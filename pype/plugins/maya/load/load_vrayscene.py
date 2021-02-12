@@ -68,13 +68,13 @@ class VRaySceneLoader(api.Loader):
         assert cmds.objExists(node), "Missing container"
 
         members = cmds.sets(node, query=True) or []
-        vraymeshes = cmds.ls(members, type="VRayMesh")
-        assert vraymeshes, "Cannot find VRayMesh in container"
+        vraymeshes = cmds.ls(members, type="VRayScene")
+        assert vraymeshes, "Cannot find VRayScene in container"
 
         filename = api.get_representation_path(representation)
 
         for vray_mesh in vraymeshes:
-            cmds.setAttr("{}.fileName".format(vray_mesh),
+            cmds.setAttr("{}.FilePath".format(vray_mesh),
                          filename,
                          type="string")
 
@@ -117,26 +117,26 @@ class VRaySceneLoader(api.Loader):
         mesh_node_name = "VRayScene_{}".format(name)
 
         trans = cmds.createNode(
-            "transform", name="{}_Transform".format(mesh_node_name))
+            "transform", name="{}".format(mesh_node_name))
         mesh = cmds.createNode(
             "mesh", name="{}_Shape".format(mesh_node_name), parent=trans)
         vray_scene = cmds.createNode(
             "VRayScene", name="{}_VRSCN".format(mesh_node_name), parent=trans)
+
         cmds.connectAttr(
-            "{}.outMesh".format(trans), "{}.inMesh".format(mesh))
+            "{}.outMesh".format(vray_scene), "{}.inMesh".format(mesh))
 
         cmds.setAttr("{}.FilePath".format(vray_scene), filename, type="string")
 
         # Create important connections
         cmds.connectAttr("time1.outTime",
-                         "{0}.currentFrame".format(vray_scene))
+                         "{0}.inputTime".format(trans))
 
         # Connect mesh to initialShadingGroup
         cmds.sets([mesh], forceElement="initialShadingGroup")
 
         group_node = cmds.group(empty=True, name="{}_GRP".format(name))
-        mesh_transform = cmds.listRelatives(mesh, parent=True, fullPath=True)
-        cmds.parent(mesh_transform, group_node)
+        cmds.parent(trans, group_node)
         nodes = [trans, vray_scene, mesh, group_node]
 
         # Fix: Force refresh so the mesh shows correctly after creation
