@@ -1,4 +1,3 @@
-import traceback
 import collections
 import os
 import uuid
@@ -418,7 +417,7 @@ class DeleteOldVersions(api.Loader):
             self.main(data, remove_publish_folder)
 
         except Exception:
-            self.log.error(traceback.format_exc())
+            self.log.error("Failed to delete versions.", exc_info=True)
 
 
 class CalculateOldVersions(DeleteOldVersions):
