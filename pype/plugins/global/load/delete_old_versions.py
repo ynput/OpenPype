@@ -320,7 +320,8 @@ class DeleteOldVersions(api.Loader):
             "file_paths_by_dir": file_paths_by_dir,
             "versions": versions,
             "asset": asset,
-            "subset": subset
+            "subset": subset,
+            "archive_subset": versions_count == 0
         }
 
         return data
@@ -349,6 +350,15 @@ class DeleteOldVersions(api.Loader):
             update_query = {"_id": version["_id"]}
             update_data = {"$set": {"data.tags": version_tags}}
             mongo_changes_bulk.append(UpdateOne(update_query, update_data))
+
+        if data["archive_subset"]:
+            mongo_changes_bulk.append(UpdateOne(
+                {
+                    "_id": data["subset"]["_id"],
+                    "type": "subset"
+                },
+                {"$set": {"type": "archived_subset"}}
+            ))
 
         if mongo_changes_bulk:
             self.dbcon.bulk_write(mongo_changes_bulk)
