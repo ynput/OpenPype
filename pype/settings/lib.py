@@ -333,7 +333,14 @@ def get_default_anatomy_settings(clear_metadata=True):
     """Project anatomy data with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     studio_values = get_studio_project_anatomy_overrides()
-    result = apply_overrides(default_values, studio_values)
+
+    # TODO uncomment and remove hotfix result when overrides of anatomy
+    #   are stored correctly.
+    # result = apply_overrides(default_values, studio_values)
+    result = copy.deepcopy(default_values)
+    if studio_values:
+        for key, value in studio_values.items():
+            result[key] = value
     if clear_metadata:
         clear_metadata_from_settings(result)
     return result
@@ -352,7 +359,13 @@ def get_anatomy_settings(project_name, clear_metadata=True):
         project_name
     )
 
-    result = apply_overrides(studio_overrides, project_overrides)
+    # TODO uncomment and remove hotfix result when overrides of anatomy
+    #   are stored correctly.
+    # result = apply_overrides(studio_overrides, project_overrides)
+    result = copy.deepcopy(studio_overrides)
+    if project_overrides:
+        for key, value in project_overrides.items():
+            result[key] = value
     if clear_metadata:
         clear_metadata_from_settings(result)
     return result
