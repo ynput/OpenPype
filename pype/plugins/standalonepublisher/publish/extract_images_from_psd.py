@@ -46,7 +46,11 @@ class ExtractImagesFromPSD(pype.api.Extractor):
 
         for repre in tuple(repres):
             # Skip all files without .psd extension
-            if repre["ext"] != ".psd":
+            repre_ext = repre["ext"].lower()
+            if repre_ext.startswith("."):
+                repre_ext = repre_ext[1:]
+
+            if repre_ext != "psd":
                 continue
 
             # TODO add check of list of "files" value
