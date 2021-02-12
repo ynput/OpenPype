@@ -6,7 +6,7 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 from maya import cmds
 
 import pyblish.api
-from avalon import maya, api
+from avalon import api
 from pype.hosts.maya import lib
 
 
