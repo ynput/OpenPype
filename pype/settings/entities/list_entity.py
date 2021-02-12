@@ -144,6 +144,7 @@ class ListEntity(ItemEntity):
         return "/".join([self.path, str(result_idx)])
 
     def set(self, value):
+        self._validate_value_type(value)
         self.clear()
         for item in value:
             self.append(item)

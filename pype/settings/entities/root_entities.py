@@ -74,6 +74,7 @@ class RootEntity(BaseItemEntity):
 
     def set(self, value):
         """Set value."""
+        self._validate_value_type(value)
         for _key, _value in value.items():
             self.non_gui_children[_key].set(_value)
 

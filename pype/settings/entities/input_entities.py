@@ -46,20 +46,8 @@ class InputEntity(ItemEntity):
     def value(self):
         return self._current_value
 
-    def validate_value(self, value):
-        if value is NOT_SET:
-            raise ValueError(
-                "Setting value to NOT_SET object is invalid operation."
-            )
-
-        if not isinstance(value, self.valid_value_types):
-            raise TypeError(self.type_error_template.format(
-                str(type(value)),
-                ", ".join([str(_t) for _t in self.valid_value_types])
-            ))
-
     def set(self, value):
-        self.validate_value(value)
+        self._validate_value_type(value)
         self._current_value = value
         self.on_value_change()
 
@@ -311,6 +299,7 @@ class NumberEntity(InputEntity):
 
     def set(self, value):
         # TODO check number for floats, integers and point
+        self._validate_value_type(value)
         super(NumberEntity, self).set(value)
 
 
@@ -377,6 +366,8 @@ class EnumEntity(InputEntity):
         else:
             check_values = [value]
 
+        self._validate_value_type(value)
+
         for item in check_values:
             if item not in self.valid_keys:
                 raise ValueError(
@@ -426,7 +417,7 @@ class RawJsonEntity(InputEntity):
         self.project_override_metadata = {}
 
     def set(self, value):
-        self.validate_value(value)
+        self._validate_value_type(value)
 
         if isinstance(value, dict):
             for key in METADATA_KEYS:

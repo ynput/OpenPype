@@ -56,6 +56,19 @@ class DictMutableKeysEntity(ItemEntity):
         for key in tuple(self.children_by_key.keys()):
             self.pop(key)
 
+    def set(self, value):
+        self._validate_value_type(value)
+
+        prev_keys = set(self.keys())
+
+        for _key, _value in value.items():
+            self.set_value_for_key(_key, _value)
+            if _key in prev_keys:
+                prev_keys.remove(_key)
+
+        for key in prev_keys:
+            self.pop(key)
+
     def change_key(self, old_key, new_key):
         if new_key == old_key:
             return
@@ -204,17 +217,6 @@ class DictMutableKeysEntity(ItemEntity):
             return self._studio_override_metadata
 
         return self._default_metadata
-
-    def set(self, value):
-        # TODO pop keys not in value and add new keys from value
-        prev_keys = set(self.keys())
-        for _key, _value in value.items():
-            self.set_value_for_key(_key, _value)
-            if _key in prev_keys:
-                prev_keys.remove(_key)
-
-        for key in prev_keys:
-            self.pop(key)
 
     def set_override_state(self, state):
         # Trigger override state change of root if is not same

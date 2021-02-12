@@ -297,13 +297,9 @@ class BaseItemEntity(BaseEntity):
         Returns:
             bool: True if value is in entity's defined types.
         """
-        value_type = type(value)
-        for valid_type in self.valid_value_types:
-            if value_type is valid_type:
-                return True
-        return False
+        return isinstance(value, self.valid_value_types)
 
-    def validate_value(self, value):
+    def _validate_value_type(self, value):
         """Validate entered value.
 
         Raises:

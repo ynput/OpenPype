@@ -64,7 +64,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
     def set(self, value):
         """Set value."""
-        # TODO type validation
+        self._validate_value_type(value)
         for _key, _value in value.items():
             self.non_gui_children[_key].set(_value)
 
