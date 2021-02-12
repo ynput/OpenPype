@@ -6,7 +6,6 @@ import copy
 from .constants import (
     M_OVERRIDEN_KEY,
     M_ENVIRONMENT_KEY,
-    M_POP_KEY,
 
     METADATA_KEYS,
 
@@ -292,10 +291,7 @@ def merge_overrides(source_dict, override_dict):
         overriden_keys = set()
 
     for key, value in override_dict.items():
-        if value == M_POP_KEY:
-            source_dict.pop(key)
-
-        elif (key in overriden_keys or key not in source_dict):
+        if (key in overriden_keys or key not in source_dict):
             source_dict[key] = value
 
         elif isinstance(value, dict) and isinstance(source_dict[key], dict):
