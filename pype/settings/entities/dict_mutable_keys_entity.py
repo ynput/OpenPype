@@ -30,13 +30,8 @@ class DictMutableKeysEntity(ItemEntity):
     def __contains__(self, key):
         return key in self.children_by_key
 
-    def pop(self, key, default=_miss_arg):
-        if key not in self.children_by_key:
-            if default is self._miss_arg:
-                raise KeyError("Key \"{}\" not found.".format(key))
-            return default
-
-        result = self.children_by_key.pop(key)
+    def pop(self, key, *args, **kwargs):
+        result = self.children_by_key.pop(key, *args, **kwargs)
         self.on_change()
         return result
 
