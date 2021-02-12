@@ -255,8 +255,9 @@ class SyncServer(PypeModule, ITrayModule):
         """
         condition = representation_id in self._paused_representations
         if check_parents and project_name:
-            condition = condition or self.is_project_paused(project_name) \
-                        or self.is_paused()
+            condition = condition or \
+                        self.is_project_paused(project_name) or \
+                        self.is_paused()
         return condition
 
     def pause_project(self, project_name):
@@ -641,7 +642,7 @@ class SyncServer(PypeModule, ITrayModule):
                 if tries < int(config_preset["retry_cnt"]):
                     return SyncStatus.DO_UPLOAD
             else:
-                _, local_rec = self._get_site_rec(sites,local_site) or {}
+                _, local_rec = self._get_site_rec(sites, local_site) or {}
                 if not local_rec or not local_rec.get("created_dt"):
                     tries = self._get_tries_count_from_rec(local_rec)
                     # file will be skipped if unsuccessfully tried over
@@ -997,7 +998,6 @@ class SyncServer(PypeModule, ITrayModule):
 
         self._update_site(collection, query, update, arr_filter)
 
-
     def _pause_unpause_site(self, collection, query,
                             representation, site_name, pause):
         """
@@ -1230,9 +1230,8 @@ class SyncServer(PypeModule, ITrayModule):
             (string) - absolute path on local system
         """
         local_active_site = self.get_local_site(collection)
-        root_config = \
-            self.get_synced_preset(collection) \
-            ["sites"][local_active_site]["root"]
+        sites = self.get_synced_preset(collection)["sites"]
+        root_config = sites[local_active_site]["root"]
 
         if not root_config.get("root"):
             root_config = {"root": root_config}
@@ -1243,7 +1242,7 @@ class SyncServer(PypeModule, ITrayModule):
             try:
                 anatomy = self.get_anatomy(collection)
                 path = anatomy.fill_root(path)
-            except:
+            except KeyError:
                 msg = "Error in resolving local root from anatomy"
                 self.log.error(msg)
                 raise ValueError(msg)

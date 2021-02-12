@@ -439,7 +439,7 @@ class GDriveHandler(AbstractProvider):
             while response is None:
                 if server.is_representation_paused(representation['_id'],
                                                    check_parents=True,
-                                                    project_name=collection):
+                                                   project_name=collection):
                     raise ValueError("Paused during process, please redo.")
                 if status:
                     status_val = float(status.progress())

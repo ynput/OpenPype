@@ -628,8 +628,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         self.query = self.get_default_query()
         self.default_query = list(self.get_default_query())
-        log.debug("!!! init query: {}".format(json.dumps(self.query,
-                                                         indent=4)))
+
         representations = self.dbcon.aggregate(self.query)
         self.refresh(representations)
 
@@ -745,7 +744,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         for repre in result.get("paginatedResults"):
             context = repre.get("context").pop()
-            data = repre.get("data").pop()
             files = repre.get("files", [])
             if isinstance(files, dict):  # aggregate returns dictionary
                 files = [files]
@@ -1550,11 +1548,10 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         remote_provider = _translate_provider_for_icon(self.sync_server,
                                                        self._project,
                                                        remote_site)
-        
+
         for repre in result.get("paginatedResults"):
             # log.info("!!! repre:: {}".format(repre))
             files = repre.get("files", [])
-            data = repre.get("data")
             if isinstance(files, dict):  # aggregate returns dictionary
                 files = [files]
 
@@ -1840,11 +1837,10 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                             'then': 3  # Paused
                         },
                         {
-                            'case': {'$and': [
-                                        {'$or': ['$failed_remote',
-                                                 '$failed_local']},
-                                        {'$eq': ['$tries', 3]}
-                                    ]},
+                            'case': {
+                                '$and': [{'$or': ['$failed_remote',
+                                                  '$failed_local']},
+                                         {'$eq': ['$tries', 3]}]},
                             'then': 1  # Failed (3 tries)
                         },
                         {
@@ -2012,10 +2008,11 @@ class SizeDelegate(QtWidgets.QStyledItemDelegate):
 def _convert_progress(value):
     try:
         progress = float(value)
-    except (ValueError, TypeError) as _:
+    except (ValueError, TypeError):
         progress = 0.0
 
     return progress
+
 
 def _translate_provider_for_icon(sync_server, project, site):
     """
