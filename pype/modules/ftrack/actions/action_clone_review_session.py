@@ -33,7 +33,8 @@ def clone_review_session(session, entity):
                 "name": obj["name"],
                 "version": obj["version"],
                 "review_session": review_session,
-                "asset_version": obj["asset_version"]
+                "asset_version": obj["asset_version"],
+                "description": obj["description"]
             }
         )
 
