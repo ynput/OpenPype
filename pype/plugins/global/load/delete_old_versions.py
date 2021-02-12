@@ -26,7 +26,7 @@ class DeleteOldVersions(api.Loader):
 
     options = [
         qargparse.Integer(
-            "versions", default=2, min=1, help="Versions to keep:"
+            "versions_to_keep", default=2, min=0, help="Versions to keep:"
         ),
         qargparse.Boolean(
             "remove_publish_folder", help="Remove publish folder:"
@@ -393,16 +393,18 @@ class DeleteOldVersions(api.Loader):
 
     def load(self, context, name=None, namespace=None, options=None):
         try:
-            settings = {"versions": 2, "publish": False}
+            versions_to_keep = 2
             remove_publish_folder = False
             if options:
-                settings.update(options)
+                versions_to_keep = options.get(
+                    "versions_to_keep", versions_to_keep
+                )
                 remove_publish_folder = options.get(
                     "remove_publish_folder", remove_publish_folder
                 )
 
+            data = self.get_data(context, versions_to_keep)
 
-            data = self.get_data(context, settings["versions"])
             self.main(data, remove_publish_folder)
 
         except Exception:
@@ -415,7 +417,7 @@ class CalculateOldVersions(DeleteOldVersions):
 
     options = [
         qargparse.Integer(
-            "versions", default=2, min=1, help="Versions to keep:"
+            "versions_to_keep", default=2, min=0, help="Versions to keep:"
         ),
         qargparse.Boolean(
             "remove_publish_folder", help="Remove publish folder:"
