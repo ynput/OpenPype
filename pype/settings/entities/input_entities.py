@@ -311,6 +311,7 @@ class InputEntity(EndpointEntity):
         self._current_value = copy.deepcopy(current_value)
         on_change_trigger.append(self.on_change)
 
+
 class NumberEntity(InputEntity):
     schema_types = ["number"]
 
