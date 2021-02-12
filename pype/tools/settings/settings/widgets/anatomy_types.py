@@ -264,15 +264,15 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
                 "multiplatform": True
             }
         }
-        multiroot_widget = ModifiableDict(
+        roots_widget = ModifiableDict(
             multiroot_data, self,
             as_widget=True, parent_widget=content_widget
         )
-        multiroot_widget.create_ui()
+        roots_widget.create_ui()
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.addWidget(multiroot_widget)
+        content_layout.addWidget(roots_widget)
 
         body_widget.set_content_widget(content_widget)
         self.label_widget = body_widget.label_widget
@@ -282,8 +282,8 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
         main_layout.addWidget(body_widget)
 
         self.body_widget = body_widget
-        self.multiroot_widget = multiroot_widget
-        multiroot_widget.value_changed.connect(self._on_value_change)
+        self.roots_widget = roots_widget
+        roots_widget.value_changed.connect(self._on_value_change)
 
     def update_default_values(self, parent_values):
         self._state = None
@@ -294,20 +294,22 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
         else:
             value = NOT_SET
 
-        is_multiroot = False
+        self._has_studio_override = False
+        self._had_studio_override = False
+
+        is_multiroot = True
+        # Backward compatibility: Allow to switch to multiroot
         if isinstance(value, dict):
+            is_multiroot = False
             for _value in value.values():
                 if isinstance(_value, dict):
                     is_multiroot = True
                     break
 
-        self._has_studio_override = False
-        self._had_studio_override = False
-
-        if not is_multiroot and value is not NOT_SET:
+        if not is_multiroot:
             value = {"": value}
 
-        self.multiroot_widget.update_default_values(value)
+        self.roots_widget.update_default_values(value)
 
     def update_studio_values(self, parent_values):
         self._state = None
@@ -321,7 +323,7 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
         self._has_studio_override = value is not NOT_SET
         self._had_studio_override = value is not NOT_SET
 
-        self.multiroot_widget.update_studio_values(value)
+        self.roots_widget.update_studio_values(value)
 
     def apply_overrides(self, parent_values):
         # Make sure this is set to False
@@ -334,10 +336,10 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
 
         self._is_overriden = value is not NOT_SET
         self._was_overriden = bool(self._is_overriden)
-        self.multiroot_widget.apply_overrides(value)
+        self.roots_widget.apply_overrides(value)
 
     def hierarchical_style_update(self):
-        self.multiroot_widget.hierarchical_style_update()
+        self.roots_widget.hierarchical_style_update()
         self.update_style()
 
     def update_style(self):
@@ -380,52 +382,52 @@ class RootsWidget(QtWidgets.QWidget, SettingObject):
 
     @property
     def child_has_studio_override(self):
-        return self.multiroot_widget.has_studio_override
+        return self.roots_widget.has_studio_override
 
     @property
     def child_modified(self):
-        return self.multiroot_widget.child_modified
+        return self.roots_widget.child_modified
 
     @property
     def child_overriden(self):
         return (
-            self.multiroot_widget.is_overriden
-            or self.multiroot_widget.child_overriden
+            self.roots_widget.is_overriden
+            or self.roots_widget.child_overriden
         )
 
     @property
     def child_invalid(self):
-        return self.multiroot_widget.child_invalid
+        return self.roots_widget.child_invalid
 
     def remove_overrides(self):
         self._is_overriden = False
         self._is_modified = False
 
-        self.multiroot_widget.remove_overrides()
+        self.roots_widget.remove_overrides()
 
     def reset_to_pype_default(self):
-        self.multiroot_widget.reset_to_pype_default()
+        self.roots_widget.reset_to_pype_default()
         self._has_studio_override = False
 
     def set_studio_default(self):
-        self.multiroot_widget.reset_to_pype_default()
+        self.roots_widget.reset_to_pype_default()
         self._has_studio_override = True
 
     def discard_changes(self):
         self._is_overriden = self._was_overriden
         self._is_modified = False
 
-        self.multiroot_widget.discard_changes()
+        self.roots_widget.discard_changes()
 
         self._is_modified = self.child_modified
         self._has_studio_override = self._had_studio_override
 
     def set_as_overriden(self):
         self._is_overriden = True
-        self.multiroot_widget.set_as_overriden()
+        self.roots_widget.set_as_overriden()
 
     def item_value(self):
-        return self.multiroot_widget.item_value()
+        return self.roots_widget.item_value()
 
     def config_value(self):
         return {self.key: self.item_value()}
