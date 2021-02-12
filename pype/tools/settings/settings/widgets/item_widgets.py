@@ -488,7 +488,8 @@ class EnumeratorWidget(InputWidget):
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
-        print("_on_entity_change", self.__class__.__name__, self.entity.path)
+        if self.entity.value != self.input_field.value():
+            self.set_entity_value()
 
     def set_entity_value(self):
         self.input_field.set_value(self.entity.value)
