@@ -270,6 +270,10 @@ def gui_schema(subfolder, main_schema_name):
 
 
 class OverrideStateItem:
+    """Object used as item for `OverrideState` enum.
+
+    Used object to be able use exact object comparison and value comparisons.
+    """
     values = set()
 
     def __init__(self, value, name):
@@ -320,7 +324,18 @@ class OverrideStateItem:
 class OverrideState:
     """Enumeration of override states.
 
-    Each state should have unique value.
+    Each state have unique value.
+
+    Currently has 4 states:
+    - NOT_DEFINED - Initial state will raise an error if want to access
+        anything in entity.
+    - DEFAULTS - Entity cares only about default values. It is not
+        possible to set higher state if any entity does not have filled
+        default value.
+    - STUDIO - First layer of overrides. Hold only studio overriden values
+        that are applied on top of defaults.
+    - PROJECT - Second layer of overrides. Hold only project overrides that are
+        applied on top of defaults and studio overrides.
     """
     NOT_DEFINED = OverrideStateItem(-1, "Not defined")
     DEFAULTS = OverrideStateItem(0, "Defaults")
