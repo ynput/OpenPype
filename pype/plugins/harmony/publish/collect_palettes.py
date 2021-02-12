@@ -11,8 +11,9 @@ class CollectPalettes(pyblish.api.ContextPlugin):
     """Gather palettes from scene when publishing templates."""
 
     label = "Palettes"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.003
     hosts = ["harmony"]
+    allowed_tasks = []  # list of task names where collecting should happen
 
     def process(self, context):
         """Collector entry point."""
@@ -21,6 +22,13 @@ class CollectPalettes(pyblish.api.ContextPlugin):
             {
                 "function": f"PypeHarmony.Publish.{self_name}.getPalettes",
             })["result"]
+
+        # skip collecting if not in allowed task
+        if self.allowed_tasks:
+            self.allowed_tasks = [task.lower() for task in self.allowed_tasks]
+            if context.data["anatomyData"]["task"].lower() \
+                    not in self.allowed_tasks:
+                return
 
         for name, id in palettes.items():
             instance = context.create_instance(name)
