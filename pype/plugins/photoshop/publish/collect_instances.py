@@ -1,5 +1,3 @@
-import pythoncom
-
 import pyblish.api
 
 from avalon import photoshop

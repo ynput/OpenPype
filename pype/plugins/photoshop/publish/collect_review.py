@@ -1,7 +1,5 @@
 import os
 
-import pythoncom
-
 import pyblish.api
 
 
