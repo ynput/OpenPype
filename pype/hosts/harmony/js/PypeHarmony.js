@@ -4,8 +4,7 @@
 // ***************************************************************************
 
 var LD_OPENHARMONY_PATH = System.getenv('LIB_OPENHARMONY_PATH');
-LD_OPENHARMONY_PATH = LD_OPENHARMONY_PATH + '/openHarmony.js';
-LD_OPENHARMONY_PATH = LD_OPENHARMONY_PATH.replace(/\\/g, "/");
+include(LD_OPENHARMONY_PATH + '/openHarmony.js');
 
 
 

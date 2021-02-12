@@ -146,10 +146,6 @@ class ExtractSequence(pyblish.api.Extractor):
             os.path.basename(filepath)
             for filepath in output_files_by_frame.values()
         ]
-        # Sequence of one frame
-        if len(repre_files) == 1:
-            repre_files = repre_files[0]
-
         new_repre = {
             "name": ext,
             "ext": ext,

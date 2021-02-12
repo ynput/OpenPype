@@ -76,7 +76,7 @@ class ImageSequenceLoader(api.Loader):
 
         """
         self_name = self.__class__.__name__
-        node = container.get("nodes").pop()
+        node = harmony.find_node_by_name(container["name"], "READ")
 
         path = api.get_representation_path(representation)
         collections, remainder = clique.assemble(
@@ -129,7 +129,7 @@ class ImageSequenceLoader(api.Loader):
             container (dict): Container data.
 
         """
-        node = container.get("nodes").pop()
+        node = harmony.find_node_by_name(container["name"], "READ")
         harmony.send(
             {"function": "PypeHarmony.deleteNode", "args": [node]}
         )

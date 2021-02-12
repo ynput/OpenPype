@@ -7,8 +7,9 @@ import avalon.api
 
 
 class PhotoshopPrelaunch(pype.lib.PypeHook):
-    """
-        This hook can open last workfile or create it from template.
+    """This hook will check for the existence of PyWin
+
+    PyWin is a requirement for the Photoshop integration.
     """
     project_code = None
     host_name = "photoshop"
@@ -22,10 +23,13 @@ class PhotoshopPrelaunch(pype.lib.PypeHook):
         self.signature = "( {} )".format(self.__class__.__name__)
 
     def execute(self, *args, env: dict = None) -> bool:
-        workfile_path = self.get_workfile_path(env, self.host_name)
+        output = pype.lib._subprocess(["pip", "install", "pywin32==227"])
+        self.log.info(output)
 
-        # adding compulsory environment var for opening file
-        env["PYPE_WORKFILE_PATH"] = workfile_path.replace('\\', '/')
+        workfile_path = self.get_workfile_plath(env, self.host_name)
+
+        # adding compulsory environment var for openting file
+        env["PYPE_WORKFILE_PATH"] = workfile_path
 
         return True
 
@@ -67,7 +71,7 @@ class PhotoshopPrelaunch(pype.lib.PypeHook):
             avalon.api.HOST_WORKFILE_EXTENSIONS[host_name], True
         )
 
-    def get_workfile_path(self, env, host_name):
+    def get_workfile_plath(self, env, host_name):
         # get context variables
         project_name = env["AVALON_PROJECT"]
         asset_name = env["AVALON_ASSET"]

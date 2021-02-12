@@ -817,9 +817,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("output_res_ratio: `{}`".format(output_res_ratio))
 
         # Round ratios to 2 decimal places for comparing
-        # TODO change decimal places based on resolution dimensions.
-        #   This may break output resolution on bigger output resolutions
-        #   and bizzar aspect ratios (0.9).
         input_res_ratio = round(input_res_ratio, 2)
         output_res_ratio = round(output_res_ratio, 2)
 
@@ -869,10 +866,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             or input_width != output_width
             or pixel_aspect != 1
         ):
-            # Prepare scale and padding arguments if input's resolution is not
-            #   same as output's or aspect ratio is not same
             if input_res_ratio < output_res_ratio:
-                # Modify width scale if input resolution ratio is smaller
                 self.log.debug(
                     "Input's resolution ratio is lower then output's"
                 )
@@ -880,39 +874,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 width_half_pad = int((output_width - width_scale) / 2)
                 height_scale = output_height
                 height_half_pad = 0
-
             else:
-                # Modify height scale if input resolution ratio is smaller
-                self.log.debug(
-                    "Input's resolution ratio is higher then output's"
-                )
+                self.log.debug("Input is heigher then output")
                 width_scale = output_width
                 width_half_pad = 0
                 height_scale = int(input_height * scale_factor_by_width)
                 height_half_pad = int((output_height - height_scale) / 2)
-
-            # Lower scale if is bigger then output (edge case issue)
-            # - lowered by one "point" of pixel aspec ratio size
-            # - this may happen when pixel aspect ratio is defined with more
-            #   than 2 decimal places and ratios are not calculated "accurate"
-            if output_width < width_scale or output_height < height_scale:
-                msg = (
-                    "Have to lower scale resolution because is bigger than"
-                    " output's resolution. Probably got invalid aspect ratio"
-                    " from `instance.data`. SCALE RESOLUTION: {}x{}"
-                    " || OUTPUT RESOLUTION {}x{} || PIXEL ASPECT RATIO: {}"
-                ).format(
-                    width_scale, height_scale,
-                    output_width, output_height,
-                    pixel_aspect
-                )
-                self.log.warning(msg)
-                width_scale = width_scale - round(abs(
-                    width_scale - (width_scale * pixel_aspect)
-                ))
-                height_scale = height_scale - round(abs(
-                    height_scale - (height_scale * pixel_aspect)
-                ))
 
             self.log.debug("width_scale: `{}`".format(width_scale))
             self.log.debug("width_half_pad: `{}`".format(width_half_pad))
