@@ -81,7 +81,9 @@ from .item_entities import (
 )
 
 from .input_entities import (
+    EndpointEntity,
     InputEntity,
+
     NumberEntity,
     BoolEntity,
     EnumEntity,
@@ -117,7 +119,9 @@ __all__ = (
     "PathEntity",
     "ListStrictEntity",
 
+    "EndpointEntity",
     "InputEntity",
+
     "NumberEntity",
     "BoolEntity",
     "EnumEntity",

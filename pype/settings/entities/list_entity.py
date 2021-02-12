@@ -1,7 +1,7 @@
 import copy
 from . import (
     BaseEntity,
-    ItemEntity
+    EndpointEntity
 )
 from .lib import (
     NOT_SET,
@@ -10,7 +10,7 @@ from .lib import (
 from .exceptions import DefaultsNotDefined
 
 
-class ListEntity(ItemEntity):
+class ListEntity(EndpointEntity):
     schema_types = ["list"]
 
     def __iter__(self):
@@ -298,18 +298,7 @@ class ListEntity(ItemEntity):
                     return True
         return False
 
-    def settings_value(self):
-        if self._override_state is OverrideState.NOT_DEFINED:
-            return NOT_SET
-
-        if self.is_group:
-            if self._override_state is OverrideState.STUDIO:
-                if not self._has_studio_override:
-                    return NOT_SET
-            elif self._override_state is OverrideState.PROJECT:
-                if not self._has_project_override:
-                    return NOT_SET
-
+    def _settings_value(self):
         output = []
         for child_obj in self.children:
             output.append(child_obj.settings_value())
@@ -435,21 +424,6 @@ class ListEntity(ItemEntity):
         self._has_project_override = False
 
         on_change_trigger.append(self.on_change)
-
-    def update_default_value(self, value):
-        value = self._check_update_value(value, "default")
-        self.has_default_value = value is not NOT_SET
-        self._default_value = value
-
-    def update_studio_values(self, value):
-        value = self._check_update_value(value, "studio override")
-        self.had_studio_override = value is not NOT_SET
-        self._studio_override_value = value
-
-    def update_project_values(self, value):
-        value = self._check_update_value(value, "project override")
-        self.had_project_override = value is not NOT_SET
-        self._project_override_value = value
 
     def reset_callbacks(self):
         super(ListEntity, self).reset_callbacks()
