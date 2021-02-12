@@ -69,6 +69,14 @@ class DictMutableKeysEntity(ItemEntity):
         for key in prev_keys:
             self.pop(key)
 
+    def set_value_for_key(self, key, value):
+        # TODO Check for value type if is Settings entity?
+        child_obj = self.children_by_key.get(key)
+        if not child_obj:
+            child_obj = self.add_key(key)
+
+        child_obj.set(value)
+
     def change_key(self, old_key, new_key):
         if new_key == old_key:
             return
@@ -89,8 +97,10 @@ class DictMutableKeysEntity(ItemEntity):
             if child is child_entity:
                 return key
         return None
+    def _add_key(self, key):
+        if key in self.children_by_key:
+            self.pop(key)
 
-    def _add_new_key(self, key):
         if self.value_is_env_group:
             item_schema = copy.deepcopy(self.item_schema)
             item_schema["env_group_key"] = key
@@ -101,8 +111,8 @@ class DictMutableKeysEntity(ItemEntity):
         self.children_by_key[key] = new_child
         return new_child
 
-    def add_new_key(self, key):
-        new_child = self._add_new_key(key)
+    def add_key(self, key):
+        new_child = self._add_key(key)
         new_child.set_override_state(self._override_state)
         self.on_change()
         return new_child
@@ -179,14 +189,6 @@ class DictMutableKeysEntity(ItemEntity):
             raise ValueError("Didn't found child {}".format(child_obj))
 
         return "/".join([self.path, result_key])
-
-    def set_value_for_key(self, key, value):
-        # TODO Check for value type if is Settings entity?
-        child_obj = self.children_by_key.get(key)
-        if not child_obj:
-            child_obj = self.add_new_key(key)
-
-        child_obj.set(value)
 
     def on_change(self):
         for callback in self.on_change_callbacks:
@@ -268,7 +270,7 @@ class DictMutableKeysEntity(ItemEntity):
         children_label_by_id = {}
         metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
         for _key, _value in new_value.items():
-            child_obj = self._add_new_key(_key)
+            child_obj = self._add_key(_key)
             child_obj.update_default_value(_value)
             if using_overrides:
                 if state is OverrideState.STUDIO:
@@ -449,7 +451,7 @@ class DictMutableKeysEntity(ItemEntity):
 
         # Create new children
         for _key, _value in new_value.items():
-            child_obj = self.add_new_key(_key)
+            child_obj = self.add_key(_key)
             child_obj.update_default_value(_value)
             child_obj.set_override_state(self._override_state)
 
@@ -491,7 +493,7 @@ class DictMutableKeysEntity(ItemEntity):
 
         # Create new children
         for _key, _value in new_value.items():
-            child_obj = self.add_new_key(_key)
+            child_obj = self.add_key(_key)
             child_obj.update_default_value(_value)
             if using_overrides:
                 child_obj.update_studio_value(_value)

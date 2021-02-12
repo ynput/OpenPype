@@ -603,7 +603,7 @@ class DictMutableKeysWidget(BaseWidget):
 
         # Creating of new item will trigger entity change so input field is
         #   created at this moment
-        child_entity = self.entity.add_new_key(entity_key)
+        child_entity = self.entity.add_key(entity_key)
 
         # Find created item
         input_field = None
