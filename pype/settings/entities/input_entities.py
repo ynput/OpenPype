@@ -49,9 +49,9 @@ class InputEntity(ItemEntity):
     def set(self, value):
         self._validate_value_type(value)
         self._current_value = value
-        self.on_value_change()
+        self._on_value_change()
 
-    def on_value_change(self):
+    def _on_value_change(self):
         # Change has_project_override attr value
         if self._override_state is OverrideState.PROJECT:
             self._has_project_override = True
@@ -424,7 +424,7 @@ class RawJsonEntity(InputEntity):
                 if key in value:
                     value.pop(key)
         self._current_value = value
-        self.on_value_change()
+        self._on_value_change()
 
     @property
     def metadata(self):
