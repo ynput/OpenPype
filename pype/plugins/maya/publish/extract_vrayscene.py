@@ -8,7 +8,6 @@ import pype.api
 from pype.hosts.maya.render_setup_tools import export_in_rs_layer
 
 from maya import cmds
-import maya.app.renderSetup.model.renderSetup as renderSetup
 
 
 class ExtractVrayscene(pype.api.Extractor):
@@ -22,7 +21,14 @@ class ExtractVrayscene(pype.api.Extractor):
         """Plugin entry point."""
         if instance.data.get("exportOnFarm"):
             self.log.info("vrayscenes will be exported on farm.")
-            return
+            raise NotImplementedError(
+                "exporting vrayscenes is not implemented")
+
+        # handle sequence
+        if instance.data.get("vraySceneMultipleFiles"):
+            self.log.info("vrayscenes will be exported on farm.")
+            raise NotImplementedError(
+                "exporting vrayscene sequences not implemented yet")
 
         vray_settings = cmds.ls(type="VRaySettingsNode")
         if not vray_settings:
@@ -56,7 +62,7 @@ class ExtractVrayscene(pype.api.Extractor):
                 export_in_rs_layer(
                     file_path,
                     instance.data["setMembers"],
-                    export=lambda file_path: cmds.file(
+                    export=lambda: cmds.file(
                         file_path, type="V-Ray Scene", pr=True, es=True))
 
             else:
@@ -68,23 +74,21 @@ class ExtractVrayscene(pype.api.Extractor):
             instance.data["representations"] = []
 
         files = file_path
-        # handle sequence
-        if instance.data.get("vraySceneMultipleFiles"):
-            pass
 
         representation = {
             'name': 'vrscene',
             'ext': 'vrscene',
-            'files': files,
-            "stagingDir": staging_dir,
+            'files': os.path.basename(files),
+            "stagingDir": os.path.dirname(files),
         }
         instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '%s' to: %s"
                       % (instance.name, staging_dir))
 
+    @staticmethod
     def format_vray_output_filename(
-            self, filename, layer, template, start_frame=None):
+            filename, layer, template, start_frame=None):
         """Format the expected output file of the Export job.
 
         Example:
@@ -104,7 +108,7 @@ class ExtractVrayscene(pype.api.Extractor):
 
         """
         # format template to match pythons format specs
-        template = re.sub(r"<\w+?)>", r"{\1}", template.lower())
+        template = re.sub(r"<(\w+?)>", r"{\1}", template.lower())
 
         # Ensure filename has no extension
         file_name, _ = os.path.splitext(filename)

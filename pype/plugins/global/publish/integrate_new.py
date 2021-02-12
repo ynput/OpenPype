@@ -65,6 +65,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "vdbcache",
                 "scene",
                 "vrayproxy",
+                "vrayscene_layer",
                 "render",
                 "prerender",
                 "imagesequence",
