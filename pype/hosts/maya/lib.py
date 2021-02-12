@@ -2525,15 +2525,30 @@ class RenderSetupListObserver:
 
         for render_set in render_sets:
             members = cmds.sets(render_set, query=True) or []
-            if not cmds.namespace(exists="_{}".format(render_set)):
-                namespace = cmds.namespace(add="_{}".format(render_set))
+
+            namespace_name = "_{}".format(render_set)
+            if not cmds.namespace(exists=namespace_name):
+                index = 1
+                namespace_name = "_{}".format(render_set)
+                try:
+                    cmds.namespace(rm=namespace_name)
+                except RuntimeError:
+                    # namespace is not empty, so we leave it untouched
+                    pass
+                orignal_namespace_name = namespace_name
+                while(cmds.namespace(exists=namespace_name)):
+                    namespace_name = "{}{}".format(
+                        orignal_namespace_name, index)
+                    index += 1
+
+                namespace = cmds.namespace(add=namespace_name)
 
             if members:
                 # if set already have namespaced members, use the same
                 # namespace as others.
                 namespace = members[0].rpartition(":")[0]
             else:
-                namespace = "_{}".format(render_set)
+                namespace = namespace_name
 
             render_layer_set_name = "{}:{}".format(namespace, layer_name)
             if render_layer_set_name in members:

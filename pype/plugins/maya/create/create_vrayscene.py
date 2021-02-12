@@ -45,7 +45,7 @@ class CreateVRayScene(avalon.maya.Creator):
                 pass
 
             while(cmds.namespace(exists=namespace_name)):
-                namespace_name = "_vraysceneDefault{}".format(index)
+                namespace_name = "_{}{}".format(str(instance), index)
                 index += 1
 
             namespace = cmds.namespace(add=namespace_name)
