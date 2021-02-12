@@ -180,7 +180,7 @@
         }
     },
     "sync_server": {
-        "enabled": false,
+        "enabled": true,
         "config": {
             "local_id": "local_0",
             "retry_cnt": "3",
@@ -192,12 +192,23 @@
             "gdrive": {
                 "provider": "gdrive",
                 "credentials_url": "",
-                "root": "/sync_testing/test"
+                "root": {
+                    "work": ""
+                }
             },
             "studio": {
                 "provider": "local_drive",
                 "credentials_url": "",
-                "root": ""
+                "root": {
+                    "work": ""
+                }
+            },
+            "local_0": {
+                "provider": "local_drive",
+                "credentials_url": "",
+                "root": {
+                    "work": ""
+                }
             }
         }
     }

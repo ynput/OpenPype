@@ -1,4 +1,5 @@
 from pype.api import (
+    Anatomy,
     get_project_settings,
     get_current_project_settings)
 
@@ -125,6 +126,7 @@ class SyncServer(PypeModule, ITrayModule):
         self._paused = False
         self._paused_projects = set()
         self._paused_representations = set()
+        self._anatomies = {}
 
     # public facing API
     def add_site(self, collection, representation_id, site_name=None):
@@ -410,32 +412,17 @@ class SyncServer(PypeModule, ITrayModule):
     def is_running(self):
         return self.sync_server_thread.is_running
 
-    def get_sites_for_project(self, project_name=None):
+    def get_anatomy(self, project_name):
         """
-            Checks if sync is enabled globally and on project.
-            In that case return local and remote site
+            Get already created or newly created anatomy for project
 
             Args:
-                project_name (str):
+                project_name (string):
 
-            Returns:
-                (tuple): of strings, labels for (local_site, remote_site)
+            Return:
+                (Anatomy)
         """
-        if self.enabled:
-            if project_name:
-                settings = get_project_settings(project_name)
-            else:
-                settings = get_current_project_settings()
-
-            sync_server_presets = settings["global"]["sync_server"]["config"]
-            if settings["global"]["sync_server"]["enabled"]:
-                local_site = sync_server_presets.get("active_site",
-                                                     "studio").strip()
-                remote_site = sync_server_presets.get("remote_site")
-
-                return local_site, remote_site
-
-        return self.DEFAULT_SITE, None
+        return self._anatomies.get('project_name') or Anatomy(project_name)
 
     def get_synced_presets(self):
         """
@@ -443,6 +430,9 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             (dict): of settings, keys are project names
         """
+        if self.presets:  # presets set already, do not call again and again
+            return self.presets
+
         sync_presets = {}
         if not self.connection:
             self.connection = AvalonMongoDB()
@@ -467,6 +457,11 @@ class SyncServer(PypeModule, ITrayModule):
                 (dict): settings dictionary for the enabled project,
                     empty if no settings or sync is disabled
         """
+        # presets set already, do not call again and again
+        # self.log.debug("project preset {}".format(self.presets))
+        if self.presets and self.presets.get(project_name):
+            return self.presets.get(project_name)
+
         settings = get_project_settings(project_name)
         sync_settings = settings.get("global")["sync_server"]
         if not sync_settings:
@@ -523,6 +518,18 @@ class SyncServer(PypeModule, ITrayModule):
                     {  'project_name' : ('provider_name', 'site_name') }
         """
         return self.active_sites[project_name]
+
+    def get_local_site(self, project_name):
+        """
+            Returns active (mine) site for 'project_name' from settings
+        """
+        return self.get_synced_preset(project_name)['config']['active_site']
+
+    def get_remote_site(self, project_name):
+        """
+            Returns remote (theirs) site for 'project_name' from settings
+        """
+        return self.get_synced_preset(project_name)['config']['remote_site']
 
     def get_provider_for_site(self, project_name, site):
         """
@@ -681,8 +688,9 @@ class SyncServer(PypeModule, ITrayModule):
             remote_file = self._get_remote_file_path(file,
                                                      handler.get_roots_config()
                                                      )
-            local_root = representation.get("context", {}).get("root")
-            local_file = self._get_local_file_path(file, local_root)
+
+            local_file = self.get_local_file_path(collection,
+                                                  file.get("path", ""))
 
             target_folder = os.path.dirname(remote_file)
             folder_id = handler.create_folder(target_folder)
@@ -691,7 +699,8 @@ class SyncServer(PypeModule, ITrayModule):
                 err = "Folder {} wasn't created. Check permissions.".\
                     format(target_folder)
                 raise NotADirectoryError(err)
-        _, remote_site = self.get_sites_for_project(collection)
+
+        remote_site = self.get_remote_site(collection)
         loop = asyncio.get_running_loop()
         file_id = await loop.run_in_executor(None,
                                              handler.upload_file,
@@ -727,22 +736,21 @@ class SyncServer(PypeModule, ITrayModule):
         with self.lock:
             handler = lib.factory.get_provider(provider_name, site_name,
                                                tree=tree, presets=preset)
-            remote_file = self._get_remote_file_path(file,
-                                                     handler.get_roots_config()
-                                                     )
-            local_root = representation.get("context", {}).get("root")
-            local_file = self._get_local_file_path(file, local_root)
+            remote_file_path = self._get_remote_file_path(
+                file, handler.get_roots_config())
 
-            local_folder = os.path.dirname(local_file)
+            local_file_path = self.get_local_file_path(collection,
+                                                       file.get("path", ""))
+            local_folder = os.path.dirname(local_file_path)
             os.makedirs(local_folder, exist_ok=True)
 
-        local_site, _ = self.get_sites_for_project(collection)
+        local_site = self.get_local_site(collection)
 
         loop = asyncio.get_running_loop()
         file_id = await loop.run_in_executor(None,
                                              handler.download_file,
-                                             remote_file,
-                                             local_file,
+                                             remote_file_path,
+                                             local_file_path,
                                              self,
                                              collection,
                                              file,
@@ -812,8 +820,9 @@ class SyncServer(PypeModule, ITrayModule):
             error_str = ''
 
         source_file = file.get("path", "")
-        log.debug("File {source_file} process {status} {error_str}".
-                  format(status=status,
+        log.debug("File for {} - {source_file} process {status} {error_str}".
+                  format(representation_id,
+                         status=status,
                          source_file=source_file,
                          error_str=error_str))
 
@@ -897,7 +906,9 @@ class SyncServer(PypeModule, ITrayModule):
             raise ValueError("Misconfiguration, only one of side and " +
                              "site_name arguments should be passed.")
 
-        local_site, remote_site = self.get_sites_for_project(collection)
+        local_site = self.get_local_site(collection)
+        remote_site = self.get_remote_site(collection)
+
         if side:
             if side == 'local':
                 site_name = local_site
@@ -1082,12 +1093,11 @@ class SyncServer(PypeModule, ITrayModule):
                 return
 
             representation = representation.pop()
-            local_root = representation.get("context", {}).get("root")
             for file in representation.get("files"):
                 try:
                     self.log.debug("Removing {}".format(file["path"]))
-                    local_file = self._get_local_file_path(file,
-                                                           local_root)
+                    local_file = self.get_local_file_path(collection,
+                                                          file.get("path", ""))
                     os.remove(local_file)
                 except IndexError:
                     msg = "No file set for {}".format(representation_id)
@@ -1097,6 +1107,14 @@ class SyncServer(PypeModule, ITrayModule):
                     msg = "File {} cannot be removed".format(file["path"])
                     self.log.warning(msg)
                     raise ValueError(msg)
+
+            try:
+                folder = os.path.dirname(local_file)
+                os.rmdir(folder)
+            except OSError:
+                msg = "folder {} cannot be removed".format(folder)
+                self.log.warning(msg)
+                raise ValueError(msg)
 
     def get_my_local_site(self, project_name=None):
         """
@@ -1197,22 +1215,40 @@ class SyncServer(PypeModule, ITrayModule):
         val = {"files.$[f].sites.$[s].progress": progress}
         return val
 
-    def _get_local_file_path(self, file, local_root):
+    def get_local_file_path(self, collection, path):
         """
             Auxiliary function for replacing rootless path with real path
 
+            Works with multi roots.
+            If root definition is not found in Settings, anatomy is used
+
         Args:
-            file (dictionary): file info, get 'path' to file with {root}
-            local_root (string): value of {root} for local projects
+            collection (string): project name
+            path (dictionary): 'path' to file with {root}
 
         Returns:
             (string) - absolute path on local system
         """
-        if not local_root:
-            raise ValueError("Unknown local root for file {}")
-        path = file.get("path", "")
+        local_active_site = self.get_local_site(collection)
+        root_config = \
+            self.get_synced_preset(collection) \
+            ["sites"][local_active_site]["root"]
 
-        return path.format(**{"root": local_root})
+        if not root_config.get("root"):
+            root_config = {"root": root_config}
+
+        try:
+            path = path.format(**root_config)
+        except KeyError:
+            try:
+                anatomy = self.get_anatomy(collection)
+                path = anatomy.fill_root(path)
+            except:
+                msg = "Error in resolving local root from anatomy"
+                self.log.error(msg)
+                raise ValueError(msg)
+
+        return path
 
     def _get_remote_file_path(self, file, root_config):
         """
@@ -1227,8 +1263,12 @@ class SyncServer(PypeModule, ITrayModule):
         path = file.get("path", "")
         if not root_config.get("root"):
             root_config = {"root": root_config}
-        path = path.format(**root_config)
-        return path
+
+        try:
+            return path.format(**root_config)
+        except KeyError:
+            msg = "Error in resolving remote root, unknown key"
+            self.log.error(msg)
 
     def _get_retries_arr(self, project_name):
         """

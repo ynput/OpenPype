@@ -1213,6 +1213,8 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
     def set_value(self, value):
         # Ignore value change because if `self.isChecked()` has same
         # value as `value` the `_on_value_change` is not triggered
+        if value is NOT_SET:
+            value = []
         self.input_field.set_value(value)
 
     def update_style(self):

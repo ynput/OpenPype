@@ -35,7 +35,7 @@
             },
             {
                 "type": "text",
-                "key": "publish_site",
+                "key": "active_site",
                 "label": "Active Site"
             },
             {
@@ -66,10 +66,14 @@
                 "label": "Credentials url"
             },
             {
-                "type": "text",
+                "type": "dict-modifiable",
                 "key": "root",
-                "label": "Root"
-            }]
+                "label": "Roots",
+                "collapsable": false,
+                "collapsable_key": false,
+                "object_type": "text"
+            }
+            ]
         }
     }
     ]

@@ -171,8 +171,7 @@ class SyncProjectListWidget(ProjectListWidget):
             self.current_project = self.project_list.model().item(0). \
                 data(QtCore.Qt.DisplayRole)
 
-        self.local_site = self.sync_server.get_synced_preset(project_name)\
-            ['config']["active_site"]
+        self.local_site = self.sync_server.get_local_site(project_name)
 
     def _get_icon(self, status):
         if not self.icons.get(status):
@@ -532,7 +531,6 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
         fpath = self.item.path
         fpath = os.path.normpath(os.path.dirname(fpath))
-
         if os.path.isdir(fpath):
             if 'win' in sys.platform:  # windows
                 subprocess.Popen('explorer "%s"' % fpath)
@@ -621,8 +619,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site, self.remote_site = \
-            self.sync_server.get_sites_for_project(self._project)
+        self.local_site = self.sync_server.get_local_site(self._project)
+        self.remote_site = self.sync_server.get_remote_site(self._project)
 
         self.projection = self.get_default_projection()
 
@@ -789,7 +787,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 repre.get("files_size", 0),
                 1,
                 STATUS[repre.get("status", -1)],
-                data.get("path")
+                self.sync_server.get_local_file_path(self._project,
+                                                     files[0].get('path'))
             )
 
             self._data.append(item)
@@ -869,8 +868,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 project (str): name of project
         """
         self._project = project
-        self.local_site, self.remote_site = \
-            self.sync_server.get_sites_for_project(self._project)
+        self.local_site = self.sync_server.get_local_site(self._project)
+        self.remote_site = self.sync_server.get_remote_site(self._project)
         self.refresh()
 
     def get_index(self, id):
@@ -1458,8 +1457,8 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site, self.remote_site = \
-            self.sync_server.get_sites_for_project(self._project)
+        self.local_site = self.sync_server.get_local_site(self._project)
+        self.remote_site = self.sync_server.get_remote_site(self._project)
 
         self.sort = self.DEFAULT_SORT
 
@@ -1594,7 +1593,8 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                     STATUS[repre.get("status", -1)],
                     repre.get("tries"),
                     '\n'.join(errors),
-                    data.get("path")
+                    self.sync_server.get_local_file_path(self._project,
+                                                         file.get('path'))
 
                 )
                 self._data.append(item)
