@@ -1,6 +1,10 @@
 import os
 
-from pype.lib import PreLaunchHook
+import avalon
+from pype.lib import (
+    PreLaunchHook,
+    get_pype_execute_args
+)
 
 
 class AfterEffectsPrelaunchHook(PreLaunchHook):
@@ -12,29 +16,22 @@ class AfterEffectsPrelaunchHook(PreLaunchHook):
     app_groups = ["aftereffects"]
 
     def execute(self):
-        # Pop tvpaint executable
-        aftereffects_executable = self.launch_context.launch_args.pop(0)
+        # Pop executable
+        executable_path = self.launch_context.launch_args.pop(0)
 
         # Pop rest of launch arguments - There should not be other arguments!
         remainders = []
         while self.launch_context.launch_args:
             remainders.append(self.launch_context.launch_args.pop(0))
 
+        script_path = self.get_launch_script_path()
+        new_launch_args = get_pype_execute_args(
+            "run", script_path, executable_path
+        )
+        # Add workfile path if exists
         workfile_path = self.data["last_workfile_path"]
-        if not os.path.exists(workfile_path):
-            workfile_path = ""
-
-        new_launch_args = [
-            self.python_executable(),
-            "-c",
-            (
-                "import avalon.aftereffects;"
-                "avalon.aftereffects.launch(\"{}\", \"{}\")"
-            ).format(
-                aftereffects_executable.replace("\\", "\\\\"),
-                workfile_path.replace("\\", "\\\\")
-            )
-        ]
+        if os.path.exists(workfile_path):
+            new_launch_args.append(workfile_path)
 
         # Append as whole list as these arguments should not be separated
         self.launch_context.launch_args.append(new_launch_args)
@@ -46,7 +43,12 @@ class AfterEffectsPrelaunchHook(PreLaunchHook):
             ).format(str(remainders)))
             self.launch_context.launch_args.extend(remainders)
 
-    def python_executable(self):
-        """Should lead to python executable."""
-        # TODO change in Pype 3
-        return os.environ["PYPE_PYTHON_EXE"]
+    def get_launch_script_path(self):
+        """Path to launch script of photoshop implementation."""
+        avalon_dir = os.path.dirname(os.path.abspath(avalon.__file__))
+        script_path = os.path.join(
+            avalon_dir,
+            "AfterEffects",
+            "launch_script.py"
+        )
+        return script_path
