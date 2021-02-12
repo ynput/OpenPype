@@ -43,6 +43,10 @@ A few important notes about 2.x and 3.x development:
 
 Inside each PR, put a link to the corresponding PR
 
+Of course if you want to contribute, feel free to make a PR to only 2.x/develop or develop, based on what you are using. While reviewing the PRs, we might convert the code to corresponding PR for the other release ourselves. 
+
+We might also change the target of you PR to and intermediate branch, rather than `develop` if we feel it requires some extra work on our end. That way, we preserve all your commits so you don't loos out on the contribution credits.
+
 
 
 
