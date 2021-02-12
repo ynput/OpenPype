@@ -150,6 +150,7 @@ class RootEntity(BaseItemEntity):
                 entities.BaseEntity,
                 entities.BaseItemEntity,
                 entities.ItemEntity,
+                entities.EndpointEntity,
                 entities.InputEntity
             )
 
