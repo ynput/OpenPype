@@ -45,38 +45,6 @@ class EndpointEntity(ItemEntity):
 
         super(EndpointEntity, self).schema_validations()
 
-    @property
-    def has_unsaved_changes(self):
-        if self._override_state is OverrideState.NOT_DEFINED:
-            return False
-
-        if self._value_is_modified:
-            return True
-
-        # These may be stored on value change
-        if self._override_state is OverrideState.DEFAULTS:
-            if not self.has_default_value:
-                return True
-
-        elif self._override_state is OverrideState.STUDIO:
-            if self._has_studio_override != self.had_studio_override:
-                return True
-
-            if not self._has_studio_override and not self.has_default_value:
-                return True
-
-        elif self._override_state is OverrideState.PROJECT:
-            if self._has_project_override != self.had_project_override:
-                return True
-
-            if (
-                not self._has_project_override
-                and not self._has_studio_override
-                and not self.has_default_value
-            ):
-                return True
-        return False
-
     @abstractmethod
     def _settings_value(self):
         pass
@@ -193,6 +161,38 @@ class InputEntity(EndpointEntity):
 
     def on_child_change(self, child_obj):
         raise TypeError("Input entities do not contain children.")
+
+    @property
+    def has_unsaved_changes(self):
+        if self._override_state is OverrideState.NOT_DEFINED:
+            return False
+
+        if self._value_is_modified:
+            return True
+
+        # These may be stored on value change
+        if self._override_state is OverrideState.DEFAULTS:
+            if not self.has_default_value:
+                return True
+
+        elif self._override_state is OverrideState.STUDIO:
+            if self._has_studio_override != self.had_studio_override:
+                return True
+
+            if not self._has_studio_override and not self.has_default_value:
+                return True
+
+        elif self._override_state is OverrideState.PROJECT:
+            if self._has_project_override != self.had_project_override:
+                return True
+
+            if (
+                not self._has_project_override
+                and not self._has_studio_override
+                and not self.has_default_value
+            ):
+                return True
+        return False
 
     def set_override_state(self, state):
         # Trigger override state change of root if is not same
