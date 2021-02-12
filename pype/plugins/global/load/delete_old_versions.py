@@ -28,7 +28,9 @@ class DeleteOldVersions(api.Loader):
         qargparse.Integer(
             "versions", default=2, min=1, help="Versions to keep:"
         ),
-        qargparse.Boolean("publish", help="Remove publish folder:")
+        qargparse.Boolean(
+            "remove_publish_folder", help="Remove publish folder:"
+        )
     ]
 
     def sizeof_fmt(self, num, suffix='B'):
@@ -323,11 +325,11 @@ class DeleteOldVersions(api.Loader):
 
         return data
 
-    def main(self, data, publish):
+    def main(self, data, remove_publish_folder):
         # Size of files.
         size = 0
 
-        if publish:
+        if remove_publish_folder:
             size = self.delete_whole_dir_paths(data["dir_paths"].values())
         else:
             size = self.delete_only_repre_files(
@@ -392,12 +394,17 @@ class DeleteOldVersions(api.Loader):
     def load(self, context, name=None, namespace=None, options=None):
         try:
             settings = {"versions": 2, "publish": False}
+            remove_publish_folder = False
             if options:
                 settings.update(options)
+                remove_publish_folder = options.get(
+                    "remove_publish_folder", remove_publish_folder
+                )
+
 
             data = self.get_data(context, settings["versions"])
+            self.main(data, remove_publish_folder)
 
-            self.main(data, settings["publish"])
         except Exception:
             self.log.error(traceback.format_exc())
 
@@ -410,13 +417,15 @@ class CalculateOldVersions(DeleteOldVersions):
         qargparse.Integer(
             "versions", default=2, min=1, help="Versions to keep:"
         ),
-        qargparse.Boolean("publish", help="Remove publish folder:")
+        qargparse.Boolean(
+            "remove_publish_folder", help="Remove publish folder:"
+        )
     ]
 
-    def main(self, data, publish):
+    def main(self, data, remove_publish_folder):
         size = 0
 
-        if publish:
+        if remove_publish_folder:
             size = self.delete_whole_dir_paths(
                 data["dir_paths"].values(), delete=False
             )
