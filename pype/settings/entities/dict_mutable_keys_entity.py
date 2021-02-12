@@ -4,7 +4,7 @@ from .lib import (
     NOT_SET,
     OverrideState
 )
-from . import ItemEntity
+from . import EndpointEntity
 from .exceptions import DefaultsNotDefined
 from pype.settings.constants import (
     METADATA_KEYS,
@@ -13,7 +13,8 @@ from pype.settings.constants import (
 )
 
 
-class DictMutableKeysEntity(ItemEntity):
+class DictMutableKeysEntity(EndpointEntity):
+    """"""
     schema_types = ["dict-modifiable"]
     _miss_arg = object()
 
@@ -78,20 +79,6 @@ class DictMutableKeysEntity(ItemEntity):
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
         self.on_change()
 
-    def change_child_key(self, child_entity, new_key):
-        old_key = None
-        for key, child in self.children_by_key.items():
-            if child is child_entity:
-                old_key = key
-                break
-
-        self.change_key(old_key, new_key)
-
-    def get_child_key(self, child_entity):
-        for key, child in self.children_by_key.items():
-            if child is child_entity:
-                return key
-        return None
     def _add_key(self, key):
         if key in self.children_by_key:
             self.pop(key)
@@ -111,6 +98,21 @@ class DictMutableKeysEntity(ItemEntity):
         new_child.set_override_state(self._override_state)
         self.on_change()
         return new_child
+
+    def change_child_key(self, child_entity, new_key):
+        old_key = None
+        for key, child in self.children_by_key.items():
+            if child is child_entity:
+                old_key = key
+                break
+
+        self.change_key(old_key, new_key)
+
+    def get_child_key(self, child_entity):
+        for key, child in self.children_by_key.items():
+            if child is child_entity:
+                return key
+        return None
 
     def _item_initalization(self):
         self._default_metadata = {}
@@ -185,12 +187,7 @@ class DictMutableKeysEntity(ItemEntity):
 
         return "/".join([self.path, result_key])
 
-    def on_change(self):
-        for callback in self.on_change_callbacks:
-            callback()
-        self.parent.on_child_change(self)
-
-    def on_child_change(self, _child_obj):
+    def on_child_change(self, _child_entity):
         if self._ignore_child_changes:
             return
 
@@ -367,19 +364,7 @@ class DictMutableKeysEntity(ItemEntity):
                     return True
         return False
 
-    def settings_value(self):
-        if self._override_state is OverrideState.NOT_DEFINED:
-            return NOT_SET
-
-        if self.is_group:
-            if self._override_state is OverrideState.STUDIO:
-                if not self._has_studio_override:
-                    return NOT_SET
-
-            elif self._override_state is OverrideState.PROJECT:
-                if not self._has_project_override:
-                    return NOT_SET
-
+    def _settings_value(self):
         output = {}
         for key, child_entity in self.children_by_key.items():
             child_value = child_entity.settings_value()

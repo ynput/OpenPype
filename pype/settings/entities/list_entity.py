@@ -149,12 +149,7 @@ class ListEntity(EndpointEntity):
         for item in value:
             self.append(item)
 
-    def on_change(self):
-        for callback in self.on_change_callbacks:
-            callback()
-        self.parent.on_child_change(self)
-
-    def on_child_change(self, child_obj):
+    def on_child_change(self, _child_entity):
         if self._ignore_child_changes:
             return
 

@@ -94,6 +94,11 @@ class EndpointEntity(ItemEntity):
                     return NOT_SET
         return self._settings_value()
 
+    def on_change(self):
+        for callback in self.on_change_callbacks:
+            callback()
+        self.parent.on_child_change(self)
+
     def update_default_value(self, value):
         value = self._check_update_value(value, "default")
         self._default_value = value
@@ -184,9 +189,7 @@ class InputEntity(EndpointEntity):
 
         self._value_is_modified = value_is_modified
 
-        for callback in self.on_change_callbacks:
-            callback()
-        self.parent.on_child_change(self)
+        super(InputEntity, self).on_change()
 
     def on_child_change(self, child_obj):
         raise TypeError("Input entities do not contain children.")
