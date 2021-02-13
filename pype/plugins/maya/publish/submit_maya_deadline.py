@@ -475,8 +475,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             payload = self._get_vray_render_payload(payload_data)
         elif "assscene" in instance.data["families"]:
             payload = self._get_arnold_render_payload(payload_data)
-        elif "animation" in instance.data["families"]:
-            payload = self._get_animation_payload(payload_data)
+        elif ("animation" in instance.data["families"] or
+              "pointcache" in instance.data["families"]):
+            payload = self._get_pointcache_payload(payload_data)
             instance.data["byFrameStep"] = 1
         else:
             payload = self._get_maya_payload(payload_data)
@@ -774,7 +775,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload["PluginInfo"].update(plugin_info)
         return payload
 
-    def _get_animation_payload(self, data):
+    def _get_pointcache_payload(self, data):
         payload = copy.deepcopy(self.payload_skeleton)
 
         job_info_ext = {
