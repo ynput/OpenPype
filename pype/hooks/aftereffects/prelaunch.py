@@ -6,12 +6,12 @@ import getpass
 import avalon.api
 
 
-class PhotoshopPrelaunch(pype.lib.PypeHook):
+class AfterEffectsPrelaunch(pype.lib.PypeHook):
     """
-        This hook can open last workfile or create it from template.
+        Opens AE with template file (if present) or with last opened workfile.
     """
     project_code = None
-    host_name = "photoshop"
+    host_name = "aftereffects"
 
     def __init__(self, logger=None):
         if not logger:
@@ -25,49 +25,22 @@ class PhotoshopPrelaunch(pype.lib.PypeHook):
         workfile_path = self.get_workfile_path(env, self.host_name)
 
         # adding compulsory environment var for opening file
-        env["PYPE_WORKFILE_PATH"] = workfile_path.replace('\\', '/')
+        # used in .bat launcher
+        env["PYPE_AE_WORKFILE_PATH"] = workfile_path.replace('\\', '/')
 
         return True
 
-    def get_anatomy_filled(self, workdir, project_name, asset_name,
-                           task_name, host_name, extension):
-        dbcon = avalon.api.AvalonMongoDB()
-        dbcon.install()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-        project_document = dbcon.find_one({"type": "project"})
-        asset_document = dbcon.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
-        dbcon.uninstall()
-
-        asset_doc_parents = asset_document["data"].get("parents")
-        hierarchy = "/".join(asset_doc_parents)
-
-        data = {
-            "project": {
-                "name": project_document["name"],
-                "code": project_document["data"].get("code")
-            },
-            "task": task_name,
-            "asset": asset_name,
-            "app": host_name,
-            "hierarchy": hierarchy
-        }
-        anatomy = Anatomy(project_name)
-        file_template = anatomy.templates["work"]["file"]
-        data.update({
-            "version": 1,
-            "user": os.environ.get("PYPE_USERNAME") or getpass.getuser(),
-            "ext": extension
-        })
-
-        return avalon.api.last_workfile(
-            workdir, file_template, data,
-            avalon.api.HOST_WORKFILE_EXTENSIONS[host_name], True
-        )
-
     def get_workfile_path(self, env, host_name):
+        """
+            Pulls DB to get last opened workfile path, if not found, checks
+            for presence of template file and creates new file from it.
+        Args:
+            env (dict): injected environment variables
+            host_name (string): 'aftereffects'
+
+        Returns:
+            (str): abs path for workfile
+        """
         # get context variables
         project_name = env["AVALON_PROJECT"]
         asset_name = env["AVALON_ASSET"]
@@ -125,3 +98,42 @@ class PhotoshopPrelaunch(pype.lib.PypeHook):
 
         self.log.info("Workfile to open: `{}`".format(workfile_path))
         return workfile_path
+
+    def get_anatomy_filled(self, workdir, project_name, asset_name,
+                           task_name, host_name, extension):
+        dbcon = avalon.api.AvalonMongoDB()
+        dbcon.install()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+        project_document = dbcon.find_one({"type": "project"})
+        asset_document = dbcon.find_one({
+            "type": "asset",
+            "name": asset_name
+        })
+        dbcon.uninstall()
+
+        asset_doc_parents = asset_document["data"].get("parents")
+        hierarchy = "/".join(asset_doc_parents)
+
+        data = {
+            "project": {
+                "name": project_document["name"],
+                "code": project_document["data"].get("code")
+            },
+            "task": task_name,
+            "asset": asset_name,
+            "app": host_name,
+            "hierarchy": hierarchy
+        }
+        anatomy = Anatomy(project_name)
+        file_template = anatomy.templates["work"]["file"]
+        data.update({
+            "version": 1,
+            "user": os.environ.get("PYPE_USERNAME") or getpass.getuser(),
+            "ext": extension
+        })
+
+        return avalon.api.last_workfile(
+            workdir, file_template, data,
+            avalon.api.HOST_WORKFILE_EXTENSIONS[host_name], True
+        )
+
