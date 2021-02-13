@@ -15,8 +15,11 @@ def main():
         if instance.name == os.environ["PYPE_INSTANCE_NAME"]:
             instance.data["publish"] = True
             instance.data["farm"] = False
+            instance.data["families"].remove("deadline")
         else:
             instance.data["publish"] = False
+
+    check_results(context)
 
     stages = [util.extract, util.integrate]
     for stage in stages:
