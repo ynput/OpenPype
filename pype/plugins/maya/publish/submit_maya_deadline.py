@@ -775,7 +775,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         return payload
 
     def _get_animation_payload(self, data):
-        payload = copy.deepcopy(payload_skeleton)
+        payload = copy.deepcopy(self.payload_skeleton)
 
         job_info_ext = {
             # Asset dependency to wait for at least the scene file to sync.
