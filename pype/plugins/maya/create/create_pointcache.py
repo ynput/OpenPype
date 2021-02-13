@@ -29,3 +29,4 @@ class CreatePointCache(avalon.maya.Creator):
 
         # Default to not send to farm.
         self.data["farm"] = False
+        self.data["priority"] = 50
