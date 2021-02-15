@@ -820,6 +820,197 @@ def _merge_env(env, current_env):
         value = acre.lib.partial_format(value, data=current_env)
         result[key] = value
     return result
+
+
+def prepare_host_environments(data):
+    """Modify launch environments based on launched app and context.
+
+    Args:
+        data (EnvironmentPrepData): Dictionary where result and intermediate
+            result will be stored.
+    """
+    import acre
+
+    app = data["app"]
+    log = data["log"]
+
+    # Keys for getting environments
+    env_keys = [app.app_group, app.app_name]
+
+    asset_doc = data.get("asset_doc")
+    if asset_doc:
+        # Add tools environments
+        for key in asset_doc["data"].get("tools_env") or []:
+            tool = app.manager.tools.get(key)
+            if tool:
+                if tool.group_name not in env_keys:
+                    env_keys.append(tool.group_name)
+
+                if tool.name not in env_keys:
+                    env_keys.append(tool.name)
+
+    log.debug(
+        "Finding environment groups for keys: {}".format(env_keys)
+    )
+
+    settings_env = data["settings_env"]
+    env_values = {}
+    for env_key in env_keys:
+        _env_values = settings_env.get(env_key)
+        if not _env_values:
+            continue
+
+        # Choose right platform
+        tool_env = acre.parse(_env_values)
+        # Merge dictionaries
+        env_values = _merge_env(tool_env, env_values)
+
+    final_env = _merge_env(acre.compute(env_values), data["env"])
+
+    # Update env
+    data["env"].update(final_env)
+
+
+def prepare_context_environments(data):
+    """Modify launch environemnts with context data for launched host.
+
+    Args:
+        data (EnvironmentPrepData): Dictionary where result and intermediate
+            result will be stored.
+    """
+    # Context environments
+    log = data["log"]
+
+    project_doc = data["project_doc"]
+    asset_doc = data["asset_doc"]
+    task_name = data["task_name"]
+    if (
+        not project_doc
+        or not asset_doc
+        or not task_name
+    ):
+        log.info(
+            "Skipping context environments preparation."
+            " Launch context does not contain required data."
+        )
+        return
+
+    app = data["app"]
+    workdir_data = get_workdir_data(
+        project_doc, asset_doc, task_name, app.host_name
+    )
+    data["workdir_data"] = workdir_data
+
+    anatomy = data["anatomy"]
+
+    try:
+        workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
+        if not os.path.exists(workdir):
+            log.debug(
+                "Creating workdir folder: \"{}\"".format(workdir)
+            )
+            os.makedirs(workdir)
+
+    except Exception as exc:
+        raise ApplicationLaunchFailed(
+            "Error in anatomy.format: {}".format(str(exc))
+        )
+
+    context_env = {
+        "AVALON_PROJECT": project_doc["name"],
+        "AVALON_ASSET": asset_doc["name"],
+        "AVALON_TASK": task_name,
+        "AVALON_APP": app.host_name,
+        "AVALON_APP_NAME": app.app_name,
+        "AVALON_WORKDIR": workdir
+    }
+    log.debug(
+        "Context environemnts set:\n{}".format(
+            json.dumps(context_env, indent=4)
+        )
+    )
+    data["env"].update(context_env)
+
+    _prepare_last_workfile(data, workdir)
+
+
+def _prepare_last_workfile(data, workdir):
+    """last workfile workflow preparation.
+
+    Function check if should care about last workfile workflow and tries
+    to find the last workfile. Both information are stored to `data` and
+    environments.
+
+    Last workfile is filled always (with version 1) even if any workfile
+    exists yet.
+
+    Args:
+        data (EnvironmentPrepData): Dictionary where result and intermediate
+            result will be stored.
+        workdir (str): Path to folder where workfiles should be stored.
+    """
+    import avalon.api
+
+    log = data["log"]
+    _workdir_data = data.get("workdir_data")
+    if not _workdir_data:
+        log.info(
+            "Skipping last workfile preparation."
+            " Key `workdir_data` not filled."
+        )
+        return
+
+    app = data["app"]
+    workdir_data = copy.deepcopy(_workdir_data)
+    project_name = data["project_name"]
+    task_name = data["task_name"]
+    start_last_workfile = should_start_last_workfile(
+        project_name, app.host_name, task_name
+    )
+    data["start_last_workfile"] = start_last_workfile
+
+    # Store boolean as "0"(False) or "1"(True)
+    data["env"]["AVALON_OPEN_LAST_WORKFILE"] = (
+        str(int(bool(start_last_workfile)))
+    )
+
+    _sub_msg = "" if start_last_workfile else " not"
+    log.debug(
+        "Last workfile should{} be opened on start.".format(_sub_msg)
+    )
+
+    # Last workfile path
+    last_workfile_path = ""
+    extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(
+        app.host_name
+    )
+    if extensions:
+        anatomy = data["anatomy"]
+        # Find last workfile
+        file_template = anatomy.templates["work"]["file"]
+        workdir_data.update({
+            "version": 1,
+            "user": os.environ.get("PYPE_USERNAME") or getpass.getuser(),
+            "ext": extensions[0]
+        })
+
+        last_workfile_path = avalon.api.last_workfile(
+            workdir, file_template, workdir_data, extensions, True
+        )
+
+    if os.path.exists(last_workfile_path):
+        log.debug((
+            "Workfiles for launch context does not exists"
+            " yet but path will be set."
+        ))
+    log.debug(
+        "Setting last workfile path: {}".format(last_workfile_path)
+    )
+
+    data["env"]["AVALON_LAST_WORKFILE"] = last_workfile_path
+    data["last_workfile_path"] = last_workfile_path
+
+
 def should_start_last_workfile(
     project_name, host_name, task_name, default_output=False
 ):
