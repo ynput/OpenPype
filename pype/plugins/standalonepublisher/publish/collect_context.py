@@ -89,15 +89,15 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 files = [files]
 
             self.log.debug(f"_ files: {files}")
-            for index, f in enumerate(files):
+            for index, _file in enumerate(files):
                 index += 1
                 # copy dictionaries
                 in_data_copy = copy.deepcopy(in_data_copy)
-                repr_new = copy.deepcopy(repr)
+                new_repre = copy.deepcopy(repre)
 
-                repr_new["files"] = f
-                repr_new["name"] = ext
-                in_data_copy["representations"] = [repr_new]
+                new_repre["files"] = _file
+                new_repre["name"] = ext
+                in_data_copy["representations"] = [new_repre]
 
                 # create subset Name
                 new_subset = f"{ext}{index}{subset}"

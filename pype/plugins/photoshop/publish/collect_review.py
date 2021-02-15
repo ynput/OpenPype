@@ -1,7 +1,5 @@
 import os
 
-import pythoncom
-
 import pyblish.api
 
 
@@ -13,10 +11,6 @@ class CollectReview(pyblish.api.ContextPlugin):
     hosts = ["photoshop"]
 
     def process(self, context):
-        # Necessary call when running in a different thread which pyblish-qml
-        # can be.
-        pythoncom.CoInitialize()
-
         family = "review"
         task = os.getenv("AVALON_TASK", None)
         subset = family + task.capitalize()
