@@ -155,13 +155,13 @@
                                             "spi-anim": "spi-anim"
                                         },
                                         {
-                                            "aces_1.0.3": "aces_0.1.1"
+                                            "aces_0.1.1": "aces_0.1.1"
                                         },
                                         {
-                                            "aces_1.0.3": "aces_0.7.1"
+                                            "aces_0.7.1": "aces_0.7.1"
                                         },
                                         {
-                                            "aces_1.0.3": "aces_1.0.1"
+                                            "aces_1.0.1": "aces_1.0.1"
                                         },
                                         {
                                             "aces_1.0.3": "aces_1.0.3"
