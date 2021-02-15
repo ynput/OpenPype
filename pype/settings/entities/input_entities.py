@@ -37,12 +37,6 @@ class EndpointEntity(ItemEntity):
                 )
             )
 
-        # Input entity must have file parent.
-        if not self.file_item:
-            raise ValueError(
-                "{}: Missing parent file entity.".format(self.path)
-            )
-
         super(EndpointEntity, self).schema_validations()
 
     @abstractmethod
@@ -99,6 +93,15 @@ class InputEntity(EndpointEntity):
         raise TypeError("{} can't have children".format(
             self.__class__.__name__
         ))
+
+    def schema_validations(self):
+        # Input entity must have file parent.
+        if not self.file_item:
+            raise ValueError(
+                "{}: Missing parent file entity.".format(self.path)
+            )
+
+        super(EndpointEntity, self).schema_validations()
 
     @property
     def value(self):
