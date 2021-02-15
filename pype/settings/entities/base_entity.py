@@ -57,7 +57,7 @@ class GUIEntity(BaseEntity):
     """Entity without any specific logic that should be handled only in GUI."""
     gui_type = True
 
-    schema_types = ["divider", "splitter", "label"]
+    schema_types = ["separator", "splitter", "label"]
 
     def __getitem__(self, key):
         return self.schema_data[key]
