@@ -1,0 +1,29 @@
+{
+    "type": "dict",
+    "collapsable": true,
+    "key": "maya",
+    "label": "Maya",
+    "is_file": true,
+    "children": [
+        {
+            "type": "schema",
+            "name": "schema_maya_capture"
+        },
+        {
+            "type": "schema",
+            "name": "schema_maya_publish"
+        },
+        {
+            "type": "schema",
+            "name": "schema_maya_load"
+        },
+        {
+            "type": "schema",
+            "name": "schema_workfile_build"
+        },
+        {
+            "type": "schema",
+            "name": "schema_publish_gui_filter"
+        }
+    ]
+}

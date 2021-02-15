@@ -1,0 +1,77 @@
+{
+    "type": "dict",
+    "collapsable": true,
+    "key": "tools",
+    "label": "Tools",
+    "children": [
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "creator",
+            "label": "Creator",
+            "children": [
+                {
+                    "type": "dict-modifiable",
+                    "collapsable": false,
+                    "key": "families_smart_select",
+                    "label": "Families smart select",
+                    "object_type": {
+                        "type": "list",
+                        "object_type": "text"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "Workfiles",
+            "label": "Workfiles",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "last_workfile_on_startup",
+                    "label": "Open last workfiles on launch",
+                    "is_group": true,
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Tasks",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "enabled",
+                                "label": "Enabled"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "dict-modifiable",
+                    "collapsable": true,
+                    "key": "sw_folders",
+                    "label": "Extra task folders",
+                    "is_group": true,
+                    "object_type": {
+                        "type": "list",
+                        "object_type": "text"
+                    }
+                }
+            ]
+        }
+    ]
+}

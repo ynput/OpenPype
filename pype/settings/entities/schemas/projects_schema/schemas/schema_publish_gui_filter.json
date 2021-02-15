@@ -1,0 +1,10 @@
+{
+    "type": "dict-modifiable",
+    "collapsable": true,
+    "key": "filters",
+    "label": "Publish GUI Filters",
+    "object_type": {
+        "type": "raw-json",
+        "label": "Plugins"
+    }
+}

@@ -1,0 +1,62 @@
+{
+    "type": "dict",
+    "collapsable": true,
+    "key": "celaction",
+    "label": "CelAction",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsable": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsable": true,
+                    "checkbox_key": "enabled",
+                    "key": "ExtractCelactionDeadline",
+                    "label": "ExtractCelactionDeadline",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_department",
+                            "label": "Deadline apartment"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_priority",
+                            "label": "Deadline priority"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool",
+                            "label": "Deadline pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_pool_secondary",
+                            "label": "Deadline pool (secondary)"
+                        },
+                        {
+                            "type": "text",
+                            "key": "deadline_group",
+                            "label": "Deadline Group"
+                        },
+                        {
+                            "type": "number",
+                            "key": "deadline_chunk_size",
+                            "label": "Deadline Chunk size"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
