@@ -7,10 +7,15 @@
             "key": "project_anatomy",
             "children": [
                 {
-                    "type": "anatomy_roots",
                     "key": "roots",
                     "label": "Roots",
-                    "is_file": true
+                    "type": "anatomy_roots",
+                    "is_file": true,
+                    "expandable": false,
+                    "object_type": {
+                        "type": "path-widget",
+                        "multiplatform": true
+                    }
                 },
                 {
                     "type": "schema",
