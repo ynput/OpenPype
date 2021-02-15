@@ -777,6 +777,37 @@ class ApplicationLaunchContext:
         return args
 
 
+class MissingRequiredKey(KeyError):
+    pass
+
+
+class EnvironmentPrepData(dict):
+    """Helper dictionary for storin temp data during environment prep.
+
+    Args:
+        data (dict): Data must contain required keys.
+    """
+    required_keys = (
+        "project_doc", "asset_doc", "task_name", "app", "anatomy"
+    )
+
+    def __init__(self, data):
+        for key in self.required_keys:
+            if key not in data:
+                raise MissingRequiredKey(key)
+
+        if not data.get("log"):
+            data["log"] = get_logger()
+
+        if data.get("env") is None:
+            data["env"] = os.environ.copy()
+
+        if data.get("settings_env") is None:
+            data["settings_env"] = get_environments()
+
+        super(EnvironmentPrepData, self).__init__(data)
+
+
 
 
 def _merge_env(env, current_env):
