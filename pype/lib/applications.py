@@ -777,6 +777,18 @@ class ApplicationLaunchContext:
         return args
 
 
+
+
+def _merge_env(env, current_env):
+    """Modified function(merge) from acre module."""
+    import acre
+
+    result = current_env.copy()
+    for key, value in env.items():
+        # Keep missing keys by not filling `missing` kwarg
+        value = acre.lib.partial_format(value, data=current_env)
+        result[key] = value
+    return result
 def should_start_last_workfile(
     project_name, host_name, task_name, default_output=False
 ):
