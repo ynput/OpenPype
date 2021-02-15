@@ -808,6 +808,66 @@ class EnvironmentPrepData(dict):
         super(EnvironmentPrepData, self).__init__(data)
 
 
+def get_app_environments_for_context(
+    project_name, asset_name, task_name, app_name, env=None
+):
+    """Prepare environment variables by context.
+    Args:
+        project_name (str): Name of project.
+        asset_name (str): Name of asset.
+        task_name (str): Name of task.
+        app_name (str): Name of application that is launched and can be found
+            by ApplicationManager.
+        env (dict): Initial environment variables. `os.environ` is used when
+            not passed.
+
+    Returns:
+        dict: Environments for passed context and application.
+    """
+    from avalon.api import AvalonMongoDB
+
+    # Avalon database connection
+    dbcon = AvalonMongoDB()
+    dbcon.Session["AVALON_PROJECT"] = project_name
+    dbcon.install()
+
+    # Project document
+    project_doc = dbcon.find_one({"type": "project"})
+    asset_doc = dbcon.find_one({
+        "type": "asset",
+        "name": asset_name
+    })
+
+    # Prepare app object which can be obtained only from ApplciationManager
+    app_manager = ApplicationManager()
+    app = app_manager.applications[app_name]
+
+    # Project's anatomy
+    anatomy = Anatomy(project_name)
+
+    data = EnvironmentPrepData({
+        "project_name": project_name,
+        "asset_name": asset_name,
+        "task_name": task_name,
+        "app_name": app_name,
+        "app": app,
+
+        "dbcon": dbcon,
+        "project_doc": project_doc,
+        "asset_doc": asset_doc,
+
+        "anatomy": anatomy,
+
+        "env": env
+    })
+
+    prepare_host_environments(data)
+    prepare_context_environments(data)
+
+    # Discard avalon connection
+    dbcon.uninstall()
+
+    return data["env"]
 
 
 def _merge_env(env, current_env):
