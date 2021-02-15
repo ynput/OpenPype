@@ -31,6 +31,17 @@ from .python_module_tools import (
 )
 
 
+_logger = None
+
+
+def get_logger():
+    """Global lib.applications logger getter."""
+    global _logger
+    if _logger is None:
+        _logger = PypeLogger.get_logger(__name__)
+    return _logger
+
+
 class ApplicationNotFound(Exception):
     """Application was not found in ApplicationManager by name."""
 
