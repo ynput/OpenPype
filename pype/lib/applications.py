@@ -1,5 +1,9 @@
 import os
+import re
+import copy
+import json
 import platform
+import getpass
 import inspect
 import subprocess
 import distutils.spawn
@@ -7,8 +11,19 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from pype.settings import get_system_settings, get_environments
-from . import PypeLogger
+from pype.settings import (
+    get_system_settings,
+    get_project_settings,
+    get_environments
+)
+from . import (
+    PypeLogger,
+    Anatomy
+)
+from .avalon_context import (
+    get_workdir_data,
+    get_workdir_with_workdir_data
+)
 
 from .python_module_tools import (
     modules_from_path,
