@@ -1,19 +1,20 @@
 import os
 
-import avalon
 from pype.lib import (
     PreLaunchHook,
     get_pype_execute_args
 )
+import pype.PACKAGE_DIR
 
 
-class AfterEffectsPrelaunchHook(PreLaunchHook):
+class NonPythonHostHook(PreLaunchHook):
     """Launch arguments preparation.
 
-    Hook add python executable and execute python script of AfterEffects
-    implementation before AfterEffects executable.
+    Non python host implementation do not launch host directly but use
+    python script which launch the host. For these cases it is necessary to
+    prepend python (or pype) executable and script path before application's.
     """
-    app_groups = ["aftereffects"]
+    app_groups = ["harmony", "photoshop", "aftereffects"]
 
     def execute(self):
         # Pop executable
@@ -24,7 +25,12 @@ class AfterEffectsPrelaunchHook(PreLaunchHook):
         while self.launch_context.launch_args:
             remainders.append(self.launch_context.launch_args.pop(0))
 
-        script_path = self.get_launch_script_path()
+        script_path = os.path.join(
+            pype.PACKAGE_DIR,
+            "scripts",
+            "non_python_host_launch.py"
+        )
+
         new_launch_args = get_pype_execute_args(
             "run", script_path, executable_path
         )
@@ -33,22 +39,8 @@ class AfterEffectsPrelaunchHook(PreLaunchHook):
         if os.path.exists(workfile_path):
             new_launch_args.append(workfile_path)
 
-        # Append as whole list as these arguments should not be separated
+        # Append as whole list as these areguments should not be separated
         self.launch_context.launch_args.append(new_launch_args)
 
         if remainders:
-            self.log.warning((
-                "There are unexpected launch arguments "
-                "in AfterEffects launch. {}"
-            ).format(str(remainders)))
             self.launch_context.launch_args.extend(remainders)
-
-    def get_launch_script_path(self):
-        """Path to launch script of photoshop implementation."""
-        avalon_dir = os.path.dirname(os.path.abspath(avalon.__file__))
-        script_path = os.path.join(
-            avalon_dir,
-            "AfterEffects",
-            "launch_script.py"
-        )
-        return script_path
