@@ -71,7 +71,9 @@ class SchemaTemplateMissingKeys(Exception):
         self.missing_keys = missing_keys
         self.required_keys = required_keys
         if template_name:
-            msg = f"Schema template \"{template_name}\" require more keys.\n"
+            msg = "Schema template \"{}\" require more keys.\n".format(
+                template_name
+            )
         else:
             msg = ""
         msg += "Required keys: {}\nMissing keys: {}".format(
@@ -82,5 +84,5 @@ class SchemaTemplateMissingKeys(Exception):
 
     def join_keys(self, keys):
         return ", ".join([
-            f"\"{key}\"" for key in keys
+            "\"{}\"".format(key) for key in keys
         ])

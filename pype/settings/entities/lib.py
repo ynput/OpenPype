@@ -252,9 +252,9 @@ def gui_schema(subfolder, main_schema_name):
                 try:
                     schema_data = json.load(json_stream)
                 except Exception as exc:
-                    raise Exception((
-                        f"Unable to parse JSON file {filepath}\n{exc}"
-                    )) from exc
+                    raise ValueError((
+                        "Unable to parse JSON file {}\n{}"
+                    ).format(filepath, str(exc)))
             if isinstance(schema_data, list):
                 loaded_schema_templates[basename] = schema_data
             else:
