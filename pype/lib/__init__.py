@@ -69,8 +69,13 @@ from .applications import (
     ApplictionExecutableNotFound,
     ApplicationNotFound,
     ApplicationManager,
+
     PreLaunchHook,
-    PostLaunchHook
+    PostLaunchHook,
+
+    EnvironmentPrepData,
+    prepare_host_environments,
+    prepare_context_environments
 )
 
 from .plugin_tools import (
@@ -151,6 +156,9 @@ __all__ = [
     "ApplicationManager",
     "PreLaunchHook",
     "PostLaunchHook",
+    "EnvironmentPrepData",
+    "prepare_host_environments",
+    "prepare_context_environments",
 
     "filter_pyblish_plugins",
     "source_hash",
