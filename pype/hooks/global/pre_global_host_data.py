@@ -29,7 +29,7 @@ class GlobalHostDataHook(PreLaunchHook):
 
         app = self.launch_context.application
         temp_data = EnvironmentPrepData({
-            "project_name":  self.data["project_name"],
+            "project_name": self.data["project_name"],
             "asset_name": self.data["asset_name"],
             "task_name": self.data["task_name"],
             "app_name": app.app_name,
