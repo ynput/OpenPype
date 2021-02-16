@@ -1,10 +1,12 @@
 import sys
 import json
 import re
+import os
+import contextlib
 from opentimelineio import opentime
 import pype
 
-from .otio import davinci_export as otio_export
+from ..otio import davinci_export as otio_export
 
 from pype.api import Logger
 
@@ -12,6 +14,7 @@ log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self.project_manager = None
+self.media_storage = None
 
 # Pype sequencial rename variables
 self.rename_index = 0
@@ -29,12 +32,56 @@ self.pype_marker_duration = 1
 self.pype_marker_color = "Mint"
 self.temp_marker_frame = None
 
+# Pype default timeline
+self.pype_timeline_name = "PypeTimeline"
+
+
+@contextlib.contextmanager
+def maintain_current_timeline(to_timeline: object,
+                              from_timeline: object = None):
+    """Maintain current timeline selection during context
+
+    Attributes:
+        from_timeline (resolve.Timeline)[optional]:
+    Example:
+        >>> print(from_timeline.GetName())
+        timeline1
+        >>> print(to_timeline.GetName())
+        timeline2
+
+        >>> with maintain_current_timeline(to_timeline):
+        ...     print(get_current_timeline().GetName())
+        timeline2
+
+        >>> print(get_current_timeline().GetName())
+        timeline1
+    """
+    project = get_current_project()
+    working_timeline = from_timeline or project.GetCurrentTimeline()
+
+    # swith to the input timeline
+    project.SetCurrentTimeline(to_timeline)
+
+    try:
+        # do a work
+        yield
+    finally:
+        # put the original working timeline to context
+        project.SetCurrentTimeline(working_timeline)
+
 
 def get_project_manager():
     from . import bmdvr
     if not self.project_manager:
         self.project_manager = bmdvr.GetProjectManager()
     return self.project_manager
+
+
+def get_media_storage():
+    from . import bmdvr
+    if not self.media_storage:
+        self.media_storage = bmdvr.GetMediaStorage()
+    return self.media_storage
 
 
 def get_current_project():
@@ -44,57 +91,241 @@ def get_current_project():
     return self.project_manager.GetCurrentProject()
 
 
-def get_current_sequence():
+def get_current_timeline(new=False):
     # get current project
     project = get_current_project()
+
+    if new:
+        media_pool = project.GetMediaPool()
+        new_timeline = media_pool.CreateEmptyTimeline(self.pype_timeline_name)
+        project.SetCurrentTimeline(new_timeline)
 
     return project.GetCurrentTimeline()
 
 
-def get_video_track_names():
+def create_bin(name: str, root: object = None) -> object:
+    """
+    Create media pool's folder.
+
+    Return folder object and if the name does not exist it will create a new.
+    If the input name is with forward or backward slashes then it will create
+    all parents and return the last child bin object
+
+    Args:
+        name (str): name of folder / bin, or hierarchycal name "parent/name"
+        root (resolve.Folder)[optional]: root folder / bin object
+
+    Returns:
+        object: resolve.Folder
+    """
+    # get all variables
+    media_pool = get_current_project().GetMediaPool()
+    root_bin = root or media_pool.GetRootFolder()
+
+    # create hierarchy of bins in case there is slash in name
+    if "/" in name.replace("\\", "/"):
+        child_bin = None
+        for bname in name.split("/"):
+            child_bin = create_bin(bname, child_bin or root_bin)
+        if child_bin:
+            return child_bin
+    else:
+        created_bin = None
+        for subfolder in root_bin.GetSubFolderList():
+            if subfolder.GetName() in name:
+                created_bin = subfolder
+
+        if not created_bin:
+            new_folder = media_pool.AddSubFolder(root_bin, name)
+            media_pool.SetCurrentFolder(new_folder)
+        else:
+            media_pool.SetCurrentFolder(created_bin)
+
+        return media_pool.GetCurrentFolder()
+
+
+def create_media_pool_item(fpath: str,
+                           root: object = None) -> object:
+    """
+    Create media pool item.
+
+    Args:
+        fpath (str): absolute path to a file
+        root (resolve.Folder)[optional]: root folder / bin object
+
+    Returns:
+        object: resolve.MediaPoolItem
+    """
+    # get all variables
+    media_storage = get_media_storage()
+    media_pool = get_current_project().GetMediaPool()
+    root_bin = root or media_pool.GetRootFolder()
+
+    # try to search in bin if the clip does not exist
+    existing_mpi = get_media_pool_item(fpath, root_bin)
+
+    if not existing_mpi:
+        media_pool_item = media_storage.AddItemsToMediaPool(fpath)
+        print(media_pool_item)
+        # pop the returned dict on first item as resolve data object is such
+        return media_pool_item.pop(1.0)
+    else:
+        return existing_mpi
+
+
+def get_media_pool_item(fpath, root: object = None) -> object:
+    """
+    Return clip if found in folder with use of input file path.
+
+    Args:
+        fpath (str): absolute path to a file
+        root (resolve.Folder)[optional]: root folder / bin object
+
+    Returns:
+        object: resolve.MediaPoolItem
+    """
+    media_pool = get_current_project().GetMediaPool()
+    root = root or media_pool.GetRootFolder()
+    fname = os.path.basename(fpath)
+
+    for _mpi in root.GetClipList():
+        _mpi_name = _mpi.GetClipProperty("File Name")["File Name"]
+        _mpi_name = get_reformated_path(_mpi_name, first=True)
+        if fname in _mpi_name:
+            return _mpi
+    return None
+
+
+def create_timeline_item(media_pool_item: object,
+                         timeline: object = None,
+                         source_start: int = None,
+                         source_end: int = None) -> object:
+    """
+    Add media pool item to current or defined timeline.
+
+    Args:
+        media_pool_item (resolve.MediaPoolItem): resolve's object
+        timeline (resolve.Timeline)[optional]: resolve's object
+        source_start (int)[optional]: media source input frame (sequence frame)
+        source_end (int)[optional]: media source output frame (sequence frame)
+
+    Returns:
+        object: resolve.TimelineItem
+    """
+    # get all variables
+    project = get_current_project()
+    media_pool = project.GetMediaPool()
+    clip_property = media_pool_item.GetClipProperty()
+    clip_name = clip_property["File Name"]
+    timeline = timeline or get_current_timeline()
+
+    # if timeline was used then switch it to current timeline
+    with maintain_current_timeline(timeline):
+        # Add input mediaPoolItem to clip data
+        clip_data = {"mediaPoolItem": media_pool_item}
+
+        # add source time range if input was given
+        if source_start is not None:
+            clip_data.update({"startFrame": source_start})
+        if source_end is not None:
+            clip_data.update({"endFrame": source_end})
+
+        print(clip_data)
+        print(clip_property)
+        # add to timeline
+        media_pool.AppendToTimeline([clip_data])
+
+        output_timeline_item = get_timeline_item(
+            media_pool_item, timeline)
+
+    assert output_timeline_item, AssertionError(
+        "Track Item with name `{}` doesnt exist on the timeline: `{}`".format(
+            clip_name, timeline.GetName()
+        ))
+    return output_timeline_item
+
+
+def get_timeline_item(media_pool_item: object,
+                      timeline: object = None) -> object:
+    """
+    Returns clips related to input mediaPoolItem.
+
+    Args:
+        media_pool_item (resolve.MediaPoolItem): resolve's object
+        timeline (resolve.Timeline)[optional]: resolve's object
+
+    Returns:
+        object: resolve.TimelineItem
+    """
+    clip_property = media_pool_item.GetClipProperty()
+    clip_name = clip_property["File Name"]
+    output_timeline_item = None
+    timeline = timeline or get_current_timeline()
+
+    with maintain_current_timeline(timeline):
+        # search the timeline for the added clip
+
+        for _ti_data in get_current_timeline_items():
+            _ti_clip = _ti_data["clip"]["item"]
+            _ti_clip_property = _ti_clip.GetMediaPoolItem().GetClipProperty()
+            if clip_name in _ti_clip_property["File Name"]:
+                output_timeline_item = _ti_clip
+
+    return output_timeline_item
+
+
+def get_video_track_names() -> list:
     tracks = list()
     track_type = "video"
-    sequence = get_current_sequence()
+    timeline = get_current_timeline()
 
     # get all tracks count filtered by track type
-    selected_track_count = sequence.GetTrackCount(track_type)
+    selected_track_count = timeline.GetTrackCount(track_type)
 
     # loop all tracks and get items
+    track_index: int
     for track_index in range(1, (int(selected_track_count) + 1)):
-        track_name = sequence.GetTrackName("video", track_index)
+        track_name = timeline.GetTrackName("video", track_index)
         tracks.append(track_name)
 
     return tracks
 
 
-def get_current_track_items(
-        filter=False,
-        track_type=None,
-        selecting_color=None):
+def get_current_timeline_items(
+        filter: bool = False,
+        track_type: str = None,
+        track_name: str = None,
+        selecting_color: str = None) -> list:
     """ Gets all available current timeline track items
     """
     track_type = track_type or "video"
     selecting_color = selecting_color or "Chocolate"
     project = get_current_project()
-    sequence = get_current_sequence()
+    timeline = get_current_timeline()
     selected_clips = list()
 
     # get all tracks count filtered by track type
-    selected_track_count = sequence.GetTrackCount(track_type)
+    selected_track_count = timeline.GetTrackCount(track_type)
 
     # loop all tracks and get items
     _clips = dict()
     for track_index in range(1, (int(selected_track_count) + 1)):
-        track_name = sequence.GetTrackName(track_type, track_index)
-        track_track_items = sequence.GetItemListInTrack(
+        _track_name = timeline.GetTrackName(track_type, track_index)
+
+        # filter out all unmathed track names
+        if track_name:
+            if _track_name not in track_name:
+                continue
+
+        timeline_items = timeline.GetItemListInTrack(
             track_type, track_index)
-        _clips[track_index] = track_track_items
+        _clips[track_index] = timeline_items
 
         _data = {
             "project": project,
-            "sequence": sequence,
+            "timeline": timeline,
             "track": {
-                "name": track_name,
+                "name": _track_name,
                 "index": track_index,
                 "type": track_type}
         }
@@ -115,22 +346,34 @@ def get_current_track_items(
     return selected_clips
 
 
-def get_track_item_pype_tag(track_item):
+def get_pype_timeline_item_by_name(name: str) -> object:
+    track_itmes = get_current_timeline_items()
+    for _ti in track_itmes:
+        tag_data = get_timeline_item_pype_tag(_ti["clip"]["item"])
+        tag_name = tag_data.get("name")
+        if not tag_name:
+            continue
+        if tag_data.get("name") in name:
+            return _ti
+    return None
+
+
+def get_timeline_item_pype_tag(timeline_item):
     """
     Get pype track item tag created by creator or loader plugin.
 
     Attributes:
-        trackItem (resolve.TimelineItem): hiero object
+        trackItem (resolve.TimelineItem): resolve object
 
     Returns:
-        hiero.core.Tag: hierarchy, orig clip attributes
+        dict: pype tag data
     """
     return_tag = None
 
     if self.pype_marker_workflow:
-        return_tag = get_pype_marker(track_item)
+        return_tag = get_pype_marker(timeline_item)
     else:
-        media_pool_item = track_item.GetMediaPoolItem()
+        media_pool_item = timeline_item.GetMediaPoolItem()
 
         # get all tags from track item
         _tags = media_pool_item.GetMetadata()
@@ -144,9 +387,9 @@ def get_track_item_pype_tag(track_item):
     return return_tag
 
 
-def set_track_item_pype_tag(track_item, data=None):
+def set_timeline_item_pype_tag(timeline_item, data=None):
     """
-    Set pype track item tag to input track_item.
+    Set pype track item tag to input timeline_item.
 
     Attributes:
         trackItem (resolve.TimelineItem): resolve api object
@@ -157,18 +400,18 @@ def set_track_item_pype_tag(track_item, data=None):
     data = data or dict()
 
     # get available pype tag if any
-    tag_data = get_track_item_pype_tag(track_item)
+    tag_data = get_timeline_item_pype_tag(timeline_item)
 
     if self.pype_marker_workflow:
         # delete tag as it is not updatable
         if tag_data:
-            delete_pype_marker(track_item)
+            delete_pype_marker(timeline_item)
 
         tag_data.update(data)
-        set_pype_marker(track_item, tag_data)
+        set_pype_marker(timeline_item, tag_data)
     else:
         if tag_data:
-            media_pool_item = track_item.GetMediaPoolItem()
+            media_pool_item = timeline_item.GetMediaPoolItem()
             # it not tag then create one
             tag_data.update(data)
             media_pool_item.SetMetadata(
@@ -177,19 +420,19 @@ def set_track_item_pype_tag(track_item, data=None):
             tag_data = data
             # if pype tag available then update with input data
             # add it to the input track item
-            track_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
+            timeline_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
 
     return tag_data
 
 
-def imprint(track_item, data=None):
+def imprint(timeline_item, data=None):
     """
     Adding `Avalon data` into a hiero track item tag.
 
     Also including publish attribute into tag.
 
     Arguments:
-        track_item (hiero.core.TrackItem): hiero track item object
+        timeline_item (hiero.core.TrackItem): hiero track item object
         data (dict): Any data which needst to be imprinted
 
     Examples:
@@ -201,39 +444,39 @@ def imprint(track_item, data=None):
     """
     data = data or {}
 
-    set_track_item_pype_tag(track_item, data)
+    set_timeline_item_pype_tag(timeline_item, data)
 
     # add publish attribute
-    set_publish_attribute(track_item, True)
+    set_publish_attribute(timeline_item, True)
 
 
-def set_publish_attribute(track_item, value):
+def set_publish_attribute(timeline_item, value):
     """ Set Publish attribute in input Tag object
 
     Attribute:
         tag (hiero.core.Tag): a tag object
         value (bool): True or False
     """
-    tag_data = get_track_item_pype_tag(track_item)
+    tag_data = get_timeline_item_pype_tag(timeline_item)
     tag_data["publish"] = value
     # set data to the publish attribute
-    set_track_item_pype_tag(track_item, tag_data)
+    set_timeline_item_pype_tag(timeline_item, tag_data)
 
 
-def get_publish_attribute(track_item):
+def get_publish_attribute(timeline_item):
     """ Get Publish attribute from input Tag object
 
     Attribute:
         tag (hiero.core.Tag): a tag object
         value (bool): True or False
     """
-    tag_data = get_track_item_pype_tag(track_item)
+    tag_data = get_timeline_item_pype_tag(timeline_item)
     return tag_data["publish"]
 
 
-def set_pype_marker(track_item, tag_data):
-    source_start = track_item.GetLeftOffset()
-    item_duration = track_item.GetDuration()
+def set_pype_marker(timeline_item, tag_data):
+    source_start = timeline_item.GetLeftOffset()
+    item_duration = timeline_item.GetDuration()
     frame = int(source_start + (item_duration / 2))
 
     # marker attributes
@@ -243,7 +486,7 @@ def set_pype_marker(track_item, tag_data):
     note = json.dumps(tag_data)
     duration = (self.pype_marker_duration / 10) * 10
 
-    track_item.AddMarker(
+    timeline_item.AddMarker(
         frameId,
         color,
         name,
@@ -252,12 +495,12 @@ def set_pype_marker(track_item, tag_data):
     )
 
 
-def get_pype_marker(track_item):
-    track_item_markers = track_item.GetMarkers()
-    for marker_frame in track_item_markers:
-        note = track_item_markers[marker_frame]["note"]
-        color = track_item_markers[marker_frame]["color"]
-        name = track_item_markers[marker_frame]["name"]
+def get_pype_marker(timeline_item):
+    timeline_item_markers = timeline_item.GetMarkers()
+    for marker_frame in timeline_item_markers:
+        note = timeline_item_markers[marker_frame]["note"]
+        color = timeline_item_markers[marker_frame]["color"]
+        name = timeline_item_markers[marker_frame]["name"]
         print(f"_ marker data: {marker_frame} | {name} | {color} | {note}")
         if name == self.pype_marker_name and color == self.pype_marker_color:
             self.temp_marker_frame = marker_frame
@@ -266,103 +509,9 @@ def get_pype_marker(track_item):
     return dict()
 
 
-def delete_pype_marker(track_item):
-    track_item.DeleteMarkerAtFrame(self.temp_marker_frame)
+def delete_pype_marker(timeline_item):
+    timeline_item.DeleteMarkerAtFrame(self.temp_marker_frame)
     self.temp_marker_frame = None
-
-
-def create_current_sequence_media_bin(sequence):
-    seq_name = sequence.GetName()
-    media_pool = get_current_project().GetMediaPool()
-    root_folder = media_pool.GetRootFolder()
-    sub_folders = root_folder.GetSubFolderList()
-    testing_names = list()
-
-    print(f"_ sub_folders: {sub_folders}")
-    for subfolder in sub_folders:
-        subf_name = subfolder.GetName()
-        if seq_name in subf_name:
-            testing_names.append(subfolder)
-        else:
-            testing_names.append(False)
-
-    matching = next((f for f in testing_names if f is not False), None)
-
-    if not matching:
-        new_folder = media_pool.AddSubFolder(root_folder, seq_name)
-        media_pool.SetCurrentFolder(new_folder)
-    else:
-        media_pool.SetCurrentFolder(matching)
-
-    return media_pool.GetCurrentFolder()
-
-
-def get_name_with_data(clip_data, presets):
-    """
-    Take hierarchy data from presets and build name with parents data
-
-    Args:
-        clip_data (dict): clip data from `get_current_track_items()`
-        presets (dict): data from create plugin
-
-    Returns:
-        list: name, data
-
-    """
-    def _replace_hash_to_expression(name, text):
-        _spl = text.split("#")
-        _len = (len(_spl) - 1)
-        _repl = f"{{{name}:0>{_len}}}"
-        new_text = text.replace(("#" * _len), _repl)
-        return new_text
-
-    # presets data
-    clip_name = presets["clipName"]
-    hierarchy = presets["hierarchy"]
-    hierarchy_data = presets["hierarchyData"].copy()
-    count_from = presets["countFrom"]
-    steps = presets["steps"]
-
-    # reset rename_add
-    if self.rename_add < count_from:
-        self.rename_add = count_from
-
-    # shot num calculate
-    if self.rename_index == 0:
-        shot_num = self.rename_add
-    else:
-        shot_num = self.rename_add + steps
-
-    print(f"shot_num: {shot_num}")
-
-    # clip data
-    _data = {
-        "sequence": clip_data["sequence"].GetName(),
-        "track": clip_data["track"]["name"].replace(" ", "_"),
-        "shot": shot_num
-    }
-
-    # solve # in test to pythonic explression
-    for k, v in hierarchy_data.items():
-        if "#" not in v:
-            continue
-        hierarchy_data[k] = _replace_hash_to_expression(k, v)
-
-    # fill up pythonic expresisons
-    for k, v in hierarchy_data.items():
-        hierarchy_data[k] = v.format(**_data)
-
-    # fill up clip name and hierarchy keys
-    hierarchy = hierarchy.format(**hierarchy_data)
-    clip_name = clip_name.format(**hierarchy_data)
-
-    self.rename_add = shot_num
-    print(f"shot_num: {shot_num}")
-
-    return (clip_name, {
-        "hierarchy": hierarchy,
-        "hierarchyData": hierarchy_data
-    })
 
 
 def create_compound_clip(clip_data, name, folder):
@@ -380,7 +529,7 @@ def create_compound_clip(clip_data, name, folder):
     """
     # get basic objects form data
     project = clip_data["project"]
-    sequence = clip_data["sequence"]
+    timeline = clip_data["timeline"]
     clip = clip_data["clip"]
 
     # get details of objects
@@ -411,7 +560,7 @@ def create_compound_clip(clip_data, name, folder):
     out_frame = opentime.to_frames(mp_out_rc)
 
     # keep original sequence
-    sq_origin = sequence
+    tl_origin = timeline
 
     # Set current folder to input media_pool_folder:
     mp.SetCurrentFolder(folder)
@@ -433,18 +582,13 @@ def create_compound_clip(clip_data, name, folder):
                     if c.GetName() in name), None)
         print(f"_ cct created: {cct}")
 
-        # Set current timeline to created timeline:
-        project.SetCurrentTimeline(cct)
-
-        # Add input clip to the current timeline:
-        mp.AppendToTimeline([{
-            "mediaPoolItem": mp_item,
-            "startFrame": mp_first_frame,
-            "endFrame": mp_last_frame
-        }])
-
-        # Set current timeline to the working timeline:
-        project.SetCurrentTimeline(sq_origin)
+        with maintain_current_timeline(cct, tl_origin):
+            # Add input clip to the current timeline:
+            mp.AppendToTimeline([{
+                "mediaPoolItem": mp_item,
+                "startFrame": mp_first_frame,
+                "endFrame": mp_last_frame
+            }])
 
     # Add collected metadata and attributes to the comound clip:
     if mp_item.GetMetadata(self.pype_tag_name):
@@ -465,13 +609,13 @@ def create_compound_clip(clip_data, name, folder):
     cct.SetClipProperty("Start TC", mp_props["Start TC"])
 
     # swap clips on timeline
-    swap_clips(clip_item, cct, name, in_frame, out_frame)
+    swap_clips(clip_item, cct, in_frame, out_frame)
 
     cct.SetClipColor("Pink")
     return cct
 
 
-def swap_clips(from_clip, to_clip, to_clip_name, to_in_frame, to_out_frame):
+def swap_clips(from_clip, to_clip, to_in_frame, to_out_frame):
     """
     Swaping clips on timeline in timelineItem
 
@@ -488,6 +632,8 @@ def swap_clips(from_clip, to_clip, to_clip_name, to_in_frame, to_out_frame):
         bool: True if successfully replaced
 
     """
+    clip_prop = to_clip.GetClipProperty()
+    to_clip_name = clip_prop["File Name"]
     # add clip item as take to timeline
     take = from_clip.AddTake(
         to_clip,
@@ -508,7 +654,7 @@ def swap_clips(from_clip, to_clip, to_clip_name, to_in_frame, to_out_frame):
     return False
 
 
-def validate_tc(x):
+def _validate_tc(x):
     # Validate and reformat timecode string
 
     if len(x) != 11:
@@ -590,7 +736,7 @@ def set_project_manager_to_folder_name(folder_name):
     # go back to root folder
     if self.project_manager.GotoRootFolder():
         log.info(f"Testing existing folder: {folder_name}")
-        folders = convert_resolve_list_type(
+        folders = _convert_resolve_list_type(
             self.project_manager.GetFoldersInCurrentFolder())
         log.info(f"Testing existing folders: {folders}")
         # get me first available folder object
@@ -617,7 +763,7 @@ def set_project_manager_to_folder_name(folder_name):
             return False
 
 
-def convert_resolve_list_type(resolve_list):
+def _convert_resolve_list_type(resolve_list):
     """ Resolve is using indexed dictionary as list type.
     `{1.0: 'vaule'}`
     This will convert it to normal list class
@@ -628,7 +774,59 @@ def convert_resolve_list_type(resolve_list):
     return [resolve_list[i] for i in sorted(resolve_list.keys())]
 
 
-def get_reformated_path(path, padded=True):
+def create_otio_time_range_from_timeline_item_data(timeline_item_data):
+    timeline_item = timeline_item_data["clip"]["item"]
+    project = timeline_item_data["project"]
+    timeline = timeline_item_data["timeline"]
+    timeline_start = timeline.GetStartFrame()
+
+    frame_start = int(timeline_item.GetStart() - timeline_start)
+    frame_duration = int(timeline_item.GetDuration())
+    fps = project.GetSetting("timelineFrameRate")
+
+    return otio_export.create_otio_time_range(
+        frame_start, frame_duration, fps)
+
+
+def get_otio_clip_instance_data(otio_timeline, timeline_item_data):
+    """
+    Return otio objects for timeline, track and clip
+
+    Args:
+        timeline_item_data (dict): timeline_item_data from list returned by
+                                resolve.get_current_timeline_items()
+        otio_timeline (otio.schema.Timeline): otio object
+
+    Returns:
+        dict: otio clip object
+
+    """
+
+    timeline_item = timeline_item_data["clip"]["item"]
+    track_name = timeline_item_data["track"]["name"]
+    timeline_range = create_otio_time_range_from_timeline_item_data(
+        timeline_item_data)
+
+    for otio_clip in otio_timeline.each_clip():
+        track_name = otio_clip.parent().name
+        parent_range = otio_clip.range_in_parent()
+        if track_name not in track_name:
+            continue
+        if otio_clip.name not in timeline_item.GetName():
+            continue
+        if pype.lib.is_overlapping_otio_ranges(
+                parent_range, timeline_range, strict=True):
+
+            # add pypedata marker to otio_clip metadata
+            for marker in otio_clip.markers:
+                if self.pype_marker_name in marker.name:
+                    otio_clip.metadata.update(marker.metadata)
+            return {"otioClip": otio_clip}
+
+    return None
+
+
+def get_reformated_path(path, padded=False, first=False):
     """
     Return fixed python expression path
 
@@ -642,64 +840,19 @@ def get_reformated_path(path, padded=True):
         get_reformated_path("plate.[0001-1008].exr") > plate.%04d.exr
 
     """
-    num_pattern = "(\\[\\d+\\-\\d+\\])"
-    padding_pattern = "(\\d+)(?=-)"
+    num_pattern = r"(\[\d+\-\d+\])"
+    padding_pattern = r"(\d+)(?=-)"
+    first_frame_pattern = re.compile(r"\[(\d+)\-\d+\]")
+
     if "[" in path:
         padding = len(re.findall(padding_pattern, path).pop())
         if padded:
             path = re.sub(num_pattern, f"%0{padding}d", path)
+        elif first:
+            first_frame = re.findall(first_frame_pattern, path, flags=0)
+            if len(first_frame) >= 1:
+                first_frame = first_frame[0]
+            path = re.sub(num_pattern, first_frame, path)
         else:
-            path = re.sub(num_pattern, f"%d", path)
+            path = re.sub(num_pattern, "%d", path)
     return path
-
-
-def create_otio_time_range_from_track_item_data(track_item_data):
-    track_item = track_item_data["clip"]["item"]
-    project = track_item_data["project"]
-    timeline = track_item_data["sequence"]
-    timeline_start = timeline.GetStartFrame()
-
-    frame_start = int(track_item.GetStart() - timeline_start)
-    frame_duration = int(track_item.GetDuration())
-    fps = project.GetSetting("timelineFrameRate")
-
-    return otio_export.create_otio_time_range(
-        frame_start, frame_duration, fps)
-
-
-def get_otio_clip_instance_data(otio_timeline, track_item_data):
-    """
-    Return otio objects for timeline, track and clip
-
-    Args:
-        track_item_data (dict): track_item_data from list returned by
-                                resolve.get_current_track_items()
-        otio_timeline (otio.schema.Timeline): otio object
-
-    Returns:
-        dict: otio clip object
-
-    """
-
-    track_item = track_item_data["clip"]["item"]
-    track_name = track_item_data["track"]["name"]
-    timeline_range = create_otio_time_range_from_track_item_data(
-        track_item_data)
-
-    for otio_clip in otio_timeline.each_clip():
-        track_name = otio_clip.parent().name
-        parent_range = otio_clip.range_in_parent()
-        if track_name not in track_name:
-            continue
-        if otio_clip.name not in track_item.GetName():
-            continue
-        if pype.lib.is_overlapping_otio_ranges(
-                parent_range, timeline_range, strict=True):
-
-            # add pypedata marker to otio_clip metadata
-            for marker in otio_clip.markers:
-                if self.pype_marker_name in marker.name:
-                    otio_clip.metadata.update(marker.metadata)
-            return {"otioClip": otio_clip}
-
-    return None

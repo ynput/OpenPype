@@ -22,7 +22,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         project = resolve.get_current_project()
         fps = project.GetSetting("timelineFrameRate")
 
-        active_sequence = resolve.get_current_sequence()
+        active_timeline = resolve.get_current_timeline()
         video_tracks = resolve.get_video_track_names()
 
         # adding otio timeline to context
@@ -42,7 +42,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         # update context with main project attributes
         context_data = {
             "activeProject": project,
-            "activeSequence": active_sequence,
             "otioTimeline": otio_timeline,
             "videoTracks": video_tracks,
             "currentFile": project.GetName(),

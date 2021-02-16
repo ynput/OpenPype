@@ -21,7 +21,7 @@ class SelectInvalidAction(pyblish.api.Action):
     def process(self, context, plugin):
 
         try:
-            from . import get_project_manager
+            from .lib import get_project_manager
             pm = get_project_manager()
             self.log.debug(pm)
         except ImportError:

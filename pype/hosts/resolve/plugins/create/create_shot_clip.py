@@ -240,11 +240,11 @@ class CreateShotClip(resolve.Creator):
         sorted_selected_track_items.extend(unsorted_selected_track_items)
 
         # sequence attrs
-        sq_frame_start = self.sequence.GetStartFrame()
-        sq_markers = self.sequence.GetMarkers()
+        sq_frame_start = self.timeline.GetStartFrame()
+        sq_markers = self.timeline.GetMarkers()
 
         # create media bin for compound clips (trackItems)
-        mp_folder = resolve.create_current_sequence_media_bin(self.sequence)
+        mp_folder = resolve.create_current_sequence_media_bin(self.timeline)
 
         kwargs = {
             "ui_inputs": widget.result,

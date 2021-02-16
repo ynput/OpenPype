@@ -1,7 +1,7 @@
 import os
 import importlib
 from pype.lib import PreLaunchHook
-from pype.hosts.resolve import utils
+from pype.hosts.resolve.api import utils
 
 
 class ResolvePrelaunch(PreLaunchHook):

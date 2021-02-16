@@ -2,7 +2,7 @@
 
 import os
 from pype.api import Logger
-from . import (
+from .. import (
     get_project_manager,
     get_current_project,
     set_project_manager_to_folder_name
