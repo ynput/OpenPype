@@ -282,17 +282,18 @@ class DictImmutableKeysEntity(ItemEntity):
         if self._metadata_are_modified:
             return True
 
-        if (
-            self._override_state is OverrideState.PROJECT
-            and self._has_project_override != self.had_project_override
-        ):
-            return True
+        if self.is_group or self.group_item:
+            if (
+                self._override_state is OverrideState.PROJECT
+                and self._has_project_override != self.had_project_override
+            ):
+                return True
 
-        elif (
-            self._override_state is OverrideState.STUDIO
-            and self._has_studio_override != self.had_studio_override
-        ):
-            return True
+            elif (
+                self._override_state is OverrideState.STUDIO
+                and self._has_studio_override != self.had_studio_override
+            ):
+                return True
 
         return self._child_has_unsaved_changes
 
@@ -305,6 +306,8 @@ class DictImmutableKeysEntity(ItemEntity):
 
     @property
     def has_studio_override(self):
+        if not self.is_group and not self.group_item:
+            return self._child_has_studio_override
         return self._has_studio_override or self._child_has_studio_override
 
     @property
@@ -317,6 +320,8 @@ class DictImmutableKeysEntity(ItemEntity):
 
     @property
     def has_project_override(self):
+        if not self.is_group and not self.group_item:
+            return self._child_has_project_override
         return self._has_project_override or self._child_has_project_override
 
     @property
