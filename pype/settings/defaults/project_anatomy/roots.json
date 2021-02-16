@@ -1,5 +1,7 @@
 {
-    "windows": "C:/projects",
-    "darwin": "/Volumes/path",
-    "linux": "/mnt/share/projects"
+    "work": {
+        "windows": "C:/projects",
+        "darwin": "/Volumes/path",
+        "linux": "/mnt/share/projects"
+    }
 }

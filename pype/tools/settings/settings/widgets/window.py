@@ -1,5 +1,9 @@
 from Qt import QtWidgets, QtGui
-from .base import CategoryState, SystemWidget, ProjectWidget
+from .categories import (
+    CategoryState,
+    SystemWidget,
+    ProjectWidget
+)
 from .widgets import ShadowWidget
 from .. import style
 
