@@ -564,7 +564,7 @@ class ApplicationLaunchContext:
         # --- END: Backwards compatibility ---
 
         subfolders_list = (
-            ("hooks", "global"),
+            ["hooks"],
             ("hosts", self.host_name, "hooks")
         )
         for subfolders in subfolders_list:
