@@ -59,14 +59,11 @@ def filter_pyblish_plugins(plugins):
                 continue
 
         for option, value in config_data.items():
-
-            log.info("host_from_file: {}".format(host_from_file))
             if option == "enabled" and value is False:
-                log.info("PLUGIN: {}".format(plugin.__name__))
                 log.info('removing plugin {}'.format(plugin.__name__))
                 plugins.remove(plugin)
             else:
-                log.info('setting XXX {}:{} on plugin {}'.format(
+                log.info('setting {}:{} on plugin {}'.format(
                     option, value, plugin.__name__))
 
                 setattr(plugin, option, value)
