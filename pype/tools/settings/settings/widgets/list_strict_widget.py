@@ -57,6 +57,12 @@ class ListStrictWidget(BaseWidget):
                 return True
         return False
 
+    def get_invalid(self):
+        invalid = []
+        for input_field in self.input_fields:
+            invalid.extend(input_field.get_invalid())
+        return invalid
+
     def add_widget_to_layout(self, widget, label=None):
         # Horizontally added children
         if self.entity.is_horizontal:
