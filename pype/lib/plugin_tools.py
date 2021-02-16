@@ -31,19 +31,24 @@ def filter_pyblish_plugins(plugins):
     host = api.current_host()
 
     presets = get_project_settings(os.environ['AVALON_PROJECT']) or {}
+    # skip if there are no presets to process
+    if not presets:
+        return
 
     # iterate over plugins
     for plugin in plugins[:]:
-        # skip if there are no presets to process
-        if not presets:
-            continue
 
         file = os.path.normpath(inspect.getsourcefile(plugin))
         file = os.path.normpath(file)
 
+
         # host determined from path
-        host_from_file = file.split(os.path.sep)[-3:-2][0]
+        host_from_file = file.split(os.path.sep)[-4:-3][0]
         plugin_kind = file.split(os.path.sep)[-2:-1][0]
+
+        # TODO: change after all plugins are moved one level up
+        if host_from_file == "plugins":
+            host_from_file = "global"
 
         try:
             config_data = presets[host]["publish"][plugin.__name__]
@@ -54,7 +59,10 @@ def filter_pyblish_plugins(plugins):
                 continue
 
         for option, value in config_data.items():
+
+            log.info("host_from_file: {}".format(host_from_file))
             if option == "enabled" and value is False:
+                log.info("PLUGIN: {}".format(plugin.__name__))
                 log.info('removing plugin {}'.format(plugin.__name__))
                 plugins.remove(plugin)
             else:
