@@ -14,7 +14,17 @@ from pype.settings.constants import (
 
 
 class DictMutableKeysEntity(EndpointEntity):
-    """"""
+    """Dictionary entity that has mutable keys.
+
+    Keys of entity's children can be modified, removed or added. Children have
+    defined entity type so it is not possible to have 2 different entity types
+    as children.
+
+    TODOs:
+    - cleanup children on pop
+        - remove child's reference to parent
+        - clear callbacks
+    """
     schema_types = ["dict-modifiable"]
     _miss_arg = object()
 
