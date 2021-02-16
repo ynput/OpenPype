@@ -364,7 +364,7 @@ class ExtractOTIOReview(pype.api.Extractor):
         ])
         # execute
         self.log.debug("Executing: {}".format(" ".join(command)))
-        output = pype.api.subprocess(" ".join(command), shell=True)
+        output = pype.api.run_subprocess(" ".join(command), shell=True)
         self.log.debug("Output: {}".format(output))
 
     def _generate_used_frames(self, duration, end_offset=None):
