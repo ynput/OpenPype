@@ -266,6 +266,7 @@ class ListStrictEntity(ItemEntity):
 
         self.on_change()
 
+    @property
     def has_unsaved_changes(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return False
