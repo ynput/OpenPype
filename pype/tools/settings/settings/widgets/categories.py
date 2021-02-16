@@ -429,9 +429,10 @@ class ProjectWidget(SettingsCategoryWidget):
             elif self.project_name is None:
                 self.entity.set_studio_state()
 
+            elif self.project_name == self.entity.project_name:
+                self.entity.set_project_state()
             else:
                 self.entity.change_project(self.project_name)
-                self.entity.set_project_state()
 
             if self.modify_defaults_checkbox:
                 self.modify_defaults_checkbox.setEnabled(True)
@@ -454,9 +455,10 @@ class ProjectWidget(SettingsCategoryWidget):
         if project_name == self.project_name:
             return
 
+        self.project_name = project_name
+
         self.set_state(CategoryState.Working)
 
-        self.entity.change_project(project_name)
         self.reset()
 
         self.set_state(CategoryState.Idle)
