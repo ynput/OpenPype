@@ -80,8 +80,8 @@ def get_global_environments(env=None):
     modules.
 
     Args:
-        env (dict, optional): Initial environments. `os.environ` is used when
-            not entered.
+        env (dict, optional): Initial environments. Empty dictionary is used
+            when not entered.
 
     Returns;
         dict of str: Loaded and processed environments.
@@ -91,7 +91,7 @@ def get_global_environments(env=None):
     from pype.modules import ModulesManager
 
     if env is None:
-        env = os.environ.copy()
+        env = {}
 
     # Get global environments from settings
     all_settings_env = get_environments()

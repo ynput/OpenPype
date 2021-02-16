@@ -34,7 +34,8 @@ from .config import get_datetime_data
 
 from .env_tools import (
     env_value_to_bool,
-    get_paths_from_environ
+    get_paths_from_environ,
+    get_global_environments
 )
 
 from .python_module_tools import (
@@ -121,6 +122,7 @@ __all__ = [
 
     "env_value_to_bool",
     "get_paths_from_environ",
+    "get_global_environments",
 
     "modules_from_path",
     "recursive_bases_from_class",
