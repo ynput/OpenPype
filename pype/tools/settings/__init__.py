@@ -1,7 +1,11 @@
 import sys
 from Qt import QtWidgets, QtGui
 
-from .settings import style, MainWidget
+from .settings import (
+    style,
+    MainWidget,
+    ProjectListWidget
+)
 
 
 def main(user_role=None):
