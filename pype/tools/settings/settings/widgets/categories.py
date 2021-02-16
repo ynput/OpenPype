@@ -1,11 +1,7 @@
 import os
-import json
 from enum import Enum
 from Qt import QtWidgets, QtCore, QtGui
-from pype.settings.constants import (
-    PROJECT_SETTINGS_KEY,
-    PROJECT_ANATOMY_KEY
-)
+
 from pype.settings.entities import (
     SystemSettings,
     ProjectSettings,
@@ -27,12 +23,7 @@ from pype.settings.entities import (
     DefaultsNotDefined
 )
 
-from pype.settings.lib import (
-    reset_default_settings,
-    get_default_settings,
-
-    get_system_settings
-)
+from pype.settings.lib import get_system_settings
 from .widgets import (
     UnsavedChangesDialog,
     ProjectListWidget
