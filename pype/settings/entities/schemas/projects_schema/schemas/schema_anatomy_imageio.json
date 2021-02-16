@@ -88,6 +88,7 @@
                     "type": "dict",
                     "label": "Colorspace on Inputs by regex detection",
                     "collapsable": true,
+                    "is_group": true,
                     "children": [
                         {
                             "type": "list",
@@ -324,6 +325,7 @@
                     "key": "regexInputs",
                     "type": "dict",
                     "label": "Colorspace on Inputs by regex detection",
+                    "is_group": true,
                     "collapsable": true,
                     "children": [
                         {
