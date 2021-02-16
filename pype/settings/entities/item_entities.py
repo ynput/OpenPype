@@ -310,6 +310,14 @@ class ListStrictEntity(ItemEntity):
         return False
 
     @property
+    def has_studio_override(self):
+        return self._has_studio_override or self._child_has_studio_override
+
+    @property
+    def has_project_override(self):
+        return self._has_project_override or self._child_has_project_override
+
+    @property
     def _child_has_unsaved_changes(self):
         for child_obj in self.children:
             if child_obj.has_unsaved_changes:
