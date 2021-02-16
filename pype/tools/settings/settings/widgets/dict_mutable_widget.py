@@ -270,6 +270,13 @@ class ModifiableDictItem(QtWidgets.QWidget):
         edit_btn.clicked.connect(self.on_edit_pressed)
         remove_btn.clicked.connect(self.on_remove_clicked)
 
+        # Hide edit inputs
+        key_input.setVisible(False)
+        key_input_label_widget.setVisible(False)
+        key_label_input.setVisible(False)
+        key_label_input_label_widget.setVisible(False)
+        remove_btn.setVisible(False)
+
         self.key_input = key_input
         self.key_input_label_widget = key_input_label_widget
         self.key_label_input = key_label_input
