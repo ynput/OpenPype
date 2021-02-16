@@ -87,7 +87,7 @@ class DictImmutableKeysWidget(BaseWidget):
 
         if self.entity.is_dynamic_item:
             content_widget.setObjectName("DictAsWidgetBody")
-            show_borders = str(int(self.show_borders))
+            show_borders = str(int(self.entity.show_borders))
             content_widget.setProperty("show_borders", show_borders)
             content_layout_margins = (5, 5, 5, 5)
             main_layout_spacing = 5
