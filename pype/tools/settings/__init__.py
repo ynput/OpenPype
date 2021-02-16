@@ -32,5 +32,6 @@ def main(user_role=None):
 __all__ = (
     "style",
     "MainWidget",
+    "ProjectListWidget",
     "main"
 )
