@@ -20,7 +20,8 @@ from .lib import (
     get_last_version_from_path,
     get_app_environments_for_context,
     source_hash,
-    get_latest_version
+    get_latest_version,
+    get_global_environments
 )
 
 from .lib.mongo import (
@@ -106,5 +107,6 @@ __all__ = [
     "source_hash",
 
     "run_subprocess",
-    "get_latest_version"
+    "get_latest_version",
+    "get_global_environments"
 ]
