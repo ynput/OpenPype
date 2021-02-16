@@ -5,7 +5,7 @@ from pype.lib import (
     get_pype_execute_args
 )
 
-from pype import PACKAGE_DIR
+from pype import PACKAGE_DIR as PYPE_DIR
 
 
 class NonPythonHostHook(PreLaunchHook):
@@ -27,7 +27,7 @@ class NonPythonHostHook(PreLaunchHook):
             remainders.append(self.launch_context.launch_args.pop(0))
 
         script_path = os.path.join(
-            PACKAGE_DIR,
+            PYPE_DIR,
             "scripts",
             "non_python_host_launch.py"
         )
