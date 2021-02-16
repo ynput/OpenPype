@@ -3,6 +3,7 @@
     "key": "imageio",
     "label": "Color Management and Output Formats",
     "is_file": true,
+    "is_group": true,
     "children": [
         {
             "key": "hiero",

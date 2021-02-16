@@ -1,10 +1,11 @@
 {
     "type": "dict",
-    "collapsable": true,
     "key": "templates",
     "label": "Templates",
+    "collapsable": true,
     "collapsable_key": true,
     "is_file": true,
+    "is_group": true,
     "children": [
         {
             "type": "number",

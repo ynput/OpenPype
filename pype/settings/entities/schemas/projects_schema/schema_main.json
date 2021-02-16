@@ -6,13 +6,13 @@
             "type": "anatomy",
             "key": "project_anatomy",
             "label": "Anatomy",
-            "is_group": true,
             "children": [
                 {
                     "key": "roots",
                     "label": "Roots",
                     "type": "anatomy_roots",
                     "is_file": true,
+                    "is_group": true,
                     "expandable": false,
                     "object_type": {
                         "type": "path-widget",
