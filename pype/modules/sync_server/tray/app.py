@@ -1,9 +1,11 @@
 from Qt import QtWidgets, QtCore, QtGui
 from Qt.QtCore import Qt
-from pype.tools.settings.settings.widgets.base import ProjectListWidget
 import attr
 import os
-from pype.tools.settings.settings import style
+from pype.tools.settings import (
+    ProjectListWidget,
+    style
+)
 from avalon.tools.delegates import PrettyTimeDelegate, pretty_timestamp
 
 from pype.lib import PypeLogger
