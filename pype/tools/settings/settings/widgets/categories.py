@@ -458,11 +458,11 @@ class ProjectWidget(SettingsCategoryWidget):
             self.modify_defaults_checkbox.setEnabled(False)
 
     def _on_project_change(self):
-        self.set_state(CategoryState.Working)
-
         project_name = self.project_list_widget.project_name()
         if project_name == self.project_name:
             return
+
+        self.set_state(CategoryState.Working)
 
         self.entity.change_project(project_name)
         self.reset()
