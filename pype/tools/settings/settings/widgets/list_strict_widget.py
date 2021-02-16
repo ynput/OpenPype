@@ -117,6 +117,9 @@ class ListStrictWidget(BaseWidget):
         for input_field in self.input_fields:
             input_field.set_entity_value()
 
+    def _on_entity_change(self):
+        pass
+
     def update_style(self):
         if not self.label_widget:
             return
