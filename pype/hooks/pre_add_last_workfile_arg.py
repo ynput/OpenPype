@@ -9,7 +9,7 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
     """
 
     order = 0
-    app_groups = ["maya", "nuke", "nukex", "hiero", "nukestudio", "blender"]
+    app_groups = ["maya", "nuke", "nukex", "hiero", "nukestudio"]
 
     def execute(self):
         if not self.data.get("start_last_workfile"):
