@@ -610,12 +610,7 @@ class ProjectListWidget(QtWidgets.QWidget):
             self.select_project(self.current_project)
 
     def validate_context_change(self):
-        # TODO add check if project can be changed (is modified)
-        for item in self._parent.input_fields:
-            is_modified = item.child_modified
-            if is_modified:
-                return False
-        return True
+        return not self._parent.entity.has_unsaved_changes
 
     def project_name(self):
         if self.current_project == self.default:
