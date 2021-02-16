@@ -7,20 +7,20 @@ from avalon.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
 from pype.api import Logger
-from pype import PLUGINS_DIR
+import pype.hosts.fusion
 
 log = Logger().get_logger(__name__)
 
 
-AVALON_CONFIG = os.environ["AVALON_CONFIG"]
+AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
-LOAD_PATH = os.path.join(PLUGINS_DIR, "fusion", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "fusion", "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "fusion", "inventory")
+HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.fusion.__file__))
+PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 
-PUBLISH_PATH = os.path.join(
-    PLUGINS_DIR, "fusion", "publish"
-).replace("\\", "/")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def install():

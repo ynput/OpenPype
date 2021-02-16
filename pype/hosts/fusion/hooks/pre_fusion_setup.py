@@ -1,7 +1,7 @@
 import os
 import importlib
 from pype.lib import PreLaunchHook
-from pype.hosts.fusion import utils
+from pype.hosts.fusion.api import utils
 
 
 class FusionPrelaunch(PreLaunchHook):
@@ -13,7 +13,7 @@ class FusionPrelaunch(PreLaunchHook):
 
     def execute(self):
         # making sure pyton 3.6 is installed at provided path
-        py36_dir = os.path.normpath(self.env.get("PYTHON36", ""))
+        py36_dir = os.path.normpath(self.launch_context.env.get("PYTHON36", ""))
         assert os.path.isdir(py36_dir), (
             "Python 3.6 is not installed at the provided folder path. Either "
             "make sure the `environments\resolve.json` is having correctly "
@@ -21,11 +21,11 @@ class FusionPrelaunch(PreLaunchHook):
             f"in given path. \nPYTHON36E: `{py36_dir}`"
         )
         self.log.info(f"Path to Fusion Python folder: `{py36_dir}`...")
-        self.env["PYTHON36"] = py36_dir
+        self.launch_context.env["PYTHON36"] = py36_dir
 
         # setting utility scripts dir for scripts syncing
         us_dir = os.path.normpath(
-            self.env.get("FUSION_UTILITY_SCRIPTS_DIR", "")
+            self.launch_context.env.get("FUSION_UTILITY_SCRIPTS_DIR", "")
         )
         assert os.path.isdir(us_dir), (
             "Fusion utility script dir does not exists. Either make sure "
@@ -47,4 +47,4 @@ class FusionPrelaunch(PreLaunchHook):
         else:
             # Resolve Setup integration
             importlib.reload(utils)
-            utils.setup(self.env)
+            utils.setup(self.launch_context.env)

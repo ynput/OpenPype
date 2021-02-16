@@ -8,7 +8,7 @@ log = Logger().get_logger(__name__)
 
 
 def main(env):
-    from pype.hosts.fusion import menu
+    from pype.hosts.fusion.api import menu
     import avalon.fusion
     # Registers pype's Global pyblish plugins
     pype.install()
