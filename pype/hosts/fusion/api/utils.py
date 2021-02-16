@@ -8,6 +8,7 @@ import os
 import shutil
 
 from pype.api import Logger
+import pype.hosts.fusion
 
 log = Logger().get_logger(__name__)
 
@@ -26,7 +27,7 @@ def _sync_utility_scripts(env=None):
     us_env = env.get("FUSION_UTILITY_SCRIPTS_SOURCE_DIR")
     us_dir = env.get("FUSION_UTILITY_SCRIPTS_DIR", "")
     us_paths = [os.path.join(
-        os.path.dirname(__file__),
+        os.path.dirname(os.path.abspath(pype.hosts.fusion.__file__)),
         "utility_scripts"
     )]
 
