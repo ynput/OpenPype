@@ -11,43 +11,13 @@ ValidateSceneOrder = pyblish.api.ValidatorOrder + 0.2
 ValidateMeshOrder = pyblish.api.ValidatorOrder + 0.3
 
 
-def imprint_attributes(plugin):
-    """
-    Load presets by class and set them as attributes (if found)
-
-    :param plugin: plugin instance
-    :type plugin: instance
-    """
-    file = inspect.getfile(plugin.__class__)
-    file = os.path.normpath(file)
-    plugin_kind = file.split(os.path.sep)[-2:-1][0]
-    plugin_host = file.split(os.path.sep)[-3:-2][0]
-    plugin_name = type(plugin).__name__
-    try:
-        settings = get_project_settings(os.environ['AVALON_PROJECT'])
-        settings_data = settings[plugin_host][plugin_kind][plugin_name]  # noqa: E501
-        print(settings_data)
-    except KeyError:
-        print("preset not found")
-        return
-
-    for option, value in settings_data.items():
-        if option == "enabled" and value is False:
-            setattr(plugin, "active", False)
-        else:
-            setattr(plugin, option, value)
-            print("setting {}: {} on {}".format(option, value, plugin_name))
-
-
 class ContextPlugin(pyblish.api.ContextPlugin):
     def process(cls, *args, **kwargs):
-        imprint_attributes(cls)
         super(ContextPlugin, cls).process(cls, *args, **kwargs)
 
 
 class InstancePlugin(pyblish.api.InstancePlugin):
     def process(cls, *args, **kwargs):
-        imprint_attributes(cls)
         super(InstancePlugin, cls).process(cls, *args, **kwargs)
 
 
