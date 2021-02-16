@@ -59,7 +59,7 @@ class BaseWidget(QtWidgets.QWidget):
 
     def _on_entity_change(self):
         """Not yet used."""
-        print("{}: Wraning missing `_on_entity_change` implementation".format(
+        print("{}: Warning missing `_on_entity_change` implementation".format(
             self.__class__.__name__
         ))
 
