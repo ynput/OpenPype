@@ -396,7 +396,8 @@ class DictImmutableKeysEntity(ItemEntity):
         unknown_keys = value_keys - expected_keys
         if unknown_keys:
             self.log.warning(
-                "Unknown keys in default values: {}".format(
+                "{} Unknown keys in default values: {}".format(
+                    self.path,
                     ", ".join("\"{}\"".format(key) for key in unknown_keys)
                 )
             )
@@ -424,7 +425,8 @@ class DictImmutableKeysEntity(ItemEntity):
         unknown_keys = value_keys - expected_keys
         if unknown_keys:
             self.log.warning(
-                "Unknown keys in studio overrides: {}".format(
+                "{} Unknown keys in studio overrides: {}".format(
+                    self.path,
                     ", ".join("\"{}\"".format(key) for key in unknown_keys)
                 )
             )
@@ -451,7 +453,8 @@ class DictImmutableKeysEntity(ItemEntity):
         unknown_keys = value_keys - expected_keys
         if unknown_keys:
             self.log.warning(
-                "Unknown keys in project overrides: {}".format(
+                "{} Unknown keys in project overrides: {}".format(
+                    self.path,
                     ", ".join("\"{}\"".format(key) for key in unknown_keys)
                 )
             )
