@@ -38,6 +38,12 @@ class ListStrictWidget(BaseWidget):
                 self.create_ui_for_entity(child_obj, self)
             )
 
+        if self.entity.is_horizontal:
+            col = self.content_layout.columnCount()
+            spacer = SpacerWidget(self)
+            self.content_layout.addWidget(spacer, 0, col, 2, 1)
+            self.content_layout.setColumnStretch(col, 1)
+
         self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     @property
@@ -61,17 +67,18 @@ class ListStrictWidget(BaseWidget):
         self.updateGeometry()
 
     def _add_child_horizontally(self, widget, label):
-        row = self.content_layout.rowCount()
+        col = self.content_layout.columnCount()
         # Expand to whole grid if all children are without label
         if not self._any_children_has_label:
-            self.content_layout.addWidget(widget, row, 0, 1, 2)
+            self.content_layout.addWidget(widget, 0, col, 1, 2)
         else:
             if label:
                 label_widget = GridLabelWidget(label, widget)
                 label_widget.input_field = widget
                 widget.label_widget = label_widget
-                self.content_layout.addWidget(label_widget, row, 0, 1, 1)
-            self.content_layout.addWidget(widget, row, 1, 1, 1)
+                self.content_layout.addWidget(label_widget, 0, col, 1, 1)
+                col += 1
+            self.content_layout.addWidget(widget, 0, col, 1, 1)
 
     def _add_child_vertically(self, widget, label):
         row = self.content_layout.rowCount()
