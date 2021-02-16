@@ -269,9 +269,9 @@ class ListStrictEntity(ItemEntity):
             return
 
         if self._override_state is OverrideState.STUDIO:
-            self._has_studio_override = self.child_has_studio_override
+            self._has_studio_override = self._child_has_studio_override
         elif self._override_state is OverrideState.PROJECT:
-            self._has_project_override = self.child_has_project_override
+            self._has_project_override = self._child_has_project_override
 
         self.on_change()
 
