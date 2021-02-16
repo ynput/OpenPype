@@ -206,6 +206,15 @@ class ListStrictEntity(ItemEntity):
         if not self.group_item and not self.is_group:
             self.is_group = True
 
+    def schema_validations(self):
+        # List entity must have file parent.
+        if not self.file_item and not self.is_file:
+            raise ValueError(
+                "{}: Missing file entity in hierarchy.".format(self.path)
+            )
+
+        super(ListStrictEntity, self).schema_validations()
+
     def get_child_path(self, child_obj):
         result_idx = None
         for idx, _child_obj in enumerate(self.children):

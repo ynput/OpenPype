@@ -101,7 +101,7 @@ class InputEntity(EndpointEntity):
                 "{}: Missing parent file entity.".format(self.path)
             )
 
-        super(EndpointEntity, self).schema_validations()
+        super(InputEntity, self).schema_validations()
 
     @property
     def value(self):
