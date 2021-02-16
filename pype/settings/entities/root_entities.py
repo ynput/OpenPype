@@ -592,16 +592,6 @@ class ProjectSettings(RootEntity):
         self.log.warning("change_project not implemented yet!")
 
     def _reset_values(self):
-
-        # PROJECT_SETTINGS_KEY,
-        # PROJECT_ANATOMY_KEY
-        # get_studio_project_settings_overrides,
-        # get_studio_project_anatomy_overrides,
-        # get_project_settings_overrides,
-        # get_project_anatomy_overrides,
-        # save_project_settings,
-        # save_project_anatomy,
-
         default_values = {
             PROJECT_SETTINGS_KEY: get_default_settings()[PROJECT_SETTINGS_KEY],
             PROJECT_ANATOMY_KEY: get_default_settings()[PROJECT_ANATOMY_KEY]
@@ -614,6 +604,7 @@ class ProjectSettings(RootEntity):
             PROJECT_SETTINGS_KEY: get_studio_project_settings_overrides(),
             PROJECT_ANATOMY_KEY: get_studio_project_anatomy_overrides()
         }
+
         for key, child_obj in self.non_gui_children.items():
             value = studio_overrides.get(key, NOT_SET)
             child_obj.update_studio_values(value)
@@ -657,7 +648,11 @@ class ProjectSettings(RootEntity):
         self.log.debug("Saving system settings: {}".format(
             json.dumps(settings_value, indent=4)
         ))
-        save_studio_settings(settings_value)
+        project_settings = settings_value.get(PROJECT_SETTINGS_KEY) or {}
+        project_anatomy = settings_value.get(PROJECT_ANATOMY_KEY) or {}
+
+        save_project_settings(self.project_name, project_settings)
+        save_project_anatomy(self.project_name, project_anatomy)
 
     def _validate_defaults_to_save(self, value):
         """Valiations of default values before save."""
