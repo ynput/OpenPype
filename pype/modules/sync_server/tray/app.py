@@ -2,10 +2,15 @@ from Qt import QtWidgets, QtCore, QtGui
 from Qt.QtCore import Qt
 import attr
 import os
+
 import sys
 import subprocess
-from pype.tools.settings.settings.widgets.base import ProjectListWidget
-from pype.tools.settings.settings import style
+
+from pype.tools.settings import (
+    ProjectListWidget,
+    style
+)
+
 from avalon.tools.delegates import PrettyTimeDelegate, pretty_timestamp
 from bson.objectid import ObjectId
 
