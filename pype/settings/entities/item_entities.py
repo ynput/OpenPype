@@ -342,8 +342,8 @@ class ListStrictEntity(ItemEntity):
             if not self.is_dynamic_item and not self.is_in_dynamic_item:
                 raise DefaultsNotDefined(self)
 
-        for child_obj in self.children:
-            child_obj.set_override_state(state)
+        for child_entity in self.children:
+            child_entity.set_override_state(state)
 
         self.initial_value = self.settings_value()
 

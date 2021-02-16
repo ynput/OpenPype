@@ -24,7 +24,10 @@ class EndpointEntity(ItemEntity):
     def __init__(self, *args, **kwargs):
         super(EndpointEntity, self).__init__(*args, **kwargs)
 
-        if not self.group_item and not self.is_group:
+        if (
+            not (self.group_item or self.is_group)
+            and not (self.is_dynamic_item or self.is_in_dynamic_item)
+        ):
             self.is_group = True
 
     def schema_validations(self):

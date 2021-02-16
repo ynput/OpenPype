@@ -247,6 +247,14 @@ class BaseItemEntity(BaseEntity):
                 "{}: Item has set label but is used as dynamic item."
             ).format(self.path))
 
+        # Dynamic items or items in dynamic item must not have set `is_group`
+        if self.is_group and (self.is_dynamic_item or self.is_in_dynamic_item):
+            raise ValueError(
+                "{} Dynamic entity has set `is_group` to true.".format(
+                    self.path
+                )
+            )
+
     @abstractmethod
     def set_override_state(self, state):
         """Set override state and trigger it on children.
