@@ -231,6 +231,20 @@ class ListStrictEntity(ItemEntity):
             self.children[idx].set(item)
 
     def settings_value(self):
+        if self._override_state is OverrideState.NOT_DEFINED:
+            return NOT_SET
+
+        if (
+            self.is_group
+            and self._override_state is not OverrideState.DEFAULTS
+        ):
+            if self._override_state is OverrideState.STUDIO:
+                if not self.has_studio_override:
+                    return NOT_SET
+            elif self._override_state is OverrideState.PROJECT:
+                if not self.has_project_override:
+                    return NOT_SET
+
         output = []
         for child_obj in self.children:
             output.append(child_obj.settings_value())
