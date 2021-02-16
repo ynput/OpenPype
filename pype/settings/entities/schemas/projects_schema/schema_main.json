@@ -5,6 +5,8 @@
         {
             "type": "anatomy",
             "key": "project_anatomy",
+            "label": "Anatomy",
+            "is_group": true,
             "children": [
                 {
                     "key": "roots",
