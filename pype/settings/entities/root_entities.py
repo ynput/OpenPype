@@ -644,7 +644,7 @@ class ProjectSettings(RootEntity):
     def _save_studio_values(self):
         settings_value = self.settings_value()
 
-        self._validate_duplicated_env_group(settings_value)
+        self._validate_values_to_save(settings_value)
 
         self.log.debug("Saving system settings: {}".format(
             json.dumps(settings_value, indent=4)
@@ -653,6 +653,9 @@ class ProjectSettings(RootEntity):
 
     def _validate_defaults_to_save(self, value):
         """Valiations of default values before save."""
+        pass
+
+    def _validate_values_to_save(self, value):
         pass
 
     def _save_project_values(self):
