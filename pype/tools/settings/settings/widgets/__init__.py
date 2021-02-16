@@ -1,5 +1,5 @@
 from .window import MainWidget
-from .categories import ProjectListWidget
+from .widgets import ProjectListWidget
 from . import item_types
 from . import anatomy_types
 

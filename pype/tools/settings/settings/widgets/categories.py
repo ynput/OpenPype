@@ -43,7 +43,10 @@ from pype.settings.lib import (
 
     get_system_settings
 )
-from .widgets import UnsavedChangesDialog
+from .widgets import (
+    UnsavedChangesDialog,
+    ProjectListWidget
+)
 from . import lib
 
 from .base import GUIWidget
@@ -59,10 +62,7 @@ from .item_widgets import (
     PathWidget,
     PathInputWidget
 )
-from avalon.mongodb import (
-    AvalonMongoConnection,
-    AvalonMongoDB
-)
+
 from avalon.vendor import qtawesome
 
 
@@ -655,153 +655,6 @@ class SystemWidget(SettingsCategoryWidget):
         # Add spacer to stretch children guis
         self.content_layout.addWidget(
             QtWidgets.QWidget(self.content_widget), 1
-        )
-
-
-class ProjectListView(QtWidgets.QListView):
-    left_mouse_released_at = QtCore.Signal(QtCore.QModelIndex)
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            index = self.indexAt(event.pos())
-            self.left_mouse_released_at.emit(index)
-        super(ProjectListView, self).mouseReleaseEvent(event)
-
-
-class ProjectListWidget(QtWidgets.QWidget):
-    default = "< Default >"
-    project_changed = QtCore.Signal()
-
-    def __init__(self, parent):
-        self._parent = parent
-
-        self.current_project = None
-
-        super(ProjectListWidget, self).__init__(parent)
-        self.setObjectName("ProjectListWidget")
-
-        label_widget = QtWidgets.QLabel("Projects")
-        project_list = ProjectListView(self)
-        project_list.setModel(QtGui.QStandardItemModel())
-
-        # Do not allow editing
-        project_list.setEditTriggers(
-            QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers
-        )
-        # Do not automatically handle selection
-        project_list.setSelectionMode(QtWidgets.QAbstractItemView.NoSelection)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.setSpacing(3)
-        layout.addWidget(label_widget, 0)
-        layout.addWidget(project_list, 1)
-
-        project_list.left_mouse_released_at.connect(self.on_item_clicked)
-
-        self.project_list = project_list
-
-        self.dbcon = None
-
-    def on_item_clicked(self, new_index):
-        new_project_name = new_index.data(QtCore.Qt.DisplayRole)
-        if new_project_name is None:
-            return
-
-        if self.current_project == new_project_name:
-            return
-
-        save_changes = False
-        change_project = False
-        if self.validate_context_change():
-            change_project = True
-
-        else:
-            dialog = UnsavedChangesDialog(self)
-            result = dialog.exec_()
-            if result == 1:
-                save_changes = True
-                change_project = True
-
-            elif result == 2:
-                change_project = True
-
-        if save_changes:
-            self._parent._save()
-
-        if change_project:
-            self.select_project(new_project_name)
-            self.current_project = new_project_name
-            self.project_changed.emit()
-        else:
-            self.select_project(self.current_project)
-
-    def validate_context_change(self):
-        # TODO add check if project can be changed (is modified)
-        for item in self._parent.input_fields:
-            is_modified = item.child_modified
-            if is_modified:
-                return False
-        return True
-
-    def project_name(self):
-        if self.current_project == self.default:
-            return None
-        return self.current_project
-
-    def select_project(self, project_name):
-        model = self.project_list.model()
-        found_items = model.findItems(project_name)
-        if not found_items:
-            found_items = model.findItems(self.default)
-
-        index = model.indexFromItem(found_items[0])
-        self.project_list.selectionModel().clear()
-        self.project_list.selectionModel().setCurrentIndex(
-            index, QtCore.QItemSelectionModel.SelectionFlag.SelectCurrent
-        )
-
-    def refresh(self):
-        selected_project = None
-        for index in self.project_list.selectedIndexes():
-            selected_project = index.data(QtCore.Qt.DisplayRole)
-            break
-
-        model = self.project_list.model()
-        model.clear()
-
-        items = [self.default]
-
-        system_settings = get_system_settings()
-        mongo_url = system_settings["modules"]["avalon"]["AVALON_MONGO"]
-        if not mongo_url:
-            mongo_url = os.environ["PYPE_MONGO"]
-
-        # Force uninstall of whole avalon connection if url does not match
-        # to current environment and set it as environment
-        if mongo_url != os.environ["AVALON_MONGO"]:
-            AvalonMongoConnection.uninstall(self.dbcon, force=True)
-            os.environ["AVALON_MONGO"] = mongo_url
-            self.dbcon = None
-
-        if not self.dbcon:
-            try:
-                self.dbcon = AvalonMongoDB()
-                self.dbcon.install()
-            except Exception:
-                self.dbcon = None
-                self.current_project = None
-
-        if self.dbcon:
-            for project_doc in tuple(self.dbcon.projects()):
-                items.append(project_doc["name"])
-
-        for item in items:
-            model.appendRow(QtGui.QStandardItem(item))
-
-        self.select_project(selected_project)
-
-        self.current_project = self.project_list.currentIndex().data(
-            QtCore.Qt.DisplayRole
         )
 
 
