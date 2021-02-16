@@ -142,8 +142,16 @@ class RootEntity(BaseItemEntity):
 
         self._add_children(self.schema_data)
 
-        for children in self.children:
-            children.schema_validations()
+        self.schema_validations()
+
+    def schema_validations(self):
+        for child_entity in self.children:
+            if child_entity.is_group:
+                raise ValueError((
+                    "Root entity \"{}\" has child with `is_group`"
+                    " attribute set to True but root can't save overrides."
+                ).format(self.__class__.__name__))
+            child_entity.schema_validations()
 
     def create_schema_object(self, schema_data, *args, **kwargs):
         """Create entity by entered schema data.
