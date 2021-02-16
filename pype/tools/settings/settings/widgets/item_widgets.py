@@ -231,10 +231,10 @@ class DictImmutableKeysWidget(BaseWidget):
 
     @property
     def is_invalid(self):
-        return self._is_invalid or self.child_invalid
+        return self._is_invalid or self._child_invalid
 
     @property
-    def child_invalid(self):
+    def _child_invalid(self):
         for input_field in self.input_fields:
             if input_field.is_invalid:
                 return True
