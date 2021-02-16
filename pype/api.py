@@ -3,7 +3,9 @@ from .settings import (
     get_project_settings,
     get_current_project_settings,
     get_anatomy_settings,
-    get_environments
+    get_environments,
+
+    SystemSettings
 )
 from .lib import (
     PypeLogger,
@@ -62,6 +64,8 @@ __all__ = [
     "get_current_project_settings",
     "get_anatomy_settings",
     "get_environments",
+
+    "SystemSettings",
 
     "PypeLogger",
     "Logger",

@@ -126,6 +126,7 @@ class ExpandingWidget(QtWidgets.QWidget):
     def __init__(self, label, parent):
         super(ExpandingWidget, self).__init__(parent)
 
+        self.content_widget = None
         self.toolbox_hidden = False
 
         top_part = ClickableWidget(parent=self)
@@ -192,7 +193,8 @@ class ExpandingWidget(QtWidgets.QWidget):
     def hide_toolbox(self, hide_content=False):
         self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
         self.toolbox_hidden = True
-        self.content_widget.setVisible(not hide_content)
+        if self.content_widget:
+            self.content_widget.setVisible(not hide_content)
         self.parent().updateGeometry()
 
     def show_toolbox(self):
@@ -225,7 +227,8 @@ class ExpandingWidget(QtWidgets.QWidget):
             arrow_type = QtCore.Qt.DownArrow
         self.button_toggle.setChecked(checked)
         self.button_toggle.setArrowType(arrow_type)
-        self.content_widget.setVisible(checked)
+        if self.content_widget:
+            self.content_widget.setVisible(checked)
         self.parent().updateGeometry()
 
     def add_widget_after_label(self, widget):
@@ -236,7 +239,8 @@ class ExpandingWidget(QtWidgets.QWidget):
 
     def resizeEvent(self, event):
         super(ExpandingWidget, self).resizeEvent(event)
-        self.content_widget.updateGeometry()
+        if self.content_widget:
+            self.content_widget.updateGeometry()
 
 
 class UnsavedChangesDialog(QtWidgets.QDialog):
