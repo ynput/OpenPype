@@ -22,7 +22,7 @@ class DictMutableKeysEntity(EndpointEntity):
         return self.children_by_key[key]
 
     def __setitem__(self, key, value):
-        self.set_value_for_key(key, value)
+        self.set_key_value(key, value)
 
     def __iter__(self):
         for key in self.keys():
@@ -58,14 +58,14 @@ class DictMutableKeysEntity(EndpointEntity):
         prev_keys = set(self.keys())
 
         for _key, _value in value.items():
-            self.set_value_for_key(_key, _value)
+            self.set_key_value(_key, _value)
             if _key in prev_keys:
                 prev_keys.remove(_key)
 
         for key in prev_keys:
             self.pop(key)
 
-    def set_value_for_key(self, key, value):
+    def set_key_value(self, key, value):
         # TODO Check for value type if is Settings entity?
         child_obj = self.children_by_key.get(key)
         if not child_obj:
