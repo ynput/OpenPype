@@ -114,6 +114,22 @@ class DictMutableKeysEntity(EndpointEntity):
                 return key
         return None
 
+    # Label methods
+    def get_child_label(self, child_entity):
+        return self.children_label_by_id.get(child_entity.id)
+
+    def set_child_label(self, child_entity, label):
+        self.children_label_by_id[child_entity.id] = label
+        self.on_change()
+
+    def get_key_label(self, key):
+        child_entity = self.children_by_key[key]
+        return self.get_child_label(child_entity)
+
+    def set_key_label(self, key, label):
+        child_entity = self.children_by_key[key]
+        self.set_child_label(child_entity, label)
+
     def _item_initalization(self):
         self._default_metadata = {}
         self._studio_override_metadata = {}
@@ -368,6 +384,8 @@ class DictMutableKeysEntity(EndpointEntity):
         output = {}
         for key, child_entity in self.children_by_key.items():
             child_value = child_entity.settings_value()
+            # TODO child should have setter of env group key se child can
+            #   know what env group represents.
             if self.value_is_env_group:
                 if key not in child_value[M_ENVIRONMENT_KEY]:
                     _metadata = child_value[M_ENVIRONMENT_KEY]
