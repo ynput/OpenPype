@@ -61,7 +61,11 @@ class ExtractBGMainGroups(pype.api.Extractor):
 
         for repre in tuple(repres):
             # Skip all files without .psd extension
-            if repre["ext"] != ".psd":
+            repre_ext = repre["ext"].lower()
+            if repre_ext.startswith("."):
+                repre_ext = repre_ext[1:]
+
+            if repre_ext != "psd":
                 continue
 
             # Prepare json filepath where extracted metadata are stored
@@ -101,7 +105,9 @@ class ExtractBGMainGroups(pype.api.Extractor):
             "__schema_version__": 1,
             "children": []
         }
-        transfers = []
+        output_ext = ".png"
+
+        to_export = []
         for layer_idx, layer in enumerate(psd_object):
             layer_name = layer.name.replace(" ", "_")
             if (
@@ -117,21 +123,48 @@ class ExtractBGMainGroups(pype.api.Extractor):
                 ).format(layer.name))
                 continue
 
-            filename = "{:0>2}_{}.png".format(layer_idx, layer_name)
-            layer_data = {
+            filebase = "{:0>2}_{}".format(layer_idx, layer_name)
+            if layer_name.lower() == "anim":
+                if not layer.is_group:
+                    self.log.warning("ANIM layer is not a group layer.")
+                    continue
+
+                children = []
+                for anim_idx, anim_layer in enumerate(layer):
+                    anim_layer_name = anim_layer.name.replace(" ", "_")
+                    filename = "{}_{:0>2}_{}{}".format(
+                        filebase, anim_idx, anim_layer_name, output_ext
+                    )
+                    children.append({
+                        "index": anim_idx,
+                        "name": anim_layer.name,
+                        "filename": filename
+                    })
+                    to_export.append((anim_layer, filename))
+
+                json_data["children"].append({
+                    "index": layer_idx,
+                    "name": layer.name,
+                    "children": children
+                })
+                continue
+
+            filename = filebase + output_ext
+            json_data["children"].append({
                 "index": layer_idx,
                 "name": layer.name,
                 "filename": filename
-            }
+            })
+            to_export.append((layer, filename))
 
+        transfers = []
+        for layer, filename in to_export:
             output_filepath = os.path.join(output_dir, filename)
             dst_filepath = os.path.join(publish_dir, filename)
             transfers.append((output_filepath, dst_filepath))
 
             pil_object = layer.composite(viewport=psd_object.viewbox)
             pil_object.save(output_filepath, "PNG")
-
-            json_data["children"].append(layer_data)
 
         return json_data, transfers
 
