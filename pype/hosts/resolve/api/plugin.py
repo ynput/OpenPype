@@ -1,5 +1,6 @@
 import re
 from avalon import api
+import pype.api as pype
 from pype.hosts import resolve
 from avalon.vendor import qargparse
 from . import lib
@@ -278,7 +279,172 @@ class Spacer(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-class SequenceLoader(api.Loader):
+class ClipLoader:
+
+    active_bin = None
+    data = dict()
+
+    def __init__(self, cls, context, **options):
+        """ Initialize object
+
+        Arguments:
+            cls (avalon.api.Loader): plugin object
+            context (dict): loader plugin context
+            options (dict)[optional]: possible keys:
+                projectBinPath: "path/to/binItem"
+
+        """
+        self.__dict__.update(cls.__dict__)
+        self.context = context
+        self.active_project = lib.get_current_project()
+
+        # try to get value from options or evaluate key value for `handles`
+        self.with_handles = options.get("handles") or bool(
+            options.get("handles") is True)
+        # try to get value from options or evaluate key value for `load_to`
+        self.new_timeline = options.get("newTimeline") or bool(
+            "New timeline" in options.get("load_to", ""))
+
+        assert self._populate_data(), str(
+            "Cannot Load selected data, look into database "
+            "or call your supervisor")
+
+        # inject asset data to representation dict
+        self._get_asset_data()
+        print("__init__ self.data: `{}`".format(self.data))
+
+        # add active components to class
+        if self.new_timeline:
+            if options.get("timeline"):
+                # if multiselection is set then use options sequence
+                self.active_timeline = options["timeline"]
+            else:
+                # create new sequence
+                self.active_timeline = lib.get_current_timeline(new=True)
+        else:
+            self.active_timeline = lib.get_current_timeline()
+
+        cls.timeline = self.active_timeline
+
+    def _populate_data(self):
+        """ Gets context and convert it to self.data
+        data structure:
+            {
+                "name": "assetName_subsetName_representationName"
+                "path": "path/to/file/created/by/get_repr..",
+                "binPath": "projectBinPath",
+            }
+        """
+        # create name
+        repr = self.context["representation"]
+        repr_cntx = repr["context"]
+        asset = str(repr_cntx["asset"])
+        subset = str(repr_cntx["subset"])
+        representation = str(repr_cntx["representation"])
+        self.data["clip_name"] = "_".join([asset, subset, representation])
+        self.data["versionData"] = self.context["version"]["data"]
+        # gets file path
+        file = self.fname
+        if not file:
+            repr_id = repr["_id"]
+            print(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return None
+        self.data["path"] = file.replace("\\", "/")
+
+        # solve project bin structure path
+        hierarchy = str("/".join((
+            "Loader",
+            repr_cntx["hierarchy"].replace("\\", "/"),
+            asset
+        )))
+
+        self.data["binPath"] = hierarchy
+
+        return True
+
+    def _get_asset_data(self):
+        """ Get all available asset data
+
+        joint `data` key with asset.data dict into the representaion
+
+        """
+        asset_name = self.context["representation"]["context"]["asset"]
+        self.data["assetData"] = pype.get_asset(asset_name)["data"]
+
+    def load(self):
+        # create project bin for the media to be imported into
+        self.active_bin = lib.create_bin(self.data["binPath"])
+
+        # create mediaItem in active project bin
+        # create clip media
+        media_pool_item = lib.create_media_pool_item(
+            self.data["path"], self.active_bin)
+        clip_property = media_pool_item.GetClipProperty()
+
+        # get handles
+        handle_start = self.data["versionData"].get("handleStart")
+        handle_end = self.data["versionData"].get("handleEnd")
+        if handle_start is None:
+            handle_start = int(self.data["assetData"]["handleStart"])
+        if handle_end is None:
+            handle_end = int(self.data["assetData"]["handleEnd"])
+
+        source_in = int(clip_property["Start"])
+        source_out = int(clip_property["End"])
+
+        if clip_property["Type"] == "Video":
+            source_in += handle_start
+            source_out -= handle_end
+
+        # include handles
+        if self.with_handles:
+            source_in -= handle_start
+            source_out += handle_end
+            handle_start = 0
+            handle_end = 0
+
+        # make track item from source in bin as item
+        timeline_item = lib.create_timeline_item(
+            media_pool_item, self.active_timeline, source_in, source_out)
+
+        print("Loading clips: `{}`".format(self.data["clip_name"]))
+        return timeline_item
+
+    def update(self, timeline_item):
+        # create project bin for the media to be imported into
+        self.active_bin = lib.create_bin(self.data["binPath"])
+
+        # create mediaItem in active project bin
+        # create clip media
+        media_pool_item = lib.create_media_pool_item(
+            self.data["path"], self.active_bin)
+        clip_property = media_pool_item.GetClipProperty()
+        clip_name = clip_property["File Name"]
+
+        # get handles
+        handle_start = self.data["versionData"].get("handleStart")
+        handle_end = self.data["versionData"].get("handleEnd")
+        if handle_start is None:
+            handle_start = int(self.data["assetData"]["handleStart"])
+        if handle_end is None:
+            handle_end = int(self.data["assetData"]["handleEnd"])
+
+        source_in = int(clip_property["Start"])
+        source_out = int(clip_property["End"])
+
+        resolve.swap_clips(
+            timeline_item,
+            media_pool_item,
+            source_in,
+            source_out
+        )
+
+        print("Loading clips: `{}`".format(self.data["clip_name"]))
+        return timeline_item
+
+
+class TimelineItemLoader(api.Loader):
     """A basic SequenceLoader for Resolve
 
     This will implement the basic behavior for a loader to inherit from that
@@ -303,16 +469,6 @@ class SequenceLoader(api.Loader):
             ],
             default=0,
             help="Where do you want clips to be loaded?"
-        ),
-        qargparse.Choice(
-            "load_how",
-            label="How to load clips",
-            items=[
-                "original timing",
-                "sequential in order"
-            ],
-            default=0,
-            help="Would you like to place it at orignal timing?"
         )
     ]
 
@@ -352,12 +508,12 @@ class Creator(api.Creator):
 
         # adding basic current context resolve objects
         self.project = resolve.get_current_project()
-        self.sequence = resolve.get_current_sequence()
+        self.timeline = resolve.get_current_timeline()
 
         if (self.options or {}).get("useSelection"):
-            self.selected = resolve.get_current_track_items(filter=True)
+            self.selected = resolve.get_current_timeline_items(filter=True)
         else:
-            self.selected = resolve.get_current_track_items(filter=False)
+            self.selected = resolve.get_current_timeline_items(filter=False)
 
         self.widget = CreatorWidget
 
@@ -367,7 +523,7 @@ class PublishClip:
     Convert a track item to publishable instance
 
     Args:
-        track_item (hiero.core.TrackItem): hiero track item object
+        timeline_item (hiero.core.TrackItem): hiero track item object
         kwargs (optional): additional data needed for rename=True (presets)
 
     Returns:
@@ -398,24 +554,24 @@ class PublishClip:
     vertical_sync_default = False
     driving_layer_default = ""
 
-    def __init__(self, cls, track_item_data, **kwargs):
+    def __init__(self, cls, timeline_item_data, **kwargs):
         # populate input cls attribute onto self.[attr]
         self.__dict__.update(cls.__dict__)
 
         # get main parent objects
-        self.track_item_data = track_item_data
-        self.track_item = track_item_data["clip"]["item"]
-        sequence_name = track_item_data["sequence"].GetName()
-        self.sequence_name = str(sequence_name).replace(" ", "_")
+        self.timeline_item_data = timeline_item_data
+        self.timeline_item = timeline_item_data["clip"]["item"]
+        timeline_name = timeline_item_data["timeline"].GetName()
+        self.timeline_name = str(timeline_name).replace(" ", "_")
 
         # track item (clip) main attributes
-        self.ti_name = self.track_item.GetName()
-        self.ti_index = int(track_item_data["clip"]["index"])
+        self.ti_name = self.timeline_item.GetName()
+        self.ti_index = int(timeline_item_data["clip"]["index"])
 
         # get track name and index
-        track_name = track_item_data["track"]["name"]
+        track_name = timeline_item_data["track"]["name"]
         self.track_name = str(track_name).replace(" ", "_")
-        self.track_index = int(track_item_data["track"]["index"])
+        self.track_index = int(timeline_item_data["track"]["index"])
 
         # adding tag.family into tag
         if kwargs.get("avalon"):
@@ -428,7 +584,7 @@ class PublishClip:
         self.mp_folder = kwargs.get("mp_folder")
 
         # populate default data before we get other attributes
-        self._populate_track_item_default_data()
+        self._populate_timeline_item_default_data()
 
         # use all populated default data to create all important attributes
         self._populate_attributes()
@@ -457,27 +613,27 @@ class PublishClip:
         if not lib.pype_marker_workflow:
             # create compound clip workflow
             lib.create_compound_clip(
-                self.track_item_data,
+                self.timeline_item_data,
                 self.tag_data["asset"],
                 self.mp_folder
             )
 
-            # add track_item_data selection to tag
+            # add timeline_item_data selection to tag
             self.tag_data.update({
-                "track_data": self.track_item_data["track"]
+                "track_data": self.timeline_item_data["track"]
             })
 
-        # create pype tag on track_item and add data
-        lib.imprint(self.track_item, self.tag_data)
+        # create pype tag on timeline_item and add data
+        lib.imprint(self.timeline_item, self.tag_data)
 
-        return self.track_item
+        return self.timeline_item
 
-    def _populate_track_item_default_data(self):
+    def _populate_timeline_item_default_data(self):
         """ Populate default formating data from track item. """
 
-        self.track_item_default_data = {
+        self.timeline_item_default_data = {
             "_folder_": "shots",
-            "_sequence_": self.sequence_name,
+            "_sequence_": self.timeline_name,
             "_track_": self.track_name,
             "_clip_": self.ti_name,
             "_trackIndex_": self.track_index,
@@ -487,8 +643,8 @@ class PublishClip:
     def _populate_attributes(self):
         """ Populate main object attributes. """
         # track item frame range and parent track name for vertical sync check
-        self.clip_in = int(self.track_item.GetStart())
-        self.clip_out = int(self.track_item.GetEnd())
+        self.clip_in = int(self.timeline_item.GetStart())
+        self.clip_out = int(self.timeline_item.GetEnd())
 
         # define ui inputs if non gui mode was used
         self.shot_num = self.ti_index
@@ -504,7 +660,7 @@ class PublishClip:
             "hierarchy", {}).get("value") or self.hierarchy_default
         self.hierarchy_data = self.ui_inputs.get(
             "hierarchyData", {}).get("value") or \
-            self.track_item_default_data.copy()
+            self.timeline_item_default_data.copy()
         self.count_from = self.ui_inputs.get(
             "countFrom", {}).get("value") or self.count_from_default
         self.count_steps = self.ui_inputs.get(
@@ -553,7 +709,7 @@ class PublishClip:
         self.count_steps *= self.rename_index
 
         hierarchy_formating_data = dict()
-        _data = self.track_item_default_data.copy()
+        _data = self.timeline_item_default_data.copy()
         if self.ui_inputs:
             # adding tag metadata from ui
             for _k, _v in self.ui_inputs.items():
@@ -652,7 +808,7 @@ class PublishClip:
         return {
             "entity_type": entity_type,
             "entity_name": self.hierarchy_data[key]["value"].format(
-                **self.track_item_default_data
+                **self.timeline_item_default_data
             )
         }
 

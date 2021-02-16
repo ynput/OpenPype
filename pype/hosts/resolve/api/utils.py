@@ -7,7 +7,7 @@ Resolve's tools for setting environment
 import sys
 import os
 import shutil
-
+from . import HOST_DIR
 from pype.api import Logger
 log = Logger().get_logger(__name__)
 
@@ -15,10 +15,10 @@ log = Logger().get_logger(__name__)
 def get_resolve_module():
     from pype.hosts import resolve
     # dont run if already loaded
-    if resolve.bmdvr:
+    if resolve.api.bmdvr:
         log.info(("resolve module is assigned to "
-                  f"`pype.hosts.resolve.bmdvr`: {resolve.bmdvr}"))
-        return resolve.bmdvr
+                  f"`pype.hosts.resolve.api.bmdvr`: {resolve.api.bmdvr}"))
+        return resolve.api.bmdvr
     try:
         """
         The PYTHONPATH needs to be set correctly for this import
@@ -71,12 +71,12 @@ def get_resolve_module():
     # assign global var and return
     bmdvr = bmd.scriptapp("Resolve")
     # bmdvf = bmd.scriptapp("Fusion")
-    resolve.bmdvr = bmdvr
-    resolve.bmdvf = bmdvr.Fusion()
+    resolve.api.bmdvr = bmdvr
+    resolve.api.bmdvf = bmdvr.Fusion()
     log.info(("Assigning resolve module to "
-              f"`pype.hosts.resolve.bmdvr`: {resolve.bmdvr}"))
+              f"`pype.hosts.resolve.api.bmdvr`: {resolve.api.bmdvr}"))
     log.info(("Assigning resolve module to "
-              f"`pype.hosts.resolve.bmdvf`: {resolve.bmdvf}"))
+              f"`pype.hosts.resolve.api.bmdvf`: {resolve.api.bmdvf}"))
 
 
 def _sync_utility_scripts(env=None):
@@ -93,7 +93,7 @@ def _sync_utility_scripts(env=None):
     us_env = env.get("RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR")
     us_dir = env.get("RESOLVE_UTILITY_SCRIPTS_DIR", "")
     us_paths = [os.path.join(
-        os.path.dirname(__file__),
+        HOST_DIR,
         "utility_scripts"
     )]
 
@@ -115,7 +115,10 @@ def _sync_utility_scripts(env=None):
         for s in os.listdir(us_dir):
             path = os.path.join(us_dir, s)
             log.info(f"Removing `{path}`...")
-            os.remove(path)
+            if os.path.isdir(path):
+                shutil.rmtree(path, onerror=None)
+            else:
+                os.remove(path)
 
     # copy scripts into Resolve's utility scripts dir
     for d, sl in scripts.items():
@@ -125,7 +128,13 @@ def _sync_utility_scripts(env=None):
             src = os.path.join(d, s)
             dst = os.path.join(us_dir, s)
             log.info(f"Copying `{src}` to `{dst}`...")
-            shutil.copy2(src, dst)
+            if os.path.isdir(src):
+                shutil.copytree(
+                    src, dst, symlinks=False,
+                    ignore=None, ignore_dangling_symlinks=False
+                )
+            else:
+                shutil.copy2(src, dst)
 
 
 def setup(env=None):
