@@ -588,8 +588,21 @@ class ProjectSettings(RootEntity):
     def change_project(self, project_name):
         if project_name == self._project_name:
             return
-        # TODO implement
-        self.log.warning("change_project not implemented yet!")
+
+        self._project_name = project_name
+        if project_name is None:
+            self.set_studio_state()
+            return
+
+        project_override_value = {
+            PROJECT_SETTINGS_KEY: get_project_settings_overrides(project_name),
+            PROJECT_ANATOMY_KEY: get_project_anatomy_overrides(project_name)
+        }
+        for key, child_obj in self.non_gui_children.items():
+            value = project_override_value.get(key, NOT_SET)
+            child_obj.update_project_values(value)
+
+        self.set_project_state()
 
     def _reset_values(self):
         default_values = {
@@ -612,6 +625,15 @@ class ProjectSettings(RootEntity):
         if not self.project_name:
             return
 
+        project_name = self.project_name
+        project_override_value = {
+            PROJECT_SETTINGS_KEY: get_project_settings_overrides(project_name),
+            PROJECT_ANATOMY_KEY: get_project_anatomy_overrides(project_name)
+        }
+        for key, child_obj in self.non_gui_children.items():
+            value = project_override_value.get(key, NOT_SET)
+            child_obj.update_project_values(value)
+
     def reset(self, new_state=None):
         """Discard changes and reset entit's values.
 
@@ -626,9 +648,6 @@ class ProjectSettings(RootEntity):
 
         if new_state is OverrideState.NOT_DEFINED:
             new_state = OverrideState.DEFAULTS
-
-        if new_state is OverrideState.PROJECT:
-            raise ValueError("System settings can't store poject overrides.")
 
         self._reset_values()
         self.set_override_state(new_state)
@@ -645,7 +664,7 @@ class ProjectSettings(RootEntity):
 
         self._validate_values_to_save(settings_value)
 
-        self.log.debug("Saving system settings: {}".format(
+        self.log.debug("Saving project settings: {}".format(
             json.dumps(settings_value, indent=4)
         ))
         project_settings = settings_value.get(PROJECT_SETTINGS_KEY) or {}
@@ -662,10 +681,5 @@ class ProjectSettings(RootEntity):
         pass
 
     def _save_project_values(self):
-        """System settings can't have project overrides.
-
-        Raises:
-            ValueError: Raise when called as entity can't use or store project
-                overrides.
-        """
-        self.log.warning("_save_project_values not implemented")
+        """Project overrides are saved same ways as studio overrides."""
+        self._save_studio_values()
