@@ -182,9 +182,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
         key_input = QtWidgets.QLineEdit(self)
         key_input.setObjectName("DictKey")
 
-        spacer_widget = SpacerWidget(self)
-        spacer_widget.setVisible(False)
-
         add_btn = create_add_btn(self)
         remove_btn = create_remove_btn(self)
 
@@ -194,7 +191,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
         layout.addWidget(add_btn, 0)
         layout.addWidget(remove_btn, 0)
         layout.addWidget(key_input, 0)
-        layout.addWidget(spacer_widget, 1)
 
         key_input.textChanged.connect(self._on_key_change)
         key_input.returnPressed.connect(self._on_enter_press)
@@ -203,7 +199,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
         remove_btn.clicked.connect(self.on_remove_clicked)
 
         self.key_input = key_input
-        self.spacer_widget = spacer_widget
         self.add_btn = add_btn
         self.remove_btn = remove_btn
 
@@ -213,7 +208,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.input_field = self.create_ui_for_entity(self.entity, self)
 
     def add_widget_to_layout(self, widget, label=None):
-        self.content_layout.addWidget(widget)
+        self.content_layout.addWidget(widget, 1)
         self.setFocusProxy(widget)
 
     def create_collapsible_ui(self):
