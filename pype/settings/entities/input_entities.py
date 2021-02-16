@@ -1,7 +1,7 @@
 import copy
 from abc import abstractmethod
 
-from .item_entities import ItemEntity
+from .base_entity import ItemEntity
 from .lib import (
     NOT_SET,
     OverrideState
