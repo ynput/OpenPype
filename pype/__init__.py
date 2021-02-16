@@ -18,8 +18,8 @@ PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
 # Global plugin paths
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "global", "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "global", "load")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 
 
 def import_wrapper(func):
