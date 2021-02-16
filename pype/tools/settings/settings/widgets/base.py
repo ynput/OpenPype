@@ -265,3 +265,28 @@ class GUIWidget(BaseWidget):
 
     def get_invalid(self):
         return []
+
+
+class MockUpWidget(BaseWidget):
+    allow_actions = False
+    child_invalid = False
+
+    def create_ui(self):
+        self.setObjectName("LabelWidget")
+
+        label = "Mockup widget for entity {}".format(self.entity.path)
+        label_widget = QtWidgets.QLabel(label, self)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 5, 0, 5)
+        layout.addWidget(label_widget)
+        self.entity_widget.add_widget_to_layout(self)
+
+    def set_entity_value(self):
+        return
+
+    def hierarchical_style_update(self):
+        pass
+
+    def get_invalid(self):
+        return []
