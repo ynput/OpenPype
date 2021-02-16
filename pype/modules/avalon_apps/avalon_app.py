@@ -49,12 +49,6 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
 
     def get_global_environments(self):
         """Avalon global environments for pype implementation."""
-        mongodb_data_dir = os.environ.get("AVALON_DB_DATA")
-        if not mongodb_data_dir:
-            mongodb_data_dir = os.path.join(
-                os.path.dirname(os.environ["PYPE_ROOT"]),
-                "mongo_db_data"
-            )
         return {
             # 100% hardcoded
             "AVALON_SCHEMA": self.schema_path,
@@ -72,11 +66,7 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
 
             # May be modifiable?
             # - mongo database name where projects are stored
-            "AVALON_DB": "avalon",
-
-            # Not even connected to Avalon
-            # TODO remove - pype's variable for local mongo
-            "AVALON_DB_DATA": mongodb_data_dir
+            "AVALON_DB": "avalon"
         }
 
     def tray_init(self):

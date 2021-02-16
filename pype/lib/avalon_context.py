@@ -1119,3 +1119,30 @@ class BuildWorkfile:
             )
 
         return output
+
+
+def get_creator_by_name(creator_name, case_sensitive=False):
+    """Find creator plugin by name.
+
+    Args:
+        creator_name (str): Name of creator class that should be returned.
+        case_sensitive (bool): Match of creator plugin name is case sensitive.
+            Set to `False` by default.
+
+    Returns:
+        Creator: Return first matching plugin or `None`.
+    """
+    # Lower input creator name if is not case sensitive
+    if not case_sensitive:
+        creator_name = creator_name.lower()
+
+    for creator_plugin in avalon.api.discover(avalon.api.Creator):
+        _creator_name = creator_plugin.__name__
+
+        # Lower creator plugin name if is not case sensitive
+        if not case_sensitive:
+            _creator_name = _creator_name.lower()
+
+        if _creator_name == creator_name:
+            return creator_plugin
+    return None

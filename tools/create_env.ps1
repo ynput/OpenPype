@@ -32,8 +32,21 @@ function Show-PSWarning() {
         Exit-WithCode 1
     }
 }
+
+
+function Install-Poetry() {
+    Write-Host ">>> " -NoNewline -ForegroundColor Green
+    Write-Host "Installing Poetry ... "
+    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
+    # add it to PATH
+    $env:PATH = "$($env:PATH);$($env:USERPROFILE)\.poetry\bin"
+}
+
+
 $current_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pype_root = (Get-Item $current_dir).parent.FullName
+
+Set-Location -Path $pype_root
 
 $art = @"
 
@@ -87,51 +100,25 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
 }
 Write-Host "OK [ $p ]" -ForegroundColor green
 
-# Create venv directory if not exist
-if (-not (Test-Path -PathType Container -Path "$($pype_root)\venv")) {
-    New-Item -ItemType Directory -Force -Path "$($pype_root)\venv"
+Write-Host ">>> " -NoNewline -ForegroundColor Green
+Write-Host "Reading Poetry ... " -NoNewline
+if (-not (Test-Path -PathType Container -Path "$($env:USERPROFILE)\.poetry\bin")) {
+    Write-Host "NOT FOUND" -ForegroundColor Yellow
+    Install-Poetry
+    Write-Host "INSTALLED" -ForegroundColor Cyan
+} else {
+    Write-Host "OK" -ForegroundColor Green
 }
 
-Write-Host "--- " -NoNewline -ForegroundColor yellow
-Write-Host "Cleaning venv directory ..."
-
-try {
-    Remove-Item -Recurse -Force "$($pype_root)\venv\*"
+if (-not (Test-Path -PathType Leaf -Path "$($pype_root)\poetry.lock")) {
+    Write-Host ">>> " -NoNewline -ForegroundColor green
+    Write-Host "Creating virtual environment."
+    & poetry install
+} else {
+    Write-Host ">>> " -NoNewline -ForegroundColor green
+    Write-Host "Updating virtual environment."
+    & poetry update
 }
-catch {
-    Write-Host "!!! " -NoNewline -ForegroundColor red
-    Write-Host "Cannot clean venv directory, possibly another process is using it."
-    Write-Host $_.Exception.Message
-    Exit-WithCode 1
-}
-
+Set-Location -Path $current_dir
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Creating virtual env ..."
-& python -m venv venv
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Entering venv ..."
-try {
-  . ("$($pype_root)\venv\Scripts\Activate.ps1")
-}
-catch {
-    Write-Host "!!! Failed to activate" -ForegroundColor red
-    Write-Host $_.Exception.Message
-    Exit-WithCode 1
-}
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Updating pip ..."
-& python -m pip install --upgrade pip
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Installing packages to new venv ..."
-& pip install -r "$($pype_root)\requirements.txt"
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Cleaning cache files ... " -NoNewline
-Get-ChildItem "$($pype_root)" -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
-Get-ChildItem "$($pype_root)" -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
-Write-Host "OK" -ForegroundColor green
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Deactivating venv ..."
-deactivate
+Write-Host "Virtual environment created. "

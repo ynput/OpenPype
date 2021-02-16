@@ -34,11 +34,10 @@ class CelactionPrelaunchHook(PreLaunchHook):
             "Software\\CelAction\\CelAction2D\\User Settings", 0,
             winreg.KEY_ALL_ACCESS)
 
-        # TODO: change to pype executable
-        pype_root_path = os.getenv("PYPE_SETUP_PATH")
-        path = os.path.join(pype_root_path, "pype.bat")
+        # TODO: this will need to be checked more thoroughly
+        pype_exe = os.getenv("PYPE_EXECUTABLE")
 
-        winreg.SetValueEx(hKey, "SubmitAppTitle", 0, winreg.REG_SZ, path)
+        winreg.SetValueEx(hKey, "SubmitAppTitle", 0, winreg.REG_SZ, pype_exe)
 
         parameters = [
             "launch",

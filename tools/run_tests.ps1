@@ -31,6 +31,7 @@ function Show-PSWarning() {
         Exit-WithCode 1
     }
 }
+
 $art = @"
 
 
@@ -95,26 +96,6 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
 Write-Host "OK [ $p ]" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Entering venv ..."
-try {
-  . ("$($pype_root)\venv\Scripts\Activate.ps1")
-}
-catch {
-  Write-Host "!!! Failed to activate" -ForegroundColor red
-  Write-Host ">>> " -NoNewline -ForegroundColor green
-  Write-Host "Trying to create env ..."
-  & "$($script_dir)\create_env.ps1"
-  try {
-    . ("$($pype_root)\venv\Scripts\Activate.ps1")
-  }
-  catch {
-      Write-Host "!!! Failed to activate" -ForegroundColor red
-      Write-Host $_.Exception.Message
-      Exit-WithCode 1
-  }
-}
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
 Get-ChildItem $pype_root -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
 Get-ChildItem $pype_root -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
@@ -124,11 +105,8 @@ Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Testing Pype ..."
 $original_pythonpath = $env:PYTHONPATH
 $env:PYTHONPATH="$($pype_root);$($env:PYTHONPATH)"
-pytest -x --capture=sys --print -W ignore::DeprecationWarning "$($pype_root)/tests"
+& poetry run pytest -x --capture=sys --print -W ignore::DeprecationWarning "$($pype_root)/tests"
 $env:PYTHONPATH = $original_pythonpath
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "deactivating venv ..."
-deactivate
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "restoring current directory"

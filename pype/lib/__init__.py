@@ -34,7 +34,8 @@ from .config import get_datetime_data
 
 from .env_tools import (
     env_value_to_bool,
-    get_paths_from_environ
+    get_paths_from_environ,
+    get_global_environments
 )
 
 from .python_module_tools import (
@@ -59,7 +60,9 @@ from .avalon_context import (
     save_workfile_data_to_doc,
     get_workfile_doc,
 
-    BuildWorkfile
+    BuildWorkfile,
+
+    get_creator_by_name
 )
 
 from .applications import (
@@ -67,8 +70,14 @@ from .applications import (
     ApplictionExecutableNotFound,
     ApplicationNotFound,
     ApplicationManager,
+
     PreLaunchHook,
-    PostLaunchHook
+    PostLaunchHook,
+
+    EnvironmentPrepData,
+    prepare_host_environments,
+    prepare_context_environments,
+    get_app_environments_for_context
 )
 
 from .plugin_tools import (
@@ -119,6 +128,7 @@ __all__ = [
 
     "env_value_to_bool",
     "get_paths_from_environ",
+    "get_global_environments",
 
     "modules_from_path",
     "recursive_bases_from_class",
@@ -141,12 +151,18 @@ __all__ = [
 
     "BuildWorkfile",
 
+    "get_creator_by_name",
+
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",
     "ApplicationNotFound",
     "ApplicationManager",
     "PreLaunchHook",
     "PostLaunchHook",
+    "EnvironmentPrepData",
+    "prepare_host_environments",
+    "prepare_context_environments",
+    "get_app_environments_for_context",
 
     "filter_pyblish_plugins",
     "source_hash",

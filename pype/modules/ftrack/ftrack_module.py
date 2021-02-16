@@ -63,7 +63,7 @@ class FtrackModule(
     def get_plugin_paths(self):
         """Ftrack plugin paths."""
         return {
-            "publish": [os.path.join(pype.PLUGINS_DIR, "ftrack", "publish")]
+            "publish": [os.path.join(FTRACK_MODULE_DIR, "plugins", "publish")]
         }
 
     def get_launch_hook_paths(self):

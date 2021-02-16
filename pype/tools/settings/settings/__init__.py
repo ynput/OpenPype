@@ -1,8 +1,12 @@
 from . import style
-from .widgets import MainWidget
+from .widgets import (
+    MainWidget,
+    ProjectListWidget
+)
 
 
 __all__ = (
     "style",
-    "MainWidget"
+    "MainWidget",
+    "ProjectListWidget"
 )

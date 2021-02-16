@@ -32,8 +32,10 @@ function Show-PSWarning() {
         Exit-WithCode 1
     }
 }
+
 $current_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pype_root = (Get-Item $current_dir).parent.FullName
+Set-Location -Path $pype_root
 
 $art = @"
 
@@ -88,22 +90,9 @@ if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
 Write-Host "OK [ $p ]" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Entering venv ..."
-try {
-  . ("$($pype_root)\venv\Scripts\Activate.ps1")
-}
-catch {
-    Write-Host "!!! Failed to activate" -ForegroundColor red
-    Write-Host $_.Exception.Message
-    Exit-WithCode 1
-}
-Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Generating zip from current sources ..."
 Write-Host "... " -NoNewline -ForegroundColor Magenta
 Write-Host "arguments: " -NoNewline -ForegroundColor Gray
 Write-Host $ARGS -ForegroundColor White
-& python "$($pype_root)\start.py" generate-zip $ARGS
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Deactivating venv ..."
-deactivate
+& poetry run python "$($pype_root)\start.py" generate-zip $ARGS
+Set-Location -Path $current_dir
