@@ -647,7 +647,7 @@ class ProjectSettings(RootEntity):
 
         Implementation of abstract method.
         """
-        return os.path.join(DEFAULTS_DIR, SYSTEM_SETTINGS_KEY)
+        return DEFAULTS_DIR
 
     def _save_studio_values(self):
         settings_value = self.settings_value()
