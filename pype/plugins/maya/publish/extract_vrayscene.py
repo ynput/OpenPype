@@ -59,16 +59,26 @@ class ExtractVrayscene(pype.api.Extractor):
         self.log.info("Writing: '%s'" % file_path)
         with avalon.maya.maintained_selection():
             if "*" not in instance.data["setMembers"]:
-                export_in_rs_layer(
-                    file_path,
-                    instance.data["setMembers"],
-                    export=lambda: cmds.file(
-                        file_path, type="V-Ray Scene", pr=True, es=True))
-
+                self.log.info(
+                    "Exporting: {}".format(instance.data["setMembers"]))
+                set_members = instance.data["setMembers"]
+                cmds.select(set_members, noExpand=True)
             else:
-                cmds.file(file_path, type="V-Ray Scene", pr=True, ea=True)
+                self.log.info("Exporting all ...")
+                set_members = cmds.ls(
+                    long=True, objectsOnly=True,
+                    geometry=True, lights=True, cameras=True)
+                cmds.select(set_members, noExpand=True)
 
-        # render_setup.switchToLayer(current_layer)
+            self.log.info("Appending layer name {}".format(layer_name))
+            set_members.append(layer_name)
+
+            export_in_rs_layer(
+                file_path,
+                set_members,
+                export=lambda: cmds.file(
+                    file_path, type="V-Ray Scene",
+                    pr=True, es=True, force=True))
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
