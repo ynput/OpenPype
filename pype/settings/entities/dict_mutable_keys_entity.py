@@ -459,7 +459,7 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Create new children
         for _key, _value in new_value.items():
-            child_obj = self.add_key(_key)
+            child_obj = self._add_key(_key)
             child_obj.update_default_value(_value)
             child_obj.set_override_state(self._override_state)
 
@@ -482,10 +482,8 @@ class DictMutableKeysEntity(EndpointEntity):
         if not self.has_project_override:
             return
 
-        using_overrides = False
         if self._has_studio_override:
             value = self._studio_override_value
-            using_overrides = True
         elif self.has_default_value:
             value = self._default_value
         else:
@@ -501,9 +499,9 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Create new children
         for _key, _value in new_value.items():
-            child_obj = self.add_key(_key)
+            child_obj = self._add_key(_key)
             child_obj.update_default_value(_value)
-            if using_overrides:
+            if self._has_studio_override:
                 child_obj.update_studio_value(_value)
             child_obj.set_override_state(self._override_state)
 
