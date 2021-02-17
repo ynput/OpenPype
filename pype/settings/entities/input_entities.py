@@ -52,10 +52,10 @@ class EndpointEntity(ItemEntity):
 
         if self.is_group:
             if self._override_state is OverrideState.STUDIO:
-                if not self._has_studio_override:
+                if not self.has_studio_override:
                     return NOT_SET
             elif self._override_state is OverrideState.PROJECT:
-                if not self._has_project_override:
+                if not self.has_project_override:
                     return NOT_SET
         return self._settings_value()
 
