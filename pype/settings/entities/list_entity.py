@@ -407,6 +407,9 @@ class ListEntity(EndpointEntity):
 
         self._ignore_child_changes = True
 
+        while self.children:
+            self.children.pop(0)
+
         for item in value:
             child_obj = self._add_new_item()
             child_obj.update_default_value(item)
