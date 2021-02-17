@@ -192,22 +192,6 @@ class DictImmutableKeysEntity(ItemEntity):
         return "/".join([self.path, result_key])
 
     def _update_current_metadata(self):
-        # Define if current metadata are avaialble for current override state
-        metadata = NOT_SET
-        if self._override_state is OverrideState.DEFAULTS:
-            metadata = {}
-
-        if self._override_state is OverrideState.PROJECT:
-            # metadata are NOT_SET if project overrides do not override this
-            # item
-            metadata = self._project_override_metadata
-
-        if (
-            self._override_state >= OverrideState.STUDIO
-            and metadata is NOT_SET
-        ):
-            metadata = self._studio_override_metadata
-
         current_metadata = {}
         for key, child_obj in self.non_gui_children.items():
             if self._override_state is OverrideState.DEFAULTS:
@@ -232,10 +216,18 @@ class DictImmutableKeysEntity(ItemEntity):
                 current_metadata[M_OVERRIDEN_KEY] = []
             current_metadata[M_OVERRIDEN_KEY].append(key)
 
-        if metadata is NOT_SET and not current_metadata:
-            self._metadata_are_modified = False
-        else:
-            self._metadata_are_modified = current_metadata != metadata
+        # Define if current metadata are avaialble for current override state
+        metadata = NOT_SET
+        if self._override_state is OverrideState.STUDIO:
+            metadata = self._studio_override_metadata
+
+        elif self._override_state is OverrideState.PROJECT:
+            metadata = self._project_override_metadata
+
+        if metadata is NOT_SET:
+            metadata = {}
+
+        self._metadata_are_modified = current_metadata != metadata
         self._current_metadata = current_metadata
 
     def set_override_state(self, state):
