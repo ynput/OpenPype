@@ -69,7 +69,7 @@ class BaseWidget(QtWidgets.QWidget):
     def _discard_changes_action(self, menu, actions_mapping):
         # TODO use better condition as unsaved changes may be caused due to
         #   changes in schema.
-        if not self.entity.has_unsaved_changes:
+        if not self.entity.can_discard_changes:
             return
 
         def discard_changes():
@@ -81,64 +81,38 @@ class BaseWidget(QtWidgets.QWidget):
         actions_mapping[action] = discard_changes
         menu.addAction(action)
 
-    def _set_project_override_action(self, menu, actions_mapping):
-        # Show only when project overrides are set
-        if not self.entity.root_item.is_in_project_state():
-            return
-
-        # Do not show on items under group item
-        if self.entity.group_item:
-            return
-
-        # Skip if already is marked to save project overrides
-        if self.entity.is_group and self.entity.has_studio_override:
-            return
-
-        action = QtWidgets.QAction("Add to project project override")
-        actions_mapping[action] = self.entity.add_to_project_override
-        menu.addAction(action)
-
-    def _remove_from_studio_default_action(self, menu, actions_mapping):
-        if not self.entity.root_item.is_in_studio_state():
-            return
-
-        if self.entity.has_studio_override:
-            def remove_from_studio_default():
-                self.ignore_input_changes.set_ignore(True)
-                self.entity.remove_from_studio_default()
-                self.ignore_input_changes.set_ignore(False)
-            action = QtWidgets.QAction("Remove from studio default")
-            actions_mapping[action] = remove_from_studio_default
-            menu.addAction(action)
-
     def _add_to_studio_default(self, menu, actions_mapping):
         """Set values as studio overrides."""
         # Skip if not in studio overrides
-        if not self.entity.root_item.is_in_studio_state():
-            return
-
-        # Skip if entity is under group
-        if self.entity.group_item:
-            return
-
-        # Skip if is group and any children is already marked with studio
-        #   overrides
-        if self.entity.is_group and self.entity.has_studio_override:
+        if not self.entity.can_add_to_studio_default:
             return
 
         action = QtWidgets.QAction("Add to studio default")
         actions_mapping[action] = self.entity.add_to_studio_default
         menu.addAction(action)
 
-    def _remove_project_override_action(self, menu, actions_mapping):
-        # Dynamic items can't have these actions
-        if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
+    def _remove_from_studio_default_action(self, menu, actions_mapping):
+        if not self.entity.can_remove_from_studio_default:
             return
 
-        if not self.entity.has_project_override:
+        def remove_from_studio_default():
+            self.ignore_input_changes.set_ignore(True)
+            self.entity.remove_from_studio_default()
+            self.ignore_input_changes.set_ignore(False)
+        action = QtWidgets.QAction("Remove from studio default")
+        actions_mapping[action] = remove_from_studio_default
+        menu.addAction(action)
+
+    def _add_to_project_override_action(self, menu, actions_mapping):
+        if not self.entity.can_add_to_project_override:
             return
 
-        if not self.entity.root_item.is_in_project_state():
+        action = QtWidgets.QAction("Add to project project override")
+        actions_mapping[action] = self.entity.add_to_project_override
+        menu.addAction(action)
+
+    def _remove_from_project_override_action(self, menu, actions_mapping):
+        if not self.entity.can_remove_from_project_override:
             return
 
         def remove_from_project_override():
@@ -165,8 +139,8 @@ class BaseWidget(QtWidgets.QWidget):
         self._discard_changes_action(menu, actions_mapping)
         self._add_to_studio_default(menu, actions_mapping)
         self._remove_from_studio_default_action(menu, actions_mapping)
-        self._set_project_override_action(menu, actions_mapping)
-        self._remove_project_override_action(menu, actions_mapping)
+        self._add_to_project_override_action(menu, actions_mapping)
+        self._remove_from_project_override_action(menu, actions_mapping)
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
