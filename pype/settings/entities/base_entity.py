@@ -481,7 +481,7 @@ class BaseItemEntity(BaseEntity):
             return False
 
         # Skip if already is marked to save project overrides
-        if self.is_group and self.has_studio_override:
+        if self.is_group and self.has_project_override:
             return False
         return True
 
