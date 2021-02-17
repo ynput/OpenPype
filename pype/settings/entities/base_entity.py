@@ -638,7 +638,7 @@ class ItemEntity(BaseItemEntity):
         pass
 
     @abstractmethod
-    def update_studio_values(self, parent_values):
+    def update_studio_value(self, parent_values):
         """Fill studio override values on startup or on refresh.
 
         Set studio value if is not set to NOT_SET, in that case studio
@@ -651,7 +651,7 @@ class ItemEntity(BaseItemEntity):
         pass
 
     @abstractmethod
-    def update_project_values(self, parent_values):
+    def update_project_value(self, parent_values):
         """Fill project override values on startup, refresh or project change.
 
         Set project value if is not set to NOT_SET, in that case project

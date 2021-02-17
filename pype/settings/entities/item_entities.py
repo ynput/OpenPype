@@ -156,11 +156,11 @@ class PathEntity(ItemEntity):
     def update_default_value(self, value):
         self.child_obj.update_default_value(value)
 
-    def update_project_values(self, value):
-        self.child_obj.update_project_values(value)
+    def update_project_value(self, value):
+        self.child_obj.update_project_value(value)
 
-    def update_studio_values(self, value):
-        self.child_obj.update_studio_values(value)
+    def update_studio_value(self, value):
+        self.child_obj.update_studio_value(value)
 
     def _discard_changes(self, *args):
         self.child_obj.discard_changes(*args)
@@ -435,25 +435,25 @@ class ListStrictEntity(ItemEntity):
             for idx, item_value in enumerate(value):
                 self.children[idx].update_default_value(item_value)
 
-    def update_studio_values(self, value):
+    def update_studio_value(self, value):
         value = self._check_update_value(value, "studio override")
         if value is NOT_SET:
             for child_obj in self.children:
-                child_obj.update_studio_values(value)
+                child_obj.update_studio_value(value)
 
         else:
             for idx, item_value in enumerate(value):
-                self.children[idx].update_studio_values(item_value)
+                self.children[idx].update_studio_value(item_value)
 
-    def update_project_values(self, value):
+    def update_project_value(self, value):
         value = self._check_update_value(value, "project override")
         if value is NOT_SET:
             for child_obj in self.children:
-                child_obj.update_project_values(value)
+                child_obj.update_project_value(value)
 
         else:
             for idx, item_value in enumerate(value):
-                self.children[idx].update_project_values(item_value)
+                self.children[idx].update_project_value(item_value)
 
     def reset_callbacks(self):
         super(ListStrictEntity, self).reset_callbacks()

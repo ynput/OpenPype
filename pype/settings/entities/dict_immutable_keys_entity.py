@@ -411,7 +411,7 @@ class DictImmutableKeysEntity(ItemEntity):
             child_value = value.get(key, NOT_SET)
             child_obj.update_default_value(child_value)
 
-    def update_studio_values(self, value):
+    def update_studio_value(self, value):
         """Update studio override values.
 
         Not an api method, should be called by parent.
@@ -422,7 +422,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
         if value is NOT_SET:
             for child_obj in self.non_gui_children.values():
-                child_obj.update_studio_values(value)
+                child_obj.update_studio_value(value)
             return
 
         value_keys = set(value.keys())
@@ -437,9 +437,9 @@ class DictImmutableKeysEntity(ItemEntity):
             )
         for key, child_obj in self.non_gui_children.items():
             child_value = value.get(key, NOT_SET)
-            child_obj.update_studio_values(child_value)
+            child_obj.update_studio_value(child_value)
 
-    def update_project_values(self, value):
+    def update_project_value(self, value):
         """Update project override values.
 
         Not an api method, should be called by parent.
@@ -450,7 +450,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
         if value is NOT_SET:
             for child_obj in self.non_gui_children.values():
-                child_obj.update_project_values(value)
+                child_obj.update_project_value(value)
             return
 
         value_keys = set(value.keys())
@@ -466,7 +466,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
         for key, child_obj in self.non_gui_children.items():
             child_value = value.get(key, NOT_SET)
-            child_obj.update_project_values(child_value)
+            child_obj.update_project_value(child_value)
 
     def _discard_changes(self, on_change_trigger):
         self._ignore_child_changes = True

@@ -198,13 +198,13 @@ class ListEntity(EndpointEntity):
             child_obj.update_default_value(item)
             if self._override_state is OverrideState.PROJECT:
                 if self.had_project_override:
-                    child_obj.update_project_values(item)
+                    child_obj.update_project_value(item)
                 elif self.had_studio_override:
-                    child_obj.update_studio_values(item)
+                    child_obj.update_studio_value(item)
 
             elif self._override_state is OverrideState.STUDIO:
                 if self.had_studio_override:
-                    child_obj.update_studio_values(item)
+                    child_obj.update_studio_value(item)
 
         for child_obj in self.children:
             child_obj.set_override_state(self._override_state)
@@ -337,13 +337,13 @@ class ListEntity(EndpointEntity):
             child_obj.update_default_value(item)
             if self._override_state is OverrideState.PROJECT:
                 if self.had_project_override:
-                    child_obj.update_project_values(item)
+                    child_obj.update_project_value(item)
                 elif self.had_studio_override:
-                    child_obj.update_studio_values(item)
+                    child_obj.update_studio_value(item)
 
             elif self._override_state is OverrideState.STUDIO:
                 if self.had_studio_override:
-                    child_obj.update_studio_values(item)
+                    child_obj.update_studio_value(item)
 
             child_obj.set_override_state(self._override_state)
 
@@ -411,7 +411,7 @@ class ListEntity(EndpointEntity):
             child_obj = self._add_new_item()
             child_obj.update_default_value(item)
             if self._has_studio_override:
-                child_obj.update_studio_values(item)
+                child_obj.update_studio_value(item)
             child_obj.set_override_state(self._override_state)
 
         self._ignore_child_changes = False

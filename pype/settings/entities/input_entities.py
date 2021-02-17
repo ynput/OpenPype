@@ -69,12 +69,12 @@ class EndpointEntity(ItemEntity):
         self._default_value = value
         self.has_default_value = value is not NOT_SET
 
-    def update_studio_values(self, value):
+    def update_studio_value(self, value):
         value = self._check_update_value(value, "studio override")
         self._studio_override_value = value
         self.had_studio_override = bool(value is not NOT_SET)
 
-    def update_project_values(self, value):
+    def update_project_value(self, value):
         value = self._check_update_value(value, "project override")
         self._project_override_value = value
         self.had_project_override = bool(value is not NOT_SET)
@@ -516,14 +516,14 @@ class RawJsonEntity(InputEntity):
         self._default_value = value
         self.default_metadata = metadata
 
-    def update_studio_values(self, value):
+    def update_studio_value(self, value):
         value = self._check_update_value(value, "studio override")
         self.had_studio_override = value is not NOT_SET
         value, metadata = self._prepare_value(value)
         self._studio_override_value = value
         self.studio_override_metadata = metadata
 
-    def update_project_values(self, value):
+    def update_project_value(self, value):
         value = self._check_update_value(value, "project override")
         self.had_project_override = value is not NOT_SET
         value, metadata = self._prepare_value(value)

@@ -292,9 +292,9 @@ class DictMutableKeysEntity(EndpointEntity):
             child_obj.update_default_value(_value)
             if using_overrides:
                 if state is OverrideState.STUDIO:
-                    child_obj.update_studio_values(_value)
+                    child_obj.update_studio_value(_value)
                 else:
-                    child_obj.update_project_values(_value)
+                    child_obj.update_project_value(_value)
 
             label = metadata_labels.get(_key)
             if label:
@@ -421,14 +421,14 @@ class DictMutableKeysEntity(EndpointEntity):
         self._default_value = value
         self._default_metadata = metadata
 
-    def update_studio_values(self, value):
+    def update_studio_value(self, value):
         value = self._check_update_value(value, "studio override")
         value, metadata = self._prepare_value(value)
         self._studio_override_value = value
         self._studio_override_metadata = metadata
         self.had_studio_override = value is not NOT_SET
 
-    def update_project_values(self, value):
+    def update_project_value(self, value):
         value = self._check_update_value(value, "project override")
         value, metadata = self._prepare_value(value)
         self._project_override_value = value

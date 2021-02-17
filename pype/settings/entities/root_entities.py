@@ -468,7 +468,7 @@ class SystemSettings(RootEntity):
         studio_overrides = get_studio_system_settings_overrides()
         for key, child_obj in self.non_gui_children.items():
             value = studio_overrides.get(key, NOT_SET)
-            child_obj.update_studio_values(value)
+            child_obj.update_studio_value(value)
 
     def reset(self, new_state=None):
         """Discard changes and reset entit's values.
@@ -600,7 +600,7 @@ class ProjectSettings(RootEntity):
         }
         for key, child_obj in self.non_gui_children.items():
             value = project_override_value.get(key, NOT_SET)
-            child_obj.update_project_values(value)
+            child_obj.update_project_value(value)
 
         self.set_project_state()
 
@@ -620,7 +620,7 @@ class ProjectSettings(RootEntity):
 
         for key, child_obj in self.non_gui_children.items():
             value = studio_overrides.get(key, NOT_SET)
-            child_obj.update_studio_values(value)
+            child_obj.update_studio_value(value)
 
         if not self.project_name:
             return
@@ -632,7 +632,7 @@ class ProjectSettings(RootEntity):
         }
         for key, child_obj in self.non_gui_children.items():
             value = project_override_value.get(key, NOT_SET)
-            child_obj.update_project_values(value)
+            child_obj.update_project_value(value)
 
     def reset(self, new_state=None):
         """Discard changes and reset entit's values.
