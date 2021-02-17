@@ -55,6 +55,7 @@ print(system_settings["general"]["studio_name"].value)
 
 from .exceptions import (
     DefaultsNotDefined,
+    StudioDefaultsNotDefined,
     InvalidValueType,
     SchemaMissingFileInfo,
     SchemeGroupHierarchyBug,
@@ -107,6 +108,7 @@ from .anatomy_entities import (
 
 __all__ = (
     "DefaultsNotDefined",
+    "StudioDefaultsNotDefined",
     "InvalidValueType",
     "SchemaMissingFileInfo",
     "SchemeGroupHierarchyBug",

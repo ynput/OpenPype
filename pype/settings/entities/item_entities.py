@@ -2,7 +2,10 @@ from .lib import (
     NOT_SET,
     OverrideState
 )
-from .exceptions import DefaultsNotDefined
+from .exceptions import (
+    DefaultsNotDefined,
+    StudioDefaultsNotDefined
+)
 from .base_entity import ItemEntity
 
 
@@ -345,10 +348,15 @@ class ListStrictEntity(ItemEntity):
             return
 
         self._override_state = state
-        if not self.has_default_value and state > OverrideState.DEFAULTS:
-            # Ignore if is dynamic item and use default in that case
-            if not self.is_dynamic_item and not self.is_in_dynamic_item:
-                raise DefaultsNotDefined(self)
+        # Ignore if is dynamic item and use default in that case
+        if not self.is_dynamic_item and not self.is_in_dynamic_item:
+            if state > OverrideState.DEFAULTS:
+                if not self.has_default_value:
+                    raise DefaultsNotDefined(self)
+
+            elif state > OverrideState.STUDIO:
+                if not self.had_studio_override:
+                    raise StudioDefaultsNotDefined(self)
 
         for child_entity in self.children:
             child_entity.set_override_state(state)

@@ -617,6 +617,9 @@ class ProjectListWidget(QtWidgets.QWidget):
             return None
         return self.current_project
 
+    def select_default_project(self):
+        self.select_project(self.default)
+
     def select_project(self, project_name):
         model = self.project_list.model()
         found_items = model.findItems(project_name)

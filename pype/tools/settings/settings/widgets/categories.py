@@ -20,7 +20,8 @@ from pype.settings.entities import (
     PathInput,
     RawJsonEntity,
 
-    DefaultsNotDefined
+    DefaultsNotDefined,
+    StudioDefaultsNotDefined
 )
 
 from pype.settings.lib import get_system_settings
@@ -452,6 +453,9 @@ class ProjectWidget(SettingsCategoryWidget):
             self.modify_defaults_checkbox.setChecked(True)
             self.modify_defaults_checkbox.setEnabled(False)
             self.project_list_widget.setEnabled(False)
+
+        except StudioDefaultsNotDefined:
+            self.select_default_project()
 
     def _on_project_change(self):
         project_name = self.project_list_widget.project_name()
