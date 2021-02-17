@@ -14,12 +14,12 @@ log = logging.getLogger(__name__)
 
 PROJECT_PLUGINS_PATH = os.environ.get("PYPE_PROJECT_PLUGINS")
 STUDIO_PLUGINS_PATH = os.environ.get("PYPE_STUDIO_PLUGINS")
-PACKAGE_DIR = os.path.dirname(__file__)
+PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
 # Global plugin paths
-PUBLISH_PATH = os.path.join(PLUGINS_DIR, "global", "publish")
-LOAD_PATH = os.path.join(PLUGINS_DIR, "global", "load")
+PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 
 
 def import_wrapper(func):

@@ -5,17 +5,6 @@
         "icon": "{}/app_icons/maya.png",
         "host_name": "maya",
         "environment": {
-            "__environment_keys__": {
-                "maya": [
-                    "PYTHONPATH",
-                    "MAYA_DISABLE_CLIC_IPM",
-                    "MAYA_DISABLE_CIP",
-                    "MAYA_DISABLE_CER",
-                    "PYMEL_SKIP_MEL_INIT",
-                    "LC_ALL",
-                    "PYPE_LOG_NO_COLORS"
-                ]
-            },
             "PYTHONPATH": [
                 "{PYPE_ROOT}/pype/hosts/maya/startup",
                 "{PYPE_REPOS_ROOT}/avalon-core/setup/maya",
@@ -27,7 +16,18 @@
             "MAYA_DISABLE_CER": "Yes",
             "PYMEL_SKIP_MEL_INIT": "Yes",
             "LC_ALL": "C",
-            "PYPE_LOG_NO_COLORS": "Yes"
+            "PYPE_LOG_NO_COLORS": "Yes",
+            "__environment_keys__": {
+                "maya": [
+                    "PYTHONPATH",
+                    "MAYA_DISABLE_CLIC_IPM",
+                    "MAYA_DISABLE_CIP",
+                    "MAYA_DISABLE_CER",
+                    "PYMEL_SKIP_MEL_INIT",
+                    "LC_ALL",
+                    "PYPE_LOG_NO_COLORS"
+                ]
+            }
         },
         "variants": {
             "maya_2020": {
@@ -51,12 +51,12 @@
                     ]
                 },
                 "environment": {
+                    "MAYA_VERSION": "2020",
                     "__environment_keys__": {
                         "maya_2020": [
                             "MAYA_VERSION"
                         ]
-                    },
-                    "MAYA_VERSION": "2020"
+                    }
                 }
             },
             "maya_2019": {
@@ -80,12 +80,12 @@
                     ]
                 },
                 "environment": {
+                    "MAYA_VERSION": "2019",
                     "__environment_keys__": {
                         "maya_2019": [
                             "MAYA_VERSION"
                         ]
-                    },
-                    "MAYA_VERSION": "2019"
+                    }
                 }
             },
             "maya_2018": {
@@ -109,12 +109,12 @@
                     ]
                 },
                 "environment": {
+                    "MAYA_VERSION": "2018",
                     "__environment_keys__": {
                         "maya_2018": [
                             "MAYA_VERSION"
                         ]
-                    },
-                    "MAYA_VERSION": "2018"
+                    }
                 }
             }
         }
@@ -125,18 +125,6 @@
         "icon": "{}/app_icons/maya.png",
         "host_name": "maya",
         "environment": {
-            "__environment_keys__": {
-                "mayabatch": [
-                    "PYTHONPATH",
-                    "MAYA_DISABLE_CLIC_IPM",
-                    "MAYA_DISABLE_CIP",
-                    "MAYA_DISABLE_CER",
-                    "PYMEL_SKIP_MEL_INIT",
-                    "LC_ALL",
-                    "PYPE_LOG_NO_COLORS",
-                    "MAYA_TEST"
-                ]
-            },
             "PYTHONPATH": [
                 "{PYPE_REPOS_ROOT}/avalon-core/setup/maya",
                 "{PYPE_REPOS_ROOT}/maya-look-assigner",
@@ -149,7 +137,19 @@
             "PYMEL_SKIP_MEL_INIT": "Yes",
             "LC_ALL": "C",
             "PYPE_LOG_NO_COLORS": "Yes",
-            "MAYA_TEST": "{MAYA_VERSION}"
+            "MAYA_TEST": "{MAYA_VERSION}",
+            "__environment_keys__": {
+                "mayabatch": [
+                    "PYTHONPATH",
+                    "MAYA_DISABLE_CLIC_IPM",
+                    "MAYA_DISABLE_CIP",
+                    "MAYA_DISABLE_CER",
+                    "PYMEL_SKIP_MEL_INIT",
+                    "LC_ALL",
+                    "PYPE_LOG_NO_COLORS",
+                    "MAYA_TEST"
+                ]
+            }
         },
         "variants": {
             "mayabatch_2020": {
@@ -168,12 +168,12 @@
                     "linux": []
                 },
                 "environment": {
+                    "MAYA_VERSION": "2020",
                     "__environment_keys__": {
                         "mayabatch_2020": [
                             "MAYA_VERSION"
                         ]
-                    },
-                    "MAYA_VERSION": "2020"
+                    }
                 }
             },
             "mayabatch_2019": {
@@ -192,12 +192,12 @@
                     "linux": []
                 },
                 "environment": {
+                    "MAYA_VERSION": "2019",
                     "__environment_keys__": {
                         "mayabatch_2019": [
                             "MAYA_VERSION"
                         ]
-                    },
-                    "MAYA_VERSION": "2019"
+                    }
                 }
             },
             "mayabatch_2018": {
@@ -216,12 +216,12 @@
                     "linux": []
                 },
                 "environment": {
+                    "MAYA_VERSION": "2018",
                     "__environment_keys__": {
                         "mayabatch_2018": [
                             "MAYA_VERSION"
                         ]
-                    },
-                    "MAYA_VERSION": "2018"
+                    }
                 }
             }
         }
@@ -232,13 +232,6 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "__environment_keys__": {
-                "nuke": [
-                    "NUKE_PATH",
-                    "PATH",
-                    "LOGLEVEL"
-                ]
-            },
             "NUKE_PATH": [
                 "{PYPE_REPOS_ROOT}/avalon-core/setup/nuke/nuke_path",
                 "{PYPE_ROOT}/pype/hosts/nuke/startup",
@@ -247,7 +240,14 @@
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
             },
-            "LOGLEVEL": "DEBUG"
+            "LOGLEVEL": "DEBUG",
+            "__environment_keys__": {
+                "nuke": [
+                    "NUKE_PATH",
+                    "PATH",
+                    "LOGLEVEL"
+                ]
+            }
         },
         "variants": {
             "nuke_12.2": {
@@ -357,13 +357,6 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "__environment_keys__": {
-                "nukex": [
-                    "NUKE_PATH",
-                    "PATH",
-                    "LOGLEVEL"
-                ]
-            },
             "NUKE_PATH": [
                 "{PYPE_REPOS_ROOT}/avalon-core/setup/nuke/nuke_path",
                 "{PYPE_ROOT}/pype/hosts/nuke/startup",
@@ -372,7 +365,14 @@
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
             },
-            "LOGLEVEL": "DEBUG"
+            "LOGLEVEL": "DEBUG",
+            "__environment_keys__": {
+                "nukex": [
+                    "NUKE_PATH",
+                    "PATH",
+                    "LOGLEVEL"
+                ]
+            }
         },
         "variants": {
             "nukex_12.2": {
@@ -482,15 +482,6 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "hiero",
         "environment": {
-            "__environment_keys__": {
-                "nukestudio": [
-                    "HIERO_PLUGIN_PATH",
-                    "PATH",
-                    "WORKFILES_STARTUP",
-                    "TAG_ASSETBUILD_STARTUP",
-                    "LOGLEVEL"
-                ]
-            },
             "HIERO_PLUGIN_PATH": [
                 "{PYPE_ROOT}/pype/hosts/hiero/startup"
             ],
@@ -499,7 +490,16 @@
             },
             "WORKFILES_STARTUP": "0",
             "TAG_ASSETBUILD_STARTUP": "0",
-            "LOGLEVEL": "DEBUG"
+            "LOGLEVEL": "DEBUG",
+            "__environment_keys__": {
+                "nukestudio": [
+                    "HIERO_PLUGIN_PATH",
+                    "PATH",
+                    "WORKFILES_STARTUP",
+                    "TAG_ASSETBUILD_STARTUP",
+                    "LOGLEVEL"
+                ]
+            }
         },
         "variants": {
             "nukestudio_12.2": {
@@ -604,15 +604,6 @@
         "icon": "{}/app_icons/hiero.png",
         "host_name": "hiero",
         "environment": {
-            "__environment_keys__": {
-                "hiero": [
-                    "HIERO_PLUGIN_PATH",
-                    "PATH",
-                    "WORKFILES_STARTUP",
-                    "TAG_ASSETBUILD_STARTUP",
-                    "LOGLEVEL"
-                ]
-            },
             "HIERO_PLUGIN_PATH": [
                 "{PYPE_ROOT}/pype/hosts/hiero/startup"
             ],
@@ -621,7 +612,16 @@
             },
             "WORKFILES_STARTUP": "0",
             "TAG_ASSETBUILD_STARTUP": "0",
-            "LOGLEVEL": "DEBUG"
+            "LOGLEVEL": "DEBUG",
+            "__environment_keys__": {
+                "hiero": [
+                    "HIERO_PLUGIN_PATH",
+                    "PATH",
+                    "WORKFILES_STARTUP",
+                    "TAG_ASSETBUILD_STARTUP",
+                    "LOGLEVEL"
+                ]
+            }
         },
         "variants": {
             "hiero_12.2": {
@@ -731,8 +731,37 @@
         "icon": "{}/app_icons/fusion.png",
         "host_name": "fusion",
         "environment": {
+            "FUSION_UTILITY_SCRIPTS_SOURCE_DIR": [],
+            "FUSION_UTILITY_SCRIPTS_DIR": {
+                "windows": "{PROGRAMDATA}/Blackmagic Design/Fusion/Scripts/Comp",
+                "darvin": "/Library/Application Support/Blackmagic Design/Fusion/Scripts/Comp",
+                "linux": "/opt/Fusion/Scripts/Comp"
+            },
+            "PYTHON36": {
+                "windows": "{LOCALAPPDATA}/Programs/Python/Python36",
+                "darvin": "~/Library/Python/3.6/bin",
+                "linux": "/opt/Python/3.6/bin"
+            },
+            "PYTHONPATH": [
+                "{PYTHON36}/Lib/site-packages",
+                "{VIRTUAL_ENV}/Lib/site-packages",
+                "{PYTHONPATH}"
+            ],
+            "PATH": [
+                "{PYTHON36}",
+                "{PYTHON36}/Scripts",
+                "{PATH}"
+            ],
+            "PYPE_LOG_NO_COLORS": "Yes",
             "__environment_keys__": {
-                "fusion": []
+                "fusion": [
+                    "FUSION_UTILITY_SCRIPTS_SOURCE_DIR",
+                    "FUSION_UTILITY_SCRIPTS_DIR",
+                    "PYTHON36",
+                    "PYTHONPATH",
+                    "PATH",
+                    "PYPE_LOG_NO_COLORS"
+                ]
             }
         },
         "variants": {
@@ -758,7 +787,12 @@
                 "variant_label": "9",
                 "icon": "",
                 "executables": {
-                    "windows": [],
+                    "windows": [
+                        [
+                            "C:\\Program Files\\Blackmagic Design\\Fusion 9\\Fusion.exe",
+                            ""
+                        ]
+                    ],
                     "darwin": [],
                     "linux": []
                 },
@@ -776,20 +810,6 @@
         "icon": "{}/app_icons/resolve.png",
         "host_name": "resolve",
         "environment": {
-            "__environment_keys__": {
-                "resolve": [
-                    "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR",
-                    "RESOLVE_SCRIPT_API",
-                    "RESOLVE_SCRIPT_LIB",
-                    "RESOLVE_UTILITY_SCRIPTS_DIR",
-                    "PYTHON36_RESOLVE",
-                    "PYTHONPATH",
-                    "PATH",
-                    "PRE_PYTHON_SCRIPT",
-                    "PYPE_LOG_NO_COLORS",
-                    "RESOLVE_DEV"
-                ]
-            },
             "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR": [],
             "RESOLVE_SCRIPT_API": {
                 "windows": "{PROGRAMDATA}/Blackmagic Design/DaVinci Resolve/Support/Developer/Scripting",
@@ -825,7 +845,21 @@
             ],
             "PRE_PYTHON_SCRIPT": "{PYPE_ROOT}/pype/resolve/preload_console.py",
             "PYPE_LOG_NO_COLORS": "True",
-            "RESOLVE_DEV": "True"
+            "RESOLVE_DEV": "True",
+            "__environment_keys__": {
+                "resolve": [
+                    "RESOLVE_UTILITY_SCRIPTS_SOURCE_DIR",
+                    "RESOLVE_SCRIPT_API",
+                    "RESOLVE_SCRIPT_LIB",
+                    "RESOLVE_UTILITY_SCRIPTS_DIR",
+                    "PYTHON36_RESOLVE",
+                    "PYTHONPATH",
+                    "PATH",
+                    "PRE_PYTHON_SCRIPT",
+                    "PYPE_LOG_NO_COLORS",
+                    "RESOLVE_DEV"
+                ]
+            }
         },
         "variants": {
             "resolve_16": {
@@ -857,12 +891,6 @@
         "icon": "{}/app_icons/houdini.png",
         "host_name": "houdini",
         "environment": {
-            "__environment_keys__": {
-                "houdini": [
-                    "HOUDINI_PATH",
-                    "HOUDINI_MENU_PATH"
-                ]
-            },
             "HOUDINI_PATH": {
                 "darwin": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
                 "linux": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
@@ -872,6 +900,12 @@
                 "darwin": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
                 "linux": "{PYPE_ROOT}/pype/hosts/houdini/startup:&",
                 "windows": "{PYPE_ROOT}/pype/hosts/houdini/startup;&"
+            },
+            "__environment_keys__": {
+                "houdini": [
+                    "HOUDINI_PATH",
+                    "HOUDINI_MENU_PATH"
+                ]
             }
         },
         "variants": {
@@ -915,19 +949,19 @@
         "icon": "{}/app_icons/blender.png",
         "host_name": "blender",
         "environment": {
+            "BLENDER_USER_SCRIPTS": "{PYPE_REPOS_ROOT}/avalon-core/setup/blender",
+            "PYTHONPATH": [
+                "{PYPE_REPOS_ROOT}/avalon-core/setup/blender",
+                "{PYTHONPATH}"
+            ],
+            "CREATE_NEW_CONSOLE": "yes",
             "__environment_keys__": {
                 "blender": [
                     "BLENDER_USER_SCRIPTS",
                     "PYTHONPATH",
                     "CREATE_NEW_CONSOLE"
                 ]
-            },
-            "BLENDER_USER_SCRIPTS": "{PYPE_REPOS_ROOT}/avalon-core/setup/blender",
-            "PYTHONPATH": [
-                "{PYPE_REPOS_ROOT}/avalon-core/setup/blender",
-                "{PYTHONPATH}"
-            ],
-            "CREATE_NEW_CONSOLE": "yes"
+            }
         },
         "variants": {
             "blender_2.90": {
@@ -980,14 +1014,14 @@
         "icon": "{}/app_icons/harmony.png",
         "host_name": "harmony",
         "environment": {
+            "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1",
+            "PYBLISH_GUI_ALWAYS_EXEC": "1",
             "__environment_keys__": {
                 "harmony": [
                     "AVALON_HARMONY_WORKFILES_ON_LAUNCH",
                     "PYBLISH_GUI_ALWAYS_EXEC"
                 ]
-            },
-            "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1",
-            "PYBLISH_GUI_ALWAYS_EXEC": "1"
+            }
         },
         "variants": {
             "harmony_20": {
@@ -1035,12 +1069,12 @@
         "icon": "{}/app_icons/tvpaint.png",
         "host_name": "tvpaint",
         "environment": {
+            "PYPE_LOG_NO_COLORS": "True",
             "__environment_keys__": {
                 "tvpaint": [
                     "PYPE_LOG_NO_COLORS"
                 ]
-            },
-            "PYPE_LOG_NO_COLORS": "True"
+            }
         },
         "variants": {
             "tvpaint_Animation 11 (64bits)": {
@@ -1097,6 +1131,10 @@
         "icon": "{}/app_icons/photoshop.png",
         "host_name": "photoshop",
         "environment": {
+            "AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH": "1",
+            "PYPE_LOG_NO_COLORS": "Yes",
+            "WEBSOCKET_URL": "ws://localhost:8099/ws/",
+            "WORKFILES_SAVE_AS": "Yes",
             "__environment_keys__": {
                 "photoshop": [
                     "AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH",
@@ -1104,11 +1142,7 @@
                     "WEBSOCKET_URL",
                     "WORKFILES_SAVE_AS"
                 ]
-            },
-            "AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH": "1",
-            "PYPE_LOG_NO_COLORS": "Yes",
-            "WEBSOCKET_URL": "ws://localhost:8099/ws/",
-            "WORKFILES_SAVE_AS": "Yes"
+            }
         },
         "variants": {
             "photoshop_2020": {
@@ -1161,6 +1195,10 @@
         "icon": "{}/app_icons/aftereffects.png",
         "host_name": "aftereffects",
         "environment": {
+            "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH": "1",
+            "PYPE_LOG_NO_COLORS": "Yes",
+            "WEBSOCKET_URL": "ws://localhost:8097/ws/",
+            "WORKFILES_SAVE_AS": "Yes",
             "__environment_keys__": {
                 "aftereffects": [
                     "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH",
@@ -1168,11 +1206,7 @@
                     "WEBSOCKET_URL",
                     "WORKFILES_SAVE_AS"
                 ]
-            },
-            "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH": "1",
-            "PYPE_LOG_NO_COLORS": "Yes",
-            "WEBSOCKET_URL": "ws://localhost:8097/ws/",
-            "WORKFILES_SAVE_AS": "Yes"
+            }
         },
         "variants": {
             "aftereffects_2020": {
@@ -1225,12 +1259,12 @@
         "icon": "app_icons/celaction.png",
         "host_name": "celaction",
         "environment": {
+            "CELACTION_TEMPLATE": "{PYPE_ROOT}/pype/hosts/celaction/celaction_template_scene.scn",
             "__environment_keys__": {
                 "celaction": [
                     "CELACTION_TEMPLATE"
                 ]
-            },
-            "CELACTION_TEMPLATE": "{PYPE_ROOT}/pype/hosts/celaction/celaction_template_scene.scn"
+            }
         },
         "variants": {
             "celation_Local": {
@@ -1271,16 +1305,16 @@
         "icon": "{}/app_icons/ue4.png'",
         "host_name": "unreal",
         "environment": {
+            "AVALON_UNREAL_PLUGIN": "{PYPE_REPOS_ROOT}/avalon-unreal-integration",
+            "PYPE_LOG_NO_COLORS": "True",
+            "QT_PREFERRED_BINDING": "PySide",
             "__environment_keys__": {
                 "unreal": [
                     "AVALON_UNREAL_PLUGIN",
                     "PYPE_LOG_NO_COLORS",
                     "QT_PREFERRED_BINDING"
                 ]
-            },
-            "AVALON_UNREAL_PLUGIN": "{PYPE_REPOS_ROOT}/avalon-unreal-integration",
-            "PYPE_LOG_NO_COLORS": "True",
-            "QT_PREFERRED_BINDING": "PySide"
+            }
         },
         "variants": {
             "unreal_4.24": {
