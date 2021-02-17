@@ -87,6 +87,27 @@ class DictMutableKeysEntity(EndpointEntity):
         if new_key == old_key:
             return
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
+        self._on_key_change()
+
+    def _on_key_change(self):
+        key_changed = False
+        for key, child_id in self.initial_child_id_by_key.items():
+            child_entity = self.children_by_key.get(key)
+            if child_entity is None:
+                key_changed = True
+                break
+
+            if child_entity.id != child_id:
+                key_changed = True
+                break
+
+        if not key_changed:
+            return
+
+        if self._override_state is OverrideState.STUDIO:
+            self._has_studio_override = True
+        elif self._override_state is OverrideState.PROJECT:
+            self._has_project_override = True
         self.on_change()
 
     def _add_key(self, key):
@@ -146,6 +167,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self._project_override_metadata = {}
 
         self.initial_value = None
+        self.initial_child_id_by_key = {}
 
         self._ignore_child_changes = False
 
@@ -217,10 +239,6 @@ class DictMutableKeysEntity(EndpointEntity):
         if self._ignore_child_changes:
             return
 
-        if self._override_state is OverrideState.STUDIO:
-            self._has_studio_override = self._child_has_studio_override
-        elif self._override_state is OverrideState.PROJECT:
-            self._has_project_override = self._child_has_project_override
         self.on_change()
 
     def _metadata_for_current_state(self):
@@ -287,27 +305,30 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
-            child_obj = self.children_by_key.pop(key)
+            self.children_by_key.pop(key)
 
         # Create new children
         children_label_by_id = {}
+        initial_child_id_by_key = {}
         metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
         for _key, _value in new_value.items():
-            child_obj = self._add_key(_key)
-            child_obj.update_default_value(_value)
+            child_entity = self._add_key(_key)
+            child_entity.update_default_value(_value)
             if using_project_overrides:
-                child_obj.update_project_value(_value)
+                child_entity.update_project_value(_value)
             elif using_studio_overrides:
-                child_obj.update_studio_value(_value)
+                child_entity.update_studio_value(_value)
 
             label = metadata_labels.get(_key)
             if label:
-                children_label_by_id[child_obj.id] = label
-            child_obj.set_override_state(state)
+                children_label_by_id[child_entity.id] = label
+            initial_child_id_by_key[_key] = child_entity.id
+            child_entity.set_override_state(state)
 
         self.children_label_by_id = children_label_by_id
 
         self.initial_value = self.settings_value()
+        self.initial_child_id_by_key = initial_child_id_by_key
 
     def children_key_by_id(self):
         return {
@@ -331,8 +352,9 @@ class DictMutableKeysEntity(EndpointEntity):
         children_key_by_id = self.children_key_by_id()
         label_metadata = {}
         for child_id, label in self.children_label_by_id.items():
-            key = children_key_by_id[child_id]
-            label_metadata[key] = label
+            key = children_key_by_id.get(child_id)
+            if key:
+                label_metadata[key] = label
 
         output[M_DYNAMIC_KEY_LABEL] = label_metadata
 
