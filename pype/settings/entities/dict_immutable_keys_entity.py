@@ -246,24 +246,6 @@ class DictImmutableKeysEntity(ItemEntity):
 
         # Change has/had override states
         self._override_state = state
-        if state is OverrideState.NOT_DEFINED:
-            pass
-
-        elif state is OverrideState.DEFAULTS:
-            self.has_default_value = self._default_value is not NOT_SET
-
-        elif state is OverrideState.STUDIO:
-            self.had_studio_override = (
-                self._studio_override_metadata is not NOT_SET
-            )
-            self._has_studio_override = self.had_studio_override
-
-        elif state is OverrideState.PROJECT:
-            self._has_studio_override = self.had_studio_override
-            self.had_project_override = (
-                self._project_override_metadata is not NOT_SET
-            )
-            self._has_project_override = self.had_project_override
 
         for child_obj in self.non_gui_children.values():
             child_obj.set_override_state(state)
@@ -282,19 +264,6 @@ class DictImmutableKeysEntity(ItemEntity):
         if self._metadata_are_modified:
             return True
 
-        if self.is_group or self.group_item:
-            if (
-                self._override_state is OverrideState.PROJECT
-                and self._has_project_override != self.had_project_override
-            ):
-                return True
-
-            elif (
-                self._override_state is OverrideState.STUDIO
-                and self._has_studio_override != self.had_studio_override
-            ):
-                return True
-
         return self._child_has_unsaved_changes
 
     @property
@@ -306,9 +275,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
     @property
     def has_studio_override(self):
-        if not self.is_group and not self.group_item:
-            return self._child_has_studio_override
-        return self._has_studio_override or self._child_has_studio_override
+        return self._child_has_studio_override
 
     @property
     def _child_has_studio_override(self):
@@ -320,9 +287,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
     @property
     def has_project_override(self):
-        if not self.is_group and not self.group_item:
-            return self._child_has_project_override
-        return self._has_project_override or self._child_has_project_override
+        return self._child_has_project_override
 
     @property
     def _child_has_project_override(self):
@@ -419,6 +384,7 @@ class DictImmutableKeysEntity(ItemEntity):
         value = self._check_update_value(value, "studio override")
         value, metadata = self._prepare_value(value)
         self._studio_override_metadata = metadata
+        self.had_studio_override = metadata is not NOT_SET
 
         if value is NOT_SET:
             for child_obj in self.non_gui_children.values():
@@ -447,6 +413,7 @@ class DictImmutableKeysEntity(ItemEntity):
         value = self._check_update_value(value, "project override")
         value, metadata = self._prepare_value(value)
         self._project_override_metadata = metadata
+        self.had_project_override = metadata is not NOT_SET
 
         if value is NOT_SET:
             for child_obj in self.non_gui_children.values():
@@ -491,7 +458,6 @@ class DictImmutableKeysEntity(ItemEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.remove_from_studio_default(on_change_trigger)
         self._ignore_child_changes = False
-        self._has_studio_override = False
 
     def add_to_project_override(self):
         if self._override_state is not OverrideState.PROJECT:
