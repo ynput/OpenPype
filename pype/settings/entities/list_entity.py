@@ -36,6 +36,19 @@ class ListEntity(EndpointEntity):
                 return True
         return False
 
+    def index(self, item):
+        if isinstance(item, BaseEntity):
+            for idx, child_entity in enumerate(self.children):
+                if child_entity.id == item.id:
+                    return idx
+        else:
+            for idx, _item in enumerate(self.value):
+                if item == _item:
+                    return idx
+        raise ValueError(
+            "{} is not in {}".format(item, self.__class__.__name__)
+        )
+
     def append(self, item):
         child_obj = self._add_new_item()
         child_obj.set_override_state(self._override_state)
@@ -88,6 +101,22 @@ class ListEntity(EndpointEntity):
         child_obj.set_override_state(self._override_state)
         self.on_change()
         return child_obj
+
+    def swap_items(self, item_1, item_2):
+        index_1 = self.index(item_1)
+        index_2 = self.index(item_2)
+        self.swap_indexes(index_1, index_2)
+
+    def swap_indexes(self, index_1, index_2):
+        children_len = len(self.children)
+        if index_1 > children_len or index_2 > children_len:
+            raise IndexError(
+                "{} index out of range".format(self.__class__.__name__)
+            )
+        self.children[index_1], self.children[index_2] = (
+            self.children[index_2], self.children[index_1]
+        )
+        self.on_change()
 
     def _item_initalization(self):
         self.valid_value_types = (list, )
