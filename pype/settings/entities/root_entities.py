@@ -335,10 +335,10 @@ class RootEntity(BaseItemEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.add_to_project_override()
 
-    def _remove_from_project_override(self):
+    def _remove_from_project_override(self, on_change_trigger):
         """Implementation of abstract method only trigger children callback."""
         for child_obj in self.non_gui_children.values():
-            child_obj.remove_from_project_override()
+            child_obj.remove_from_project_override(on_change_trigger)
 
     def save(self):
         """Save values for current override state.
