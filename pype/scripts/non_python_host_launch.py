@@ -85,7 +85,7 @@ def main(argv):
     elif host_name == "aftereffects":
         from avalon.aftereffects.lib import launch
     elif host_name == "harmony":
-        from avalon.photoshop.lib import launch
+        from avalon.harmony.lib import launch
     else:
         title = "Unknown host name"
         message = (

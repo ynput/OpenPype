@@ -1,5 +1,9 @@
 import os
+import re
+import copy
+import json
 import platform
+import getpass
 import inspect
 import subprocess
 import distutils.spawn
@@ -7,13 +11,35 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from pype.settings import get_system_settings, get_environments
-from . import PypeLogger
+from pype.settings import (
+    get_system_settings,
+    get_project_settings,
+    get_environments
+)
+from . import (
+    PypeLogger,
+    Anatomy
+)
+from .avalon_context import (
+    get_workdir_data,
+    get_workdir_with_workdir_data
+)
 
 from .python_module_tools import (
     modules_from_path,
     classes_from_module
 )
+
+
+_logger = None
+
+
+def get_logger():
+    """Global lib.applications logger getter."""
+    global _logger
+    if _logger is None:
+        _logger = PypeLogger.get_logger(__name__)
+    return _logger
 
 
 class ApplicationNotFound(Exception):
@@ -538,7 +564,7 @@ class ApplicationLaunchContext:
         # --- END: Backwards compatibility ---
 
         subfolders_list = (
-            ("hooks", "global"),
+            ["hooks"],
             ("hosts", self.host_name, "hooks")
         )
         for subfolders in subfolders_list:
@@ -749,3 +775,393 @@ class ApplicationLaunchContext:
             if all_cleared:
                 break
         return args
+
+
+class MissingRequiredKey(KeyError):
+    pass
+
+
+class EnvironmentPrepData(dict):
+    """Helper dictionary for storin temp data during environment prep.
+
+    Args:
+        data (dict): Data must contain required keys.
+    """
+    required_keys = (
+        "project_doc", "asset_doc", "task_name", "app", "anatomy"
+    )
+
+    def __init__(self, data):
+        for key in self.required_keys:
+            if key not in data:
+                raise MissingRequiredKey(key)
+
+        if not data.get("log"):
+            data["log"] = get_logger()
+
+        if data.get("env") is None:
+            data["env"] = os.environ.copy()
+
+        if data.get("settings_env") is None:
+            data["settings_env"] = get_environments()
+
+        super(EnvironmentPrepData, self).__init__(data)
+
+
+def get_app_environments_for_context(
+    project_name, asset_name, task_name, app_name, env=None
+):
+    """Prepare environment variables by context.
+    Args:
+        project_name (str): Name of project.
+        asset_name (str): Name of asset.
+        task_name (str): Name of task.
+        app_name (str): Name of application that is launched and can be found
+            by ApplicationManager.
+        env (dict): Initial environment variables. `os.environ` is used when
+            not passed.
+
+    Returns:
+        dict: Environments for passed context and application.
+    """
+    from avalon.api import AvalonMongoDB
+
+    # Avalon database connection
+    dbcon = AvalonMongoDB()
+    dbcon.Session["AVALON_PROJECT"] = project_name
+    dbcon.install()
+
+    # Project document
+    project_doc = dbcon.find_one({"type": "project"})
+    asset_doc = dbcon.find_one({
+        "type": "asset",
+        "name": asset_name
+    })
+
+    # Prepare app object which can be obtained only from ApplciationManager
+    app_manager = ApplicationManager()
+    app = app_manager.applications[app_name]
+
+    # Project's anatomy
+    anatomy = Anatomy(project_name)
+
+    data = EnvironmentPrepData({
+        "project_name": project_name,
+        "asset_name": asset_name,
+        "task_name": task_name,
+        "app_name": app_name,
+        "app": app,
+
+        "dbcon": dbcon,
+        "project_doc": project_doc,
+        "asset_doc": asset_doc,
+
+        "anatomy": anatomy,
+
+        "env": env
+    })
+
+    prepare_host_environments(data)
+    prepare_context_environments(data)
+
+    # Discard avalon connection
+    dbcon.uninstall()
+
+    return data["env"]
+
+
+def _merge_env(env, current_env):
+    """Modified function(merge) from acre module."""
+    import acre
+
+    result = current_env.copy()
+    for key, value in env.items():
+        # Keep missing keys by not filling `missing` kwarg
+        value = acre.lib.partial_format(value, data=current_env)
+        result[key] = value
+    return result
+
+
+def prepare_host_environments(data):
+    """Modify launch environments based on launched app and context.
+
+    Args:
+        data (EnvironmentPrepData): Dictionary where result and intermediate
+            result will be stored.
+    """
+    import acre
+
+    app = data["app"]
+    log = data["log"]
+
+    # Keys for getting environments
+    env_keys = [app.app_group, app.app_name]
+
+    asset_doc = data.get("asset_doc")
+    if asset_doc:
+        # Add tools environments
+        for key in asset_doc["data"].get("tools_env") or []:
+            tool = app.manager.tools.get(key)
+            if tool:
+                if tool.group_name not in env_keys:
+                    env_keys.append(tool.group_name)
+
+                if tool.name not in env_keys:
+                    env_keys.append(tool.name)
+
+    log.debug(
+        "Finding environment groups for keys: {}".format(env_keys)
+    )
+
+    settings_env = data["settings_env"]
+    env_values = {}
+    for env_key in env_keys:
+        _env_values = settings_env.get(env_key)
+        if not _env_values:
+            continue
+
+        # Choose right platform
+        tool_env = acre.parse(_env_values)
+        # Merge dictionaries
+        env_values = _merge_env(tool_env, env_values)
+
+    final_env = _merge_env(acre.compute(env_values), data["env"])
+
+    # Update env
+    data["env"].update(final_env)
+
+
+def prepare_context_environments(data):
+    """Modify launch environemnts with context data for launched host.
+
+    Args:
+        data (EnvironmentPrepData): Dictionary where result and intermediate
+            result will be stored.
+    """
+    # Context environments
+    log = data["log"]
+
+    project_doc = data["project_doc"]
+    asset_doc = data["asset_doc"]
+    task_name = data["task_name"]
+    if (
+        not project_doc
+        or not asset_doc
+        or not task_name
+    ):
+        log.info(
+            "Skipping context environments preparation."
+            " Launch context does not contain required data."
+        )
+        return
+
+    app = data["app"]
+    workdir_data = get_workdir_data(
+        project_doc, asset_doc, task_name, app.host_name
+    )
+    data["workdir_data"] = workdir_data
+
+    anatomy = data["anatomy"]
+
+    try:
+        workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
+        if not os.path.exists(workdir):
+            log.debug(
+                "Creating workdir folder: \"{}\"".format(workdir)
+            )
+            os.makedirs(workdir)
+
+    except Exception as exc:
+        raise ApplicationLaunchFailed(
+            "Error in anatomy.format: {}".format(str(exc))
+        )
+
+    context_env = {
+        "AVALON_PROJECT": project_doc["name"],
+        "AVALON_ASSET": asset_doc["name"],
+        "AVALON_TASK": task_name,
+        "AVALON_APP": app.host_name,
+        "AVALON_APP_NAME": app.app_name,
+        "AVALON_WORKDIR": workdir
+    }
+    log.debug(
+        "Context environemnts set:\n{}".format(
+            json.dumps(context_env, indent=4)
+        )
+    )
+    data["env"].update(context_env)
+
+    _prepare_last_workfile(data, workdir)
+
+
+def _prepare_last_workfile(data, workdir):
+    """last workfile workflow preparation.
+
+    Function check if should care about last workfile workflow and tries
+    to find the last workfile. Both information are stored to `data` and
+    environments.
+
+    Last workfile is filled always (with version 1) even if any workfile
+    exists yet.
+
+    Args:
+        data (EnvironmentPrepData): Dictionary where result and intermediate
+            result will be stored.
+        workdir (str): Path to folder where workfiles should be stored.
+    """
+    import avalon.api
+
+    log = data["log"]
+    _workdir_data = data.get("workdir_data")
+    if not _workdir_data:
+        log.info(
+            "Skipping last workfile preparation."
+            " Key `workdir_data` not filled."
+        )
+        return
+
+    app = data["app"]
+    workdir_data = copy.deepcopy(_workdir_data)
+    project_name = data["project_name"]
+    task_name = data["task_name"]
+    start_last_workfile = should_start_last_workfile(
+        project_name, app.host_name, task_name
+    )
+    data["start_last_workfile"] = start_last_workfile
+
+    # Store boolean as "0"(False) or "1"(True)
+    data["env"]["AVALON_OPEN_LAST_WORKFILE"] = (
+        str(int(bool(start_last_workfile)))
+    )
+
+    _sub_msg = "" if start_last_workfile else " not"
+    log.debug(
+        "Last workfile should{} be opened on start.".format(_sub_msg)
+    )
+
+    # Last workfile path
+    last_workfile_path = ""
+    extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(
+        app.host_name
+    )
+    if extensions:
+        anatomy = data["anatomy"]
+        # Find last workfile
+        file_template = anatomy.templates["work"]["file"]
+        workdir_data.update({
+            "version": 1,
+            "user": os.environ.get("PYPE_USERNAME") or getpass.getuser(),
+            "ext": extensions[0]
+        })
+
+        last_workfile_path = avalon.api.last_workfile(
+            workdir, file_template, workdir_data, extensions, True
+        )
+
+    if os.path.exists(last_workfile_path):
+        log.debug((
+            "Workfiles for launch context does not exists"
+            " yet but path will be set."
+        ))
+    log.debug(
+        "Setting last workfile path: {}".format(last_workfile_path)
+    )
+
+    data["env"]["AVALON_LAST_WORKFILE"] = last_workfile_path
+    data["last_workfile_path"] = last_workfile_path
+
+
+def should_start_last_workfile(
+    project_name, host_name, task_name, default_output=False
+):
+    """Define if host should start last version workfile if possible.
+
+    Default output is `False`. Can be overriden with environment variable
+    `AVALON_OPEN_LAST_WORKFILE`, valid values without case sensitivity are
+    `"0", "1", "true", "false", "yes", "no"`.
+
+    Args:
+        project_name (str): Name of project.
+        host_name (str): Name of host which is launched. In avalon's
+            application context it's value stored in app definition under
+            key `"application_dir"`. Is not case sensitive.
+        task_name (str): Name of task which is used for launching the host.
+            Task name is not case sensitive.
+
+    Returns:
+        bool: True if host should start workfile.
+
+    """
+
+    project_settings = get_project_settings(project_name)
+    startup_presets = (
+        project_settings
+        ["global"]
+        ["tools"]
+        ["Workfiles"]
+        ["last_workfile_on_startup"]
+    )
+
+    if not startup_presets:
+        return default_output
+
+    host_name_lowered = host_name.lower()
+    task_name_lowered = task_name.lower()
+
+    max_points = 2
+    matching_points = -1
+    matching_item = None
+    for item in startup_presets:
+        hosts = item.get("hosts") or tuple()
+        tasks = item.get("tasks") or tuple()
+
+        hosts_lowered = tuple(_host_name.lower() for _host_name in hosts)
+        # Skip item if has set hosts and current host is not in
+        if hosts_lowered and host_name_lowered not in hosts_lowered:
+            continue
+
+        tasks_lowered = tuple(_task_name.lower() for _task_name in tasks)
+        # Skip item if has set tasks and current task is not in
+        if tasks_lowered:
+            task_match = False
+            for task_regex in compile_list_of_regexes(tasks_lowered):
+                if re.match(task_regex, task_name_lowered):
+                    task_match = True
+                    break
+
+            if not task_match:
+                continue
+
+        points = int(bool(hosts_lowered)) + int(bool(tasks_lowered))
+        if points > matching_points:
+            matching_item = item
+            matching_points = points
+
+        if matching_points == max_points:
+            break
+
+    if matching_item is not None:
+        output = matching_item.get("enabled")
+        if output is None:
+            output = default_output
+        return output
+    return default_output
+
+
+def compile_list_of_regexes(in_list):
+    """Convert strings in entered list to compiled regex objects."""
+    regexes = list()
+    if not in_list:
+        return regexes
+
+    for item in in_list:
+        if not item:
+            continue
+        try:
+            regexes.append(re.compile(item))
+        except TypeError:
+            print((
+                "Invalid type \"{}\" value \"{}\"."
+                " Expected string based object. Skipping."
+            ).format(str(type(item)), str(item)))
+    return regexes
