@@ -54,7 +54,6 @@ class ListItem(QtWidgets.QWidget):
         self.entity = entity
 
         self.ignore_input_changes = entity_widget.ignore_input_changes
-        self.create_ui_for_entity = entity_widget.create_ui_for_entity
 
         char_up = qtawesome.charmap("fa.angle-up")
         char_down = qtawesome.charmap("fa.angle-down")
@@ -122,6 +121,11 @@ class ListItem(QtWidgets.QWidget):
     @property
     def category_widget(self):
         return self.entity_widget.category_widget
+
+    def create_ui_for_entity(self, *args, **kwargs):
+        return self.entity_widget.create_ui_for_entity(
+            *args, **kwargs
+        )
 
     @property
     def is_invalid(self):

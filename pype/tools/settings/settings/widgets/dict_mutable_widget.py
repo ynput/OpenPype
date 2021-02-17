@@ -156,7 +156,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.entity = entity
         self.entity_widget = entity_widget
 
-        self.create_ui_for_entity = entity_widget.create_ui_for_entity
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
         self.is_key_duplicated = False
@@ -181,6 +180,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
     @property
     def category_widget(self):
         return self.entity_widget.category_widget
+
+    def create_ui_for_entity(self, *args, **kwargs):
+        return self.entity_widget.create_ui_for_entity(*args, **kwargs)
 
     def create_addible_ui(self):
         key_input = QtWidgets.QLineEdit(self)
