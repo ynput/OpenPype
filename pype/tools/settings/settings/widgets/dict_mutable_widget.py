@@ -768,6 +768,7 @@ class DictMutableKeysWidget(BaseWidget):
         self.update_style()
 
     def _on_entity_change(self):
+        changed = False
         to_remove = []
         for input_field in self.input_fields:
             found = False
@@ -780,6 +781,7 @@ class DictMutableKeysWidget(BaseWidget):
                 to_remove.append(input_field)
 
         for input_field in to_remove:
+            changed = True
             self.remove_row(input_field)
 
         for key, child_entity in self.entity.items():
@@ -793,6 +795,7 @@ class DictMutableKeysWidget(BaseWidget):
                     break
 
             if not found:
+                changed = True
                 args = [previous_input]
                 if previous_input is None:
                     args.append(True)
@@ -804,7 +807,11 @@ class DictMutableKeysWidget(BaseWidget):
 
             else:
                 if input_field.key_value() != key:
+                    changed = True
                     input_field.set_key(key)
+
+        if changed:
+            self.on_shuffle()
 
     def set_entity_value(self):
         while self.input_fields:
