@@ -242,6 +242,11 @@ class DictMutableKeysEntity(EndpointEntity):
         if self._ignore_child_changes:
             return
 
+        if self._override_state is OverrideState.STUDIO:
+            self._has_studio_override = True
+        elif self._override_state is OverrideState.PROJECT:
+            self._has_project_override = True
+
         self.on_change()
 
     def _metadata_for_current_state(self):
