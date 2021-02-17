@@ -66,18 +66,20 @@ realpath () {
 }
 
 # Main
-echo -e "${BGreen}"
-art
-echo -e "${RST}"
+main () {
+  echo -e "${BGreen}"
+  art
+  echo -e "${RST}"
 
-# Directories
-pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
-pushd "$pype_root" > /dev/null
+  # Directories
+  pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
+  pushd "$pype_root" > /dev/null || return > /dev/null
 
-mongo_port=2707
-echo $pype_root
-dbpath="$(dirname $pype_root)/mongo_db_data"
+  mongo_port=2707
+  dbpath="$(dirname $pype_root)/mongo_db_data"
 
-echo -e "${BIGreen}>>>${RST} Running mongodb ..."
-mongod --dbpath "$dbpath" --port $mongo_port
-echo -e "${BIGreen}>>>${RST} Detached to background."
+  echo -e "${BIGreen}>>>${RST} Running mongodb ..."
+  mongod --dbpath "$dbpath" --port $mongo_port
+  echo -e "${BIGreen}>>>${RST} Detached to background."
+}
+

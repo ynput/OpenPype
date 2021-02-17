@@ -99,8 +99,9 @@ install_poetry () {
 #   None
 ###############################################################################
 clean_pyc () {
-  path=${1:-$pype_root}
-  echo -e "${IGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
+  local path
+  path=$pype_root
+  echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
 }
