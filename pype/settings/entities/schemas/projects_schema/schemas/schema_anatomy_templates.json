@@ -1,5 +1,5 @@
 {
-    "type": "dict",
+    "type": "anatomy_templates",
     "key": "templates",
     "label": "Templates",
     "collapsable": true,

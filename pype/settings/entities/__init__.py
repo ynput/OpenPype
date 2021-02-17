@@ -102,7 +102,8 @@ from .dict_mutable_keys_entity import DictMutableKeysEntity
 
 from .anatomy_entities import (
     AnatomyEntity,
-    AnatomyRootsEntity
+    AnatomyRootsEntity,
+    AnatomyTemplatesEntity
 )
 
 
@@ -147,5 +148,6 @@ __all__ = (
     "DictMutableKeysEntity",
 
     "AnatomyEntity",
-    "AnatomyRootsEntity"
+    "AnatomyRootsEntity",
+    "AnatomyTemplatesEntity"
 )
