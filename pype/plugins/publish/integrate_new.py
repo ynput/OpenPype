@@ -967,7 +967,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             if sync_server_presets["enabled"]:
                 local_site = sync_server_presets["config"].\
-                    get("publish_site", "studio").strip()
+                    get("active_site", "studio").strip()
                 remote_site = sync_server_presets["config"].get("remote_site")
 
         rec = {
