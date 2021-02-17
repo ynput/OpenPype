@@ -263,36 +263,35 @@ class ListWidget(InputWidget):
 
     def _on_entity_change(self):
         # TODO do less inefficient
-        current_entities = []
-        for input_field in self.input_fields:
-            current_entities.append(input_field.entity)
-
-        for idx, child_entity in enumerate(self.entity):
-            found = False
-            for input_field in self.input_fields:
-                if input_field.entity is child_entity:
-                    found = True
-                    break
-
-            if not found:
-                self.add_row(child_entity, idx)
-
+        input_field_last_idx = len(self.input_fields) - 1
         child_len = len(self.entity)
-        for idx, child_entity in enumerate(tuple(self.entity)):
+        for idx, child_entity in enumerate(self.entity):
+            if idx > input_field_last_idx:
+                self.add_row(child_entity, idx)
+                input_field_last_idx += 1
+                continue
+
             if self.input_fields[idx].entity is child_entity:
                 continue
 
-            for _idx in range(idx, child_len):
-                input_field = self.input_fields[_idx]
-                if input_field.entity is not child_entity:
-                    continue
+            input_field_idx = None
+            for _input_field_idx, input_field in enumerate(self.input_fields):
+                if input_field.entity is child_entity:
+                    input_field_idx = _input_field_idx
+                    break
 
-                self.content_layout.insertWidget(idx, input_field)
-                break
+            if input_field_idx is None:
+                self.add_row(child_entity, idx)
+                input_field_last_idx += 1
+                continue
 
-        input_field_len = len(self.input_fields)
-        if child_len != input_field_len:
-            for _idx in range(child_len, input_field_len):
+            input_field = self.input_fields.pop(input_field_idx)
+            self.input_fields.insert(idx, input_field)
+            self.content_layout.insertWidget(idx, input_field)
+
+        new_input_field_len = len(self.input_fields)
+        if child_len != new_input_field_len:
+            for _idx in range(child_len, new_input_field_len):
                 # Remove row at the same index
                 self.remove_row(self.input_fields[child_len])
 
@@ -348,7 +347,7 @@ class ListWidget(InputWidget):
             if row < max_index:
                 next_field = self.input_fields[row]
 
-            self.content_layout.insertWidget(row, item_widget)
+            self.content_layout.insertWidget(row + 1, item_widget)
             self.input_fields.insert(row, item_widget)
 
         if previous_field:
