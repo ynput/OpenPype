@@ -546,8 +546,23 @@ class BaseItemEntity(BaseEntity):
         """Entity's implementation to discard all changes made by user."""
         pass
 
+    def add_to_studio_default(self, on_change_trigger=None):
+        initialized = False
+        if on_change_trigger is None:
+            if not self.can_add_to_studio_default:
+                return
+
+            initialized = True
+            on_change_trigger = []
+
+        self._add_to_studio_default(on_change_trigger)
+
+        if initialized:
+            for callback in on_change_trigger:
+                callback()
+
     @abstractmethod
-    def add_to_studio_default(self):
+    def _add_to_studio_default(self, on_change_trigger):
         """Item's implementation to set current values as studio's overrides.
 
         Mark item and it's children as they have studio overrides.
@@ -592,8 +607,23 @@ class BaseItemEntity(BaseEntity):
         """
         pass
 
+    def add_to_project_override(self, on_change_trigger=None):
+        initialized = False
+        if on_change_trigger is None:
+            if not self.can_add_to_project_override:
+                return
+
+            initialized = True
+            on_change_trigger = []
+
+        self._add_to_project_override(on_change_trigger)
+
+        if initialized:
+            for callback in on_change_trigger:
+                callback()
+
     @abstractmethod
-    def add_to_project_override(self):
+    def _add_to_project_override(self, on_change_trigger):
         """Item's implementation to set values as overriden for project.
 
         Mark item and all it's children to be stored as project overrides.

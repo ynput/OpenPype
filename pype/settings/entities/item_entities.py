@@ -162,20 +162,20 @@ class PathEntity(ItemEntity):
     def update_studio_value(self, value):
         self.child_obj.update_studio_value(value)
 
-    def _discard_changes(self, *args):
-        self.child_obj.discard_changes(*args)
+    def _discard_changes(self, *args, **kwargs):
+        self.child_obj.discard_changes(*args, **kwargs)
 
-    def add_to_studio_default(self):
-        self.child_obj.add_to_studio_default()
+    def _add_to_studio_default(self, *args, **kwargs):
+        self.child_obj.add_to_studio_default(*args, **kwargs)
 
-    def _remove_from_studio_default(self, *args):
-        self.child_obj.remove_from_studio_default(*args)
+    def _remove_from_studio_default(self, *args, **kwargs):
+        self.child_obj.remove_from_studio_default(*args, **kwargs)
 
-    def add_to_project_override(self):
-        self.child_obj.add_to_project_override()
+    def _add_to_project_override(self, *args, **kwargs):
+        self.child_obj.add_to_project_override(*args, **kwargs)
 
-    def _remove_from_project_override(self, *args):
-        self.child_obj.remove_from_project_override(*args)
+    def _remove_from_project_override(self, *args, **kwargs):
+        self.child_obj.remove_from_project_override(*args, **kwargs)
 
     def reset_callbacks(self):
         super(PathEntity, self).reset_callbacks()
@@ -359,9 +359,7 @@ class ListStrictEntity(ItemEntity):
         for child_obj in self.children:
             child_obj.discard_changes(on_change_trigger)
 
-    def add_to_studio_default(self):
-        if self._override_state is not OverrideState.STUDIO:
-            return
+    def _add_to_studio_default(self, _on_change_trigger):
         self._has_studio_override = True
         self.on_change()
 
@@ -375,14 +373,11 @@ class ListStrictEntity(ItemEntity):
 
         self._has_studio_override = False
 
-    def add_to_project_override(self):
+    def _add_to_project_override(self, _on_change_trigger):
         self._has_project_override = True
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if self._override_state is not OverrideState.PROJECT:
-            return
-
         self._ignore_child_changes = True
 
         for child_obj in self.children:

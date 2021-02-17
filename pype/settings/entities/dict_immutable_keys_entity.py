@@ -435,13 +435,10 @@ class DictImmutableKeysEntity(ItemEntity):
 
         self._ignore_child_changes = False
 
-    def add_to_studio_default(self):
-        if self._override_state is not OverrideState.STUDIO:
-            return
-
+    def _add_to_studio_default(self, on_change_trigger):
         self._ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
-            child_obj.add_to_studio_default()
+            child_obj.add_to_studio_default(on_change_trigger)
         self._ignore_child_changes = False
         self.parent.on_child_change(self)
 
@@ -451,13 +448,10 @@ class DictImmutableKeysEntity(ItemEntity):
             child_obj.remove_from_studio_default(on_change_trigger)
         self._ignore_child_changes = False
 
-    def add_to_project_override(self):
-        if self._override_state is not OverrideState.PROJECT:
-            return
-
+    def _add_to_project_override(self, _on_change_trigger):
         self._ignore_child_changes = True
         for child_obj in self.non_gui_children.values():
-            child_obj.add_to_project_override()
+            child_obj.add_to_project_override(_on_change_trigger)
         self._ignore_child_changes = False
         self.parent.on_child_change(self)
 

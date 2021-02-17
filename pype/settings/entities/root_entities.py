@@ -321,20 +321,20 @@ class RootEntity(BaseItemEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.discard_changes(on_change_trigger)
 
-    def add_to_studio_default(self):
+    def _add_to_studio_default(self, *args, **kwargs):
         """Implementation of abstract method only trigger children callback."""
         for child_obj in self.non_gui_children.values():
-            child_obj.add_to_studio_default()
+            child_obj.add_to_studio_default(*args, **kwargs)
 
     def _remove_from_studio_default(self, on_change_trigger):
         """Implementation of abstract method only trigger children callback."""
         for child_obj in self.non_gui_children.values():
             child_obj.remove_from_studio_default(on_change_trigger)
 
-    def add_to_project_override(self):
+    def _add_to_project_override(self, *args, **kwargs):
         """Implementation of abstract method only trigger children callback."""
         for child_obj in self.non_gui_children.values():
-            child_obj.add_to_project_override()
+            child_obj.add_to_project_override(*args, **kwargs)
 
     def _remove_from_project_override(self, on_change_trigger):
         """Implementation of abstract method only trigger children callback."""

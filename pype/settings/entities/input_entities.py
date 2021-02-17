@@ -276,9 +276,7 @@ class InputEntity(EndpointEntity):
 
         raise NotImplementedError("BUG: Unexcpected part of code.")
 
-    def add_to_studio_default(self):
-        if self._override_state is not OverrideState.STUDIO:
-            return
+    def _add_to_studio_default(self, _on_change_trigger):
         self._has_studio_override = True
         self.on_change()
 
@@ -293,9 +291,7 @@ class InputEntity(EndpointEntity):
 
         on_change_trigger.append(self.on_change)
 
-    def add_to_project_override(self):
-        if self._override_state is not OverrideState.PROJECT:
-            return
+    def _add_to_project_override(self, _on_change_trigger):
         self._has_project_override = True
         self.on_change()
 
