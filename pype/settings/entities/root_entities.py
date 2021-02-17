@@ -184,10 +184,11 @@ class RootEntity(BaseItemEntity):
                 if not issubclass(item, entities.BaseEntity):
                     continue
 
+                # Skip class that is abstract by design
+                if item in known_abstract_classes:
+                    continue
+
                 if inspect.isabstract(item):
-                    # Skip class that is abstract by design
-                    if item in known_abstract_classes:
-                        continue
                     # Create an object to get crash and get traceback
                     item()
 

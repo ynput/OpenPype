@@ -143,9 +143,12 @@ class BaseWidget(QtWidgets.QWidget):
         elif not self.entity.has_project_override:
             return
 
-        # TODO better label
+        def remove_from_project_override():
+            self.ignore_input_changes.set_ignore(True)
+            self.entity.remove_from_project_override()
+            self.ignore_input_changes.set_ignore(False)
         action = QtWidgets.QAction("Remove from project override")
-        actions_mapping[action] = self.entity.remove_from_project_override
+        actions_mapping[action] = remove_from_project_override
         menu.addAction(action)
 
     def show_actions_menu(self, event=None):
