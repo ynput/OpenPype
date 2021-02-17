@@ -243,9 +243,6 @@ class InputEntity(EndpointEntity):
         self._current_value = copy.deepcopy(value)
 
     def _discard_changes(self, on_change_trigger=None):
-        if self._override_state is OverrideState.NOT_DEFINED:
-            return
-
         self._value_is_modified = False
         if self._override_state >= OverrideState.PROJECT:
             self._has_project_override = self.had_project_override

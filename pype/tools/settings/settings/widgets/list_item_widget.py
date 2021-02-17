@@ -304,20 +304,7 @@ class ListWidget(InputWidget):
         if row_1 == row_2:
             return
 
-        if row_1 > row_2:
-            row_1, row_2 = row_2, row_1
-
-        field_1 = self.input_fields[row_1]
-        field_2 = self.input_fields[row_2]
-
-        self.input_fields[row_1] = field_2
-        self.input_fields[row_2] = field_1
-
-        layout_index = self.content_layout.indexOf(field_1)
-        self.content_layout.insertWidget(layout_index + 1, field_1)
-
-        field_1.order_changed()
-        field_2.order_changed()
+        self.entity.swap_indexes(row_1, row_2)
 
     def add_new_item(self, row=None):
         new_entity = self.entity.add_new_item(row)
