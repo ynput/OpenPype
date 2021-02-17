@@ -258,20 +258,25 @@ class DictMutableKeysEntity(EndpointEntity):
             self._has_project_override = self.had_project_override
             self._has_studio_override = self.had_studio_override
 
-        using_overrides = True
+        using_project_overrides = False
+        using_studio_overrides = False
         if (
             state is OverrideState.PROJECT
             and self.had_project_override
         ):
+            using_project_overrides = True
             value = self._project_override_value
             metadata = self._project_override_metadata
 
-        elif self.had_studio_override:
+        elif (
+            state >= OverrideState.STUDIO
+            and self.had_studio_override
+        ):
+            using_studio_overrides = True
             value = self._studio_override_value
             metadata = self._studio_override_metadata
 
         else:
-            using_overrides = False
             value = self._default_value
             metadata = self._default_metadata
 
@@ -290,11 +295,10 @@ class DictMutableKeysEntity(EndpointEntity):
         for _key, _value in new_value.items():
             child_obj = self._add_key(_key)
             child_obj.update_default_value(_value)
-            if using_overrides:
-                if state is OverrideState.STUDIO:
-                    child_obj.update_studio_value(_value)
-                else:
-                    child_obj.update_project_value(_value)
+            if using_project_overrides:
+                child_obj.update_project_value(_value)
+            elif using_studio_overrides:
+                child_obj.update_studio_value(_value)
 
             label = metadata_labels.get(_key)
             if label:
