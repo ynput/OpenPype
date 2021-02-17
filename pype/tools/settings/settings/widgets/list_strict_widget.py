@@ -35,7 +35,9 @@ class ListStrictWidget(BaseWidget):
 
         for child_obj in self.entity.children:
             self.input_fields.append(
-                self.create_ui_for_entity(child_obj, self)
+                self.create_ui_for_entity(
+                    self.category_widget, child_obj, self
+                )
             )
 
         if self.entity.is_horizontal:

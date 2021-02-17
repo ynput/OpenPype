@@ -98,7 +98,9 @@ class ListItem(QtWidgets.QWidget):
         self.content_widget = self
         self.content_layout = layout
 
-        self.input_field = self.create_ui_for_entity(self.entity, self)
+        self.input_field = self.create_ui_for_entity(
+            self.category_widget, self.entity, self
+        )
         self.input_field.set_entity_value()
 
         spacer_widget = QtWidgets.QWidget(self)
@@ -116,6 +118,10 @@ class ListItem(QtWidgets.QWidget):
         self.down_btn = down_btn
 
         self.spacer_widget = spacer_widget
+
+    @property
+    def category_widget(self):
+        return self.entity_widget.category_widget
 
     @property
     def is_invalid(self):

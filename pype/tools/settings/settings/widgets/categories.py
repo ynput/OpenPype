@@ -93,42 +93,43 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.create_ui()
 
     @staticmethod
-    def create_ui_for_entity(entity, entity_widget):
+    def create_ui_for_entity(category_widget, entity, entity_widget):
+        args = (category_widget, entity, entity_widget)
         if isinstance(entity, GUIEntity):
-            return GUIWidget(entity, entity_widget)
+            return GUIWidget(*args)
 
         elif isinstance(entity, DictImmutableKeysEntity):
-            return DictImmutableKeysWidget(entity, entity_widget)
+            return DictImmutableKeysWidget(*args)
 
         elif isinstance(entity, BoolEntity):
-            return BoolWidget(entity, entity_widget)
+            return BoolWidget(*args)
 
         elif isinstance(entity, TextEntity):
-            return TextWidget(entity, entity_widget)
+            return TextWidget(*args)
 
         elif isinstance(entity, NumberEntity):
-            return NumberWidget(entity, entity_widget)
+            return NumberWidget(*args)
 
         elif isinstance(entity, RawJsonEntity):
-            return RawJsonWidget(entity, entity_widget)
+            return RawJsonWidget(*args)
 
         elif isinstance(entity, EnumEntity):
-            return EnumeratorWidget(entity, entity_widget)
+            return EnumeratorWidget(*args)
 
         elif isinstance(entity, PathEntity):
-            return PathWidget(entity, entity_widget)
+            return PathWidget(*args)
 
         elif isinstance(entity, PathInput):
-            return PathInputWidget(entity, entity_widget)
+            return PathInputWidget(*args)
 
         elif isinstance(entity, ListEntity):
-            return ListWidget(entity, entity_widget)
+            return ListWidget(*args)
 
         elif isinstance(entity, DictMutableKeysEntity):
-            return DictMutableKeysWidget(entity, entity_widget)
+            return DictMutableKeysWidget(*args)
 
         elif isinstance(entity, ListStrictEntity):
-            return ListStrictWidget(entity, entity_widget)
+            return ListStrictWidget(*args)
 
         label = "<{}>: {} ({})".format(
             entity.__class__.__name__, entity.path, entity.value
@@ -298,7 +299,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
     def add_children_gui(self):
         for child_obj in self.entity.children:
-            item = self.create_ui_for_entity(child_obj, self)
+            item = self.create_ui_for_entity(self, child_obj, self)
             self.input_fields.append(item)
 
         # Add spacer to stretch children guis

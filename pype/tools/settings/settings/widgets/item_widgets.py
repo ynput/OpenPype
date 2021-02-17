@@ -45,7 +45,9 @@ class DictImmutableKeysWidget(BaseWidget):
 
         for child_obj in self.entity.children:
             self.input_fields.append(
-                self.create_ui_for_entity(child_obj, self)
+                self.create_ui_for_entity(
+                    self.category_widget, child_obj, self
+                )
             )
 
         self.entity_widget.add_widget_to_layout(self)
@@ -508,7 +510,7 @@ class PathWidget(BaseWidget):
         self.content_layout.setSpacing(5)
 
         self.input_field = self.create_ui_for_entity(
-            self.entity.child_obj, self
+            self.category_widget, self.entity.child_obj, self
         )
 
         self.entity_widget.add_widget_to_layout(self, self.entity.label)

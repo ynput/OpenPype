@@ -178,6 +178,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.create_addible_ui()
         self.update_style()
 
+    @property
+    def category_widget(self):
+        return self.entity_widget.category_widget
+
     def create_addible_ui(self):
         key_input = QtWidgets.QLineEdit(self)
         key_input.setObjectName("DictKey")
@@ -205,7 +209,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.content_widget = self
         self.content_layout = layout
 
-        self.input_field = self.create_ui_for_entity(self.entity, self)
+        self.input_field = self.create_ui_for_entity(
+            self.category_widget, self.entity, self
+        )
 
     def add_widget_to_layout(self, widget, label=None):
         self.content_layout.addWidget(widget, 1)
@@ -288,7 +294,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        self.input_field = self.create_ui_for_entity(self.entity, self)
+        self.input_field = self.create_ui_for_entity(
+            self.category_widget, self.entity, self
+        )
 
     def get_style_state(self):
         if self.is_invalid:

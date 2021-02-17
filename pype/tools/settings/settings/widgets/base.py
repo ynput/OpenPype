@@ -4,7 +4,8 @@ from Qt import QtWidgets, QtGui, QtCore
 class BaseWidget(QtWidgets.QWidget):
     allow_actions = True
 
-    def __init__(self, entity, entity_widget):
+    def __init__(self, category_widget, entity, entity_widget):
+        self.category_widget = category_widget
         self.entity = entity
         self.entity_widget = entity_widget
 
