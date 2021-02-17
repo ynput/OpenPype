@@ -90,23 +90,9 @@ class DictMutableKeysEntity(EndpointEntity):
         if new_key == old_key:
             return
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
-        self._on_key_change()
+        self._on_key_label_change()
 
-    def _on_key_change(self):
-        key_changed = False
-        for key, child_id in self.initial_child_id_by_key.items():
-            child_entity = self.children_by_key.get(key)
-            if child_entity is None:
-                key_changed = True
-                break
-
-            if child_entity.id != child_id:
-                key_changed = True
-                break
-
-        if not key_changed:
-            return
-
+    def _on_key_label_change(self):
         if self._override_state is OverrideState.STUDIO:
             self._has_studio_override = True
         elif self._override_state is OverrideState.PROJECT:
@@ -154,7 +140,7 @@ class DictMutableKeysEntity(EndpointEntity):
 
     def set_child_label(self, child_entity, label):
         self.children_label_by_id[child_entity.id] = label
-        self.on_change()
+        self._on_key_label_change()
 
     def get_key_label(self, key):
         child_entity = self.children_by_key[key]
@@ -170,7 +156,6 @@ class DictMutableKeysEntity(EndpointEntity):
         self._project_override_metadata = {}
 
         self.initial_value = None
-        self.initial_child_id_by_key = {}
 
         self._ignore_child_changes = False
 
@@ -322,7 +307,6 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Create new children
         children_label_by_id = {}
-        initial_child_id_by_key = {}
         metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
         for _key, _value in new_value.items():
             child_entity = self._add_key(_key)
@@ -335,13 +319,11 @@ class DictMutableKeysEntity(EndpointEntity):
             label = metadata_labels.get(_key)
             if label:
                 children_label_by_id[child_entity.id] = label
-            initial_child_id_by_key[_key] = child_entity.id
             child_entity.set_override_state(state)
 
         self.children_label_by_id = children_label_by_id
 
         self.initial_value = self.settings_value()
-        self.initial_child_id_by_key = initial_child_id_by_key
 
     def children_key_by_id(self):
         return {
