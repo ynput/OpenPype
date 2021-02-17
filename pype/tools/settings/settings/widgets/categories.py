@@ -437,6 +437,7 @@ class ProjectWidget(SettingsCategoryWidget):
 
             if self.modify_defaults_checkbox:
                 self.modify_defaults_checkbox.setEnabled(True)
+            self.project_list_widget.setEnabled(True)
 
         except DefaultsNotDefined:
             if not self.modify_defaults_checkbox:
@@ -450,6 +451,7 @@ class ProjectWidget(SettingsCategoryWidget):
             self.entity.set_defaults_state()
             self.modify_defaults_checkbox.setChecked(True)
             self.modify_defaults_checkbox.setEnabled(False)
+            self.project_list_widget.setEnabled(False)
 
     def _on_project_change(self):
         project_name = self.project_list_widget.project_name()
