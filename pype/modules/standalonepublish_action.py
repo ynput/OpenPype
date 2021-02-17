@@ -14,7 +14,11 @@ class StandAlonePublishAction(PypeModule, ITrayAction):
         self.enabled = modules_settings[self.name]["enabled"]
         self.publish_paths = [
             os.path.join(
-                pype.PLUGINS_DIR, "standalonepublisher", "publish"
+                pype.PACKAGE_DIR,
+                "hosts",
+                "standalonepublisher",
+                "plugins",
+                "publish"
             )
         ]
 

@@ -41,13 +41,12 @@ def filter_pyblish_plugins(plugins):
         file = os.path.normpath(inspect.getsourcefile(plugin))
         file = os.path.normpath(file)
 
-
         # host determined from path
         host_from_file = file.split(os.path.sep)[-4:-3][0]
         plugin_kind = file.split(os.path.sep)[-2:-1][0]
 
         # TODO: change after all plugins are moved one level up
-        if host_from_file == "plugins":
+        if host_from_file == "pype":
             host_from_file = "global"
 
         try:
