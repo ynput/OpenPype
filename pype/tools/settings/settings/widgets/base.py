@@ -135,15 +135,10 @@ class BaseWidget(QtWidgets.QWidget):
         if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
             return
 
-        if self.entity.is_group:
-            if not self.entity.has_project_override:
-                return
+        if not self.entity.has_project_override:
+            return
 
-        elif self.entity.group_item:
-            if not self.entity.group_item.has_project_override:
-                return
-
-        elif not self.entity.has_project_override:
+        if not self.entity.root_item.is_in_project_state():
             return
 
         def remove_from_project_override():
