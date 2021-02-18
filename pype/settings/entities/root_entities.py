@@ -36,9 +36,6 @@ from pype.settings.lib import (
     find_environments,
     apply_overrides
 )
-# TODO implement
-# ProjectSettings
-# AnatomySettings
 
 
 class RootEntity(BaseItemEntity):
