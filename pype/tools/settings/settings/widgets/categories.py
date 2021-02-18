@@ -25,10 +25,8 @@ from pype.settings.entities import (
 )
 
 from pype.settings.lib import get_system_settings
-from .widgets import (
-    UnsavedChangesDialog,
-    ProjectListWidget
-)
+from .widgets import ProjectListWidget
+
 from . import lib
 
 from .base import GUIWidget
