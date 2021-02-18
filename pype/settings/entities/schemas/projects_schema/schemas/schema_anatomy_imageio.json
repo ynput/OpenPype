@@ -3,6 +3,7 @@
     "key": "imageio",
     "label": "Color Management and Output Formats",
     "is_file": true,
+    "is_group": true,
     "children": [
         {
             "key": "hiero",
@@ -13,7 +14,7 @@
                     "key": "workfile",
                     "type": "dict",
                     "label": "Workfile",
-                    "collapsable": false,
+                    "collapsible": false,
                     "children": [
                         {
                             "type": "form",
@@ -87,7 +88,7 @@
                     "key": "regexInputs",
                     "type": "dict",
                     "label": "Colorspace on Inputs by regex detection",
-                    "collapsable": true,
+                    "collapsible": true,
                     "children": [
                         {
                             "type": "list",
@@ -121,8 +122,7 @@
                     "key": "workfile",
                     "type": "dict",
                     "label": "Workfile",
-                    "collapsable": false,
-                    "is_group": true,
+                    "collapsible": false,
                     "children": [
                         {
                             "type": "form",
@@ -155,13 +155,13 @@
                                             "spi-anim": "spi-anim"
                                         },
                                         {
-                                            "aces_1.0.3": "aces_0.1.1"
+                                            "aces_0.1.1": "aces_0.1.1"
                                         },
                                         {
-                                            "aces_1.0.3": "aces_0.7.1"
+                                            "aces_0.7.1": "aces_0.7.1"
                                         },
                                         {
-                                            "aces_1.0.3": "aces_1.0.1"
+                                            "aces_1.0.1": "aces_1.0.1"
                                         },
                                         {
                                             "aces_1.0.3": "aces_1.0.3"
@@ -219,8 +219,7 @@
                     "key": "nodes",
                     "type": "dict",
                     "label": "Nodes",
-                    "collapsable": true,
-                    "is_group": true,
+                    "collapsible": true,
                     "children": [
                         {
                             "key": "requiredNodes",
@@ -324,7 +323,7 @@
                     "key": "regexInputs",
                     "type": "dict",
                     "label": "Colorspace on Inputs by regex detection",
-                    "collapsable": true,
+                    "collapsible": true,
                     "children": [
                         {
                             "type": "list",

@@ -2,8 +2,7 @@
     "type": "dict",
     "key": "ftrack",
     "label": "Ftrack",
-    "collapsable": true,
-    "checkbox_key": "enabled",
+    "collapsible": true,
     "is_file": true,
     "children": [
         {
@@ -162,6 +161,7 @@
                     "type": "dict",
                     "key": "status_update",
                     "label": "Update status on task action",
+                    "is_group": true,
                     "checkbox_key": "enabled",
                     "children": [
                         {
@@ -240,6 +240,7 @@
                     "type": "dict",
                     "key": "status_task_to_version",
                     "label": "Sync status from Task to Version",
+                    "is_group": true,
                     "checkbox_key": "enabled",
                     "children": [
                         {
@@ -272,6 +273,7 @@
                     "type": "dict",
                     "key": "status_version_to_task",
                     "label": "Sync status from Version to Task",
+                    "is_group": true,
                     "checkbox_key": "enabled",
                     "children": [
                         {
@@ -327,6 +329,7 @@
                 {
                     "type": "dict",
                     "key": "next_task_update",
+                    "is_group": true,
                     "label": "Update status on next task",
                     "checkbox_key": "enabled",
                     "children": [
@@ -386,6 +389,7 @@
                 {
                     "type": "dict",
                     "key": "application_launch_statuses",
+                    "is_group": true,
                     "label": "Application - Status change on launch",
                     "checkbox_key": "enabled",
                     "children": [
@@ -605,14 +609,14 @@
         },
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
             "is_file": true,
             "children": [
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "checkbox_key": "enabled",
                     "key": "IntegrateFtrackNote",
                     "label": "IntegrateFtrackNote",
@@ -639,7 +643,7 @@
 
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "checkbox_key": "enabled",
                     "key": "ValidateFtrackAttributes",
                     "label": "ValidateFtrackAttributes",

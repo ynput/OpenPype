@@ -4,15 +4,12 @@ from Qt import QtWidgets, QtGui, QtCore
 class BaseWidget(QtWidgets.QWidget):
     allow_actions = True
 
-    def __init__(self, entity, entity_widget):
+    def __init__(self, category_widget, entity, entity_widget):
+        self.category_widget = category_widget
         self.entity = entity
         self.entity_widget = entity_widget
 
-        self.trigger_hierarchical_style_update = (
-            self.entity_widget.trigger_hierarchical_style_update
-        )
         self.ignore_input_changes = entity_widget.ignore_input_changes
-        self.create_ui_for_entity = entity_widget.create_ui_for_entity
 
         self._is_invalid = False
         self._style_state = None
@@ -23,6 +20,12 @@ class BaseWidget(QtWidgets.QWidget):
 
         self.label_widget = None
         self.create_ui()
+
+    def trigger_hierarchical_style_update(self):
+        self.category_widget.hierarchical_style_update()
+
+    def create_ui_for_entity(self, *args, **kwargs):
+        return self.category_widget.create_ui_for_entity(*args, **kwargs)
 
     @property
     def is_invalid(self):
@@ -59,14 +62,14 @@ class BaseWidget(QtWidgets.QWidget):
 
     def _on_entity_change(self):
         """Not yet used."""
-        print("{}: Wraning missing `_on_entity_change` implementation".format(
+        print("{}: Warning missing `_on_entity_change` implementation".format(
             self.__class__.__name__
         ))
 
     def _discard_changes_action(self, menu, actions_mapping):
         # TODO use better condition as unsaved changes may be caused due to
         #   changes in schema.
-        if not self.entity.has_unsaved_changes:
+        if not self.entity.can_discard_changes:
             return
 
         def discard_changes():
@@ -78,74 +81,46 @@ class BaseWidget(QtWidgets.QWidget):
         actions_mapping[action] = discard_changes
         menu.addAction(action)
 
-    def _set_project_override_action(self, menu, actions_mapping):
-        # Show only when project overrides are set
-        if not self.entity.root_item.is_in_project_state():
-            return
-
-        # Do not show on items under group item
-        if self.entity.group_item:
-            return
-
-        # Skip if already is marked to save project overrides
-        if self.entity.is_group and self.entity.has_studio_override:
-            return
-
-        action = QtWidgets.QAction("Add to project project override")
-        actions_mapping[action] = self.entity.add_to_project_override
-        menu.addAction(action)
-
-    def _remove_from_studio_default_action(self, menu, actions_mapping):
-        if not self.entity.root_item.is_in_studio_state():
-            return
-
-        if self.entity.has_studio_override:
-            def remove_from_studio_default():
-                self.ignore_input_changes.set_ignore(True)
-                self.entity.remove_from_studio_default()
-                self.ignore_input_changes.set_ignore(False)
-            action = QtWidgets.QAction("Remove from studio default")
-            actions_mapping[action] = remove_from_studio_default
-            menu.addAction(action)
-
     def _add_to_studio_default(self, menu, actions_mapping):
         """Set values as studio overrides."""
         # Skip if not in studio overrides
-        if not self.entity.root_item.is_in_studio_state():
-            return
-
-        # Skip if entity is under group
-        if self.entity.group_item:
-            return
-
-        # Skip if is group and any children is already marked with studio
-        #   overrides
-        if self.entity.is_group and self.entity.has_studio_override:
+        if not self.entity.can_add_to_studio_default:
             return
 
         action = QtWidgets.QAction("Add to studio default")
         actions_mapping[action] = self.entity.add_to_studio_default
         menu.addAction(action)
 
-    def _remove_project_override_action(self, menu, actions_mapping):
-        # Dynamic items can't have these actions
-        if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
+    def _remove_from_studio_default_action(self, menu, actions_mapping):
+        if not self.entity.can_remove_from_studio_default:
             return
 
-        if self.entity.is_group:
-            if not self.entity.has_project_override:
-                return
+        def remove_from_studio_default():
+            self.ignore_input_changes.set_ignore(True)
+            self.entity.remove_from_studio_default()
+            self.ignore_input_changes.set_ignore(False)
+        action = QtWidgets.QAction("Remove from studio default")
+        actions_mapping[action] = remove_from_studio_default
+        menu.addAction(action)
 
-        elif self.entity.group_item:
-            if not self.entity.group_item.has_project_override:
-                return
-
-        elif not self.entity.has_project_override:
+    def _add_to_project_override_action(self, menu, actions_mapping):
+        if not self.entity.can_add_to_project_override:
             return
 
-        # TODO better label
+        action = QtWidgets.QAction("Add to project project override")
+        actions_mapping[action] = self.entity.add_to_project_override
+        menu.addAction(action)
+
+    def _remove_from_project_override_action(self, menu, actions_mapping):
+        if not self.entity.can_remove_from_project_override:
+            return
+
+        def remove_from_project_override():
+            self.ignore_input_changes.set_ignore(True)
+            self.entity.remove_from_project_override()
+            self.ignore_input_changes.set_ignore(False)
         action = QtWidgets.QAction("Remove from project override")
-        actions_mapping[action] = self.entity.remove_from_project_override
+        actions_mapping[action] = remove_from_project_override
         menu.addAction(action)
 
     def show_actions_menu(self, event=None):
@@ -164,8 +139,8 @@ class BaseWidget(QtWidgets.QWidget):
         self._discard_changes_action(menu, actions_mapping)
         self._add_to_studio_default(menu, actions_mapping)
         self._remove_from_studio_default_action(menu, actions_mapping)
-        self._set_project_override_action(menu, actions_mapping)
-        self._remove_project_override_action(menu, actions_mapping)
+        self._add_to_project_override_action(menu, actions_mapping)
+        self._remove_from_project_override_action(menu, actions_mapping)
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
@@ -256,6 +231,31 @@ class GUIWidget(BaseWidget):
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
         layout.addWidget(splitter_item)
+
+    def set_entity_value(self):
+        return
+
+    def hierarchical_style_update(self):
+        pass
+
+    def get_invalid(self):
+        return []
+
+
+class MockUpWidget(BaseWidget):
+    allow_actions = False
+    child_invalid = False
+
+    def create_ui(self):
+        self.setObjectName("LabelWidget")
+
+        label = "Mockup widget for entity {}".format(self.entity.path)
+        label_widget = QtWidgets.QLabel(label, self)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 5, 0, 5)
+        layout.addWidget(label_widget)
+        self.entity_widget.add_widget_to_layout(self)
 
     def set_entity_value(self):
         return

@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "ftrack",
     "label": "Ftrack",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {
@@ -58,7 +58,7 @@
             "key": "intent",
             "type": "dict",
             "label": "Intent",
-            "collapsable_key": true,
+            "collapsible_key": true,
             "is_group": true,
             "children": [
                 {

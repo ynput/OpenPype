@@ -7,7 +7,10 @@ from .lib import (
     NOT_SET,
     OverrideState
 )
-from .exceptions import DefaultsNotDefined
+from .exceptions import (
+    DefaultsNotDefined,
+    StudioDefaultsNotDefined
+)
 
 
 class ListEntity(EndpointEntity):
@@ -35,6 +38,19 @@ class ListEntity(EndpointEntity):
             if item == _item:
                 return True
         return False
+
+    def index(self, item):
+        if isinstance(item, BaseEntity):
+            for idx, child_entity in enumerate(self.children):
+                if child_entity.id == item.id:
+                    return idx
+        else:
+            for idx, _item in enumerate(self.value):
+                if item == _item:
+                    return idx
+        raise ValueError(
+            "{} is not in {}".format(item, self.__class__.__name__)
+        )
 
     def append(self, item):
         child_obj = self._add_new_item()
@@ -88,6 +104,22 @@ class ListEntity(EndpointEntity):
         child_obj.set_override_state(self._override_state)
         self.on_change()
         return child_obj
+
+    def swap_items(self, item_1, item_2):
+        index_1 = self.index(item_1)
+        index_2 = self.index(item_2)
+        self.swap_indexes(index_1, index_2)
+
+    def swap_indexes(self, index_1, index_2):
+        children_len = len(self.children)
+        if index_1 > children_len or index_2 > children_len:
+            raise IndexError(
+                "{} index out of range".format(self.__class__.__name__)
+            )
+        self.children[index_1], self.children[index_2] = (
+            self.children[index_2], self.children[index_1]
+        )
+        self.on_change()
 
     def _item_initalization(self):
         self.valid_value_types = (list, )
@@ -153,11 +185,10 @@ class ListEntity(EndpointEntity):
         if self._ignore_child_changes:
             return
 
-        # TODO is this enough?
         if self._override_state is OverrideState.STUDIO:
-            self._has_studio_override = self._child_has_studio_override
+            self._has_studio_override = True
         elif self._override_state is OverrideState.PROJECT:
-            self._has_project_override = self._child_has_project_override
+            self._has_project_override = True
         self.on_change()
 
     def set_override_state(self, state):
@@ -171,10 +202,15 @@ class ListEntity(EndpointEntity):
         while self.children:
             self.children.pop(0)
 
-        if not self.has_default_value and state > OverrideState.DEFAULTS:
-            # Ignore if is dynamic item and use default in that case
-            if not self.is_dynamic_item and not self.is_in_dynamic_item:
-                raise DefaultsNotDefined(self)
+        # Ignore if is dynamic item and use default in that case
+        if not self.is_dynamic_item and not self.is_in_dynamic_item:
+            if state > OverrideState.DEFAULTS:
+                if not self.has_default_value:
+                    raise DefaultsNotDefined(self)
+
+            elif state > OverrideState.STUDIO:
+                if not self.had_studio_override:
+                    raise StudioDefaultsNotDefined(self)
 
         value = NOT_SET
         if self._override_state is OverrideState.PROJECT:
@@ -198,13 +234,13 @@ class ListEntity(EndpointEntity):
             child_obj.update_default_value(item)
             if self._override_state is OverrideState.PROJECT:
                 if self.had_project_override:
-                    child_obj.update_project_values(item)
+                    child_obj.update_project_value(item)
                 elif self.had_studio_override:
-                    child_obj.update_studio_values(item)
+                    child_obj.update_studio_value(item)
 
             elif self._override_state is OverrideState.STUDIO:
                 if self.had_studio_override:
-                    child_obj.update_studio_values(item)
+                    child_obj.update_studio_value(item)
 
         for child_obj in self.children:
             child_obj.set_override_state(self._override_state)
@@ -337,13 +373,13 @@ class ListEntity(EndpointEntity):
             child_obj.update_default_value(item)
             if self._override_state is OverrideState.PROJECT:
                 if self.had_project_override:
-                    child_obj.update_project_values(item)
+                    child_obj.update_project_value(item)
                 elif self.had_studio_override:
-                    child_obj.update_studio_values(item)
+                    child_obj.update_studio_value(item)
 
             elif self._override_state is OverrideState.STUDIO:
                 if self.had_studio_override:
-                    child_obj.update_studio_values(item)
+                    child_obj.update_studio_value(item)
 
             child_obj.set_override_state(self._override_state)
 
@@ -357,9 +393,7 @@ class ListEntity(EndpointEntity):
 
         on_change_trigger.append(self.on_change)
 
-    def add_to_studio_default(self):
-        if self._override_state is not OverrideState.STUDIO:
-            return
+    def _add_to_studio_default(self, _on_change_trigger):
         self._has_studio_override = True
         self.on_change()
 
@@ -387,7 +421,7 @@ class ListEntity(EndpointEntity):
 
         on_change_trigger.append(self.on_change)
 
-    def add_to_project_override(self):
+    def _add_to_project_override(self, _on_change_trigger):
         self._has_project_override = True
         self.on_change()
 
@@ -407,11 +441,14 @@ class ListEntity(EndpointEntity):
 
         self._ignore_child_changes = True
 
+        while self.children:
+            self.children.pop(0)
+
         for item in value:
             child_obj = self._add_new_item()
             child_obj.update_default_value(item)
             if self._has_studio_override:
-                child_obj.update_studio_values(item)
+                child_obj.update_studio_value(item)
             child_obj.set_override_state(self._override_state)
 
         self._ignore_child_changes = False

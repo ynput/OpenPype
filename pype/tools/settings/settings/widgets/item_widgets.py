@@ -45,7 +45,9 @@ class DictImmutableKeysWidget(BaseWidget):
 
         for child_obj in self.entity.children:
             self.input_fields.append(
-                self.create_ui_for_entity(child_obj, self)
+                self.create_ui_for_entity(
+                    self.category_widget, child_obj, self
+                )
             )
 
         self.entity_widget.add_widget_to_layout(self)
@@ -87,7 +89,7 @@ class DictImmutableKeysWidget(BaseWidget):
 
         if self.entity.is_dynamic_item:
             content_widget.setObjectName("DictAsWidgetBody")
-            show_borders = str(int(self.show_borders))
+            show_borders = str(int(self.entity.show_borders))
             content_widget.setProperty("show_borders", show_borders)
             content_layout_margins = (5, 5, 5, 5)
             main_layout_spacing = 5
@@ -231,10 +233,10 @@ class DictImmutableKeysWidget(BaseWidget):
 
     @property
     def is_invalid(self):
-        return self._is_invalid or self.child_invalid
+        return self._is_invalid or self._child_invalid
 
     @property
-    def child_invalid(self):
+    def _child_invalid(self):
         for input_field in self.input_fields:
             if input_field.is_invalid:
                 return True
@@ -508,7 +510,7 @@ class PathWidget(BaseWidget):
         self.content_layout.setSpacing(5)
 
         self.input_field = self.create_ui_for_entity(
-            self.entity.child_obj, self
+            self.category_widget, self.entity.child_obj, self
         )
 
         self.entity_widget.add_widget_to_layout(self, self.entity.label)

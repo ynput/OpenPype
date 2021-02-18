@@ -2,7 +2,10 @@ from .lib import (
     NOT_SET,
     OverrideState
 )
-from .exceptions import DefaultsNotDefined
+from .exceptions import (
+    DefaultsNotDefined,
+    StudioDefaultsNotDefined
+)
 from .base_entity import ItemEntity
 
 
@@ -156,26 +159,26 @@ class PathEntity(ItemEntity):
     def update_default_value(self, value):
         self.child_obj.update_default_value(value)
 
-    def update_project_values(self, value):
-        self.child_obj.update_project_values(value)
+    def update_project_value(self, value):
+        self.child_obj.update_project_value(value)
 
-    def update_studio_values(self, value):
-        self.child_obj.update_studio_values(value)
+    def update_studio_value(self, value):
+        self.child_obj.update_studio_value(value)
 
-    def _discard_changes(self, *args):
-        self.child_obj.discard_changes(*args)
+    def _discard_changes(self, *args, **kwargs):
+        self.child_obj.discard_changes(*args, **kwargs)
 
-    def add_to_studio_default(self):
-        self.child_obj.add_to_studio_default()
+    def _add_to_studio_default(self, *args, **kwargs):
+        self.child_obj.add_to_studio_default(*args, **kwargs)
 
-    def _remove_from_studio_default(self, *args):
-        self.child_obj.remove_from_studio_default(*args)
+    def _remove_from_studio_default(self, *args, **kwargs):
+        self.child_obj.remove_from_studio_default(*args, **kwargs)
 
-    def add_to_project_override(self):
-        self.child_obj.add_to_project_override()
+    def _add_to_project_override(self, *args, **kwargs):
+        self.child_obj.add_to_project_override(*args, **kwargs)
 
-    def _remove_from_project_override(self, *args):
-        self.child_obj.remove_from_project_override(*args)
+    def _remove_from_project_override(self, *args, **kwargs):
+        self.child_obj.remove_from_project_override(*args, **kwargs)
 
     def reset_callbacks(self):
         super(PathEntity, self).reset_callbacks()
@@ -206,6 +209,15 @@ class ListStrictEntity(ItemEntity):
         if not self.group_item and not self.is_group:
             self.is_group = True
 
+    def schema_validations(self):
+        # List entity must have file parent.
+        if not self.file_item and not self.is_file:
+            raise ValueError(
+                "{}: Missing file entity in hierarchy.".format(self.path)
+            )
+
+        super(ListStrictEntity, self).schema_validations()
+
     def get_child_path(self, child_obj):
         result_idx = None
         for idx, _child_obj in enumerate(self.children):
@@ -231,6 +243,20 @@ class ListStrictEntity(ItemEntity):
             self.children[idx].set(item)
 
     def settings_value(self):
+        if self._override_state is OverrideState.NOT_DEFINED:
+            return NOT_SET
+
+        if (
+            self.is_group
+            and self._override_state is not OverrideState.DEFAULTS
+        ):
+            if self._override_state is OverrideState.STUDIO:
+                if not self.has_studio_override:
+                    return NOT_SET
+            elif self._override_state is OverrideState.PROJECT:
+                if not self.has_project_override:
+                    return NOT_SET
+
         output = []
         for child_obj in self.children:
             output.append(child_obj.settings_value())
@@ -246,12 +272,13 @@ class ListStrictEntity(ItemEntity):
             return
 
         if self._override_state is OverrideState.STUDIO:
-            self._has_studio_override = self.child_has_studio_override
+            self._has_studio_override = self._child_has_studio_override
         elif self._override_state is OverrideState.PROJECT:
-            self._has_project_override = self.child_has_project_override
+            self._has_project_override = self._child_has_project_override
 
         self.on_change()
 
+    @property
     def has_unsaved_changes(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return False
@@ -286,6 +313,14 @@ class ListStrictEntity(ItemEntity):
         return False
 
     @property
+    def has_studio_override(self):
+        return self._has_studio_override or self._child_has_studio_override
+
+    @property
+    def has_project_override(self):
+        return self._has_project_override or self._child_has_project_override
+
+    @property
     def _child_has_unsaved_changes(self):
         for child_obj in self.children:
             if child_obj.has_unsaved_changes:
@@ -313,13 +348,18 @@ class ListStrictEntity(ItemEntity):
             return
 
         self._override_state = state
-        if not self.has_default_value and state > OverrideState.DEFAULTS:
-            # Ignore if is dynamic item and use default in that case
-            if not self.is_dynamic_item and not self.is_in_dynamic_item:
-                raise DefaultsNotDefined(self)
+        # Ignore if is dynamic item and use default in that case
+        if not self.is_dynamic_item and not self.is_in_dynamic_item:
+            if state > OverrideState.DEFAULTS:
+                if not self.has_default_value:
+                    raise DefaultsNotDefined(self)
 
-        for child_obj in self.children:
-            child_obj.set_override_state(state)
+            elif state > OverrideState.STUDIO:
+                if not self.had_studio_override:
+                    raise StudioDefaultsNotDefined(self)
+
+        for child_entity in self.children:
+            child_entity.set_override_state(state)
 
         self.initial_value = self.settings_value()
 
@@ -327,9 +367,7 @@ class ListStrictEntity(ItemEntity):
         for child_obj in self.children:
             child_obj.discard_changes(on_change_trigger)
 
-    def add_to_studio_default(self):
-        if self._override_state is not OverrideState.STUDIO:
-            return
+    def _add_to_studio_default(self, _on_change_trigger):
         self._has_studio_override = True
         self.on_change()
 
@@ -343,14 +381,11 @@ class ListStrictEntity(ItemEntity):
 
         self._has_studio_override = False
 
-    def add_to_project_override(self):
+    def _add_to_project_override(self, _on_change_trigger):
         self._has_project_override = True
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if self._override_state is not OverrideState.PROJECT:
-            return
-
         self._ignore_child_changes = True
 
         for child_obj in self.children:
@@ -403,25 +438,25 @@ class ListStrictEntity(ItemEntity):
             for idx, item_value in enumerate(value):
                 self.children[idx].update_default_value(item_value)
 
-    def update_studio_values(self, value):
+    def update_studio_value(self, value):
         value = self._check_update_value(value, "studio override")
         if value is NOT_SET:
             for child_obj in self.children:
-                child_obj.update_studio_values(value)
+                child_obj.update_studio_value(value)
 
         else:
             for idx, item_value in enumerate(value):
-                self.children[idx].update_studio_values(item_value)
+                self.children[idx].update_studio_value(item_value)
 
-    def update_project_values(self, value):
+    def update_project_value(self, value):
         value = self._check_update_value(value, "project override")
         if value is NOT_SET:
             for child_obj in self.children:
-                child_obj.update_project_values(value)
+                child_obj.update_project_value(value)
 
         else:
             for idx, item_value in enumerate(value):
-                self.children[idx].update_project_values(item_value)
+                self.children[idx].update_project_value(item_value)
 
     def reset_callbacks(self):
         super(ListStrictEntity, self).reset_callbacks()

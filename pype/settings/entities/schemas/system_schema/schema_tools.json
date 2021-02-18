@@ -2,7 +2,7 @@
     "key": "tools",
     "type": "dict",
     "label": "Tools",
-    "collapsable": true,
+    "collapsible": true,
     "is_file": true,
     "children": [
         {

@@ -1,20 +1,20 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "harmony",
     "label": "Harmony",
     "is_file": true,
     "children": [
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
             "children": []
         },
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "general",
             "label": "General",
             "children": [

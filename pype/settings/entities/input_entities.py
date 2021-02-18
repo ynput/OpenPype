@@ -1,12 +1,16 @@
 import copy
 from abc import abstractmethod
 
-from .item_entities import ItemEntity
+from .base_entity import ItemEntity
 from .lib import (
     NOT_SET,
     OverrideState
 )
-from .exceptions import DefaultsNotDefined
+from .exceptions import (
+    DefaultsNotDefined,
+    StudioDefaultsNotDefined
+)
+
 from pype.settings.constants import (
     METADATA_KEYS,
     M_ENVIRONMENT_KEY
@@ -24,7 +28,10 @@ class EndpointEntity(ItemEntity):
     def __init__(self, *args, **kwargs):
         super(EndpointEntity, self).__init__(*args, **kwargs)
 
-        if not self.group_item and not self.is_group:
+        if (
+            not (self.group_item or self.is_group)
+            and not (self.is_dynamic_item or self.is_in_dynamic_item)
+        ):
             self.is_group = True
 
     def schema_validations(self):
@@ -35,12 +42,6 @@ class EndpointEntity(ItemEntity):
                 "Attribute `value_on_not_set` is not filled. {}".format(
                     self.__class__.__name__
                 )
-            )
-
-        # Input entity must have file parent.
-        if not self.file_item:
-            raise ValueError(
-                "{}: Missing parent file entity.".format(self.path)
             )
 
         super(EndpointEntity, self).schema_validations()
@@ -55,10 +56,10 @@ class EndpointEntity(ItemEntity):
 
         if self.is_group:
             if self._override_state is OverrideState.STUDIO:
-                if not self._has_studio_override:
+                if not self.has_studio_override:
                     return NOT_SET
             elif self._override_state is OverrideState.PROJECT:
-                if not self._has_project_override:
+                if not self.has_project_override:
                     return NOT_SET
         return self._settings_value()
 
@@ -72,12 +73,12 @@ class EndpointEntity(ItemEntity):
         self._default_value = value
         self.has_default_value = value is not NOT_SET
 
-    def update_studio_values(self, value):
+    def update_studio_value(self, value):
         value = self._check_update_value(value, "studio override")
         self._studio_override_value = value
         self.had_studio_override = bool(value is not NOT_SET)
 
-    def update_project_values(self, value):
+    def update_project_value(self, value):
         value = self._check_update_value(value, "project override")
         self._project_override_value = value
         self.had_project_override = bool(value is not NOT_SET)
@@ -99,6 +100,15 @@ class InputEntity(EndpointEntity):
         raise TypeError("{} can't have children".format(
             self.__class__.__name__
         ))
+
+    def schema_validations(self):
+        # Input entity must have file parent.
+        if not self.file_item:
+            raise ValueError(
+                "{}: Missing parent file entity.".format(self.path)
+            )
+
+        super(InputEntity, self).schema_validations()
 
     @property
     def value(self):
@@ -201,10 +211,15 @@ class InputEntity(EndpointEntity):
             return
 
         self._override_state = state
-        if not self.has_default_value and state > OverrideState.DEFAULTS:
-            # Ignore if is dynamic item and use default in that case
-            if not self.is_dynamic_item and not self.is_in_dynamic_item:
-                raise DefaultsNotDefined(self)
+        # Ignore if is dynamic item and use default in that case
+        if not self.is_dynamic_item and not self.is_in_dynamic_item:
+            if state > OverrideState.DEFAULTS:
+                if not self.has_default_value:
+                    raise DefaultsNotDefined(self)
+
+            elif state > OverrideState.STUDIO:
+                if not self.had_studio_override:
+                    raise StudioDefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
             self._has_studio_override = (
@@ -237,9 +252,6 @@ class InputEntity(EndpointEntity):
         self._current_value = copy.deepcopy(value)
 
     def _discard_changes(self, on_change_trigger=None):
-        if self._override_state is OverrideState.NOT_DEFINED:
-            return
-
         self._value_is_modified = False
         if self._override_state >= OverrideState.PROJECT:
             self._has_project_override = self.had_project_override
@@ -270,9 +282,7 @@ class InputEntity(EndpointEntity):
 
         raise NotImplementedError("BUG: Unexcpected part of code.")
 
-    def add_to_studio_default(self):
-        if self._override_state is not OverrideState.STUDIO:
-            return
+    def _add_to_studio_default(self, _on_change_trigger):
         self._has_studio_override = True
         self.on_change()
 
@@ -287,9 +297,7 @@ class InputEntity(EndpointEntity):
 
         on_change_trigger.append(self.on_change)
 
-    def add_to_project_override(self):
-        if self._override_state is not OverrideState.PROJECT:
-            return
+    def _add_to_project_override(self, _on_change_trigger):
         self._has_project_override = True
         self.on_change()
 
@@ -510,14 +518,14 @@ class RawJsonEntity(InputEntity):
         self._default_value = value
         self.default_metadata = metadata
 
-    def update_studio_values(self, value):
+    def update_studio_value(self, value):
         value = self._check_update_value(value, "studio override")
         self.had_studio_override = value is not NOT_SET
         value, metadata = self._prepare_value(value)
         self._studio_override_value = value
         self.studio_override_metadata = metadata
 
-    def update_project_values(self, value):
+    def update_project_value(self, value):
         value = self._check_update_value(value, "project override")
         self.had_project_override = value is not NOT_SET
         value, metadata = self._prepare_value(value)

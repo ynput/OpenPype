@@ -1,12 +1,12 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "load",
     "label": "Loader plugins",
     "children": [
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "colors",
             "label": "Loaded Subsets Outliner Colors",
             "children": [

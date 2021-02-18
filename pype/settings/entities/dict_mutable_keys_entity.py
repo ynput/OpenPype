@@ -5,7 +5,10 @@ from .lib import (
     OverrideState
 )
 from . import EndpointEntity
-from .exceptions import DefaultsNotDefined
+from .exceptions import (
+    DefaultsNotDefined,
+    StudioDefaultsNotDefined
+)
 from pype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL,
@@ -14,7 +17,17 @@ from pype.settings.constants import (
 
 
 class DictMutableKeysEntity(EndpointEntity):
-    """"""
+    """Dictionary entity that has mutable keys.
+
+    Keys of entity's children can be modified, removed or added. Children have
+    defined entity type so it is not possible to have 2 different entity types
+    as children.
+
+    TODOs:
+    - cleanup children on pop
+        - remove child's reference to parent
+        - clear callbacks
+    """
     schema_types = ["dict-modifiable"]
     _miss_arg = object()
 
@@ -22,7 +35,7 @@ class DictMutableKeysEntity(EndpointEntity):
         return self.children_by_key[key]
 
     def __setitem__(self, key, value):
-        self.set_value_for_key(key, value)
+        self.set_key_value(key, value)
 
     def __iter__(self):
         for key in self.keys():
@@ -58,14 +71,14 @@ class DictMutableKeysEntity(EndpointEntity):
         prev_keys = set(self.keys())
 
         for _key, _value in value.items():
-            self.set_value_for_key(_key, _value)
+            self.set_key_value(_key, _value)
             if _key in prev_keys:
                 prev_keys.remove(_key)
 
         for key in prev_keys:
             self.pop(key)
 
-    def set_value_for_key(self, key, value):
+    def set_key_value(self, key, value):
         # TODO Check for value type if is Settings entity?
         child_obj = self.children_by_key.get(key)
         if not child_obj:
@@ -77,6 +90,13 @@ class DictMutableKeysEntity(EndpointEntity):
         if new_key == old_key:
             return
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
+        self._on_key_label_change()
+
+    def _on_key_label_change(self):
+        if self._override_state is OverrideState.STUDIO:
+            self._has_studio_override = True
+        elif self._override_state is OverrideState.PROJECT:
+            self._has_project_override = True
         self.on_change()
 
     def _add_key(self, key):
@@ -114,6 +134,22 @@ class DictMutableKeysEntity(EndpointEntity):
                 return key
         return None
 
+    # Label methods
+    def get_child_label(self, child_entity):
+        return self.children_label_by_id.get(child_entity.id)
+
+    def set_child_label(self, child_entity, label):
+        self.children_label_by_id[child_entity.id] = label
+        self._on_key_label_change()
+
+    def get_key_label(self, key):
+        child_entity = self.children_by_key[key]
+        return self.get_child_label(child_entity)
+
+    def set_key_label(self, key, label):
+        child_entity = self.children_by_key[key]
+        self.set_child_label(child_entity, label)
+
     def _item_initalization(self):
         self._default_metadata = {}
         self._studio_override_metadata = {}
@@ -133,12 +169,12 @@ class DictMutableKeysEntity(EndpointEntity):
             self.schema_data.get("value_is_env_group") or False
         )
         self.required_keys = self.schema_data.get("required_keys") or []
-        self.collapsible_key = self.schema_data.get("collapsable_key") or False
+        self.collapsible_key = self.schema_data.get("collapsible_key") or False
         # GUI attributes
         self.hightlight_content = (
             self.schema_data.get("highlight_content") or False
         )
-        self.collapsible = self.schema_data.get("collapsable", True)
+        self.collapsible = self.schema_data.get("collapsible", True)
         self.collapsed = self.schema_data.get("collapsed", True)
 
         object_type = self.schema_data["object_type"]
@@ -192,9 +228,10 @@ class DictMutableKeysEntity(EndpointEntity):
             return
 
         if self._override_state is OverrideState.STUDIO:
-            self._has_studio_override = self._child_has_studio_override
+            self._has_studio_override = True
         elif self._override_state is OverrideState.PROJECT:
-            self._has_project_override = self._child_has_project_override
+            self._has_project_override = True
+
         self.on_change()
 
     def _metadata_for_current_state(self):
@@ -220,10 +257,15 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # TODO change metadata
         self._override_state = state
-        if not self.has_default_value and state > OverrideState.DEFAULTS:
-            # Ignore if is dynamic item and use default in that case
-            if not self.is_dynamic_item and not self.is_in_dynamic_item:
-                raise DefaultsNotDefined(self)
+        # Ignore if is dynamic item and use default in that case
+        if not self.is_dynamic_item and not self.is_in_dynamic_item:
+            if state > OverrideState.DEFAULTS:
+                if not self.has_default_value:
+                    raise DefaultsNotDefined(self)
+
+            elif state > OverrideState.STUDIO:
+                if not self.had_studio_override:
+                    raise StudioDefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
             self._has_studio_override = self.had_studio_override
@@ -232,20 +274,25 @@ class DictMutableKeysEntity(EndpointEntity):
             self._has_project_override = self.had_project_override
             self._has_studio_override = self.had_studio_override
 
-        using_overrides = True
+        using_project_overrides = False
+        using_studio_overrides = False
         if (
             state is OverrideState.PROJECT
             and self.had_project_override
         ):
+            using_project_overrides = True
             value = self._project_override_value
             metadata = self._project_override_metadata
 
-        elif self.had_studio_override:
+        elif (
+            state >= OverrideState.STUDIO
+            and self.had_studio_override
+        ):
+            using_studio_overrides = True
             value = self._studio_override_value
             metadata = self._studio_override_metadata
 
         else:
-            using_overrides = False
             value = self._default_value
             metadata = self._default_metadata
 
@@ -256,24 +303,23 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
-            child_obj = self.children_by_key.pop(key)
+            self.children_by_key.pop(key)
 
         # Create new children
         children_label_by_id = {}
         metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
         for _key, _value in new_value.items():
-            child_obj = self._add_key(_key)
-            child_obj.update_default_value(_value)
-            if using_overrides:
-                if state is OverrideState.STUDIO:
-                    child_obj.update_studio_values(_value)
-                else:
-                    child_obj.update_project_values(_value)
+            child_entity = self._add_key(_key)
+            child_entity.update_default_value(_value)
+            if using_project_overrides:
+                child_entity.update_project_value(_value)
+            elif using_studio_overrides:
+                child_entity.update_studio_value(_value)
 
             label = metadata_labels.get(_key)
             if label:
-                children_label_by_id[child_obj.id] = label
-            child_obj.set_override_state(state)
+                children_label_by_id[child_entity.id] = label
+            child_entity.set_override_state(state)
 
         self.children_label_by_id = children_label_by_id
 
@@ -301,8 +347,9 @@ class DictMutableKeysEntity(EndpointEntity):
         children_key_by_id = self.children_key_by_id()
         label_metadata = {}
         for child_id, label in self.children_label_by_id.items():
-            key = children_key_by_id[child_id]
-            label_metadata[key] = label
+            key = children_key_by_id.get(child_id)
+            if key:
+                label_metadata[key] = label
 
         output[M_DYNAMIC_KEY_LABEL] = label_metadata
 
@@ -368,6 +415,8 @@ class DictMutableKeysEntity(EndpointEntity):
         output = {}
         for key, child_entity in self.children_by_key.items():
             child_value = child_entity.settings_value()
+            # TODO child should have setter of env group key se child can
+            #   know what env group represents.
             if self.value_is_env_group:
                 if key not in child_value[M_ENVIRONMENT_KEY]:
                     _metadata = child_value[M_ENVIRONMENT_KEY]
@@ -393,14 +442,14 @@ class DictMutableKeysEntity(EndpointEntity):
         self._default_value = value
         self._default_metadata = metadata
 
-    def update_studio_values(self, value):
+    def update_studio_value(self, value):
         value = self._check_update_value(value, "studio override")
         value, metadata = self._prepare_value(value)
         self._studio_override_value = value
         self._studio_override_metadata = metadata
         self.had_studio_override = value is not NOT_SET
 
-    def update_project_values(self, value):
+    def update_project_value(self, value):
         value = self._check_update_value(value, "project override")
         value, metadata = self._prepare_value(value)
         self._project_override_value = value
@@ -411,9 +460,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.set_override_state(self._override_state)
         on_change_trigger.append(self.on_change)
 
-    def add_to_studio_default(self):
-        if self._override_state is not OverrideState.STUDIO:
-            return
+    def _add_to_studio_default(self, _on_change_trigger):
         self._has_studio_override = True
         self.on_change()
 
@@ -431,7 +478,7 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Create new children
         for _key, _value in new_value.items():
-            child_obj = self.add_key(_key)
+            child_obj = self._add_key(_key)
             child_obj.update_default_value(_value)
             child_obj.set_override_state(self._override_state)
 
@@ -441,9 +488,7 @@ class DictMutableKeysEntity(EndpointEntity):
 
         on_change_trigger.append(self.on_change)
 
-    def add_to_project_override(self):
-        if self._override_state is not OverrideState.PROJECT:
-            return
+    def _add_to_project_override(self, _on_change_trigger):
         self._has_project_override = True
         self.on_change()
 
@@ -454,10 +499,8 @@ class DictMutableKeysEntity(EndpointEntity):
         if not self.has_project_override:
             return
 
-        using_overrides = False
         if self._has_studio_override:
             value = self._studio_override_value
-            using_overrides = True
         elif self.has_default_value:
             value = self._default_value
         else:
@@ -473,9 +516,9 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Create new children
         for _key, _value in new_value.items():
-            child_obj = self.add_key(_key)
+            child_obj = self._add_key(_key)
             child_obj.update_default_value(_value)
-            if using_overrides:
+            if self._has_studio_override:
                 child_obj.update_studio_value(_value)
             child_obj.set_override_state(self._override_state)
 

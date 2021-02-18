@@ -1,10 +1,11 @@
 {
-    "type": "dict",
-    "collapsable": true,
+    "type": "anatomy_templates",
     "key": "templates",
     "label": "Templates",
-    "collapsable_key": true,
+    "collapsible": true,
+    "collapsible_key": true,
     "is_file": true,
+    "is_group": true,
     "children": [
         {
             "type": "number",

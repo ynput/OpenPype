@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "yeti",
     "label": "Pergrine Labs Yeti",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {

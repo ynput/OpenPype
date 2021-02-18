@@ -1,0 +1,26 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "global",
+    "label": "Global",
+    "is_file": true,
+    "children": [
+        {
+            "type": "schema",
+            "name": "schema_global_publish"
+        },
+        {
+            "type": "schema",
+            "name": "schema_global_tools"
+        },
+        {
+            "type": "raw-json",
+            "label": "Project Folder Structure",
+            "key": "project_folder_structure"
+        },
+        {
+            "type": "schema",
+            "name": "schema_project_syncserver"
+        }
+    ]
+}

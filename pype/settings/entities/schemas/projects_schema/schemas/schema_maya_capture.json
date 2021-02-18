@@ -4,7 +4,7 @@
     "children": [
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "capture",
             "label": "Maya Playblast settings",
             "is_file": true,
@@ -311,7 +311,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "key": "Viewport Options",
                     "label": "Viewport Options",
                     "children": [
@@ -527,7 +527,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "key": "Camera Options",
                     "label": "Camera Options",
                     "children": [

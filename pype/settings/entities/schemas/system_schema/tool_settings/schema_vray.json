@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "vray",
     "label": "Chaos Group Vray",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {

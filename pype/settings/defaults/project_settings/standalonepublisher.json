@@ -10,18 +10,6 @@
         }
     },
     "create": {
-        "__dynamic_keys_labels__": {
-            "create_workfile": "Workfile",
-            "create_model": "Model",
-            "create_rig": "Rig",
-            "create_pointcache": "Pointcache",
-            "create_plate": "Plate",
-            "create_camera": "Camera",
-            "create_editorial": "Editorial",
-            "create_image": "Image",
-            "create_matchmove": "Matchmove",
-            "": ""
-        },
         "create_workfile": {
             "name": "workfile",
             "label": "Workfile",
@@ -121,6 +109,17 @@
                 "Mocap"
             ],
             "help": "Script exported from matchmoving application"
+        },
+        "__dynamic_keys_labels__": {
+            "create_workfile": "Workfile",
+            "create_model": "Model",
+            "create_rig": "Rig",
+            "create_pointcache": "Pointcache",
+            "create_plate": "Plate",
+            "create_camera": "Camera",
+            "create_editorial": "Editorial",
+            "create_image": "Image",
+            "create_matchmove": "Matchmove"
         }
     }
 }

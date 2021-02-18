@@ -57,7 +57,7 @@ class GUIEntity(BaseEntity):
     """Entity without any specific logic that should be handled only in GUI."""
     gui_type = True
 
-    schema_types = ["divider", "splitter", "label"]
+    schema_types = ["separator", "splitter", "label"]
 
     def __getitem__(self, key):
         return self.schema_data[key]
@@ -247,6 +247,14 @@ class BaseItemEntity(BaseEntity):
                 "{}: Item has set label but is used as dynamic item."
             ).format(self.path))
 
+        # Dynamic items or items in dynamic item must not have set `is_group`
+        if self.is_group and (self.is_dynamic_item or self.is_in_dynamic_item):
+            raise ValueError(
+                "{} Dynamic entity has set `is_group` to true.".format(
+                    self.path
+                )
+            )
+
     @abstractmethod
     def set_override_state(self, state):
         """Set override state and trigger it on children.
@@ -409,6 +417,94 @@ class BaseItemEntity(BaseEntity):
         """Value of entity without metadata."""
         pass
 
+    @property
+    def can_discard_changes(self):
+        """Result defines if `discard_changes` will be processed.
+
+        Also can be used as validation before the method is called.
+        """
+        return self.has_unsaved_changes
+
+    @property
+    def can_add_to_studio_default(self):
+        """Result defines if `add_to_studio_default` will be processed.
+
+        Also can be used as validation before the method is called.
+        """
+        if self._override_state is not OverrideState.STUDIO:
+            return False
+
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+
+        # Skip if entity is under group
+        if self.group_item:
+            return False
+
+        # Skip if is group and any children is already marked with studio
+        #   overrides
+        if self.is_group and self.has_studio_override:
+            return False
+        return True
+
+    @property
+    def can_remove_from_studio_default(self):
+        """Result defines if `remove_from_studio_default` can be triggered.
+
+        This can be also used as validation before the method is called.
+        """
+        if self._override_state is not OverrideState.STUDIO:
+            return False
+
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+
+        if not self.has_studio_override:
+            return False
+        return True
+
+    @property
+    def can_add_to_project_override(self):
+        """Result defines if `add_to_project_override` can be triggered.
+
+        Also can be used as validation before the method is called.
+        """
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+
+        # Show only when project overrides are set
+        if self._override_state is not OverrideState.PROJECT:
+            return False
+
+        # Do not show on items under group item
+        if self.group_item:
+            return False
+
+        # Skip if already is marked to save project overrides
+        if self.is_group and self.has_project_override:
+            return False
+        return True
+
+    @property
+    def can_remove_from_project_override(self):
+        """Result defines if `remove_from_project_override` can be triggered.
+
+        This can be also used as validation before the method is called.
+        """
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+
+        if self._override_state is not OverrideState.PROJECT:
+            return False
+
+        # Dynamic items can't have these actions
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+
+        if not self.has_project_override:
+            return False
+        return True
+
     def discard_changes(self, on_change_trigger=None):
         """Discard changes on entity and it's children.
 
@@ -433,6 +529,9 @@ class BaseItemEntity(BaseEntity):
         """
         initialized = False
         if on_change_trigger is None:
+            if not self.can_discard_changes:
+                return
+
             initialized = True
             on_change_trigger = []
 
@@ -447,8 +546,23 @@ class BaseItemEntity(BaseEntity):
         """Entity's implementation to discard all changes made by user."""
         pass
 
+    def add_to_studio_default(self, on_change_trigger=None):
+        initialized = False
+        if on_change_trigger is None:
+            if not self.can_add_to_studio_default:
+                return
+
+            initialized = True
+            on_change_trigger = []
+
+        self._add_to_studio_default(on_change_trigger)
+
+        if initialized:
+            for callback in on_change_trigger:
+                callback()
+
     @abstractmethod
-    def add_to_studio_default(self):
+    def _add_to_studio_default(self, on_change_trigger):
         """Item's implementation to set current values as studio's overrides.
 
         Mark item and it's children as they have studio overrides.
@@ -470,11 +584,11 @@ class BaseItemEntity(BaseEntity):
             on_change_trigger (list): Callbacks of `on_change` should be stored
                 to trigger them afterwards.
         """
-        if self._override_state is not OverrideState.STUDIO:
-            return
-
         initialized = False
         if on_change_trigger is None:
+            if not self.can_remove_from_studio_default:
+                return
+
             initialized = True
             on_change_trigger = []
 
@@ -490,6 +604,29 @@ class BaseItemEntity(BaseEntity):
 
         Mark item as it does not have studio overrides unset studio
         override values.
+        """
+        pass
+
+    def add_to_project_override(self, on_change_trigger=None):
+        initialized = False
+        if on_change_trigger is None:
+            if not self.can_add_to_project_override:
+                return
+
+            initialized = True
+            on_change_trigger = []
+
+        self._add_to_project_override(on_change_trigger)
+
+        if initialized:
+            for callback in on_change_trigger:
+                callback()
+
+    @abstractmethod
+    def _add_to_project_override(self, on_change_trigger):
+        """Item's implementation to set values as overriden for project.
+
+        Mark item and all it's children to be stored as project overrides.
         """
         pass
 
@@ -513,6 +650,8 @@ class BaseItemEntity(BaseEntity):
 
         initialized = False
         if on_change_trigger is None:
+            if not self.can_remove_from_project_override:
+                return
             initialized = True
             on_change_trigger = []
 
@@ -521,14 +660,6 @@ class BaseItemEntity(BaseEntity):
         if initialized:
             for callback in on_change_trigger:
                 callback()
-
-    @abstractmethod
-    def add_to_project_override(self):
-        """Item's implementation to set values as overriden for project.
-
-        Mark item and all it's children to be stored as project overrides.
-        """
-        pass
 
     @abstractmethod
     def _remove_from_project_override(self, on_change_trigger):
@@ -630,7 +761,7 @@ class ItemEntity(BaseItemEntity):
         pass
 
     @abstractmethod
-    def update_studio_values(self, parent_values):
+    def update_studio_value(self, parent_values):
         """Fill studio override values on startup or on refresh.
 
         Set studio value if is not set to NOT_SET, in that case studio
@@ -643,7 +774,7 @@ class ItemEntity(BaseItemEntity):
         pass
 
     @abstractmethod
-    def update_project_values(self, parent_values):
+    def update_project_value(self, parent_values):
         """Fill project override values on startup, refresh or project change.
 
         Set project value if is not set to NOT_SET, in that case project

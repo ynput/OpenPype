@@ -3,7 +3,7 @@
         "type": "dict",
         "key": "{nuke_type}",
         "label": "Foundry {nuke_label}",
-        "collapsable": true,
+        "collapsible": true,
         "checkbox_key": "enabled",
         "children": [
             {

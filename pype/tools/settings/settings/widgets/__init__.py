@@ -1,11 +1,8 @@
 from .window import MainWidget
-from .categories import ProjectListWidget
-from . import item_types
-from . import anatomy_types
+from .widgets import ProjectListWidget
+
 
 __all__ = [
     "MainWidget",
-    "ProjectListWidget",
-    "item_types",
-    "anatomy_types"
+    "ProjectListWidget"
 ]

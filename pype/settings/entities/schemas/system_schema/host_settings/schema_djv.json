@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "djvview",
     "label": "DJV View",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {

@@ -1,6 +1,6 @@
 {
     "type": "dict-modifiable",
-    "collapsable": true,
+    "collapsible": true,
     "key": "filters",
     "label": "Publish GUI Filters",
     "object_type": {

@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "photoshop",
     "label": "Adobe Photoshop",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {

@@ -4,6 +4,14 @@ class DefaultsNotDefined(Exception):
         super(DefaultsNotDefined, self).__init__(msg)
 
 
+class StudioDefaultsNotDefined(Exception):
+    def __init__(self, obj):
+        msg = "Studio default values for object are not set. {}".format(
+            obj.path
+        )
+        super(StudioDefaultsNotDefined, self).__init__(msg)
+
+
 class InvalidValueType(Exception):
     msg_template = "{}"
 

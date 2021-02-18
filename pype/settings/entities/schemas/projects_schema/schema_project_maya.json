@@ -1,6 +1,6 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "maya",
     "label": "Maya",
     "is_file": true,

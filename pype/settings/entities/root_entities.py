@@ -12,7 +12,11 @@ from .lib import (
     OverrideState,
     gui_schema
 )
-from pype.settings.constants import SYSTEM_SETTINGS_KEY
+from pype.settings.constants import (
+    SYSTEM_SETTINGS_KEY,
+    PROJECT_SETTINGS_KEY,
+    PROJECT_ANATOMY_KEY
+)
 
 from pype.settings.lib import (
     DEFAULTS_DIR,
@@ -20,15 +24,18 @@ from pype.settings.lib import (
     get_default_settings,
 
     get_studio_system_settings_overrides,
-
     save_studio_settings,
+
+    get_studio_project_settings_overrides,
+    get_studio_project_anatomy_overrides,
+    get_project_settings_overrides,
+    get_project_anatomy_overrides,
+    save_project_settings,
+    save_project_anatomy,
 
     find_environments,
     apply_overrides
 )
-# TODO implement
-# ProjectSettings
-# AnatomySettings
 
 
 class RootEntity(BaseItemEntity):
@@ -132,8 +139,16 @@ class RootEntity(BaseItemEntity):
 
         self._add_children(self.schema_data)
 
-        for children in self.children:
-            children.schema_validations()
+        self.schema_validations()
+
+    def schema_validations(self):
+        for child_entity in self.children:
+            if child_entity.is_group:
+                raise ValueError((
+                    "Root entity \"{}\" has child with `is_group`"
+                    " attribute set to True but root can't save overrides."
+                ).format(self.__class__.__name__))
+            child_entity.schema_validations()
 
     def create_schema_object(self, schema_data, *args, **kwargs):
         """Create entity by entered schema data.
@@ -166,10 +181,11 @@ class RootEntity(BaseItemEntity):
                 if not issubclass(item, entities.BaseEntity):
                     continue
 
+                # Skip class that is abstract by design
+                if item in known_abstract_classes:
+                    continue
+
                 if inspect.isabstract(item):
-                    # Skip class that is abstract by design
-                    if item in known_abstract_classes:
-                        continue
                     # Create an object to get crash and get traceback
                     item()
 
@@ -302,25 +318,25 @@ class RootEntity(BaseItemEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.discard_changes(on_change_trigger)
 
-    def add_to_studio_default(self):
+    def _add_to_studio_default(self, *args, **kwargs):
         """Implementation of abstract method only trigger children callback."""
         for child_obj in self.non_gui_children.values():
-            child_obj.add_to_studio_default()
+            child_obj.add_to_studio_default(*args, **kwargs)
 
     def _remove_from_studio_default(self, on_change_trigger):
         """Implementation of abstract method only trigger children callback."""
         for child_obj in self.non_gui_children.values():
             child_obj.remove_from_studio_default(on_change_trigger)
 
-    def add_to_project_override(self):
+    def _add_to_project_override(self, *args, **kwargs):
         """Implementation of abstract method only trigger children callback."""
         for child_obj in self.non_gui_children.values():
-            child_obj.add_to_project_override()
+            child_obj.add_to_project_override(*args, **kwargs)
 
-    def _remove_from_project_override(self):
+    def _remove_from_project_override(self, on_change_trigger):
         """Implementation of abstract method only trigger children callback."""
         for child_obj in self.non_gui_children.values():
-            child_obj.remove_from_project_override()
+            child_obj.remove_from_project_override(on_change_trigger)
 
     def save(self):
         """Save values for current override state.
@@ -450,7 +466,7 @@ class SystemSettings(RootEntity):
         studio_overrides = get_studio_system_settings_overrides()
         for key, child_obj in self.non_gui_children.items():
             value = studio_overrides.get(key, NOT_SET)
-            child_obj.update_studio_values(value)
+            child_obj.update_studio_value(value)
 
     def reset(self, new_state=None):
         """Discard changes and reset entit's values.
@@ -478,7 +494,7 @@ class SystemSettings(RootEntity):
 
         Implementation of abstract method.
         """
-        return os.path.join(DEFAULTS_DIR, SYSTEM_SETTINGS_KEY)
+        return DEFAULTS_DIR
 
     def _save_studio_values(self):
         settings_value = self.settings_value()
@@ -521,3 +537,147 @@ class SystemSettings(RootEntity):
                 overrides.
         """
         raise ValueError("System settings can't save project overrides.")
+
+
+class ProjectSettings(RootEntity):
+    """Root entity for project settings.
+
+    Allows to modify project settings via entity system and loaded schemas.
+
+    Args:
+        project_name (str): Project name which overrides will be loaded.
+            Use `None` to modify studio defaults.
+        change_state (bool): Set values on initialization. By
+            default is set to True.
+        reset (bool): Reset values on initialization. By default is set to
+            True.
+        schema_data (dict): Pass schema data to entity. This is for development
+            and debugging purposes.
+    """
+    def __init__(
+        self,
+        project_name=None,
+        change_state=True,
+        reset=True,
+        schema_data=None
+    ):
+        self._project_name = project_name
+
+        if schema_data is None:
+            # Load system schemas
+            schema_data = gui_schema("projects_schema", "schema_main")
+
+        super(ProjectSettings, self).__init__(schema_data, reset)
+
+        if change_state:
+            if self.project_name is None:
+                self.set_studio_state()
+            else:
+                self.set_project_state()
+
+    @property
+    def project_name(self):
+        return self._project_name
+
+    @project_name.setter
+    def project_name(self, project_name):
+        self.change_project(project_name)
+
+    def change_project(self, project_name):
+        if project_name == self._project_name:
+            return
+
+        self._project_name = project_name
+        if project_name is None:
+            self.set_studio_state()
+            return
+
+        project_override_value = {
+            PROJECT_SETTINGS_KEY: get_project_settings_overrides(project_name),
+            PROJECT_ANATOMY_KEY: get_project_anatomy_overrides(project_name)
+        }
+        for key, child_obj in self.non_gui_children.items():
+            value = project_override_value.get(key, NOT_SET)
+            child_obj.update_project_value(value)
+
+        self.set_project_state()
+
+    def _reset_values(self):
+        default_values = {
+            PROJECT_SETTINGS_KEY: get_default_settings()[PROJECT_SETTINGS_KEY],
+            PROJECT_ANATOMY_KEY: get_default_settings()[PROJECT_ANATOMY_KEY]
+        }
+        for key, child_obj in self.non_gui_children.items():
+            value = default_values.get(key, NOT_SET)
+            child_obj.update_default_value(value)
+
+        studio_overrides = {
+            PROJECT_SETTINGS_KEY: get_studio_project_settings_overrides(),
+            PROJECT_ANATOMY_KEY: get_studio_project_anatomy_overrides()
+        }
+
+        for key, child_obj in self.non_gui_children.items():
+            value = studio_overrides.get(key, NOT_SET)
+            child_obj.update_studio_value(value)
+
+        if not self.project_name:
+            return
+
+        project_name = self.project_name
+        project_override_value = {
+            PROJECT_SETTINGS_KEY: get_project_settings_overrides(project_name),
+            PROJECT_ANATOMY_KEY: get_project_anatomy_overrides(project_name)
+        }
+        for key, child_obj in self.non_gui_children.items():
+            value = project_override_value.get(key, NOT_SET)
+            child_obj.update_project_value(value)
+
+    def reset(self, new_state=None):
+        """Discard changes and reset entit's values.
+
+        Reload default values and studio override values and update entities.
+
+        Args:
+            new_state (OverrideState): It is possible to change override state
+                during reset. Current state is used if not defined.
+        """
+        if new_state is None:
+            new_state = self._override_state
+
+        if new_state is OverrideState.NOT_DEFINED:
+            new_state = OverrideState.DEFAULTS
+
+        self._reset_values()
+        self.set_override_state(new_state)
+
+    def defaults_dir(self):
+        """Path to defaults directory.
+
+        Implementation of abstract method.
+        """
+        return DEFAULTS_DIR
+
+    def _save_studio_values(self):
+        settings_value = self.settings_value()
+
+        self._validate_values_to_save(settings_value)
+
+        self.log.debug("Saving project settings: {}".format(
+            json.dumps(settings_value, indent=4)
+        ))
+        project_settings = settings_value.get(PROJECT_SETTINGS_KEY) or {}
+        project_anatomy = settings_value.get(PROJECT_ANATOMY_KEY) or {}
+
+        save_project_settings(self.project_name, project_settings)
+        save_project_anatomy(self.project_name, project_anatomy)
+
+    def _validate_defaults_to_save(self, value):
+        """Valiations of default values before save."""
+        pass
+
+    def _validate_values_to_save(self, value):
+        pass
+
+    def _save_project_values(self):
+        """Project overrides are saved same ways as studio overrides."""
+        self._save_studio_values()
