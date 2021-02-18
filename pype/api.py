@@ -5,7 +5,8 @@ from .settings import (
     get_anatomy_settings,
     get_environments,
 
-    SystemSettings
+    SystemSettings,
+    ProjectSettings
 )
 from .lib import (
     PypeLogger,
