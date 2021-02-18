@@ -49,6 +49,8 @@ class ExtractSequence(pyblish.api.Extractor):
         "renderPass": "\"PNG\"",
         "renderLayer": "\"PNG\"",
     }
+    default_thumbnail_save_mode = "\"JPG\""
+    thumbnail_save_mode_for_family = {}
 
     def process(self, instance):
         self.log.info(
@@ -120,9 +122,12 @@ class ExtractSequence(pyblish.api.Extractor):
 
         thumbnail_filename = "thumbnail"
 
+        thumbnail_save_mode = self.thumbnail_save_mode_for_family.get(
+            family_lowered, self.default_thumbnail_save_mode
+        )
         # Render output
         output_files_by_frame = self.render(
-            save_mode, filename_template, output_dir,
+            thumbnail_save_mode, filename_template, output_dir,
             filtered_layers, frame_start, frame_end, thumbnail_filename
         )
         thumbnail_fullpath = output_files_by_frame.pop(
