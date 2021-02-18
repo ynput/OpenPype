@@ -9,9 +9,6 @@ class BaseWidget(QtWidgets.QWidget):
         self.entity = entity
         self.entity_widget = entity_widget
 
-        self.trigger_hierarchical_style_update = (
-            self.entity_widget.trigger_hierarchical_style_update
-        )
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
         self._is_invalid = False
@@ -23,6 +20,9 @@ class BaseWidget(QtWidgets.QWidget):
 
         self.label_widget = None
         self.create_ui()
+
+    def trigger_hierarchical_style_update(self):
+        self.category_widget.hierarchical_style_update()
 
     def create_ui_for_entity(self, *args, **kwargs):
         return self.category_widget.create_ui_for_entity(*args, **kwargs)

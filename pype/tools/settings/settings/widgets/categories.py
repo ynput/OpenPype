@@ -245,9 +245,6 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
 
-    def trigger_hierarchical_style_update(self):
-        self.hierarchical_style_update()
-
     def _on_entity_change(self):
         self.hierarchical_style_update()
 
