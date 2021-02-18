@@ -2,8 +2,8 @@
     "type": "anatomy_templates",
     "key": "templates",
     "label": "Templates",
-    "collapsable": true,
-    "collapsable_key": true,
+    "collapsible": true,
+    "collapsible_key": true,
     "is_file": true,
     "is_group": true,
     "children": [

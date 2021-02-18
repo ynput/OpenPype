@@ -9,7 +9,7 @@
         "type": "dict",
         "key": "{host_name}_{host_version}",
         "label": "{host_version}",
-        "collapsable": true,
+        "collapsible": true,
         "checkbox_key": "enabled",
         "children": [
             {

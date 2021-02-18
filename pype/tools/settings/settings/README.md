@@ -126,8 +126,8 @@
     - without label it is just wrap item holding `"key"`
         - can't have `"is_group"` key set to True as it breaks visual override showing
     - if `"label"` is entetered there which will be shown in GUI
-        - item with label can be collapsable
-            - that can be set with key `"collapsable"` as `True`/`False` (Default: `True`)
+        - item with label can be collapsible
+            - that can be set with key `"collapsible"` as `True`/`False` (Default: `True`)
                 - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
         - it is possible to add darker background with `"highlight_content"` (Default: `False`)
             - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
@@ -138,7 +138,7 @@
     "key": "applications",
     "type": "dict",
     "label": "Applications",
-    "collapsable": true,
+    "collapsible": true,
     "highlight_content": true,
     "is_group": true,
     "is_file": true,
@@ -320,8 +320,8 @@
 - there are 2 possible ways how to set the type:
     1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
     2.) item type name as string without modifiers (e.g. `text`)
-- this input can be collapsable
-    - that can be set with key `"collapsable"` as `True`/`False` (Default: `True`)
+- this input can be collapsible
+    - that can be set with key `"collapsible"` as `True`/`False` (Default: `True`)
         - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
 
 1.) with item modifiers

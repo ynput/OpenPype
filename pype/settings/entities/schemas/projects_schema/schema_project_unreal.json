@@ -1,13 +1,13 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "unreal",
     "label": "Unreal Engine",
     "is_file": true,
     "children": [
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "project_setup",
             "label": "Project Setup",
             "children": [

@@ -169,12 +169,12 @@ class DictMutableKeysEntity(EndpointEntity):
             self.schema_data.get("value_is_env_group") or False
         )
         self.required_keys = self.schema_data.get("required_keys") or []
-        self.collapsible_key = self.schema_data.get("collapsable_key") or False
+        self.collapsible_key = self.schema_data.get("collapsible_key") or False
         # GUI attributes
         self.hightlight_content = (
             self.schema_data.get("highlight_content") or False
         )
-        self.collapsible = self.schema_data.get("collapsable", True)
+        self.collapsible = self.schema_data.get("collapsible", True)
         self.collapsed = self.schema_data.get("collapsed", True)
 
         object_type = self.schema_data["object_type"]

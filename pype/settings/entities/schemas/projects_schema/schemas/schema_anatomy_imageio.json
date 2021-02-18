@@ -14,7 +14,7 @@
                     "key": "workfile",
                     "type": "dict",
                     "label": "Workfile",
-                    "collapsable": false,
+                    "collapsible": false,
                     "children": [
                         {
                             "type": "form",
@@ -88,7 +88,7 @@
                     "key": "regexInputs",
                     "type": "dict",
                     "label": "Colorspace on Inputs by regex detection",
-                    "collapsable": true,
+                    "collapsible": true,
                     "children": [
                         {
                             "type": "list",
@@ -122,7 +122,7 @@
                     "key": "workfile",
                     "type": "dict",
                     "label": "Workfile",
-                    "collapsable": false,
+                    "collapsible": false,
                     "children": [
                         {
                             "type": "form",
@@ -219,7 +219,7 @@
                     "key": "nodes",
                     "type": "dict",
                     "label": "Nodes",
-                    "collapsable": true,
+                    "collapsible": true,
                     "children": [
                         {
                             "key": "requiredNodes",
@@ -323,7 +323,7 @@
                     "key": "regexInputs",
                     "type": "dict",
                     "label": "Colorspace on Inputs by regex detection",
-                    "collapsable": true,
+                    "collapsible": true,
                     "children": [
                         {
                             "type": "list",

@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "ftrack",
     "label": "Ftrack",
-    "collapsable": true,
+    "collapsible": true,
     "is_file": true,
     "children": [
         {
@@ -609,14 +609,14 @@
         },
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
             "is_file": true,
             "children": [
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "checkbox_key": "enabled",
                     "key": "IntegrateFtrackNote",
                     "label": "IntegrateFtrackNote",
@@ -643,7 +643,7 @@
 
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "checkbox_key": "enabled",
                     "key": "ValidateFtrackAttributes",
                     "label": "ValidateFtrackAttributes",

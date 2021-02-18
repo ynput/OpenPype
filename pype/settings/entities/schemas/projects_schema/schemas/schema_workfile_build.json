@@ -1,6 +1,6 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "workfile_build",
     "label": "Workfile Build Settings",
     "children": [

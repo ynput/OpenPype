@@ -1,6 +1,6 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "attributes",
     "label": "Attributes",
     "is_file": true,

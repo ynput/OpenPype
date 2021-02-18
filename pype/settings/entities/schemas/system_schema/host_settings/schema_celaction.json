@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "celaction",
     "label": "CelAction2D",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {

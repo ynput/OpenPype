@@ -169,7 +169,7 @@ class DictImmutableKeysEntity(ItemEntity):
             "highlight_content", False
         )
         self.show_borders = self.schema_data.get("show_borders", True)
-        self.collapsible = self.schema_data.get("collapsable", True)
+        self.collapsible = self.schema_data.get("collapsible", True)
         self.collapsed = self.schema_data.get("collapsed", True)
 
         # Not yet implemented

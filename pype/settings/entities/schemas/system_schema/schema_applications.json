@@ -2,7 +2,7 @@
   "key": "applications",
   "type": "dict",
   "label": "Applications",
-  "collapsable": true,
+  "collapsible": true,
   "is_file": true,
   "children": [
     {

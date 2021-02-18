@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "sync_server",
     "label": "Sync Server (currently unused)",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "is_file": true,
     "children": [
@@ -15,7 +15,7 @@
         "type": "dict",
         "key": "config",
         "label": "Config",
-        "collapsable": true,
+        "collapsible": true,
         "children": [
 
             {
@@ -46,10 +46,10 @@
         ]
     }, {
         "type": "dict-modifiable",
-        "collapsable": true,
+        "collapsible": true,
         "key": "sites",
         "label": "Sites",
-        "collapsable_key": false,
+        "collapsible_key": false,
         "is_file": true,
         "object_type":
         {

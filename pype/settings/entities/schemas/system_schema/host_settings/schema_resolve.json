@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "resolve",
     "label": "Blackmagic DaVinci Resolve",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {

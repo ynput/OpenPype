@@ -1,6 +1,6 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "global",
     "label": "Global",
     "is_file": true,
