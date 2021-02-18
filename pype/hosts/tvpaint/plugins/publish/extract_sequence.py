@@ -49,8 +49,6 @@ class ExtractSequence(pyblish.api.Extractor):
         "renderPass": "\"PNG\"",
         "renderLayer": "\"PNG\"",
     }
-    default_thumbnail_save_mode = "\"JPG\""
-    thumbnail_save_mode_for_family = {}
 
     def process(self, instance):
         self.log.info(
@@ -122,12 +120,9 @@ class ExtractSequence(pyblish.api.Extractor):
 
         thumbnail_filename = "thumbnail"
 
-        thumbnail_save_mode = self.thumbnail_save_mode_for_family.get(
-            family_lowered, self.default_thumbnail_save_mode
-        )
         # Render output
         output_files_by_frame = self.render(
-            thumbnail_save_mode, filename_template, output_dir,
+            save_mode, filename_template, output_dir,
             filtered_layers, frame_start, frame_end, thumbnail_filename
         )
         thumbnail_fullpath = output_files_by_frame.pop(
@@ -312,11 +307,11 @@ class ExtractSequence(pyblish.api.Extractor):
         if thumbnail_filename:
             basename, ext = os.path.splitext(thumbnail_filename)
             if not ext:
-                ext = ".png"
+                ext = ".jpeg"
             thumbnail_fullpath = "/".join([output_dir, basename + ext])
             all_output_files[thumbnail_filename] = thumbnail_fullpath
             # Force save mode to png for thumbnail
-            george_script_lines.append("tv_SaveMode \"PNG\"")
+            george_script_lines.append("tv_SaveMode \"JPG\"")
             # Go to frame
             george_script_lines.append("tv_layerImage {}".format(first_frame))
             # Store image to output
