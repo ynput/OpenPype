@@ -21,6 +21,7 @@ class ExtractSequence(pyblish.api.Extractor):
         "flc": ".fli",
         "gif": ".gif",
         "ilbm": ".iff",
+        "jpg": ".jpg",
         "jpeg": ".jpg",
         "pcx": ".pcx",
         "png": ".png",
@@ -36,6 +37,7 @@ class ExtractSequence(pyblish.api.Extractor):
         "bmp",
         "dpx",
         "ilbm",
+        "jpg",
         "jpeg",
         "png",
         "sun",
@@ -307,7 +309,7 @@ class ExtractSequence(pyblish.api.Extractor):
         if thumbnail_filename:
             basename, ext = os.path.splitext(thumbnail_filename)
             if not ext:
-                ext = ".jpeg"
+                ext = ".jpg"
             thumbnail_fullpath = "/".join([output_dir, basename + ext])
             all_output_files[thumbnail_filename] = thumbnail_fullpath
             # Force save mode to png for thumbnail
