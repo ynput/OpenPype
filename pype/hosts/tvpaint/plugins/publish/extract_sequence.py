@@ -179,6 +179,7 @@ class ExtractSequence(pyblish.api.Extractor):
         thumbnail_repre = {
             "name": "thumbnail",
             "ext": ext,
+            "outputName": "thumb",
             "files": os.path.basename(thumbnail_fullpath),
             "stagingDir": output_dir,
             "tags": ["thumbnail"]
