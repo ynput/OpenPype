@@ -109,6 +109,27 @@ def eventserver(debug,
 
 
 @main.command()
+@click.argument("output_json_path")
+@click.option("--project", help="Project name", default=None)
+@click.option("--asset", help="Asset name", default=None)
+@click.option("--task", help="Task name", default=None)
+@click.option("--app", help="Application name", default=None)
+def extractenvironments(output_json_path, project, asset, task, app):
+    """Extract environment variables for entered context to a json file.
+
+    Entered output filepath will be created if does not exists.
+
+    All context options must be passed otherwise only pype's global
+    environments will be extracted.
+
+    Context options are "project", "asset", "task", "app"
+    """
+    PypeCommands().extractenvironments(
+        output_json_path, project, asset, task, app
+    )
+
+
+@main.command()
 @click.argument("paths", nargs=-1)
 @click.option("-g", "--gui", is_flag=True, help="Run pyblish GUI")
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
