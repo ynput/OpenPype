@@ -119,7 +119,7 @@ def publish(debug, paths):
     """
     if debug:
         os.environ['PYPE_DEBUG'] = '3'
-    PypeCommands().publish(list(paths))
+    PypeCommands.publish(list(paths))
 
 
 @main.command()

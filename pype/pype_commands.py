@@ -44,8 +44,7 @@ class PypeCommands:
     def publish(paths):
         """Start headless publishing.
 
-        Publish collects json from current working directory
-        or supplied paths argument.
+        Publish use json from passed paths argument.
 
         Args:
             paths (list): Paths to jsons.
