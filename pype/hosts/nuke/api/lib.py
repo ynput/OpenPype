@@ -168,7 +168,7 @@ def writes_version_sync():
                 each['file'].setValue(node_new_file)
                 if not os.path.isdir(os.path.dirname(node_new_file)):
                     log.warning("Path does not exist! I am creating it.")
-                    os.makedirs(os.path.dirname(node_new_file), 0o766)
+                    os.makedirs(os.path.dirname(node_new_file))
             except Exception as e:
                 log.warning(
                     "Write node: `{}` has no version in path: {}".format(
@@ -350,7 +350,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):
         log.warning("Path does not exist! I am creating it.")
-        os.makedirs(os.path.dirname(fpath), 0o766)
+        os.makedirs(os.path.dirname(fpath))
 
     _data = OrderedDict({
         "file": fpath
