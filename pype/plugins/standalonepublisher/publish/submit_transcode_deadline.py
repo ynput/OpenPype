@@ -47,21 +47,6 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
         return published_path
 
     def process(self, instance):
-        # Get asset dependencies.
-        asset_dependencies = {}
-        count = 0
-        audio_published_path = None
-        for representation in instance.data["representations"]:
-            published_path = self.get_published_path(representation, instance)
-
-            asset_dependencies["AssetDependency{}".format(count)] = (
-                published_path
-            )
-            count += 1
-
-            if representation["name"] == "audio":
-                audio_published_path = published_path
-
         # Requried environment.
         PYTHONPATH = ""
         for module in [pype, pyblish, avalon, pypeapp, acre]:
@@ -89,6 +74,7 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
             descended_from_type=otio.schema.track.Track
         )
         jobs = []
+        clip_names = []
         for track in tracks:
             for clip in track.each_child():
                 if clip.name is None:
@@ -109,31 +95,39 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                 if self.clips_start_frame is None:
                     self.clips_start_frame = clip_range.start_time.value
 
+                start_frame = (
+                    clip_range.start_time.value - self.clips_start_frame
+                )
+
                 # Get media path.
                 url = urlparse(clip.media_reference.target_url)
                 path = os.path.join(url.netloc, url.path)
                 if path.startswith("/"):
-                    path = path[1:]
+                    path = "{}:{}".format(url.scheme, path)
                 path = os.path.abspath(path)
 
-                # HARDCODED frame pattern for exr files.
-                # Also hardcoded is the start frame, which is assumed to 1.
+                # HARDCODED frame pattern for exr files. This should be
+                # extended to all image sequences.
                 if path.endswith(".exr"):
                     basename = os.path.basename(path)
                     directory = os.path.dirname(path)
                     path = "{}.%04d.exr [{}-{}]".format(
                         os.path.join(directory, basename.split(".")[0]),
-                        1,
-                        clip.duration().value
+                        start_frame,
+                        start_frame + clip.duration().value - 1
                     )
 
-                start_frame = (
-                    clip_range.start_time.value - self.clips_start_frame
-                )
+                # Need unique names to prevent overwriting.
+                name = clip.name
+                if name in clip_names:
+                    name_occurance = clip_names.count(clip.name)
+                    name = "{}_{}".format(clip.name, name_occurance)
+                clip_names.append(clip.name)
+
                 jobs.append({
                     "input_path": path.replace("\\", "/"),
                     "preset": instance.data,
-                    "name": clip.name,
+                    "name": name,
                     "output_path": os.path.dirname(
                         instance.context.data["currentFile"]
                     ).replace("\\", "/"),
@@ -164,7 +158,8 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                     "UserName": getpass.getuser(),
                     "OutputDirectory0": job["output_path"],
                     "EnvironmentKeyValue0": "PYTHONPATH={}".format(PYTHONPATH),
-                    "EnvironmentKeyValue1": "PATH={}".format(PATH)
+                    "EnvironmentKeyValue1": "PATH={}".format(PATH),
+                    "AssetDependency0": job["input_path"]
                 },
                 "PluginInfo": {
                     "Version": "3.7",
@@ -176,8 +171,11 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                 "AuxFiles": [],
             }
 
-            # Add asset dependencies.
-            payload["JobInfo"].update(asset_dependencies)
+            # HARDCODED asset dependency format for exr files.
+            if "%04d.exr" in job["input_path"]:
+                path = job["input_path"].split("exr")[0]
+                path = path.replace("%04d", "####") + "exr"
+                payload["JobInfo"]["AssetDependency0"] = path
 
             payloads.append(payload)
 
@@ -220,6 +218,17 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
 
         published_path = self.get_published_path(representation, instance)
 
+        # Get audio asset dependency.
+        audio_published_path = None
+        for representation in instance.data["representations"]:
+            if representation["name"] != "audio":
+                continue
+
+            audio_published_path = self.get_published_path(
+                representation, instance
+            )
+
+        # Get arguments.
         output_path = os.path.dirname(
             instance.context.data["currentFile"]
         ).replace("\\", "/")
@@ -230,6 +239,8 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
             f"-output {output_path} -audio {audio_published_path} "
             f"-start 0 -framerate {framerate}"
         )
+
+        # Generate payload.
         payload = {
             "JobInfo": {
                 "Plugin": "Python",
@@ -239,7 +250,7 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                 "OutputDirectory0": output_path,
                 "EnvironmentKeyValue0": "PYTHONPATH={}".format(PYTHONPATH),
                 "EnvironmentKeyValue1": "PATH={}".format(PATH),
-                "AssetDependency0": published_path
+                "AssetDependency0": audio_published_path
             },
             "PluginInfo": {
                 "Version": "3.7",
@@ -262,6 +273,7 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
         url = "{}/api/jobs".format(
             os.environ.get("DEADLINE_REST_URL", "http://localhost:8082")
         )
+
         response = requests.post(url, json=payload, timeout=10)
         if not response.ok:
             raise Exception(response.text)

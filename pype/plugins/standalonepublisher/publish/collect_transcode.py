@@ -13,7 +13,8 @@ class CollectTranscode(pyblish.api.InstancePlugin):
     families = ["prores422HQ", "h264"]
 
     # presets
-    extensions = [".wav"]
+    audio_extensions = [".wav"]
+    editorial_extensions = ["edl", "xml", "otio"]
 
     def process(self, instance):
         self.log.debug(f"instance: `{instance}`")
@@ -32,11 +33,12 @@ class CollectTranscode(pyblish.api.InstancePlugin):
             instance.data["label"] = name
             instance.data["families"].append("transcode")
 
-            # Get version from published versions.
+            # Get version from published versions. Since editorial file
+            # extension can change, we compared with audio file "wav".
             instance.data["version"] = 1
             subsets = pype.lib.get_subsets(
                 instance.context.data["assetEntity"]["name"],
-                representations=[representation["ext"][1:]]
+                representations=self.editorial_extensions
             )
             try:
                 instance.data["version"] = (
@@ -44,6 +46,10 @@ class CollectTranscode(pyblish.api.InstancePlugin):
                 )
             except KeyError:
                 pass
+
+            self.log.info(
+                "Setting version to: {}".format(instance.data["version"])
+            )
 
             # Get audio file path.
             audio_path = None
@@ -53,8 +59,8 @@ class CollectTranscode(pyblish.api.InstancePlugin):
                 # filter out by not sharing the same name
                 if os.path.splitext(f)[0] not in basename:
                     continue
-                # filter out by respected extensions
-                if os.path.splitext(f)[1] not in self.extensions:
+                # filter out by respected audio_extensions
+                if os.path.splitext(f)[1] not in self.audio_extensions:
                     continue
                 audio_path = os.path.join(
                     staging_dir, f

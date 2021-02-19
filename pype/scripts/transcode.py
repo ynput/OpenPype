@@ -103,7 +103,11 @@ def main(input_path="",
 
         # Add EXR ffmpeg args.
         ffmpeg_args.extend(
-            ["-gamma", "2.2", "-i", collection.format("{head}{padding}{tail}")]
+            [
+                "-gamma", "2.2",
+                "-start_number", str(list(collection.indexes)[0]),
+                "-i", collection.format("{head}{padding}{tail}")
+            ]
         )
 
     # Process movie files.
