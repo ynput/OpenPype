@@ -142,7 +142,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         # define chunk and priority
         chunk_size = instance.data.get("deadlineChunkSize")
-        if chunk_size == 0:
+        if chunk_size == 0 and self.deadline_chunk_size:
             chunk_size = self.deadline_chunk_size
 
         priority = instance.data.get("deadlinePriority")
@@ -155,7 +155,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 "BatchName": script_name,
 
                 # Asset dependency to wait for at least the scene file to sync.
-                "AssetDependency0": script_path,
+                # "AssetDependency0": script_path,
 
                 # Job name, as seen in Monitor
                 "Name": jobname,
