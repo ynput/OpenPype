@@ -56,12 +56,20 @@
     },
     "vray": {
         "enabled": true,
-        "environment": {},
+        "environment": {
+            "__environment_keys__": {
+                "vray": []
+            }
+        },
         "variants": {}
     },
     "yeti": {
         "enabled": true,
-        "environment": {},
+        "environment": {
+            "__environment_keys__": {
+                "yeti": []
+            }
+        },
         "variants": {}
     },
     "other": {
