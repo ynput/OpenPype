@@ -54,8 +54,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 continue
 
             instance = context.create_instance(node.split("/")[-1])
-            instance.append(node)
             instance.data.update(data)
+            instance.data["setMembers"] = [node]
             instance.data["publish"] = harmony.send(
                 {"function": "node.getEnable", "args": [node]}
             )["result"]

@@ -5,8 +5,6 @@ import shutil
 from zipfile import ZipFile
 
 import pype.api
-from avalon import harmony
-import pype.hosts.harmony
 
 
 class ExtractWorkfile(pype.api.Extractor):

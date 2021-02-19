@@ -47,7 +47,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
         harmony.send(
             {
                 "function": func,
-                "args": [instance[0], path + "/" + instance.data["name"]]
+                "args": [instance.data["setMembers"][0],
+                         path + "/" + instance.data["name"]]
             }
         )
         harmony.save_scene()
@@ -75,7 +76,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
         collections, remainder = clique.assemble(files, minimum_items=1)
         assert not remainder, (
             "There should not be a remainder for {0}: {1}".format(
-                instance[0], remainder
+                instance.data["setMembers"][0], remainder
             )
         )
         self.log.debug(collections)
