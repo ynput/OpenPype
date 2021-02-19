@@ -66,6 +66,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "vdbcache",
                 "scene",
                 "vrayproxy",
+                "vrayscene_layer",
                 "render",
                 "prerender",
                 "imagesequence",
@@ -701,7 +702,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 'type': 'subset',
                 '_id': io.ObjectId(subset["_id"])
             }, {'$set': {'data.subsetGroup':
-                instance.data.get('subsetGroup')}}
+                         instance.data.get('subsetGroup')}}
             )
 
         # Update families on subset.
@@ -878,9 +879,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             path = rootless_path
         else:
             self.log.warning((
-                              "Could not find root path for remapping \"{}\"."
-                              " This may cause issues on farm."
-                              ).format(path))
+                "Could not find root path for remapping \"{}\"."
+                " This may cause issues on farm."
+            ).format(path))
         return path
 
     def get_files_info(self, instance, integrated_file_sizes):

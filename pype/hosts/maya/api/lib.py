@@ -43,17 +43,17 @@ SHAPE_ATTRS = {"castsShadows",
                "opposite"}
 
 RENDER_ATTRS = {"vray": {
-                        "node": "vraySettings",
-                        "prefix": "fileNamePrefix",
-                        "padding": "fileNamePadding",
-                        "ext": "imageFormatStr"
-                        },
-                "default": {
-                        "node": "defaultRenderGlobals",
-                        "prefix": "imageFilePrefix",
-                        "padding": "extensionPadding"
-                        }
-                }
+    "node": "vraySettings",
+    "prefix": "fileNamePrefix",
+    "padding": "fileNamePadding",
+    "ext": "imageFormatStr"
+},
+    "default": {
+    "node": "defaultRenderGlobals",
+    "prefix": "imageFilePrefix",
+    "padding": "extensionPadding"
+}
+}
 
 
 DEFAULT_MATRIX = [1.0, 0.0, 0.0, 0.0,
@@ -95,6 +95,8 @@ _alembic_options = {
 INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
 FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
+RENDERLIKE_INSTANCE_FAMILIES = ["rendering", "vrayscene"]
+
 
 def _get_mel_global(name):
     """Return the value of a mel global variable"""
@@ -114,7 +116,9 @@ def matrix_equals(a, b, tolerance=1e-10):
         bool : True or False
 
     """
-    return all(abs(x - y) < tolerance for x, y in zip(a, b))
+    if not all(abs(x - y) < tolerance for x, y in zip(a, b)):
+        return False
+    return True
 
 
 def float_round(num, places=0, direction=ceil):
@@ -2466,12 +2470,21 @@ class shelf():
             cmds.shelfLayout(self.name, p="ShelfLayout")
 
 
-def _get_render_instance():
+def _get_render_instances():
+    """Return all 'render-like' instances.
+
+    This returns list of instance sets that needs to receive informations
+    about render layer changes.
+
+    Returns:
+        list: list of instances
+
+    """
     objectset = cmds.ls("*.id", long=True, type="objectSet",
                         recursive=True, objectsOnly=True)
 
+    instances = []
     for objset in objectset:
-
         if not cmds.attributeQuery("id", node=objset, exists=True):
             continue
 
@@ -2485,16 +2498,18 @@ def _get_render_instance():
         if not has_family:
             continue
 
-        if cmds.getAttr("{}.family".format(objset)) == 'rendering':
-            return objset
+        if cmds.getAttr(
+                "{}.family".format(objset)) in RENDERLIKE_INSTANCE_FAMILIES:
+            instances.append(objset)
 
-    return None
+    return instances
 
 
 renderItemObserverList = []
 
 
 class RenderSetupListObserver:
+    """Observer to catch changes in render setup layers."""
 
     def listItemAdded(self, item):
         print("--- adding ...")
@@ -2505,56 +2520,95 @@ class RenderSetupListObserver:
         self._remove_render_layer(item.name())
 
     def _add_render_layer(self, item):
-        render_set = _get_render_instance()
+        render_sets = _get_render_instances()
         layer_name = item.name()
 
-        if not render_set:
-            return
+        for render_set in render_sets:
+            members = cmds.sets(render_set, query=True) or []
 
-        members = cmds.sets(render_set, query=True) or []
-        if not "LAYER_{}".format(layer_name) in members:
+            namespace_name = "_{}".format(render_set)
+            if not cmds.namespace(exists=namespace_name):
+                index = 1
+                namespace_name = "_{}".format(render_set)
+                try:
+                    cmds.namespace(rm=namespace_name)
+                except RuntimeError:
+                    # namespace is not empty, so we leave it untouched
+                    pass
+                orignal_namespace_name = namespace_name
+                while(cmds.namespace(exists=namespace_name)):
+                    namespace_name = "{}{}".format(
+                        orignal_namespace_name, index)
+                    index += 1
+
+                namespace = cmds.namespace(add=namespace_name)
+
+            if members:
+                # if set already have namespaced members, use the same
+                # namespace as others.
+                namespace = members[0].rpartition(":")[0]
+            else:
+                namespace = namespace_name
+
+            render_layer_set_name = "{}:{}".format(namespace, layer_name)
+            if render_layer_set_name in members:
+                continue
             print("  - creating set for {}".format(layer_name))
-            set = cmds.sets(n="LAYER_{}".format(layer_name), empty=True)
-            cmds.sets(set, forceElement=render_set)
+            maya_set = cmds.sets(n=render_layer_set_name, empty=True)
+            cmds.sets(maya_set, forceElement=render_set)
             rio = RenderSetupItemObserver(item)
             print("-   adding observer for {}".format(item.name()))
             item.addItemObserver(rio.itemChanged)
             renderItemObserverList.append(rio)
 
     def _remove_render_layer(self, layer_name):
-        render_set = _get_render_instance()
+        render_sets = _get_render_instances()
 
-        if not render_set:
-            return
+        for render_set in render_sets:
+            members = cmds.sets(render_set, query=True)
+            if not members:
+                continue
 
-        members = cmds.sets(render_set, query=True)
-        if "LAYER_{}".format(layer_name) in members:
-            print("  - removing set for {}".format(layer_name))
-            cmds.delete("LAYER_{}".format(layer_name))
+            # all sets under set should have the same namespace
+            namespace = members[0].rpartition(":")[0]
+            render_layer_set_name = "{}:{}".format(namespace, layer_name)
+
+            if render_layer_set_name in members:
+                print("  - removing set for {}".format(layer_name))
+                cmds.delete(render_layer_set_name)
 
 
 class RenderSetupItemObserver():
+    """Handle changes in render setup items."""
 
     def __init__(self, item):
         self.item = item
         self.original_name = item.name()
 
     def itemChanged(self, *args, **kwargs):
+        """Item changed callback."""
         if self.item.name() == self.original_name:
             return
 
-        render_set = _get_render_instance()
+        render_sets = _get_render_instances()
 
-        if not render_set:
-            return
+        for render_set in render_sets:
+            members = cmds.sets(render_set, query=True)
+            if not members:
+                continue
 
-        members = cmds.sets(render_set, query=True)
-        if "LAYER_{}".format(self.original_name) in members:
-            print(" <> renaming {} to {}".format(self.original_name,
-                                                 self.item.name()))
-            cmds.rename("LAYER_{}".format(self.original_name),
-                        "LAYER_{}".format(self.item.name()))
-        self.original_name = self.item.name()
+            # all sets under set should have the same namespace
+            namespace = members[0].rpartition(":")[0]
+            render_layer_set_name = "{}:{}".format(
+                namespace, self.original_name)
+
+            if render_layer_set_name in members:
+                print(" <> renaming {} to {}".format(self.original_name,
+                                                     self.item.name()))
+                cmds.rename(render_layer_set_name,
+                            "{}:{}".format(
+                                namespace, self.item.name()))
+            self.original_name = self.item.name()
 
 
 renderListObserver = RenderSetupListObserver()
@@ -2564,14 +2618,19 @@ def add_render_layer_change_observer():
     import maya.app.renderSetup.model.renderSetup as renderSetup
 
     rs = renderSetup.instance()
-    render_set = _get_render_instance()
-    if not render_set:
-        return
+    render_sets = _get_render_instances()
 
-    members = cmds.sets(render_set, query=True)
     layers = rs.getRenderLayers()
-    for layer in layers:
-        if "LAYER_{}".format(layer.name()) in members:
+    for render_set in render_sets:
+        members = cmds.sets(render_set, query=True)
+        if not members:
+            continue
+        # all sets under set should have the same namespace
+        namespace = members[0].rpartition(":")[0]
+        for layer in layers:
+            render_layer_set_name = "{}:{}".format(namespace, layer.name())
+            if render_layer_set_name not in members:
+                continue
             rio = RenderSetupItemObserver(layer)
             print("-   adding observer for {}".format(layer.name()))
             layer.addItemObserver(rio.itemChanged)
