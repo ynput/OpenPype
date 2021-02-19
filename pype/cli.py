@@ -124,7 +124,7 @@ def extractenvironments(output_json_path, project, asset, task, app):
 
     Context options are "project", "asset", "task", "app"
     """
-    PypeCommands().extractenvironments(
+    PypeCommands.extractenvironments(
         output_json_path, project, asset, task, app
     )
 
