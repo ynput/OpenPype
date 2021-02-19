@@ -165,8 +165,6 @@ class SettingObject:
                     "Item {} does not allow to store environment values"
                 ).format(schema_data["type"]))
 
-            self.add_environ_field(self)
-
         any_parent_as_widget = parent.as_widget
         if not any_parent_as_widget:
             any_parent_as_widget = parent.any_parent_as_widget
@@ -260,9 +258,6 @@ class SettingObject:
                 "Expected 'None' of 'str'. Got {}".format(str(type(value)))
             )
         self._env_group_key = value
-
-    def add_environ_field(self, input_field):
-        self._parent.add_environ_field(input_field)
 
     @property
     def as_widget(self):
@@ -1213,6 +1208,8 @@ class EnumeratorWidget(QtWidgets.QWidget, InputObject):
     def set_value(self, value):
         # Ignore value change because if `self.isChecked()` has same
         # value as `value` the `_on_value_change` is not triggered
+        if value is NOT_SET:
+            value = []
         self.input_field.set_value(value)
 
     def update_style(self):

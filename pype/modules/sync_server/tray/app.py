@@ -1,10 +1,18 @@
 from Qt import QtWidgets, QtCore, QtGui
 from Qt.QtCore import Qt
-from pype.tools.settings.settings.widgets.base import ProjectListWidget
 import attr
 import os
-from pype.tools.settings.settings import style
+
+import sys
+import subprocess
+
+from pype.tools.settings import (
+    ProjectListWidget,
+    style
+)
+
 from avalon.tools.delegates import PrettyTimeDelegate, pretty_timestamp
+from bson.objectid import ObjectId
 
 from pype.lib import PypeLogger
 
@@ -30,6 +38,7 @@ class SyncServerWindow(QtWidgets.QDialog):
 
     def __init__(self, sync_server, parent=None):
         super(SyncServerWindow, self).__init__(parent)
+        self.sync_server = sync_server
         self.setWindowFlags(QtCore.Qt.Window)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
@@ -37,21 +46,33 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
         self.resize(1400, 800)
 
+        self.timer = QtCore.QTimer()
+        self.timer.timeout.connect(self._hide_message)
+
         body = QtWidgets.QWidget(self)
         footer = QtWidgets.QWidget(self)
         footer.setFixedHeight(20)
 
-        container = QtWidgets.QWidget()
-        projects = SyncProjectListWidget(sync_server, self)
-        projects.refresh()  # force selection of default
-        repres = SyncRepresentationWidget(sync_server,
-                                          project=projects.current_project,
-                                          parent=self)
+        left_column = QtWidgets.QWidget(body)
+        left_column_layout = QtWidgets.QVBoxLayout(left_column)
 
+        self.projects = SyncProjectListWidget(sync_server, self)
+        self.projects.refresh()  # force selection of default
+        left_column_layout.addWidget(self.projects)
+        self.pause_btn = QtWidgets.QPushButton("Pause server")
+
+        left_column_layout.addWidget(self.pause_btn)
+        left_column.setLayout(left_column_layout)
+
+        repres = SyncRepresentationWidget(
+            sync_server,
+            project=self.projects.current_project,
+            parent=self)
+        container = QtWidgets.QWidget()
         container_layout = QtWidgets.QHBoxLayout(container)
         container_layout.setContentsMargins(0, 0, 0, 0)
         split = QtWidgets.QSplitter()
-        split.addWidget(projects)
+        split.addWidget(left_column)
         split.addWidget(repres)
         split.setSizes([180, 950, 200])
         container_layout.addWidget(split)
@@ -62,12 +83,12 @@ class SyncServerWindow(QtWidgets.QDialog):
         body_layout.addWidget(container)
         body_layout.setContentsMargins(0, 0, 0, 0)
 
-        message = QtWidgets.QLabel(footer)
-        message.hide()
+        self.message = QtWidgets.QLabel(footer)
+        self.message.hide()
 
         footer_layout = QtWidgets.QVBoxLayout(footer)
-        footer_layout.addWidget(message)
-        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addWidget(self.message)
+        footer_layout.setContentsMargins(20, 0, 0, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(body)
@@ -76,9 +97,42 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setLayout(body_layout)
         self.setWindowTitle("Sync Server")
 
-        projects.project_changed.connect(
+        self.projects.project_changed.connect(
             lambda: repres.table_view.model().set_project(
-                projects.current_project))
+                self.projects.current_project))
+
+        self.pause_btn.clicked.connect(self._pause)
+        repres.message_generated.connect(self._update_message)
+
+    def _pause(self):
+        if self.sync_server.is_paused():
+            self.sync_server.unpause_server()
+            self.pause_btn.setText("Pause server")
+        else:
+            self.sync_server.pause_server()
+            self.pause_btn.setText("Unpause server")
+        self.projects.refresh()
+
+    def _update_message(self, value):
+        """
+            Update and show message in the footer
+        """
+        self.message.setText(value)
+        if self.message.isVisible():
+            self.message.repaint()
+        else:
+            self.message.show()
+        msec_delay = 3000
+        self.timer.start(msec_delay)
+
+    def _hide_message(self):
+        """
+            Hide message in footer
+
+            Called automatically by self.timer after a while
+        """
+        self.message.setText("")
+        self.message.hide()
 
 
 class SyncProjectListWidget(ProjectListWidget):
@@ -89,6 +143,12 @@ class SyncProjectListWidget(ProjectListWidget):
     def __init__(self, sync_server, parent):
         super(SyncProjectListWidget, self).__init__(parent)
         self.sync_server = sync_server
+        self.project_list.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.project_list.customContextMenuRequested.connect(
+            self._on_context_menu)
+        self.project_name = None
+        self.local_site = None
+        self.icons = {}
 
     def validate_context_change(self):
         return True
@@ -98,7 +158,13 @@ class SyncProjectListWidget(ProjectListWidget):
         model.clear()
 
         for project_name in self.sync_server.get_synced_presets().keys():
-            model.appendRow(QtGui.QStandardItem(project_name))
+            if self.sync_server.is_paused() or \
+               self.sync_server.is_project_paused(project_name):
+                icon = self._get_icon("paused")
+            else:
+                icon = self._get_icon("synced")
+
+            model.appendRow(QtGui.QStandardItem(icon, project_name))
 
         if len(self.sync_server.get_synced_presets().keys()) == 0:
             model.appendRow(QtGui.QStandardItem("No project configured"))
@@ -110,6 +176,83 @@ class SyncProjectListWidget(ProjectListWidget):
             self.current_project = self.project_list.model().item(0). \
                 data(QtCore.Qt.DisplayRole)
 
+        self.local_site = self.sync_server.get_local_site(project_name)
+
+    def _get_icon(self, status):
+        if not self.icons.get(status):
+            resource_path = os.path.dirname(__file__)
+            resource_path = os.path.join(resource_path, "..",
+                                         "resources")
+            pix_url = "{}/{}.png".format(resource_path, status)
+            icon = QtGui.QIcon(pix_url)
+            self.icons[status] = icon
+        else:
+            icon = self.icons[status]
+        return icon
+
+    def _on_context_menu(self, point):
+        point_index = self.project_list.indexAt(point)
+        if not point_index.isValid():
+            return
+
+        self.project_name = point_index.data(QtCore.Qt.DisplayRole)
+
+        menu = QtWidgets.QMenu()
+        actions_mapping = {}
+
+        action = None
+        if self.sync_server.is_project_paused(self.project_name):
+            action = QtWidgets.QAction("Unpause")
+            actions_mapping[action] = self._unpause
+        else:
+            action = QtWidgets.QAction("Pause")
+            actions_mapping[action] = self._pause
+        menu.addAction(action)
+
+        if self.local_site == self.sync_server.get_my_local_site(
+                self.project_name):
+            action = QtWidgets.QAction("Clear local project")
+            actions_mapping[action] = self._clear_project
+            menu.addAction(action)
+
+        result = menu.exec_(QtGui.QCursor.pos())
+        if result:
+            to_run = actions_mapping[result]
+            if to_run:
+                to_run()
+
+    def _pause(self):
+        if self.project_name:
+            self.sync_server.pause_project(self.project_name)
+            self.project_name = None
+        self.refresh()
+
+    def _unpause(self):
+        if self.project_name:
+            self.sync_server.unpause_project(self.project_name)
+            self.project_name = None
+        self.refresh()
+
+    def _clear_project(self):
+        if self.project_name:
+            self.sync_server.clear_project(self.project_name, self.local_site)
+            self.project_name = None
+        self.refresh()
+
+class ProjectModel(QtCore.QAbstractListModel):
+    def __init__(self, *args, projects=None, **kwargs):
+        super(ProjectModel, self).__init__(*args, **kwargs)
+        self.projects = projects or []
+
+    def data(self, index, role):
+        if role == Qt.DisplayRole:
+            # See below for the data structure.
+            status, text = self.projects[index.row()]
+            # Return the todo text only.
+            return text
+
+    def rowCount(self, index):
+        return len(self.todos)
 
 class SyncRepresentationWidget(QtWidgets.QWidget):
     """
@@ -117,6 +260,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         settings 'local_site' and 'remote_site'.
     """
     active_changed = QtCore.Signal()  # active index changed
+    message_generated = QtCore.Signal(str)
 
     default_widths = (
         ("asset", 210),
@@ -139,6 +283,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.sync_server = sync_server
 
         self._selected_id = None  # keep last selected _id
+        self.representation_id = None
+        self.site_name = None  # to pause/unpause representation
 
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representations..")
@@ -202,7 +348,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
     def _selection_changed(self, new_selection):
         index = self.selection_model.currentIndex()
-        self._selected_id = self.table_view.model().data(index, Qt.UserRole)
+        self._selected_id = \
+            self.table_view.model().data(index, Qt.UserRole)
 
     def _set_selection(self):
         """
@@ -236,10 +383,192 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         if not point_index.isValid():
             return
 
+        self.item = self.table_view.model()._data[point_index.row()]
+        self.representation_id = self.item._id
+        log.debug("menu representation _id:: {}".
+                  format(self.representation_id))
+
+        menu = QtWidgets.QMenu()
+        actions_mapping = {}
+
+        action = QtWidgets.QAction("Open in explorer")
+        actions_mapping[action] = self._open_in_explorer
+        menu.addAction(action)
+
+        local_site, local_progress = self.item.local_site.split()
+        remote_site, remote_progress = self.item.remote_site.split()
+        local_progress = float(local_progress)
+        remote_progress = float(remote_progress)
+
+        # progress smaller then 1.0 --> in progress or queued
+        if local_progress < 1.0:
+            self.site_name = local_site
+        else:
+            self.site_name = remote_site
+
+        if self.item.state in [STATUS[0], STATUS[2]]:
+            action = QtWidgets.QAction("Pause")
+            actions_mapping[action] = self._pause
+            menu.addAction(action)
+
+        if self.item.state == STATUS[3]:
+            action = QtWidgets.QAction("Unpause")
+            actions_mapping[action] = self._unpause
+            menu.addAction(action)
+
+        # if self.item.state == STATUS[1]:
+        #     action = QtWidgets.QAction("Open error detail")
+        #     actions_mapping[action] = self._show_detail
+        #     menu.addAction(action)
+
+        if remote_progress == 1.0:
+            action = QtWidgets.QAction("Reset local site")
+            actions_mapping[action] = self._reset_local_site
+            menu.addAction(action)
+
+        if local_progress == 1.0:
+            action = QtWidgets.QAction("Reset remote site")
+            actions_mapping[action] = self._reset_remote_site
+            menu.addAction(action)
+
+        if local_site != self.sync_server.DEFAULT_SITE:
+            action = QtWidgets.QAction("Completely remove from local")
+            actions_mapping[action] = self._remove_site
+            menu.addAction(action)
+        else:
+            action = QtWidgets.QAction("Mark for sync to local")
+            actions_mapping[action] = self._add_site
+            menu.addAction(action)
+
+        if not actions_mapping:
+            action = QtWidgets.QAction("< No action >")
+            actions_mapping[action] = None
+            menu.addAction(action)
+
+        result = menu.exec_(QtGui.QCursor.pos())
+        if result:
+            to_run = actions_mapping[result]
+            if to_run:
+                to_run()
+
+        self.table_view.model().refresh()
+
+    def _pause(self):
+        self.sync_server.pause_representation(self.table_view.model()._project,
+                                              self.representation_id,
+                                              self.site_name)
+        self.site_name = None
+        self.message_generated.emit("Paused {}".format(self.representation_id))
+
+    def _unpause(self):
+        self.sync_server.unpause_representation(
+            self.table_view.model()._project,
+            self.representation_id,
+            self.site_name)
+        self.site_name = None
+        self.message_generated.emit("Unpaused {}".format(
+            self.representation_id))
+
+    # temporary here for testing, will be removed TODO
+    def _add_site(self):
+        log.info(self.representation_id)
+        project_name = self.table_view.model()._project
+        local_site_name = self.sync_server.get_my_local_site(project_name)
+        try:
+            self.sync_server.add_site(
+                self.table_view.model()._project,
+                self.representation_id,
+                local_site_name
+                )
+            self.message_generated.emit(
+                "Site {} added for {}".format(local_site_name,
+                                              self.representation_id))
+        except ValueError as exp:
+            self.message_generated.emit("Error {}".format(str(exp)))
+
+    def _remove_site(self):
+        """
+            Removes site record AND files.
+
+            This is ONLY for representations stored on local site, which
+            cannot be same as SyncServer.DEFAULT_SITE.
+
+            This could only happen when artist work on local machine, not
+            connected to studio mounted drives.
+        """
+        log.info("Removing {}".format(self.representation_id))
+        try:
+            self.sync_server.remove_site(
+                self.table_view.model()._project,
+                self.representation_id,
+                'local_0',
+                True
+                )
+            self.message_generated.emit("Site local_0 removed")
+        except ValueError as exp:
+            self.message_generated.emit("Error {}".format(str(exp)))
+
+    def _reset_local_site(self):
+        """
+            Removes errors or success metadata for particular file >> forces
+            redo of upload/download
+        """
+        self.sync_server.reset_provider_for_file(
+            self.table_view.model()._project,
+            self.representation_id,
+            'local'
+            )
+
+    def _reset_remote_site(self):
+        """
+            Removes errors or success metadata for particular file >> forces
+            redo of upload/download
+        """
+        self.sync_server.reset_provider_for_file(
+            self.table_view.model()._project,
+            self.representation_id,
+            'remote'
+            )
+
+    def _open_in_explorer(self):
+        if not self.item:
+            return
+
+        fpath = self.item.path
+        fpath = os.path.normpath(os.path.dirname(fpath))
+        if os.path.isdir(fpath):
+            if 'win' in sys.platform:  # windows
+                subprocess.Popen('explorer "%s"' % fpath)
+            elif sys.platform == 'darwin':  # macOS
+                subprocess.Popen(['open', fpath])
+            else:  # linux
+                try:
+                    subprocess.Popen(['xdg-open', fpath])
+                except OSError:
+                    raise OSError('unsupported xdg-open call??')
+
 
 class SyncRepresentationModel(QtCore.QAbstractTableModel):
-    PAGE_SIZE = 19
-    REFRESH_SEC = 5000
+    """
+        Model for summary of representations.
+
+        Groups files information per representation. Allows sorting and
+        full text filtering.
+
+        Allows pagination, most of heavy lifting is being done on DB side.
+        Single model matches to single collection. When project is changed,
+        model is reset and refreshed.
+
+        Args:
+            sync_server (SyncServer) - object to call server operations (update
+                db status, set site status...)
+            header (list) - names of visible columns
+            project (string) - collection name, all queries must be called on
+                a specific collection
+
+    """
+    PAGE_SIZE = 20  # default page size to query for
+    REFRESH_SEC = 5000  # in seconds, requery DB for new status
     DEFAULT_SORT = {
         "updated_dt_remote": -1,
         "_id": 1
@@ -258,8 +587,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         "context.asset",  # priority TODO
         "status"  # state
     ]
-
-    numberPopulated = QtCore.Signal(int)
 
     @attr.s
     class SyncRepresentation:
@@ -281,6 +608,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         files_size = attr.ib(default=None)
         priority = attr.ib(default=None)
         state = attr.ib(default=None)
+        path = attr.ib(default=None)
 
     def __init__(self, sync_server, header, project=None):
         super(SyncRepresentationModel, self).__init__()
@@ -288,7 +616,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._data = []
         self._project = project
         self._rec_loaded = 0
-        self._buffer = []  # stash one page worth of records (actually cursor)
+        self._total_records = 0  # how many documents query actually found
         self.filter = None
 
         self._initialized = False
@@ -296,8 +624,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site, self.remote_site = \
-            self.sync_server.get_sites_for_project(self._project)
+        self.local_site = self.sync_server.get_local_site(self._project)
+        self.remote_site = self.sync_server.get_remote_site(self._project)
 
         self.projection = self.get_default_projection()
 
@@ -305,8 +633,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         self.query = self.get_default_query()
         self.default_query = list(self.get_default_query())
-        log.debug("!!! init query: {}".format(json.dumps(self.query,
-                                                         indent=4)))
+
         representations = self.dbcon.aggregate(self.query)
         self.refresh(representations)
 
@@ -316,6 +643,12 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
     @property
     def dbcon(self):
+        """
+            Database object with preselected project (collection) to run DB
+            operations (find, aggregate).
+
+            All queries should go through this (because of collection).
+        """
         return self.sync_server.connection.database[self._project]
 
     def data(self, index, role):
@@ -338,6 +671,12 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 return str(self._header[section])
 
     def tick(self):
+        """
+            Triggers refresh of model.
+
+            Because of pagination, prepared (sorting, filtering) query needs
+            to be run on DB every X seconds.
+        """
         self.refresh(representations=None, load_records=self._rec_loaded)
         self.timer.start(self.REFRESH_SEC)
 
@@ -353,6 +692,25 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         return self._header.index(value)
 
     def refresh(self, representations=None, load_records=0):
+        """
+            Reloads representations from DB if necessary, adds them to model.
+
+            Runs periodically (every X seconds) or by demand (change of
+            sorting, filtering etc.)
+
+            Emits 'modelReset' signal.
+
+            Args:
+                representations (PaginationResult object): pass result of
+                    aggregate query from outside - mostly for testing only
+                load_records (int) - enforces how many records should be
+                    actually queried (scrolled a couple of times to list more
+                    than single page of records)
+        """
+        if self.sync_server.is_paused() or \
+                self.sync_server.is_project_paused(self._project):
+            return
+
         self.beginResetModel()
         self._data = []
         self._rec_loaded = 0
@@ -366,7 +724,30 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.endResetModel()
 
     def _add_page_records(self, local_site, remote_site, representations):
-        for repre in representations:
+        """
+            Process all records from 'representation' and add them to storage.
+
+            Args:
+                local_site (str): name of local site (mine)
+                remote_site (str): name of cloud provider (theirs)
+                representations (Mongo Cursor) - mimics result set, 1 object
+                    with paginatedResults array and totalCount array
+        """
+        result = representations.next()
+        count = 0
+        total_count = result.get("totalCount")
+        if total_count:
+            count = total_count.pop().get('count')
+        self._total_records = count
+
+        local_provider = _translate_provider_for_icon(self.sync_server,
+                                                      self._project,
+                                                      local_site)
+        remote_provider = _translate_provider_for_icon(self.sync_server,
+                                                       self._project,
+                                                       remote_site)
+
+        for repre in result.get("paginatedResults"):
             context = repre.get("context").pop()
             files = repre.get("files", [])
             if isinstance(files, dict):  # aggregate returns dictionary
@@ -385,37 +766,44 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 remote_updated = \
                     repre.get('updated_dt_remote').strftime("%Y%m%dT%H%M%SZ")
 
-            avg_progress_remote = repre.get('avg_progress_remote', '')
-            avg_progress_local = repre.get('avg_progress_local', '')
+            avg_progress_remote = _convert_progress(
+                repre.get('avg_progress_remote', '0'))
+            avg_progress_local = _convert_progress(
+                repre.get('avg_progress_local', '0'))
+
+            if context.get("version"):
+                version = "v{:0>3d}".format(context.get("version"))
+            else:
+                version = "master"
 
             item = self.SyncRepresentation(
                 repre.get("_id"),
                 context.get("asset"),
                 context.get("subset"),
-                "v{:0>3d}".format(context.get("version", 1)),
+                version,
                 context.get("representation"),
                 local_updated,
                 remote_updated,
-                '{} {}'.format(local_site, avg_progress_local),
-                '{} {}'.format(remote_site, avg_progress_remote),
+                '{} {}'.format(local_provider, avg_progress_local),
+                '{} {}'.format(remote_provider, avg_progress_remote),
                 repre.get("files_count", 1),
                 repre.get("files_size", 0),
                 1,
-                STATUS[repre.get("status", -1)]
+                STATUS[repre.get("status", -1)],
+                self.sync_server.get_local_file_path(self._project,
+                                                     files[0].get('path'))
             )
 
             self._data.append(item)
             self._rec_loaded += 1
+
 
     def canFetchMore(self, index):
         """
             Check if there are more records than currently loaded
         """
         # 'skip' might be suboptimal when representation hits 500k+
-        self._buffer = list(self.dbcon.aggregate(self.query))
-        # log.info("!!! canFetchMore _rec_loaded::{} - {}".format(
-        #     self._rec_loaded, len(self._buffer)))
-        return len(self._buffer) > self._rec_loaded
+        return self._total_records > self._rec_loaded
 
     def fetchMore(self, index):
         """
@@ -423,21 +811,20 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
             Called when 'canFetchMore' returns true, which means there are
             more records in DB than loaded.
-            'self._buffer' is used to stash cursor to limit requery
         """
         log.debug("fetchMore")
-        # cursor.count() returns always total number, not only skipped + limit
-        remainder = len(self._buffer) - self._rec_loaded
-        items_to_fetch = min(self.PAGE_SIZE, remainder)
+        items_to_fetch = min(self._total_records - self._rec_loaded,
+                             self.PAGE_SIZE)
+        self.query = self.get_default_query(self._rec_loaded)
+        representations = self.dbcon.aggregate(self.query)
         self.beginInsertRows(index,
                              self._rec_loaded,
                              self._rec_loaded + items_to_fetch - 1)
 
-        self._add_page_records(self.local_site, self.remote_site, self._buffer)
+        self._add_page_records(self.local_site, self.remote_site,
+                               representations)
 
         self.endInsertRows()
-
-        self.numberPopulated.emit(items_to_fetch)  # ??
 
     def sort(self, index, order):
         """
@@ -484,6 +871,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 project (str): name of project
         """
         self._project = project
+        self.local_site = self.sync_server.get_local_site(self._project)
+        self.remote_site = self.sync_server.get_remote_site(self._project)
         self.refresh()
 
     def get_index(self, id):
@@ -503,7 +892,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             value = self.data(index, Qt.UserRole)
             if value == id:
                 return index
-        return index
+        return None
 
     def get_default_query(self, limit=0):
         """
@@ -521,7 +910,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                     0 - in progress
                     1 - failed
                     2 - queued
-                    3 - paused (not implemented yet)
+                    3 - paused
                     4 - finished on both sides
 
                 are calculated and must be calculated in DB because of
@@ -599,12 +988,29 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 'failed_local': {
                     '$cond': [{'$size': "$order_local.last_failed_dt"},
                               1,
-                              0]}
+                              0]},
+                'failed_local_tries': {
+                    '$cond': [{'$size': '$order_local.tries'},
+                              {'$first': '$order_local.tries'},
+                              0]},
+                'failed_remote_tries': {
+                    '$cond': [{'$size': '$order_remote.tries'},
+                              {'$first': '$order_local.tries'},
+                              0]},
+                'paused_remote': {
+                    '$cond': [{'$size': "$order_remote.paused"},
+                              1,
+                              0]},
+                'paused_local': {
+                    '$cond': [{'$size': "$order_local.paused"},
+                              1,
+                              0]},
             }},
             {'$group': {
                 '_id': '$_id',
                 # pass through context - same for representation
                 'context': {'$addToSet': '$context'},
+                'data': {'$addToSet': '$data'},
                 # pass through files as a list
                 'files': {'$addToSet': '$files'},
                 # count how many files
@@ -616,13 +1022,22 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 # select last touch of file
                 'updated_dt_remote': {'$max': "$updated_dt_remote"},
                 'failed_remote': {'$sum': '$failed_remote'},
-                'failed_local': {'$sum': '$failed_local'},
+                'failed_local': {'$sum': '$paused_remote'},
+                'failed_local_tries': {'$sum': '$failed_local_tries'},
+                'failed_remote_tries': {'$sum': '$failed_remote_tries'},
+                'paused_remote': {'$sum': '$paused_remote'},
+                'paused_local': {'$sum': '$paused_local'},
                 'updated_dt_local': {'$max': "$updated_dt_local"}
             }},
-            {"$limit": limit},
-            {"$skip": self._rec_loaded},
             {"$project": self.projection},
-            {"$sort": self.sort}
+            {"$sort": self.sort},
+            {
+                '$facet': {
+                    'paginatedResults': [{'$skip': self._rec_loaded},
+                                         {'$limit': limit}],
+                    'totalCount': [{'$count': 'count'}]
+                }
+            }
         ]
 
     def _get_match_part(self):
@@ -633,37 +1048,31 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             checked.
             If performance issues are found, '$text' and text indexes should
             be investigated.
+
+            Fulltext searches in:
+                context.subset
+                context.asset
+                context.representation  names AND _id (ObjectId)
         """
-        if not self.filter:
-            return {
+        base_match = {
                 "type": "representation",
-                'files.sites': {
-                    '$elemMatch': {
-                        '$or': [
-                            {'name': self.local_site},
-                            {'name': self.remote_site}
-                        ]
-                    }
-                }
-            }
+                'files.sites.name': {'$all': [self.local_site,
+                                              self.remote_site]}
+        }
+        if not self.filter:
+            return base_match
         else:
             regex_str = '.*{}.*'.format(self.filter)
-            return {
-                "type": "representation",
-                '$or': [
+            base_match['$or'] = [
                     {'context.subset': {'$regex': regex_str, '$options': 'i'}},
                     {'context.asset': {'$regex': regex_str, '$options': 'i'}},
                     {'context.representation': {'$regex': regex_str,
-                                                '$options': 'i'}}],
-                'files.sites': {
-                    '$elemMatch': {
-                        '$or': [
-                            {'name': self.local_site},
-                            {'name': self.remote_site}
-                        ]
-                    }
-                }
-            }
+                                                '$options': 'i'}}]
+
+            if ObjectId.is_valid(self.filter):
+                base_match['$or'] = [{'_id': ObjectId(self.filter)}]
+
+            return base_match
 
     def get_default_projection(self):
         """
@@ -679,6 +1088,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             "context.asset": 1,
             "context.version": 1,
             "context.representation": 1,
+            "data.path": 1,
             "files": 1,
             'files_count': 1,
             "files_size": 1,
@@ -686,19 +1096,28 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             'avg_progress_local': 1,
             'updated_dt_remote': 1,
             'updated_dt_local': 1,
+            'paused_remote': 1,
+            'paused_local': 1,
             'status': {
                 '$switch': {
                     'branches': [
                         {
                             'case': {
-                                '$or': [{'$eq': ['$avg_progress_remote', 0]},
-                                        {'$eq': ['$avg_progress_local', 0]}]},
-                            'then': 2  # Queued
+                                '$or': ['$paused_remote', '$paused_local']},
+                            'then': 3  # Paused
                         },
                         {
                             'case': {
-                                '$or': ['$failed_remote', '$failed_local']},
-                            'then': 1  # Failed
+                                '$or': [
+                                    {'$gte': ['$failed_local_tries', 3]},
+                                    {'$gte': ['$failed_remote_tries', 3]}
+                                ]},
+                            'then': 1},
+                        {
+                            'case': {
+                                '$or': [{'$eq': ['$avg_progress_remote', 0]},
+                                        {'$eq': ['$avg_progress_local', 0]}]},
+                            'then': 2  # Queued
                         },
                         {
                             'case': {'$or': [{'$and': [
@@ -711,10 +1130,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                                 ]}
                             ]},
                             'then': 0  # In progress
-                        },
-                        {
-                            'case': {'$eq': ['dummy_placeholder', 'paused']},
-                            'then': 3  # Paused
                         },
                         {
                             'case': {'$and': [
@@ -752,11 +1167,11 @@ class SyncServerDetailWindow(QtWidgets.QDialog):
         body_layout.addWidget(container)
         body_layout.setContentsMargins(0, 0, 0, 0)
 
-        message = QtWidgets.QLabel()
-        message.hide()
+        self.message = QtWidgets.QLabel()
+        self.message.hide()
 
         footer_layout = QtWidgets.QVBoxLayout(footer)
-        footer_layout.addWidget(message)
+        footer_layout.addWidget(self.message)
         footer_layout.setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -792,8 +1207,10 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
     def __init__(self, sync_server, _id=None, project=None, parent=None):
         super(SyncRepresentationDetailWidget, self).__init__(parent)
 
+        log.debug("Representation_id:{}".format(_id))
         self.representation_id = _id
         self.item = None  # set to item that mouse was clicked over
+        self.project = project
 
         self.sync_server = sync_server
 
@@ -903,19 +1320,23 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         menu = QtWidgets.QMenu()
         actions_mapping = {}
 
+        action = QtWidgets.QAction("Open in explorer")
+        actions_mapping[action] = self._open_in_explorer
+        menu.addAction(action)
+
         if self.item.state == STATUS[1]:
             action = QtWidgets.QAction("Open error detail")
             actions_mapping[action] = self._show_detail
             menu.addAction(action)
 
         remote_site, remote_progress = self.item.remote_site.split()
-        if remote_progress == '1':
+        if float(remote_progress) == 1.0:
             action = QtWidgets.QAction("Reset local site")
             actions_mapping[action] = self._reset_local_site
             menu.addAction(action)
 
         local_site, local_progress = self.item.local_site.split()
-        if local_progress == '1':
+        if float(local_progress) == 1.0:
             action = QtWidgets.QAction("Reset remote site")
             actions_mapping[action] = self._reset_remote_site
             menu.addAction(action)
@@ -939,8 +1360,9 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.sync_server.reset_provider_for_file(
             self.table_view.model()._project,
             self.representation_id,
-            self.item._id,
-            'local')
+            'local',
+            self.item._id)
+        self.table_view.model().refresh()
 
     def _reset_remote_site(self):
         """
@@ -950,13 +1372,43 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.sync_server.reset_provider_for_file(
             self.table_view.model()._project,
             self.representation_id,
-            self.item._id,
-            'remote')
+            'remote',
+            self.item._id)
+        self.table_view.model().refresh()
+
+    def _open_in_explorer(self):
+        if not self.item:
+            return
+
+        fpath = self.item.path
+        fpath = os.path.normpath(os.path.dirname(fpath))
+
+        if os.path.isdir(fpath):
+            if 'win' in sys.platform:  # windows
+                subprocess.Popen('explorer "%s"' % fpath)
+            elif sys.platform == 'darwin':  # macOS
+                subprocess.Popen(['open', fpath])
+            else:  # linux
+                try:
+                    subprocess.Popen(['xdg-open', fpath])
+                except OSError:
+                    raise OSError('unsupported xdg-open call??')
 
 
 class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
     """
         List of all syncronizable files per single representation.
+
+        Used in detail window accessible after clicking on single repre in the
+        summary.
+
+        Args:
+            sync_server (SyncServer) - object to call server operations (update
+                db status, set site status...)
+            header (list) - names of visible columns
+            _id (string) - MongoDB _id of representation
+            project (string) - collection name, all queries must be called on
+                a specific collection
     """
     PAGE_SIZE = 30
     # TODO add filter filename
@@ -992,6 +1444,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         state = attr.ib(default=None)
         tries = attr.ib(default=None)
         error = attr.ib(default=None)
+        path = attr.ib(default=None)
 
     def __init__(self, sync_server, header, _id, project=None):
         super(SyncRepresentationDetailModel, self).__init__()
@@ -999,16 +1452,16 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self._data = []
         self._project = project
         self._rec_loaded = 0
+        self._total_records = 0  # how many documents query actually found
         self.filter = None
-        self._buffer = []  # stash one page worth of records (actually cursor)
         self._id = _id
         self._initialized = False
 
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site, self.remote_site = \
-            self.sync_server.get_sites_for_project(self._project)
+        self.local_site = self.sync_server.get_local_site(self._project)
+        self.remote_site = self.sync_server.get_remote_site(self._project)
 
         self.sort = self.DEFAULT_SORT
 
@@ -1061,6 +1514,9 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                 return str(self._header[section])
 
     def refresh(self, representations=None, load_records=0):
+        if self.sync_server.is_paused():
+            return
+
         self.beginResetModel()
         self._data = []
         self._rec_loaded = 0
@@ -1080,9 +1536,25 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             Args:
                 local_site (str): name of local site (mine)
                 remote_site (str): name of cloud provider (theirs)
-                representations (Mongo Cursor)
+                representations (Mongo Cursor) - mimics result set, 1 object
+                    with paginatedResults array and totalCount array
         """
-        for repre in representations:
+        # representations is a Cursor, get first
+        result = representations.next()
+        count = 0
+        total_count = result.get("totalCount")
+        if total_count:
+            count = total_count.pop().get('count')
+        self._total_records = count
+
+        local_provider = _translate_provider_for_icon(self.sync_server,
+                                                      self._project,
+                                                      local_site)
+        remote_provider = _translate_provider_for_icon(self.sync_server,
+                                                       self._project,
+                                                       remote_site)
+
+        for repre in result.get("paginatedResults"):
             # log.info("!!! repre:: {}".format(repre))
             files = repre.get("files", [])
             if isinstance(files, dict):  # aggregate returns dictionary
@@ -1100,8 +1572,10 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                         repre.get('updated_dt_remote').strftime(
                             "%Y%m%dT%H%M%SZ")
 
-                progress_remote = repre.get('progress_remote', '')
-                progress_local = repre.get('progress_local', '')
+                progress_remote = _convert_progress(
+                    repre.get('progress_remote', '0'))
+                progress_local = _convert_progress(
+                    repre.get('progress_local', '0'))
 
                 errors = []
                 if repre.get('failed_remote_error'):
@@ -1114,13 +1588,16 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                     os.path.basename(file["path"]),
                     local_updated,
                     remote_updated,
-                    '{} {}'.format(local_site, progress_local),
-                    '{} {}'.format(remote_site, progress_remote),
+                    '{} {}'.format(local_provider, progress_local),
+                    '{} {}'.format(remote_provider, progress_remote),
                     file.get('size', 0),
                     1,
                     STATUS[repre.get("status", -1)],
                     repre.get("tries"),
-                    '\n'.join(errors)
+                    '\n'.join(errors),
+                    self.sync_server.get_local_file_path(self._project,
+                                                         file.get('path'))
+
                 )
                 self._data.append(item)
                 self._rec_loaded += 1
@@ -1130,8 +1607,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             Check if there are more records than currently loaded
         """
         # 'skip' might be suboptimal when representation hits 500k+
-        self._buffer = list(self.dbcon.aggregate(self.query))
-        return len(self._buffer) > self._rec_loaded
+        return self._total_records > self._rec_loaded
 
     def fetchMore(self, index):
         """
@@ -1142,14 +1618,16 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             'self._buffer' is used to stash cursor to limit requery
         """
         log.debug("fetchMore")
-        # cursor.count() returns always total number, not only skipped + limit
-        remainder = len(self._buffer) - self._rec_loaded
-        items_to_fetch = min(self.PAGE_SIZE, remainder)
-
+        items_to_fetch = min(self._total_records - self._rec_loaded,
+                             self.PAGE_SIZE)
+        self.query = self.get_default_query(self._rec_loaded)
+        representations = self.dbcon.aggregate(self.query)
         self.beginInsertRows(index,
                              self._rec_loaded,
                              self._rec_loaded + items_to_fetch - 1)
-        self._add_page_records(self.local_site, self.remote_site, self._buffer)
+
+        self._add_page_records(self.local_site, self.remote_site,
+                               representations)
 
         self.endInsertRows()
 
@@ -1192,7 +1670,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             value = self.data(index, Qt.UserRole)
             if value == id:
                 return index
-        return index
+        return None
 
     def get_default_query(self, limit=0):
         """
@@ -1269,6 +1747,14 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                         }
                     ]
                 }},
+                'paused_remote': {
+                    '$cond': [{'$size': "$order_remote.paused"},
+                              1,
+                              0]},
+                'paused_local': {
+                    '$cond': [{'$size': "$order_local.paused"},
+                              1,
+                              0]},
                 'failed_remote': {
                     '$cond': [{'$size': "$order_remote.last_failed_dt"},
                               1,
@@ -1295,10 +1781,15 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                               ]}
                              ]}}
             }},
-            {"$limit": limit},
-            {"$skip": self._rec_loaded},
             {"$project": self.projection},
-            {"$sort": self.sort}
+            {"$sort": self.sort},
+            {
+                '$facet': {
+                    'paginatedResults': [{'$skip': self._rec_loaded},
+                                         {'$limit': limit}],
+                    'totalCount': [{'$count': 'count'}]
+                }
+            }
         ]
 
     def _get_match_part(self):
@@ -1337,12 +1828,26 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             'progress_local': 1,
             'updated_dt_remote': 1,
             'updated_dt_local': 1,
+            'paused_remote': 1,
+            'paused_local': 1,
             'failed_remote_error': 1,
             'failed_local_error': 1,
             'tries': 1,
             'status': {
                 '$switch': {
                     'branches': [
+                        {
+                            'case': {
+                                '$or': ['$paused_remote', '$paused_local']},
+                            'then': 3  # Paused
+                        },
+                        {
+                            'case': {
+                                '$and': [{'$or': ['$failed_remote',
+                                                  '$failed_local']},
+                                         {'$eq': ['$tries', 3]}]},
+                            'then': 1  # Failed (3 tries)
+                        },
                         {
                             'case': {
                                 '$or': [{'$eq': ['$progress_remote', 0]},
@@ -1367,10 +1872,6 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                             'then': 0  # In Progress
                         },
                         {
-                            'case': {'$eq': ['dummy_placeholder', 'paused']},
-                            'then': 3
-                        },
-                        {
                             'case': {'$and': [
                                 {'$eq': ['$progress_remote', 1]},
                                 {'$eq': ['$progress_local', 1]}
@@ -1380,7 +1881,8 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                     ],
                     'default': -1
                 }
-            }
+            },
+            'data.path': 1
         }
 
 
@@ -1507,3 +2009,24 @@ class SizeDelegate(QtWidgets.QStyledItemDelegate):
                 return "%3.1f%s%s" % (value, unit, suffix)
             value /= 1024.0
         return "%.1f%s%s" % (value, 'Yi', suffix)
+
+def _convert_progress(value):
+    try:
+        progress = float(value)
+    except (ValueError, TypeError):
+        progress = 0.0
+
+    return progress
+
+
+def _translate_provider_for_icon(sync_server, project, site):
+    """
+        Get provider for 'site'
+
+        This is used for getting icon, 'studio' should have different icon
+        then local sites, even the provider 'local_drive' is same
+
+    """
+    if site == sync_server.DEFAULT_SITE:
+        return sync_server.DEFAULT_SITE
+    return sync_server.get_provider_for_site(project, site)

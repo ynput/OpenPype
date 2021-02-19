@@ -12,15 +12,6 @@
         "linux": ""
     },
     "environment": {
-        "__environment_keys__": {
-            "global": [
-                "FFMPEG_PATH",
-                "PYPE_PYTHON_EXE",
-                "PYPE_OCIO_CONFIG",
-                "PYBLISH_GUI",
-                "QT_AUTO_SCREEN_SCALE_FACTOR"
-            ]
-        },
         "FFMPEG_PATH": {
             "windows": "{PYPE_ROOT}/vendor/bin/ffmpeg_exec/windows/bin",
             "darwin": "{PYPE_ROOT}/vendor/bin/ffmpeg_exec/darwin/bin",
@@ -33,6 +24,15 @@
         },
         "PYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
         "PYBLISH_GUI": "pyblish_pype",
-        "QT_AUTO_SCREEN_SCALE_FACTOR": "1"
+        "QT_AUTO_SCREEN_SCALE_FACTOR": "1",
+        "__environment_keys__": {
+            "global": [
+                "FFMPEG_PATH",
+                "PYPE_PYTHON_EXE",
+                "PYPE_OCIO_CONFIG",
+                "PYBLISH_GUI",
+                "QT_AUTO_SCREEN_SCALE_FACTOR"
+            ]
+        }
     }
 }

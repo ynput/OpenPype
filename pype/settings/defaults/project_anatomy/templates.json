@@ -4,23 +4,23 @@
     "frame_padding": 4,
     "frame": "{frame:0>{@frame_padding}}",
     "work": {
-        "folder": "{root}/{project[name]}/{hierarchy}/{asset}/work/{task}",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task}",
         "file": "{project[code]}_{asset}_{task}_{@version}<_{comment}>.{ext}",
         "path": "{@folder}/{@file}"
     },
     "render": {
-        "folder": "{root}/{project[name]}/{hierarchy}/{asset}/publish/render/{subset}/{@version}",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/render/{subset}/{@version}",
         "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
         "path": "{@folder}/{@file}"
     },
     "publish": {
-        "folder": "{root}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
         "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
         "path": "{@folder}/{@file}",
         "thumbnail": "{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}.{ext}"
     },
     "master": {
-        "folder": "{root}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/master",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/master",
         "file": "{project[code]}_{asset}_{subset}_master<_{output}><.{frame}>.{ext}",
         "path": "{@folder}/{@file}"
     },
