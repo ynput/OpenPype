@@ -3,11 +3,15 @@ import logging
 from Qt import QtWidgets, QtCore
 from .widgets import (
     ExpandingWidget,
-    SpacerWidget
+    SpacerWidget,
+    ProjectListWidget
 )
 from .. import style
 from .lib import CHILD_OFFSET
-from pype.api import SystemSettings
+from pype.api import (
+    SystemSettings,
+    ProjectSettings
+)
 
 log = logging.getLogger(__name__)
 
@@ -293,21 +297,83 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
         return output
 
 
+class RootsWidget(QtWidgets.QWidget):
+    def __init__(self, project_settings, parent):
+        super(RootsWidget, self).__init__(parent)
+
+        self.project_settings = project_settings
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+
+        self.content_layout = main_layout
+
+    def refresh(self):
+        roots_entity = self.project_settings["project_anatomy"]["roots"]
+        for root_name, path_entity in roots_entity.items():
+            platform_entity = path_entity[platform.system().lower()]
+            print(root_name, platform_entity.value)
+
+
+
+class _ProjectListWidget(ProjectListWidget):
+    def on_item_clicked(self, new_index):
+        new_project_name = new_index.data(QtCore.Qt.DisplayRole)
+        if new_project_name is None:
+            return
+
+        if self.current_project == new_project_name:
+            return
+
+        self.select_project(new_project_name)
+        self.current_project = new_project_name
+        self.project_changed.emit()
+
+
+class ProjectSettingsWidget(QtWidgets.QWidget):
+    def __init__(self, project_settings, parent):
+        super(ProjectSettingsWidget, self).__init__(parent)
+
+        projects_widget = _ProjectListWidget(self)
+        roots_widget = RootsWidget(project_settings, self)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(projects_widget, 0)
+        main_layout.addWidget(roots_widget, 1)
+
+        projects_widget.refresh()
+
+        projects_widget.project_changed.connect(self._on_project_change)
+
+        self.project_settings = project_settings
+
+        self.projects_widget = projects_widget
+        self.roots_widget = roots_widget
+
+    def _on_project_change(self):
+        self.project_settings.change_project(
+            self.projects_widget.project_name()
+        )
+        self.roots_widget.refresh()
+
+
 class LocalSettingsWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(LocalSettingsWidget, self).__init__(parent)
 
         self.system_settings = SystemSettings()
-        # self.project_settings = SystemSettings()
+        self.project_settings = ProjectSettings()
         user_settings = {}
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
         self.general_widget = None
         self.apps_widget = None
+        self.projects_widget = None
 
         self._create_general_ui()
         self._create_app_ui()
+        self._create_project_ui()
 
         # Add spacer to main layout
         self.main_layout.addWidget(SpacerWidget(self), 1)
@@ -349,6 +415,20 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(app_expand_widget)
 
         self.app_widget = app_widget
+
+    def _create_project_ui(self):
+        project_expand_widget = ExpandingWidget("Project settings", self)
+        project_content = QtWidgets.QWidget(self)
+        project_layout = QtWidgets.QVBoxLayout(project_content)
+        project_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
+        project_expand_widget.set_content_widget(project_content)
+
+        projects_widget = ProjectSettingsWidget(self.project_settings, self)
+        project_layout.addWidget(projects_widget)
+
+        self.main_layout.addWidget(project_expand_widget)
+
+        self.projects_widget = projects_widget
 
     def set_value(self, value):
         if not value:
