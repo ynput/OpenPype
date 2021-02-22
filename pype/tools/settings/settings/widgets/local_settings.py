@@ -302,17 +302,47 @@ class RootsWidget(QtWidgets.QWidget):
         super(RootsWidget, self).__init__(parent)
 
         self.project_settings = project_settings
+        self.widgts_by_root_name = {}
 
         main_layout = QtWidgets.QVBoxLayout(self)
 
         self.content_layout = main_layout
 
     def refresh(self):
+        while self.content_layout.count():
+            item = self.content_layout.itemAt(0)
+            item.widget().hide()
+            self.content_layout.removeItem(item)
+
         roots_entity = self.project_settings["project_anatomy"]["roots"]
         for root_name, path_entity in roots_entity.items():
             platform_entity = path_entity[platform.system().lower()]
-            print(root_name, platform_entity.value)
+            root_widget = QtWidgets.QWidget(self)
 
+            key_input = QtWidgets.QLineEdit(root_widget)
+            key_input.setText(root_name)
+            key_input.setReadOnly(True)
+
+            root_input_widget = QtWidgets.QWidget(root_widget)
+            root_input_layout = QtWidgets.QVBoxLayout(root_input_widget)
+
+            value_input = QtWidgets.QLineEdit(root_input_widget)
+            value_input.setPlaceholderText(
+                "< Root overrides for this machine >"
+            )
+            studio_input = QtWidgets.QLineEdit(root_input_widget)
+            studio_input.setText(platform_entity.value)
+            studio_input.setReadOnly(True)
+
+            root_input_layout.addWidget(value_input)
+            root_input_layout.addWidget(studio_input)
+
+            root_layout = QtWidgets.QHBoxLayout(root_widget)
+            root_layout.addWidget(key_input)
+            root_layout.addWidget(root_input_widget)
+
+            self.content_layout.addWidget(root_widget)
+        self.content_layout.addWidget(SpacerWidget(self), 1)
 
 
 class _ProjectListWidget(ProjectListWidget):
