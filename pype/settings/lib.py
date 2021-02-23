@@ -341,7 +341,8 @@ def apply_overrides(source_data, override_data):
 def apply_local_settings_on_system_settings(system_settings, local_settings):
     """Apply local settings on studio system settings.
 
-    In local settings are set application executables.
+    ATM local settings can modify only application executables. Executable
+    values are not overriden but prepended.
     """
     if not local_settings or "applications" not in local_settings:
         return
@@ -370,6 +371,26 @@ def apply_local_settings_on_system_settings(system_settings, local_settings):
 def apply_local_settings_on_anatomy_settings(
     anatomy_settings, local_settings, project_name
 ):
+    """Apply local settings on anatomy settings.
+
+    ATM local settings can modify project roots. Project name is required as
+    local settings have data stored data by project's name.
+
+    Local settings override root values in this order:
+    1.) Check if local settings contain overrides for default project and
+        apply it's values on roots if there are any.
+    2.) If passed `project_name` is not None then check project specific
+        overrides in local settings for the project and apply it's value on
+        roots if there are any.
+
+    NOTE: Root values of default project from local settings are always applied
+        if are set.
+
+    Args:
+        anatomy_settings (dict): Data for anatomy settings.
+        local_settings (dict): Data of local settings.
+        project_name (str): Name of project for which anatomy data are.
+    """
     if not local_settings:
         return
 
@@ -394,8 +415,8 @@ def apply_local_settings_on_anatomy_settings(
     if local_projects and "roots" in local_projects:
         for root_name, path in local_projects["roots"].items():
             if root_name not in root_data:
-                print(root_name, "not in root data")
                 continue
+
             anatomy_settings["roots"][root_name][current_platform] = (
                 path
             )
