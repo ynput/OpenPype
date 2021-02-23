@@ -83,16 +83,6 @@ def save_project_anatomy(project_name, anatomy_data):
     return _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
 
 
-@require_local_handler
-def save_local_settings(data):
-    return _LOCAL_SETTINGS_HANDLER.save_local_settings(data)
-
-
-@require_local_handler
-def get_local_settings():
-    return _LOCAL_SETTINGS_HANDLER.get_local_settings()
-
-
 @require_handler
 def get_studio_system_settings_overrides():
     return _SETTINGS_HANDLER.get_studio_system_settings_overrides()
@@ -116,6 +106,16 @@ def get_project_settings_overrides(project_name):
 @require_handler
 def get_project_anatomy_overrides(project_name):
     return _SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
+
+
+@require_local_handler
+def save_local_settings(data):
+    return _LOCAL_SETTINGS_HANDLER.save_local_settings(data)
+
+
+@require_local_handler
+def get_local_settings():
+    return _LOCAL_SETTINGS_HANDLER.get_local_settings()
 
 
 class DuplicatedEnvGroups(Exception):
