@@ -120,7 +120,7 @@ class ASettingRegistry():
         """Delete item from settings.
 
         Note:
-            see :meth:`pype.lib.user_settings.ARegistrySettings.delete_item`
+            see :meth:`pype.lib.local_settings.ARegistrySettings.delete_item`
 
         """
         pass

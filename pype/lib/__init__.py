@@ -92,7 +92,7 @@ from .plugin_tools import (
     should_decompress
 )
 
-from .user_settings import (
+from .local_settings import (
     IniSettingRegistry,
     JSONSettingRegistry,
     PypeSettingsRegistry,
