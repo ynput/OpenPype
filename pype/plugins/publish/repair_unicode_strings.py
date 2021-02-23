@@ -10,20 +10,8 @@ class RepairUnicodeStrings(pyblish.api.Collector):
 
     order = pyblish.api.CollectorOrder
     label = 'Unicode Strings'
+    actions = [pype.api.RepairContextAction]
 
-    def process(self, instance):
-        # invalid = self.get_invalid(instance)
-        # if invalid:
+    def process(self, context):
         for key, value in os.environ.items():
-            self.log.info(type(value))
-            if type(value) is type(u't'):
-                os.environ[key] = str(value)
-
-    @classmethod
-    def get_invalid(cls, instance):
-        invalid = []
-        for key, value in os.environ.items():
-            if type(value) is type(u't'):
-                invalid.append((key, value))
-
-        return invalid
+            os.environ[str(key)] = str(value)
