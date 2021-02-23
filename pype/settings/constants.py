@@ -15,7 +15,10 @@ METADATA_KEYS = (
 SYSTEM_SETTINGS_KEY = "system_settings"
 PROJECT_SETTINGS_KEY = "project_settings"
 PROJECT_ANATOMY_KEY = "project_anatomy"
+LOCAL_SETTING_KEY = "local_settings"
 
+# Key replacing `None` as key for local settings values
+DEFAULT_PROJECT_KEY = "__default_project__"
 
 __all__ = (
     "M_OVERRIDEN_KEY",
@@ -26,5 +29,8 @@ __all__ = (
 
     "SYSTEM_SETTINGS_KEY",
     "PROJECT_SETTINGS_KEY",
-    "PROJECT_ANATOMY_KEY"
+    "PROJECT_ANATOMY_KEY",
+    "LOCAL_SETTING_KEY",
+
+    "DEFAULT_PROJECT_KEY"
 )
