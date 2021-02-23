@@ -3,7 +3,7 @@ import sys
 import traceback
 import platform
 import logging
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
     ExpandingWidget,
     SpacerWidget,
@@ -669,8 +669,11 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
         self.resize(1000, 600)
 
+        self.setWindowTitle("Pype Local settings")
+
         stylesheet = style.load_stylesheet()
         self.setStyleSheet(stylesheet)
+        self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
 
         scroll_widget = QtWidgets.QScrollArea(self)
         scroll_widget.setObjectName("GroupWidget")
