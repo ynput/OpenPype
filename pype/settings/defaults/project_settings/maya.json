@@ -112,32 +112,130 @@
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
-        "ValidateCameraAttributes": {
+        "ValidateShaderName": {
             "enabled": false,
-            "optional": true
+            "regex": "(?P<asset>.*)_(.*)_SHD"
+        },
+        "ValidateAttributes": {
+            "enabled": false,
+            "attributes": {}
         },
         "ValidateModelName": {
-            "enabled": true,
+            "enabled": false,
             "material_file": {
                 "windows": "",
                 "darwin": "",
                 "linux": ""
             },
-            "regex": ""
+            "regex": "(.*)_(\\\\d)*_(.*)_(GEO)"
         },
-        "ValidateAssemblyName": {
-            "enabled": true
-        },
-        "ValidateShaderName": {
+        "ValidateTransformNamingSuffix": {
             "enabled": true,
-            "regex": ""
+            "SUFFIX_NAMING_TABLE": {
+                "mesh": [
+                    "_GEO",
+                    "_GES",
+                    "_GEP",
+                    "_OSD"
+                ],
+                "nurbsCurve": [
+                    "_CRV"
+                ],
+                "nurbsSurface": [
+                    "_NRB"
+                ],
+                "locator": [
+                    "_LOC"
+                ],
+                "group": [
+                    "_GRP"
+                ]
+            },
+            "ALLOW_IF_NOT_IN_SUFFIX_TABLE": true
+        },
+        "ValidateColorSets": {
+            "enabled": false,
+            "optional": true
         },
         "ValidateMeshHasOverlappingUVs": {
-            "enabled": false
-        },
-        "ValidateAttributes": {
             "enabled": false,
-            "attributes": {}
+            "optional": true
+        },
+        "ValidateMeshArnoldAttributes": {
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshShaderConnections": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateMeshSingleUVSet": {
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshHasUVs": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateMeshLaminaFaces": {
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshNonManifold": {
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshUVSetMap1": {
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateMeshVerticesHaveEdges": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNoAnimation": {
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateNoNamespace": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNoNullTransforms": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNoUnknownNodes": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNodeNoGhosting": {
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateShapeDefaultNames": {
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateShapeRenderStats": {
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateTransformZero": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateCameraAttributes": {
+            "enabled": false,
+            "optional": true
+        },
+        "ValidateAssemblyName": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateAssRelativePaths": {
+            "enabled": true,
+            "optional": true
         },
         "ExtractCameraAlembic": {
             "enabled": true,

@@ -22,7 +22,6 @@ class ValidateModelName(pyblish.api.InstancePlugin):
     # path to shader names definitions
     # TODO: move it to preset file
     material_file = None
-    active = False
     regex = '(.*)_(\\d)*_(.*)_(GEO)'
 
     @classmethod
