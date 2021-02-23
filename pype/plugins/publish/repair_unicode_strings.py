@@ -1,6 +1,5 @@
 import os
 import pyblish.api
-import pype.api
 
 
 class RepairUnicodeStrings(pyblish.api.Collector):
@@ -10,7 +9,6 @@ class RepairUnicodeStrings(pyblish.api.Collector):
 
     order = pyblish.api.CollectorOrder
     label = 'Unicode Strings'
-    actions = [pype.api.RepairContextAction]
 
     def process(self, context):
         for key, value in os.environ.items():
