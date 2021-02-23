@@ -2,6 +2,7 @@ import os
 import json
 import functools
 import logging
+import platform
 import copy
 from .constants import (
     M_OVERRIDEN_KEY,
@@ -337,6 +338,69 @@ def apply_overrides(source_data, override_data):
     return merge_overrides(_source_data, override_data)
 
 
+def apply_local_settings_on_system_settings(system_settings, local_settings):
+    """Apply local settings on studio system settings.
+
+    In local settings are set application executables.
+    """
+    if not local_settings or "applications" not in local_settings:
+        return
+
+    current_platform = platform.system().lower()
+    for app_group_name, value in local_settings["applications"].items():
+        if not value or app_group_name not in system_settings["applications"]:
+            continue
+
+        variants = system_settings["applications"][app_group_name]["variants"]
+        for app_name, app_value in value.items():
+            if not app_value or app_name not in variants:
+                continue
+
+            executable = app_value.get("executable")
+            if not executable:
+                continue
+            platform_executables = variants[app_name]["executables"].get(
+                current_platform
+            )
+            new_executables = [executable]
+            new_executables.extend(platform_executables)
+            variants[app_name]["executables"] = new_executables
+
+
+def apply_local_settings_on_anatomy_settings(
+    anatomy_settings, local_settings, project_name
+):
+    if not local_settings:
+        return
+
+    local_project_settings = local_settings.get("projects")
+    if not local_project_settings:
+        return
+
+    current_platform = platform.system().lower()
+    local_defaults = local_project_settings.get(None)
+    root_data = anatomy_settings["roots"]
+    if local_defaults and "roots" in local_defaults:
+        for root_name, path in local_defaults["roots"].items():
+            if root_name not in root_data:
+                continue
+            anatomy_settings["roots"][root_name][current_platform] = (
+                path
+            )
+    if project_name is None:
+        return
+
+    local_projects = local_project_settings.get(project_name)
+    if local_projects and "roots" in local_projects:
+        for root_name, path in local_projects["roots"].items():
+            if root_name not in root_data:
+                print(root_name, "not in root data")
+                continue
+            anatomy_settings["roots"][root_name][current_platform] = (
+                path
+            )
+
+
 def get_system_settings(clear_metadata=True):
     """System settings with applied studio overrides."""
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
@@ -344,6 +408,10 @@ def get_system_settings(clear_metadata=True):
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
+        # TODO local settings may be required to apply for environments
+        local_settings = get_local_settings()
+        apply_local_settings_on_system_settings(result, local_settings)
+
     return result
 
 
@@ -371,6 +439,8 @@ def get_default_anatomy_settings(clear_metadata=True):
             result[key] = value
     if clear_metadata:
         clear_metadata_from_settings(result)
+        local_settings = get_local_settings()
+        apply_local_settings_on_anatomy_settings(result, local_settings, None)
     return result
 
 
@@ -396,6 +466,10 @@ def get_anatomy_settings(project_name, clear_metadata=True):
             result[key] = value
     if clear_metadata:
         clear_metadata_from_settings(result)
+        local_settings = get_local_settings()
+        apply_local_settings_on_anatomy_settings(
+            result, local_settings, project_name
+        )
     return result
 
 
