@@ -516,7 +516,17 @@ class MongoSettingsHandler(SettingsHandler):
 
 
 class MongoLocalSettingsHandler(LocalSettingsHandler):
-    """Settings handler that use mongo for store and load local settings."""
+    """Settings handler that use mongo for store and load local settings.
+
+    Data have 2 query criteria. First is key "type" stored in constant
+    `LOCAL_SETTING_KEY`. Second is key "site_id" which value can be obstained
+    with `get_local_site_id` function.
+
+    Because project specific values are stored by project name the default
+    project would have key `None` which is not allowed. Because of that is
+    `None` replaced with `default_project_key` value on save and the key
+    is replaced with `None` of load.
+    """
     default_project_key = "__default_project__"
 
     def __init__(self, local_site_id=None):
