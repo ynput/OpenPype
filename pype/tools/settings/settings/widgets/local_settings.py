@@ -214,7 +214,7 @@ class AppVariantWidget(QtWidgets.QWidget):
     def __init__(self, group_label, variant_entity, parent):
         super(AppVariantWidget, self).__init__(parent)
 
-        self.input_widget = None
+        self.executable_input_widget = None
 
         label = " ".join([group_label, variant_entity.label])
 
@@ -238,10 +238,10 @@ class AppVariantWidget(QtWidgets.QWidget):
             content_layout.addWidget(warn_label)
             return
 
-        input_widget = PathInput(
+        executable_input_widget = PathInput(
             content_widget, self.exec_placeholder, self.args_placeholder
         )
-        content_layout.addWidget(input_widget)
+        content_layout.addWidget(executable_input_widget)
 
         studio_executables = (
             variant_entity["executables"][platform.system().lower()]
@@ -255,20 +255,28 @@ class AppVariantWidget(QtWidgets.QWidget):
             path_widget.set_value(item.value)
             content_layout.addWidget(path_widget)
 
-        self.input_widget = input_widget
+        self.executable_input_widget = executable_input_widget
 
     def set_value(self, value):
-        if not self.input_widget:
+        if not self.executable_input_widget:
             return
 
         if not value:
-            value = []
-        self.input_widget.set_value(value)
+            value = {}
+        elif not isinstance(value, dict):
+            print("Got invalid value type {}. Expected {}".format(
+                type(value), dict
+            ))
+            value = {}
+        self.executable_input_widget.set_value(value.get("executable"))
 
     def settings_value(self):
-        if not self.input_widget:
+        if not self.executable_input_widget:
             return None
-        return self.input_widget.settings_value()
+        value = self.executable_input_widget.settings_value()
+        if not value:
+            return None
+        return {"executable": self.executable_input_widget.settings_value()}
 
 
 class AppGroupWidget(QtWidgets.QWidget):
