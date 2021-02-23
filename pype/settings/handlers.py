@@ -106,6 +106,11 @@ class SettingsHandler:
 
 @six.add_metaclass(ABCMeta)
 class LocalSettingsHandler:
+    """Handler that should handle about storing and loading of local settings.
+
+    Local settings are "workstation" specific modifications that modify how
+    system and project settings look on the workstation and only there.
+    """
     @abstractmethod
     def save_local_settings(self, data):
         """Save local data of local settings.
