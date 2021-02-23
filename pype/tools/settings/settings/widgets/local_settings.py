@@ -1,3 +1,6 @@
+import os
+import sys
+import traceback
 import platform
 import logging
 from Qt import QtWidgets, QtCore
@@ -8,12 +11,25 @@ from .widgets import (
 )
 from .. import style
 from .lib import CHILD_OFFSET
+from pype.settings.constants import PROJECT_ANATOMY_KEY
+from pype.settings.lib import (
+    get_local_settings,
+    save_local_settings
+)
 from pype.api import (
     SystemSettings,
-    ProjectSettings
+    ProjectSettings,
+    change_pype_mongo_url
 )
+from pymongo.errors import ServerSelectionTimeoutError
 
 log = logging.getLogger(__name__)
+
+
+LOCAL_GENERAL_KEY = "general"
+LOCAL_PROJECTS_KEY = "projects"
+LOCAL_APPS_KEY = "applications"
+LOCAL_ROOTS_KEY = "roots"
 
 
 class Separator(QtWidgets.QFrame):
@@ -32,50 +48,107 @@ class Separator(QtWidgets.QFrame):
         layout.addWidget(splitter_item)
 
 
+class PypeMongoWidget(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super(PypeMongoWidget, self).__init__(parent)
+
+        # Warning label
+        warning_label = QtWidgets.QLabel((
+            "WARNING: Requires restart. Change of Pype Mongo requires to"
+            " restart of all running Pype processes and process using Pype"
+            " (Including this)."
+            "\n- all changes in different categories won't be saved."
+        ), self)
+        warning_label.setStyleSheet("font-weight: bold;")
+
+        # Label
+        mongo_url_label = QtWidgets.QLabel("Pype Mongo URL", self)
+
+        # Input
+        mongo_url_input = QtWidgets.QLineEdit(self)
+        mongo_url_input.setPlaceholderText("< Pype Mongo URL >")
+        mongo_url_input.setText(os.environ["PYPE_MONGO"])
+
+        # Confirm button
+        mongo_url_change_btn = QtWidgets.QPushButton("Confirm Change", self)
+
+        layout = QtWidgets.QGridLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(warning_label, 0, 0, 1, 3)
+        layout.addWidget(mongo_url_label, 1, 0)
+        layout.addWidget(mongo_url_input, 1, 1)
+        layout.addWidget(mongo_url_change_btn, 1, 2)
+
+        mongo_url_change_btn.clicked.connect(self._on_confirm_click)
+
+        self.mongo_url_input = mongo_url_input
+
+    def _on_confirm_click(self):
+        value = self.mongo_url_input.text()
+
+        dialog = QtWidgets.QMessageBox(self)
+
+        title = "Pype mongo changed"
+        message = (
+            "Pype mongo url was successfully changed. Restart Pype please."
+        )
+        details = None
+
+        try:
+            change_pype_mongo_url(value)
+        except Exception as exc:
+            if isinstance(exc, ServerSelectionTimeoutError):
+                error_message = (
+                    "Connection timeout passed."
+                    " Probably can't connect to the Mongo server."
+                )
+            else:
+                error_message = str(exc)
+
+            title = "Pype mongo change failed"
+            # TODO catch exception message more gracefully
+            message = (
+                "Pype mongo change was not successful."
+                " Full traceback can be found in details section.\n\n"
+                "Error message:\n{}"
+            ).format(error_message)
+            details = "\n".join(traceback.format_exception(*sys.exc_info()))
+        dialog.setWindowTitle(title)
+        dialog.setText(message)
+        if details:
+            dialog.setDetailedText(details)
+        dialog.exec_()
+
+
 class LocalGeneralWidgets(QtWidgets.QWidget):
     def __init__(self, parent):
         super(LocalGeneralWidgets, self).__init__(parent)
 
-        mongo_url_label = QtWidgets.QLabel("Pype Mongo URL", self)
-        mongo_url_input = QtWidgets.QLineEdit(self)
-        local_site_name_label = QtWidgets.QLabel("Local site name", self)
         local_site_name_input = QtWidgets.QLineEdit(self)
 
-        layout = QtWidgets.QGridLayout(self)
+        layout = QtWidgets.QFormLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        row = 0
-        layout.addWidget(mongo_url_label, row, 0)
-        layout.addWidget(mongo_url_input, row, 1)
-        row += 1
-        layout.addWidget(local_site_name_label, row, 0)
-        layout.addWidget(local_site_name_input, row, 1)
 
-        self.mongo_url_input = mongo_url_input
+        layout.addRow("Local site name", local_site_name_input)
+
         self.local_site_name_input = local_site_name_input
 
     def set_value(self, value):
-        mongo_url = ""
         site_name = ""
         if value:
-            mongo_url = value.get("mongo_url", mongo_url)
             site_name = value.get("site_name", site_name)
-        self.mongo_url_input.setText(mongo_url)
         self.local_site_name_input.setText(site_name)
 
     def settings_value(self):
         # Add changed
         # If these have changed then
         output = {}
-        mongo_url = self.mongo_url_input.text()
-        if mongo_url:
-            output["mongo_url"] = mongo_url
-
         local_site_name = self.local_site_name_input.text()
         if local_site_name:
             output["site_name"] = local_site_name
         # Do not return output yet since we don't have mechanism to save or
         #   load these data through api calls
-        return None
+        return output
 
 
 class PathInput(QtWidgets.QWidget):
@@ -322,7 +395,9 @@ class RootsWidget(QtWidgets.QWidget):
         default_placeholder = "< Root overrides for this machine >"
         default_root_values = self.local_default_project_values() or {}
 
-        roots_entity = self.project_settings["project_anatomy"]["roots"]
+        roots_entity = (
+            self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
+        )
         is_in_default = self.project_settings.project_name is None
         for root_name, path_entity in roots_entity.items():
             platform_entity = path_entity[platform.system().lower()]
@@ -368,7 +443,7 @@ class RootsWidget(QtWidgets.QWidget):
     def local_default_project_values(self):
         default_project = self._parent_widget.per_project_settings.get(None)
         if default_project:
-            return default_project.get("roots")
+            return default_project.get(LOCAL_ROOTS_KEY)
         return None
 
     def set_value(self, value):
@@ -418,12 +493,8 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
         main_layout.addWidget(projects_widget, 0)
         main_layout.addWidget(roots_widget, 1)
 
-        projects_widget.refresh()
-
         projects_widget.project_changed.connect(self._on_project_change)
         roots_widget.value_changed.connect(self._on_root_value_change)
-
-        roots_widget.refresh()
 
         self.project_settings = project_settings
 
@@ -434,7 +505,7 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
         roots_value = self.roots_widget.settings_value()
         current_value = {}
         if roots_value:
-            current_value["roots"] = roots_value
+            current_value[LOCAL_ROOTS_KEY] = roots_value
         return current_value
 
     def project_name(self):
@@ -447,7 +518,7 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
         self.roots_widget.refresh()
 
         project_value = self.per_project_settings.get(project_name) or {}
-        self.roots_widget.set_value(project_value.get("roots"))
+        self.roots_widget.set_value(project_value.get(LOCAL_ROOTS_KEY))
 
     def _on_root_value_change(self):
         self.per_project_settings[self.project_name()] = (
@@ -458,6 +529,13 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
         if not value:
             value = {}
         self.per_project_settings = value
+
+        self.projects_widget.refresh()
+        self.roots_widget.refresh()
+
+        project_name = self.project_name()
+        project_value = self.per_project_settings.get(project_name) or {}
+        self.roots_widget.set_value(project_value.get(LOCAL_ROOTS_KEY))
 
     def settings_value(self):
         output = {}
@@ -475,14 +553,15 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
         self.system_settings = SystemSettings()
         self.project_settings = ProjectSettings()
-        user_settings = {}
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
+        self.pype_mongo_widget = None
         self.general_widget = None
         self.apps_widget = None
         self.projects_widget = None
 
+        self._create_pype_mongo_ui()
         self._create_general_ui()
         self._create_app_ui()
         self._create_project_ui()
@@ -490,13 +569,23 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         # Add spacer to main layout
         self.main_layout.addWidget(SpacerWidget(self), 1)
 
-        self.set_value(user_settings)
+    def _create_pype_mongo_ui(self):
+        pype_mongo_expand_widget = ExpandingWidget("Pype Mongo URL", self)
+        pype_mongo_content = QtWidgets.QWidget(self)
+        pype_mongo_layout = QtWidgets.QVBoxLayout(pype_mongo_content)
+        pype_mongo_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
+        pype_mongo_expand_widget.set_content_widget(pype_mongo_content)
+
+        pype_mongo_widget = PypeMongoWidget(self)
+        pype_mongo_layout.addWidget(pype_mongo_widget)
+
+        self.main_layout.addWidget(pype_mongo_expand_widget)
+
+        self.pype_mongo_widget = pype_mongo_widget
 
     def _create_general_ui(self):
         # General
-        general_expand_widget = ExpandingWidget(
-            "General (Does nothing!)", self
-        )
+        general_expand_widget = ExpandingWidget("General", self)
 
         general_content = QtWidgets.QWidget(self)
         general_layout = QtWidgets.QVBoxLayout(general_content)
@@ -546,23 +635,23 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         if not value:
             value = {}
 
-        self.general_widget.set_value(value.get("general"))
-        self.app_widget.set_value(value.get("applications"))
-        self.projects_widget.set_value(value.get("projects"))
+        self.general_widget.set_value(value.get(LOCAL_GENERAL_KEY))
+        self.app_widget.set_value(value.get(LOCAL_APPS_KEY))
+        self.projects_widget.set_value(value.get(LOCAL_PROJECTS_KEY))
 
     def settings_value(self):
         output = {}
         general_value = self.general_widget.settings_value()
         if general_value:
-            output["general"] = general_value
+            output[LOCAL_GENERAL_KEY] = general_value
 
         app_value = self.app_widget.settings_value()
         if app_value:
-            output["applications"] = app_value
+            output[LOCAL_APPS_KEY] = app_value
 
         projects_value = self.projects_widget.settings_value()
         if projects_value:
-            output["projects"] = projects_value
+            output[LOCAL_PROJECTS_KEY] = projects_value
         return output
 
 
@@ -598,9 +687,17 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         self.settings_widget = settings_widget
         self.save_btn = save_btn
 
+        self.reset()
+
+    def reset(self):
+        value = get_local_settings()
+        self.settings_widget.set_value(value)
+
     def _on_save_clicked(self):
         try:
             value = self.settings_widget.settings_value()
-            print(value)
         except Exception:
             log.warning("Failed to save", exc_info=True)
+            return
+
+        save_local_settings(value)
