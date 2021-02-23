@@ -23,6 +23,7 @@ from .mongo import (
     decompose_url,
     compose_url,
     get_default_components,
+    validate_mongo_connection,
     PypeMongoConnection
 )
 from .anatomy import (
@@ -191,6 +192,7 @@ __all__ = [
     "decompose_url",
     "compose_url",
     "get_default_components",
+    "validate_mongo_connection",
     "PypeMongoConnection",
 
     "IniSettingRegistry",

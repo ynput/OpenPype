@@ -93,6 +93,42 @@ def extract_port_from_url(url):
     return parsed_url.port
 
 
+def validate_mongo_connection(mongo_uri):
+    """Check if provided mongodb URL is valid.
+
+    Args:
+        mongo_uri (str): URL to validate.
+
+    Raises:
+        ValueError: When port in mongo uri is not valid.
+        pymongo.errors.InvalidURI: If passed mongo is invalid.
+        pymongo.errors.ServerSelectionTimeoutError: If connection timeout
+            passed so probably couldn't connect to mongo server.
+
+    """
+    parsed = urlparse(mongo_uri)
+    # Force validation of scheme
+    if parsed.scheme not in ["mongodb", "mongodb+srv"]:
+        raise pymongo.errors.InvalidURI((
+            "Invalid URI scheme:"
+            " URI must begin with 'mongodb://' or 'mongodb+srv://'"
+        ))
+    # we have mongo connection string. Let's try if we can connect.
+    components = decompose_url(mongo_uri)
+    mongo_args = {
+        "host": compose_url(**components),
+        "serverSelectionTimeoutMS": 1000
+    }
+    port = components.get("port")
+    if port is not None:
+        mongo_args["port"] = int(port)
+
+    # Create connection
+    client = pymongo.MongoClient(**mongo_args)
+    client.server_info()
+    client.close()
+
+
 class PypeMongoConnection:
     """Singleton MongoDB connection.
 
