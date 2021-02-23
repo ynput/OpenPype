@@ -133,7 +133,7 @@
                         },
                         {
                             "type": "schema_template",
-                            "name": "template_simple_plugin",
+                            "name": "template_publish_plugin",
                             "template_data": [
                                 {
                                     "key": "ValidateColorSets",
@@ -215,7 +215,7 @@
                 },
                 {
                     "type": "schema_template",
-                    "name": "template_simple_plugin",
+                    "name": "template_publish_plugin",
                     "template_data": [
                         {
                             "key": "ValidateCameraAttributes",

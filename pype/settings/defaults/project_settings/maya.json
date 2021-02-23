@@ -107,7 +107,121 @@
             "overscan": 1.0
         }
     },
-    "ext_mapping": {},
+    "create": {
+        "CreateAnimation": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateAss": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateAssembly": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateCamera": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateLayout": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateLook": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMayaScene": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateModel": {
+            "enabled": true,
+            "defaults": [
+                "Main",
+                "Proxy",
+                "Sculpt"
+            ]
+        },
+        "CreatePointCache": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateRender": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateRenderSetup": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateReview": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateRig": {
+            "enabled": true,
+            "defaults": [
+                "Main",
+                "Sim",
+                "Cloth"
+            ]
+        },
+        "CreateSetDress": {
+            "enabled": true,
+            "defaults": [
+                "Main",
+                "Anim"
+            ]
+        },
+        "CreateUnrealStaticMesh": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateVrayProxy": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateVRayScene": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateYetiRig": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        }
+    },
     "publish": {
         "CollectMayaRender": {
             "sync_workfile_version": false
@@ -319,6 +433,39 @@
                 0.8,
                 0.5
             ]
+        },
+        "ReferenceLoader": {
+            "enabled": true,
+            "representations": [
+                "ma",
+                "mb",
+                "abc",
+                "fbx"
+            ]
+        },
+        "AudioLoader": {
+            "enabled": true,
+            "representations": [
+                "wav"
+            ]
+        },
+        "GpuCacheLoader": {
+            "enabled": true,
+            "representations": [
+                "abc"
+            ]
+        },
+        "ImagePlaneLoader": {
+            "enabled": true,
+            "representations": [
+                "jpg",
+                "png",
+                "mov"
+            ]
+        },
+        "MatchmoveLoader": {
+            "enabled": true,
+            "representations": []
         }
     },
     "workfile_build": {
