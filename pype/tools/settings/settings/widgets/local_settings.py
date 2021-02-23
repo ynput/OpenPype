@@ -298,7 +298,10 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
 
 
 class RootsWidget(QtWidgets.QWidget):
+    value_changed = QtCore.Signal()
+
     def __init__(self, project_settings, parent):
+        self._parent_widget = parent
         super(RootsWidget, self).__init__(parent)
 
         self.project_settings = project_settings
@@ -314,35 +317,77 @@ class RootsWidget(QtWidgets.QWidget):
             item.widget().hide()
             self.content_layout.removeItem(item)
 
+        self.widgts_by_root_name.clear()
+
+        default_placeholder = "< Root overrides for this machine >"
+        default_root_values = self.local_default_project_values() or {}
+
         roots_entity = self.project_settings["project_anatomy"]["roots"]
+        is_in_default = self.project_settings.project_name is None
         for root_name, path_entity in roots_entity.items():
             platform_entity = path_entity[platform.system().lower()]
             root_widget = QtWidgets.QWidget(self)
 
-            key_input = QtWidgets.QLineEdit(root_widget)
-            key_input.setText(root_name)
-            key_input.setReadOnly(True)
+            key_label = QtWidgets.QLabel(root_name, root_widget)
 
             root_input_widget = QtWidgets.QWidget(root_widget)
             root_input_layout = QtWidgets.QVBoxLayout(root_input_widget)
 
             value_input = QtWidgets.QLineEdit(root_input_widget)
-            value_input.setPlaceholderText(
-                "< Root overrides for this machine >"
-            )
+            placeholder = None
+            if not is_in_default:
+                placeholder = default_root_values.get(root_name)
+                if placeholder:
+                    placeholder = "< {} >".format(placeholder)
+
+            if not placeholder:
+                placeholder = default_placeholder
+            value_input.setPlaceholderText(placeholder)
+            value_input.textChanged.connect(self._on_root_value_change)
+
             studio_input = QtWidgets.QLineEdit(root_input_widget)
             studio_input.setText(platform_entity.value)
             studio_input.setReadOnly(True)
 
             root_input_layout.addWidget(value_input)
+            root_input_layout.addWidget(Separator(parent=self))
             root_input_layout.addWidget(studio_input)
 
             root_layout = QtWidgets.QHBoxLayout(root_widget)
-            root_layout.addWidget(key_input)
+            root_layout.addWidget(key_label)
             root_layout.addWidget(root_input_widget)
 
             self.content_layout.addWidget(root_widget)
+            self.widgts_by_root_name[root_name] = value_input
+
         self.content_layout.addWidget(SpacerWidget(self), 1)
+
+    def _on_root_value_change(self):
+        self.value_changed.emit()
+
+    def local_default_project_values(self):
+        default_project = self._parent_widget.per_project_settings.get(None)
+        if default_project:
+            return default_project.get("roots")
+        return None
+
+    def set_value(self, value):
+        if not value:
+            value = {}
+
+        for root_name, widget in self.widgts_by_root_name.items():
+            root_value = value.get(root_name) or ""
+            widget.setText(root_value)
+
+    def settings_value(self):
+        output = {}
+        for root_name, widget in self.widgts_by_root_name.items():
+            value = widget.text()
+            if value:
+                output[root_name] = value
+        if not output:
+            return None
+        return output
 
 
 class _ProjectListWidget(ProjectListWidget):
@@ -363,6 +408,8 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
     def __init__(self, project_settings, parent):
         super(ProjectSettingsWidget, self).__init__(parent)
 
+        self.per_project_settings = {}
+
         projects_widget = _ProjectListWidget(self)
         roots_widget = RootsWidget(project_settings, self)
 
@@ -374,17 +421,52 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
         projects_widget.refresh()
 
         projects_widget.project_changed.connect(self._on_project_change)
+        roots_widget.value_changed.connect(self._on_root_value_change)
+
+        roots_widget.refresh()
 
         self.project_settings = project_settings
 
         self.projects_widget = projects_widget
         self.roots_widget = roots_widget
 
+    def _current_value(self):
+        roots_value = self.roots_widget.settings_value()
+        current_value = {}
+        if roots_value:
+            current_value["roots"] = roots_value
+        return current_value
+
+    def project_name(self):
+        return self.projects_widget.project_name()
+
     def _on_project_change(self):
-        self.project_settings.change_project(
-            self.projects_widget.project_name()
-        )
+        project_name = self.project_name()
+
+        self.project_settings.change_project(project_name)
         self.roots_widget.refresh()
+
+        project_value = self.per_project_settings.get(project_name) or {}
+        self.roots_widget.set_value(project_value.get("roots"))
+
+    def _on_root_value_change(self):
+        self.per_project_settings[self.project_name()] = (
+            self._current_value()
+        )
+
+    def set_value(self, value):
+        if not value:
+            value = {}
+        self.per_project_settings = value
+
+    def settings_value(self):
+        output = {}
+        for project_name, value in self.per_project_settings.items():
+            if value:
+                output[project_name] = value
+        if not output:
+            return None
+        return output
 
 
 class LocalSettingsWidget(QtWidgets.QWidget):
@@ -466,6 +548,7 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
         self.general_widget.set_value(value.get("general"))
         self.app_widget.set_value(value.get("applications"))
+        self.projects_widget.set_value(value.get("projects"))
 
     def settings_value(self):
         output = {}
@@ -476,6 +559,10 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         app_value = self.app_widget.settings_value()
         if app_value:
             output["applications"] = app_value
+
+        projects_value = self.projects_widget.settings_value()
+        if projects_value:
+            output["projects"] = projects_value
         return output
 
 
