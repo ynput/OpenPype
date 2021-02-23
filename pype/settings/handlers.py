@@ -103,6 +103,23 @@ class SettingsHandler:
         pass
 
 
+@six.add_metaclass(ABCMeta)
+class LocalSettingsHandler:
+    @abstractmethod
+    def save_local_settings(self, data):
+        """Save local data of local settings.
+
+        Args:
+            data(dict): Data of local data with override metadata.
+        """
+        pass
+
+    @abstractmethod
+    def get_local_settings(self):
+        """Studio overrides of system settings."""
+        pass
+
+
 class SettingsFileHandler(SettingsHandler):
     def __init__(self):
         self.log = logging.getLogger("SettingsFileHandler")
