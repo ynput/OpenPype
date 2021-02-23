@@ -479,7 +479,7 @@ def _create_local_site_id(registry=None):
 
     print("Created local site id \"{}\"".format(new_id))
 
-    registry.set_secure_item("localId", new_id)
+    registry.set_item("localId", new_id)
 
     return new_id
 
@@ -491,7 +491,7 @@ def get_local_site_id():
     """
     registry = PypeSettingsRegistry()
     try:
-        return registry.get_secure_item("localId")
+        return registry.get_item("localId")
     except ValueError:
         return _create_local_site_id()
 
