@@ -4,7 +4,8 @@ from Qt import QtWidgets, QtGui
 from .settings import (
     style,
     MainWidget,
-    ProjectListWidget
+    ProjectListWidget,
+    LocalSettingsWindow
 )
 
 
@@ -33,5 +34,6 @@ __all__ = (
     "style",
     "MainWidget",
     "ProjectListWidget",
+    "LocalSettingsWindow",
     "main"
 )

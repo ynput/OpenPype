@@ -627,6 +627,7 @@ class TrayModulesManager(ModulesManager):
         "clockify",
         "standalonepublish_tool",
         "log_viewer",
+        "local_settings",
         "settings"
     )
 
