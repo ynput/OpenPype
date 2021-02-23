@@ -517,6 +517,7 @@ class MongoSettingsHandler(SettingsHandler):
 
 class MongoLocalSettingshandler(LocalSettingsHandler):
     """Settings handler that use mongo for store and load local settings."""
+    default_project_key = "__default_project__"
 
     def __init__(self, local_site_id=None):
         # Get mongo connection
@@ -545,7 +546,7 @@ class MongoLocalSettingshandler(LocalSettingsHandler):
 
         self.local_site_id = local_site_id
 
-        self.settings_cache = CacheValues()
+        self.local_settings_cache = CacheValues()
 
     def save_local_settings(self, data):
         """Save local settings.
@@ -553,7 +554,15 @@ class MongoLocalSettingshandler(LocalSettingsHandler):
         Args:
             data(dict): Data of studio overrides with override metadata.
         """
-        self.settings_cache.update_data(data)
+        data = data or {}
+
+        # Replace key `None` (default project values) with constant string
+        if "projects" in data and None in data["projects"]:
+            data["projects"][self.default_project_key] = (
+                data["projects"].pop(None)
+            )
+
+        self.local_settings_cache.update_data(data)
 
         self.collection.replace_one(
             {
@@ -563,18 +572,27 @@ class MongoLocalSettingshandler(LocalSettingsHandler):
             {
                 "type": LOCAL_SETTING_KEY,
                 "site_id": self.local_site_id,
-                "value": self.settings_cache.to_json_string()
+                "value": self.local_settings_cache.to_json_string()
             },
             upsert=True
         )
 
     def get_local_settings(self):
         """Local settings for local site id."""
-        if self.settings_cache.is_outdated:
+        if self.local_settings_cache.is_outdated:
             document = self.collection.find_one({
                 "type": LOCAL_SETTING_KEY,
                 "site_id": self.local_site_id
             })
 
-            self.settings_cache.update_from_document(document)
-        return self.settings_cache.data_copy()
+            self.local_settings_cache.update_from_document(document)
+            data = self.local_settings_cache.data
+            if (
+                "projects" in data
+                and self.default_project_key in data["projects"]
+            ):
+                data["projects"][None] = data["projects"].pop(
+                    self.default_project_key
+                )
+
+        return self.local_settings_cache.data_copy()
