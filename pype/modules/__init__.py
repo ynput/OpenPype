@@ -55,6 +55,7 @@ __all__ = (
     "TrayModulesManager",
 
     "SettingsAction",
+    "LocalSettingsAction",
 
     "UserModule",
     "IUserModule",
