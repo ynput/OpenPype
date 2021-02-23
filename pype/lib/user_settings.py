@@ -28,6 +28,8 @@ import platform
 import appdirs
 import six
 
+from .import validate_mongo_connection
+
 
 @six.add_metaclass(ABCMeta)
 class ASettingRegistry():
@@ -464,3 +466,43 @@ class PypeSettingsRegistry(JSONSettingRegistry):
         self.product = "pype"
         path = appdirs.user_data_dir(self.product, self.vendor)
         super(PypeSettingsRegistry, self).__init__("pype_settings", path)
+
+
+def _create_local_site_id(registry=None):
+    """Create a local site identifier."""
+    from uuid import uuid4
+
+    if registry is None:
+        registry = PypeSettingsRegistry()
+
+    new_id = str(uuid4())
+
+    print("Created local site id \"{}\"".format(new_id))
+
+    registry.set_secure_item("localId", new_id)
+
+    return new_id
+
+
+def get_local_site_id():
+    """Get local site identifier.
+
+    Identifier is created if does not exists yet.
+    """
+    registry = PypeSettingsRegistry()
+    try:
+        return registry.get_secure_item("localId")
+    except ValueError:
+        return _create_local_site_id()
+
+
+def change_pype_mongo_url(new_mongo_url):
+    """Change mongo url in pype registry.
+
+    Change of Pype mongo URL require restart of running pype processes or
+    processes using pype.
+    """
+
+    validate_mongo_connection(new_mongo_url)
+    registry = PypeSettingsRegistry()
+    registry.set_secure_item("pypeMongo", new_mongo_url)

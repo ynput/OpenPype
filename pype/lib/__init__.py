@@ -95,7 +95,9 @@ from .plugin_tools import (
 from .user_settings import (
     IniSettingRegistry,
     JSONSettingRegistry,
-    PypeSettingsRegistry
+    PypeSettingsRegistry,
+    get_local_site_id,
+    change_pype_mongo_url
 )
 
 from .path_tools import (
@@ -198,6 +200,9 @@ __all__ = [
     "IniSettingRegistry",
     "JSONSettingRegistry",
     "PypeSettingsRegistry",
+    "get_local_site_id",
+    "change_pype_mongo_url",
+
     "timeit",
 
     "is_overlapping_otio_ranges",
