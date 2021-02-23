@@ -65,8 +65,8 @@ def create_settings_handler():
 
 
 def create_local_settings_handler():
-    from .handlers import MongoLocalSettingshandler
-    return MongoLocalSettingshandler()
+    from .handlers import MongoLocalSettingsHandler
+    return MongoLocalSettingsHandler()
 
 
 @require_handler

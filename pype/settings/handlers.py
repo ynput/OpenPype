@@ -515,7 +515,7 @@ class MongoSettingsHandler(SettingsHandler):
         return self._get_project_anatomy_overrides(project_name)
 
 
-class MongoLocalSettingshandler(LocalSettingsHandler):
+class MongoLocalSettingsHandler(LocalSettingsHandler):
     """Settings handler that use mongo for store and load local settings."""
     default_project_key = "__default_project__"
 
