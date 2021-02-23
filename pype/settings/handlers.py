@@ -10,7 +10,8 @@ import pype
 from .constants import (
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
-    PROJECT_ANATOMY_KEY
+    PROJECT_ANATOMY_KEY,
+    LOCAL_SETTING_KEY
 )
 from .lib import load_json_file
 
@@ -512,3 +513,68 @@ class MongoSettingsHandler(SettingsHandler):
         if not project_name:
             return {}
         return self._get_project_anatomy_overrides(project_name)
+
+
+class MongoLocalSettingshandler(LocalSettingsHandler):
+    """Settings handler that use mongo for store and load local settings."""
+
+    def __init__(self, local_site_id=None):
+        # Get mongo connection
+        from pype.lib import (
+            PypeMongoConnection,
+            get_local_site_id
+        )
+
+        if local_site_id is None:
+            local_site_id = get_local_site_id()
+        settings_collection = PypeMongoConnection.get_mongo_client()
+
+        # TODO prepare version of pype
+        # - pype version should define how are settings saved and loaded
+
+        # TODO modify to not use hardcoded keys
+        database_name = "pype"
+        collection_name = "settings"
+
+        self.settings_collection = settings_collection
+
+        self.database_name = database_name
+        self.collection_name = collection_name
+
+        self.collection = settings_collection[database_name][collection_name]
+
+        self.local_site_id = local_site_id
+
+        self.settings_cache = CacheValues()
+
+    def save_local_settings(self, data):
+        """Save local settings.
+
+        Args:
+            data(dict): Data of studio overrides with override metadata.
+        """
+        self.settings_cache.update_data(data)
+
+        self.collection.replace_one(
+            {
+                "type": LOCAL_SETTING_KEY,
+                "site_id": self.local_site_id
+            },
+            {
+                "type": LOCAL_SETTING_KEY,
+                "site_id": self.local_site_id,
+                "value": self.settings_cache.to_json_string()
+            },
+            upsert=True
+        )
+
+    def get_local_settings(self):
+        """Local settings for local site id."""
+        if self.settings_cache.is_outdated:
+            document = self.collection.find_one({
+                "type": LOCAL_SETTING_KEY,
+                "site_id": self.local_site_id
+            })
+
+            self.settings_cache.update_from_document(document)
+        return self.settings_cache.data_copy()
