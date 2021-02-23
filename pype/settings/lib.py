@@ -32,6 +32,9 @@ _DEFAULT_SETTINGS = None
 # Handler of studio overrides
 _SETTINGS_HANDLER = None
 
+# Handler of local settings
+_LOCAL_SETTINGS_HANDLER = None
+
 
 def require_handler(func):
     @functools.wraps(func)
@@ -43,11 +46,26 @@ def require_handler(func):
     return wrapper
 
 
+def require_local_handler(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        global _LOCAL_SETTINGS_HANDLER
+        if _LOCAL_SETTINGS_HANDLER is None:
+            _LOCAL_SETTINGS_HANDLER = create_local_settings_handler()
+        return func(*args, **kwargs)
+    return wrapper
+
+
 def create_settings_handler():
     from .handlers import MongoSettingsHandler
     # Handler can't be created in global space on initialization but only when
     # needed. Plus here may be logic: Which handler is used (in future).
     return MongoSettingsHandler()
+
+
+def create_local_settings_handler():
+    from .handlers import MongoLocalSettingshandler
+    return MongoLocalSettingshandler()
 
 
 @require_handler
@@ -63,6 +81,16 @@ def save_project_settings(project_name, overrides):
 @require_handler
 def save_project_anatomy(project_name, anatomy_data):
     return _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+
+
+@require_local_handler
+def save_local_settings(data):
+    return _LOCAL_SETTINGS_HANDLER.save_local_settings(data)
+
+
+@require_local_handler
+def get_local_settings():
+    return _LOCAL_SETTINGS_HANDLER.get_local_settings()
 
 
 @require_handler
