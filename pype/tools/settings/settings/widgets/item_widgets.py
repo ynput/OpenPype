@@ -257,26 +257,23 @@ class DictImmutableKeysWidget(BaseWidget):
 
 
 class BoolWidget(InputWidget):
-    def create_ui(self):
+    def _add_inputs_to_layout(self):
         checkbox_height = self.style().pixelMetric(
             QtWidgets.QStyle.PM_IndicatorHeight
         )
-        self.input_field = NiceCheckbox(height=checkbox_height, parent=self)
+        self.input_field = NiceCheckbox(
+            height=checkbox_height, parent=self.content_widget
+        )
 
-        spacer = QtWidgets.QWidget(self)
+        spacer = QtWidgets.QWidget(self.content_widget)
         spacer.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        layout.addWidget(self.input_field, 0)
-        layout.addWidget(spacer, 1)
+        self.content_layout.addWidget(self.input_field, 0)
+        self.content_layout.addWidget(spacer, 1)
 
         self.setFocusProxy(self.input_field)
 
         self.input_field.stateChanged.connect(self._on_value_change)
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.isChecked():
@@ -292,12 +289,12 @@ class BoolWidget(InputWidget):
 
 
 class TextWidget(InputWidget):
-    def create_ui(self):
+    def _add_inputs_to_layout(self):
         multiline = self.entity.multiline
         if multiline:
-            self.input_field = QtWidgets.QPlainTextEdit(self)
+            self.input_field = QtWidgets.QPlainTextEdit(self.content_widget)
         else:
-            self.input_field = QtWidgets.QLineEdit(self)
+            self.input_field = QtWidgets.QLineEdit(self.content_widget)
 
         placeholder_text = self.entity.placeholder_text
         if placeholder_text:
@@ -309,14 +306,9 @@ class TextWidget(InputWidget):
         if multiline:
             layout_kwargs["alignment"] = QtCore.Qt.AlignTop
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-        layout.addWidget(self.input_field, 1, **layout_kwargs)
+        self.content_layout.addWidget(self.input_field, 1, **layout_kwargs)
 
         self.input_field.textChanged.connect(self._on_value_change)
-
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_value():
@@ -342,25 +334,19 @@ class TextWidget(InputWidget):
 
 
 class NumberWidget(InputWidget):
-    def create_ui(self):
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
+    def _add_inputs_to_layout(self):
         kwargs = {
             "minimum": self.entity.minimum,
             "maximum": self.entity.maximum,
             "decimal": self.entity.decimal
         }
-        self.input_field = NumberSpinBox(self, **kwargs)
+        self.input_field = NumberSpinBox(self.content_widget, **kwargs)
 
         self.setFocusProxy(self.input_field)
 
-        layout.addWidget(self.input_field, 1)
+        self.content_layout.addWidget(self.input_field, 1)
 
         self.input_field.valueChanged.connect(self._on_value_change)
-
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.value():
@@ -426,12 +412,8 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
 
 class RawJsonWidget(InputWidget):
-    def create_ui(self):
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        self.input_field = RawJsonInput(self)
+    def _add_inputs_to_layout(self):
+        self.input_field = RawJsonInput(self.content_widget)
         self.input_field.setSizePolicy(
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding
@@ -439,10 +421,11 @@ class RawJsonWidget(InputWidget):
 
         self.setFocusProxy(self.input_field)
 
-        layout.addWidget(self.input_field, 1, alignment=QtCore.Qt.AlignTop)
+        self.content_layout.addWidget(
+            self.input_field, 1, alignment=QtCore.Qt.AlignTop
+        )
 
         self.input_field.textChanged.connect(self._on_value_change)
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def set_entity_value(self):
         self.input_field.set_value(self.entity.value)
@@ -470,31 +453,26 @@ class RawJsonWidget(InputWidget):
 
 
 class EnumeratorWidget(InputWidget):
-    def create_ui(self):
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
+    def _add_inputs_to_layout(self):
         if self.entity.multiselection:
             self.input_field = MultiSelectionComboBox(
-                placeholder=self.entity.placeholder, parent=self
+                placeholder=self.entity.placeholder, parent=self.content_widget
             )
             model = self.input_field.model()
             for idx in range(self.input_field.count()):
                 model.item(idx).setCheckable(True)
         else:
-            self.input_field = ComboBox(self)
+            self.input_field = ComboBox(self.content_widget)
 
         for enum_item in self.entity.enum_items:
             for value, label in enum_item.items():
                 self.input_field.addItem(label, value)
 
-        layout.addWidget(self.input_field, 0)
+        self.content_layout.addWidget(self.input_field, 0)
 
         self.setFocusProxy(self.input_field)
 
         self.input_field.value_changed.connect(self._on_value_change)
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.value():
@@ -579,12 +557,8 @@ class PathWidget(BaseWidget):
 
 
 class PathInputWidget(InputWidget):
-    def create_ui(self, label_widget=None):
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        self.input_field = QtWidgets.QLineEdit(self)
+    def _add_inputs_to_layout(self):
+        self.input_field = QtWidgets.QLineEdit(self.content_widget)
         self.args_input_field = None
         if self.entity.with_arguments:
             self.input_field.setPlaceholderText("Executable path")
@@ -592,14 +566,12 @@ class PathInputWidget(InputWidget):
             self.args_input_field.setPlaceholderText("Arguments")
 
         self.setFocusProxy(self.input_field)
-        layout.addWidget(self.input_field, 8)
+        self.content_layout.addWidget(self.input_field, 8)
         self.input_field.textChanged.connect(self._on_value_change)
 
         if self.args_input_field:
-            layout.addWidget(self.args_input_field, 2)
+            self.content_layout.addWidget(self.args_input_field, 2)
             self.args_input_field.textChanged.connect(self._on_value_change)
-
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_value():
