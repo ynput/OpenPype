@@ -777,6 +777,15 @@ class ItemEntity(BaseItemEntity):
         """Call save on root item."""
         self.root_item.save()
 
+    def schema_validations(self):
+        if not self.label and self.use_label_wrap:
+            raise ValueError((
+                "{} Entity has set `use_label_wrap` to true but"
+                " does not have set `label`."
+            ).format(self.path))
+
+        super(ItemEntity, self).schema_validations()
+
     def create_schema_object(self, *args, **kwargs):
         """Reference method for creation of entities defined in RootEntity."""
         return self.root_item.create_schema_object(*args, **kwargs)
