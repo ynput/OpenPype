@@ -2,7 +2,7 @@ import pyblish.api
 
 from maya import cmds
 
-from pype.hosts.maya.api import lib
+from pype.hosts.maya.api.attributes import get_attr_in_layer
 
 
 class CollectRenderableCamera(pyblish.api.InstancePlugin):
@@ -24,7 +24,7 @@ class CollectRenderableCamera(pyblish.api.InstancePlugin):
         self.log.info("layer: {}".format(layer))
         cameras = cmds.ls(type="camera", long=True)
         renderable = [c for c in cameras if
-                      lib.get_attr_in_layer("%s.renderable" % c, layer=layer)]
+                      get_attr_in_layer("%s.renderable" % c, layer)]
 
         self.log.info("Found cameras %s: %s" % (len(renderable), renderable))
 
