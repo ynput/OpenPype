@@ -285,7 +285,7 @@ class AppGroupWidget(QtWidgets.QWidget):
 
         valid_variants = {}
         for key, entity in group_entity["variants"].items():
-            if entity["enabled"]:
+            if entity["enabled"].value:
                 valid_variants[key] = entity
 
         group_label = group_entity.label
@@ -340,13 +340,13 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
 
         for key, entity in system_settings_entity["applications"].items():
             # Filter not enabled app groups
-            if not entity["enabled"]:
+            if not entity["enabled"].value:
                 continue
 
             # Check if has enabled any variant
             enabled_variant = False
             for variant_entity in entity["variants"].values():
-                if variant_entity["enabled"]:
+                if variant_entity["enabled"].value:
                     enabled_variant = True
                     break
 
