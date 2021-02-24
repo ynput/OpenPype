@@ -27,19 +27,25 @@ class DictImmutableKeysWidget(BaseWidget):
         self._child_style_state = ""
         self.input_fields = []
         self.checkbox_child = None
+
+        self.label_widget = None
+        self.body_widget = None
+        self.content_widget = None
+        self.content_layout = None
+
         label = None
         if self.entity.is_dynamic_item:
-            self._ui_item_or_as_widget()
+            self._ui_as_dynamic_item()
 
-        elif not self.entity.use_label_wrap:
-            self._ui_item_without_label()
-            label = self.entity.label
-
-        else:
-            self._ui_item_or_as_widget()
+        elif self.entity.use_label_wrap:
+            self._ui_label_wrap()
             self.checkbox_child = self.entity.non_gui_children.get(
                 self.entity.checkbox_key
             )
+
+        else:
+            self._ui_item_base()
+            label = self.entity.label
 
         self.widget_mapping = {}
         self.wrapper_widgets_by_id = {}
@@ -79,68 +85,73 @@ class DictImmutableKeysWidget(BaseWidget):
             self.add_widget_to_layout(wrapper)
             self._prepare_entity_layouts(child["children"], wrapper)
 
-    def _ui_item_without_label(self):
+    def _ui_item_base(self):
         self.setObjectName("DictInvisible")
 
-        self.body_widget = None
         self.content_widget = self
         self.content_layout = QtWidgets.QGridLayout(self)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(5)
 
-    def _ui_item_or_as_widget(self):
+    def _ui_as_dynamic_item(self):
         content_widget = QtWidgets.QWidget(self)
+        content_widget.setObjectName("DictAsWidgetBody")
 
-        if self.entity.is_dynamic_item:
-            content_widget.setObjectName("DictAsWidgetBody")
-            show_borders = str(int(self.entity.show_borders))
-            content_widget.setProperty("show_borders", show_borders)
-            content_layout_margins = (5, 5, 5, 5)
-            main_layout_spacing = 5
-            body_widget = None
-            label_widget = QtWidgets.QLabel(self.entity.label)
+        show_borders = str(int(self.entity.show_borders))
+        content_widget.setProperty("show_borders", show_borders)
 
+        label_widget = QtWidgets.QLabel(self.entity.label)
+
+        content_layout = QtWidgets.QGridLayout(content_widget)
+        content_layout.setContentsMargins(5, 5, 5, 5)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(5)
+        main_layout.addWidget(content_widget)
+
+        self.label_widget = label_widget
+        self.content_widget = content_widget
+        self.content_layout = content_layout
+
+    def _ui_label_wrap(self):
+        content_widget = QtWidgets.QWidget(self)
+        content_widget.setObjectName("ContentWidget")
+
+        if self.entity.highlight_content:
+            content_state = "hightlighted"
+            bottom_margin = 5
         else:
-            content_widget.setObjectName("ContentWidget")
-            if self.entity.highlight_content:
-                content_state = "hightlighted"
-                bottom_margin = 5
-            else:
-                content_state = ""
-                bottom_margin = 0
-            content_widget.setProperty("content_state", content_state)
-            content_layout_margins = (CHILD_OFFSET, 5, 0, bottom_margin)
-            main_layout_spacing = 0
+            content_state = ""
+            bottom_margin = 0
+        content_widget.setProperty("content_state", content_state)
+        content_layout_margins = (CHILD_OFFSET, 5, 0, bottom_margin)
 
-            body_widget = ExpandingWidget(self.entity.label, self)
-            label_widget = body_widget.label_widget
-            body_widget.set_content_widget(content_widget)
+        body_widget = ExpandingWidget(self.entity.label, self)
+        label_widget = body_widget.label_widget
+        body_widget.set_content_widget(content_widget)
 
         content_layout = QtWidgets.QGridLayout(content_widget)
         content_layout.setContentsMargins(*content_layout_margins)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(main_layout_spacing)
-        if not body_widget:
-            main_layout.addWidget(content_widget)
-        else:
-            main_layout.addWidget(body_widget)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(body_widget)
 
         self.label_widget = label_widget
         self.body_widget = body_widget
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        if body_widget:
-            if len(self.input_fields) == 1 and self.checkbox_widget:
-                body_widget.hide_toolbox(hide_content=True)
+        if len(self.input_fields) == 1 and self.checkbox_widget:
+            body_widget.hide_toolbox(hide_content=True)
 
-            elif self.entity.collapsible:
-                if not self.entity.collapsed:
-                    body_widget.toggle_content()
-            else:
-                body_widget.hide_toolbox(hide_content=False)
+        elif self.entity.collapsible:
+            if not self.entity.collapsed:
+                body_widget.toggle_content()
+        else:
+            body_widget.hide_toolbox(hide_content=False)
 
     def add_widget_to_layout(self, widget, label=None):
         if self.checkbox_child and widget.entity is self.checkbox_child:
