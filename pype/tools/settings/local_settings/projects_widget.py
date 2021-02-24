@@ -1,8 +1,8 @@
 import platform
 from Qt import QtWidgets, QtCore
 from pype.tools.settings.settings import ProjectListWidget
-from .widgets import SpacerWidget
 from pype.settings.constants import PROJECT_ANATOMY_KEY
+from .widgets import SpacerWidget
 
 LOCAL_ROOTS_KEY = "roots"
 
@@ -25,27 +25,31 @@ class RootsWidget(QtWidgets.QWidget):
     value_changed = QtCore.Signal()
 
     def __init__(self, project_settings, parent):
-        self._parent_widget = parent
         super(RootsWidget, self).__init__(parent)
 
         self.project_settings = project_settings
-        self.local_project_settings = local_project_settings
+        self.local_project_settings = {}
         self.widgts_by_root_name = {}
+        self._project_name = None
+        self._site_name = None
 
-        main_layout = QtWidgets.QVBoxLayout(self)
+        self.content_layout = QtWidgets.QVBoxLayout(self)
 
-        self.content_layout = main_layout
+    def _on_root_value_change(self, root_key):
+        print("root value or key {} changed".format(root_key))
 
-    def _on_root_value_change(self):
-        self.value_changed.emit()
-
-    def refresh(self):
+    def _clear_widgets(self):
         while self.content_layout.count():
             item = self.content_layout.itemAt(0)
             item.widget().hide()
             self.content_layout.removeItem(item)
-
         self.widgts_by_root_name.clear()
+
+    def refresh(self):
+        self._clear_widgets()
+
+        if self._project_name is None or self._site_name is None:
+            return
 
         default_root_values = self.local_default_project_values() or {}
 
@@ -72,7 +76,11 @@ class RootsWidget(QtWidgets.QWidget):
             if not placeholder:
                 placeholder = platform_entity.value
             value_input.setPlaceholderText(placeholder)
-            value_input.textChanged.connect(self._on_root_value_change)
+
+            def _on_root_change():
+                self._on_root_value_change(root_name)
+
+            value_input.textChanged.connect(_on_root_change)
 
             root_input_layout.addWidget(value_input)
 
@@ -86,13 +94,21 @@ class RootsWidget(QtWidgets.QWidget):
         self.content_layout.addWidget(SpacerWidget(self), 1)
 
     def local_default_project_values(self):
-        default_project = self._parent_widget.per_project_settings.get(None)
+        default_project = self.local_project_settings.get(None)
         if default_project:
             return default_project.get(LOCAL_ROOTS_KEY)
         return None
 
     def set_value(self, local_project_settings):
         self.local_project_settings = local_project_settings
+
+    def change_site(self, site_name):
+        self._site_name = site_name
+        self.refresh()
+
+    def change_project(self, project_name):
+        self._project_name = project_name
+        self.refresh()
 
 
 class RootSiteWidget(QtWidgets.QWidget):
@@ -104,6 +120,7 @@ class RootSiteWidget(QtWidgets.QWidget):
 
         self.project_settings = project_settings
         self.widgts_by_root_name = {}
+        self._project_name = None
 
         sites_widget = QtWidgets.QWidget(self)
         sites_layout = QtWidgets.QHBoxLayout(sites_widget)
@@ -114,16 +131,46 @@ class RootSiteWidget(QtWidgets.QWidget):
         sites_layout.addWidget(QtWidgets.QLabel("Remote Site", sites_widget))
         sites_layout.addWidget(remote_site_combo)
 
+        roots_widget = RootsWidget(project_settings, self)
+
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(sites_widget)
+        main_layout.addWidget(roots_widget)
         main_layout.addWidget(SpacerWidget(self), 1)
+
+        self.active_site_combo = active_site_combo
+        self.remote_site_combo = remote_site_combo
+        self.roots_widget = roots_widget
+
+    def _fill_active_site_combo(self):
+        if self._project_name is None:
+            return
+
+    def _fill_remote_site_combo(self):
+        if self._project_name is None:
+            return
+
+    def _change_combobox_values(self):
+        # Set sites from local settings in comboboxes
+        pass
 
     def set_value(self, local_project_settings):
         self.local_project_settings = local_project_settings
 
+    def _change_active_site(self, site_name):
+        self.roots_widget.change_site(site_name)
+
     def change_project(self, project_name):
-        # TODO update values
-        pass
+        self._project_name = project_name
+        # Set roots project to None so all changes below are ignored
+        self.roots_widget.change_project(None)
+
+        self._fill_active_site_combo()
+        self._fill_remote_site_combo()
+        self._change_combobox_values()
+
+        # Change project name in roots widget
+        self.roots_widget.change_project(project_name)
 
 
 class ProjectValue(dict):
