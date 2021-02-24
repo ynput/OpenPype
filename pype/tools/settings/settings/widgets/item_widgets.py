@@ -38,7 +38,6 @@ class DictImmutableKeysWidget(BaseWidget):
                 )
 
         self.widget_mapping = {}
-        self.wrapper_widgets_by_id = {}
         self._added_wrapper_ids = set()
         self._prepare_entity_layouts(
             self.entity.gui_layout, self.content_widget
@@ -72,7 +71,6 @@ class DictImmutableKeysWidget(BaseWidget):
                 )
 
             self.widget_mapping[wrapper.id] = widget
-            self.wrapper_widgets_by_id[wrapper.id] = wrapper
             self._prepare_entity_layouts(child["children"], wrapper)
 
     def _ui_item_without_label(self):
