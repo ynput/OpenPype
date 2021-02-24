@@ -405,7 +405,6 @@ class RootsWidget(QtWidgets.QWidget):
 
         self.widgts_by_root_name.clear()
 
-        default_placeholder = "< Root overrides for this machine >"
         default_root_values = self.local_default_project_values() or {}
 
         roots_entity = (
@@ -429,17 +428,11 @@ class RootsWidget(QtWidgets.QWidget):
                     placeholder = "< {} >".format(placeholder)
 
             if not placeholder:
-                placeholder = default_placeholder
+                placeholder = platform_entity.value
             value_input.setPlaceholderText(placeholder)
             value_input.textChanged.connect(self._on_root_value_change)
 
-            studio_input = QtWidgets.QLineEdit(root_input_widget)
-            studio_input.setText(platform_entity.value)
-            studio_input.setReadOnly(True)
-
             root_input_layout.addWidget(value_input)
-            root_input_layout.addWidget(Separator(parent=self))
-            root_input_layout.addWidget(studio_input)
 
             root_layout = QtWidgets.QHBoxLayout(root_widget)
             root_layout.addWidget(key_label)
