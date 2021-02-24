@@ -28,8 +28,6 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
     hosts = ["standalonepublisher"]
     families = ["transcode"]
 
-    clips_start_frame = None
-
     def get_published_path(self, representation, instance):
         anatomy = instance.context.data["anatomy"]
         template_data = instance.data.get("anatomyData")
@@ -91,13 +89,8 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                     continue
 
                 # Get start of clips.
-                clip_range = clip.range_in_parent()
-                if self.clips_start_frame is None:
-                    self.clips_start_frame = clip_range.start_time.value
-
-                start_frame = (
-                    clip_range.start_time.value - self.clips_start_frame
-                )
+                start_frame = int(clip.source_range.start_time.value)
+                end_frame = None
 
                 # Get media path.
                 url = urlparse(clip.media_reference.target_url)
@@ -109,12 +102,19 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                 # HARDCODED frame pattern for exr files. This should be
                 # extended to all image sequences.
                 if path.endswith(".exr"):
+                    # Bug with xml files where image sequences always start at
+                    # 0.
+                    if extension == ".xml" and start_frame == 0:
+                        start_frame = 1
+
+                    end_frame = start_frame + clip.duration().value - 1
+
                     basename = os.path.basename(path)
                     directory = os.path.dirname(path)
                     path = "{}.%04d.exr [{}-{}]".format(
                         os.path.join(directory, basename.split(".")[0]),
                         start_frame,
-                        start_frame + clip.duration().value - 1
+                        end_frame
                     )
 
                 # Need unique names to prevent overwriting.
@@ -131,7 +131,8 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                     "output_path": os.path.dirname(
                         instance.context.data["currentFile"]
                     ).replace("\\", "/"),
-                    "start": int(start_frame)
+                    "start": int(start_frame),
+                    "end": end_frame
                 })
 
         module_path = transcode.__file__
@@ -176,6 +177,10 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                 path = job["input_path"].split("exr")[0]
                 path = path.replace("%04d", "####") + "exr"
                 payload["JobInfo"]["AssetDependency0"] = path
+
+                payload["JobInfo"]["FrameDependencyOffsetEnd"] = job["end"]
+                payload["JobInfo"]["FrameDependencyOffsetStart"] = job["start"]
+                payload["JobInfo"]["IsFrameDependent"] = True
 
             payloads.append(payload)
 
