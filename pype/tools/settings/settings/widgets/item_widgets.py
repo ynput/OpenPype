@@ -46,8 +46,8 @@ class DictImmutableKeysWidget(BaseWidget):
             self._ui_item_base()
             label = self.entity.label
 
-        self.widget_mapping = {}
-        self.wrapper_widgets_by_id = {}
+        self._parent_widget_by_entity_id = {}
+        self._added_wrapper_ids = set()
         self._prepare_entity_layouts(
             self.entity.gui_layout, self.content_widget
         )
@@ -65,7 +65,7 @@ class DictImmutableKeysWidget(BaseWidget):
         for child in children:
             if not isinstance(child, dict):
                 if child is not self.checkbox_child:
-                    self.widget_mapping[child.id] = widget
+                    self._parent_widget_by_entity_id[child.id] = widget
                 continue
 
             if child["type"] == "collapsible-wrap":
@@ -79,9 +79,8 @@ class DictImmutableKeysWidget(BaseWidget):
                     "Unknown Wrapper type \"{}\"".format(child["type"])
                 )
 
-            self.widget_mapping[wrapper.id] = widget
-            self.wrapper_widgets_by_id[wrapper.id] = wrapper
-            self.add_widget_to_layout(wrapper)
+            self._parent_widget_by_entity_id[wrapper.id] = widget
+
             self._prepare_entity_layouts(child["children"], wrapper)
 
     def _ui_item_base(self):
@@ -162,9 +161,12 @@ class DictImmutableKeysWidget(BaseWidget):
         else:
             map_id = widget.entity.id
 
-        wrapper = self.widget_mapping[map_id]
+        wrapper = self._parent_widget_by_entity_id[map_id]
         if wrapper is not self.content_widget:
             wrapper.add_widget_to_layout(widget, label)
+            if wrapper.id not in self._added_wrapper_ids:
+                self.add_widget_to_layout(wrapper)
+                self._added_wrapper_ids.add(wrapper.id)
             return
 
         row = self.content_layout.rowCount()
