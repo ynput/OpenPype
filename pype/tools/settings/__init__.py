@@ -1,11 +1,10 @@
 import sys
 from Qt import QtWidgets, QtGui
-
+from .local_settings import LocalSettingsWindow
 from .settings import (
     style,
     MainWidget,
-    ProjectListWidget,
-    LocalSettingsWindow
+    ProjectListWidget
 )
 
 
@@ -23,7 +22,8 @@ def main(user_role=None):
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
 
-    widget = MainWidget(user_role)
+    # widget = MainWidget(user_role)
+    widget = LocalSettingsWindow()
     widget.show()
     widget.reset()
 

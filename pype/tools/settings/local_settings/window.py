@@ -4,13 +4,13 @@ import traceback
 import platform
 import logging
 from Qt import QtWidgets, QtCore, QtGui
-from .widgets import (
+from pype.tools.settings.settings.widgets.widgets import (
     ExpandingWidget,
     SpacerWidget,
     ProjectListWidget
 )
-from .. import style
-from .lib import CHILD_OFFSET
+from ..settings import style
+from pype.tools.settings.settings.widgets.lib import CHILD_OFFSET
 from pype.settings.constants import PROJECT_ANATOMY_KEY
 from pype.settings.lib import (
     get_local_settings,
@@ -353,6 +353,9 @@ class RootsWidget(QtWidgets.QWidget):
 
         self.content_layout = main_layout
 
+    def _on_root_value_change(self):
+        self.value_changed.emit()
+
     def refresh(self):
         while self.content_layout.count():
             item = self.content_layout.itemAt(0)
@@ -399,9 +402,6 @@ class RootsWidget(QtWidgets.QWidget):
 
         self.content_layout.addWidget(SpacerWidget(self), 1)
 
-    def _on_root_value_change(self):
-        self.value_changed.emit()
-
     def local_default_project_values(self):
         default_project = self._parent_widget.per_project_settings.get(None)
         if default_project:
@@ -427,6 +427,53 @@ class RootsWidget(QtWidgets.QWidget):
         return output
 
 
+class ProjectSpecificWidget(QtWidgets.QWidget):
+    value_changed = QtCore.Signal()
+
+    def __init__(self, project_settings, parent):
+        self._parent_widget = parent
+        super(ProjectSpecificWidget, self).__init__(parent)
+
+        self.project_settings = project_settings
+        self.widgts_by_root_name = {}
+
+        sites_widget = QtWidgets.QWidget(self)
+        sites_layout = QtWidgets.QHBoxLayout(sites_widget)
+        active_site_combo = QtWidgets.QComboBox(sites_widget)
+        remote_site_combo = QtWidgets.QComboBox(sites_widget)
+        sites_layout.addWidget(QtWidgets.QLabel("Active Site", sites_widget))
+        sites_layout.addWidget(active_site_combo)
+        sites_layout.addWidget(QtWidgets.QLabel("Remote Site", sites_widget))
+        sites_layout.addWidget(remote_site_combo)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(sites_widget)
+        main_layout.addWidget(SpacerWidget(self), 1)
+
+    def set_value(self, value):
+        pass
+        # if not value:
+        #     value = {}
+        #
+        # for root_name, widget in self.widgts_by_root_name.items():
+        #     root_value = value.get(root_name) or ""
+        #     widget.setText(root_value)
+
+    def settings_value(self):
+        return {}
+        # output = {}
+        # for root_name, widget in self.widgts_by_root_name.items():
+        #     value = widget.text()
+        #     if value:
+        #         output[root_name] = value
+        # if not output:
+        #     return None
+        # return output
+
+    def change_project(self, project_name):
+        pass
+
+
 class _ProjectListWidget(ProjectListWidget):
     def on_item_clicked(self, new_index):
         new_project_name = new_index.data(QtCore.Qt.DisplayRole)
@@ -448,23 +495,25 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
         self.per_project_settings = {}
 
         projects_widget = _ProjectListWidget(self)
-        roots_widget = RootsWidget(project_settings, self)
+        project_specific_widget = ProjectSpecificWidget(project_settings, self)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(projects_widget, 0)
-        main_layout.addWidget(roots_widget, 1)
+        main_layout.addWidget(project_specific_widget, 1)
 
         projects_widget.project_changed.connect(self._on_project_change)
-        roots_widget.value_changed.connect(self._on_root_value_change)
+        # project_specific_widget.value_changed.connect(
+        #     self._on_root_value_change
+        # )
 
         self.project_settings = project_settings
 
         self.projects_widget = projects_widget
-        self.roots_widget = roots_widget
+        self.project_specific_widget = project_specific_widget
 
     def _current_value(self):
-        roots_value = self.roots_widget.settings_value()
+        roots_value = self.project_specific_widget.settings_value()
         current_value = {}
         if roots_value:
             current_value[LOCAL_ROOTS_KEY] = roots_value
@@ -477,10 +526,7 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
         project_name = self.project_name()
 
         self.project_settings.change_project(project_name)
-        self.roots_widget.refresh()
-
-        project_value = self.per_project_settings.get(project_name) or {}
-        self.roots_widget.set_value(project_value.get(LOCAL_ROOTS_KEY))
+        self.project_specific_widget.change_project(project_name)
 
     def _on_root_value_change(self):
         self.per_project_settings[self.project_name()] = (
@@ -493,11 +539,8 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
         self.per_project_settings = value
 
         self.projects_widget.refresh()
-        self.roots_widget.refresh()
 
-        project_name = self.project_name()
-        project_value = self.per_project_settings.get(project_name) or {}
-        self.roots_widget.set_value(project_value.get(LOCAL_ROOTS_KEY))
+        self.project_specific_widget.set_value(self.per_project_settings)
 
     def settings_value(self):
         output = {}

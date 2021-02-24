@@ -1,7 +1,6 @@
 from . import style
 from .widgets import (
     MainWidget,
-    LocalSettingsWindow,
     ProjectListWidget
 )
 
@@ -9,6 +8,5 @@ from .widgets import (
 __all__ = (
     "style",
     "MainWidget",
-    "LocalSettingsWindow",
     "ProjectListWidget"
 )

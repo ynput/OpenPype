@@ -1,0 +1,1 @@
+from .window import LocalSettingsWindow
