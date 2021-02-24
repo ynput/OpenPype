@@ -9,7 +9,7 @@
             "type": "dict",
             "collapsible": true,
             "key": "create",
-            "label": "Create plugins",
+            "label": "Creator plugins",
             "children": [
                 {
                     "type": "dict",
@@ -42,144 +42,9 @@
             ]
         },
         {
-            "type": "dict",
-            "collapsible": true,
-            "key": "publish",
-            "label": "Publish plugins",
-            "children": [
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "PreCollectNukeInstances",
-                    "label": "PreCollectNukeInstances",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "sync_workfile_version",
-                            "label": "Sync Version from workfile"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "checkbox_key": "enabled",
-                    "key": "ExtractThumbnail",
-                    "label": "ExtractThumbnail",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "raw-json",
-                            "key": "nodes",
-                            "label": "Nodes"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "checkbox_key": "enabled",
-                    "key": "ValidateKnobs",
-                    "label": "ValidateKnobs",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "raw-json",
-                            "key": "knobs",
-                            "label": "Knobs"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "checkbox_key": "enabled",
-                    "key": "ExtractReviewDataLut",
-                    "label": "ExtractReviewDataLut",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "checkbox_key": "enabled",
-                    "key": "ExtractReviewDataMov",
-                    "label": "ExtractReviewDataMov",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "viewer_lut_raw",
-                            "label": "Viewer LUT raw"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "ExtractSlateFrame",
-                    "label": "ExtractSlateFrame",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "viewer_lut_raw",
-                            "label": "Viewer LUT raw"
-                        }
-                    ]
-                },
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "NukeSubmitDeadline",
-                    "label": "NukeSubmitDeadline",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "number",
-                            "key": "deadline_priority",
-                            "label": "deadline_priority"
-                        },
-                        {
-                            "type": "text",
-                            "key": "deadline_pool",
-                            "label": "deadline_pool"
-                        },
-                        {
-                            "type": "text",
-                            "key": "deadline_pool_secondary",
-                            "label": "deadline_pool_secondary"
-                        },
-                        {
-                            "type": "number",
-                            "key": "deadline_chunk_size",
-                            "label": "deadline_chunk_size"
-                        }
-                    ]
-                }
-            ]
+            "type": "schema",
+            "name": "schema_nuke_publish",
+            "template_data": []
         },
         {
             "type": "schema",

@@ -130,7 +130,7 @@ class DictImmutableKeysEntity(ItemEntity):
                 continue
 
             if child_obj.key in self.non_gui_children:
-                raise SchemaDuplicatedKeys(self.path, child_obj.key)
+                raise SchemaDuplicatedKeys("", child_obj.key)
             self.non_gui_children[child_obj.key] = child_obj
 
         if not first:

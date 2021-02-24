@@ -47,6 +47,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_deadline"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_maya"
                 },
                 {

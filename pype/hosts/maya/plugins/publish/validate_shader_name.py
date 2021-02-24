@@ -13,7 +13,6 @@ class ValidateShaderName(pyblish.api.InstancePlugin):
 
     """
     optional = True
-    active = False
     order = pype.api.ValidateContentsOrder
     families = ["look"]
     hosts = ['maya']

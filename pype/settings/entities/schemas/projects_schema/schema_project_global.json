@@ -14,9 +14,15 @@
             "name": "schema_global_tools"
         },
         {
-            "type": "raw-json",
+            "type": "collapsible-wrap",
             "label": "Project Folder Structure",
-            "key": "project_folder_structure"
+            "children": [
+                {
+                    "type": "raw-json",
+                    "label": " ",
+                    "key": "project_folder_structure"
+                }
+            ]
         },
         {
             "type": "schema",
