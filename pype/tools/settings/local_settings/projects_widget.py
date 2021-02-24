@@ -29,6 +29,7 @@ class RootsWidget(QtWidgets.QWidget):
         super(RootsWidget, self).__init__(parent)
 
         self.project_settings = project_settings
+        self.local_project_settings = local_project_settings
         self.widgts_by_root_name = {}
 
         main_layout = QtWidgets.QVBoxLayout(self)
@@ -90,31 +91,16 @@ class RootsWidget(QtWidgets.QWidget):
             return default_project.get(LOCAL_ROOTS_KEY)
         return None
 
-    def set_value(self, value):
-        if not value:
-            value = {}
-
-        for root_name, widget in self.widgts_by_root_name.items():
-            root_value = value.get(root_name) or ""
-            widget.setText(root_value)
-
-    def settings_value(self):
-        output = {}
-        for root_name, widget in self.widgts_by_root_name.items():
-            value = widget.text()
-            if value:
-                output[root_name] = value
-        if not output:
-            return None
-        return output
+    def set_value(self, local_project_settings):
+        self.local_project_settings = local_project_settings
 
 
-class ProjectSpecificWidget(QtWidgets.QWidget):
+class RootSiteWidget(QtWidgets.QWidget):
     value_changed = QtCore.Signal()
 
     def __init__(self, project_settings, parent):
         self._parent_widget = parent
-        super(ProjectSpecificWidget, self).__init__(parent)
+        super(RootSiteWidget, self).__init__(parent)
 
         self.project_settings = project_settings
         self.widgts_by_root_name = {}
@@ -132,87 +118,59 @@ class ProjectSpecificWidget(QtWidgets.QWidget):
         main_layout.addWidget(sites_widget)
         main_layout.addWidget(SpacerWidget(self), 1)
 
-    def set_value(self, value):
-        pass
-        # if not value:
-        #     value = {}
-        #
-        # for root_name, widget in self.widgts_by_root_name.items():
-        #     root_value = value.get(root_name) or ""
-        #     widget.setText(root_value)
-
-    def settings_value(self):
-        return {}
-        # output = {}
-        # for root_name, widget in self.widgts_by_root_name.items():
-        #     value = widget.text()
-        #     if value:
-        #         output[root_name] = value
-        # if not output:
-        #     return None
-        # return output
+    def set_value(self, local_project_settings):
+        self.local_project_settings = local_project_settings
 
     def change_project(self, project_name):
+        # TODO update values
         pass
+
+
+class ProjectValue(dict):
+    pass
 
 
 class ProjectSettingsWidget(QtWidgets.QWidget):
     def __init__(self, project_settings, parent):
         super(ProjectSettingsWidget, self).__init__(parent)
 
-        self.per_project_settings = {}
+        self.local_project_settings = {}
 
         projects_widget = _ProjectListWidget(self)
-        project_specific_widget = ProjectSpecificWidget(project_settings, self)
+        roos_site_widget = RootSiteWidget(project_settings, self)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.addWidget(projects_widget, 0)
-        main_layout.addWidget(project_specific_widget, 1)
+        main_layout.addWidget(roos_site_widget, 1)
 
         projects_widget.project_changed.connect(self._on_project_change)
-        # project_specific_widget.value_changed.connect(
-        #     self._on_root_value_change
-        # )
 
         self.project_settings = project_settings
 
         self.projects_widget = projects_widget
-        self.project_specific_widget = project_specific_widget
-
-    def _current_value(self):
-        roots_value = self.project_specific_widget.settings_value()
-        current_value = {}
-        if roots_value:
-            current_value[LOCAL_ROOTS_KEY] = roots_value
-        return current_value
+        self.roos_site_widget = roos_site_widget
 
     def project_name(self):
         return self.projects_widget.project_name()
 
     def _on_project_change(self):
         project_name = self.project_name()
-
         self.project_settings.change_project(project_name)
-        self.project_specific_widget.change_project(project_name)
-
-    def _on_root_value_change(self):
-        self.per_project_settings[self.project_name()] = (
-            self._current_value()
-        )
+        self.roos_site_widget.change_project(project_name)
 
     def set_value(self, value):
         if not value:
             value = {}
-        self.per_project_settings = value
+        self.local_project_settings = ProjectValue(value)
+
+        self.roos_site_widget.set_value(self.local_project_settings)
 
         self.projects_widget.refresh()
 
-        self.project_specific_widget.set_value(self.per_project_settings)
-
     def settings_value(self):
         output = {}
-        for project_name, value in self.per_project_settings.items():
+        for project_name, value in self.local_project_settings.items():
             if value:
                 output[project_name] = value
         if not output:
