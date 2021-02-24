@@ -151,65 +151,8 @@ class LocalGeneralWidgets(QtWidgets.QWidget):
         return output
 
 
-class PathInput(QtWidgets.QWidget):
-    def __init__(
-        self,
-        parent,
-        executable_placeholder=None,
-        argument_placeholder=None
-    ):
-        super(PathInput, self).__init__(parent)
-
-        executable_input = QtWidgets.QLineEdit(self)
-        if executable_placeholder:
-            executable_input.setPlaceholderText(executable_placeholder)
-
-        arguments_input = QtWidgets.QLineEdit(self)
-        if argument_placeholder:
-            arguments_input.setPlaceholderText(argument_placeholder)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        layout.addWidget(executable_input)
-        layout.addWidget(arguments_input)
-
-        self.executable_input = executable_input
-        self.arguments_input = arguments_input
-
-    def set_read_only(self, readonly=True):
-        self.executable_input.setReadOnly(readonly)
-        self.arguments_input.setReadOnly(readonly)
-
-    def set_value(self, arguments):
-        executable = ""
-        args = ""
-        if arguments:
-            if isinstance(arguments, str):
-                executable = arguments
-            elif isinstance(arguments, list):
-                executable = arguments[0]
-                if len(arguments) > 1:
-                    args = " ".join(arguments[1:])
-        self.executable_input.setText(executable)
-        self.arguments_input.setText(args)
-
-    def settings_value(self):
-        executable = self.executable_input.text()
-        if not executable:
-            return None
-
-        output = [executable]
-        args = self.arguments_input.text()
-        if args:
-            output.append(args)
-        return output
-
-
 class AppVariantWidget(QtWidgets.QWidget):
     exec_placeholder = "< Specific path for this machine >"
-    args_placeholder = "< Launch arguments >"
 
     def __init__(self, group_label, variant_entity, parent):
         super(AppVariantWidget, self).__init__(parent)
@@ -238,9 +181,8 @@ class AppVariantWidget(QtWidgets.QWidget):
             content_layout.addWidget(warn_label)
             return
 
-        executable_input_widget = PathInput(
-            content_widget, self.exec_placeholder, self.args_placeholder
-        )
+        executable_input_widget = QtWidgets.QLineEdit(content_widget)
+        executable_input_widget.setPlaceholderText(self.exec_placeholder)
         content_layout.addWidget(executable_input_widget)
 
         self.executable_input_widget = executable_input_widget
@@ -273,15 +215,29 @@ class AppVariantWidget(QtWidgets.QWidget):
                 type(value), dict
             ))
             value = {}
-        self.executable_input_widget.set_value(value.get("executable"))
+
+        executable_path = value.get("executable")
+        if not executable_path:
+            executable_path = ""
+        elif isinstance(executable_path, list):
+            print("Got list in executable path so using first item as value")
+            executable_path = executable_path[0]
+
+        if not isinstance(executable_path, str):
+            executable_path = ""
+            print((
+                "Got invalid value type of app executable {}. Expected {}"
+            ).format(type(value), str))
+
+        self.executable_input_widget.setText(executable_path)
 
     def settings_value(self):
         if not self.executable_input_widget:
             return None
-        value = self.executable_input_widget.settings_value()
+        value = self.executable_input_widget.text()
         if not value:
             return None
-        return {"executable": self.executable_input_widget.settings_value()}
+        return {"executable": value}
 
 
 class AppGroupWidget(QtWidgets.QWidget):
