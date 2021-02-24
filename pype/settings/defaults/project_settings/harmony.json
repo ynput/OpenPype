@@ -14,7 +14,7 @@
             "priority": 50,
             "primary_pool": "",
             "secondary_pool": "",
-            "Chunk Size": 10000
+            "chunk_size": 0
         }
     }
 }

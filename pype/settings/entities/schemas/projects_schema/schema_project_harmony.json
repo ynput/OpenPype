@@ -73,7 +73,7 @@
                         },
                         {
                             "type": "number",
-                            "key": "Chunk Size",
+                            "key": "chunk_size",
                             "label": "Chunk Size"
                         }
                     ]
