@@ -243,19 +243,24 @@ class AppVariantWidget(QtWidgets.QWidget):
         )
         content_layout.addWidget(executable_input_widget)
 
+        self.executable_input_widget = executable_input_widget
+
         studio_executables = (
             variant_entity["executables"][platform.system().lower()]
         )
-        if len(studio_executables) > 0:
-            content_layout.addWidget(Separator(parent=self))
+        if len(studio_executables) < 1:
+            return
+
+        content_layout.addWidget(Separator(parent=self))
+        content_layout.addWidget(
+            QtWidgets.QLabel("Studio paths:", self)
+        )
 
         for item in studio_executables:
-            path_widget = PathInput(content_widget)
-            path_widget.set_read_only()
-            path_widget.set_value(item.value)
+            path_widget = QtWidgets.QLineEdit(content_widget)
+            path_widget.setText(item.value[0])
+            path_widget.setEnabled(False)
             content_layout.addWidget(path_widget)
-
-        self.executable_input_widget = executable_input_widget
 
     def set_value(self, value):
         if not self.executable_input_widget:
