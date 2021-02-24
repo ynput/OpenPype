@@ -5,6 +5,10 @@
     "label": "Publish plugins",
     "children": [
         {
+            "type": "label",
+            "label": "Collectors"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "PreCollectNukeInstances",
@@ -18,25 +22,12 @@
                 }
             ]
         },
+                {
+            "type": "splitter"
+        },
         {
-            "type": "dict",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "key": "ExtractThumbnail",
-            "label": "ExtractThumbnail",
-            "is_group": true,
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "raw-json",
-                    "key": "nodes",
-                    "label": "Nodes"
-                }
-            ]
+            "type": "label",
+            "label": "Validators"
         },
         {
             "type": "dict",
@@ -55,6 +46,55 @@
                     "type": "raw-json",
                     "key": "knobs",
                     "label": "Knobs"
+                }
+            ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateOutputResolution",
+                    "label": "Validate Output Resolution"
+                },
+                {
+                    "key": "ValidateGizmo",
+                    "label": "Validate Gizmo (Group)"
+                },
+                {
+                    "key": "ValidateScript",
+                    "label": "Validate script settings"
+                },
+                {
+                    "key": "ValidateNukeWriteBoundingBox",
+                    "label": "Validate and Write Bounding Box"
+                }
+            ]
+        },
+                {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Extractors"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "ExtractThumbnail",
+            "label": "ExtractThumbnail",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "raw-json",
+                    "key": "nodes",
+                    "label": "Nodes"
                 }
             ]
         },
@@ -108,24 +148,31 @@
             ]
         },
         {
-            "type": "schema_template",
-            "name": "template_publish_plugin",
-            "template_data": [
+            "type": "dict",
+            "collapsible": true,
+            "key": "NukeSubmitDeadline",
+            "label": "NukeSubmitDeadline",
+            "is_group": true,
+            "children": [
                 {
-                    "key": "ValidateOutputResolution",
-                    "label": "Validate Output Resolution"
+                    "type": "number",
+                    "key": "deadline_priority",
+                    "label": "deadline_priority"
                 },
                 {
-                    "key": "ValidateGizmo",
-                    "label": "Validate Gizmo (Group)"
+                    "type": "text",
+                    "key": "deadline_pool",
+                    "label": "deadline_pool"
                 },
                 {
-                    "key": "ValidateScript",
-                    "label": "Validate script settings"
+                    "type": "text",
+                    "key": "deadline_pool_secondary",
+                    "label": "deadline_pool_secondary"
                 },
                 {
-                    "key": "ValidateNukeWriteBoundingBox",
-                    "label": "Validate and Write Bounding Box"
+                    "type": "number",
+                    "key": "deadline_chunk_size",
+                    "label": "deadline_chunk_size"
                 }
             ]
         }

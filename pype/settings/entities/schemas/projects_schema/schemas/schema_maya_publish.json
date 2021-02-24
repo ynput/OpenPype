@@ -21,16 +21,66 @@
                 }
             ]
         },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Validators"
+        },
 
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateShaderName",
+            "label": "ValidateShaderName",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "Shader name regex can use named capture group <b>asset</b> to validate against current asset name.<p><b>Example:</b><br/><code>^.*(?P=&lt;asset&gt;.+)_SHD</code></p>"
+                },
+                {
+                    "type": "text",
+                    "key": "regex",
+                    "label": "Validation regex"
+                }
+            ]
+        },
+
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateAttributes",
+            "label": "ValidateAttributes",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "raw-json",
+                    "key": "attributes",
+                    "label": "Attributes"
+                }
+            ]
+        },
+        {
             "type": "collapsible-wrap",
-            "label": "Validators",
+            "label": "Model",
             "children": [
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "ValidateShaderName",
-                    "label": "ValidateShaderName",
+                    "key": "ValidateModelName",
+                    "label": "Validate Model Name",
                     "checkbox_key": "enabled",
                     "children": [
                         {
@@ -40,7 +90,14 @@
                         },
                         {
                             "type": "label",
-                            "label": "Shader name regex can use named capture group <b>asset</b> to validate against current asset name.<p><b>Example:</b><br/><code>^.*(?P=&lt;asset&gt;.+)_SHD</code></p>"
+                            "label": "Path to material file defining list of material names to check. This is material name per line simple text file.<br/>It will be checked against named group <b>shader</b> in your <em>Validation regex</em>.<p>For example: <br/> <code>^.*(?P=&lt;shader&gt;.+)_GEO</code></p>"
+                        },
+                        {
+                            "type": "path-widget",
+                            "key": "material_file",
+                            "label": "Material File",
+                            "multiplatform": true,
+                            "multipath": false
                         },
                         {
                             "type": "text",
@@ -49,12 +106,11 @@
                         }
                     ]
                 },
-
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "ValidateAttributes",
-                    "label": "ValidateAttributes",
+                    "key": "ValidateTransformNamingSuffix",
+                    "label": "ValidateTransformNamingSuffix",
                     "checkbox_key": "enabled",
                     "children": [
                         {
@@ -63,153 +119,18 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "label",
+                            "label": "Validates transform suffix based on the type of its children shapes."
+                        },
+                        {
                             "type": "raw-json",
-                            "key": "attributes",
-                            "label": "Attributes"
-                        }
-                    ]
-                },
-                {
-                    "type": "collapsible-wrap",
-                    "label": "Model",
-                    "children": [
-                        {
-                            "type": "dict",
-                            "collapsible": true,
-                            "key": "ValidateModelName",
-                            "label": "Validate Model Name",
-                            "checkbox_key": "enabled",
-                            "children": [
-                                {
-                                    "type": "boolean",
-                                    "key": "enabled",
-                                    "label": "Enabled"
-                                },
-                                {
-                                    "type": "label",
-                                    "label": "Path to material file defining list of material names to check. This is material name per line simple text file.<br/>It will be checked against named group <b>shader</b> in your <em>Validation regex</em>.<p>For example: <br/> <code>^.*(?P=&lt;shader&gt;.+)_GEO</code></p>"
-                                },
-                                {
-                                    "type": "path-widget",
-                                    "key": "material_file",
-                                    "label": "Material File",
-                                    "multiplatform": true,
-                                    "multipath": false
-                                },
-                                {
-                                    "type": "text",
-                                    "key": "regex",
-                                    "label": "Validation regex"
-                                }
-                            ]
+                            "key": "SUFFIX_NAMING_TABLE",
+                            "label": "Suffix Naming Table"
                         },
                         {
-                            "type": "dict",
-                            "collapsible": true,
-                            "key": "ValidateTransformNamingSuffix",
-                            "label": "ValidateTransformNamingSuffix",
-                            "checkbox_key": "enabled",
-                            "children": [
-                                {
-                                    "type": "boolean",
-                                    "key": "enabled",
-                                    "label": "Enabled"
-                                },
-                                {
-                                    "type": "label",
-                                    "label": "Validates transform suffix based on the type of its children shapes."
-                                },
-                                {
-                                    "type": "raw-json",
-                                    "key": "SUFFIX_NAMING_TABLE",
-                                    "label": "Suffix Naming Table"
-                                },
-                                {
-                                    "type": "boolean",
-                                    "key": "ALLOW_IF_NOT_IN_SUFFIX_TABLE",
-                                    "label": "Allow if suffix not in table"
-                                }
-                            ]
-                        },
-                        {
-                            "type": "schema_template",
-                            "name": "template_publish_plugin",
-                            "template_data": [
-                                {
-                                    "key": "ValidateColorSets",
-                                    "label": "ValidateColorSets"
-                                },
-                                {
-                                    "key": "ValidateMeshHasOverlappingUVs",
-                                    "label": "ValidateMeshHasOverlappingUVs"
-                                },
-                                {
-                                    "key": "ValidateMeshArnoldAttributes",
-                                    "label": "ValidateMeshArnoldAttributes"
-                                },
-                                {
-                                    "key": "ValidateMeshShaderConnections",
-                                    "label": "ValidateMeshShaderConnections"
-                                },
-                                {
-                                    "key": "ValidateMeshSingleUVSet",
-                                    "label": "ValidateMeshSingleUVSet"
-                                },
-                                {
-                                    "key": "ValidateMeshHasUVs",
-                                    "label": "ValidateMeshHasUVs"
-                                },
-                                {
-                                    "key": "ValidateMeshLaminaFaces",
-                                    "label": "ValidateMeshLaminaFaces"
-                                },
-                                {
-                                    "key": "ValidateMeshNonManifold",
-                                    "label": "ValidateMeshNonManifold"
-                                },
-                                {
-                                    "key": "ValidateMeshUVSetMap1",
-                                    "label": "ValidateMeshUVSetMap1",
-                                    "docstring": "Validate model's default uv set exists and is named 'map1'.<br><br>In Maya meshes by default have a uv set named 'map1' that cannot be deleted. It can be renamed, however,<br> introducing some issues with some renderers. As such we ensure the first (default) UV set index is named 'map1'."
-                                },
-                                {
-                                    "key": "ValidateMeshVerticesHaveEdges",
-                                    "label": "ValidateMeshVerticesHaveEdges"
-                                },
-                                {
-                                    "key": "ValidateNoAnimation",
-                                    "label": "ValidateNoAnimation",
-                                    "docstring": "Ensure no keyframes on nodes in the Instance.<br>Even though a Model would extract without animCurves correctly this avoids getting different <br> output from a model when extracted from a different frame than the first frame. (Might be overly restrictive though)."
-                                },
-                                {
-                                    "key": "ValidateNoNamespace",
-                                    "label": "ValidateNoNamespace"
-                                },
-                                {
-                                    "key": "ValidateNoNullTransforms",
-                                    "label": "ValidateNoNullTransforms"
-                                },
-                                {
-                                    "key": "ValidateNoUnknownNodes",
-                                    "label": "ValidateNoUnknownNodes"
-                                },
-                                {
-                                    "key": "ValidateNodeNoGhosting",
-                                    "label": "ValidateNodeNoGhosting"
-                                },
-                                {
-                                    "key": "ValidateShapeDefaultNames",
-                                    "label": "ValidateShapeDefaultNames"
-                                },
-                                {
-                                    "key": "ValidateShapeRenderStats",
-                                    "label": "ValidateShapeRenderStats"
-                                },
-                                {
-                                    "key": "ValidateTransformZero",
-                                    "label": "ValidateTransformZero"
-                                }
-                            ]
+                            "type": "boolean",
+                            "key": "ALLOW_IF_NOT_IN_SUFFIX_TABLE",
+                            "label": "Allow if suffix not in table"
                         }
                     ]
                 },
@@ -218,21 +139,104 @@
                     "name": "template_publish_plugin",
                     "template_data": [
                         {
-                            "key": "ValidateCameraAttributes",
-                            "label": "Validate Camera Attributes",
-                            "docstring": ""
+                            "key": "ValidateColorSets",
+                            "label": "ValidateColorSets"
                         },
                         {
-                            "key": "ValidateAssemblyName",
-                            "label": "Validate Assembly Name"
+                            "key": "ValidateMeshHasOverlappingUVs",
+                            "label": "ValidateMeshHasOverlappingUVs"
                         },
                         {
-                            "key": "ValidateAssRelativePaths",
-                            "label": "ValidateAssRelativePaths"
+                            "key": "ValidateMeshArnoldAttributes",
+                            "label": "ValidateMeshArnoldAttributes"
+                        },
+                        {
+                            "key": "ValidateMeshShaderConnections",
+                            "label": "ValidateMeshShaderConnections"
+                        },
+                        {
+                            "key": "ValidateMeshSingleUVSet",
+                            "label": "ValidateMeshSingleUVSet"
+                        },
+                        {
+                            "key": "ValidateMeshHasUVs",
+                            "label": "ValidateMeshHasUVs"
+                        },
+                        {
+                            "key": "ValidateMeshLaminaFaces",
+                            "label": "ValidateMeshLaminaFaces"
+                        },
+                        {
+                            "key": "ValidateMeshNonManifold",
+                            "label": "ValidateMeshNonManifold"
+                        },
+                        {
+                            "key": "ValidateMeshUVSetMap1",
+                            "label": "ValidateMeshUVSetMap1",
+                            "docstring": "Validate model's default uv set exists and is named 'map1'.<br><br>In Maya meshes by default have a uv set named 'map1' that cannot be deleted. It can be renamed, however,<br> introducing some issues with some renderers. As such we ensure the first (default) UV set index is named 'map1'."
+                        },
+                        {
+                            "key": "ValidateMeshVerticesHaveEdges",
+                            "label": "ValidateMeshVerticesHaveEdges"
+                        },
+                        {
+                            "key": "ValidateNoAnimation",
+                            "label": "ValidateNoAnimation",
+                            "docstring": "Ensure no keyframes on nodes in the Instance.<br>Even though a Model would extract without animCurves correctly this avoids getting different <br> output from a model when extracted from a different frame than the first frame. (Might be overly restrictive though)."
+                        },
+                        {
+                            "key": "ValidateNoNamespace",
+                            "label": "ValidateNoNamespace"
+                        },
+                        {
+                            "key": "ValidateNoNullTransforms",
+                            "label": "ValidateNoNullTransforms"
+                        },
+                        {
+                            "key": "ValidateNoUnknownNodes",
+                            "label": "ValidateNoUnknownNodes"
+                        },
+                        {
+                            "key": "ValidateNodeNoGhosting",
+                            "label": "ValidateNodeNoGhosting"
+                        },
+                        {
+                            "key": "ValidateShapeDefaultNames",
+                            "label": "ValidateShapeDefaultNames"
+                        },
+                        {
+                            "key": "ValidateShapeRenderStats",
+                            "label": "ValidateShapeRenderStats"
+                        },
+                        {
+                            "key": "ValidateTransformZero",
+                            "label": "ValidateTransformZero"
                         }
                     ]
                 }
             ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateCameraAttributes",
+                    "label": "Validate Camera Attributes",
+                    "docstring": ""
+                },
+                {
+                    "key": "ValidateAssemblyName",
+                    "label": "Validate Assembly Name"
+                },
+                {
+                    "key": "ValidateAssRelativePaths",
+                    "label": "ValidateAssRelativePaths"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
         },
         {
             "type": "label",
