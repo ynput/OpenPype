@@ -1,7 +1,10 @@
+import platform
 from Qt import QtWidgets, QtCore
 from pype.tools.settings.settings import ProjectListWidget
 from .widgets import SpacerWidget
 from pype.settings.constants import PROJECT_ANATOMY_KEY
+
+LOCAL_ROOTS_KEY = "roots"
 
 
 class _ProjectListWidget(ProjectListWidget):

@@ -24,11 +24,9 @@ from .projects_widget import ProjectSettingsWidget
 
 log = logging.getLogger(__name__)
 
-
 LOCAL_GENERAL_KEY = "general"
 LOCAL_PROJECTS_KEY = "projects"
 LOCAL_APPS_KEY = "applications"
-LOCAL_ROOTS_KEY = "roots"
 
 
 class LocalGeneralWidgets(QtWidgets.QWidget):
