@@ -17,6 +17,7 @@ PROJECT_SETTINGS_KEY = "project_settings"
 PROJECT_ANATOMY_KEY = "project_anatomy"
 LOCAL_SETTING_KEY = "local_settings"
 
+DEFAULT_PROJECT_KEY = "__default_project__"
 
 __all__ = (
     "M_OVERRIDEN_KEY",

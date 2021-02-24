@@ -12,7 +12,8 @@ from .constants import (
 
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
-    PROJECT_ANATOMY_KEY
+    PROJECT_ANATOMY_KEY,
+    DEFAULT_PROJECT_KEY
 )
 
 log = logging.getLogger(__name__)
@@ -402,7 +403,7 @@ def apply_local_settings_on_anatomy_settings(
         return
 
     current_platform = platform.system().lower()
-    local_defaults = local_project_settings.get(None)
+    local_defaults = local_project_settings.get(DEFAULT_PROJECT_KEY)
     root_data = anatomy_settings["roots"]
     if local_defaults and "roots" in local_defaults:
         for root_name, path in local_defaults["roots"].items():
@@ -411,7 +412,7 @@ def apply_local_settings_on_anatomy_settings(
             anatomy_settings["roots"][root_name][current_platform] = (
                 path
             )
-    if project_name is None:
+    if project_name == DEFAULT_PROJECT_KEY:
         return
 
     local_projects = local_project_settings.get(project_name)

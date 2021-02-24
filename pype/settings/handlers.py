@@ -526,13 +526,7 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
     Data have 2 query criteria. First is key "type" stored in constant
     `LOCAL_SETTING_KEY`. Second is key "site_id" which value can be obstained
     with `get_local_site_id` function.
-
-    Because project specific values are stored by project name the default
-    project would have key `None` which is not allowed. Because of that is
-    `None` replaced with `default_project_key` value on save and the key
-    is replaced with `None` of load.
     """
-    default_project_key = "__default_project__"
 
     def __init__(self, local_site_id=None):
         # Get mongo connection
@@ -571,12 +565,6 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
         """
         data = data or {}
 
-        # Replace key `None` (default project values) with constant string
-        if "projects" in data and None in data["projects"]:
-            data["projects"][self.default_project_key] = (
-                data["projects"].pop(None)
-            )
-
         self.local_settings_cache.update_data(data)
 
         self.collection.replace_one(
@@ -601,13 +589,5 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
             })
 
             self.local_settings_cache.update_from_document(document)
-            data = self.local_settings_cache.data
-            if (
-                "projects" in data
-                and self.default_project_key in data["projects"]
-            ):
-                data["projects"][None] = data["projects"].pop(
-                    self.default_project_key
-                )
 
         return self.local_settings_cache.data_copy()
