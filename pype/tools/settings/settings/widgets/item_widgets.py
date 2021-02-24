@@ -27,15 +27,19 @@ class DictImmutableKeysWidget(BaseWidget):
         self._child_style_state = ""
         self.input_fields = []
         self.checkbox_child = None
-        if not self.entity.is_dynamic_item and not self.entity.label:
+        label = None
+        if self.entity.is_dynamic_item:
+            self._ui_item_or_as_widget()
+
+        elif not self.entity.use_label_wrap:
             self._ui_item_without_label()
+            label = self.entity.label
 
         else:
             self._ui_item_or_as_widget()
-            if not self.entity.is_dynamic_item:
-                self.checkbox_child = self.entity.non_gui_children.get(
-                    self.entity.checkbox_key
-                )
+            self.checkbox_child = self.entity.non_gui_children.get(
+                self.entity.checkbox_key
+            )
 
         self.widget_mapping = {}
         self.wrapper_widgets_by_id = {}
@@ -50,7 +54,7 @@ class DictImmutableKeysWidget(BaseWidget):
                 )
             )
 
-        self.entity_widget.add_widget_to_layout(self)
+        self.entity_widget.add_widget_to_layout(self, label)
 
     def _prepare_entity_layouts(self, children, widget):
         for child in children:
