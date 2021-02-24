@@ -24,7 +24,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
     # presets
     priority = 50
-    deadline_chunk_size = 1
+    chunk_size = 1
     primary_pool = ""
     secondary_pool = ""
     group = ""
