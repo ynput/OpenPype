@@ -1,2 +1,5 @@
 [virtualenvs]
 in-project = true
+
+[repositories.pype]
+url = "http://d.r1.wbsprt.com/pype.club/distribute/"
