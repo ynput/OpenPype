@@ -363,7 +363,10 @@ def apply_local_settings_on_system_settings(system_settings, local_settings):
             platform_executables = variants[app_name]["executables"].get(
                 current_platform
             )
-            new_executables = [executable]
+            # TODO This is temporary fix until launch arguments will be stored
+            #   per platform and not per executable.
+            # - local settings store only executable
+            new_executables = [[executable, ""]]
             new_executables.extend(platform_executables)
             variants[app_name]["executables"] = new_executables
 
