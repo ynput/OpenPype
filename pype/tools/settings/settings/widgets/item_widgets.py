@@ -24,7 +24,6 @@ from .lib import CHILD_OFFSET
 
 class DictImmutableKeysWidget(BaseWidget):
     def create_ui(self):
-        self._child_style_state = ""
         self.input_fields = []
         self.checkbox_child = None
 
@@ -187,7 +186,7 @@ class DictImmutableKeysWidget(BaseWidget):
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
 
-    def update_style(self, is_overriden=None):
+    def update_style(self):
         if not self.body_widget and not self.label_widget:
             return
 
@@ -201,36 +200,8 @@ class DictImmutableKeysWidget(BaseWidget):
             has_project_override = self.entity.has_project_override
             has_studio_override = self.entity.has_studio_override
 
-        is_invalid = self.is_invalid
-        if self.body_widget:
-            child_style_state = self.get_style_state(
-                is_invalid,
-                has_unsaved_changes,
-                has_project_override,
-                has_studio_override
-            )
-
-            if child_style_state:
-                child_style_state = "child-{}".format(child_style_state)
-
-            if self._child_style_state != child_style_state:
-                self.body_widget.side_line_widget.setProperty(
-                    "state", child_style_state
-                )
-                self.body_widget.side_line_widget.style().polish(
-                    self.body_widget.side_line_widget
-                )
-                self._child_style_state = child_style_state
-
-        # There is nothing to care if there is no label
-        if not self.label_widget:
-            return
-        # Don't change label if is not group or under group item
-        if not self.entity.is_group and not self.entity.group_item:
-            return
-
         style_state = self.get_style_state(
-            is_invalid,
+            self.is_invalid,
             has_unsaved_changes,
             has_project_override,
             has_studio_override
@@ -238,10 +209,31 @@ class DictImmutableKeysWidget(BaseWidget):
         if self._style_state == style_state:
             return
 
+        self._style_state = style_state
+
+        if self.body_widget:
+            if style_state:
+                child_style_state = "child-{}".format(style_state)
+            else:
+                child_style_state = ""
+
+            self.body_widget.side_line_widget.setProperty(
+                "state", child_style_state
+            )
+            self.body_widget.side_line_widget.style().polish(
+                self.body_widget.side_line_widget
+            )
+
+        # There is nothing to care if there is no label
+        if not self.label_widget:
+            return
+
+        # Don't change label if is not group or under group item
+        if not self.entity.is_group and not self.entity.group_item:
+            return
+
         self.label_widget.setProperty("state", style_state)
         self.label_widget.style().polish(self.label_widget)
-
-        self._style_state = style_state
 
     def _on_entity_change(self):
         pass
