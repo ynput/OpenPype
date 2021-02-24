@@ -8,13 +8,6 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "publish",
-            "label": "Publish plugins",
-            "children": []
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
             "key": "general",
             "label": "General",
             "children": [
@@ -29,6 +22,61 @@
                     "key": "skip_timelines_check",
                     "object_type": "text",
                     "label": "Skip Timeliene Check  for Tasks"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectPalettes",
+                    "label": "Collect Palettes",
+                    "children": [
+                        {
+                            "type": "list",
+                            "key": "allowed_tasks",
+                            "label": "Allowed tasks",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "HarmonySubmitDeadline",
+                    "label": "Harmony Submit to Deadline",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "use_published",
+                            "label": "Use Published scene"
+                        },
+                        {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "priority"
+                        },
+                        {
+                            "type": "text",
+                            "key": "primary_pool",
+                            "label": "Primary Pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "secondary_pool",
+                            "label": "Secondary Pool"
+                        },
+                        {
+                            "type": "number",
+                            "key": "Chunk Size",
+                            "label": "Chunk Size"
+                        }
+                    ]
                 }
             ]
         }
