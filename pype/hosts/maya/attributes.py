@@ -12,12 +12,7 @@ import maya.api.OpenMaya as om
 import pymel.core as pm
 
 import maya.app.renderSetup.model.utils as utils
-from maya.app.renderSetup.model import (
-    selector,
-    collection,
-    renderLayer,
-    renderSetup
-)
+from maya.app.renderSetup.model import renderSetup
 from maya.app.renderSetup.model.override import (
     AbsOverride,
     RelOverride,
