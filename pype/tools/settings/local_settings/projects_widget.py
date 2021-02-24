@@ -1,4 +1,5 @@
 import platform
+import copy
 from Qt import QtWidgets, QtCore
 from pype.tools.settings.settings import ProjectListWidget
 from pype.settings.constants import (
@@ -29,6 +30,97 @@ class _ProjectListWidget(ProjectListWidget):
         return self.current_project
 
 
+class RootInputWidget(QtWidgets.QWidget):
+    def __init__(
+        self,
+        local_project_settings,
+        local_project_settings_orig,
+        platform_root_entity,
+        root_name,
+        project_name,
+        site_name,
+        parent
+    ):
+        super(RootInputWidget, self).__init__(parent)
+
+        self.local_project_settings = local_project_settings
+        self.local_project_settings_orig = local_project_settings_orig
+        self.platform_root_entity = platform_root_entity
+        self.root_name = root_name
+        self.site_name = site_name
+        self.project_name = project_name
+
+        self.origin_value = self._get_site_value_for_project(
+            self.project_name, self.local_project_settings_orig
+        )
+
+        key_label = QtWidgets.QLabel(root_name, self)
+        value_input = QtWidgets.QLineEdit(self)
+
+        is_default_project = bool(project_name == DEFAULT_PROJECT_KEY)
+
+        default_input_value = self._get_site_value_for_project(
+            DEFAULT_PROJECT_KEY
+        )
+        if is_default_project:
+            project_value = None
+            input_value = default_input_value
+        else:
+            input_value = self._get_site_value_for_project(self.project_name)
+            project_value = input_value
+
+        # Placeholder
+        placeholder = None
+        if not is_default_project:
+            placeholder = default_input_value
+
+        if not placeholder:
+            placeholder = platform_root_entity.value
+
+        value_input.setPlaceholderText("< {} >".format(placeholder))
+
+        # Root value
+        if input_value:
+            value_input.setText(input_value)
+
+        value_input.textChanged.connect(self._on_value_change)
+
+        root_layout = QtWidgets.QHBoxLayout(self)
+        root_layout.addWidget(key_label)
+        root_layout.addWidget(value_input)
+
+        self.value_input = value_input
+
+        self.is_default_project = is_default_project
+        self.studio_value = platform_root_entity.value
+        self.default_value = default_input_value
+        self.project_value = project_value
+
+    @property
+    def is_modified(self):
+        return self.origin_value != self.value_input.text()
+
+    def _get_site_value_for_project(self, project_name, data=None):
+        if data is None:
+            data = self.local_project_settings
+        project_values = data.get(project_name)
+        site_value = {}
+        if project_values:
+            root_value = project_values.get(LOCAL_ROOTS_KEY)
+            if root_value:
+                site_value = root_value.get(self.site_name) or {}
+        return site_value.get(self.root_name)
+
+    def _on_value_change(self):
+        value = self.value_input.text()
+        data = self.local_project_settings
+        for key in (self.project_name, LOCAL_ROOTS_KEY, self.site_name):
+            if key not in data:
+                data[key] = {}
+            data = data[key]
+        data[self.root_name] = value
+
+
 class RootsWidget(QtWidgets.QWidget):
     value_changed = QtCore.Signal()
 
@@ -36,8 +128,9 @@ class RootsWidget(QtWidgets.QWidget):
         super(RootsWidget, self).__init__(parent)
 
         self.project_settings = project_settings
-        self.local_project_settings = {}
         self.widgts_by_root_name = {}
+        self.local_project_settings = None
+        self.local_project_settings_orig = None
         self._project_name = None
         self._site_name = None
 
@@ -59,68 +152,31 @@ class RootsWidget(QtWidgets.QWidget):
         if self._project_name is None or self._site_name is None:
             return
 
-        default_root_values = self._get_site_value_for_project(
-            DEFAULT_PROJECT_KEY
-        )
-        if self._project_name == DEFAULT_PROJECT_KEY:
-            project_root_values = default_root_values
-        else:
-            project_root_values = self._get_site_value_for_project(
-                self._project_name
-            )
-
         roots_entity = (
             self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
         )
-        is_in_default = self._project_name == DEFAULT_PROJECT_KEY
         for root_name, path_entity in roots_entity.items():
             platform_entity = path_entity[platform.system().lower()]
-            root_widget = QtWidgets.QWidget(self)
-
-            key_label = QtWidgets.QLabel(root_name, root_widget)
-            value_input = QtWidgets.QLineEdit(root_widget)
-            # Placeholder
-            placeholder = None
-            if not is_in_default:
-                placeholder = default_root_values.get(root_name)
-                if placeholder:
-                    placeholder = "< {} >".format(placeholder)
-
-            if not placeholder:
-                placeholder = platform_entity.value
-
-            value_input.setPlaceholderText(placeholder)
-
-            # Root value
-            project_value = project_root_values.get(root_name)
-            if project_value:
-                value_input.setText(project_value)
-
-            # Register change callback
-            def _on_root_change():
-                self._on_root_value_change(root_name)
-
-            value_input.textChanged.connect(_on_root_change)
-
-            root_layout = QtWidgets.QHBoxLayout(root_widget)
-            root_layout.addWidget(key_label)
-            root_layout.addWidget(value_input)
+            root_widget = RootInputWidget(
+                self.local_project_settings,
+                self.local_project_settings_orig,
+                platform_entity,
+                root_name,
+                self._project_name,
+                self._site_name,
+                self
+            )
 
             self.content_layout.addWidget(root_widget)
-            self.widgts_by_root_name[root_name] = value_input
+            self.widgts_by_root_name[root_name] = root_widget
 
         self.content_layout.addWidget(SpacerWidget(self), 1)
 
-    def _get_site_value_for_project(self, project_name):
-        default_project = self.local_project_settings.get(project_name)
-        if default_project:
-            root_value = default_project.get(LOCAL_ROOTS_KEY)
-            if root_value:
-                return root_value.get(self._site_name) or {}
-        return {}
-
     def set_value(self, local_project_settings):
         self.local_project_settings = local_project_settings
+        self.local_project_settings_orig = copy.deepcopy(
+            dict(local_project_settings)
+        )
 
     def change_site(self, site_name):
         self._site_name = site_name
@@ -232,6 +288,7 @@ class RootSiteWidget(QtWidgets.QWidget):
 
     def set_value(self, local_project_settings):
         self.local_project_settings = local_project_settings
+        self.roots_widget.set_value(local_project_settings)
 
     def _change_active_site(self, site_name):
         self.roots_widget.change_site(site_name)
