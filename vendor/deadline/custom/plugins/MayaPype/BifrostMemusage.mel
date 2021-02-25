@@ -1,0 +1,67 @@
+// adrian.graham@autodesk.com
+// 01/24/14
+//
+// Spit out Bifrost-related data. Useful in the "Pre-Render Frame MEL" field of
+// Render Options, so batch processing (playblasting, exporting meshes, etc)
+// can be closely monitored.
+//
+// Usage: simply put 'bifrostMemUsage' in the Pre-Render Frame MEL field under
+// Render Globals > Render Options.
+//
+// Also handy to put in a per-frame expression.
+
+global float $ELAPSED;
+
+global proc BifrostMemUsage() {
+
+    // Initialize python.
+    global float $ELAPSED;
+    python( "import time" );
+    float $time = python( "'%.02f' % (time.time()-float("+$ELAPSED+"))" );
+    print( "[bifrostMemUsage] ELAPSED since last eval: "+$time+" seconds.\n" );
+    $ELAPSED = python( "time.time()" );
+    
+    // Get data.
+    string $date_time = `date`;
+    float $frame = `currentTime -q`;
+    string $free = `memory -mb -freeMemory`;
+    string $used = `memory -mb -heapMemory`;
+
+    // Make Mb amounts nicer.
+    python( "import locale" );
+    python( "locale.setlocale(locale.LC_ALL, '')" );
+    $free = python( "format( "+int($free)+", 'n' ).decode(locale.getpreferredencoding())" );
+    
+    $used = python( "format( "+int($used)+", 'n' ).decode(locale.getpreferredencoding())" );
+    string $mem_output = "[bifrostMemUsage] FRAME "+$frame+" ("+$date_time+")\n";
+    $mem_output       += "[bifrostMemUsage] USED: "+$used+" Mb\n";
+    $mem_output       += "[bifrostMemUsage] FREE: "+$free+" Mb\n";
+    string $containers[] = `ls -type bifrostContainer`;
+
+    for( $container in $containers ) {
+
+        $mem_output += "    >>> "+$container+" <<<\n";
+        if( `objExists ($container+".masterVoxelSize")` ) {
+            float $mvs = `getAttr ($container+".masterVoxelSize")`;
+            $mem_output += "     MVS: "+$mvs+"\n" ;
+        } // end if
+
+        // Get associated Bifrost object.
+        string $bifrost_objs[] = `listConnections -shapes on -type bifrostShape $container`;
+        string $bifrost_obj = $bifrost_objs[0];
+        string $num_parts = `getAttr( $bifrost_obj+".outNumParticles")`;
+        string $num_voxels = `getAttr( $bifrost_obj+".outNumVoxels")`;
+
+        $num_parts   = python( "format( "+int($num_parts)+", 'n' ).decode(locale.getpreferredencoding())" );
+        $num_voxels  = python( "format( "+int($num_voxels)+", 'n' ).decode(locale.getpreferredencoding())" );
+        $mem_output += "     Particles: "+$num_parts+"\n" ;
+        $mem_output += "     Voxels: "+$num_voxels+"\n" ;
+
+    }
+
+    $mem_output += "\n";
+
+    // Finally, print out.
+    print( $mem_output );
+
+} // end bifrostMemUsage
