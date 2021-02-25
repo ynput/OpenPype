@@ -169,7 +169,7 @@ class RootsWidget(QtWidgets.QWidget):
         # Add spacer so other widgets are squeezed to top
         self.content_layout.addWidget(SpacerWidget(self), 1)
 
-    def set_value(self, local_project_settings):
+    def update_local_settings(self, local_project_settings):
         self.local_project_settings = local_project_settings
         self.local_project_settings_orig = copy.deepcopy(
             dict(local_project_settings)
@@ -329,7 +329,7 @@ class _SiteCombobox(QtWidgets.QWidget):
             if to_run:
                 to_run()
 
-    def set_value(self, local_project_settings):
+    def update_local_settings(self, local_project_settings):
         self.local_project_settings = local_project_settings
         self.local_project_settings_orig = copy.deepcopy(
             dict(local_project_settings)
@@ -495,11 +495,11 @@ class RootSiteWidget(QtWidgets.QWidget):
         sites_entity = global_entity["sync_server"]["sites"]
         return tuple(sites_entity.keys())
 
-    def set_value(self, local_project_settings):
+    def update_local_settings(self, local_project_settings):
         self.local_project_settings = local_project_settings
-        self.active_site_widget.set_value(local_project_settings)
-        self.remote_site_widget.set_value(local_project_settings)
-        self.roots_widget.set_value(local_project_settings)
+        self.active_site_widget.update_local_settings(local_project_settings)
+        self.remote_site_widget.update_local_settings(local_project_settings)
+        self.roots_widget.update_local_settings(local_project_settings)
 
     def _on_acite_site_change(self, site_name):
         self._change_active_site(site_name)
@@ -555,12 +555,12 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
             project_name = DEFAULT_PROJECT_KEY
         self.roos_site_widget.change_project(project_name)
 
-    def set_value(self, value):
+    def update_local_settings(self, value):
         if not value:
             value = {}
         self.local_project_settings = ProjectValue(value)
 
-        self.roos_site_widget.set_value(self.local_project_settings)
+        self.roos_site_widget.update_local_settings(self.local_project_settings)
 
         self.projects_widget.refresh()
 

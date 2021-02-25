@@ -42,7 +42,7 @@ class LocalGeneralWidgets(QtWidgets.QWidget):
 
         self.local_site_name_input = local_site_name_input
 
-    def set_value(self, value):
+    def update_local_settings(self, value):
         site_label = ""
         if value:
             site_label = value.get("site_label", site_label)
@@ -144,13 +144,19 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
         self.projects_widget = projects_widget
 
-    def set_value(self, value):
+    def update_local_settings(self, value):
         if not value:
             value = {}
 
-        self.general_widget.set_value(value.get(LOCAL_GENERAL_KEY))
-        self.app_widget.set_value(value.get(LOCAL_APPS_KEY))
-        self.projects_widget.set_value(value.get(LOCAL_PROJECTS_KEY))
+        self.general_widget.update_local_settings(
+            value.get(LOCAL_GENERAL_KEY)
+        )
+        self.app_widget.update_local_settings(
+            value.get(LOCAL_APPS_KEY)
+        )
+        self.projects_widget.update_local_settings(
+            value.get(LOCAL_PROJECTS_KEY)
+        )
 
     def settings_value(self):
         output = {}
@@ -207,7 +213,7 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
     def reset(self):
         value = get_local_settings()
-        self.settings_widget.set_value(value)
+        self.settings_widget.update_local_settings(value)
 
     def _on_save_clicked(self):
         try:
