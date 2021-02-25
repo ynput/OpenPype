@@ -10,7 +10,7 @@
 ```json
 {
     "general": {
-        "site_name": "MySite"
+        "site_label": "MySite"
     }
 }
 ```
@@ -55,7 +55,7 @@
     "_id": "<ObjectId(...)>",
     "site_id": "<site id>",
     "general": {
-        "site_name": "MySite"
+        "site_label": "MySite"
     },
     "applications": {
         "<app group>": {
