@@ -11,6 +11,7 @@ PS> .\run_settings.ps1
 
 #>
 
+$current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $pype_root = (Get-Item $script_dir).parent.FullName
 Set-Location -Path $pype_root
