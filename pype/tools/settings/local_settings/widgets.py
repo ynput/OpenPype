@@ -3,7 +3,6 @@ from pype.tools.settings.settings.widgets.widgets import (
     ExpandingWidget,
     SpacerWidget
 )
-from pype.tools.settings.settings.widgets.lib import CHILD_OFFSET
 
 
 class Separator(QtWidgets.QFrame):
@@ -50,3 +49,11 @@ class ProxyLabelWidget(QtWidgets.QWidget):
         if self.mouse_release_callback:
             return self.mouse_release_callback(event)
         return super(ProxyLabelWidget, self).mouseReleaseEvent(event)
+
+
+__all__ = (
+    "ExpandingWidget",
+    "SpacerWidget",
+    "Separator",
+    "SpacerWidget"
+)

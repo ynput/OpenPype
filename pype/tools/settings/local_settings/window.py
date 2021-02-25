@@ -1,5 +1,5 @@
 import logging
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtGui
 
 from ..settings import style
 
@@ -13,10 +13,8 @@ from pype.api import (
 )
 
 from .widgets import (
-    Separator,
     SpacerWidget,
-    ExpandingWidget,
-    CHILD_OFFSET
+    ExpandingWidget
 )
 from .mongo_widget import PypeMongoWidget
 from .general_widget import LocalGeneralWidgets
@@ -24,6 +22,7 @@ from .apps_widget import LocalApplicationsWidgets
 from .projects_widget import ProjectSettingsWidget
 
 from .constants import (
+    CHILD_OFFSET,
     LOCAL_GENERAL_KEY,
     LOCAL_PROJECTS_KEY,
     LOCAL_APPS_KEY

@@ -2,9 +2,9 @@ import platform
 from Qt import QtWidgets
 from .widgets import (
     Separator,
-    ExpandingWidget,
-    CHILD_OFFSET
+    ExpandingWidget
 )
+from .constants import CHILD_OFFSET
 
 
 class AppVariantWidget(QtWidgets.QWidget):

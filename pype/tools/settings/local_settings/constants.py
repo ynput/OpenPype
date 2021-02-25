@@ -14,6 +14,8 @@ LOCAL_APPS_KEY = "applications"
 # Roots key constant
 LOCAL_ROOTS_KEY = "roots"
 
+# Child offset in expandable widget
+CHILD_OFFSET = 15
 
 __all__ = (
     "LABEL_REMOVE_DEFAULT",
