@@ -157,8 +157,8 @@ class ExtractSequence(pyblish.api.Extractor):
             "ext": ext,
             "files": repre_files,
             "stagingDir": output_dir,
-            "frameStart": frame_start,
-            "frameEnd": frame_end,
+            "frameStart": frame_start + 1,
+            "frameEnd": frame_end + 1,
             "tags": tags
         }
         self.log.debug("Creating new representation: {}".format(new_repre))
