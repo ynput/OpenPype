@@ -118,6 +118,9 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         if not value:
             value = {}
 
+        self.system_settings.reset()
+        self.project_settings.reset()
+
         self.general_widget.update_local_settings(
             value.get(LOCAL_GENERAL_KEY)
         )
@@ -186,10 +189,6 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         self.settings_widget.update_local_settings(value)
 
     def _on_save_clicked(self):
-        try:
-            value = self.settings_widget.settings_value()
-        except Exception:
-            log.warning("Failed to save", exc_info=True)
-            return
-
+        value = self.settings_widget.settings_value()
         save_local_settings(value)
+        self.reset()
