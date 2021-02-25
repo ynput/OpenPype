@@ -12,6 +12,7 @@ from .widgets import (
 )
 
 LOCAL_ROOTS_KEY = "roots"
+NOT_SET = type("NOT_SET", (), {})()
 
 
 def get_active_sites(project_settings):
@@ -94,7 +95,6 @@ class RootInputWidget(QtWidgets.QWidget):
 
         self.value_input = value_input
 
-        self.is_default_project = is_default_project
         self.studio_value = platform_root_entity.value
         self.default_value = default_input_value
         self.project_value = project_value
@@ -203,7 +203,6 @@ class _SiteCombobox(QtWidgets.QWidget):
         self.local_project_settings = None
         self.local_project_settings_orig = None
         self.project_name = None
-        self.is_default_project = None
 
         self.default_override_value = None
         self.project_override_value = None
@@ -281,13 +280,22 @@ class _SiteCombobox(QtWidgets.QWidget):
         self._show_actions()
 
     def _remove_from_local(self):
-        if (
-            self.project_name != DEFAULT_PROJECT_KEY
-            and self.default_override_value
-        ):
+        settings_value = self._get_value_from_project_settings()
+        combobox_value = None
+        if self.project_name == DEFAULT_PROJECT_KEY:
+            combobox_value = self._get_local_settings_item(DEFAULT_PROJECT_KEY)
+            if combobox_value:
+                idx = self.combobox_input.findText(combobox_value)
+                if idx < 0:
+                    combobox_value = None
+
+        if not combobox_value:
+            combobox_value = settings_value
+
+        if combobox_value:
             _project_name = self.project_name
             self.project_name = None
-            self._set_current_text(self.default_override_value)
+            self._set_current_text(combobox_value)
             self.project_name = _project_name
 
         self._set_local_settings_value("")
@@ -300,19 +308,19 @@ class _SiteCombobox(QtWidgets.QWidget):
     def _add_actions(self, menu, actions_mapping):
         # TODO better labels
         if self.project_name == DEFAULT_PROJECT_KEY:
-            if self.default_override_value:
-                action = QtWidgets.QAction("Remove from default")
-                callback = self._remove_from_local
-            else:
-                action = QtWidgets.QAction("Add to default")
-                callback = self._add_to_local
+            remove_label = "Remove from default"
+            add_label = "Add to default"
         else:
-            if self.project_override_value:
-                action = QtWidgets.QAction("Remove from project")
-                callback = self._remove_from_local
-            else:
-                action = QtWidgets.QAction("Add to project")
-                callback = self._add_to_local
+            remove_label = "Remove from project"
+            add_label = "Add to project"
+
+        has_value = self._get_local_settings_item(self.project_name)
+        if has_value:
+            action = QtWidgets.QAction(remove_label)
+            callback = self._remove_from_local
+        else:
+            action = QtWidgets.QAction(add_label)
+            callback = self._add_to_local
 
         actions_mapping[action] = callback
         menu.addAction(action)
@@ -356,12 +364,12 @@ class _SiteCombobox(QtWidgets.QWidget):
             self.update_style()
             return
 
-        self.is_default_project = bool(project_name == DEFAULT_PROJECT_KEY)
+        is_default_project = bool(project_name == DEFAULT_PROJECT_KEY)
         site_items = self._get_project_sites()
         self.combobox_input.addItems(site_items)
 
         default_item = self._get_local_settings_item(DEFAULT_PROJECT_KEY)
-        if self.is_default_project:
+        if is_default_project:
             project_item = None
         else:
             project_item = self._get_local_settings_item(project_name)
@@ -379,7 +387,14 @@ class _SiteCombobox(QtWidgets.QWidget):
                 self.default_override_value = default_item
                 if index is None:
                     index = idx
-        if index:
+
+        if index is None:
+            settings_value = self._get_value_from_project_settings()
+            idx = self.combobox_input.findText(settings_value)
+            if idx >= 0:
+                index = idx
+
+        if index is not None:
             self.combobox_input.setCurrentIndex(index)
 
         self.project_name = project_name
@@ -406,9 +421,16 @@ class _SiteCombobox(QtWidgets.QWidget):
             )
         )
 
-    def _get_local_settings_item(self, project_name, data=None):
+    def _get_local_settings_item(self, project_name=None, data=None):
         raise NotImplementedError(
             "{}`_get_local_settings_item` not implemented".format(
+                self.__class__.__name__
+            )
+        )
+
+    def _get_value_from_project_settings(self):
+        raise NotImplementedError(
+            "{}`_get_value_from_project_settings` not implemented".format(
                 self.__class__.__name__
             )
         )
@@ -420,7 +442,10 @@ class AciveSiteCombo(_SiteCombobox):
     def _get_project_sites(self):
         return get_active_sites(self.project_settings)
 
-    def _get_local_settings_item(self, project_name, data=None):
+    def _get_local_settings_item(self, project_name=None, data=None):
+        if project_name is None:
+            project_name = self.project_name
+
         if data is None:
             data = self.local_project_settings
         project_values = data.get(project_name)
@@ -428,6 +453,10 @@ class AciveSiteCombo(_SiteCombobox):
         if project_values:
             value = project_values.get("active_site")
         return value
+
+    def _get_value_from_project_settings(self):
+        global_entity = self.project_settings["project_settings"]["global"]
+        return global_entity["sync_server"]["config"]["active_site"].value
 
     def _set_local_settings_value(self, value):
         if self.project_name not in self.local_project_settings:
@@ -443,7 +472,9 @@ class RemoteSiteCombo(_SiteCombobox):
         sites_entity = global_entity["sync_server"]["sites"]
         return tuple(sites_entity.keys())
 
-    def _get_local_settings_item(self, project_name, data=None):
+    def _get_local_settings_item(self, project_name=None, data=None):
+        if project_name is None:
+            project_name = self.project_name
         if data is None:
             data = self.local_project_settings
         project_values = data.get(project_name)
@@ -451,6 +482,10 @@ class RemoteSiteCombo(_SiteCombobox):
         if project_values:
             value = project_values.get("remote_site")
         return value
+
+    def _get_value_from_project_settings(self):
+        global_entity = self.project_settings["project_settings"]["global"]
+        return global_entity["sync_server"]["config"]["remote_site"].value
 
     def _set_local_settings_value(self, value):
         if self.project_name not in self.local_project_settings:
