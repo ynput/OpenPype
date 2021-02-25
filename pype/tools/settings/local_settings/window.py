@@ -167,8 +167,12 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         scroll_widget.setWidgetResizable(True)
 
         footer = QtWidgets.QWidget(self)
+
         save_btn = QtWidgets.QPushButton("Save", footer)
+        reset_btn = QtWidgets.QPushButton("Reset", footer)
+
         footer_layout = QtWidgets.QHBoxLayout(footer)
+        footer_layout.addWidget(reset_btn, 0)
         footer_layout.addWidget(SpacerWidget(footer), 1)
         footer_layout.addWidget(save_btn, 0)
 
@@ -178,8 +182,10 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         main_layout.addWidget(footer, 0)
 
         save_btn.clicked.connect(self._on_save_clicked)
+        reset_btn.clicked.connect(self._on_reset_clicked)
 
         self.settings_widget = settings_widget
+        self.reset_btn = reset_btn
         self.save_btn = save_btn
 
         self.reset()
@@ -187,6 +193,9 @@ class LocalSettingsWindow(QtWidgets.QWidget):
     def reset(self):
         value = get_local_settings()
         self.settings_widget.update_local_settings(value)
+
+    def _on_reset_clicked(self):
+        self.reset()
 
     def _on_save_clicked(self):
         value = self.settings_widget.settings_value()
