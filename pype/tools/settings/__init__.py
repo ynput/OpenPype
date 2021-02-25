@@ -22,8 +22,7 @@ def main(user_role=None):
     app = QtWidgets.QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
 
-    # widget = MainWidget(user_role)
-    widget = LocalSettingsWindow()
+    widget = MainWidget(user_role)
     widget.show()
     widget.reset()
 
