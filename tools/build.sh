@@ -136,14 +136,6 @@ main () {
   poetry run python3 "$pype_root/setup.py" build > "$pype_root/build/build.log"
   poetry run python3 "$pype_root/tools/build_dependencies.py"
 
-  # reinstall these because of bug in poetry? or cx_freeze?
-  # cx_freeze will crash on missing __pychache__ on these but
-  # reinstalling them solves the problem.
-  echo -e "${BIGreen}>>>${RST} Fixing pycache bug ..."
-  poetry run python -m pip install --upgrade pip
-  poetry run pip install --force-reinstall setuptools
-  poetry run pip install --force-reinstall wheel
-
   echo -e "${BICyan}>>>${RST} All done. You will find Pype and build log in \c"
   echo -e "${BIWhite}$pype_root/build${RST} directory."
 }

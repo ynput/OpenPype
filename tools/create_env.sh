@@ -148,6 +148,14 @@ main () {
 
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
+
+  # reinstall these because of bug in poetry? or cx_freeze?
+  # cx_freeze will crash on missing __pychache__ on these but
+  # reinstalling them solves the problem.
+  echo -e "${BIGreen}>>>${RST} Fixing pycache bug ..."
+  poetry run python -m pip install --upgrade pip
+  poetry run pip install --force-reinstall setuptools
+  poetry run pip install --force-reinstall wheel
 }
 
 main
