@@ -38,15 +38,15 @@ class LocalGeneralWidgets(QtWidgets.QWidget):
         layout = QtWidgets.QFormLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        layout.addRow("Local site name", local_site_name_input)
+        layout.addRow("Local site label", local_site_name_input)
 
         self.local_site_name_input = local_site_name_input
 
     def set_value(self, value):
-        site_name = ""
+        site_label = ""
         if value:
-            site_name = value.get("site_name", site_name)
-        self.local_site_name_input.setText(site_name)
+            site_label = value.get("site_label", site_label)
+        self.local_site_name_input.setText(site_label)
 
     def settings_value(self):
         # Add changed
@@ -54,7 +54,7 @@ class LocalGeneralWidgets(QtWidgets.QWidget):
         output = {}
         local_site_name = self.local_site_name_input.text()
         if local_site_name:
-            output["site_name"] = local_site_name
+            output["site_label"] = local_site_name
         # Do not return output yet since we don't have mechanism to save or
         #   load these data through api calls
         return output
