@@ -24,11 +24,6 @@ class _ProjectListWidget(ProjectListWidget):
         self.current_project = new_project_name
         self.project_changed.emit()
 
-    def project_name(self):
-        if self.current_project == self.default:
-            return DEFAULT_PROJECT_KEY
-        return self.current_project
-
 
 class RootInputWidget(QtWidgets.QWidget):
     def __init__(
@@ -54,17 +49,14 @@ class RootInputWidget(QtWidgets.QWidget):
             self.project_name, self.local_project_settings_orig
         )
 
-        key_label = QtWidgets.QLabel(root_name, self)
-        value_input = QtWidgets.QLineEdit(self)
-
         is_default_project = bool(project_name == DEFAULT_PROJECT_KEY)
 
         default_input_value = self._get_site_value_for_project(
             DEFAULT_PROJECT_KEY
         )
         if is_default_project:
-            project_value = None
             input_value = default_input_value
+            project_value = None
         else:
             input_value = self._get_site_value_for_project(self.project_name)
             project_value = input_value
@@ -77,6 +69,8 @@ class RootInputWidget(QtWidgets.QWidget):
         if not placeholder:
             placeholder = platform_root_entity.value
 
+        key_label = QtWidgets.QLabel(root_name, self)
+        value_input = QtWidgets.QLineEdit(self)
         value_input.setPlaceholderText("< {} >".format(placeholder))
 
         # Root value
@@ -122,8 +116,6 @@ class RootInputWidget(QtWidgets.QWidget):
 
 
 class RootsWidget(QtWidgets.QWidget):
-    value_changed = QtCore.Signal()
-
     def __init__(self, project_settings, parent):
         super(RootsWidget, self).__init__(parent)
 
@@ -135,9 +127,6 @@ class RootsWidget(QtWidgets.QWidget):
         self._site_name = None
 
         self.content_layout = QtWidgets.QVBoxLayout(self)
-
-    def _on_root_value_change(self, root_key):
-        print("root value or key {} changed".format(root_key))
 
     def _clear_widgets(self):
         while self.content_layout.count():
@@ -152,6 +141,10 @@ class RootsWidget(QtWidgets.QWidget):
         if self._project_name is None or self._site_name is None:
             return
 
+        # Site label
+        self.content_layout.addWidget(QtWidgets.QLabel(self._site_name, self))
+
+        # Root inputs
         roots_entity = (
             self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
         )
@@ -170,6 +163,7 @@ class RootsWidget(QtWidgets.QWidget):
             self.content_layout.addWidget(root_widget)
             self.widgts_by_root_name[root_name] = root_widget
 
+        # Add spacer so other widgets are squeezed to top
         self.content_layout.addWidget(SpacerWidget(self), 1)
 
     def set_value(self, local_project_settings):
@@ -187,9 +181,135 @@ class RootsWidget(QtWidgets.QWidget):
         self.refresh()
 
 
-class RootSiteWidget(QtWidgets.QWidget):
-    value_changed = QtCore.Signal()
+class _SiteCombobox(QtWidgets.QWidget):
+    site_changed = QtCore.Signal(str)
 
+    def __init__(self, project_settings, parent):
+        super(_SiteCombobox, self).__init__(parent)
+        self.project_settings = project_settings
+
+        self.local_project_settings = None
+        self.local_project_settings_orig = None
+        self.project_name = None
+        self.is_default_project = None
+
+        self.default_override_value = None
+        self.project_override_value = None
+
+        label_widget = QtWidgets.QLabel(self)
+        combobox_input = QtWidgets.QComboBox(self)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.addWidget(label_widget)
+        main_layout.addWidget(combobox_input)
+
+        combobox_input.currentIndexChanged.connect(self._on_index_change)
+        self.label_widget = label_widget
+        self.combobox_input = combobox_input
+
+        self._ui_tweaks()
+
+    def set_value(self, local_project_settings):
+        self.local_project_settings = local_project_settings
+        self.local_project_settings_orig = copy.deepcopy(
+            dict(local_project_settings)
+        )
+
+    def change_project(self, project_name):
+        self.default_override_value = None
+        self.project_override_value = None
+
+        self.project_name = None
+        self.combobox_input.clear()
+        if project_name is None:
+            return
+
+        self.is_default_project = bool(project_name == DEFAULT_PROJECT_KEY)
+        site_items = self._get_project_sites()
+        self.combobox_input.addItems(site_items)
+
+        default_item = self._get_local_settings_item(DEFAULT_PROJECT_KEY)
+        if self.is_default_project:
+            project_item = None
+        else:
+            project_item = self._get_local_settings_item(project_name)
+
+        index = None
+        if project_item:
+            idx = self.combobox_input.findText(project_item)
+            if idx >= 0:
+                self.project_override_value = project_item
+                index = self.combobox_input.model().index(idx, 0)
+
+        if default_item:
+            idx = self.combobox_input.findText(default_item)
+            if idx >= 0:
+                self.default_override_value = default_item
+                if not index:
+                    index = self.combobox_input.model().index(idx, 0)
+        if index:
+            self.combobox_input.setCurrentIndex(index)
+
+        self.project_name = project_name
+        self.site_changed.emit(self.combobox_input.currentText())
+
+    def _on_index_change(self):
+        if self.project_name is None:
+            return
+        self.site_changed.emit(self.combobox_input.currentText())
+        print("here")
+
+    def _ui_tweaks(self):
+        raise NotImplementedError("_ui_tweaks not implemented {}".format(
+            self.__class__.__name__
+        ))
+
+    def _get_project_sites(self):
+        raise NotImplementedError("_ui_tweaks not implemented {}".format(
+            self.__class__.__name__
+        ))
+
+    def _get_local_settings_item(self, project_name):
+        raise NotImplementedError("_ui_tweaks not implemented {}".format(
+            self.__class__.__name__
+        ))
+
+
+class AciveSiteCombo(_SiteCombobox):
+    def _ui_tweaks(self):
+        self.label_widget.setText("Active site")
+
+    def _get_project_sites(self):
+        global_entity = self.project_settings["project_settings"]["global"]
+        sites_entity = global_entity["sync_server"]["sites"]
+        return tuple(sites_entity.keys())
+
+    def _get_local_settings_item(self, project_name):
+        project_values = self.local_project_settings.get(project_name)
+        value = None
+        if project_values:
+            value = project_values.get("active_site")
+        return value
+
+
+class RemoteSiteCombo(_SiteCombobox):
+    def _ui_tweaks(self):
+        self.label_widget.setText("Remote site")
+
+    def _get_project_sites(self):
+        global_entity = self.project_settings["project_settings"]["global"]
+        sites_entity = global_entity["sync_server"]["sites"]
+        return tuple(sites_entity.keys())
+
+    def _get_local_settings_item(self, project_name):
+        project_values = self.local_project_settings.get(project_name)
+        value = None
+        if project_values:
+            value = project_values.get("remote_site")
+        return value
+
+
+class RootSiteWidget(QtWidgets.QWidget):
     def __init__(self, project_settings, parent):
         self._parent_widget = parent
         super(RootSiteWidget, self).__init__(parent)
@@ -199,12 +319,11 @@ class RootSiteWidget(QtWidgets.QWidget):
 
         sites_widget = QtWidgets.QWidget(self)
         sites_layout = QtWidgets.QHBoxLayout(sites_widget)
-        active_site_combo = QtWidgets.QComboBox(sites_widget)
-        remote_site_combo = QtWidgets.QComboBox(sites_widget)
-        sites_layout.addWidget(QtWidgets.QLabel("Active Site", sites_widget))
-        sites_layout.addWidget(active_site_combo)
-        sites_layout.addWidget(QtWidgets.QLabel("Remote Site", sites_widget))
-        sites_layout.addWidget(remote_site_combo)
+
+        active_site_widget = AciveSiteCombo(project_settings, sites_widget)
+        remote_site_widget = RemoteSiteCombo(project_settings, sites_widget)
+        sites_layout.addWidget(active_site_widget)
+        sites_layout.addWidget(remote_site_widget)
 
         roots_widget = RootsWidget(project_settings, self)
 
@@ -213,8 +332,9 @@ class RootSiteWidget(QtWidgets.QWidget):
         main_layout.addWidget(roots_widget)
         main_layout.addWidget(SpacerWidget(self), 1)
 
-        self.active_site_combo = active_site_combo
-        self.remote_site_combo = remote_site_combo
+        active_site_widget.site_changed.connect(self._on_acite_site_change)
+        self.active_site_widget = active_site_widget
+        self.remote_site_widget = remote_site_widget
         self.roots_widget = roots_widget
 
     def _active_site_values(self):
@@ -227,68 +347,14 @@ class RootSiteWidget(QtWidgets.QWidget):
         sites_entity = global_entity["sync_server"]["sites"]
         return tuple(sites_entity.keys())
 
-    def _change_combobox_values(self):
-        self.active_site_combo.clear()
-        self.remote_site_combo.clear()
-        if self._project_name is None:
-            return
-
-        active_site_values = self._active_site_values()
-        remote_site_values = self._remote_site_values()
-
-        # Set sites from local settings in comboboxes
-        active_site = None
-        remote_site = None
-
-        project_values = self.local_project_settings.get(self._project_name)
-        if project_values:
-            active_site = project_values.get("active_site")
-            remote_site = project_values.get("remote_site")
-
-        if (
-            (not active_site or not remote_site)
-            and self._project_name is not DEFAULT_PROJECT_KEY
-        ):
-            default_values = self.local_project_settings.get(
-                DEFAULT_PROJECT_KEY
-            )
-            if default_values:
-                if not active_site:
-                    active_site = default_values.get("active_site")
-                if not remote_site:
-                    remote_site = default_values.get("remote_site")
-
-        self.active_site_combo.addItems(active_site_values)
-        self.remote_site_combo.addItems(remote_site_values)
-
-        # Find and set remote site in combobox
-        if remote_site:
-            idx = self.remote_site_combo.findText(active_site)
-            if idx >= 0:
-                index = self.remote_site_combo.model().index(idx, 0)
-                self.remote_site_combo.setCurrentIndex(index)
-
-        # Find and set active site in combobox
-        if active_site:
-            idx = self.active_site_combo.findText(active_site)
-            if idx < 0:
-                active_site = None
-            else:
-                index = self.active_site_combo.model().index(idx, 0)
-                self.active_site_combo.setCurrentIndex(index)
-
-        # Prepare value to change active site in roots widget
-        if not active_site:
-            if not active_site_values:
-                active_site = None
-            else:
-                active_site = self.active_site_combo.currentText()
-
-        self._change_active_site(active_site)
-
     def set_value(self, local_project_settings):
         self.local_project_settings = local_project_settings
+        self.active_site_widget.set_value(local_project_settings)
+        self.remote_site_widget.set_value(local_project_settings)
         self.roots_widget.set_value(local_project_settings)
+
+    def _on_acite_site_change(self, site_name):
+        self._change_active_site(site_name)
 
     def _change_active_site(self, site_name):
         self.roots_widget.change_site(site_name)
@@ -299,7 +365,8 @@ class RootSiteWidget(QtWidgets.QWidget):
         self.roots_widget.change_project(None)
 
         # Aply changes in site comboboxes
-        self._change_combobox_values()
+        self.active_site_widget.change_project(project_name)
+        self.remote_site_widget.change_project(project_name)
 
         # Change project name in roots widget
         self.roots_widget.change_project(project_name)
@@ -336,6 +403,8 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
     def _on_project_change(self):
         project_name = self.project_name()
         self.project_settings.change_project(project_name)
+        if project_name is None:
+            project_name = DEFAULT_PROJECT_KEY
         self.roos_site_widget.change_project(project_name)
 
     def set_value(self, value):
