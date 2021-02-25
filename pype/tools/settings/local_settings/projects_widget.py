@@ -500,6 +500,11 @@ class RootSiteWidget(QtWidgets.QWidget):
         self.active_site_widget.update_local_settings(local_project_settings)
         self.remote_site_widget.update_local_settings(local_project_settings)
         self.roots_widget.update_local_settings(local_project_settings)
+        project_name = self._project_name
+        if project_name is None:
+            project_name = DEFAULT_PROJECT_KEY
+
+        self.change_project(project_name)            
 
     def _on_acite_site_change(self, site_name):
         self._change_active_site(site_name)
@@ -560,7 +565,9 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
             value = {}
         self.local_project_settings = ProjectValue(value)
 
-        self.roos_site_widget.update_local_settings(self.local_project_settings)
+        self.roos_site_widget.update_local_settings(
+            self.local_project_settings
+        )
 
         self.projects_widget.refresh()
 

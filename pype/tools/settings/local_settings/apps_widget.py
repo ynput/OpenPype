@@ -150,12 +150,22 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
     def __init__(self, system_settings_entity, parent):
         super(LocalApplicationsWidgets, self).__init__(parent)
 
-        widgets_by_group_name = {}
+        self.widgets_by_group_name = {}
+        self.system_settings_entity = system_settings_entity
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        for key, entity in system_settings_entity["applications"].items():
+        self.content_layout = layout
+
+    def _reset_app_widgets(self):
+        while self.content_layout.count() > 0:
+            item = self.content_layout.itemAt(0)
+            item.widget().hide()
+            self.content_layout.removeItem(item)
+        self.widgets_by_group_name.clear()
+
+        for key, entity in self.system_settings_entity["applications"].items():
             # Filter not enabled app groups
             if not entity["enabled"].value:
                 continue
@@ -172,14 +182,14 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
 
             # Create App group specific widget and store it by the key
             group_widget = AppGroupWidget(entity, self)
-            widgets_by_group_name[key] = group_widget
-            layout.addWidget(group_widget)
-
-        self.widgets_by_group_name = widgets_by_group_name
+            self.widgets_by_group_name[key] = group_widget
+            self.content_layout.addWidget(group_widget)
 
     def update_local_settings(self, value):
         if not value:
             value = {}
+
+        self._reset_app_widgets()
 
         for group_name, widget in self.widgets_by_group_name.items():
             widget.update_local_settings(value.get(group_name))
