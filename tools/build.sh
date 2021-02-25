@@ -69,7 +69,7 @@ detect_python () {
   python_version="$(python3 <<< ${version_command})"
   oIFS="$IFS"
   IFS=.
-  set -- "$python_version"
+  set -- $python_version
   IFS="$oIFS"
   if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
     if [ "$2" -gt "7" ] ; then

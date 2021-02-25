@@ -75,7 +75,6 @@ detect_python () {
     else
       echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
     fi
-    PYTHON="python3"
   else
     command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
   fi

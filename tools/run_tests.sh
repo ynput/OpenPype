@@ -71,7 +71,6 @@ detect_python () {
   IFS="$oIFS"
   if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
     echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
-    PYTHON="python3"
   else
     command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
   fi
