@@ -112,6 +112,8 @@ class RootInputWidget(QtWidgets.QWidget):
         self.project_value = project_value
         self.placeholder_value = placeholder
 
+        self._update_style()
+
     def is_modified(self):
         return self.origin_value != self.value_input.text()
 
