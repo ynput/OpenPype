@@ -63,6 +63,7 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
+            "AVALON_APP_NAME",
             "PYPE_USERNAME",
             "PYPE_DEV",
             "PYPE_LOG_NO_COLORS"

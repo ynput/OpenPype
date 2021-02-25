@@ -431,6 +431,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
+            "AVALON_APP_NAME",
             "PYPE_USERNAME",
             "PYPE_DEV",
             "PYPE_LOG_NO_COLORS"
