@@ -10,8 +10,15 @@ from .widgets import (
     SpacerWidget,
     ProxyLabelWidget
 )
+from .constants import (
+    LABEL_REMOVE_DEFAULT,
+    LABEL_ADD_DEFAULT,
+    LABEL_REMOVE_PROJECT,
+    LABEL_ADD_PROJECT,
+    LABEL_DISCARD_CHANGES,
+    LOCAL_ROOTS_KEY
+)
 
-LOCAL_ROOTS_KEY = "roots"
 NOT_SET = type("NOT_SET", (), {})()
 
 
@@ -57,7 +64,7 @@ class RootInputWidget(QtWidgets.QWidget):
 
         self.origin_value = self._get_site_value_for_project(
             self.project_name, self.local_project_settings_orig
-        )
+        ) or ""
 
         is_default_project = bool(project_name == DEFAULT_PROJECT_KEY)
 
@@ -79,7 +86,11 @@ class RootInputWidget(QtWidgets.QWidget):
         if not placeholder:
             placeholder = platform_root_entity.value
 
-        key_label = QtWidgets.QLabel(root_name, self)
+        key_label = ProxyLabelWidget(
+            root_name,
+            self._mouse_release_callback,
+            self
+        )
         value_input = QtWidgets.QLineEdit(self)
         value_input.setPlaceholderText("< {} >".format(placeholder))
 
@@ -94,14 +105,98 @@ class RootInputWidget(QtWidgets.QWidget):
         root_layout.addWidget(value_input)
 
         self.value_input = value_input
+        self.label_widget = key_label
 
         self.studio_value = platform_root_entity.value
         self.default_value = default_input_value
         self.project_value = project_value
+        self.placeholder_value = placeholder
 
-    @property
     def is_modified(self):
         return self.origin_value != self.value_input.text()
+
+    def _mouse_release_callback(self, event):
+        if event.button() != QtCore.Qt.RightButton:
+            return
+        self._show_actions()
+        event.accept()
+
+    def _get_style_state(self):
+        if self.project_name is None:
+            return ""
+
+        if self.is_modified():
+            return "modified"
+
+        current_value = self.value_input.text()
+        if self.project_name == DEFAULT_PROJECT_KEY:
+            if current_value:
+                return "studio"
+        else:
+            if current_value:
+                return "overriden"
+
+            studio_value = self._get_site_value_for_project(
+                DEFAULT_PROJECT_KEY
+            )
+            if studio_value:
+                return "studio"
+        return ""
+
+    def _update_style(self):
+        state = self._get_style_state()
+
+        self.value_input.setProperty("input-state", state)
+        self.value_input.style().polish(self.value_input)
+
+        self.label_widget.set_label_property("state", state)
+
+    def _remove_from_local(self):
+        self.value_input.setText("")
+        self._update_style()
+
+    def _add_to_local(self):
+        self.value_input.setText(self.placeholder_value)
+        self._update_style()
+
+    def discard_changes(self):
+        self.value_input.setText(self.origin_value)
+        self._update_style()
+
+    def _show_actions(self):
+        if self.project_name is None:
+            return
+
+        menu = QtWidgets.QMenu(self)
+        actions_mapping = {}
+
+        if self.project_name == DEFAULT_PROJECT_KEY:
+            remove_label = LABEL_REMOVE_DEFAULT
+            add_label = LABEL_ADD_DEFAULT
+        else:
+            remove_label = LABEL_REMOVE_PROJECT
+            add_label = LABEL_ADD_PROJECT
+
+        if self.value_input.text():
+            action = QtWidgets.QAction(remove_label)
+            callback = self._remove_from_local
+        else:
+            action = QtWidgets.QAction(add_label)
+            callback = self._add_to_local
+
+        actions_mapping[action] = callback
+        menu.addAction(action)
+
+        if self.is_modified():
+            discard_changes_action = QtWidgets.QAction(LABEL_DISCARD_CHANGES)
+            actions_mapping[discard_changes_action] = self.discard_changes
+            menu.addAction(discard_changes_action)
+
+        result = menu.exec_(QtGui.QCursor.pos())
+        if result:
+            to_run = actions_mapping[result]
+            if to_run:
+                to_run()
 
     def _get_site_value_for_project(self, project_name, data=None):
         if data is None:
@@ -122,6 +217,7 @@ class RootInputWidget(QtWidgets.QWidget):
                 data[key] = {}
             data = data[key]
         data[self.root_name] = value
+        self._update_style()
 
 
 class RootsWidget(QtWidgets.QWidget):
@@ -229,10 +325,25 @@ class _SiteCombobox(QtWidgets.QWidget):
             if idx >= 0:
                 index = idx
 
-        if index:
+        if index is not None:
             self.combobox_input.setCurrentIndex(index)
             return True
         return False
+
+    def is_modified(self, current_value=NOT_SET, orig_value=NOT_SET):
+        if current_value is NOT_SET:
+            current_value = self._get_local_settings_item(self.project_name)
+        if orig_value is NOT_SET:
+            orig_value = self._get_local_settings_item(
+                self.project_name, self.local_project_settings_orig
+            )
+        if current_value and orig_value:
+            modified = current_value != orig_value
+        elif not current_value and not orig_value:
+            modified = False
+        else:
+            modified = True
+        return modified
 
     def _get_style_state(self):
         if self.project_name is None:
@@ -242,14 +353,8 @@ class _SiteCombobox(QtWidgets.QWidget):
         orig_value = self._get_local_settings_item(
             self.project_name, self.local_project_settings_orig
         )
-        if current_value and orig_value:
-            modified = current_value != orig_value
-        elif not current_value and not orig_value:
-            modified = False
-        else:
-            modified = True
 
-        if modified:
+        if self.is_modified(current_value, orig_value):
             return "modified"
 
         if self.project_name == DEFAULT_PROJECT_KEY:
@@ -259,14 +364,12 @@ class _SiteCombobox(QtWidgets.QWidget):
             if current_value:
                 return "overriden"
 
-            studio_value = current_value = self._get_local_settings_item(
-                DEFAULT_PROJECT_KEY
-            )
+            studio_value = self._get_local_settings_item(DEFAULT_PROJECT_KEY)
             if studio_value:
                 return "studio"
         return ""
 
-    def update_style(self):
+    def _update_style(self):
         state = self._get_style_state()
 
         self.combobox_input.setProperty("input-state", state)
@@ -299,20 +402,31 @@ class _SiteCombobox(QtWidgets.QWidget):
             self.project_name = _project_name
 
         self._set_local_settings_value("")
-        self.update_style()
+        self._update_style()
 
     def _add_to_local(self):
         self._set_local_settings_value(self.current_text())
-        self.update_style()
+        self._update_style()
 
-    def _add_actions(self, menu, actions_mapping):
-        # TODO better labels
+    def discard_changes(self):
+        orig_value = self._get_local_settings_item(
+            self.project_name, self.local_project_settings_orig
+        )
+        self._set_current_text(orig_value)
+
+    def _show_actions(self):
+        if self.project_name is None:
+            return
+
+        menu = QtWidgets.QMenu(self)
+        actions_mapping = {}
+
         if self.project_name == DEFAULT_PROJECT_KEY:
-            remove_label = "Remove from default"
-            add_label = "Add to default"
+            remove_label = LABEL_REMOVE_DEFAULT
+            add_label = LABEL_ADD_DEFAULT
         else:
-            remove_label = "Remove from project"
-            add_label = "Add to project"
+            remove_label = LABEL_REMOVE_PROJECT
+            add_label = LABEL_ADD_PROJECT
 
         has_value = self._get_local_settings_item(self.project_name)
         if has_value:
@@ -325,19 +439,10 @@ class _SiteCombobox(QtWidgets.QWidget):
         actions_mapping[action] = callback
         menu.addAction(action)
 
-    def _show_actions(self):
-        if self.project_name is None:
-            return
-
-        menu = QtWidgets.QMenu(self)
-        actions_mapping = {}
-
-        self._add_actions(menu, actions_mapping)
-
-        if not actions_mapping:
-            action = QtWidgets.QAction("< No action >")
-            actions_mapping[action] = None
-            menu.addAction(action)
+        if self.is_modified():
+            discard_changes_action = QtWidgets.QAction(LABEL_DISCARD_CHANGES)
+            actions_mapping[discard_changes_action] = self.discard_changes
+            menu.addAction(discard_changes_action)
 
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
@@ -361,7 +466,7 @@ class _SiteCombobox(QtWidgets.QWidget):
         self.project_name = None
         self.combobox_input.clear()
         if project_name is None:
-            self.update_style()
+            self._update_style()
             return
 
         is_default_project = bool(project_name == DEFAULT_PROJECT_KEY)
@@ -398,14 +503,14 @@ class _SiteCombobox(QtWidgets.QWidget):
             self.combobox_input.setCurrentIndex(index)
 
         self.project_name = project_name
-        self.update_style()
+        self._update_style()
 
     def _on_index_change(self):
         if self.project_name is None:
             return
 
         self._set_local_settings_value(self.current_text())
-        self.update_style()
+        self._update_style()
 
     def _set_local_settings_value(self, value):
         raise NotImplementedError(

@@ -23,11 +23,13 @@ from .general_widget import LocalGeneralWidgets
 from .apps_widget import LocalApplicationsWidgets
 from .projects_widget import ProjectSettingsWidget
 
-log = logging.getLogger(__name__)
+from .constants import (
+    LOCAL_GENERAL_KEY,
+    LOCAL_PROJECTS_KEY,
+    LOCAL_APPS_KEY
+)
 
-LOCAL_GENERAL_KEY = "general"
-LOCAL_PROJECTS_KEY = "projects"
-LOCAL_APPS_KEY = "applications"
+log = logging.getLogger(__name__)
 
 
 class LocalSettingsWidget(QtWidgets.QWidget):
