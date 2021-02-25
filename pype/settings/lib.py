@@ -402,28 +402,33 @@ def apply_local_settings_on_anatomy_settings(
     if not local_project_settings:
         return
 
-    current_platform = platform.system().lower()
-    local_defaults = local_project_settings.get(DEFAULT_PROJECT_KEY)
-    root_data = anatomy_settings["roots"]
-    if local_defaults and "roots" in local_defaults:
-        for root_name, path in local_defaults["roots"].items():
-            if root_name not in root_data:
-                continue
-            anatomy_settings["roots"][root_name][current_platform] = (
-                path
-            )
-    if project_name == DEFAULT_PROJECT_KEY:
+    project_locals = local_project_settings.get(project_name) or {}
+    default_locals = local_project_settings.get(DEFAULT_PROJECT_KEY) or {}
+    active_site = project_locals.get("active_site")
+    if not active_site:
+        active_site = default_locals.get("active_site")
+
+    if not active_site:
         return
 
-    local_projects = local_project_settings.get(project_name)
-    if local_projects and "roots" in local_projects:
-        for root_name, path in local_projects["roots"].items():
-            if root_name not in root_data:
-                continue
+    roots_locals = default_locals.get("roots", {}).get(active_site, {})
+    if project_name != DEFAULT_PROJECT_KEY:
+        roots_locals.update(
+            project_locals.get("roots", {}).get(active_site, {})
+        )
 
-            anatomy_settings["roots"][root_name][current_platform] = (
-                path
-            )
+    if not roots_locals:
+        return
+
+    current_platform = platform.system().lower()
+
+    root_data = anatomy_settings["roots"]
+    for root_name, path in roots_locals.items():
+        if root_name not in root_data:
+            continue
+        anatomy_settings["roots"][root_name][current_platform] = (
+            path
+        )
 
 
 def get_system_settings(clear_metadata=True):
