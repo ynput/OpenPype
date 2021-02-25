@@ -14,6 +14,12 @@ from .widgets import (
 LOCAL_ROOTS_KEY = "roots"
 
 
+def get_active_sites(project_settings):
+    global_entity = project_settings["project_settings"]["global"]
+    sites_entity = global_entity["sync_server"]["sites"]
+    return tuple(sites_entity.keys())
+
+
 class _ProjectListWidget(ProjectListWidget):
     def on_item_clicked(self, new_index):
         new_project_name = new_index.data(QtCore.Qt.DisplayRole)
@@ -123,11 +129,10 @@ class RootsWidget(QtWidgets.QWidget):
         super(RootsWidget, self).__init__(parent)
 
         self.project_settings = project_settings
-        self.widgts_by_root_name = {}
+        self.site_widgets = []
         self.local_project_settings = None
         self.local_project_settings_orig = None
         self._project_name = None
-        self._site_name = None
 
         self.content_layout = QtWidgets.QVBoxLayout(self)
 
@@ -136,35 +141,43 @@ class RootsWidget(QtWidgets.QWidget):
             item = self.content_layout.itemAt(0)
             item.widget().hide()
             self.content_layout.removeItem(item)
-        self.widgts_by_root_name.clear()
+        self.site_widgets = []
 
     def refresh(self):
         self._clear_widgets()
 
-        if self._project_name is None or self._site_name is None:
+        if self._project_name is None:
             return
 
-        # Site label
-        self.content_layout.addWidget(QtWidgets.QLabel(self._site_name, self))
-
-        # Root inputs
         roots_entity = (
             self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
         )
-        for root_name, path_entity in roots_entity.items():
-            platform_entity = path_entity[platform.system().lower()]
-            root_widget = RootInputWidget(
-                self.local_project_settings,
-                self.local_project_settings_orig,
-                platform_entity,
-                root_name,
-                self._project_name,
-                self._site_name,
-                self
-            )
+        # Site label
+        for site_name in get_active_sites(self.project_settings):
+            site_widget = QtWidgets.QWidget(self)
+            site_layout = QtWidgets.QVBoxLayout(site_widget)
 
-            self.content_layout.addWidget(root_widget)
-            self.widgts_by_root_name[root_name] = root_widget
+            site_label = QtWidgets.QLabel(site_name, site_widget)
+
+            site_layout.addWidget(site_label)
+
+            # Root inputs
+            for root_name, path_entity in roots_entity.items():
+                platform_entity = path_entity[platform.system().lower()]
+                root_widget = RootInputWidget(
+                    self.local_project_settings,
+                    self.local_project_settings_orig,
+                    platform_entity,
+                    root_name,
+                    self._project_name,
+                    site_name,
+                    site_widget
+                )
+
+                site_layout.addWidget(root_widget)
+
+            self.site_widgets.append(site_widget)
+            self.content_layout.addWidget(site_widget)
 
         # Add spacer so other widgets are squeezed to top
         self.content_layout.addWidget(SpacerWidget(self), 1)
@@ -175,17 +188,12 @@ class RootsWidget(QtWidgets.QWidget):
             dict(local_project_settings)
         )
 
-    def change_site(self, site_name):
-        self._site_name = site_name
-        self.refresh()
-
     def change_project(self, project_name):
         self._project_name = project_name
         self.refresh()
 
 
 class _SiteCombobox(QtWidgets.QWidget):
-    site_changed = QtCore.Signal(str)
     input_label = None
 
     def __init__(self, project_settings, parent):
@@ -375,7 +383,6 @@ class _SiteCombobox(QtWidgets.QWidget):
             self.combobox_input.setCurrentIndex(index)
 
         self.project_name = project_name
-        self.site_changed.emit(self.current_text())
         self.update_style()
 
     def _on_index_change(self):
@@ -383,7 +390,6 @@ class _SiteCombobox(QtWidgets.QWidget):
             return
 
         self._set_local_settings_value(self.current_text())
-        self.site_changed.emit(self.current_text())
         self.update_style()
 
     def _set_local_settings_value(self, value):
@@ -412,9 +418,7 @@ class AciveSiteCombo(_SiteCombobox):
     input_label = "Active site"
 
     def _get_project_sites(self):
-        global_entity = self.project_settings["project_settings"]["global"]
-        sites_entity = global_entity["sync_server"]["sites"]
-        return tuple(sites_entity.keys())
+        return get_active_sites(self.project_settings)
 
     def _get_local_settings_item(self, project_name, data=None):
         if data is None:
@@ -480,7 +484,6 @@ class RootSiteWidget(QtWidgets.QWidget):
         main_layout.addWidget(roots_widget)
         main_layout.addWidget(SpacerWidget(self), 1)
 
-        active_site_widget.site_changed.connect(self._on_acite_site_change)
         self.active_site_widget = active_site_widget
         self.remote_site_widget = remote_site_widget
         self.roots_widget = roots_widget
@@ -504,13 +507,7 @@ class RootSiteWidget(QtWidgets.QWidget):
         if project_name is None:
             project_name = DEFAULT_PROJECT_KEY
 
-        self.change_project(project_name)            
-
-    def _on_acite_site_change(self, site_name):
-        self._change_active_site(site_name)
-
-    def _change_active_site(self, site_name):
-        self.roots_widget.change_site(site_name)
+        self.change_project(project_name)
 
     def change_project(self, project_name):
         self._project_name = project_name
