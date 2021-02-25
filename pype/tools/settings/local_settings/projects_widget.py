@@ -1,12 +1,15 @@
 import platform
 import copy
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 from pype.tools.settings.settings import ProjectListWidget
 from pype.settings.constants import (
     PROJECT_ANATOMY_KEY,
     DEFAULT_PROJECT_KEY
 )
-from .widgets import SpacerWidget
+from .widgets import (
+    SpacerWidget,
+    ProxyLabelWidget
+)
 
 LOCAL_ROOTS_KEY = "roots"
 
@@ -196,12 +199,17 @@ class _SiteCombobox(QtWidgets.QWidget):
         self.default_override_value = None
         self.project_override_value = None
 
-        label_widget = QtWidgets.QLabel(self)
+        label_widget = ProxyLabelWidget("", self._mouse_release_callback, self)
         combobox_input = QtWidgets.QComboBox(self)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(label_widget)
         main_layout.addWidget(combobox_input)
+
+        # --- START --- DEBUG widget
+        self._debug_label = QtWidgets.QLabel("*", self)
+        main_layout.addWidget(self._debug_label)
+        # --- END ---
 
         combobox_input.currentIndexChanged.connect(self._on_index_change)
         self.label_widget = label_widget
@@ -209,11 +217,119 @@ class _SiteCombobox(QtWidgets.QWidget):
 
         self._ui_tweaks()
 
+    def _set_current_text(self, text):
+        index = None
+        if text:
+            idx = self.combobox_input.findText(text)
+            if idx >= 0:
+                index = idx
+
+        if index:
+            self.combobox_input.setCurrentIndex(index)
+            return True
+        return False
+
+    def update_style(self):
+        if self.project_name is None:
+            self._debug_label.setText("None")
+            return
+
+        current_value = self._get_local_settings_item(self.project_name)
+        orig_value = self._get_local_settings_item(
+            self.project_name, self.local_project_settings_orig
+        )
+        if current_value and orig_value:
+            modified = current_value != orig_value
+        elif not current_value and not orig_value:
+            modified = False
+        else:
+            modified = True
+
+        if modified:
+            self._debug_label.setText("Modified")
+            return
+
+        if self.project_name == DEFAULT_PROJECT_KEY:
+            if not current_value:
+                self._debug_label.setText("No active site")
+            else:
+                self._debug_label.setText("Active default")
+        else:
+            if not current_value:
+                self._debug_label.setText("Default active site")
+            else:
+                self._debug_label.setText("Active project")
+
+    def _mouse_release_callback(self, event):
+        if event.button() != QtCore.Qt.RightButton:
+            return
+        self._show_actions()
+
+    def _remove_from_local(self):
+        if (
+            self.project_name != DEFAULT_PROJECT_KEY
+            and self.default_override_value
+        ):
+            _project_name = self.project_name
+            self.project_name = None
+            self._set_current_text(self.default_override_value)
+            self.project_name = _project_name
+
+        self._set_local_settings_value("")
+        self.update_style()
+
+    def _add_to_local(self):
+        self._set_local_settings_value(self.current_text())
+        self.update_style()
+
+    def _add_actions(self, menu, actions_mapping):
+        # TODO better labels
+        if self.project_name == DEFAULT_PROJECT_KEY:
+            if self.default_override_value:
+                action = QtWidgets.QAction("Remove from default")
+                callback = self._remove_from_local
+            else:
+                action = QtWidgets.QAction("Add to default")
+                callback = self._add_to_local
+        else:
+            if self.project_override_value:
+                action = QtWidgets.QAction("Remove from project")
+                callback = self._remove_from_local
+            else:
+                action = QtWidgets.QAction("Add to project")
+                callback = self._add_to_local
+
+        actions_mapping[action] = callback
+        menu.addAction(action)
+
+    def _show_actions(self):
+        if self.project_name is None:
+            return
+
+        menu = QtWidgets.QMenu(self)
+        actions_mapping = {}
+
+        self._add_actions(menu, actions_mapping)
+
+        if not actions_mapping:
+            action = QtWidgets.QAction("< No action >")
+            actions_mapping[action] = None
+            menu.addAction(action)
+
+        result = menu.exec_(QtGui.QCursor.pos())
+        if result:
+            to_run = actions_mapping[result]
+            if to_run:
+                to_run()
+
     def set_value(self, local_project_settings):
         self.local_project_settings = local_project_settings
         self.local_project_settings_orig = copy.deepcopy(
             dict(local_project_settings)
         )
+
+    def current_text(self):
+        return self.combobox_input.currentText()
 
     def change_project(self, project_name):
         self.default_override_value = None
@@ -222,6 +338,7 @@ class _SiteCombobox(QtWidgets.QWidget):
         self.project_name = None
         self.combobox_input.clear()
         if project_name is None:
+            self.update_style()
             return
 
         self.is_default_project = bool(project_name == DEFAULT_PROJECT_KEY)
@@ -239,40 +356,54 @@ class _SiteCombobox(QtWidgets.QWidget):
             idx = self.combobox_input.findText(project_item)
             if idx >= 0:
                 self.project_override_value = project_item
-                index = self.combobox_input.model().index(idx, 0)
+                index = idx
 
         if default_item:
             idx = self.combobox_input.findText(default_item)
             if idx >= 0:
                 self.default_override_value = default_item
-                if not index:
-                    index = self.combobox_input.model().index(idx, 0)
+                if index is None:
+                    index = idx
         if index:
             self.combobox_input.setCurrentIndex(index)
 
         self.project_name = project_name
-        self.site_changed.emit(self.combobox_input.currentText())
+        self.site_changed.emit(self.current_text())
+        self.update_style()
 
     def _on_index_change(self):
         if self.project_name is None:
             return
-        self.site_changed.emit(self.combobox_input.currentText())
-        print("here")
+
+        self._set_local_settings_value(self.current_text())
+        self.site_changed.emit(self.current_text())
+        self.update_style()
+
+    def _set_local_settings_value(self, value):
+        raise NotImplementedError(
+            "{} `_set_local_settings_value` not implemented".format(
+                self.__class__.__name__
+            )
+        )
 
     def _ui_tweaks(self):
-        raise NotImplementedError("_ui_tweaks not implemented {}".format(
+        raise NotImplementedError("{} `_ui_tweaks` not implemented".format(
             self.__class__.__name__
         ))
 
     def _get_project_sites(self):
-        raise NotImplementedError("_ui_tweaks not implemented {}".format(
-            self.__class__.__name__
-        ))
+        raise NotImplementedError(
+            "{} `_get_project_sites` not implemented".format(
+                self.__class__.__name__
+            )
+        )
 
-    def _get_local_settings_item(self, project_name):
-        raise NotImplementedError("_ui_tweaks not implemented {}".format(
-            self.__class__.__name__
-        ))
+    def _get_local_settings_item(self, project_name, data=None):
+        raise NotImplementedError(
+            "{}`_get_local_settings_item` not implemented".format(
+                self.__class__.__name__
+            )
+        )
 
 
 class AciveSiteCombo(_SiteCombobox):
@@ -284,12 +415,19 @@ class AciveSiteCombo(_SiteCombobox):
         sites_entity = global_entity["sync_server"]["sites"]
         return tuple(sites_entity.keys())
 
-    def _get_local_settings_item(self, project_name):
-        project_values = self.local_project_settings.get(project_name)
+    def _get_local_settings_item(self, project_name, data=None):
+        if data is None:
+            data = self.local_project_settings
+        project_values = data.get(project_name)
         value = None
         if project_values:
             value = project_values.get("active_site")
         return value
+
+    def _set_local_settings_value(self, value):
+        if self.project_name not in self.local_project_settings:
+            self.local_project_settings[self.project_name] = {}
+        self.local_project_settings[self.project_name]["active_site"] = value
 
 
 class RemoteSiteCombo(_SiteCombobox):
@@ -301,12 +439,19 @@ class RemoteSiteCombo(_SiteCombobox):
         sites_entity = global_entity["sync_server"]["sites"]
         return tuple(sites_entity.keys())
 
-    def _get_local_settings_item(self, project_name):
-        project_values = self.local_project_settings.get(project_name)
+    def _get_local_settings_item(self, project_name, data=None):
+        if data is None:
+            data = self.local_project_settings
+        project_values = data.get(project_name)
         value = None
         if project_values:
             value = project_values.get("remote_site")
         return value
+
+    def _set_local_settings_value(self, value):
+        if self.project_name not in self.local_project_settings:
+            self.local_project_settings[self.project_name] = {}
+        self.local_project_settings[self.project_name]["remote_site"] = value
 
 
 class RootSiteWidget(QtWidgets.QWidget):
@@ -419,11 +564,22 @@ class ProjectSettingsWidget(QtWidgets.QWidget):
 
         self.projects_widget.refresh()
 
-    def settings_value(self):
+    def _clear_value(self, value):
+        if not value:
+            return None
+
+        if not isinstance(value, dict):
+            return value
+
         output = {}
-        for project_name, value in self.local_project_settings.items():
-            if value:
-                output[project_name] = value
+        for _key, _value in value.items():
+            _modified_value = self._clear_value(_value)
+            if _modified_value:
+                output[_key] = _modified_value
+        return output
+
+    def settings_value(self):
+        output = self._clear_value(self.local_project_settings)
         if not output:
             return None
         return output
