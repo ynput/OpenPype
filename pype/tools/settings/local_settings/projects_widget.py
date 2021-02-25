@@ -206,11 +206,6 @@ class _SiteCombobox(QtWidgets.QWidget):
         main_layout.addWidget(label_widget)
         main_layout.addWidget(combobox_input)
 
-        # --- START --- DEBUG widget
-        self._debug_label = QtWidgets.QLabel("*", self)
-        main_layout.addWidget(self._debug_label)
-        # --- END ---
-
         combobox_input.currentIndexChanged.connect(self._on_index_change)
         self.label_widget = label_widget
         self.combobox_input = combobox_input
@@ -229,10 +224,9 @@ class _SiteCombobox(QtWidgets.QWidget):
             return True
         return False
 
-    def update_style(self):
+    def _get_style_state(self):
         if self.project_name is None:
-            self._debug_label.setText("None")
-            return
+            return ""
 
         current_value = self._get_local_settings_item(self.project_name)
         orig_value = self._get_local_settings_item(
@@ -246,19 +240,29 @@ class _SiteCombobox(QtWidgets.QWidget):
             modified = True
 
         if modified:
-            self._debug_label.setText("Modified")
-            return
+            return "modified"
 
         if self.project_name == DEFAULT_PROJECT_KEY:
-            if not current_value:
-                self._debug_label.setText("No active site")
-            else:
-                self._debug_label.setText("Active default")
+            if current_value:
+                return "studio"
         else:
-            if not current_value:
-                self._debug_label.setText("Default active site")
-            else:
-                self._debug_label.setText("Active project")
+            if current_value:
+                return "overriden"
+
+            studio_value = current_value = self._get_local_settings_item(
+                DEFAULT_PROJECT_KEY
+            )
+            if studio_value:
+                return "studio"
+        return ""
+
+    def update_style(self):
+        state = self._get_style_state()
+
+        self.combobox_input.setProperty("input-state", state)
+        self.combobox_input.style().polish(self.combobox_input)
+
+        self.label_widget.set_label_property("state", state)
 
     def _mouse_release_callback(self, event):
         if event.button() != QtCore.Qt.RightButton:

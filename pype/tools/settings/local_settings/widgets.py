@@ -42,6 +42,10 @@ class ProxyLabelWidget(QtWidgets.QWidget):
     def setText(self, text):
         self.label_widget.setText(text)
 
+    def set_label_property(self, *args, **kwargs):
+        self.label_widget.setProperty(*args, **kwargs)
+        self.label_widget.style().polish(self.label_widget)
+
     def mouseReleaseEvent(self, event):
         if self.mouse_release_callback:
             return self.mouse_release_callback(event)
