@@ -133,7 +133,7 @@ main () {
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
   echo -e "${BIGreen}>>>${RST} Building ..."
-  poetry run python3 "$pype_root/setup.py" build > "$pype_root/build/build.log"
+  poetry run python3 "$pype_root/setup.py" build > "$pype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
   poetry run python3 "$pype_root/tools/build_dependencies.py"
 
   echo -e "${BICyan}>>>${RST} All done. You will find Pype and build log in \c"
