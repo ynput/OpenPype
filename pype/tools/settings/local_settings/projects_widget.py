@@ -186,6 +186,7 @@ class RootsWidget(QtWidgets.QWidget):
 
 class _SiteCombobox(QtWidgets.QWidget):
     site_changed = QtCore.Signal(str)
+    input_label = None
 
     def __init__(self, project_settings, parent):
         super(_SiteCombobox, self).__init__(parent)
@@ -199,7 +200,11 @@ class _SiteCombobox(QtWidgets.QWidget):
         self.default_override_value = None
         self.project_override_value = None
 
-        label_widget = ProxyLabelWidget("", self._mouse_release_callback, self)
+        label_widget = ProxyLabelWidget(
+            self.input_label,
+            self._mouse_release_callback,
+            self
+        )
         combobox_input = QtWidgets.QComboBox(self)
 
         main_layout = QtWidgets.QHBoxLayout(self)
@@ -209,8 +214,6 @@ class _SiteCombobox(QtWidgets.QWidget):
         combobox_input.currentIndexChanged.connect(self._on_index_change)
         self.label_widget = label_widget
         self.combobox_input = combobox_input
-
-        self._ui_tweaks()
 
     def _set_current_text(self, text):
         index = None
@@ -390,11 +393,6 @@ class _SiteCombobox(QtWidgets.QWidget):
             )
         )
 
-    def _ui_tweaks(self):
-        raise NotImplementedError("{} `_ui_tweaks` not implemented".format(
-            self.__class__.__name__
-        ))
-
     def _get_project_sites(self):
         raise NotImplementedError(
             "{} `_get_project_sites` not implemented".format(
@@ -411,8 +409,7 @@ class _SiteCombobox(QtWidgets.QWidget):
 
 
 class AciveSiteCombo(_SiteCombobox):
-    def _ui_tweaks(self):
-        self.label_widget.setText("Active site")
+    input_label = "Active site"
 
     def _get_project_sites(self):
         global_entity = self.project_settings["project_settings"]["global"]
@@ -435,8 +432,7 @@ class AciveSiteCombo(_SiteCombobox):
 
 
 class RemoteSiteCombo(_SiteCombobox):
-    def _ui_tweaks(self):
-        self.label_widget.setText("Remote site")
+    input_label = "Remote site"
 
     def _get_project_sites(self):
         global_entity = self.project_settings["project_settings"]["global"]
