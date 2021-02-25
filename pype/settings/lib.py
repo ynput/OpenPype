@@ -409,6 +409,17 @@ def apply_local_settings_on_anatomy_settings(
         active_site = default_locals.get("active_site")
 
     if not active_site:
+        project_settings = get_project_settings(project_name)
+        active_site = (
+            project_settings
+            ["global"]
+            ["sync_server"]
+            ["config"]
+            ["active_site"]
+        )
+
+    # QUESTION should raise an exception?
+    if not active_site:
         return
 
     roots_locals = default_locals.get("roots", {}).get(active_site, {})
