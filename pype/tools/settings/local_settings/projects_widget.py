@@ -318,12 +318,15 @@ class RootSiteWidget(QtWidgets.QWidget):
         self._project_name = None
 
         sites_widget = QtWidgets.QWidget(self)
-        sites_layout = QtWidgets.QHBoxLayout(sites_widget)
 
         active_site_widget = AciveSiteCombo(project_settings, sites_widget)
         remote_site_widget = RemoteSiteCombo(project_settings, sites_widget)
+
+        sites_layout = QtWidgets.QHBoxLayout(sites_widget)
+        sites_layout.setContentsMargins(0, 0, 0, 0)
         sites_layout.addWidget(active_site_widget)
         sites_layout.addWidget(remote_site_widget)
+        sites_layout.addWidget(SpacerWidget(self), 1)
 
         roots_widget = RootsWidget(project_settings, self)
 
