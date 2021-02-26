@@ -19,7 +19,7 @@ def CleanupDeadlineEventListener(eventListener):
 
 
 class PypeEventListener(Deadline.Events.DeadlineEventListener):
-    """ 
+    """
         Called on every Deadline plugin event, used for injecting Pype
         environment variables into rendering process.
 
@@ -30,11 +30,11 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
                  AVALON_APP_NAME
         Without these only global environment would be pulled from Pype
 
-        Configure 'Path to Pype executable dir' in Deadlines 
+        Configure 'Path to Pype executable dir' in Deadlines
             'Tools > Configure Events > pype '
         Only directory path is needed.
 
-    """      
+    """
     ALREADY_INJECTED = False
 
     def __init__(self):
@@ -111,7 +111,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
             self.LogInfo("Extending sys.path with: " + str(path))
             sys.path.append(path)
 
-        self.LogInfo("inject_pype_environment start")     
+        self.LogInfo("inject_pype_environment start")
         try:
             pype_command = "pype_console"
             if platform.system().lower() == "linux":
@@ -165,12 +165,12 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
             Deadline.Scripting.RepositoryUtils.SaveJob(job)  # IMPORTANT
             self.ALREADY_INJECTED = True
-            
+
             os.remove(export_url)
 
             self.LogInfo("inject_pype_environment end")
         except Exception:
-            import traceback           
+            import traceback
             self.LogInfo(traceback.format_exc())
             self.LogInfo("inject_pype_environment failed")
             Deadline.Scripting.RepositoryUtils.FailJob(job)
@@ -220,7 +220,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
     def OnJobError(self, job, task, report):
         self.LogInfo("OnJobError LOGGING")
-        #data = {"task": task, "report": report}
+        # data = {"task": task, "report": report}
 
     def OnJobPurged(self, job):
         pass
@@ -242,7 +242,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
     def OnSlaveRendering(self, host_name, job):
         self.LogInfo("OnSlaveRendering LOGGING")
-        
+
     def OnSlaveStartingJob(self, host_name, job):
         self.LogInfo("OnSlaveStartingJob LOGGING")
         # inject params must be here for Resubmits
