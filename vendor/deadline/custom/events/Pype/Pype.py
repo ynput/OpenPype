@@ -1,6 +1,4 @@
-import os
 import sys
-import logging
 import json
 import subprocess
 import platform
@@ -11,7 +9,6 @@ import time
 import Deadline.Events
 import Deadline.Scripting
 
-from System import Environment
 
 def GetDeadlineEventListener():
     return PypeEventListener()
@@ -71,7 +68,6 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
         self.ALREADY_INJECTED = False
 
-
     def Cleanup(self):
         del self.OnJobSubmittedCallback
         del self.OnJobStartedCallback
@@ -101,7 +97,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         del self.OnThermalShutdownCallback
         del self.OnMachineRestartCallback
 
-    def inject_pype_environment(self, job, additonalData={}):
+    def inject_pype_environment(self, job, additonalData=None):
 
         if self.ALREADY_INJECTED:
             self.LogInfo("Environment injected previously")
@@ -117,16 +113,19 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
         self.LogInfo("inject_pype_environment start")     
         try:
+            pype_command = "pype_console"
             if platform.system().lower() == "linux":
                 pype_command = "pype_console.sh"
-            elif platform.system().lower() == "windows":
+            if platform.system().lower() == "windows":
                 pype_command = "pype_console.exe"
 
-            pype_root = self.GetConfigEntryWithDefault("PypeExecutable", "").strip()
+            pype_root = self.GetConfigEntryWithDefault("PypeExecutable", "")
 
-            pype_app = os.path.join(pype_root , pype_command)
+            pype_app = os.path.join(pype_root.strip(), pype_command)
             if not os.path.exists(pype_app):
-                raise RuntimeError("App '{}' doesn't exist. Fix it in Tools > Configure Events > pype".format(pype_app))
+                raise RuntimeError("App '{}' doesn't exist. " +
+                                   "Fix it in Tools > Configure Events > " +
+                                   "pype".format(pype_app))
 
             # tempfile.TemporaryFile cannot be used because of locking
             export_url = os.path.join(tempfile.gettempdir(),
@@ -134,20 +133,21 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
                                       'env.json')  # add HHMMSS + delete later
             self.LogInfo("export_url {}".format(export_url))
 
-            additional_args = {}
-            additional_args['project'] = job.GetJobEnvironmentKeyValue('AVALON_PROJECT')
-            additional_args['asset'] = job.GetJobEnvironmentKeyValue('AVALON_ASSET')
-            additional_args['task'] = job.GetJobEnvironmentKeyValue('AVALON_TASK')
-            additional_args['app'] = job.GetJobEnvironmentKeyValue('AVALON_APP_NAME')
-            self.LogInfo("args::{}".format(additional_args))
+            add_args = {}
+            add_args['project'] = \
+                job.GetJobEnvironmentKeyValue('AVALON_PROJECT')
+            add_args['asset'] = job.GetJobEnvironmentKeyValue('AVALON_ASSET')
+            add_args['task'] = job.GetJobEnvironmentKeyValue('AVALON_TASK')
+            add_args['app'] = job.GetJobEnvironmentKeyValue('AVALON_APP_NAME')
+            self.LogInfo("args::{}".format(add_args))
 
             args = [
                 pype_app,
                 'extractenvironments',
                 export_url
             ]
-            if all(additional_args.values()):
-                for key, value in additional_args.items():
+            if all(add_args.values()):
+                for key, value in add_args.items():
                     args.append("--{}".format(key))
                     args.append(value)
 
@@ -163,13 +163,13 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
                 for key, value in contents.items():
                     job.SetJobEnvironmentKeyValue(key, value)
 
-            Deadline.Scripting.RepositoryUtils.SaveJob(job) # IMPORTANT
+            Deadline.Scripting.RepositoryUtils.SaveJob(job)  # IMPORTANT
             self.ALREADY_INJECTED = True
             
             os.remove(export_url)
 
             self.LogInfo("inject_pype_environment end")
-        except Exception as error:
+        except Exception:
             import traceback           
             self.LogInfo(traceback.format_exc())
             self.LogInfo("inject_pype_environment failed")
@@ -177,7 +177,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
             raise
 
     def updateFtrackStatus(self, job, statusName, createIfMissing=False):
-        "Updates version status on ftrack"
+        """Updates version status on ftrack"""
         pass
 
     def OnJobSubmitted(self, job):
@@ -220,7 +220,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
     def OnJobError(self, job, task, report):
         self.LogInfo("OnJobError LOGGING")
-        data = {"task": task, "report": report}
+        #data = {"task": task, "report": report}
 
     def OnJobPurged(self, job):
         pass
