@@ -1,14 +1,20 @@
 import tempfile
 import os
 import pyblish.api
+import avalon.api
 
 from pype.api import get_project_settings
-import inspect
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
 ValidateContentsOrder = pyblish.api.ValidatorOrder + 0.1
 ValidateSceneOrder = pyblish.api.ValidatorOrder + 0.2
 ValidateMeshOrder = pyblish.api.ValidatorOrder + 0.3
+
+
+class Creator(avalon.api.Creator):
+    @classmethod
+    def get_subset_name(cls, *a, **kw):
+        return super(Creator, cls).get_subset_name(*a, **kw)
 
 
 class ContextPlugin(pyblish.api.ContextPlugin):
