@@ -2,7 +2,6 @@ import tempfile
 import os
 import pyblish.api
 import avalon.api
-
 from pype.api import get_project_settings
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
@@ -11,10 +10,26 @@ ValidateSceneOrder = pyblish.api.ValidatorOrder + 0.2
 ValidateMeshOrder = pyblish.api.ValidatorOrder + 0.3
 
 
-class Creator(avalon.api.Creator):
+class PypeCreatorMixin:
+    """Helper to override avalon's default class methods.
+
+    Mixin class must be used as first in inheritance order to override methods.
+    """
     @classmethod
-    def get_subset_name(cls, *a, **kw):
-        return super(Creator, cls).get_subset_name(*a, **kw)
+    def get_subset_name(cls, user_text, task_name, asset_id, project_name):
+        if not cls.family:
+            return ""
+
+        # Capitalize first letter of user input
+        if user_text:
+            user_text = user_text[0].capitalize() + user_text[1:]
+
+        family = cls.family.rsplit(".", 1)[-1]
+        return "{}___{}".format(family, user_text)
+
+
+class Creator(PypeCreatorMixin, avalon.api.Creator):
+    pass
 
 
 class ContextPlugin(pyblish.api.ContextPlugin):
