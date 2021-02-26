@@ -5,7 +5,7 @@ from .applications import compile_list_of_regexes
 log = logging.getLogger(__name__)
 
 
-def _profile_exclusion(matching_profiles):
+def _profile_exclusion(matching_profiles, logger):
     """Find out most matching profile byt host, task and family match.
 
     Profiles are selectively filtered. Each item in passed argument must
@@ -26,14 +26,12 @@ def _profile_exclusion(matching_profiles):
     Returns:
         dict: Most matching profile.
     """
-    log.info(
+
+    logger.info(
         "Search for first most matching profile in match order:"
         " Host name -> Task name -> Family."
     )
-    # Filter all profiles with highest points value. First filter profiles
-    # with matching host if there are any then filter profiles by task
-    # name if there are any and lastly filter by family. Else use first in
-    # list.
+
     if not matching_profiles:
         return None
 
@@ -69,9 +67,9 @@ def validate_value_by_regexes(value, in_list):
         value (str): String where regexes is checked.
 
     Returns:
-        int: Returns `0` when list is not set or is empty. Returns `1` when
-            any regex match value and returns `-1` when none of regexes
-            match value entered.
+        int: Returns `0` when list is not set, is empty or contain "*".
+            Returns `1` when any regex match value and returns `-1`
+            when none of regexes match entered value.
     """
     if not in_list:
         return 0
@@ -89,7 +87,7 @@ def validate_value_by_regexes(value, in_list):
     return -1
 
 
-def filter_profiles(profiles_data, key_values, keys_order=None):
+def filter_profiles(profiles_data, key_values, keys_order=None, logger=None):
     """ Filter profiles by entered key -> values.
 
     Profile if marked with score for each key/value from `key_values` with
@@ -113,14 +111,17 @@ def filter_profiles(profiles_data, key_values, keys_order=None):
             available in profile and if Value is matching it's values.
         keys_order (list, tuple): Order of keys from `key_values` which matters
             only when multiple profiles have same score.
+        logger (logging.Logger): Optionally can be passed different logger.
 
     Returns:
         dict/None: Return most matching profile or None if none of profiles
             match at least one criteria.
     """
-
     if not profiles_data:
         return None
+
+    if not logger:
+        logger = log
 
     if not keys_order:
         keys_order = tuple(key_values.keys())
@@ -146,7 +147,7 @@ def filter_profiles(profiles_data, key_values, keys_order=None):
             profile_value = profile.get(key) or []
             match = validate_value_by_regexes(value, profile.get(key))
             if match == -1:
-                log.debug(
+                logger.debug(
                     "\"{}\" not found in {}".format(key, profile_value)
                 )
                 continue
@@ -170,12 +171,14 @@ def filter_profiles(profiles_data, key_values, keys_order=None):
     ])
 
     if not matching_profiles:
-        log.warning("None of profiles match your setup. {}".format(log_parts))
+        logger.warning(
+            "None of profiles match your setup. {}".format(log_parts)
+        )
         return None
 
     if len(matching_profiles) > 1:
-        log.warning(
+        logger.warning(
             "More than one profile match your setup. {}".format(log_parts)
         )
 
-    return _profile_exclusion(matching_profiles)
+    return _profile_exclusion(matching_profiles, logger)
