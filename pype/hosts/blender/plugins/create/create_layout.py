@@ -3,11 +3,11 @@
 import bpy
 
 from avalon import api
-from avalon.blender import Creator, lib
+from avalon.blender import lib
 import pype.hosts.blender.api.plugin
 
 
-class CreateLayout(Creator):
+class CreateLayout(pype.hosts.blender.api.plugin.Creator):
     """Layout output for character rigs"""
 
     name = "layoutMain"

@@ -9,7 +9,8 @@ from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
 from pype.hosts.maya.api import (
-    lib, plugin
+    lib,
+    plugin
 )
 from pype.api import get_system_settings
 
