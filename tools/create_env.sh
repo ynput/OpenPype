@@ -52,6 +52,24 @@ BIPurple='\033[1;95m'     # Purple
 BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
 
+
+poetry_verbosity=""
+while :; do
+  case $1 in
+    --verbose)
+      poetry_verbosity="-vvv"
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+  esac
+  shift
+done
+
+
 ##############################################################################
 # Detect required version of python
 # Globals:
@@ -140,11 +158,11 @@ main () {
 
   if [ -f "$pype_root/poetry.lock" ]; then
     echo -e "${BIGreen}>>>${RST} Updating dependencies ..."
-    poetry update || { echo -e "${BIRed}!!!${RST} Poetry environment update failed"; return; }
   else
     echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
-    poetry install || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
   fi
+
+  poetry install $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
 
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
@@ -158,4 +176,4 @@ main () {
   poetry run pip install --force-reinstall wheel
 }
 
-main
+main -3

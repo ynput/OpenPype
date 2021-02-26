@@ -12,6 +12,7 @@ keywords = ["Pipeline", "Avalon", "VFX", "animation", "automation", "tracking", 
 
 [tool.poetry.dependencies]
 python = "3.7.*"
+aiohttp = "^3.7"
 aiohttp_json_rpc = "*" # TVPaint server
 acre = { git = "https://github.com/pypeclub/acre.git" }
 opentimelineio = { version = "0.14.0.dev1", source = "pype" }
