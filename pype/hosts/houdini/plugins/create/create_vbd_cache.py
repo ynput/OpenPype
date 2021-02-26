@@ -1,7 +1,7 @@
-from avalon import houdini
+from pype.hosts.houdini.api import plugin
 
 
-class CreateVDBCache(houdini.Creator):
+class CreateVDBCache(plugin.Creator):
     """OpenVDB from Geometry ROP"""
 
     name = "vbdcache"
