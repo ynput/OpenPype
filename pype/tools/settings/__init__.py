@@ -1,6 +1,6 @@
 import sys
 from Qt import QtWidgets, QtGui
-
+from .local_settings import LocalSettingsWindow
 from .settings import (
     style,
     MainWidget,
@@ -33,5 +33,6 @@ __all__ = (
     "style",
     "MainWidget",
     "ProjectListWidget",
+    "LocalSettingsWindow",
     "main"
 )

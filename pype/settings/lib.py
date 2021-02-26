@@ -2,6 +2,7 @@ import os
 import json
 import functools
 import logging
+import platform
 import copy
 from .constants import (
     M_OVERRIDEN_KEY,
@@ -11,7 +12,8 @@ from .constants import (
 
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
-    PROJECT_ANATOMY_KEY
+    PROJECT_ANATOMY_KEY,
+    DEFAULT_PROJECT_KEY
 )
 
 log = logging.getLogger(__name__)
@@ -32,6 +34,9 @@ _DEFAULT_SETTINGS = None
 # Handler of studio overrides
 _SETTINGS_HANDLER = None
 
+# Handler of local settings
+_LOCAL_SETTINGS_HANDLER = None
+
 
 def require_handler(func):
     @functools.wraps(func)
@@ -43,11 +48,26 @@ def require_handler(func):
     return wrapper
 
 
+def require_local_handler(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        global _LOCAL_SETTINGS_HANDLER
+        if _LOCAL_SETTINGS_HANDLER is None:
+            _LOCAL_SETTINGS_HANDLER = create_local_settings_handler()
+        return func(*args, **kwargs)
+    return wrapper
+
+
 def create_settings_handler():
     from .handlers import MongoSettingsHandler
     # Handler can't be created in global space on initialization but only when
     # needed. Plus here may be logic: Which handler is used (in future).
     return MongoSettingsHandler()
+
+
+def create_local_settings_handler():
+    from .handlers import MongoLocalSettingsHandler
+    return MongoLocalSettingsHandler()
 
 
 @require_handler
@@ -88,6 +108,16 @@ def get_project_settings_overrides(project_name):
 @require_handler
 def get_project_anatomy_overrides(project_name):
     return _SETTINGS_HANDLER.get_project_anatomy_overrides(project_name)
+
+
+@require_local_handler
+def save_local_settings(data):
+    return _LOCAL_SETTINGS_HANDLER.save_local_settings(data)
+
+
+@require_local_handler
+def get_local_settings():
+    return _LOCAL_SETTINGS_HANDLER.get_local_settings()
 
 
 class DuplicatedEnvGroups(Exception):
@@ -309,6 +339,109 @@ def apply_overrides(source_data, override_data):
     return merge_overrides(_source_data, override_data)
 
 
+def apply_local_settings_on_system_settings(system_settings, local_settings):
+    """Apply local settings on studio system settings.
+
+    ATM local settings can modify only application executables. Executable
+    values are not overriden but prepended.
+    """
+    if not local_settings or "applications" not in local_settings:
+        return
+
+    current_platform = platform.system().lower()
+    for app_group_name, value in local_settings["applications"].items():
+        if not value or app_group_name not in system_settings["applications"]:
+            continue
+
+        variants = system_settings["applications"][app_group_name]["variants"]
+        for app_name, app_value in value.items():
+            if not app_value or app_name not in variants:
+                continue
+
+            executable = app_value.get("executable")
+            if not executable:
+                continue
+            platform_executables = variants[app_name]["executables"].get(
+                current_platform
+            )
+            # TODO This is temporary fix until launch arguments will be stored
+            #   per platform and not per executable.
+            # - local settings store only executable
+            new_executables = [[executable, ""]]
+            new_executables.extend(platform_executables)
+            variants[app_name]["executables"] = new_executables
+
+
+def apply_local_settings_on_anatomy_settings(
+    anatomy_settings, local_settings, project_name
+):
+    """Apply local settings on anatomy settings.
+
+    ATM local settings can modify project roots. Project name is required as
+    local settings have data stored data by project's name.
+
+    Local settings override root values in this order:
+    1.) Check if local settings contain overrides for default project and
+        apply it's values on roots if there are any.
+    2.) If passed `project_name` is not None then check project specific
+        overrides in local settings for the project and apply it's value on
+        roots if there are any.
+
+    NOTE: Root values of default project from local settings are always applied
+        if are set.
+
+    Args:
+        anatomy_settings (dict): Data for anatomy settings.
+        local_settings (dict): Data of local settings.
+        project_name (str): Name of project for which anatomy data are.
+    """
+    if not local_settings:
+        return
+
+    local_project_settings = local_settings.get("projects")
+    if not local_project_settings:
+        return
+
+    project_locals = local_project_settings.get(project_name) or {}
+    default_locals = local_project_settings.get(DEFAULT_PROJECT_KEY) or {}
+    active_site = project_locals.get("active_site")
+    if not active_site:
+        active_site = default_locals.get("active_site")
+
+    if not active_site:
+        project_settings = get_project_settings(project_name)
+        active_site = (
+            project_settings
+            ["global"]
+            ["sync_server"]
+            ["config"]
+            ["active_site"]
+        )
+
+    # QUESTION should raise an exception?
+    if not active_site:
+        return
+
+    roots_locals = default_locals.get("roots", {}).get(active_site, {})
+    if project_name != DEFAULT_PROJECT_KEY:
+        roots_locals.update(
+            project_locals.get("roots", {}).get(active_site, {})
+        )
+
+    if not roots_locals:
+        return
+
+    current_platform = platform.system().lower()
+
+    root_data = anatomy_settings["roots"]
+    for root_name, path in roots_locals.items():
+        if root_name not in root_data:
+            continue
+        anatomy_settings["roots"][root_name][current_platform] = (
+            path
+        )
+
+
 def get_system_settings(clear_metadata=True):
     """System settings with applied studio overrides."""
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
@@ -316,6 +449,10 @@ def get_system_settings(clear_metadata=True):
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
+        # TODO local settings may be required to apply for environments
+        local_settings = get_local_settings()
+        apply_local_settings_on_system_settings(result, local_settings)
+
     return result
 
 
@@ -343,6 +480,8 @@ def get_default_anatomy_settings(clear_metadata=True):
             result[key] = value
     if clear_metadata:
         clear_metadata_from_settings(result)
+        local_settings = get_local_settings()
+        apply_local_settings_on_anatomy_settings(result, local_settings, None)
     return result
 
 
@@ -368,6 +507,10 @@ def get_anatomy_settings(project_name, clear_metadata=True):
             result[key] = value
     if clear_metadata:
         clear_metadata_from_settings(result)
+        local_settings = get_local_settings()
+        apply_local_settings_on_anatomy_settings(
+            result, local_settings, project_name
+        )
     return result
 
 
