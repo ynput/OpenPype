@@ -1,8 +1,10 @@
-import avalon.maya
-from pype.hosts.maya.api import lib
+from pype.hosts.maya.api import (
+    lib,
+    plugin
+)
 
 
-class CreatePointCache(avalon.maya.Creator):
+class CreatePointCache(plugin.Creator):
     """Alembic pointcache for animated data"""
 
     name = "pointcache"

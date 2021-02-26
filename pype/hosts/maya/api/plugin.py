@@ -1,5 +1,7 @@
 from avalon import api
 from avalon.vendor import qargparse
+import avalon.maya
+from pype.api import PypeCreatorMixin
 
 
 def get_reference_node_parents(ref):
@@ -24,6 +26,10 @@ def get_reference_node_parents(ref):
                                      referenceNode=True,
                                      parent=True)
     return parents
+
+
+class Creator(PypeCreatorMixin, avalon.maya.Creator):
+    pass
 
 
 class ReferenceLoader(api.Loader):

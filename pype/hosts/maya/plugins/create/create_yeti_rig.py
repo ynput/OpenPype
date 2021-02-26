@@ -1,10 +1,12 @@
 from maya import cmds
 
-from pype.hosts.maya.api import lib
-import avalon.maya
+from pype.hosts.maya.api import (
+    lib,
+    plugin
+)
 
 
-class CreateYetiRig(avalon.maya.Creator):
+class CreateYetiRig(plugin.Creator):
     """Output for procedural plugin nodes ( Yeti / XGen / etc)"""
 
     label = "Yeti Rig"
