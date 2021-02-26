@@ -370,11 +370,8 @@ class FamilyWidget(QtWidgets.QWidget):
         settings = get_project_settings(project_name)
         sp_settings = settings.get('standalonepublisher', {})
 
-        for key, creator in sp_settings.get("create", {}).items():
-            if key == "__dynamic_keys_labels__":
-                continue
-
-            creator = type(key, (Creator, ), creator)
+        for key, creator_data in sp_settings.get("create", {}).items():
+            creator = type(key, (Creator, ), creator_data)
 
             label = creator.label or creator.family
             item = QtWidgets.QListWidgetItem(label)
