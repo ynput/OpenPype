@@ -1,12 +1,12 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "publish",
     "label": "Publish plugins",
     "children": [
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "IntegrateMasterVersion",
             "label": "IntegrateMasterVersion",
@@ -21,7 +21,7 @@
         },
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "key": "ExtractJpegEXR",
             "label": "ExtractJpegEXR",
@@ -54,7 +54,7 @@
         },
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "ExtractReview",
             "label": "ExtractReview",
             "checkbox_key": "enabled",
@@ -188,7 +188,7 @@
         },
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "ExtractBurnin",
             "label": "ExtractBurnin",
             "checkbox_key": "enabled",
@@ -201,7 +201,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "key": "options",
                     "label": "Burnin formating options",
                     "children": [
@@ -268,7 +268,7 @@
                                 "label": "Burnins",
                                 "type": "dict-modifiable",
                                 "highlight_content": true,
-                                "collapsable": false,
+                                "collapsible": false,
                                 "object_type": {
                                     "type": "dict",
                                     "children": [
@@ -312,7 +312,7 @@
         },
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "IntegrateAssetNew",
             "label": "IntegrateAssetNew",
             "is_group": true,
@@ -326,7 +326,7 @@
         },
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "ProcessSubmittedJobOnFarm",
             "label": "ProcessSubmittedJobOnFarm",
             "checkbox_key": "enabled",

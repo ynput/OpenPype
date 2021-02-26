@@ -56,7 +56,7 @@ class FormWrapper(WrapperWidget):
 
 class CollapsibleWrapper(WrapperWidget):
     def create_ui(self):
-        self.collapsible = self.schema_data.get("collapsable", True)
+        self.collapsible = self.schema_data.get("collapsible", True)
         self.collapsed = self.schema_data.get("collapsed", True)
 
         content_widget = QtWidgets.QWidget(self)

@@ -46,6 +46,13 @@ class RenderInstance(object):
     frameEnd = attr.ib()  # start end
     frameStep = attr.ib()  # frame step
 
+    handleStart = attr.ib()  # start frame
+    handleEnd = attr.ib()  # start frame
+
+    # for softwares (like Harmony) where frame range cannot be set by DB
+    # handles need to be propagated if exist
+    ignoreFrameHandleCheck = attr.ib(default=False)
+
     # --------------------
     # With default values
     # metadata
@@ -154,8 +161,8 @@ class AbstractCollectRender(pyblish.api.ContextPlugin):
 
             frame_start_render = int(render_instance.frameStart)
             frame_end_render = int(render_instance.frameEnd)
-
-            if (int(context.data['frameStartHandle']) == frame_start_render
+            if (render_instance.ignoreFrameHandleCheck or
+                    int(context.data['frameStartHandle']) == frame_start_render
                     and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
 
                 handle_start = context.data['handleStart']

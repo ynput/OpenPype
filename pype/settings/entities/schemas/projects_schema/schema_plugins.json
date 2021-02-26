@@ -1,32 +1,32 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "plugins",
     "label": "Plugins",
     "children": [
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "standalonepublisher",
             "label": "Standalone Publisher",
             "children": [
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "key": "publish",
                     "label": "Publish plugins",
                     "is_file": true,
                     "children": [
                         {
                             "type": "dict",
-                            "collapsable": true,
+                            "collapsible": true,
                             "key": "ExtractThumbnailSP",
                             "label": "ExtractThumbnailSP",
                             "is_group": true,
                             "children": [
                                 {
                                     "type": "dict",
-                                    "collapsable": false,
+                                    "collapsible": false,
                                     "key": "ffmpeg_args",
                                     "label": "ffmpeg_args",
                                     "children": [

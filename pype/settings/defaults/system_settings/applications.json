@@ -1015,12 +1015,10 @@
         "host_name": "harmony",
         "environment": {
             "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1",
-            "PYBLISH_GUI_ALWAYS_EXEC": "1",
             "LIB_OPENHARMONY_PATH": "{PYPE_ROOT}/pype/vendor/OpenHarmony",
             "__environment_keys__": {
                 "harmony": [
                     "AVALON_HARMONY_WORKFILES_ON_LAUNCH",
-                    "PYBLISH_GUI_ALWAYS_EXEC",
                     "LIB_OPENHARMONY_PATH"
                 ]
             }

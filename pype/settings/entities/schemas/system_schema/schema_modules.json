@@ -2,14 +2,14 @@
     "key": "modules",
     "type": "dict",
     "label": "Modules",
-    "collapsable": true,
+    "collapsible": true,
     "is_file": true,
     "children": [
         {
             "type": "dict",
             "key": "avalon",
             "label": "Avalon",
-            "collapsable": true,
+            "collapsible": true,
             "children": [
                 {
                     "type": "text",
@@ -45,7 +45,7 @@
             "type": "dict",
             "key": "rest_api",
             "label": "Rest Api",
-            "collapsable": true,
+            "collapsible": true,
             "children": [
                 {
                     "type": "number",
@@ -70,7 +70,7 @@
             "type": "dict",
             "key": "timers_manager",
             "label": "Timers Manager",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
                 {
@@ -96,7 +96,7 @@
             "type": "dict",
             "key": "clockify",
             "label": "Clockify",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
                 {
@@ -114,7 +114,7 @@
             "type": "dict",
             "key": "sync_server",
             "label": "Sync Server",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "children": [{
                   "type": "boolean",
@@ -125,7 +125,7 @@
             "type": "dict",
             "key": "deadline",
             "label": "Deadline",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
                 {
@@ -144,7 +144,7 @@
             "type": "dict",
             "key": "muster",
             "label": "Muster",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
                 {
@@ -175,7 +175,7 @@
             "type": "dict",
             "key": "log_viewer",
             "label": "Logging",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
                 {
@@ -189,7 +189,7 @@
             "type": "dict",
             "key": "user",
             "label": "User setting",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
                 {
@@ -203,7 +203,7 @@
             "type": "dict",
             "key": "standalonepublish_tool",
             "label": "Standalone Publish",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
                 {
@@ -217,7 +217,7 @@
             "type": "dict",
             "key": "idle_manager",
             "label": "Idle Manager",
-            "collapsable": true,
+            "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
                 {

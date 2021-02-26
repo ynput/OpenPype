@@ -55,6 +55,7 @@ print(system_settings["general"]["studio_name"].value)
 
 from .exceptions import (
     DefaultsNotDefined,
+    StudioDefaultsNotDefined,
     InvalidValueType,
     SchemaMissingFileInfo,
     SchemeGroupHierarchyBug,
@@ -73,7 +74,10 @@ from .base_entity import (
     ItemEntity
 )
 
-from .root_entities import SystemSettings
+from .root_entities import (
+    SystemSettings,
+    ProjectSettings
+)
 
 from .item_entities import (
     PathEntity,
@@ -96,9 +100,16 @@ from .list_entity import ListEntity
 from .dict_immutable_keys_entity import DictImmutableKeysEntity
 from .dict_mutable_keys_entity import DictMutableKeysEntity
 
+from .anatomy_entities import (
+    AnatomyEntity,
+    AnatomyRootsEntity,
+    AnatomyTemplatesEntity
+)
+
 
 __all__ = (
     "DefaultsNotDefined",
+    "StudioDefaultsNotDefined",
     "InvalidValueType",
     "SchemaMissingFileInfo",
     "SchemeGroupHierarchyBug",
@@ -115,6 +126,7 @@ __all__ = (
     "ItemEntity",
 
     "SystemSettings",
+    "ProjectSettings",
 
     "PathEntity",
     "ListStrictEntity",
@@ -133,5 +145,9 @@ __all__ = (
 
     "DictImmutableKeysEntity",
 
-    "DictMutableKeysEntity"
+    "DictMutableKeysEntity",
+
+    "AnatomyEntity",
+    "AnatomyRootsEntity",
+    "AnatomyTemplatesEntity"
 )

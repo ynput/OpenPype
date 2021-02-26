@@ -80,6 +80,7 @@ def any_outdated():
                       "database".format(**container))
 
         checked.add(representation)
+
     return False
 
 

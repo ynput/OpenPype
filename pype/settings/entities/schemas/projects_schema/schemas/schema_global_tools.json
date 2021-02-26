@@ -1,18 +1,18 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "tools",
     "label": "Tools",
     "children": [
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "creator",
             "label": "Creator",
             "children": [
                 {
                     "type": "dict-modifiable",
-                    "collapsable": false,
+                    "collapsible": false,
                     "key": "families_smart_select",
                     "label": "Families smart select",
                     "object_type": {
@@ -24,7 +24,7 @@
         },
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "Workfiles",
             "label": "Workfiles",
             "children": [
@@ -62,7 +62,7 @@
                 },
                 {
                     "type": "dict-modifiable",
-                    "collapsable": true,
+                    "collapsible": true,
                     "key": "sw_folders",
                     "label": "Extra task folders",
                     "is_group": true,

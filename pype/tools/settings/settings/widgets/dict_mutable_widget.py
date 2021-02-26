@@ -13,8 +13,6 @@ from .lib import (
     CHILD_OFFSET
 )
 
-from pype.settings.entities import NOT_SET
-
 
 def create_add_btn(parent):
     add_btn = QtWidgets.QPushButton("+", parent)
@@ -156,14 +154,13 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.entity = entity
         self.entity_widget = entity_widget
 
-        self.create_ui_for_entity = entity_widget.create_ui_for_entity
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
         self.is_key_duplicated = False
         self.is_required = False
 
-        self.origin_key = NOT_SET
-        self.origin_key_label = NOT_SET
+        self.origin_key = None
+        self.origin_key_label = None
 
         self.temp_key = ""
         self.uuid_key = None
@@ -172,18 +169,24 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.wrapper_widget = None
 
+        self.key_label_input = None
+
         if collapsible_key:
             self.create_collapsible_ui()
         else:
             self.create_addible_ui()
         self.update_style()
 
+    @property
+    def category_widget(self):
+        return self.entity_widget.category_widget
+
+    def create_ui_for_entity(self, *args, **kwargs):
+        return self.entity_widget.create_ui_for_entity(*args, **kwargs)
+
     def create_addible_ui(self):
         key_input = QtWidgets.QLineEdit(self)
         key_input.setObjectName("DictKey")
-
-        spacer_widget = SpacerWidget(self)
-        spacer_widget.setVisible(False)
 
         add_btn = create_add_btn(self)
         remove_btn = create_remove_btn(self)
@@ -194,7 +197,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
         layout.addWidget(add_btn, 0)
         layout.addWidget(remove_btn, 0)
         layout.addWidget(key_input, 0)
-        layout.addWidget(spacer_widget, 1)
 
         key_input.textChanged.connect(self._on_key_change)
         key_input.returnPressed.connect(self._on_enter_press)
@@ -203,17 +205,18 @@ class ModifiableDictItem(QtWidgets.QWidget):
         remove_btn.clicked.connect(self.on_remove_clicked)
 
         self.key_input = key_input
-        self.spacer_widget = spacer_widget
         self.add_btn = add_btn
         self.remove_btn = remove_btn
 
         self.content_widget = self
         self.content_layout = layout
 
-        self.input_field = self.create_ui_for_entity(self.entity, self)
+        self.input_field = self.create_ui_for_entity(
+            self.category_widget, self.entity, self
+        )
 
     def add_widget_to_layout(self, widget, label=None):
-        self.content_layout.addWidget(widget)
+        self.content_layout.addWidget(widget, 1)
         self.setFocusProxy(widget)
 
     def create_collapsible_ui(self):
@@ -269,11 +272,18 @@ class ModifiableDictItem(QtWidgets.QWidget):
         key_input.textChanged.connect(self._on_key_change)
         key_input.returnPressed.connect(self._on_enter_press)
 
-        key_label_input.textChanged.connect(self._on_key_change)
+        key_label_input.textChanged.connect(self._on_key_label_change)
         key_label_input.returnPressed.connect(self._on_enter_press)
 
         edit_btn.clicked.connect(self.on_edit_pressed)
         remove_btn.clicked.connect(self.on_remove_clicked)
+
+        # Hide edit inputs
+        key_input.setVisible(False)
+        key_input_label_widget.setVisible(False)
+        key_label_input.setVisible(False)
+        key_label_input_label_widget.setVisible(False)
+        remove_btn.setVisible(False)
 
         self.key_input = key_input
         self.key_input_label_widget = key_input_label_widget
@@ -286,7 +296,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        self.input_field = self.create_ui_for_entity(self.entity, self)
+        self.input_field = self.create_ui_for_entity(
+            self.category_widget, self.entity, self
+        )
 
     def get_style_state(self):
         if self.is_invalid:
@@ -327,9 +339,12 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def set_key_label(self, key, label):
         self.set_key(key)
-        if label:
-            self.key_label_input.setText(label)
+        self.set_label(label)
         self.set_edit_mode(False)
+
+    def set_label(self, label):
+        if self.key_label_input and label is not None:
+            self.key_label_input.setText(label)
 
     def set_as_required(self, key):
         self.key_input.setText(key)
@@ -360,6 +375,8 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.set_edit_mode(False)
 
     def _on_key_label_change(self):
+        label = self.key_label_value()
+        self.entity_widget.change_label(label, self)
         self.update_key_label()
 
     def _on_key_change(self):
@@ -427,17 +444,6 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def is_key_label_modified(self):
         return self.key_label_value() != self.origin_key_label
 
-    def is_value_modified(self):
-        return self.input_field.is_modified
-
-    @property
-    def is_modified(self):
-        return (
-            self.is_key_modified()
-            or self.is_key_label_modified()
-            or self.is_value_modified()
-        )
-
     def trigger_hierarchical_style_update(self):
         self.entity_widget.trigger_hierarchical_style_update()
 
@@ -504,9 +510,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
         return self.entity_widget.input_fields.index(self)
 
     def key_label_value(self):
-        if self.collapsible_key:
+        if self.key_label_input:
             return self.key_label_input.text()
-        return NOT_SET
+        return None
 
     def mouseReleaseEvent(self, event):
         return QtWidgets.QWidget.mouseReleaseEvent(self, event)
@@ -685,6 +691,13 @@ class DictMutableKeysWidget(BaseWidget):
                 self.entity.children_by_key[sk_old_key]
             )
 
+    def change_label(self, label, input_field):
+        entity = input_field.entity
+        _label = self.entity.get_child_label(entity)
+        if _label == label:
+            return
+        self.entity.set_child_label(entity, label)
+
     def add_widget_for_child(
         self, child_entity, after_widget=None, first=False
     ):
@@ -756,6 +769,7 @@ class DictMutableKeysWidget(BaseWidget):
         self.update_style()
 
     def _on_entity_change(self):
+        changed = False
         to_remove = []
         for input_field in self.input_fields:
             found = False
@@ -768,6 +782,7 @@ class DictMutableKeysWidget(BaseWidget):
                 to_remove.append(input_field)
 
         for input_field in to_remove:
+            changed = True
             self.remove_row(input_field)
 
         for key, child_entity in self.entity.items():
@@ -781,6 +796,7 @@ class DictMutableKeysWidget(BaseWidget):
                     break
 
             if not found:
+                changed = True
                 args = [previous_input]
                 if previous_input is None:
                     args.append(True)
@@ -788,11 +804,24 @@ class DictMutableKeysWidget(BaseWidget):
                 _input_field = self.add_widget_for_child(child_entity, *args)
                 _input_field.origin_key = key
                 _input_field.set_key(key)
+                if self.entity.collapsible_key:
+                    label = self.entity.get_child_label(child_entity)
+                    _input_field.origin_key_label = label
+                    _input_field.set_label(label)
                 _input_field.set_entity_value()
 
             else:
                 if input_field.key_value() != key:
+                    changed = True
                     input_field.set_key(key)
+
+                if self.entity.collapsible_key:
+                    label = self.entity.get_child_label(child_entity)
+                    if input_field.key_label_value() != label:
+                        input_field.set_label(label)
+
+        if changed:
+            self.on_shuffle()
 
     def set_entity_value(self):
         while self.input_fields:
@@ -802,6 +831,10 @@ class DictMutableKeysWidget(BaseWidget):
             input_field = self.add_widget_for_child(child_entity)
             input_field.origin_key = key
             input_field.set_key(key)
+            if self.entity.collapsible_key:
+                label = self.entity.get_child_label(child_entity)
+                input_field.origin_key_label = label
+                input_field.set_label(label)
 
         for input_field in self.input_fields:
             input_field.set_entity_value()

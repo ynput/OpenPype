@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "harmony",
     "label": "Toon Boom Harmony",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {

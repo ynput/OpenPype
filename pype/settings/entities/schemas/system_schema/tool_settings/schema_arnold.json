@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "mtoa",
     "label": "Autodesk Arnold",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {

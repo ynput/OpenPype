@@ -326,10 +326,10 @@
                     "multipath": true
                 },
                 {
-                    "key": "collapsable",
+                    "key": "collapsible",
                     "type": "dict",
-                    "label": "collapsable dictionary",
-                    "collapsable": true,
+                    "label": "collapsible dictionary",
+                    "collapsible": true,
                     "is_group": true,
                     "children": [
                         {
@@ -340,10 +340,10 @@
                     ]
                 },
                 {
-                    "key": "collapsable_expanded",
+                    "key": "collapsible_expanded",
                     "type": "dict",
-                    "label": "collapsable dictionary, expanded on creation",
-                    "collapsable": true,
+                    "label": "collapsible dictionary, expanded on creation",
+                    "collapsible": true,
                     "collapsed": false,
                     "is_group": true,
                     "children": [
@@ -355,10 +355,10 @@
                     ]
                 },
                 {
-                    "key": "not_collapsable",
+                    "key": "not_collapsible",
                     "type": "dict",
-                    "label": "Not collapsable",
-                    "collapsable": false,
+                    "label": "Not collapsible",
+                    "collapsible": false,
                     "is_group": true,
                     "children": [
                         {

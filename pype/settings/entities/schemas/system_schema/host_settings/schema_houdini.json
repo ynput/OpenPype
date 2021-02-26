@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "houdini",
     "label": "SideFX Houdini",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {

@@ -1,19 +1,19 @@
 {
     "type": "dict",
-    "collapsable": true,
-    "key": "resolve",
-    "label": "DaVinci Resolve",
+    "collapsible": true,
+    "key": "hiero",
+    "label": "Hiero",
     "is_file": true,
     "children": [
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "create",
-            "label": "Creator plugins",
+            "label": "Create plugins",
             "children": [
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "key": "CreateShotClip",
                     "label": "Create Shot Clip",
                     "is_group": true,
@@ -21,7 +21,7 @@
                         {
                           "type": "collapsible-wrap",
                           "label": "Shot Hierarchy And Rename Settings",
-                          "collapsable": false,
+                          "collapsible": false,
                           "children": [
                             {
                                 "type": "text",
@@ -53,7 +53,7 @@
                         {
                           "type": "collapsible-wrap",
                           "label": "Shot Template Keywords",
-                          "collapsable": false,
+                          "collapsible": false,
                           "children": [
                             {
                                 "type": "text",
@@ -85,7 +85,7 @@
                         {
                           "type": "collapsible-wrap",
                           "label": "Vertical Synchronization Of Attributes",
-                          "collapsable": false,
+                          "collapsible": false,
                           "children": [
                             {
                                 "type": "boolean",
@@ -97,7 +97,7 @@
                         {
                           "type": "collapsible-wrap",
                           "label": "Shot Attributes",
-                          "collapsable": false,
+                          "collapsible": false,
                           "children": [
                             {
                                 "type": "number",
@@ -119,6 +119,54 @@
                     ]
                 }
             ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "CollectInstanceVersion",
+                    "label": "Collect Instance Version",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "checkbox_key": "enabled",
+                    "key": "ExtractReviewCutUpVideo",
+                    "label": "Extract Review Cut Up Video",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "object_type": "text",
+                            "key": "tags_addition",
+                            "label": "Tags addition"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "schema",
+            "name": "schema_publish_gui_filter"
         }
     ]
 }

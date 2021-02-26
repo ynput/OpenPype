@@ -50,6 +50,8 @@ def get_asset_settings():
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
+    handle_start = asset_data.get("handleStart")
+    handle_end = asset_data.get("handleEnd")
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
     entity_type = asset_data.get("entityType")
@@ -58,6 +60,8 @@ def get_asset_settings():
         "fps": fps,
         "frameStart": frame_start,
         "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end,
         "resolutionWidth": resolution_width,
         "resolutionHeight": resolution_height
     }
@@ -150,13 +154,14 @@ def application_launch():
     # It is now moved so it it manually called.
     # ensure_scene_settings()
     # check_inventory()
-    pype_harmony_path = Path(__file__).parent / "js" / "PypeHarmony.js"
+    # fills PYPE_HARMONY_JS
+    pype_harmony_path = Path(__file__).parent.parent / "js" / "PypeHarmony.js"
     pype_harmony_js = pype_harmony_path.read_text()
 
     # go through js/creators, loaders and publish folders and load all scripts
     script = ""
     for item in ["creators", "loaders", "publish"]:
-        dir_to_scan = Path(__file__).parent / "js" / item
+        dir_to_scan = Path(__file__).parent.parent / "js" / item
         for child in dir_to_scan.iterdir():
             script += child.read_text()
 
@@ -210,12 +215,15 @@ def uninstall():
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node enabling on instance toggles."""
-    try:
+    node = None
+    if instance.data.get("setMembers"):
+        node = instance.data["setMembers"][0]
+
+    if node:
         harmony.send(
             {
                 "function": "PypeHarmony.toggleInstance",
-                "args": [instance[0], new_value]
+                "args": [node, new_value]
             }
         )
-    except IndexError:
-        print(f"Instance '{instance}' is missing node")
+

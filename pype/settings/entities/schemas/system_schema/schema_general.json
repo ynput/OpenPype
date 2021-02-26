@@ -2,7 +2,7 @@
     "key": "general",
     "type": "dict",
     "label": "General",
-    "collapsable": true,
+    "collapsible": true,
     "is_file": true,
     "children": [
         {

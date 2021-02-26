@@ -19,6 +19,12 @@ class ValidateAudio(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
+        node = None
+        if instance.data.get("setMembers"):
+            node = instance.data["setMembers"][0]
+
+        if not node:
+            return
         # Collect scene data.
         func = """function func(write_node)
         {
@@ -29,7 +35,7 @@ class ValidateAudio(pyblish.api.InstancePlugin):
         func
         """
         result = harmony.send(
-            {"function": func, "args": [instance[0]]}
+            {"function": func, "args": [node]}
         )["result"]
 
         audio_path = result[0]

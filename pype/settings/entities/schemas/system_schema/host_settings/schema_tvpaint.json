@@ -2,7 +2,7 @@
     "type": "dict",
     "key": "tvpaint",
     "label": "TVPaint",
-    "collapsable": true,
+    "collapsible": true,
     "checkbox_key": "enabled",
     "children": [
         {

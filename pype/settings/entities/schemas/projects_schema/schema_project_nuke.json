@@ -1,19 +1,19 @@
 {
     "type": "dict",
-    "collapsable": true,
+    "collapsible": true,
     "key": "nuke",
     "label": "Nuke",
     "is_file": true,
     "children": [
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "create",
             "label": "Create plugins",
             "children": [
                 {
                     "type": "dict",
-                    "collapsable": false,
+                    "collapsible": false,
                     "key": "CreateWriteRender",
                     "label": "CreateWriteRender",
                     "is_group": true,
@@ -27,7 +27,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsable": false,
+                    "collapsible": false,
                     "key": "CreateWritePrerender",
                     "label": "CreateWritePrerender",
                     "is_group": true,
@@ -43,13 +43,13 @@
         },
         {
             "type": "dict",
-            "collapsable": true,
+            "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
             "children": [
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "key": "PreCollectNukeInstances",
                     "label": "PreCollectNukeInstances",
                     "is_group": true,
@@ -63,7 +63,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "checkbox_key": "enabled",
                     "key": "ExtractThumbnail",
                     "label": "ExtractThumbnail",
@@ -83,7 +83,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "checkbox_key": "enabled",
                     "key": "ValidateKnobs",
                     "label": "ValidateKnobs",
@@ -103,7 +103,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "checkbox_key": "enabled",
                     "key": "ExtractReviewDataLut",
                     "label": "ExtractReviewDataLut",
@@ -118,7 +118,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "checkbox_key": "enabled",
                     "key": "ExtractReviewDataMov",
                     "label": "ExtractReviewDataMov",
@@ -138,7 +138,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "key": "ExtractSlateFrame",
                     "label": "ExtractSlateFrame",
                     "is_group": true,
@@ -152,7 +152,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsable": true,
+                    "collapsible": true,
                     "key": "NukeSubmitDeadline",
                     "label": "NukeSubmitDeadline",
                     "is_group": true,
