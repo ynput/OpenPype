@@ -83,6 +83,8 @@ from .applications import (
     compile_list_of_regexes
 )
 
+from .profiles_filtering import filter_profiles
+
 from .plugin_tools import (
     filter_pyblish_plugins,
     source_hash,
@@ -170,6 +172,8 @@ __all__ = [
     "get_app_environments_for_context",
 
     "compile_list_of_regexes",
+
+    "filter_profiles",
 
     "filter_pyblish_plugins",
     "source_hash",
