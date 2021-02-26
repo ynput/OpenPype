@@ -460,15 +460,18 @@ class EnumeratorWidget(InputWidget):
             self.input_field = MultiSelectionComboBox(
                 placeholder=self.entity.placeholder, parent=self.content_widget
             )
-            model = self.input_field.model()
-            for idx in range(self.input_field.count()):
-                model.item(idx).setCheckable(True)
+
         else:
             self.input_field = ComboBox(self.content_widget)
 
         for enum_item in self.entity.enum_items:
             for value, label in enum_item.items():
                 self.input_field.addItem(label, value)
+
+        if self.entity.multiselection:
+            model = self.input_field.model()
+            for idx in range(self.input_field.count()):
+                model.item(idx).setCheckable(True)
 
         self.content_layout.addWidget(self.input_field, 0)
 
