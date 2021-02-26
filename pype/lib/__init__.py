@@ -78,7 +78,9 @@ from .applications import (
     EnvironmentPrepData,
     prepare_host_environments,
     prepare_context_environments,
-    get_app_environments_for_context
+    get_app_environments_for_context,
+
+    compile_list_of_regexes
 )
 
 from .plugin_tools import (
@@ -166,6 +168,8 @@ __all__ = [
     "prepare_host_environments",
     "prepare_context_environments",
     "get_app_environments_for_context",
+
+    "compile_list_of_regexes",
 
     "filter_pyblish_plugins",
     "source_hash",
