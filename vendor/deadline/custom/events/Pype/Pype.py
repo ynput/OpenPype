@@ -103,6 +103,21 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
             self.LogInfo("Environment injected previously")
             return
 
+        pype_render_job = job.GetJobEnvironmentKeyValue('PYPE_RENDER_JOB') \
+            or '0'
+        pype_publish_job = job.GetJobEnvironmentKeyValue('PYPE_PUBLISH_JOB') \
+            or '0'
+
+        if pype_publish_job == '1' and pype_render_job == '1':
+            raise RuntimeError("Misconfiguration. Job couldn't be both " +
+                               "render and publish.")
+        elif pype_publish_job == '1':
+            self.LogInfo("Publish job, skipping inject.")
+            return
+        elif pype_render_job == '0':
+            # not pype triggered job
+            return
+
         # adding python search paths
         paths = self.GetConfigEntryWithDefault("PythonSearchPaths", "").strip()
         paths = paths.split(";")
@@ -113,19 +128,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
         self.LogInfo("inject_pype_environment start")
         try:
-            pype_command = "pype_console"
-            if platform.system().lower() == "linux":
-                pype_command = "pype_console.sh"
-            if platform.system().lower() == "windows":
-                pype_command = "pype_console.exe"
-
-            pype_root = self.GetConfigEntryWithDefault("PypeExecutable", "")
-
-            pype_app = os.path.join(pype_root.strip(), pype_command)
-            if not os.path.exists(pype_app):
-                raise RuntimeError("App '{}' doesn't exist. " +
-                                   "Fix it in Tools > Configure Events > " +
-                                   "pype".format(pype_app))
+            pype_app = self.get_pype_executable_path()
 
             # tempfile.TemporaryFile cannot be used because of locking
             export_url = os.path.join(tempfile.gettempdir(),
@@ -133,23 +136,27 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
                                       'env.json')  # add HHMMSS + delete later
             self.LogInfo("export_url {}".format(export_url))
 
+            args = [
+                pype_app,
+                'extractenvironments',
+                export_url
+            ]
+
             add_args = {}
             add_args['project'] = \
                 job.GetJobEnvironmentKeyValue('AVALON_PROJECT')
             add_args['asset'] = job.GetJobEnvironmentKeyValue('AVALON_ASSET')
             add_args['task'] = job.GetJobEnvironmentKeyValue('AVALON_TASK')
             add_args['app'] = job.GetJobEnvironmentKeyValue('AVALON_APP_NAME')
-            self.LogInfo("args::{}".format(add_args))
 
-            args = [
-                pype_app,
-                'extractenvironments',
-                export_url
-            ]
             if all(add_args.values()):
                 for key, value in add_args.items():
                     args.append("--{}".format(key))
                     args.append(value)
+            else:
+                msg = "Required env vars: AVALON_PROJECT, AVALON_ASSET, " + \
+                      "AVALON_TASK, AVALON_APP_NAME"
+                raise RuntimeError(msg)
 
             self.LogInfo("args::{}".format(args))
 
@@ -176,6 +183,28 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
             Deadline.Scripting.RepositoryUtils.FailJob(job)
             raise
 
+    def get_pype_executable_path(self):
+        """
+            Returns calculated path based on settings and platform
+
+            Uses 'pype_console' executable
+        """
+        pype_command = "pype_console"
+        if platform.system().lower() == "linux":
+            pype_command = "pype_console.sh"
+        if platform.system().lower() == "windows":
+            pype_command = "pype_console.exe"
+
+        pype_root = self.GetConfigEntryWithDefault("PypeExecutable", "")
+
+        pype_app = os.path.join(pype_root.strip(), pype_command)
+        if not os.path.exists(pype_app):
+            raise RuntimeError("App '{}' doesn't exist. " +
+                               "Fix it in Tools > Configure Events > " +
+                               "pype".format(pype_app))
+
+        return pype_app
+
     def updateFtrackStatus(self, job, statusName, createIfMissing=False):
         """Updates version status on ftrack"""
         pass
@@ -192,6 +221,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         self.updateFtrackStatus(job, "Rendering")
 
     def OnJobFinished(self, job):
+        self.LogInfo("OnJobFinished")
         self.updateFtrackStatus(job, "Artist Review")
 
     def OnJobRequeued(self, job):
