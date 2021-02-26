@@ -6,7 +6,7 @@ import pype.hosts.maya.api.action
 from pype.hosts.maya.api import lib
 
 
-class ValidateJointsHidden(pyblish.api.InstancePlugin):
+class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
     """Validate all joints are hidden visually.
 
     This includes being hidden:
@@ -20,7 +20,6 @@ class ValidateJointsHidden(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
     families = ['rig']
-    category = 'rig'
     version = (0, 1, 0)
     label = "Joints Hidden"
     actions = [pype.hosts.maya.api.action.SelectInvalidAction,

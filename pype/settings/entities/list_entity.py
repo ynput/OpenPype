@@ -15,6 +15,11 @@ from .exceptions import (
 
 class ListEntity(EndpointEntity):
     schema_types = ["list"]
+    _default_label_wrap = {
+        "use_label_wrap": False,
+        "collapsible": True,
+        "collapsed": False
+    }
 
     def __iter__(self):
         for item in self.children:
@@ -138,12 +143,6 @@ class ListEntity(EndpointEntity):
 
         # Value that was set on set_override_state
         self.initial_value = []
-
-        # GUI attributes
-        self.use_label_wrap = self.schema_data.get("use_label_wrap") or False
-        # Used only if `use_label_wrap` is set to True
-        self.collapsible = self.schema_data.get("collapsible") or True
-        self.collapsed = self.schema_data.get("collapsed") or False
 
     def schema_validations(self):
         super(ListEntity, self).schema_validations()

@@ -123,8 +123,7 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
         self.log.debug("Qeurying latest versions for instances.")
 
         hierarchy = {}
-        subset_names = set()
-        asset_ids = set()
+        subset_filters = []
         for instance in context:
             # Make sure `"latestVersion"` key is set
             latest_version = instance.data.get("latestVersion")
@@ -138,8 +137,6 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             # Store asset ids and subset names for queries
             asset_id = asset_doc["_id"]
             subset_name = instance.data["subset"]
-            asset_ids.add(asset_id)
-            subset_names.add(subset_name)
 
             # Prepare instance hiearchy for faster filling latest versions
             if asset_id not in hierarchy:
@@ -147,11 +144,14 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
             if subset_name not in hierarchy[asset_id]:
                 hierarchy[asset_id][subset_name] = []
             hierarchy[asset_id][subset_name].append(instance)
+            subset_filters.append({
+                "parent": asset_id,
+                "name": subset_name
+            })
 
         subset_docs = list(io.find({
             "type": "subset",
-            "parent": {"$in": list(asset_ids)},
-            "name": {"$in": list(subset_names)}
+            "$or": subset_filters
         }))
 
         subset_ids = [

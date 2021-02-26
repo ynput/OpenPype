@@ -1,0 +1,44 @@
+{
+    "publish": {
+        "MayaSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "tile_assembler_plugin": "oiio",
+            "use_published": true,
+            "asset_dependencies": true
+        },
+        "NukeSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "use_published": true,
+            "priority": 50,
+            "Chunk Size": 10,
+            "primary_pool": "",
+            "secondary_pool": "",
+            "group": "",
+            "department": ""
+        },
+        "HarmonySubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "use_published": true,
+            "priority": 50,
+            "Chunk Size": 10000,
+            "primary_pool": "",
+            "secondary_pool": "",
+            "group": "",
+            "department": ""
+        },
+        "AfterEffectsSubmitDeadline": {
+            "enabled": true,
+            "optional": false,
+            "use_published": true,
+            "priority": 50,
+            "Chunk Size": 10000,
+            "primary_pool": "",
+            "secondary_pool": "",
+            "group": "",
+            "department": ""
+        }
+    }
+}

@@ -9,7 +9,7 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
 
     Knobs to validate and their values comes from the
 
-    Controled by plugin settings that require json in following structure:
+    Controlled by plugin settings that require json in following structure:
         "ValidateKnobs": {
             "enabled": true,
             "knobs": {

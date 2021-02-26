@@ -23,6 +23,7 @@ from .mongo import (
     decompose_url,
     compose_url,
     get_default_components,
+    validate_mongo_connection,
     PypeMongoConnection
 )
 from .anatomy import (
@@ -91,10 +92,12 @@ from .plugin_tools import (
     should_decompress
 )
 
-from .user_settings import (
+from .local_settings import (
     IniSettingRegistry,
     JSONSettingRegistry,
-    PypeSettingsRegistry
+    PypeSettingsRegistry,
+    get_local_site_id,
+    change_pype_mongo_url
 )
 
 from .path_tools import (
@@ -191,11 +194,15 @@ __all__ = [
     "decompose_url",
     "compose_url",
     "get_default_components",
+    "validate_mongo_connection",
     "PypeMongoConnection",
 
     "IniSettingRegistry",
     "JSONSettingRegistry",
     "PypeSettingsRegistry",
+    "get_local_site_id",
+    "change_pype_mongo_url",
+
     "timeit",
 
     "is_overlapping_otio_ranges",

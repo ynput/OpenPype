@@ -35,11 +35,11 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
     version = (0, 1, 0)
     label = 'Suffix Naming Conventions'
     actions = [pype.hosts.maya.api.action.SelectInvalidAction]
-    SUFFIX_NAMING_TABLE = {'mesh': ["_GEO", "_GES", "_GEP", "_OSD"],
-                           'nurbsCurve': ["_CRV"],
-                           'nurbsSurface': ["_NRB"],
-                           'locator': ["_LOC"],
-                           None: ['_GRP']}
+    SUFFIX_NAMING_TABLE = {"mesh": ["_GEO", "_GES", "_GEP", "_OSD"],
+                           "nurbsCurve": ["_CRV"],
+                           "nurbsSurface": ["_NRB"],
+                           "locator": ["_LOC"],
+                           "group": ["_GRP"]}
 
     ALLOW_IF_NOT_IN_SUFFIX_TABLE = True
 
@@ -88,7 +88,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
                                         fullPath=True,
                                         noIntermediate=True)
 
-            shape_type = cmds.nodeType(shapes[0]) if shapes else None
+            shape_type = cmds.nodeType(shapes[0]) if shapes else "group"
             if not cls.is_valid_name(transform, shape_type,
                                      cls.SUFFIX_NAMING_TABLE,
                                      cls.ALLOW_IF_NOT_IN_SUFFIX_TABLE):

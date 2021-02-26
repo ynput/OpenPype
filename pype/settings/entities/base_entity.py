@@ -695,6 +695,12 @@ class ItemEntity(BaseItemEntity):
         is_dynamic_item (bool): Entity should behave like dynamically created
             entity.
     """
+    _default_label_wrap = {
+        "use_label_wrap": False,
+        "collapsible": True,
+        "collapsed": False
+    }
+
     def __init__(self, schema_data, parent, is_dynamic_item=False):
         super(ItemEntity, self).__init__(schema_data)
 
@@ -736,11 +742,49 @@ class ItemEntity(BaseItemEntity):
         self.key = self.schema_data.get("key")
         self.label = self.schema_data.get("label")
 
+        # GUI attributes
+        _default_label_wrap = self.__class__._default_label_wrap
+        for key, value in ItemEntity._default_label_wrap.items():
+            if key not in _default_label_wrap:
+                self.log.warning(
+                    "Class {} miss default label wrap key \"{}\"".format(
+                        self.__class__.__name__, key
+                    )
+                )
+                _default_label_wrap[key] = value
+
+        use_label_wrap = self.schema_data.get("use_label_wrap")
+        if use_label_wrap is None:
+            if not self.label:
+                use_label_wrap = False
+            else:
+                use_label_wrap = _default_label_wrap["use_label_wrap"]
+        self.use_label_wrap = use_label_wrap
+
+        # Used only if `use_label_wrap` is set to True
+        self.collapsible = self.schema_data.get(
+            "collapsible",
+            _default_label_wrap["collapsible"]
+        )
+        self.collapsed = self.schema_data.get(
+            "collapsed",
+            _default_label_wrap["collapsed"]
+        )
+
         self._item_initalization()
 
     def save(self):
         """Call save on root item."""
         self.root_item.save()
+
+    def schema_validations(self):
+        if not self.label and self.use_label_wrap:
+            raise ValueError((
+                "{} Entity has set `use_label_wrap` to true but"
+                " does not have set `label`."
+            ).format(self.path))
+
+        super(ItemEntity, self).schema_validations()
 
     def create_schema_object(self, *args, **kwargs):
         """Reference method for creation of entities defined in RootEntity."""

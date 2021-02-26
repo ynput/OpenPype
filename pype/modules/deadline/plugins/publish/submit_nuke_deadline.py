@@ -23,12 +23,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     optional = True
 
     # presets
-    deadline_priority = 50
-    deadline_chunk_size = 1
-    deadline_pool = ""
-    deadline_pool_secondary = ""
-    deadline_group = ""
-    deadline_department = ""
+    priority = 50
+    chunk_size = 1
+    primary_pool = ""
+    secondary_pool = ""
+    group = ""
+    department = ""
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
@@ -142,12 +142,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         # define chunk and priority
         chunk_size = instance.data.get("deadlineChunkSize")
-        if chunk_size == 0 and self.deadline_chunk_size:
-            chunk_size = self.deadline_chunk_size
+        if chunk_size == 0 and self.chunk_size:
+            chunk_size = self.chunk_size
 
         priority = instance.data.get("deadlinePriority")
         if not priority:
-            priority = self.deadline_priority
+            priority = self.priority
 
         payload = {
             "JobInfo": {
@@ -165,11 +165,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Priority": priority,
                 "ChunkSize": chunk_size,
-                "Department": self.deadline_department,
+                "Department": self.department,
 
-                "Pool": self.deadline_pool,
-                "SecondaryPool": self.deadline_pool_secondary,
-                "Group": self.deadline_group,
+                "Pool": self.primary_pool,
+                "SecondaryPool": self.secondary_pool,
+                "Group": self.group,
 
                 "Plugin": "Nuke",
                 "Frames": "{start}-{end}".format(

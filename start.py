@@ -116,7 +116,8 @@ from igniter.tools import load_environments  # noqa: E402
 from igniter.bootstrap_repos import PypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
-silent_commands = ["run", "igniter", "standalonepublisher"]
+silent_commands = ["run", "igniter", "standalonepublisher",
+                   "extractenvironments"]
 
 
 def set_environments() -> None:
@@ -236,8 +237,9 @@ def _process_arguments() -> tuple:
     # handle igniter
     # this is helper to run igniter before anything else
     if "igniter" in sys.argv:
-        import igniter
-        igniter.run()
+        pass
+        # import igniter
+        # igniter.run()
 
     return use_version, use_staging
 
@@ -472,8 +474,8 @@ def boot():
     from igniter.terminal_splash import play_animation
 
     # don't play for silenced commands
-    if all(item not in sys.argv for item in silent_commands):
-        play_animation()
+    # if all(item not in sys.argv for item in silent_commands):
+    #     play_animation()
 
     # ------------------------------------------------------------------------
     # Process arguments

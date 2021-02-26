@@ -29,6 +29,12 @@ class DictMutableKeysEntity(EndpointEntity):
         - clear callbacks
     """
     schema_types = ["dict-modifiable"]
+    _default_label_wrap = {
+        "use_label_wrap": True,
+        "collapsible": True,
+        "collapsed": True
+    }
+
     _miss_arg = object()
 
     def __getitem__(self, key):
@@ -174,8 +180,6 @@ class DictMutableKeysEntity(EndpointEntity):
         self.hightlight_content = (
             self.schema_data.get("highlight_content") or False
         )
-        self.collapsible = self.schema_data.get("collapsible", True)
-        self.collapsed = self.schema_data.get("collapsed", True)
 
         object_type = self.schema_data["object_type"]
         if not isinstance(object_type, dict):

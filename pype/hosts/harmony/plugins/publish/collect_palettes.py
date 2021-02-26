@@ -2,6 +2,7 @@
 """Collect palettes from Harmony."""
 import os
 import json
+import re
 
 import pyblish.api
 from avalon import harmony
@@ -13,7 +14,9 @@ class CollectPalettes(pyblish.api.ContextPlugin):
     label = "Palettes"
     order = pyblish.api.CollectorOrder + 0.003
     hosts = ["harmony"]
-    allowed_tasks = []  # list of task names where collecting should happen
+
+    # list of regexes for task names where collecting should happen
+    allowed_tasks = []
 
     def process(self, context):
         """Collector entry point."""
@@ -25,9 +28,9 @@ class CollectPalettes(pyblish.api.ContextPlugin):
 
         # skip collecting if not in allowed task
         if self.allowed_tasks:
-            self.allowed_tasks = [task.lower() for task in self.allowed_tasks]
-            if context.data["anatomyData"]["task"].lower() \
-                    not in self.allowed_tasks:
+            task_name = context.data["anatomyData"]["task"].lower()
+            if (not any([re.search(pattern, task_name)
+                         for pattern in self.allowed_tasks])):
                 return
 
         for name, id in palettes.items():

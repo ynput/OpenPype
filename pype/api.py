@@ -22,7 +22,9 @@ from .lib import (
     get_app_environments_for_context,
     source_hash,
     get_latest_version,
-    get_global_environments
+    get_global_environments,
+    get_local_site_id,
+    change_pype_mongo_url
 )
 
 from .lib.mongo import (
@@ -109,5 +111,8 @@ __all__ = [
 
     "run_subprocess",
     "get_latest_version",
-    "get_global_environments"
+    "get_global_environments",
+
+    "get_local_site_id",
+    "change_pype_mongo_url"
 ]
