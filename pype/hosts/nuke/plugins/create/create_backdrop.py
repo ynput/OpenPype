@@ -1,9 +1,9 @@
-import avalon.nuke
 from avalon.nuke import lib as anlib
+from pype.hosts.nuke.api import plugin
 import nuke
 
 
-class CreateBackdrop(avalon.nuke.Creator):
+class CreateBackdrop(plugin.Creator):
     """Add Publishable Backdrop"""
 
     name = "nukenodes"

@@ -1,9 +1,9 @@
-import avalon.nuke
 from avalon.nuke import lib as anlib
+from pype.hosts.nuke.api import plugin
 import nuke
 
 
-class CreateGizmo(avalon.nuke.Creator):
+class CreateGizmo(plugin.PypeCreator):
     """Add Publishable "gizmo" group
 
     The name is symbolically gizmo as presumably
