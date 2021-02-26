@@ -494,7 +494,7 @@ class SystemSettings(RootEntity):
 
         Implementation of abstract method.
         """
-        return DEFAULTS_DIR
+        return os.path.join(DEFAULTS_DIR, SYSTEM_SETTINGS_KEY)
 
     def _save_studio_values(self):
         settings_value = self.settings_value()

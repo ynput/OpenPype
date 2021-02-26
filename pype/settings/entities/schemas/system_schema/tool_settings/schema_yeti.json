@@ -13,7 +13,8 @@
         {
             "key": "environment",
             "label": "Environment",
-            "type": "raw-json"
+            "type": "raw-json",
+            "env_group_key": "yeti"
         },
         {
             "type": "schema_template",

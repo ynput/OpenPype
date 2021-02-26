@@ -62,7 +62,7 @@ Needed configuration:
  - `"local_id": "local_0",` -- identifier of user pype
  - `"retry_cnt": 3,`        -- how many times try to synch file in case of error
  - `"loop_delay": 60,`      -- how many seconds between sync loops
- - `"active_site": "studio",` -- which site user current, 'studio' by default, 
+ - `"publish_site": "studio",` -- which site user current, 'studio' by default, 
                               could by same as 'local_id' if user is working
                               from home without connection to studio 
                               infrastructure
@@ -71,7 +71,7 @@ Needed configuration:
                              Used in IntegrateNew to prepare skeleton for 
                              syncing in the representation record.
                              Leave empty if no syncing is wanted.
-  This is a general configuration, 'local_id', 'active_site' and 'remote_site'
+  This is a general configuration, 'local_id', 'publish_site' and 'remote_site'
   will be set and changed by some GUI in the future.                           
   
 `pype/settings/defaults/project_settings/global.json`.`sync_server`.`sites`:

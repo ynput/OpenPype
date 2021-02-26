@@ -21,6 +21,7 @@ class ExtractSequence(pyblish.api.Extractor):
         "flc": ".fli",
         "gif": ".gif",
         "ilbm": ".iff",
+        "jpg": ".jpg",
         "jpeg": ".jpg",
         "pcx": ".pcx",
         "png": ".png",
@@ -36,6 +37,7 @@ class ExtractSequence(pyblish.api.Extractor):
         "bmp",
         "dpx",
         "ilbm",
+        "jpg",
         "jpeg",
         "png",
         "sun",
@@ -170,10 +172,14 @@ class ExtractSequence(pyblish.api.Extractor):
         if not thumbnail_fullpath:
             return
 
+        thumbnail_ext = os.path.splitext(
+            thumbnail_fullpath
+        )[1].replace(".", "")
         # Create thumbnail representation
         thumbnail_repre = {
             "name": "thumbnail",
-            "ext": ext,
+            "ext": thumbnail_ext,
+            "outputName": "thumb",
             "files": os.path.basename(thumbnail_fullpath),
             "stagingDir": output_dir,
             "tags": ["thumbnail"]
@@ -306,11 +312,11 @@ class ExtractSequence(pyblish.api.Extractor):
         if thumbnail_filename:
             basename, ext = os.path.splitext(thumbnail_filename)
             if not ext:
-                ext = ".png"
+                ext = ".jpg"
             thumbnail_fullpath = "/".join([output_dir, basename + ext])
             all_output_files[thumbnail_filename] = thumbnail_fullpath
             # Force save mode to png for thumbnail
-            george_script_lines.append("tv_SaveMode \"PNG\"")
+            george_script_lines.append("tv_SaveMode \"JPG\"")
             # Go to frame
             george_script_lines.append("tv_layerImage {}".format(first_frame))
             # Store image to output
