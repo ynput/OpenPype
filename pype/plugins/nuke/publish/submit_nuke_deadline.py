@@ -151,7 +151,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 "BatchName": script_name,
 
                 # Asset dependency to wait for at least the scene file to sync.
-                # "AssetDependency0": script_path,
+                "AssetDependency0": script_path,
 
                 # Job name, as seen in Monitor
                 "Name": jobname,
