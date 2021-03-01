@@ -63,8 +63,8 @@ def validate_value_by_regexes(value, in_list):
     """Validates in any regex from list match entered value.
 
     Args:
-        in_list (list): List with regexes.
         value (str): String where regexes is checked.
+        in_list (list): List with regexes.
 
     Returns:
         int: Returns `0` when list is not set, is empty or contain "*".
@@ -145,30 +145,34 @@ def filter_profiles(profiles_data, key_values, keys_order=None, logger=None):
     # are also stored ordered lists of matching values.
     for profile in profiles_data:
         profile_points = 0
-        profile_value = []
+        profile_scores = []
 
         for key in keys_order:
             value = key_values[key]
-            profile_value = profile.get(key) or []
             match = validate_value_by_regexes(value, profile.get(key))
             if match == -1:
+                profile_value = profile.get(key) or []
                 logger.debug(
                     "\"{}\" not found in {}".format(key, profile_value)
                 )
-                continue
+                profile_points = -1
+                break
 
             profile_points += match
-            profile_value.append(bool(match))
+            profile_scores.append(bool(match))
 
-            if profile_points < highest_profile_points:
-                continue
+        if (
+            profile_points < 0
+            or profile_points < highest_profile_points
+        ):
+            continue
 
-            if profile_points > highest_profile_points:
-                matching_profiles = []
-                highest_profile_points = profile_points
+        if profile_points > highest_profile_points:
+            matching_profiles = []
+            highest_profile_points = profile_points
 
-            if profile_points == highest_profile_points:
-                matching_profiles.append((profile, profile_value))
+        if profile_points == highest_profile_points:
+            matching_profiles.append((profile, profile_scores))
 
     log_parts = " | ".join([
         "{}: \"{}\"".format(*item)
