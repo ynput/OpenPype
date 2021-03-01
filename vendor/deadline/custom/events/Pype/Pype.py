@@ -222,7 +222,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         self.updateFtrackStatus(job, "Rendering")
 
     def OnJobFinished(self, job):
-        #self.LogInfo("OnJobFinished")
+        # self.LogInfo("OnJobFinished")
         self.updateFtrackStatus(job, "Artist Review")
 
     def OnJobRequeued(self, job):
@@ -250,7 +250,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         pass
 
     def OnJobError(self, job, task, report):
-        #self.LogInfo("OnJobError LOGGING")
+        # self.LogInfo("OnJobError LOGGING")
         pass
 
     def OnJobPurged(self, job):
@@ -263,7 +263,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         pass
 
     def OnSlaveStarted(self, job):
-        #self.LogInfo("OnSlaveStarted LOGGING")
+        # self.LogInfo("OnSlaveStarted LOGGING")
         pass
 
     def OnSlaveStopped(self, job):
@@ -273,7 +273,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         pass
 
     def OnSlaveRendering(self, host_name, job):
-        #self.LogInfo("OnSlaveRendering LOGGING")
+        # self.LogInfo("OnSlaveRendering LOGGING")
         pass
 
     def OnSlaveStartingJob(self, host_name, job):

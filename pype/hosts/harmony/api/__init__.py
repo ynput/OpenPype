@@ -226,4 +226,3 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
                 "args": [node, new_value]
             }
         )
-

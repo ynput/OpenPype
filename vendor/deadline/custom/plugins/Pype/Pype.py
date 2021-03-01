@@ -7,8 +7,8 @@ from Deadline.Plugins import DeadlinePlugin, PluginType
 
 
 ######################################################################
-## This is the function that Deadline calls to get an instance of the
-## main DeadlinePlugin class.
+# This is the function that Deadline calls to get an instance of the
+# main DeadlinePlugin class.
 ######################################################################
 def GetDeadlinePlugin():
     return PypeDeadlinePlugin()
@@ -16,7 +16,6 @@ def GetDeadlinePlugin():
 
 def CleanupDeadlinePlugin(deadlinePlugin):
     deadlinePlugin.Cleanup()
-
 
 
 class PypeDeadlinePlugin(DeadlinePlugin):
@@ -80,7 +79,7 @@ class PypeDeadlinePlugin(DeadlinePlugin):
             self.LogInfo("PypeDeadlinePlugin failed")
             raise
 
-    ## Called by Deadline to initialize the process.
+    # Called by Deadline to initialize the process.
     def InitializeProcess(self):
         # Set the plugin specific settings.
         self.PluginType = PluginType.Simple
