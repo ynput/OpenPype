@@ -128,6 +128,9 @@ class FamilyWidget(QtWidgets.QWidget):
         }
         return data
 
+    def on_task_change(self):
+        self.on_data_changed()
+
     def change_asset(self, name):
         if name is None:
             name = self.NOT_SELECTED
@@ -219,8 +222,8 @@ class FamilyWidget(QtWidgets.QWidget):
                     user_input_text, task_name, asset_id, project_name
                 )
                 # Force replacement of prohibited symbols
-                # QUESTION should Creator care about this and here should be only
-                #   validated with schema regex?
+                # QUESTION should Creator care about this and here should be
+                #   only validated with schema regex?
                 subset_name = re.sub(
                     "[^{}]+".format(SubsetAllowedSymbols),
                     "",
