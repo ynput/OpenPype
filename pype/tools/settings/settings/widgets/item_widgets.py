@@ -468,11 +468,6 @@ class EnumeratorWidget(InputWidget):
             for value, label in enum_item.items():
                 self.input_field.addItem(label, value)
 
-        if self.entity.multiselection:
-            model = self.input_field.model()
-            for idx in range(self.input_field.count()):
-                model.item(idx).setCheckable(True)
-
         self.content_layout.addWidget(self.input_field, 0)
 
         self.setFocusProxy(self.input_field)
