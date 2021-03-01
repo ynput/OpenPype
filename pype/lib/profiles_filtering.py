@@ -80,6 +80,11 @@ def validate_value_by_regexes(value, in_list):
     if "*" in in_list:
         return 0
 
+    # If value is not set and in list has specific values then resolve value
+    #   as not matching.
+    if not value:
+        return -1
+
     regexes = compile_list_of_regexes(in_list)
     for regex in regexes:
         if re.match(regex, value):
