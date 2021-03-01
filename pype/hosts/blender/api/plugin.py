@@ -7,7 +7,7 @@ import bpy
 
 from avalon import api
 import avalon.blender
-from pype.api PypeCreatorMixin
+from pype.api import PypeCreatorMixin
 
 VALID_EXTENSIONS = [".blend", ".json"]
 
