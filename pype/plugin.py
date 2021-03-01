@@ -35,10 +35,6 @@ class PypeCreatorMixin:
         if not host_name:
             host_name = os.environ["AVALON_APP"]
 
-        # Capitalize first letter of user input
-        if user_text:
-            user_text = user_text[0].capitalize() + user_text[1:]
-
         # Use only last part of class family value split by dot (`.`)
         family = cls.family.rsplit(".", 1)[-1]
 
@@ -66,10 +62,15 @@ class PypeCreatorMixin:
             raise TaskNotSetError()
 
         fill_data = {
-            "user_input": user_text,
-            "userInput": user_text,
+            "variant": variant,
+            "Variant": variant.capitalize(),
+            "VARIANT": variant.upper(),
             "family": family,
-            "task": task_name
+            "Family": family.capitalize(),
+            "FAMILY": family.upper(),
+            "task": task_name,
+            "Task": task_name.capitalize(),
+            "TASK": task_name.upper()
         }
         return template.format(**fill_data)
 
