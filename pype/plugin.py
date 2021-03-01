@@ -23,7 +23,7 @@ class PypeCreatorMixin:
 
     Mixin class must be used as first in inheritance order to override methods.
     """
-    default_tempate = "{family}{user_input}"
+    default_tempate = "{family}{Variant}"
 
     @classmethod
     def get_subset_name(
@@ -58,20 +58,35 @@ class PypeCreatorMixin:
 
         # Simple check of task name existence for template with {task} in
         #   - missing task should be possible only in Standalone publisher
-        if not task_name and "{task}" in template:
+        if not task_name and "{task" in template.lower():
             raise TaskNotSetError()
 
-        fill_data = {
-            "variant": variant,
-            "Variant": variant.capitalize(),
-            "VARIANT": variant.upper(),
-            "family": family,
-            "Family": family.capitalize(),
-            "FAMILY": family.upper(),
-            "task": task_name,
-            "Task": task_name.capitalize(),
-            "TASK": task_name.upper()
-        }
+        fill_pairs = (
+            ("variant", variant),
+            ("family", family),
+            ("task", task_name)
+        )
+        fill_data = {}
+        for key, value in fill_pairs:
+            # Handle cases when value is `None` (standalone publisher)
+            if value is None:
+                continue
+            # Keep value as it is
+            fill_data[key] = value
+            # Both key and value are with upper case
+            fill_data[key.upper()] = value.upper()
+
+            # Capitalize only first char of value
+            # - conditions are because of possible index errors
+            capitalized = ""
+            if value:
+                # Upper first character
+                capitalized += value[0].upper()
+                # Append rest of string if there is any
+                if len(value) > 1:
+                    capitalized += value[1:]
+            fill_data[key.capitalize()] = capitalized
+
         return template.format(**fill_data)
 
 
