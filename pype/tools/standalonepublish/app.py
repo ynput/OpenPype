@@ -9,6 +9,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
     AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
 )
+from .widgets.constants import HOST_NAME
 from avalon import style
 from pype.api import resources
 from avalon.api import AvalonMongoDB
@@ -208,6 +209,8 @@ class Window(QtWidgets.QDialog):
 
 
 def main():
+    os.environ["AVALON_APP"] = HOST_NAME
+
     # Allow to change icon of running process in windows taskbar
     if os.name == "nt":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
