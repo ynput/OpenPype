@@ -11,6 +11,13 @@ ValidateSceneOrder = pyblish.api.ValidatorOrder + 0.2
 ValidateMeshOrder = pyblish.api.ValidatorOrder + 0.3
 
 
+class TaskNotSetError(KeyError):
+    def __init__(self, msg=None):
+        if not msg:
+            msg = "Creator's subset name template requires task name."
+        super(TaskNotSetError, self).__init__(msg)
+
+
 class PypeCreatorMixin:
     """Helper to override avalon's default class methods.
 
@@ -52,6 +59,11 @@ class PypeCreatorMixin:
         # Make sure template is set (matching may have empty string)
         if not template:
             template = cls.default_tempate
+
+        # Simple check of task name existence for template with {task} in
+        #   - missing task should be possible only in Standalone publisher
+        if not task_name and "{task}" in template:
+            raise TaskNotSetError()
 
         fill_data = {
             "user_input": user_text,
