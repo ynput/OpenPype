@@ -26,6 +26,8 @@ from .applications import (
     _subprocess
 )
 
+from .profiles_filtering import filter_profiles
+
 from .plugin_tools import (
     filter_pyblish_plugins,
     source_hash,
@@ -44,7 +46,7 @@ from .path_tools import (
     get_paths_from_environ,
     get_ffmpeg_tool_path
 )
-
+from .
 from .ffmpeg_utils import ffprobe_streams
 
 from .packaging import make_workload_package
@@ -68,6 +70,8 @@ __all__ = [
     "ApplicationLaunchFailed",
     "launch_application",
     "ApplicationAction",
+
+    "filter_profiles",
 
     "filter_pyblish_plugins",
     "get_unique_layer_name",
