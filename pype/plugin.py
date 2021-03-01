@@ -27,7 +27,7 @@ class PypeCreatorMixin:
 
     @classmethod
     def get_subset_name(
-        cls, user_text, task_name, asset_id, project_name, host_name=None
+        cls, variant, task_name, asset_id, project_name, host_name=None
     ):
         if not cls.family:
             return ""
