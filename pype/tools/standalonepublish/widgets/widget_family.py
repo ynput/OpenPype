@@ -305,30 +305,46 @@ class FamilyWidget(QtWidgets.QWidget):
         subset_name = self.input_result.text()
         version = 1
 
+        asset_doc = None
+        subset_doc = None
+        versions = None
         if (
             asset_name != self.NOT_SELECTED and
             subset_name.strip() != ''
         ):
-            asset = self.dbcon.find_one({
-                'type': 'asset',
-                'name': asset_name
-            })
-            subset = self.dbcon.find_one({
-                'type': 'subset',
-                'parent': asset['_id'],
-                'name': subset_name
-            })
-            if subset:
-                versions = self.dbcon.find({
+            asset_doc = self.dbcon.find_one(
+                {
+                    'type': 'asset',
+                    'name': asset_name
+                },
+                {"_id": 1}
+            )
+
+        if asset_doc:
+            subset_doc = self.dbcon.find_one(
+                {
+                    'type': 'subset',
+                    'parent': asset_doc['_id'],
+                    'name': subset_name
+                },
+                {"_id": 1}
+            )
+
+        if subset_doc:
+            versions = self.dbcon.find(
+                {
                     'type': 'version',
-                    'parent': subset['_id']
-                })
-                if versions:
-                    versions = sorted(
-                        [v for v in versions],
-                        key=lambda ver: ver['name']
-                    )
-                    version = int(versions[-1]['name']) + 1
+                    'parent': subset_doc['_id']
+                },
+                {"name": 1}
+            ).distinct("name")
+
+        if versions:
+            versions = sorted(
+                [v for v in versions],
+                key=lambda ver: ver['name']
+            )
+            version = int(versions[-1]['name']) + 1
 
         self.version_spinbox.setValue(version)
 

@@ -284,6 +284,7 @@ class AssetWidget(QtWidgets.QWidget):
         self.task_changed.emit()
 
     def _refresh_tasks(self):
+        self.dbcon.Session["AVALON_TASK"] = None
         tasks = []
         selected = self.get_selected_assets()
         if len(selected) == 1:
