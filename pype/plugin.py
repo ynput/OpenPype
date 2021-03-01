@@ -39,7 +39,7 @@ class PypeCreatorMixin:
         tools_settings = get_project_settings(project_name)["global"]["tools"]
         profiles = tools_settings["creator"]["subset_name_profiles"]
         filtering_criteria = {
-            "family": family,
+            "families": family,
             "hosts": host_name,
             "tasks": task_name
         }
@@ -57,7 +57,7 @@ class PypeCreatorMixin:
             "user_input": user_text,
             "userInput": user_text,
             "family": family,
-            "task_name": task_name
+            "task": task_name
         }
         return template.format(**fill_data)
 
