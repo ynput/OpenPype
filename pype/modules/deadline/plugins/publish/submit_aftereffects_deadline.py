@@ -77,6 +77,8 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
                 dln_job_info.EnvironmentKeyValue = "{key}={value}".format(
                      key=key,
                      value=val)
+        # to recognize job from PYPE for turning Event On/Off
+        dln_job_info.EnvironmentKeyValue = "PYPE_RENDER_JOB=1"
 
         return dln_job_info
 

@@ -287,6 +287,9 @@ class HarmonySubmitDeadline(
                     key=key,
                     value=val)
 
+        # to recognize job from PYPE for turning Event On/Off
+        job_info.EnvironmentKeyValue = "PYPE_RENDER_JOB=1"
+
         return job_info
 
     def _unzip_scene_file(self, published_scene: Path) -> Path:
