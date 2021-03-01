@@ -111,7 +111,8 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         if pype_publish_job == '1' and pype_render_job == '1':
             raise RuntimeError("Misconfiguration. Job couldn't be both " +
                                "render and publish.")
-        elif pype_publish_job == '1':
+
+        if pype_publish_job == '1':
             self.LogInfo("Publish job, skipping inject.")
             return
         elif pype_render_job == '0':
@@ -162,7 +163,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
             exit_code = subprocess.call(args, shell=True)
             if exit_code != 0:
-                raise RuntimeError("Publishing failed")
+                raise RuntimeError("Publishing failed, check worker's log")
 
             with open(export_url) as fp:
                 contents = json.load(fp)
@@ -221,7 +222,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         self.updateFtrackStatus(job, "Rendering")
 
     def OnJobFinished(self, job):
-        self.LogInfo("OnJobFinished")
+        #self.LogInfo("OnJobFinished")
         self.updateFtrackStatus(job, "Artist Review")
 
     def OnJobRequeued(self, job):
@@ -249,8 +250,8 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         pass
 
     def OnJobError(self, job, task, report):
-        self.LogInfo("OnJobError LOGGING")
-        # data = {"task": task, "report": report}
+        #self.LogInfo("OnJobError LOGGING")
+        pass
 
     def OnJobPurged(self, job):
         pass
@@ -258,11 +259,12 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
     def OnHouseCleaning(self):
         pass
 
-    def OnRepositoryRepair(self, job):
+    def OnRepositoryRepair(self, job, *args):
         pass
 
     def OnSlaveStarted(self, job):
-        self.LogInfo("OnSlaveStarted LOGGING")
+        #self.LogInfo("OnSlaveStarted LOGGING")
+        pass
 
     def OnSlaveStopped(self, job):
         pass
@@ -271,7 +273,8 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         pass
 
     def OnSlaveRendering(self, host_name, job):
-        self.LogInfo("OnSlaveRendering LOGGING")
+        #self.LogInfo("OnSlaveRendering LOGGING")
+        pass
 
     def OnSlaveStartingJob(self, host_name, job):
         self.LogInfo("OnSlaveStartingJob LOGGING")
