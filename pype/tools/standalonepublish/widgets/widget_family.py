@@ -1,6 +1,5 @@
 import os
 import re
-from collections import namedtuple
 
 from Qt import QtWidgets, QtCore
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
@@ -10,6 +9,7 @@ from pype.api import (
     get_project_settings,
     Creator
 )
+from pype.plugin import TaskNotSetError
 from avalon.tools.creator.app import SubsetAllowedSymbols
 
 
@@ -214,18 +214,23 @@ class FamilyWidget(QtWidgets.QWidget):
             task_name = self.dbcon.Session["AVALON_TASK"]
 
             # Calculate subset name with Creator plugin
-            subset_name = plugin.get_subset_name(
-                user_input_text, task_name, asset_id, project_name
-            )
-            # Force replacement of prohibited symbols
-            # QUESTION should Creator care about this and here should be only
-            #   validated with schema regex?
-            subset_name = re.sub(
-                "[^{}]+".format(SubsetAllowedSymbols),
-                "",
-                subset_name
-            )
-            self.input_result.setText(subset_name)
+            try:
+                subset_name = plugin.get_subset_name(
+                    user_input_text, task_name, asset_id, project_name
+                )
+                # Force replacement of prohibited symbols
+                # QUESTION should Creator care about this and here should be only
+                #   validated with schema regex?
+                subset_name = re.sub(
+                    "[^{}]+".format(SubsetAllowedSymbols),
+                    "",
+                    subset_name
+                )
+                self.input_result.setText(subset_name)
+
+            except TaskNotSetError:
+                subset_name = ""
+                self.input_result.setText("Select task please")
 
             # Get all subsets of the current asset
             subset_docs = self.dbcon.find(
