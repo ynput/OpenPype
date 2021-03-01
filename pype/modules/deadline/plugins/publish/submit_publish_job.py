@@ -5,42 +5,13 @@ import os
 import json
 import re
 from copy import copy, deepcopy
+import sys
 import pype.api
 
 from avalon import api, io
 from avalon.vendor import requests, clique
 
 import pyblish.api
-
-
-def _get_script(path):
-
-    # pass input path if exists
-    if path:
-        if os.path.exists(path):
-            return str(path)
-        else:
-            raise
-
-    """Get path to the image sequence script."""
-    try:
-        from pathlib import Path
-    except ImportError:
-        from pathlib2 import Path
-
-    try:
-        from pype.scripts import publish_filesequence
-    except Exception:
-        assert False, "Expected module 'publish_deadline'to be available"
-
-    module_path = publish_filesequence.__file__
-    if module_path.endswith(".pyc"):
-        module_path = module_path[: -len(".pyc")] + ".py"
-
-    path = Path(os.path.normpath(module_path)).resolve(strict=True)
-    assert path is not None, ("Cannot determine path")
-
-    return str(path)
 
 
 def get_resources(version, extension=None):
@@ -127,6 +98,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     label = "Submit image sequence jobs to Deadline or Muster"
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
+    deadline_plugin = "Pype"
+
 
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 
@@ -144,8 +117,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_SERVER",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT",
+        "AVALON_ASSET",
+        "AVALON_TASK",
+        "AVALON_APP_NAME",
+        "PYPE_PUBLISH_JOB"
         "PYPE_LOG_NO_COLORS",
-        "PYPE_USERNAME"
+        "PYPE_USERNAME",
+        "PYPE_RENDER_JOB",
+        "PYPE_PUBLISH_JOB"
     ]
 
     # custom deadline atributes
@@ -235,10 +214,26 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                                               'render',
                                               override_version)
 
+        # Transfer the environment from the original job to this dependent
+        # job so they use the same environment
+        metadata_path, roothless_metadata_path = \
+            self._create_metadata_path(instance)
+
+        environment = job["Props"].get("Env", {})
+        environment["PYPE_METADATA_FILE"] = roothless_metadata_path
+        environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
+        environment["AVALON_ASSET"] = io.Session["AVALON_ASSET"]
+        environment["AVALON_TASK"] = io.Session["AVALON_TASK"]
+        environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
+        environment["PYPE_LOG_NO_COLORS"] = "1"
+        environment["PYPE_USERNAME"] = instance.context.data["user"]
+        environment["PYPE_PUBLISH_JOB"] = "1"
+        environment["PYPE_RENDER_JOB"] = "0"
+
         # Generate the payload for Deadline submission
         payload = {
             "JobInfo": {
-                "Plugin": "Python",
+                "Plugin": self.deadline_plugin,
                 "BatchName": job["Props"]["Batch"],
                 "Name": job_name,
                 "UserName": job["Props"]["User"],
@@ -256,8 +251,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             },
             "PluginInfo": {
                 "Version": self.plugin_python_version,
-                "ScriptFile": _get_script(self.publishing_script),
-                "Arguments": "",
                 "SingleFrameOnly": "True",
             },
             # Mandatory for Deadline, may be empty
@@ -274,20 +267,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         else:
             payload["JobInfo"]["JobDependency0"] = job["_id"]
 
-        # Transfer the environment from the original job to this dependent
-        # job so they use the same environment
-        metadata_path, roothless_metadata_path = self._create_metadata_path(
-            instance)
-        environment = job["Props"].get("Env", {})
-        environment["PYPE_METADATA_FILE"] = roothless_metadata_path
-        environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
-        environment["PYPE_LOG_NO_COLORS"] = "1"
-        environment["PYPE_USERNAME"] = instance.context.data["user"]
-        try:
-            environment["PYPE_PYTHON_EXE"] = os.environ["PYPE_PYTHON_EXE"]
-        except KeyError:
-            # PYPE_PYTHON_EXE not set
-            pass
         i = 0
         for index, key in enumerate(environment):
             if key.upper() in self.enviro_filter:
@@ -1066,3 +1045,30 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             publish_folder = os.path.dirname(file_path)
 
         return publish_folder
+
+    def _get_executable(self, path=None):
+
+        # pass input path if exists
+        if path:
+            if os.path.exists(path):
+                return str(path)
+            else:
+                raise
+
+        """Get path to the image sequence script."""
+        try:
+            from pathlib import Path
+        except ImportError:
+            from pathlib2 import Path
+
+        if getattr(sys, 'frozen', False):
+            interpreter = [sys.executable]
+        else:
+            interpreter = [sys.executable, 'start.py']
+
+        self.log.info("interpreter::{}".format(interpreter))
+        executable_path = os.path.join(*interpreter)
+
+        assert executable_path is not None, ("Cannot determine path")
+
+        return str(executable_path)
