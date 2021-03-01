@@ -136,7 +136,7 @@
                     "families": [],
                     "hosts": [],
                     "tasks": [],
-                    "template": "{family}{user_input}"
+                    "template": "{family}{Variant}"
                 },
                 {
                     "families": [
@@ -144,7 +144,7 @@
                     ],
                     "hosts": [],
                     "tasks": [],
-                    "template": "{family}{task}{user_input}"
+                    "template": "{family}{Task}{Variant}"
                 }
             ]
         },
