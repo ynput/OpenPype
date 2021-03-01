@@ -3,6 +3,7 @@ import os
 import pyblish.api
 import avalon.api
 from pype.api import get_project_settings
+from pype.lib import filter_profiles
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
 ValidateContentsOrder = pyblish.api.ValidatorOrder + 0.1
@@ -15,17 +16,50 @@ class PypeCreatorMixin:
 
     Mixin class must be used as first in inheritance order to override methods.
     """
+    default_tempate = "{family}{user_input}"
+
     @classmethod
-    def get_subset_name(cls, user_text, task_name, asset_id, project_name):
+    def get_subset_name(
+        cls, user_text, task_name, asset_id, project_name, host_name=None
+    ):
         if not cls.family:
             return ""
+
+        if not host_name:
+            host_name = os.environ["AVALON_APP"]
 
         # Capitalize first letter of user input
         if user_text:
             user_text = user_text[0].capitalize() + user_text[1:]
 
+        # Use only last part of class family value split by dot (`.`)
         family = cls.family.rsplit(".", 1)[-1]
-        return "{}___{}".format(family, user_text)
+
+        # Get settings
+        tools_settings = get_project_settings(project_name)["global"]["tools"]
+        profiles = tools_settings["creator"]["subset_name_profiles"]
+        filtering_criteria = {
+            "family": family,
+            "hosts": host_name,
+            "tasks": task_name
+        }
+
+        matching_profile = filter_profiles(profiles, filtering_criteria)
+        template = None
+        if matching_profile:
+            template = matching_profile["template"]
+
+        # Make sure template is set (matching may have empty string)
+        if not template:
+            template = cls.default_tempate
+
+        fill_data = {
+            "user_input": user_text,
+            "userInput": user_text,
+            "family": family,
+            "task_name": task_name
+        }
+        return template.format(**fill_data)
 
 
 class Creator(PypeCreatorMixin, avalon.api.Creator):
