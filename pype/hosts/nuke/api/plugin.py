@@ -1,4 +1,3 @@
-import avalon.api
 import avalon.nuke
 from pype.api import (
     get_current_project_settings,
