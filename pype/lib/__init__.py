@@ -46,7 +46,7 @@ from .path_tools import (
     get_paths_from_environ,
     get_ffmpeg_tool_path
 )
-from .
+
 from .ffmpeg_utils import ffprobe_streams
 
 from .packaging import make_workload_package
