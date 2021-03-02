@@ -112,6 +112,22 @@ realpath () {
   echo $(cd $(dirname "$1") || return; pwd)/$(basename "$1")
 }
 
+##############################################################################
+# Install Poetry when needed
+# Globals:
+#   PATH
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+install_poetry () {
+  echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
+  command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
+  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+  export PATH="$PATH:$HOME/.poetry/bin"
+}
+
 # Main
 main () {
   echo -e "${BGreen}"
@@ -132,6 +148,16 @@ main () {
   echo -e "${BIGreen}>>>${RST} Building Pype ${BIWhite}[${RST} ${BIGreen}$pype_version${RST} ${BIWhite}]${RST}"
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
+
+  echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
+  if [ -f "$HOME/.poetry/bin/poetry" ]; then
+    echo -e "${BIGreen}OK${RST}"
+    export PATH="$PATH:$HOME/.poetry/bin"
+  else
+    echo -e "${BIYellow}NOT FOUND${RST}"
+    install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+  fi
+
   echo -e "${BIGreen}>>>${RST} Building ..."
   poetry run python3 "$pype_root/setup.py" build > "$pype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
   poetry run python3 "$pype_root/tools/build_dependencies.py"
