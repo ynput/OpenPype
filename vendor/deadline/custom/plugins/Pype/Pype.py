@@ -1,9 +1,10 @@
-import sys
-import subprocess
-import platform
-import os
+from System.IO import *
+from System.Text.RegularExpressions import *
 
-from Deadline.Plugins import DeadlinePlugin, PluginType
+from Deadline.Plugins import *
+from Deadline.Scripting import *
+
+import re
 
 
 ######################################################################
@@ -28,84 +29,88 @@ class PypeDeadlinePlugin(DeadlinePlugin):
         for publish process.
     """
     def __init__(self):
-        self.StartJobCallback += self.StartJob
         self.InitializeProcessCallback += self.InitializeProcess
-        self.RenderTasksCallback += self.RenderTasks
+        self.RenderExecutableCallback += self.RenderExecutable
+        self.RenderArgumentCallback += self.RenderArgument
 
     def Cleanup(self):
-        del self.StartJobCallback
+        for stdoutHandler in self.StdoutHandlers:
+            del stdoutHandler.HandleCallback
+
         del self.InitializeProcessCallback
-        del self.RenderTasksCallback
+        del self.RenderExecutableCallback
+        del self.RenderArgumentCallback
 
-    def StartJob(self):
-        # adding python search paths
-        paths = self.GetConfigEntryWithDefault("PythonSearchPaths", "").strip()
-        paths = paths.split(";")
-
-        for path in paths:
-            self.LogInfo("Extending sys.path with: " + str(path))
-            sys.path.append(path)
-
-        self.LogInfo("PypeDeadlinePlugin start")
-        try:
-            metadata_file = \
-                self.GetProcessEnvironmentVariable("PYPE_METADATA_FILE")
-            if not metadata_file:
-                raise RuntimeError("Env var PYPE_METADATA_FILE value missing")
-
-            pype_app = self.get_pype_executable_path()
-
-            args = [
-                pype_app,
-                'publish',
-                metadata_file
-            ]
-
-            env = {}
-            env = dict(os.environ)
-
-            job = self.GetJob()
-            for key in job.GetJobEnvironmentKeys():
-                env[str(key)] = str(job.GetJobEnvironmentKeyValue(key))
-
-            exit_code = subprocess.call(args, shell=True, env=env)
-            if exit_code != 0:
-                raise RuntimeError("Publishing failed, check worker's log")
-
-            self.LogInfo("PypeDeadlinePlugin end")
-        except Exception:
-            import traceback
-            self.LogInfo(traceback.format_exc())
-            self.LogInfo("PypeDeadlinePlugin failed")
-            raise
-
-    # Called by Deadline to initialize the process.
     def InitializeProcess(self):
-        # Set the plugin specific settings.
         self.PluginType = PluginType.Simple
+        self.StdoutHandling = True
 
-    def RenderTasks(self):
-        # do nothing, no render, just publishing, still must be here
-        pass
+        self.SingleFramesOnly = self.GetBooleanPluginInfoEntryWithDefault(
+            "SingleFramesOnly", False)
+        self.LogInfo("Single Frames Only: %s" % self.SingleFramesOnly)
 
-    def get_pype_executable_path(self):
-        """
-            Returns calculated path based on settings and platform
+        self.AddStdoutHandlerCallback(
+            ".*Progress: (\d+)%.*").HandleCallback += self.HandleProgress
 
-            Uses 'pype_console' executable
-        """
-        pype_command = "pype_console"
-        if platform.system().lower() == "linux":
-            pype_command = "pype_console.sh"
-        if platform.system().lower() == "windows":
-            pype_command = "pype_console.exe"
+    def RenderExecutable(self):
+        version = self.GetPluginInfoEntry("Version")
 
-        pype_root = self.GetConfigEntryWithDefault("PypeExecutable", "")
+        exeList = self.GetConfigEntry(
+            "Pype_Executable_" + version.replace(".", "_"))
+        exe = FileUtils.SearchFileList(exeList)
+        if exe == "":
+            self.FailRender(
+                "Pype " + version + " executable was not found " +
+                "in the semicolon separated list \"" + exeList + "\". " +
+                "The path to the render executable can be configured " +
+                "from the Plugin Configuration in the Deadline Monitor.")
+        return exe
 
-        pype_app = os.path.join(pype_root.strip(), pype_command)
-        if not os.path.exists(pype_app):
-            raise RuntimeError("App '{}' doesn't exist. " +
-                               "Fix it in Tools > Configure Events > " +
-                               "pype".format(pype_app))
+    def RenderArgument(self):
+        arguments = str(self.GetPluginInfoEntryWithDefault("Arguments", ""))
+        arguments = RepositoryUtils.CheckPathMapping(arguments)
 
-        return pype_app
+        arguments = re.sub(r"<(?i)STARTFRAME>", str(self.GetStartFrame()),
+                           arguments)
+        arguments = re.sub(r"<(?i)ENDFRAME>", str(self.GetEndFrame()),
+                           arguments)
+        arguments = re.sub(r"<(?i)QUOTE>", "\"", arguments)
+
+        arguments = self.ReplacePaddedFrame(arguments,
+                                            "<(?i)STARTFRAME%([0-9]+)>",
+                                            self.GetStartFrame())
+        arguments = self.ReplacePaddedFrame(arguments,
+                                            "<(?i)ENDFRAME%([0-9]+)>",
+                                            self.GetEndFrame())
+
+        count = 0
+        for filename in self.GetAuxiliaryFilenames():
+            localAuxFile = Path.Combine(self.GetJobsDataDirectory(), filename)
+            arguments = re.sub(r"<(?i)AUXFILE" + str(count) + r">",
+                               localAuxFile.replace("\\", "/"), arguments)
+            count += 1
+
+        return arguments
+
+    def ReplacePaddedFrame(self, arguments, pattern, frame):
+        frameRegex = Regex(pattern)
+        while True:
+            frameMatch = frameRegex.Match(arguments)
+            if frameMatch.Success:
+                paddingSize = int(frameMatch.Groups[1].Value)
+                if paddingSize > 0:
+                    padding = StringUtils.ToZeroPaddedString(frame,
+                                                             paddingSize,
+                                                             False)
+                else:
+                    padding = str(frame)
+                arguments = arguments.replace(frameMatch.Groups[0].Value,
+                                              padding)
+            else:
+                break
+
+        return arguments
+
+    def HandleProgress(self):
+        progress = float(self.GetRegexMatch(1))
+        self.SetProgress(progress)

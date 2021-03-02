@@ -1,37 +1,27 @@
-[State]
-Type=Enum
-Items=Global Enabled;Opt-In;Disabled
-Category=Options
-CategoryOrder=0
-CategoryIndex=0
-Label=State
-Default=Global Enabled
-Description=How this event plug-in should respond to events. If Global, all jobs and slaves will trigger the events for this plugin. If Opt-In, jobs and slaves can choose to trigger the events for this plugin. If Disabled, no events are triggered for this plugin.
+[About]
+Type=label
+Label=About
+Category=About Plugin
+CategoryOrder=-1
+Index=0
+Default=Pype Plugin for Deadline
+Description=Not configurable
 
-[PythonSearchPaths]
-Type=MultiLineMultiFolder
-Label=Additional Python Search Paths
-Category=Options
+[ConcurrentTasks]
+Type=label
+Label=ConcurrentTasks
+Category=About Plugin
+CategoryOrder=-1
+Index=0
+Default=True
+Description=Not configurable
+
+[Pype_Executable_3_0]
+Type=multilinemultifilename
+Label=Pype 3.0 Executable
+Category=Pype Executables
 CategoryOrder=0
-CategoryIndex=1
+Index=0
 Default=
-Description=The list of paths to append to the PYTHONPATH environment variable.  This allows the Python job to find custom modules in non-standard locations.
+Description=The path to the Pype executable. Enter alternative paths on separate lines.
 
-[LoggingLevel]
-Type=Enum
-Label=Logging Level
-Category=Options
-CategoryOrder=0
-CategoryIndex=2
-Items=DEBUG;INFO;WARNING;ERROR
-Default=DEBUG
-Description=Logging level where printing will start.
-
-[PypeExecutable]
-Type=MultiLineMultiFolder
-Label=Path to Pype executable dir
-Category=Job Plugins
-CategoryOrder=1
-CategoryIndex=1
-Default=
-Description=

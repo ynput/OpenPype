@@ -100,7 +100,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     icon = "tractor"
     deadline_plugin = "Pype"
 
-
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 
     families = ["render.farm", "prerender",
@@ -150,7 +149,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     # list of family names to transfer to new family if present
     families_transfer = ["render3d", "render2d", "ftrack", "slate"]
-    plugin_python_version = "3.7"
+    plugin_pype_version = "3.0"
 
     # script path for publish_filesequence.py
     publishing_script = None
@@ -186,7 +185,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             ).format(output_dir))
             roothless_mtdt_p = metadata_path
 
-        return (metadata_path, roothless_mtdt_p)
+        return metadata_path, roothless_mtdt_p
 
     def _submit_deadline_post_job(self, instance, job, instances):
         """Submit publish job to Deadline.
@@ -220,7 +219,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self._create_metadata_path(instance)
 
         environment = job["Props"].get("Env", {})
-        environment["PYPE_METADATA_FILE"] = roothless_metadata_path
         environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
         environment["AVALON_ASSET"] = io.Session["AVALON_ASSET"]
         environment["AVALON_TASK"] = io.Session["AVALON_TASK"]
@@ -229,6 +227,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["PYPE_USERNAME"] = instance.context.data["user"]
         environment["PYPE_PUBLISH_JOB"] = "1"
         environment["PYPE_RENDER_JOB"] = "0"
+
+        args = [
+            'publish',
+            roothless_metadata_path
+        ]
 
         # Generate the payload for Deadline submission
         payload = {
@@ -250,7 +253,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "OutputDirectory0": output_dir
             },
             "PluginInfo": {
-                "Version": self.plugin_python_version,
+                "Version": self.plugin_pype_version,
+                "Arguments": " ".join(args),
                 "SingleFrameOnly": "True",
             },
             # Mandatory for Deadline, may be empty
@@ -1069,6 +1073,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info("interpreter::{}".format(interpreter))
         executable_path = os.path.join(*interpreter)
 
-        assert executable_path is not None, ("Cannot determine path")
+        assert executable_path is not None, "Cannot determine path"
 
         return str(executable_path)
