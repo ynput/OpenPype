@@ -35,8 +35,6 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         Only directory path is needed.
 
     """
-    ALREADY_INJECTED = False
-
     def __init__(self):
         self.OnJobSubmittedCallback += self.OnJobSubmitted
         self.OnJobStartedCallback += self.OnJobStarted
@@ -65,8 +63,6 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         self.OnMachineStartupCallback += self.OnMachineStartup
         self.OnThermalShutdownCallback += self.OnThermalShutdown
         self.OnMachineRestartCallback += self.OnMachineRestart
-
-        self.ALREADY_INJECTED = False
 
     def Cleanup(self):
         del self.OnJobSubmittedCallback
@@ -97,128 +93,32 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         del self.OnThermalShutdownCallback
         del self.OnMachineRestartCallback
 
-    def inject_pype_environment(self, job, additonalData=None):
-
-        if self.ALREADY_INJECTED:
-            self.LogInfo("Environment injected previously")
-            return
-
-        pype_render_job = job.GetJobEnvironmentKeyValue('PYPE_RENDER_JOB') \
-            or '0'
-        pype_publish_job = job.GetJobEnvironmentKeyValue('PYPE_PUBLISH_JOB') \
-            or '0'
-
-        if pype_publish_job == '1' and pype_render_job == '1':
-            raise RuntimeError("Misconfiguration. Job couldn't be both " +
-                               "render and publish.")
-
-        if pype_publish_job == '1':
-            self.LogInfo("Publish job, skipping inject.")
-            return
-        elif pype_render_job == '0':
-            # not pype triggered job
-            return
-
-        # adding python search paths
-        paths = self.GetConfigEntryWithDefault("PythonSearchPaths", "").strip()
-        paths = paths.split(";")
-
-        for path in paths:
-            self.LogInfo("Extending sys.path with: " + str(path))
-            sys.path.append(path)
-
-        self.LogInfo("inject_pype_environment start")
-        try:
-            pype_app = self.get_pype_executable_path()
-
-            # tempfile.TemporaryFile cannot be used because of locking
-            export_url = os.path.join(tempfile.gettempdir(),
-                                      time.strftime('%Y%m%d%H%M%S'),
-                                      'env.json')  # add HHMMSS + delete later
-            self.LogInfo("export_url {}".format(export_url))
-
-            args = [
-                pype_app,
-                'extractenvironments',
-                export_url
-            ]
-
-            add_args = {}
-            add_args['project'] = \
-                job.GetJobEnvironmentKeyValue('AVALON_PROJECT')
-            add_args['asset'] = job.GetJobEnvironmentKeyValue('AVALON_ASSET')
-            add_args['task'] = job.GetJobEnvironmentKeyValue('AVALON_TASK')
-            add_args['app'] = job.GetJobEnvironmentKeyValue('AVALON_APP_NAME')
-
-            if all(add_args.values()):
-                for key, value in add_args.items():
-                    args.append("--{}".format(key))
-                    args.append(value)
-            else:
-                msg = "Required env vars: AVALON_PROJECT, AVALON_ASSET, " + \
-                      "AVALON_TASK, AVALON_APP_NAME"
-                raise RuntimeError(msg)
-
-            self.LogInfo("args::{}".format(args))
-
-            exit_code = subprocess.call(args, shell=True)
-            if exit_code != 0:
-                raise RuntimeError("Publishing failed, check worker's log")
-
-            with open(export_url) as fp:
-                contents = json.load(fp)
-                self.LogInfo("contents::{}".format(contents))
-                for key, value in contents.items():
-                    job.SetJobEnvironmentKeyValue(key, value)
-
-            Deadline.Scripting.RepositoryUtils.SaveJob(job)  # IMPORTANT
-            self.ALREADY_INJECTED = True
-
-            os.remove(export_url)
-
-            self.LogInfo("inject_pype_environment end")
-        except Exception:
-            import traceback
-            self.LogInfo(traceback.format_exc())
-            self.LogInfo("inject_pype_environment failed")
-            Deadline.Scripting.RepositoryUtils.FailJob(job)
-            raise
-
-    def get_pype_executable_path(self):
+    def set_pype_executable_path(self, job):
         """
-            Returns calculated path based on settings and platform
+            Sets configurable PypeExecutable value to job extra infos.
 
-            Uses 'pype_console' executable
+            GlobalJobPreLoad takes this value, pulls env vars for each task
+            from specific worker itself. GlobalJobPreLoad is not easily
+            configured, so we are configuring Event itself.
         """
-        pype_command = "pype_console"
-        if platform.system().lower() == "linux":
-            pype_command = "pype_console.sh"
-        if platform.system().lower() == "windows":
-            pype_command = "pype_console.exe"
+        pype_execs = self.GetConfigEntryWithDefault("PypeExecutable", "")
+        job.SetJobExtraInfoKeyValue("pype_executables", pype_execs)
 
-        pype_root = self.GetConfigEntryWithDefault("PypeExecutable", "")
-
-        pype_app = os.path.join(pype_root.strip(), pype_command)
-        if not os.path.exists(pype_app):
-            raise RuntimeError("App '{}' doesn't exist. " +
-                               "Fix it in Tools > Configure Events > " +
-                               "pype".format(pype_app))
-
-        return pype_app
+        Deadline.Scripting.RepositoryUtils.SaveJob(job)
 
     def updateFtrackStatus(self, job, statusName, createIfMissing=False):
         """Updates version status on ftrack"""
         pass
 
     def OnJobSubmitted(self, job):
-        self.LogInfo("OnJobSubmitted LOGGING")
+        # self.LogInfo("OnJobSubmitted LOGGING")
         # for 1st time submit
-        self.inject_pype_environment(job)
+        self.set_pype_executable_path(job)
         self.updateFtrackStatus(job, "Render Queued")
 
     def OnJobStarted(self, job):
-        self.LogInfo("OnJobStarted")
-        # inject_pype_environment shouldnt be here, too late already
+        # self.LogInfo("OnJobStarted")
+        self.set_pype_executable_path(job)
         self.updateFtrackStatus(job, "Rendering")
 
     def OnJobFinished(self, job):
@@ -226,22 +126,24 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         self.updateFtrackStatus(job, "Artist Review")
 
     def OnJobRequeued(self, job):
-        self.LogInfo("OnJobRequeued LOGGING")
-        self.inject_pype_environment(job)
+        # self.LogInfo("OnJobRequeued LOGGING")
+        self.set_pype_executable_path(job)
 
     def OnJobFailed(self, job):
         pass
 
     def OnJobSuspended(self, job):
-        self.LogInfo("OnJobSuspended LOGGING")
+        # self.LogInfo("OnJobSuspended LOGGING")
         self.updateFtrackStatus(job, "Render Queued")
 
     def OnJobResumed(self, job):
-        self.LogInfo("OnJobResumed LOGGING")
+        # self.LogInfo("OnJobResumed LOGGING")
+        self.set_pype_executable_path(job)
         self.updateFtrackStatus(job, "Rendering")
 
     def OnJobPended(self, job):
-        self.LogInfo("OnJobPended LOGGING")
+        # self.LogInfo("OnJobPended LOGGING")
+        pass
 
     def OnJobReleased(self, job):
         pass
@@ -277,9 +179,8 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         pass
 
     def OnSlaveStartingJob(self, host_name, job):
-        self.LogInfo("OnSlaveStartingJob LOGGING")
-        # inject params must be here for Resubmits
-        self.inject_pype_environment(job)
+        # self.LogInfo("OnSlaveStartingJob LOGGING")
+        self.set_pype_executable_path(job)
 
     def OnSlaveStalled(self, job):
         pass

@@ -1,76 +1,94 @@
 # -*- coding: utf-8 -*-
-"""Remap pype path and PYPE_METADATA_PATH."""
-import platform
+import os
+import tempfile
+import time
+import subprocess
+import json
+from Deadline.Scripting import *
 from Deadline.Scripting import RepositoryUtils
 
 
-def pype_command_line(executable, arguments, workingDirectory):
-    """Remap paths in comand line argument string.
-
-    Using Deadline rempper it will remap all path found in command-line.
-
-    Args:
-        executable (str): path to executable
-        arguments (str): arguments passed to executable
-        workingDirectory (str): working directory path
-
-    Returns:
-        Tuple(executable, arguments, workingDirectory)
-
-    """
-    print("-" * 40)
-    print("executable: {}".format(executable))
-    print("arguments: {}".format(arguments))
-    print("workingDirectory: {}".format(workingDirectory))
-    print("-" * 40)
-    print("Remapping arguments ...")
-    arguments = RepositoryUtils.CheckPathMapping(arguments)
-    print("* {}".format(arguments))
-    print("-" * 40)
-    return executable, arguments, workingDirectory
-
-
-def pype(deadlinePlugin):
-    """Remaps `PYPE_METADATA_FILE` and `PYPE_PYTHON_EXE` environment vars.
-
-    `PYPE_METADATA_FILE` is used on farm to point to rendered data. This path
-    originates on platform from which this job was published. To be able to
-    publish on different platform, this path needs to be remapped.
-
-    `PYPE_PYTHON_EXE` can be used to specify custom location of python
-    interpreter to use for Pype. This is remappeda also if present even
-    though it probably doesn't make much sense.
-
-    Arguments:
-        deadlinePlugin: Deadline job plugin passed by Deadline
-
-    """
+def inject_pype_environment(deadlinePlugin):
     job = deadlinePlugin.GetJob()
-    pype_metadata = job.GetJobEnvironmentKeyValue("PYPE_METADATA_FILE")
-    pype_python = job.GetJobEnvironmentKeyValue("PYPE_PYTHON_EXE")
-    # test if it is pype publish job.
-    if pype_metadata:
-        pype_metadata = RepositoryUtils.CheckPathMapping(pype_metadata)
-        if platform.system().lower() == "linux":
-            pype_metadata = pype_metadata.replace("\\", "/")
+    job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
-        print("- remapping PYPE_METADATA_FILE: {}".format(pype_metadata))
-        job.SetJobEnvironmentKeyValue("PYPE_METADATA_FILE", pype_metadata)
-        deadlinePlugin.SetProcessEnvironmentVariable(
-            "PYPE_METADATA_FILE", pype_metadata)
+    pype_render_job = job.GetJobEnvironmentKeyValue('PYPE_RENDER_JOB') \
+        or '0'
+    pype_publish_job = job.GetJobEnvironmentKeyValue('PYPE_PUBLISH_JOB') \
+        or '0'
 
-    if pype_python:
-        pype_python = RepositoryUtils.CheckPathMapping(pype_python)
-        if platform.system().lower() == "linux":
-            pype_python = pype_python.replace("\\", "/")
+    if pype_publish_job == '1' and pype_render_job == '1':
+        raise RuntimeError("Misconfiguration. Job couldn't be both " +
+                           "render and publish.")
 
-        print("- remapping PYPE_PYTHON_EXE: {}".format(pype_python))
-        job.SetJobEnvironmentKeyValue("PYPE_PYTHON_EXE", pype_python)
-        deadlinePlugin.SetProcessEnvironmentVariable(
-            "PYPE_PYTHON_EXE", pype_python)
+    if pype_publish_job == '1':
+        print("Publish job, skipping inject.")
+        return
+    elif pype_render_job == '0':
+        # not pype triggered job
+        return
 
-    deadlinePlugin.ModifyCommandLineCallback += pype_command_line
+    print("inject_pype_environment start")
+    try:
+        exe_list = job.GetJobExtraInfoKeyValue("pype_executables")
+        pype_app = FileUtils.SearchFileList(exe_list)
+        if pype_app == "":
+            raise RuntimeError(
+                "Pype executable was not found " +
+                "in the semicolon separated list \"" + exe_list + "\". " +
+                "The path to the render executable can be configured " +
+                "from the Plugin Configuration in the Deadline Monitor.")
+
+        # tempfile.TemporaryFile cannot be used because of locking
+        export_url = os.path.join(tempfile.gettempdir(),
+                                  time.strftime('%Y%m%d%H%M%S'),
+                                  'env.json')  # add HHMMSS + delete later
+        print("export_url {}".format(export_url))
+
+        args = [
+            pype_app,
+            'extractenvironments',
+            export_url
+        ]
+
+        add_args = {}
+        add_args['project'] = \
+            job.GetJobEnvironmentKeyValue('AVALON_PROJECT')
+        add_args['asset'] = job.GetJobEnvironmentKeyValue('AVALON_ASSET')
+        add_args['task'] = job.GetJobEnvironmentKeyValue('AVALON_TASK')
+        add_args['app'] = job.GetJobEnvironmentKeyValue('AVALON_APP_NAME')
+
+        if all(add_args.values()):
+            for key, value in add_args.items():
+                args.append("--{}".format(key))
+                args.append(value)
+        else:
+            msg = "Required env vars: AVALON_PROJECT, AVALON_ASSET, " + \
+                  "AVALON_TASK, AVALON_APP_NAME"
+            raise RuntimeError(msg)
+
+        print("args::{}".format(args))
+
+        exit_code = subprocess.call(args, shell=True)
+        if exit_code != 0:
+            raise RuntimeError("Publishing failed, check worker's log")
+
+        with open(export_url) as fp:
+            contents = json.load(fp)
+            print("contents::{}".format(contents))
+            for key, value in contents.items():
+                deadlinePlugin.SetEnvironmentVariable(key, value)
+
+        os.remove(export_url)
+
+        print("inject_pype_environment end")
+    except Exception:
+        import traceback
+        print(traceback.format_exc())
+        print("inject_pype_environment failed")
+        RepositoryUtils.FailJob(job)
+        raise
 
 
 def __main__(deadlinePlugin):
-    pype(deadlinePlugin)
+    inject_pype_environment(deadlinePlugin)

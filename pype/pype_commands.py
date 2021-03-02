@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from pype.lib import PypeLogger
+from pype.api import get_app_environments_for_context
 
 
 class PypeCommands:
@@ -62,6 +63,14 @@ class PypeCommands:
         # Register target and host
         import pyblish.api
         import pyblish.util
+
+        env = get_app_environments_for_context(
+            os.environ["AVALON_PROJECT"],
+            os.environ["AVALON_ASSET"],
+            os.environ["AVALON_TASK"],
+            os.environ["AVALON_APP_NAME"]
+        )
+        os.environ.update(env)
 
         log = Logger.get_logger()
 
