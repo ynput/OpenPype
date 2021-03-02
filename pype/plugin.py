@@ -70,7 +70,7 @@ class PypeCreatorMixin:
             config.get_presets(project_name)
             .get("tools", {})
             .get("creator_subset_name_profiles")
-        ) or {}
+        ) or []
         filtering_criteria = {
             "families": family,
             "hosts": host_name,
