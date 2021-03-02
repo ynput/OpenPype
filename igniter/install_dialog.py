@@ -42,7 +42,7 @@ class InstallDialog(QtWidgets.QDialog):
         super(InstallDialog, self).__init__(parent)
         self.registry = PypeSettingsRegistry()
 
-        self._mongo_url = os.getenv("PYPE_MONGO", "") or self.registry.get_secure_item("pypeMongo") or ""  # noqa: E501
+        self.mongo_url = os.getenv("PYPE_MONGO", "") or self.registry.get_secure_item("pypeMongo") or ""  # noqa: E501
 
         self.setWindowTitle("Pype - Configure Pype repository path")
         self._icon_path = os.path.join(
@@ -234,6 +234,10 @@ class InstallDialog(QtWidgets.QDialog):
                 )
                 self.parent().ok_button.setEnabled(False)
 
+            def set_read_only(self, state: bool):
+                """Set input read-only."""
+                self._mongo_input.setReadOnly(state)
+
             def validate_url(self) -> bool:
                 """Validate if entered url is ok.
 
@@ -256,8 +260,8 @@ class InstallDialog(QtWidgets.QDialog):
                 return True
 
         self._mongo = MongoWidget(self)
-        if self._mongo_url:
-            self._mongo.set_mongo_url(self._mongo_url)
+        if self.mongo_url:
+            self._mongo.set_mongo_url(self.mongo_url)
 
         # Bottom button bar
         # --------------------------------------------------------------------
@@ -379,10 +383,12 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(self._progress_bar)
         main.addWidget(bottom_widget)
         self.setLayout(main)
-        if not self._mongo_url:
+        if not self.mongo_url:
             self._mongo.setVisible(False)
         else:
-            self._mongo.validate_url()
+            if self._mongo.validate_url() and len(self.path) == 0:
+                self._mongo.setVisible(True)
+                self._mongo.setReadonly(True)
 
     def _on_select_clicked(self):
         """Show directory dialog."""
@@ -465,8 +471,14 @@ class InstallDialog(QtWidgets.QDialog):
         else:
             self._mongo.setVisible(False)
 
-        if len(self.path) < 1:
+        if len(self.path) < 1 and not self.mongo_url:
             self._mongo.setVisible(False)
+
+        if len(self.path) == 0 and self._mongo.validate_url():
+            self._mongo.setVisible(True)
+            self._mongo.set_read_only(True)
+        else:
+            self._mongo.set_read_only(False)
         return path
 
     def update_console(self, msg: str, error: bool = False) -> None:
@@ -554,7 +566,7 @@ class PathValidator(QValidator):
 
         return QValidator.State.Acceptable, path, len(path)
 
-    def validate(self, path: str, pos: int) -> (QValidator.State, str, int):
+    def validate(self, path: str, pos: int) -> (QValidator.State, str, int):  # noqa
         """Validate entered path.
 
         It can be regular path - in that case we test if it does exist.
@@ -570,7 +582,6 @@ class PathValidator(QValidator):
 
         """
         if path.startswith("mongodb"):
-            pos = len(path)
             return self._return_state(
                 QValidator.State.Intermediate, "", path)
 
