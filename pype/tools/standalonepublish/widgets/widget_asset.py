@@ -121,9 +121,11 @@ class AssetWidget(QtWidgets.QWidget):
 
     """
 
+    project_changed = QtCore.Signal(str)
     assets_refreshed = QtCore.Signal()   # on model refresh
     selection_changed = QtCore.Signal()  # on view selection change
     current_changed = QtCore.Signal()    # on view current index change
+    task_changed = QtCore.Signal()
 
     def __init__(self, dbcon, parent=None):
         super(AssetWidget, self).__init__(parent=parent)
@@ -189,6 +191,9 @@ class AssetWidget(QtWidgets.QWidget):
         selection = view.selectionModel()
         selection.selectionChanged.connect(self.selection_changed)
         selection.currentChanged.connect(self.current_changed)
+        task_view.selectionModel().selectionChanged.connect(
+            self._on_task_change
+        )
         refresh.clicked.connect(self.refresh)
 
         self.selection_changed.connect(self._refresh_tasks)
@@ -249,6 +254,9 @@ class AssetWidget(QtWidgets.QWidget):
         project_name = self.combo_projects.currentText()
         if project_name in projects:
             self.dbcon.Session["AVALON_PROJECT"] = project_name
+
+        self.project_changed.emit(project_name)
+
         self.refresh()
 
     def _refresh_model(self):
@@ -265,7 +273,18 @@ class AssetWidget(QtWidgets.QWidget):
     def refresh(self):
         self._refresh_model()
 
+    def _on_task_change(self):
+        try:
+            index = self.task_view.selectedIndexes()[0]
+            task_name = self.task_model.itemData(index)[0]
+        except Exception:
+            task_name = None
+
+        self.dbcon.Session["AVALON_TASK"] = task_name
+        self.task_changed.emit()
+
     def _refresh_tasks(self):
+        self.dbcon.Session["AVALON_TASK"] = None
         tasks = []
         selected = self.get_selected_assets()
         if len(selected) == 1:
@@ -275,7 +294,8 @@ class AssetWidget(QtWidgets.QWidget):
             if asset:
                 tasks = asset.get('data', {}).get('tasks', [])
         self.task_model.set_tasks(tasks)
-        self.task_view.setVisible(len(tasks)>0)
+        self.task_view.setVisible(len(tasks) > 0)
+        self.task_changed.emit()
 
     def get_active_asset(self):
         """Return the asset id the current asset."""
