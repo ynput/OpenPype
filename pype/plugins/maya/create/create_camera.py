@@ -1,8 +1,10 @@
-import avalon.maya
-from pype.hosts.maya import lib
+from pype.hosts.maya import (
+    lib,
+    plugin
+)
 
 
-class CreateCamera(avalon.maya.Creator):
+class CreateCamera(plugin.Creator):
     """Single baked camera"""
 
     name = "cameraMain"

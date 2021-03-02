@@ -1,7 +1,7 @@
-import avalon.maya
+from pype.hosts.maya import plugin
 
 
-class CreateUnrealStaticMesh(avalon.maya.Creator):
+class CreateUnrealStaticMesh(plugin.Creator):
     name = "staticMeshMain"
     label = "Unreal - Static Mesh"
     family = "unrealStaticMesh"
