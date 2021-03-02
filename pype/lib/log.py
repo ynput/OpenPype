@@ -201,8 +201,11 @@ class PypeLogger:
     # Information about mongo url
     log_mongo_url = None
     log_mongo_url_components = None
-    log_database_name = None
-    log_collection_name = None
+
+    # Database name in Mongo
+    log_database_name = "pype"
+    # Collection name under database in Mongo
+    log_collection_name = "logs"
 
     # PYPE_DEBUG
     pype_debug = 0
@@ -348,24 +351,13 @@ class PypeLogger:
         cls.pype_debug = int(os.getenv("PYPE_DEBUG") or "0")
 
         # Mongo URL where logs will be stored
-        cls.log_mongo_url = (
-            os.environ.get("PYPE_LOG_MONGO_URL")
-            or os.environ.get("PYPE_MONGO")
-        )
+        cls.log_mongo_url = os.environ.get("PYPE_MONGO")
+
         if not cls.log_mongo_url:
             cls.use_mongo_logging = False
         else:
             # Decompose url
             cls.log_mongo_url_components = decompose_url(cls.log_mongo_url)
-
-        # Database name in Mongo
-        cls.log_database_name = (
-            os.environ.get("PYPE_LOG_MONGO_DB") or "pype"
-        )
-        # Collection name under database in Mongo
-        cls.log_collection_name = (
-            os.environ.get("PYPE_LOG_MONGO_COL") or "logs"
-        )
 
         # Mark as initialized
         cls.initialized = True
