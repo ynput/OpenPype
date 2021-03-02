@@ -1,7 +1,7 @@
 import os
 
 import pyblish.api
-import pype.lib
+from pype import api
 
 
 class CollectTranscode(pyblish.api.InstancePlugin):
@@ -33,19 +33,15 @@ class CollectTranscode(pyblish.api.InstancePlugin):
             instance.data["label"] = name
             instance.data["families"].append("transcode")
 
-            # Get version from published versions. Since editorial file
-            # extension can change, we compared with audio file "wav".
+            # Get version from published versions.
             instance.data["version"] = 1
-            subsets = pype.lib.get_subsets(
-                instance.context.data["assetEntity"]["name"],
-                representations=self.editorial_extensions
+
+            version = api.get_latest_version(
+                instance.data["asset"], instance.data["subset"]
             )
-            try:
-                instance.data["version"] = (
-                    subsets[instance.data["subset"]]["version"]["name"] + 1
-                )
-            except KeyError:
-                pass
+
+            if version:
+                instance.data["version"] = version["name"] + 1
 
             self.log.info(
                 "Setting version to: {}".format(instance.data["version"])
