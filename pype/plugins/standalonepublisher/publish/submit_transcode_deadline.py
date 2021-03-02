@@ -164,6 +164,11 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                     "OutputDirectory0": job["output_path"],
                     "EnvironmentKeyValue0": "PYTHONPATH={}".format(PYTHONPATH),
                     "EnvironmentKeyValue1": "PATH={}".format(PATH),
+                    "EnvironmentKeyValue2": (
+                        "PYPE_PROJECT_CONFIGS={}".format(
+                            os.environ["PYPE_PROJECT_CONFIGS"]
+                        )
+                    ),
                     "AssetDependency0": job["input_path"]
                 },
                 "PluginInfo": {
@@ -259,6 +264,11 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                 "OutputDirectory0": output_path,
                 "EnvironmentKeyValue0": "PYTHONPATH={}".format(PYTHONPATH),
                 "EnvironmentKeyValue1": "PATH={}".format(PATH),
+                "EnvironmentKeyValue2": (
+                    "PYPE_PROJECT_CONFIGS={}".format(
+                        os.environ["PYPE_PROJECT_CONFIGS"]
+                    )
+                ),
                 "AssetDependency0": audio_published_path
             },
             "PluginInfo": {
