@@ -85,12 +85,28 @@ class CreateRender(avalon.maya.Creator):
         """Entry point."""
         exists = cmds.ls(self.name)
         if exists:
-            return cmds.warning("%s already exists." % exists[0])
+            cmds.warning("%s already exists." % exists[0])
+            return
 
         use_selection = self.options.get("useSelection")
         with lib.undo_chunk():
             self._create_render_settings()
             instance = super(CreateRender, self).process()
+            # create namespace with instance
+            index = 1
+            namespace_name = "_{}".format(str(instance))
+            try:
+                cmds.namespace(rm=namespace_name)
+            except RuntimeError:
+                # namespace is not empty, so we leave it untouched
+                pass
+
+            while(cmds.namespace(exists=namespace_name)):
+                namespace_name = "_{}{}".format(str(instance), index)
+                index += 1
+
+            namespace = cmds.namespace(add=namespace_name)
+
             cmds.setAttr("{}.machineList".format(instance), lock=True)
             self._rs = renderSetup.instance()
             layers = self._rs.getRenderLayers()
@@ -98,17 +114,19 @@ class CreateRender(avalon.maya.Creator):
                 print(">>> processing existing layers")
                 sets = []
                 for layer in layers:
-                    print("  - creating set for {}".format(layer.name()))
-                    render_set = cmds.sets(n="LAYER_{}".format(layer.name()))
+                    print("  - creating set for {}:{}".format(
+                        namespace, layer.name()))
+                    render_set = cmds.sets(
+                        n="{}:{}".format(namespace, layer.name()))
                     sets.append(render_set)
                 cmds.sets(sets, forceElement=instance)
 
             # if no render layers are present, create default one with
             # asterix selector
             if not layers:
-                rl = self._rs.createRenderLayer('Main')
-                cl = rl.createCollection("defaultCollection")
-                cl.getSelector().setPattern('*')
+                render_layer = self._rs.createRenderLayer('Main')
+                collection = render_layer.createCollection("defaultCollection")
+                collection.getSelector().setPattern('*')
 
             renderer = cmds.getAttr(
                 'defaultRenderGlobals.currentRenderer').lower()
@@ -184,12 +202,11 @@ class CreateRender(avalon.maya.Creator):
         self.data["whitelist"] = False
         self.data["machineList"] = ""
         self.data["useMayaBatch"] = False
-        self.data["vrayScene"] = False
         self.data["tileRendering"] = False
         self.data["tilesX"] = 2
         self.data["tilesY"] = 2
         self.data["convertToScanline"] = False
-        self.data["vrayUseReferencedAovs"] = False
+        self.data["useReferencedAovs"] = False
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 

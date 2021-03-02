@@ -1,7 +1,6 @@
 import os
 import sys
 import logging
-
 import nuke
 
 from avalon import api as avalon

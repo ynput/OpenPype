@@ -21,6 +21,7 @@ class ExtractSequence(pyblish.api.Extractor):
         "flc": ".fli",
         "gif": ".gif",
         "ilbm": ".iff",
+        "jpg": ".jpg",
         "jpeg": ".jpg",
         "pcx": ".pcx",
         "png": ".png",
@@ -36,6 +37,7 @@ class ExtractSequence(pyblish.api.Extractor):
         "bmp",
         "dpx",
         "ilbm",
+        "jpg",
         "jpeg",
         "png",
         "sun",
@@ -62,17 +64,20 @@ class ExtractSequence(pyblish.api.Extractor):
             for layer in layers
             if layer["visible"]
         ]
-        layer_ids = [str(layer["layer_id"]) for layer in filtered_layers]
-        if not layer_ids:
+        layer_names = [str(layer["name"]) for layer in filtered_layers]
+        if not layer_names:
             self.log.info(
                 f"None of the layers from the instance"
                 " are visible. Extraction skipped."
             )
             return
 
+        joined_layer_names = ", ".join(
+            ["\"{}\"".format(name) for name in layer_names]
+        )
         self.log.debug(
-            "Instance has {} layers with ids: {}".format(
-                len(layer_ids), ", ".join(layer_ids)
+            "Instance has {} layers with names: {}".format(
+                len(layer_names), joined_layer_names
             )
         )
         # This is plugin attribe cleanup method
@@ -143,13 +148,17 @@ class ExtractSequence(pyblish.api.Extractor):
             os.path.basename(filepath)
             for filepath in output_files_by_frame.values()
         ]
+        # Sequence of one frame
+        if len(repre_files) == 1:
+            repre_files = repre_files[0]
+
         new_repre = {
             "name": ext,
             "ext": ext,
             "files": repre_files,
             "stagingDir": output_dir,
-            "frameStart": frame_start,
-            "frameEnd": frame_end,
+            "frameStart": frame_start + 1,
+            "frameEnd": frame_end + 1,
             "tags": tags
         }
         self.log.debug("Creating new representation: {}".format(new_repre))
@@ -163,10 +172,14 @@ class ExtractSequence(pyblish.api.Extractor):
         if not thumbnail_fullpath:
             return
 
+        thumbnail_ext = os.path.splitext(
+            thumbnail_fullpath
+        )[1].replace(".", "")
         # Create thumbnail representation
         thumbnail_repre = {
             "name": "thumbnail",
-            "ext": ext,
+            "ext": thumbnail_ext,
+            "outputName": "thumb",
             "files": os.path.basename(thumbnail_fullpath),
             "stagingDir": output_dir,
             "tags": ["thumbnail"]
@@ -299,11 +312,11 @@ class ExtractSequence(pyblish.api.Extractor):
         if thumbnail_filename:
             basename, ext = os.path.splitext(thumbnail_filename)
             if not ext:
-                ext = ".png"
+                ext = ".jpg"
             thumbnail_fullpath = "/".join([output_dir, basename + ext])
             all_output_files[thumbnail_filename] = thumbnail_fullpath
             # Force save mode to png for thumbnail
-            george_script_lines.append("tv_SaveMode \"PNG\"")
+            george_script_lines.append("tv_SaveMode \"JPG\"")
             # Go to frame
             george_script_lines.append("tv_layerImage {}".format(first_frame))
             # Store image to output

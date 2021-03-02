@@ -22,10 +22,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     families = ["render.farm", "prerender.farm"]
     optional = True
 
+    # presets
     deadline_priority = 50
+    deadline_chunk_size = 1
     deadline_pool = ""
     deadline_pool_secondary = ""
-    deadline_chunk_size = 1
+    deadline_group = ""
+    deadline_department = ""
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
@@ -135,7 +138,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         # define chunk and priority
         chunk_size = instance.data.get("deadlineChunkSize")
-        if chunk_size == 0:
+        if chunk_size == 0 and self.deadline_chunk_size:
             chunk_size = self.deadline_chunk_size
 
         priority = instance.data.get("deadlinePriority")
@@ -148,7 +151,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 "BatchName": script_name,
 
                 # Asset dependency to wait for at least the scene file to sync.
-                "AssetDependency0": script_path,
+                # "AssetDependency0": script_path,
 
                 # Job name, as seen in Monitor
                 "Name": jobname,
@@ -158,9 +161,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Priority": priority,
                 "ChunkSize": chunk_size,
+                "Department": self.deadline_department,
 
                 "Pool": self.deadline_pool,
                 "SecondaryPool": self.deadline_pool_secondary,
+                "Group": self.deadline_group,
 
                 "Plugin": "Nuke",
                 "Frames": "{start}-{end}".format(
@@ -223,9 +228,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         for path in os.environ:
             if path.lower().startswith('pype_'):
                 environment[path] = os.environ[path]
+            if path.lower().startswith('nuke_'):
+                environment[path] = os.environ[path]
+            if 'license' in path.lower():
+                environment[path] = os.environ[path]
 
-        # environment["PATH"] = os.environ["PATH"]
-        # self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
         clean_environment = {}
         for key, value in environment.items():
             clean_path = ""

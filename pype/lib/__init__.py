@@ -13,7 +13,8 @@ from .avalon_context import (
     get_hierarchy,
     get_linked_assets,
     get_latest_version,
-    BuildWorkfile
+    BuildWorkfile,
+    get_creator_by_name
 )
 
 from .hooks import PypeHook, execute_hook
@@ -46,6 +47,8 @@ from .path_tools import (
 
 from .ffmpeg_utils import ffprobe_streams
 
+from .packaging import make_workload_package
+
 __all__ = [
     "get_avalon_database",
     "set_io_database",
@@ -57,6 +60,7 @@ __all__ = [
     "get_linked_assets",
     "get_latest_version",
     "BuildWorkfile",
+    "get_creator_by_name",
 
     "PypeHook",
     "execute_hook",
@@ -82,5 +86,7 @@ __all__ = [
     "ffprobe_streams",
 
     "source_hash",
-    "_subprocess"
+    "_subprocess",
+
+    "make_workload_package"
 ]

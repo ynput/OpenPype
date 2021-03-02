@@ -120,7 +120,7 @@ def writes_version_sync():
                 each['file'].setValue(node_new_file)
                 if not os.path.isdir(os.path.dirname(node_new_file)):
                     log.warning("Path does not exist! I am creating it.")
-                    os.makedirs(os.path.dirname(node_new_file), 0o766)
+                    os.makedirs(os.path.dirname(node_new_file))
             except Exception as e:
                 log.warning(
                     "Write node: `{}` has no version in path: {}".format(
@@ -284,7 +284,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):
         log.warning("Path does not exist! I am creating it.")
-        os.makedirs(os.path.dirname(fpath), 0o766)
+        os.makedirs(os.path.dirname(fpath))
 
     _data = OrderedDict({
         "file": fpath
@@ -840,7 +840,7 @@ class WorkfileSettings(object):
         handle_start = data["handleStart"]
         handle_end = data["handleEnd"]
 
-        fps = data["fps"]
+        fps = float(data["fps"])
         frame_start = int(data["frameStart"]) - handle_start
         frame_end = int(data["frameEnd"]) + handle_end
 
@@ -1302,6 +1302,7 @@ class ExporterReviewMov(ExporterReview):
         self.viewer_lut_raw = klass.viewer_lut_raw
         self.bake_colorspace_fallback = klass.bake_colorspace_fallback
         self.bake_colorspace_main = klass.bake_colorspace_main
+        self.write_colorspace = instance.data["colorspace"]
 
         self.name = name or "baked"
         self.ext = ext or "mov"
@@ -1347,6 +1348,8 @@ class ExporterReviewMov(ExporterReview):
         r_node["origfirst"].setValue(self.first_frame)
         r_node["last"].setValue(self.last_frame)
         r_node["origlast"].setValue(self.last_frame)
+        r_node["colorspace"].setValue(self.write_colorspace)
+
         # connect
         self._temp_nodes.append(r_node)
         self.previous_node = r_node

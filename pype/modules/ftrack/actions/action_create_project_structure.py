@@ -85,11 +85,11 @@ class CreateProjectFolders(BaseAction):
         try:
             # Get paths based on presets
             basic_paths = self.get_path_items(project_folder_presets)
-            anatomy = Anatomy(project["full_name"])
-            self.create_folders(basic_paths, entity, project, anatomy)
+            self.create_folders(basic_paths, project)
             self.create_ftrack_entities(basic_paths, project)
 
         except Exception as exc:
+            self.log.warning("Creating of structure crashed.", exc_info=True)
             session.rollback()
             return {
                 "success": False,
@@ -219,10 +219,11 @@ class CreateProjectFolders(BaseAction):
             output.append(os.path.normpath(os.path.sep.join(clean_items)))
         return output
 
-    def create_folders(self, basic_paths, entity, project, anatomy):
+    def create_folders(self, basic_paths, project):
+        anatomy = Anatomy(project["full_name"])
         roots_paths = []
         if isinstance(anatomy.roots, dict):
-            for root in anatomy.roots:
+            for root in anatomy.roots.values():
                 roots_paths.append(root.value)
         else:
             roots_paths.append(anatomy.roots.value)
@@ -232,9 +233,14 @@ class CreateProjectFolders(BaseAction):
             full_paths = self.compute_paths(basic_paths, project_root)
             # Create folders
             for path in full_paths:
-                if os.path.exists(path):
-                    continue
-                os.makedirs(path.format(project_root=project_root))
+                full_path = path.format(project_root=project_root)
+                if os.path.exists(full_path):
+                    self.log.debug(
+                        "Folder already exists: {}".format(full_path)
+                    )
+                else:
+                    self.log.debug("Creating folder: {}".format(full_path))
+                    os.makedirs(full_path)
 
 
 def register(session, plugins_presets={}):

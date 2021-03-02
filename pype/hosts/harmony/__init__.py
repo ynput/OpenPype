@@ -37,6 +37,8 @@ def get_asset_settings():
     fps = asset_data.get("fps")
     frame_start = asset_data.get("frameStart")
     frame_end = asset_data.get("frameEnd")
+    handle_start = asset_data.get("handleStart")
+    handle_end = asset_data.get("handleEnd")
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
     entity_type = asset_data.get("entityType")
@@ -45,15 +47,26 @@ def get_asset_settings():
         "fps": fps,
         "frameStart": frame_start,
         "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end,
         "resolutionWidth": resolution_width,
         "resolutionHeight": resolution_height
     }
 
     try:
-        skip_resolution_check = \
-            config.get_presets()["harmony"]["general"]["skip_resolution_check"]
-        skip_timelines_check = \
-            config.get_presets()["harmony"]["general"]["skip_timelines_check"]
+        # temporary, in pype3 replace with api.get_current_project_settings
+        skip_resolution_check = (
+            get_current_project_settings()
+            ["harmony"]
+            ["general"]
+            ["skip_resolution_check"]
+        )
+        skip_timelines_check = (
+            get_current_project_settings()
+            ["harmony"]
+            ["general"]
+            ["skip_timelines_check"]
+        )
     except KeyError:
         skip_resolution_check = []
         skip_timelines_check = []
@@ -67,6 +80,24 @@ def get_asset_settings():
         scene_data.pop('frameEnd', None)
 
     return scene_data
+
+
+# temporary, in pype3 replace with api.get_current_project_settings
+def get_current_project_settings():
+    """Project settings for current context project.
+
+    Project name should be stored in environment variable `AVALON_PROJECT`.
+    This function should be used only in host context where environment
+    variable must be set and should not happen that any part of process will
+    change the value of the enviornment variable.
+    """
+    project_name = os.environ.get("AVALON_PROJECT")
+    if not project_name:
+        raise ValueError(
+            "Missing context project in environemt variable `AVALON_PROJECT`."
+        )
+    presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+    return presets
 
 
 def ensure_scene_settings():
@@ -202,11 +233,18 @@ def install():
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node enabling on instance toggles."""
     try:
-        harmony.send(
-            {
-                "function": "PypeHarmony.toggleInstance",
-                "args": [instance[0], new_value]
-            }
-        )
+        node = instance[0]  # regular instance
     except IndexError:
-        print(f"Instance '{instance}' is missing node")
+        try:
+            node = instance.data["setMembers"][0]  # for HarmonyRenderInstance
+        except IndexError:
+            print(f"Instance '{instance}' is missing node")
+            return
+
+    harmony.send(
+        {
+            "function": "PypeHarmony.toggleInstance",
+            "args": [node, new_value]
+        }
+    )
+

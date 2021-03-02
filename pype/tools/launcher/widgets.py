@@ -123,6 +123,12 @@ class ActionBar(QtWidgets.QWidget):
 
         view.clicked.connect(self.on_clicked)
 
+    def discover_actions(self):
+        self.model.discover()
+
+    def filter_actions(self):
+        self.model.filter_actions()
+
     def set_row_height(self, rows):
         self.setMinimumHeight(rows * 75)
 

@@ -6,4 +6,3 @@ since-tag=2.13.6
 release-branch=master
 enhancement-label=**Enhancements:**
 issues=False
-pulls=False

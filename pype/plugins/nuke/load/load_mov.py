@@ -42,32 +42,6 @@ def preserve_trim(node):
                   "{}".format(script_start))
 
 
-def loader_shift(node, frame, relative=True):
-    """Shift global in time by i preserving duration
-
-    This moves the loader by i frames preserving global duration. When relative
-    is False it will shift the global in to the start frame.
-
-    Args:
-        loader (tool): The fusion loader tool.
-        frame (int): The amount of frames to move.
-        relative (bool): When True the shift is relative, else the shift will
-            change the global in to frame.
-
-    Returns:
-        int: The resulting relative frame change (how much it moved)
-
-    """
-    # working script frame range
-    script_start = nuke.root()["first_frame"].value()
-
-    if relative:
-        node['frame_mode'].setValue("start at")
-        node['frame'].setValue(str(frame))
-
-    return int(script_start)
-
-
 def add_review_presets_config():
     returning = {
         "families": list(),
@@ -106,6 +80,34 @@ class LoadMov(api.Loader):
     icon = "code-fork"
     color = "orange"
 
+    def loader_shift(self, node, frame, relative=True):
+        """Shift global in time by i preserving duration
+
+        This moves the loader by i frames preserving global duration. When relative
+        is False it will shift the global in to the start frame.
+
+        Args:
+            loader (tool): The fusion loader tool.
+            frame (int): The amount of frames to move.
+            relative (bool): When True the shift is relative, else the shift will
+                change the global in to frame.
+
+        Returns:
+            int: The resulting relative frame change (how much it moved)
+
+        """
+        # working script frame range
+        script_start = nuke.root()["first_frame"].value()
+
+        if relative:
+            node['frame_mode'].setValue("start at")
+            node['frame'].setValue(str(script_start))
+        else:
+            node['frame_mode'].setValue("start at")
+            node['frame'].setValue(str(frame))
+
+        return int(script_start)
+
     def load(self, context, name, namespace, data):
         from avalon.nuke import (
             containerise,
@@ -122,8 +124,8 @@ class LoadMov(api.Loader):
         first = orig_first - diff
         last = orig_last - diff
 
-        handle_start = version_data.get("handleStart", 0)
-        handle_end = version_data.get("handleEnd", 0)
+        handle_start = version_data.get("handleStart") or 0
+        handle_end = version_data.get("handleEnd") or 0
 
         colorspace = version_data.get("colorspace")
         repr_cont = context["representation"]["context"]
@@ -163,13 +165,11 @@ class LoadMov(api.Loader):
             )
             read_node["file"].setValue(file)
 
-            loader_shift(read_node, first, relative=True)
+            self.loader_shift(read_node, first)
             read_node["origfirst"].setValue(first)
             read_node["first"].setValue(first)
             read_node["origlast"].setValue(last)
             read_node["last"].setValue(last)
-            read_node["frame_mode"].setValue("start at")
-            read_node["frame"].setValue(str(offset_frame))
 
             if colorspace:
                 read_node["colorspace"].setValue(str(colorspace))
@@ -236,7 +236,7 @@ class LoadMov(api.Loader):
 
         assert node.Class() == "Read", "Must be Read"
 
-        file = self.fname
+        file = api.get_representation_path(representation)
 
         if not file:
             repr_id = representation["_id"]
@@ -297,13 +297,11 @@ class LoadMov(api.Loader):
             self.log.info("__ node['file']: {}".format(node["file"].value()))
 
         # Set the global in to the start frame of the sequence
-        loader_shift(node, first, relative=True)
+        self.loader_shift(node, first, relative=True)
         node["origfirst"].setValue(first)
         node["first"].setValue(first)
         node["origlast"].setValue(last)
         node["last"].setValue(last)
-        node["frame_mode"].setValue("start at")
-        node["frame"].setValue(str(offset_frame))
 
         if colorspace:
             node["colorspace"].setValue(str(colorspace))

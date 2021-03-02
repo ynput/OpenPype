@@ -10,7 +10,7 @@ import pype.hosts.harmony
 
 
 class ExtractWorkfile(pype.api.Extractor):
-    """Extract the connected nodes to the composite instance."""
+    """Extract and zip complete workfile folder into zip."""
 
     label = "Extract Workfile"
     hosts = ["harmony"]
@@ -18,15 +18,11 @@ class ExtractWorkfile(pype.api.Extractor):
 
     def process(self, instance):
         """Plugin entry point."""
-        # Export template.
-        backdrops = harmony.send(
-            {"function": "Backdrop.backdrops", "args": ["Top"]}
-        )["result"]
-        nodes = instance.context.data.get("allNodes")
         staging_dir = self.staging_dir(instance)
         filepath = os.path.join(staging_dir, "{}.tpl".format(instance.name))
-
-        pype.hosts.harmony.export_template(backdrops, nodes, filepath)
+        src = os.path.dirname(instance.context.data["currentFile"])
+        self.log.info("Copying to {}".format(filepath))
+        shutil.copytree(src, filepath)
 
         # Prep representation.
         os.chdir(staging_dir)

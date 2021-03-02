@@ -20,7 +20,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["harmony"]
     families_mapping = {
-        "render": ["imagesequence", "review", "ftrack"],
+        "render": ["review", "ftrack"],
         "harmony.template": [],
         "palette": ["palette", "ftrack"]
     }
@@ -47,6 +47,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # Skip containers.
             if "container" in data["id"]:
+                continue
+
+            # skip render farm family as it is collected separately
+            if data["family"] == "renderFarm":
                 continue
 
             instance = context.create_instance(node.split("/")[-1])
