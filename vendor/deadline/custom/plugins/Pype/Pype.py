@@ -1,8 +1,8 @@
 from System.IO import *
 from System.Text.RegularExpressions import *
 
-from Deadline.Plugins import *
-from Deadline.Scripting import *
+from Deadline.Plugins import PluginType, DeadlinePlugin
+from Deadline.Scripting import StringUtils, FileUtils, RepositoryUtils
 
 import re
 

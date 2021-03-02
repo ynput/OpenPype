@@ -5,7 +5,7 @@ import time
 import subprocess
 import json
 from Deadline.Scripting import *
-from Deadline.Scripting import RepositoryUtils
+from Deadline.Scripting import RepositoryUtils, FileUtils
 
 
 def inject_pype_environment(deadlinePlugin):
@@ -75,7 +75,6 @@ def inject_pype_environment(deadlinePlugin):
 
         with open(export_url) as fp:
             contents = json.load(fp)
-            print("contents::{}".format(contents))
             for key, value in contents.items():
                 deadlinePlugin.SetEnvironmentVariable(key, value)
 
