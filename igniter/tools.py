@@ -210,6 +210,9 @@ def load_environments(sections: list = None) -> dict:
 def get_pype_path_from_db(url: str) -> Union[str, None]:
     """Get Pype path from database.
 
+    We are loading data from database `pype` and collection `settings`.
+    There we expect document type `global_settings`.
+
     Args:
         url (str): mongodb url.
 
@@ -237,7 +240,7 @@ def get_pype_path_from_db(url: str) -> Union[str, None]:
     db = client.pype
     col = db.settings
 
-    result = col.find_one({"type": "global_settings"}, {"value": 1})
-    global_settings = result.get("value")
+    global_settings = col.find_one(
+        {"type": "global_settings"}, {"data": 1}).get("data")
 
     return global_settings.get("pype_path", {}).get(platform.system().lower())

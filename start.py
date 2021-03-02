@@ -112,7 +112,7 @@ if getattr(sys, 'frozen', False):
     os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
 from igniter import BootstrapRepos  # noqa: E402
-from igniter.tools import load_environments  # noqa: E402
+from igniter.tools import load_environments, get_pype_path_from_db  # noqa
 from igniter.bootstrap_repos import PypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
@@ -121,6 +121,9 @@ silent_commands = ["run", "igniter", "standalonepublisher"]
 
 def set_environments() -> None:
     """Set loaded environments.
+
+    .. deprecated:: 3.0
+        no environment loading from settings until Pype version is established
 
     .. todo:
         better handling of environments
@@ -134,14 +137,21 @@ def set_environments() -> None:
                 os.path.dirname(sys.executable),
                 "dependencies"
             ))
-            import acre
+            try:
+                import acre
+            except ImportError as e:
+                # giving up
+                print("!!! cannot import acre")
+                print(f"{e}")
+                sys.exit(1)
     try:
         env = load_environments(["global"])
     except OSError as e:
         print(f"!!! {e}")
         sys.exit(1)
 
-    env = acre.merge(env, dict(os.environ))
+    # acre must be available here
+    env = acre.merge(env, dict(os.environ))  # noqa
     os.environ.clear()
     os.environ.update(env)
 
@@ -264,7 +274,9 @@ def _determine_mongodb() -> str:
         except ValueError:
             print("*** No DB connection string specified.")
             print("--- launching setup UI ...")
-            run(["igniter"])
+            return_code = run(["igniter"])
+            if return_code != 0:
+                raise RuntimeError("mongodb is not set")
             try:
                 pype_mongo = bootstrap.registry.get_secure_item("pypeMongo")
             except ValueError:
@@ -337,7 +349,9 @@ def _find_frozen_pype(use_version: str = None,
         # no pype version found, run Igniter and ask for them.
         print('*** No Pype versions found.')
         print("--- launching setup UI ...")
-        run(["igniter"])
+        return_code = run(["igniter"])
+        if return_code != 0:
+            raise RuntimeError("igniter crashed.")
         pype_versions = bootstrap.find_pype()
 
     if not pype_versions:
@@ -463,7 +477,6 @@ def _bootstrap_from_code(use_version):
 
 def boot():
     """Bootstrap Pype."""
-    version_path = None
 
     # ------------------------------------------------------------------------
     # Play animation
@@ -495,7 +508,7 @@ def boot():
     os.environ["PYPE_MONGO"] = pype_mongo
 
     # ------------------------------------------------------------------------
-    # Load environments from database
+    # Set environments - load Pype path from database (if set)
     # ------------------------------------------------------------------------
     # set PYPE_ROOT to running location until proper version can be
     # determined.
@@ -503,7 +516,15 @@ def boot():
         os.environ["PYPE_ROOT"] = os.path.dirname(sys.executable)
     else:
         os.environ["PYPE_ROOT"] = os.path.dirname(__file__)
-    set_environments()
+
+    # No environment loading from settings until Pype version is established.
+    # set_environments()
+
+    # Get Pype path from database and set it to environment so Pype can
+    # find its versions there and bootstrap them.
+    pype_path = get_pype_path_from_db(pype_mongo)
+    if not os.getenv("PYPE_PATH") and pype_path:
+        os.environ["PYPE_PATH"] = pype_path
 
     # ------------------------------------------------------------------------
     # Find Pype versions
@@ -532,10 +553,12 @@ def boot():
 
     # delete Pype module and it's submodules from cache so it is used from
     # specific version
-    modules_to_del = []
-    for module_name in tuple(sys.modules):
-        if module_name == "pype" or module_name.startswith("pype."):
-            modules_to_del.append(sys.modules.pop(module_name))
+    modules_to_del = [
+        sys.modules.pop(module_name)
+        for module_name in tuple(sys.modules)
+        if module_name == "pype" or module_name.startswith("pype.")
+    ]
+
     try:
         for module_name in modules_to_del:
             del sys.modules[module_name]
@@ -557,10 +580,7 @@ def boot():
     t_width = 20
     try:
         t_width = os.get_terminal_size().columns - 2
-    except ValueError:
-        # running without terminal
-        pass
-    except OSError:
+    except (ValueError, OSError):
         # running without terminal
         pass
 
@@ -574,7 +594,7 @@ def boot():
 
     try:
         cli.main(obj={}, prog_name="pype")
-    except Exception:
+    except Exception:  # noqa
         exc_info = sys.exc_info()
         print("!!! Pype crashed:")
         traceback.print_exception(*exc_info)
