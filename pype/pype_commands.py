@@ -63,15 +63,6 @@ class PypeCommands:
     def texture_copy(self, project, asset, path):
         pass
 
-    def run_pype_tests(self, keyword, id):
-        pass
-
-    def make_docs(self):
-        pass
-
-    def pype_setup_coverage(self):
-        pass
-
     def run_application(self, app, project, asset, task, tools, arguments):
         pass
 
@@ -95,7 +86,7 @@ class PypeCommands:
             bs.data_dir = out_path.parent
 
         print(f">>> Creating zip in {bs.data_dir} ...")
-        repo_file = bs.install_live_repos()
+        repo_file = bs.create_version_from_live_code()
         if not repo_file:
             print("!!! Error while creating zip file.")
             exit(1)
