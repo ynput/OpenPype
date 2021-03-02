@@ -1,5 +1,5 @@
-from System.IO import *
-from System.Text.RegularExpressions import *
+from System.IO import Path
+from System.Text.RegularExpressions import Regex
 
 from Deadline.Plugins import PluginType, DeadlinePlugin
 from Deadline.Scripting import StringUtils, FileUtils, RepositoryUtils

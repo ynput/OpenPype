@@ -4,7 +4,6 @@ import tempfile
 import time
 import subprocess
 import json
-from Deadline.Scripting import *
 from Deadline.Scripting import RepositoryUtils, FileUtils
 
 
