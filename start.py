@@ -176,7 +176,7 @@ def run(arguments: list, env: dict = None) -> int:
 
 
 def set_avalon_environments():
-    """ Set avalon specific environments.
+    """Set avalon specific environments.
 
     These are non modifiable environments for avalon workflow that must be set
     before avalon module is imported because avalon works with globals set with
