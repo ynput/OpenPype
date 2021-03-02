@@ -891,7 +891,8 @@ class BootstrapRepos:
                 # copy file to destination
                 self._print("Copying zip to destination ...")
                 copyfile(
-                    pype_version.path.as_posix(), destination.parent.as_posix())
+                    pype_version.path.as_posix(),
+                    destination.parent.as_posix())
             except OSError as e:
                 self._print(
                     "cannot copy version to user data directory", LOG_ERROR,

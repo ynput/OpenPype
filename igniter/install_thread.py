@@ -73,7 +73,8 @@ class InstallThread(QThread):
             detected = bs.find_pype(include_zips=True)
 
             if detected:
-                if PypeVersion(version=local_version, path=Path()) < detected[-1]:
+                if PypeVersion(
+                        version=local_version, path=Path()) < detected[-1]:
                     self.message.emit((
                         f"Latest installed version {detected[-1]} is newer "
                         f"then currently running {local_version}"
