@@ -12,7 +12,6 @@ def run():
     """Show Igniter dialog."""
     app = QtWidgets.QApplication(sys.argv)
     d = InstallDialog()
-    d.exec_()
     d.show()
     sys.exit(app.exec_())
 

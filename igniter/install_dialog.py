@@ -3,23 +3,46 @@
 import os
 import sys
 
-from Qt import QtCore, QtGui, QtWidgets
-from Qt.QtGui import QValidator
+from Qt import QtCore, QtGui, QtWidgets  # noqa
+from Qt.QtGui import QValidator  # noqa
 
 from .install_thread import InstallThread
-from .tools import validate_path_string, validate_mongo_connection
+from .tools import (
+    validate_path_string,
+    validate_mongo_connection,
+    get_pype_path_from_db
+)
+from .user_settings import PypeSettingsRegistry
+
+
+class FocusHandlingLineEdit(QtWidgets.QLineEdit):
+    """Handling focus in/out on QLineEdit."""
+    focusIn = QtCore.Signal()
+    focusOut = QtCore.Signal()
+
+    def focusOutEvent(self, event):  # noqa
+        """For emitting signal on focus out."""
+        self.focusOut.emit()
+        super().focusOutEvent(event)
+
+    def focusInEvent(self, event):  # noqa
+        """For emitting signal on focus in."""
+        self.focusIn.emit()
+        super().focusInEvent(event)
 
 
 class InstallDialog(QtWidgets.QDialog):
+    """Main Igniter dialog window."""
     _size_w = 400
-    _size_h = 400
-    _path = None
+    _size_h = 600
+    path = None
     _controls_disabled = False
 
     def __init__(self, parent=None):
         super(InstallDialog, self).__init__(parent)
+        self.registry = PypeSettingsRegistry()
 
-        self._mongo_url = os.getenv("PYPE_MONGO", "")
+        self._mongo_url = os.getenv("PYPE_MONGO", "") or self.registry.get_secure_item("pypeMongo") or ""  # noqa: E501
 
         self.setWindowTitle("Pype - Configure Pype repository path")
         self._icon_path = os.path.join(
@@ -34,7 +57,7 @@ class InstallDialog(QtWidgets.QDialog):
         self.setMinimumSize(
             QtCore.QSize(self._size_w, self._size_h))
         self.setMaximumSize(
-            QtCore.QSize(self._size_w + 100, self._size_h + 100))
+            QtCore.QSize(self._size_w + 100, self._size_h + 500))
 
         # style for normal console text
         self.default_console_style = QtGui.QTextCharFormat()
@@ -98,7 +121,7 @@ class InstallDialog(QtWidgets.QDialog):
         input_layout = QtWidgets.QHBoxLayout()
 
         input_layout.setContentsMargins(0, 10, 0, 10)
-        self.user_input = QtWidgets.QLineEdit()
+        self.user_input = FocusHandlingLineEdit()
 
         self.user_input.setPlaceholderText("Pype repository path or url")
         self.user_input.textChanged.connect(self._path_changed)
@@ -130,14 +153,20 @@ class InstallDialog(QtWidgets.QDialog):
         # --------------------------------------------------------------------
 
         class MongoWidget(QtWidgets.QWidget):
+            """Widget to input mongodb URL."""
+
             def __init__(self, parent=None):
                 self._btn_mongo = None
                 super(MongoWidget, self).__init__(parent)
                 mongo_layout = QtWidgets.QHBoxLayout()
                 mongo_layout.setContentsMargins(0, 0, 0, 0)
-                self._mongo_input = QtWidgets.QLineEdit()
+                self._mongo_input = FocusHandlingLineEdit()
                 self._mongo_input.setPlaceholderText("Mongo URL")
                 self._mongo_input.textChanged.connect(self._mongo_changed)
+                self._mongo_input.focusIn.connect(self._focus_in)
+                self._mongo_input.focusOut.connect(self._focus_out)
+                # self._mongo_input.setValidator(
+                #     PathValidator(self._mongo_input))
                 self._mongo_input.setStyleSheet(
                     ("color: rgb(233, 233, 233);"
                      "background-color: rgb(64, 64, 64);"
@@ -148,16 +177,37 @@ class InstallDialog(QtWidgets.QDialog):
                 mongo_layout.addWidget(self._mongo_input)
                 self.setLayout(mongo_layout)
 
+            def _focus_out(self):
+                self.validate_url()
+
+            def _focus_in(self):
+                self._mongo_input.setStyleSheet(
+                    """
+                    background-color: rgb(32, 32, 19);
+                    color: rgb(255, 190, 15);
+                    padding: 0.5em;
+                    border: 1px solid rgb(64, 64, 32);
+                    """
+                )
+
             def _mongo_changed(self, mongo: str):
                 self.parent().mongo_url = mongo
 
-            def get_mongo_url(self):
+            def get_mongo_url(self) -> str:
+                """Helper to get url from parent."""
                 return self.parent().mongo_url
 
             def set_mongo_url(self, mongo: str):
+                """Helper to set url to  parent.
+
+                Args:
+                    mongo (str): mongodb url string.
+
+                """
                 self._mongo_input.setText(mongo)
 
             def set_valid(self):
+                """Set valid state on mongo url input."""
                 self._mongo_input.setStyleSheet(
                     """
                     background-color: rgb(19, 19, 19);
@@ -166,16 +216,44 @@ class InstallDialog(QtWidgets.QDialog):
                     border: 1px solid rgb(32, 64, 32);
                     """
                 )
+                self.parent().ok_button.setEnabled(True)
+                if self.parent().path != "":
+                    path = get_pype_path_from_db(self.parent().mongo_url)
+                    self.parent().path = path
+                    self.parent().user_input.setText(path)
 
             def set_invalid(self):
+                """Set invalid state on mongo url input."""
                 self._mongo_input.setStyleSheet(
                     """
                     background-color: rgb(32, 19, 19);
                     color: rgb(255, 69, 0);
                     padding: 0.5em;
-                    border: 1px solid rgb(32, 64, 32);
+                    border: 1px solid rgb(64, 32, 32);
                     """
                 )
+                self.parent().ok_button.setEnabled(False)
+
+            def validate_url(self) -> bool:
+                """Validate if entered url is ok.
+
+                Returns:
+                    True if url is valid monogo string.
+
+                """
+                if self.parent().mongo_url == "":
+                    return False
+
+                is_valid, reason_str = validate_mongo_connection(
+                    self.parent().mongo_url
+                )
+                if not is_valid:
+                    self.set_invalid()
+                    self.parent().update_console(f"!!! {reason_str}", True)
+                    return False
+                else:
+                    self.set_valid()
+                return True
 
         self._mongo = MongoWidget(self)
         if self._mongo_url:
@@ -193,15 +271,15 @@ class InstallDialog(QtWidgets.QDialog):
         pype_logo_label.setPixmap(pype_logo)
         pype_logo_label.setContentsMargins(10, 0, 0, 10)
 
-        self._ok_button = QtWidgets.QPushButton("OK")
-        self._ok_button.setStyleSheet(
+        self.ok_button = QtWidgets.QPushButton("OK")
+        self.ok_button.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(72, 200, 150);"
              "padding: 0.5em;")
         )
-        self._ok_button.setMinimumSize(64, 24)
-        self._ok_button.setToolTip("Save and continue")
-        self._ok_button.clicked.connect(self._on_ok_clicked)
+        self.ok_button.setMinimumSize(64, 24)
+        self.ok_button.setToolTip("Save and continue")
+        self.ok_button.clicked.connect(self._on_ok_clicked)
 
         self._exit_button = QtWidgets.QPushButton("Exit")
         self._exit_button.setStyleSheet(
@@ -216,7 +294,7 @@ class InstallDialog(QtWidgets.QDialog):
         bottom_layout.setContentsMargins(0, 10, 0, 0)
         bottom_layout.addWidget(pype_logo_label)
         bottom_layout.addStretch(1)
-        bottom_layout.addWidget(self._ok_button)
+        bottom_layout.addWidget(self.ok_button)
         bottom_layout.addWidget(self._exit_button)
 
         bottom_widget.setLayout(bottom_layout)
@@ -301,6 +379,10 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(self._progress_bar)
         main.addWidget(bottom_widget)
         self.setLayout(main)
+        if not self._mongo_url:
+            self._mongo.setVisible(False)
+        else:
+            self._mongo.validate_url()
 
     def _on_select_clicked(self):
         """Show directory dialog."""
@@ -317,8 +399,7 @@ class InstallDialog(QtWidgets.QDialog):
         if not result:
             return
 
-        filename = result[0]
-        filename = QtCore.QDir.toNativeSeparators(filename)
+        filename = QtCore.QDir.toNativeSeparators(result)
 
         if os.path.isdir(filename):
             self.user_input.setText(filename)
@@ -329,7 +410,7 @@ class InstallDialog(QtWidgets.QDialog):
         This will once again validate entered path and if ok, start
         working thread that will do actual job.
         """
-        valid, reason = validate_path_string(self._path)
+        valid, reason = validate_path_string(self.path)
         if not valid:
             self.user_input.setStyleSheet(
                 """
@@ -339,7 +420,7 @@ class InstallDialog(QtWidgets.QDialog):
                 border: 1px solid rgb(32, 64, 32);
                 """
             )
-            self._update_console(reason, True)
+            self.update_console(reason, True)
             return
         else:
             self.user_input.setStyleSheet(
@@ -350,23 +431,23 @@ class InstallDialog(QtWidgets.QDialog):
                 border: 1px solid rgb(32, 64, 32);
                 """
             )
-        if not self._path or not self._path.startswith("mongodb"):
+        if not self.path or not self.path.startswith("mongodb"):
             valid, reason = validate_mongo_connection(
                 self._mongo.get_mongo_url()
             )
             if not valid:
                 self._mongo.set_invalid()
-                self._update_console(f"!!! {reason}", True)
+                self.update_console(f"!!! {reason}", True)
                 return
             else:
                 self._mongo.set_valid()
 
         self._disable_buttons()
         self._install_thread = InstallThread(self)
-        self._install_thread.message.connect(self._update_console)
+        self._install_thread.message.connect(self.update_console)
         self._install_thread.progress.connect(self._update_progress)
         self._install_thread.finished.connect(self._enable_buttons)
-        self._install_thread.set_path(self._path)
+        self._install_thread.set_path(self.path)
         self._install_thread.set_mongo(self._mongo.get_mongo_url())
         self._install_thread.start()
 
@@ -378,17 +459,17 @@ class InstallDialog(QtWidgets.QDialog):
 
     def _path_changed(self, path: str) -> str:
         """Set path."""
-        self._path = path
-        if not self._path.startswith("mongodb"):
+        self.path = path
+        if not self.path.startswith("mongodb"):
             self._mongo.setVisible(True)
         else:
             self._mongo.setVisible(False)
 
-        if len(self._path) < 1:
+        if len(self.path) < 1:
             self._mongo.setVisible(False)
         return path
 
-    def _update_console(self, msg: str, error: bool = False) -> None:
+    def update_console(self, msg: str, error: bool = False) -> None:
         """Display message in console.
 
         Args:
@@ -405,17 +486,17 @@ class InstallDialog(QtWidgets.QDialog):
         """Disable buttons so user interaction doesn't interfere."""
         self._btn_select.setEnabled(False)
         self._exit_button.setEnabled(False)
-        self._ok_button.setEnabled(False)
+        self.ok_button.setEnabled(False)
         self._controls_disabled = True
 
     def _enable_buttons(self):
         """Enable buttons after operation is complete."""
         self._btn_select.setEnabled(True)
         self._exit_button.setEnabled(True)
-        self._ok_button.setEnabled(True)
+        self.ok_button.setEnabled(True)
         self._controls_disabled = False
 
-    def closeEvent(self, event):
+    def closeEvent(self, event):  # noqa
         """Prevent closing if window when controls are disabled."""
         if self._controls_disabled:
             return event.ignore()
@@ -423,13 +504,15 @@ class InstallDialog(QtWidgets.QDialog):
 
 
 class PathValidator(QValidator):
+    """Validate mongodb url for Qt widgets."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, intermediate=False):
         self.parent = parent
+        self.intermediate = intermediate
         super(PathValidator, self).__init__(parent)
 
     def _return_state(
-            self, state: QValidator.State, reason: str, path: str, pos: int):
+            self, state: QValidator.State, reason: str, path: str):
         """Set stylesheets and actions on parent based on state.
 
         Warning:
@@ -448,7 +531,7 @@ class PathValidator(QValidator):
                 border: 1px solid rgb(32, 64, 32);
                 """
             )
-        elif state == QValidator.State.Intermediate:
+        elif state == QValidator.State.Intermediate and self.intermediate:
             self.parent.setToolTip(reason)
             self.parent.setStyleSheet(
                 """
@@ -489,22 +572,23 @@ class PathValidator(QValidator):
         if path.startswith("mongodb"):
             pos = len(path)
             return self._return_state(
-                QValidator.State.Intermediate, "", path, pos)
+                QValidator.State.Intermediate, "", path)
 
         if len(path) < 6:
             return self._return_state(
-                QValidator.State.Intermediate, "", path, pos)
+                QValidator.State.Intermediate, "", path)
 
         valid, reason = validate_path_string(path)
         if not valid:
             return self._return_state(
-                QValidator.State.Invalid, reason, path, pos)
+                QValidator.State.Invalid, reason, path)
         else:
             return self._return_state(
-                QValidator.State.Acceptable, reason, path, pos)
+                QValidator.State.Acceptable, reason, path)
 
 
 class CollapsibleWidget(QtWidgets.QWidget):
+    """Collapsible widget to hide mongo url in necessary."""
 
     def __init__(self, parent=None, title: str = "", animation: int = 300):
         self._mainLayout = QtWidgets.QGridLayout(parent)
@@ -515,9 +599,9 @@ class CollapsibleWidget(QtWidgets.QWidget):
         self._animation = animation
         self._title = title
         super(CollapsibleWidget, self).__init__(parent)
-        self._initUi()
+        self._init_ui()
 
-    def _initUi(self):
+    def _init_ui(self):
         self._toggleButton.setStyleSheet(
             """QToolButton {
                 border: none;
@@ -576,13 +660,13 @@ class CollapsibleWidget(QtWidgets.QWidget):
         self._toggleAnimation.setDirection(direction)
         self._toggleAnimation.start()
 
-    def setContentLayout(self, content_layout: QtWidgets.QLayout):
+    def setContentLayout(self, content_layout: QtWidgets.QLayout):  # noqa
         self._contentArea.setLayout(content_layout)
         collapsed_height = \
             self.sizeHint().height() - self._contentArea.maximumHeight()
         content_height = self._contentArea.sizeHint().height()
 
-        for i in range(0, self._toggleAnimation.animationCount() - 1):
+        for i in range(self._toggleAnimation.animationCount() - 1):
             sec_anim = self._toggleAnimation.animationAt(i)
             sec_anim.setDuration(self._animation)
             sec_anim.setStartValue(collapsed_height)

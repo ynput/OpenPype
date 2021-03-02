@@ -9,8 +9,9 @@ version is decided.
 
 import os
 import uuid
-from typing import Dict
+from typing import Dict, Union
 from urllib.parse import urlparse, parse_qs
+import platform
 
 from pymongo import MongoClient
 from pymongo.errors import ServerSelectionTimeoutError, InvalidURI
@@ -115,10 +116,14 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
     if parsed.scheme not in ["mongodb", "mongodb+srv"]:
         return False, "Not mongodb schema"
     # we have mongo connection string. Let's try if we can connect.
-    components = decompose_url(cnx)
+    try:
+        components = decompose_url(cnx)
+    except RuntimeError:
+        return False, f"Invalid port specified."
+
     mongo_args = {
         "host": compose_url(**components),
-        "serverSelectionTimeoutMS": 1000
+        "serverSelectionTimeoutMS": 2000
     }
     port = components.get("port")
     if port is not None:
@@ -200,3 +205,39 @@ def load_environments(sections: list = None) -> dict:
         merged_env = acre.append(merged_env, parsed_env)
 
     return acre.compute(merged_env, cleanup=True)
+
+
+def get_pype_path_from_db(url: str) -> Union[str, None]:
+    """Get Pype path from database.
+
+    Args:
+        url (str): mongodb url.
+
+    Returns:
+        path to Pype or None if not found
+
+    """
+    try:
+        components = decompose_url(url)
+    except RuntimeError:
+        return None
+    mongo_args = {
+        "host": compose_url(**components),
+        "serverSelectionTimeoutMS": 2000
+    }
+    port = components.get("port")
+    if port is not None:
+        mongo_args["port"] = int(port)
+
+    try:
+        client = MongoClient(**mongo_args)
+    except Exception:
+        return None
+
+    db = client.pype
+    col = db.settings
+
+    result = col.find_one({"type": "global_settings"}, {"value": 1})
+    global_settings = result.get("value")
+
+    return global_settings.get("pype_path", {}).get(platform.system().lower())
