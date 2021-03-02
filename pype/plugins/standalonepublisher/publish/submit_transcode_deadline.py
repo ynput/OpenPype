@@ -99,6 +99,10 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
                     path = "{}:{}".format(url.scheme, path)
                 path = os.path.abspath(path)
 
+                # Ignore "wav" media.
+                if path.endswith(".wav"):
+                    continue
+
                 # HARDCODED frame pattern for exr files. This should be
                 # extended to all image sequences.
                 if path.endswith(".exr"):
