@@ -149,10 +149,12 @@ class CollectAnatomyInstanceData(pyblish.api.ContextPlugin):
                 "name": subset_name
             })
 
-        subset_docs = list(io.find({
-            "type": "subset",
-            "$or": subset_filters
-        }))
+        subset_docs = []
+        if subset_filters:
+            subset_docs = list(io.find({
+                "type": "subset",
+                "$or": subset_filters
+            }))
 
         subset_ids = [
             subset_doc["_id"]
