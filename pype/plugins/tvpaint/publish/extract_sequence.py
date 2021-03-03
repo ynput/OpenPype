@@ -318,6 +318,64 @@ class ExtractSequence(pyblish.api.Extractor):
             filepaths_by_frame[frame] = space_filepath
             shutil.copy(previous_frame_filepath, space_filepath)
 
+    def _fill_frame_by_pre_behavior(
+        self,
+        layer,
+        pre_behavior,
+        mark_in_index,
+        layer_files_by_frame,
+        filename_template,
+        output_dir
+    ):
+        layer_position = layer["position"]
+        frame_start_index = layer["frame_start"]
+        frame_end_index = layer["frame_end"]
+        frame_count = frame_end_index - frame_start_index + 1
+        if mark_in_index >= frame_start_index:
+            return
+
+        if pre_behavior == "none":
+            return
+
+        if pre_behavior == "hold":
+            # Keep first frame for whole time
+            eq_frame_filepath = layer_files_by_frame[frame_start_index]
+            for frame_idx in range(mark_in_index, frame_start_index):
+                filename = filename_template.format(layer_position, frame_idx)
+                new_filepath = "/".join([output_dir, filename])
+                self._copy_image(eq_frame_filepath, new_filepath)
+                layer_files_by_frame[frame_idx] = new_filepath
+
+        elif pre_behavior == "loop":
+            # Loop backwards from last frame of layer
+            for frame_idx in reversed(range(mark_in_index, frame_start_index)):
+                eq_frame_idx_offset = (
+                    (frame_end_index - frame_idx) % frame_count
+                )
+                eq_frame_idx = frame_end_index - eq_frame_idx_offset
+                eq_frame_filepath = layer_files_by_frame[eq_frame_idx]
+
+                filename = filename_template.format(layer_position, frame_idx)
+                new_filepath = "/".join([output_dir, filename])
+                self._copy_image(eq_frame_filepath, new_filepath)
+                layer_files_by_frame[frame_idx] = new_filepath
+
+        elif pre_behavior == "pingpong":
+            half_seq_len = frame_count - 1
+            seq_len = half_seq_len * 2
+            for frame_idx in reversed(range(mark_in_index, frame_start_index)):
+                eq_frame_idx_offset = (frame_start_index - frame_idx) % seq_len
+                if eq_frame_idx_offset > half_seq_len:
+                    eq_frame_idx_offset = (seq_len - eq_frame_idx_offset)
+                eq_frame_idx = frame_start_index + eq_frame_idx_offset
+
+                eq_frame_filepath = layer_files_by_frame[eq_frame_idx]
+
+                filename = filename_template.format(layer_position, frame_idx)
+                new_filepath = "/".join([output_dir, filename])
+                self._copy_image(eq_frame_filepath, new_filepath)
+                layer_files_by_frame[frame_idx] = new_filepath
+
     def _copy_image(self, src_path, dst_path):
         # Create hardlink of image instead of copying if possible
         if hasattr(os, "link"):
