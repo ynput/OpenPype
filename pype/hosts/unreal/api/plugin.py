@@ -1,7 +1,8 @@
 from avalon import api
+import pype.api
 
 
-class Creator(api.Creator):
+class Creator(pype.api.Creator):
     """This serves as skeleton for future Pype specific functionality"""
     pass
 

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """Create render node."""
 from avalon import harmony
+from pype.hosts.harmony.api import plugin
 
 
-class CreateRender(harmony.Creator):
+class CreateRender(plugin.Creator):
     """Composite node for publishing renders."""
 
     name = "renderDefault"

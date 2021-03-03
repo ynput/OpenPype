@@ -1,4 +1,4 @@
-from avalon import api
+import pype.api
 from avalon.vendor import Qt
 from avalon import aftereffects
 
@@ -7,7 +7,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class CreateRender(api.Creator):
+class CreateRender(pype.api.Creator):
     """Render folder for publish."""
 
     name = "renderDefault"

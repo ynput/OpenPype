@@ -185,6 +185,38 @@ def run(arguments: list, env: dict = None) -> int:
     return p.returncode
 
 
+def set_avalon_environments():
+    """Set avalon specific environments.
+
+    These are non modifiable environments for avalon workflow that must be set
+    before avalon module is imported because avalon works with globals set with
+    environment variables.
+    """
+    from pype import PACKAGE_DIR
+
+    # Path to pype's schema
+    schema_path = os.path.join(
+        os.path.dirname(PACKAGE_DIR),
+        "schema"
+    )
+    # Avalon mongo URL
+    avalon_mongo_url = (
+        os.environ.get("AVALON_MONGO")
+        or os.environ["PYPE_MONGO"]
+    )
+    os.environ.update({
+        # Mongo url (use same as pype has)
+        "AVALON_MONGO": avalon_mongo_url,
+
+        "AVALON_SCHEMA": schema_path,
+        # Mongo DB name where avalon docs are stored
+        "AVALON_DB": "avalon",
+        # Name of config
+        "AVALON_CONFIG": "pype",
+        "AVALON_LABEL": "Pype"
+    })
+
+
 def set_modules_environments():
     """Set global environments for pype modules.
 
@@ -571,6 +603,8 @@ def boot():
     from pype.lib import terminal as t
     from pype.version import __version__
     print(">>> loading environments ...")
+    # Must happen before `set_modules_environments`
+    set_avalon_environments()
     set_modules_environments()
 
     assert version_path, "Version path not defined."

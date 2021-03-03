@@ -12,12 +12,49 @@
             "children": [
                 {
                     "type": "dict-modifiable",
-                    "collapsible": false,
+                    "collapsible": true,
                     "key": "families_smart_select",
                     "label": "Families smart select",
                     "object_type": {
                         "type": "list",
                         "object_type": "text"
+                    }
+                },
+                {
+                    "type": "list",
+                    "key": "subset_name_profiles",
+                    "label": "Subset name profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "template",
+                                "label": "Template"
+                            }
+                        ]
                     }
                 }
             ]

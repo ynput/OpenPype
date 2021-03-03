@@ -1,7 +1,7 @@
-import avalon.maya
+from pype.hosts.maya.api import plugin
 
 
-class CreateLayout(avalon.maya.Creator):
+class CreateLayout(plugin.Creator):
     """A grouped package of loaded content"""
 
     name = "layoutMain"
