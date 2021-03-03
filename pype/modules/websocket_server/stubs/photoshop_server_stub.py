@@ -238,7 +238,14 @@ class PhotoshopServerStub():
         """
             Reads layers metadata from Headline from active document in PS.
             (Headline accessible by File > File Info)
-        Returns(string): - json documents
+
+            Returns:
+                (string): - json documents
+                example:
+                    {"8":{"active":true,"subset":"imageBG",
+                          "family":"image","id":"pyblish.avalon.instance",
+                          "asset":"Town"}}
+                    8 is layer(group) id - used for deletion, update etc.
         """
         layers_data = {}
         res = self.websocketserver.call(self.client.call('Photoshop.read'))
@@ -287,6 +294,19 @@ class PhotoshopServerStub():
         self.websocketserver.call(self.client.call
                                   ('Photoshop.delete_layer',
                                    layer_id=layer_id))
+
+    def remove_instance(self, instance_id):
+        cleaned_data = {}
+
+        for key, instance in self.get_layers_metadata().items():
+            if key != instance_id:
+                cleaned_data[key] = instance
+
+        payload = json.dumps(cleaned_data, indent=4)
+
+        self.websocketserver.call(self.client.call
+                                  ('Photoshop.imprint', payload=payload)
+                                  )
 
     def close(self):
         self.client.close()
