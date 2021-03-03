@@ -643,10 +643,7 @@ class ProjectListWidget(QtWidgets.QWidget):
 
         items = [self.default]
 
-        system_settings = get_system_settings()
-        mongo_url = system_settings["modules"]["avalon"]["AVALON_MONGO"]
-        if not mongo_url:
-            mongo_url = os.environ["PYPE_MONGO"]
+        mongo_url = os.environ["PYPE_MONGO"]
 
         # Force uninstall of whole avalon connection if url does not match
         # to current environment and set it as environment
