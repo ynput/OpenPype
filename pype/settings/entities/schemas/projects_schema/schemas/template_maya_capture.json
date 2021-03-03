@@ -163,42 +163,7 @@
                             }
                         ]
                     },
-                    {
-                        "type": "dict",
-                        "key": "IO",
-                        "children": [
-                            {
-                                "type": "label",
-                                "label": "<b>IO</b>"
-                            },
-                            {
-                                "type": "text",
-                                "key": "name",
-                                "label": "Name"
-                            },
-                            {
-                                "type": "boolean",
-                                "key": "open_finished",
-                                "label": "Open finished"
-                            },
-                            {
-                                "type": "boolean",
-                                "key": "raw_frame_numbers",
-                                "label": "Raw frame numbers"
-                            },
-                            {
-                                "type": "list",
-                                "key": "recent_playblasts",
-                                "label": "Recent Playblasts",
-                                "object_type": "text"
-                            },
-                            {
-                                "type": "boolean",
-                                "key": "save_file",
-                                "label": "Save file"
-                            }
-                        ]
-                    },
+
                     {
                         "type": "dict",
                         "key": "PanZoom",
@@ -222,9 +187,12 @@
                                 "label": "<b>Renderer</b>"
                             },
                             {
-                                "type": "text",
+                                "type": "enum",
                                 "key": "rendererName",
-                                "label": "     Renderer name"
+                                "label": "Renderer name",
+                                "enum_items": [
+                                    { "vp2Renderer": "Viewport 2.0" }
+                                ]
                             }
                         ]
                     },
@@ -275,46 +243,64 @@
                     },
                     {
                         "type": "dict",
-                        "key": "Time Range",
-                        "children": [
-                            {
-                                "type": "label",
-                                "label": "<b>Time Range</b>"
-                            },
-                            {
-                                "type": "number",
-                                "key": "start_frame",
-                                "label": "            Start frame",
-                                "decimal": 0,
-                                "minimum": 0,
-                                "maximum": 999999
-                            },
-                            {
-                                "type": "number",
-                                "key": "end_frame",
-                                "label": "End frame",
-                                "decimal": 0,
-                                "minimum": 0,
-                                "maximum": 999999
-                            },
-                            {
-                                "type": "text",
-                                "key": "frame",
-                                "label": "Frame"
-                            },
-                            {
-                                "type": "text",
-                                "key": "time",
-                                "label": "Time"
-                            }
-                        ]
-                    },
-                    {
-                        "type": "dict",
                         "collapsible": true,
                         "key": "Viewport Options",
                         "label": "Viewport Options",
                         "children": [
+                            {
+                                "type": "boolean",
+                                "key": "override_viewport_options",
+                                "label": "override_viewport_options"
+                            },
+                            {
+                                "type": "enum",
+                                "key": "displayLights",
+                                "label": "Display Lights",
+                                "enum_items": [
+                                    { "default": "Default Lighting"},
+                                    { "all": "All Lights"},
+                                    { "selected": "Selected Lights"},
+                                    { "flat": "Flat Lighting"},
+                                    { "nolights": "No Lights"}
+                                ]
+                            },
+                            {
+                                "type": "number",
+                                "key": "textureMaxResolution",
+                                "label": "Texture Clamp Resolution",
+                                "decimal": 0
+                            },
+                            {
+                                "type": "number",
+                                "key": "multiSample",
+                                "label": "Anti Aliasing Samples",
+                                "decimal": 0,
+                                "minimum": 0,
+                                "maximum": 32
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "shadows",
+                                "label": "Display Shadows"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "textures",
+                                "label": "Display Textures"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "twoSidedLighting",
+                                "label": "Two Sided Lighting"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "ssaoEnable",
+                                "label": "Screen Space Ambient Occlusion"
+                            },
+                            {
+                                "type": "splitter"
+                            },
                             {
                                 "type": "boolean",
                                 "key": "cameras",
@@ -339,14 +325,6 @@
                                 "type": "boolean",
                                 "key": "dimensions",
                                 "label": "dimensions"
-                            },
-                            {
-                                "type": "number",
-                                "key": "displayLights",
-                                "label": "displayLights",
-                                "decimal": 0,
-                                "minimum": 0,
-                                "maximum": 10
                             },
                             {
                                 "type": "boolean",
@@ -392,11 +370,6 @@
                                 "type": "boolean",
                                 "key": "handles",
                                 "label": "handles"
-                            },
-                            {
-                                "type": "boolean",
-                                "key": "high_quality",
-                                "label": "high_quality"
                             },
                             {
                                 "type": "boolean",
@@ -470,11 +443,6 @@
                             },
                             {
                                 "type": "boolean",
-                                "key": "override_viewport_options",
-                                "label": "override_viewport_options"
-                            },
-                            {
-                                "type": "boolean",
                                 "key": "particleInstancers",
                                 "label": "particleInstancers"
                             },
@@ -500,11 +468,6 @@
                             },
                             {
                                 "type": "boolean",
-                                "key": "shadows",
-                                "label": "shadows"
-                            },
-                            {
-                                "type": "boolean",
                                 "key": "strokes",
                                 "label": "strokes"
                             },
@@ -512,16 +475,6 @@
                                 "type": "boolean",
                                 "key": "subdivSurfaces",
                                 "label": "subdivSurfaces"
-                            },
-                            {
-                                "type": "boolean",
-                                "key": "textures",
-                                "label": "textures"
-                            },
-                            {
-                                "type": "boolean",
-                                "key": "twoSidedLighting",
-                                "label": "twoSidedLighting"
                             }
                         ]
                     },

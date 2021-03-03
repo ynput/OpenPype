@@ -45,11 +45,8 @@ class ExtractPlayblast(pype.api.Extractor):
         # get cameras
         camera = instance.data['review_camera']
 
-        try:
-            preset = lib.load_capture_preset(data=self.capture_preset)
-        except Exception:
-            preset = {}
-        self.log.info('using viewport preset: {}'.format(preset))
+        preset = lib.load_capture_preset(data=self.capture_preset)
+
 
         preset['camera'] = camera
         preset['format'] = "image"
@@ -98,6 +95,9 @@ class ExtractPlayblast(pype.api.Extractor):
 
             # Remove panel key since it's internal value to capture_gui
             preset.pop("panel", None)
+
+            
+            self.log.info('using viewport preset: {}'.format(preset))
 
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
