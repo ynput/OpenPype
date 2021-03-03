@@ -317,3 +317,10 @@ class ExtractSequence(pyblish.api.Extractor):
             )
             filepaths_by_frame[frame] = space_filepath
             shutil.copy(previous_frame_filepath, space_filepath)
+
+    def _copy_image(self, src_path, dst_path):
+        # Create hardlink of image instead of copying if possible
+        if hasattr(os, "link"):
+            os.link(src_path, dst_path)
+        else:
+            shutil.copy(src_path, dst_path)
