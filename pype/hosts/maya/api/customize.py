@@ -89,7 +89,7 @@ def override_toolbox_ui():
         log.warning("Could not import Workfiles tool")
 
     try:
-        import mayalookassigner
+        from pype.tools import mayalookassigner
     except Exception:
         log.warning("Could not import Maya Look assigner tool")
 
