@@ -9,7 +9,10 @@ from .base import (
     ModulesManager,
     TrayModulesManager
 )
-from .settings_action import SettingsAction
+from .settings_action import (
+    SettingsAction,
+    LocalSettingsAction
+)
 from .rest_api import (
     RestApiModule,
     IRestApi
@@ -52,6 +55,7 @@ __all__ = (
     "TrayModulesManager",
 
     "SettingsAction",
+    "LocalSettingsAction",
 
     "UserModule",
     "IUserModule",

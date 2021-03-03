@@ -94,7 +94,7 @@ def run_subprocess(*args, **kwargs):
     # not passed.
     env = kwargs.get("env") or os.environ
     # Make sure environment contains only strings
-    filtered_env = {k: str(v) for k, v in env.items()}
+    filtered_env = {str(k): str(v) for k, v in env.items()}
 
     # Use lib's logger if was not passed with kwargs.
     logger = kwargs.pop("logger", log)

@@ -24,21 +24,30 @@ from .lib import CHILD_OFFSET
 
 class DictImmutableKeysWidget(BaseWidget):
     def create_ui(self):
-        self._child_style_state = ""
         self.input_fields = []
         self.checkbox_child = None
-        if not self.entity.is_dynamic_item and not self.entity.label:
-            self._ui_item_without_label()
+
+        self.label_widget = None
+        self.body_widget = None
+        self.content_widget = None
+        self.content_layout = None
+
+        label = None
+        if self.entity.is_dynamic_item:
+            self._ui_as_dynamic_item()
+
+        elif self.entity.use_label_wrap:
+            self._ui_label_wrap()
+            self.checkbox_child = self.entity.non_gui_children.get(
+                self.entity.checkbox_key
+            )
 
         else:
-            self._ui_item_or_as_widget()
-            if not self.entity.is_dynamic_item:
-                self.checkbox_child = self.entity.non_gui_children.get(
-                    self.entity.checkbox_key
-                )
+            self._ui_item_base()
+            label = self.entity.label
 
-        self.widget_mapping = {}
-        self.wrapper_widgets_by_id = {}
+        self._parent_widget_by_entity_id = {}
+        self._added_wrapper_ids = set()
         self._prepare_entity_layouts(
             self.entity.gui_layout, self.content_widget
         )
@@ -50,13 +59,13 @@ class DictImmutableKeysWidget(BaseWidget):
                 )
             )
 
-        self.entity_widget.add_widget_to_layout(self)
+        self.entity_widget.add_widget_to_layout(self, label)
 
     def _prepare_entity_layouts(self, children, widget):
         for child in children:
             if not isinstance(child, dict):
                 if child is not self.checkbox_child:
-                    self.widget_mapping[child.id] = widget
+                    self._parent_widget_by_entity_id[child.id] = widget
                 continue
 
             if child["type"] == "collapsible-wrap":
@@ -70,73 +79,77 @@ class DictImmutableKeysWidget(BaseWidget):
                     "Unknown Wrapper type \"{}\"".format(child["type"])
                 )
 
-            self.widget_mapping[wrapper.id] = widget
-            self.wrapper_widgets_by_id[wrapper.id] = wrapper
-            self.add_widget_to_layout(wrapper)
+            self._parent_widget_by_entity_id[wrapper.id] = widget
+
             self._prepare_entity_layouts(child["children"], wrapper)
 
-    def _ui_item_without_label(self):
+    def _ui_item_base(self):
         self.setObjectName("DictInvisible")
 
-        self.body_widget = None
         self.content_widget = self
         self.content_layout = QtWidgets.QGridLayout(self)
         self.content_layout.setContentsMargins(0, 0, 0, 0)
         self.content_layout.setSpacing(5)
 
-    def _ui_item_or_as_widget(self):
+    def _ui_as_dynamic_item(self):
         content_widget = QtWidgets.QWidget(self)
+        content_widget.setObjectName("DictAsWidgetBody")
 
-        if self.entity.is_dynamic_item:
-            content_widget.setObjectName("DictAsWidgetBody")
-            show_borders = str(int(self.entity.show_borders))
-            content_widget.setProperty("show_borders", show_borders)
-            content_layout_margins = (5, 5, 5, 5)
-            main_layout_spacing = 5
-            body_widget = None
-            label_widget = QtWidgets.QLabel(self.entity.label)
+        show_borders = str(int(self.entity.show_borders))
+        content_widget.setProperty("show_borders", show_borders)
 
+        label_widget = QtWidgets.QLabel(self.entity.label)
+
+        content_layout = QtWidgets.QGridLayout(content_widget)
+        content_layout.setContentsMargins(5, 5, 5, 5)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(5)
+        main_layout.addWidget(content_widget)
+
+        self.label_widget = label_widget
+        self.content_widget = content_widget
+        self.content_layout = content_layout
+
+    def _ui_label_wrap(self):
+        content_widget = QtWidgets.QWidget(self)
+        content_widget.setObjectName("ContentWidget")
+
+        if self.entity.highlight_content:
+            content_state = "hightlighted"
+            bottom_margin = 5
         else:
-            content_widget.setObjectName("ContentWidget")
-            if self.entity.highlight_content:
-                content_state = "hightlighted"
-                bottom_margin = 5
-            else:
-                content_state = ""
-                bottom_margin = 0
-            content_widget.setProperty("content_state", content_state)
-            content_layout_margins = (CHILD_OFFSET, 5, 0, bottom_margin)
-            main_layout_spacing = 0
+            content_state = ""
+            bottom_margin = 0
+        content_widget.setProperty("content_state", content_state)
+        content_layout_margins = (CHILD_OFFSET, 5, 0, bottom_margin)
 
-            body_widget = ExpandingWidget(self.entity.label, self)
-            label_widget = body_widget.label_widget
-            body_widget.set_content_widget(content_widget)
+        body_widget = ExpandingWidget(self.entity.label, self)
+        label_widget = body_widget.label_widget
+        body_widget.set_content_widget(content_widget)
 
         content_layout = QtWidgets.QGridLayout(content_widget)
         content_layout.setContentsMargins(*content_layout_margins)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(main_layout_spacing)
-        if not body_widget:
-            main_layout.addWidget(content_widget)
-        else:
-            main_layout.addWidget(body_widget)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(body_widget)
 
         self.label_widget = label_widget
         self.body_widget = body_widget
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        if body_widget:
-            if len(self.input_fields) == 1 and self.checkbox_widget:
-                body_widget.hide_toolbox(hide_content=True)
+        if len(self.input_fields) == 1 and self.checkbox_widget:
+            body_widget.hide_toolbox(hide_content=True)
 
-            elif self.entity.collapsible:
-                if not self.entity.collapsed:
-                    body_widget.toggle_content()
-            else:
-                body_widget.hide_toolbox(hide_content=False)
+        elif self.entity.collapsible:
+            if not self.entity.collapsed:
+                body_widget.toggle_content()
+        else:
+            body_widget.hide_toolbox(hide_content=False)
 
     def add_widget_to_layout(self, widget, label=None):
         if self.checkbox_child and widget.entity is self.checkbox_child:
@@ -148,9 +161,12 @@ class DictImmutableKeysWidget(BaseWidget):
         else:
             map_id = widget.entity.id
 
-        wrapper = self.widget_mapping[map_id]
+        wrapper = self._parent_widget_by_entity_id[map_id]
         if wrapper is not self.content_widget:
             wrapper.add_widget_to_layout(widget, label)
+            if wrapper.id not in self._added_wrapper_ids:
+                self.add_widget_to_layout(wrapper)
+                self._added_wrapper_ids.add(wrapper.id)
             return
 
         row = self.content_layout.rowCount()
@@ -172,7 +188,7 @@ class DictImmutableKeysWidget(BaseWidget):
         for input_field in self.input_fields:
             input_field.hierarchical_style_update()
 
-    def update_style(self, is_overriden=None):
+    def update_style(self):
         if not self.body_widget and not self.label_widget:
             return
 
@@ -186,36 +202,8 @@ class DictImmutableKeysWidget(BaseWidget):
             has_project_override = self.entity.has_project_override
             has_studio_override = self.entity.has_studio_override
 
-        is_invalid = self.is_invalid
-        if self.body_widget:
-            child_style_state = self.get_style_state(
-                is_invalid,
-                has_unsaved_changes,
-                has_project_override,
-                has_studio_override
-            )
-
-            if child_style_state:
-                child_style_state = "child-{}".format(child_style_state)
-
-            if self._child_style_state != child_style_state:
-                self.body_widget.side_line_widget.setProperty(
-                    "state", child_style_state
-                )
-                self.body_widget.side_line_widget.style().polish(
-                    self.body_widget.side_line_widget
-                )
-                self._child_style_state = child_style_state
-
-        # There is nothing to care if there is no label
-        if not self.label_widget:
-            return
-        # Don't change label if is not group or under group item
-        if not self.entity.is_group and not self.entity.group_item:
-            return
-
         style_state = self.get_style_state(
-            is_invalid,
+            self.is_invalid,
             has_unsaved_changes,
             has_project_override,
             has_studio_override
@@ -223,10 +211,31 @@ class DictImmutableKeysWidget(BaseWidget):
         if self._style_state == style_state:
             return
 
+        self._style_state = style_state
+
+        if self.body_widget:
+            if style_state:
+                child_style_state = "child-{}".format(style_state)
+            else:
+                child_style_state = ""
+
+            self.body_widget.side_line_widget.setProperty(
+                "state", child_style_state
+            )
+            self.body_widget.side_line_widget.style().polish(
+                self.body_widget.side_line_widget
+            )
+
+        # There is nothing to care if there is no label
+        if not self.label_widget:
+            return
+
+        # Don't change label if is not group or under group item
+        if not self.entity.is_group and not self.entity.group_item:
+            return
+
         self.label_widget.setProperty("state", style_state)
         self.label_widget.style().polish(self.label_widget)
-
-        self._style_state = style_state
 
     def _on_entity_change(self):
         pass
@@ -250,26 +259,23 @@ class DictImmutableKeysWidget(BaseWidget):
 
 
 class BoolWidget(InputWidget):
-    def create_ui(self):
+    def _add_inputs_to_layout(self):
         checkbox_height = self.style().pixelMetric(
             QtWidgets.QStyle.PM_IndicatorHeight
         )
-        self.input_field = NiceCheckbox(height=checkbox_height, parent=self)
+        self.input_field = NiceCheckbox(
+            height=checkbox_height, parent=self.content_widget
+        )
 
-        spacer = QtWidgets.QWidget(self)
+        spacer = QtWidgets.QWidget(self.content_widget)
         spacer.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        layout.addWidget(self.input_field, 0)
-        layout.addWidget(spacer, 1)
+        self.content_layout.addWidget(self.input_field, 0)
+        self.content_layout.addWidget(spacer, 1)
 
         self.setFocusProxy(self.input_field)
 
         self.input_field.stateChanged.connect(self._on_value_change)
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.isChecked():
@@ -285,12 +291,12 @@ class BoolWidget(InputWidget):
 
 
 class TextWidget(InputWidget):
-    def create_ui(self):
+    def _add_inputs_to_layout(self):
         multiline = self.entity.multiline
         if multiline:
-            self.input_field = QtWidgets.QPlainTextEdit(self)
+            self.input_field = QtWidgets.QPlainTextEdit(self.content_widget)
         else:
-            self.input_field = QtWidgets.QLineEdit(self)
+            self.input_field = QtWidgets.QLineEdit(self.content_widget)
 
         placeholder_text = self.entity.placeholder_text
         if placeholder_text:
@@ -302,14 +308,9 @@ class TextWidget(InputWidget):
         if multiline:
             layout_kwargs["alignment"] = QtCore.Qt.AlignTop
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-        layout.addWidget(self.input_field, 1, **layout_kwargs)
+        self.content_layout.addWidget(self.input_field, 1, **layout_kwargs)
 
         self.input_field.textChanged.connect(self._on_value_change)
-
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_value():
@@ -335,25 +336,19 @@ class TextWidget(InputWidget):
 
 
 class NumberWidget(InputWidget):
-    def create_ui(self):
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
+    def _add_inputs_to_layout(self):
         kwargs = {
             "minimum": self.entity.minimum,
             "maximum": self.entity.maximum,
             "decimal": self.entity.decimal
         }
-        self.input_field = NumberSpinBox(self, **kwargs)
+        self.input_field = NumberSpinBox(self.content_widget, **kwargs)
 
         self.setFocusProxy(self.input_field)
 
-        layout.addWidget(self.input_field, 1)
+        self.content_layout.addWidget(self.input_field, 1)
 
         self.input_field.valueChanged.connect(self._on_value_change)
-
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.value():
@@ -419,12 +414,8 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
 
 class RawJsonWidget(InputWidget):
-    def create_ui(self):
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        self.input_field = RawJsonInput(self)
+    def _add_inputs_to_layout(self):
+        self.input_field = RawJsonInput(self.content_widget)
         self.input_field.setSizePolicy(
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding
@@ -432,10 +423,11 @@ class RawJsonWidget(InputWidget):
 
         self.setFocusProxy(self.input_field)
 
-        layout.addWidget(self.input_field, 1, alignment=QtCore.Qt.AlignTop)
+        self.content_layout.addWidget(
+            self.input_field, 1, alignment=QtCore.Qt.AlignTop
+        )
 
         self.input_field.textChanged.connect(self._on_value_change)
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def set_entity_value(self):
         self.input_field.set_value(self.entity.value)
@@ -463,31 +455,24 @@ class RawJsonWidget(InputWidget):
 
 
 class EnumeratorWidget(InputWidget):
-    def create_ui(self):
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
+    def _add_inputs_to_layout(self):
         if self.entity.multiselection:
             self.input_field = MultiSelectionComboBox(
-                placeholder=self.entity.placeholder, parent=self
+                placeholder=self.entity.placeholder, parent=self.content_widget
             )
-            model = self.input_field.model()
-            for idx in range(self.input_field.count()):
-                model.item(idx).setCheckable(True)
+
         else:
-            self.input_field = ComboBox(self)
+            self.input_field = ComboBox(self.content_widget)
 
         for enum_item in self.entity.enum_items:
             for value, label in enum_item.items():
                 self.input_field.addItem(label, value)
 
-        layout.addWidget(self.input_field, 0)
+        self.content_layout.addWidget(self.input_field, 0)
 
         self.setFocusProxy(self.input_field)
 
         self.input_field.value_changed.connect(self._on_value_change)
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.value():
@@ -572,12 +557,8 @@ class PathWidget(BaseWidget):
 
 
 class PathInputWidget(InputWidget):
-    def create_ui(self, label_widget=None):
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
-
-        self.input_field = QtWidgets.QLineEdit(self)
+    def _add_inputs_to_layout(self):
+        self.input_field = QtWidgets.QLineEdit(self.content_widget)
         self.args_input_field = None
         if self.entity.with_arguments:
             self.input_field.setPlaceholderText("Executable path")
@@ -585,14 +566,12 @@ class PathInputWidget(InputWidget):
             self.args_input_field.setPlaceholderText("Arguments")
 
         self.setFocusProxy(self.input_field)
-        layout.addWidget(self.input_field, 8)
+        self.content_layout.addWidget(self.input_field, 8)
         self.input_field.textChanged.connect(self._on_value_change)
 
         if self.args_input_field:
-            layout.addWidget(self.args_input_field, 2)
+            self.content_layout.addWidget(self.args_input_field, 2)
             self.args_input_field.textChanged.connect(self._on_value_change)
-
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_value():

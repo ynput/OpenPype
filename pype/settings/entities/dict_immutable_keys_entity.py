@@ -27,6 +27,11 @@ class DictImmutableKeysEntity(ItemEntity):
     are not real settings values but entities representing the value.
     """
     schema_types = ["dict"]
+    _default_label_wrap = {
+        "use_label_wrap": True,
+        "collapsible": True,
+        "collapsed": True
+    }
 
     def __getitem__(self, key):
         """Return entity inder key."""
@@ -130,7 +135,7 @@ class DictImmutableKeysEntity(ItemEntity):
                 continue
 
             if child_obj.key in self.non_gui_children:
-                raise SchemaDuplicatedKeys(self.path, child_obj.key)
+                raise SchemaDuplicatedKeys("", child_obj.key)
             self.non_gui_children[child_obj.key] = child_obj
 
         if not first:
@@ -169,11 +174,6 @@ class DictImmutableKeysEntity(ItemEntity):
             "highlight_content", False
         )
         self.show_borders = self.schema_data.get("show_borders", True)
-        self.collapsible = self.schema_data.get("collapsible", True)
-        self.collapsed = self.schema_data.get("collapsed", True)
-
-        # Not yet implemented
-        self.use_label_wrap = self.schema_data.get("use_label_wrap") or True
 
     def get_child_path(self, child_obj):
         """Get hierarchical path of child entity.

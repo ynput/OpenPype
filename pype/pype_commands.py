@@ -2,6 +2,7 @@
 """Implementation of Pype commands."""
 import os
 import sys
+import json
 from pathlib import Path
 
 from pype.lib import PypeLogger
@@ -84,6 +85,21 @@ class PypeCommands:
 
         log.info("Publish finished.")
         uninstall()
+
+    def extractenvironments(output_json_path, project, asset, task, app):
+        env = os.environ.copy()
+        if all((project, asset, task, app)):
+            from pype.api import get_app_environments_for_context
+            env = get_app_environments_for_context(
+                project, asset, task, app, env
+            )
+
+        output_dir = os.path.dirname(output_json_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        with open(output_json_path, "w") as file_stream:
+            json.dump(env, file_stream, indent=4)
 
     def texture_copy(self, project, asset, path):
         pass

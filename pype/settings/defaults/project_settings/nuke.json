@@ -61,6 +61,22 @@
             "deadline_pool": "",
             "deadline_pool_secondary": "",
             "deadline_chunk_size": 1
+        },
+        "ValidateOutputResolution": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateGizmo": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateScript": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNukeWriteBoundingBox": {
+            "enabled": true,
+            "optional": true
         }
     },
     "workfile_build": {

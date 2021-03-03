@@ -1677,15 +1677,15 @@ class SyncToAvalonEvent(BaseEvent):
                     self.updates[mongo_id]["data"] = {}
 
                 vis_par_id = None
+                ent_path_items = [self.cur_project["full_name"]]
                 if par_av_ent["type"].lower() != "project":
                     vis_par_id = par_av_ent["_id"]
+                    ent_path_items.extend(par_av_ent["data"]["parents"])
+                    ent_path_items.append(par_av_ent["name"])
+
                 self.updates[mongo_id]["data"]["visualParent"] = vis_par_id
                 self.moved_in_avalon.append(mongo_id)
 
-                # TODO logging
-                ent_path_items = [self.cur_project["full_name"]]
-                ent_path_items.extend(par_av_ent["data"]["parents"])
-                ent_path_items.append(par_av_ent["name"])
                 ent_path_items.append(avalon_ent["name"])
                 ent_path = "/".join(ent_path_items)
                 self.log.debug((

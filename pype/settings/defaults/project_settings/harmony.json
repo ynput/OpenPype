@@ -1,7 +1,20 @@
 {
-    "publish": {},
     "general": {
         "skip_resolution_check": [],
         "skip_timelines_check": []
+    },
+    "publish": {
+        "CollectPalettes": {
+            "allowed_tasks": [
+                "."
+            ]
+        },
+        "HarmonySubmitDeadline": {
+            "use_published": false,
+            "priority": 50,
+            "primary_pool": "",
+            "secondary_pool": "",
+            "chunk_size": 0
+        }
     }
 }

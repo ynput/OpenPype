@@ -13,6 +13,12 @@ PS> .\create_env.ps1
 
 #>
 
+$arguments=$ARGS
+$poetry_verbosity=""
+if($arguments -eq "--verbose") {
+    $poetry_verbosity="-vvv"
+}
+
 function Exit-WithCode($exitcode) {
    # Only exit this host process if it's a child of another PowerShell parent process...
    $parentPID = (Get-CimInstance -ClassName Win32_Process -Filter "ProcessId=$PID" | Select-Object -Property ParentProcessId).ParentProcessId
@@ -43,8 +49,40 @@ function Install-Poetry() {
 }
 
 
-$current_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$pype_root = (Get-Item $current_dir).parent.FullName
+function Test-Python() {
+    Write-Host ">>> " -NoNewline -ForegroundColor green
+    Write-Host "Detecting host Python ... " -NoNewline
+    if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
+        Write-Host "!!! Python not detected" -ForegroundColor red
+        Set-Location -Path $current_dir
+        Exit-WithCode 1
+    }
+    $version_command = @'
+import sys
+print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
+'@
+
+    $p = & python -c $version_command
+    $env:PYTHON_VERSION = $p
+    $m = $p -match '(\d+)\.(\d+)'
+    if(-not $m) {
+      Write-Host "!!! Cannot determine version" -ForegroundColor red
+      Set-Location -Path $current_dir
+      Exit-WithCode 1
+    }
+    # We are supporting python 3.6 and up
+    if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
+      Write-Host "FAILED Version [ $p ] is old and unsupported" -ForegroundColor red
+      Set-Location -Path $current_dir
+      Exit-WithCode 1
+    }
+    Write-Host "OK [ $p ]" -ForegroundColor green
+}
+
+
+$current_dir = Get-Location
+$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$pype_root = (Get-Item $script_dir).parent.FullName
 
 Set-Location -Path $pype_root
 
@@ -72,33 +110,14 @@ $pype_version = $result[0].Groups['version'].Value
 if (-not $pype_version) {
   Write-Host "!!! " -ForegroundColor yellow -NoNewline
   Write-Host "Cannot determine Pype version."
+  Set-Location -Path $current_dir
   Exit-WithCode 1
 }
+Write-Host ">>> " -NoNewline -ForegroundColor Green
+Write-Host "Found Pype version " -NoNewline
+Write-Host "[ $($pype_version) ]" -ForegroundColor Green
 
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Detecting host Python ... " -NoNewline
-if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
-    Write-Host "!!! Python not detected" -ForegroundColor red
-    Exit-WithCode 1
-}
-$version_command = @'
-import sys
-print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
-'@
-
-$p = & python -c $version_command
-$env:PYTHON_VERSION = $p
-$m = $p -match '(\d+)\.(\d+)'
-if(-not $m) {
-  Write-Host "!!! Cannot determine version" -ForegroundColor red
-  Exit-WithCode 1
-}
-# We are supporting python 3.6 and up
-if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
-  Write-Host "FAILED Version [ $p ] is old and unsupported" -ForegroundColor red
-  Exit-WithCode 1
-}
-Write-Host "OK [ $p ]" -ForegroundColor green
+Test-Python
 
 Write-Host ">>> " -NoNewline -ForegroundColor Green
 Write-Host "Reading Poetry ... " -NoNewline
@@ -112,12 +131,17 @@ if (-not (Test-Path -PathType Container -Path "$($env:USERPROFILE)\.poetry\bin")
 
 if (-not (Test-Path -PathType Leaf -Path "$($pype_root)\poetry.lock")) {
     Write-Host ">>> " -NoNewline -ForegroundColor green
-    Write-Host "Creating virtual environment."
-    & poetry install
+    Write-Host "Installing virtual environment and creating lock."
 } else {
     Write-Host ">>> " -NoNewline -ForegroundColor green
-    Write-Host "Updating virtual environment."
-    & poetry update
+    Write-Host "Installing virtual environment from lock."
+}
+& poetry install $poetry_verbosity
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "!!! " -ForegroundColor yellow -NoNewline
+    Write-Host "Poetry command failed."
+    Set-Location -Path $current_dir
+    Exit-WithCode 1
 }
 Set-Location -Path $current_dir
 Write-Host ">>> " -NoNewline -ForegroundColor green

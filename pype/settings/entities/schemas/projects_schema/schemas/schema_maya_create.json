@@ -1,0 +1,86 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "create",
+    "label": "Creator plugins",
+    "children": [
+        {
+            "type": "schema_template",
+            "name": "template_create_plugin",
+            "template_data": [
+                {
+                    "key": "CreateAnimation",
+                    "label": "Create Animation"
+                },
+                {
+                    "key": "CreateAss",
+                    "label": "Create Ass"
+                },
+                {
+                    "key": "CreateAssembly",
+                    "label": "Create Assembly"
+                },
+                {
+                    "key": "CreateCamera",
+                    "label": "Create Camera"
+                },
+                {
+                    "key": "CreateLayout",
+                    "label": "Create Layout"
+                },
+                {
+                    "key": "CreateLook",
+                    "label": "Create Look"
+                },
+                {
+                    "key": "CreateMayaScene",
+                    "label": "Create Maya Scene"
+                },
+                {
+                    "key": "CreateModel",
+                    "label": "Create Model"
+                },
+                {
+                    "key": "CreatePointCache",
+                    "label": "Create Cache"
+                },
+                {
+                    "key": "CreateRender",
+                    "label": "Create Render"
+                },
+                {
+                    "key": "CreateRenderSetup",
+                    "label": "Create Render Setup"
+                },
+                {
+                    "key": "CreateReview",
+                    "label": "Create Review"
+                },
+                {
+                    "key": "CreateRig",
+                    "label": "Create Rig"
+                },
+                {
+                    "key": "CreateSetDress",
+                    "label": "Create Set Dress"
+                },
+                {
+                    "key": "CreateUnrealStaticMesh",
+                    "label": "Create Unreal - Static Mesh"
+                },
+                {
+                    "key": "CreateVrayProxy",
+                    "label": "Create VRay Proxy"
+                },
+                {
+                    "key": "CreateVRayScene",
+                    "label": "Create VRay Scene"
+                },
+                {
+                    "key": "CreateYetiRig",
+                    "label": "Create Yeti Rig"
+                }
+            ]
+        }
+    ]
+}
