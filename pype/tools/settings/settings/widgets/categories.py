@@ -404,10 +404,6 @@ class ProjectWidget(SettingsCategoryWidget):
         if self is saved_tab_widget:
             return
 
-        # If mongo url is not the same as was then refresh projects
-        if mongo_url != os.environ["AVALON_MONGO"]:
-            self.project_list_widget.refresh()
-
     def _create_root_entity(self):
         self.entity = ProjectSettings(change_state=False)
         self.entity.on_change_callbacks.append(self._on_entity_change)
