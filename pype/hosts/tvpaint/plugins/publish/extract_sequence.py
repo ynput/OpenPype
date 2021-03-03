@@ -190,8 +190,8 @@ class ExtractSequence(pyblish.api.Extractor):
         return "{{:0>{}}}".format(frame_padding) + ".png"
 
     def render(
-        self, save_mode, filename_template, output_dir, layers,
-        first_frame, last_frame, thumbnail_filename
+        self, filename_template, output_dir, layers,
+        frame_start, frame_end, thumbnail_filename
     ):
         """ Export images from TVPaint.
 
@@ -209,9 +209,6 @@ class ExtractSequence(pyblish.api.Extractor):
         Retruns:
             dict: Mapping frame to output filepath.
         """
-
-        # Add save mode arguments to function
-        save_mode = "tv_SaveMode {}".format(save_mode)
 
         # Map layers by position
         layers_by_position = {}
