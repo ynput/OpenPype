@@ -1,7 +1,8 @@
 from avalon.tvpaint import pipeline, lib
+from pype.hosts.tvpaint.api import plugin
 
 
-class CreateRenderPass(pipeline.Creator):
+class CreateRenderPass(plugin.Creator):
     """Render pass is combination of one or more layers from same group.
 
     Requirement to create Render Pass is to have already created beauty

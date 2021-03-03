@@ -1,7 +1,7 @@
-from avalon import houdini
+from pype.hosts.houdini.api import plugin
 
 
-class CreatePointCache(houdini.Creator):
+class CreatePointCache(plugin.Creator):
     """Alembic ROP to pointcache"""
 
     name = "pointcache"

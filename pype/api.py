@@ -44,6 +44,9 @@ from .lib.avalon_context import (
 from . import resources
 
 from .plugin import (
+    PypeCreatorMixin,
+    Creator,
+
     Extractor,
 
     ValidatePipelineOrder,
@@ -86,6 +89,9 @@ __all__ = [
     # Resources
     "resources",
 
+    # Pype creator mixin
+    "PypeCreatorMixin",
+    "Creator",
     # plugin classes
     "Extractor",
     # ordering

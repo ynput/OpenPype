@@ -6,6 +6,8 @@ from typing import Dict, List, Optional
 import bpy
 
 from avalon import api
+import avalon.blender
+from pype.api import PypeCreatorMixin
 
 VALID_EXTENSIONS = [".blend", ".json"]
 
@@ -98,6 +100,10 @@ def get_local_collection_with_name(name):
         if collection.name == name and collection.library is None:
             return collection
     return None
+
+
+class Creator(PypeCreatorMixin, avalon.blender.Creator):
+    pass
 
 
 class AssetLoader(api.Loader):
