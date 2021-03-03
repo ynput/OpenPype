@@ -1,9 +1,11 @@
 from collections import OrderedDict
-import avalon.maya
-from pype.hosts.maya import lib
+from pype.hosts.maya import (
+    lib,
+    plugin
+)
 
 
-class CreateReview(avalon.maya.Creator):
+class CreateReview(plugin.Creator):
     """Single baked camera"""
 
     name = "reviewDefault"

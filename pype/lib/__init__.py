@@ -26,6 +26,8 @@ from .applications import (
     _subprocess
 )
 
+from .profiles_filtering import filter_profiles
+
 from .plugin_tools import (
     filter_pyblish_plugins,
     source_hash,
@@ -68,6 +70,8 @@ __all__ = [
     "ApplicationLaunchFailed",
     "launch_application",
     "ApplicationAction",
+
+    "filter_profiles",
 
     "filter_pyblish_plugins",
     "get_unique_layer_name",

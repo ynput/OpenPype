@@ -1,9 +1,9 @@
-from avalon import api
+import pype.api
 from avalon.vendor import Qt
 from avalon import photoshop
 
 
-class CreateImage(api.Creator):
+class CreateImage(pype.api.Creator):
     """Image folder for publish."""
 
     name = "imageDefault"

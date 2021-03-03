@@ -8,11 +8,13 @@ import requests
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
-from pype.hosts.maya import lib
-import avalon.maya
+from pype.hosts.maya import (
+    lib,
+    plugin
+)
 
 
-class CreateRender(avalon.maya.Creator):
+class CreateRender(plugin.Creator):
     """Create *render* instance.
 
     Render instances are not actually published, they hold options for

@@ -1,8 +1,10 @@
-import avalon.maya
-from pype.hosts.maya import lib
+from pype.hosts.maya import (
+    lib,
+    plugin
+)
 
 
-class CreateAnimation(avalon.maya.Creator):
+class CreateAnimation(plugin.Creator):
     """Animation output for character rigs"""
 
     name = "animationDefault"

@@ -1,10 +1,12 @@
 from collections import OrderedDict
 
-import avalon.maya
-from pype.hosts.maya import lib
+from pype.hosts.maya import (
+    lib,
+    plugin
+)
 
 
-class CreateYetiCache(avalon.maya.Creator):
+class CreateYetiCache(plugin.Creator):
     """Output for procedural plugin nodes of Yeti """
 
     name = "yetiDefault"
