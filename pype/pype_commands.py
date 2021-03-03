@@ -42,6 +42,50 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
+    def publish(paths):
+        """Start headless publishing.
+
+        Publish use json from passed paths argument.
+
+        Args:
+            paths (list): Paths to jsons.
+
+        Raises:
+            RuntimeError: When there is no pathto process.
+        """
+        if not any(paths):
+            raise RuntimeError("No publish paths specified")
+
+        from pype import install, uninstall
+        from pype.api import Logger
+
+        # Register target and host
+        import pyblish.api
+        import pyblish.util
+
+        log = Logger.get_logger()
+
+        install()
+
+        pyblish.api.register_target("filesequence")
+        pyblish.api.register_host("shell")
+
+        os.environ["PYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
+
+        log.info("Running publish ...")
+
+        # Error exit as soon as any error occurs.
+        error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+
+        for result in pyblish.util.publish_iter():
+            if result["error"]:
+                log.error(error_format.format(**result))
+                uninstall()
+                sys.exit(1)
+
+        log.info("Publish finished.")
+        uninstall()
+
     def extractenvironments(output_json_path, project, asset, task, app):
         env = os.environ.copy()
         if all((project, asset, task, app)):
@@ -56,9 +100,6 @@ class PypeCommands:
 
         with open(output_json_path, "w") as file_stream:
             json.dump(env, file_stream, indent=4)
-
-    def publish(self, gui, paths):
-        pass
 
     def texture_copy(self, project, asset, path):
         pass
