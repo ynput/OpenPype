@@ -1,7 +1,8 @@
 from avalon.tvpaint import pipeline, lib
+from pype.hosts.tvpaint.api import plugin
 
 
-class CreateRenderlayer(pipeline.Creator):
+class CreateRenderlayer(plugin.Creator):
     """Mark layer group as one instance."""
     name = "render_layer"
     label = "RenderLayer"

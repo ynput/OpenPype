@@ -9,6 +9,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from .widgets import (
     AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
 )
+from .widgets.constants import HOST_NAME
 from avalon import style
 from pype.api import resources
 from avalon.api import AvalonMongoDB
@@ -73,6 +74,7 @@ class Window(QtWidgets.QDialog):
 
         # signals
         widget_assets.selection_changed.connect(self.on_asset_changed)
+        widget_assets.task_changed.connect(self._on_task_change)
         widget_assets.project_changed.connect(self.on_project_change)
         widget_family.stateChanged.connect(self.set_valid_family)
 
@@ -150,6 +152,9 @@ class Window(QtWidgets.QDialog):
             self.widget_family.change_asset(None)
         self.widget_family.on_data_changed()
 
+    def _on_task_change(self):
+        self.widget_family.on_task_change()
+
     def keyPressEvent(self, event):
         ''' Handling Ctrl+V KeyPress event
         Can handle:
@@ -208,6 +213,8 @@ class Window(QtWidgets.QDialog):
 
 
 def main():
+    os.environ["AVALON_APP"] = HOST_NAME
+
     # Allow to change icon of running process in windows taskbar
     if os.name == "nt":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(

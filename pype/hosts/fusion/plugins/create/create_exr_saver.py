@@ -1,10 +1,10 @@
 import os
 
-import avalon.api
+import pype.api
 from avalon import fusion
 
 
-class CreateOpenEXRSaver(avalon.api.Creator):
+class CreateOpenEXRSaver(pype.api.Creator):
 
     name = "openexrDefault"
     label = "Create OpenEXR Saver"

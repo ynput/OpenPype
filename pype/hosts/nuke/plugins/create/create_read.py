@@ -2,11 +2,12 @@ from collections import OrderedDict
 import avalon.api
 import avalon.nuke
 from pype import api as pype
+from pype.hosts.nuke.api import plugin
 
 import nuke
 
 
-class CrateRead(avalon.nuke.Creator):
+class CrateRead(plugin.PypeCreator):
     # change this to template preset
     name = "ReadCopy"
     label = "Create Read Copy"

@@ -7,6 +7,7 @@ import string
 
 from Qt import QtWidgets, QtCore
 from . import DropDataFrame
+from .constants import HOST_NAME
 from avalon import io
 from pype.api import execute, Logger
 from pype.lib import get_pype_execute_args
@@ -178,8 +179,8 @@ def set_context(project, asset, task):
 
     io.Session["current_dir"] = os.path.normpath(os.getcwd())
 
-    os.environ["AVALON_APP"] = "standalonepublish"
-    io.Session["AVALON_APP"] = "standalonepublish"
+    os.environ["AVALON_APP"] = HOST_NAME
+    io.Session["AVALON_APP"] = HOST_NAME
 
     io.uninstall()
 

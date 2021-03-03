@@ -62,7 +62,7 @@ BIWhite='\033[1;97m'      # White
 #   None
 ###############################################################################
 detect_python () {
-  echo -e "${BIGreen}>>>${RST} Using Python \c"
+  echo -e "${BIGreen}>>>${RST} Using python \c"
   local version_command
   version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
   local python_version
@@ -72,9 +72,13 @@ detect_python () {
   set -- $python_version
   IFS="$oIFS"
   if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
-    echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
+    if [ "$2" -gt "7" ] ; then
+      echo -e "${BIWhite}[${RST} ${BIRed}$1.$2 ${BIWhite}]${RST} - ${BIRed}FAILED${RST} ${BIYellow}Version is new and unsupported, use${RST} ${BIPurple}3.7.x${RST}"; return 1;
+    else
+      echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
+    fi
   else
-    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
   fi
 }
 
@@ -88,7 +92,8 @@ detect_python () {
 #   None
 ###############################################################################
 clean_pyc () {
-  path=${1:-$pype_root}
+  local path
+  path=$pype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
@@ -107,28 +112,58 @@ realpath () {
   echo $(cd $(dirname "$1") || return; pwd)/$(basename "$1")
 }
 
+##############################################################################
+# Install Poetry when needed
+# Globals:
+#   PATH
+# Arguments:
+#   None
+# Returns:
+#   None
+###############################################################################
+install_poetry () {
+  echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
+  command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
+  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+  export PATH="$PATH:$HOME/.poetry/bin"
+}
+
 # Main
-echo -e "${BGreen}"
-art
-echo -e "${RST}"
-detect_python || return 1
+main () {
+  echo -e "${BGreen}"
+  art
+  echo -e "${RST}"
+  detect_python || return 1
 
-# Directories
-pype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
-pushd "$pype_root" || return > /dev/null
+  # Directories
+  pype_root=$(dirname $(dirname "$(realpath ${BASH_SOURCE[0]})"))
+  pushd "$pype_root" > /dev/null || return > /dev/null
 
-version_command="import os;exec(open(os.path.join('$pype_root', 'pype', 'version.py')).read());print(__version__);"
-pype_version="$(python3 <<< ${version_command})"
+  version_command="import os;exec(open(os.path.join('$pype_root', 'pype', 'version.py')).read());print(__version__);"
+  pype_version="$(python3 <<< ${version_command})"
 
-echo -e "${BIYellow}---${RST} Cleaning build directory ..."
-rm -rf "$pype_root/build" && mkdir "$pype_root/build" > /dev/null
+  echo -e "${BIYellow}---${RST} Cleaning build directory ..."
+  rm -rf "$pype_root/build" && mkdir "$pype_root/build" > /dev/null
 
-echo -e "${BIGreen}>>>${RST} Building Pype ${BIWhite}[${RST} ${BIGreen}$pype_version${RST} ${BIWhite}]${RST}"
-echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
-clean_pyc
-echo -e "${BIGreen}>>>${RST} Building ..."
-poetry run python "$pype_root/setup.py" build > "$pype_root/build/build.log"
-poetry run python "$pype_root/tools/build_dependencies.py"
+  echo -e "${BIGreen}>>>${RST} Building Pype ${BIWhite}[${RST} ${BIGreen}$pype_version${RST} ${BIWhite}]${RST}"
+  echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
+  clean_pyc
 
-echo -e "${BICyan}>>>${RST} All done. You will find Pype and build log in \c"
-echo -e "${BIWhite}$pype_root/build${RST} directory."
+  echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
+  if [ -f "$HOME/.poetry/bin/poetry" ]; then
+    echo -e "${BIGreen}OK${RST}"
+    export PATH="$PATH:$HOME/.poetry/bin"
+  else
+    echo -e "${BIYellow}NOT FOUND${RST}"
+    install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+  fi
+
+  echo -e "${BIGreen}>>>${RST} Building ..."
+  poetry run python3 "$pype_root/setup.py" build > "$pype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+  poetry run python3 "$pype_root/tools/build_dependencies.py"
+
+  echo -e "${BICyan}>>>${RST} All done. You will find Pype and build log in \c"
+  echo -e "${BIWhite}$pype_root/build${RST} directory."
+}
+
+main

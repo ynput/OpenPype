@@ -38,11 +38,6 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
         self.avalon_mongo_url = avalon_mongo_url
         self.avalon_mongo_timeout = avalon_mongo_timeout
 
-        self.schema_path = os.path.join(
-            os.path.dirname(pype.PACKAGE_DIR),
-            "schema"
-        )
-
         # Tray attributes
         self.libraryloader = None
         self.rest_api_obj = None
@@ -50,23 +45,11 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
     def get_global_environments(self):
         """Avalon global environments for pype implementation."""
         return {
-            # 100% hardcoded
-            "AVALON_SCHEMA": self.schema_path,
-            "AVALON_CONFIG": "pype",
-            "AVALON_LABEL": "Pype",
-
-            # Modifiable by settings
-            # - mongo ulr for avalon projects
-            "AVALON_MONGO": self.avalon_mongo_url,
             # TODO thumbnails root should be multiplafrom
             # - thumbnails root
             "AVALON_THUMBNAIL_ROOT": self.thumbnail_root,
             # - mongo timeout in ms
             "AVALON_TIMEOUT": str(self.avalon_mongo_timeout),
-
-            # May be modifiable?
-            # - mongo database name where projects are stored
-            "AVALON_DB": "avalon"
         }
 
     def tray_init(self):

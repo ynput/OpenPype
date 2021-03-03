@@ -52,6 +52,24 @@ BIPurple='\033[1;95m'     # Purple
 BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
 
+
+poetry_verbosity=""
+while :; do
+  case $1 in
+    --verbose)
+      poetry_verbosity="-vvv"
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+  esac
+  shift
+done
+
+
 ##############################################################################
 # Detect required version of python
 # Globals:
@@ -71,16 +89,20 @@ detect_python () {
   set -- $python_version
   IFS="$oIFS"
   if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
-    echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
-    PYTHON="python3"
+    if [ "$2" -gt "7" ] ; then
+      echo -e "${BIWhite}[${RST} ${BIRed}$1.$2 ${BIWhite}]${RST} - ${BIRed}FAILED${RST} ${BIYellow}Version is new and unsupported, use${RST} ${BIPurple}3.7.x${RST}"; return 1;
+    else
+      echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
+    fi
   else
-    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
+    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
   fi
 }
 
 install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
-  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+  command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
+  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
   export PATH="$PATH:$HOME/.poetry/bin"
 }
 
@@ -94,8 +116,9 @@ install_poetry () {
 #   None
 ###############################################################################
 clean_pyc () {
-  path=${1:-$pype_root}
-  echo -e "${IGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
+  local path
+  path=$pype_root
+  echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
 }
@@ -113,32 +136,44 @@ realpath () {
   echo $(cd $(dirname "$1"); pwd)/$(basename "$1")
 }
 
-# Main
-echo -e "${BGreen}"
-art
-echo -e "${RST}"
-detect_python || return 1
+main () {
+  # Main
+  echo -e "${BGreen}"
+  art
+  echo -e "${RST}"
+  detect_python || return 1
 
-# Directories
-pype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
-pushd "$pype_root" || return > /dev/null
+  # Directories
+  pype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+  pushd "$pype_root" > /dev/null || return > /dev/null
 
-echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
-if [ -f "$HOME/.poetry/bin/poetry" ]; then
-  echo -e "${BIGreen}OK${RST}"
-else
-  echo -e "${BIYellow}NOT FOUND${RST}"
-  install_poetry
-fi
+  echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
+  if [ -f "$HOME/.poetry/bin/poetry" ]; then
+    echo -e "${BIGreen}OK${RST}"
+    export PATH="$PATH:$HOME/.poetry/bin"
+  else
+    echo -e "${BIYellow}NOT FOUND${RST}"
+    install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+  fi
 
-if [ -f "$pype_root/poetry.lock" ]; then
-  echo -e "${BIGreen}>>>${RST} Updating dependencies ..."
-  poetry update
-else
-  echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
-  poetry install
-fi
+  if [ -f "$pype_root/poetry.lock" ]; then
+    echo -e "${BIGreen}>>>${RST} Updating dependencies ..."
+  else
+    echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
+  fi
 
-echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
-clean_pyc
+  poetry install $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
 
+  echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
+  clean_pyc
+
+  # reinstall these because of bug in poetry? or cx_freeze?
+  # cx_freeze will crash on missing __pychache__ on these but
+  # reinstalling them solves the problem.
+  echo -e "${BIGreen}>>>${RST} Fixing pycache bug ..."
+  poetry run python -m pip install --upgrade pip
+  poetry run pip install --force-reinstall setuptools
+  poetry run pip install --force-reinstall wheel
+}
+
+main -3

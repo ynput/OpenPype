@@ -1,7 +1,7 @@
-import avalon.maya
+from pype.hosts.maya.api import plugin
 
 
-class CreateAssembly(avalon.maya.Creator):
+class CreateAssembly(plugin.Creator):
     """A grouped package of loaded content"""
 
     name = "assembly"

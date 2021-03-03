@@ -151,7 +151,7 @@ def on_open(_):
     """On scene open let's assume the containers have changed."""
 
     from avalon.vendor.Qt import QtWidgets
-    from ...widgets import popup
+    from pype.widgets import popup
 
     cmds.evalDeferred(
         "from pype.hosts.maya.api import lib;"

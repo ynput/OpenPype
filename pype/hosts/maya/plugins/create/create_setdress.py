@@ -1,7 +1,7 @@
-import avalon.maya
+from pype.hosts.maya.api import plugin
 
 
-class CreateSetDress(avalon.maya.Creator):
+class CreateSetDress(plugin.Creator):
     """A grouped package of loaded content"""
 
     name = "setdressMain"

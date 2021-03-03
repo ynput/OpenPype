@@ -1,11 +1,13 @@
-import avalon.api
 import avalon.nuke
-from pype.api import get_current_project_settings
+from pype.api import (
+    get_current_project_settings,
+    PypeCreatorMixin
+)
 from .lib import check_subsetname_exists
 import nuke
 
 
-class PypeCreator(avalon.nuke.pipeline.Creator):
+class PypeCreator(PypeCreatorMixin, avalon.nuke.pipeline.Creator):
     """Pype Nuke Creator class wrapper
     """
     def __init__(self, *args, **kwargs):

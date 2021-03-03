@@ -12,12 +12,6 @@
             "collapsible": true,
             "children": [
                 {
-                    "type": "text",
-                    "key": "AVALON_MONGO",
-                    "label": "Avalon Mongo URL",
-                    "placeholder": "Pype Mongo is used if not filled."
-                },
-                {
                     "type": "number",
                     "key": "AVALON_TIMEOUT",
                     "minimum": 0,
@@ -29,11 +23,6 @@
                     "key": "AVALON_THUMBNAIL_ROOT",
                     "multiplatform": true,
                     "multipath": false
-                },
-                {
-                    "type": "text",
-                    "key": "AVALON_DB_DATA",
-                    "label": "Avalon Mongo Data Location"
                 }
             ]
         },
