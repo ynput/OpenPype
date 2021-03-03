@@ -242,6 +242,7 @@ class ExtractSequence(pyblish.api.Extractor):
             filename_template,
             thumbnail_filename
         )
+        self._cleanup_tmp_files(files_by_position)
         return output
 
     def render_layer(
@@ -475,6 +476,11 @@ class ExtractSequence(pyblish.api.Extractor):
             thumbnail_obj.save(thumbnail_filepath)
 
         return output_filepaths, thumbnail_filepath
+
+    def _cleanup_tmp_files(self, files_by_position):
+        for data in files_by_position.values():
+            for filepath in data.values():
+                os.remove(filepath)
 
     def _copy_image(self, src_path, dst_path):
         # Create hardlink of image instead of copying if possible
