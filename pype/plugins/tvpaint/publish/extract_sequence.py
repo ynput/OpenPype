@@ -214,10 +214,13 @@ class ExtractSequence(pyblish.api.Extractor):
         save_mode = "tv_SaveMode {}".format(save_mode)
 
         # Map layers by position
-        layers_by_position = {
-            layer["position"]: layer
-            for layer in layers
-        }
+        layers_by_position = {}
+        layer_ids = []
+        for layer in layers:
+            position = layer["position"]
+            layers_by_position[position] = layer
+
+            layer_ids.append(layer["layer_id"])
 
         # Sort layer positions in reverse order
         sorted_positions = list(reversed(sorted(layers_by_position.keys())))
