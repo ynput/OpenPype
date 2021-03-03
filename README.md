@@ -32,13 +32,17 @@ or high availability options are recommended.
 Building Pype
 -------------
 
+To build Pype you currently need [Python 3.7](https://www.python.org/downloads/) as we are following
+[vfx platform](https://vfxplatform.com). Because of some Linux distros comes with newer Python version
+already, you need to install **3.7** version and make use of it. You can use perhaps [pyenv](https://github.com/pyenv/pyenv) for this on Linux.
+
 ### Windows
 
-You will need [Python 3.7 and newer](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads).
+You will need [Python 3.7](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads).
 More tools might be needed for installing dependencies (for example for **OpenTimelineIO**) - mostly
 development tools like [CMake](https://cmake.org/) and [Visual Studio](https://visualstudio.microsoft.com/cs/downloads/)
 
-Clone repository:
+#### Clone repository:
 ```sh
 git clone --recurse-submodules git@github.com:pypeclub/pype.git
 ```
@@ -59,17 +63,43 @@ Pype is build using [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to f
 
 ### macOS
 
-You will need [Python 3.7 and newer](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll need also other tools to build
+You will need [Python 3.7](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll need also other tools to build
 some Pype dependencies like [CMake](https://cmake.org/) and **XCode Command Line Tools** (or some other build system).
 
-You can install **XCode Command Line Tools** from Terminal:
+Easy way of installing everything necessary is to use [Homebrew](https://brew.sh):
+
+1) Install **Homebrew**:
 ```sh
-xcode-select --install
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Before building Pype be sure to make **CMake** available in `PATH`:
+2) Install **cmake**:
 ```sh
-export PATH=$PATH:/Applications/CMake.app/Contents/bin
+brew install cmake
+```
+
+3) Install [pyenv](https://github.com/pyenv/pyenv):
+```sh
+brew install pyenv
+echo 'eval "$(pypenv init -)"' >> ~/.zshrc
+pyenv init
+exec "$SHELL"
+PATH=$(pyenv root)/shims:$PATH
+```
+
+4) Pull in required Python version 3.7.x
+```sh
+# install Python build dependences
+brew install openssl readline sqlite3 xz zlib
+
+# replace with up-to-date 3.7.x version
+pyenv install 3.7.9
+```
+
+5) Set local Python version
+```sh
+# switch to Pype source directory
+pyenv local 3.7.9
 ```
 
 #### To build Pype:
@@ -80,15 +110,35 @@ export PATH=$PATH:/Applications/CMake.app/Contents/bin
 
 ### Linux
 
-You will need [Python 3.7 and newer](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll need also other tools to build
+You will need [Python 3.7](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll also need [curl](https://curl.se) on systems that doesn't have one preinstalled.
+
+To build Python related stuff, you need Python header files installed (`python3-dev` on Ubuntu for example).
+
+You'll need also other tools to build
 some Pype dependencies like [CMake](https://cmake.org/). Python 3 should be part of all modern distributions. You can use your package manager to install **git** and **cmake**.
 
-For Ubuntu:
-```sh
-sudo apt install git cmake
-```
 
-For CentOS:
+<details>
+<summary>Details for Ubuntu</summary>
+Install git, cmake and curl
+
+```sh
+sudo apt install build-essential checkinstall
+sudo apt install git cmake curl
+```
+#### Note:
+In case you run in error about `xcb` when running Pype,
+you'll need also additional libraries for Qt5:
+
+```sh
+sudo apt install qt5-default
+```
+</details>
+
+<details>
+<summary>Details for Centos</summary>
+Install git, cmake and curl
+
 ```sh
 sudo yum install qit cmake
 ```
@@ -97,20 +147,49 @@ sudo yum install qit cmake
 In case you run in error about `xcb` when running Pype,
 you'll need also additional libraries for Qt5:
 
-For Ubuntu:
-```sh
-sudo apt install qt5-default
-```
-For CentOS:
 ```sh
 sudo yum install qt5-qtbase-devel
 ```
+</details>
+
+<details>
+<summary>Use pyenv to install Python version for Pype build</summary>
+
+You will need **bzip2**, **readline** and **sqlite3** libraries.
+
+**Ubuntu:**
+```sh
+sudo apt install  libbz2-dev libreadline-dev libsqlite3-dev
+```
+
+1) install **pyenv**
+```sh
+curl https://pyenv.run | bash
+
+# you can add those to ~/.bashrc
+export PATH="$HOME/.pyenv/bin:$PATH"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
+
+# reload shell
+exec $SHELL
+
+# install Python 3.7.9
+pyenv install -v 3.7.9
+
+# change path to pype 3
+cd /path/to/pype-3
+
+# set local python version
+pyenv local 3.7.9
+
+```
+</details>
 
 #### To build Pype:
 
 1) Run `.\tools\create_env.sh` to create virtual environment in `.\venv`
 2) Run `.\tools\build.sh` to build Pype executables in `.\build\`
-
 
 
 Running Pype

@@ -44,18 +44,20 @@ function Find-Mongo {
       # we have mongo server installed on standard Windows location
       # so we can inject it to the PATH. We'll use latest version available.
       $mongoVersions = Get-ChildItem -Directory 'C:\Program Files\MongoDB\Server' | Sort-Object -Property {$_.Name -as [int]}
-      if(Test-Path "C:\Program Files\MongoDB\Server\$($mongoVersions[-1])\bin\mongod.exe" -PathType Leaf) {
-        $env:PATH="$($env:PATH);C:\Program Files\MongoDB\Server\$($mongoVersions[-1])\bin\"
+      if(Test-Path "$($mongoVersions[-1])\bin\mongod.exe" -PathType Leaf) {
+        $env:PATH="$($env:PATH);$($mongoVersions[-1])\bin\"
         Write-Host "OK" -ForegroundColor Green
         Write-Host "  - auto-added from [ " -NoNewline
-        Write-Host "C:\Program Files\MongoDB\Server\$($mongoVersions[-1])\bin\" -NoNewLine -ForegroundColor Cyan
+        Write-Host "$($mongoVersions[-1])\bin\" -NoNewLine -ForegroundColor Cyan
         Write-Host " ]"
       } else {
           Write-Host "FAILED " -NoNewLine -ForegroundColor Red
           Write-Host "MongoDB not detected" -ForegroundColor Yellow
-          Write-Host "Tried to find it on standard location [ " -NoNewline -ForegroundColor Gray
-          Write-Host "C:\Program Files\MongoDB\Server\$($mongoVersions[-1])\bin\" -NoNewline -ForegroundColor White
-          Write-Host " ] but failed." -ForegroundColor Gray
+          Write-Host "Tried to find it on standard location " -NoNewline -ForegroundColor Gray
+          Write-Host " [ " -NoNewline -ForegroundColor Cyan
+          Write-Host "$($mongoVersions[-1])\bin\" -NoNewline -ForegroundColor White
+          Write-Host " ] " -NonNewLine -ForegroundColor Cyan
+          Write-Host "but failed." -ForegroundColor Gray
           Exit-WithCode 1
       }
     } else {

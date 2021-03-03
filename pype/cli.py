@@ -131,9 +131,8 @@ def extractenvironments(output_json_path, project, asset, task, app):
 
 @main.command()
 @click.argument("paths", nargs=-1)
-@click.option("-g", "--gui", is_flag=True, help="Run pyblish GUI")
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
-def publish(gui, debug, paths):
+def publish(debug, paths):
     """Start CLI publishing.
 
     Publish collects json from paths provided as an argument.
@@ -141,7 +140,7 @@ def publish(gui, debug, paths):
     """
     if debug:
         os.environ['PYPE_DEBUG'] = '3'
-    PypeCommands().publish(gui, list(paths))
+    PypeCommands.publish(list(paths))
 
 
 @main.command()

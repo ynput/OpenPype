@@ -54,11 +54,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         self.setItemDelegate(self.delegate)
 
         self.lines = {}
-        self.item_height = (
-            self.fontMetrics().height()
-            + (2 * self.top_bottom_padding)
-            + (2 * self.top_bottom_margins)
-        )
+        self.item_height = None
 
     def mousePressEvent(self, event):
         """Reimplemented."""
@@ -157,6 +153,11 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
         return super(MultiSelectionComboBox, self).eventFilter(obj, event)
 
+    def addItem(self, *args, **kwargs):
+        idx = self.count()
+        super(MultiSelectionComboBox, self).addItem(*args, **kwargs)
+        self.model().item(idx).setCheckable(True)
+
     def paintEvent(self, event):
         """Reimplemented."""
         painter = QtWidgets.QStylePainter(self)
@@ -173,6 +174,12 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
             return
 
         font_metricts = self.fontMetrics()
+
+        if self.item_height is None:
+            self.updateGeometry()
+            self.update()
+            return
+
         for line, items in self.lines.items():
             top_y = (
                 option.rect.top()
@@ -187,11 +194,13 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                 label_rect.moveTop(top_y)
                 label_rect.moveLeft(left_x)
                 label_rect.setHeight(self.item_height)
+                label_rect.setWidth(
+                    label_rect.width() + self.left_right_padding
+                )
 
                 bg_rect = QtCore.QRectF(label_rect)
                 bg_rect.setWidth(
-                    label_rect.width()
-                    + (2 * self.left_right_padding)
+                    label_rect.width() + self.left_right_padding
                 )
                 left_x = bg_rect.right() + self.item_spacing
 
@@ -264,6 +273,13 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
         lines = len(self.lines)
         if lines == 0:
             lines = 1
+
+        if self.item_height is None:
+            self.item_height = (
+                self.fontMetrics().height()
+                + (2 * self.top_bottom_padding)
+                + (2 * self.top_bottom_margins)
+            )
         value.setHeight(
             (lines * self.item_height)
             + (2 * self.top_bottom_margins)
