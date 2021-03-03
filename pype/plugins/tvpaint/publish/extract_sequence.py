@@ -234,6 +234,15 @@ class ExtractSequence(pyblish.api.Extractor):
             )
             files_by_position[position] = files_by_frames
 
+        output = self._composite_files(
+            files_by_position,
+            output_dir,
+            mark_in_index,
+            mark_out_index,
+            filename_template,
+            thumbnail_filename
+        )
+        return output
 
     def render_layer(
         self,
