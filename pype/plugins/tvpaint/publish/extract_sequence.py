@@ -1,6 +1,8 @@
 import os
 import shutil
+import time
 import tempfile
+import multiprocessing
 
 import pyblish.api
 from avalon.tvpaint import lib
@@ -467,6 +469,11 @@ class ExtractSequence(pyblish.api.Extractor):
                 if frame_idx in position_data:
                     images_by_frame[frame_idx].append(position_data[frame_idx])
 
+        process_count = os.cpu_count()
+        if process_count > 1:
+            process_count -= 1
+
+        processes = {}
         output_filepaths = []
         thumbnail_src_filepath = None
         for frame_idx in sorted(images_by_frame.keys()):
@@ -480,9 +487,34 @@ class ExtractSequence(pyblish.api.Extractor):
             if thumbnail_filename and thumbnail_src_filepath is None:
                 thumbnail_src_filepath = output_filepath
 
-            composite_images(
-                image_filepaths, output_filepath, scene_width, scene_height
+            processes[frame_idx] = multiprocessing.Process(
+                target=composite_images,
+                args=(
+                    image_filepaths, output_filepath, scene_width, scene_height
+                )
             )
+
+        # Wait until all processes are done
+        running_processes = {}
+        while True:
+            for idx in tuple(running_processes.keys()):
+                process = running_processes[idx]
+                if not process.is_alive():
+                    running_processes.pop(idx).join()
+
+            if processes and len(running_processes) != process_count:
+                indexes = list(processes.keys())
+                for _ in range(process_count - len(running_processes)):
+                    if not indexes:
+                        break
+                    idx = indexes.pop(0)
+                    running_processes[idx] = processes.pop(idx)
+                    running_processes[idx].start()
+
+            if not running_processes and not processes:
+                break
+
+            time.sleep(0.01)
 
         thumbnail_filepath = None
         if thumbnail_src_filepath:
