@@ -404,11 +404,6 @@ class ProjectWidget(SettingsCategoryWidget):
         if self is saved_tab_widget:
             return
 
-        system_settings = get_system_settings()
-        mongo_url = system_settings["modules"]["avalon"]["AVALON_MONGO"]
-        if not mongo_url:
-            mongo_url = os.environ["PYPE_MONGO"]
-
         # If mongo url is not the same as was then refresh projects
         if mongo_url != os.environ["AVALON_MONGO"]:
             self.project_list_widget.refresh()
