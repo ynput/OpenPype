@@ -1,12 +1,37 @@
 import sys
+import collections
 import six
+
 import pyblish.api
 from avalon import io
 
-try:
-    from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_AUTO_SYNC
-except Exception:
-    CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
+# Copy of constant `pype.modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
+CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
+
+
+# Copy of `get_pype_attr` from pype.modules.ftrack.lib
+def get_pype_attr(session, split_hierarchical=True):
+    custom_attributes = []
+    hier_custom_attributes = []
+    # TODO remove deprecated "avalon" group from query
+    cust_attrs_query = (
+        "select id, entity_type, object_type_id, is_hierarchical, default"
+        " from CustomAttributeConfiguration"
+        " where group.name in (\"avalon\", \"pype\")"
+    )
+    all_avalon_attr = session.query(cust_attrs_query).all()
+    for cust_attr in all_avalon_attr:
+        if split_hierarchical and cust_attr["is_hierarchical"]:
+            hier_custom_attributes.append(cust_attr)
+            continue
+
+        custom_attributes.append(cust_attr)
+
+    if split_hierarchical:
+        # return tuple
+        return custom_attributes, hier_custom_attributes
+
+    return custom_attributes
 
 
 class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
