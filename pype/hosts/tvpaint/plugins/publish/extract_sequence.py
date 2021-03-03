@@ -45,13 +45,6 @@ class ExtractSequence(pyblish.api.Extractor):
         "tga"
     }
 
-    default_save_mode = "\"PNG\""
-    save_mode_for_family = {
-        "review": "\"PNG\"",
-        "renderPass": "\"PNG\"",
-        "renderLayer": "\"PNG\"",
-    }
-
     def process(self, instance):
         self.log.info(
             "* Processing instance \"{}\"".format(instance.data["label"])
@@ -80,34 +73,15 @@ class ExtractSequence(pyblish.api.Extractor):
                 len(layer_names), joined_layer_names
             )
         )
-        # This is plugin attribe cleanup method
-        self._prepare_save_modes()
 
         family_lowered = instance.data["family"].lower()
-        save_mode = self.save_mode_for_family.get(
-            family_lowered, self.default_save_mode
-        )
-        save_mode_type = self._get_save_mode_type(save_mode)
-
-        if not bool(save_mode_type in self.sequential_save_mode):
-            raise AssertionError((
-                "Plugin can export only sequential frame output"
-                " but save mode for family \"{}\" is not for sequence > {} <"
-            ).format(instance.data["family"], save_mode))
-
         frame_start = instance.data["frameStart"]
         frame_end = instance.data["frameEnd"]
 
-        filename_template = self._get_filename_template(
-            save_mode_type, save_mode, frame_end
-        )
+        filename_template = self._get_filename_template(frame_end)
         ext = os.path.splitext(filename_template)[1].replace(".", "")
 
-        self.log.debug(
-            "Using save mode > {} < and file template \"{}\"".format(
-                save_mode, filename_template
-            )
-        )
+        self.log.debug("Using file template \"{}\"".format(filename_template))
 
         # Save to staging dir
         output_dir = instance.data.get("stagingDir")
@@ -186,19 +160,6 @@ class ExtractSequence(pyblish.api.Extractor):
         }
         instance.data["representations"].append(thumbnail_repre)
 
-    def _prepare_save_modes(self):
-        """Lower family names in keys and skip empty values."""
-        new_specifications = {}
-        for key, value in self.save_mode_for_family.items():
-            if value:
-                new_specifications[key.lower()] = value
-            else:
-                self.log.warning((
-                    "Save mode for family \"{}\" has empty value."
-                    " The family will use default save mode: > {} <."
-                ).format(key, self.default_save_mode))
-        self.save_mode_for_family = new_specifications
-
     def _get_save_mode_type(self, save_mode):
         """Extract type of save mode.
 
@@ -212,7 +173,7 @@ class ExtractSequence(pyblish.api.Extractor):
         self.log.debug("Save mode type is \"{}\"".format(save_mode_type))
         return save_mode_type
 
-    def _get_filename_template(self, save_mode_type, save_mode, frame_end):
+    def _get_filename_template(self, frame_end):
         """Get filetemplate for rendered files.
 
         This is simple template contains `{frame}{ext}` for sequential outputs
@@ -220,18 +181,12 @@ class ExtractSequence(pyblish.api.Extractor):
         temporary folder so filename should not matter as integrator change
         them.
         """
-        ext = self.save_mode_to_ext.get(save_mode_type)
-        if ext is None:
-            raise AssertionError((
-                "Couldn't find file extension for TVPaint's save mode: > {} <"
-            ).format(save_mode))
-
         frame_padding = 4
         frame_end_str_len = len(str(frame_end))
         if frame_end_str_len > frame_padding:
             frame_padding = frame_end_str_len
 
-        return "{{frame:0>{}}}".format(frame_padding) + ext
+        return "{{:0>{}}}".format(frame_padding) + ".png"
 
     def render(
         self, save_mode, filename_template, output_dir, layers,
