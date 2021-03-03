@@ -113,7 +113,8 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         self.log.info("Collecting scene data from workfile")
         workfile_info_parts = lib.execute_george("tv_projectinfo").split(" ")
 
-        _frame_start = int(workfile_info_parts.pop(-1))
+        # Project frame start - not used
+        workfile_info_parts.pop(-1)
         field_order = workfile_info_parts.pop(-1)
         frame_rate = float(workfile_info_parts.pop(-1))
         pixel_apsect = float(workfile_info_parts.pop(-1))
@@ -141,8 +142,8 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         clip_info_str = lib.execute_george("tv_clipinfo")
         self.log.debug("Clip info: {}".format(clip_info_str))
         clip_info_items = clip_info_str.split(" ")
-        # Color index
-        color_idx = clip_info_items.pop(-1)
+        # Color index - not used
+        clip_info_items.pop(-1)
         clip_info_items.pop(-1)
 
         mark_out = int(clip_info_items.pop(-1)) + 1
