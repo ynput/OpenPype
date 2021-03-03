@@ -146,10 +146,12 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         clip_info_items.pop(-1)
         clip_info_items.pop(-1)
 
-        mark_out = int(clip_info_items.pop(-1)) + 1
+        mark_out = int(clip_info_items.pop(-1))
+        frame_end = mark_out + 1
         clip_info_items.pop(-1)
 
-        mark_in = int(clip_info_items.pop(-1)) + 1
+        mark_in = int(clip_info_items.pop(-1))
+        frame_start = mark_in + 1
         clip_info_items.pop(-1)
 
-        return mark_in, mark_out
+        return frame_start, frame_end
