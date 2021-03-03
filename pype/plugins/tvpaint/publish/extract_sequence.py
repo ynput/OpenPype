@@ -215,8 +215,25 @@ class ExtractSequence(pyblish.api.Extractor):
 
         behavior_by_layer_id = lib.get_layers_pre_post_behavior(layer_ids)
 
+        mark_in_index = frame_start - 1
+        mark_out_index = frame_end - 1
+
+        tmp_filename_template = "pos_{}." + filename_template
+
+        files_by_position = {}
         for position in sorted_positions:
             layer = layers_by_position[position]
+            behavior = behavior_by_layer_id[layer["layer_id"]]
+            files_by_frames = self.render_layer(
+                layer,
+                tmp_filename_template,
+                output_dir,
+                behavior,
+                mark_in_index,
+                mark_out_index
+            )
+            files_by_position[position] = files_by_frames
+
 
     def render_layer(
         self,
