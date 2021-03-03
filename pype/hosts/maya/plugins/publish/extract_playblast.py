@@ -23,6 +23,7 @@ class ExtractPlayblast(pype.api.Extractor):
     hosts = ["maya"]
     families = ["review"]
     optional = True
+    capture_preset = {}
 
     def process(self, instance):
         self.log.info("Extracting capture..")
@@ -43,12 +44,9 @@ class ExtractPlayblast(pype.api.Extractor):
 
         # get cameras
         camera = instance.data['review_camera']
-        capture_preset = (
-            instance.context.data['project_settings']['maya']['capture']
-        )
 
         try:
-            preset = lib.load_capture_preset(data=capture_preset)
+            preset = lib.load_capture_preset(data=self.capture_preset)
         except Exception:
             preset = {}
         self.log.info('using viewport preset: {}'.format(preset))
