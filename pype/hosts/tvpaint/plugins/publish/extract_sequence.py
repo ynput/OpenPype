@@ -61,7 +61,7 @@ class ExtractSequence(pyblish.api.Extractor):
         layer_names = [str(layer["name"]) for layer in filtered_layers]
         if not layer_names:
             self.log.info(
-                f"None of the layers from the instance"
+                "None of the layers from the instance"
                 " are visible. Extraction skipped."
             )
             return
@@ -198,6 +198,7 @@ class ExtractSequence(pyblish.api.Extractor):
         Retruns:
             dict: Mapping frame to output filepath.
         """
+        self.log.debug("Preparing data for rendering.")
 
         # Map layers by position
         layers_by_position = {}
@@ -213,6 +214,7 @@ class ExtractSequence(pyblish.api.Extractor):
         if not sorted_positions:
             return
 
+        self.log.debug("Collecting pre/post behavior of individual layers.")
         behavior_by_layer_id = lib.get_layers_pre_post_behavior(layer_ids)
 
         mark_in_index = frame_start - 1
@@ -279,10 +281,17 @@ class ExtractSequence(pyblish.api.Extractor):
             # Store image to output
             george_script_lines.append("tv_saveimage \"{}\"".format(dst_path))
 
+        self.log.debug("Rendering exposure frames {} of layer {}".format(
+            str(exposure_frames), layer_id
+        ))
         # Let TVPaint render layer's image
         lib.execute_george_through_file("\n".join(george_script_lines))
 
         # Fill frames between `frame_start_index` and `frame_end_index`
+        self.log.debug((
+            "Filling frames between first and last frame of layer ({} - {})."
+        ).format(frame_start_index + 1, frame_end_index + 1))
+
         prev_filepath = None
         for frame_idx in range(frame_start_index, frame_end_index + 1):
             if frame_idx in layer_files_by_frame:
@@ -300,6 +309,11 @@ class ExtractSequence(pyblish.api.Extractor):
         # Fill frames by pre/post behavior of layer
         pre_behavior = behavior["pre"]
         post_behavior = behavior["post"]
+        self.log.debug((
+            "Completing image sequence of layer by pre/post behavior."
+            " PRE: {} | POST: {}"
+        ).format(pre_behavior, post_behavior))
+
         # Pre behavior
         self._fill_frame_by_pre_behavior(
             layer,
