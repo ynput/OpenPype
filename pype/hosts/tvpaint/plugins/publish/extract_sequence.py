@@ -218,6 +218,80 @@ class ExtractSequence(pyblish.api.Extractor):
         for position in sorted_positions:
             layer = layers_by_position[position]
 
+    def render_layer(
+        self,
+        layer,
+        tmp_filename_template,
+        output_dir,
+        behavior,
+        mark_in_index,
+        mark_out_index
+    ):
+        layer_id = layer["layer_id"]
+        frame_start_index = layer["frame_start"]
+        frame_end_index = layer["frame_end"]
+        exposure_frames = lib.get_exposure_frames(
+            layer_id, frame_start_index, frame_end_index
+        )
+        if frame_start_index not in exposure_frames:
+            exposure_frames.append(frame_start_index)
+
+        layer_files_by_frame = {}
+        george_script_lines = [
+            "tv_SaveMode \"PNG\""
+        ]
+        layer_position = layer["position"]
+
+        for frame_idx in exposure_frames:
+            filename = tmp_filename_template.format(layer_position, frame_idx)
+            dst_path = "/".join([output_dir, filename])
+            layer_files_by_frame[frame_idx] = os.path.normpath(dst_path)
+
+            # Go to frame
+            george_script_lines.append("tv_layerImage {}".format(frame_idx))
+            # Store image to output
+            george_script_lines.append("tv_saveimage \"{}\"".format(dst_path))
+
+        # Let TVPaint render layer's image
+        lib.execute_george_through_file("\n".join(george_script_lines))
+
+        # Fill frames between `frame_start_index` and `frame_end_index`
+        prev_filepath = None
+        for frame_idx in range(frame_start_index, frame_end_index + 1):
+            if frame_idx in layer_files_by_frame:
+                prev_filepath = layer_files_by_frame[frame_idx]
+                continue
+
+            if prev_filepath is None:
+                raise ValueError("BUG: First frame of layer was not rendered!")
+
+            filename = tmp_filename_template.format(layer_position, frame_idx)
+            new_filepath = "/".join([output_dir, filename])
+            self._copy_image(prev_filepath, new_filepath)
+            layer_files_by_frame[frame_idx] = new_filepath
+
+        # Fill frames by pre/post behavior of layer
+        pre_behavior = behavior["pre"]
+        post_behavior = behavior["post"]
+        # Pre behavior
+        self._fill_frame_by_pre_behavior(
+            layer,
+            pre_behavior,
+            mark_in_index,
+            layer_files_by_frame,
+            tmp_filename_template,
+            output_dir
+        )
+        self._fill_frame_by_post_behavior(
+            layer,
+            post_behavior,
+            mark_out_index,
+            layer_files_by_frame,
+            tmp_filename_template,
+            output_dir
+        )
+        return layer_files_by_frame
+
     def _fill_frame_by_pre_behavior(
         self,
         layer,
