@@ -7,6 +7,22 @@ from avalon.tvpaint import lib
 from PIL import Image
 
 
+def composite_images(
+    input_image_paths, output_filepath, scene_width, scene_height
+):
+    img_obj = None
+    for image_filepath in input_image_paths:
+        _img_obj = Image.open(image_filepath)
+        if img_obj is None:
+            img_obj = _img_obj
+        else:
+            img_obj.alpha_composite(_img_obj)
+
+    if img_obj is None:
+        img_obj = Image.new("RGBA", (scene_width, scene_height), (0, 0, 0, 0))
+    img_obj.save(output_filepath)
+
+
 class ExtractSequence(pyblish.api.Extractor):
     label = "Extract Sequence"
     hosts = ["tvpaint"]
@@ -78,6 +94,8 @@ class ExtractSequence(pyblish.api.Extractor):
         family_lowered = instance.data["family"].lower()
         frame_start = instance.data["frameStart"]
         frame_end = instance.data["frameEnd"]
+        scene_width = instance.context.data["sceneWidth"]
+        scene_height = instance.context.data["sceneHeight"]
 
         filename_template = self._get_filename_template(frame_end)
         ext = os.path.splitext(filename_template)[1].replace(".", "")
@@ -100,7 +118,8 @@ class ExtractSequence(pyblish.api.Extractor):
         # Render output
         output_filepaths, thumbnail_fullpath = self.render(
             filename_template, output_dir, filtered_layers,
-            frame_start, frame_end, thumbnail_filename
+            frame_start, frame_end, thumbnail_filename,
+            scene_width, scene_height
         )
 
         # Fill tags and new families
@@ -180,7 +199,8 @@ class ExtractSequence(pyblish.api.Extractor):
 
     def render(
         self, filename_template, output_dir, layers,
-        frame_start, frame_end, thumbnail_filename
+        frame_start, frame_end, thumbnail_filename,
+        scene_width, scene_height
     ):
         """ Export images from TVPaint.
 
@@ -242,7 +262,9 @@ class ExtractSequence(pyblish.api.Extractor):
             mark_in_index,
             mark_out_index,
             filename_template,
-            thumbnail_filename
+            thumbnail_filename,
+            scene_width,
+            scene_height
         )
         self._cleanup_tmp_files(files_by_position)
         return output
@@ -448,7 +470,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
     def _composite_files(
         self, files_by_position, output_dir, frame_start, frame_end,
-        filename_template, thumbnail_filename
+        filename_template, thumbnail_filename, scene_width, scene_height
     ):
         # Prepare paths to images by frames into list where are stored
         #   in order of compositing.
@@ -465,21 +487,17 @@ class ExtractSequence(pyblish.api.Extractor):
         for frame_idx in sorted(images_by_frame.keys()):
             image_filepaths = images_by_frame[frame_idx]
             frame = frame_idx + 1
+
             output_filename = filename_template.format(frame)
             output_filepath = os.path.join(output_dir, output_filename)
-            img_obj = None
-            for image_filepath in image_filepaths:
-                _img_obj = Image.open(image_filepath)
-                if img_obj is None:
-                    img_obj = _img_obj
-                    continue
-
-                img_obj.alpha_composite(_img_obj)
-            img_obj.save(output_filepath)
             output_filepaths.append(output_filepath)
 
             if thumbnail_filename and thumbnail_src_filepath is None:
                 thumbnail_src_filepath = output_filepath
+
+            composite_images(
+                image_filepaths, output_filepath, scene_width, scene_height
+            )
 
         thumbnail_filepath = None
         if thumbnail_src_filepath:
