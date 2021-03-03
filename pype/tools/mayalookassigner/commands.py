@@ -4,10 +4,7 @@ import os
 
 import maya.cmds as cmds
 
-try:
-    import pype.maya.lib as cblib
-except Exception:
-    import pype.hosts.maya.lib as cblib
+from pype.hosts.maya.api import lib
 
 from avalon import io, api
 
@@ -105,7 +102,7 @@ def create_asset_id_hash(nodes):
     """
     node_id_hash = defaultdict(list)
     for node in nodes:
-        value = cblib.get_id(node)
+        value = lib.get_id(node)
         if value is None:
             continue
 
@@ -149,7 +146,7 @@ def create_items_from_nodes(nodes):
             continue
 
         # Collect available look subsets for this asset
-        looks = cblib.list_looks(asset["_id"])
+        looks = lib.list_looks(asset["_id"])
 
         # Collect namespaces the asset is found in
         namespaces = set()

@@ -2,7 +2,7 @@ import sys
 import time
 import logging
 
-import pype.hosts.maya.lib as cblib
+from pype.hosts.maya.api.lib import assign_look_by_version
 
 from avalon import style, io
 from avalon.tools import lib
@@ -212,8 +212,8 @@ class App(QtWidgets.QWidget):
                                                        asset))
 
             # Assign look
-            cblib.assign_look_by_version(nodes=item["nodes"],
-                                         version_id=version["_id"])
+            assign_look_by_version(nodes=item["nodes"],
+                                   version_id=version["_id"])
 
         end = time.time()
 
