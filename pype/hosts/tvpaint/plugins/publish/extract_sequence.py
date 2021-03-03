@@ -4,6 +4,7 @@ import tempfile
 
 import pyblish.api
 from avalon.tvpaint import lib
+from PIL import Image
 
 
 class ExtractSequence(pyblish.api.Extractor):
@@ -430,6 +431,51 @@ class ExtractSequence(pyblish.api.Extractor):
                 new_filepath = "/".join([output_dir, filename])
                 self._copy_image(eq_frame_filepath, new_filepath)
                 layer_files_by_frame[frame_idx] = new_filepath
+
+    def _composite_files(
+        self, files_by_position, output_dir, frame_start, frame_end,
+        filename_template, thumbnail_filename
+    ):
+        # Prepare paths to images by frames into list where are stored
+        #   in order of compositing.
+        images_by_frame = {}
+        for frame_idx in range(frame_start, frame_end + 1):
+            images_by_frame[frame_idx] = []
+            for position in sorted(files_by_position.keys(), reverse=True):
+                position_data = files_by_position[position]
+                if frame_idx in position_data:
+                    images_by_frame[frame_idx].append(position_data[frame_idx])
+
+        output_filepaths = []
+        thumbnail_src_filepath = None
+        for frame_idx in sorted(images_by_frame.keys()):
+            image_filepaths = images_by_frame[frame_idx]
+            frame = frame_idx + 1
+            output_filename = filename_template.format(frame)
+            output_filepath = os.path.join(output_dir, output_filename)
+            img_obj = None
+            for image_filepath in image_filepaths:
+                _img_obj = Image.open(image_filepath)
+                if img_obj is None:
+                    img_obj = _img_obj
+                    continue
+
+                img_obj.alpha_composite(_img_obj)
+            img_obj.save(output_filepath)
+            output_filepaths.append(output_filepath)
+
+            if thumbnail_filename and thumbnail_src_filepath is None:
+                thumbnail_src_filepath = output_filepath
+
+        thumbnail_filepath = None
+        if thumbnail_src_filepath:
+            source_img = Image.open(thumbnail_src_filepath)
+            thumbnail_filepath = os.path.join(output_dir, thumbnail_filename)
+            thumbnail_obj = Image.new("RGB", source_img.size, (255, 255, 255))
+            thumbnail_obj.paste(source_img)
+            thumbnail_obj.save(thumbnail_filepath)
+
+        return output_filepaths, thumbnail_filepath
 
     def _copy_image(self, src_path, dst_path):
         # Create hardlink of image instead of copying if possible
