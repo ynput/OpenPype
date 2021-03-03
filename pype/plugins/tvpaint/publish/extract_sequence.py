@@ -102,17 +102,6 @@ class ExtractSequence(pyblish.api.Extractor):
             save_mode, filename_template, output_dir,
             filtered_layers, frame_start, frame_end, thumbnail_filename
         )
-        thumbnail_fullpath = output_files_by_frame.pop(
-            thumbnail_filename, None
-        )
-
-        # Fill gaps in sequence
-        self.fill_missing_frames(
-            output_files_by_frame,
-            frame_start,
-            frame_end,
-            filename_template
-        )
 
         # Fill tags and new families
         tags = []
@@ -224,100 +213,9 @@ class ExtractSequence(pyblish.api.Extractor):
         if not sorted_positions:
             return
 
-        # Create temporary layer
-        new_layer_id = lib.execute_george("tv_layercreate _tmp_layer")
 
-        # Merge layers to temp layer
-        george_script_lines = []
-        # Set duplicated layer as current
-        george_script_lines.append("tv_layerset {}".format(new_layer_id))
         for position in sorted_positions:
             layer = layers_by_position[position]
-            george_script_lines.append(
-                "tv_layermerge {}".format(layer["layer_id"])
-            )
-
-        lib.execute_george_through_file("\n".join(george_script_lines))
-
-        # Frames with keyframe
-        exposure_frames = lib.get_exposure_frames(
-            new_layer_id, first_frame, last_frame
-        )
-
-        # TODO what if there is not exposue frames?
-        # - this force to have first frame all the time
-        if first_frame not in exposure_frames:
-            exposure_frames.insert(0, first_frame)
-
-        # Restart george script lines
-        george_script_lines = []
-        george_script_lines.append(save_mode)
-
-        all_output_files = {}
-        for frame in exposure_frames:
-            filename = filename_template.format(frame, frame=frame)
-            dst_path = "/".join([output_dir, filename])
-            all_output_files[frame] = os.path.normpath(dst_path)
-
-            # Go to frame
-            george_script_lines.append("tv_layerImage {}".format(frame))
-            # Store image to output
-            george_script_lines.append("tv_saveimage \"{}\"".format(dst_path))
-
-        # Export thumbnail
-        if thumbnail_filename:
-            basename, ext = os.path.splitext(thumbnail_filename)
-            if not ext:
-                ext = ".jpg"
-            thumbnail_fullpath = "/".join([output_dir, basename + ext])
-            all_output_files[thumbnail_filename] = thumbnail_fullpath
-            # Force save mode to png for thumbnail
-            george_script_lines.append("tv_SaveMode \"JPG\"")
-            # Go to frame
-            george_script_lines.append("tv_layerImage {}".format(first_frame))
-            # Store image to output
-            george_script_lines.append(
-                "tv_saveimage \"{}\"".format(thumbnail_fullpath)
-            )
-
-        # Delete temporary layer
-        george_script_lines.append("tv_layerkill {}".format(new_layer_id))
-
-        lib.execute_george_through_file("\n".join(george_script_lines))
-
-        return all_output_files
-
-    def fill_missing_frames(
-        self, filepaths_by_frame, first_frame, last_frame, filename_template
-    ):
-        """Fill not rendered frames with previous frame.
-
-        Extractor is rendering only frames with keyframes (exposure frames) to
-        get output faster which means there may be gaps between frames.
-        This function fill the missing frames.
-        """
-        output_dir = None
-        previous_frame_filepath = None
-        for frame in range(first_frame, last_frame + 1):
-            if frame in filepaths_by_frame:
-                previous_frame_filepath = filepaths_by_frame[frame]
-                continue
-
-            elif previous_frame_filepath is None:
-                self.log.warning(
-                    "No frames to fill. Seems like nothing was exported."
-                )
-                break
-
-            if output_dir is None:
-                output_dir = os.path.dirname(previous_frame_filepath)
-
-            filename = filename_template.format(frame=frame)
-            space_filepath = os.path.normpath(
-                os.path.join(output_dir, filename)
-            )
-            filepaths_by_frame[frame] = space_filepath
-            shutil.copy(previous_frame_filepath, space_filepath)
 
     def _fill_frame_by_pre_behavior(
         self,
