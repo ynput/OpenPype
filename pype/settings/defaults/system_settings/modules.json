@@ -1,13 +1,11 @@
 {
     "avalon": {
-        "AVALON_MONGO": "",
         "AVALON_TIMEOUT": 1000,
         "AVALON_THUMBNAIL_ROOT": {
             "windows": "",
             "darwin": "",
             "linux": ""
-        },
-        "AVALON_DB_DATA": "{PYPE_SETUP_PATH}/../mongo_db_data"
+        }
     },
     "ftrack": {
         "enabled": true,
