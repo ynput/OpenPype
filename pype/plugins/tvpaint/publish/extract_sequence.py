@@ -213,6 +213,7 @@ class ExtractSequence(pyblish.api.Extractor):
         if not sorted_positions:
             return
 
+        behavior_by_layer_id = lib.get_layers_pre_post_behavior(layer_ids)
 
         for position in sorted_positions:
             layer = layers_by_position[position]
