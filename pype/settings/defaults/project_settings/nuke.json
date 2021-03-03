@@ -11,6 +11,30 @@
         "PreCollectNukeInstances": {
             "sync_workfile_version": true
         },
+        "ValidateKnobs": {
+            "enabled": false,
+            "knobs": {
+                "render": {
+                    "review": true
+                }
+            }
+        },
+        "ValidateOutputResolution": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateGizmo": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateScript": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNukeWriteBoundingBox": {
+            "enabled": true,
+            "optional": true
+        },
         "ExtractThumbnail": {
             "enabled": true,
             "nodes": {
@@ -38,14 +62,6 @@
                 ]
             }
         },
-        "ValidateKnobs": {
-            "enabled": false,
-            "knobs": {
-                "render": {
-                    "review": true
-                }
-            }
-        },
         "ExtractReviewDataLut": {
             "enabled": false
         },
@@ -61,22 +77,6 @@
             "deadline_pool": "",
             "deadline_pool_secondary": "",
             "deadline_chunk_size": 1
-        },
-        "ValidateOutputResolution": {
-            "enabled": true,
-            "optional": true
-        },
-        "ValidateGizmo": {
-            "enabled": true,
-            "optional": true
-        },
-        "ValidateScript": {
-            "enabled": true,
-            "optional": true
-        },
-        "ValidateNukeWriteBoundingBox": {
-            "enabled": true,
-            "optional": true
         }
     },
     "workfile_build": {
