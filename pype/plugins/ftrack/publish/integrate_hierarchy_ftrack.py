@@ -36,7 +36,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
     order = pyblish.api.IntegratorOrder - 0.04
     label = 'Integrate Hierarchy To Ftrack'
     families = ["shot"]
-    hosts = ["hiero"]
+    hosts = ["hiero", "standalonepublisher"]
     optional = False
 
     def process(self, context):
@@ -50,8 +50,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         project_name = self.context.data["projectEntity"]["name"]
         query = 'Project where full_name is "{}"'.format(project_name)
         project = self.session.query(query).one()
-        auto_sync_state = project[
-            "custom_attributes"][CUST_ATTR_AUTO_SYNC]
+        auto_sync_state = project["custom_attributes"][CUST_ATTR_AUTO_SYNC]
 
         if not io.Session:
             io.install()
@@ -74,6 +73,15 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 self.auto_sync_on(project)
 
     def import_to_ftrack(self, input_data, parent=None):
+        # Prequery hiearchical custom attributes
+        hier_custom_attributes = get_pype_attr(self.session)[1]
+        hier_attr_by_key = {
+            attr["key"]: attr
+            for attr in hier_custom_attributes
+        }
+        # Get ftrack api module (as they are different per python version)
+        ftrack_api = self.context.data["ftrackPythonModule"]
+
         for entity_name in input_data:
             entity_data = input_data[entity_name]
             entity_type = entity_data['entity_type']
@@ -116,12 +124,34 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 i for i in self.context if i.data['asset'] in entity['name']
             ]
             for key in custom_attributes:
-                assert (key in entity['custom_attributes']), (
-                    'Missing custom attribute key: `{0}` in attrs: '
-                    '`{1}`'.format(key, entity['custom_attributes'].keys())
-                )
+                hier_attr = hier_attr_by_key.get(key)
+                # Use simple method if key is not hierarchical
+                if not hier_attr:
+                    assert (key in entity['custom_attributes']), (
+                        'Missing custom attribute key: `{0}` in attrs: '
+                        '`{1}`'.format(key, entity['custom_attributes'].keys())
+                    )
 
-                entity['custom_attributes'][key] = custom_attributes[key]
+                    entity['custom_attributes'][key] = custom_attributes[key]
+
+                else:
+                    # Use ftrack operations method to set hiearchical
+                    # attribute value.
+                    # - this is because there may be non hiearchical custom
+                    #   attributes with different properties
+                    entity_key = collections.OrderedDict({
+                        "configuration_id": hier_attr["id"],
+                        "entity_id": entity["id"]
+                    })
+                    self.session.recorded_operations.push(
+                        ftrack_api.operation.UpdateEntityOperation(
+                            "ContextCustomAttributeValue",
+                            entity_key,
+                            "value",
+                            ftrack_api.symbol.NOT_SET,
+                            custom_attributes[key]
+                        )
+                    )
 
                 for instance in instances:
                     instance.data['ftrackEntity'] = entity
