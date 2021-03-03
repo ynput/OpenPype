@@ -95,12 +95,12 @@ class ExtractSequence(pyblish.api.Extractor):
             "Files will be rendered to folder: {}".format(output_dir)
         )
 
-        thumbnail_filename = "thumbnail"
+        thumbnail_filename = "thumbnail.jpg"
 
         # Render output
-        output_files_by_frame = self.render(
-            save_mode, filename_template, output_dir,
-            filtered_layers, frame_start, frame_end, thumbnail_filename
+        output_filepaths, thumbnail_fullpath = self.render(
+            filename_template, output_dir, filtered_layers,
+            frame_start, frame_end, thumbnail_filename
         )
 
         # Fill tags and new families
@@ -110,7 +110,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         repre_files = [
             os.path.basename(filepath)
-            for filepath in output_files_by_frame.values()
+            for filepath in output_filepaths
         ]
         # Sequence of one frame
         if len(repre_files) == 1:
