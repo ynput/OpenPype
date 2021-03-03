@@ -43,6 +43,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     # Backgroud extensions
     alpha_exts = ["exr", "png", "dpx"]
+    color_regex = re.compile(r"^#[a-fA-F0-9]{6}$")
 
     # FFmpeg tools paths
     ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
@@ -473,18 +474,25 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         bg_color = output_def.get("bg_color")
         if bg_color:
-            if temp_data["input_allow_bg"]:
+            if not temp_data["input_allow_bg"]:
+                self.log.info((
+                    "Outpud definition has defined BG color input was"
+                    " resolved as does not support adding BG."
+                ))
+            elif not self.color_regex.match(bg_color):
+                self.log.warning((
+                    "Color defined in output definition does not match"
+                    " regex `^#[a-fA-F0-9]{6}$`"
+                ))
+
+            else:
                 self.log.info("Applying BG color {}".format(bg_color))
                 ffmpeg_video_filters.extend([
                     "split=2[bg][fg]",
                     "[bg]drawbox=c={}:replace=1:t=fill[bg]".format(bg_color),
                     "[bg][fg]overlay=format=auto"
                 ])
-            else:
-                self.log.info((
-                    "Outpud definition has defined BG color input was"
-                    " resolved as does not support adding BG."
-                ))
+
 
 
         # Add argument to override output file
