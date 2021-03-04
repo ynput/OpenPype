@@ -66,13 +66,10 @@ class ExtractSequence(pyblish.api.Extractor):
             "Files will be rendered to folder: {}".format(output_dir)
         )
 
-        thumbnail_filename = "thumbnail.jpg"
-
         # Render output
         output_filepaths, thumbnail_fullpath = self.render(
             filename_template, output_dir, filtered_layers,
-            frame_start, frame_end, thumbnail_filename,
-            scene_width, scene_height
+            frame_start, frame_end, scene_width, scene_height
         )
 
         # Fill tags and new families
@@ -139,8 +136,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
     def render(
         self, filename_template, output_dir, layers,
-        frame_start, frame_end, thumbnail_filename,
-        scene_width, scene_height
+        frame_start, frame_end, scene_width, scene_height
     ):
         """ Export images from TVPaint.
 
@@ -213,7 +209,6 @@ class ExtractSequence(pyblish.api.Extractor):
                 mark_in_index,
                 mark_out_index,
                 filename_template,
-                thumbnail_filename,
                 scene_width,
                 scene_height
             )
@@ -226,7 +221,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         if thumbnail_src_filepath and os.path.exists(thumbnail_src_filepath):
             source_img = Image.open(thumbnail_src_filepath)
-            thumbnail_filepath = os.path.join(output_dir, thumbnail_filename)
+            thumbnail_filepath = os.path.join(output_dir, "thumbnail.jpg")
             thumbnail_obj = Image.new("RGB", source_img.size, (255, 255, 255))
             thumbnail_obj.paste(source_img)
             thumbnail_obj.save(thumbnail_filepath)
@@ -434,7 +429,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
     def _composite_files(
         self, files_by_position, output_dir, frame_start, frame_end,
-        filename_template, thumbnail_filename, scene_width, scene_height
+        filename_template, scene_width, scene_height
     ):
         # Prepare paths to images by frames into list where are stored
         #   in order of compositing.
@@ -452,7 +447,6 @@ class ExtractSequence(pyblish.api.Extractor):
 
         processes = {}
         output_filepaths = []
-        thumbnail_src_filepath = None
         for frame_idx in sorted(images_by_frame.keys()):
             image_filepaths = images_by_frame[frame_idx]
             frame = frame_idx + 1
@@ -460,9 +454,6 @@ class ExtractSequence(pyblish.api.Extractor):
             output_filename = filename_template.format(frame)
             output_filepath = os.path.join(output_dir, output_filename)
             output_filepaths.append(output_filepath)
-
-            if thumbnail_filename and thumbnail_src_filepath is None:
-                thumbnail_src_filepath = output_filepath
 
             processes[frame_idx] = multiprocessing.Process(
                 target=composite_images,
