@@ -70,15 +70,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if instance is None:
                 continue
 
-            frame_start = context.data["frameStart"]
-            frame_end = frame_start
-            for layer in instance.data["layers"]:
-                _frame_end = layer["frame_end"]
-                if _frame_end > frame_end:
-                    frame_end = _frame_end
-
-            instance.data["frameStart"] = frame_start
-            instance.data["frameEnd"] = frame_end
+            instance.data["frameStart"] = context.data["frameStart"]
+            instance.data["frameEnd"] = context.data["frameEnd"]
 
             self.log.debug("Created instance: {}\n{}".format(
                 instance, json.dumps(instance.data, indent=4)
