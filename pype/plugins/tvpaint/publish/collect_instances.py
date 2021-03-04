@@ -103,7 +103,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
         group_id = instance_data["group_id"]
         group_layers = []
         for layer in layers_data:
-            if layer["group_id"] == group_id and layer["visible"]:
+            if layer["group_id"] == group_id:
                 group_layers.append(layer)
 
         if not group_layers:
