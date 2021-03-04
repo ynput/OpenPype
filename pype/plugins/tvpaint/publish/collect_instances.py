@@ -73,6 +73,14 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if instance is None:
                 continue
 
+            any_visible = False
+            for layer in instance.data["layers"]:
+                if layer["visible"]:
+                    any_visible = True
+                    break
+
+            instance.data["publish"] = any_visible
+
             instance.data["frameStart"] = context.data["frameStart"]
             instance.data["frameEnd"] = context.data["frameEnd"]
 
