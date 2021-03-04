@@ -164,10 +164,9 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     # attribute value.
                     # - this is because there may be non hiearchical custom
                     #   attributes with different properties
-                    entity_key = collections.OrderedDict({
-                        "configuration_id": hier_attr["id"],
-                        "entity_id": entity["id"]
-                    })
+                    entity_key = collections.OrderedDict()
+                    entity_key["configuration_id"] = hier_attr["id"]
+                    entity_key["entity_id"] = entity["id"]
                     self.session.recorded_operations.push(
                         ftrack_api.operation.UpdateEntityOperation(
                             "ContextCustomAttributeValue",
