@@ -6,44 +6,10 @@ from avalon.tvpaint import lib
 from PIL import Image
 
 
-class ExtractSequence(pyblish.api.Extractor):
-    label = "Extract Sequence"
+class ExtractReviewSequence(pyblish.api.Extractor):
+    label = "Extract Review Sequence"
     hosts = ["tvpaint"]
-    families = ["review", "renderPass", "renderLayer"]
-
-    save_mode_to_ext = {
-        "avi": ".avi",
-        "bmp": ".bmp",
-        "cin": ".cin",
-        "deep": ".dip",
-        "dps": ".dps",
-        "dpx": ".dpx",
-        "flc": ".fli",
-        "gif": ".gif",
-        "ilbm": ".iff",
-        "jpg": ".jpg",
-        "jpeg": ".jpg",
-        "pcx": ".pcx",
-        "png": ".png",
-        "psd": ".psd",
-        "qt": ".qt",
-        "rtv": ".rtv",
-        "sun": ".ras",
-        "tiff": ".tiff",
-        "tga": ".tga",
-        "vpb": ".vpb"
-    }
-    sequential_save_mode = {
-        "bmp",
-        "dpx",
-        "ilbm",
-        "jpg",
-        "jpeg",
-        "png",
-        "sun",
-        "tiff",
-        "tga"
-    }
+    families = ["review"]
 
     def process(self, instance):
         self.log.info(
