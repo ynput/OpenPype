@@ -7,7 +7,7 @@ import multiprocessing
 import pyblish.api
 from avalon.tvpaint import lib
 from pype.hosts.tvpaint.lib import composite_images
-from PIL import Image
+from PIL import Image, ImageDraw
 
 
 class ExtractSequence(pyblish.api.Extractor):
@@ -394,9 +394,29 @@ class ExtractSequence(pyblish.api.Extractor):
             return
 
         if pre_behavior == "none":
-            return
+            # Take size from first image and fill it with transparent color
+            first_filename = filename_template.format(
+                pos=layer_position,
+                frame=frame_start_index
+            )
+            first_filepath = os.path.join(output_dir, first_filename)
+            empty_image_filepath = None
+            for frame_idx in reversed(range(mark_in_index, frame_start_index)):
+                filename = filename_template.format(
+                    pos=layer_position,
+                    frame=frame_idx
+                )
+                filepath = os.path.join(output_dir, filename)
+                if empty_image_filepath is None:
+                    img_obj = Image.open(first_filepath)
+                    painter = ImageDraw.Draw(img_obj)
+                    painter.rectangle((0, 0, *img_obj.size), fill=(0, 0, 0, 0))
+                    img_obj.save(filepath)
+                    empty_image_filepath = filepath
+                else:
+                    self._copy_image(empty_image_filepath, filepath)
 
-        if pre_behavior == "hold":
+        elif pre_behavior == "hold":
             # Keep first frame for whole time
             eq_frame_filepath = layer_files_by_frame[frame_start_index]
             for frame_idx in range(mark_in_index, frame_start_index):
@@ -461,9 +481,29 @@ class ExtractSequence(pyblish.api.Extractor):
             return
 
         if post_behavior == "none":
-            return
+            # Take size from last image and fill it with transparent color
+            last_filename = filename_template.format(
+                pos=layer_position,
+                frame=frame_end_index
+            )
+            last_filepath = os.path.join(output_dir, last_filename)
+            empty_image_filepath = None
+            for frame_idx in range(frame_end_index + 1, mark_out_index + 1):
+                filename = filename_template.format(
+                    pos=layer_position,
+                    frame=frame_idx
+                )
+                filepath = os.path.join(output_dir, filename)
+                if empty_image_filepath is None:
+                    img_obj = Image.open(last_filepath)
+                    painter = ImageDraw.Draw(img_obj)
+                    painter.rectangle((0, 0, *img_obj.size), fill=(0, 0, 0, 0))
+                    img_obj.save(filepath)
+                    empty_image_filepath = filepath
+                else:
+                    self._copy_image(empty_image_filepath, filepath)
 
-        if post_behavior == "hold":
+        elif post_behavior == "hold":
             # Keep first frame for whole time
             eq_frame_filepath = layer_files_by_frame[frame_end_index]
             for frame_idx in range(frame_end_index + 1, mark_out_index + 1):
