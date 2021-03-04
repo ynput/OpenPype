@@ -79,6 +79,25 @@
             "deadline_chunk_size": 1
         }
     },
+    "load": {
+        "LoadImage": {
+            "enabled": true,
+            "representations": []
+        },
+        "LoadMov": {
+            "enabled": true,
+            "representations": []
+        },
+        "LoadSequence": {
+            "enabled": true,
+            "representations": [
+                "png",
+                "jpg",
+                "exr",
+                ""
+            ]
+        }
+    },
     "workfile_build": {
         "profiles": [
             {
