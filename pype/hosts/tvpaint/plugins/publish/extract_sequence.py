@@ -133,7 +133,7 @@ class ExtractSequence(pyblish.api.Extractor):
         if frame_end_str_len > frame_padding:
             frame_padding = frame_end_str_len
 
-        return "{{:0>{}}}".format(frame_padding) + ".png"
+        return "{{frame:0>{}}}".format(frame_padding) + ".png"
 
     def render_review(
         self, filename_template, output_dir, frame_start, frame_end
@@ -142,9 +142,9 @@ class ExtractSequence(pyblish.api.Extractor):
 
         Args:
             filename_template (str): Filename template of an output. Template
-                should already contain extension. Template may contain only
-                keyword argument `{frame}` or index argument (for same value).
-                Extension in template must match `save_mode`.
+                should already contain extension. Template must contain
+                keyword argument `{frame}`. Extension in template must match
+                `save_mode`.
             output_dir (list): List of layers to be exported.
             frame_start (int): Starting frame from which export will begin.
             frame_end (int): On which frame export will end.
@@ -155,7 +155,7 @@ class ExtractSequence(pyblish.api.Extractor):
         self.log.debug("Preparing data for rendering.")
         first_frame_filepath = os.path.join(
             output_dir,
-            filename_template.format(frame_start, frame=frame_start)
+            filename_template.format(frame=frame_start)
         )
         mark_in = frame_start - 1
         mark_out = frame_end - 1
@@ -174,7 +174,7 @@ class ExtractSequence(pyblish.api.Extractor):
         output = []
         first_frame_filepath = None
         for frame in range(frame_start, frame_end + 1):
-            filename = filename_template.format(frame, frame=frame)
+            filename = filename_template.format(frame=frame)
             output.append(filename)
             if first_frame_filepath is None:
                 first_frame_filepath = os.path.join(output_dir, filename)
@@ -229,7 +229,7 @@ class ExtractSequence(pyblish.api.Extractor):
         mark_in_index = frame_start - 1
         mark_out_index = frame_end - 1
 
-        tmp_filename_template = "pos_{}." + filename_template
+        tmp_filename_template = "pos_{pos}." + filename_template
 
         files_by_position = {}
         is_single_layer = len(sorted_positions) == 1
@@ -310,7 +310,10 @@ class ExtractSequence(pyblish.api.Extractor):
         layer_position = layer["position"]
 
         for frame_idx in exposure_frames:
-            filename = tmp_filename_template.format(layer_position, frame_idx)
+            filename = tmp_filename_template.format(
+                pos=layer_position,
+                frame=frame_idx
+            )
             dst_path = "/".join([output_dir, filename])
             layer_files_by_frame[frame_idx] = os.path.normpath(dst_path)
 
@@ -397,7 +400,10 @@ class ExtractSequence(pyblish.api.Extractor):
             # Keep first frame for whole time
             eq_frame_filepath = layer_files_by_frame[frame_start_index]
             for frame_idx in range(mark_in_index, frame_start_index):
-                filename = filename_template.format(layer_position, frame_idx)
+                filename = filename_template.format(
+                    pos=layer_position,
+                    frame=frame_idx
+                )
                 new_filepath = "/".join([output_dir, filename])
                 self._copy_image(eq_frame_filepath, new_filepath)
                 layer_files_by_frame[frame_idx] = new_filepath
@@ -411,7 +417,10 @@ class ExtractSequence(pyblish.api.Extractor):
                 eq_frame_idx = frame_end_index - eq_frame_idx_offset
                 eq_frame_filepath = layer_files_by_frame[eq_frame_idx]
 
-                filename = filename_template.format(layer_position, frame_idx)
+                filename = filename_template.format(
+                    pos=layer_position,
+                    frame=frame_idx
+                )
                 new_filepath = "/".join([output_dir, filename])
                 self._copy_image(eq_frame_filepath, new_filepath)
                 layer_files_by_frame[frame_idx] = new_filepath
@@ -427,7 +436,10 @@ class ExtractSequence(pyblish.api.Extractor):
 
                 eq_frame_filepath = layer_files_by_frame[eq_frame_idx]
 
-                filename = filename_template.format(layer_position, frame_idx)
+                filename = filename_template.format(
+                    pos=layer_position,
+                    frame=frame_idx
+                )
                 new_filepath = "/".join([output_dir, filename])
                 self._copy_image(eq_frame_filepath, new_filepath)
                 layer_files_by_frame[frame_idx] = new_filepath
@@ -455,7 +467,10 @@ class ExtractSequence(pyblish.api.Extractor):
             # Keep first frame for whole time
             eq_frame_filepath = layer_files_by_frame[frame_end_index]
             for frame_idx in range(frame_end_index + 1, mark_out_index + 1):
-                filename = filename_template.format(layer_position, frame_idx)
+                filename = filename_template.format(
+                    pos=layer_position,
+                    frame=frame_idx
+                )
                 new_filepath = "/".join([output_dir, filename])
                 self._copy_image(eq_frame_filepath, new_filepath)
                 layer_files_by_frame[frame_idx] = new_filepath
@@ -466,7 +481,10 @@ class ExtractSequence(pyblish.api.Extractor):
                 eq_frame_idx = frame_idx % frame_count
                 eq_frame_filepath = layer_files_by_frame[eq_frame_idx]
 
-                filename = filename_template.format(layer_position, frame_idx)
+                filename = filename_template.format(
+                    pos=layer_position,
+                    frame=frame_idx
+                )
                 new_filepath = "/".join([output_dir, filename])
                 self._copy_image(eq_frame_filepath, new_filepath)
                 layer_files_by_frame[frame_idx] = new_filepath
@@ -482,7 +500,10 @@ class ExtractSequence(pyblish.api.Extractor):
 
                 eq_frame_filepath = layer_files_by_frame[eq_frame_idx]
 
-                filename = filename_template.format(layer_position, frame_idx)
+                filename = filename_template.format(
+                    pos=layer_position,
+                    frame=frame_idx
+                )
                 new_filepath = "/".join([output_dir, filename])
                 self._copy_image(eq_frame_filepath, new_filepath)
                 layer_files_by_frame[frame_idx] = new_filepath
@@ -511,7 +532,7 @@ class ExtractSequence(pyblish.api.Extractor):
             image_filepaths = images_by_frame[frame_idx]
             frame = frame_idx + 1
 
-            output_filename = filename_template.format(frame)
+            output_filename = filename_template.format(frame=frame)
             output_filepath = os.path.join(output_dir, output_filename)
             output_filepaths.append(output_filepath)
 
