@@ -300,6 +300,9 @@ class ExtractSequence(pyblish.api.Extractor):
         exposure_frames = lib.get_exposure_frames(
             layer_id, frame_start_index, frame_end_index
         )
+        self.log.debug("Rendering Exposure frames {} of layer {} ({})".format(
+            str(exposure_frames), layer["layer_id"], layer["name"]
+        ))
         if frame_start_index not in exposure_frames:
             exposure_frames.append(frame_start_index)
 
@@ -333,6 +336,7 @@ class ExtractSequence(pyblish.api.Extractor):
             "Filling frames between first and last frame of layer ({} - {})."
         ).format(frame_start_index + 1, frame_end_index + 1))
 
+        _debug_filled_frames = []
         prev_filepath = None
         for frame_idx in range(frame_start_index, frame_end_index + 1):
             if frame_idx in layer_files_by_frame:
@@ -341,7 +345,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
             if prev_filepath is None:
                 raise ValueError("BUG: First frame of layer was not rendered!")
-
+            _debug_filled_frames.append(frame_idx)
             filename = tmp_filename_template.format(
                 pos=layer_position,
                 frame=frame_idx
@@ -349,6 +353,8 @@ class ExtractSequence(pyblish.api.Extractor):
             new_filepath = "/".join([output_dir, filename])
             self._copy_image(prev_filepath, new_filepath)
             layer_files_by_frame[frame_idx] = new_filepath
+
+        self.log.debug("Filled frames {}".format(str(_debug_filled_frames)))
 
         # Fill frames by pre/post behavior of layer
         pre_behavior = behavior["pre"]
@@ -391,9 +397,16 @@ class ExtractSequence(pyblish.api.Extractor):
         frame_end_index = layer["frame_end"]
         frame_count = frame_end_index - frame_start_index + 1
         if mark_in_index >= frame_start_index:
+            self.log.debug((
+                "Skipping pre-behavior."
+                " All frames after Mark In are rendered."
+            ))
             return
 
         if pre_behavior == "none":
+            self.log.debug("Creating empty images for range {} - {}".format(
+                mark_in_index, frame_start_index
+            ))
             # Take size from first image and fill it with transparent color
             first_filename = filename_template.format(
                 pos=layer_position,
@@ -479,9 +492,16 @@ class ExtractSequence(pyblish.api.Extractor):
         frame_end_index = layer["frame_end"]
         frame_count = frame_end_index - frame_start_index + 1
         if mark_out_index <= frame_end_index:
+            self.log.debug((
+                "Skipping post-behavior."
+                " All frames up to Mark Out are rendered."
+            ))
             return
 
         if post_behavior == "none":
+            self.log.debug("Creating empty images for range {} - {}".format(
+                frame_end_index + 1, mark_out_index + 1
+            ))
             # Take size from last image and fill it with transparent color
             last_filename = filename_template.format(
                 pos=layer_position,
