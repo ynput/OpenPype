@@ -183,31 +183,55 @@ class ExtractSequence(pyblish.api.Extractor):
         tmp_filename_template = "pos_{}." + filename_template
 
         files_by_position = {}
+        is_single_layer = len(sorted_positions) == 1
         for position in sorted_positions:
             layer = layers_by_position[position]
             behavior = behavior_by_layer_id[layer["layer_id"]]
+
+            if is_single_layer:
+                _template = filename_template
+            else:
+                _template = tmp_filename_template
+
             files_by_frames = self.render_layer(
                 layer,
-                tmp_filename_template,
+                _template,
                 output_dir,
                 behavior,
                 mark_in_index,
                 mark_out_index
             )
-            files_by_position[position] = files_by_frames
+            if is_single_layer:
+                output_filepaths = list(files_by_frames.values())
+            else:
+                files_by_position[position] = files_by_frames
 
-        output = self._composite_files(
-            files_by_position,
-            output_dir,
-            mark_in_index,
-            mark_out_index,
-            filename_template,
-            thumbnail_filename,
-            scene_width,
-            scene_height
-        )
-        self._cleanup_tmp_files(files_by_position)
-        return output
+        if not is_single_layer:
+            output_filepaths = self._composite_files(
+                files_by_position,
+                output_dir,
+                mark_in_index,
+                mark_out_index,
+                filename_template,
+                thumbnail_filename,
+                scene_width,
+                scene_height
+            )
+            self._cleanup_tmp_files(files_by_position)
+
+        thumbnail_src_filepath = None
+        thumbnail_filepath = None
+        if output_filepaths:
+            thumbnail_src_filepath = tuple(sorted(output_filepaths))[0]
+
+        if thumbnail_src_filepath and os.path.exists(thumbnail_src_filepath):
+            source_img = Image.open(thumbnail_src_filepath)
+            thumbnail_filepath = os.path.join(output_dir, thumbnail_filename)
+            thumbnail_obj = Image.new("RGB", source_img.size, (255, 255, 255))
+            thumbnail_obj.paste(source_img)
+            thumbnail_obj.save(thumbnail_filepath)
+
+        return output_filepaths, thumbnail_filepath
 
     def render_layer(
         self,
@@ -469,15 +493,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
             time.sleep(0.01)
 
-        thumbnail_filepath = None
-        if thumbnail_src_filepath:
-            source_img = Image.open(thumbnail_src_filepath)
-            thumbnail_filepath = os.path.join(output_dir, thumbnail_filename)
-            thumbnail_obj = Image.new("RGB", source_img.size, (255, 255, 255))
-            thumbnail_obj.paste(source_img)
-            thumbnail_obj.save(thumbnail_filepath)
-
-        return output_filepaths, thumbnail_filepath
+        return output_filepaths
 
     def _cleanup_tmp_files(self, files_by_position):
         for data in files_by_position.values():
