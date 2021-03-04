@@ -30,6 +30,10 @@ class ValidateNamingRepair(pyblish.api.Action):
             data["subset"] = "image" + name
             stub.imprint(instance[0], data)
 
+            name = name.replace(instance.data["family"], '')
+            name = stub.PUBLISH_ICON + name
+            stub.rename_layer(instance.data["uuid"], name)
+
         return True
 
 
