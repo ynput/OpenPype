@@ -48,7 +48,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 instance_data["subset"] = new_subset_name
 
                 instance = context.create_instance(**instance_data)
-                instance.data["layers"] = context.data["layersData"]
+
+                instance.data["layers"] = copy.deepcopy(
+                    context.data["layersData"]
+                )
                 # Add ftrack family
                 instance.data["families"].append("ftrack")
 
