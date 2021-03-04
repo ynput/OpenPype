@@ -13,7 +13,7 @@ from PIL import Image
 class ExtractSequence(pyblish.api.Extractor):
     label = "Extract Sequence"
     hosts = ["tvpaint"]
-    families = ["renderPass", "renderLayer"]
+    families = ["review", "renderPass", "renderLayer"]
 
     def process(self, instance):
         self.log.info(
@@ -66,21 +66,22 @@ class ExtractSequence(pyblish.api.Extractor):
             "Files will be rendered to folder: {}".format(output_dir)
         )
 
-        # Render output
-        output_filepaths, thumbnail_fullpath = self.render(
-            filename_template, output_dir, filtered_layers,
-            frame_start, frame_end, scene_width, scene_height
-        )
+        if instance.data["family"] == "review":
+            repre_files, thumbnail_fullpath = self.render_review(
+                filename_template, output_dir, frame_start, frame_end
+            )
+        else:
+            # Render output
+            repre_files, thumbnail_fullpath = self.render(
+                filename_template, output_dir, filtered_layers,
+                frame_start, frame_end, scene_width, scene_height
+            )
 
         # Fill tags and new families
         tags = []
         if family_lowered in ("review", "renderlayer"):
             tags.append("review")
 
-        repre_files = [
-            os.path.basename(filepath)
-            for filepath in output_filepaths
-        ]
         # Sequence of one frame
         if len(repre_files) == 1:
             repre_files = repre_files[0]
@@ -133,6 +134,58 @@ class ExtractSequence(pyblish.api.Extractor):
             frame_padding = frame_end_str_len
 
         return "{{:0>{}}}".format(frame_padding) + ".png"
+
+    def render_review(
+        self, filename_template, output_dir, frame_start, frame_end
+    ):
+        """ Export images from TVPaint.
+
+        Args:
+            filename_template (str): Filename template of an output. Template
+                should already contain extension. Template may contain only
+                keyword argument `{frame}` or index argument (for same value).
+                Extension in template must match `save_mode`.
+            output_dir (list): List of layers to be exported.
+            frame_start (int): Starting frame from which export will begin.
+            frame_end (int): On which frame export will end.
+
+        Retruns:
+            dict: Mapping frame to output filepath.
+        """
+        self.log.debug("Preparing data for rendering.")
+        first_frame_filepath = os.path.join(
+            output_dir,
+            filename_template.format(frame_start, frame=frame_start)
+        )
+        mark_in = frame_start - 1
+        mark_out = frame_end - 1
+
+        george_script_lines = [
+            "tv_SaveMode \"PNG\"",
+            "export_path = \"{}\"".format(
+                first_frame_filepath.replace("\\", "/")
+            ),
+            "tv_savesequence '\"'export_path'\"' {} {}".format(
+                mark_in, mark_out
+            )
+        ]
+        lib.execute_george_through_file("\n".join(george_script_lines))
+
+        output = []
+        first_frame_filepath = None
+        for frame in range(frame_start, frame_end + 1):
+            filename = filename_template.format(frame, frame=frame)
+            output.append(filename)
+            if first_frame_filepath is None:
+                first_frame_filepath = os.path.join(output_dir, filename)
+
+        thumbnail_filepath = os.path.join(output_dir, "thumbnail.jpg")
+        if first_frame_filepath and os.path.exists(first_frame_filepath):
+            source_img = Image.open(first_frame_filepath)
+            thumbnail_obj = Image.new("RGB", source_img.size, (255, 255, 255))
+            thumbnail_obj.paste(source_img)
+            thumbnail_obj.save(thumbnail_filepath)
+        return output, thumbnail_filepath
 
     def render(
         self, filename_template, output_dir, layers,
@@ -189,7 +242,7 @@ class ExtractSequence(pyblish.api.Extractor):
             else:
                 _template = tmp_filename_template
 
-            files_by_frames = self.render_layer(
+            files_by_frames = self._render_layer(
                 layer,
                 _template,
                 output_dir,
@@ -226,9 +279,13 @@ class ExtractSequence(pyblish.api.Extractor):
             thumbnail_obj.paste(source_img)
             thumbnail_obj.save(thumbnail_filepath)
 
-        return output_filepaths, thumbnail_filepath
+        repre_files = [
+            os.path.basename(path)
+            for path in output_filepaths
+        ]
+        return repre_files, thumbnail_filepath
 
-    def render_layer(
+    def _render_layer(
         self,
         layer,
         tmp_filename_template,
@@ -282,7 +339,10 @@ class ExtractSequence(pyblish.api.Extractor):
             if prev_filepath is None:
                 raise ValueError("BUG: First frame of layer was not rendered!")
 
-            filename = tmp_filename_template.format(layer_position, frame_idx)
+            filename = tmp_filename_template.format(
+                pos=layer_position,
+                frame=frame_idx
+            )
             new_filepath = "/".join([output_dir, filename])
             self._copy_image(prev_filepath, new_filepath)
             layer_files_by_frame[frame_idx] = new_filepath
