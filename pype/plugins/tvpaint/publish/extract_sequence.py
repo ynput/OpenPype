@@ -406,15 +406,16 @@ class ExtractSequence(pyblish.api.Extractor):
                     pos=layer_position,
                     frame=frame_idx
                 )
-                filepath = os.path.join(output_dir, filename)
+                new_filepath = os.path.join(output_dir, filename)
                 if empty_image_filepath is None:
                     img_obj = Image.open(first_filepath)
                     painter = ImageDraw.Draw(img_obj)
                     painter.rectangle((0, 0, *img_obj.size), fill=(0, 0, 0, 0))
-                    img_obj.save(filepath)
-                    empty_image_filepath = filepath
+                    img_obj.save(new_filepath)
+                    empty_image_filepath = new_filepath
                 else:
-                    self._copy_image(empty_image_filepath, filepath)
+                    self._copy_image(empty_image_filepath, new_filepath)
+                layer_files_by_frame[frame_idx] = new_filepath
 
         elif pre_behavior == "hold":
             # Keep first frame for whole time
@@ -493,15 +494,16 @@ class ExtractSequence(pyblish.api.Extractor):
                     pos=layer_position,
                     frame=frame_idx
                 )
-                filepath = os.path.join(output_dir, filename)
+                new_filepath = os.path.join(output_dir, filename)
                 if empty_image_filepath is None:
                     img_obj = Image.open(last_filepath)
                     painter = ImageDraw.Draw(img_obj)
                     painter.rectangle((0, 0, *img_obj.size), fill=(0, 0, 0, 0))
-                    img_obj.save(filepath)
-                    empty_image_filepath = filepath
+                    img_obj.save(new_filepath)
+                    empty_image_filepath = new_filepath
                 else:
-                    self._copy_image(empty_image_filepath, filepath)
+                    self._copy_image(empty_image_filepath, new_filepath)
+                layer_files_by_frame[frame_idx] = new_filepath
 
         elif post_behavior == "hold":
             # Keep first frame for whole time
