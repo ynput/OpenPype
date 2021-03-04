@@ -1,7 +1,7 @@
-import avalon.maya
+from pype.hosts.maya.api import plugin
 
 
-class CreateVrayProxy(avalon.maya.Creator):
+class CreateVrayProxy(plugin.Creator):
     """Alembic pointcache for animated data"""
 
     name = "vrayproxy"

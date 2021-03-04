@@ -3,11 +3,11 @@
 import bpy
 
 from avalon import api
-from avalon.blender import Creator, lib
 import pype.hosts.blender.api.plugin
+from avalon.blender import lib
 
 
-class CreateAction(Creator):
+class CreateAction(pype.hosts.blender.api.plugin.Creator):
     """Action output for character rigs"""
 
     name = "actionMain"

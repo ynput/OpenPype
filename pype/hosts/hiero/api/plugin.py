@@ -592,7 +592,7 @@ class ClipLoader:
         return track_item
 
 
-class Creator(avalon.Creator):
+class Creator(pype.Creator):
     """Creator class wrapper
     """
     clip_color = "Purple"

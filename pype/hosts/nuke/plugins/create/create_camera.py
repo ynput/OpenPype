@@ -1,9 +1,9 @@
-import avalon.nuke
 from avalon.nuke import lib as anlib
+from pype.hosts.nuke.api import plugin
 import nuke
 
 
-class CreateCamera(avalon.nuke.Creator):
+class CreateCamera(plugin.PypeCreator):
     """Add Publishable Backdrop"""
 
     name = "camera"

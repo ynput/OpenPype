@@ -3,11 +3,11 @@
 import bpy
 
 from avalon import api
-from avalon.blender import Creator, lib
+from avalon.blender import lib
 import pype.hosts.blender.api.plugin
 
 
-class CreateModel(Creator):
+class CreateModel(pype.hosts.blender.api.plugin.Creator):
     """Polygonal static geometry"""
 
     name = "modelMain"

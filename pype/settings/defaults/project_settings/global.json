@@ -130,7 +130,23 @@
                     "rigging",
                     "rig"
                 ]
-            }
+            },
+            "subset_name_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "tasks": [],
+                    "template": "{family}{Variant}"
+                },
+                {
+                    "families": [
+                        "render"
+                    ],
+                    "hosts": [],
+                    "tasks": [],
+                    "template": "{family}{Task}{Variant}"
+                }
+            ]
         },
         "Workfiles": {
             "last_workfile_on_startup": [
