@@ -47,8 +47,6 @@ class ExtractSequence(pyblish.api.Extractor):
         family_lowered = instance.data["family"].lower()
         frame_start = instance.data["frameStart"]
         frame_end = instance.data["frameEnd"]
-        scene_width = instance.context.data["sceneWidth"]
-        scene_height = instance.context.data["sceneHeight"]
 
         filename_template = self._get_filename_template(frame_end)
         ext = os.path.splitext(filename_template)[1].replace(".", "")
@@ -73,8 +71,8 @@ class ExtractSequence(pyblish.api.Extractor):
         else:
             # Render output
             repre_files, thumbnail_fullpath = self.render(
-                filename_template, output_dir, filtered_layers,
-                frame_start, frame_end, scene_width, scene_height
+                filename_template, output_dir, frame_start, frame_end,
+                filtered_layers
             )
 
         # Fill tags and new families
@@ -138,19 +136,20 @@ class ExtractSequence(pyblish.api.Extractor):
     def render_review(
         self, filename_template, output_dir, frame_start, frame_end
     ):
-        """ Export images from TVPaint.
+        """ Export images from TVPaint using `tv_savesequence` command.
 
         Args:
             filename_template (str): Filename template of an output. Template
-                should already contain extension. Template must contain
-                keyword argument `{frame}`. Extension in template must match
-                `save_mode`.
-            output_dir (list): List of layers to be exported.
-            frame_start (int): Starting frame from which export will begin.
-            frame_end (int): On which frame export will end.
+                should already contain extension. Template may contain only
+                keyword argument `{frame}` or index argument (for same value).
+                Extension in template must match `save_mode`.
+            output_dir (str): Directory where files will be stored.
+            first_frame (int): Starting frame from which export will begin.
+            last_frame (int): On which frame export will end.
 
         Retruns:
-            dict: Mapping frame to output filepath.
+            tuple: With 2 items first is list of filenames second is path to
+                thumbnail.
         """
         self.log.debug("Preparing data for rendering.")
         first_frame_filepath = os.path.join(
@@ -188,24 +187,23 @@ class ExtractSequence(pyblish.api.Extractor):
         return output, thumbnail_filepath
 
     def render(
-        self, filename_template, output_dir, layers,
-        frame_start, frame_end, scene_width, scene_height
+        self, filename_template, output_dir, frame_start, frame_end, layers
     ):
         """ Export images from TVPaint.
 
         Args:
-            save_mode (str): Argument for `tv_savemode` george script function.
-                More about save mode in documentation.
             filename_template (str): Filename template of an output. Template
                 should already contain extension. Template may contain only
                 keyword argument `{frame}` or index argument (for same value).
                 Extension in template must match `save_mode`.
-            layers (list): List of layers to be exported.
+            output_dir (str): Directory where files will be stored.
             first_frame (int): Starting frame from which export will begin.
             last_frame (int): On which frame export will end.
+            layers (list): List of layers to be exported.
 
         Retruns:
-            dict: Mapping frame to output filepath.
+            tuple: With 2 items first is list of filenames second is path to
+                thumbnail.
         """
         self.log.debug("Preparing data for rendering.")
 
@@ -232,40 +230,28 @@ class ExtractSequence(pyblish.api.Extractor):
         tmp_filename_template = "pos_{pos}." + filename_template
 
         files_by_position = {}
-        is_single_layer = len(sorted_positions) == 1
         for position in sorted_positions:
             layer = layers_by_position[position]
             behavior = behavior_by_layer_id[layer["layer_id"]]
 
-            if is_single_layer:
-                _template = filename_template
-            else:
-                _template = tmp_filename_template
-
             files_by_frames = self._render_layer(
                 layer,
-                _template,
+                tmp_filename_template,
                 output_dir,
                 behavior,
                 mark_in_index,
                 mark_out_index
             )
-            if is_single_layer:
-                output_filepaths = list(files_by_frames.values())
-            else:
-                files_by_position[position] = files_by_frames
+            files_by_position[position] = files_by_frames
 
-        if not is_single_layer:
-            output_filepaths = self._composite_files(
-                files_by_position,
-                output_dir,
-                mark_in_index,
-                mark_out_index,
-                filename_template,
-                scene_width,
-                scene_height
-            )
-            self._cleanup_tmp_files(files_by_position)
+        output_filepaths = self._composite_files(
+            files_by_position,
+            mark_in_index,
+            mark_out_index,
+            filename_template,
+            output_dir
+        )
+        self._cleanup_tmp_files(files_by_position)
 
         thumbnail_src_filepath = None
         thumbnail_filepath = None
@@ -300,9 +286,7 @@ class ExtractSequence(pyblish.api.Extractor):
         exposure_frames = lib.get_exposure_frames(
             layer_id, frame_start_index, frame_end_index
         )
-        self.log.debug("Rendering Exposure frames {} of layer {} ({})".format(
-            str(exposure_frames), layer["layer_id"], layer["name"]
-        ))
+
         if frame_start_index not in exposure_frames:
             exposure_frames.append(frame_start_index)
 
@@ -325,8 +309,8 @@ class ExtractSequence(pyblish.api.Extractor):
             # Store image to output
             george_script_lines.append("tv_saveimage \"{}\"".format(dst_path))
 
-        self.log.debug("Rendering exposure frames {} of layer {}".format(
-            str(exposure_frames), layer_id
+        self.log.debug("Rendering Exposure frames {} of layer {} ({})".format(
+            str(exposure_frames), layer_id, layer["name"]
         ))
         # Let TVPaint render layer's image
         lib.execute_george_through_file("\n".join(george_script_lines))
@@ -404,31 +388,8 @@ class ExtractSequence(pyblish.api.Extractor):
             return
 
         if pre_behavior == "none":
-            self.log.debug("Creating empty images for range {} - {}".format(
-                mark_in_index, frame_start_index
-            ))
-            # Take size from first image and fill it with transparent color
-            first_filename = filename_template.format(
-                pos=layer_position,
-                frame=frame_start_index
-            )
-            first_filepath = os.path.join(output_dir, first_filename)
-            empty_image_filepath = None
-            for frame_idx in reversed(range(mark_in_index, frame_start_index)):
-                filename = filename_template.format(
-                    pos=layer_position,
-                    frame=frame_idx
-                )
-                new_filepath = os.path.join(output_dir, filename)
-                if empty_image_filepath is None:
-                    img_obj = Image.open(first_filepath)
-                    painter = ImageDraw.Draw(img_obj)
-                    painter.rectangle((0, 0, *img_obj.size), fill=(0, 0, 0, 0))
-                    img_obj.save(new_filepath)
-                    empty_image_filepath = new_filepath
-                else:
-                    self._copy_image(empty_image_filepath, new_filepath)
-                layer_files_by_frame[frame_idx] = new_filepath
+            # Empty frames are handled during `_composite_files`
+            pass
 
         elif pre_behavior == "hold":
             # Keep first frame for whole time
@@ -499,31 +460,8 @@ class ExtractSequence(pyblish.api.Extractor):
             return
 
         if post_behavior == "none":
-            self.log.debug("Creating empty images for range {} - {}".format(
-                frame_end_index + 1, mark_out_index + 1
-            ))
-            # Take size from last image and fill it with transparent color
-            last_filename = filename_template.format(
-                pos=layer_position,
-                frame=frame_end_index
-            )
-            last_filepath = os.path.join(output_dir, last_filename)
-            empty_image_filepath = None
-            for frame_idx in range(frame_end_index + 1, mark_out_index + 1):
-                filename = filename_template.format(
-                    pos=layer_position,
-                    frame=frame_idx
-                )
-                new_filepath = os.path.join(output_dir, filename)
-                if empty_image_filepath is None:
-                    img_obj = Image.open(last_filepath)
-                    painter = ImageDraw.Draw(img_obj)
-                    painter.rectangle((0, 0, *img_obj.size), fill=(0, 0, 0, 0))
-                    img_obj.save(new_filepath)
-                    empty_image_filepath = new_filepath
-                else:
-                    self._copy_image(empty_image_filepath, new_filepath)
-                layer_files_by_frame[frame_idx] = new_filepath
+            # Empty frames are handled during `_composite_files`
+            pass
 
         elif post_behavior == "hold":
             # Keep first frame for whole time
@@ -571,9 +509,16 @@ class ExtractSequence(pyblish.api.Extractor):
                 layer_files_by_frame[frame_idx] = new_filepath
 
     def _composite_files(
-        self, files_by_position, output_dir, frame_start, frame_end,
-        filename_template, scene_width, scene_height
+        self, files_by_position, frame_start, frame_end,
+        filename_template, output_dir
     ):
+        """Composite frames when more that one layer was exported.
+
+        This method is used when more than one layer is rendered out so and
+        output should be composition of each frame of rendered layers.
+        Missing frames are filled with transparent images.
+        """
+        self.log.debug("Preparing files for compisiting.")
         # Prepare paths to images by frames into list where are stored
         #   in order of compositing.
         images_by_frame = {}
@@ -582,7 +527,8 @@ class ExtractSequence(pyblish.api.Extractor):
             for position in sorted(files_by_position.keys(), reverse=True):
                 position_data = files_by_position[position]
                 if frame_idx in position_data:
-                    images_by_frame[frame_idx].append(position_data[frame_idx])
+                    filepath = position_data[frame_idx]
+                    images_by_frame[frame_idx].append(filepath)
 
         process_count = os.cpu_count()
         if process_count > 1:
@@ -590,22 +536,41 @@ class ExtractSequence(pyblish.api.Extractor):
 
         processes = {}
         output_filepaths = []
+        missing_frame_paths = []
+        random_frame_path = None
         for frame_idx in sorted(images_by_frame.keys()):
             image_filepaths = images_by_frame[frame_idx]
-            frame = frame_idx + 1
-
-            output_filename = filename_template.format(frame=frame)
+            output_filename = filename_template.format(frame=frame_idx + 1)
             output_filepath = os.path.join(output_dir, output_filename)
             output_filepaths.append(output_filepath)
 
-            processes[frame_idx] = multiprocessing.Process(
-                target=composite_images,
-                args=(
-                    image_filepaths, output_filepath, scene_width, scene_height
-                )
-            )
+            # Store information about missing frame and skip
+            if not image_filepaths:
+                missing_frame_paths.append(output_filepath)
+                continue
 
-        # Wait until all processes are done
+            # Just rename the file if is no need of compositing
+            if len(image_filepaths) == 1:
+                os.rename(image_filepaths[0], output_filepath)
+
+            # Prepare process for compositing of images
+            else:
+                processes[frame_idx] = multiprocessing.Process(
+                    target=composite_images,
+                    args=(image_filepaths, output_filepath)
+                )
+
+            # Store path of random output image that will 100% exist after all
+            #   multiprocessing as mockup for missing frames
+            if random_frame_path is None:
+                random_frame_path = output_filepath
+
+        self.log.info(
+            "Running {} compositing processes - this mey take a while.".format(
+                len(processes)
+            )
+        )
+        # Wait until all compositing processes are done
         running_processes = {}
         while True:
             for idx in tuple(running_processes.keys()):
@@ -627,14 +592,36 @@ class ExtractSequence(pyblish.api.Extractor):
 
             time.sleep(0.01)
 
+        self.log.debug(
+            "Creating transparent images for frames without render {}.".format(
+                str(missing_frame_paths)
+            )
+        )
+        # Fill the sequence with transparent frames
+        transparent_filepath = None
+        for filepath in missing_frame_paths:
+            if transparent_filepath is None:
+                img_obj = Image.open(random_frame_path)
+                painter = ImageDraw.Draw(img_obj)
+                painter.rectangle((0, 0, *img_obj.size), fill=(0, 0, 0, 0))
+                img_obj.save(filepath)
+                transparent_filepath = filepath
+            else:
+                self._copy_image(transparent_filepath, filepath)
         return output_filepaths
 
     def _cleanup_tmp_files(self, files_by_position):
+        """Remove temporary files that were used for compositing."""
         for data in files_by_position.values():
             for filepath in data.values():
-                os.remove(filepath)
+                if os.path.exists(filepath):
+                    os.remove(filepath)
 
     def _copy_image(self, src_path, dst_path):
+        """Create a copy of an image.
+
+        This was added to be able easier change copy method.
+        """
         # Create hardlink of image instead of copying if possible
         if hasattr(os, "link"):
             os.link(src_path, dst_path)
