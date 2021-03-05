@@ -18,6 +18,10 @@ class PypeInfoWidget(QtWidgets.QWidget):
 
         self.setStyleSheet(style.load_stylesheet())
 
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        self.setWindowIcon(icon)
+        self.setWindowTitle("Pype info")
+
         main_layout = QtWidgets.QFormLayout(self)
 
         if getattr(sys, "frozen", False):
