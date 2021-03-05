@@ -2,7 +2,7 @@ from .. import PypeModule, ITrayService
 
 
 class WebServerModule(PypeModule, ITrayService):
-    name = "Websocket server"
+    name = "webserver"
     label = "WebServer"
 
     def initialize(self, module_settings):
