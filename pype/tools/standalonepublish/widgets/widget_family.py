@@ -340,11 +340,8 @@ class FamilyWidget(QtWidgets.QWidget):
             ).distinct("name")
 
         if versions:
-            versions = sorted(
-                [v for v in versions],
-                key=lambda ver: ver['name']
-            )
-            version = int(versions[-1]['name']) + 1
+            versions = sorted(versions)
+            version = int(versions[-1]) + 1
 
         self.version_spinbox.setValue(version)
 
