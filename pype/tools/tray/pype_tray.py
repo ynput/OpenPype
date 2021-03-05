@@ -177,16 +177,9 @@ class PypeTrayApplication(QtWidgets.QApplication):
     """Qt application manages application's control flow."""
 
     def __init__(self):
-        super(self.__class__, self).__init__(sys.argv)
+        super(PypeTrayApplication, self).__init__(sys.argv)
         # Allows to close widgets without exiting app
         self.setQuitOnLastWindowClosed(False)
-
-        # Allow show icon istead of python icon in task bar (Windows)
-        if os.name == "nt":
-            import ctypes
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-                u"pype_tray"
-            )
 
         # Sets up splash
         splash_widget = self.set_splash()
