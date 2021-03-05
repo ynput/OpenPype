@@ -6,11 +6,9 @@ Functions ``compose_url()`` and ``decompose_url()`` are the same as in
 version is decided.
 
 """
-
-import os
-import uuid
 from typing import Dict, Union
 from urllib.parse import urlparse, parse_qs
+from pathlib import Path
 import platform
 
 from pymongo import MongoClient
@@ -142,13 +140,32 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
         return True, "Connection is successful"
 
 
-def validate_path_string(path: str) -> (bool, str):
-    """Validate string if it is acceptable by **Igniter**.
-
-    `path` string can be either regular path, or mongodb url or Pype token.
+def validate_mongo_string(mongo: str) -> (bool, str):
+    """Validate string if it is mongo url acceptable by **Igniter**..
 
     Args:
-        path (str): String to validate.
+        mongo (str): String to validate.
+
+    Returns:
+        (bool, str):
+            True if valid, False if not and in second part of tuple
+            the reason why it failed.
+
+    """
+    if not mongo:
+        return True, "empty string"
+    parsed = urlparse(mongo)
+    if parsed.scheme in ["mongodb", "mongodb+srv"]:
+        return validate_mongo_connection(mongo)
+    return False, "not valid mongodb schema"
+
+
+def validate_path_string(path: str) -> (bool, str):
+    """Validate string if it is path to Pype repository.
+
+    Args:
+        path (str): Path to validate.
+
 
     Returns:
         (bool, str):
@@ -157,22 +174,15 @@ def validate_path_string(path: str) -> (bool, str):
 
     """
     if not path:
-        return True, "Empty string"
-    parsed = urlparse(path)
-    if parsed.scheme == "mongodb":
-        return validate_mongo_connection(path)
-    # test for uuid
-    try:
-        uuid.UUID(path)
-    except (ValueError, TypeError):
-        # not uuid
-        if not os.path.exists(path):
-            return False, "Path doesn't exist or invalid token"
-        return True, "Path exists"
-    else:
-        # we have pype token
-        # todo: implement
-        return False, "Not implemented yet"
+        return False, "empty string"
+
+    if Path(path).exists():
+        return False, "path doesn't exists"
+
+    if not Path(path).is_dir():
+        return False, "path is not directory"
+
+    return True, "valid path"
 
 
 def load_environments(sections: list = None) -> dict:

@@ -122,9 +122,6 @@ silent_commands = ["run", "igniter", "standalonepublisher"]
 def set_environments() -> None:
     """Set loaded environments.
 
-    .. deprecated:: 3.0
-        no environment loading from settings until Pype version is established
-
     .. todo:
         better handling of environments
 
@@ -281,6 +278,7 @@ def _process_arguments() -> tuple:
         import igniter
         igniter.run()
 
+
     return use_version, use_staging
 
 
@@ -384,11 +382,19 @@ def _find_frozen_pype(use_version: str = None,
         return_code = run(["igniter"])
         if return_code != 0:
             raise RuntimeError("igniter crashed.")
-        pype_versions = bootstrap.find_pype()
+        print('>>> Finding Pype again ...')
+        pype_versions = bootstrap.find_pype(staging=use_staging)
+        try:
+            pype_version = pype_versions[-1]
+        except IndexError:
+            print("!!! Something is wrong and we didn't found it again.")
+            pype_versions = None
 
     if not pype_versions:
         # no Pype versions found anyway, lets use then the one
         # shipped with frozen Pype
+        print("*** Still no luck finding Pype.")
+        print("*** We'll try to use the one coming with Pype installation.")
         version_path = _bootstrap_from_code(use_version)
         pype_version = PypeVersion(
             version=BootstrapRepos.get_version(version_path),
@@ -452,6 +458,8 @@ def _bootstrap_from_code(use_version):
         pype_root = os.path.normpath(
             os.path.dirname(sys.executable))
         local_version = bootstrap.get_version(Path(pype_root))
+        print(f"  - running version: {local_version}")
+        assert local_version
     else:
         pype_root = os.path.normpath(
             os.path.dirname(os.path.realpath(__file__)))
@@ -604,7 +612,9 @@ def boot():
     from pype.version import __version__
     print(">>> loading environments ...")
     # Must happen before `set_modules_environments`
+    print("  - for Avalon ...")
     set_avalon_environments()
+    print("  - for modules ...")
     set_modules_environments()
 
     assert version_path, "Version path not defined."

@@ -456,6 +456,10 @@ class BootstrapRepos:
                     self._progress_callback(int(progress))
 
                     arc_name = file.relative_to(frozen_root.parent)
+                    # we need to replace first part of path which starts with
+                    # something like `exe.win/linux....` with `pype` as this
+                    # is expected by Pype in zip archive.
+                    arc_name = Path("pype").joinpath(*arc_name.parts[1:])
                     zip_file.write(file, arc_name)
 
             destination = self._move_zip_to_data_dir(temp_zip)
@@ -719,7 +723,7 @@ class BootstrapRepos:
         # either "live" Pype repository, or multiple zip files or even
         # multiple pype version directories. This process looks into zip
         # files and directories and tries to parse `version.py` file.
-        versions = self.find_pype(pype_path)
+        versions = self.find_pype(pype_path, include_zips=True)
         if versions:
             self._print(f"found Pype in [ {pype_path} ]")
             self._print(f"latest version found is [ {versions[-1]} ]")
@@ -890,15 +894,17 @@ class BootstrapRepos:
             try:
                 # copy file to destination
                 self._print("Copying zip to destination ...")
+                _destination_zip = destination.parent / pype_version.path.name
                 copyfile(
                     pype_version.path.as_posix(),
-                    destination.parent.as_posix())
+                    _destination_zip.as_posix())
             except OSError as e:
                 self._print(
                     "cannot copy version to user data directory", LOG_ERROR,
                     exc_info=True)
-                raise PypeVersionIOError(
-                    "can't copy version to destination") from e
+                raise PypeVersionIOError((
+                    f"can't copy version {pype_version.path.as_posix()} "
+                    f"to destination {destination.parent.as_posix()}")) from e
 
         # extract zip there
         self._print("extracting zip to destination ...")

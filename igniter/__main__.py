@@ -2,11 +2,26 @@
 """Open install dialog."""
 
 import sys
-from Qt import QtWidgets
+from Qt import QtWidgets  # noqa
+from Qt.QtCore import Signal  # noqa
 
 from .install_dialog import InstallDialog
 
+
+RESULT = 0
+
+
+def get_result(res: int):
+    """Sets result returned from dialog."""
+    global RESULT
+    RESULT = res
+
+
 app = QtWidgets.QApplication(sys.argv)
+
 d = InstallDialog()
+d.finished.connect(get_result)
 d.show()
-sys.exit(app.exec_())
+app.exec_()
+print(RESULT)
+sys.exit(RESULT)
