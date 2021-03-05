@@ -134,45 +134,6 @@ class TrayMainWindow(QtWidgets.QMainWindow):
         self.tray_widget.show()
 
 
-class DragAndDropHelper:
-    """ Helper adds to widget drag and drop ability
-
-    :param widget: Qt Widget where drag and drop ability will be added
-    """
-
-    def __init__(self, widget):
-        self.widget = widget
-        self.widget.mousePressEvent = self.mousePressEvent
-        self.widget.mouseMoveEvent = self.mouseMoveEvent
-        self.widget.mouseReleaseEvent = self.mouseReleaseEvent
-
-    def mousePressEvent(self, event):
-        self.__mousePressPos = None
-        self.__mouseMovePos = None
-        if event.button() == QtCore.Qt.LeftButton:
-            self.__mousePressPos = event.globalPos()
-            self.__mouseMovePos = event.globalPos()
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() == QtCore.Qt.LeftButton:
-            # adjust offset from clicked point to origin of widget
-            currPos = self.widget.mapToGlobal(
-                self.widget.pos()
-            )
-            globalPos = event.globalPos()
-            diff = globalPos - self.__mouseMovePos
-            newPos = self.widget.mapFromGlobal(currPos + diff)
-            self.widget.move(newPos)
-            self.__mouseMovePos = globalPos
-
-    def mouseReleaseEvent(self, event):
-        if self.__mousePressPos is not None:
-            moved = event.globalPos() - self.__mousePressPos
-            if moved.manhattanLength() > 3:
-                event.ignore()
-                return
-
-
 class PypeTrayApplication(QtWidgets.QApplication):
     """Qt application manages application's control flow."""
 
