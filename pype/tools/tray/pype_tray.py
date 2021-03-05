@@ -54,6 +54,26 @@ class TrayManager:
         # Print time report
         self.modules_manager.print_report()
 
+    def show_tray_message(self, title, message, icon=None, msecs=None):
+        """Show tray message.
+
+        Args:
+            title (str): Title of message.
+            message (str): Content of message.
+            icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
+                Information icon, may differ by Qt version.
+            msecs (int): Duration of message visibility in miliseconds.
+                Default is 10000 msecs, may differ by Qt version.
+        """
+        args = [title, message]
+        kwargs = {}
+        if icon:
+            kwargs["icon"] = icon
+        if msecs:
+            kwargs["msecs"] = msecs
+
+        self.tray_widget.showMessage(*args, **kwargs)
+
     def _add_version_item(self):
         subversion = os.environ.get("PYPE_SUBVERSION")
         client_name = os.environ.get("PYPE_CLIENT")
