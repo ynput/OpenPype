@@ -124,63 +124,14 @@ class TrayMainWindow(QtWidgets.QMainWindow):
 
     Every widget should have set this window as parent because
     QSystemTrayIcon widget is not allowed to be a parent of any widget.
-
-    :param app: Qt application manages application's control flow
-    :type app: QtWidgets.QApplication
-
-    .. note::
-        *TrayMainWindow* has ability to show **working** widget.
-        Calling methods:
-        - ``show_working()``
-        - ``hide_working()``
-    .. todo:: Hide working widget if idle is too long
     """
 
     def __init__(self, app):
-        super().__init__()
+        super(TrayMainWindow, self).__init__()
         self.app = app
 
-        self.set_working_widget()
-
-        self.trayIcon = SystemTrayIcon(self)
-        self.trayIcon.show()
-
-    def set_working_widget(self):
-        image_file = resources.get_resource("icons", "working.svg")
-        img_pix = QtGui.QPixmap(image_file)
-        if image_file.endswith('.svg'):
-            widget = QtSvg.QSvgWidget(image_file)
-        else:
-            widget = QtWidgets.QLabel()
-            widget.setPixmap(img_pix)
-
-        # Set widget properties
-        widget.setGeometry(img_pix.rect())
-        widget.setMask(img_pix.mask())
-        widget.setWindowFlags(
-            QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint
-        )
-        widget.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
-
-        self.center_widget(widget)
-        self._working_widget = widget
-        self.helper = DragAndDropHelper(self._working_widget)
-
-    def center_widget(self, widget):
-        frame_geo = widget.frameGeometry()
-        screen = self.app.desktop().cursor().pos()
-        center_point = self.app.desktop().screenGeometry(
-            self.app.desktop().screenNumber(screen)
-        ).center()
-        frame_geo.moveCenter(center_point)
-        widget.move(frame_geo.topLeft())
-
-    def show_working(self):
-        self._working_widget.show()
-
-    def hide_working(self):
-        self.center_widget(self._working_widget)
-        self._working_widget.hide()
+        self.tray_widget = SystemTrayIcon(self)
+        self.tray_widget.show()
 
 
 class DragAndDropHelper:
