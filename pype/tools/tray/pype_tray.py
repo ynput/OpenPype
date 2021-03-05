@@ -10,6 +10,51 @@ from pype.settings.lib import get_system_settings
 import pype.version
 
 
+class PypeInfoWidget(QtWidgets.QWidget):
+    not_allowed = "N/A"
+
+    def __init__(self, parent=None):
+        super(PypeInfoWidget, self).__init__(parent)
+
+        self.setStyleSheet(style.load_stylesheet())
+
+        main_layout = QtWidgets.QFormLayout(self)
+
+        if getattr(sys, "frozen", False):
+            version_end = "build"
+        else:
+            version_end = "code"
+        version_value = "{} ({})".format(
+            pype.version.__version__, version_end
+        )
+
+        lable_value = [
+            # Pype version
+            ("Pype version:", version_value),
+            ("Pype location:", os.environ.get("PYPE_ROOT")),
+
+            # Mongo URL
+            ("Pype Mongo URL:", os.environ.get("PYPE_MONGO"))
+        ]
+
+        for label, value in lable_value:
+            main_layout.addRow(
+                label,
+                QtWidgets.QLabel(value or self.not_allowed)
+            )
+
+    def showEvent(self, event):
+        result = super(PypeInfoWidget, self).showEvent(event)
+        screen_center = (
+            QtWidgets.QApplication.desktop().availableGeometry(self).center()
+        )
+        self.move(
+            screen_center.x() - (self.width() / 2),
+            screen_center.y() - (self.height() / 2)
+        )
+        return result
+
+
 class TrayManager:
     """Cares about context of application.
 
@@ -19,6 +64,8 @@ class TrayManager:
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
+
+        self.pype_info_widget = None
 
         self.log = Logger.get_logger(self.__class__.__name__)
 
@@ -85,11 +132,20 @@ class TrayManager:
             version_string += ", {}".format(client_name)
 
         version_action = QtWidgets.QAction(version_string, self.tray_widget)
+        version_action.triggered.connect(self._on_version_action)
         self.tray_widget.menu.addAction(version_action)
         self.tray_widget.menu.addSeparator()
 
     def on_exit(self):
         self.modules_manager.on_exit()
+
+    def _on_version_action(self):
+        if self.pype_info_widget is None:
+            self.pype_info_widget = PypeInfoWidget()
+
+        self.pype_info_widget.show()
+        self.pype_info_widget.raise_()
+        self.pype_info_widget.activateWindow()
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
