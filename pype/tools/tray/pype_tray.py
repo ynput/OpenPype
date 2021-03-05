@@ -8,10 +8,6 @@ from pype.api import Logger, resources
 from pype.modules import TrayModulesManager, ITrayService
 from pype.settings.lib import get_system_settings
 import pype.version
-try:
-    import configparser
-except Exception:
-    import ConfigParser as configparser
 
 
 class TrayManager:
