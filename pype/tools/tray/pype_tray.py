@@ -23,7 +23,7 @@ class PypeInfoWidget(QtWidgets.QWidget):
         self.setWindowTitle("Pype info")
 
         main_layout = QtWidgets.QFormLayout(self)
-
+        main_layout.setLabelAlignment(QtCore.Qt.AlignRight)
         if getattr(sys, "frozen", False):
             version_end = "build"
         else:
