@@ -176,7 +176,7 @@ def validate_path_string(path: str) -> (bool, str):
     if not path:
         return False, "empty string"
 
-    if Path(path).exists():
+    if not Path(path).exists():
         return False, "path doesn't exists"
 
     if not Path(path).is_dir():
@@ -251,6 +251,6 @@ def get_pype_path_from_db(url: str) -> Union[str, None]:
     col = db.settings
 
     global_settings = col.find_one(
-        {"type": "global_settings"}, {"data": 1}).get("data")
+        {"type": "global_settings"}, {"data": 1}).get("data", {})
 
     return global_settings.get("pype_path", {}).get(platform.system().lower())

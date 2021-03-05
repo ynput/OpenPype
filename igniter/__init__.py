@@ -7,6 +7,7 @@ from Qt.QtCore import Signal  # noqa
 
 from .install_dialog import InstallDialog
 from .bootstrap_repos import BootstrapRepos
+from .version import __version__ as version
 
 
 RESULT = 0
@@ -18,18 +19,19 @@ def get_result(res: int):
     RESULT = res
 
 
-def run():
+def open_dialog():
     """Show Igniter dialog."""
     app = QtWidgets.QApplication(sys.argv)
     d = InstallDialog()
     d.finished.connect(get_result)
-    d.show()
-    app.exec_()
+    d.open()
+    app.exec()
     return RESULT
 
 
 __all__ = [
     "InstallDialog",
     "BootstrapRepos",
-    "run"
+    "open_dialog",
+    "version"
 ]

@@ -7,7 +7,7 @@ from Qt import QtCore, QtGui, QtWidgets  # noqa
 from Qt.QtGui import QValidator  # noqa
 from Qt.QtCore import QTimer  # noqa
 
-from .install_thread import InstallThread
+from .install_thread import InstallThread, InstallResult
 from .tools import (
     validate_path_string,
     validate_mongo_connection,
@@ -107,11 +107,15 @@ class InstallDialog(QtWidgets.QDialog):
 
         self.pype_path_label = QtWidgets.QLabel(
             """This is <b>Path to studio location</b> where Pype versions
-            are stored. It will be pre-filled if your mongoDB connection is
+            are stored. It will be pre-filled if your MongoDB connection is
             already set and your studio defined this location.
             <p>
-            Leave it empty if you want to use Pype version that come with this
-            installation.
+            Leave it empty if you want to install Pype version that comes with
+            this installation.
+            </p>
+            <p>
+            If you want to just try Pype without installing, hit the middle
+            button that states "run without installation".
             </p>
             """
         )
@@ -465,6 +469,17 @@ class InstallDialog(QtWidgets.QDialog):
         else:
             self._mongo.set_valid()
 
+        if self._pype_run_ready:
+            self.done(3)
+            return
+
+        if self.path != "":
+            valid, reason = validate_path_string(self.path)
+
+        if not valid:
+            self.update_console(f"!!! {reason}", True)
+            return
+
         self._disable_buttons()
         self._install_thread = InstallThread(
             self.install_result_callback_handler, self)
@@ -475,9 +490,9 @@ class InstallDialog(QtWidgets.QDialog):
         self._install_thread.set_mongo(self._mongo.get_mongo_url())
         self._install_thread.start()
 
-    def install_result_callback_handler(self, status):
+    def install_result_callback_handler(self, result: InstallResult):
         """Change button behaviour based on installation outcome."""
-        self.update_console(f"--- {status}")
+        status = result.status
         if status >= 0:
             self.install_button.setText("Run installed Pype")
             self._pype_run_ready = True
@@ -607,7 +622,7 @@ class MongoValidator(QValidator):
                 QValidator.State.Invalid, "need mongodb schema", mongo)
 
         return self._return_state(
-                QValidator.State.Intermediate, "", mongo)
+            QValidator.State.Intermediate, "", mongo)
 
 
 class PathValidator(MongoValidator):

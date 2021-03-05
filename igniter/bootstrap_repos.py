@@ -337,6 +337,10 @@ class BootstrapRepos:
         else:
             version = self.get_version(repo_dir)
 
+        if not version:
+            self._print("Pype not found.", LOG_ERROR)
+            return
+
         # create destination directory
         if not self.data_dir.exists():
             self.data_dir.mkdir(parents=True)

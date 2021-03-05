@@ -176,6 +176,7 @@ def run(arguments: list, env: dict = None) -> int:
 
     interpreter.extend(arguments)
 
+    print("|".join(interpreter))
     p = subprocess.Popen(interpreter, env=env)
     p.wait()
     print(f">>> done [{p.returncode}]")
@@ -276,8 +277,12 @@ def _process_arguments() -> tuple:
     # this is helper to run igniter before anything else
     if "igniter" in sys.argv:
         import igniter
-        igniter.run()
+        return_code = igniter.open_dialog()
 
+        # this is when we want to run Pype without installing anything.
+        # or we are ready to run.
+        if return_code not in [2, 3]:
+            sys.exit(return_code)
 
     return use_version, use_staging
 
@@ -372,29 +377,41 @@ def _find_frozen_pype(use_version: str = None,
     pype_version = None
     pype_versions = bootstrap.find_pype(include_zips=True,
                                         staging=use_staging)
-    try:
-        # use latest one found (last in the list is latest)
-        pype_version = pype_versions[-1]
-    except IndexError:
-        # no pype version found, run Igniter and ask for them.
-        print('*** No Pype versions found.')
-        print("--- launching setup UI ...")
-        return_code = run(["igniter"])
-        if return_code != 0:
-            raise RuntimeError("igniter crashed.")
-        print('>>> Finding Pype again ...')
-        pype_versions = bootstrap.find_pype(staging=use_staging)
+    if not os.getenv("PYPE_TRYOUT"):
         try:
+            # use latest one found (last in the list is latest)
             pype_version = pype_versions[-1]
         except IndexError:
-            print("!!! Something is wrong and we didn't found it again.")
-            pype_versions = None
+            # no pype version found, run Igniter and ask for them.
+            print('*** No Pype versions found.')
+            print("--- launching setup UI ...")
+            import igniter
+            return_code = igniter.open_dialog()
+            if return_code == 2:
+                os.environ["PYPE_TRYOUT"] = "1"
+            if return_code == 3:
+                # run Pype after installation
+
+                print('>>> Finding Pype again ...')
+                pype_versions = bootstrap.find_pype(staging=use_staging)
+                try:
+                    pype_version = pype_versions[-1]
+                except IndexError:
+                    print(("!!! Something is wrong and we didn't "
+                          "found it again."))
+                    pype_versions = None
+                    sys.exit(1)
+            elif return_code != 2:
+                print(f"  . finished ({return_code})")
+                sys.exit(return_code)
 
     if not pype_versions:
         # no Pype versions found anyway, lets use then the one
         # shipped with frozen Pype
-        print("*** Still no luck finding Pype.")
-        print("*** We'll try to use the one coming with Pype installation.")
+        if not os.getenv("PYPE_TRYOUT"):
+            print("*** Still no luck finding Pype.")
+            print(("*** We'll try to use the one coming "
+                   "with Pype installation."))
         version_path = _bootstrap_from_code(use_version)
         pype_version = PypeVersion(
             version=BootstrapRepos.get_version(version_path),
