@@ -50,8 +50,11 @@ class ValidateNaming(pyblish.api.InstancePlugin):
     actions = [ValidateNamingRepair]
 
     def process(self, instance):
-        msg = "Name \"{}\" is not allowed.".format(instance.data["name"])
+        help_msg = ' Use Repair action (A) in Pyblish to fix it.'
+        msg = "Name \"{}\" is not allowed.{}".format(instance.data["name"],
+                                                     help_msg)
         assert " " not in instance.data["name"], msg
 
-        msg = "Subset \"{}\" is not allowed.".format(instance.data["subset"])
+        msg = "Subset \"{}\" is not allowed.{}".format(instance.data["subset"],
+                                                       help_msg)
         assert " " not in instance.data["subset"], msg
