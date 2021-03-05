@@ -23,6 +23,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
     color_regex = re.compile(r"^#[a-fA-F0-9]{6}$")
 
     # Presetable attribute
+    use_bg_color = True
     ffmpeg_args = None
 
     def process(self, instance):
@@ -143,7 +144,11 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             .get("extract_colors", {})
             .get("bg_color")
         )
-        if not bg_color or ext not in self.alpha_exts:
+        if (
+            not bg_color
+            or ext not in self.alpha_exts
+            or not self.use_bg_color
+        ):
             return output_args
 
         if not self.color_regex.match(bg_color):
