@@ -14,6 +14,7 @@ from .tools import (
     get_pype_path_from_db
 )
 from .user_settings import PypeSettingsRegistry
+from .version import __version__
 
 
 class FocusHandlingLineEdit(QtWidgets.QLineEdit):
@@ -45,7 +46,7 @@ class InstallDialog(QtWidgets.QDialog):
 
         self.mongo_url = os.getenv("PYPE_MONGO", "") or self.registry.get_secure_item("pypeMongo") or ""  # noqa: E501
 
-        self.setWindowTitle("Pype - Configure Pype repository path")
+        self.setWindowTitle(f"Pype Igniter {__version__} - Pype installation")
         self._icon_path = os.path.join(
             os.path.dirname(__file__), 'pype_icon.png')
         icon = QtGui.QIcon(self._icon_path)
@@ -342,7 +343,7 @@ class InstallDialog(QtWidgets.QDialog):
                 color: rgb(72, 200, 150);
                 font-family: "Roboto Mono";
                 font-size: 0.5em;
-                border: 1px solid rgb(48, 48, 48); 
+                border: 1px solid rgb(48, 48, 48);
                 }
                 QScrollBar:vertical {
                  border: 1px solid rgb(61, 115, 97);
