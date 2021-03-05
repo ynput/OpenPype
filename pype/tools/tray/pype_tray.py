@@ -15,13 +15,12 @@ class TrayManager:
 
     Load submenus, actions, separators and modules into tray's context.
     """
-    available_sourcetypes = ["python", "file"]
 
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
 
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.module_settings = get_system_settings()["modules"]
 
@@ -101,9 +100,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     """
 
     def __init__(self, parent):
-        self.icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
 
-        QtWidgets.QSystemTrayIcon.__init__(self, self.icon, parent)
+        super(SystemTrayIcon, self).__init__(icon, parent)
 
         # Store parent - QtWidgets.QMainWindow()
         self.parent = parent
@@ -116,15 +115,15 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.tray_man = TrayManager(self, self.parent)
         self.tray_man.initialize_modules()
 
-        # Catch activate event
-        self.activated.connect(self.on_systray_activated)
+        # Catch activate event for left click if not on MacOS
+        #   - MacOS has this ability by design so menu would be doubled
+        if platform.system().lower() != "darwin":
+            self.activated.connect(self.on_systray_activated)
         # Add menu to Context of SystemTrayIcon
         self.setContextMenu(self.menu)
 
     def on_systray_activated(self, reason):
         # show contextMenu if left click
-        if platform.system().lower() == "darwin":
-            return
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
             position = QtGui.QCursor().pos()
             self.contextMenu().popup(position)
