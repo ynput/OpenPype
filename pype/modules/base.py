@@ -638,8 +638,10 @@ class TrayModulesManager(ModulesManager):
         self.modules_by_id = {}
         self.modules_by_name = {}
         self._report = {}
+        self.tray_manager = None
 
-    def initialize(self, tray_menu):
+    def initialize(self, tray_manager, tray_menu):
+        self.tray_manager = tray_manager
         self.initialize_modules()
         self.tray_init()
         self.connect_modules()
