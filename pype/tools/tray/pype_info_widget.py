@@ -18,7 +18,7 @@ class EnvironmentsView(QtWidgets.QTreeView):
         self.header().setSectionResizeMode(
             0, QtWidgets.QHeaderView.ResizeToContents
         )
-        self.setSelectionMode(QtWidgets.QTreeView.MultiSelection)
+        self.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
 
     def get_all_as_dict(self):
         pass
