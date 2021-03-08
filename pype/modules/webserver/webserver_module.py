@@ -1,3 +1,5 @@
+import os
+from pype import resources
 from .. import PypeModule, ITrayService
 
 
@@ -17,12 +19,21 @@ class WebServerModule(PypeModule, ITrayService):
 
     def tray_init(self):
         self.create_server_manager()
+        self._add_resources_statics()
 
     def tray_start(self):
         self.start_server()
 
     def tray_exit(self):
         self.stop_server()
+
+    def _add_resources_statics(self):
+        static_prefix = "/res"
+        self.server_manager.add_static(static_prefix, resources.RESOURCES_DIR)
+
+        os.environ["PYPE_STATICS_SERVER"] = "http://localhost:{}{}".format(
+            self.port, static_prefix
+        )
 
     def start_server(self):
         if self.server_manager:

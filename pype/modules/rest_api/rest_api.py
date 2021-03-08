@@ -107,7 +107,6 @@ class RestApiModule(PypeModule, ITrayService):
 
         self.rest_api_url = None
         self.rest_api_thread = None
-        self.resources_url = None
 
     def register_callback(
         self, path, callback, url_prefix="", methods=[], strict_match=False
@@ -189,11 +188,9 @@ class RestApiModule(PypeModule, ITrayService):
         self.rest_api_url = "http://localhost:{}".format(port)
         self.rest_api_thread = RestApiThread(self, port)
         self.register_statics("/res", resources.RESOURCES_DIR)
-        self.resources_url = "{}/res".format(self.rest_api_url)
 
         # Set rest api environments
         os.environ["PYPE_REST_API_URL"] = self.rest_api_url
-        os.environ["PYPE_STATICS_SERVER"] = self.resources_url
 
     def tray_start(self):
         RestApiFactory.prepare_registered()
