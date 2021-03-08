@@ -7,6 +7,7 @@ from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
 from pype.api import resources
 import pype.version
+from pype.settings.lib import get_local_settings
 
 
 class EnvironmentsView(QtWidgets.QTreeView):
@@ -69,8 +70,29 @@ class PypeInfoWidget(QtWidgets.QWidget):
         self.setWindowTitle("Pype info")
 
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addWidget(self._create_pype_info_widget())
-        main_layout.addWidget(self._create_environ_widget())
+        main_layout.addWidget(self._create_pype_info_widget(), 0)
+        main_layout.addWidget(self._create_local_settings_widget(), 0)
+        main_layout.addWidget(self._create_environ_widget(), 1)
+
+    def _create_local_settings_widget(self):
+        local_settings = get_local_settings()
+
+        local_settings_widget = QtWidgets.QWidget(self)
+
+        label_widget = QtWidgets.QLabel(
+            "Local settings", local_settings_widget
+        )
+        label_widget.setStyleSheet("font-weight: bold;")
+        settings_input = QtWidgets.QPlainTextEdit(local_settings_widget)
+        settings_input.setReadOnly(True)
+        settings_input.setMinimumHeight(20)
+        settings_input.setPlainText(json.dumps(local_settings, indent=4))
+
+        local_settings_layout = QtWidgets.QVBoxLayout(local_settings_widget)
+        local_settings_layout.addWidget(label_widget)
+        local_settings_layout.addWidget(settings_input)
+
+        return local_settings_widget
 
     def _create_environ_widget(self):
         env_widget = QtWidgets.QWidget(self)
