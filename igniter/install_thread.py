@@ -129,6 +129,7 @@ class InstallThread(QThread):
                     self.message.emit(f"Using: {pype_version}", False)
                     bs.install_version(pype_version)
                     self.message.emit(f"Installed as {pype_version}", False)
+                    self.progress.emit(100)
                     self.finished.emit(InstallResult(1))
                     return
                 else:
@@ -155,6 +156,8 @@ class InstallThread(QThread):
                 return
 
             self.message.emit(f"Installed as {local_pype}", False)
+            self.progress.emit(100)
+            return
         else:
             # if we have mongo connection string, validate it, set it to
             # user settings and get PYPE_PATH from there.
@@ -175,6 +178,7 @@ class InstallThread(QThread):
                 self.finished.emit(InstallResult(-1))
                 return
 
+        self.progress.emit(100)
         self.finished.emit(InstallResult(1))
         return
 
