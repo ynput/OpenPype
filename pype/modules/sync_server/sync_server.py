@@ -119,7 +119,8 @@ class SyncServer(PypeModule, ITrayModule):
         # some parts of code need to run sequentially, not in async
         self.lock = None
         self.connection = None  # connection to avalon DB to update state
-        self.presets = None  # settings for all enabled projects for sync
+        # settings for all enabled projects for sync
+        self.sync_project_presets = None
         self.sync_server_thread = None  # asyncio requires new thread
 
         self.action_show_widget = None
@@ -335,15 +336,14 @@ class SyncServer(PypeModule, ITrayModule):
         if not self.enabled:
             return
 
-        self.presets = None
+        self.sync_project_presets = None
         self.lock = threading.Lock()
 
         self.connection = AvalonMongoDB()
         self.connection.install()
 
         try:
-            self.presets = self.get_synced_presets()
-            self.set_active_sites(self.presets)
+            self.sync_project_presets = self.get_synced_presets()
             self.sync_server_thread = SyncServerThread(self)
             from .tray.app import SyncServerWindow
             self.widget = SyncServerWindow(self)
@@ -355,7 +355,7 @@ class SyncServer(PypeModule, ITrayModule):
                 "There are not set presets for SyncServer OR "
                 "Credentials provided are invalid, "
                 "no syncing possible").
-                format(str(self.presets)), exc_info=True)
+                     format(str(self.sync_project_presets)), exc_info=True)
             self.enabled = False
 
     def tray_start(self):
@@ -369,7 +369,8 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             None
         """
-        if self.presets and self.active_sites:
+        if self.sync_project_presets and \
+                self.has_working_sites(self.sync_project_presets):
             self.sync_server_thread.start()
         else:
             log.info("No presets or active providers. " +
@@ -431,8 +432,9 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             (dict): of settings, keys are project names
         """
-        if self.presets:  # presets set already, do not call again and again
-            return self.presets
+        # presets set already, do not call again and again
+        if self.sync_project_presets:
+            return self.sync_project_presets
 
         sync_presets = {}
         if not self.connection:
@@ -460,8 +462,9 @@ class SyncServer(PypeModule, ITrayModule):
         """
         # presets set already, do not call again and again
         # self.log.debug("project preset {}".format(self.presets))
-        if self.presets and self.presets.get(project_name):
-            return self.presets.get(project_name)
+        if self.sync_project_presets and \
+                self.sync_project_presets.get(project_name):
+            return self.sync_project_presets.get(project_name)
 
         settings = get_project_settings(project_name)
         sync_settings = settings.get("global")["sync_server"]
@@ -474,20 +477,26 @@ class SyncServer(PypeModule, ITrayModule):
 
         return {}
 
-    def set_active_sites(self, settings):
+    def has_working_sites(self, settings):
         """
-            Sets 'self.active_sites' as a dictionary from provided 'settings'
+            Learn if there is any valid combination of active and remote sites
+            for any configured project.
 
-            Format:
-              {  'project_name' : ('provider_name', 'site_name') }
+            If yes, sync server should be started, if not, it shouldnt be
+            started unnecessary to hog resources.
+
         Args:
             settings (dict): all enabled project sync setting (sites labesl,
                 retries count etc.)
         """
-        self.active_sites = {}
-        initiated_handlers = {}
+        initiated_handlers = {}  # handlers cache
         for project_name, project_setting in settings.items():
+            set_sites = {self.get_local_site(project_name): False,
+                         self.get_remote_site(project_name): False}
             for site_name, config in project_setting.get("sites").items():
+                if site_name not in set_sites.keys():
+                    continue
+
                 handler = initiated_handlers.get(config["provider"])
                 if not handler:
                     handler = lib.factory.get_provider(config["provider"],
@@ -496,29 +505,12 @@ class SyncServer(PypeModule, ITrayModule):
                     initiated_handlers[config["provider"]] = handler
 
                 if handler.is_active():
-                    if not self.active_sites.get('project_name'):
-                        self.active_sites[project_name] = []
+                    set_sites[site_name] = True
+            if all(set_sites.values()):
+                return True
 
-                    self.active_sites[project_name].append(
-                        (config["provider"], site_name))
-
-        if not self.active_sites:
-            log.info("No sync sites active, no working credentials provided")
-
-    def get_active_sites(self, project_name):
-        """
-            Returns active sites (provider configured and able to connect) per
-            project.
-
-            Args:
-                project_name (str): used as a key in dict
-
-            Returns:
-                (dict):
-                Format:
-                    {  'project_name' : ('provider_name', 'site_name') }
-        """
-        return self.active_sites[project_name]
+        log.info("No tuple of active-remote sites is active for any project.")
+        return False
 
     def get_local_site(self, project_name):
         """
@@ -606,8 +598,9 @@ class SyncServer(PypeModule, ITrayModule):
                 ]}
             ]
         }
-
-        log.debug("get_sync_representations.query: {}".format(query))
+        log.debug("active_site:{} - remote_site:{}".format(active_site,
+                                                           remote_site))
+        log.debug("query: {}".format(query))
         representations = self.connection.find(query)
 
         return representations
@@ -686,9 +679,11 @@ class SyncServer(PypeModule, ITrayModule):
             # structure should be run in parallel
             handler = lib.factory.get_provider(provider_name, site_name,
                                                tree=tree, presets=preset)
-            remote_file = self._get_remote_file_path(file,
-                                                     handler.get_roots_config()
-                                                     )
+
+            root_configs = self._get_roots_config(self.sync_project_presets,
+                                                  collection,
+                                                  site_name)
+            remote_file = self._get_remote_file_path(file, root_configs)
 
             local_file = self.get_local_file_path(collection,
                                                   file.get("path", ""))
@@ -737,8 +732,11 @@ class SyncServer(PypeModule, ITrayModule):
         with self.lock:
             handler = lib.factory.get_provider(provider_name, site_name,
                                                tree=tree, presets=preset)
-            remote_file_path = self._get_remote_file_path(
-                file, handler.get_roots_config())
+
+            root_configs = self._get_roots_config(self.sync_project_presets,
+                                                  collection,
+                                                  site_name)
+            remote_file_path = self._get_remote_file_path(file, root_configs)
 
             local_file_path = self.get_local_file_path(collection,
                                                        file.get("path", ""))
@@ -1072,13 +1070,8 @@ class SyncServer(PypeModule, ITrayModule):
                              format(site_name))
             return
 
-        handler = None
-        sites = self.get_active_sites(collection)
-        for provider_name, provider_site_name in sites:
-            if provider_site_name == site_name:
-                handler = lib.factory.get_provider(provider_name,
-                                                   site_name)
-                break
+        provider_name = self.get_provider_for_site(collection, site_name)
+        handler = lib.factory.get_provider(provider_name, site_name)
 
         if handler and isinstance(handler, LocalDriveHandler):
             query = {
@@ -1141,7 +1134,8 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             (int): in seconds
         """
-        return int(self.presets[project_name]["config"]["loop_delay"])
+        ld = self.sync_project_presets[project_name]["config"]["loop_delay"]
+        return int(ld)
 
     def show_widget(self):
         """Show dialog to enter credentials"""
@@ -1278,11 +1272,19 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             (list)
         """
-        retry_cnt = self.presets[project_name].get("config")["retry_cnt"]
+        retry_cnt = self.sync_project_presets[project_name].\
+            get("config")["retry_cnt"]
         arr = [i for i in range(int(retry_cnt))]
         arr.append(None)
 
         return arr
+
+    def _get_roots_config(self, presets, project_name, site_name):
+        """
+            Returns configured root(s) for 'project_name' and 'site_name' from
+            settings ('presets')
+        """
+        return presets[project_name]['sites'][site_name]['root']
 
 
 class SyncServerThread(threading.Thread):
