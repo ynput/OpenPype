@@ -8,6 +8,11 @@ from Qt import QtCore, QtGui, QtWidgets
 from pype.api import resources
 import pype.version
 from pype.settings.lib import get_local_settings
+from pype.lib.pype_info import (
+    get_pype_info,
+    get_workstation_info,
+    extract_pype_info_to_file
+)
 
 
 class EnvironmentsView(QtWidgets.QTreeView):
@@ -19,9 +24,6 @@ class EnvironmentsView(QtWidgets.QTreeView):
             0, QtWidgets.QHeaderView.ResizeToContents
         )
         self.setSelectionMode(QtWidgets.QTreeView.ExtendedSelection)
-
-    def get_all_as_dict(self):
-        pass
 
     def get_selection_as_dict(self):
         indexes = self.selectionModel().selectedIndexes()
@@ -203,25 +205,20 @@ class PypeInfoWidget(QtWidgets.QWidget):
 
     def _create_pype_info_widget(self):
         """Create widget with information about pype application."""
-        pype_root = os.environ["PYPE_ROOT"]
-        if getattr(sys, "frozen", False):
-            version_end = "build"
-            executable_path = sys.executable
-        else:
-            version_end = "code"
-            executable_path = os.path.join(pype_root, "start.py")
-        version_value = "{} ({})".format(
-            pype.version.__version__, version_end
-        )
 
+        pype_info = get_pype_info()
+        version_value = "{} ({})".format(
+            pype_info["version"],
+            pype_info["version_type"]
+        )
         lable_value = [
             # Pype version
             ("Pype version:", version_value),
-            ("Pype executable:", executable_path),
-            ("Pype location:", pype_root),
+            ("Pype executable:", pype_info["executable"]),
+            ("Pype location:", pype_info["pype_root"]),
 
             # Mongo URL
-            ("Pype Mongo URL:", os.environ.get("PYPE_MONGO"))
+            ("Pype Mongo URL:", pype_info["mongo_url"])
         ]
 
         info_widget = QtWidgets.QWidget(self)
