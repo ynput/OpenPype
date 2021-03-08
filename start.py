@@ -176,7 +176,6 @@ def run(arguments: list, env: dict = None) -> int:
 
     interpreter.extend(arguments)
 
-    print("|".join(interpreter))
     p = subprocess.Popen(interpreter, env=env)
     p.wait()
     print(f">>> done [{p.returncode}]")

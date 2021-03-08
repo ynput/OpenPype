@@ -144,7 +144,7 @@ class InstallThread(QThread):
                     PypeVersionInvalid,
                     PypeVersionIOError) as e:
                 self.message.emit(f"Installed failed: ", True)
-                self.message.emit(e, True)
+                self.message.emit(str(e), True)
                 self.finished.emit(InstallResult(-1))
 
             self.message.emit(f"Installed as {local_pype}", False)
