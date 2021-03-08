@@ -308,9 +308,9 @@ def _determine_mongodb() -> str:
         except ValueError:
             print("*** No DB connection string specified.")
             print("--- launching setup UI ...")
-            return_code = run(["igniter"])
-            if return_code != 0:
-                raise RuntimeError("mongodb is not set")
+            import igniter
+            igniter.open_dialog()
+
             try:
                 pype_mongo = bootstrap.registry.get_secure_item("pypeMongo")
             except ValueError:

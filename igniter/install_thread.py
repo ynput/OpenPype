@@ -80,6 +80,7 @@ class InstallThread(QThread):
                 else:
                     self._mongo = os.getenv("PYPE_MONGO")
             else:
+                self.message.emit("Saving mongo connection string ...", False)
                 bs.registry.set_secure_item("pypeMongo", self._mongo)
 
             os.environ["PYPE_MONGO"] = self._mongo
@@ -99,6 +100,7 @@ class InstallThread(QThread):
                     if detected[-1].path.suffix.lower() == ".zip":
                         bs.extract_pype(detected[-1])
                     self.finished.emit(InstallResult(0))
+                    return
 
                 if PypeVersion(version=local_version).get_main_version() == detected[-1].get_main_version():  # noqa
                     self.message.emit((
@@ -107,6 +109,7 @@ class InstallThread(QThread):
                     ), False)
                     self.message.emit("Skipping Pype install ...", False)
                     self.finished.emit(InstallResult(0))
+                    return
 
                 self.message.emit((
                     "All installed versions are older then "
@@ -122,10 +125,12 @@ class InstallThread(QThread):
                         self.message.emit(
                             f"!!! Install failed - {pype_version}", True)
                         self.finished.emit(InstallResult(-1))
+                        return
                     self.message.emit(f"Using: {pype_version}", False)
                     bs.install_version(pype_version)
                     self.message.emit(f"Installed as {pype_version}", False)
                     self.finished.emit(InstallResult(1))
+                    return
                 else:
                     self.message.emit("None detected.", False)
 
@@ -137,6 +142,7 @@ class InstallThread(QThread):
                 self.message.emit(
                     f"!!! Install failed - {local_pype}", True)
                 self.finished.emit(InstallResult(-1))
+                return
 
             try:
                 bs.install_version(local_pype)
@@ -146,6 +152,7 @@ class InstallThread(QThread):
                 self.message.emit(f"Installed failed: ", True)
                 self.message.emit(str(e), True)
                 self.finished.emit(InstallResult(-1))
+                return
 
             self.message.emit(f"Installed as {local_pype}", False)
         else:
@@ -156,6 +163,7 @@ class InstallThread(QThread):
                     self.message.emit(
                         f"!!! invalid mongo url {self._mongo}", True)
                     self.finished.emit(InstallResult(-1))
+                    return
                 bs.registry.set_secure_item("pypeMongo", self._mongo)
                 os.environ["PYPE_MONGO"] = self._mongo
 
