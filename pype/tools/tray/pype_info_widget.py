@@ -85,7 +85,6 @@ class PypeInfoWidget(QtWidgets.QWidget):
         label_widget.setStyleSheet("font-weight: bold;")
         settings_input = QtWidgets.QPlainTextEdit(local_settings_widget)
         settings_input.setReadOnly(True)
-        settings_input.setMinimumHeight(20)
         settings_input.setPlainText(json.dumps(local_settings, indent=4))
 
         local_settings_layout = QtWidgets.QVBoxLayout(local_settings_widget)
