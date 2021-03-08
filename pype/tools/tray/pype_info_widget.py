@@ -57,6 +57,88 @@ class EnvironmentsView(QtWidgets.QTreeView):
             return super(EnvironmentsView, self).keyPressEvent(event)
 
 
+class ClickableWidget(QtWidgets.QWidget):
+    clicked = QtCore.Signal()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.clicked.emit()
+        super(ClickableWidget, self).mouseReleaseEvent(event)
+
+
+class CollapsibleWidget(QtWidgets.QWidget):
+    def __init__(self, label, parent):
+        super(CollapsibleWidget, self).__init__(parent)
+
+        self.content_widget = None
+
+        top_part = ClickableWidget(parent=self)
+
+        button_size = QtCore.QSize(5, 5)
+        button_toggle = QtWidgets.QToolButton(parent=top_part)
+        button_toggle.setIconSize(button_size)
+        button_toggle.setArrowType(QtCore.Qt.RightArrow)
+        button_toggle.setCheckable(True)
+        button_toggle.setChecked(False)
+
+        label_widget = QtWidgets.QLabel(label, parent=top_part)
+        spacer_widget = QtWidgets.QWidget(top_part)
+
+        top_part_layout = QtWidgets.QHBoxLayout(top_part)
+        top_part_layout.setContentsMargins(0, 0, 0, 0)
+        top_part_layout.addWidget(button_toggle)
+        top_part_layout.addWidget(label_widget)
+        top_part_layout.addWidget(spacer_widget, 1)
+
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        self.button_toggle = button_toggle
+        self.label_widget = label_widget
+
+        top_part.clicked.connect(self._top_part_clicked)
+        self.button_toggle.clicked.connect(self._btn_clicked)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        main_layout.setAlignment(QtCore.Qt.AlignTop)
+        main_layout.addWidget(top_part)
+
+        self.main_layout = main_layout
+
+    def set_content_widget(self, content_widget):
+        content_widget.setVisible(self.button_toggle.isChecked())
+        self.main_layout.addWidget(content_widget)
+        self.content_widget = content_widget
+
+    def _btn_clicked(self):
+        self.toggle_content(self.button_toggle.isChecked())
+
+    def _top_part_clicked(self):
+        self.toggle_content()
+
+    def toggle_content(self, *args):
+        if len(args) > 0:
+            checked = args[0]
+        else:
+            checked = not self.button_toggle.isChecked()
+        arrow_type = QtCore.Qt.RightArrow
+        if checked:
+            arrow_type = QtCore.Qt.DownArrow
+        self.button_toggle.setChecked(checked)
+        self.button_toggle.setArrowType(arrow_type)
+        if self.content_widget:
+            self.content_widget.setVisible(checked)
+        self.parent().updateGeometry()
+
+    def resizeEvent(self, event):
+        super(CollapsibleWidget, self).resizeEvent(event)
+        if self.content_widget:
+            self.content_widget.updateGeometry()
+
+
 class PypeInfoWidget(QtWidgets.QWidget):
     not_allowed = "N/A"
 
@@ -70,6 +152,7 @@ class PypeInfoWidget(QtWidgets.QWidget):
         self.setWindowTitle("Pype info")
 
         main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setAlignment(QtCore.Qt.AlignTop)
         main_layout.addWidget(self._create_pype_info_widget(), 0)
         main_layout.addWidget(self._create_local_settings_widget(), 0)
         main_layout.addWidget(self._create_environ_widget(), 1)
@@ -77,27 +160,18 @@ class PypeInfoWidget(QtWidgets.QWidget):
     def _create_local_settings_widget(self):
         local_settings = get_local_settings()
 
-        local_settings_widget = QtWidgets.QWidget(self)
+        local_settings_widget = CollapsibleWidget("Local settings", self)
 
-        label_widget = QtWidgets.QLabel(
-            "Local settings", local_settings_widget
-        )
-        label_widget.setStyleSheet("font-weight: bold;")
         settings_input = QtWidgets.QPlainTextEdit(local_settings_widget)
         settings_input.setReadOnly(True)
         settings_input.setPlainText(json.dumps(local_settings, indent=4))
 
-        local_settings_layout = QtWidgets.QVBoxLayout(local_settings_widget)
-        local_settings_layout.addWidget(label_widget)
-        local_settings_layout.addWidget(settings_input)
+        local_settings_widget.set_content_widget(settings_input)
 
         return local_settings_widget
 
     def _create_environ_widget(self):
-        env_widget = QtWidgets.QWidget(self)
-
-        env_label_widget = QtWidgets.QLabel("Environments", env_widget)
-        env_label_widget.setStyleSheet("font-weight: bold;")
+        env_widget = CollapsibleWidget("Environments", self)
 
         env_model = QtGui.QStandardItemModel()
 
@@ -114,9 +188,7 @@ class PypeInfoWidget(QtWidgets.QWidget):
 
         env_view = EnvironmentsView(env_model, env_widget)
 
-        env_layout = QtWidgets.QVBoxLayout(env_widget)
-        env_layout.addWidget(env_label_widget)
-        env_layout.addWidget(env_view)
+        env_widget.set_content_widget(env_view)
 
         return env_widget
 
