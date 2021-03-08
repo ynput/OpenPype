@@ -44,7 +44,11 @@ class InstallDialog(QtWidgets.QDialog):
         super(InstallDialog, self).__init__(parent)
         self.registry = PypeSettingsRegistry()
 
-        self.mongo_url = os.getenv("PYPE_MONGO", "") or self.registry.get_secure_item("pypeMongo") or ""  # noqa: E501
+        self.mongo_url = ""
+        try:
+            self.mongo_url = os.getenv("PYPE_MONGO", "") or self.registry.get_secure_item("pypeMongo")  # noqa: E501
+        except ValueError:
+            pass
 
         self.setWindowTitle(f"Pype Igniter {__version__} - Pype installation")
         self._icon_path = os.path.join(
