@@ -85,7 +85,7 @@ class CollapsibleWidget(QtWidgets.QWidget):
         spacer_widget = QtWidgets.QWidget(top_part)
 
         top_part_layout = QtWidgets.QHBoxLayout(top_part)
-        top_part_layout.setContentsMargins(0, 0, 0, 0)
+        top_part_layout.setContentsMargins(0, 0, 0, 5)
         top_part_layout.addWidget(button_toggle)
         top_part_layout.addWidget(label_widget)
         top_part_layout.addWidget(spacer_widget, 1)
@@ -154,8 +154,17 @@ class PypeInfoWidget(QtWidgets.QWidget):
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
         main_layout.addWidget(self._create_pype_info_widget(), 0)
+        main_layout.addWidget(self._create_separator(), 0)
         main_layout.addWidget(self._create_local_settings_widget(), 0)
+        main_layout.addWidget(self._create_separator(), 0)
         main_layout.addWidget(self._create_environ_widget(), 1)
+
+    def _create_separator(self):
+        separator_widget = QtWidgets.QWidget(self)
+        separator_widget.setStyleSheet("background: #222222;")
+        separator_widget.setMinimumHeight(2)
+        separator_widget.setMaximumHeight(2)
+        return separator_widget
 
     def _create_local_settings_widget(self):
         local_settings = get_local_settings()
