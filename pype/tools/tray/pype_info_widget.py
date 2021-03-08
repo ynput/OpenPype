@@ -15,11 +15,39 @@ from pype.lib.pype_info import (
 )
 
 
+class EnvironmentValueDelegate(QtWidgets.QStyledItemDelegate):
+    def createEditor(self, parent, option, index):
+        edit_widget = QtWidgets.QLineEdit(parent)
+        edit_widget.setReadOnly(True)
+        return edit_widget
+
+
 class EnvironmentsView(QtWidgets.QTreeView):
-    def __init__(self, model, parent=None):
+    def __init__(self, parent=None):
         super(EnvironmentsView, self).__init__(parent)
+
+        model = QtGui.QStandardItemModel()
+
+        env = os.environ.copy()
+        keys = []
+        values = []
+        for key in sorted(env.keys()):
+            key_item = QtGui.QStandardItem(key)
+            key_item.setFlags(
+                QtCore.Qt.ItemIsSelectable
+                | QtCore.Qt.ItemIsEnabled
+            )
+            keys.append(key_item)
+            values.append(QtGui.QStandardItem(env[key]))
+
+        model.appendColumn(keys)
+        model.appendColumn(values)
+        model.setHorizontalHeaderLabels(["Key", "Value"])
+
         self.setModel(model)
         self.setIndentation(0)
+        delegate = EnvironmentValueDelegate(self)
+        self.setItemDelegateForColumn(1, delegate)
         self.header().setSectionResizeMode(
             0, QtWidgets.QHeaderView.ResizeToContents
         )
@@ -184,20 +212,7 @@ class PypeInfoWidget(QtWidgets.QWidget):
     def _create_environ_widget(self):
         env_widget = CollapsibleWidget("Environments", self)
 
-        env_model = QtGui.QStandardItemModel()
-
-        env = os.environ.copy()
-        keys = []
-        values = []
-        for key in sorted(env.keys()):
-            keys.append(QtGui.QStandardItem(key))
-            values.append(QtGui.QStandardItem(env[key]))
-
-        env_model.appendColumn(keys)
-        env_model.appendColumn(values)
-        env_model.setHorizontalHeaderLabels(["Key", "Value"])
-
-        env_view = EnvironmentsView(env_model, env_widget)
+        env_view = EnvironmentsView(env_widget)
 
         env_widget.set_content_widget(env_view)
 
