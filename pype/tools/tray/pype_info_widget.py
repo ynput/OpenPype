@@ -239,15 +239,3 @@ class PypeInfoWidget(QtWidgets.QWidget):
                 value_label, row, 1, 1, 1
             )
         return info_widget
-
-    def showEvent(self, event):
-        """Center widget to center of desktop on show."""
-        result = super(PypeInfoWidget, self).showEvent(event)
-        screen_center = (
-            QtWidgets.QApplication.desktop().availableGeometry(self).center()
-        )
-        self.move(
-            screen_center.x() - (self.width() / 2),
-            screen_center.y() - (self.height() / 2)
-        )
-        return result
