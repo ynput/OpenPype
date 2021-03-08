@@ -29,6 +29,8 @@ STATUS = {
     -1: 'Not available'
 }
 
+DUMMY_PROJECT = "No project configured"
+
 
 class SyncServerWindow(QtWidgets.QDialog):
     """
@@ -157,6 +159,7 @@ class SyncProjectListWidget(ProjectListWidget):
         model = self.project_list.model()
         model.clear()
 
+        project_name = None
         for project_name in self.sync_server.get_synced_presets().keys():
             if self.sync_server.is_paused() or \
                self.sync_server.is_project_paused(project_name):
@@ -167,7 +170,7 @@ class SyncProjectListWidget(ProjectListWidget):
             model.appendRow(QtGui.QStandardItem(icon, project_name))
 
         if len(self.sync_server.get_synced_presets().keys()) == 0:
-            model.appendRow(QtGui.QStandardItem("No project configured"))
+            model.appendRow(QtGui.QStandardItem(DUMMY_PROJECT))
 
         self.current_project = self.project_list.currentIndex().data(
             QtCore.Qt.DisplayRole
@@ -176,7 +179,8 @@ class SyncProjectListWidget(ProjectListWidget):
             self.current_project = self.project_list.model().item(0). \
                 data(QtCore.Qt.DisplayRole)
 
-        self.local_site = self.sync_server.get_local_site(project_name)
+        if project_name:
+            self.local_site = self.sync_server.get_local_site(project_name)
 
     def _get_icon(self, status):
         if not self.icons.get(status):
@@ -620,6 +624,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.filter = None
 
         self._initialized = False
+        if not self._project or self._project == DUMMY_PROJECT:
+            return
 
         self.sync_server = sync_server
         # TODO think about admin mode
