@@ -71,3 +71,25 @@ class AbstractProvider(metaclass=ABCMeta):
             (list)
         """
         pass
+
+    @abstractmethod
+    def create_folder(self, folder_path):
+        """
+            Create all nonexistent folders and subfolders in 'path'.
+
+        Args:
+            path (string): absolute path
+
+        Returns:
+            (string) folder id of lowest subfolder from 'path'
+        """
+        pass
+
+    @abstractmethod
+    def get_tree(self):
+        """
+            Creates folder structure for providers which do not provide
+            tree folder structure (GDrive has no accessible tree structure,
+            only parents and their parents)
+        """
+        pass
