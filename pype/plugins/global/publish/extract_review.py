@@ -41,6 +41,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
     video_exts = ["mov", "mp4"]
     supported_exts = image_exts + video_exts
 
+    # Backgroud extensions
+    alpha_exts = ["exr", "png", "dpx"]
+    color_regex = re.compile(r"^#[a-fA-F0-9]{6}$")
+
     # FFmpeg tools paths
     ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
@@ -299,6 +303,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ):
             with_audio = False
 
+        input_is_sequence = self.input_is_sequence(repre)
+
+        input_allow_bg = False
+        if input_is_sequence and repre["files"]:
+            ext = os.path.splitext(repre["files"][0])[1].replace(".", "")
+            if ext in self.alpha_exts:
+                input_allow_bg = True
+
         return {
             "fps": float(instance.data["fps"]),
             "frame_start": frame_start,
@@ -313,7 +325,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "resolution_width": instance.data.get("resolutionWidth"),
             "resolution_height": instance.data.get("resolutionHeight"),
             "origin_repre": repre,
-            "input_is_sequence": self.input_is_sequence(repre),
+            "input_is_sequence": input_is_sequence,
+            "input_allow_bg": input_allow_bg,
             "with_audio": with_audio,
             "without_handles": without_handles,
             "handles_are_set": handles_are_set
@@ -458,6 +471,33 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         lut_filters = self.lut_filters(new_repre, instance, ffmpeg_input_args)
         ffmpeg_video_filters.extend(lut_filters)
+
+        use_bg_color = output_def.get("use_bg_color")
+        bg_color = (
+            instance.context.data["presets"]
+            .get("tools", {})
+            .get("extract_colors", {})
+            .get("bg_color")
+        )
+        if use_bg_color and bg_color:
+            if not temp_data["input_allow_bg"]:
+                self.log.info((
+                    "Output definition has defined BG color input was"
+                    " resolved as does not support adding BG."
+                ))
+            elif not self.color_regex.match(bg_color):
+                self.log.warning((
+                    "Color defined in output definition does not match"
+                    " regex `^#[a-fA-F0-9]{6}$`"
+                ))
+
+            else:
+                self.log.info("Applying BG color {}".format(bg_color))
+                ffmpeg_video_filters.extend([
+                    "split=2[bg][fg]",
+                    "[bg]drawbox=c={}:replace=1:t=fill[bg]".format(bg_color),
+                    "[bg][fg]overlay=format=auto"
+                ])
 
         # Add argument to override output file
         ffmpeg_output_args.append("-y")
