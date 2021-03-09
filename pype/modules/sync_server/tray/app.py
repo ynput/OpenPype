@@ -179,7 +179,7 @@ class SyncProjectListWidget(ProjectListWidget):
                 data(QtCore.Qt.DisplayRole)
 
         if project_name:
-            self.local_site = self.sync_server.get_local_site(project_name)
+            self.local_site = self.sync_server.get_active_site(project_name)
 
     def _get_icon(self, status):
         if not self.icons.get(status):
@@ -629,7 +629,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site = self.sync_server.get_local_site(self._project)
+        self.local_site = self.sync_server.get_active_site(self._project)
         self.remote_site = self.sync_server.get_remote_site(self._project)
 
         self.projection = self.get_default_projection()
@@ -876,7 +876,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 project (str): name of project
         """
         self._project = project
-        self.local_site = self.sync_server.get_local_site(self._project)
+        self.local_site = self.sync_server.get_active_site(self._project)
         self.remote_site = self.sync_server.get_remote_site(self._project)
         self.refresh()
 
@@ -1465,7 +1465,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site = self.sync_server.get_local_site(self._project)
+        self.local_site = self.sync_server.get_active_site(self._project)
         self.remote_site = self.sync_server.get_remote_site(self._project)
 
         self.sort = self.DEFAULT_SORT
