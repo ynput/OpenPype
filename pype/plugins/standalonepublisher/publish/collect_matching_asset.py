@@ -39,8 +39,8 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
             ).format(asset_name))
             regex_result = self.version_regex.findall(asset_name)
             if regex_result:
-                asset_name, _version_number = regex_result[0]
-                matching_asset_doc = asset_docs_by_name.get(asset_name)
+                _asset_name, _version_number = regex_result[0]
+                matching_asset_doc = asset_docs_by_name.get(_asset_name)
                 if matching_asset_doc:
                     version_number = int(_version_number)
 
