@@ -224,11 +224,10 @@ class PhotoshopServerStub:
             layers: <list of Layer('id':XX, 'name':"YYY")>
         Returns: None
         """
-        layer_ids = [layer.id for layer in layers]
-
+        layers_id = [str(lay.id) for lay in layers]
         self.websocketserver.call(self.client.call
-                                  ('Photoshop.get_layers',
-                                   layers=layer_ids)
+                                  ('Photoshop.select_layers',
+                                   layers=json.dumps(layers_id))
                                   )
 
     def get_active_document_full_name(self):
