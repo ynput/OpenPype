@@ -15,7 +15,7 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
     label = "Collect Matching Asset to Instance"
     order = pyblish.api.CollectorOrder - 0.05
     hosts = ["standalonepublisher"]
-    families = ["background_batch"]
+    families = ["background_batch", "render_mov_batch"]
 
     # Version regex to parse asset name and version from filename
     version_regex = re.compile(r"^(.+)_v([0-9]+)$")
