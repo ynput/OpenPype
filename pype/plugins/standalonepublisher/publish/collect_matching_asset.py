@@ -1,4 +1,5 @@
 import os
+import re
 import collections
 import pyblish.api
 from avalon import io
@@ -15,6 +16,9 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder - 0.05
     hosts = ["standalonepublisher"]
     families = ["background_batch"]
+
+    # Version regex to parse asset name and version from filename
+    version_regex = re.compile(r"^(.+)_v([0-9]+)$")
 
     def process(self, instance):
         source_file = os.path.basename(instance.data["source"]).lower()
