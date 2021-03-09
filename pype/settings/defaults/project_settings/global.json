@@ -198,29 +198,14 @@
     "sync_server": {
         "enabled": true,
         "config": {
-            "local_id": "local_0",
             "retry_cnt": "3",
             "loop_delay": "60",
             "active_site": "studio",
-            "remote_site": "gdrive"
+            "remote_site": "studio"
         },
         "sites": {
             "gdrive": {
                 "provider": "gdrive",
-                "credentials_url": "",
-                "root": {
-                    "work": ""
-                }
-            },
-            "studio": {
-                "provider": "local_drive",
-                "credentials_url": "",
-                "root": {
-                    "work": ""
-                }
-            },
-            "local_0": {
-                "provider": "local_drive",
                 "credentials_url": "",
                 "root": {
                     "work": ""
