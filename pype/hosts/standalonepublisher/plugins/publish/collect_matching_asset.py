@@ -31,19 +31,19 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
                     matching_asset_doc = asset_doc
                     break
 
-        if matching_asset_doc:
-            instance.data["asset"] = matching_asset_doc["name"]
-            instance.data["assetEntity"] = matching_asset_doc
-            self.log.info(
-                f"Matching asset found: {pformat(matching_asset_doc)}"
-            )
-
-        else:
+        if not matching_asset_doc:
             # TODO better error message
             raise AssertionError((
                 "Filename \"{}\" does not match"
                 " any name of asset documents in database for your selection."
             ).format(instance.data["source"]))
+
+        instance.data["asset"] = matching_asset_doc["name"]
+        instance.data["assetEntity"] = matching_asset_doc
+
+        self.log.info(
+            f"Matching asset found: {pformat(matching_asset_doc)}"
+        )
 
     def selection_children_by_name(self, instance):
         storing_key = "childrenDocsForSelection"
