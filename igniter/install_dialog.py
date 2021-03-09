@@ -477,7 +477,7 @@ class InstallDialog(QtWidgets.QDialog):
             self.done(3)
             return
 
-        if self.path != "":
+        if self.path and len(self.path) > 0:
             valid, reason = validate_path_string(self.path)
 
         if not valid:

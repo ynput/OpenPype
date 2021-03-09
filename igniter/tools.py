@@ -250,7 +250,8 @@ def get_pype_path_from_db(url: str) -> Union[str, None]:
     db = client.pype
     col = db.settings
 
-    global_settings = col.find_one(
-        {"type": "global_settings"}, {"data": 1}).get("data", {})
-
+    global_settings = col.find_one({"type": "global_settings"}, {"data": 1})
+    if not global_settings:
+        return None
+    global_settings.get("data", {})
     return global_settings.get("pype_path", {}).get(platform.system().lower())
