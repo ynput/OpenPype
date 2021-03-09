@@ -1,5 +1,4 @@
 import os
-import sys
 import json
 import collections
 
@@ -14,6 +13,8 @@ from pype.lib.pype_info import (
     get_workstation_info,
     extract_pype_info_to_file
 )
+
+IS_MAIN_ROLE = QtCore.Qt.UserRole
 
 
 class EnvironmentValueDelegate(QtWidgets.QStyledItemDelegate):
@@ -38,17 +39,36 @@ class EnvironmentsView(QtWidgets.QTreeView):
                 QtCore.Qt.ItemIsSelectable
                 | QtCore.Qt.ItemIsEnabled
             )
+            key_item.setData(True, IS_MAIN_ROLE)
             keys.append(key_item)
-            values.append(QtGui.QStandardItem(env[key]))
+
+            value = env[key]
+            value_item = QtGui.QStandardItem(value)
+            value_item.setData(True, IS_MAIN_ROLE)
+            values.append(value_item)
+
+            value_parts = [
+                part
+                for part in value.split(os.pathsep) if part
+            ]
+            if len(value_parts) < 2:
+                continue
+
+            sub_parts = []
+            for part_value in value_parts:
+                part_item = QtGui.QStandardItem(part_value)
+                part_item.setData(False, IS_MAIN_ROLE)
+                sub_parts.append(part_item)
+            key_item.appendRows(sub_parts)
 
         model.appendColumn(keys)
         model.appendColumn(values)
         model.setHorizontalHeaderLabels(["Key", "Value"])
 
         self.setModel(model)
-        self.setIndentation(0)
+        # self.setIndentation(0)
         delegate = EnvironmentValueDelegate(self)
-        self.setItemDelegateForColumn(1, delegate)
+        self.setItemDelegate(delegate)
         self.header().setSectionResizeMode(
             0, QtWidgets.QHeaderView.ResizeToContents
         )
@@ -56,17 +76,22 @@ class EnvironmentsView(QtWidgets.QTreeView):
 
     def get_selection_as_dict(self):
         indexes = self.selectionModel().selectedIndexes()
-        mapping = collections.defaultdict(dict)
+
+        main_mapping = collections.defaultdict(dict)
         for index in indexes:
+            is_main = index.data(IS_MAIN_ROLE)
+            if not is_main:
+                continue
             row = index.row()
             value = index.data(QtCore.Qt.DisplayRole)
             if index.column() == 0:
                 key = "key"
             else:
                 key = "value"
-            mapping[row][key] = value
+            main_mapping[row][key] = value
+
         result = {}
-        for item in mapping.values():
+        for item in main_mapping.values():
             result[item["key"]] = item["value"]
         return result
 
@@ -75,8 +100,8 @@ class EnvironmentsView(QtWidgets.QTreeView):
             event.type() == QtGui.QKeyEvent.KeyPress
             and event.matches(QtGui.QKeySequence.Copy)
         ):
-            selected_dict = self.get_selection_as_dict()
-            selected_str = json.dumps(selected_dict, indent=4)
+            selected_data = self.get_selection_as_dict()
+            selected_str = json.dumps(selected_data, indent=4)
 
             mime_data = QtCore.QMimeData()
             mime_data.setText(selected_str)
