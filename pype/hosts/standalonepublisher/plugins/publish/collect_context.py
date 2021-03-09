@@ -48,8 +48,12 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             self.log.debug(f"_ in_data: {pformat(in_data)}")
 
         # exception for editorial
-        if in_data["family"] in ["editorial", "background_batch"]:
+        if in_data["family"] == "render_mov_batch":
+            in_data_list = self.prepare_mov_batch_instances(context, in_data)
+
+        elif in_data["family"] in ["editorial", "background_batch"]:
             in_data_list = self.multiple_instances(context, in_data)
+
         else:
             in_data_list = [in_data]
 
@@ -66,38 +70,38 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
         in_data_list = list()
         representations = in_data.pop("representations")
-        for repre in representations:
+        for repr in representations:
             in_data_copy = copy.deepcopy(in_data)
-            ext = repre["ext"][1:]
+            ext = repr["ext"][1:]
             subset = in_data_copy["subset"]
             # filter out non editorial files
             if ext not in self.batch_extensions:
-                in_data_copy["representations"] = [repre]
+                in_data_copy["representations"] = [repr]
                 in_data_copy["subset"] = f"{ext}{subset}"
                 in_data_list.append(in_data_copy)
 
-            files = repre.get("files")
+            files = repr.get("files")
 
             # delete unneeded keys
             delete_repr_keys = ["frameStart", "frameEnd"]
             for k in delete_repr_keys:
-                if repre.get(k):
-                    repre.pop(k)
+                if repr.get(k):
+                    repr.pop(k)
 
             # convert files to list if it isnt
             if not isinstance(files, (tuple, list)):
                 files = [files]
 
             self.log.debug(f"_ files: {files}")
-            for index, _file in enumerate(files):
+            for index, f in enumerate(files):
                 index += 1
                 # copy dictionaries
                 in_data_copy = copy.deepcopy(in_data_copy)
-                new_repre = copy.deepcopy(repre)
+                repr_new = copy.deepcopy(repr)
 
-                new_repre["files"] = _file
-                new_repre["name"] = ext
-                in_data_copy["representations"] = [new_repre]
+                repr_new["files"] = f
+                repr_new["name"] = ext
+                in_data_copy["representations"] = [repr_new]
 
                 # create subset Name
                 new_subset = f"{ext}{index}{subset}"
@@ -109,6 +113,73 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 in_data_copy["subset"] = new_subset
                 in_data_list.append(in_data_copy)
                 self.log.info(f"Creating subset: {ext}{index}{subset}")
+
+        return in_data_list
+
+    def prepare_mov_batch_instances(self, context, in_data):
+        """Copy of `multiple_instances` method.
+
+        Method was copied because `batch_extensions` is used in
+        `multiple_instances` but without any family filtering. Since usage
+        of the filtering is unknown and modification of that part may break
+        editorial or PSD batch publishing it was decided to create a copy with
+        this family specific filtering.
+
+        TODO:
+        - Merge logic with `multiple_instances` method.
+        """
+        self.log.info("Preparing data for mov batch processing.")
+        in_data_list = []
+
+        representations = in_data.pop("representations")
+        for repre in representations:
+            self.log.debug("Processing representation with files {}".format(
+                str(repre["files"])
+            ))
+            ext = repre["ext"][1:]
+            # Skip files that are not available for mov batch publishing
+            # TODO add dynamic expected extensions by family from `in_data`
+            #   - with this modification it would be possible to use only
+            #     `multiple_instances` method
+            expected_exts = ["mov"]
+            if ext not in expected_exts:
+                self.log.warning((
+                    "Skipping representation."
+                    " Does not match expected extensions <{}>. {}"
+                ).format(", ".join(expected_exts), str(repre)))
+                continue
+
+            # Delete key from representation
+            # QUESTION is this needed in mov batch processing?
+            delete_repr_keys = ["frameStart", "frameEnd"]
+            for key in delete_repr_keys:
+                repre.pop(key, None)
+
+            files = repre["files"]
+            # Convert files to list if it isnt
+            if not isinstance(files, (tuple, list)):
+                files = [files]
+
+            # Loop through files and create new instance per each file
+            for filename in files:
+                # Create copy of representation and change it's files and name
+                new_repre = copy.deepcopy(repre)
+                new_repre["files"] = filename
+                new_repre["name"] = ext
+
+                # Prepare new subset name (temporary name)
+                # - subset name will be changed in batch specific plugins
+                new_subset_name = "{}{}".format(
+                    in_data["subset"],
+                    os.path.basename(filename)
+                )
+                # Create copy of instance data as new instance and pass in new
+                #   representation
+                in_data_copy = copy.deepcopy(in_data)
+                in_data_copy["representations"] = [new_repre]
+                in_data_copy["subset"] = new_subset_name
+
+                in_data_list.append(in_data_copy)
 
         return in_data_list
 
@@ -145,15 +216,11 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             component["stagingDir"] = component["stagingDir"]
 
             if isinstance(component["files"], list):
-                collections, _remainder = clique.assemble(component["files"])
+                collections, remainder = clique.assemble(component["files"])
                 self.log.debug("collecting sequence: {}".format(collections))
                 instance.data["frameStart"] = int(component["frameStart"])
                 instance.data["frameEnd"] = int(component["frameEnd"])
                 instance.data["fps"] = int(component["fps"])
-
-            ext = component["ext"]
-            if ext.startswith("."):
-                component["ext"] = ext[1:]
 
             if component["preview"]:
                 instance.data["families"].append("review")
