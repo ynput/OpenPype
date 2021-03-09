@@ -55,6 +55,8 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
 
         instance.data["asset"] = matching_asset_doc["name"]
         instance.data["assetEntity"] = matching_asset_doc
+        if version_number is not None:
+            instance.data["version"] = version_number
 
         self.log.info(
             f"Matching asset found: {pformat(matching_asset_doc)}"
