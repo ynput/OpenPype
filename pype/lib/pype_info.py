@@ -69,5 +69,5 @@ def extract_pype_info_to_file(dirpath):
         os.makedirs(dirpath)
 
     with open(filepath, "w") as file_stream:
-        json.dump(data, file_stream)
+        json.dump(data, file_stream, indent=4)
     return filepath

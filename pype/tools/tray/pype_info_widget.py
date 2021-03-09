@@ -9,6 +9,7 @@ from pype.api import resources
 import pype.version
 from pype.settings.lib import get_local_settings
 from pype.lib.pype_info import (
+    get_all_data,
     get_pype_info,
     get_workstation_info,
     extract_pype_info_to_file
@@ -190,6 +191,58 @@ class PypeInfoWidget(QtWidgets.QWidget):
         main_layout.addWidget(self._create_local_settings_widget(), 0)
         main_layout.addWidget(self._create_separator(), 0)
         main_layout.addWidget(self._create_environ_widget(), 1)
+        main_layout.addWidget(self._create_btns_section(), 0)
+
+    def _create_btns_section(self):
+        btns_widget = QtWidgets.QWidget(self)
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+        btns_layout.setContentsMargins(0, 0, 0, 0)
+
+        copy_to_clipboard_btn = QtWidgets.QPushButton(
+            "Copy to clipboard", btns_widget
+        )
+        export_to_file_btn = QtWidgets.QPushButton(
+            "Export", btns_widget
+        )
+        btns_layout.addWidget(QtWidgets.QWidget(btns_widget))
+        btns_layout.addWidget(copy_to_clipboard_btn)
+        btns_layout.addWidget(export_to_file_btn)
+
+        copy_to_clipboard_btn.clicked.connect(self._on_copy_to_clipboard)
+        export_to_file_btn.clicked.connect(self._on_export_to_file)
+
+        return btns_widget
+
+    def _on_export_to_file(self):
+        dst_dir_path = QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            "Choose directory",
+            os.path.expanduser("~"),
+            QtWidgets.QFileDialog.ShowDirsOnly
+        )
+        if not dst_dir_path or not os.path.exists(dst_dir_path):
+            return
+
+        filepath = extract_pype_info_to_file(dst_dir_path)
+        title = "Extraction done"
+        message = "Extraction is done. Destination filepath is \"{}\"".format(
+            filepath.replace("\\", "/")
+        )
+        dialog = QtWidgets.QMessageBox(self)
+        dialog.setIcon(QtWidgets.QMessageBox.NoIcon)
+        dialog.setWindowTitle(title)
+        dialog.setText(message)
+        dialog.exec_()
+
+    def _on_copy_to_clipboard(self):
+        all_data = get_all_data()
+        all_data_str = json.dumps(all_data, indent=4)
+
+        mime_data = QtCore.QMimeData()
+        mime_data.setText(all_data_str)
+        QtWidgets.QApplication.instance().clipboard().setMimeData(
+            mime_data
+        )
 
     def _create_separator(self):
         separator_widget = QtWidgets.QWidget(self)
