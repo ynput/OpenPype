@@ -3,12 +3,12 @@ import pyblish.api
 from pprint import pformat
 
 
-class CollectPsdInstances(pyblish.api.InstancePlugin):
+class CollectBatchInstances(pyblish.api.InstancePlugin):
     """
     Collect all available instances from psd batch.
     """
 
-    label = "Collect Psd Instances"
+    label = "Collect Batch Instances"
     order = pyblish.api.CollectorOrder + 0.489
     hosts = ["standalonepublisher"]
     families = ["background_batch", "render_mov_batch"]
