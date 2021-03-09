@@ -170,7 +170,7 @@ class CollapsibleWidget(QtWidgets.QWidget):
 
 
 class PypeInfoWidget(QtWidgets.QWidget):
-    not_allowed = "N/A"
+    not_applicable = "N/A"
 
     def __init__(self, parent=None):
         super(PypeInfoWidget, self).__init__(parent)
@@ -185,6 +185,8 @@ class PypeInfoWidget(QtWidgets.QWidget):
         main_layout.setAlignment(QtCore.Qt.AlignTop)
         main_layout.addWidget(self._create_pype_info_widget(), 0)
         main_layout.addWidget(self._create_separator(), 0)
+        main_layout.addWidget(self._create_workstation_widget(), 0)
+        main_layout.addWidget(self._create_separator(), 0)
         main_layout.addWidget(self._create_local_settings_widget(), 0)
         main_layout.addWidget(self._create_separator(), 0)
         main_layout.addWidget(self._create_environ_widget(), 1)
@@ -195,6 +197,56 @@ class PypeInfoWidget(QtWidgets.QWidget):
         separator_widget.setMinimumHeight(2)
         separator_widget.setMaximumHeight(2)
         return separator_widget
+
+    def _create_workstation_widget(self):
+        key_label_mapping = {
+            "system_name": "System:",
+            "local_id": "Local ID:",
+            "username": "Username:",
+            "hostname": "Hostname:",
+            "hostip": "Host IP:"
+        }
+        keys_order = [
+            "system_name",
+            "local_id",
+            "username",
+            "hostname",
+            "hostip"
+        ]
+        workstation_info = get_workstation_info()
+        for key in workstation_info.keys():
+            if key not in keys_order:
+                keys_order.append(key)
+
+        wokstation_info_widget = CollapsibleWidget("Workstation info", self)
+
+        info_widget = QtWidgets.QWidget(self)
+        info_layout = QtWidgets.QGridLayout(info_widget)
+        # Add spacer to 3rd column
+        info_layout.addWidget(QtWidgets.QWidget(info_widget), 0, 2)
+        info_layout.setColumnStretch(2, 1)
+
+        for key in keys_order:
+            if key not in workstation_info:
+                continue
+
+            label = key_label_mapping.get(key, key)
+            value = workstation_info[key]
+            row = info_layout.rowCount()
+            info_layout.addWidget(
+                QtWidgets.QLabel(label), row, 0, 1, 1
+            )
+            value_label = QtWidgets.QLabel(value)
+            value_label.setTextInteractionFlags(
+                QtCore.Qt.TextSelectableByMouse
+            )
+            info_layout.addWidget(
+                value_label, row, 1, 1, 1
+            )
+
+        wokstation_info_widget.set_content_widget(info_widget)
+
+        return wokstation_info_widget
 
     def _create_local_settings_widget(self):
         local_settings = get_local_settings()
@@ -221,21 +273,28 @@ class PypeInfoWidget(QtWidgets.QWidget):
     def _create_pype_info_widget(self):
         """Create widget with information about pype application."""
 
+        # Get pype info data
         pype_info = get_pype_info()
+        # Modify version key/values
         version_value = "{} ({})".format(
-            pype_info["version"],
-            pype_info["version_type"]
+            pype_info.pop("version", self.not_applicable),
+            pype_info.pop("version_type", self.not_applicable)
         )
-        lable_value = [
-            # Pype version
-            ("Pype version:", version_value),
-            ("Pype executable:", pype_info["executable"]),
-            ("Pype location:", pype_info["pype_root"]),
+        pype_info["version_value"] = version_value
+        # Prepare lable mapping
+        key_label_mapping = {
+            "version_value": "Pype version:",
+            "executable": "Pype executable:",
+            "pype_root": "Pype location:",
+            "mongo_url": "Pype  Mongo URL:"
+        }
+        # Prepare keys order
+        keys_order = ["version_value", "executable", "pype_root", "mongo_url"]
+        for key in pype_info.keys():
+            if key not in keys_order:
+                keys_order.append(key)
 
-            # Mongo URL
-            ("Pype Mongo URL:", pype_info["mongo_url"])
-        ]
-
+        # Create widgets
         info_widget = QtWidgets.QWidget(self)
         info_layout = QtWidgets.QGridLayout(info_widget)
         # Add spacer to 3rd column
@@ -247,12 +306,16 @@ class PypeInfoWidget(QtWidgets.QWidget):
         title_label.setStyleSheet("font-weight: bold;")
         info_layout.addWidget(title_label, 0, 0, 1, 2)
 
-        for label, value in lable_value:
+        for key in keys_order:
+            if key not in pype_info:
+                continue
+            value = pype_info[key]
+            label = key_label_mapping.get(key, key)
             row = info_layout.rowCount()
             info_layout.addWidget(
                 QtWidgets.QLabel(label), row, 0, 1, 1
             )
-            value_label = QtWidgets.QLabel(value or self.not_allowed)
+            value_label = QtWidgets.QLabel(value)
             value_label.setTextInteractionFlags(
                 QtCore.Qt.TextSelectableByMouse
             )
