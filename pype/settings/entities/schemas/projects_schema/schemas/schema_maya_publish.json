@@ -171,6 +171,10 @@
                             "label": "ValidateMeshNonManifold"
                         },
                         {
+                            "key": "ValidateMeshNormalsUnlocked",
+                            "label": "ValidateMeshNormalsUnlocked"
+                        },
+                        {
                             "key": "ValidateMeshUVSetMap1",
                             "label": "ValidateMeshUVSetMap1",
                             "docstring": "Validate model's default uv set exists and is named 'map1'.<br><br>In Maya meshes by default have a uv set named 'map1' that cannot be deleted. It can be renamed, however,<br> introducing some issues with some renderers. As such we ensure the first (default) UV set index is named 'map1'."
@@ -241,6 +245,10 @@
         {
             "type": "label",
             "label": "Extractors"
+        },
+        {
+            "type": "schema_template",
+            "name": "template_maya_capture"
         },
         {
             "type": "dict",

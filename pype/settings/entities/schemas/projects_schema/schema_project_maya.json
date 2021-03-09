@@ -6,8 +6,13 @@
     "is_file": true,
     "children": [
         {
-            "type": "schema",
-            "name": "schema_maya_capture"
+            "type": "dict-modifiable",
+            "key": "ext_mapping",
+            "label": "Extension Mapping",
+            "use_label_wrap": true,
+            "object_type": {
+                                "type": "text"
+                            }
         },
         {
             "type": "schema",
