@@ -123,7 +123,8 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         `multiple_instances` but without any family filtering. Since usage
         of the filtering is unknown and modification of that part may break
         editorial or PSD batch publishing it was decided to create a copy with
-        this family specific filtering.
+        this family specific filtering. Also "frameStart" and "frameEnd" keys
+        are removed from instance which is needed for this processing.
 
         TODO:
         - Merge logic with `multiple_instances` method.
@@ -148,12 +149,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                     " Does not match expected extensions <{}>. {}"
                 ).format(", ".join(expected_exts), str(repre)))
                 continue
-
-            # Delete key from representation
-            # QUESTION is this needed in mov batch processing?
-            delete_repr_keys = ["frameStart", "frameEnd"]
-            for key in delete_repr_keys:
-                repre.pop(key, None)
 
             files = repre["files"]
             # Convert files to list if it isnt
