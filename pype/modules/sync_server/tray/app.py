@@ -15,8 +15,7 @@ from avalon.tools.delegates import PrettyTimeDelegate, pretty_timestamp
 from bson.objectid import ObjectId
 
 from pype.lib import PypeLogger
-
-import json
+from pype.api import get_local_site_id
 
 log = PypeLogger().get_logger("SyncServer")
 
@@ -213,8 +212,7 @@ class SyncProjectListWidget(ProjectListWidget):
             actions_mapping[action] = self._pause
         menu.addAction(action)
 
-        if self.local_site == self.sync_server.get_my_local_site(
-                self.project_name):
+        if self.local_site == self.sync_server.get_my_local_site():
             action = QtWidgets.QAction("Clear local project")
             actions_mapping[action] = self._clear_project
             menu.addAction(action)
@@ -477,7 +475,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     def _add_site(self):
         log.info(self.representation_id)
         project_name = self.table_view.model()._project
-        local_site_name = self.sync_server.get_my_local_site(project_name)
+        local_site_name = self.sync_server.get_my_local_site()
         try:
             self.sync_server.add_site(
                 self.table_view.model()._project,
@@ -502,13 +500,14 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         """
         log.info("Removing {}".format(self.representation_id))
         try:
+            local_site = get_local_site_id()
             self.sync_server.remove_site(
                 self.table_view.model()._project,
                 self.representation_id,
-                'local_0',
+                local_site,
                 True
                 )
-            self.message_generated.emit("Site local_0 removed")
+            self.message_generated.emit("Site {} removed".format(local_site))
         except ValueError as exp:
             self.message_generated.emit("Error {}".format(str(exp)))
 
