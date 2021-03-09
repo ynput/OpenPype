@@ -31,7 +31,7 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
         },
         "render_mov_batch": {
             "renderCompositingDefault": {
-                "task": "Compositing",
+                "task": "compositing",
                 "family": "render"
             }
         }
@@ -40,7 +40,6 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         context = instance.context
-        asset_data = instance.data["assetEntity"]
         asset_name = instance.data["asset"]
         family = instance.data["family"]
 
