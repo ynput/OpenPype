@@ -204,7 +204,7 @@ class PypeInfoWidget(QtWidgets.QWidget):
         export_to_file_btn = QtWidgets.QPushButton(
             "Export", btns_widget
         )
-        btns_layout.addWidget(QtWidgets.QWidget(btns_widget))
+        btns_layout.addWidget(QtWidgets.QWidget(btns_widget), 1)
         btns_layout.addWidget(copy_to_clipboard_btn)
         btns_layout.addWidget(export_to_file_btn)
 
