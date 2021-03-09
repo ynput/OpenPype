@@ -11,21 +11,29 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
     label = "Collect Psd Instances"
     order = pyblish.api.CollectorOrder + 0.489
     hosts = ["standalonepublisher"]
-    families = ["background_batch"]
+    families = ["background_batch", "render_mov_batch"]
 
     # presets
     subsets = {
-        "backgroundLayout": {
-            "task": "background",
-            "family": "backgroundLayout"
+        "background_batch": {
+            "backgroundLayout": {
+                "task": "background",
+                "family": "backgroundLayout"
+            },
+            "backgroundComp": {
+                "task": "background",
+                "family": "backgroundComp"
+            },
+            "workfileBackground": {
+                "task": "background",
+                "family": "workfile"
+            }
         },
-        "backgroundComp": {
-            "task": "background",
-            "family": "backgroundComp"
-        },
-        "workfileBackground": {
-            "task": "background",
-            "family": "workfile"
+        "render_mov_batch": {
+            "renderCompositingDefault": {
+                "task": "Compositing",
+                "family": "render"
+            }
         }
     }
     unchecked_by_default = []
@@ -34,7 +42,9 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
         context = instance.context
         asset_data = instance.data["assetEntity"]
         asset_name = instance.data["asset"]
-        for subset_name, subset_data in self.subsets.items():
+        family = instance.data["family"]
+
+        for subset_name, subset_data in self.subsets[family].items():
             instance_name = f"{asset_name}_{subset_name}"
             task = subset_data.get("task", "background")
 
