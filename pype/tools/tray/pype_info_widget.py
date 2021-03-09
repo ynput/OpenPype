@@ -9,7 +9,7 @@ from pype.api import resources
 import pype.version
 from pype.settings.lib import get_local_settings
 from pype.lib.pype_info import (
-    get_all_data,
+    get_all_current_info,
     get_pype_info,
     get_workstation_info,
     extract_pype_info_to_file
@@ -235,7 +235,7 @@ class PypeInfoWidget(QtWidgets.QWidget):
         dialog.exec_()
 
     def _on_copy_to_clipboard(self):
-        all_data = get_all_data()
+        all_data = get_all_current_info()
         all_data_str = json.dumps(all_data, indent=4)
 
         mime_data = QtCore.QMimeData()
