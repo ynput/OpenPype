@@ -28,7 +28,18 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
 
         asset_docs_by_name = self.selection_children_by_name(instance)
 
+        version_number = None
+        # Always first check if source filename is in assets
         matching_asset_doc = asset_docs_by_name.get(source_file)
+        if matching_asset_doc is None:
+            # Check if source file contain version in name
+            regex_result = self.version_regex.findall(source_file)
+            if regex_result:
+                asset_name, _version_number = regex_result[0]
+                matching_asset_doc = asset_docs_by_name.get(asset_name)
+                if matching_asset_doc:
+                    version_number = int(_version_number)
+
         if matching_asset_doc is None:
             for asset_name_low, asset_doc in asset_docs_by_name.items():
                 if asset_name_low in source_file:
