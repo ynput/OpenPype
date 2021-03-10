@@ -45,8 +45,9 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
         with open(input_json_path, "r") as f:
             in_data = json.load(f)
-            self.log.debug(f"_ in_data: {pformat(in_data)}")
+        self.log.debug(f"_ in_data: {pformat(in_data)}")
 
+        self.add_files_to_ignore_cleanup(in_data, context)
         # exception for editorial
         if in_data["family"] == "render_mov_batch":
             in_data_list = self.prepare_mov_batch_instances(context, in_data)
@@ -62,6 +63,21 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         for in_data in in_data_list:
             # create instance
             self.create_instance(context, in_data)
+
+    def add_files_to_ignore_cleanup(self, in_data, context):
+        all_filepaths = context.data.get("skipCleanupFilepaths") or []
+        for repre in in_data["representations"]:
+            files = repre["files"]
+            if not isinstance(files, list):
+                files = [files]
+
+            dirpath = repre["stagingDir"]
+            for filename in files:
+                filepath = os.path.normpath(os.path.join(dirpath, filename))
+                if filepath not in all_filepaths:
+                    all_filepaths.append(filepath)
+
+        context.data["skipCleanupFilepaths"] = all_filepaths
 
     def multiple_instances(self, context, in_data):
         # avoid subset name duplicity
