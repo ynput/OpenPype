@@ -398,34 +398,23 @@ def apply_local_settings_on_anatomy_settings(
     if not local_settings:
         return
 
-    local_project_settings = local_settings.get("projects")
-    if not local_project_settings:
-        return
+    local_project_settings = local_settings.get("projects") or {}
 
     project_locals = local_project_settings.get(project_name) or {}
     default_locals = local_project_settings.get(DEFAULT_PROJECT_KEY) or {}
-    active_site = project_locals.get("active_site")
-    if not active_site:
-        active_site = default_locals.get("active_site")
-
-    if not active_site:
-        project_settings = get_project_settings(project_name)
-        active_site = (
-            project_settings
-            ["global"]
-            ["sync_server"]
-            ["config"]
-            ["active_site"]
-        )
+    project_settings = get_project_settings(project_name)
+    active_site = (
+        project_settings["global"]["sync_server"]["config"]["active_site"]
+    )
 
     # QUESTION should raise an exception?
     if not active_site:
         return
 
-    roots_locals = default_locals.get("roots", {}).get(active_site, {})
+    roots_locals = default_locals.get("roots", {}).get(active_site) or {}
     if project_name != DEFAULT_PROJECT_KEY:
         roots_locals.update(
-            project_locals.get("roots", {}).get(active_site, {})
+            project_locals.get("roots", {}).get(active_site) or {}
         )
 
     if not roots_locals:
@@ -440,6 +429,45 @@ def apply_local_settings_on_anatomy_settings(
         anatomy_settings["roots"][root_name][current_platform] = (
             path
         )
+
+
+def apply_local_settings_on_project_settings(
+    project_settings, local_settings, project_name
+):
+    """Apply local settings on project settings.
+
+    Args:
+        project_settings (dict): Data for project settings.
+        local_settings (dict): Data of local settings.
+        project_name (str): Name of project for which settings data are.
+    """
+    if not local_settings:
+        return
+
+    local_project_settings = local_settings.get("projects")
+    if not local_project_settings:
+        return
+
+    project_locals = local_project_settings.get(project_name) or {}
+    default_locals = local_project_settings.get(DEFAULT_PROJECT_KEY) or {}
+    active_site = (
+        project_locals.get("active_site")
+        or default_locals.get("active_site")
+    )
+    remote_site = (
+        project_locals.get("remote_site")
+        or default_locals.get("remote_site")
+    )
+
+    if active_site or remote_site:
+        sync_server_config = (
+            project_settings["global"]["sync_server"]["config"]
+        )
+        if active_site:
+            sync_server_config["active_site"] = active_site
+
+        if remote_site:
+            sync_server_config["remote_site"] = active_site
 
 
 def get_system_settings(clear_metadata=True):
@@ -463,6 +491,8 @@ def get_default_project_settings(clear_metadata=True):
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
+        local_settings = get_local_settings()
+        apply_local_settings_on_project_settings(result, local_settings, None)
     return result
 
 
@@ -485,7 +515,7 @@ def get_default_anatomy_settings(clear_metadata=True):
     return result
 
 
-def get_anatomy_settings(project_name, clear_metadata=True):
+def get_applied_anatomy_settings(project_name):
     """Project anatomy data with applied studio and project overrides."""
     if not project_name:
         raise ValueError(
@@ -498,23 +528,24 @@ def get_anatomy_settings(project_name, clear_metadata=True):
         project_name
     )
 
-    # TODO uncomment and remove hotfix result when overrides of anatomy
-    #   are stored correctly.
-    # result = apply_overrides(studio_overrides, project_overrides)
-    result = copy.deepcopy(studio_overrides)
-    if project_overrides:
-        for key, value in project_overrides.items():
-            result[key] = value
-    if clear_metadata:
-        clear_metadata_from_settings(result)
-        local_settings = get_local_settings()
-        apply_local_settings_on_anatomy_settings(
-            result, local_settings, project_name
-        )
+    result = apply_overrides(studio_overrides, project_overrides)
+
+    clear_metadata_from_settings(result)
+
     return result
 
 
-def get_project_settings(project_name, clear_metadata=True):
+def get_anatomy_settings(project_name):
+    result = get_applied_anatomy_settings(project_name)
+
+    local_settings = get_local_settings()
+    apply_local_settings_on_anatomy_settings(
+        result, local_settings, project_name
+    )
+    return result
+
+
+def get_applied_project_settings(project_name):
     """Project settings with applied studio and project overrides."""
     if not project_name:
         raise ValueError(
@@ -528,8 +559,18 @@ def get_project_settings(project_name, clear_metadata=True):
     )
 
     result = apply_overrides(studio_overrides, project_overrides)
-    if clear_metadata:
-        clear_metadata_from_settings(result)
+    clear_metadata_from_settings(result)
+    return result
+
+
+def get_project_settings(project_name):
+    result = get_applied_project_settings(project_name)
+
+    local_settings = get_local_settings()
+    apply_local_settings_on_project_settings(
+        result, local_settings, project_name
+    )
+
     return result
 
 
