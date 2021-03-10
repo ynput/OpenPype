@@ -121,7 +121,7 @@ class SyncServer(PypeModule, ITrayModule):
         self.lock = None
         self.connection = None  # connection to avalon DB to update state
         # settings for all enabled projects for sync
-        self.sync_project_presets = None
+        self.sync_project_settings = None
         self.sync_server_thread = None  # asyncio requires new thread
 
         self.action_show_widget = None
@@ -148,7 +148,7 @@ class SyncServer(PypeModule, ITrayModule):
             Returns:
                 throws ValueError if any issue
         """
-        if not self.get_synced_preset(collection):
+        if not self.get_sync_project_setting(collection):
             raise ValueError("Project not configured")
 
         if not site_name:
@@ -175,7 +175,7 @@ class SyncServer(PypeModule, ITrayModule):
             Returns:
                 throws ValueError if any issue
         """
-        if not self.get_synced_preset(collection):
+        if not self.get_sync_project_setting(collection):
             raise ValueError("Project not configured")
 
         self.reset_provider_for_file(collection,
@@ -328,7 +328,7 @@ class SyncServer(PypeModule, ITrayModule):
         """
             Returns list of active sites for 'project_name'.
 
-            By default it returns ['studio', 'local'], these sites are defaults
+            By default it returns ['studio'], this site is default
             and always present even if SyncServer is not enabled. (for publish)
 
             Used mainly for Local settings for user override.
@@ -339,10 +339,44 @@ class SyncServer(PypeModule, ITrayModule):
             Returns:
                 (list) of strings
         """
-        sites = [self.DEFAULT_SITE, self.LOCAL_SITE]
+        return self.get_active_sites_from_setting(
+            get_project_settings(project_name))
+
+    def get_active_sites_from_setting(self, settings):
+        """
+            List available active sites from incoming 'settings'. Used for
+            returning 'default' values for Local Settings
+
+            Args:
+                settings (dict): full settings (global + project)
+            Returns:
+                (list) of strings
+        """
+        sync_settings = self._parse_sync_settings_from_settings(settings)
+
+        return self._get_active_sites_from_settings(sync_settings)
+
+    def get_active_site(self, project_name):
+        """
+            Returns active (mine) site for 'project_name' from settings
+
+            Returns:
+                (string)
+        """
+        active_site = self.get_sync_project_setting(project_name)['config']\
+            ['active_site']
+        if active_site == self.LOCAL_SITE:
+            return get_local_site_id()
+        return active_site
+
+    def _get_active_sites_from_settings(self, sync_settings):
+        sites = [self.DEFAULT_SITE]
+        if self.enabled and sync_settings['enabled']:
+            sites.append(self.LOCAL_SITE)
 
         return sites
 
+    # remote sites
     def get_remote_sites(self, project_name):
         """
             Returns all remote sites configured on 'project_name'.
@@ -357,32 +391,35 @@ class SyncServer(PypeModule, ITrayModule):
             Returns:
                 (list) of strings
         """
-        sync_presets = self.get_synced_presets()
-        remote_sites = []
-        if sync_presets:
-            for _, sites in self.get_configured_sites(sync_presets,
-                                                      project_name).items():
-                for site, enabled in sites.items():
-                    if enabled:
-                        remote_sites.append(site)
+        return self.get_remote_sites_from_setting(
+            get_project_settings(project_name))
 
-        return remote_sites
+    def get_remote_sites_from_setting(self, settings):
+        """
+            Get remote sites for returning 'default' values for Local Settings
+        """
+        sync_settings = self._parse_sync_settings_from_settings(settings)
 
-    def get_active_site(self, project_name):
-        """
-            Returns active (mine) site for 'project_name' from settings
-        """
-        active_site = self.get_synced_preset(project_name)['config']\
-            ['active_site']
-        if active_site == self.LOCAL_SITE:
-            return get_local_site_id()
-        return active_site
+        return self._get_remote_sites_from_settings(sync_settings)
 
     def get_remote_site(self, project_name):
         """
             Returns remote (theirs) site for 'project_name' from settings
         """
-        return self.get_synced_preset(project_name)['config']['remote_site']
+        return self.get_sync_project_setting(project_name)['config']['remote_site']
+
+    def _get_remote_sites_from_settings(self, sync_settings):
+        if not self.enabled or not sync_settings['enabled']:
+            return []
+
+        remote_sites = [self.DEFAULT_SITE, self.LOCAL_SITE]
+        if sync_settings:
+            for site, enabled in self._get_configured_sites_from_setting(
+                    sync_settings).items():
+                if enabled:
+                    remote_sites.append(site)
+
+        return list(set(remote_sites))
 
     """ End of Public API """
 
@@ -399,14 +436,14 @@ class SyncServer(PypeModule, ITrayModule):
         if not self.enabled:
             return
 
-        self.sync_project_presets = None
+        self.sync_project_settings = None
         self.lock = threading.Lock()
 
         self.connection = AvalonMongoDB()
         self.connection.install()
 
         try:
-            self.set_sync_project_presets()
+            self.set_sync_project_settings()
             self.sync_server_thread = SyncServerThread(self)
             from .tray.app import SyncServerWindow
             self.widget = SyncServerWindow(self)
@@ -418,7 +455,7 @@ class SyncServer(PypeModule, ITrayModule):
                 "There are not set presets for SyncServer OR "
                 "Credentials provided are invalid, "
                 "no syncing possible").
-                     format(str(self.sync_project_presets)), exc_info=True)
+                     format(str(self.sync_project_settings)), exc_info=True)
             self.enabled = False
 
     def tray_start(self):
@@ -432,8 +469,7 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             None
         """
-        if self.sync_project_presets and \
-                self.has_working_sites(self.sync_project_presets):
+        if self.sync_project_settings and self.enabled:
             self.sync_server_thread.start()
         else:
             log.info("No presets or active providers. " +
@@ -489,23 +525,45 @@ class SyncServer(PypeModule, ITrayModule):
         """
         return self._anatomies.get('project_name') or Anatomy(project_name)
 
-    def get_synced_presets(self, refresh=False):
+    def set_sync_project_settings(self):
+        """
+            Set sync_project_settings for all projects (caching)
+
+            For performance
+        """
+        sync_project_presets = {}
+        if not self.connection:
+            self.connection = AvalonMongoDB()
+            self.connection.install()
+
+        for collection in self.connection.database.collection_names(False):
+            sync_settings = self.get_sync_project_setting(collection)
+            if sync_settings:
+                sync_project_presets[collection] = sync_settings
+
+        if not sync_project_presets:
+            log.info("No enabled and configured projects for sync.")
+
+        self.sync_project_settings = sync_project_presets
+
+    def get_sync_project_settings(self, refresh=False):
         """
             Collects all projects which have enabled syncing and their settings
         Args:
             refresh (bool): refresh presets from settings - used when user
-                changes site in Local Settings
+                changes site in Local Settings or any time up-to-date values
+                are necessary
         Returns:
             (dict): of settings, keys are project names
             {'projectA':{enabled: True, sites:{}...}
         """
         # presets set already, do not call again and again
-        if not self.sync_project_presets:
-            self.set_sync_project_presets()
+        if refresh or not self.sync_project_settings:
+            self.set_sync_project_settings()
 
-        return self.sync_project_presets
+        return self.sync_project_settings
 
-    def get_synced_preset(self, project_name):
+    def get_sync_project_setting(self, project_name):
         """ Handles pulling sync_server's settings for enabled 'project_name'
 
             Args:
@@ -516,109 +574,79 @@ class SyncServer(PypeModule, ITrayModule):
         """
         # presets set already, do not call again and again
         # self.log.debug("project preset {}".format(self.presets))
-        if self.sync_project_presets and \
-                self.sync_project_presets.get(project_name):
-            return self.sync_project_presets.get(project_name)
+        if self.sync_project_settings and \
+                self.sync_project_settings.get(project_name):
+            return self.sync_project_settings.get(project_name)
 
         settings = get_project_settings(project_name)
-        sync_settings = settings.get("global")["sync_server"]
+        return self._parse_sync_settings_from_settings(settings)
+
+    def site_is_working(self, project_name, site_name):
+        """
+            Confirm that 'site_name' is configured correctly for 'project_name'
+            Args:
+                project_name(string):
+                site_name(string):
+            Returns
+                (bool)
+        """
+        if self._get_configured_sites(project_name).get(site_name):
+            return True
+        return False
+
+    def _parse_sync_settings_from_settings(self, settings):
+        """ settings from api.get_project_settings, TOOD rename """
+        sync_settings = settings.get("global").get("sync_server")
         if not sync_settings:
-            log.info("No project setting for {}, not syncing.".
-                     format(project_name))
+            log.info("No project setting not syncing.")
             return {}
         if sync_settings.get("enabled"):
             return sync_settings
 
         return {}
 
-    def set_sync_project_presets(self):
-        sync_presets = {}
-        if not self.connection:
-            self.connection = AvalonMongoDB()
-            self.connection.install()
-
-        for collection in self.connection.database.collection_names(False):
-            sync_settings = self.get_synced_preset(collection)
-            if sync_settings:
-                sync_presets[collection] = sync_settings
-
-        if not sync_presets:
-            log.info("No enabled and configured projects for sync.")
-
-        self.sync_project_presets = sync_presets
-
-    def get_configured_sites(self, settings, only_project_name=None):
+    def _get_configured_sites(self, project_name):
         """
             Loops through settings and looks for configured sites and checks
-            its handlers.
+            its handlers for particular 'project_name'.
 
             Args:
-                settings(dict): dictionary from Settings
+                project_setting(dict): dictionary from Settings
                 only_project_name(string, optional): only interested in
                     particular project
             Returns:
                 (dict of dict)
                 {'ProjectA': {'studio':True, 'gdrive':False}}
         """
-        initiated_handlers = {}  # handlers cache
-        working_sites_per_project = {}
-        for project_name, project_setting in settings.items():
-            if only_project_name and project_name != only_project_name:
-                continue
+        settings = self.get_sync_project_setting(project_name)
+        return self._get_configured_sites_from_setting(settings)
 
-            if not project_setting.get("enabled"):
-                continue
+    def _get_configured_sites_from_setting(self, project_setting):
+        if not project_setting.get("enabled"):
+            return {}
 
-            configured_sites = {}
-            for site_name, config in project_setting.get("sites").items():
-                handler = initiated_handlers.\
-                    get((config["provider"], site_name))
-                if not handler:
-                    handler = lib.factory.get_provider(config["provider"],
-                                                       site_name,
-                                                       presets=config)
-                    initiated_handlers[(config["provider"], site_name)] = \
-                        handler
+        initiated_handlers = {}
+        configured_sites = {}
+        for site_name, config in project_setting.get("sites").items():
+            handler = initiated_handlers. \
+                get((config["provider"], site_name))
+            if not handler:
+                handler = lib.factory.get_provider(config["provider"],
+                                                   site_name,
+                                                   presets=config)
+                initiated_handlers[(config["provider"], site_name)] = \
+                    handler
 
-                if handler.is_active():
-                    configured_sites[site_name] = True
+            if handler.is_active():
+                configured_sites[site_name] = True
 
-            working_sites_per_project[project_name] = configured_sites
-
-        return working_sites_per_project
-
-    def has_working_sites(self, settings, only_project_name=None):
-        """
-            Learn if there is any valid combination of active and remote sites
-            for any configured project.
-
-            Valid means that both handlers are configured correctly
-            (credentials for remote sites etc.)
-
-            If yes, sync server should be started, if not, it shouldnt be
-            started unnecessary to hog resources.
-
-        Args:
-            settings (dict): all enabled project sync setting (sites labesl,
-                retries count etc.)
-        """
-        working_sites_per_project = self.get_configured_sites(
-            settings, only_project_name)
-
-        for project_name in working_sites_per_project.keys():
-            if only_project_name and project_name != only_project_name:
-                continue
-            if all(working_sites_per_project[project_name].values()):
-                return True
-
-        log.info("No tuple of active-remote sites is active for project.")
-        return False
+        return configured_sites
 
     def get_provider_for_site(self, project_name, site):
         """
             Return provider name for site.
         """
-        site_preset = self.get_synced_preset(project_name)["sites"].get(site)
+        site_preset = self.get_sync_project_setting(project_name)["sites"].get(site)
         if site_preset:
             return site_preset["provider"]
 
@@ -770,7 +798,7 @@ class SyncServer(PypeModule, ITrayModule):
             handler = lib.factory.get_provider(provider_name, site_name,
                                                tree=tree, presets=preset)
 
-            root_configs = self._get_roots_config(self.sync_project_presets,
+            root_configs = self._get_roots_config(self.sync_project_settings,
                                                   collection,
                                                   site_name)
             remote_file = self._get_remote_file_path(file, root_configs)
@@ -823,7 +851,7 @@ class SyncServer(PypeModule, ITrayModule):
             handler = lib.factory.get_provider(provider_name, site_name,
                                                tree=tree, presets=preset)
 
-            root_configs = self._get_roots_config(self.sync_project_presets,
+            root_configs = self._get_roots_config(self.sync_project_settings,
                                                   collection,
                                                   site_name)
             remote_file_path = self._get_remote_file_path(file, root_configs)
@@ -1200,7 +1228,7 @@ class SyncServer(PypeModule, ITrayModule):
                 raise ValueError(msg)
 
     def get_my_local_site(self):
-        """
+        """ TODO remove
             Returns name of current user local_site, its Pype wide.
 
             Returns:
@@ -1215,7 +1243,7 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             (int): in seconds
         """
-        ld = self.sync_project_presets[project_name]["config"]["loop_delay"]
+        ld = self.sync_project_settings[project_name]["config"]["loop_delay"]
         return int(ld)
 
     def show_widget(self):
@@ -1305,7 +1333,7 @@ class SyncServer(PypeModule, ITrayModule):
             (string) - absolute path on local system
         """
         local_active_site = self.get_active_site(collection)
-        sites = self.get_synced_preset(collection)["sites"]
+        sites = self.get_sync_project_setting(collection)["sites"]
         root_config = sites[local_active_site]["root"]
 
         if not root_config.get("root"):
@@ -1353,7 +1381,7 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             (list)
         """
-        retry_cnt = self.sync_project_presets[project_name].\
+        retry_cnt = self.sync_project_settings[project_name].\
             get("config")["retry_cnt"]
         arr = [i for i in range(int(retry_cnt))]
         arr.append(None)
@@ -1417,18 +1445,14 @@ class SyncServerThread(threading.Thread):
             while self.is_running and not self.module.is_paused():
                 import time
                 start_time = None
-                self.module.set_sync_project_presets()
-                for collection, preset in self.module.get_synced_presets().\
+                self.module.set_sync_project_settings()  # clean cache
+                for collection, preset in self.module.get_sync_project_settings().\
                         items():
-                    if self.module.is_project_paused(collection):
+                    start_time = time.time()
+                    local_site, remote_site = self._working_sites(collection)
+                    if not all([local_site, remote_site]):
                         continue
 
-                    local_site = self.module.get_active_site(collection)
-                    remote_site = self.module.get_remote_site(collection)
-                    if local_site == remote_site:
-                        self.log.debug("Both sites same, skipping")
-
-                    start_time = time.time()
                     sync_repres = self.module.get_sync_representations(
                         collection,
                         local_site,
@@ -1564,3 +1588,23 @@ class SyncServerThread(threading.Thread):
         self.executor.shutdown(wait=True)
         await asyncio.sleep(0.07)
         self.loop.stop()
+
+    def _working_sites(self, collection):
+        if self.module.is_project_paused(collection):
+            log.debug("Both sites same, skipping")
+            return None, None
+
+        local_site = self.module.get_active_site(collection)
+        remote_site = self.module.get_remote_site(collection)
+        if local_site == remote_site:
+            log.debug("{}-{} sites same, skipping".format(local_site,
+                                                          remote_site))
+            return None, None
+
+        if not all(self.module.site_is_working(collection, local_site),
+                   self.module.site_is_working(collection, remote_site)):
+            log.debug("At least one of the sites is not " +
+                           "working properly")
+            return None, None
+
+        return local_site, remote_site
