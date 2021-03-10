@@ -28,6 +28,7 @@ def test_pype_version():
 
     v2 = PypeVersion(1, 2, 3, client="x")
     assert str(v2) == "1.2.3-x"
+    assert v1 < v2
 
     v3 = PypeVersion(1, 2, 3, variant="staging")
     assert str(v3) == "1.2.3-staging"
@@ -35,6 +36,7 @@ def test_pype_version():
     v4 = PypeVersion(1, 2, 3, variant="staging", client="client")
     assert str(v4) == "1.2.3-client-staging"
     assert v3 < v4
+    assert v1 < v4
 
     v5 = PypeVersion(1, 2, 3, variant="foo", client="x")
     assert str(v5) == "1.2.3-x"
@@ -54,6 +56,9 @@ def test_pype_version():
 
     v10 = PypeVersion(1, 2, 2)
     assert v10 < v1
+
+    v11 = PypeVersion(1, 2, 3, path=Path("/foo/bar"))
+    assert v10 < v11
 
     assert v5 == v2
 
@@ -141,7 +146,7 @@ def test_search_string_for_pype_version(printer):
 
 
 def test_install_live_repos(fix_bootstrap, printer):
-    rf = fix_bootstrap.install_live_repos()
+    rf = fix_bootstrap.create_version_from_live_code()
     sep = os.path.sep
     expected_paths = [
         f"{rf}{sep}avalon-core",
