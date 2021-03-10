@@ -128,7 +128,15 @@ class AlembicCameraLoader(api.Loader):
 
             # collect input output dependencies
             dependencies = camera_node.dependencies()
-            dependent = camera_node.dependent()
+
+            dependent_connections = []
+            for dependent in camera_node.dependent():
+                for index in range(0, dependent.inputs()):
+                    connected_node = dependent.input(index)
+                    if connected_node == camera_node:
+                        dependent_connections.append(
+                            {"input": index, "node": dependent}
+                        )
 
             camera_node["frame_rate"].setValue(float(fps))
             camera_node["file"].setValue(file)
@@ -147,11 +155,8 @@ class AlembicCameraLoader(api.Loader):
             for i, input in enumerate(dependencies):
                 camera_node.setInput(i, input)
             # link to original output nodes
-            for d in dependent:
-                index = next((i for i, dpcy in enumerate(
-                              d.dependencies())
-                              if camera_node is dpcy), 0)
-                d.setInput(index, camera_node)
+            for connection in dependent_connections:
+                connection["node"].setInput(connection["input"], camera_node)
 
         # color node by correct color by actual version
         self.node_version_color(version, camera_node)
