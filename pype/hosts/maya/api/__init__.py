@@ -7,7 +7,7 @@ from maya import utils, cmds
 from avalon import api as avalon
 from avalon import pipeline
 from avalon.maya import suspended_refresh
-from avalon.maya.pipeline import IS_HEADLESS, _on_task_changed
+from avalon.maya.pipeline import IS_HEADLESS
 from avalon.tools import workfiles
 from pyblish import api as pyblish
 from pype.lib import any_outdated
@@ -45,9 +45,7 @@ def install():
     avalon.on("open", on_open)
     avalon.on("new", on_new)
     avalon.before("save", on_before_save)
-
-    log.info("Overriding existing event 'taskChanged'")
-    override_event("taskChanged", on_task_changed)
+    avalon.on("taskChanged", on_task_changed)
 
     log.info("Setting default family states for loader..")
     avalon.data["familiesStateToggled"] = ["imagesequence"]
@@ -59,24 +57,6 @@ def uninstall():
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
 
     menu.uninstall()
-
-
-def override_event(event, callback):
-    """
-    Override existing event callback
-    Args:
-        event (str): name of the event
-        callback (function): callback to be triggered
-
-    Returns:
-        None
-
-    """
-
-    ref = weakref.WeakSet()
-    ref.add(callback)
-
-    pipeline._registered_event_handlers[event] = ref
 
 
 def on_init(_):
@@ -215,7 +195,6 @@ def on_new(_):
 def on_task_changed(*args):
     """Wrapped function of app initialize and maya's on task changed"""
     # Run
-    _on_task_changed()
     with suspended_refresh():
         lib.set_context_settings()
         lib.update_content_on_context_change()
