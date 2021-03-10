@@ -22,12 +22,6 @@ from .constants import (
 NOT_SET = type("NOT_SET", (), {})()
 
 
-def get_active_sites(project_settings):
-    global_entity = project_settings["project_settings"]["global"]
-    sites_entity = global_entity["sync_server"]["sites"]
-    return tuple(sites_entity.keys())
-
-
 class _ProjectListWidget(ProjectListWidget):
     def on_item_clicked(self, new_index):
         new_project_name = new_index.data(QtCore.Qt.DisplayRole)
@@ -242,6 +236,16 @@ class RootsWidget(QtWidgets.QWidget):
             self.content_layout.removeItem(item)
         self.site_widgets = []
 
+    def _get_active_sites(self):
+        sync_server_module = (
+            self.modules_manager.modules_by_name["sync_server"]
+        )
+        if self._project_name is None:
+            return sync_server_module.get_active_sites_from_setting(
+                self.project_settings["project_settings"].value
+            )
+        return sync_server_module.get_active_sites(self._project_name)
+
     def refresh(self):
         self._clear_widgets()
 
@@ -252,7 +256,7 @@ class RootsWidget(QtWidgets.QWidget):
             self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
         )
         # Site label
-        for site_name in get_active_sites(self.project_settings):
+        for site_name in self._get_active_sites():
             site_widget = QtWidgets.QWidget(self)
             site_layout = QtWidgets.QVBoxLayout(site_widget)
 
@@ -550,7 +554,14 @@ class AciveSiteCombo(_SiteCombobox):
     input_label = "Active site"
 
     def _get_project_sites(self):
-        return get_active_sites(self.project_settings)
+        sync_server_module = (
+            self.modules_manager.modules_by_name["sync_server"]
+        )
+        if self.project_name is None:
+            return sync_server_module.get_active_sites_from_setting(
+                self.project_settings["project_settings"].value
+            )
+        return sync_server_module.get_active_sites(self.project_name)
 
     def _get_local_settings_item(self, project_name=None, data=None):
         if project_name is None:
@@ -578,9 +589,14 @@ class RemoteSiteCombo(_SiteCombobox):
     input_label = "Remote site"
 
     def _get_project_sites(self):
-        global_entity = self.project_settings["project_settings"]["global"]
-        sites_entity = global_entity["sync_server"]["sites"]
-        return tuple(sites_entity.keys())
+        sync_server_module = (
+            self.modules_manager.modules_by_name["sync_server"]
+        )
+        if self.project_name is None:
+            return sync_server_module.get_remote_sites_from_setting(
+                self.project_settings["project_settings"].value
+            )
+        return sync_server_module.get_remote_sites(self.project_name)
 
     def _get_local_settings_item(self, project_name=None, data=None):
         if project_name is None:
