@@ -92,7 +92,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "harmony.palette",
                 "editorial",
                 "background",
-                "camerarig"
+                "camerarig",
+                "projection"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -206,8 +207,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             data=version_data
         )
 
-        self.log.debug("Creating version ...")
-
         new_repre_names_low = [_repre["name"].lower() for _repre in repres]
 
         existing_version = io.find_one({
@@ -217,8 +216,18 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         })
 
         if existing_version is None:
+            self.log.debug("Creating new version...")
+
+            # Prefil id if it exists on the instance.
+            if "versionId" in instance.data:
+                self.log.debug(
+                    "Prefilled id: {}".format(instance.data["versionId"])
+                )
+                version["_id"] = instance.data["versionId"]
+
             version_id = io.insert_one(version).inserted_id
         else:
+            self.log.debug("Updating existing version...")
             # Check if instance have set `append` mode which cause that
             # only replicated representations are set to archive
             append_repres = instance.data.get("append", False)
