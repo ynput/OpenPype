@@ -3,7 +3,7 @@ from pype.hosts.nuke import plugin
 import nuke
 
 
-class CreateCamera(plugin.Creator):
+class CreateCamera(plugin.PypeCreator):
     """Add Publishable Backdrop"""
 
     name = "camera"
