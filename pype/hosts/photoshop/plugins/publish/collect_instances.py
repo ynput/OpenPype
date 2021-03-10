@@ -24,6 +24,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
         stub = photoshop.stub()
         layers = stub.get_layers()
         layers_meta = stub.get_layers_metadata()
+        instance_names = []
         for layer in layers:
             layer_data = stub.read(layer, layers_meta)
 
@@ -41,14 +42,20 @@ class CollectInstances(pyblish.api.ContextPlugin):
             #     self.log.info("%s skipped, it was empty." % layer.Name)
             #     continue
 
-            instance = context.create_instance(layer.name)
+            instance = context.create_instance(layer_data["subset"])
             instance.append(layer)
             instance.data.update(layer_data)
             instance.data["families"] = self.families_mapping[
                 layer_data["family"]
             ]
             instance.data["publish"] = layer.visible
+            instance_names.append(layer_data["subset"])
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
+            self.log.info("instance: {} ".format(instance.data))
+
+        if len(instance_names) != len(set(instance_names)):
+            self.log.warning("Duplicate instances found. " +
+                             "Remove unwanted via SubsetManager")
