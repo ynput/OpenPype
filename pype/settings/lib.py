@@ -400,8 +400,19 @@ def apply_local_settings_on_anatomy_settings(
 
     local_project_settings = local_settings.get("projects") or {}
 
+    # Get local settings fro default project and project specified in argument
     project_locals = local_project_settings.get(project_name) or {}
     default_locals = local_project_settings.get(DEFAULT_PROJECT_KEY) or {}
+
+    # Check for roots existence in local settings first
+    roots_project_locals = project_locals.get("roots") or {}
+    roots_default_locals = default_locals.get("roots") or {}
+
+    # Skip rest of processing if roots are not set
+    if not roots_project_locals and not roots_default_locals:
+        return
+
+    # Get active site from settings
     project_settings = get_project_settings(project_name)
     active_site = (
         project_settings["global"]["sync_server"]["config"]["active_site"]
@@ -411,12 +422,11 @@ def apply_local_settings_on_anatomy_settings(
     if not active_site:
         return
 
-    roots_locals = default_locals.get("roots", {}).get(active_site) or {}
-    if project_name != DEFAULT_PROJECT_KEY:
-        roots_locals.update(
-            project_locals.get("roots", {}).get(active_site) or {}
-        )
-
+    # Combine roots from local settings
+    roots_locals = roots_default_locals.get(active_site) or {}
+    roots_locals.update(roots_project_locals.get(active_site) or {})
+    # Skip processing if roots for current active site are not available in
+    #   local settings
     if not roots_locals:
         return
 
@@ -435,6 +445,8 @@ def apply_local_settings_on_project_settings(
     project_settings, local_settings, project_name
 ):
     """Apply local settings on project settings.
+
+    Currently is modifying active site and remote site in sync server.
 
     Args:
         project_settings (dict): Data for project settings.
