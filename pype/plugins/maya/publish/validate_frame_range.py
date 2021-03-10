@@ -84,10 +84,16 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
         """
         Repair instance container to match asset data.
         """
+        # Try and find object by "objectName" else fallback on instance name.
+        # This is for instances that are spawned from other instances.
+        object_name = instance.data.get("objectName", "")
+        if not cmds.objExists(object_name):
+            object_name = instance.data["name"]
+
         cmds.setAttr(
-            "{}.frameStart".format(instance.data["name"]),
+            "{}.frameStart".format(object_name),
             instance.context.data.get("frameStartHandle"))
 
         cmds.setAttr(
-            "{}.frameEnd".format(instance.data["name"]),
+            "{}.frameEnd".format(object_name),
             instance.context.data.get("frameEndHandle"))
