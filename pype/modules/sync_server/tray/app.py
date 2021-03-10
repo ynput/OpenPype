@@ -159,7 +159,7 @@ class SyncProjectListWidget(ProjectListWidget):
         model.clear()
 
         project_name = None
-        for project_name in self.sync_server.get_synced_presets().keys():
+        for project_name in self.sync_server.get_sync_project_settings().keys():
             if self.sync_server.is_paused() or \
                self.sync_server.is_project_paused(project_name):
                 icon = self._get_icon("paused")
@@ -168,7 +168,7 @@ class SyncProjectListWidget(ProjectListWidget):
 
             model.appendRow(QtGui.QStandardItem(icon, project_name))
 
-        if len(self.sync_server.get_synced_presets().keys()) == 0:
+        if len(self.sync_server.get_sync_project_settings().keys()) == 0:
             model.appendRow(QtGui.QStandardItem(DUMMY_PROJECT))
 
         self.current_project = self.project_list.currentIndex().data(
