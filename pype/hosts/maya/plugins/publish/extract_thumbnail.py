@@ -34,7 +34,7 @@ class ExtractThumbnail(pype.api.Extractor):
 
         capture_preset = ""
         capture_preset = (
-            instance.context.data["project_settings"]['maya']['capture']
+            instance.context.data["project_settings"]['maya']['publish']['ExtractPlayblast']
         )
 
         try:

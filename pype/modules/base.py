@@ -108,6 +108,7 @@ class ITrayModule:
     would do nothing.
     """
     tray_initialized = False
+    _tray_manager = None
 
     @abstractmethod
     def tray_init(self):
@@ -137,6 +138,20 @@ class ITrayModule:
         This is place where all threads should be shut.
         """
         pass
+
+    def show_tray_message(self, title, message, icon=None, msecs=None):
+        """Show tray message.
+
+        Args:
+            title (str): Title of message.
+            message (str): Content of message.
+            icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
+                Information icon, may differ by Qt version.
+            msecs (int): Duration of message visibility in miliseconds.
+                Default is 10000 msecs, may differ by Qt version.
+        """
+        if self._tray_manager:
+            self._tray_manager.show_tray_message(title, message, icon, msecs)
 
 
 class ITrayAction(ITrayModule):
@@ -638,8 +653,10 @@ class TrayModulesManager(ModulesManager):
         self.modules_by_id = {}
         self.modules_by_name = {}
         self._report = {}
+        self.tray_manager = None
 
-    def initialize(self, tray_menu):
+    def initialize(self, tray_manager, tray_menu):
+        self.tray_manager = tray_manager
         self.initialize_modules()
         self.tray_init()
         self.connect_modules()
@@ -658,6 +675,7 @@ class TrayModulesManager(ModulesManager):
         prev_start_time = time_start
         for module in self.get_enabled_tray_modules():
             try:
+                module._tray_manager = self.tray_manager
                 module.tray_init()
                 module.tray_initialized = True
             except Exception:

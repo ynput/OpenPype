@@ -1,14 +1,4 @@
 {
-    "publish": {
-        "ExtractThumbnailSP": {
-            "ffmpeg_args": {
-                "input": [
-                    "gamma 2.2"
-                ],
-                "output": []
-            }
-        }
-    },
     "create": {
         "create_workfile": {
             "name": "workfile",
@@ -120,6 +110,16 @@
             "create_editorial": "Editorial",
             "create_image": "Image",
             "create_matchmove": "Matchmove"
+        }
+    },
+    "publish": {
+        "ExtractThumbnailSP": {
+            "ffmpeg_args": {
+                "input": [
+                    "gamma 2.2"
+                ],
+                "output": []
+            }
         }
     }
 }

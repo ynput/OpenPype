@@ -3,15 +3,12 @@ import sys
 
 import platform
 from avalon import style
-from Qt import QtCore, QtGui, QtWidgets, QtSvg
+from Qt import QtCore, QtGui, QtWidgets
 from pype.api import Logger, resources
 from pype.modules import TrayModulesManager, ITrayService
 from pype.settings.lib import get_system_settings
 import pype.version
-try:
-    import configparser
-except Exception:
-    import ConfigParser as configparser
+from .pype_info_widget import PypeInfoWidget
 
 
 class TrayManager:
@@ -19,13 +16,14 @@ class TrayManager:
 
     Load submenus, actions, separators and modules into tray's context.
     """
-    available_sourcetypes = ["python", "file"]
 
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
 
-        self.log = Logger().get_logger(self.__class__.__name__)
+        self.pype_info_widget = None
+
+        self.log = Logger.get_logger(self.__class__.__name__)
 
         self.module_settings = get_system_settings()["modules"]
 
@@ -36,7 +34,7 @@ class TrayManager:
     def initialize_modules(self):
         """Add modules to tray."""
 
-        self.modules_manager.initialize(self.tray_widget.menu)
+        self.modules_manager.initialize(self, self.tray_widget.menu)
 
         # Add services if they are
         services_submenu = ITrayService.services_submenu(self.tray_widget.menu)
@@ -58,6 +56,26 @@ class TrayManager:
         # Print time report
         self.modules_manager.print_report()
 
+    def show_tray_message(self, title, message, icon=None, msecs=None):
+        """Show tray message.
+
+        Args:
+            title (str): Title of message.
+            message (str): Content of message.
+            icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
+                Information icon, may differ by Qt version.
+            msecs (int): Duration of message visibility in miliseconds.
+                Default is 10000 msecs, may differ by Qt version.
+        """
+        args = [title, message]
+        kwargs = {}
+        if icon:
+            kwargs["icon"] = icon
+        if msecs:
+            kwargs["msecs"] = msecs
+
+        self.tray_widget.showMessage(*args, **kwargs)
+
     def _add_version_item(self):
         subversion = os.environ.get("PYPE_SUBVERSION")
         client_name = os.environ.get("PYPE_CLIENT")
@@ -70,11 +88,20 @@ class TrayManager:
             version_string += ", {}".format(client_name)
 
         version_action = QtWidgets.QAction(version_string, self.tray_widget)
+        version_action.triggered.connect(self._on_version_action)
         self.tray_widget.menu.addAction(version_action)
         self.tray_widget.menu.addSeparator()
 
     def on_exit(self):
         self.modules_manager.on_exit()
+
+    def _on_version_action(self):
+        if self.pype_info_widget is None:
+            self.pype_info_widget = PypeInfoWidget()
+
+        self.pype_info_widget.show()
+        self.pype_info_widget.raise_()
+        self.pype_info_widget.activateWindow()
 
 
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
@@ -85,9 +112,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     """
 
     def __init__(self, parent):
-        self.icon = QtGui.QIcon(resources.pype_icon_filepath())
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
 
-        QtWidgets.QSystemTrayIcon.__init__(self, self.icon, parent)
+        super(SystemTrayIcon, self).__init__(icon, parent)
 
         # Store parent - QtWidgets.QMainWindow()
         self.parent = parent
@@ -100,15 +127,15 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.tray_man = TrayManager(self, self.parent)
         self.tray_man.initialize_modules()
 
-        # Catch activate event
-        self.activated.connect(self.on_systray_activated)
+        # Catch activate event for left click if not on MacOS
+        #   - MacOS has this ability by design so menu would be doubled
+        if platform.system().lower() != "darwin":
+            self.activated.connect(self.on_systray_activated)
         # Add menu to Context of SystemTrayIcon
         self.setContextMenu(self.menu)
 
     def on_systray_activated(self, reason):
         # show contextMenu if left click
-        if platform.system().lower() == "darwin":
-            return
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
             position = QtGui.QCursor().pos()
             self.contextMenu().popup(position)
@@ -128,118 +155,23 @@ class TrayMainWindow(QtWidgets.QMainWindow):
 
     Every widget should have set this window as parent because
     QSystemTrayIcon widget is not allowed to be a parent of any widget.
-
-    :param app: Qt application manages application's control flow
-    :type app: QtWidgets.QApplication
-
-    .. note::
-        *TrayMainWindow* has ability to show **working** widget.
-        Calling methods:
-        - ``show_working()``
-        - ``hide_working()``
-    .. todo:: Hide working widget if idle is too long
     """
 
     def __init__(self, app):
-        super().__init__()
+        super(TrayMainWindow, self).__init__()
         self.app = app
 
-        self.set_working_widget()
-
-        self.trayIcon = SystemTrayIcon(self)
-        self.trayIcon.show()
-
-    def set_working_widget(self):
-        image_file = resources.get_resource("icons", "working.svg")
-        img_pix = QtGui.QPixmap(image_file)
-        if image_file.endswith('.svg'):
-            widget = QtSvg.QSvgWidget(image_file)
-        else:
-            widget = QtWidgets.QLabel()
-            widget.setPixmap(img_pix)
-
-        # Set widget properties
-        widget.setGeometry(img_pix.rect())
-        widget.setMask(img_pix.mask())
-        widget.setWindowFlags(
-            QtCore.Qt.WindowStaysOnTopHint | QtCore.Qt.FramelessWindowHint
-        )
-        widget.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
-
-        self.center_widget(widget)
-        self._working_widget = widget
-        self.helper = DragAndDropHelper(self._working_widget)
-
-    def center_widget(self, widget):
-        frame_geo = widget.frameGeometry()
-        screen = self.app.desktop().cursor().pos()
-        center_point = self.app.desktop().screenGeometry(
-            self.app.desktop().screenNumber(screen)
-        ).center()
-        frame_geo.moveCenter(center_point)
-        widget.move(frame_geo.topLeft())
-
-    def show_working(self):
-        self._working_widget.show()
-
-    def hide_working(self):
-        self.center_widget(self._working_widget)
-        self._working_widget.hide()
-
-
-class DragAndDropHelper:
-    """ Helper adds to widget drag and drop ability
-
-    :param widget: Qt Widget where drag and drop ability will be added
-    """
-
-    def __init__(self, widget):
-        self.widget = widget
-        self.widget.mousePressEvent = self.mousePressEvent
-        self.widget.mouseMoveEvent = self.mouseMoveEvent
-        self.widget.mouseReleaseEvent = self.mouseReleaseEvent
-
-    def mousePressEvent(self, event):
-        self.__mousePressPos = None
-        self.__mouseMovePos = None
-        if event.button() == QtCore.Qt.LeftButton:
-            self.__mousePressPos = event.globalPos()
-            self.__mouseMovePos = event.globalPos()
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() == QtCore.Qt.LeftButton:
-            # adjust offset from clicked point to origin of widget
-            currPos = self.widget.mapToGlobal(
-                self.widget.pos()
-            )
-            globalPos = event.globalPos()
-            diff = globalPos - self.__mouseMovePos
-            newPos = self.widget.mapFromGlobal(currPos + diff)
-            self.widget.move(newPos)
-            self.__mouseMovePos = globalPos
-
-    def mouseReleaseEvent(self, event):
-        if self.__mousePressPos is not None:
-            moved = event.globalPos() - self.__mousePressPos
-            if moved.manhattanLength() > 3:
-                event.ignore()
-                return
+        self.tray_widget = SystemTrayIcon(self)
+        self.tray_widget.show()
 
 
 class PypeTrayApplication(QtWidgets.QApplication):
     """Qt application manages application's control flow."""
 
     def __init__(self):
-        super(self.__class__, self).__init__(sys.argv)
+        super(PypeTrayApplication, self).__init__(sys.argv)
         # Allows to close widgets without exiting app
         self.setQuitOnLastWindowClosed(False)
-
-        # Allow show icon istead of python icon in task bar (Windows)
-        if os.name == "nt":
-            import ctypes
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
-                u"pype_tray"
-            )
 
         # Sets up splash
         splash_widget = self.set_splash()
