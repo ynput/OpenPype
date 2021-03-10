@@ -3,7 +3,7 @@ from pype.hosts.nuke import plugin
 import nuke
 
 
-class CreateGizmo(plugin.Creator):
+class CreateGizmo(plugin.PypeCreator):
     """Add Publishable "gizmo" group
 
     The name is symbolically gizmo as presumably
