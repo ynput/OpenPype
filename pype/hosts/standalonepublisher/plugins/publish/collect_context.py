@@ -227,11 +227,15 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             component["stagingDir"] = component["stagingDir"]
 
             if isinstance(component["files"], list):
-                collections, remainder = clique.assemble(component["files"])
+                collections, _remainder = clique.assemble(component["files"])
                 self.log.debug("collecting sequence: {}".format(collections))
                 instance.data["frameStart"] = int(component["frameStart"])
                 instance.data["frameEnd"] = int(component["frameEnd"])
                 instance.data["fps"] = int(component["fps"])
+
+            ext = component["ext"]
+            if ext.startswith("."):
+                component["ext"] = ext[1:]
 
             if component["preview"]:
                 instance.data["families"].append("review")
