@@ -11,6 +11,7 @@ from pype.api import (
     SystemSettings,
     ProjectSettings
 )
+from pype.modules import ModulesManager
 
 from .widgets import (
     SpacerWidget,
@@ -37,6 +38,7 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
         self.system_settings = SystemSettings()
         self.project_settings = ProjectSettings()
+        self.modules_manager = ModulesManager()
 
         self.main_layout = QtWidgets.QVBoxLayout(self)
 
@@ -108,7 +110,9 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         project_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
         project_expand_widget.set_content_widget(project_content)
 
-        projects_widget = ProjectSettingsWidget(self.project_settings, self)
+        projects_widget = ProjectSettingsWidget(
+            self.modules_manager, self.project_settings, self
+        )
         project_layout.addWidget(projects_widget)
 
         self.main_layout.addWidget(project_expand_widget)
