@@ -26,7 +26,7 @@ class ValidatePointcache(pyblish.api.InstancePlugin):
                     names[node_name] = [node]
 
             instance.data["invalid"] = []
-            for name, nodes in names.items():
+            for _, nodes in names.items():
                 if len(nodes) != 1:
                     invalid.extend(nodes)
                     instance.data["invalid"].extend(nodes)
