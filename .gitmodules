@@ -5,9 +5,6 @@
 [submodule "repos/avalon-unreal-integration"]
 	path = repos/avalon-unreal-integration
 	url = git@github.com:pypeclub/avalon-unreal-integration.git
-[submodule "repos/maya-look-assigner"]
-	path = repos/maya-look-assigner
-	url = git@github.com:pypeclub/maya-look-assigner.git
 [submodule "pype/modules/ftrack/python2_vendor/ftrack-python-api"]
 	path = pype/modules/ftrack/python2_vendor/ftrack-python-api
 	url = https://bitbucket.org/ftrack/ftrack-python-api.git

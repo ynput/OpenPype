@@ -95,6 +95,7 @@ class LoadMov(api.Loader):
             containerise,
             viewer_update_and_undo_stop
         )
+
         version = context['version']
         version_data = version.get("data", {})
         repr_id = context["representation"]["_id"]

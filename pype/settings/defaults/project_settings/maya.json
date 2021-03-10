@@ -1,111 +1,11 @@
 {
-    "capture": {
-        "Codec": {
-            "compression": "jpg",
-            "format": "image",
-            "quality": 95
-        },
-        "Display Options": {
-            "background": [
-                0.7,
-                0.7,
-                0.7
-            ],
-            "backgroundBottom": [
-                0.7,
-                0.7,
-                0.7
-            ],
-            "backgroundTop": [
-                0.7,
-                0.7,
-                0.7
-            ],
-            "override_display": true
-        },
-        "Generic": {
-            "isolate_view": true,
-            "off_screen": true
-        },
-        "IO": {
-            "name": "",
-            "open_finished": true,
-            "raw_frame_numbers": true,
-            "recent_playblasts": [],
-            "save_file": true
-        },
-        "PanZoom": {
-            "pan_zoom": true
-        },
-        "Renderer": {
-            "rendererName": "vp2Renderer"
-        },
-        "Resolution": {
-            "width": 1080,
-            "height": 1920,
-            "percent": 1.0,
-            "mode": "Custom"
-        },
-        "Time Range": {
-            "start_frame": 0,
-            "end_frame": 0,
-            "frame": "",
-            "time": "Time Slider"
-        },
-        "Viewport Options": {
-            "cameras": false,
-            "clipGhosts": false,
-            "controlVertices": false,
-            "deformers": false,
-            "dimensions": false,
-            "displayLights": 0,
-            "dynamicConstraints": false,
-            "dynamics": false,
-            "fluids": false,
-            "follicles": false,
-            "gpuCacheDisplayFilter": false,
-            "greasePencils": false,
-            "grid": false,
-            "hairSystems": true,
-            "handles": false,
-            "high_quality": true,
-            "hud": false,
-            "hulls": false,
-            "ikHandles": false,
-            "imagePlane": true,
-            "joints": false,
-            "lights": false,
-            "locators": false,
-            "manipulators": false,
-            "motionTrails": false,
-            "nCloths": false,
-            "nParticles": false,
-            "nRigids": false,
-            "nurbsCurves": false,
-            "nurbsSurfaces": false,
-            "override_viewport_options": true,
-            "particleInstancers": false,
-            "pivots": false,
-            "planes": false,
-            "pluginShapes": false,
-            "polymeshes": true,
-            "shadows": true,
-            "strokes": false,
-            "subdivSurfaces": false,
-            "textures": false,
-            "twoSidedLighting": true
-        },
-        "Camera Options": {
-            "displayGateMask": false,
-            "displayResolution": false,
-            "displayFilmGate": false,
-            "displayFieldChart": false,
-            "displaySafeAction": false,
-            "displaySafeTitle": false,
-            "displayFilmPivot": false,
-            "displayFilmOrigin": false,
-            "overscan": 1.0
-        }
+    "ext_mapping": {
+        "model": "ma",
+        "mayaAscii": "ma",
+        "camera": "ma",
+        "rig": "ma",
+        "workfile": "ma",
+        "yetiRig": "ma"
     },
     "create": {
         "CreateAnimation": {
@@ -299,6 +199,10 @@
             "enabled": false,
             "optional": true
         },
+        "ValidateMeshNormalsUnlocked": {
+            "enabled": false,
+            "optional": true
+        },
         "ValidateMeshUVSetMap1": {
             "enabled": false,
             "optional": true
@@ -336,7 +240,7 @@
             "optional": true
         },
         "ValidateTransformZero": {
-            "enabled": true,
+            "enabled": false,
             "optional": true
         },
         "ValidateCameraAttributes": {
@@ -350,6 +254,105 @@
         "ValidateAssRelativePaths": {
             "enabled": true,
             "optional": true
+        },
+        "ExtractPlayblast": {
+            "capture_preset": {
+                "Codec": {
+                    "compression": "jpg",
+                    "format": "image",
+                    "quality": 95
+                },
+                "Display Options": {
+                    "background": [
+                        0.7,
+                        0.7,
+                        0.7
+                    ],
+                    "backgroundBottom": [
+                        0.7,
+                        0.7,
+                        0.7
+                    ],
+                    "backgroundTop": [
+                        0.7,
+                        0.7,
+                        0.7
+                    ],
+                    "override_display": true
+                },
+                "Generic": {
+                    "isolate_view": true,
+                    "off_screen": true
+                },
+                "PanZoom": {
+                    "pan_zoom": true
+                },
+                "Renderer": {
+                    "rendererName": "vp2Renderer"
+                },
+                "Resolution": {
+                    "width": 1080,
+                    "height": 1920,
+                    "percent": 1.0,
+                    "mode": "Custom"
+                },
+                "Viewport Options": {
+                    "override_viewport_options": true,
+                    "displayLights": "0",
+                    "textureMaxResolution": 1024,
+                    "multiSample": 4,
+                    "shadows": true,
+                    "textures": true,
+                    "twoSidedLighting": true,
+                    "ssaoEnable": true,
+                    "cameras": false,
+                    "clipGhosts": false,
+                    "controlVertices": false,
+                    "deformers": false,
+                    "dimensions": false,
+                    "dynamicConstraints": false,
+                    "dynamics": false,
+                    "fluids": false,
+                    "follicles": false,
+                    "gpuCacheDisplayFilter": false,
+                    "greasePencils": false,
+                    "grid": false,
+                    "hairSystems": true,
+                    "handles": false,
+                    "hud": false,
+                    "hulls": false,
+                    "ikHandles": false,
+                    "imagePlane": true,
+                    "joints": false,
+                    "lights": false,
+                    "locators": false,
+                    "manipulators": false,
+                    "motionTrails": false,
+                    "nCloths": false,
+                    "nParticles": false,
+                    "nRigids": false,
+                    "nurbsCurves": false,
+                    "nurbsSurfaces": false,
+                    "particleInstancers": false,
+                    "pivots": false,
+                    "planes": false,
+                    "pluginShapes": false,
+                    "polymeshes": true,
+                    "strokes": false,
+                    "subdivSurfaces": false
+                },
+                "Camera Options": {
+                    "displayGateMask": false,
+                    "displayResolution": false,
+                    "displayFilmGate": false,
+                    "displayFieldChart": false,
+                    "displaySafeAction": false,
+                    "displaySafeTitle": false,
+                    "displayFilmPivot": false,
+                    "displayFilmOrigin": false,
+                    "overscan": 1.0
+                }
+            }
         },
         "ExtractCameraAlembic": {
             "enabled": true,
