@@ -295,6 +295,52 @@ class SitesWidget(QtWidgets.QWidget):
             self.project_settings["project_settings"].value
         )
 
+    @staticmethod
+    def _extract_value_from_data(data, project_name, site_name, key):
+        _s_value = data
+        for _key in (project_name, site_name, key):
+            if _key not in _s_value:
+                return None
+            _s_value = _s_value[_key]
+        return _s_value
+
+    def _prepare_value_item(self, site_name, key):
+        value = self._extract_value_from_data(
+            self.local_project_settings,
+            self._project_name,
+            site_name,
+            key
+        )
+        orig_value = self._extract_value_from_data(
+            self.local_project_settings_orig,
+            self._project_name,
+            site_name,
+            key
+        )
+        orig_default_value = None
+        default_value = None
+        if self._project_name != DEFAULT_PROJECT_KEY:
+            default_value = self._extract_value_from_data(
+                self.local_project_settings,
+                DEFAULT_PROJECT_KEY,
+                site_name,
+                key
+            )
+            orig_default_value = self._extract_value_from_data(
+                self.local_project_settings_orig,
+                DEFAULT_PROJECT_KEY,
+                site_name,
+                key
+            )
+
+        return SiteValueItem(
+            self._project_name,
+            value,
+            default_value,
+            orig_value,
+            orig_default_value
+        )
+
     def refresh(self):
         self._clear_widgets()
 
