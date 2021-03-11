@@ -17,16 +17,10 @@
             "darwin": "{PYPE_ROOT}/vendor/bin/ffmpeg_exec/darwin/bin",
             "linux": ":{PYPE_ROOT}/vendor/bin/ffmpeg_exec/linux"
         },
-        "PYPE_PYTHON_EXE": {
-            "windows": "{VIRTUAL_ENV}/Scripts/python.exe",
-            "linux": "{VIRTUAL_ENV}/Scripts/python",
-            "darwin": "{VIRTUAL_ENV}/bin/python"
-        },
         "PYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
         "__environment_keys__": {
             "global": [
                 "FFMPEG_PATH",
-                "PYPE_PYTHON_EXE",
                 "PYPE_OCIO_CONFIG"
             ]
         }
