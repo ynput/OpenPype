@@ -14,6 +14,7 @@ class CollectPalettes(pyblish.api.ContextPlugin):
     label = "Palettes"
     order = pyblish.api.CollectorOrder + 0.003
     hosts = ["harmony"]
+
     # list of regexes for task names where collecting should happen
     allowed_tasks = []
 

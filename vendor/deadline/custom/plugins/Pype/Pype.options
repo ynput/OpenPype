@@ -1,0 +1,41 @@
+[ScriptFile]
+Type=filename
+Label=Script File
+Category=Python Options
+CategoryOrder=0
+Index=0
+Description=The script file to be executed.
+Required=false
+DisableIfBlank=true
+
+[Arguments]
+Type=string
+Label=Arguments
+Category=Python Options
+CategoryOrder=0
+Index=1
+Description=The arguments to pass to the script. If no arguments are required, leave this blank.
+Required=false
+DisableIfBlank=true
+
+[Version]
+Type=enum
+Values=3.0
+Label=Version
+Category=Python Options
+CategoryOrder=0
+Index=2
+Description=The version of Python to use.
+Required=false
+DisableIfBlank=true
+
+[SingleFramesOnly]
+Type=boolean
+Label=Single Frames Only
+Category=Job Options
+CategoryOrder=1
+Index=0
+Description=If enabled, the plugin will only render one frame at a time even if a single task contains a chunk of frames.
+Required=true
+DisableIfBlank=true
+Default=false

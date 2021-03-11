@@ -63,6 +63,7 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
+            "AVALON_APP_NAME",
             "PYPE_USERNAME",
             "PYPE_DEV",
             "PYPE_LOG_NO_COLORS"
@@ -76,6 +77,8 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
                 dln_job_info.EnvironmentKeyValue = "{key}={value}".format(
                      key=key,
                      value=val)
+        # to recognize job from PYPE for turning Event On/Off
+        dln_job_info.EnvironmentKeyValue = "PYPE_RENDER_JOB=1"
 
         return dln_job_info
 

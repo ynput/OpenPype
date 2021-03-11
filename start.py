@@ -116,7 +116,8 @@ from igniter.tools import get_pype_path_from_db  # noqa
 from igniter.bootstrap_repos import PypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
-silent_commands = ["run", "igniter", "standalonepublisher"]
+silent_commands = ["run", "igniter", "standalonepublisher",
+                   "extractenvironments"]
 
 
 def set_pype_global_environments() -> None:
@@ -531,8 +532,8 @@ def boot():
     from igniter.terminal_splash import play_animation
 
     # don't play for silenced commands
-    if all(item not in sys.argv for item in silent_commands):
-        play_animation()
+    # if all(item not in sys.argv for item in silent_commands):
+    #     play_animation()
 
     # ------------------------------------------------------------------------
     # Process arguments
@@ -610,9 +611,6 @@ def boot():
     except KeyError:
         pass
 
-    from pype import cli
-    from pype.lib import terminal as t
-    from pype.version import __version__
     print(">>> loading environments ...")
     # Avalon environments must be set before avalon module is imported
     print("  - for Avalon ...")
@@ -621,6 +619,10 @@ def boot():
     set_pype_global_environments()
     print("  - for modules ...")
     set_modules_environments()
+
+    from pype import cli
+    from pype.lib import terminal as t  
+    from pype.version import __version__
 
     assert version_path, "Version path not defined."
     info = get_info()
