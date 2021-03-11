@@ -540,6 +540,9 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             return
 
         fpath = self.item.path
+        project = self.table_view.model()._project
+        fpath = self.sync_server.get_local_file_path(project, fpath)
+
         fpath = os.path.normpath(os.path.dirname(fpath))
         if os.path.isdir(fpath):
             if 'win' in sys.platform:  # windows
@@ -797,8 +800,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 repre.get("files_size", 0),
                 1,
                 STATUS[repre.get("status", -1)],
-                self.sync_server.get_local_file_path(self._project,
-                                                     files[0].get('path'))
+                files[0].get('path')
             )
 
             self._data.append(item)
@@ -1390,8 +1392,10 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             return
 
         fpath = self.item.path
-        fpath = os.path.normpath(os.path.dirname(fpath))
+        project = self.table_view.model()._project
+        fpath = self.sync_server.get_local_file_path(project, fpath)
 
+        fpath = os.path.normpath(os.path.dirname(fpath))
         if os.path.isdir(fpath):
             if 'win' in sys.platform:  # windows
                 subprocess.Popen('explorer "%s"' % fpath)
@@ -1604,8 +1608,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                     STATUS[repre.get("status", -1)],
                     repre.get("tries"),
                     '\n'.join(errors),
-                    self.sync_server.get_local_file_path(self._project,
-                                                         file.get('path'))
+                    file.get('path')
 
                 )
                 self._data.append(item)
