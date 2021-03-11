@@ -369,13 +369,6 @@ class SyncServer(PypeModule, ITrayModule):
             return get_local_site_id()
         return active_site
 
-    def _get_active_sites_from_settings(self, sync_settings):
-        sites = [self.DEFAULT_SITE]
-        if self.enabled and sync_settings['enabled']:
-            sites.append(self.LOCAL_SITE)
-
-        return sites
-
     # remote sites
     def get_remote_sites(self, project_name):
         """
@@ -406,7 +399,10 @@ class SyncServer(PypeModule, ITrayModule):
         """
             Returns remote (theirs) site for 'project_name' from settings
         """
-        return self.get_sync_project_setting(project_name)['config']['remote_site']
+        return self.get_sync_project_setting(project_name)['config']\
+            ['remote_site']
+
+    """ End of Public API """
 
     def _get_remote_sites_from_settings(self, sync_settings):
         if not self.enabled or not sync_settings['enabled']:
@@ -414,14 +410,16 @@ class SyncServer(PypeModule, ITrayModule):
 
         remote_sites = [self.DEFAULT_SITE, self.LOCAL_SITE]
         if sync_settings:
-            for site, enabled in self._get_configured_sites_from_setting(
-                    sync_settings).items():
-                if enabled:
-                    remote_sites.append(site)
+            remote_sites.extend(sync_settings.get("sites").keys())
 
         return list(set(remote_sites))
 
-    """ End of Public API """
+    def _get_active_sites_from_settings(self, sync_settings):
+        sites = [self.DEFAULT_SITE]
+        if self.enabled and sync_settings['enabled']:
+            sites.append(self.LOCAL_SITE)
+
+        return sites
 
     def connect_with_modules(self, *_a, **kw):
         return
@@ -627,7 +625,11 @@ class SyncServer(PypeModule, ITrayModule):
 
         initiated_handlers = {}
         configured_sites = {}
-        for site_name, config in project_setting.get("sites").items():
+        default_config = {'provider': 'local_drive'}
+        all_sites = {self.DEFAULT_SITE: default_config,
+                     self.LOCAL_SITE: default_config}
+        all_sites.update(project_setting.get("sites"))
+        for site_name, config in all_sites.items():
             handler = initiated_handlers. \
                 get((config["provider"], site_name))
             if not handler:
@@ -1601,10 +1603,11 @@ class SyncServerThread(threading.Thread):
                                                           remote_site))
             return None, None
 
-        if not all(self.module.site_is_working(collection, local_site),
-                   self.module.site_is_working(collection, remote_site)):
-            log.debug("At least one of the sites is not " +
-                           "working properly")
+        if not all([self.module.site_is_working(collection, local_site),
+                   self.module.site_is_working(collection, remote_site)]):
+            log.debug("Some of the sites {} - {} is not ".format(local_site,
+                                                                 remote_site) +
+                      "working properly")
             return None, None
 
         return local_site, remote_site
