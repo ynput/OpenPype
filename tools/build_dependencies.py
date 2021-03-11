@@ -95,10 +95,15 @@ libs_dir = build_dir / "lib"
 
 to_delete = []
 _print("Finding duplicates ...")
+deps_items = list(deps_dir.iterdir())
 for d in libs_dir.iterdir():
-    if (deps_dir / d.name) in deps_dir.iterdir():
+    if (deps_dir / d.name) in deps_items:
         to_delete.append(d)
         _print(f"found {d}", 3)
+
+# add pype and igniter in libs too
+to_delete.append(libs_dir / "pype")
+to_delete.append(libs_dir / "igniter")
 
 # delete duplicates
 _print(f"Deleting {len(to_delete)} duplicates ...")
