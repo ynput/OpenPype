@@ -2,10 +2,12 @@
 """Open install dialog."""
 
 import sys
-from Qt import QtWidgets  # noqa
-from Qt.QtCore import Signal  # noqa
+
 import os
 os.chdir(os.path.dirname(__file__))  # for override sys.path in Deadline
+
+from Qt import QtWidgets  # noqa
+from Qt.QtCore import Signal  # noqa
 
 from .install_dialog import InstallDialog
 from .bootstrap_repos import BootstrapRepos
