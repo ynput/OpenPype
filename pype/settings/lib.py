@@ -445,24 +445,37 @@ def apply_local_settings_on_anatomy_settings(
 
 
 def get_site_local_overrides(project_name, site_name, local_settings=None):
+    """Site overrides from local settings for passet project and site name.
+
+    Args:
+        project_name (str): For which project are overrides.
+        site_name (str): For which site are overrides needed.
+        local_settings (dict): Preloaded local settings. They are loaded
+            automatically if not passed.
+    """
+    # Check if local settings were passed
     if local_settings is None:
         local_settings = get_local_settings()
 
     output = {}
 
+    # Skip if local settings are empty
     if not local_settings:
         return output
 
     local_project_settings = local_settings.get("projects") or {}
 
+    # Prepare overrides for entered project and for default project
     project_locals = None
     if project_name:
         project_locals = local_project_settings.get(project_name)
     default_project_locals = local_project_settings.get(DEFAULT_PROJECT_KEY)
 
+    # First load and use local settings from default project
     if default_project_locals and site_name in default_project_locals:
         output.update(default_project_locals[site_name])
 
+    # Apply project specific local settings if there are any
     if project_locals and site_name in project_locals:
         output.update(project_locals[site_name])
 
