@@ -25,9 +25,9 @@ class ValidateInstanceRepair(pyblish.api.Action):
         instances = pyblish.api.instances_by_plugin(failed, plugin)
 
         for instance in instances:
-            data = harmony.read(instance[0])
+            data = harmony.read(instance.data["setMembers"][0])
             data["asset"] = os.environ["AVALON_ASSET"]
-            harmony.imprint(instance[0], data)
+            harmony.imprint(instance.data["setMembers"][0], data)
 
 
 class ValidateInstance(pyblish.api.InstancePlugin):

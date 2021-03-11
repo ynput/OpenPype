@@ -236,7 +236,7 @@ class HarmonySubmitDeadline(
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["harmony"]
-    families = ["renderlayer"]
+    families = ["render.farm"]
     if not os.environ.get("DEADLINE_REST_URL"):
         optional = False
         active = False
@@ -254,8 +254,8 @@ class HarmonySubmitDeadline(
         job_info.Name = self._instance.data["name"]
         job_info.Plugin = "HarmonyPype"
         job_info.Frames = "{}-{}".format(
-            self._instance.data["frameStart"],
-            self._instance.data["frameEnd"]
+            self._instance.data["frameStartHandle"],
+            self._instance.data["frameEndHandle"]
         )
         # for now, get those from presets. Later on it should be
         # configurable in Harmony UI directly.
@@ -272,6 +272,7 @@ class HarmonySubmitDeadline(
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
+            "AVALON_APP_NAME",
             "PYPE_USERNAME",
             "PYPE_DEV",
             "PYPE_LOG_NO_COLORS"
@@ -285,6 +286,9 @@ class HarmonySubmitDeadline(
                 job_info.EnvironmentKeyValue = "{key}={value}".format(
                     key=key,
                     value=val)
+
+        # to recognize job from PYPE for turning Event On/Off
+        job_info.EnvironmentKeyValue = "PYPE_RENDER_JOB=1"
 
         return job_info
 

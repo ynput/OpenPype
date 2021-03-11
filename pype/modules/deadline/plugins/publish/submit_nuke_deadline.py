@@ -218,6 +218,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "PYTHONPATH",
             "PATH",
             "AVALON_SCHEMA",
+            "AVALON_PROJECT",
+            "AVALON_ASSET",
+            "AVALON_TASK",
+            "AVALON_APP_NAME",
             "FTRACK_API_KEY",
             "FTRACK_API_USER",
             "FTRACK_SERVER",
@@ -265,7 +269,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             clean_environment[key] = clean_path
 
         environment = clean_environment
-
+        # to recognize job from PYPE for turning Event On/Off
+        environment["PYPE_RENDER_JOB"] = "1"
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,

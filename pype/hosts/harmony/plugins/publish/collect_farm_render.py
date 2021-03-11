@@ -7,6 +7,7 @@ from avalon import harmony, api
 
 import pype.lib.abstract_collect_render
 from pype.lib.abstract_collect_render import RenderInstance
+import pype.lib
 
 
 @attr.s
@@ -51,8 +52,8 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
         This returns full path with file name determined by Write node
         settings.
         """
-        start = render_instance.frameStart
-        end = render_instance.frameEnd
+        start = render_instance.frameStart - render_instance.handleStart
+        end = render_instance.frameEnd + render_instance.handleEnd
         node = render_instance.setMembers[0]
         self_name = self.__class__.__name__
         # 0 - filename / 1 - type / 2 - zeros / 3 - start
@@ -73,23 +74,19 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                 f"Cannot determine file extension for {info[1]}")
 
         path = Path(render_instance.source).parent
-
         # is sequence start node on write node offsetting whole sequence?
         expected_files = []
 
-        # Harmony 17 needs at least one '.' in file_prefix, but not at end
-        file_prefix = info[0]
-        file_prefix += '.temp'
-
+        # '-' in name is important for Harmony17
         for frame in range(start, end + 1):
             expected_files.append(
-                path / "{}{}.{}".format(
-                    file_prefix,
+                path / "{}-{}.{}".format(
+                    render_instance.subset,
                     str(frame).rjust(int(info[2]) + 1, "0"),
                     ext
                 )
             )
-
+        self.log.debug("expected_files::{}".format(expected_files))
         return expected_files
 
     def get_instances(self, context):
@@ -116,7 +113,7 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
             if data["family"] != "renderFarm":
                 continue
 
-            # 0 - filename / 1 - type / 2 - zeros / 3 - start
+            # 0 - filename / 1 - type / 2 - zeros / 3 - start / 4 - enabled
             info = harmony.send(
                 {
                     "function": f"PypeHarmony.Publish.{self_name}."
@@ -126,24 +123,28 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
 
             # TODO: handle pixel aspect and frame step
             # TODO: set Deadline stuff (pools, priority, etc. by presets)
-            subset_name = node.split("/")[1].replace('Farm', '')
+            # because of using 'renderFarm' as a family, replace 'Farm' with
+            # capitalized task name
+            subset_name = node.split("/")[1].replace(
+                'Farm',
+                context.data["anatomyData"]["task"].capitalize())
             render_instance = HarmonyRenderInstance(
                 version=version,
                 time=api.time(),
                 source=context.data["currentFile"],
-                label=subset_name,
+                label=node.split("/")[1],
                 subset=subset_name,
                 asset=api.Session["AVALON_ASSET"],
                 attachTo=False,
                 setMembers=[node],
-                publish=True,
+                publish=info[4],
                 review=False,
                 renderer=None,
                 priority=50,
                 name=node.split("/")[1],
 
-                family="renderlayer",
-                families=["renderlayer"],
+                family="render.farm",
+                families=["render.farm"],
 
                 resolutionWidth=context.data["resolutionWidth"],
                 resolutionHeight=context.data["resolutionHeight"],
@@ -157,12 +158,15 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
                 # time settings
                 frameStart=context.data["frameStart"],
                 frameEnd=context.data["frameEnd"],
+                handleStart=context.data["handleStart"],  # from DB
+                handleEnd=context.data["handleEnd"],      # from DB
                 frameStep=1,
                 outputType="Image",
                 outputFormat=info[1],
                 outputStartFrame=info[3],
                 leadingZeros=info[2],
-                toBeRenderedOn='deadline'
+                toBeRenderedOn='deadline',
+                ignoreFrameHandleCheck=True
 
             )
             self.log.debug(render_instance)
