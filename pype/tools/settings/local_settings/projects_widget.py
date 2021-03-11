@@ -222,7 +222,7 @@ class SitesWidget(QtWidgets.QWidget):
 
         self.modules_manager = modules_manager
         self.project_settings = project_settings
-        self.site_widgets = []
+        self.input_objects = {}
         self.local_project_settings = None
         self.local_project_settings_orig = None
         self._project_name = None
@@ -253,6 +253,7 @@ class SitesWidget(QtWidgets.QWidget):
         self.active_site_widget = active_site_widget
         self.remote_site_widget = remote_site_widget
 
+        self.content_widget = content_widget
         self.content_layout = content_layout
 
     def _clear_widgets(self):
@@ -260,9 +261,9 @@ class SitesWidget(QtWidgets.QWidget):
             item = self.content_layout.itemAt(0)
             item.widget().hide()
             self.content_layout.removeItem(item)
-        self.site_widgets = []
+        self.input_objects = {}
 
-    def _get_active_sites(self):
+    def _get_sites_inputs(self):
         sync_server_module = (
             self.modules_manager.modules_by_name["sync_server"]
         )
@@ -323,38 +324,74 @@ class SitesWidget(QtWidgets.QWidget):
         if self._project_name is None:
             return
 
-        roots_entity = (
-            self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
-        )
         # Site label
-        for site_name in self._get_active_sites():
-            site_widget = QtWidgets.QWidget(self)
+        for site_name, site_inputs in self._get_sites_inputs():
+            site_widget = QtWidgets.QWidget(self.content_widget)
             site_layout = QtWidgets.QVBoxLayout(site_widget)
 
             site_label = QtWidgets.QLabel(site_name, site_widget)
 
-            site_layout.addWidget(site_label)
+            inputs_widget = QtWidgets.QWidget(site_widget)
+            inputs_layout = QtWidgets.QGridLayout(inputs_widget)
 
-            # Root inputs
-            for root_name, path_entity in roots_entity.items():
-                platform_entity = path_entity[platform.system().lower()]
-                root_widget = RootInputWidget(
-                    self.local_project_settings,
-                    self.local_project_settings_orig,
-                    platform_entity,
-                    root_name,
-                    self._project_name,
+            site_input_objects = {}
+            for idx, input_def in enumerate(site_inputs):
+                key = input_def["key"]
+                label = input_def.get("label") or key
+                label_widget = ProxyLabelWidget(label, None, inputs_widget)
+
+                value_item = self._prepare_value_item(site_name, key)
+
+                input_obj = DynamicInputItem(
+                    input_def,
                     site_name,
-                    site_widget
+                    value_item,
+                    label_widget,
+                    inputs_widget
                 )
+                input_obj.value_changed.connect(self._on_input_value_change)
+                site_input_objects[key] = input_obj
+                inputs_layout.addWidget(label_widget, idx, 0)
+                inputs_layout.addWidget(input_obj.input_widget, idx, 1)
 
-                site_layout.addWidget(root_widget)
+            site_layout.addWidget(site_label)
+            site_layout.addWidget(inputs_widget)
 
-            self.site_widgets.append(site_widget)
             self.content_layout.addWidget(site_widget)
+            self.input_objects[site_name] = site_input_objects
 
         # Add spacer so other widgets are squeezed to top
         self.content_layout.addWidget(SpacerWidget(self), 1)
+
+    def _on_input_value_change(self, site_name, key):
+        if (
+            site_name not in self.input_objects
+            or key not in self.input_objects[site_name]
+        ):
+            return
+
+        input_obj = self.input_objects[site_name][key]
+        value = input_obj.current_value
+
+        if not value:
+            if self._project_name not in self.local_project_settings:
+                return
+
+            project_values = self.local_project_settings[self._project_name]
+            if site_name not in project_values:
+                return
+
+            project_values[site_name][key] = None
+
+        else:
+            if self._project_name not in self.local_project_settings:
+                self.local_project_settings[self._project_name] = {}
+
+            project_values = self.local_project_settings[self._project_name]
+            if site_name not in project_values:
+                project_values[site_name] = {}
+
+            project_values[site_name][key] = value
 
     def update_local_settings(self, local_project_settings):
         self.local_project_settings = local_project_settings
