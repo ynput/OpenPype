@@ -144,6 +144,7 @@ class ActionModel(QtGui.QStandardItemModel):
         if not project_doc:
             return actions
 
+        self.application_manager.refresh()
         for app_def in project_doc["config"]["apps"]:
             app_name = app_def["name"]
             app = self.application_manager.applications.get(app_name)
