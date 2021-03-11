@@ -398,8 +398,12 @@ class SyncServer(PypeModule, ITrayModule):
         """
             Returns remote (theirs) site for 'project_name' from settings
         """
-        return self.get_sync_project_setting(
+        remote_site = self.get_sync_project_setting(
             project_name)['config']['remote_site']
+        if remote_site == self.LOCAL_SITE:
+            return get_local_site_id()
+
+        return remote_site
 
     """ End of Public API """
 
@@ -653,9 +657,12 @@ class SyncServer(PypeModule, ITrayModule):
         return configured_sites
 
     def _get_default_site_configs(self):
+        """
+            Returns skeleton settings for 'studio' and user's local site
+        """
         default_config = {'provider': 'local_drive'}
         all_sites = {self.DEFAULT_SITE: default_config,
-                     self.LOCAL_SITE: default_config}
+                     get_local_site_id(): default_config}
         return all_sites
 
     def get_provider_for_site(self, project_name, site):

@@ -966,13 +966,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                                         ["global"]
                                                         ["sync_server"])
 
+            local_site_id = pype.api.get_local_site_id()
             if sync_server_presets["enabled"]:
                 local_site = sync_server_presets["config"].\
                     get("active_site", "studio").strip()
                 if local_site == 'local':
-                    local_site = pype.api.get_local_site_id()
+                    local_site = local_site_id
 
                 remote_site = sync_server_presets["config"].get("remote_site")
+                if remote_site == 'local':
+                    remote_site = local_site_id
 
         rec = {
             "_id": io.ObjectId(),
