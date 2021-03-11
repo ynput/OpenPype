@@ -85,6 +85,25 @@ class LocalDriveHandler(AbstractProvider):
     def get_tree(self):
         return
 
+    def resolve_path(self, path, root_config, anatomy=None):
+        if root_config and not root_config.get("root"):
+            root_config = {"root": root_config}
+
+        try:
+            if not root_config:
+                raise KeyError
+
+            path = path.format(**root_config)
+        except KeyError:
+            try:
+                path = anatomy.fill_root(path)
+            except KeyError:
+                msg = "Error in resolving local root from anatomy"
+                log.error(msg)
+                raise ValueError(msg)
+
+        return path
+
     def _copy(self, source_path, target_path):
         print("copying {}->{}".format(source_path, target_path))
         shutil.copy(source_path, target_path)

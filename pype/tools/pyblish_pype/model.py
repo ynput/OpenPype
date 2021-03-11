@@ -106,7 +106,7 @@ class IntentModel(QtGui.QStandardItemModel):
         intents_preset = (
             get_system_settings()
             .get("modules", {})
-            .get("Ftrack", {})
+            .get("ftrack", {})
             .get("intent", {})
         )
 

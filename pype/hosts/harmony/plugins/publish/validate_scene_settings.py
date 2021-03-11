@@ -18,9 +18,12 @@ class ValidateSceneSettingsRepair(pyblish.api.Action):
 
     def process(self, context, plugin):
         """Repair action entry point."""
-        pype.hosts.harmony.set_scene_settings(
-            pype.hosts.harmony.get_asset_settings()
-        )
+        expected = pype.hosts.harmony.api.get_asset_settings()
+        asset_settings = _update_frames(dict.copy(expected))
+        asset_settings["frameStart"] = 1
+        asset_settings["frameEnd"] = asset_settings["frameEnd"] + \
+            asset_settings["handleEnd"]
+        pype.hosts.harmony.api.set_scene_settings(asset_settings)
         if not os.path.exists(context.data["scenePath"]):
             self.log.info("correcting scene name")
             scene_dir = os.path.dirname(context.data["currentFile"])
@@ -45,16 +48,12 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Plugin entry point."""
-        expected_settings = pype.hosts.harmony.get_asset_settings()
+        expected_settings = pype.hosts.harmony.api.get_asset_settings()
         self.log.info(expected_settings)
 
-        # Harmony is expected to start at 1.
-        frame_start = expected_settings["frameStart"]
-        frame_end = expected_settings["frameEnd"]
-        expected_settings["frameEnd"] = frame_end - frame_start + 1
-        expected_settings["frameStart"] = 1
-
-        self.log.info(instance.context.data['anatomyData']['asset'])
+        expected_settings = _update_frames(dict.copy(expected_settings))
+        expected_settings["frameEndHandle"] = expected_settings["frameEnd"] +\
+            expected_settings["handleEnd"]
 
         if any(string in instance.context.data['anatomyData']['asset']
                 for string in self.frame_check_filter):
@@ -73,13 +72,19 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             expected_settings.pop("resolutionWidth")
             expected_settings.pop("resolutionHeight")
 
+        self.log.debug(expected_settings)
+
         current_settings = {
             "fps": fps,
-            "frameStart": instance.context.data.get("frameStart"),
-            "frameEnd": instance.context.data.get("frameEnd"),
+            "frameStart": instance.context.data["frameStart"],
+            "frameEnd": instance.context.data["frameEnd"],
+            "handleStart": instance.context.data.get("handleStart"),
+            "handleEnd": instance.context.data.get("handleEnd"),
+            "frameEndHandle": instance.context.data.get("frameEndHandle"),
             "resolutionWidth": instance.context.data.get("resolutionWidth"),
             "resolutionHeight": instance.context.data.get("resolutionHeight"),
         }
+        self.log.debug("curr:: {}".format(current_settings))
 
         invalid_settings = []
         for key, value in expected_settings.items():
@@ -90,6 +95,13 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
                     "current": current_settings[key]
                 })
 
+        if ((expected_settings["handleStart"]
+            or expected_settings["handleEnd"])
+           and invalid_settings):
+            msg = "Handles included in calculation. Remove handles in DB " +\
+                  "or extend frame range in timeline."
+            invalid_settings[-1]["reason"] = msg
+
         msg = "Found invalid settings:\n{}".format(
             json.dumps(invalid_settings, sort_keys=True, indent=4)
         )
@@ -97,3 +109,24 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         assert os.path.exists(instance.context.data.get("scenePath")), (
             "Scene file not found (saved under wrong name)"
         )
+
+
+def _update_frames(expected_settings):
+    """
+        Calculate proper frame range including handles set in DB.
+
+        Harmony requires rendering from 1, so frame range is always moved
+        to 1.
+    Args:
+        expected_settings (dict): pulled from DB
+
+    Returns:
+        modified expected_setting (dict)
+    """
+    frames_count = expected_settings["frameEnd"] - \
+        expected_settings["frameStart"] + 1
+
+    expected_settings["frameStart"] = 1.0 + expected_settings["handleStart"]
+    expected_settings["frameEnd"] = \
+        expected_settings["frameStart"] + frames_count - 1
+    return expected_settings
