@@ -362,8 +362,8 @@ class SyncServer(PypeModule, ITrayModule):
             Returns:
                 (string)
         """
-        active_site = self.get_sync_project_setting(project_name)['config']\
-            ['active_site']
+        active_site = self.get_sync_project_setting(
+            project_name)['config']['active_site']
         if active_site == self.LOCAL_SITE:
             return get_local_site_id()
         return active_site
@@ -398,8 +398,8 @@ class SyncServer(PypeModule, ITrayModule):
         """
             Returns remote (theirs) site for 'project_name' from settings
         """
-        return self.get_sync_project_setting(project_name)['config']\
-            ['remote_site']
+        return self.get_sync_project_setting(
+            project_name)['config']['remote_site']
 
     """ End of Public API """
 
@@ -460,7 +460,7 @@ class SyncServer(PypeModule, ITrayModule):
                 "There are not set presets for SyncServer OR "
                 "Credentials provided are invalid, "
                 "no syncing possible").
-                     format(str(self.sync_project_settings)), exc_info=True)
+                format(str(self.sync_project_settings)), exc_info=True)
             self.enabled = False
 
     def tray_start(self):
@@ -662,7 +662,8 @@ class SyncServer(PypeModule, ITrayModule):
         """
             Return provider name for site.
         """
-        site_preset = self.get_sync_project_setting(project_name)["sites"].get(site)
+        site_preset = self.get_sync_project_setting(project_name)["sites"].\
+            get(site)
         if site_preset:
             return site_preset["provider"]
 
