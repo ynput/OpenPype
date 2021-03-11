@@ -611,9 +611,6 @@ def boot():
     except KeyError:
         pass
 
-    from pype import cli
-    from pype.lib import terminal as t
-    from pype.version import __version__
     print(">>> loading environments ...")
     # Avalon environments must be set before avalon module is imported
     print("  - for Avalon ...")
@@ -622,6 +619,10 @@ def boot():
     set_pype_global_environments()
     print("  - for modules ...")
     set_modules_environments()
+
+    from pype import cli
+    from pype.lib import terminal as t  
+    from pype.version import __version__
 
     assert version_path, "Version path not defined."
     info = get_info()
