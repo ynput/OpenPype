@@ -130,7 +130,10 @@ def set_pype_global_environments() -> None:
 
     # TODO Global environments will be stored in "general" settings so loading
     #   will be modified and can be done in igniter.
-    env = acre.merge(all_env["global"], dict(os.environ))
+    env = acre.merge(
+        acre.parse(all_env["global"]),
+        dict(os.environ)
+    )
     os.environ.clear()
     os.environ.update(env)
 
