@@ -268,9 +268,31 @@ class SitesWidget(QtWidgets.QWidget):
             self.modules_manager.modules_by_name["sync_server"]
         )
 
-        return sync_server_module.get_active_sites_from_settings(
+        # This is temporary modification
+        # - whole logic here should be in sync module's providers
+        site_names = sync_server_module.get_active_sites_from_settings(
             self.project_settings["project_settings"].value
         )
+
+        roots_entity = (
+            self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
+        )
+
+        output = []
+        for site_name in site_names:
+            site_inputs = []
+            for root_name, path_entity in roots_entity.items():
+                platform_entity = path_entity[platform.system().lower()]
+                site_inputs.append({
+                    "label": root_name,
+                    "key": root_name,
+                    "value": platform_entity.value
+                })
+
+            output.append(
+                (site_name, site_inputs)
+            )
+        return output
 
     @staticmethod
     def _extract_value_from_data(data, project_name, site_name, key):
