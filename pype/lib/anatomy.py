@@ -77,7 +77,7 @@ class Anatomy:
     root_key_regex = re.compile(r"{(root?[^}]+)}")
     root_name_regex = re.compile(r"root\[([^]]+)\]")
 
-    def __init__(self, project_name=None):
+    def __init__(self, project_name=None, site_name=None):
         if not project_name:
             project_name = os.environ.get("AVALON_PROJECT")
 
@@ -89,7 +89,7 @@ class Anatomy:
 
         self.project_name = project_name
 
-        self._data = get_anatomy_settings(project_name)
+        self._data = get_anatomy_settings(project_name, site_name)
 
         self._templates_obj = Templates(self)
         self._roots_obj = Roots(self)
