@@ -215,6 +215,30 @@ class RootInputWidget(QtWidgets.QWidget):
         data[self.root_name] = value
         self._update_style()
 
+class SiteValueItem:
+    def __init__(
+        self,
+        project_name,
+        value,
+        default_value,
+        orig_value,
+        orig_default_value
+    ):
+        self.project_name = project_name
+        self.value = value or ""
+        self.default_value = default_value or ""
+        self.orig_value = orig_value or ""
+        self.orig_default_value = orig_default_value or ""
+
+    def __repr__(self):
+        return "\n".join((
+            "Project: {}".format(self.project_name),
+            "Value: {}".format(self.value),
+            "Default value: {}".format(self.default_value),
+            "Orig value: {}".format(self.orig_value),
+            "Orig default value: {}".format(self.orig_default_value),
+        ))
+
 
 class SitesWidget(QtWidgets.QWidget):
     def __init__(self, modules_manager, project_settings, parent):
