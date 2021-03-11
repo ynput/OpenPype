@@ -240,11 +240,10 @@ class RootsWidget(QtWidgets.QWidget):
         sync_server_module = (
             self.modules_manager.modules_by_name["sync_server"]
         )
-        if self._project_name is None:
-            return sync_server_module.get_active_sites_from_setting(
-                self.project_settings["project_settings"].value
-            )
-        return sync_server_module.get_active_sites(self._project_name)
+
+        return sync_server_module.get_active_sites_from_settings(
+            self.project_settings["project_settings"].value
+        )
 
     def refresh(self):
         self._clear_widgets()
@@ -558,7 +557,7 @@ class AciveSiteCombo(_SiteCombobox):
             self.modules_manager.modules_by_name["sync_server"]
         )
         if self.project_name is None:
-            return sync_server_module.get_active_sites_from_setting(
+            return sync_server_module.get_active_sites_from_settings(
                 self.project_settings["project_settings"].value
             )
         return sync_server_module.get_active_sites(self.project_name)
@@ -593,7 +592,7 @@ class RemoteSiteCombo(_SiteCombobox):
             self.modules_manager.modules_by_name["sync_server"]
         )
         if self.project_name is None:
-            return sync_server_module.get_remote_sites_from_setting(
+            return sync_server_module.get_remote_sites_from_settings(
                 self.project_settings["project_settings"].value
             )
         return sync_server_module.get_remote_sites(self.project_name)
