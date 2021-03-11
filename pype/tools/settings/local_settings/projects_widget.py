@@ -621,6 +621,11 @@ class AciveSiteCombo(_SiteCombobox):
 class RemoteSiteCombo(_SiteCombobox):
     input_label = "Remote site"
 
+    def change_project(self, *args, **kwargs):
+        super(RemoteSiteCombo, self).change_project(*args, **kwargs)
+
+        self.setVisible(self.combobox_input.count() > 0)
+
     def _get_project_sites(self):
         sync_server_module = (
             self.modules_manager.modules_by_name["sync_server"]
