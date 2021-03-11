@@ -404,12 +404,10 @@ def apply_local_settings_on_anatomy_settings(
     roots_project_locals = (
         local_project_settings
         .get(project_name, {})
-        .get("roots", {})
     )
     roots_default_locals = (
         local_project_settings
         .get(DEFAULT_PROJECT_KEY, {})
-        .get("roots", {})
     )
 
     # Skip rest of processing if roots are not set
