@@ -1049,30 +1049,3 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             publish_folder = os.path.dirname(file_path)
 
         return publish_folder
-
-    def _get_executable(self, path=None):
-
-        # pass input path if exists
-        if path:
-            if os.path.exists(path):
-                return str(path)
-            else:
-                raise
-
-        """Get path to the image sequence script."""
-        try:
-            from pathlib import Path
-        except ImportError:
-            from pathlib2 import Path
-
-        if getattr(sys, 'frozen', False):
-            interpreter = [sys.executable]
-        else:
-            interpreter = [sys.executable, 'start.py']
-
-        self.log.info("interpreter::{}".format(interpreter))
-        executable_path = os.path.join(*interpreter)
-
-        assert executable_path is not None, "Cannot determine path"
-
-        return str(executable_path)
