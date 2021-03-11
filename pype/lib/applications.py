@@ -101,6 +101,9 @@ class ApplicationManager:
 
     def refresh(self):
         """Refresh applications from settings."""
+        self.applications.clear()
+        self.tools.clear()
+
         settings = get_system_settings()
 
         hosts_definitions = settings["applications"]
