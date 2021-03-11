@@ -373,7 +373,7 @@ def apply_local_settings_on_system_settings(system_settings, local_settings):
 
 
 def apply_local_settings_on_anatomy_settings(
-    anatomy_settings, local_settings, project_name
+    anatomy_settings, local_settings, project_name, site_name=None
 ):
     """Apply local settings on anatomy settings.
 
@@ -400,31 +400,36 @@ def apply_local_settings_on_anatomy_settings(
 
     local_project_settings = local_settings.get("projects") or {}
 
-    # Get local settings fro default project and project specified in argument
-    project_locals = local_project_settings.get(project_name) or {}
-    default_locals = local_project_settings.get(DEFAULT_PROJECT_KEY) or {}
-
     # Check for roots existence in local settings first
-    roots_project_locals = project_locals.get("roots") or {}
-    roots_default_locals = default_locals.get("roots") or {}
+    roots_project_locals = (
+        local_project_settings
+        .get(project_name, {})
+        .get("roots", {})
+    )
+    roots_default_locals = (
+        local_project_settings
+        .get(DEFAULT_PROJECT_KEY, {})
+        .get("roots", {})
+    )
 
     # Skip rest of processing if roots are not set
     if not roots_project_locals and not roots_default_locals:
         return
 
     # Get active site from settings
-    project_settings = get_project_settings(project_name)
-    active_site = (
-        project_settings["global"]["sync_server"]["config"]["active_site"]
-    )
+    if site_name is None:
+        project_settings = get_project_settings(project_name)
+        site_name = (
+            project_settings["global"]["sync_server"]["config"]["active_site"]
+        )
 
     # QUESTION should raise an exception?
-    if not active_site:
+    if not site_name:
         return
 
     # Combine roots from local settings
-    roots_locals = roots_default_locals.get(active_site) or {}
-    roots_locals.update(roots_project_locals.get(active_site) or {})
+    roots_locals = roots_default_locals.get(site_name) or {}
+    roots_locals.update(roots_project_locals.get(site_name) or {})
     # Skip processing if roots for current active site are not available in
     #   local settings
     if not roots_locals:
@@ -471,15 +476,12 @@ def apply_local_settings_on_project_settings(
         or default_locals.get("remote_site")
     )
 
-    if active_site or remote_site:
-        sync_server_config = (
-            project_settings["global"]["sync_server"]["config"]
-        )
-        if active_site:
-            sync_server_config["active_site"] = active_site
+    sync_server_config = project_settings["global"]["sync_server"]["config"]
+    if active_site:
+        sync_server_config["active_site"] = active_site
 
-        if remote_site:
-            sync_server_config["remote_site"] = active_site
+    if remote_site:
+        sync_server_config["remote_site"] = remote_site
 
 
 def get_system_settings(clear_metadata=True):
@@ -547,12 +549,12 @@ def get_applied_anatomy_settings(project_name):
     return result
 
 
-def get_anatomy_settings(project_name):
+def get_anatomy_settings(project_name, site_name=None):
     result = get_applied_anatomy_settings(project_name)
 
     local_settings = get_local_settings()
     apply_local_settings_on_anatomy_settings(
-        result, local_settings, project_name
+        result, local_settings, project_name, site_name
     )
     return result
 
