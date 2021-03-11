@@ -112,45 +112,32 @@ if getattr(sys, 'frozen', False):
     os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
 from igniter import BootstrapRepos  # noqa: E402
-from igniter.tools import load_environments, get_pype_path_from_db  # noqa
+from igniter.tools import get_pype_path_from_db  # noqa
 from igniter.bootstrap_repos import PypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
 silent_commands = ["run", "igniter", "standalonepublisher"]
 
 
-def set_environments() -> None:
-    """Set loaded environments.
+def set_pype_global_environments() -> None:
+    """Set global pype's environments."""
+    import acre
 
-    .. todo:
-        better handling of environments
+    from pype.settings import get_environments
 
-    """
-    try:
-        import acre
-    except ImportError:
-        if getattr(sys, 'frozen', False):
-            sys.path.append(os.path.join(
-                os.path.dirname(sys.executable),
-                "dependencies"
-            ))
-            try:
-                import acre
-            except ImportError as e:
-                # giving up
-                print("!!! cannot import acre")
-                print(f"{e}")
-                sys.exit(1)
-    try:
-        env = load_environments(["global"])
-    except OSError as e:
-        print(f"!!! {e}")
-        sys.exit(1)
+    all_env = get_environments()
 
-    # acre must be available here
-    env = acre.merge(env, dict(os.environ))  # noqa
+    # TODO Global environments will be stored in "general" settings so loading
+    #   will be modified and can be done in igniter.
+    env = acre.merge(all_env["global"], dict(os.environ))
     os.environ.clear()
     os.environ.update(env)
+
+    # Hardcoded default values
+    os.environ["PYBLISH_GUI"] = "pyblish_pype"
+    # Change scale factor only if is not set
+    if "QT_AUTO_SCREEN_SCALE_FACTOR" not in os.environ:
+        os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
 
 
 def run(arguments: list, env: dict = None) -> int:
@@ -573,9 +560,6 @@ def boot():
     else:
         os.environ["PYPE_ROOT"] = os.path.dirname(__file__)
 
-    # No environment loading from settings until Pype version is established.
-    # set_environments()
-
     # Get Pype path from database and set it to environment so Pype can
     # find its versions there and bootstrap them.
     pype_path = get_pype_path_from_db(pype_mongo)
@@ -627,9 +611,11 @@ def boot():
     from pype.lib import terminal as t
     from pype.version import __version__
     print(">>> loading environments ...")
-    # Must happen before `set_modules_environments`
+    # Avalon environments must be set before avalon module is imported
     print("  - for Avalon ...")
     set_avalon_environments()
+    print("  - global Pype ...")
+    set_pype_global_environments()
     print("  - for modules ...")
     set_modules_environments()
 
