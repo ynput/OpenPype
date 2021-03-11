@@ -542,8 +542,11 @@ class SyncServer(PypeModule, ITrayModule):
             self.connection.install()
 
         for collection in self.connection.database.collection_names(False):
-            sync_settings = self.get_sync_project_setting(collection)
+            sync_settings = self._parse_sync_settings_from_settings(
+                get_project_settings(collection))
             if sync_settings:
+                default_sites = self._get_default_site_configs()
+                sync_settings['sites'].update(default_sites)
                 sync_project_settings[collection] = sync_settings
 
         if not sync_project_settings:
@@ -632,9 +635,7 @@ class SyncServer(PypeModule, ITrayModule):
 
         initiated_handlers = {}
         configured_sites = {}
-        default_config = {'provider': 'local_drive'}
-        all_sites = {self.DEFAULT_SITE: default_config,
-                     self.LOCAL_SITE: default_config}
+        all_sites = self._get_default_site_configs()
         all_sites.update(project_setting.get("sites"))
         for site_name, config in all_sites.items():
             handler = initiated_handlers. \
@@ -650,6 +651,12 @@ class SyncServer(PypeModule, ITrayModule):
                 configured_sites[site_name] = True
 
         return configured_sites
+
+    def _get_default_site_configs(self):
+        default_config = {'provider': 'local_drive'}
+        all_sites = {self.DEFAULT_SITE: default_config,
+                     self.LOCAL_SITE: default_config}
+        return all_sites
 
     def get_provider_for_site(self, project_name, site):
         """

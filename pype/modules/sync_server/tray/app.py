@@ -880,6 +880,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 project (str): name of project
         """
         self._project = project
+        self.sync_server.set_sync_project_settings()
         self.local_site = self.sync_server.get_active_site(self._project)
         self.remote_site = self.sync_server.get_remote_site(self._project)
         self.refresh()
