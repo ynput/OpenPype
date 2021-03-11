@@ -112,45 +112,12 @@ if getattr(sys, 'frozen', False):
     os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
 from igniter import BootstrapRepos  # noqa: E402
-from igniter.tools import load_environments, get_pype_path_from_db  # noqa
+from igniter.tools import get_pype_path_from_db  # noqa
 from igniter.bootstrap_repos import PypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
 silent_commands = ["run", "igniter", "standalonepublisher"]
 
-
-def set_environments() -> None:
-    """Set loaded environments.
-
-    .. todo:
-        better handling of environments
-
-    """
-    try:
-        import acre
-    except ImportError:
-        if getattr(sys, 'frozen', False):
-            sys.path.append(os.path.join(
-                os.path.dirname(sys.executable),
-                "dependencies"
-            ))
-            try:
-                import acre
-            except ImportError as e:
-                # giving up
-                print("!!! cannot import acre")
-                print(f"{e}")
-                sys.exit(1)
-    try:
-        env = load_environments(["global"])
-    except OSError as e:
-        print(f"!!! {e}")
-        sys.exit(1)
-
-    # acre must be available here
-    env = acre.merge(env, dict(os.environ))  # noqa
-    os.environ.clear()
-    os.environ.update(env)
 
 
 def run(arguments: list, env: dict = None) -> int:
@@ -572,9 +539,6 @@ def boot():
         os.environ["PYPE_ROOT"] = os.path.dirname(sys.executable)
     else:
         os.environ["PYPE_ROOT"] = os.path.dirname(__file__)
-
-    # No environment loading from settings until Pype version is established.
-    # set_environments()
 
     # Get Pype path from database and set it to environment so Pype can
     # find its versions there and bootstrap them.
