@@ -36,80 +36,78 @@ class _ProjectListWidget(ProjectListWidget):
         self.project_changed.emit()
 
 
-class RootInputWidget(QtWidgets.QWidget):
+class DynamicInputItem(QtCore.QObject):
+    value_changed = QtCore.Signal(str, str)
+
     def __init__(
         self,
-        local_project_settings,
-        local_project_settings_orig,
-        platform_root_entity,
-        root_name,
-        project_name,
+        input_def,
         site_name,
+        value_item,
+        label_widget,
         parent
     ):
-        super(RootInputWidget, self).__init__(parent)
+        super(DynamicInputItem, self).__init__()
+        input_widget = QtWidgets.QLineEdit(parent)
 
-        self.local_project_settings = local_project_settings
-        self.local_project_settings_orig = local_project_settings_orig
-        self.platform_root_entity = platform_root_entity
-        self.root_name = root_name
+        settings_value = input_def.get("value")
+        placeholder = input_def.get("placeholder")
+
+        value_placeholder_template = "< {} >"
+        if (
+            not placeholder
+            and value_item.project_name != DEFAULT_PROJECT_KEY
+            and value_item.default_value
+        ):
+            placeholder = value_placeholder_template.format(
+                value_item.default_value
+            )
+
+        if not placeholder and settings_value:
+            placeholder = value_placeholder_template.format(settings_value)
+
+        if placeholder:
+            input_widget.setPlaceholderText(placeholder)
+
+        if value_item.value:
+            input_widget.setText(value_item.value)
+
+        input_widget.textChanged.connect(self._on_str_change)
+
+        self.value_item = value_item
         self.site_name = site_name
-        self.project_name = project_name
+        self.key = input_def["key"]
 
-        self.origin_value = self._get_site_value_for_project(
-            self.project_name, self.local_project_settings_orig
-        ) or ""
+        self.settings_value = settings_value
 
-        is_default_project = bool(project_name == DEFAULT_PROJECT_KEY)
+        self.current_value = input_widget.text()
 
-        default_input_value = self._get_site_value_for_project(
-            DEFAULT_PROJECT_KEY
-        )
-        if is_default_project:
-            input_value = default_input_value
-            project_value = None
-        else:
-            input_value = self._get_site_value_for_project(self.project_name)
-            project_value = input_value
+        self.input_widget = input_widget
+        self.label_widget = label_widget
 
-        # Placeholder
-        placeholder = None
-        if not is_default_project:
-            placeholder = default_input_value
+        self.parent_widget = parent
 
-        if not placeholder:
-            placeholder = platform_root_entity.value
+        label_widget.set_mouse_release_callback(self._mouse_release_callback)
+        self._update_style()
 
-        key_label = ProxyLabelWidget(
-            root_name,
-            self._mouse_release_callback,
-            self
-        )
-        value_input = QtWidgets.QLineEdit(self)
-        value_input.setPlaceholderText("< {} >".format(placeholder))
+    @property
+    def origin_value(self):
+        return self.value_item.orig_value
 
-        # Root value
-        if input_value:
-            value_input.setText(input_value)
+    @property
+    def project_name(self):
+        return self.value_item.project_name
 
-        value_input.textChanged.connect(self._on_value_change)
+    def _on_str_change(self, value):
+        if self.current_value == value:
+            return
 
-        root_layout = QtWidgets.QHBoxLayout(self)
-        root_layout.addWidget(key_label)
-        root_layout.addWidget(value_input)
-
-        self.value_input = value_input
-        self.label_widget = key_label
-
-        self.studio_value = platform_root_entity.value
-        self.default_value = default_input_value
-        self.project_value = project_value
-        self.placeholder_value = placeholder
-
+        self.current_value = value
+        self.value_changed.emit(self.site_name, self.key)
         self._update_style()
 
     def is_modified(self):
-        return self.origin_value != self.value_input.text()
+        return self.origin_value != self.input_widget.text()
 
     def _mouse_release_callback(self, event):
         if event.button() != QtCore.Qt.RightButton:
@@ -124,7 +122,7 @@ class RootInputWidget(QtWidgets.QWidget):
         if self.is_modified():
             return "modified"
 
-        current_value = self.value_input.text()
+        current_value = self.input_widget.text()
         if self.project_name == DEFAULT_PROJECT_KEY:
             if current_value:
                 return "studio"
@@ -132,38 +130,36 @@ class RootInputWidget(QtWidgets.QWidget):
             if current_value:
                 return "overriden"
 
-            studio_value = self._get_site_value_for_project(
-                DEFAULT_PROJECT_KEY
-            )
-            if studio_value:
+            if self.value_item.default_value:
                 return "studio"
         return ""
 
     def _update_style(self):
         state = self._get_style_state()
 
-        self.value_input.setProperty("input-state", state)
-        self.value_input.style().polish(self.value_input)
+        self.input_widget.setProperty("input-state", state)
+        self.input_widget.style().polish(self.input_widget)
 
         self.label_widget.set_label_property("state", state)
 
     def _remove_from_local(self):
-        self.value_input.setText("")
-        self._update_style()
+        self.input_widget.setText("")
 
     def _add_to_local(self):
-        self.value_input.setText(self.placeholder_value)
-        self._update_style()
+        value = self.value_item.default_value
+        if self.project_name == DEFAULT_PROJECT_KEY or not value:
+            value = self.settings_value
+
+        self.input_widget.setText(value)
 
     def discard_changes(self):
-        self.value_input.setText(self.origin_value)
-        self._update_style()
+        self.input_widget.setText(self.origin_value)
 
     def _show_actions(self):
         if self.project_name is None:
             return
 
-        menu = QtWidgets.QMenu(self)
+        menu = QtWidgets.QMenu(self.parent_widget)
         actions_mapping = {}
 
         if self.project_name == DEFAULT_PROJECT_KEY:
@@ -173,7 +169,7 @@ class RootInputWidget(QtWidgets.QWidget):
             remove_label = LABEL_REMOVE_PROJECT
             add_label = LABEL_ADD_PROJECT
 
-        if self.value_input.text():
+        if self.input_widget.text():
             action = QtWidgets.QAction(remove_label)
             callback = self._remove_from_local
         else:
@@ -194,26 +190,6 @@ class RootInputWidget(QtWidgets.QWidget):
             if to_run:
                 to_run()
 
-    def _get_site_value_for_project(self, project_name, data=None):
-        if data is None:
-            data = self.local_project_settings
-        project_values = data.get(project_name)
-        site_value = {}
-        if project_values:
-            root_value = project_values.get(LOCAL_ROOTS_KEY)
-            if root_value:
-                site_value = root_value.get(self.site_name) or {}
-        return site_value.get(self.root_name)
-
-    def _on_value_change(self):
-        value = self.value_input.text()
-        data = self.local_project_settings
-        for key in (self.project_name, LOCAL_ROOTS_KEY, self.site_name):
-            if key not in data:
-                data[key] = {}
-            data = data[key]
-        data[self.root_name] = value
-        self._update_style()
 
 class SiteValueItem:
     def __init__(
