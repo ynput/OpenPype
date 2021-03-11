@@ -23,15 +23,11 @@
             "darwin": "{VIRTUAL_ENV}/bin/python"
         },
         "PYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
-        "PYBLISH_GUI": "pyblish_pype",
-        "QT_AUTO_SCREEN_SCALE_FACTOR": "1",
         "__environment_keys__": {
             "global": [
                 "FFMPEG_PATH",
                 "PYPE_PYTHON_EXE",
-                "PYPE_OCIO_CONFIG",
-                "PYBLISH_GUI",
-                "QT_AUTO_SCREEN_SCALE_FACTOR"
+                "PYPE_OCIO_CONFIG"
             ]
         }
     }
