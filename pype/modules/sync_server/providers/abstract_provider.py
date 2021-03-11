@@ -93,3 +93,17 @@ class AbstractProvider(metaclass=ABCMeta):
             only parents and their parents)
         """
         pass
+
+    @abstractmethod
+    def resolve_path(self, path, root_config, anatomy=None):
+        """
+            Replaces root placeholders with appropriate real value from
+            'root_configs' (from Settings or Local Settings) or Anatomy
+            (mainly for 'studio' site)
+
+            Args:
+                path(string): path with '{root[work]}/...'
+                root_config(dict): from Settings or Local Settings
+                anatomy (Anatomy): prepared anatomy object for project
+        """
+        pass

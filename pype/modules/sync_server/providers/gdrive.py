@@ -678,6 +678,16 @@ class GDriveHandler(AbstractProvider):
             return
         return provider_presets
 
+    def resolve_path(self, path, root_config, anatomy=None):
+        if not root_config.get("root"):
+            root_config = {"root": root_config}
+
+        try:
+            return path.format(**root_config)
+        except KeyError:
+            msg = "Error in resolving remote root, unknown key"
+            log.error(msg)
+
     def _handle_q(self, q, trashed=False):
         """ API list call contain trashed and hidden files/folder by default.
             Usually we dont want those, must be included in query explicitly.

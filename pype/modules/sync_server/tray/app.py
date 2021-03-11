@@ -159,7 +159,8 @@ class SyncProjectListWidget(ProjectListWidget):
         model.clear()
 
         project_name = None
-        for project_name in self.sync_server.get_sync_project_settings().keys():
+        for project_name in self.sync_server.get_sync_project_settings().\
+                keys():
             if self.sync_server.is_paused() or \
                self.sync_server.is_project_paused(project_name):
                 icon = self._get_icon("paused")
@@ -203,7 +204,6 @@ class SyncProjectListWidget(ProjectListWidget):
         menu = QtWidgets.QMenu()
         actions_mapping = {}
 
-        action = None
         if self.sync_server.is_project_paused(self.project_name):
             action = QtWidgets.QAction("Unpause")
             actions_mapping[action] = self._unpause
@@ -212,7 +212,7 @@ class SyncProjectListWidget(ProjectListWidget):
             actions_mapping[action] = self._pause
         menu.addAction(action)
 
-        if self.local_site == self.sync_server.get_my_local_site():
+        if self.local_site == get_local_site_id():
             action = QtWidgets.QAction("Clear local project")
             actions_mapping[action] = self._clear_project
             menu.addAction(action)
@@ -241,6 +241,7 @@ class SyncProjectListWidget(ProjectListWidget):
             self.project_name = None
         self.refresh()
 
+
 class ProjectModel(QtCore.QAbstractListModel):
     def __init__(self, *args, projects=None, **kwargs):
         super(ProjectModel, self).__init__(*args, **kwargs)
@@ -255,6 +256,7 @@ class ProjectModel(QtCore.QAbstractListModel):
 
     def rowCount(self, index):
         return len(self.todos)
+
 
 class SyncRepresentationWidget(QtWidgets.QWidget):
     """
@@ -478,7 +480,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         local_site_name = self.sync_server.get_my_local_site()
         try:
             self.sync_server.add_site(
-                self.table_view.model()._project,
+                project_name,
                 self.representation_id,
                 local_site_name
                 )
@@ -802,7 +804,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             self._data.append(item)
             self._rec_loaded += 1
 
-
     def canFetchMore(self, index):
         """
             Check if there are more records than currently loaded
@@ -854,6 +855,9 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         self.sort = {self.SORT_BY_COLUMN[index]: order, '_id': 1}
         self.query = self.get_default_query()
+        # import json
+        # log.debug(json.dumps(self.query, indent=4).replace('False', 'false').\
+        #           replace('True', 'true').replace('None', 'null'))
 
         representations = self.dbcon.aggregate(self.query)
         self.refresh(representations)
@@ -891,7 +895,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             Returns:
                 (QModelIndex)
         """
-        index = None
         for i in range(self.rowCount(None)):
             index = self.index(i, 0)
             value = self.data(index, Qt.UserRole)
@@ -1000,7 +1003,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                               0]},
                 'failed_remote_tries': {
                     '$cond': [{'$size': '$order_remote.tries'},
-                              {'$first': '$order_local.tries'},
+                              {'$first': '$order_remote.tries'},
                               0]},
                 'paused_remote': {
                     '$cond': [{'$size': "$order_remote.paused"},
@@ -1027,9 +1030,9 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 # select last touch of file
                 'updated_dt_remote': {'$max': "$updated_dt_remote"},
                 'failed_remote': {'$sum': '$failed_remote'},
-                'failed_local': {'$sum': '$paused_remote'},
-                'failed_local_tries': {'$sum': '$failed_local_tries'},
+                'failed_local': {'$sum': '$failed_local'},
                 'failed_remote_tries': {'$sum': '$failed_remote_tries'},
+                'failed_local_tries': {'$sum': '$failed_local_tries'},
                 'paused_remote': {'$sum': '$paused_remote'},
                 'paused_local': {'$sum': '$paused_local'},
                 'updated_dt_local': {'$max': "$updated_dt_local"}
@@ -1669,7 +1672,6 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
             Returns:
                 (QModelIndex)
         """
-        index = None
         for i in range(self.rowCount(None)):
             index = self.index(i, 0)
             value = self.data(index, Qt.UserRole)
@@ -1777,14 +1779,15 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                               "$order_local.error",
                               [""]]}},
                 'tries': {'$first': {
-                    '$cond': [{'$size': "$order_local.tries"},
-                              "$order_local.tries",
-                              {'$cond': [
-                                  {'$size': "$order_remote.tries"},
-                                  "$order_remote.tries",
-                                  []
-                              ]}
-                             ]}}
+                    '$cond': [
+                        {'$size': "$order_local.tries"},
+                        "$order_local.tries",
+                        {'$cond': [
+                            {'$size': "$order_remote.tries"},
+                            "$order_remote.tries",
+                            []
+                        ]}
+                    ]}}
             }},
             {"$project": self.projection},
             {"$sort": self.sort},
@@ -2014,6 +2017,7 @@ class SizeDelegate(QtWidgets.QStyledItemDelegate):
                 return "%3.1f%s%s" % (value, unit, suffix)
             value /= 1024.0
         return "%.1f%s%s" % (value, 'Yi', suffix)
+
 
 def _convert_progress(value):
     try:
