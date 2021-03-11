@@ -2,26 +2,38 @@
 """Open install dialog."""
 
 import sys
+from Qt import QtWidgets  # noqa
+from Qt.QtCore import Signal  # noqa
 import os
 os.chdir(os.path.dirname(__file__))  # for override sys.path in Deadline
 
-from Qt import QtWidgets
-
 from .install_dialog import InstallDialog
 from .bootstrap_repos import BootstrapRepos
+from .version import __version__ as version
 
 
-def run():
+RESULT = 0
+
+
+def get_result(res: int):
+    """Sets result returned from dialog."""
+    global RESULT
+    RESULT = res
+
+
+def open_dialog():
     """Show Igniter dialog."""
     app = QtWidgets.QApplication(sys.argv)
     d = InstallDialog()
-    d.exec_()
-    d.show()
-    sys.exit(app.exec_())
+    d.finished.connect(get_result)
+    d.open()
+    app.exec()
+    return RESULT
 
 
 __all__ = [
     "InstallDialog",
     "BootstrapRepos",
-    "run"
+    "open_dialog",
+    "version"
 ]

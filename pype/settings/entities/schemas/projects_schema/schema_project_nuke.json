@@ -46,6 +46,11 @@
             "name": "schema_nuke_publish",
             "template_data": []
         },
+                {
+            "type": "schema",
+            "name": "schema_nuke_load",
+            "template_data": []
+        },
         {
             "type": "schema",
             "name": "schema_workfile_build"

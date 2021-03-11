@@ -73,5 +73,17 @@ class CreateImage(pype.api.Creator):
             groups.append(group)
 
         for group in groups:
+            long_names = []
+            if group.long_name:
+                for directory in group.long_name[::-1]:
+                    name = directory.replace(stub.PUBLISH_ICON, '').\
+                                      replace(stub.LOADED_ICON, '')
+                    long_names.append(name)
+
             self.data.update({"subset": "image" + group.name})
+            self.data.update({"uuid": str(group.id)})
+            self.data.update({"long_name": "_".join(long_names)})
             stub.imprint(group, self.data)
+            # reusing existing group, need to rename afterwards
+            if not create_group:
+                stub.rename_layer(group.id, stub.PUBLISH_ICON + group.name)

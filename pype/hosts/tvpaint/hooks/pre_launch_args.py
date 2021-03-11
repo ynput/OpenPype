@@ -2,7 +2,10 @@ import os
 import shutil
 
 from pype.hosts import tvpaint
-from pype.lib import PreLaunchHook
+from pype.lib import (
+    PreLaunchHook,
+    get_pype_execute_args
+)
 
 import avalon
 
@@ -20,18 +23,16 @@ class TvpaintPrelaunchHook(PreLaunchHook):
 
     def execute(self):
         # Pop tvpaint executable
-        tvpaint_executable = self.launch_context.launch_args.pop(0)
+        executable_path = self.launch_context.launch_args.pop(0)
 
         # Pop rest of launch arguments - There should not be other arguments!
         remainders = []
         while self.launch_context.launch_args:
             remainders.append(self.launch_context.launch_args.pop(0))
 
-        new_launch_args = [
-            self.main_executable(),
-            self.launch_script_path(),
-            tvpaint_executable
-        ]
+        new_launch_args = get_pype_execute_args(
+            "run", self.launch_script_path(), executable_path
+        )
 
         # Add workfile to launch arguments
         workfile_path = self.workfile_path()
@@ -55,11 +56,6 @@ class TvpaintPrelaunchHook(PreLaunchHook):
                 "There are unexpected launch arguments in TVPaint launch. {}"
             ).format(str(remainders)))
             self.launch_context.launch_args.extend(remainders)
-
-    def main_executable(self):
-        """Should lead to python executable."""
-        # TODO change in Pype 3
-        return os.path.normpath(os.environ["PYPE_PYTHON_EXE"])
 
     def launch_script_path(self):
         avalon_dir = os.path.dirname(os.path.abspath(avalon.__file__))
