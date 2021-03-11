@@ -298,7 +298,7 @@
                 },
                 "Viewport Options": {
                     "override_viewport_options": true,
-                    "displayLights": "0",
+                    "displayLights": "default",
                     "textureMaxResolution": 1024,
                     "multiSample": 4,
                     "shadows": true,
