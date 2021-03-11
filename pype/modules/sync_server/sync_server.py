@@ -339,10 +339,10 @@ class SyncServer(PypeModule, ITrayModule):
             Returns:
                 (list) of strings
         """
-        return self.get_active_sites_from_setting(
+        return self.get_active_sites_from_settings(
             get_project_settings(project_name))
 
-    def get_active_sites_from_setting(self, settings):
+    def get_active_sites_from_settings(self, settings):
         """
             List available active sites from incoming 'settings'. Used for
             returning 'default' values for Local Settings
@@ -391,10 +391,10 @@ class SyncServer(PypeModule, ITrayModule):
             Returns:
                 (list) of strings
         """
-        return self.get_remote_sites_from_setting(
+        return self.get_remote_sites_from_settings(
             get_project_settings(project_name))
 
-    def get_remote_sites_from_setting(self, settings):
+    def get_remote_sites_from_settings(self, settings):
         """
             Get remote sites for returning 'default' values for Local Settings
         """
