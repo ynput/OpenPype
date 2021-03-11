@@ -529,7 +529,7 @@ def get_default_anatomy_settings(clear_metadata=True):
     return result
 
 
-def get_applied_anatomy_settings(project_name):
+def get_anatomy_settings(project_name, site_name=None, exclude_locals=False):
     """Project anatomy data with applied studio and project overrides."""
     if not project_name:
         raise ValueError(
@@ -546,20 +546,15 @@ def get_applied_anatomy_settings(project_name):
 
     clear_metadata_from_settings(result)
 
+    if not exclude_locals:
+        local_settings = get_local_settings()
+        apply_local_settings_on_anatomy_settings(
+            result, local_settings, project_name, site_name
+        )
     return result
 
 
-def get_anatomy_settings(project_name, site_name=None):
-    result = get_applied_anatomy_settings(project_name)
-
-    local_settings = get_local_settings()
-    apply_local_settings_on_anatomy_settings(
-        result, local_settings, project_name, site_name
-    )
-    return result
-
-
-def get_applied_project_settings(project_name):
+def get_project_settings(project_name, exclude_locals=False):
     """Project settings with applied studio and project overrides."""
     if not project_name:
         raise ValueError(
@@ -574,16 +569,12 @@ def get_applied_project_settings(project_name):
 
     result = apply_overrides(studio_overrides, project_overrides)
     clear_metadata_from_settings(result)
-    return result
 
-
-def get_project_settings(project_name):
-    result = get_applied_project_settings(project_name)
-
-    local_settings = get_local_settings()
-    apply_local_settings_on_project_settings(
-        result, local_settings, project_name
-    )
+    if not exclude_locals:
+        local_settings = get_local_settings()
+        apply_local_settings_on_project_settings(
+            result, local_settings, project_name
+        )
 
     return result
 
