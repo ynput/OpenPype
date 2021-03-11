@@ -444,6 +444,31 @@ def apply_local_settings_on_anatomy_settings(
         )
 
 
+def get_site_local_overrides(project_name, site_name, local_settings=None):
+    if local_settings is None:
+        local_settings = get_local_settings()
+
+    output = {}
+
+    if not local_settings:
+        return output
+
+    local_project_settings = local_settings.get("projects") or {}
+
+    project_locals = None
+    if project_name:
+        project_locals = local_project_settings.get(project_name)
+    default_project_locals = local_project_settings.get(DEFAULT_PROJECT_KEY)
+
+    if default_project_locals and site_name in default_project_locals:
+        output.update(default_project_locals[site_name])
+
+    if project_locals and site_name in project_locals:
+        output.update(project_locals[site_name])
+
+    return output
+
+
 def apply_local_settings_on_project_settings(
     project_settings, local_settings, project_name
 ):
