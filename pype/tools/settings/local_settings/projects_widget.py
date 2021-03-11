@@ -625,6 +625,8 @@ class RemoteSiteCombo(_SiteCombobox):
         super(RemoteSiteCombo, self).change_project(*args, **kwargs)
 
         self.setVisible(self.combobox_input.count() > 0)
+        if not self.isVisible():
+            self._set_local_settings_value("")
 
     def _get_project_sites(self):
         sync_server_module = (
