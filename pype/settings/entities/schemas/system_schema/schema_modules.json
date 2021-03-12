@@ -32,31 +32,6 @@
         },
         {
             "type": "dict",
-            "key": "rest_api",
-            "label": "Rest Api",
-            "collapsible": true,
-            "children": [
-                {
-                    "type": "number",
-                    "key": "default_port",
-                    "label": "Default Port",
-                    "minimum": 1,
-                    "maximum": 65535
-                },
-                {
-                    "type": "list",
-                    "key": "exclude_ports",
-                    "label": "Exclude ports",
-                    "object_type": {
-                        "type": "number",
-                        "minimum": 1,
-                        "maximum": 65535
-                    }
-                }
-            ]
-        },
-        {
-            "type": "dict",
             "key": "timers_manager",
             "label": "Timers Manager",
             "collapsible": true,
