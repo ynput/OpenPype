@@ -21,7 +21,11 @@ class WebServerManager:
 
         # add route with multiple methods for single "external app"
 
-        self.webserver_thread = WebServerThread(self, self.module.port)
+        self.webserver_thread = WebServerThread(self)
+
+    @property
+    def port(self):
+        return self.module.port
 
     def add_route(self, *args, **kwargs):
         self.app.router.add_route(*args, **kwargs)
@@ -60,16 +64,19 @@ class WebServerManager:
 
 class WebServerThread(threading.Thread):
     """ Listener for requests in thread."""
-    def __init__(self, manager, port):
+    def __init__(self, manager):
         super(WebServerThread, self).__init__()
 
         self.is_running = False
-        self.port = port
         self.manager = manager
         self.loop = None
         self.runner = None
         self.site = None
         self.tasks = []
+
+    @property
+    def port(self):
+        return self.manager.port
 
     def run(self):
         self.is_running = True

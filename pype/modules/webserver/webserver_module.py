@@ -1,4 +1,5 @@
 import os
+import socket
 from pype import resources
 from .. import PypeModule, ITrayService
 
@@ -11,8 +12,7 @@ class WebServerModule(PypeModule, ITrayService):
         self.enabled = True
         self.server_manager = None
 
-        # TODO find free port
-        self.port = 8098
+        self.port = self.find_free_port()
 
     def connect_with_modules(self, *_a, **_kw):
         return
@@ -53,3 +53,58 @@ class WebServerModule(PypeModule, ITrayService):
         self.server_manager.on_stop_callbacks.append(
             self.set_service_failed_icon
         )
+
+    @staticmethod
+    def find_free_port(
+        port_from=None, port_to=None, exclude_ports=None, host=None
+    ):
+        """Find available socket port from entered range.
+
+        It is also possible to only check if entered port is available.
+
+        Args:
+            port_from (int): Port number which is checked as first.
+            port_to (int): Last port that is checked in sequence from entered
+                `port_from`. Only `port_from` is checked if is not entered.
+                Nothing is processed if is equeal to `port_from`!
+            exclude_ports (list, tuple, set): List of ports that won't be
+                checked form entered range.
+            host (str): Host where will check for free ports. Set to
+                "localhost" by default.
+        """
+        if port_from is None:
+            port_from = 8079
+
+        if port_to is None:
+            port_to = 65535
+
+        # Excluded ports (e.g. reserved for other servers/clients)
+        if exclude_ports is None:
+            exclude_ports = []
+
+        # Default host is localhost but it is possible to look for other hosts
+        if host is None:
+            host = "localhost"
+
+        found_port = None
+        for port in range(port_from, port_to + 1):
+            if port in exclude_ports:
+                continue
+
+            sock = None
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.bind((host, port))
+                found_port = port
+
+            except socket.error:
+                continue
+
+            finally:
+                if sock:
+                    sock.close()
+
+            if found_port is not None:
+                break
+
+        return found_port
