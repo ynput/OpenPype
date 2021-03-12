@@ -4,11 +4,12 @@ import appdirs
 import requests
 from .. import (
     PypeModule,
-    ITrayModule
+    ITrayModule,
+    IWebServerRoutes
 )
 
 
-class MusterModule(PypeModule, ITrayModule):
+class MusterModule(PypeModule, ITrayModule, IWebServerRoutes):
     """
     Module handling Muster Render credentials. This will display dialog
     asking for user credentials for Muster if not already specified.
@@ -31,6 +32,7 @@ class MusterModule(PypeModule, ITrayModule):
         # Tray attributes
         self.widget_login = None
         self.action_show_login = None
+        self.rest_api_obj = None
 
     def get_global_environments(self):
         return {
@@ -73,6 +75,13 @@ class MusterModule(PypeModule, ITrayModule):
         self.action_show_login.triggered.connect(self.show_login)
 
         parent.addMenu(menu)
+
+    def webserver_initialization(self, server_manager):
+        """Implementation of IWebServerRoutes interface."""
+        if self.tray_initialized:
+            from .rest_api import MusterModuleRestApi
+
+            self.rest_api_obj = MusterModuleRestApi(self, server_manager)
 
     def load_credentials(self):
         """
