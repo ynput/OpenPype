@@ -2,6 +2,7 @@
 """Setup info for building Pype 3.0."""
 import os
 import sys
+import re
 from pathlib import Path
 
 from cx_Freeze import setup, Executable
@@ -13,7 +14,9 @@ pype_root = Path(os.path.dirname(__file__))
 
 with open(pype_root / "pype" / "version.py") as fp:
     exec(fp.read(), version)
-__version__ = version["__version__"]
+
+version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
+__version__ = version_match.group(1)
 
 base = None
 if sys.platform == "win32":
