@@ -98,7 +98,7 @@ $pype_root = (Get-Item $script_dir).parent.FullName
 Set-Location -Path $pype_root
 
 $version_file = Get-Content -Path "$($pype_root)\pype\version.py"
-$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+)"')
+$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
 $pype_version = $result[0].Groups['version'].Value
 if (-not $pype_version) {
   Write-Host "!!! " -ForegroundColor yellow -NoNewline

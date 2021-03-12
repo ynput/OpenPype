@@ -57,7 +57,7 @@ Write-Host $art -ForegroundColor DarkGreen
 # Show-PSWarning
 
 $version_file = Get-Content -Path "$($pype_root)\pype\version.py"
-$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+)"')
+$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
 $pype_version = $result[0].Groups['version'].Value
 if (-not $pype_version) {
   Write-Host "!!! " -ForegroundColor yellow -NoNewline
