@@ -36,80 +36,78 @@ class _ProjectListWidget(ProjectListWidget):
         self.project_changed.emit()
 
 
-class RootInputWidget(QtWidgets.QWidget):
+class DynamicInputItem(QtCore.QObject):
+    value_changed = QtCore.Signal(str, str)
+
     def __init__(
         self,
-        local_project_settings,
-        local_project_settings_orig,
-        platform_root_entity,
-        root_name,
-        project_name,
+        input_def,
         site_name,
+        value_item,
+        label_widget,
         parent
     ):
-        super(RootInputWidget, self).__init__(parent)
+        super(DynamicInputItem, self).__init__()
+        input_widget = QtWidgets.QLineEdit(parent)
 
-        self.local_project_settings = local_project_settings
-        self.local_project_settings_orig = local_project_settings_orig
-        self.platform_root_entity = platform_root_entity
-        self.root_name = root_name
+        settings_value = input_def.get("value")
+        placeholder = input_def.get("placeholder")
+
+        value_placeholder_template = "< {} >"
+        if (
+            not placeholder
+            and value_item.project_name != DEFAULT_PROJECT_KEY
+            and value_item.default_value
+        ):
+            placeholder = value_placeholder_template.format(
+                value_item.default_value
+            )
+
+        if not placeholder and settings_value:
+            placeholder = value_placeholder_template.format(settings_value)
+
+        if placeholder:
+            input_widget.setPlaceholderText(placeholder)
+
+        if value_item.value:
+            input_widget.setText(value_item.value)
+
+        input_widget.textChanged.connect(self._on_str_change)
+
+        self.value_item = value_item
         self.site_name = site_name
-        self.project_name = project_name
+        self.key = input_def["key"]
 
-        self.origin_value = self._get_site_value_for_project(
-            self.project_name, self.local_project_settings_orig
-        ) or ""
+        self.settings_value = settings_value
 
-        is_default_project = bool(project_name == DEFAULT_PROJECT_KEY)
+        self.current_value = input_widget.text()
 
-        default_input_value = self._get_site_value_for_project(
-            DEFAULT_PROJECT_KEY
-        )
-        if is_default_project:
-            input_value = default_input_value
-            project_value = None
-        else:
-            input_value = self._get_site_value_for_project(self.project_name)
-            project_value = input_value
+        self.input_widget = input_widget
+        self.label_widget = label_widget
 
-        # Placeholder
-        placeholder = None
-        if not is_default_project:
-            placeholder = default_input_value
+        self.parent_widget = parent
 
-        if not placeholder:
-            placeholder = platform_root_entity.value
+        label_widget.set_mouse_release_callback(self._mouse_release_callback)
+        self._update_style()
 
-        key_label = ProxyLabelWidget(
-            root_name,
-            self._mouse_release_callback,
-            self
-        )
-        value_input = QtWidgets.QLineEdit(self)
-        value_input.setPlaceholderText("< {} >".format(placeholder))
+    @property
+    def origin_value(self):
+        return self.value_item.orig_value
 
-        # Root value
-        if input_value:
-            value_input.setText(input_value)
+    @property
+    def project_name(self):
+        return self.value_item.project_name
 
-        value_input.textChanged.connect(self._on_value_change)
+    def _on_str_change(self, value):
+        if self.current_value == value:
+            return
 
-        root_layout = QtWidgets.QHBoxLayout(self)
-        root_layout.addWidget(key_label)
-        root_layout.addWidget(value_input)
-
-        self.value_input = value_input
-        self.label_widget = key_label
-
-        self.studio_value = platform_root_entity.value
-        self.default_value = default_input_value
-        self.project_value = project_value
-        self.placeholder_value = placeholder
-
+        self.current_value = value
+        self.value_changed.emit(self.site_name, self.key)
         self._update_style()
 
     def is_modified(self):
-        return self.origin_value != self.value_input.text()
+        return self.origin_value != self.input_widget.text()
 
     def _mouse_release_callback(self, event):
         if event.button() != QtCore.Qt.RightButton:
@@ -124,7 +122,7 @@ class RootInputWidget(QtWidgets.QWidget):
         if self.is_modified():
             return "modified"
 
-        current_value = self.value_input.text()
+        current_value = self.input_widget.text()
         if self.project_name == DEFAULT_PROJECT_KEY:
             if current_value:
                 return "studio"
@@ -132,38 +130,36 @@ class RootInputWidget(QtWidgets.QWidget):
             if current_value:
                 return "overriden"
 
-            studio_value = self._get_site_value_for_project(
-                DEFAULT_PROJECT_KEY
-            )
-            if studio_value:
+            if self.value_item.default_value:
                 return "studio"
         return ""
 
     def _update_style(self):
         state = self._get_style_state()
 
-        self.value_input.setProperty("input-state", state)
-        self.value_input.style().polish(self.value_input)
+        self.input_widget.setProperty("input-state", state)
+        self.input_widget.style().polish(self.input_widget)
 
         self.label_widget.set_label_property("state", state)
 
     def _remove_from_local(self):
-        self.value_input.setText("")
-        self._update_style()
+        self.input_widget.setText("")
 
     def _add_to_local(self):
-        self.value_input.setText(self.placeholder_value)
-        self._update_style()
+        value = self.value_item.default_value
+        if self.project_name == DEFAULT_PROJECT_KEY or not value:
+            value = self.settings_value
+
+        self.input_widget.setText(value)
 
     def discard_changes(self):
-        self.value_input.setText(self.origin_value)
-        self._update_style()
+        self.input_widget.setText(self.origin_value)
 
     def _show_actions(self):
         if self.project_name is None:
             return
 
-        menu = QtWidgets.QMenu(self)
+        menu = QtWidgets.QMenu(self.parent_widget)
         actions_mapping = {}
 
         if self.project_name == DEFAULT_PROJECT_KEY:
@@ -173,7 +169,7 @@ class RootInputWidget(QtWidgets.QWidget):
             remove_label = LABEL_REMOVE_PROJECT
             add_label = LABEL_ADD_PROJECT
 
-        if self.value_input.text():
+        if self.input_widget.text():
             action = QtWidgets.QAction(remove_label)
             callback = self._remove_from_local
         else:
@@ -194,55 +190,154 @@ class RootInputWidget(QtWidgets.QWidget):
             if to_run:
                 to_run()
 
-    def _get_site_value_for_project(self, project_name, data=None):
-        if data is None:
-            data = self.local_project_settings
-        project_values = data.get(project_name)
-        site_value = {}
-        if project_values:
-            root_value = project_values.get(LOCAL_ROOTS_KEY)
-            if root_value:
-                site_value = root_value.get(self.site_name) or {}
-        return site_value.get(self.root_name)
 
-    def _on_value_change(self):
-        value = self.value_input.text()
-        data = self.local_project_settings
-        for key in (self.project_name, LOCAL_ROOTS_KEY, self.site_name):
-            if key not in data:
-                data[key] = {}
-            data = data[key]
-        data[self.root_name] = value
-        self._update_style()
+class SiteValueItem:
+    def __init__(
+        self,
+        project_name,
+        value,
+        default_value,
+        orig_value,
+        orig_default_value
+    ):
+        self.project_name = project_name
+        self.value = value or ""
+        self.default_value = default_value or ""
+        self.orig_value = orig_value or ""
+        self.orig_default_value = orig_default_value or ""
+
+    def __repr__(self):
+        return "\n".join((
+            "Project: {}".format(self.project_name),
+            "Value: {}".format(self.value),
+            "Default value: {}".format(self.default_value),
+            "Orig value: {}".format(self.orig_value),
+            "Orig default value: {}".format(self.orig_default_value),
+        ))
 
 
-class RootsWidget(QtWidgets.QWidget):
+class SitesWidget(QtWidgets.QWidget):
     def __init__(self, modules_manager, project_settings, parent):
-        super(RootsWidget, self).__init__(parent)
+        super(SitesWidget, self).__init__(parent)
 
         self.modules_manager = modules_manager
         self.project_settings = project_settings
-        self.site_widgets = []
+        self.input_objects = {}
         self.local_project_settings = None
         self.local_project_settings_orig = None
         self._project_name = None
 
-        self.content_layout = QtWidgets.QVBoxLayout(self)
+        comboboxes_widget = QtWidgets.QWidget(self)
+
+        active_site_widget = AciveSiteCombo(
+            modules_manager, project_settings, comboboxes_widget
+        )
+        remote_site_widget = RemoteSiteCombo(
+            modules_manager, project_settings, comboboxes_widget
+        )
+
+        comboboxes_layout = QtWidgets.QHBoxLayout(comboboxes_widget)
+        comboboxes_layout.setContentsMargins(0, 0, 0, 0)
+        comboboxes_layout.addWidget(active_site_widget)
+        comboboxes_layout.addWidget(remote_site_widget)
+        comboboxes_layout.addWidget(SpacerWidget(comboboxes_widget), 1)
+
+        content_widget = QtWidgets.QWidget(self)
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(comboboxes_widget, 0)
+        main_layout.addWidget(content_widget, 1)
+
+        self.active_site_widget = active_site_widget
+        self.remote_site_widget = remote_site_widget
+
+        self.content_widget = content_widget
+        self.content_layout = content_layout
 
     def _clear_widgets(self):
         while self.content_layout.count():
             item = self.content_layout.itemAt(0)
             item.widget().hide()
             self.content_layout.removeItem(item)
-        self.site_widgets = []
+        self.input_objects = {}
 
-    def _get_active_sites(self):
+    def _get_sites_inputs(self):
         sync_server_module = (
             self.modules_manager.modules_by_name["sync_server"]
         )
 
-        return sync_server_module.get_active_sites_from_settings(
+        # This is temporary modification
+        # - whole logic here should be in sync module's providers
+        site_names = sync_server_module.get_active_sites_from_settings(
             self.project_settings["project_settings"].value
+        )
+
+        roots_entity = (
+            self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
+        )
+
+        output = []
+        for site_name in site_names:
+            site_inputs = []
+            for root_name, path_entity in roots_entity.items():
+                platform_entity = path_entity[platform.system().lower()]
+                site_inputs.append({
+                    "label": root_name,
+                    "key": root_name,
+                    "value": platform_entity.value
+                })
+
+            output.append(
+                (site_name, site_inputs)
+            )
+        return output
+
+    @staticmethod
+    def _extract_value_from_data(data, project_name, site_name, key):
+        _s_value = data
+        for _key in (project_name, site_name, key):
+            if _key not in _s_value:
+                return None
+            _s_value = _s_value[_key]
+        return _s_value
+
+    def _prepare_value_item(self, site_name, key):
+        value = self._extract_value_from_data(
+            self.local_project_settings,
+            self._project_name,
+            site_name,
+            key
+        )
+        orig_value = self._extract_value_from_data(
+            self.local_project_settings_orig,
+            self._project_name,
+            site_name,
+            key
+        )
+        orig_default_value = None
+        default_value = None
+        if self._project_name != DEFAULT_PROJECT_KEY:
+            default_value = self._extract_value_from_data(
+                self.local_project_settings,
+                DEFAULT_PROJECT_KEY,
+                site_name,
+                key
+            )
+            orig_default_value = self._extract_value_from_data(
+                self.local_project_settings_orig,
+                DEFAULT_PROJECT_KEY,
+                site_name,
+                key
+            )
+
+        return SiteValueItem(
+            self._project_name,
+            value,
+            default_value,
+            orig_value,
+            orig_default_value
         )
 
     def refresh(self):
@@ -251,46 +346,90 @@ class RootsWidget(QtWidgets.QWidget):
         if self._project_name is None:
             return
 
-        roots_entity = (
-            self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
-        )
         # Site label
-        for site_name in self._get_active_sites():
-            site_widget = QtWidgets.QWidget(self)
+        for site_name, site_inputs in self._get_sites_inputs():
+            site_widget = QtWidgets.QWidget(self.content_widget)
             site_layout = QtWidgets.QVBoxLayout(site_widget)
 
             site_label = QtWidgets.QLabel(site_name, site_widget)
 
-            site_layout.addWidget(site_label)
+            inputs_widget = QtWidgets.QWidget(site_widget)
+            inputs_layout = QtWidgets.QGridLayout(inputs_widget)
 
-            # Root inputs
-            for root_name, path_entity in roots_entity.items():
-                platform_entity = path_entity[platform.system().lower()]
-                root_widget = RootInputWidget(
-                    self.local_project_settings,
-                    self.local_project_settings_orig,
-                    platform_entity,
-                    root_name,
-                    self._project_name,
+            site_input_objects = {}
+            for idx, input_def in enumerate(site_inputs):
+                key = input_def["key"]
+                label = input_def.get("label") or key
+                label_widget = ProxyLabelWidget(label, None, inputs_widget)
+
+                value_item = self._prepare_value_item(site_name, key)
+
+                input_obj = DynamicInputItem(
+                    input_def,
                     site_name,
-                    site_widget
+                    value_item,
+                    label_widget,
+                    inputs_widget
                 )
+                input_obj.value_changed.connect(self._on_input_value_change)
+                site_input_objects[key] = input_obj
+                inputs_layout.addWidget(label_widget, idx, 0)
+                inputs_layout.addWidget(input_obj.input_widget, idx, 1)
 
-                site_layout.addWidget(root_widget)
+            site_layout.addWidget(site_label)
+            site_layout.addWidget(inputs_widget)
 
-            self.site_widgets.append(site_widget)
             self.content_layout.addWidget(site_widget)
+            self.input_objects[site_name] = site_input_objects
 
         # Add spacer so other widgets are squeezed to top
         self.content_layout.addWidget(SpacerWidget(self), 1)
+
+    def _on_input_value_change(self, site_name, key):
+        if (
+            site_name not in self.input_objects
+            or key not in self.input_objects[site_name]
+        ):
+            return
+
+        input_obj = self.input_objects[site_name][key]
+        value = input_obj.current_value
+
+        if not value:
+            if self._project_name not in self.local_project_settings:
+                return
+
+            project_values = self.local_project_settings[self._project_name]
+            if site_name not in project_values:
+                return
+
+            project_values[site_name][key] = None
+
+        else:
+            if self._project_name not in self.local_project_settings:
+                self.local_project_settings[self._project_name] = {}
+
+            project_values = self.local_project_settings[self._project_name]
+            if site_name not in project_values:
+                project_values[site_name] = {}
+
+            project_values[site_name][key] = value
 
     def update_local_settings(self, local_project_settings):
         self.local_project_settings = local_project_settings
         self.local_project_settings_orig = copy.deepcopy(
             dict(local_project_settings)
         )
+        self.active_site_widget.update_local_settings(local_project_settings)
+        self.remote_site_widget.update_local_settings(local_project_settings)
 
     def change_project(self, project_name):
+        self._project_name = None
+        self.refresh()
+
+        self.active_site_widget.change_project(project_name)
+        self.remote_site_widget.change_project(project_name)
+
         self._project_name = project_name
         self.refresh()
 
@@ -587,6 +726,13 @@ class AciveSiteCombo(_SiteCombobox):
 class RemoteSiteCombo(_SiteCombobox):
     input_label = "Remote site"
 
+    def change_project(self, *args, **kwargs):
+        super(RemoteSiteCombo, self).change_project(*args, **kwargs)
+
+        self.setVisible(self.combobox_input.count() > 0)
+        if not self.isVisible():
+            self._set_local_settings_value("")
+
     def _get_project_sites(self):
         sync_server_module = (
             self.modules_manager.modules_by_name["sync_server"]
@@ -627,47 +773,17 @@ class RootSiteWidget(QtWidgets.QWidget):
         self.project_settings = project_settings
         self._project_name = None
 
-        sites_widget = QtWidgets.QWidget(self)
-
-        active_site_widget = AciveSiteCombo(
-            modules_manager, project_settings, sites_widget
-        )
-        remote_site_widget = RemoteSiteCombo(
-            modules_manager, project_settings, sites_widget
-        )
-
-        sites_layout = QtWidgets.QHBoxLayout(sites_widget)
-        sites_layout.setContentsMargins(0, 0, 0, 0)
-        sites_layout.addWidget(active_site_widget)
-        sites_layout.addWidget(remote_site_widget)
-        sites_layout.addWidget(SpacerWidget(self), 1)
-
-        roots_widget = RootsWidget(modules_manager, project_settings, self)
+        sites_widget = SitesWidget(modules_manager, project_settings, self)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(sites_widget)
-        main_layout.addWidget(roots_widget)
         main_layout.addWidget(SpacerWidget(self), 1)
 
-        self.active_site_widget = active_site_widget
-        self.remote_site_widget = remote_site_widget
-        self.roots_widget = roots_widget
-
-    def _active_site_values(self):
-        global_entity = self.project_settings["project_settings"]["global"]
-        sites_entity = global_entity["sync_server"]["sites"]
-        return tuple(sites_entity.keys())
-
-    def _remote_site_values(self):
-        global_entity = self.project_settings["project_settings"]["global"]
-        sites_entity = global_entity["sync_server"]["sites"]
-        return tuple(sites_entity.keys())
+        self.sites_widget = sites_widget
 
     def update_local_settings(self, local_project_settings):
         self.local_project_settings = local_project_settings
-        self.active_site_widget.update_local_settings(local_project_settings)
-        self.remote_site_widget.update_local_settings(local_project_settings)
-        self.roots_widget.update_local_settings(local_project_settings)
+        self.sites_widget.update_local_settings(local_project_settings)
         project_name = self._project_name
         if project_name is None:
             project_name = DEFAULT_PROJECT_KEY
@@ -676,15 +792,9 @@ class RootSiteWidget(QtWidgets.QWidget):
 
     def change_project(self, project_name):
         self._project_name = project_name
-        # Set roots project to None so all changes below are ignored
-        self.roots_widget.change_project(None)
-
-        # Aply changes in site comboboxes
-        self.active_site_widget.change_project(project_name)
-        self.remote_site_widget.change_project(project_name)
 
         # Change project name in roots widget
-        self.roots_widget.change_project(project_name)
+        self.sites_widget.change_project(project_name)
 
 
 class ProjectValue(dict):
