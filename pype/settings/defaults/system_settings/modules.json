@@ -126,10 +126,6 @@
             }
         }
     },
-    "rest_api": {
-        "default_port": 8021,
-        "exclude_ports": []
-    },
     "timers_manager": {
         "enabled": true,
         "full_time": 15.0,

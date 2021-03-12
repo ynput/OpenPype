@@ -274,9 +274,9 @@ class CreateRender(plugin.Creator):
         # authentication token expired so we need to login to Muster
         # again to get it. We use Pype API call to show login window.
         api_url = "{}/muster/show_login".format(
-            os.environ["PYPE_REST_API_URL"])
+            os.environ["PYPE_WEBSERVER_URL"])
         self.log.debug(api_url)
-        login_response = self._requests_post(api_url, timeout=1)
+        login_response = self._requests_get(api_url, timeout=1)
         if login_response.status_code != 200:
             self.log.error("Cannot show login form to Muster")
             raise Exception("Cannot show login form to Muster")

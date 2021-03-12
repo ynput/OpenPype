@@ -1,21 +1,38 @@
 import os
+import socket
+from abc import ABCMeta, abstractmethod
+
+import six
+
 from pype import resources
 from .. import PypeModule, ITrayService
+
+
+@six.add_metaclass(ABCMeta)
+class IWebServerRoutes:
+    """Other modules interface to register their routes."""
+    @abstractmethod
+    def webserver_initialization(self, server_manager):
+        pass
 
 
 class WebServerModule(PypeModule, ITrayService):
     name = "webserver"
     label = "WebServer"
 
-    def initialize(self, module_settings):
+    def initialize(self, _module_settings):
         self.enabled = True
         self.server_manager = None
 
-        # TODO find free port
-        self.port = 8098
+        self.port = self.find_free_port()
 
-    def connect_with_modules(self, *_a, **_kw):
-        return
+    def connect_with_modules(self, enabled_modules):
+        if not self.server_manager:
+            return
+
+        for module in enabled_modules:
+            if isinstance(module, IWebServerRoutes):
+                module.webserver_initialization(self.server_manager)
 
     def tray_init(self):
         self.create_server_manager()
@@ -31,8 +48,10 @@ class WebServerModule(PypeModule, ITrayService):
         static_prefix = "/res"
         self.server_manager.add_static(static_prefix, resources.RESOURCES_DIR)
 
-        os.environ["PYPE_STATICS_SERVER"] = "http://localhost:{}{}".format(
-            self.port, static_prefix
+        webserver_url = "http://localhost:{}".format(self.port)
+        os.environ["PYPE_WEBSERVER_URL"] = webserver_url
+        os.environ["PYPE_STATICS_SERVER"] = "{}{}".format(
+            webserver_url, static_prefix
         )
 
     def start_server(self):
@@ -53,3 +72,58 @@ class WebServerModule(PypeModule, ITrayService):
         self.server_manager.on_stop_callbacks.append(
             self.set_service_failed_icon
         )
+
+    @staticmethod
+    def find_free_port(
+        port_from=None, port_to=None, exclude_ports=None, host=None
+    ):
+        """Find available socket port from entered range.
+
+        It is also possible to only check if entered port is available.
+
+        Args:
+            port_from (int): Port number which is checked as first.
+            port_to (int): Last port that is checked in sequence from entered
+                `port_from`. Only `port_from` is checked if is not entered.
+                Nothing is processed if is equeal to `port_from`!
+            exclude_ports (list, tuple, set): List of ports that won't be
+                checked form entered range.
+            host (str): Host where will check for free ports. Set to
+                "localhost" by default.
+        """
+        if port_from is None:
+            port_from = 8079
+
+        if port_to is None:
+            port_to = 65535
+
+        # Excluded ports (e.g. reserved for other servers/clients)
+        if exclude_ports is None:
+            exclude_ports = []
+
+        # Default host is localhost but it is possible to look for other hosts
+        if host is None:
+            host = "localhost"
+
+        found_port = None
+        for port in range(port_from, port_to + 1):
+            if port in exclude_ports:
+                continue
+
+            sock = None
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.bind((host, port))
+                found_port = port
+
+            except socket.error:
+                continue
+
+            finally:
+                if sock:
+                    sock.close()
+
+            if found_port is not None:
+                break
+
+        return found_port

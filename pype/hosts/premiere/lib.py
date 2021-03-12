@@ -168,7 +168,7 @@ def clearing_caches_ui():
 
 def test_rest_api_server(env):
     # from pprint import pformat
-    rest_url = env.get("PYPE_REST_API_URL")
+    rest_url = env.get("PYPE_WEBSERVER_URL")
     project_name = "{AVALON_PROJECT}".format(**env)
     URL = "/".join((rest_url,
                     "avalon/projects",

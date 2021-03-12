@@ -13,9 +13,9 @@ from .settings_action import (
     SettingsAction,
     LocalSettingsAction
 )
-from .rest_api import (
-    RestApiModule,
-    IRestApi
+from .webserver import (
+    WebServerModule,
+    IWebServerRoutes
 )
 from .user import (
     UserModule,
@@ -40,7 +40,6 @@ from .log_viewer import LogViewModule
 from .muster import MusterModule
 from .deadline import DeadlineModule
 from .standalonepublish_action import StandAlonePublishAction
-from .webserver import WebServerModule
 from .sync_server import SyncServer
 
 
@@ -57,6 +56,9 @@ __all__ = (
     "SettingsAction",
     "LocalSettingsAction",
 
+    "WebServerModule",
+    "IWebServerRoutes",
+
     "UserModule",
     "IUserModule",
 
@@ -65,9 +67,6 @@ __all__ = (
 
     "TimersManager",
     "ITimersManager",
-
-    "RestApiModule",
-    "IRestApi",
 
     "AvalonModule",
     "LauncherAction",
@@ -82,6 +81,5 @@ __all__ = (
     "DeadlineModule",
     "StandAlonePublishAction",
 
-    "WebServerModule",
     "SyncServer"
 )
