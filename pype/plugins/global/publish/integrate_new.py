@@ -344,7 +344,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 ).format(repre["name"], ext))
                 ext = ext[1:]
             repre["ext"] = ext
-            
+
             if sequence_repre:
                 self.log.debug(
                     "files: {}".format(files))
