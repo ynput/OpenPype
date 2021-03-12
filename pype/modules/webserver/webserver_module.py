@@ -4,18 +4,31 @@ from pype import resources
 from .. import PypeModule, ITrayService
 
 
+@six.add_metaclass(ABCMeta)
+class IWebServerRoutes:
+    """Other modules interface to register their routes."""
+    @abstractmethod
+    def webserver_initialization(self, server_manager):
+        pass
+
+
 class WebServerModule(PypeModule, ITrayService):
     name = "webserver"
     label = "WebServer"
 
-    def initialize(self, module_settings):
+    def initialize(self, _module_settings):
         self.enabled = True
         self.server_manager = None
 
         self.port = self.find_free_port()
 
-    def connect_with_modules(self, *_a, **_kw):
-        return
+    def connect_with_modules(self, enabled_modules):
+        if not self.server_manager:
+            return
+
+        for module in enabled_modules:
+            if isinstance(module, IWebServerRoutes):
+                module.webserver_initialization(self.server_manager)
 
     def tray_init(self):
         self.create_server_manager()
@@ -31,8 +44,10 @@ class WebServerModule(PypeModule, ITrayService):
         static_prefix = "/res"
         self.server_manager.add_static(static_prefix, resources.RESOURCES_DIR)
 
-        os.environ["PYPE_STATICS_SERVER"] = "http://localhost:{}{}".format(
-            self.port, static_prefix
+        webserver_url = "http://localhost:{}".format(self.port)
+        os.environ["PYPE_WEBSERVER_URL"] = webserver_url
+        os.environ["PYPE_STATICS_SERVER"] = "{}{}".format(
+            webserver_url, static_prefix
         )
 
     def start_server(self):
