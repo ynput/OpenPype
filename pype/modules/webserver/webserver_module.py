@@ -1,5 +1,9 @@
 import os
 import socket
+from abc import ABCMeta, abstractmethod
+
+import six
+
 from pype import resources
 from .. import PypeModule, ITrayService
 
