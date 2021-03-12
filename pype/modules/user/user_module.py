@@ -24,7 +24,7 @@ class IUserModule:
         pass
 
 
-class UserModule(PypeModule, ITrayModule):
+class UserModule(PypeModule, ITrayModule, IWebServerRoutes):
     cred_folder_path = os.path.normpath(
         appdirs.user_data_dir('pype-app', 'pype')
     )

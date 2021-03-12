@@ -7,7 +7,6 @@ import bson
 from bson.objectid import ObjectId
 import bson.json_util
 
-from aiohttp.web_request import Request
 from aiohttp.web_response import Response
 
 from avalon.api import AvalonMongoDB

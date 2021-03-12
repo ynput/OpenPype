@@ -4,7 +4,6 @@ These must not be imported in module itself to not break Python 2
 applications.
 """
 
-import json
 import inspect
 from aiohttp.http_exceptions import HttpBadRequest
 from aiohttp.web_exceptions import HTTPMethodNotAllowed
