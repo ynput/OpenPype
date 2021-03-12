@@ -3,12 +3,11 @@ import pype
 from pype import resources
 from .. import (
     PypeModule,
-    ITrayModule,
-    IRestApi
+    ITrayModule
 )
 
 
-class AvalonModule(PypeModule, ITrayModule, IRestApi):
+class AvalonModule(PypeModule, ITrayModule):
     name = "avalon"
 
     def initialize(self, modules_settings):
@@ -73,11 +72,6 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
 
     def connect_with_modules(self, _enabled_modules):
         return
-
-    def rest_api_initialization(self, rest_api_module):
-        if self.tray_initialized:
-            from .rest_api import AvalonRestApi
-            self.rest_api_obj = AvalonRestApi()
 
     # Definition of Tray menu
     def tray_menu(self, tray_menu):
