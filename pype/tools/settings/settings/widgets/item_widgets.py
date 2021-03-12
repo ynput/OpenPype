@@ -489,16 +489,54 @@ class EnumeratorWidget(InputWidget):
 
 class PathWidget(BaseWidget):
     def create_ui(self):
-        self.content_widget = self
-        self.content_layout = QtWidgets.QGridLayout(self)
-        self.content_layout.setContentsMargins(0, 0, 0, 0)
-        self.content_layout.setSpacing(5)
+        self._child_style_state = ""
+
+        if self.entity.use_label_wrap:
+            entity_label = None
+            self._create_label_wrapper()
+        else:
+            entity_label = self.entity.label
+            self.content_widget = self
+            self.content_layout = QtWidgets.QGridLayout(self)
+            self.content_layout.setContentsMargins(0, 0, 0, 0)
+            self.content_layout.setSpacing(5)
+            self.body_widget = None
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.input_field = self.create_ui_for_entity(
             self.category_widget, self.entity.child_obj, self
         )
+        self.entity_widget.add_widget_to_layout(self, entity_label)
 
-        self.entity_widget.add_widget_to_layout(self, self.entity.label)
+    def _create_label_wrapper(self):
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        body_widget = ExpandingWidget(self.entity.label, self)
+        main_layout.addWidget(body_widget)
+        self.label_widget = body_widget.label_widget
+
+        self.body_widget = body_widget
+
+        content_widget = QtWidgets.QWidget(body_widget)
+        content_widget.setObjectName("ContentWidget")
+        content_widget.setProperty("content_state", "")
+        content_layout = QtWidgets.QGridLayout(content_widget)
+        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 5)
+
+        body_widget.set_content_widget(content_widget)
+
+        self.body_widget = body_widget
+        self.content_widget = content_widget
+        self.content_layout = content_layout
+
+        if not self.entity.collapsible:
+            body_widget.hide_toolbox(hide_content=False)
+
+        elif self.entity.collapsed:
+            body_widget.toggle_content()
 
     def add_widget_to_layout(self, widget, label=None):
         row = self.content_layout.rowCount()
@@ -523,26 +561,52 @@ class PathWidget(BaseWidget):
         pass
 
     def update_style(self):
-        if not self.label_widget:
+        if not self.body_widget and not self.label_widget:
             return
 
-        has_unsaved_changes = self.entity.has_unsaved_changes
-        if not has_unsaved_changes and self.entity.group_item:
-            has_unsaved_changes = self.entity.group_item.has_unsaved_changes
+        if self.entity.group_item:
+            group_item = self.entity.group_item
+            has_unsaved_changes = group_item.has_unsaved_changes
+            has_project_override = group_item.has_project_override
+            has_studio_override = group_item.has_studio_override
+        else:
+            has_unsaved_changes = self.entity.has_unsaved_changes
+            has_project_override = self.entity.has_project_override
+            has_studio_override = self.entity.has_studio_override
 
-        state = self.get_style_state(
-            self.is_invalid,
-            has_unsaved_changes,
-            self.entity.has_project_override,
-            self.entity.has_studio_override
-        )
-        if self._style_state == state:
-            return
+        child_invalid = self.is_invalid
 
-        self._style_state = state
+        if self.body_widget:
+            child_style_state = self.get_style_state(
+                child_invalid,
+                has_unsaved_changes,
+                has_project_override,
+                has_studio_override
+            )
+            if child_style_state:
+                child_style_state = "child-{}".format(child_style_state)
 
-        self.label_widget.setProperty("state", state)
-        self.label_widget.style().polish(self.label_widget)
+            if child_style_state != self._child_style_state:
+                self.body_widget.side_line_widget.setProperty(
+                    "state", child_style_state
+                )
+                self.body_widget.side_line_widget.style().polish(
+                    self.body_widget.side_line_widget
+                )
+                self._child_style_state = child_style_state
+
+        if self.label_widget:
+            style_state = self.get_style_state(
+                child_invalid,
+                has_unsaved_changes,
+                has_project_override,
+                has_studio_override
+            )
+            if self._style_state != style_state:
+                self.label_widget.setProperty("state", style_state)
+                self.label_widget.style().polish(self.label_widget)
+
+                self._style_state = style_state
 
     @property
     def is_invalid(self):
