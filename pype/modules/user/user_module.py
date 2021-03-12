@@ -9,7 +9,8 @@ import appdirs
 
 from .. import (
     PypeModule,
-    ITrayModule
+    ITrayModule,
+    IWebServerRoutes
 )
 
 
@@ -46,6 +47,8 @@ class UserModule(PypeModule, ITrayModule):
         self.widget_login = None
         self.action_show_widget = None
 
+        self.rest_api_obj = None
+
     def tray_init(self):
         from .widget_user import UserWidget
         self.widget_login = UserWidget(self)
@@ -70,6 +73,12 @@ class UserModule(PypeModule, ITrayModule):
 
     def get_user(self):
         return self.cred.get("username") or getpass.getuser()
+
+    def webserver_initialization(self, server_manager):
+        """Implementation of IWebServerRoutes interface."""
+        from .rest_api import UserModuleRestApi
+
+        self.rest_api_obj = UserModuleRestApi(self, server_manager)
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
