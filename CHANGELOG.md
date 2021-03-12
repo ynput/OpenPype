@@ -1,13 +1,89 @@
 # Changelog
 
-## [2.15.0](https://github.com/pypeclub/pype/tree/2.15.0) (2021-02-08)
+## [2.15.4-prerelease](https://github.com/pypeclub/pype/tree/2.15.4) (2021-03-12)
 
-[Full Changelog](https://github.com/pypeclub/pype/compare/2.15.0-rc1...2.15.0)
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.15.3...2.15.4)
 
 **Enhancements:**
 
+- Nuke: shortcuts for Pype menu [\#1127](https://github.com/pypeclub/pype/pull/1127)
+- Nuke: workfile template [\#1124](https://github.com/pypeclub/pype/pull/1124)
+- Reset loader's asset selection on context change [\#1106](https://github.com/pypeclub/pype/pull/1106)
+- TVPaint extractor enhancement [\#1080](https://github.com/pypeclub/pype/pull/1080)
+- Photoshop: added support for .psb in workfiles [\#1078](https://github.com/pypeclub/pype/pull/1078)
+- Optionally add task to subset name [\#1072](https://github.com/pypeclub/pype/pull/1072)
+
+**Fixed bugs:**
+
+- Avoid dot in repre extension [\#1125](https://github.com/pypeclub/pype/pull/1125)
+- Nuke: AvalonTab as default for write node [\#1114](https://github.com/pypeclub/pype/pull/1114)
+- Nuke: class parent to correct class name [\#1109](https://github.com/pypeclub/pype/pull/1109)
+- Fix versions variable usage in standalone publisher [\#1090](https://github.com/pypeclub/pype/pull/1090)
+- Collect instance data fix subset query [\#1082](https://github.com/pypeclub/pype/pull/1082)
+
+**Merged pull requests:**
+
+- Photoshop: mark publishable instances [\#1093](https://github.com/pypeclub/pype/pull/1093)
+
+## [2.15.3](https://github.com/pypeclub/pype/tree/2.15.3) (2021-02-26)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.15.2...2.15.3)
+
+**Fixed bugs:**
+
+- Fix order of wrappers in settings gui [\#1052](https://github.com/pypeclub/pype/pull/1052)
+- Ftrack integrate hierarchy fix [\#1085](https://github.com/pypeclub/pype/pull/1085)
+- Explicit subset filter in anatomy instance data [\#1059](https://github.com/pypeclub/pype/pull/1059)
+- TVPaint frame offset [\#1057](https://github.com/pypeclub/pype/pull/1057)
+- Auto fix unicode strings [\#1046](https://github.com/pypeclub/pype/pull/1046)
+
+**Merged pull requests:**
+
+- Maya: speedup renderable camera collection [\#1053](https://github.com/pypeclub/pype/pull/1053)
+- Harmony - add regex search to filter allowed task names for collectin… [\#1047](https://github.com/pypeclub/pype/pull/1047)
+
+## [2.15.2](https://github.com/pypeclub/pype/tree/2.15.2) (2021-02-19)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.15.1...2.15.2)
+
+**Enhancements:**
+
+- Maya: Vray scene publishing [\#1013](https://github.com/pypeclub/pype/pull/1013)
+
+**Fixed bugs:**
+
+- Fix entity move under project [\#1040](https://github.com/pypeclub/pype/pull/1040)
+- smaller nuke fixes from production [\#1036](https://github.com/pypeclub/pype/pull/1036)
+- TVPaint thumbnail extract fix [\#1031](https://github.com/pypeclub/pype/pull/1031)
+
+## [2.15.1](https://github.com/pypeclub/pype/tree/2.15.1) (2021-02-12)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.15.0...2.15.1)
+
+**Enhancements:**
+
+- Delete old versions [\#445](https://github.com/pypeclub/pype/pull/445)
+
+**Fixed bugs:**
+
+- Clone description of review session objects. [\#922](https://github.com/pypeclub/pype/pull/922)
+
+**Merged pull requests:**
+
+- Delete version as loader action [\#1011](https://github.com/pypeclub/pype/pull/1011)
+- PS - remove obsolete functions from pywin32 [\#1006](https://github.com/pypeclub/pype/pull/1006)
+
+## [2.15.0](https://github.com/pypeclub/pype/tree/2.15.0) (2021-02-09)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.14.6...2.15.0)
+
+**Enhancements:**
+
+- Release/2.15.0 [\#926](https://github.com/pypeclub/pype/pull/926)
+- Photoshop: add option for template.psd and prelaunch hook  [\#894](https://github.com/pypeclub/pype/pull/894)
 - Nuke: deadline presets [\#993](https://github.com/pypeclub/pype/pull/993)
 - Maya: Alembic only set attributes that exists. [\#986](https://github.com/pypeclub/pype/pull/986)
+- Harmony: render local and handle fixes [\#981](https://github.com/pypeclub/pype/pull/981)
 - PSD Bulk export of ANIM group [\#965](https://github.com/pypeclub/pype/pull/965)
 - AE - added prelaunch hook for opening last or workfile from template [\#944](https://github.com/pypeclub/pype/pull/944)
 - PS - safer handling of loading of workfile [\#941](https://github.com/pypeclub/pype/pull/941)
@@ -20,9 +96,8 @@
 - Maya: Optionally hide image planes from reviews. [\#840](https://github.com/pypeclub/pype/pull/840)
 - Maya: handle referenced AOVs for Vray [\#824](https://github.com/pypeclub/pype/pull/824)
 - DWAA/DWAB support on windows [\#795](https://github.com/pypeclub/pype/pull/795)
+- Unreal: add 4.26 support [\#746](https://github.com/pypeclub/pype/pull/746)
 - Unreal: animation, layout and setdress updates [\#695](https://github.com/pypeclub/pype/pull/695)
-- Photoshop: add option for template.psd and prelaunch hook  [\#894](https://github.com/pypeclub/pype/pull/894)
-- Harmony: render local and handle fixes [\#981](https://github.com/pypeclub/pype/pull/981)
 
 **Fixed bugs:**
 
@@ -47,6 +122,10 @@
 - Get the correct file path for the updated mov. [\#889](https://github.com/pypeclub/pype/pull/889)
 - Maya: Deadline submitter - shared data access violation [\#831](https://github.com/pypeclub/pype/pull/831)
 - Maya: Take into account vray master AOV switch [\#822](https://github.com/pypeclub/pype/pull/822)
+
+**Merged pull requests:**
+
+- Ftrack plugins cleanup [\#757](https://github.com/pypeclub/pype/pull/757)
 
 ## [2.14.6](https://github.com/pypeclub/pype/tree/2.14.6) (2021-01-15)
 
@@ -98,6 +177,7 @@
 **Fixed bugs:**
 
 - Harmony: template extraction and palettes thumbnails on mac [\#768](https://github.com/pypeclub/pype/pull/768)
+- TVPaint store context to workfile metadata \(764\) [\#766](https://github.com/pypeclub/pype/pull/766)
 - Extract review audio cut fix [\#763](https://github.com/pypeclub/pype/pull/763)
 
 **Merged pull requests:**
@@ -108,6 +188,10 @@
 ## [2.14.1](https://github.com/pypeclub/pype/tree/2.14.1) (2020-11-27)
 
 [Full Changelog](https://github.com/pypeclub/pype/compare/2.14.0...2.14.1)
+
+**Enhancements:**
+
+- Extract review may not add audio to output [\#761](https://github.com/pypeclub/pype/pull/761)
 
 **Fixed bugs:**
 
@@ -124,7 +208,6 @@
 
 **Enhancements:**
 
-- Render publish plugins abstraction [\#687](https://github.com/pypeclub/pype/pull/687)
 - Shot asset build trigger status [\#736](https://github.com/pypeclub/pype/pull/736)
 - Maya: add camera rig publishing option [\#721](https://github.com/pypeclub/pype/pull/721)
 - Sort instances by label in pyblish gui  [\#719](https://github.com/pypeclub/pype/pull/719)
@@ -132,15 +215,12 @@
 - 686 standalonepublisher editorial from image sequences [\#699](https://github.com/pypeclub/pype/pull/699)
 - TV Paint: initial implementation of creators and local rendering [\#693](https://github.com/pypeclub/pype/pull/693)
 - Ask user to select non-default camera from scene or create a new. [\#678](https://github.com/pypeclub/pype/pull/678)
-- TVPaint: image loader with options [\#675](https://github.com/pypeclub/pype/pull/675)
-- Maya: Camera name can be added to burnins. [\#674](https://github.com/pypeclub/pype/pull/674)
 - After Effects: base integration with loaders [\#667](https://github.com/pypeclub/pype/pull/667)
 - Harmony: Javascript refactoring and overall stability improvements [\#666](https://github.com/pypeclub/pype/pull/666)
 
 **Fixed bugs:**
 
 - Asset fetch second fix [\#726](https://github.com/pypeclub/pype/pull/726)
-- Fix ffmpeg executable path with spaces [\#680](https://github.com/pypeclub/pype/pull/680)
 - TVPaint extract review fix [\#740](https://github.com/pypeclub/pype/pull/740)
 - After Effects: Review were not being sent to ftrack [\#738](https://github.com/pypeclub/pype/pull/738)
 - Maya: vray proxy was not loading [\#722](https://github.com/pypeclub/pype/pull/722)
@@ -157,6 +237,7 @@
 - Feature \#664 3.0 lib refactor [\#706](https://github.com/pypeclub/pype/pull/706)
 - Lib from illicit part 2 [\#700](https://github.com/pypeclub/pype/pull/700)
 - 3.0 lib refactor - path tools [\#697](https://github.com/pypeclub/pype/pull/697)
+- Lib from illicit part 1 [\#681](https://github.com/pypeclub/pype/pull/681)
 
 ## [2.13.7](https://github.com/pypeclub/pype/tree/2.13.7) (2020-11-19)
 
