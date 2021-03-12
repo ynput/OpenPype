@@ -22,12 +22,6 @@ from .constants import (
 NOT_SET = type("NOT_SET", (), {})()
 
 
-def get_active_sites(project_settings):
-    global_entity = project_settings["project_settings"]["global"]
-    sites_entity = global_entity["sync_server"]["sites"]
-    return tuple(sites_entity.keys())
-
-
 class _ProjectListWidget(ProjectListWidget):
     def on_item_clicked(self, new_index):
         new_project_name = new_index.data(QtCore.Qt.DisplayRole)
@@ -223,9 +217,10 @@ class RootInputWidget(QtWidgets.QWidget):
 
 
 class RootsWidget(QtWidgets.QWidget):
-    def __init__(self, project_settings, parent):
+    def __init__(self, modules_manager, project_settings, parent):
         super(RootsWidget, self).__init__(parent)
 
+        self.modules_manager = modules_manager
         self.project_settings = project_settings
         self.site_widgets = []
         self.local_project_settings = None
@@ -241,6 +236,15 @@ class RootsWidget(QtWidgets.QWidget):
             self.content_layout.removeItem(item)
         self.site_widgets = []
 
+    def _get_active_sites(self):
+        sync_server_module = (
+            self.modules_manager.modules_by_name["sync_server"]
+        )
+
+        return sync_server_module.get_active_sites_from_settings(
+            self.project_settings["project_settings"].value
+        )
+
     def refresh(self):
         self._clear_widgets()
 
@@ -251,7 +255,7 @@ class RootsWidget(QtWidgets.QWidget):
             self.project_settings[PROJECT_ANATOMY_KEY][LOCAL_ROOTS_KEY]
         )
         # Site label
-        for site_name in get_active_sites(self.project_settings):
+        for site_name in self._get_active_sites():
             site_widget = QtWidgets.QWidget(self)
             site_layout = QtWidgets.QVBoxLayout(site_widget)
 
@@ -294,9 +298,11 @@ class RootsWidget(QtWidgets.QWidget):
 class _SiteCombobox(QtWidgets.QWidget):
     input_label = None
 
-    def __init__(self, project_settings, parent):
+    def __init__(self, modules_manager, project_settings, parent):
         super(_SiteCombobox, self).__init__(parent)
         self.project_settings = project_settings
+
+        self.modules_manager = modules_manager
 
         self.local_project_settings = None
         self.local_project_settings_orig = None
@@ -547,7 +553,14 @@ class AciveSiteCombo(_SiteCombobox):
     input_label = "Active site"
 
     def _get_project_sites(self):
-        return get_active_sites(self.project_settings)
+        sync_server_module = (
+            self.modules_manager.modules_by_name["sync_server"]
+        )
+        if self.project_name is None:
+            return sync_server_module.get_active_sites_from_settings(
+                self.project_settings["project_settings"].value
+            )
+        return sync_server_module.get_active_sites(self.project_name)
 
     def _get_local_settings_item(self, project_name=None, data=None):
         if project_name is None:
@@ -575,9 +588,14 @@ class RemoteSiteCombo(_SiteCombobox):
     input_label = "Remote site"
 
     def _get_project_sites(self):
-        global_entity = self.project_settings["project_settings"]["global"]
-        sites_entity = global_entity["sync_server"]["sites"]
-        return tuple(sites_entity.keys())
+        sync_server_module = (
+            self.modules_manager.modules_by_name["sync_server"]
+        )
+        if self.project_name is None:
+            return sync_server_module.get_remote_sites_from_settings(
+                self.project_settings["project_settings"].value
+            )
+        return sync_server_module.get_remote_sites(self.project_name)
 
     def _get_local_settings_item(self, project_name=None, data=None):
         if project_name is None:
@@ -601,17 +619,22 @@ class RemoteSiteCombo(_SiteCombobox):
 
 
 class RootSiteWidget(QtWidgets.QWidget):
-    def __init__(self, project_settings, parent):
+    def __init__(self, modules_manager, project_settings, parent):
         self._parent_widget = parent
         super(RootSiteWidget, self).__init__(parent)
 
+        self.modules_manager = modules_manager
         self.project_settings = project_settings
         self._project_name = None
 
         sites_widget = QtWidgets.QWidget(self)
 
-        active_site_widget = AciveSiteCombo(project_settings, sites_widget)
-        remote_site_widget = RemoteSiteCombo(project_settings, sites_widget)
+        active_site_widget = AciveSiteCombo(
+            modules_manager, project_settings, sites_widget
+        )
+        remote_site_widget = RemoteSiteCombo(
+            modules_manager, project_settings, sites_widget
+        )
 
         sites_layout = QtWidgets.QHBoxLayout(sites_widget)
         sites_layout.setContentsMargins(0, 0, 0, 0)
@@ -619,7 +642,7 @@ class RootSiteWidget(QtWidgets.QWidget):
         sites_layout.addWidget(remote_site_widget)
         sites_layout.addWidget(SpacerWidget(self), 1)
 
-        roots_widget = RootsWidget(project_settings, self)
+        roots_widget = RootsWidget(modules_manager, project_settings, self)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(sites_widget)
@@ -669,13 +692,17 @@ class ProjectValue(dict):
 
 
 class ProjectSettingsWidget(QtWidgets.QWidget):
-    def __init__(self, project_settings, parent):
+    def __init__(self, modules_manager, project_settings, parent):
         super(ProjectSettingsWidget, self).__init__(parent)
 
         self.local_project_settings = {}
 
+        self.modules_manager = modules_manager
+
         projects_widget = _ProjectListWidget(self)
-        roos_site_widget = RootSiteWidget(project_settings, self)
+        roos_site_widget = RootSiteWidget(
+            modules_manager, project_settings, self
+        )
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
