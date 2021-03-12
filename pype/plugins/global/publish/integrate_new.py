@@ -334,6 +334,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             sequence_repre = isinstance(files, list)
             repre_context = None
+
+            ext = repre["ext"]
+            if ext.startswith("."):
+                self.log.warning((
+                    "Implementaion warning: <\"{}\">"
+                    " Representation's extension stored under \"ext\" key "
+                    " started with dot (\"{}\")."
+                ).format(repre["name"], ext))
+                ext = ext[1:]
+            repre["ext"] = ext
+            
             if sequence_repre:
                 self.log.debug(
                     "files: {}".format(files))
