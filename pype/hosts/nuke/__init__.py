@@ -1,9 +1,14 @@
 import os
 import sys
-import logging
 import nuke
-
-from avalon import api as avalon
+import getpass
+from pype.api import Anatomy
+from avalon.nuke import (
+    save_file, open_file
+)
+from avalon import (
+    io, api
+)
 from avalon.tools import workfiles
 from pyblish import api as pyblish
 from pype.hosts.nuke import menu
@@ -63,12 +68,12 @@ def install():
 
     log.info("Registering Nuke plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
-    avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
-    avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+    api.register_plugin_path(api.Loader, LOAD_PATH)
+    api.register_plugin_path(api.Creator, CREATE_PATH)
+    api.register_plugin_path(api.InventoryAction, INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
-    avalon.on("workio.open_file", lib.check_inventory_versions)
+    api.on("workio.open_file", lib.check_inventory_versions)
 
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
     workfile_settings = lib.WorkfileSettings()
@@ -80,28 +85,91 @@ def install():
         "gizmo"
     ]
 
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
-
-    # Workfiles.
-    launch_workfiles = os.environ.get("WORKFILES_STARTUP")
-
-    if launch_workfiles:
-        nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
+    api.data["familiesStateDefault"] = False
+    api.data["familiesStateToggled"] = family_states
 
     # Set context settings.
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
-
+    nuke.addOnCreate(open_last_workfile, nodeClass="Root")
+    nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
     menu.install()
 
 
 def launch_workfiles_app():
     '''Function letting start workfiles after start of host
     '''
+    if not os.environ.get("WORKFILES_STARTUP"):
+        return
+
     if not self.workfiles_launched:
         self.workfiles_launched = True
         workfiles.show(os.environ["AVALON_WORKDIR"])
+
+
+def open_last_workfile():
+    if not os.getenv("WORKFILE_OPEN_LAST_VERSION"):
+        return
+
+    log.info("Opening last workfile...")
+    last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
+    if not last_workfile_path:
+        root_path = api.registered_root()
+        workdir = os.environ["AVALON_WORKDIR"]
+        task = os.environ["AVALON_TASK"]
+        project_name = os.environ["AVALON_PROJECT"]
+        asset_name = os.environ["AVALON_ASSET"]
+
+        io.install()
+        project_entity = io.find_one({
+            "type": "project",
+            "name": project_name
+        })
+        assert project_entity, (
+            "Project '{0}' was not found."
+        ).format(project_name)
+
+        asset_entity = io.find_one({
+            "type": "asset",
+            "name": asset_name,
+            "parent": project_entity["_id"]
+        })
+        assert asset_entity, (
+            "No asset found by the name '{0}' in project '{1}'"
+        ).format(asset_name, project_name)
+
+        project_name = project_entity["name"]
+
+        anatomy = Anatomy()
+        file_template = anatomy.templates["work"]["file"]
+        extensions = api.HOST_WORKFILE_EXTENSIONS.get("nuke")
+
+        # create anatomy data for building file name
+        workdir_data = {
+            "root": root_path,
+            "project": {
+                "name": project_name,
+                "code": project_entity["data"].get("code")
+            },
+            "asset": asset_entity["name"],
+            "task": task,
+            "version": 1,
+            "user": os.environ.get("PYPE_USERNAME") or getpass.getuser(),
+            "ext": extensions[0]
+        }
+
+        # create last workfile name
+        last_workfile_path = api.last_workfile(
+            workdir, file_template, workdir_data, extensions, True
+        )
+    if not os.path.exists(last_workfile_path):
+        save_file(last_workfile_path)
+    else:
+        # to avoid looping of the callback, remove it!
+        nuke.removeOnCreate(open_last_workfile, nodeClass="Root")
+
+        # open workfile
+        open_file(last_workfile_path)
 
 
 def uninstall():
@@ -109,8 +177,8 @@ def uninstall():
     '''
     log.info("Deregistering Nuke plug-ins..")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
-    avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
+    api.deregister_plugin_path(api.Loader, LOAD_PATH)
+    api.deregister_plugin_path(api.Creator, CREATE_PATH)
 
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
 
