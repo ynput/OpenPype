@@ -2,10 +2,13 @@ import os
 import json
 import appdirs
 import requests
-from .. import PypeModule, ITrayModule, IRestApi
+from .. import (
+    PypeModule,
+    ITrayModule
+)
 
 
-class MusterModule(PypeModule, ITrayModule, IRestApi):
+class MusterModule(PypeModule, ITrayModule):
     """
     Module handling Muster Render credentials. This will display dialog
     asking for user credentials for Muster if not already specified.
@@ -70,14 +73,6 @@ class MusterModule(PypeModule, ITrayModule, IRestApi):
         self.action_show_login.triggered.connect(self.show_login)
 
         parent.addMenu(menu)
-
-    def rest_api_initialization(self, rest_api_module):
-        """Implementation of IRestApi interface."""
-        def api_show_login():
-            self.action_show_login.trigger()
-        rest_api_module.register_callback(
-            "/show_login", api_show_login, "muster", "post"
-        )
 
     def load_credentials(self):
         """
