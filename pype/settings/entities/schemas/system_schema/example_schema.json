@@ -298,28 +298,28 @@
                     }
                 },
                 {
-                    "type": "path-widget",
+                    "type": "path",
                     "key": "single_path_input",
                     "label": "Single path input",
                     "multiplatform": false,
                     "multipath": false
                 },
                 {
-                    "type": "path-widget",
+                    "type": "path",
                     "key": "multi_path_input",
                     "label": "Multi path input",
                     "multiplatform": false,
                     "multipath": true
                 },
                 {
-                    "type": "path-widget",
+                    "type": "path",
                     "key": "single_os_specific_path_input",
                     "label": "Single OS specific path input",
                     "multiplatform": true,
                     "multipath": false
                 },
                 {
-                    "type": "path-widget",
+                    "type": "path",
                     "key": "multi_os_specific_path_input",
                     "label": "Multi OS specific path input",
                     "multiplatform": true,

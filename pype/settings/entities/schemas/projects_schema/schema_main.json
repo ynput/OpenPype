@@ -15,7 +15,7 @@
                     "is_group": true,
                     "expandable": false,
                     "object_type": {
-                        "type": "path-widget",
+                        "type": "path",
                         "multiplatform": true
                     }
                 },

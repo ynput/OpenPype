@@ -10,7 +10,7 @@ from .base_entity import ItemEntity
 
 
 class PathEntity(ItemEntity):
-    schema_types = ["path-widget", "path-item"]
+    schema_types = ["path"]
     platforms = ("windows", "darwin", "linux")
     platform_labels_mapping = {
         "windows": "Windows",
