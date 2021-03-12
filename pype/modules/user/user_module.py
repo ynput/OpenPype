@@ -7,7 +7,10 @@ from abc import ABCMeta, abstractmethod
 import six
 import appdirs
 
-from .. import PypeModule, ITrayModule, IRestApi
+from .. import (
+    PypeModule,
+    ITrayModule
+)
 
 
 @six.add_metaclass(ABCMeta)
@@ -20,7 +23,7 @@ class IUserModule:
         pass
 
 
-class UserModule(PypeModule, ITrayModule, IRestApi):
+class UserModule(PypeModule, ITrayModule):
     cred_folder_path = os.path.normpath(
         appdirs.user_data_dir('pype-app', 'pype')
     )
@@ -67,21 +70,6 @@ class UserModule(PypeModule, ITrayModule, IRestApi):
 
     def get_user(self):
         return self.cred.get("username") or getpass.getuser()
-
-    def rest_api_initialization(self, rest_api_module):
-        def api_get_username():
-            return self.cred
-
-        rest_api_module.register_callback(
-            "user/username", api_get_username, "get"
-        )
-
-        def api_show_widget():
-            self.action_show_widget.trigger()
-
-        rest_api_module.register_callback(
-            "user/show_widget", api_show_widget, "post"
-        )
 
     def connect_with_modules(self, enabled_modules):
         for module in enabled_modules:
