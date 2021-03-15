@@ -3,7 +3,7 @@ from pype.hosts.nuke.api import plugin
 import nuke
 
 
-class CreateBackdrop(plugin.Creator):
+class CreateBackdrop(plugin.PypeCreator):
     """Add Publishable Backdrop"""
 
     name = "nukenodes"
