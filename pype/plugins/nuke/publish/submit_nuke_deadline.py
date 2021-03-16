@@ -29,6 +29,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_pool_secondary = ""
     deadline_group = ""
     deadline_department = ""
+    env_overrides = {}
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
@@ -260,6 +261,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             clean_environment[key] = clean_path
 
         environment = clean_environment
+
+        # Finally override by preset's env vars
+        if self.env_overrides:
+            for key, value in self.env_overrides.items():
+                environment[key] = value
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
