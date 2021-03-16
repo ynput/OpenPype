@@ -7,6 +7,15 @@ from .delegates import ActionDelegate
 from . import lib
 from .models import TaskModel, ActionModel, ProjectModel
 from .flickcharm import FlickCharm
+from .constants import (
+    ACTION_ROLE,
+    GROUP_ROLE,
+    VARIANT_GROUP_ROLE,
+    ACTION_ID_ROLE,
+    ANIMATION_START_ROLE,
+    ANIMATION_STATE_ROLE,
+    ANIMATION_LEN
+)
 
 
 class ProjectBar(QtWidgets.QWidget):
@@ -105,7 +114,7 @@ class ActionBar(QtWidgets.QWidget):
 
         # TODO better group delegate
         delegate = ActionDelegate(
-            [model.GROUP_ROLE, model.VARIANT_GROUP_ROLE],
+            [GROUP_ROLE, VARIANT_GROUP_ROLE],
             self
         )
         view.setItemDelegate(delegate)
@@ -136,14 +145,14 @@ class ActionBar(QtWidgets.QWidget):
         if not index.isValid():
             return
 
-        is_group = index.data(self.model.GROUP_ROLE)
-        is_variant_group = index.data(self.model.VARIANT_GROUP_ROLE)
+        is_group = index.data(GROUP_ROLE)
+        is_variant_group = index.data(VARIANT_GROUP_ROLE)
         if not is_group and not is_variant_group:
-            action = index.data(self.model.ACTION_ROLE)
+            action = index.data(ACTION_ROLE)
             self.action_clicked.emit(action)
             return
 
-        actions = index.data(self.model.ACTION_ROLE)
+        actions = index.data(ACTION_ROLE)
 
         menu = QtWidgets.QMenu(self)
         actions_mapping = {}
