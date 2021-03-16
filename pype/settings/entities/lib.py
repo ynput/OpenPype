@@ -8,6 +8,10 @@ from .exceptions import (
     SchemaDuplicatedEnvGroupKeys
 )
 
+try:
+    STRING_TYPE = basestring
+except Exception:
+    STRING_TYPE = str
 
 WRAPPER_TYPES = ["form", "collapsible-wrap"]
 NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
@@ -55,7 +59,7 @@ def _fill_schema_template_data(
                 value, template_data, required_keys, missing_keys
             )
 
-    elif isinstance(template, str):
+    elif isinstance(template, STRING_TYPE):
         # TODO find much better way how to handle filling template data
         for replacement_string in template_key_pattern.findall(template):
             key = str(replacement_string[1:-1])

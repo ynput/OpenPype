@@ -4,6 +4,7 @@ from abc import abstractmethod
 from .base_entity import ItemEntity
 from .lib import (
     NOT_SET,
+    STRING_TYPE,
     OverrideState
 )
 from .exceptions import (
@@ -421,7 +422,7 @@ class TextEntity(InputEntity):
     schema_types = ["text"]
 
     def _item_initalization(self):
-        self.valid_value_types = (str, )
+        self.valid_value_types = (STRING_TYPE, )
         self.value_on_not_set = ""
 
         # GUI attributes
@@ -438,7 +439,7 @@ class PathInput(InputEntity):
             self.valid_value_types = (list, )
             self.value_on_not_set = ["", ""]
         else:
-            self.valid_value_types = (str, )
+            self.valid_value_types = (STRING_TYPE, )
             self.value_on_not_set = ""
 
 
