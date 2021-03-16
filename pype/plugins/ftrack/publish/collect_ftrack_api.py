@@ -1,6 +1,7 @@
 import os
-import pyblish.api
 import logging
+import pyblish.api
+import avalon.api
 
 try:
     import ftrack_api_old as ftrack_api
@@ -11,11 +12,10 @@ except Exception:
 class CollectFtrackApi(pyblish.api.ContextPlugin):
     """ Collects an ftrack session and the current task id. """
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.4999
     label = "Collect Ftrack Api"
 
     def process(self, context):
-
         ftrack_log = logging.getLogger('ftrack_api')
         ftrack_log.setLevel(logging.WARNING)
         ftrack_log = logging.getLogger('ftrack_api_old')
