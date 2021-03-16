@@ -129,8 +129,10 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             ).format(str(instance)))
             return
 
-        info_msg = "Created new {entity_type} with data: {data}"
-        info_msg += ", metadata: {metadata}."
+        info_msg = (
+            "Created new {entity_type} with data: {data}"
+            ", metadata: {metadata}."
+        )
 
         used_asset_versions = []
 
