@@ -1,3 +1,4 @@
+import uuid
 import copy
 import logging
 import collections
@@ -125,6 +126,7 @@ class ActionModel(QtGui.QStandardItemModel):
         self.default_icon = qtawesome.icon("fa.cube", color="white")
         # Cache of available actions
         self._registered_actions = list()
+        self.items_by_id = {}
 
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
@@ -136,6 +138,7 @@ class ActionModel(QtGui.QStandardItemModel):
         actions.extend(app_actions)
 
         self._registered_actions = actions
+        self.items_by_id.clear()
 
     def get_application_actions(self):
         actions = []
@@ -182,6 +185,7 @@ class ActionModel(QtGui.QStandardItemModel):
         # Validate actions based on compatibility
         self.clear()
 
+        self.items_by_id.clear()
         self._groups.clear()
 
         actions = self.filter_compatible_actions(self._registered_actions)
@@ -272,6 +276,9 @@ class ActionModel(QtGui.QStandardItemModel):
 
         for order in sorted(items_by_order.keys()):
             for item in items_by_order[order]:
+                item_id = str(uuid.uuid4())
+                item.setData(item_id, ACTION_ID_ROLE)
+                self.items_by_id[item_id] = item
                 self.appendRow(item)
 
         self.endResetModel()
