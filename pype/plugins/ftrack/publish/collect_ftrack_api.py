@@ -27,10 +27,9 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
         context.data["ftrackSession"] = session
 
         # Collect task
-
-        project_name = os.environ.get('AVALON_PROJECT', '')
-        asset_name = os.environ.get('AVALON_ASSET', '')
-        task_name = os.environ.get('AVALON_TASK', None)
+        project_name = avalon.api.Session["AVALON_PROJECT"]
+        asset_name = avalon.api.Session["AVALON_ASSET"]
+        task_name = avalon.api.Session["AVALON_TASK"]
 
         # Find project entity
         project_query = 'Project where full_name is "{0}"'.format(project_name)
