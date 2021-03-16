@@ -274,7 +274,7 @@ def get_gui_schema(subfolder, main_schema_name):
 
 
 def get_studio_settings_schema():
-    return get_gui_schema("projects_schema", "schema_main")
+    return get_gui_schema("system_schema", "schema_main")
 
 
 def get_project_settings_schema():
