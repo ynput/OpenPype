@@ -106,7 +106,7 @@ class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
         try:
             task_type = asset_doc["data"]["tasks"][task_name]["type"]
         except KeyError:
-            self.log.warning("Couldn't find task_type for {}".\
+            self.log.warning("Couldn't find task_type for {}".
                              format(task_name))
 
         hierarchy = asset_doc["data"]["hierarchy"].split("\\")

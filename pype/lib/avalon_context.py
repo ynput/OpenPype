@@ -1171,5 +1171,3 @@ def change_timer_to_current_context():
     }
 
     requests.post(rest_api_url, json=data)
-
-
