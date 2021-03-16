@@ -14,12 +14,12 @@ Provides:
 """
 
 import os
-import pyblish.api
-from avalon import io
 import json
 import copy
-import clique
 from pprint import pformat
+import clique
+import pyblish.api
+from avalon import io
 
 
 class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
@@ -154,6 +154,11 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 str(repre["files"])
             ))
             ext = repre["ext"][1:]
+
+            # Rename representation name
+            repre_name = repre["name"]
+            if repre_name.startswith(ext + "_"):
+                repre["name"] = ext
             # Skip files that are not available for mov batch publishing
             # TODO add dynamic expected extensions by family from `in_data`
             #   - with this modification it would be possible to use only
