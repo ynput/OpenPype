@@ -237,7 +237,7 @@ def validate_schema(schema_data):
     validate_environment_groups_uniquenes(schema_data)
 
 
-def gui_schema(subfolder, main_schema_name):
+def get_gui_schema(subfolder, main_schema_name):
     dirpath = os.path.join(
         os.path.dirname(__file__),
         "schemas",
@@ -271,6 +271,14 @@ def gui_schema(subfolder, main_schema_name):
     )
     validate_schema(main_schema)
     return main_schema
+
+
+def get_studio_settings_schema():
+    return get_gui_schema("projects_schema", "schema_main")
+
+
+def get_project_settings_schema():
+    return get_gui_schema("projects_schema", "schema_main")
 
 
 class OverrideStateItem:

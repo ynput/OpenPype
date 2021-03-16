@@ -10,7 +10,8 @@ from .lib import (
     NOT_SET,
     WRAPPER_TYPES,
     OverrideState,
-    gui_schema
+    get_studio_settings_schema,
+    get_project_settings_schema
 )
 from pype.settings.constants import (
     SYSTEM_SETTINGS_KEY,
@@ -450,7 +451,7 @@ class SystemSettings(RootEntity):
     ):
         if schema_data is None:
             # Load system schemas
-            schema_data = gui_schema("system_schema", "schema_main")
+            schema_data = get_studio_settings_schema()
 
         super(SystemSettings, self).__init__(schema_data, reset)
 
@@ -565,7 +566,7 @@ class ProjectSettings(RootEntity):
 
         if schema_data is None:
             # Load system schemas
-            schema_data = gui_schema("projects_schema", "schema_main")
+            schema_data = get_project_settings_schema()
 
         super(ProjectSettings, self).__init__(schema_data, reset)
 
