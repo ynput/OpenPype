@@ -1,6 +1,8 @@
+import os
 from abc import ABCMeta, abstractmethod
 import six
-from .. import PypeModule, ITrayService, IIdleManager
+from .. import PypeModule, ITrayService, IIdleManager, IWebServerRoutes
+from avalon.api import AvalonMongoDB
 
 
 @six.add_metaclass(ABCMeta)
@@ -28,7 +30,7 @@ class ITimersManager:
         self.timer_manager_module.timer_stopped(self.id)
 
 
-class TimersManager(PypeModule, ITrayService, IIdleManager):
+class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
@@ -71,6 +73,52 @@ class TimersManager(PypeModule, ITrayService, IIdleManager):
     def tray_exit(self):
         """Nothing special for TimersManager."""
         return
+
+    def webserver_initialization(self, server_manager):
+        """Implementation of IWebServerRoutes interface."""
+        if self.tray_initialized:
+            from .rest_api import TimersManagerModuleRestApi
+            self.rest_api_obj = TimersManagerModuleRestApi(self,
+                                                           server_manager)
+
+    def start_timer(self, project_name, asset_name, task_name):
+        """
+            Start timer for 'project_name', 'asset_name' and 'task_name'
+
+            Called from REST api by hosts.
+
+            Args:
+                project_name (string)
+                asset_name (string)
+                task_name (string)
+        """
+        dbconn = AvalonMongoDB()
+        dbconn.install()
+        dbconn.Session["AVALON_PROJECT"] = project_name
+
+        asset_doc = dbconn.find_one({
+            "type": "asset", "name": asset_name
+        })
+        if not asset_doc:
+            raise ValueError("Uknown asset {}".format(asset_name))
+
+        task_type = ''
+        try:
+            task_type = asset_doc["data"]["tasks"][task_name]["type"]
+        except KeyError:
+            self.log.warning("Couldn't find task_type for {}".\
+                             format(task_name))
+
+        hierarchy = asset_doc["data"]["hierarchy"].split("\\")
+        hierarchy.append(asset_name)
+
+        data = {
+            "project_name": project_name,
+            "task_name": task_name,
+            "task_type": task_type,
+            "hierarchy": hierarchy
+        }
+        self.timer_started(None, data)
 
     def timer_started(self, source_id, data):
         for module in self.modules:
@@ -169,3 +217,24 @@ class TimersManager(PypeModule, ITrayService, IIdleManager):
             return
         if self.widget_user_idle.bool_is_showed is False:
             self.widget_user_idle.show()
+
+    def change_timer_from_host(self, project_name, asset_name, task_name):
+        """Prepared method for calling change timers on REST api"""
+        webserver_url = os.environ.get("PYPE_WEBSERVER_URL")
+        if not webserver_url:
+            self.log.warning("Couldn't find webserver url")
+            return
+
+        rest_api_url = "{}/timers_manager/start_timer".format(webserver_url)
+        try:
+            import requests
+        except Exception:
+            self.log.warning("Couldn't start timer")
+            return
+        data = {
+            "project_name": project_name,
+            "asset_name": asset_name,
+            "task_name": task_name
+        }
+
+        requests.post(rest_api_url, json=data)

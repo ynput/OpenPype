@@ -5,7 +5,8 @@ import functools
 import logging
 
 from .settings import get_project_settings
-from .lib import Anatomy, filter_pyblish_plugins
+from .lib import Anatomy, filter_pyblish_plugins, \
+    change_timer_to_current_context
 
 pyblish = avalon = _original_discover = None
 
@@ -131,6 +132,12 @@ def install():
     # apply monkey patched discover to original one
     log.info("Patching discovery")
     avalon.discover = patched_discover
+
+    avalon.on("taskChanged", _on_task_change)
+
+
+def _on_task_change(*args):
+    change_timer_to_current_context()
 
 
 @import_wrapper
