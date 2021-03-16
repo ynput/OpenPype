@@ -24,7 +24,6 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
         # Collect session
         session = ftrack_api.Session(auto_connect_event_hub=True)
         self.log.debug("Ftrack user: \"{0}\"".format(session.api_user))
-        context.data["ftrackSession"] = session
 
         # Collect task
         project_name = avalon.api.Session["AVALON_PROJECT"]
@@ -95,7 +94,97 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
             task_entity = None
             self.log.warning("Task name is not set.")
 
+        context.data["ftrackSession"] = session
         context.data["ftrackPythonModule"] = ftrack_api
         context.data["ftrackProject"] = project_entity
         context.data["ftrackEntity"] = asset_entity
         context.data["ftrackTask"] = task_entity
+
+        self.per_instance_process(context, asset_name, task_name)
+
+    def per_instance_process(
+        self, context, context_asset_name, context_task_name
+    ):
+        to_query_combinations = []
+        instance_by_asset_and_task = {}
+        for instance in context:
+            instance_asset_name = instance.data.get("asset")
+            instance_task_name = instance.data.get("task")
+
+            if not instance_asset_name and not instance_task_name:
+                continue
+
+            elif instance_asset_name and instance_task_name:
+                if (
+                    instance_asset_name == context_asset_name
+                    and instance_task_name == context_task_name
+                ):
+                    continue
+                asset_name = instance_asset_name
+                task_name = instance_task_name
+
+            elif instance_task_name:
+                if instance_task_name == context_task_name:
+                    continue
+
+                asset_name = context_asset_name
+                task_name = instance_task_name
+
+            elif instance_asset_name:
+                if instance_asset_name == context_asset_name:
+                    continue
+
+                # Do not use context's task name
+                task_name = instance_task_name
+                asset_name = instance_asset_name
+
+            asset_name = (
+                instance_asset_name
+                if instance_asset_name
+                else context_asset_name
+            )
+            task_name = (
+                instance_task_name
+                if instance_task_name
+                else context_task_name
+            )
+            if asset_name not in instance_by_asset_and_task:
+                instance_by_asset_and_task[asset_name] = {}
+
+            if task_name not in instance_by_asset_and_task[asset_name]:
+                instance_by_asset_and_task[asset_name][task_name] = []
+            instance_by_asset_and_task[asset_name][task_name].append(instance)
+
+        if not instance_by_asset_and_task:
+            return
+
+        session = context.data["ftrackSession"]
+        project_entity = context.data["ftrackProject"]
+        for asset_name, by_task_data in instance_by_asset_and_task.items():
+            entity = session.query((
+                "TypedContext where project_id is \"{}\" and name is \"{}\""
+            ).format(project_entity["id"], asset_name)).first()
+
+            task_entity_by_name = {}
+            if not entity:
+                instance.data["ftrackEntity"] = None
+            else:
+                task_entities = session.query((
+                    "select id, name from Task where parent_id is \"{}\""
+                ).format(entity["id"])).all()
+                for task_entity in task_entities:
+                    task_name_low = task_entity["name"].lower()
+                    task_entity_by_name[task_name_low] = task_entity
+
+            for task_name, instances in by_task_data.items():
+                task_entity = None
+                if task_name and entity:
+                    task_entity = task_entity_by_name.get(task_name.lower())
+
+                for instance in instances:
+                    instance.data["ftrackTask"] = task_entity
+
+                    self.log.debug((
+                        "Instance {} has own ftrack entities"
+                        " as has different context. TypedContext: {} Task: {}"
+                    ).format(str(instance), str(entity), str(task_entity)))
