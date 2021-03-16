@@ -81,7 +81,7 @@ class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
             self.rest_api_obj = TimersManagerModuleRestApi(self,
                                                            server_manager)
 
-    def start_timer(self, project_name, asset_name, task_name):
+    def start_timer(self, project_name, asset_name, task_name, hierarchy):
         """
             Start timer for 'project_name', 'asset_name' and 'task_name'
 
@@ -91,6 +91,7 @@ class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
                 project_name (string)
                 asset_name (string)
                 task_name (string)
+                hierarchy (string)
         """
         dbconn = AvalonMongoDB()
         dbconn.install()
@@ -109,7 +110,7 @@ class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
             self.log.warning("Couldn't find task_type for {}".
                              format(task_name))
 
-        hierarchy = asset_doc["data"]["hierarchy"].split("\\")
+        hierarchy = hierarchy.split("\\")
         hierarchy.append(asset_name)
 
         data = {

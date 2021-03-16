@@ -1167,7 +1167,8 @@ def change_timer_to_current_context():
     data = {
         "project_name": avalon.io.Session["AVALON_PROJECT"],
         "asset_name": avalon.io.Session["AVALON_ASSET"],
-        "task_name": avalon.io.Session["AVALON_TASK"]
+        "task_name": avalon.io.Session["AVALON_TASK"],
+        "hierarchy": get_hierarchy()
     }
 
     requests.post(rest_api_url, json=data)
