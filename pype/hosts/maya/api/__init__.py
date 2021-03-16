@@ -12,6 +12,7 @@ from avalon.tools import workfiles
 from pyblish import api as pyblish
 from pype.lib import any_outdated
 import pype.hosts.maya
+from pype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
 
 log = logging.getLogger("pype.hosts.maya")
@@ -46,6 +47,7 @@ def install():
     avalon.on("new", on_new)
     avalon.before("save", on_before_save)
     avalon.on("taskChanged", on_task_changed)
+    avalon.on("before.workfile.save", before_workfile_save)
 
     log.info("Setting default family states for loader..")
     avalon.data["familiesStateToggled"] = ["imagesequence"]
@@ -203,3 +205,11 @@ def on_task_changed(*args):
         "Context was changed",
         ("Context was changed to {}".format(avalon.Session["AVALON_ASSET"])),
     )
+
+
+def before_workfile_save(workfile_path):
+    if not workfile_path:
+        return
+
+    workdir = os.path.dirname(workfile_path)
+    copy_workspace_mel(workdir)
