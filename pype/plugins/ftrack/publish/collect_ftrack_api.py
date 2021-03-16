@@ -105,7 +105,6 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
     def per_instance_process(
         self, context, context_asset_name, context_task_name
     ):
-        to_query_combinations = []
         instance_by_asset_and_task = {}
         for instance in context:
             instance_asset_name = instance.data.get("asset")
