@@ -119,12 +119,18 @@ class IdleManagerThread(threading.Thread):
         self.log.info("IdleManagerThread has stopped")
         self.module.on_thread_stop()
 
+    def _create_threads(self):
+        from .idle_logic import MouseThread, KeyboardThread
+
+        thread_mouse = MouseThread(self.reset_time)
+        thread_keyboard = KeyboardThread(self.reset_time)
+        return thread_mouse, thread_keyboard
+
     def run(self):
         self.log.info("IdleManagerThread has started")
         self.is_running = True
-        thread_mouse = MouseThread(self.reset_time)
+        thread_mouse, thread_keyboard = self._create_threads()
         thread_mouse.start()
-        thread_keyboard = KeyboardThread(self.reset_time)
         thread_keyboard.start()
         try:
             while self.is_running:
