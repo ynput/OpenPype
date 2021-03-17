@@ -451,7 +451,13 @@ class DictMutableKeysEntity(EndpointEntity):
 
     def update_default_value(self, value):
         value = self._check_update_value(value, "default")
-        self.has_default_value = value is not NOT_SET
+        has_default_value = value is not NOT_SET
+        if has_default_value:
+            for required_key in self.required_keys:
+                if required_key not in value:
+                    has_default_value = False
+                    break
+        self.has_default_value = has_default_value
         value, metadata = self._prepare_value(value)
         self._default_value = value
         self._default_metadata = metadata
