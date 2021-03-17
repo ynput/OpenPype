@@ -25,5 +25,5 @@
         "path": "{@folder}/{@file}"
     },
     "delivery": {},
-    "other": {}
+    "others": {}
 }
