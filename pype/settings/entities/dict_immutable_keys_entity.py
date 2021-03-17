@@ -10,6 +10,7 @@ from pype.settings.constants import (
     M_OVERRIDEN_KEY
 )
 from . import (
+    BaseItemEntity,
     ItemEntity,
     BoolEntity,
     GUIEntity
@@ -75,6 +76,15 @@ class DictImmutableKeysEntity(ItemEntity):
 
     def schema_validations(self):
         """Validation of schema data."""
+        children_keys = set()
+        for child_entity in self.children:
+            if not isinstance(child_entity, BaseItemEntity):
+                continue
+            elif child_entity.key not in children_keys:
+                children_keys.add(child_entity.key)
+            else:
+                raise SchemaDuplicatedKeys(self.path, child_entity.key)
+
         if self.checkbox_key:
             checkbox_child = self.non_gui_children.get(self.checkbox_key)
             if not checkbox_child:
@@ -134,8 +144,6 @@ class DictImmutableKeysEntity(ItemEntity):
             if isinstance(child_obj, GUIEntity):
                 continue
 
-            if child_obj.key in self.non_gui_children:
-                raise SchemaDuplicatedKeys("", child_obj.key)
             self.non_gui_children[child_obj.key] = child_obj
 
         if not first:

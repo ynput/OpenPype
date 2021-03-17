@@ -39,7 +39,7 @@
                 "roles": ["developer"]
             },
             {
-                "type": "path-widget",
+                "type": "path",
                 "key": "executables",
                 "label": "Executables",
                 "multiplatform": "{multiplatform}",

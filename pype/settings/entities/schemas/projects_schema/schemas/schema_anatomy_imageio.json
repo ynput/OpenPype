@@ -39,7 +39,7 @@
                                     ]
                                 },
                                 {
-                                    "type": "path-widget",
+                                    "type": "path",
                                     "key": "ocioconfigpath",
                                     "label": "Custom OCIO path",
                                     "multiplatform": true,
@@ -175,7 +175,7 @@
                                     ]
                                 },
                                 {
-                                    "type": "path-widget",
+                                    "type": "path",
                                     "key": "customOCIOConfigPath",
                                     "label": "Custom OCIO config path",
                                     "multiplatform": true,
