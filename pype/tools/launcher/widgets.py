@@ -184,8 +184,8 @@ class ActionBar(QtWidgets.QWidget):
         is_variant_group = index.data(VARIANT_GROUP_ROLE)
         if not is_group and not is_variant_group:
             action = index.data(ACTION_ROLE)
-            self.action_clicked.emit(action)
             self._start_animation(index)
+            self.action_clicked.emit(action)
             return
 
         actions = index.data(ACTION_ROLE)
@@ -248,8 +248,8 @@ class ActionBar(QtWidgets.QWidget):
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
             action = actions_mapping[result]
-            self.action_clicked.emit(action)
             self._start_animation(index)
+            self.action_clicked.emit(action)
 
 
 class TasksWidget(QtWidgets.QWidget):
