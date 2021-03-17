@@ -28,6 +28,10 @@ class InvalidValueType(Exception):
         super(InvalidValueType, self).__init__(msg)
 
 
+class RequiredKeyModified(KeyError):
+    def __init__(self, entity_path, key):
+        msg = "{} - Tried to modify required key \"{}\"."
+        super(RequiredKeyModified, self).__init__(msg.format(entity_path, key))
 
 
 class SchemaError(Exception):
