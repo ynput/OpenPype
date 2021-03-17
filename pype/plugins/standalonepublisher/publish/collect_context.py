@@ -184,6 +184,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 new_repre = copy.deepcopy(repre)
                 new_repre["files"] = filename
                 new_repre["name"] = ext
+                new_repre["thumbnail"] = True
 
                 if "tags" not in new_repre:
                     new_repre["tags"] = []
