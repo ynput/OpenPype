@@ -315,6 +315,10 @@ class DictMutableKeysEntity(EndpointEntity):
         for key in tuple(self.children_by_key.keys()):
             self.children_by_key.pop(key)
 
+        for required_key in self.required_keys:
+            if required_key not in new_value:
+                new_value[required_key] = NOT_SET
+
         # Create new children
         children_label_by_id = {}
         metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
