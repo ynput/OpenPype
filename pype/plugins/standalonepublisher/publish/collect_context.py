@@ -183,6 +183,10 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 new_repre["files"] = filename
                 new_repre["name"] = ext
 
+                if "tags" not in new_repre:
+                    new_repre["tags"] = []
+                new_repre["tags"].append("review")
+
                 # Prepare new subset name (temporary name)
                 # - subset name will be changed in batch specific plugins
                 new_subset_name = "{}{}".format(
@@ -194,6 +198,9 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 in_data_copy = copy.deepcopy(in_data)
                 in_data_copy["representations"] = [new_repre]
                 in_data_copy["subset"] = new_subset_name
+                if "families" not in in_data_copy:
+                    in_data_copy["families"] = []
+                in_data_copy["families"].append("review")
 
                 in_data_list.append(in_data_copy)
 
