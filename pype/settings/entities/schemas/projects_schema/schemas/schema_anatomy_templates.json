@@ -8,24 +8,30 @@
     "is_group": true,
     "children": [
         {
-            "type": "number",
-            "key": "version_padding",
-            "label": "Version Padding"
-        },
-        {
-            "type": "text",
-            "key": "version",
-            "label": "Version"
-        },
-        {
-            "type": "number",
-            "key": "frame_padding",
-            "label": "Frame Padding"
-        },
-        {
-            "type": "text",
-            "key": "frame",
-            "label": "Frame"
+            "type": "dict",
+            "key": "defaults",
+            "children": [
+                {
+                    "type": "number",
+                    "key": "version_padding",
+                    "label": "Version Padding"
+                },
+                {
+                    "type": "text",
+                    "key": "version",
+                    "label": "Version"
+                },
+                {
+                    "type": "number",
+                    "key": "frame_padding",
+                    "label": "Frame Padding"
+                },
+                {
+                    "type": "text",
+                    "key": "frame",
+                    "label": "Frame"
+                }
+            ]
         },
         {
             "type": "separator"

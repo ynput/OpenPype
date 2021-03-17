@@ -1,8 +1,10 @@
 {
-    "version_padding": 3,
-    "version": "v{version:0>{@version_padding}}",
-    "frame_padding": 4,
-    "frame": "{frame:0>{@frame_padding}}",
+    "defaults": {
+        "version_padding": 3,
+        "version": "v{version:0>{@version_padding}}",
+        "frame_padding": 4,
+        "frame": "{frame:0>{@frame_padding}}"
+    },
     "work": {
         "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task}",
         "file": "{project[code]}_{asset}_{task}_{@version}<_{comment}>.{ext}",
