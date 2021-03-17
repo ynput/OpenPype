@@ -227,7 +227,7 @@ class ApplicationExecutable:
         self.default_launch_args = default_launch_args
 
     def __iter__(self):
-        yield distutils.spawn.find_executable(self.executable_path)
+        yield self._realpath()
         for arg in self.default_launch_args:
             yield arg
 
@@ -237,10 +237,23 @@ class ApplicationExecutable:
     def as_args(self):
         return list(self)
 
+    def _realpath(self):
+        """Check if path is valid executable path."""
+        # Check for executable in PATH
+        result = distutils.spawn.find_executable(self.executable_path)
+        if result is not None:
+            return result
+
+        # This is not 100% validation but it is better than remove ability to
+        #   launch .bat, .sh or extentionless files
+        if os.path.exists(self.executable_path):
+            return self.executable_path
+        return None
+
     def exists(self):
         if not self.executable_path:
             return False
-        return bool(distutils.spawn.find_executable(self.executable_path))
+        return bool(self._realpath())
 
 
 class Application:
