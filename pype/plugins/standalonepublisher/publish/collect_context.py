@@ -50,7 +50,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         self.add_files_to_ignore_cleanup(in_data, context)
         # exception for editorial
         if in_data["family"] == "render_mov_batch":
-            in_data_list = self.prepare_mov_batch_instances(context, in_data)
+            in_data_list = self.prepare_mov_batch_instances(in_data)
 
         elif in_data["family"] in ["editorial", "background_batch"]:
             in_data_list = self.multiple_instances(context, in_data)
@@ -132,7 +132,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
         return in_data_list
 
-    def prepare_mov_batch_instances(self, context, in_data):
+    def prepare_mov_batch_instances(self, in_data):
         """Copy of `multiple_instances` method.
 
         Method was copied because `batch_extensions` is used in
