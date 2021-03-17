@@ -1,3 +1,4 @@
+"""Should be used only inside of hosts."""
 import os
 import json
 import re
@@ -1147,3 +1148,27 @@ def get_creator_by_name(creator_name, case_sensitive=False):
         if _creator_name == creator_name:
             return creator_plugin
     return None
+
+
+@with_avalon
+def change_timer_to_current_context():
+    """Called after context change to change timers"""
+    webserver_url = os.environ.get("PYPE_WEBSERVER_URL")
+    if not webserver_url:
+        log.warning("Couldn't find webserver url")
+        return
+
+    rest_api_url = "{}/timers_manager/start_timer".format(webserver_url)
+    try:
+        import requests
+    except Exception:
+        log.warning("Couldn't start timer")
+        return
+    data = {
+        "project_name": avalon.io.Session["AVALON_PROJECT"],
+        "asset_name": avalon.io.Session["AVALON_ASSET"],
+        "task_name": avalon.io.Session["AVALON_TASK"],
+        "hierarchy": get_hierarchy()
+    }
+
+    requests.post(rest_api_url, json=data)
