@@ -98,7 +98,7 @@ class IdleManager(PypeModule, ITrayService):
 class IdleManagerThread(threading.Thread):
     def __init__(self, module, *args, **kwargs):
         super(IdleManagerThread, self).__init__(*args, **kwargs)
-        self.log = PypeLogger().get_logger(self.__class__.__name__)
+        self.log = PypeLogger.get_logger(self.__class__.__name__)
         self.module = module
         self.threads = []
         self.is_running = False
