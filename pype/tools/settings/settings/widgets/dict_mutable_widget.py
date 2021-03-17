@@ -827,10 +827,25 @@ class DictMutableKeysWidget(BaseWidget):
         while self.input_fields:
             self.remove_row(self.input_fields[0])
 
-        for key, child_entity in self.entity.items():
+        keys_order = list(self.entity.required_keys)
+        last_required = None
+        if keys_order:
+            last_required = keys_order[-1]
+        for key in self.entity.keys():
+            if key in keys_order:
+                continue
+            keys_order.append(key)
+
+        for key in keys_order:
+            child_entity = self.entity[key]
             input_field = self.add_widget_for_child(child_entity)
             input_field.origin_key = key
-            input_field.set_key(key)
+            if key in self.entity.required_keys:
+                input_field.set_as_required(key)
+                if key == last_required:
+                    input_field.set_as_last_required()
+            else:
+                input_field.set_key(key)
             if self.entity.collapsible_key:
                 label = self.entity.get_child_label(child_entity)
                 input_field.origin_key_label = label
