@@ -727,7 +727,7 @@ class Templates:
                     key_2: "value_2"
                     key_4: "value_3/value_2"
         """
-        default_key_values = {}
+        default_key_values = templates.pop("defaults", {})
         for key, value in tuple(templates.items()):
             if isinstance(value, dict):
                 continue
