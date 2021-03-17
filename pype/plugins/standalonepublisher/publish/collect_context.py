@@ -142,8 +142,10 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         this family specific filtering. Also "frameStart" and "frameEnd" keys
         are removed from instance which is needed for this processing.
 
+        Instance data will also care about families.
+
         TODO:
-        - Merge logic with `multiple_instances` method.
+        - Merge possible logic with `multiple_instances` method.
         """
         self.log.info("Preparing data for mov batch processing.")
         in_data_list = []
