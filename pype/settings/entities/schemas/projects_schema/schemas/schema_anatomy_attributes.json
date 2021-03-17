@@ -9,7 +9,9 @@
         {
             "type": "number",
             "key": "fps",
-            "label": "Frame Rate"
+            "label": "Frame Rate",
+            "decimal": 2,
+            "minimum": 0
         },
         {
             "type": "number",
@@ -54,7 +56,9 @@
         {
             "type": "number",
             "key": "pixelAspect",
-            "label": "Pixel Aspect Ratio"
+            "label": "Pixel Aspect Ratio",
+            "decimal": 2,
+            "minimum": 0
         },
         {
             "type": "enum",
