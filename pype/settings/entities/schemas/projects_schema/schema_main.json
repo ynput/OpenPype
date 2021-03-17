@@ -29,9 +29,20 @@
                 },
                 {
                     "type": "dict-modifiable",
-                    "key": "task_short_names",
-                    "label": "Task short names (by Task type)",
-                    "object_type": "text"
+                    "key": "tasks",
+                    "label": "Task types",
+                    "is_file": true,
+                    "is_group": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "short_name",
+                                "label": "Short name"
+                            }
+                        ]
+                    }
                 },
                 {
                     "type": "schema",
