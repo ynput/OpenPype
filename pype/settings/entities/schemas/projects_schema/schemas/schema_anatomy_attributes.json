@@ -110,16 +110,10 @@
             ]
         },
         {
-            "type": "enum",
+            "type": "list",
             "key": "tools",
             "label": "Tools",
-            "multiselection": true,
-            "enum_items": [
-                {"mtoa_3.2": "mtoa_3.2"},
-                {"mtoa_3.1": "mtoa_3.1"},
-                {"mtoa_3.1.1": "mtoa_3.1.1"},
-                {"vray_4300": "vray_4300"}
-            ]
+            "object_type": "text"
         }
     ]
 }
