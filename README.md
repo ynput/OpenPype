@@ -208,20 +208,9 @@ install it to user data directory (on Windows to `%LOCALAPPDATA%\pypeclub\pype`,
 ### From sources
 Pype can be run directly from sources by activating virtual environment:
 
-**On Windows:**
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-and running:
-```powershell
-python start.py tray
-```
-**On macOS/Linux:**
 ```sh
-source ./venv/bin/activate
-python start.py tray
+poetry run python start.py tray
 ```
-
 
 This will use current Pype version with sources. You can override this with `--use-version=x.x.x` and
 then Pype will try to find locally installed specified version (present in user data directory).
