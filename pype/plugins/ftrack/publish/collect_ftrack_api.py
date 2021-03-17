@@ -107,10 +107,14 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
     ):
         instance_by_asset_and_task = {}
         for instance in context:
+            self.log.debug(
+                "Checking entities of instance \"{}\"".format(str(instance))
+            )
             instance_asset_name = instance.data.get("asset")
             instance_task_name = instance.data.get("task")
 
             if not instance_asset_name and not instance_task_name:
+                self.log.debug("Instance does not have set context keys.")
                 continue
 
             elif instance_asset_name and instance_task_name:
@@ -118,12 +122,20 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
                     instance_asset_name == context_asset_name
                     and instance_task_name == context_task_name
                 ):
+                    self.log.debug((
+                        "Instance's context is same as in publish context."
+                        " Asset: {} | Task: {}"
+                    ).format(context_asset_name, context_task_name))
                     continue
                 asset_name = instance_asset_name
                 task_name = instance_task_name
 
             elif instance_task_name:
                 if instance_task_name == context_task_name:
+                    self.log.debug((
+                        "Instance's context task is same as in publish"
+                        " context. Task: {}"
+                    ).format(context_task_name))
                     continue
 
                 asset_name = context_asset_name
@@ -131,22 +143,16 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
             elif instance_asset_name:
                 if instance_asset_name == context_asset_name:
+                    self.log.debug((
+                        "Instance's context asset is same as in publish"
+                        " context. Asset: {}"
+                    ).format(context_asset_name))
                     continue
 
                 # Do not use context's task name
                 task_name = instance_task_name
                 asset_name = instance_asset_name
 
-            asset_name = (
-                instance_asset_name
-                if instance_asset_name
-                else context_asset_name
-            )
-            task_name = (
-                instance_task_name
-                if instance_task_name
-                else context_task_name
-            )
             if asset_name not in instance_by_asset_and_task:
                 instance_by_asset_and_task[asset_name] = {}
 
@@ -166,7 +172,9 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
             task_entity_by_name = {}
             if not entity:
-                instance.data["ftrackEntity"] = None
+                self.log.warning((
+                    "Didn't find entity with name \"{}\" in Project \"{}\""
+                ).format(asset_name, project_entity["full_name"]))
             else:
                 task_entities = session.query((
                     "select id, name from Task where parent_id is \"{}\""
@@ -181,6 +189,7 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
                     task_entity = task_entity_by_name.get(task_name.lower())
 
                 for instance in instances:
+                    instance.data["ftrackEntity"] = entity
                     instance.data["ftrackTask"] = task_entity
 
                     self.log.debug((
