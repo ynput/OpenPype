@@ -1,4 +1,5 @@
 import copy
+import time
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 from avalon.vendor import qtawesome
@@ -7,6 +8,15 @@ from .delegates import ActionDelegate
 from . import lib
 from .models import TaskModel, ActionModel, ProjectModel
 from .flickcharm import FlickCharm
+from .constants import (
+    ACTION_ROLE,
+    GROUP_ROLE,
+    VARIANT_GROUP_ROLE,
+    ACTION_ID_ROLE,
+    ANIMATION_START_ROLE,
+    ANIMATION_STATE_ROLE,
+    ANIMATION_LEN
+)
 
 
 class ProjectBar(QtWidgets.QWidget):
@@ -105,7 +115,7 @@ class ActionBar(QtWidgets.QWidget):
 
         # TODO better group delegate
         delegate = ActionDelegate(
-            [model.GROUP_ROLE, model.VARIANT_GROUP_ROLE],
+            [GROUP_ROLE, VARIANT_GROUP_ROLE],
             self
         )
         view.setItemDelegate(delegate)
@@ -114,6 +124,13 @@ class ActionBar(QtWidgets.QWidget):
 
         self.model = model
         self.view = view
+
+        self._animated_items = set()
+
+        animation_timer = QtCore.QTimer()
+        animation_timer.setInterval(50)
+        animation_timer.timeout.connect(self._on_animation)
+        self._animation_timer = animation_timer
 
         # Make view flickable
         flick = FlickCharm(parent=view)
@@ -132,18 +149,46 @@ class ActionBar(QtWidgets.QWidget):
     def set_row_height(self, rows):
         self.setMinimumHeight(rows * 75)
 
+    def _on_animation(self):
+        time_now = time.time()
+        for action_id in tuple(self._animated_items):
+            item = self.model.items_by_id.get(action_id)
+            if not item:
+                self._animated_items.remove(action_id)
+                continue
+
+            start_time = item.data(ANIMATION_START_ROLE)
+            if (time_now - start_time) > ANIMATION_LEN:
+                item.setData(0, ANIMATION_STATE_ROLE)
+                self._animated_items.remove(action_id)
+
+        if not self._animated_items:
+            self._animation_timer.stop()
+
+        self.update()
+
+    def _start_animation(self, index):
+        action_id = index.data(ACTION_ID_ROLE)
+        item = self.model.items_by_id.get(action_id)
+        if item:
+            item.setData(time.time(), ANIMATION_START_ROLE)
+            item.setData(1, ANIMATION_STATE_ROLE)
+            self._animated_items.add(action_id)
+            self._animation_timer.start()
+
     def on_clicked(self, index):
-        if not index.isValid():
+        if not index or not index.isValid():
             return
 
-        is_group = index.data(self.model.GROUP_ROLE)
-        is_variant_group = index.data(self.model.VARIANT_GROUP_ROLE)
+        is_group = index.data(GROUP_ROLE)
+        is_variant_group = index.data(VARIANT_GROUP_ROLE)
         if not is_group and not is_variant_group:
-            action = index.data(self.model.ACTION_ROLE)
+            action = index.data(ACTION_ROLE)
+            self._start_animation(index)
             self.action_clicked.emit(action)
             return
 
-        actions = index.data(self.model.ACTION_ROLE)
+        actions = index.data(ACTION_ROLE)
 
         menu = QtWidgets.QMenu(self)
         actions_mapping = {}
@@ -203,6 +248,7 @@ class ActionBar(QtWidgets.QWidget):
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
             action = actions_mapping[result]
+            self._start_animation(index)
             self.action_clicked.emit(action)
 
 
