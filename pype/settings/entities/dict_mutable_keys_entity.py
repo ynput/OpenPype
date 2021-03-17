@@ -7,7 +7,8 @@ from .lib import (
 from . import EndpointEntity
 from .exceptions import (
     DefaultsNotDefined,
-    StudioDefaultsNotDefined
+    StudioDefaultsNotDefined,
+    RequiredKeyModified
 )
 from pype.settings.constants import (
     METADATA_KEYS,
@@ -51,6 +52,8 @@ class DictMutableKeysEntity(EndpointEntity):
         return key in self.children_by_key
 
     def pop(self, key, *args, **kwargs):
+        if key in self.required_keys:
+            raise RequiredKeyModified(self.path, key)
         result = self.children_by_key.pop(key, *args, **kwargs)
         self.on_change()
         return result
@@ -93,6 +96,9 @@ class DictMutableKeysEntity(EndpointEntity):
         child_obj.set(value)
 
     def change_key(self, old_key, new_key):
+        if old_key in self.required_keys:
+            raise RequiredKeyModified(self.path, old_key)
+
         if new_key == old_key:
             return
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
