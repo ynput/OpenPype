@@ -1,7 +1,6 @@
 import time
 from Qt import QtCore, QtWidgets, QtGui
 from .constants import (
-    ANIMATION_LEN,
     ANIMATION_START_ROLE,
     ANIMATION_STATE_ROLE
 )
@@ -47,7 +46,7 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
         time_diff = time.time() - index.data(ANIMATION_START_ROLE)
 
         # Repeat 4 times
-        part_anim = ANIMATION_LEN / 4
+        part_anim = 2.5
         part_time = time_diff % part_anim
         offset = (part_time / part_anim) * 360
         angle = (offset + 90) % 360
