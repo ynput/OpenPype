@@ -165,11 +165,25 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
         session = context.data["ftrackSession"]
         project_entity = context.data["ftrackProject"]
-        for asset_name, by_task_data in instance_by_asset_and_task.items():
-            entity = session.query((
-                "TypedContext where project_id is \"{}\" and name is \"{}\""
-            ).format(project_entity["id"], asset_name)).first()
+        asset_names = set()
+        for asset_name in instance_by_asset_and_task.keys():
+            asset_names.add(asset_name)
 
+        joined_asset_names = ",".join([
+            "\"{}\"".format(name)
+            for name in asset_names
+        ])
+        entities = session.query((
+            "TypedContext where project_id is \"{}\" and name in ({})"
+        ).format(project_entity["id"], joined_asset_names)).all()
+
+        entities_by_name = {
+            entity["name"]: entity
+            for entity in entities
+        }
+
+        for asset_name, by_task_data in instance_by_asset_and_task.items():
+            entity = entities_by_name.get(asset_name)
             task_entity_by_name = {}
             if not entity:
                 self.log.warning((
