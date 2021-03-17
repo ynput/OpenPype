@@ -740,6 +740,19 @@ class Templates:
             key_values.update(sub_value)
             keys_by_subkey[sub_key] = cls.prepare_inner_keys(key_values)
 
+        other_templates = templates.get("others") or {}
+        for sub_key, sub_value in other_templates.items():
+            if sub_key in keys_by_subkey:
+                log.warning((
+                    "Key \"{}\" is duplicated in others. Skipping."
+                ).format(sub_key))
+                continue
+
+            key_values = {}
+            key_values.update(default_key_values)
+            key_values.update(sub_value)
+            keys_by_subkey[sub_key] = cls.prepare_inner_keys(key_values)
+
         default_keys_by_subkeys = cls.prepare_inner_keys(default_key_values)
 
         for key, value in default_keys_by_subkeys.items():
