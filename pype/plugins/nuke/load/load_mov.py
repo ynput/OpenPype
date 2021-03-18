@@ -80,6 +80,9 @@ class LoadMov(api.Loader):
     icon = "code-fork"
     color = "orange"
 
+    # presets
+    name_expression = "{class_name}_{ext}"
+
     def loader_shift(self, node, frame, relative=True):
         """Shift global in time by i preserving duration
 
@@ -152,10 +155,16 @@ class LoadMov(api.Loader):
 
         file = file.replace("\\", "/")
 
-        read_name = "Read_{0}_{1}_{2}".format(
-            repr_cont["asset"],
-            repr_cont["subset"],
-            repr_cont["representation"])
+        name_data = {
+            "asset": repr_cont["asset"],
+            "subset": repr_cont["subset"],
+            "representation": context["representation"]["name"],
+            "ext": repr_cont["representation"],
+            "id": context["representation"]["_id"],
+            "class_name": self.__class__.__name__
+        }
+
+        read_name = self.name_expression.format(**name_data)
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
