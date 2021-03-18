@@ -1427,8 +1427,13 @@ class SyncEntitiesFactory:
                         old_parent_name = self.entities_dict[
                             self.ft_project_id]["name"]
                     else:
-                        old_parent_name = self.avalon_ents_by_id[
-                            ftrack_parent_mongo_id]["name"]
+                        old_parent_name = "N/A"
+                        if ftrack_parent_mongo_id in self.avalon_ents_by_id:
+                            old_parent_name = (
+                                self.avalon_ents_by_id
+                                [ftrack_parent_mongo_id]
+                                ["name"]
+                            )
 
                     self.updates[avalon_id]["data"] = {
                         "visualParent": new_parent_id
