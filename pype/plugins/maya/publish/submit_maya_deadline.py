@@ -263,6 +263,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     use_published = True
     tile_assembler_plugin = "PypeTileAssembler"
     asset_dependencies = False
+    limit_groups = []
+    group = "none"
 
     def process(self, instance):
         """Plugin entry point."""
@@ -406,6 +408,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # Set job priority
         self.payload_skeleton["JobInfo"]["Priority"] = self._instance.data.get(
             "priority", 50)
+        if self.group != "none":
+            self.payload_skeleton["JobInfo"]["Group"] = self.group
+        if self.limit:
+            self.payload_skeleton["JobInfo"]["LimitGroups"] = ",".join(self.limit_groups)  # noqa: E501
         # Optional, enable double-click to preview rendered
         # frames from Deadline Monitor
         self.payload_skeleton["JobInfo"]["OutputDirectory0"] = \
