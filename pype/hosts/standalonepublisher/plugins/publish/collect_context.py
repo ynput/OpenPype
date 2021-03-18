@@ -14,12 +14,12 @@ Provides:
 """
 
 import os
-import pyblish.api
-from avalon import io
 import json
 import copy
-import clique
 from pprint import pformat
+import clique
+import pyblish.api
+from avalon import io
 
 
 class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
@@ -50,7 +50,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         self.add_files_to_ignore_cleanup(in_data, context)
         # exception for editorial
         if in_data["family"] == "render_mov_batch":
-            in_data_list = self.prepare_mov_batch_instances(context, in_data)
+            in_data_list = self.prepare_mov_batch_instances(in_data)
 
         elif in_data["family"] in ["editorial", "background_batch"]:
             in_data_list = self.multiple_instances(context, in_data)
@@ -132,7 +132,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
         return in_data_list
 
-    def prepare_mov_batch_instances(self, context, in_data):
+    def prepare_mov_batch_instances(self, in_data):
         """Copy of `multiple_instances` method.
 
         Method was copied because `batch_extensions` is used in
@@ -142,8 +142,10 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         this family specific filtering. Also "frameStart" and "frameEnd" keys
         are removed from instance which is needed for this processing.
 
+        Instance data will also care about families.
+
         TODO:
-        - Merge logic with `multiple_instances` method.
+        - Merge possible logic with `multiple_instances` method.
         """
         self.log.info("Preparing data for mov batch processing.")
         in_data_list = []
@@ -154,6 +156,11 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 str(repre["files"])
             ))
             ext = repre["ext"][1:]
+
+            # Rename representation name
+            repre_name = repre["name"]
+            if repre_name.startswith(ext + "_"):
+                repre["name"] = ext
             # Skip files that are not available for mov batch publishing
             # TODO add dynamic expected extensions by family from `in_data`
             #   - with this modification it would be possible to use only
@@ -177,6 +184,11 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 new_repre = copy.deepcopy(repre)
                 new_repre["files"] = filename
                 new_repre["name"] = ext
+                new_repre["thumbnail"] = True
+
+                if "tags" not in new_repre:
+                    new_repre["tags"] = []
+                new_repre["tags"].append("review")
 
                 # Prepare new subset name (temporary name)
                 # - subset name will be changed in batch specific plugins
@@ -189,6 +201,9 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 in_data_copy = copy.deepcopy(in_data)
                 in_data_copy["representations"] = [new_repre]
                 in_data_copy["subset"] = new_subset_name
+                if "families" not in in_data_copy:
+                    in_data_copy["families"] = []
+                in_data_copy["families"].append("review")
 
                 in_data_list.append(in_data_copy)
 
@@ -196,6 +211,12 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
     def create_instance(self, context, in_data):
         subset = in_data["subset"]
+        # If instance data already contain families then use it
+        instance_families = in_data.get("families") or []
+        # Make sure default families are in instance
+        for default_family in self.default_families or []:
+            if default_family not in instance_families:
+                instance_families.append(default_family)
 
         instance = context.create_instance(subset)
         instance.data.update(
@@ -212,7 +233,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 "frameEnd": in_data.get("representations", [None])[0].get(
                     "frameEnd", None
                 ),
-                "families": self.default_families or [],
+                "families": instance_families
             }
         )
         self.log.info("collected instance: {}".format(pformat(instance.data)))
@@ -239,7 +260,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
             if component["preview"]:
                 instance.data["families"].append("review")
-                instance.data["repreProfiles"] = ["h264"]
                 component["tags"] = ["review"]
                 self.log.debug("Adding review family")
 
