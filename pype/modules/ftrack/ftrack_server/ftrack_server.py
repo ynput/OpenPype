@@ -64,13 +64,13 @@ class FtrackServer:
         register_functions = []
         for path in paths:
             # Get all modules with functions
-            modules, crashed = modules_from_path(path, return_crashed=True)
+            modules, crashed = modules_from_path(path)
             for filepath, exc_info in crashed:
                 log.warning("Filepath load crashed {}.\n{}".format(
                     filepath, traceback.format_exception(*exc_info)
                 ))
 
-            for module in modules:
+            for filepath, module in modules:
                 register_function = None
                 for name, attr in module.__dict__.items():
                     if (
@@ -80,7 +80,6 @@ class FtrackServer:
                         register_function = attr
                         break
 
-                filepath = os.path.abspath(module.__file__)
                 if not register_function:
                     log.warning(
                         "\"{}\" - Missing register method".format(filepath)

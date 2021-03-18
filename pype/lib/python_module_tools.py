@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 PY3 = sys.version_info[0] == 3
 
 
-def modules_from_path(folder_path, return_crashed=False):
+def modules_from_path(folder_path):
     """Get python scripts as modules from a path.
 
     Arguments:
@@ -72,7 +72,7 @@ def modules_from_path(folder_path, return_crashed=False):
 
                 module.__file__ = full_path
 
-            modules.append(module)
+            modules.append((full_path, module))
 
         except Exception:
             crashed.append((full_path, sys.exc_info()))
@@ -82,9 +82,7 @@ def modules_from_path(folder_path, return_crashed=False):
             )
             continue
 
-    if return_crashed:
-        return modules, crashed
-    return modules
+    return modules, crashed
 
 
 def recursive_bases_from_class(klass):
