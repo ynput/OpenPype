@@ -22,7 +22,7 @@ from pymongo import UpdateOne
 import ftrack_api
 from pype.lib import ApplicationManager
 
-log = Logger().get_logger(__name__)
+log = Logger.get_logger(__name__)
 
 
 # Current schemas for avalon types
@@ -42,7 +42,8 @@ CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
 
 def default_custom_attributes_definition():
     json_file_path = os.path.join(
-        os.path.dirname(__file__), "custom_attributes.json"
+        os.path.dirname(os.path.abspath(__file__)),
+        "custom_attributes.json"
     )
     with open(json_file_path, "r") as json_stream:
         data = json.load(json_stream)
