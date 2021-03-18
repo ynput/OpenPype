@@ -1140,7 +1140,7 @@ class SyncEntitiesFactory:
                 proj_schema = entity["project_schema"]
                 task_types = proj_schema["_task_type_schema"]["types"]
                 proj_apps, warnings = get_project_apps(
-                    (data.get("applications") or [])
+                    data.pop("applications", [])
                 )
                 for msg, items in warnings.items():
                     if not msg or not items:
