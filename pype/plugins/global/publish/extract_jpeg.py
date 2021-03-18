@@ -96,7 +96,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             # use same input args like with mov
             jpeg_items.extend(ffmpeg_args.get("input") or [])
             # input file
-            jpeg_items.append("-i {}".format(full_input_path))
+            jpeg_items.append("-i \"{}\"".format(full_input_path))
             # output arguments from presets
             output_args = self._prepare_output_args(
                 ffmpeg_args.get("output"), full_input_path, instance
@@ -109,7 +109,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 jpeg_items.append("-vframes 1")
 
             # output file
-            jpeg_items.append(full_output_path)
+            jpeg_items.append("\"{}\"".format(full_output_path))
 
             subprocess_jpeg = " ".join(jpeg_items)
 
