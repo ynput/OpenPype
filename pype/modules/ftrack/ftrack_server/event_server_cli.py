@@ -18,6 +18,7 @@ from pype.lib import (
     get_pype_execute_args,
     PypeMongoConnection
 )
+from pype.modules.ftrack import FTRACK_MODULE_DIR
 from pype.modules.ftrack.lib import (
     credentials,
     get_ftrack_url_from_settings
@@ -98,14 +99,14 @@ def validate_credentials(url, user, api):
 
 def legacy_server(ftrack_url):
     # Current file
-    file_path = os.path.dirname(os.path.realpath(__file__))
+    scripts_dir = os.path.join(FTRACK_MODULE_DIR, "scripts")
 
     min_fail_seconds = 5
     max_fail_count = 3
     wait_time_after_max_fail = 10
 
     subproc = None
-    subproc_path = "{}/sub_legacy_server.py".format(file_path)
+    subproc_path = "{}/sub_legacy_server.py".format(scripts_dir)
     subproc_last_failed = datetime.datetime.now()
     subproc_failed_count = 0
 
@@ -183,7 +184,7 @@ def main_loop(ftrack_url):
     mongo_uri = PypeMongoConnection.get_default_mongo_url()
 
     # Current file
-    file_path = os.path.dirname(os.path.realpath(__file__))
+    scripts_dir = os.path.join(FTRACK_MODULE_DIR, "scripts")
 
     min_fail_seconds = 5
     max_fail_count = 3
@@ -192,21 +193,21 @@ def main_loop(ftrack_url):
     # Threads data
     storer_name = "StorerThread"
     storer_port = 10001
-    storer_path = "{}/sub_event_storer.py".format(file_path)
+    storer_path = "{}/sub_event_storer.py".format(scripts_dir)
     storer_thread = None
     storer_last_failed = datetime.datetime.now()
     storer_failed_count = 0
 
     processor_name = "ProcessorThread"
     processor_port = 10011
-    processor_path = "{}/sub_event_processor.py".format(file_path)
+    processor_path = "{}/sub_event_processor.py".format(scripts_dir)
     processor_thread = None
     processor_last_failed = datetime.datetime.now()
     processor_failed_count = 0
 
     statuser_name = "StorerThread"
     statuser_port = 10021
-    statuser_path = "{}/sub_event_status.py".format(file_path)
+    statuser_path = "{}/sub_event_status.py".format(scripts_dir)
     statuser_thread = None
     statuser_last_failed = datetime.datetime.now()
     statuser_failed_count = 0
