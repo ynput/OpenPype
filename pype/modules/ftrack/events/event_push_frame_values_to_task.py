@@ -272,10 +272,9 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 if new_value == old_value:
                     continue
 
-                entity_key = collections.OrderedDict({
-                    "configuration_id": attr_id,
-                    "entity_id": entity_id
-                })
+                entity_key = collections.OrderedDict()
+                entity_key["configuration_id"] = attr_id
+                entity_key["entity_id"] = entity_id
                 self._cached_changes.append({
                     "attr_key": attr_key,
                     "entity_id": entity_id,

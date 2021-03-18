@@ -1,9 +1,15 @@
 import os
 import re
-import queue
 import json
 import collections
 import copy
+
+import six
+
+if six.PY3:
+    from queue import Queue
+else:
+    from Queue import Queue
 
 from avalon.api import AvalonMongoDB
 
@@ -135,7 +141,7 @@ def from_dict_to_set(data, is_project):
             data.pop("data")
 
     result = {"$set": {}}
-    dict_queue = queue.Queue()
+    dict_queue = Queue()
     dict_queue.put((None, data))
 
     while not dict_queue.empty():
@@ -687,7 +693,7 @@ class SyncEntitiesFactory:
         self.filter_by_duplicate_regex()
 
     def filter_by_duplicate_regex(self):
-        filter_queue = queue.Queue()
+        filter_queue = Queue()
         failed_regex_msg = "{} - Entity has invalid symbols in the name"
         duplicate_msg = "There are multiple entities with the name: \"{}\":"
 
@@ -741,7 +747,7 @@ class SyncEntitiesFactory:
         ) == "_notset_":
             return
 
-        self.filter_queue = queue.Queue()
+        self.filter_queue = Queue()
         self.filter_queue.put((self.ft_project_id, False))
         while not self.filter_queue.empty():
             parent_id, remove = self.filter_queue.get()
@@ -778,8 +784,8 @@ class SyncEntitiesFactory:
             selected_ids.append(entity["entityId"])
 
         sync_ids = [self.ft_project_id]
-        parents_queue = queue.Queue()
-        children_queue = queue.Queue()
+        parents_queue = Queue()
+        children_queue = Queue()
         for id in selected_ids:
             # skip if already filtered with ignore sync custom attribute
             if id in self.filtered_ids:
@@ -1046,7 +1052,7 @@ class SyncEntitiesFactory:
             if value is not None:
                 project_values[key] = value
 
-        hier_down_queue = queue.Queue()
+        hier_down_queue = Queue()
         hier_down_queue.put((project_values, top_id))
 
         while not hier_down_queue.empty():
@@ -1225,7 +1231,7 @@ class SyncEntitiesFactory:
             create_ftrack_ids.append(self.ft_project_id)
 
         # make it go hierarchically
-        prepare_queue = queue.Queue()
+        prepare_queue = Queue()
 
         for child_id in self.entities_dict[self.ft_project_id]["children"]:
             prepare_queue.put(child_id)
@@ -1348,7 +1354,7 @@ class SyncEntitiesFactory:
         parent_id = ent_dict["parent_id"]
         self.entities_dict[parent_id]["children"].remove(ftrack_id)
 
-        children_queue = queue.Queue()
+        children_queue = Queue()
         children_queue.put(ftrack_id)
         while not children_queue.empty():
             _ftrack_id = children_queue.get()
@@ -1361,7 +1367,7 @@ class SyncEntitiesFactory:
         hierarchy_changing_ids = []
         ignore_keys = collections.defaultdict(list)
 
-        update_queue = queue.Queue()
+        update_queue = Queue()
         for ftrack_id in self.update_ftrack_ids:
             update_queue.put(ftrack_id)
 
@@ -1941,7 +1947,7 @@ class SyncEntitiesFactory:
         entity["custom_attributes"][CUST_ATTR_ID_KEY] = str(new_id)
 
     def _bubble_changeability(self, unchangeable_ids):
-        unchangeable_queue = queue.Queue()
+        unchangeable_queue = Queue()
         for entity_id in unchangeable_ids:
             unchangeable_queue.put((entity_id, False))
 
@@ -2067,7 +2073,7 @@ class SyncEntitiesFactory:
         self.dbcon.bulk_write(mongo_changes_bulk)
 
     def reload_parents(self, hierarchy_changing_ids):
-        parents_queue = queue.Queue()
+        parents_queue = Queue()
         parents_queue.put((self.ft_project_id, [], False))
         while not parents_queue.empty():
             ftrack_id, parent_parents, changed = parents_queue.get()

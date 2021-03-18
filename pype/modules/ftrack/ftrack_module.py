@@ -42,16 +42,21 @@ class FtrackModule(
         self.ftrack_url = ftrack_settings["ftrack_server"]
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        self.server_event_handlers_paths = [
-            os.path.join(current_dir, "events"),
-            *ftrack_settings["ftrack_events_path"]
+        server_event_handlers_paths = [
+            os.path.join(current_dir, "events")
         ]
-        self.user_event_handlers_paths = [
-            os.path.join(current_dir, "actions"),
-            *ftrack_settings["ftrack_actions_path"]
+        server_event_handlers_paths.extend(
+            ftrack_settings["ftrack_events_path"]
+        )
+        user_event_handlers_paths = [
+            os.path.join(current_dir, "actions")
         ]
-
+        user_event_handlers_paths.extend(
+            ftrack_settings["ftrack_actions_path"]
+        )
         # Prepare attribute
+        self.server_event_handlers_paths = server_event_handlers_paths
+        self.user_event_handlers_paths = user_event_handlers_paths
         self.tray_module = None
 
     def get_global_environments(self):
