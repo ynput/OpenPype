@@ -411,7 +411,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         if self.group != "none":
             self.payload_skeleton["JobInfo"]["Group"] = self.group
         if self.limit:
-            self.payload_skeleton["jobInfo"]["LimitGroups"] = ",".join(self.limit)  # noqa: E501
+            self.payload_skeleton["JobInfo"]["LimitGroups"] = ",".join(self.limit_groups)  # noqa: E501
         # Optional, enable double-click to preview rendered
         # frames from Deadline Monitor
         self.payload_skeleton["JobInfo"]["OutputDirectory0"] = \
