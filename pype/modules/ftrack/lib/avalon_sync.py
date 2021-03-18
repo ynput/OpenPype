@@ -1110,9 +1110,7 @@ class SyncEntitiesFactory:
         project_name = self.entities_dict[self.ft_project_id]["name"]
         project_anatomy_data = get_anatomy_settings(project_name)
 
-        task_type_mapping = (
-            project_anatomy_data["attributes"]["task_short_names"]
-        )
+        task_type_mapping = project_anatomy_data["tasks"]
 
         not_set_ids = []
         for id, entity_dict in self.entities_dict.items():
@@ -1152,7 +1150,8 @@ class SyncEntitiesFactory:
                 tasks = {}
                 for task_type in task_types:
                     task_type_name = task_type["name"]
-                    short_name = task_type_mapping.get(task_type_name)
+                    task_type_def = task_type_mapping.get(task_type_name) or {}
+                    short_name = task_type_def.get("short_name")
                     tasks[task_type_name] = {
                         "short_name": short_name or task_type_name
                     }
