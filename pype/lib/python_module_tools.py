@@ -9,15 +9,20 @@ log = logging.getLogger(__name__)
 PY3 = sys.version_info[0] == 3
 
 
-def modules_from_path(folder_path):
+def modules_from_path(folder_path, return_crashed=False):
     """Get python scripts as modules from a path.
 
     Arguments:
         path (str): Path to folder containing python scripts.
+        return_crasher (bool): Crashed module paths with exception info
+            will be returned too.
 
     Returns:
-        List of modules.
+        list, tuple: List of modules when `return_crashed` is False else tuple
+            with list of modules at first place and tuple of path and exception
+            info at second place.
     """
+    crashed = []
     modules = []
     # Just skip and return empty list if path is not set
     if not folder_path:
@@ -70,12 +75,15 @@ def modules_from_path(folder_path):
             modules.append(module)
 
         except Exception:
+            crashed.append((full_path, sys.exc_info()))
             log.warning(
                 "Failed to load path: \"{0}\"".format(full_path),
                 exc_info=True
             )
             continue
 
+    if return_crashed:
+        return modules, crashed
     return modules
 
 
