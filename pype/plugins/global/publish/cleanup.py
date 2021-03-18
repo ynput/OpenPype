@@ -37,9 +37,16 @@ class CleanUp(pyblish.api.InstancePlugin):
             )
         )
 
+        _skip_cleanup_filepaths = instance.context.data.get(
+            "skipCleanupFilepaths"
+        ) or []
+        skip_cleanup_filepaths = set()
+        for path in _skip_cleanup_filepaths:
+            skip_cleanup_filepaths.add(os.path.normpath(path))
+
         if self.remove_temp_renders:
             self.log.info("Cleaning renders new...")
-            self.clean_renders(instance)
+            self.clean_renders(instance, skip_cleanup_filepaths)
 
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
@@ -65,7 +72,7 @@ class CleanUp(pyblish.api.InstancePlugin):
         self.log.info("Removing staging directory {}".format(staging_dir))
         shutil.rmtree(staging_dir)
 
-    def clean_renders(self, instance):
+    def clean_renders(self, instance, skip_cleanup_filepaths):
         transfers = instance.data.get("transfers", list())
 
         current_families = instance.data.get("families", list())
@@ -83,6 +90,12 @@ class CleanUp(pyblish.api.InstancePlugin):
 
             # add dest dir into clearing dir paths (regex paterns)
             transfers_dirs.append(os.path.dirname(dest))
+
+            if src in skip_cleanup_filepaths:
+                self.log.debug((
+                    "Source file is marked to be skipped in cleanup. {}"
+                ).format(src))
+                continue
 
             if os.path.normpath(src) != os.path.normpath(dest):
                 if instance_family == 'render' or 'render' in current_families:
@@ -116,6 +129,9 @@ class CleanUp(pyblish.api.InstancePlugin):
 
             # remove all files which match regex patern
             for f in files:
+                if os.path.normpath(f) in skip_cleanup_filepaths:
+                    continue
+
                 for p in self.paterns:
                     patern = re.compile(p)
                     if not patern.findall(f):
