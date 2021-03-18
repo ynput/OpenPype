@@ -14,7 +14,10 @@ import uuid
 
 import ftrack_api
 import pymongo
-from pype.lib import get_pype_execute_args
+from pype.lib import (
+    get_pype_execute_args,
+    PypeMongoConnection
+)
 from pype.modules.ftrack.lib import (
     credentials,
     get_ftrack_url_from_settings
@@ -35,17 +38,18 @@ class MongoPermissionsError(Exception):
         super().__init__(message)
 
 
-def check_mongo_url(host, port, log_error=False):
+def check_mongo_url(mongo_uri, log_error=False):
     """Checks if mongo server is responding"""
     try:
-        client = pymongo.MongoClient(host=host, port=port)
+        client = pymongo.MongoClient(mongo_uri)
         # Force connection on a request as the connect=True parameter of
         # MongoClient seems to be useless here
         client.server_info()
+        client.close()
     except pymongo.errors.ServerSelectionTimeoutError as err:
         if log_error:
-            print("Can't connect to MongoDB at {}:{} because: {}".format(
-                host, port, err
+            print("Can't connect to MongoDB at {} because: {}".format(
+                mongo_uri, err
             ))
         return False
 
@@ -175,11 +179,8 @@ def main_loop(ftrack_url):
     """
 
     os.environ["FTRACK_EVENT_SUB_ID"] = str(uuid.uuid1())
-    # Get mongo hostname and port for testing mongo connection
 
-    mongo_uri, mongo_port, database_name, collection_name = (
-        get_ftrack_event_mongo_info()
-    )
+    mongo_uri = PypeMongoConnection.get_default_mongo_url()
 
     # Current file
     file_path = os.path.dirname(os.path.realpath(__file__))
@@ -257,7 +258,7 @@ def main_loop(ftrack_url):
             ftrack_accessible = check_ftrack_url(ftrack_url)
 
         if not mongo_accessible:
-            mongo_accessible = check_mongo_url(mongo_uri, mongo_port)
+            mongo_accessible = check_mongo_url(mongo_uri)
 
         # Run threads only if Ftrack is accessible
         if not ftrack_accessible or not mongo_accessible:
