@@ -194,12 +194,8 @@ def get_project_apps(in_app_list):
     missing_app_msg = "Missing definition of application"
     application_manager = ApplicationManager()
     for app_name in in_app_list:
-        app = application_manager.applications.get(app_name)
-        if app:
-            apps.append({
-                "name": app_name,
-                "label": app.full_label
-            })
+        if application_manager.applications.get(app_name):
+            apps.append({"name": app_name})
         else:
             warnings[missing_app_msg].append(app_name)
     return apps, warnings
