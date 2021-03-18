@@ -195,7 +195,7 @@ def main(args):
         )
         SessionFactory.session = session
         register(session)
-        server = FtrackServer(server_type="event")
+        server = FtrackServer()
         log.debug("Launched Ftrack Event storer")
         server.run_server(session, load_files=False)
 
