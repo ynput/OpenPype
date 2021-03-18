@@ -2,7 +2,7 @@ import collections
 import datetime
 
 import ftrack_api
-from pype.modules.ftrack import BaseEvent
+from pype.modules.ftrack.lib import BaseEvent
 
 
 class PushFrameValuesToTaskEvent(BaseEvent):
