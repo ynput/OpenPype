@@ -1,4 +1,13 @@
 {
+    "menu": {
+        "Pype": {
+            "Create...": "ctrl+shift+alt+c",
+            "Publish...": "ctrl+alt+p",
+            "Load...": "ctrl+alt+l",
+            "Manage...": "ctrl+alt+m",
+            "Build Workfile": "ctrl+alt+b"
+        }
+    },
     "create": {
         "CreateWriteRender": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
