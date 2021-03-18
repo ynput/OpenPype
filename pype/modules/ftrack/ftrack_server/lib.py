@@ -18,7 +18,10 @@ import ftrack_api.operation
 import ftrack_api._centralized_storage_scenario
 import ftrack_api.event
 from ftrack_api.logging import LazyLogMessage as L
-
+try:
+    from weakref import WeakMethod
+except ImportError:
+    from ftrack_api._weakref import WeakMethod
 from pype.modules.ftrack.lib import get_ftrack_event_mongo_info
 
 from pype.lib import PypeMongoConnection
@@ -243,14 +246,16 @@ class ProcessEventHub(SocketBaseEventHub):
         return super()._handle_packet(code, packet_identifier, path, data)
 
 
-class SocketSession(ftrack_api.session.Session):
+class CustomEventHubSession(ftrack_api.session.Session):
     '''An isolated session for interaction with an ftrack server.'''
     def __init__(
         self, server_url=None, api_key=None, api_user=None, auto_populate=True,
         plugin_paths=None, cache=None, cache_key_maker=None,
-        auto_connect_event_hub=None, schema_cache_path=None,
-        plugin_arguments=None, sock=None, Eventhub=None
+        auto_connect_event_hub=False, schema_cache_path=None,
+        plugin_arguments=None, **kwargs
     ):
+        self.kwargs = kwargs
+
         super(ftrack_api.session.Session, self).__init__()
         self.logger = logging.getLogger(
             __name__ + '.' + self.__class__.__name__
@@ -336,17 +341,10 @@ class SocketSession(ftrack_api.session.Session):
         self.check_server_compatibility()
 
         # Construct event hub and load plugins.
-        if Eventhub is None:
-            Eventhub = ftrack_api.event.hub.EventHub
-        self._event_hub = Eventhub(
-            self._server_url,
-            self._api_user,
-            self._api_key,
-            sock=sock
-        )
+        self._event_hub = self._create_event_hub()
 
         self._auto_connect_event_hub_thread = None
-        if auto_connect_event_hub in (None, True):
+        if auto_connect_event_hub:
             # Connect to event hub in background thread so as not to block main
             # session usage waiting for event hub connection.
             self._auto_connect_event_hub_thread = threading.Thread(
@@ -355,14 +353,8 @@ class SocketSession(ftrack_api.session.Session):
             self._auto_connect_event_hub_thread.daemon = True
             self._auto_connect_event_hub_thread.start()
 
-        # To help with migration from auto_connect_event_hub default changing
-        # from True to False.
-        self._event_hub._deprecation_warning_auto_connect = (
-            auto_connect_event_hub is None
-        )
-
         # Register to auto-close session on exit.
-        atexit.register(self.close)
+        atexit.register(WeakMethod(self.close))
 
         self._plugin_paths = plugin_paths
         if self._plugin_paths is None:
@@ -398,4 +390,22 @@ class SocketSession(ftrack_api.session.Session):
                 )
             ),
             synchronous=True
+        )
+
+    def _create_event_hub(self):
+        return ftrack_api.event.hub.EventHub(
+            self._server_url,
+            self._api_user,
+            self._api_key
+        )
+
+
+class SocketSession(CustomEventHubSession):
+    def _create_event_hub(self):
+        self.sock = self.kwargs["sock"]
+        return self.kwargs["Eventhub"](
+            self._server_url,
+            self._api_user,
+            self._api_key,
+            sock=self.sock
         )
