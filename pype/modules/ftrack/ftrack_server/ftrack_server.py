@@ -1,17 +1,17 @@
 import os
-import sys
 import types
-import importlib
-import time
 import logging
-import inspect
+import traceback
 
 import ftrack_api
 
-from pype.lib import PypeLogger
+from pype.lib import (
+    PypeLogger,
+    modules_from_path
+)
 
 
-log = PypeLogger().get_logger(__name__)
+log = PypeLogger.get_logger(__name__)
 
 """
 # Required - Needed for connection to Ftrack
@@ -61,60 +61,50 @@ class FtrackServer:
 
     def set_files(self, paths):
         # Iterate all paths
-        register_functions_dict = []
+        register_functions = []
         for path in paths:
-            # add path to PYTHON PATH
-            if path not in sys.path:
-                sys.path.append(path)
-
             # Get all modules with functions
-            for file in os.listdir(path):
-                # Get only .py files with action functions
-                try:
-                    if '.pyc' in file or '.py' not in file:
-                        continue
+            modules, crashed = modules_from_path(path, return_crashed=True)
+            for filepath, exc_info in crashed:
+                log.warning("Filepath load crashed {}.\n{}".format(
+                    filepath, traceback.format_exception(*exc_info)
+                ))
 
-                    mod = importlib.import_module(os.path.splitext(file)[0])
-                    importlib.reload(mod)
-                    mod_functions = dict(
-                        [
-                            (name, function)
-                            for name, function in mod.__dict__.items()
-                            if isinstance(function, types.FunctionType)
-                        ]
+            for module in modules:
+                register_function = None
+                for name, attr in module.__dict__.items():
+                    if (
+                        name == "register"
+                        and isinstance(attr, types.FunctionType)
+                    ):
+                        register_function = attr
+                        break
+
+                filepath = os.path.abspath(module.__file__)
+                if not register_function:
+                    log.warning(
+                        "\"{}\" - Missing register method".format(filepath)
                     )
+                    continue
 
-                    # separate files by register function
-                    if 'register' not in mod_functions:
-                        msg = ('"{}" - Missing register method').format(file)
-                        log.warning(msg)
-                        continue
+                register_functions.append(
+                    (filepath, register_function)
+                )
 
-                    register_functions_dict.append({
-                        'name': file,
-                        'register': mod_functions['register']
-                    })
-                except Exception as e:
-                    msg = 'Loading of file "{}" failed ({})'.format(
-                        file, str(e)
-                    )
-                    log.warning(msg, exc_info=e)
-
-        if len(register_functions_dict) < 1:
+        if not register_functions:
             log.warning((
                 "There are no events with `register` function"
                 " in registered paths: \"{}\""
             ).format("| ".join(paths)))
 
-        for function_dict in register_functions_dict:
-            register = function_dict["register"]
+        for filepath, register_func in register_functions:
             try:
-                register(self.session)
-            except Exception as exc:
-                msg = '"{}" - register was not successful ({})'.format(
-                    function_dict['name'], str(exc)
+                register_func(self.session)
+            except Exception:
+                log.warning(
+                    "\"{}\" - register was not successful".format(filepath),
+                    exc_info=True
                 )
-                log.warning(msg, exc_info=True)
 
     def set_handler_paths(self, paths):
         self.handler_paths = paths
