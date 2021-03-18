@@ -2143,11 +2143,22 @@ class SyncEntitiesFactory:
         final_doc_data = self.entities_dict[self.ft_project_id]["final_entity"]
         final_doc_tasks = final_doc_data["config"].pop("tasks")
         current_doc_tasks = self.avalon_project.get("config", {}).get("tasks")
-        # Update project's tasks if tasks are empty or are not same
-        if not final_doc_tasks:
+        # Update project's task types
+        if not current_doc_tasks:
             update_tasks = True
         else:
-            update_tasks = final_doc_tasks != current_doc_tasks
+            # Check if task types are same
+            update_tasks = False
+            for task_type in final_doc_tasks:
+                if task_type not in current_doc_tasks:
+                    update_tasks = True
+                    break
+
+            # Update new task types
+            #   - but keep data about existing types and only add new one
+            if update_tasks:
+                for task_type, type_data in current_doc_tasks.items():
+                    final_doc_tasks[task_type] = type_data
 
         changes = self.compare_dict(final_doc_data, self.avalon_project)
 
