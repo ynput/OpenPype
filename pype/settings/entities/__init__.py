@@ -97,6 +97,8 @@ from .input_entities import (
 
 from .enum_entity import (
     EnumEntity,
+    AppsEnumEntity,
+    ToolsEnumEntity
 )
 
 from .list_entity import ListEntity
@@ -144,6 +146,8 @@ __all__ = (
     "RawJsonEntity",
 
     "EnumEntity",
+    "AppsEnumEntity",
+    "ToolsEnumEntity",
 
     "ListEntity",
 
