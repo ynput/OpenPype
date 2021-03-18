@@ -191,6 +191,9 @@ def get_project_apps(in_app_list):
     apps = []
     warnings = collections.defaultdict(list)
 
+    if not in_app_list:
+        return apps, warnings
+
     missing_app_msg = "Missing definition of application"
     application_manager = ApplicationManager()
     for app_name in in_app_list:
