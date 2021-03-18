@@ -111,6 +111,7 @@ if getattr(sys, 'frozen', False):
     paths.append(frozen_libs)
     os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
+import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import get_pype_path_from_db  # noqa
 from igniter.bootstrap_repos import PypeVersion  # noqa: E402
@@ -469,7 +470,9 @@ def _bootstrap_from_code(use_version):
         assert local_version
     else:
         pype_root = os.path.normpath(
-            os.path.dirname(os.path.realpath(__file__)))
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.realpath(igniter.__file__))))
         # get current version of Pype
         local_version = bootstrap.get_local_live_version()
 
