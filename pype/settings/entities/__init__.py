@@ -90,10 +90,13 @@ from .input_entities import (
 
     NumberEntity,
     BoolEntity,
-    EnumEntity,
     TextEntity,
     PathInput,
     RawJsonEntity
+)
+
+from .enum_entity import (
+    EnumEntity,
 )
 
 from .list_entity import ListEntity
@@ -136,10 +139,11 @@ __all__ = (
 
     "NumberEntity",
     "BoolEntity",
-    "EnumEntity",
     "TextEntity",
     "PathInput",
     "RawJsonEntity",
+
+    "EnumEntity",
 
     "ListEntity",
 
