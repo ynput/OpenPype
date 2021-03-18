@@ -28,6 +28,23 @@
                     "name": "schema_anatomy_attributes"
                 },
                 {
+                    "type": "dict-modifiable",
+                    "key": "tasks",
+                    "label": "Task types",
+                    "is_file": true,
+                    "is_group": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "short_name",
+                                "label": "Short name"
+                            }
+                        ]
+                    }
+                },
+                {
                     "type": "schema",
                     "name": "schema_anatomy_imageio"
                 }
