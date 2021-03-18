@@ -358,7 +358,8 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.add_btn.setEnabled(False)
 
     def set_as_last_required(self):
-        self.add_btn.setEnabled(True)
+        if not self.collapsible_key:
+            self.add_btn.setEnabled(True)
 
     def _on_focus_lose(self):
         if (
