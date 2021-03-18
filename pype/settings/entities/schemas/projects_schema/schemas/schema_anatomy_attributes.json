@@ -69,7 +69,6 @@
             "type": "tools-enum",
             "key": "tools",
             "label": "Tools"
-            "object_type": "text"
         }
     ]
 }
