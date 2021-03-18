@@ -61,58 +61,14 @@
             "minimum": 0
         },
         {
-            "type": "enum",
+            "type": "apps-enum",
             "key": "applications",
-            "label": "Applications",
-            "multiselection": true,
-            "enum_items": [
-                {"harmony_20": "Harmony 20"},
-                {"photoshop_2021": "Photoshop 2021"},
-                {"photoshop_2020": "Photoshop 2020"},
-                {"unreal_4.24": "Unreal Editor 4.24"},
-                {"nuke_11.3": "Nuke 11.3"},
-                {"nuke_11.2": "Nuke 11.2"},
-                {"fusion_9": "Fusion 9"},
-                {"celation_Publish": "CelAction 2D Pulblish"},
-                {"nuke_12.0": "Nuke 12.0"},
-                {"nuke_12.2": "Nuke 12.2"},
-                {"maya_2018": "Maya 2018"},
-                {"mayabatch_2018": "MayaBatch 2018"},
-                {"mayabatch_2019": "MayaBatch 2019"},
-                {"aftereffects_2020": "AfterEffects 2020"},
-                {"aftereffects_2021": "AfterEffects 2021"},
-                {"blender_2.83": "Blender 2.83"},
-                {"tvpaint_Animation 11 (64bits)": "TVPaint 11 (64bits)"},
-                {"celation_Local": "CelAction 2D Local"},
-                {"tvpaint_Animation 11 (32bits)": "TVPaint 11 (32bits)"},
-                {"harmony_17": "Harmony 17"},
-                {"resolve_16": "Resolve 16"},
-                {"fusion_16": "Fusion 16"},
-                {"maya_2019": "Maya 2019"},
-                {"djvview_1.1": "DJV View 1.1"},
-                {"nukestudio_12.0": "Nuke Studio 12.0"},
-                {"nukestudio_12.2": "Nuke Studio 12.2"},
-                {"hiero_12.2": "Hiero 12.2"},
-                {"hiero_12.0": "Hiero 12.0"},
-                {"nukestudio_11.3": "Nuke Studio 11.3"},
-                {"nukestudio_11.2": "Nuke Studio 11.2"},
-                {"houdini_18": "Houdini 18"},
-                {"mayabatch_2020": "MayaBatch 2020"},
-                {"hiero_11.2": "Hiero 11.2"},
-                {"hiero_11.3": "Hiero 11.3"},
-                {"houdini_17": "Houdini 17"},
-                {"blender_2.90": "Blender 2.90"},
-                {"nukex_12.0": "Nuke X 12.0"},
-                {"maya_2020": "Maya 2020"},
-                {"nukex_12.2": "Nuke X 12.2"},
-                {"nukex_11.2": "Nuke X 11.2"},
-                {"nukex_11.3": "Nuke X 11.3"}
-            ]
+            "label": "Applications"
         },
         {
-            "type": "list",
+            "type": "tools-enum",
             "key": "tools",
-            "label": "Tools",
+            "label": "Tools"
             "object_type": "text"
         }
     ]
