@@ -812,7 +812,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         matching_profiles = {}
         highest_value = -1
-        self.log.info(self.template_name_profiles)
+        self.log.debug(
+            "Template name profiles:\n{}".format(self.template_name_profiles)
+        )
         for name, filters in self.template_name_profiles.items():
             value = 0
             families = filters.get("families")

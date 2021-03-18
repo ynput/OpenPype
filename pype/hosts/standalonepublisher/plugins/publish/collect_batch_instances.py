@@ -3,40 +3,52 @@ import pyblish.api
 from pprint import pformat
 
 
-class CollectPsdInstances(pyblish.api.InstancePlugin):
-    """
-    Collect all available instances from psd batch.
-    """
+class CollectBatchInstances(pyblish.api.InstancePlugin):
+    """Collect all available instances for batch publish."""
 
-    label = "Collect Psd Instances"
+    label = "Collect Batch Instances"
     order = pyblish.api.CollectorOrder + 0.489
     hosts = ["standalonepublisher"]
-    families = ["background_batch"]
+    families = ["background_batch", "render_mov_batch"]
 
     # presets
+    default_subset_task = {
+        "background_batch": "background",
+        "render_mov_batch": "compositing"
+    }
     subsets = {
-        "backgroundLayout": {
-            "task": "background",
-            "family": "backgroundLayout"
+        "background_batch": {
+            "backgroundLayout": {
+                "task": "background",
+                "family": "backgroundLayout"
+            },
+            "backgroundComp": {
+                "task": "background",
+                "family": "backgroundComp"
+            },
+            "workfileBackground": {
+                "task": "background",
+                "family": "workfile"
+            }
         },
-        "backgroundComp": {
-            "task": "background",
-            "family": "backgroundComp"
-        },
-        "workfileBackground": {
-            "task": "background",
-            "family": "workfile"
+        "render_mov_batch": {
+            "renderCompositingDefault": {
+                "task": "compositing",
+                "family": "render"
+            }
         }
     }
     unchecked_by_default = []
 
     def process(self, instance):
         context = instance.context
-        asset_data = instance.data["assetEntity"]
         asset_name = instance.data["asset"]
-        for subset_name, subset_data in self.subsets.items():
+        family = instance.data["family"]
+
+        default_task_name = self.default_subset_task.get(family)
+        for subset_name, subset_data in self.subsets[family].items():
             instance_name = f"{asset_name}_{subset_name}"
-            task = subset_data.get("task", "background")
+            task_name = subset_data.get("task") or default_task_name
 
             # create new instance
             new_instance = context.create_instance(instance_name)
@@ -51,10 +63,9 @@ class CollectPsdInstances(pyblish.api.InstancePlugin):
             # add subset data from preset
             new_instance.data.update(subset_data)
 
-            new_instance.data["label"] = f"{instance_name}"
+            new_instance.data["label"] = instance_name
             new_instance.data["subset"] = subset_name
-            new_instance.data["task"] = task
-
+            new_instance.data["task"] = task_name
 
             if subset_name in self.unchecked_by_default:
                 new_instance.data["publish"] = False
