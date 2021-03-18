@@ -43,13 +43,13 @@ class FtrackModule(
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         server_event_handlers_paths = [
-            os.path.join(current_dir, "events")
+            os.path.join(current_dir, "event_handlers_server")
         ]
         server_event_handlers_paths.extend(
             ftrack_settings["ftrack_events_path"]
         )
         user_event_handlers_paths = [
-            os.path.join(current_dir, "actions")
+            os.path.join(current_dir, "event_handlers_user")
         ]
         user_event_handlers_paths.extend(
             ftrack_settings["ftrack_actions_path"]
