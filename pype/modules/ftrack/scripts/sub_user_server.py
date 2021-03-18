@@ -36,7 +36,7 @@ def main(args):
         ftrack_module = manager.modules_by_name["ftrack"]
         ftrack_module.user_event_handlers_paths
         server = FtrackServer(
-            ftrack_module.user_event_handlers_paths, "action"
+            ftrack_module.user_event_handlers_paths
         )
         log.debug("Launching User Ftrack Server")
         server.run_server(session=session)

@@ -1,4 +1,4 @@
-from pype.modules.ftrack import BaseEvent
+from pype.modules.ftrack.lib import BaseEvent
 
 
 class FirstVersionStatus(BaseEvent):

@@ -1,7 +1,7 @@
 import time
 import traceback
 
-from pype.modules.ftrack import ServerAction
+from pype.modules.ftrack.lib import ServerAction
 from pype.modules.ftrack.lib.avalon_sync import SyncEntitiesFactory
 
 

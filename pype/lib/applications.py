@@ -631,13 +631,13 @@ class ApplicationLaunchContext:
                 )
                 continue
 
-            modules = modules_from_path(path)
-            for _module in modules:
+            modules, _crashed = modules_from_path(path)
+            for _filepath, module in modules:
                 all_classes["pre"].extend(
-                    classes_from_module(PreLaunchHook, _module)
+                    classes_from_module(PreLaunchHook, module)
                 )
                 all_classes["post"].extend(
-                    classes_from_module(PostLaunchHook, _module)
+                    classes_from_module(PostLaunchHook, module)
                 )
 
         for launch_type, classes in all_classes.items():

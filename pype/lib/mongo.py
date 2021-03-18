@@ -137,10 +137,14 @@ class PypeMongoConnection:
     mongo_clients = {}
     log = logging.getLogger("PypeMongoConnection")
 
+    @staticmethod
+    def get_default_mongo_url():
+        return os.environ["PYPE_MONGO"]
+
     @classmethod
     def get_mongo_client(cls, mongo_url=None):
         if mongo_url is None:
-            mongo_url = os.environ["PYPE_MONGO"]
+            mongo_url = cls.get_default_mongo_url()
 
         connection = cls.mongo_clients.get(mongo_url)
         if connection:
