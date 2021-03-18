@@ -14,12 +14,10 @@ from pype.modules.ftrack.ftrack_server.lib import (
     TOPIC_STATUS_SERVER_RESULT
 )
 from pype.modules.ftrack.lib import get_ftrack_event_mongo_info
-from pype.modules.ftrack.ftrack_server.custom_db_connector import (
-    CustomDbConnector
-)
+from pype.lib import PypeMongoConnection
 from pype.api import Logger
 
-log = Logger().get_logger("Event storer")
+log = Logger.get_logger("Event storer")
 subprocess_started = datetime.datetime.now()
 
 
@@ -27,20 +25,21 @@ class SessionFactory:
     session = None
 
 
-uri, port, database, collection_name = get_ftrack_event_mongo_info()
-dbcon = CustomDbConnector(uri, database, port, collection_name)
+database_name, collection_name = get_ftrack_event_mongo_info()
+dbcon = None
 
 # ignore_topics = ["ftrack.meta.connected"]
 ignore_topics = []
 
 
 def install_db():
+    global dbcon
     try:
-        dbcon.install()
-        dbcon._database.list_collection_names()
+        mongo_client = PypeMongoConnection.get_mongo_client()
+        dbcon = mongo_client[database_name][collection_name]
     except pymongo.errors.AutoReconnect:
         log.error("Mongo server \"{}\" is not responding, exiting.".format(
-            os.environ["AVALON_MONGO"]
+            PypeMongoConnection.get_default_mongo_url()
         ))
         sys.exit(0)
 
@@ -204,7 +203,7 @@ def main(args):
             "Error with Mongo access, probably permissions."
             "Check if exist database with name \"{}\""
             " and collection \"{}\" inside."
-        ).format(database, collection_name))
+        ).format(database_name, collection_name))
         sock.sendall(b"MongoError")
 
     finally:

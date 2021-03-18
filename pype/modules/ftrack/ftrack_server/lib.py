@@ -21,7 +21,7 @@ from ftrack_api.logging import LazyLogMessage as L
 
 from pype.modules.ftrack.lib import get_ftrack_event_mongo_info
 
-from .custom_db_connector import CustomDbConnector
+from pype.lib import PypeMongoConnection
 from pype.api import Logger
 
 TOPIC_STATUS_SERVER = "pype.event.server.status"
@@ -133,27 +133,22 @@ class ProcessEventHub(SocketBaseEventHub):
     pypelog = Logger().get_logger("Session Processor")
 
     def __init__(self, *args, **kwargs):
-        self.uri, self.port, self.database, self.collection_name = (
-            get_ftrack_event_mongo_info()
-        )
-        self.dbcon = CustomDbConnector(
-            self.uri,
-            self.database,
-            self.port,
-            self.collection_name
-        )
+        self.mongo_url = None
+        self.dbcon = None
+
         super(ProcessEventHub, self).__init__(*args, **kwargs)
 
     def prepare_dbcon(self):
         try:
-            self.dbcon.install()
-            self.dbcon._database.list_collection_names()
+            database_name, collection_name = get_ftrack_event_mongo_info()
+            mongo_client = PypeMongoConnection.get_mongo_client()
+            self.dbcon = mongo_client[database_name][collection_name]
+            self.mongo_client = mongo_client
+
         except pymongo.errors.AutoReconnect:
-            self.pypelog.error(
-                "Mongo server \"{}\" is not responding, exiting.".format(
-                    os.environ["AVALON_MONGO"]
-                )
-            )
+            self.pypelog.error((
+                "Mongo server \"{}\" is not responding, exiting."
+            ).format(PypeMongoConnection.get_default_mongo_url()))
             sys.exit(0)
 
         except pymongo.errors.OperationFailure:
