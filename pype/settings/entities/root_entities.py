@@ -151,6 +151,12 @@ class RootEntity(BaseItemEntity):
                 ).format(self.__class__.__name__))
             child_entity.schema_validations()
 
+    def get_entity_from_path(self, path):
+        """Return system settings entity."""
+        raise NotImplementedError((
+            "Method `get_entity_from_path` not available for \"{}\""
+        ).format(self.__class__.__name__))
+
     def create_schema_object(self, schema_data, *args, **kwargs):
         """Create entity by entered schema data.
 
@@ -564,6 +570,8 @@ class ProjectSettings(RootEntity):
     ):
         self._project_name = project_name
 
+        self._system_settings_entity = None
+
         if schema_data is None:
             # Load system schemas
             schema_data = get_project_settings_schema()
@@ -583,6 +591,40 @@ class ProjectSettings(RootEntity):
     @project_name.setter
     def project_name(self, project_name):
         self.change_project(project_name)
+
+    @property
+    def system_settings_entity(self):
+        output = self._system_settings_entity
+        if output is None:
+            output = SystemSettings()
+            self._system_settings_entity = output
+
+        if self.override_state is OverrideState.DEFAULTS:
+            if output.override_state is not OverrideState.DEFAULTS:
+                output.set_defaults_state()
+        elif self.override_state > OverrideState.DEFAULTS:
+            if output.override_state <= OverrideState.DEFAULTS:
+                try:
+                    output.set_studio_state()
+                except Exception:
+                    output.set_defaults_state()
+        return output
+
+    def get_entity_from_path(self, path):
+        path_parts = path.split("/")
+        first_part = path_parts[0]
+        # TODO replace with constants
+        if first_part == "system_settings":
+            output = self.system_settings_entity
+            path_parts.pop(0)
+        else:
+            output = self
+            if first_part == "project_settings":
+                path_parts.pop(0)
+
+        for path_part in path_parts:
+            output = output[path_part]
+        return output
 
     def change_project(self, project_name):
         if project_name == self._project_name:
@@ -647,6 +689,8 @@ class ProjectSettings(RootEntity):
 
         if new_state is OverrideState.NOT_DEFINED:
             new_state = OverrideState.DEFAULTS
+
+        self._system_settings_entity = None
 
         self._reset_values()
         self.set_override_state(new_state)
