@@ -4,9 +4,7 @@ from pprint import pformat
 
 
 class CollectBatchInstances(pyblish.api.InstancePlugin):
-    """
-    Collect all available instances from psd batch.
-    """
+    """Collect all available instances for batch publish."""
 
     label = "Collect Batch Instances"
     order = pyblish.api.CollectorOrder + 0.489
@@ -65,7 +63,7 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
             # add subset data from preset
             new_instance.data.update(subset_data)
 
-            new_instance.data["label"] = f"{instance_name}"
+            new_instance.data["label"] = instance_name
             new_instance.data["subset"] = subset_name
             new_instance.data["task"] = task_name
 
