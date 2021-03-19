@@ -1562,10 +1562,9 @@ class SyncToAvalonEvent(BaseEvent):
                 ).format(entity_type, ent_info["entityType"]))
                 continue
 
-            _entity_key = collections.OrderedDict({
-                "configuration_id": mongo_id_configuration_id,
-                "entity_id": ftrack_id
-            })
+            _entity_key = collections.OrderedDict()
+            _entity_key["configuration_id"] = mongo_id_configuration_id
+            _entity_key["entity_id"] = ftrack_id
 
             self.process_session.recorded_operations.push(
                 ftrack_api.operation.UpdateEntityOperation(
