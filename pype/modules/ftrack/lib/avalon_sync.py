@@ -103,7 +103,7 @@ def get_pype_attr(session, split_hierarchical=True, query_keys=None):
         "select {}"
         " from CustomAttributeConfiguration"
         " where group.name in (\"avalon\", \"{}\")"
-    ).format(join_query_keys(query_keys), CUST_ATTR_GROUP)
+    ).format(", ".join(query_keys), CUST_ATTR_GROUP)
     all_avalon_attr = session.query(cust_attrs_query).all()
     for cust_attr in all_avalon_attr:
         if split_hierarchical and cust_attr["is_hierarchical"]:
