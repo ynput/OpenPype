@@ -1248,48 +1248,18 @@ class SyncToAvalonEvent(BaseEvent):
 
         return final_entity
 
-    def get_cust_attr_values(self, entity, keys=None):
+    def get_cust_attr_values(self, entity):
         output = {}
         custom_attrs, hier_attrs = self.avalon_cust_attrs
-        not_processed_keys = True
-        if keys:
-            not_processed_keys = [k for k in keys]
+
         # Notmal custom attributes
-        processed_keys = []
         for attr in custom_attrs:
-            if not not_processed_keys:
-                break
             key = attr["key"]
-            if key in processed_keys:
-                continue
+            if key in entity["custom_attributes"]:
+                output[key] = entity["custom_attributes"][key]
 
-            if key not in entity["custom_attributes"]:
-                continue
-
-            if keys:
-                if key not in keys:
-                    continue
-                else:
-                    not_processed_keys.remove(key)
-
-            output[key] = entity["custom_attributes"][key]
-            processed_keys.append(key)
-
-        if not not_processed_keys:
-            return output
-
-        # Hierarchical cust attrs
-        hier_keys = []
-        defaults = {}
-        for attr in hier_attrs:
-            key = attr["key"]
-            if keys and key not in keys:
-                continue
-            hier_keys.append(key)
-            defaults[key] = attr["default"]
-
-        hier_values = avalon_sync.get_hierarchical_attributes(
-            self.process_session, entity, hier_keys, defaults
+        hier_values = avalon_sync.get_hierarchical_attributes_values(
+            self.process_session, entity, hier_attrs
         )
         for key, val in hier_values.items():
             if key == CUST_ATTR_ID_KEY:
@@ -2147,7 +2117,8 @@ class SyncToAvalonEvent(BaseEvent):
         queries = [{
             "action": "query",
             "expression": (
-                "select value, entity_id from CustomAttributeValue "
+                "select value, entity_id, configuration_id"
+                " from CustomAttributeValue "
                 "where entity_id in ({}) and configuration_id in ({})"
             ).format(entity_ids_joined, attributes_joined)
         }]
@@ -2180,19 +2151,19 @@ class SyncToAvalonEvent(BaseEvent):
 
         # PREPARE DATA BEFORE THIS
         avalon_hier = []
-        for value in values["data"]:
-            if value["value"] is None:
+        for item in values["data"]:
+            value = item["value"]
+            if value is None:
                 continue
-            entity_id = value["entity_id"]
-            configuration_id = value["configuration_id"]
+            entity_id = item["entity_id"]
+            configuration_id = item["configuration_id"]
 
             convert_type = convert_types_by_id[configuration_id]
             key = hier_attr_key_by_id[configuration_id]
 
-            the_value = value["value"]
             if convert_type:
-                the_value = convert_type(the_value)
-            entities_dict[entity_id]["hier_attrs"][key] = the_value
+                value = convert_type(value)
+            entities_dict[entity_id]["hier_attrs"][key] = value
 
         # Get dictionary with not None hierarchical values to pull to childs
         project_values = {}
