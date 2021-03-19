@@ -638,11 +638,7 @@ def get_default_anatomy_settings(clear_metadata=True):
 
     # TODO uncomment and remove hotfix result when overrides of anatomy
     #   are stored correctly.
-    # result = apply_overrides(default_values, studio_values)
-    result = copy.deepcopy(default_values)
-    if studio_values:
-        for key, value in studio_values.items():
-            result[key] = value
+    result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
         local_settings = get_local_settings()
@@ -662,8 +658,10 @@ def get_anatomy_settings(project_name, site_name=None, exclude_locals=False):
     project_overrides = get_project_anatomy_overrides(
         project_name
     )
-
-    result = apply_overrides(studio_overrides, project_overrides)
+    result = copy.deepcopy(studio_overrides)
+    if project_overrides:
+        for key, value in project_overrides.items():
+            result[key] = value
 
     clear_metadata_from_settings(result)
 
