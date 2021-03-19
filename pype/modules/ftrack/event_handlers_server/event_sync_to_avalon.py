@@ -2169,31 +2169,9 @@ class SyncToAvalonEvent(BaseEvent):
             type_id = attr["type_id"]
             attr_id = attr["id"]
             cust_attr_type_name = attr_types_by_id[type_id]["name"]
-            convert_type = None
-            if cust_attr_type_name == "text":
-                convert_type = str
-
-            elif cust_attr_type_name == "boolean":
-                convert_type = bool
-
-            elif cust_attr_type_name in (
-                "date", "expression", "notificationtype", "dynamic enumerator"
-            ):
-                pass
-
-            else:
-                cust_attr_config = json.loads(attr["config"])
-                if cust_attr_type_name == "number":
-                    if cust_attr_config["isdecimal"]:
-                        convert_type = float
-                    else:
-                        convert_type = int
-
-                elif cust_attr_type_name == "enumerator":
-                    if cust_attr_config["multiSelect"]:
-                        convert_type = list
-                    else:
-                        convert_type = str
+            convert_type = avalon_sync.get_python_type_for_custom_attribute(
+                attr, cust_attr_type_name
+            )
 
             convert_types_by_id[attr_id] = convert_type
             entities_dict[ftrack_project_id]["hier_attrs"][key] = (
