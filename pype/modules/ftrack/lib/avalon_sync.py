@@ -321,6 +321,16 @@ def get_hierarchical_attributes(session, entity, attr_names, attr_defaults={}):
 class SyncEntitiesFactory:
     dbcon = AvalonMongoDB()
 
+    cust_attr_query_keys = [
+        "id",
+        "key",
+        "entity_type",
+        "object_type_id",
+        "is_hierarchical",
+        "config",
+        "default"
+    ]
+
     project_query = (
         "select full_name, name, custom_attributes"
         ", project_schema._task_type_schema.types.name"
@@ -866,7 +876,9 @@ class SyncEntitiesFactory:
     def set_cutom_attributes(self):
         self.log.debug("* Preparing custom attributes")
         # Get custom attributes and values
-        custom_attrs, hier_attrs = get_pype_attr(self.session)
+        custom_attrs, hier_attrs = get_pype_attr(
+            self.session, query_keys=self.cust_attr_query_keys
+        )
         ent_types = self.session.query("select id, name from ObjectType").all()
         ent_types_by_name = {
             ent_type["name"]: ent_type["id"] for ent_type in ent_types
