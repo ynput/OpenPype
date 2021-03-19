@@ -2159,10 +2159,43 @@ class SyncToAvalonEvent(BaseEvent):
 
         ftrack_project_id = self.cur_project["id"]
 
+        attr_types_by_id = self.cust_attr_types_by_id
+        convert_types_by_id = {}
         for attr in hier_attrs:
             key = attr["key"]
             if key not in hier_cust_attrs_keys:
                 continue
+
+            type_id = attr["type_id"]
+            attr_id = attr["id"]
+            cust_attr_type_name = attr_types_by_id[type_id]["name"]
+            convert_type = None
+            if cust_attr_type_name == "text":
+                convert_type = str
+
+            elif cust_attr_type_name == "boolean":
+                convert_type = bool
+
+            elif cust_attr_type_name in (
+                "date", "expression", "notificationtype", "dynamic enumerator"
+            ):
+                pass
+
+            else:
+                cust_attr_config = json.loads(attr["config"])
+                if cust_attr_type_name == "number":
+                    if cust_attr_config["isdecimal"]:
+                        convert_type = float
+                    else:
+                        convert_type = int
+
+                elif cust_attr_type_name == "enumerator":
+                    if cust_attr_config["multiSelect"]:
+                        convert_type = list
+                    else:
+                        convert_type = str
+
+            convert_types_by_id[attr_id] = convert_type
             entities_dict[ftrack_project_id]["hier_attrs"][key] = (
                 attr["default"]
             )
@@ -2173,8 +2206,15 @@ class SyncToAvalonEvent(BaseEvent):
             if value["value"] is None:
                 continue
             entity_id = value["entity_id"]
-            key = hier_attr_key_by_id[value["configuration_id"]]
-            entities_dict[entity_id]["hier_attrs"][key] = value["value"]
+            configuration_id = value["configuration_id"]
+
+            convert_type = convert_types_by_id[configuration_id]
+            key = hier_attr_key_by_id[configuration_id]
+
+            the_value = value["value"]
+            if convert_type:
+                the_value = convert_type(the_value)
+            entities_dict[entity_id]["hier_attrs"][key] = the_value
 
         # Get dictionary with not None hierarchical values to pull to childs
         project_values = {}
