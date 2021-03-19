@@ -83,6 +83,10 @@ def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
     return False
 
 
+def join_query_keys(keys):
+    return ",".join(["\"{}\"".format(key) for key in keys])
+
+
 def get_pype_attr(session, split_hierarchical=True, query_keys=None):
     custom_attributes = []
     hier_custom_attributes = []
