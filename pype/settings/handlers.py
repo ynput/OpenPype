@@ -342,8 +342,25 @@ class MongoSettingsHandler(SettingsHandler):
     def __init__(self):
         # Get mongo connection
         from pype.lib import PypeMongoConnection
+        from avalon.api import AvalonMongoDB
+        from .entities import ProjectSettings
+
         settings_collection = PypeMongoConnection.get_mongo_client()
 
+        # Prepare anatomy keys and attribute keys
+        # NOTE this is cached on first import
+        # - keys may change only on schema change which should not happen
+        #   during production
+        project_settings_root = ProjectSettings(
+            reset=False, change_state=False
+        )
+        anatomy_entity = project_settings_root["project_anatomy"]
+        anatomy_keys = set(anatomy_entity.keys())
+        anatomy_keys.remove("attributes")
+        attribute_keys = set(anatomy_entity["attributes"].keys())
+
+        self.anatomy_keys = anatomy_keys
+        self.attribute_keys = attribute_keys
         # TODO prepare version of pype
         # - pype version should define how are settings saved and loaded
 
@@ -357,6 +374,7 @@ class MongoSettingsHandler(SettingsHandler):
         self.collection_name = collection_name
 
         self.collection = settings_collection[database_name][collection_name]
+        self.avalon_db = AvalonMongoDB()
 
         self.system_settings_cache = CacheValues()
         self.project_settings_cache = collections.defaultdict(CacheValues)
