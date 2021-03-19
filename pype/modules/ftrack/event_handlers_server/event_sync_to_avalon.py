@@ -1259,12 +1259,16 @@ class SyncToAvalonEvent(BaseEvent):
                 output[key] = entity["custom_attributes"][key]
 
         hier_values = avalon_sync.get_hierarchical_attributes_values(
-            self.process_session, entity, hier_attrs
+            self.process_session,
+            entity,
+            hier_attrs,
+            self.cust_attr_types_by_id
         )
         for key, val in hier_values.items():
-            if key == CUST_ATTR_ID_KEY:
-                continue
             output[key] = val
+
+        # Make sure mongo id is not set
+        output.pop(CUST_ATTR_ID_KEY, None)
 
         return output
 
