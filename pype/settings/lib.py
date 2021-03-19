@@ -91,16 +91,82 @@ def calculate_changes(old_value, new_value):
 
 @require_handler
 def save_studio_settings(data):
+    # Notify Pype modules
+    from pype.modules import ModulesManager, ISettingsChangeListener
+
+    old_data = get_system_settings()
+    default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
+    new_data = apply_overrides(default_values, copy.deepcopy(data))
+    clear_metadata_from_settings(new_data)
+
+    changes = calculate_changes(old_data, new_data)
+    modules_manager = ModulesManager()
+    for module in modules_manager.get_enabled_modules():
+        if isinstance(module, ISettingsChangeListener):
+            module.on_system_settings_save(old_data, new_data, changes)
+
     return _SETTINGS_HANDLER.save_studio_settings(data)
 
 
 @require_handler
 def save_project_settings(project_name, overrides):
+    # Notify Pype modules
+    from pype.modules import ModulesManager, ISettingsChangeListener
+
+    default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
+    if project_name:
+        old_data = get_project_settings(project_name)
+
+        studio_overrides = get_studio_project_settings_overrides()
+        studio_values = apply_overrides(default_values, studio_overrides)
+        clear_metadata_from_settings(studio_values)
+        new_data = apply_overrides(studio_values, copy.deepcopy(overrides))
+
+    else:
+        old_data = get_default_project_settings()
+        new_data = apply_overrides(default_values, copy.deepcopy(overrides))
+
+    clear_metadata_from_settings(new_data)
+
+    changes = calculate_changes(old_data, new_data)
+    modules_manager = ModulesManager()
+    for module in modules_manager.get_enabled_modules():
+        if isinstance(module, ISettingsChangeListener):
+            module.on_project_settings_save(
+                old_data, new_data, project_name, changes
+            )
+
     return _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
 
 
 @require_handler
 def save_project_anatomy(project_name, anatomy_data):
+    # Notify Pype modules
+    from pype.modules import ModulesManager, ISettingsChangeListener
+
+    default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
+    if project_name:
+        old_data = get_anatomy_settings(project_name)
+
+        studio_overrides = get_studio_project_settings_overrides()
+        studio_values = apply_overrides(default_values, studio_overrides)
+        clear_metadata_from_settings(studio_values)
+        new_data = apply_overrides(studio_values, copy.deepcopy(anatomy_data))
+
+    else:
+        old_data = get_default_anatomy_settings()
+        new_data = apply_overrides(default_values, copy.deepcopy(anatomy_data))
+
+    clear_metadata_from_settings(new_data)
+
+    changes = calculate_changes(old_data, new_data)
+    modules_manager = ModulesManager()
+    for module in modules_manager.get_enabled_modules():
+        if isinstance(module, ISettingsChangeListener):
+            module.on_project_anatomy_save(
+                old_data, new_data, changes, project_name
+            )
+
     return _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
 
 
