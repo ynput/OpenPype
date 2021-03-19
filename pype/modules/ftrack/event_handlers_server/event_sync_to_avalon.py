@@ -1803,6 +1803,10 @@ class SyncToAvalonEvent(BaseEvent):
             return
 
         cust_attrs, hier_attrs = self.avalon_cust_attrs
+        hier_attrs_by_key = {
+            attr["key"]: attr
+            for attr in hier_attrs
+        }
         cust_attrs_by_obj_id = collections.defaultdict(dict)
         for cust_attr in cust_attrs:
             key = cust_attr["key"]
@@ -1818,8 +1822,6 @@ class SyncToAvalonEvent(BaseEvent):
                 obj_id = cust_attr["object_type_id"]
                 cust_attrs_by_obj_id[obj_id][key] = cust_attr
 
-        hier_attrs_keys = [attr["key"] for attr in hier_attrs]
-
         for ftrack_id, ent_info in ent_infos.items():
             mongo_id = ftrack_mongo_mapping[ftrack_id]
             entType = ent_info["entityType"]
@@ -1832,19 +1834,25 @@ class SyncToAvalonEvent(BaseEvent):
 
             # Ftrack's entity_type does not have defined custom attributes
             if ent_cust_attrs is None:
-                ent_cust_attrs = []
+                ent_cust_attrs = {}
 
             for key, values in ent_info["changes"].items():
+                if key in hier_attrs_by_key:
+                    self.hier_cust_attrs_changes[key].append(ftrack_id)
+                    continue
+
+                if key not in ent_cust_attrs:
+                    continue
+
+                value = values["new"]
+                new_value = self.convert_value_by_cust_attr_conf(
+                    value, ent_cust_attrs[key]
+                )
+
                 if entType == "show" and key == "applications":
                     # Store apps to project't config
-                    apps_str = ent_info["changes"]["applications"]["new"]
-                    cust_attr_apps = [
-                        app_name.strip()
-                        for app_name in apps_str.split(", ") if app_name
-                    ]
-
                     proj_apps, warnings = (
-                        avalon_sync.get_project_apps(cust_attr_apps)
+                        avalon_sync.get_project_apps(new_value)
                     )
                     if "config" not in self.updates[mongo_id]:
                         self.updates[mongo_id]["config"] = {}
@@ -1856,20 +1864,12 @@ class SyncToAvalonEvent(BaseEvent):
                         self.report_items["warning"][msg] = items
                     continue
 
-                if key in hier_attrs_keys:
-                    self.hier_cust_attrs_changes[key].append(ftrack_id)
-                    continue
-
-                if key not in ent_cust_attrs:
-                    continue
-
                 if "data" not in self.updates[mongo_id]:
                     self.updates[mongo_id]["data"] = {}
-                value = values["new"]
-                self.updates[mongo_id]["data"][key] = value
+                self.updates[mongo_id]["data"][key] = new_value
                 self.log.debug(
                     "Setting data value of \"{}\" to \"{}\" <{}>".format(
-                        key, value, ent_path
+                        key, new_value, ent_path
                     )
                 )
 
