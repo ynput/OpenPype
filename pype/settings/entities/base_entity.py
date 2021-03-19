@@ -375,9 +375,13 @@ class BaseItemEntity(BaseEntity):
         if value is NOT_SET:
             return value
 
-        # Validate value type and return value itself if is valid.
-        if self.is_value_valid_type(value):
-            return value
+        try:
+            new_value = self.convert_to_valid_type(value)
+        except InvalidValueType:
+            new_value = NOT_SET
+
+        if new_value is not NOT_SET:
+            return new_value
 
         # Warning log about invalid value type.
         self.log.warning(
