@@ -12,59 +12,23 @@
             "collapsible": true,
             "children": [
                 {
-                    "type": "text",
-                    "key": "AVALON_MONGO",
-                    "label": "Avalon Mongo URL",
-                    "placeholder": "Pype Mongo is used if not filled."
-                },
-                {
                     "type": "number",
                     "key": "AVALON_TIMEOUT",
                     "minimum": 0,
                     "label": "Avalon Mongo Timeout (ms)"
                 },
                 {
-                    "type": "path-widget",
+                    "type": "path",
                     "label": "Thumbnail Storage Location",
                     "key": "AVALON_THUMBNAIL_ROOT",
                     "multiplatform": true,
                     "multipath": false
-                },
-                {
-                    "type": "text",
-                    "key": "AVALON_DB_DATA",
-                    "label": "Avalon Mongo Data Location"
                 }
             ]
         },
         {
             "type": "schema",
             "name": "schema_ftrack"
-        },
-        {
-            "type": "dict",
-            "key": "rest_api",
-            "label": "Rest Api",
-            "collapsible": true,
-            "children": [
-                {
-                    "type": "number",
-                    "key": "default_port",
-                    "label": "Default Port",
-                    "minimum": 1,
-                    "maximum": 65535
-                },
-                {
-                    "type": "list",
-                    "key": "exclude_ports",
-                    "label": "Exclude ports",
-                    "object_type": {
-                        "type": "number",
-                        "minimum": 1,
-                        "maximum": 65535
-                    }
-                }
-            ]
         },
         {
             "type": "dict",

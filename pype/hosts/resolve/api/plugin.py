@@ -492,7 +492,7 @@ class TimelineItemLoader(api.Loader):
         pass
 
 
-class Creator(api.Creator):
+class Creator(pype.PypeCreatorMixin, api.Creator):
     """Creator class wrapper
     """
     marker_color = "Purple"

@@ -33,8 +33,9 @@ function Show-PSWarning() {
     }
 }
 
-$current_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$pype_root = (Get-Item $current_dir).parent.FullName
+$current_dir = Get-Location
+$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$pype_root = (Get-Item $script_dir).parent.FullName
 Set-Location -Path $pype_root
 
 $art = @"
@@ -56,7 +57,7 @@ Write-Host $art -ForegroundColor DarkGreen
 # Show-PSWarning
 
 $version_file = Get-Content -Path "$($pype_root)\pype\version.py"
-$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+)"')
+$result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
 $pype_version = $result[0].Groups['version'].Value
 if (-not $pype_version) {
   Write-Host "!!! " -ForegroundColor yellow -NoNewline

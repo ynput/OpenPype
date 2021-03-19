@@ -23,7 +23,7 @@ class ExtractTemplate(pype.api.Extractor):
         self.log.info(f"Outputting template to {staging_dir}")
 
         dependencies = []
-        self.get_dependencies(instance[0], dependencies)
+        self.get_dependencies(instance.data["setMembers"][0], dependencies)
 
         # Get backdrops.
         backdrops = {}
@@ -46,11 +46,11 @@ class ExtractTemplate(pype.api.Extractor):
                 dependencies.append(node)
 
         # Make sure we dont export the instance node.
-        if instance[0] in dependencies:
-            dependencies.remove(instance[0])
+        if instance.data["setMembers"][0] in dependencies:
+            dependencies.remove(instance.data["setMembers"][0])
 
         # Export template.
-        pype.hosts.harmony.export_template(
+        pype.hosts.harmony.api.export_template(
             unique_backdrops, dependencies, filepath
         )
 

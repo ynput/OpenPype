@@ -1,85 +1,146 @@
 import os
 import re
 import json
+import datetime
+
 import bson
+from bson.objectid import ObjectId
 import bson.json_util
-from pype.modules.rest_api import RestApi, abort, CallbackResult
+
+from aiohttp.web_response import Response
+
 from avalon.api import AvalonMongoDB
+from pype.modules.webserver.base_routes import RestApiEndpoint
 
 
-class AvalonRestApi(RestApi):
+class _RestApiEndpoint(RestApiEndpoint):
+    def __init__(self, resource):
+        self.resource = resource
+        super(_RestApiEndpoint, self).__init__()
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    @property
+    def dbcon(self):
+        return self.resource.dbcon
+
+
+class AvalonProjectsEndpoint(_RestApiEndpoint):
+    async def get(self) -> Response:
+        output = []
+        for project_name in self.dbcon.database.collection_names():
+            project_doc = self.dbcon.database[project_name].find_one({
+                "type": "project"
+            })
+            output.append(project_doc)
+        return Response(
+            status=200,
+            body=self.resource.encode(output),
+            content_type="application/json"
+        )
+
+
+class AvalonProjectEndpoint(_RestApiEndpoint):
+    async def get(self, project_name) -> Response:
+        project_doc = self.dbcon.database[project_name].find_one({
+            "type": "project"
+        })
+        if project_doc:
+            return Response(
+                status=200,
+                body=self.resource.encode(project_doc),
+                content_type="application/json"
+            )
+        return Response(
+            status=404,
+            reason="Project name {} not found".format(project_name)
+        )
+
+
+class AvalonAssetsEndpoint(_RestApiEndpoint):
+    async def get(self, project_name) -> Response:
+        asset_docs = list(self.dbcon.database[project_name].find({
+            "type": "asset"
+        }))
+        return Response(
+            status=200,
+            body=self.resource.encode(asset_docs),
+            content_type="application/json"
+        )
+
+
+class AvalonAssetEndpoint(_RestApiEndpoint):
+    async def get(self, project_name, asset_name) -> Response:
+        asset_doc = self.dbcon.database[project_name].find_one({
+            "type": "asset",
+            "name": asset_name
+        })
+        if asset_doc:
+            return Response(
+                status=200,
+                body=self.resource.encode(asset_doc),
+                content_type="application/json"
+            )
+        return Response(
+            status=404,
+            reason="Asset name {} not found in project {}".format(
+                asset_name, project_name
+            )
+        )
+
+
+class AvalonRestApiResource:
+    def __init__(self, avalon_module, server_manager):
+        self.module = avalon_module
+        self.server_manager = server_manager
+
         self.dbcon = AvalonMongoDB()
         self.dbcon.install()
 
-    @RestApi.route("/projects/<project_name>", url_prefix="/avalon", methods="GET")
-    def get_project(self, request):
-        project_name = request.url_data["project_name"]
-        if not project_name:
-            output = {}
-            for project_name in self.dbcon.tables():
-                project = self.dbcon[project_name].find_one({
-                    "type": "project"
-                })
-                output[project_name] = project
+        self.prefix = "/avalon"
 
-            return CallbackResult(data=self.result_to_json(output))
+        self.endpoint_defs = (
+            (
+                "GET",
+                "/projects",
+                AvalonProjectsEndpoint(self)
+            ),
+            (
+                "GET",
+                "/projects/{project_name}",
+                AvalonProjectEndpoint(self)
+            ),
+            (
+                "GET",
+                "/projects/{project_name}/assets",
+                AvalonAssetsEndpoint(self)
+            ),
+            (
+                "GET",
+                "/projects/{project_name}/assets/{asset_name}",
+                AvalonAssetEndpoint(self)
+            )
+        )
 
-        project = self.dbcon[project_name].find_one({"type": "project"})
+        self.register()
 
-        if project:
-            return CallbackResult(data=self.result_to_json(project))
+    def register(self):
+        for methods, url, endpoint in self.endpoint_defs:
+            final_url = self.prefix + url
+            self.server_manager.add_route(
+                methods, final_url, endpoint.dispatch
+            )
 
-        abort(404, "Project \"{}\" was not found in database".format(
-            project_name
-        ))
+    @staticmethod
+    def json_dump_handler(value):
+        if isinstance(value, datetime.datetime):
+            return value.isoformat()
+        if isinstance(value, ObjectId):
+            return str(value)
+        raise TypeError(value)
 
-    @RestApi.route("/projects/<project_name>/assets/<asset>", url_prefix="/avalon", methods="GET")
-    def get_assets(self, request):
-        _project_name = request.url_data["project_name"]
-        _asset = request.url_data["asset"]
-
-        if not self.dbcon.exist_table(_project_name):
-            abort(404, "Project \"{}\" was not found in database".format(
-                _project_name
-            ))
-
-        if not _asset:
-            assets = self.dbcon[_project_name].find({"type": "asset"})
-            output = self.result_to_json(assets)
-            return CallbackResult(data=output)
-
-        # identificator can be specified with url query (default is `name`)
-        identificator = request.query.get("identificator", "name")
-
-        asset = self.dbcon[_project_name].find_one({
-            "type": "asset",
-            identificator: _asset
-        })
-        if asset:
-            id = asset["_id"]
-            asset["_id"] = str(id)
-            return asset
-
-        abort(404, "Asset \"{}\" with {} was not found in project {}".format(
-            _asset, identificator, _project_name
-        ))
-
-    def result_to_json(self, result):
-        """ Converts result of MongoDB query to dict without $oid (ObjectId)
-        keys with help of regex matching.
-
-        ..note:
-            This will convert object type entries similar to ObjectId.
-        """
-        bson_json = bson.json_util.dumps(result)
-        # Replace "{$oid: "{entity id}"}" with "{entity id}"
-        regex1 = '(?P<id>{\"\$oid\": \"[^\"]+\"})'
-        regex2 = '{\"\$oid\": (?P<id>\"[^\"]+\")}'
-        for value in re.findall(regex1, bson_json):
-            for substr in re.findall(regex2, value):
-                bson_json = bson_json.replace(value, substr)
-
-        return json.loads(bson_json)
+    @classmethod
+    def encode(cls, data):
+        return json.dumps(
+            data,
+            indent=4,
+            default=cls.json_dump_handler
+        ).encode("utf-8")

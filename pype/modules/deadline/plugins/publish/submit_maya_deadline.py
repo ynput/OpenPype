@@ -254,6 +254,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     use_published = True
     tile_assembler_plugin = "PypeTileAssembler"
     asset_dependencies = False
+    limit_groups = []
+    group = "none"
 
     def process(self, instance):
         """Plugin entry point."""
@@ -402,8 +404,15 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # Arbitrary username, for visualisation in Monitor
         self.payload_skeleton["JobInfo"]["UserName"] = deadline_user
         # Set job priority
-        self.payload_skeleton["JobInfo"]["Priority"] = self._instance.data.get(
-            "priority", 50)
+        self.payload_skeleton["JobInfo"]["Priority"] = \
+            self._instance.data.get("priority", 50)
+
+        if self.group != "none":
+            self.payload_skeleton["JobInfo"]["Group"] = self.group
+
+        if self.limit_groups:
+            self.payload_skeleton["JobInfo"]["LimitGroups"] = \
+                ",".join(self.limit_groups)
         # Optional, enable double-click to preview rendered
         # frames from Deadline Monitor
         self.payload_skeleton["JobInfo"]["OutputDirectory0"] = \
@@ -431,6 +440,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
+            "AVALON_APP_NAME",
             "PYPE_USERNAME",
             "PYPE_DEV",
             "PYPE_LOG_NO_COLORS"
@@ -440,6 +450,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                             if key in os.environ}, **api.Session)
         environment["PYPE_LOG_NO_COLORS"] = "1"
         environment["PYPE_MAYA_VERSION"] = cmds.about(v=True)
+        # to recognize job from PYPE for turning Event On/Off
+        environment["PYPE_RENDER_JOB"] = "1"
         self.payload_skeleton["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,

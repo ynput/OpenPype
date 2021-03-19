@@ -8,13 +8,14 @@ import requests
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
-from pype.hosts.maya.api import lib
+from pype.hosts.maya.api import (
+    lib,
+    plugin
+)
 from pype.api import get_system_settings
 
-import avalon.maya
 
-
-class CreateVRayScene(avalon.maya.Creator):
+class CreateVRayScene(plugin.Creator):
     """Create Vray Scene."""
 
     label = "VRay Scene"
@@ -190,9 +191,9 @@ class CreateVRayScene(avalon.maya.Creator):
         # authentication token expired so we need to login to Muster
         # again to get it. We use Pype API call to show login window.
         api_url = "{}/muster/show_login".format(
-            os.environ["PYPE_REST_API_URL"])
+            os.environ["PYPE_WEBSERVER_URL"])
         self.log.debug(api_url)
-        login_response = self._requests_post(api_url, timeout=1)
+        login_response = self._requests_get(api_url, timeout=1)
         if login_response.status_code != 200:
             self.log.error("Cannot show login form to Muster")
             raise Exception("Cannot show login form to Muster")

@@ -1,4 +1,4 @@
-from avalon import api
+import pype.api
 from avalon.vendor import Qt
 from avalon import aftereffects
 
@@ -7,8 +7,14 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class CreateRender(api.Creator):
-    """Render folder for publish."""
+class CreateRender(pype.api.Creator):
+    """Render folder for publish.
+
+        Creates subsets in format 'familyTaskSubsetname',
+        eg 'renderCompositingMain'.
+
+        Create only single instance from composition at a time.
+    """
 
     name = "renderDefault"
     label = "Render on Farm"
@@ -20,7 +26,7 @@ class CreateRender(api.Creator):
             items = stub.get_selected_items(comps=True,
                                             folders=False,
                                             footages=False)
-        else:
+        if len(items) > 1:
             self._show_msg("Please select only single composition at time.")
             return False
 
@@ -30,15 +36,20 @@ class CreateRender(api.Creator):
                            "one composition.")
             return False
 
-        for item in items:
+        existing_subsets = [instance['subset'].lower()
+                            for instance in aftereffects.list_instances()]
+
+        item = items.pop()
+        if self.name.lower() in existing_subsets:
             txt = "Instance with name \"{}\" already exists.".format(self.name)
-            if self.name.lower() == item.name.lower():
-                self._show_msg(txt)
-                return False
-            self.data["members"] = [item.id]
-            stub.imprint(item, self.data)
-            stub.set_label_color(item.id, 14)  # Cyan options 0 - 16
-            stub.rename_item(item, self.data["subset"])
+            self._show_msg(txt)
+            return False
+
+        self.data["members"] = [item.id]
+        self.data["uuid"] = item.id  # for SubsetManager
+        stub.imprint(item, self.data)
+        stub.set_label_color(item.id, 14)  # Cyan options 0 - 16
+        stub.rename_item(item, stub.PUBLISH_ICON + self.data["subset"])
 
     def _show_msg(self, txt):
         msg = Qt.QtWidgets.QMessageBox()

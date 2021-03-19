@@ -1,7 +1,7 @@
 from pype.api import (
     Anatomy,
     get_project_settings,
-    get_current_project_settings)
+    get_local_site_id)
 
 import threading
 import concurrent.futures
@@ -97,6 +97,7 @@ class SyncServer(PypeModule, ITrayModule):
     # set 0 to no limit
     REPRESENTATION_LIMIT = 100
     DEFAULT_SITE = 'studio'
+    LOCAL_SITE = 'local'
     LOG_PROGRESS_SEC = 5  # how often log progress to DB
 
     name = "sync_server"
@@ -110,8 +111,7 @@ class SyncServer(PypeModule, ITrayModule):
             Sets 'enabled' according to global settings for the module.
             Shouldnt be doing any initialization, thats a job for 'tray_init'
         """
-        sync_server_settings = module_settings[self.name]
-        self.enabled = sync_server_settings["enabled"]
+        self.enabled = module_settings[self.name]["enabled"]
         if asyncio is None:
             raise AssertionError(
                 "SyncServer module requires Python 3.5 or higher."
@@ -119,7 +119,8 @@ class SyncServer(PypeModule, ITrayModule):
         # some parts of code need to run sequentially, not in async
         self.lock = None
         self.connection = None  # connection to avalon DB to update state
-        self.presets = None  # settings for all enabled projects for sync
+        # settings for all enabled projects for sync
+        self.sync_project_settings = None
         self.sync_server_thread = None  # asyncio requires new thread
 
         self.action_show_widget = None
@@ -128,7 +129,7 @@ class SyncServer(PypeModule, ITrayModule):
         self._paused_representations = set()
         self._anatomies = {}
 
-    # public facing API
+    """ Start of Public API """
     def add_site(self, collection, representation_id, site_name=None):
         """
             Adds new site to representation to be synced.
@@ -146,7 +147,7 @@ class SyncServer(PypeModule, ITrayModule):
             Returns:
                 throws ValueError if any issue
         """
-        if not self.get_synced_preset(collection):
+        if not self.get_sync_project_setting(collection):
             raise ValueError("Project not configured")
 
         if not site_name:
@@ -173,7 +174,7 @@ class SyncServer(PypeModule, ITrayModule):
             Returns:
                 throws ValueError if any issue
         """
-        if not self.get_synced_preset(collection):
+        if not self.get_sync_project_setting(collection):
             raise ValueError("Project not configured")
 
         self.reset_provider_for_file(collection,
@@ -322,6 +323,115 @@ class SyncServer(PypeModule, ITrayModule):
         """ Is server paused """
         return self._paused
 
+    def get_active_sites(self, project_name):
+        """
+            Returns list of active sites for 'project_name'.
+
+            By default it returns ['studio'], this site is default
+            and always present even if SyncServer is not enabled. (for publish)
+
+            Used mainly for Local settings for user override.
+
+            Args:
+                project_name (string):
+
+            Returns:
+                (list) of strings
+        """
+        return self.get_active_sites_from_settings(
+            get_project_settings(project_name))
+
+    def get_active_sites_from_settings(self, settings):
+        """
+            List available active sites from incoming 'settings'. Used for
+            returning 'default' values for Local Settings
+
+            Args:
+                settings (dict): full settings (global + project)
+            Returns:
+                (list) of strings
+        """
+        sync_settings = self._parse_sync_settings_from_settings(settings)
+
+        return self._get_active_sites_from_settings(sync_settings)
+
+    def get_active_site(self, project_name):
+        """
+            Returns active (mine) site for 'project_name' from settings
+
+            Returns:
+                (string)
+        """
+        active_site = self.get_sync_project_setting(
+            project_name)['config']['active_site']
+        if active_site == self.LOCAL_SITE:
+            return get_local_site_id()
+        return active_site
+
+    # remote sites
+    def get_remote_sites(self, project_name):
+        """
+            Returns all remote sites configured on 'project_name'.
+
+            If 'project_name' is not enabled for syncing returns [].
+
+            Used by Local setting to allow user choose remote site.
+
+            Args:
+                project_name (string):
+
+            Returns:
+                (list) of strings
+        """
+        return self.get_remote_sites_from_settings(
+            get_project_settings(project_name))
+
+    def get_remote_sites_from_settings(self, settings):
+        """
+            Get remote sites for returning 'default' values for Local Settings
+        """
+        sync_settings = self._parse_sync_settings_from_settings(settings)
+
+        return self._get_remote_sites_from_settings(sync_settings)
+
+    def get_remote_site(self, project_name):
+        """
+            Returns remote (theirs) site for 'project_name' from settings
+        """
+        remote_site = self.get_sync_project_setting(
+            project_name)['config']['remote_site']
+        if remote_site == self.LOCAL_SITE:
+            return get_local_site_id()
+
+        return remote_site
+
+    """ End of Public API """
+
+    def get_local_file_path(self, collection, file_path):
+        """
+            Externalized for app
+        """
+        local_file_path, _ = self._resolve_paths(file_path, collection)
+
+        return local_file_path
+
+    def _get_remote_sites_from_settings(self, sync_settings):
+        if not self.enabled or not sync_settings['enabled']:
+            return []
+
+        remote_sites = [self.DEFAULT_SITE, self.LOCAL_SITE]
+        if sync_settings:
+            remote_sites.extend(sync_settings.get("sites").keys())
+
+        return list(set(remote_sites))
+
+    def _get_active_sites_from_settings(self, sync_settings):
+        sites = [self.DEFAULT_SITE]
+        if self.enabled and sync_settings['enabled']:
+            sites.append(self.LOCAL_SITE)
+
+        return sites
+
     def connect_with_modules(self, *_a, **kw):
         return
 
@@ -335,15 +445,14 @@ class SyncServer(PypeModule, ITrayModule):
         if not self.enabled:
             return
 
-        self.presets = None
+        self.sync_project_settings = None
         self.lock = threading.Lock()
 
         self.connection = AvalonMongoDB()
         self.connection.install()
 
         try:
-            self.presets = self.get_synced_presets()
-            self.set_active_sites(self.presets)
+            self.set_sync_project_settings()
             self.sync_server_thread = SyncServerThread(self)
             from .tray.app import SyncServerWindow
             self.widget = SyncServerWindow(self)
@@ -355,7 +464,7 @@ class SyncServer(PypeModule, ITrayModule):
                 "There are not set presets for SyncServer OR "
                 "Credentials provided are invalid, "
                 "no syncing possible").
-                format(str(self.presets)), exc_info=True)
+                format(str(self.sync_project_settings)), exc_info=True)
             self.enabled = False
 
     def tray_start(self):
@@ -369,7 +478,7 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             None
         """
-        if self.presets and self.active_sites:
+        if self.sync_project_settings and self.enabled:
             self.sync_server_thread.start()
         else:
             log.info("No presets or active providers. " +
@@ -425,31 +534,48 @@ class SyncServer(PypeModule, ITrayModule):
         """
         return self._anatomies.get('project_name') or Anatomy(project_name)
 
-    def get_synced_presets(self):
+    def set_sync_project_settings(self):
         """
-            Collects all projects which have enabled syncing and their settings
-        Returns:
-            (dict): of settings, keys are project names
-        """
-        if self.presets:  # presets set already, do not call again and again
-            return self.presets
+            Set sync_project_settings for all projects (caching)
 
-        sync_presets = {}
+            For performance
+        """
+        sync_project_settings = {}
         if not self.connection:
             self.connection = AvalonMongoDB()
             self.connection.install()
 
         for collection in self.connection.database.collection_names(False):
-            sync_settings = self.get_synced_preset(collection)
+            sync_settings = self._parse_sync_settings_from_settings(
+                get_project_settings(collection))
             if sync_settings:
-                sync_presets[collection] = sync_settings
+                default_sites = self._get_default_site_configs()
+                sync_settings['sites'].update(default_sites)
+                sync_project_settings[collection] = sync_settings
 
-        if not sync_presets:
+        if not sync_project_settings:
             log.info("No enabled and configured projects for sync.")
 
-        return sync_presets
+        self.sync_project_settings = sync_project_settings
 
-    def get_synced_preset(self, project_name):
+    def get_sync_project_settings(self, refresh=False):
+        """
+            Collects all projects which have enabled syncing and their settings
+        Args:
+            refresh (bool): refresh presets from settings - used when user
+                changes site in Local Settings or any time up-to-date values
+                are necessary
+        Returns:
+            (dict): of settings, keys are project names
+            {'projectA':{enabled: True, sites:{}...}
+        """
+        # presets set already, do not call again and again
+        if refresh or not self.sync_project_settings:
+            self.set_sync_project_settings()
+
+        return self.sync_project_settings
+
+    def get_sync_project_setting(self, project_name):
         """ Handles pulling sync_server's settings for enabled 'project_name'
 
             Args:
@@ -460,83 +586,91 @@ class SyncServer(PypeModule, ITrayModule):
         """
         # presets set already, do not call again and again
         # self.log.debug("project preset {}".format(self.presets))
-        if self.presets and self.presets.get(project_name):
-            return self.presets.get(project_name)
+        if self.sync_project_settings and \
+                self.sync_project_settings.get(project_name):
+            return self.sync_project_settings.get(project_name)
 
         settings = get_project_settings(project_name)
-        sync_settings = settings.get("global")["sync_server"]
+        return self._parse_sync_settings_from_settings(settings)
+
+    def site_is_working(self, project_name, site_name):
+        """
+            Confirm that 'site_name' is configured correctly for 'project_name'
+            Args:
+                project_name(string):
+                site_name(string):
+            Returns
+                (bool)
+        """
+        if self._get_configured_sites(project_name).get(site_name):
+            return True
+        return False
+
+    def _parse_sync_settings_from_settings(self, settings):
+        """ settings from api.get_project_settings, TOOD rename """
+        sync_settings = settings.get("global").get("sync_server")
         if not sync_settings:
-            log.info("No project setting for {}, not syncing.".
-                     format(project_name))
+            log.info("No project setting not syncing.")
             return {}
         if sync_settings.get("enabled"):
             return sync_settings
 
         return {}
 
-    def set_active_sites(self, settings):
+    def _get_configured_sites(self, project_name):
         """
-            Sets 'self.active_sites' as a dictionary from provided 'settings'
-
-            Format:
-              {  'project_name' : ('provider_name', 'site_name') }
-        Args:
-            settings (dict): all enabled project sync setting (sites labesl,
-                retries count etc.)
-        """
-        self.active_sites = {}
-        initiated_handlers = {}
-        for project_name, project_setting in settings.items():
-            for site_name, config in project_setting.get("sites").items():
-                handler = initiated_handlers.get(config["provider"])
-                if not handler:
-                    handler = lib.factory.get_provider(config["provider"],
-                                                       site_name,
-                                                       presets=config)
-                    initiated_handlers[config["provider"]] = handler
-
-                if handler.is_active():
-                    if not self.active_sites.get('project_name'):
-                        self.active_sites[project_name] = []
-
-                    self.active_sites[project_name].append(
-                        (config["provider"], site_name))
-
-        if not self.active_sites:
-            log.info("No sync sites active, no working credentials provided")
-
-    def get_active_sites(self, project_name):
-        """
-            Returns active sites (provider configured and able to connect) per
-            project.
+            Loops through settings and looks for configured sites and checks
+            its handlers for particular 'project_name'.
 
             Args:
-                project_name (str): used as a key in dict
-
+                project_setting(dict): dictionary from Settings
+                only_project_name(string, optional): only interested in
+                    particular project
             Returns:
-                (dict):
-                Format:
-                    {  'project_name' : ('provider_name', 'site_name') }
+                (dict of dict)
+                {'ProjectA': {'studio':True, 'gdrive':False}}
         """
-        return self.active_sites[project_name]
+        settings = self.get_sync_project_setting(project_name)
+        return self._get_configured_sites_from_setting(settings)
 
-    def get_local_site(self, project_name):
-        """
-            Returns active (mine) site for 'project_name' from settings
-        """
-        return self.get_synced_preset(project_name)['config']['active_site']
+    def _get_configured_sites_from_setting(self, project_setting):
+        if not project_setting.get("enabled"):
+            return {}
 
-    def get_remote_site(self, project_name):
+        initiated_handlers = {}
+        configured_sites = {}
+        all_sites = self._get_default_site_configs()
+        all_sites.update(project_setting.get("sites"))
+        for site_name, config in all_sites.items():
+            handler = initiated_handlers. \
+                get((config["provider"], site_name))
+            if not handler:
+                handler = lib.factory.get_provider(config["provider"],
+                                                   site_name,
+                                                   presets=config)
+                initiated_handlers[(config["provider"], site_name)] = \
+                    handler
+
+            if handler.is_active():
+                configured_sites[site_name] = True
+
+        return configured_sites
+
+    def _get_default_site_configs(self):
         """
-            Returns remote (theirs) site for 'project_name' from settings
+            Returns skeleton settings for 'studio' and user's local site
         """
-        return self.get_synced_preset(project_name)['config']['remote_site']
+        default_config = {'provider': 'local_drive'}
+        all_sites = {self.DEFAULT_SITE: default_config,
+                     get_local_site_id(): default_config}
+        return all_sites
 
     def get_provider_for_site(self, project_name, site):
         """
             Return provider name for site.
         """
-        site_preset = self.get_synced_preset(project_name)["sites"].get(site)
+        site_preset = self.get_sync_project_setting(project_name)["sites"].\
+            get(site)
         if site_preset:
             return site_preset["provider"]
 
@@ -606,8 +740,9 @@ class SyncServer(PypeModule, ITrayModule):
                 ]}
             ]
         }
-
-        log.debug("get_sync_representations.query: {}".format(query))
+        log.debug("active_site:{} - remote_site:{}".format(active_site,
+                                                           remote_site))
+        log.debug("query: {}".format(query))
         representations = self.connection.find(query)
 
         return representations
@@ -654,7 +789,7 @@ class SyncServer(PypeModule, ITrayModule):
         return SyncStatus.DO_NOTHING
 
     async def upload(self, collection, file, representation, provider_name,
-                     site_name, tree=None, preset=None):
+                     remote_site_name, tree=None, preset=None):
         """
             Upload single 'file' of a 'representation' to 'provider'.
             Source url is taken from 'file' portion, where {root} placeholder
@@ -684,40 +819,40 @@ class SyncServer(PypeModule, ITrayModule):
             # this part modifies structure on 'remote_site', only single
             # thread can do that at a time, upload/download to prepared
             # structure should be run in parallel
-            handler = lib.factory.get_provider(provider_name, site_name,
-                                               tree=tree, presets=preset)
-            remote_file = self._get_remote_file_path(file,
-                                                     handler.get_roots_config()
-                                                     )
+            remote_handler = lib.factory.get_provider(provider_name,
+                                                      remote_site_name,
+                                                      tree=tree,
+                                                      presets=preset)
 
-            local_file = self.get_local_file_path(collection,
-                                                  file.get("path", ""))
+            file_path = file.get("path", "")
+            local_file_path, remote_file_path = self._resolve_paths(
+                file_path, collection, remote_site_name, remote_handler
+            )
 
-            target_folder = os.path.dirname(remote_file)
-            folder_id = handler.create_folder(target_folder)
+            target_folder = os.path.dirname(remote_file_path)
+            folder_id = remote_handler.create_folder(target_folder)
 
             if not folder_id:
                 err = "Folder {} wasn't created. Check permissions.".\
                     format(target_folder)
                 raise NotADirectoryError(err)
 
-        remote_site = self.get_remote_site(collection)
         loop = asyncio.get_running_loop()
         file_id = await loop.run_in_executor(None,
-                                             handler.upload_file,
-                                             local_file,
-                                             remote_file,
+                                             remote_handler.upload_file,
+                                             local_file_path,
+                                             remote_file_path,
                                              self,
                                              collection,
                                              file,
                                              representation,
-                                             remote_site,
+                                             remote_site_name,
                                              True
                                              )
         return file_id
 
     async def download(self, collection, file, representation, provider_name,
-                       site_name, tree=None, preset=None):
+                       remote_site_name, tree=None, preset=None):
         """
             Downloads file to local folder denoted in representation.Context.
 
@@ -735,21 +870,24 @@ class SyncServer(PypeModule, ITrayModule):
             (string) - 'name' of local file
         """
         with self.lock:
-            handler = lib.factory.get_provider(provider_name, site_name,
-                                               tree=tree, presets=preset)
-            remote_file_path = self._get_remote_file_path(
-                file, handler.get_roots_config())
+            remote_handler = lib.factory.get_provider(provider_name,
+                                                      remote_site_name,
+                                                      tree=tree,
+                                                      presets=preset)
 
-            local_file_path = self.get_local_file_path(collection,
-                                                       file.get("path", ""))
+            file_path = file.get("path", "")
+            local_file_path, remote_file_path = self._resolve_paths(
+                file_path, collection, remote_site_name, remote_handler
+            )
+
             local_folder = os.path.dirname(local_file_path)
             os.makedirs(local_folder, exist_ok=True)
 
-        local_site = self.get_local_site(collection)
+        local_site = self.get_active_site(collection)
 
         loop = asyncio.get_running_loop()
         file_id = await loop.run_in_executor(None,
-                                             handler.download_file,
+                                             remote_handler.download_file,
                                              remote_file_path,
                                              local_file_path,
                                              self,
@@ -907,7 +1045,7 @@ class SyncServer(PypeModule, ITrayModule):
             raise ValueError("Misconfiguration, only one of side and " +
                              "site_name arguments should be passed.")
 
-        local_site = self.get_local_site(collection)
+        local_site = self.get_active_site(collection)
         remote_site = self.get_remote_site(collection)
 
         if side:
@@ -1066,19 +1204,14 @@ class SyncServer(PypeModule, ITrayModule):
             Returns:
                 only logs, catches IndexError and OSError
         """
-        my_local_site = self.get_my_local_site(collection)
+        my_local_site = get_local_site_id()
         if my_local_site != site_name:
             self.log.warning("Cannot remove non local file for {}".
                              format(site_name))
             return
 
-        handler = None
-        sites = self.get_active_sites(collection)
-        for provider_name, provider_site_name in sites:
-            if provider_site_name == site_name:
-                handler = lib.factory.get_provider(provider_name,
-                                                   site_name)
-                break
+        provider_name = self.get_provider_for_site(collection, site_name)
+        handler = lib.factory.get_provider(provider_name, site_name)
 
         if handler and isinstance(handler, LocalDriveHandler):
             query = {
@@ -1093,12 +1226,14 @@ class SyncServer(PypeModule, ITrayModule):
                 return
 
             representation = representation.pop()
+            local_file_path = ''
             for file in representation.get("files"):
+                local_file_path, _ = self._resolve_paths(file.get("path", ""),
+                                                         collection
+                                                         )
                 try:
-                    self.log.debug("Removing {}".format(file["path"]))
-                    local_file = self.get_local_file_path(collection,
-                                                          file.get("path", ""))
-                    os.remove(local_file)
+                    self.log.debug("Removing {}".format(local_file_path))
+                    os.remove(local_file_path)
                 except IndexError:
                     msg = "No file set for {}".format(representation_id)
                     self.log.debug(msg)
@@ -1109,30 +1244,12 @@ class SyncServer(PypeModule, ITrayModule):
                     raise ValueError(msg)
 
             try:
-                folder = os.path.dirname(local_file)
+                folder = os.path.dirname(local_file_path)
                 os.rmdir(folder)
             except OSError:
                 msg = "folder {} cannot be removed".format(folder)
                 self.log.warning(msg)
                 raise ValueError(msg)
-
-    def get_my_local_site(self, project_name=None):
-        """
-            Returns name of current user local_site
-
-            Args:
-                project_name (string):
-            Returns:
-                (string)
-        """
-        if project_name:
-            settings = get_project_settings(project_name)
-        else:
-            settings = get_current_project_settings()
-
-        sync_server_presets = settings["global"]["sync_server"]["config"]
-
-        return sync_server_presets.get("local_id")
 
     def get_loop_delay(self, project_name):
         """
@@ -1141,7 +1258,8 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             (int): in seconds
         """
-        return int(self.presets[project_name]["config"]["loop_delay"])
+        ld = self.sync_project_settings[project_name]["config"]["loop_delay"]
+        return int(ld)
 
     def show_widget(self):
         """Show dialog to enter credentials"""
@@ -1215,59 +1333,35 @@ class SyncServer(PypeModule, ITrayModule):
         val = {"files.$[f].sites.$[s].progress": progress}
         return val
 
-    def get_local_file_path(self, collection, path):
+    def _resolve_paths(self, file_path, collection,
+                       remote_site_name=None, remote_handler=None):
         """
-            Auxiliary function for replacing rootless path with real path
+            Returns tuple of local and remote file paths with {root}
+            placeholders replaced with proper values from Settings or Anatomy
 
-            Works with multi roots.
-            If root definition is not found in Settings, anatomy is used
-
-        Args:
-            collection (string): project name
-            path (dictionary): 'path' to file with {root}
-
-        Returns:
-            (string) - absolute path on local system
+            Args:
+                file_path(string): path with {root}
+                collection(string): project name
+                remote_site_name(string): remote site
+                remote_handler(AbstractProvider): implementation
+            Returns:
+                (string, string) - proper absolute paths
         """
-        local_active_site = self.get_local_site(collection)
-        sites = self.get_synced_preset(collection)["sites"]
-        root_config = sites[local_active_site]["root"]
+        remote_file_path = ''
+        if remote_handler:
+            root_configs = self._get_roots_config(self.sync_project_settings,
+                                                  collection,
+                                                  remote_site_name)
 
-        if not root_config.get("root"):
-            root_config = {"root": root_config}
+            remote_file_path = remote_handler.resolve_path(file_path,
+                                                           root_configs)
 
-        try:
-            path = path.format(**root_config)
-        except KeyError:
-            try:
-                anatomy = self.get_anatomy(collection)
-                path = anatomy.fill_root(path)
-            except KeyError:
-                msg = "Error in resolving local root from anatomy"
-                self.log.error(msg)
-                raise ValueError(msg)
+        local_handler = lib.factory.get_provider(
+            'local_drive', self.get_active_site(collection))
+        local_file_path = local_handler.resolve_path(
+            file_path, None, self.get_anatomy(collection))
 
-        return path
-
-    def _get_remote_file_path(self, file, root_config):
-        """
-            Auxiliary function for replacing rootless path with real path
-        Args:
-            file (dictionary): file info, get 'path' to file with {root}
-            root_config (dict): value of {root} for remote location
-
-        Returns:
-            (string) - absolute path on remote location
-        """
-        path = file.get("path", "")
-        if not root_config.get("root"):
-            root_config = {"root": root_config}
-
-        try:
-            return path.format(**root_config)
-        except KeyError:
-            msg = "Error in resolving remote root, unknown key"
-            self.log.error(msg)
+        return local_file_path, remote_file_path
 
     def _get_retries_arr(self, project_name):
         """
@@ -1278,11 +1372,19 @@ class SyncServer(PypeModule, ITrayModule):
         Returns:
             (list)
         """
-        retry_cnt = self.presets[project_name].get("config")["retry_cnt"]
+        retry_cnt = self.sync_project_settings[project_name].\
+            get("config")["retry_cnt"]
         arr = [i for i in range(int(retry_cnt))]
         arr.append(None)
 
         return arr
+
+    def _get_roots_config(self, presets, project_name, site_name):
+        """
+            Returns configured root(s) for 'project_name' and 'site_name' from
+            settings ('presets')
+        """
+        return presets[project_name]['sites'][site_name]['root']
 
 
 class SyncServerThread(threading.Thread):
@@ -1334,20 +1436,20 @@ class SyncServerThread(threading.Thread):
             while self.is_running and not self.module.is_paused():
                 import time
                 start_time = None
-                for collection, preset in self.module.get_synced_presets().\
+                self.module.set_sync_project_settings()  # clean cache
+                for collection, preset in self.module.get_sync_project_settings().\
                         items():
-                    if self.module.is_project_paused(collection):
+                    start_time = time.time()
+                    local_site, remote_site = self._working_sites(collection)
+                    if not all([local_site, remote_site]):
                         continue
 
-                    start_time = time.time()
                     sync_repres = self.module.get_sync_representations(
                         collection,
-                        preset.get('config')["active_site"],
-                        preset.get('config')["remote_site"]
+                        local_site,
+                        remote_site
                     )
 
-                    local_site = preset.get('config')["active_site"]
-                    remote_site = preset.get('config')["remote_site"]
                     task_files_to_process = []
                     files_processed_info = []
                     # process only unique file paths in one batch
@@ -1477,3 +1579,24 @@ class SyncServerThread(threading.Thread):
         self.executor.shutdown(wait=True)
         await asyncio.sleep(0.07)
         self.loop.stop()
+
+    def _working_sites(self, collection):
+        if self.module.is_project_paused(collection):
+            log.debug("Both sites same, skipping")
+            return None, None
+
+        local_site = self.module.get_active_site(collection)
+        remote_site = self.module.get_remote_site(collection)
+        if local_site == remote_site:
+            log.debug("{}-{} sites same, skipping".format(local_site,
+                                                          remote_site))
+            return None, None
+
+        if not all([self.module.site_is_working(collection, local_site),
+                   self.module.site_is_working(collection, remote_site)]):
+            log.debug("Some of the sites {} - {} is not ".format(local_site,
+                                                                 remote_site) +
+                      "working properly")
+            return None, None
+
+        return local_site, remote_site

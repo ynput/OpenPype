@@ -1,8 +1,10 @@
-import avalon.maya
-from pype.hosts.maya.api import lib
+from pype.hosts.maya.api import (
+    lib,
+    plugin
+)
 
 
-class CreateCamera(avalon.maya.Creator):
+class CreateCamera(plugin.Creator):
     """Single baked camera"""
 
     name = "cameraMain"
@@ -24,7 +26,7 @@ class CreateCamera(avalon.maya.Creator):
         self.data['bakeToWorldSpace'] = True
 
 
-class CreateCameraRig(avalon.maya.Creator):
+class CreateCameraRig(plugin.Creator):
     """Complex hierarchy with camera."""
 
     name = "camerarigMain"

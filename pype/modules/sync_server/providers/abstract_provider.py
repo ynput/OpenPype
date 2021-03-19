@@ -71,3 +71,39 @@ class AbstractProvider(metaclass=ABCMeta):
             (list)
         """
         pass
+
+    @abstractmethod
+    def create_folder(self, folder_path):
+        """
+            Create all nonexistent folders and subfolders in 'path'.
+
+        Args:
+            path (string): absolute path
+
+        Returns:
+            (string) folder id of lowest subfolder from 'path'
+        """
+        pass
+
+    @abstractmethod
+    def get_tree(self):
+        """
+            Creates folder structure for providers which do not provide
+            tree folder structure (GDrive has no accessible tree structure,
+            only parents and their parents)
+        """
+        pass
+
+    @abstractmethod
+    def resolve_path(self, path, root_config, anatomy=None):
+        """
+            Replaces root placeholders with appropriate real value from
+            'root_configs' (from Settings or Local Settings) or Anatomy
+            (mainly for 'studio' site)
+
+            Args:
+                path(string): path with '{root[work]}/...'
+                root_config(dict): from Settings or Local Settings
+                anatomy (Anatomy): prepared anatomy object for project
+        """
+        pass

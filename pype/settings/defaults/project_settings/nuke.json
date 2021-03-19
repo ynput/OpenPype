@@ -1,4 +1,13 @@
 {
+    "menu": {
+        "Pype": {
+            "Create...": "ctrl+shift+alt+c",
+            "Publish...": "ctrl+alt+p",
+            "Load...": "ctrl+alt+l",
+            "Manage...": "ctrl+alt+m",
+            "Build Workfile": "ctrl+alt+b"
+        }
+    },
     "create": {
         "CreateWriteRender": {
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
@@ -10,6 +19,30 @@
     "publish": {
         "PreCollectNukeInstances": {
             "sync_workfile_version": true
+        },
+        "ValidateKnobs": {
+            "enabled": false,
+            "knobs": {
+                "render": {
+                    "review": true
+                }
+            }
+        },
+        "ValidateOutputResolution": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateGizmo": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateScript": {
+            "enabled": true,
+            "optional": true
+        },
+        "ValidateNukeWriteBoundingBox": {
+            "enabled": true,
+            "optional": true
         },
         "ExtractThumbnail": {
             "enabled": true,
@@ -38,14 +71,6 @@
                 ]
             }
         },
-        "ValidateKnobs": {
-            "enabled": false,
-            "knobs": {
-                "render": {
-                    "review": true
-                }
-            }
-        },
         "ExtractReviewDataLut": {
             "enabled": false
         },
@@ -61,22 +86,25 @@
             "deadline_pool": "",
             "deadline_pool_secondary": "",
             "deadline_chunk_size": 1
-        },
-        "ValidateOutputResolution": {
+        }
+    },
+    "load": {
+        "LoadImage": {
             "enabled": true,
-            "optional": true
+            "representations": []
         },
-        "ValidateGizmo": {
+        "LoadMov": {
             "enabled": true,
-            "optional": true
+            "representations": []
         },
-        "ValidateScript": {
+        "LoadSequence": {
             "enabled": true,
-            "optional": true
-        },
-        "ValidateNukeWriteBoundingBox": {
-            "enabled": true,
-            "optional": true
+            "representations": [
+                "png",
+                "jpg",
+                "exr",
+                ""
+            ]
         }
     },
     "workfile_build": {

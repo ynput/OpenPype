@@ -2,13 +2,25 @@
 """Working thread for installer."""
 import os
 import sys
-from zipfile import ZipFile
+from pathlib import Path
 
-from Qt.QtCore import QThread, Signal
+from Qt.QtCore import QThread, Signal, QObject  # noqa
 
-from .bootstrap_repos import BootstrapRepos
-from .bootstrap_repos import PypeVersion
+from .bootstrap_repos import (
+    BootstrapRepos,
+    PypeVersionInvalid,
+    PypeVersionIOError,
+    PypeVersionExists,
+    PypeVersion
+)
+
 from .tools import validate_mongo_connection
+
+
+class InstallResult(QObject):
+    """Used to pass results back."""
+    def __init__(self, value):
+        self.status = value
 
 
 class InstallThread(QThread):
@@ -21,19 +33,18 @@ class InstallThread(QThread):
     If path contains plain repositories, they are zipped and installed to
     user data dir.
 
-    Attributes:
-        progress (Signal): signal reporting progress back o UI.
-        message (Signal): message displaying in UI console.
-
     """
-
     progress = Signal(int)
     message = Signal((str, bool))
+    finished = Signal(object)
 
-    def __init__(self, parent=None):
+    def __init__(self, callback, parent=None,):
         self._mongo = None
         self._path = None
+        self.result_callback = callback
+
         QThread.__init__(self, parent)
+        self.finished.connect(callback)
 
     def run(self):
         """Thread entry point.
@@ -64,10 +75,12 @@ class InstallThread(QThread):
                     except ValueError:
                         self.message.emit(
                             "!!! We need MongoDB URL to proceed.", True)
+                        self.finished.emit(InstallResult(-1))
                         return
                 else:
                     self._mongo = os.getenv("PYPE_MONGO")
             else:
+                self.message.emit("Saving mongo connection string ...", False)
                 bs.registry.set_secure_item("pypeMongo", self._mongo)
 
             os.environ["PYPE_MONGO"] = self._mongo
@@ -77,7 +90,8 @@ class InstallThread(QThread):
             detected = bs.find_pype(include_zips=True)
 
             if detected:
-                if PypeVersion(version=local_version) < detected[-1]:
+                if PypeVersion(
+                        version=local_version, path=Path()) < detected[-1]:
                     self.message.emit((
                         f"Latest installed version {detected[-1]} is newer "
                         f"then currently running {local_version}"
@@ -85,14 +99,16 @@ class InstallThread(QThread):
                     self.message.emit("Skipping Pype install ...", False)
                     if detected[-1].path.suffix.lower() == ".zip":
                         bs.extract_pype(detected[-1])
+                    self.finished.emit(InstallResult(0))
                     return
 
-                if PypeVersion(version=local_version) == detected[-1]:
+                if PypeVersion(version=local_version).get_main_version() == detected[-1].get_main_version():  # noqa
                     self.message.emit((
                         f"Latest installed version is the same as "
                         f"currently running {local_version}"
                     ), False)
                     self.message.emit("Skipping Pype install ...", False)
+                    self.finished.emit(InstallResult(0))
                     return
 
                 self.message.emit((
@@ -100,11 +116,21 @@ class InstallThread(QThread):
                     f"currently running one {local_version}"
                 ), False)
             else:
-                # we cannot build install package from frozen code.
                 if getattr(sys, 'frozen', False):
                     self.message.emit("None detected.", True)
-                    self.message.emit(("Please set path to Pype sources to "
-                                       "build installation."), False)
+                    self.message.emit(("We will use Pype coming with "
+                                       "installer."), False)
+                    pype_version = bs.create_version_from_frozen_code()
+                    if not pype_version:
+                        self.message.emit(
+                            f"!!! Install failed - {pype_version}", True)
+                        self.finished.emit(InstallResult(-1))
+                        return
+                    self.message.emit(f"Using: {pype_version}", False)
+                    bs.install_version(pype_version)
+                    self.message.emit(f"Installed as {pype_version}", False)
+                    self.progress.emit(100)
+                    self.finished.emit(InstallResult(1))
                     return
                 else:
                     self.message.emit("None detected.", False)
@@ -112,31 +138,26 @@ class InstallThread(QThread):
             self.message.emit(
                 f"We will use local Pype version {local_version}", False)
 
-            repo_file = bs.install_live_repos()
-            if not repo_file:
+            local_pype = bs.create_version_from_live_code()
+            if not local_pype:
                 self.message.emit(
-                    f"!!! Install failed - {repo_file}", True)
+                    f"!!! Install failed - {local_pype}", True)
+                self.finished.emit(InstallResult(-1))
                 return
 
-            destination = bs.data_dir / repo_file.stem
-            if destination.exists():
-                try:
-                    destination.unlink()
-                except OSError as e:
-                    self.message.emit(
-                        f"!!! Cannot remove already existing {destination}",
-                        True)
-                    self.message.emit(e.strerror, True)
-                    return
+            try:
+                bs.install_version(local_pype)
+            except (PypeVersionExists,
+                    PypeVersionInvalid,
+                    PypeVersionIOError) as e:
+                self.message.emit(f"Installed failed: ", True)
+                self.message.emit(str(e), True)
+                self.finished.emit(InstallResult(-1))
+                return
 
-            destination.mkdir(parents=True)
-
-            # extract zip there
-            self.message.emit("Extracting zip to destination ...", False)
-            with ZipFile(repo_file, "r") as zip_ref:
-                zip_ref.extractall(destination)
-
-            self.message.emit(f"Installed as {repo_file}", False)
+            self.message.emit(f"Installed as {local_pype}", False)
+            self.progress.emit(100)
+            return
         else:
             # if we have mongo connection string, validate it, set it to
             # user settings and get PYPE_PATH from there.
@@ -144,25 +165,46 @@ class InstallThread(QThread):
                 if not validate_mongo_connection(self._mongo):
                     self.message.emit(
                         f"!!! invalid mongo url {self._mongo}", True)
+                    self.finished.emit(InstallResult(-1))
                     return
                 bs.registry.set_secure_item("pypeMongo", self._mongo)
                 os.environ["PYPE_MONGO"] = self._mongo
-
-            if os.getenv("PYPE_PATH") == self._path:
-                ...
 
             self.message.emit(f"processing {self._path}", True)
             repo_file = bs.process_entered_location(self._path)
 
             if not repo_file:
                 self.message.emit("!!! Cannot install", True)
+                self.finished.emit(InstallResult(-1))
                 return
 
+        self.progress.emit(100)
+        self.finished.emit(InstallResult(1))
+        return
+
     def set_path(self, path: str) -> None:
+        """Helper to set path.
+
+        Args:
+            path (str): Path to set.
+
+        """
         self._path = path
 
     def set_mongo(self, mongo: str) -> None:
+        """Helper to set mongo url.
+
+        Args:
+            mongo (str): Mongodb url.
+
+        """
         self._mongo = mongo
 
     def set_progress(self, progress: int) -> None:
+        """Helper to set progress bar.
+
+        Args:
+            progress (int): Progress in percents.
+
+        """
         self.progress.emit(progress)

@@ -812,7 +812,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         matching_profiles = {}
         highest_value = -1
-        self.log.info(self.template_name_profiles)
+        self.log.debug(
+            "Template name profiles:\n{}".format(self.template_name_profiles)
+        )
         for name, filters in self.template_name_profiles.items():
             value = 0
             families = filters.get("families")
@@ -966,10 +968,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                                         ["global"]
                                                         ["sync_server"])
 
+            local_site_id = pype.api.get_local_site_id()
             if sync_server_presets["enabled"]:
                 local_site = sync_server_presets["config"].\
                     get("active_site", "studio").strip()
+                if local_site == 'local':
+                    local_site = local_site_id
+
                 remote_site = sync_server_presets["config"].get("remote_site")
+                if remote_site == 'local':
+                    remote_site = local_site_id
 
         rec = {
             "_id": io.ObjectId(),

@@ -1,7 +1,7 @@
-from avalon import houdini
+from pype.hosts.houdini.api import plugin
 
 
-class CreateAlembicCamera(houdini.Creator):
+class CreateAlembicCamera(plugin.Creator):
     """Single baked camera from Alembic ROP"""
 
     name = "camera"

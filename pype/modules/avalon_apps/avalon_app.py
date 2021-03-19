@@ -4,11 +4,11 @@ from pype import resources
 from .. import (
     PypeModule,
     ITrayModule,
-    IRestApi
+    IWebServerRoutes
 )
 
 
-class AvalonModule(PypeModule, ITrayModule, IRestApi):
+class AvalonModule(PypeModule, ITrayModule, IWebServerRoutes):
     name = "avalon"
 
     def initialize(self, modules_settings):
@@ -38,11 +38,6 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
         self.avalon_mongo_url = avalon_mongo_url
         self.avalon_mongo_timeout = avalon_mongo_timeout
 
-        self.schema_path = os.path.join(
-            os.path.dirname(pype.PACKAGE_DIR),
-            "schema"
-        )
-
         # Tray attributes
         self.libraryloader = None
         self.rest_api_obj = None
@@ -50,23 +45,11 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
     def get_global_environments(self):
         """Avalon global environments for pype implementation."""
         return {
-            # 100% hardcoded
-            "AVALON_SCHEMA": self.schema_path,
-            "AVALON_CONFIG": "pype",
-            "AVALON_LABEL": "Pype",
-
-            # Modifiable by settings
-            # - mongo ulr for avalon projects
-            "AVALON_MONGO": self.avalon_mongo_url,
             # TODO thumbnails root should be multiplafrom
             # - thumbnails root
             "AVALON_THUMBNAIL_ROOT": self.thumbnail_root,
             # - mongo timeout in ms
             "AVALON_TIMEOUT": str(self.avalon_mongo_timeout),
-
-            # May be modifiable?
-            # - mongo database name where projects are stored
-            "AVALON_DB": "avalon"
         }
 
     def tray_init(self):
@@ -91,10 +74,12 @@ class AvalonModule(PypeModule, ITrayModule, IRestApi):
     def connect_with_modules(self, _enabled_modules):
         return
 
-    def rest_api_initialization(self, rest_api_module):
+    def webserver_initialization(self, server_manager):
+        """Implementation of IWebServerRoutes interface."""
+
         if self.tray_initialized:
-            from .rest_api import AvalonRestApi
-            self.rest_api_obj = AvalonRestApi()
+            from .rest_api import AvalonRestApiResource
+            self.rest_api_obj = AvalonRestApiResource(self, server_manager)
 
     # Definition of Tray menu
     def tray_menu(self, tray_menu):

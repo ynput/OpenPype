@@ -1,7 +1,7 @@
-from avalon import harmony
+from pype.hosts.harmony.api import plugin
 
 
-class CreateTemplate(harmony.Creator):
+class CreateTemplate(plugin.Creator):
     """Composite node for publishing to templates."""
 
     name = "templateDefault"

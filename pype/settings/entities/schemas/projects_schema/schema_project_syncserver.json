@@ -17,12 +17,6 @@
         "label": "Config",
         "collapsible": true,
         "children": [
-
-            {
-                "type": "text",
-                "key": "local_id",
-                "label": "Local ID"
-            },
             {
                 "type": "text",
                 "key": "retry_cnt",

@@ -85,9 +85,9 @@ class ValidateMusterConnection(pyblish.api.ContextPlugin):
         Renew authentication token by logging into Muster
         """
         api_url = "{}/muster/show_login".format(
-            os.environ["PYPE_REST_API_URL"])
+            os.environ["PYPE_WEBSERVER_URL"])
         cls.log.debug(api_url)
-        response = cls._requests_post(api_url, timeout=1)
+        response = cls._requests_get(api_url, timeout=1)
         if response.status_code != 200:
             cls.log.error('Cannot show login form to Muster')
             raise Exception('Cannot show login form to Muster')

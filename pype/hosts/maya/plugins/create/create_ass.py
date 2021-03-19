@@ -1,12 +1,14 @@
 from collections import OrderedDict
 
-import avalon.maya
-from pype.hosts.maya.api import lib
+from pype.hosts.maya.api import (
+    lib,
+    plugin
+)
 
 from maya import cmds
 
 
-class CreateAss(avalon.maya.Creator):
+class CreateAss(plugin.Creator):
     """Arnold Archive"""
 
     name = "ass"

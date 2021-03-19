@@ -113,7 +113,8 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         self.log.info("Collecting scene data from workfile")
         workfile_info_parts = lib.execute_george("tv_projectinfo").split(" ")
 
-        frame_start = int(workfile_info_parts.pop(-1))
+        # Project frame start - not used
+        workfile_info_parts.pop(-1)
         field_order = workfile_info_parts.pop(-1)
         frame_rate = float(workfile_info_parts.pop(-1))
         pixel_apsect = float(workfile_info_parts.pop(-1))
@@ -121,21 +122,14 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         width = int(workfile_info_parts.pop(-1))
         workfile_path = " ".join(workfile_info_parts).replace("\"", "")
 
-        # TODO This is not porper way of getting last frame
-        # - but don't know better
-        last_frame = frame_start
-        for layer in layers_data:
-            frame_end = layer["frame_end"]
-            if frame_end > last_frame:
-                last_frame = frame_end
-
+        frame_start, frame_end = self.collect_clip_frames()
         scene_data = {
             "currentFile": workfile_path,
             "sceneWidth": width,
             "sceneHeight": height,
             "pixelAspect": pixel_apsect,
             "frameStart": frame_start,
-            "frameEnd": last_frame,
+            "frameEnd": frame_end,
             "fps": frame_rate,
             "fieldOrder": field_order
         }
@@ -143,3 +137,21 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "Scene data: {}".format(json.dumps(scene_data, indent=4))
         )
         context.data.update(scene_data)
+
+    def collect_clip_frames(self):
+        clip_info_str = lib.execute_george("tv_clipinfo")
+        self.log.debug("Clip info: {}".format(clip_info_str))
+        clip_info_items = clip_info_str.split(" ")
+        # Color index - not used
+        clip_info_items.pop(-1)
+        clip_info_items.pop(-1)
+
+        mark_out = int(clip_info_items.pop(-1))
+        frame_end = mark_out + 1
+        clip_info_items.pop(-1)
+
+        mark_in = int(clip_info_items.pop(-1))
+        frame_start = mark_in + 1
+        clip_info_items.pop(-1)
+
+        return frame_start, frame_end

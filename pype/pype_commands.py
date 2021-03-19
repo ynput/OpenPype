@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from pype.lib import PypeLogger
+from pype.api import get_app_environments_for_context
 
 
 class PypeCommands:
@@ -42,6 +43,58 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
+    def publish(paths):
+        """Start headless publishing.
+
+        Publish use json from passed paths argument.
+
+        Args:
+            paths (list): Paths to jsons.
+
+        Raises:
+            RuntimeError: When there is no pathto process.
+        """
+        if not any(paths):
+            raise RuntimeError("No publish paths specified")
+
+        from pype import install, uninstall
+        from pype.api import Logger
+
+        # Register target and host
+        import pyblish.api
+        import pyblish.util
+
+        env = get_app_environments_for_context(
+            os.environ["AVALON_PROJECT"],
+            os.environ["AVALON_ASSET"],
+            os.environ["AVALON_TASK"],
+            os.environ["AVALON_APP_NAME"]
+        )
+        os.environ.update(env)
+
+        log = Logger.get_logger()
+
+        install()
+
+        pyblish.api.register_target("filesequence")
+        pyblish.api.register_host("shell")
+
+        os.environ["PYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
+
+        log.info("Running publish ...")
+
+        # Error exit as soon as any error occurs.
+        error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+
+        for result in pyblish.util.publish_iter():
+            if result["error"]:
+                log.error(error_format.format(**result))
+                uninstall()
+                sys.exit(1)
+
+        log.info("Publish finished.")
+        uninstall()
+
     def extractenvironments(output_json_path, project, asset, task, app):
         env = os.environ.copy()
         if all((project, asset, task, app)):
@@ -57,19 +110,7 @@ class PypeCommands:
         with open(output_json_path, "w") as file_stream:
             json.dump(env, file_stream, indent=4)
 
-    def publish(self, gui, paths):
-        pass
-
     def texture_copy(self, project, asset, path):
-        pass
-
-    def run_pype_tests(self, keyword, id):
-        pass
-
-    def make_docs(self):
-        pass
-
-    def pype_setup_coverage(self):
         pass
 
     def run_application(self, app, project, asset, task, tools, arguments):
@@ -95,7 +136,7 @@ class PypeCommands:
             bs.data_dir = out_path.parent
 
         print(f">>> Creating zip in {bs.data_dir} ...")
-        repo_file = bs.install_live_repos()
+        repo_file = bs.create_version_from_live_code()
         if not repo_file:
             print("!!! Error while creating zip file.")
             exit(1)

@@ -1,12 +1,36 @@
 import sys
+import collections
 import six
 import pyblish.api
 from avalon import io
 
-try:
-    from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_AUTO_SYNC
-except Exception:
-    CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
+# Copy of constant `pype.modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
+CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
+
+
+# Copy of `get_pype_attr` from pype.modules.ftrack.lib
+def get_pype_attr(session, split_hierarchical=True):
+    custom_attributes = []
+    hier_custom_attributes = []
+    # TODO remove deprecated "avalon" group from query
+    cust_attrs_query = (
+        "select id, entity_type, object_type_id, is_hierarchical, default"
+        " from CustomAttributeConfiguration"
+        " where group.name in (\"avalon\", \"pype\")"
+    )
+    all_avalon_attr = session.query(cust_attrs_query).all()
+    for cust_attr in all_avalon_attr:
+        if split_hierarchical and cust_attr["is_hierarchical"]:
+            hier_custom_attributes.append(cust_attr)
+            continue
+
+        custom_attributes.append(cust_attr)
+
+    if split_hierarchical:
+        # return tuple
+        return custom_attributes, hier_custom_attributes
+
+    return custom_attributes
 
 
 class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
@@ -36,7 +60,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
     order = pyblish.api.IntegratorOrder - 0.04
     label = 'Integrate Hierarchy To Ftrack'
     families = ["shot"]
-    hosts = ["hiero", "resolve"]
+    hosts = ["hiero", "resolve", "standalonepublisher"]
     optional = False
 
     def process(self, context):
@@ -74,6 +98,15 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 self.auto_sync_on(project)
 
     def import_to_ftrack(self, input_data, parent=None):
+        # Prequery hiearchical custom attributes
+        hier_custom_attributes = get_pype_attr(self.session)[1]
+        hier_attr_by_key = {
+            attr["key"]: attr
+            for attr in hier_custom_attributes
+        }
+        # Get ftrack api module (as they are different per python version)
+        ftrack_api = self.context.data["ftrackPythonModule"]
+
         for entity_name in input_data:
             entity_data = input_data[entity_name]
             entity_type = entity_data['entity_type']
@@ -116,12 +149,33 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 i for i in self.context if i.data['asset'] in entity['name']
             ]
             for key in custom_attributes:
-                assert (key in entity['custom_attributes']), (
-                    'Missing custom attribute key: `{0}` in attrs: '
-                    '`{1}`'.format(key, entity['custom_attributes'].keys())
-                )
+                hier_attr = hier_attr_by_key.get(key)
+                # Use simple method if key is not hierarchical
+                if not hier_attr:
+                    assert (key in entity['custom_attributes']), (
+                        'Missing custom attribute key: `{0}` in attrs: '
+                        '`{1}`'.format(key, entity['custom_attributes'].keys())
+                    )
 
-                entity['custom_attributes'][key] = custom_attributes[key]
+                    entity['custom_attributes'][key] = custom_attributes[key]
+
+                else:
+                    # Use ftrack operations method to set hiearchical
+                    # attribute value.
+                    # - this is because there may be non hiearchical custom
+                    #   attributes with different properties
+                    entity_key = collections.OrderedDict()
+                    entity_key["configuration_id"] = hier_attr["id"]
+                    entity_key["entity_id"] = entity["id"]
+                    self.session.recorded_operations.push(
+                        ftrack_api.operation.UpdateEntityOperation(
+                            "ContextCustomAttributeValue",
+                            entity_key,
+                            "value",
+                            ftrack_api.symbol.NOT_SET,
+                            custom_attributes[key]
+                        )
+                    )
 
                 for instance in instances:
                     instance.data['ftrackEntity'] = entity

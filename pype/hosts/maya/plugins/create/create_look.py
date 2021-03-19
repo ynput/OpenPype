@@ -1,8 +1,10 @@
-import avalon.maya
-from pype.hosts.maya.api import lib
+from pype.hosts.maya.api import (
+    lib,
+    plugin
+)
 
 
-class CreateLook(avalon.maya.Creator):
+class CreateLook(plugin.Creator):
     """Shader connections defining shape look"""
 
     name = "look"

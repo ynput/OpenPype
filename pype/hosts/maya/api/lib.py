@@ -2127,15 +2127,9 @@ def bake_to_world_space(nodes,
 
 
 def load_capture_preset(path=None, data=None):
-    import capture_gui
     import capture
 
-    if data:
-        preset = data
-    else:
-        path = path
-        preset = capture_gui.lib.load_json(path)
-    print(preset)
+    preset = data
 
     options = dict()
 
@@ -2177,29 +2171,27 @@ def load_capture_preset(path=None, data=None):
 
     temp_options2 = {}
     id = 'Viewport Options'
-    light_options = {
-        0: "default",
-        1: 'all',
-        2: 'selected',
-        3: 'flat',
-        4: 'nolights'}
     for key in preset[id]:
-        if key == 'high_quality':
-            if preset[id][key] == True:
-                temp_options2['multiSampleEnable'] = True
-                temp_options2['multiSampleCount'] = 4
-                temp_options2['textureMaxResolution'] = 1024
+        if key == 'textureMaxResolution':
+            if preset[id][key] > 0:
+                temp_options2['textureMaxResolution'] = preset[id][key]
                 temp_options2['enableTextureMaxRes'] = True
                 temp_options2['textureMaxResMode'] = 1
             else:
-                temp_options2['multiSampleEnable'] = False
-                temp_options2['multiSampleCount'] = 4
-                temp_options2['textureMaxResolution'] = 512
-                temp_options2['enableTextureMaxRes'] = True
+                temp_options2['textureMaxResolution'] = preset[id][key]
+                temp_options2['enableTextureMaxRes'] = False
                 temp_options2['textureMaxResMode'] = 0
 
+        if key == 'multiSample':
+            if preset[id][key] > 0:
+                temp_options2['multiSampleEnable'] = True
+                temp_options2['multiSampleCount'] = preset[id][key]
+            else:
+                temp_options2['multiSampleEnable'] = False
+                temp_options2['multiSampleCount'] = preset[id][key]
+
         if key == 'ssaoEnable':
-            if preset[id][key] == True:
+            if preset[id][key] is True:
                 temp_options2['ssaoEnable'] = True
             else:
                 temp_options2['ssaoEnable'] = False
@@ -2211,18 +2203,17 @@ def load_capture_preset(path=None, data=None):
         if key == 'headsUpDisplay':
             temp_options['headsUpDisplay'] = True
 
-        if key == 'displayLights':
-            temp_options[str(key)] = light_options[preset[id][key]]
         else:
             temp_options[str(key)] = preset[id][key]
 
     for key in ['override_viewport_options',
                 'high_quality',
                 'alphaCut',
-                'gpuCacheDisplayFilter']:
-        temp_options.pop(key, None)
-
-    for key in ['ssaoEnable']:
+                'gpuCacheDisplayFilter',
+                'multiSample',
+                'ssaoEnable',
+                'textureMaxResolution'
+                ]:
         temp_options.pop(key, None)
 
     options['viewport_options'] = temp_options
@@ -2686,7 +2677,7 @@ def update_content_on_context_change():
 
 def show_message(title, msg):
     from avalon.vendor.Qt import QtWidgets
-    from ...widgets import message_window
+    from pype.widgets import message_window
 
     # Find maya main window
     top_level_widgets = {w.objectName(): w for w in

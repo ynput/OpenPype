@@ -52,6 +52,17 @@
                             "type": "boolean",
                             "key": "asset_dependencies",
                             "label": "Use Asset dependencies"
+                        },
+                        {
+                            "type": "text",
+                            "key": "group",
+                            "label": "Group Name"
+                        },
+                        {
+                            "type": "list",
+                            "key": "limit",
+                            "label": "Limit Groups",
+                            "object_type": "text"
                         }
                     ]
                 },
@@ -84,7 +95,7 @@
                         },
                         {
                             "type": "number",
-                            "key": "Chunk Size",
+                            "key": "chunk_size",
                             "label": "Chunk Size"
                         },
                         {
@@ -138,7 +149,7 @@
                         },
                         {
                             "type": "number",
-                            "key": "Chunk Size",
+                            "key": "chunk_size",
                             "label": "Chunk Size"
                         },
                         {
@@ -192,7 +203,7 @@
                         },
                         {
                             "type": "number",
-                            "key": "Chunk Size",
+                            "key": "chunk_size",
                             "label": "Chunk Size"
                         },
                         {

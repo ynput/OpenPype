@@ -1,10 +1,12 @@
 from maya import cmds
 
-from pype.hosts.maya.api import lib
-import avalon.maya
+from pype.hosts.maya.api import (
+    lib,
+    plugin
+)
 
 
-class CreateRig(avalon.maya.Creator):
+class CreateRig(plugin.Creator):
     """Artist-friendly rig with controls to direct motion"""
 
     name = "rigDefault"

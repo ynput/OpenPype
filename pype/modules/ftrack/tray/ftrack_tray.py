@@ -8,6 +8,7 @@ import ftrack_api
 from ..ftrack_server.lib import check_ftrack_url
 from ..ftrack_server import socket_thread
 from ..lib import credentials
+from ..ftrack_module import FTRACK_MODULE_DIR
 from . import login_dialog
 
 from pype.api import Logger, resources
@@ -132,7 +133,7 @@ class FtrackTrayWrapper:
         thread_name = "ActionServerThread"
         thread_port = 10021
         subprocess_path = (
-            "{}/ftrack_server/sub_user_server.py".format(parent_file_path)
+            "{}/scripts/sub_user_server.py".format(FTRACK_MODULE_DIR)
         )
         if self.thread_socket_server is not None:
             self.thread_socket_server.stop()

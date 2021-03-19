@@ -14,7 +14,7 @@ class PypeRestApiClient {
    * @return {url string}
    */
   _getApiServerUrl() {
-    var url = this.env.PYPE_REST_API_URL;
+    var url = this.env.PYPE_WEBSERVER_URL;
     return url
   }
 

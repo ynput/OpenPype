@@ -47,7 +47,7 @@
         "key": "{host_name}_environments",
         "env_group_key": "{host_name}"
     }, {
-        "type": "path-widget",
+        "type": "path",
         "key": "{host_name}_executables",
         "label": "{host_label} - Full paths to executables",
         "multiplatform": "{multipath_executables}",
@@ -361,7 +361,7 @@
 
 ```
 {
-    "type": "path-widget",
+    "type": "path",
     "key": "ffmpeg_path",
     "label": "FFmpeg path",
     "multiplatform": true,

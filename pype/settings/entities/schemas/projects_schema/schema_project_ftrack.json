@@ -6,28 +6,6 @@
     "is_file": true,
     "children": [
         {
-            "type": "splitter"
-        },
-        {
-            "type": "label",
-            "label": "Additional Ftrack paths"
-        },
-        {
-            "type": "list",
-            "key": "ftrack_actions_path",
-            "label": "Action paths",
-            "object_type": "text"
-        },
-        {
-            "type": "list",
-            "key": "ftrack_events_path",
-            "label": "Event paths",
-            "object_type": "text"
-        },
-        {
-            "type": "splitter"
-        },
-        {
             "type": "dict",
             "key": "events",
             "label": "Server Actions/Events",
