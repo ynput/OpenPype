@@ -6,7 +6,7 @@ from avalon import api
 from avalon.vendor import requests
 import re
 import pyblish.api
-
+import nuke
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit write to Deadline
@@ -29,6 +29,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_pool_secondary = ""
     deadline_group = ""
     deadline_department = ""
+    deadline_limit_groups = {}
     env_overrides = {}
 
     def process(self, instance):
@@ -177,7 +178,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": output_filename_0.replace("\\", "/")
+                "OutputFilename0": output_filename_0.replace("\\", "/"),
+
+                # limiting groups
+                "LimitGroups": self.get_limiting_group_filter()
 
             },
             "PluginInfo": {
@@ -352,3 +356,23 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         for i in range(self._frame_start, (self._frame_end + 1)):
             instance.data["expectedFiles"].append(
                 os.path.join(dir, (file % i)).replace("\\", "/"))
+
+    def get_limiting_group_filter(self):
+        """Search for limit group nodes and return group name.
+
+        Limit groups will be defined as pairs in Nuke deadline submitter
+        presents where the key will be name of limit group and value will be
+        a list of plugin's node class names. Thus, when a plugin uses more
+        than one node, these will be captured and the triggered process
+        will add the appropriate limit group to the payload jobinfo attributes.
+        """
+        captured_groups = []
+        for lg_name, list_node_class in self.deadline_limit_groups.items():
+            for node_class in list_node_class:
+                for node in nuke.allNodes(recurseGroups=True):
+                    if node.Class() not in node_class:
+                        continue
+                    if lg_name not in captured_groups:
+                        captured_groups.append(lg_name)
+
+        return ",".join(captured_groups)
