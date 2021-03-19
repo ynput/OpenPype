@@ -330,7 +330,7 @@ class NumberEntity(InputEntity):
         self.decimal = self.schema_data.get("decimal", 0)
 
         if self.decimal:
-            valid_value_types = (int, float)
+            valid_value_types = (float, )
         else:
             valid_value_types = (int, )
         self.valid_value_types = valid_value_types
@@ -340,6 +340,19 @@ class NumberEntity(InputEntity):
         # TODO check number for floats, integers and point
         self._validate_value_type(value)
         super(NumberEntity, self).set(value)
+    def _convert_to_valid_type(self, value):
+        if self.decimal:
+            if isinstance(value, int):
+                return float(value)
+        else:
+            if isinstance(value, float):
+                new_value = int(value)
+                if new_value != value:
+                    self.log.info("Converted float {} to int {}".format(
+                        value, new_value
+                    ))
+                return new_value
+        return NOT_SET
 
 
 class BoolEntity(InputEntity):

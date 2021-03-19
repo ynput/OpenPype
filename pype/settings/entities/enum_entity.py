@@ -46,6 +46,12 @@ class EnumEntity(InputEntity):
 
         super(EnumEntity, self).schema_validations()
 
+    def _convert_to_valid_type(self, value):
+        if self.multiselection:
+            if isinstance(value, (set, tuple)):
+                return list(value)
+        return NOT_SET
+
     def set(self, value):
         if self.multiselection:
             if not isinstance(value, list):

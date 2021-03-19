@@ -126,6 +126,11 @@ class ListEntity(EndpointEntity):
         )
         self.on_change()
 
+    def _convert_to_valid_type(self, value):
+        if isinstance(value, (set, tuple)):
+            return list(value)
+        return NOT_SET
+
     def _item_initalization(self):
         self.valid_value_types = (list, )
         self.children = []
