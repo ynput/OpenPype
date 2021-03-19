@@ -883,6 +883,14 @@ class SyncEntitiesFactory:
         ent_types_by_name = {
             ent_type["name"]: ent_type["id"] for ent_type in ent_types
         }
+        # Custom attribute types
+        cust_attr_types = self.session.query(
+            "select id, name from CustomAttributeType"
+        ).all()
+        cust_attr_type_name_by_id = {
+            cust_attr_type["id"]: cust_attr_type["name"]
+            for cust_attr_type in cust_attr_types
+        }
 
         # store default values per entity type
         attrs_per_entity_type = collections.defaultdict(dict)
@@ -892,9 +900,20 @@ class SyncEntitiesFactory:
         avalon_attrs_ca_id = collections.defaultdict(dict)
 
         attribute_key_by_id = {}
+        convert_types_by_attr_id = {}
         for cust_attr in custom_attrs:
             key = cust_attr["key"]
-            attribute_key_by_id[cust_attr["id"]] = key
+            attr_id = cust_attr["id"]
+            type_id = cust_attr["type_id"]
+
+            attribute_key_by_id[attr_id] = key
+            cust_attr_type_name = cust_attr_type_name_by_id[type_id]
+
+            convert_type = get_python_type_for_custom_attribute(
+                cust_attr, cust_attr_type_name
+            )
+            convert_types_by_attr_id[attr_id] = convert_type
+
             ca_ent_type = cust_attr["entity_type"]
             if key.startswith("avalon_"):
                 if ca_ent_type == "show":
@@ -988,24 +1007,44 @@ class SyncEntitiesFactory:
 
         for item in values["data"]:
             entity_id = item["entity_id"]
-            key = attribute_key_by_id[item["configuration_id"]]
+            attr_id = item["configuration_id"]
+            key = attribute_key_by_id[attr_id]
             store_key = "custom_attributes"
             if key.startswith("avalon_"):
                 store_key = "avalon_attrs"
-            self.entities_dict[entity_id][store_key][key] = item["value"]
+
+            convert_type = convert_types_by_attr_id[attr_id]
+            value = item["value"]
+            if convert_type:
+                value = convert_type(value)
+            self.entities_dict[entity_id][store_key][key] = value
 
         # process hierarchical attributes
-        self.set_hierarchical_attribute(hier_attrs, sync_ids)
+        self.set_hierarchical_attribute(
+            hier_attrs, sync_ids, cust_attr_type_name_by_id
+        )
 
-    def set_hierarchical_attribute(self, hier_attrs, sync_ids):
+    def set_hierarchical_attribute(
+        self, hier_attrs, sync_ids, cust_attr_type_name_by_id
+    ):
         # collect all hierarchical attribute keys
         # and prepare default values to project
         attributes_by_key = {}
         attribute_key_by_id = {}
+        convert_types_by_attr_id = {}
         for attr in hier_attrs:
             key = attr["key"]
-            attribute_key_by_id[attr["id"]] = key
+            attr_id = attr["id"]
+            type_id = attr["type_id"]
+            attribute_key_by_id[attr_id] = key
             attributes_by_key[key] = attr
+
+            cust_attr_type_name = cust_attr_type_name_by_id[type_id]
+            convert_type = get_python_type_for_custom_attribute(
+                attr, cust_attr_type_name
+            )
+            convert_types_by_attr_id[attr_id] = convert_type
+
             self.hier_cust_attr_ids_by_key[key] = attr["id"]
 
             store_key = "hier_attrs"
@@ -1040,7 +1079,7 @@ class SyncEntitiesFactory:
             else:
                 prepare_dict[key] = None
 
-        for id, entity_dict in self.entities_dict.items():
+        for entity_dict in self.entities_dict.values():
             # Skip project because has stored defaults at the moment
             if entity_dict["entity_type"] == "project":
                 continue
@@ -1078,8 +1117,14 @@ class SyncEntitiesFactory:
                 or (isinstance(value, (tuple, list)) and not value)
             ):
                 continue
+
+            attr_id = item["configuration_id"]
+            convert_type = convert_types_by_attr_id[attr_id]
+            if convert_type:
+                value = convert_type(value)
+
             entity_id = item["entity_id"]
-            key = attribute_key_by_id[item["configuration_id"]]
+            key = attribute_key_by_id[attr_id]
             if key.startswith("avalon_"):
                 store_key = "avalon_attrs"
                 avalon_hier.append(key)
@@ -2436,7 +2481,7 @@ class SyncEntitiesFactory:
         if new_entity_id not in p_chilren:
             self.entities_dict[parent_id]["children"].append(new_entity_id)
 
-        cust_attr, hier_attrs = get_pype_attr(self.session)
+        cust_attr, _ = get_pype_attr(self.session)
         for _attr in cust_attr:
             key = _attr["key"]
             if key not in av_entity["data"]:
