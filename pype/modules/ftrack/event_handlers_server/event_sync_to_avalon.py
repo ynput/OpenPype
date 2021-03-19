@@ -2137,16 +2137,12 @@ class SyncToAvalonEvent(BaseEvent):
             parent_queue.put(parent_ent)
 
         # Prepare values to query
-        entity_ids_joined = ", ".join([
-            "\"{}\"".format(id) for id in cust_attrs_ftrack_ids
-        ])
         configuration_ids = set()
         for key in hier_cust_attrs_keys:
             configuration_ids.add(hier_attr_id_by_key[key])
 
-        attributes_joined = ", ".join([
-            "\"{}\"".format(conf_id) for conf_id in configuration_ids
-        ])
+        entity_ids_joined = self.join_query_keys(cust_attrs_ftrack_ids)
+        attributes_joined = self.join_query_keys(configuration_ids)
 
         queries = [{
             "action": "query",
