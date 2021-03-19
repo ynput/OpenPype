@@ -505,6 +505,38 @@ class MongoSettingsHandler(SettingsHandler):
             return {}
         return self._get_project_settings_overrides(project_name)
 
+    def project_doc_to_anatomy_data(self, project_doc):
+        """Convert project document to anatomy data.
+
+        Probably should fill missing keys and values.
+        """
+        attributes = {}
+        project_doc_data = project_doc.get("data") or {}
+        for key in self.attribute_keys:
+            value = project_doc_data.get(key)
+            if value is not None:
+                attributes[key] = value
+
+        project_doc_config = project_doc.get("config") or {}
+        app_names = set()
+        if "apps" in project_doc_config:
+            for app_item in project_doc_config.pop("apps"):
+                if not app_item:
+                    continue
+                app_name = app_item.get("name")
+                if app_name:
+                    app_names.add(app_name)
+
+        attributes["applications"] = list(app_names)
+
+        output = {"attributes": attributes}
+        for key in self.anatomy_keys:
+            value = project_doc_config.get(key)
+            if value is not None:
+                output[key] = value
+
+        return output
+
     def _get_project_anatomy_overrides(self, project_name):
         if self.project_anatomy_cache[project_name].is_outdated:
             document_filter = {
