@@ -134,6 +134,20 @@ class FtrackModule(
         """Implementation of ISettingsChangeListener interface."""
         return
 
+    def create_ftrack_session(self, **session_kwargs):
+        import ftrack_api
+
+        if "server_url" not in session_kwargs:
+            session_kwargs["server_url"] = self.ftrack_url
+
+        if "api_key" not in session_kwargs or "api_user" not in session_kwargs:
+            from .lib import credentials
+            cred = credentials.get_credentials()
+            session_kwargs["api_user"] = cred.get("username")
+            session_kwargs["api_key"] = cred.get("api_key")
+
+        return ftrack_api.Session(**session_kwargs)
+
     def tray_init(self):
         from .tray import FtrackTrayWrapper
         self.tray_module = FtrackTrayWrapper(self)
