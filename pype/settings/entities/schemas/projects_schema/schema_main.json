@@ -10,7 +10,7 @@
                 {
                     "key": "roots",
                     "label": "Roots",
-                    "type": "anatomy_roots",
+                    "type": "dict-modifiable",
                     "is_file": true,
                     "is_group": true,
                     "expandable": false,

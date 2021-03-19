@@ -105,11 +105,7 @@ from .list_entity import ListEntity
 from .dict_immutable_keys_entity import DictImmutableKeysEntity
 from .dict_mutable_keys_entity import DictMutableKeysEntity
 
-from .anatomy_entities import (
-    AnatomyEntity,
-    AnatomyRootsEntity,
-    AnatomyTemplatesEntity
-)
+from .anatomy_entities import AnatomyEntity
 
 
 __all__ = (
@@ -155,7 +151,5 @@ __all__ = (
 
     "DictMutableKeysEntity",
 
-    "AnatomyEntity",
-    "AnatomyRootsEntity",
-    "AnatomyTemplatesEntity"
+    "AnatomyEntity"
 )
