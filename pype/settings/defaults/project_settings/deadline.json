@@ -5,7 +5,9 @@
             "optional": false,
             "tile_assembler_plugin": "oiio",
             "use_published": true,
-            "asset_dependencies": true
+            "asset_dependencies": true,
+            "group": "none",
+            "limit": []
         },
         "NukeSubmitDeadline": {
             "enabled": true,

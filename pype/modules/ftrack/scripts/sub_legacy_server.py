@@ -66,8 +66,7 @@ def main(args):
         manager = ModulesManager()
         ftrack_module = manager.modules_by_name["ftrack"]
         server = FtrackServer(
-            ftrack_module.server_event_handlers_paths,
-            "event"
+            ftrack_module.server_event_handlers_paths
         )
         session = ftrack_api.Session(auto_connect_event_hub=True)
 

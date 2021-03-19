@@ -695,10 +695,14 @@ class FilesWidget(QtWidgets.QWidget):
 
         file_path = os.path.join(self.root, work_file)
 
+        pipeline.emit("before.workfile.save", file_path)
+
         self._enter_session()   # Make sure we are in the right session
         self.host.save_file(file_path)
 
         self.set_asset_task(self._asset, self._task)
+
+        pipeline.emit("after.workfile.save", file_path)
 
         self.workfile_created.emit(file_path)
 

@@ -18,7 +18,7 @@
                     "label": "Avalon Mongo Timeout (ms)"
                 },
                 {
-                    "type": "path-widget",
+                    "type": "path",
                     "label": "Thumbnail Storage Location",
                     "key": "AVALON_THUMBNAIL_ROOT",
                     "multiplatform": true,

@@ -43,7 +43,9 @@ install_requires = [
     "Qt",
     "speedcopy",
     "googleapiclient",
-    "httplib2"
+    "httplib2",
+    # Harmony implementation
+    "filecmp"
 ]
 
 includes = []

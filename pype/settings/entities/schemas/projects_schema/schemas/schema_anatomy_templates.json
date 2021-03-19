@@ -8,24 +8,37 @@
     "is_group": true,
     "children": [
         {
-            "type": "number",
-            "key": "version_padding",
-            "label": "Version Padding"
+            "type": "dict",
+            "key": "defaults",
+            "children": [
+                {
+                    "type": "number",
+                    "key": "version_padding",
+                    "label": "Version Padding",
+                    "minimum": 1,
+                    "maximum": 10
+                },
+                {
+                    "type": "text",
+                    "key": "version",
+                    "label": "Version"
+                },
+                {
+                    "type": "number",
+                    "key": "frame_padding",
+                    "label": "Frame Padding",
+                    "minimum": 1,
+                    "maximum": 10
+                },
+                {
+                    "type": "text",
+                    "key": "frame",
+                    "label": "Frame"
+                }
+            ]
         },
         {
-            "type": "text",
-            "key": "version",
-            "label": "Version"
-        },
-        {
-            "type": "number",
-            "key": "frame_padding",
-            "label": "Frame Padding"
-        },
-        {
-            "type": "text",
-            "key": "frame",
-            "label": "Frame"
+            "type": "separator"
         },
         {
             "type": "dict",
@@ -128,9 +141,13 @@
         },
         {
             "type": "dict-modifiable",
-            "key": "other",
-            "label": "Other",
-            "object_type": "text"
+            "key": "others",
+            "label": "Others",
+            "collapsible_key": true,
+            "object_type": {
+                "type": "dict-modifiable",
+                "object_type": "text"
+            }
         }
     ]
 }

@@ -93,7 +93,7 @@
                             "label": "Path to material file defining list of material names to check. This is material name per line simple text file.<br/>It will be checked against named group <b>shader</b> in your <em>Validation regex</em>.<p>For example: <br/> <code>^.*(?P=&lt;shader&gt;.+)_GEO</code></p>"
                         },
                         {
-                            "type": "path-widget",
+                            "type": "path",
                             "key": "material_file",
                             "label": "Material File",
                             "multiplatform": true,

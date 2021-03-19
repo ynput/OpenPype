@@ -9,7 +9,9 @@
         {
             "type": "number",
             "key": "fps",
-            "label": "Frame Rate"
+            "label": "Frame Rate",
+            "decimal": 2,
+            "minimum": 0
         },
         {
             "type": "number",
@@ -54,27 +56,19 @@
         {
             "type": "number",
             "key": "pixelAspect",
-            "label": "Pixel Aspect Ratio"
+            "label": "Pixel Aspect Ratio",
+            "decimal": 2,
+            "minimum": 0
         },
         {
-            "type": "enum",
+            "type": "apps-enum",
             "key": "applications",
-            "label": "Applications",
-            "multiselection": true,
-            "enum_items": [
-                { "maya_2020": "Maya 2020" },
-                { "nuke_12.2": "Nuke 12.2" },
-                { "hiero_12.2": "Hiero 12.2" },
-                { "houdini_18": "Houdini 18" },
-                { "blender_2.91": "Blender 2.91" },
-                { "aftereffects_2021": "After Effects 2021" }
-            ]
+            "label": "Applications"
         },
         {
-            "type": "dict-modifiable",
-            "key": "task_short_names",
-            "label": "Task short names (by Task type)",
-            "object_type": "text"
+            "type": "tools-enum",
+            "key": "tools",
+            "label": "Tools"
         }
     ]
 }

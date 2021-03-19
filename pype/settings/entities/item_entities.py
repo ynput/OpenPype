@@ -1,5 +1,6 @@
 from .lib import (
     NOT_SET,
+    STRING_TYPE,
     OverrideState
 )
 from .exceptions import (
@@ -10,7 +11,7 @@ from .base_entity import ItemEntity
 
 
 class PathEntity(ItemEntity):
-    schema_types = ["path-widget", "path-item"]
+    schema_types = ["path"]
     platforms = ("windows", "darwin", "linux")
     platform_labels_mapping = {
         "windows": "Windows",
@@ -56,7 +57,7 @@ class PathEntity(ItemEntity):
 
         # Create child object
         if not self.multiplatform and not self.multipath:
-            valid_value_types = (str, )
+            valid_value_types = (STRING_TYPE, )
             item_schema = {
                 "type": "path-input",
                 "key": self.key,

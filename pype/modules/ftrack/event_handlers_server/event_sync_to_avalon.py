@@ -10,16 +10,20 @@ import traceback
 from bson.objectid import ObjectId
 from pymongo import UpdateOne
 
-from avalon import schema
-
-from pype.modules.ftrack.lib import avalon_sync
-from pype.modules.ftrack.lib.avalon_sync import (
-    CUST_ATTR_ID_KEY, CUST_ATTR_AUTO_SYNC, EntitySchemas
-)
 import ftrack_api
-from pype.modules.ftrack import BaseEvent
 
+from avalon import schema
 from avalon.api import AvalonMongoDB
+
+from pype.modules.ftrack.lib import (
+    avalon_sync,
+    BaseEvent
+)
+from pype.modules.ftrack.lib.avalon_sync import (
+    CUST_ATTR_ID_KEY,
+    CUST_ATTR_AUTO_SYNC,
+    EntitySchemas
+)
 
 
 class SyncToAvalonEvent(BaseEvent):

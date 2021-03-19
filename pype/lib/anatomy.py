@@ -727,7 +727,7 @@ class Templates:
                     key_2: "value_2"
                     key_4: "value_3/value_2"
         """
-        default_key_values = {}
+        default_key_values = templates.pop("defaults", {})
         for key, value in tuple(templates.items()):
             if isinstance(value, dict):
                 continue
@@ -735,6 +735,19 @@ class Templates:
 
         keys_by_subkey = {}
         for sub_key, sub_value in templates.items():
+            key_values = {}
+            key_values.update(default_key_values)
+            key_values.update(sub_value)
+            keys_by_subkey[sub_key] = cls.prepare_inner_keys(key_values)
+
+        other_templates = templates.get("others") or {}
+        for sub_key, sub_value in other_templates.items():
+            if sub_key in keys_by_subkey:
+                log.warning((
+                    "Key \"{}\" is duplicated in others. Skipping."
+                ).format(sub_key))
+                continue
+
             key_values = {}
             key_values.update(default_key_values)
             key_values.update(sub_value)

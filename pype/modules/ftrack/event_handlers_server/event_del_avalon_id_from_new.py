@@ -1,6 +1,8 @@
 from pype.modules.ftrack.lib import BaseEvent
 from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
-from pype.modules.ftrack.events.event_sync_to_avalon import SyncToAvalonEvent
+from pype.modules.ftrack.event_handlers_server.event_sync_to_avalon import (
+    SyncToAvalonEvent
+)
 
 
 class DelAvalonIdFromNew(BaseEvent):

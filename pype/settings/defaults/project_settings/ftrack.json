@@ -1,6 +1,4 @@
 {
-    "ftrack_actions_path": [],
-    "ftrack_events_path": [],
     "events": {
         "sync_to_avalon": {
             "enabled": true,

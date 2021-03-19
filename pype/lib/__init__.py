@@ -63,7 +63,9 @@ from .avalon_context import (
 
     BuildWorkfile,
 
-    get_creator_by_name
+    get_creator_by_name,
+
+    change_timer_to_current_context
 )
 
 from .applications import (
@@ -159,6 +161,8 @@ __all__ = [
     "BuildWorkfile",
 
     "get_creator_by_name",
+
+    "change_timer_to_current_context",
 
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",

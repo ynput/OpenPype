@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 
-from pype.modules.ftrack import BaseEvent
+from pype.modules.ftrack.lib import BaseEvent
 from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 from avalon.api import AvalonMongoDB
 

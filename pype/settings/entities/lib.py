@@ -8,6 +8,10 @@ from .exceptions import (
     SchemaDuplicatedEnvGroupKeys
 )
 
+try:
+    STRING_TYPE = basestring
+except Exception:
+    STRING_TYPE = str
 
 WRAPPER_TYPES = ["form", "collapsible-wrap"]
 NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
@@ -55,7 +59,7 @@ def _fill_schema_template_data(
                 value, template_data, required_keys, missing_keys
             )
 
-    elif isinstance(template, str):
+    elif isinstance(template, STRING_TYPE):
         # TODO find much better way how to handle filling template data
         for replacement_string in template_key_pattern.findall(template):
             key = str(replacement_string[1:-1])
@@ -233,7 +237,7 @@ def validate_schema(schema_data):
     validate_environment_groups_uniquenes(schema_data)
 
 
-def gui_schema(subfolder, main_schema_name):
+def get_gui_schema(subfolder, main_schema_name):
     dirpath = os.path.join(
         os.path.dirname(__file__),
         "schemas",
@@ -267,6 +271,14 @@ def gui_schema(subfolder, main_schema_name):
     )
     validate_schema(main_schema)
     return main_schema
+
+
+def get_studio_settings_schema():
+    return get_gui_schema("system_schema", "schema_main")
+
+
+def get_project_settings_schema():
+    return get_gui_schema("projects_schema", "schema_main")
 
 
 class OverrideStateItem:

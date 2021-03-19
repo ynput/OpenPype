@@ -1,8 +1,15 @@
+import uuid
 import copy
 import logging
 import collections
 
 from . import lib
+from .constants import (
+    ACTION_ROLE,
+    GROUP_ROLE,
+    VARIANT_GROUP_ROLE,
+    ACTION_ID_ROLE
+)
 from .actions import ApplicationAction
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
@@ -109,10 +116,6 @@ class TaskModel(QtGui.QStandardItemModel):
 
 
 class ActionModel(QtGui.QStandardItemModel):
-    ACTION_ROLE = QtCore.Qt.UserRole
-    GROUP_ROLE = QtCore.Qt.UserRole + 1
-    VARIANT_GROUP_ROLE = QtCore.Qt.UserRole + 2
-
     def __init__(self, dbcon, parent=None):
         super(ActionModel, self).__init__(parent=parent)
         self.dbcon = dbcon
@@ -123,6 +126,7 @@ class ActionModel(QtGui.QStandardItemModel):
         self.default_icon = qtawesome.icon("fa.cube", color="white")
         # Cache of available actions
         self._registered_actions = list()
+        self.items_by_id = {}
 
     def discover(self):
         """Set up Actions cache. Run this for each new project."""
@@ -134,6 +138,7 @@ class ActionModel(QtGui.QStandardItemModel):
         actions.extend(app_actions)
 
         self._registered_actions = actions
+        self.items_by_id.clear()
 
     def get_application_actions(self):
         actions = []
@@ -180,6 +185,7 @@ class ActionModel(QtGui.QStandardItemModel):
         # Validate actions based on compatibility
         self.clear()
 
+        self.items_by_id.clear()
         self._groups.clear()
 
         actions = self.filter_compatible_actions(self._registered_actions)
@@ -235,8 +241,8 @@ class ActionModel(QtGui.QStandardItemModel):
 
             item = QtGui.QStandardItem(icon, label)
             item.setData(label, QtCore.Qt.ToolTipRole)
-            item.setData(actions, self.ACTION_ROLE)
-            item.setData(True, self.VARIANT_GROUP_ROLE)
+            item.setData(actions, ACTION_ROLE)
+            item.setData(True, VARIANT_GROUP_ROLE)
             items_by_order[order].append(item)
 
         for action in single_actions:
@@ -244,7 +250,7 @@ class ActionModel(QtGui.QStandardItemModel):
             label = lib.get_action_label(action)
             item = QtGui.QStandardItem(icon, label)
             item.setData(label, QtCore.Qt.ToolTipRole)
-            item.setData(action, self.ACTION_ROLE)
+            item.setData(action, ACTION_ROLE)
             items_by_order[action.order].append(item)
 
         for group_name, actions in grouped_actions.items():
@@ -263,13 +269,16 @@ class ActionModel(QtGui.QStandardItemModel):
                 icon = self.default_icon
 
             item = QtGui.QStandardItem(icon, group_name)
-            item.setData(actions, self.ACTION_ROLE)
-            item.setData(True, self.GROUP_ROLE)
+            item.setData(actions, ACTION_ROLE)
+            item.setData(True, GROUP_ROLE)
 
             items_by_order[order].append(item)
 
         for order in sorted(items_by_order.keys()):
             for item in items_by_order[order]:
+                item_id = str(uuid.uuid4())
+                item.setData(item_id, ACTION_ID_ROLE)
+                self.items_by_id[item_id] = item
                 self.appendRow(item)
 
         self.endResetModel()

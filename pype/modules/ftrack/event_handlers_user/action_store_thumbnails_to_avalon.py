@@ -1,7 +1,7 @@
 import os
-import requests
 import errno
 import json
+import requests
 
 from bson.objectid import ObjectId
 from pype.modules.ftrack.lib import BaseAction, statics_icon

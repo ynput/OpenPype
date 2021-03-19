@@ -1,4 +1,9 @@
+import time
 from Qt import QtCore, QtWidgets, QtGui
+from .constants import (
+    ANIMATION_START_ROLE,
+    ANIMATION_STATE_ROLE
+)
 
 
 class ActionDelegate(QtWidgets.QStyledItemDelegate):
@@ -9,8 +14,60 @@ class ActionDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, group_roles, *args, **kwargs):
         super(ActionDelegate, self).__init__(*args, **kwargs)
         self.group_roles = group_roles
+        self._anim_start_color = QtGui.QColor(178, 255, 246)
+        self._anim_end_color = QtGui.QColor(5, 44, 50)
+
+    def _draw_animation(self, painter, option, index):
+        grid_size = option.widget.gridSize()
+        x_offset = int(
+            (grid_size.width() / 2)
+            - (option.rect.width() / 2)
+        )
+        item_x = option.rect.x() - x_offset
+        rect_offset = grid_size.width() / 20
+        size = grid_size.width() - (rect_offset * 2)
+        anim_rect = QtCore.QRect(
+            item_x + rect_offset,
+            option.rect.y() + rect_offset,
+            size,
+            size
+        )
+
+        painter.save()
+
+        painter.setBrush(QtCore.Qt.transparent)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        gradient = QtGui.QConicalGradient()
+        gradient.setCenter(anim_rect.center())
+        gradient.setColorAt(0, self._anim_start_color)
+        gradient.setColorAt(1, self._anim_end_color)
+
+        time_diff = time.time() - index.data(ANIMATION_START_ROLE)
+
+        # Repeat 4 times
+        part_anim = 2.5
+        part_time = time_diff % part_anim
+        offset = (part_time / part_anim) * 360
+        angle = (offset + 90) % 360
+
+        gradient.setAngle(-angle)
+
+        pen = QtGui.QPen(QtGui.QBrush(gradient), rect_offset)
+        pen.setCapStyle(QtCore.Qt.RoundCap)
+        painter.setPen(pen)
+        painter.drawArc(
+            anim_rect,
+            -16 * (angle + 10),
+            -16 * offset
+        )
+
+        painter.restore()
 
     def paint(self, painter, option, index):
+        if index.data(ANIMATION_STATE_ROLE):
+            self._draw_animation(painter, option, index)
+
         super(ActionDelegate, self).paint(painter, option, index)
         is_group = False
         for group_role in self.group_roles:

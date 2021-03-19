@@ -203,6 +203,11 @@ class BaseItemEntity(BaseEntity):
         """Return path for a direct child entity."""
         pass
 
+    @abstractmethod
+    def get_entity_from_path(self, path):
+        """Return system settings entity."""
+        pass
+
     def schema_validations(self):
         """Validate schema of entity and it's hierachy.
 
@@ -789,6 +794,9 @@ class ItemEntity(BaseItemEntity):
     def create_schema_object(self, *args, **kwargs):
         """Reference method for creation of entities defined in RootEntity."""
         return self.root_item.create_schema_object(*args, **kwargs)
+
+    def get_entity_from_path(self, path):
+        return self.root_item.get_entity_from_path(path)
 
     @abstractmethod
     def update_default_value(self, parent_values):
