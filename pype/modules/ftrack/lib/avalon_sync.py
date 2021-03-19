@@ -119,6 +119,31 @@ def get_pype_attr(session, split_hierarchical=True, query_keys=None):
     return custom_attributes
 
 
+def get_python_type_for_custom_attribute(cust_attr, cust_attr_type_name=None):
+    if cust_attr_type_name is None:
+        cust_attr_type_name = cust_attr["type"]["name"]
+
+    if cust_attr_type_name == "text":
+        return str
+
+    if cust_attr_type_name == "boolean":
+        return bool
+
+    if cust_attr_type_name in ("number", "enumerator"):
+        cust_attr_config = json.loads(cust_attr["config"])
+        if cust_attr_type_name == "number":
+            if cust_attr_config["isdecimal"]:
+                return float
+            return int
+
+        if cust_attr_type_name == "enumerator":
+            if cust_attr_config["multiSelect"]:
+                return list
+            return str
+    # "date", "expression", "notificationtype", "dynamic enumerator"
+    return None
+
+
 def from_dict_to_set(data, is_project):
     """
         Converts 'data' into $set part of MongoDB update command.
