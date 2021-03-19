@@ -1,4 +1,5 @@
 import os
+import collections
 from abc import ABCMeta, abstractmethod
 import six
 import pype
@@ -8,7 +9,8 @@ from pype.modules import (
     IPluginPaths,
     ITimersManager,
     IUserModule,
-    ILaunchHookPaths
+    ILaunchHookPaths,
+    ISettingsChangeListener
 )
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +33,8 @@ class FtrackModule(
     IPluginPaths,
     ITimersManager,
     IUserModule,
-    ILaunchHookPaths
+    ILaunchHookPaths,
+    ISettingsChangeListener
 ):
     name = "ftrack"
 
@@ -114,6 +117,22 @@ class FtrackModule(
         """Implementation of IUserModule interface."""
         if self.tray_module:
             self.tray_module.changed_user()
+
+    def on_system_settings_save(self, *_args, **_kwargs):
+        """Implementation of ISettingsChangeListener interface."""
+        # Ignore
+        return
+
+    def on_project_settings_save(self, *_args, **_kwargs):
+        """Implementation of ISettingsChangeListener interface."""
+        # Ignore
+        return
+
+    def on_project_anatomy_save(
+        self, old_value, new_value, changes, project_name
+    ):
+        """Implementation of ISettingsChangeListener interface."""
+        return
 
     def tray_init(self):
         from .tray import FtrackTrayWrapper
