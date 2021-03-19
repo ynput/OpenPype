@@ -132,7 +132,57 @@ class FtrackModule(
         self, old_value, new_value, changes, project_name
     ):
         """Implementation of ISettingsChangeListener interface."""
-        return
+        if not project_name:
+            return
+
+        attributes_changes = changes.get("attributes")
+        if not attributes_changes:
+            return
+
+        import ftrack_api
+        from pype.modules.ftrack.lib import avalon_sync
+
+        session = self.create_ftrack_session()
+        project_entity = session.query(
+            "Project where full_name is \"{}\"".format(project_name)
+        ).first()
+
+        if not project_entity:
+            self.log.warning((
+                "Ftrack project with names \"{}\" was not found."
+                " Skipping settings attributes change callback."
+            ))
+            return
+
+        project_id = project_entity["id"]
+
+        cust_attr, hier_attr = avalon_sync.get_pype_attr(session)
+        cust_attr_by_key = {attr["key"]: attr for attr in cust_attr}
+        hier_attrs_by_key = {attr["key"]: attr for attr in hier_attr}
+        for key, value in attributes_changes.items():
+            configuration = hier_attrs_by_key.get(key)
+            if not configuration:
+                configuration = cust_attr_by_key.get(key)
+            if not configuration:
+                continue
+
+            # TODO add value validations
+            # - value type and list items
+            entity_key = collections.OrderedDict()
+            entity_key["configuration_id"] = configuration["id"]
+            entity_key["entity_id"] = project_id
+
+            session.recorded_operations.push(
+                ftrack_api.operation.UpdateEntityOperation(
+                    "ContextCustomAttributeValue",
+                    entity_key,
+                    "value",
+                    ftrack_api.symbol.NOT_SET,
+                    value
+
+                )
+            )
+        session.commit()
 
     def create_ftrack_session(self, **session_kwargs):
         import ftrack_api
