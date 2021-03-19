@@ -163,8 +163,9 @@ class SignalHandler(QtCore.QObject):
     signal_change_label = QtCore.Signal()
     signal_stop_timers = QtCore.Signal()
 
-    def __init__(self, cls):
-        super().__init__()
-        self.signal_show_message.connect(cls.show_message)
-        self.signal_change_label.connect(cls.change_label)
-        self.signal_stop_timers.connect(cls.stop_timers)
+    def __init__(self, module):
+        super(SignalHandler, self).__init__()
+        self.module = module
+        self.signal_show_message.connect(module.show_message)
+        self.signal_change_label.connect(module.change_label)
+        self.signal_stop_timers.connect(module.stop_timers)

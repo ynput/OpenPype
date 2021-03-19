@@ -1,4 +1,5 @@
 import os
+import collections
 from abc import ABCMeta, abstractmethod
 import six
 from .. import PypeModule, ITrayService, IIdleManager, IWebServerRoutes
@@ -159,26 +160,25 @@ class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
     def callbacks_by_idle_time(self):
         """Implementation of IIdleManager interface."""
         # Time when message is shown
-        callbacks = {
-            self.time_show_message: lambda: self.time_callback(0)
-        }
+        callbacks = collections.defaultdict(list)
+        callbacks[self.time_show_message].append(lambda: self.time_callback(0))
 
         # Times when idle is between show widget and stop timers
         show_to_stop_range = range(
             self.time_show_message - 1, self.time_stop_timer
         )
         for num in show_to_stop_range:
-            callbacks[num] = lambda: self.time_callback(1)
+            callbacks[num].append(lambda: self.time_callback(1))
 
         # Times when widget is already shown and user restart idle
         shown_and_moved_range = range(
             self.time_stop_timer - self.time_show_message
         )
         for num in shown_and_moved_range:
-            callbacks[num] = lambda: self.time_callback(1)
+            callbacks[num].append(lambda: self.time_callback(1))
 
         # Time when timers are stopped
-        callbacks[self.time_stop_timer] = lambda: self.time_callback(2)
+        callbacks[self.time_stop_timer].append(lambda: self.time_callback(2))
 
         return callbacks
 

@@ -4,7 +4,6 @@ import threading
 from abc import ABCMeta, abstractmethod
 
 import six
-from pynput import mouse, keyboard
 
 from pype.lib import PypeLogger
 from pype.modules import PypeModule, ITrayService
@@ -99,7 +98,7 @@ class IdleManager(PypeModule, ITrayService):
 class IdleManagerThread(threading.Thread):
     def __init__(self, module, *args, **kwargs):
         super(IdleManagerThread, self).__init__(*args, **kwargs)
-        self.log = PypeLogger().get_logger(self.__class__.__name__)
+        self.log = PypeLogger.get_logger(self.__class__.__name__)
         self.module = module
         self.threads = []
         self.is_running = False
@@ -120,12 +119,18 @@ class IdleManagerThread(threading.Thread):
         self.log.info("IdleManagerThread has stopped")
         self.module.on_thread_stop()
 
+    def _create_threads(self):
+        from .idle_logic import MouseThread, KeyboardThread
+
+        thread_mouse = MouseThread(self.reset_time)
+        thread_keyboard = KeyboardThread(self.reset_time)
+        return thread_mouse, thread_keyboard
+
     def run(self):
         self.log.info("IdleManagerThread has started")
         self.is_running = True
-        thread_mouse = MouseThread(self.reset_time)
+        thread_mouse, thread_keyboard = self._create_threads()
         thread_mouse.start()
-        thread_keyboard = KeyboardThread(self.reset_time)
         thread_keyboard.start()
         try:
             while self.is_running:
@@ -162,26 +167,3 @@ class IdleManagerThread(threading.Thread):
             pass
 
         self.on_stop()
-
-
-class MouseThread(mouse.Listener):
-    """Listens user's mouse movement."""
-
-    def __init__(self, callback):
-        super(MouseThread, self).__init__(on_move=self.on_move)
-        self.callback = callback
-
-    def on_move(self, posx, posy):
-        self.callback()
-
-
-class KeyboardThread(keyboard.Listener):
-    """Listens user's keyboard input."""
-
-    def __init__(self, callback):
-        super(KeyboardThread, self).__init__(on_press=self.on_press)
-
-        self.callback = callback
-
-    def on_press(self, key):
-        self.callback()
