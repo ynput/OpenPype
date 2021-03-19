@@ -438,8 +438,90 @@ class MongoSettingsHandler(SettingsHandler):
         data_cache = self.project_anatomy_cache[project_name]
         data_cache.update_data(anatomy_data)
 
-        self._save_project_data(
-            project_name, PROJECT_ANATOMY_KEY, data_cache
+        if project_name is not None:
+            self._save_project_anatomy_data(project_name, data_cache)
+
+        else:
+            self._save_project_data(
+                project_name, PROJECT_ANATOMY_KEY, data_cache
+            )
+
+    @classmethod
+    def prepare_mongo_update_dict(cls, in_data):
+        data = {}
+        for key, value in in_data.items():
+            if not isinstance(value, dict):
+                data[key] = value
+                continue
+
+            new_value = cls.prepare_mongo_update_dict(value)
+            for _key, _value in new_value.items():
+                new_key = ".".join((key, _key))
+                data[new_key] = _value
+
+        return data
+
+    def _save_project_anatomy_data(self, project_name, data_cache):
+        # Create copy of data as they will be modified during save
+        new_data = data_cache.data_copy()
+
+        # Prepare avalon project document
+        collection = self.avalon_db.database[project_name]
+        project_doc = collection.find_one({
+            "type": "project"
+        })
+        if not project_doc:
+            raise ValueError((
+                "Project document of project \"{}\" does not exists."
+                " Create project first."
+            ).format(project_name))
+
+        # Update dictionary of changes that will be changed in mongo
+        update_dict = {}
+
+        # Project's data
+        update_dict_data = {}
+        project_doc_data = project_doc.get("data") or {}
+        attributes = new_data.pop("attributes")
+        _applications = attributes.pop("applications", None) or []
+        for key, value in attributes.items():
+            if (
+                key in project_doc_data
+                and project_doc_data[key] == value
+            ):
+                continue
+            update_dict_data[key] = value
+
+        if update_dict_data:
+            update_dict["data"] = update_dict_data
+
+        update_dict_config = {}
+
+        applications = []
+        for application in _applications:
+            if not application:
+                continue
+            if isinstance(application, six.string_types):
+                applications.append({application: application})
+
+        new_data["apps"] = applications
+
+        for key, value in new_data.items():
+            project_doc_value = project_doc.get(key)
+            if key in project_doc and project_doc_value == value:
+                continue
+            update_dict_config[key] = value
+
+        if update_dict_config:
+            update_dict["config"] = update_dict_config
+
+        if not update_dict:
+            return
+
+        _update_dict = self.prepare_mongo_update_dict(update_dict)
+        collection.update_one(
+            {"type": "project"},
+            {"$set": _update_dict}
         )
 
     def _save_project_data(self, project_name, doc_type, data_cache):
@@ -539,17 +621,22 @@ class MongoSettingsHandler(SettingsHandler):
 
     def _get_project_anatomy_overrides(self, project_name):
         if self.project_anatomy_cache[project_name].is_outdated:
-            document_filter = {
-                "type": PROJECT_ANATOMY_KEY,
-            }
             if project_name is None:
-                document_filter["is_default"] = True
+                document_filter = {
+                    "type": PROJECT_ANATOMY_KEY,
+                    "is_default": True
+                }
+                document = self.collection.find_one(document_filter)
+                self.project_anatomy_cache[project_name].update_from_document(
+                    document
+                )
             else:
-                document_filter["project_name"] = project_name
-            document = self.collection.find_one(document_filter)
-            self.project_anatomy_cache[project_name].update_from_document(
-                document
-            )
+                collection = self.avalon_db.database[project_name]
+                project_doc = collection.find_one({"type": "project"})
+                self.project_anatomy_cache[project_name].update_data(
+                    self.project_doc_to_anatomy_data(project_doc)
+                )
+
         return self.project_anatomy_cache[project_name].data_copy()
 
     def get_studio_project_anatomy_overrides(self):
