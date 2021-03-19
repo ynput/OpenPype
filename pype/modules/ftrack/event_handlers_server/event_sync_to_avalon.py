@@ -33,6 +33,15 @@ class SyncToAvalonEvent(BaseEvent):
     ignore_ent_types = ["Milestone"]
     ignore_keys = ["statusid", "thumbid"]
 
+    cust_attr_query_keys = [
+        "id",
+        "key",
+        "entity_type",
+        "object_type_id",
+        "is_hierarchical",
+        "config",
+        "default"
+    ]
     project_query = (
         "select full_name, name, custom_attributes"
         ", project_schema._task_type_schema.types.name"
@@ -117,7 +126,7 @@ class SyncToAvalonEvent(BaseEvent):
     def avalon_cust_attrs(self):
         if self._avalon_cust_attrs is None:
             self._avalon_cust_attrs = avalon_sync.get_pype_attr(
-                self.process_session
+                self.process_session, query_keys=self.cust_attr_query_keys
             )
         return self._avalon_cust_attrs
 
