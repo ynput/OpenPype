@@ -82,8 +82,8 @@ class RootEntity(BaseItemEntity):
 
     def set(self, value):
         """Set value."""
-        self._validate_value_type(value)
-        for _key, _value in value.items():
+        new_value = self.convert_to_valid_type(value)
+        for _key, _value in new_value.items():
             self.non_gui_children[_key].set(_value)
 
     def keys(self):

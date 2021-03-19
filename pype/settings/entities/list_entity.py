@@ -180,9 +180,9 @@ class ListEntity(EndpointEntity):
         return "/".join([self.path, str(result_idx)])
 
     def set(self, value):
-        self._validate_value_type(value)
+        new_value = self.convert_to_valid_type(value)
         self.clear()
-        for item in value:
+        for item in new_value:
             self.append(item)
 
     def on_child_change(self, _child_entity):

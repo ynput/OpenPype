@@ -53,17 +53,11 @@ class EnumEntity(InputEntity):
         return NOT_SET
 
     def set(self, value):
+        new_value = self.convert_to_valid_type(value)
         if self.multiselection:
-            if not isinstance(value, list):
-                if isinstance(value, (set, tuple)):
-                    value = list(value)
-                else:
-                    value = [value]
-            check_values = value
+            check_values = new_value
         else:
-            check_values = [value]
-
-        self._validate_value_type(value)
+            check_values = [new_value]
 
         for item in check_values:
             if item not in self.valid_keys:
@@ -72,7 +66,7 @@ class EnumEntity(InputEntity):
                         item, self.valid_keys
                     )
                 )
-        self._current_value = value
+        self._current_value = new_value
         self._on_value_change()
 
 

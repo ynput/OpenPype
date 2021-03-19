@@ -239,8 +239,8 @@ class ListStrictEntity(ItemEntity):
         return output
 
     def set(self, value):
-        self._validate_value_type(value)
-        for idx, item in enumerate(value):
+        new_value = self.convert_to_valid_type(value)
+        for idx, item in enumerate(new_value):
             self.children[idx].set(item)
 
     def settings_value(self):

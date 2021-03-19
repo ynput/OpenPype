@@ -121,8 +121,7 @@ class InputEntity(EndpointEntity):
 
     def set(self, value):
         """Change value."""
-        self._validate_value_type(value)
-        self._current_value = value
+        self._current_value = self.convert_to_valid_type(value)
         self._on_value_change()
 
     def _on_value_change(self):
@@ -336,10 +335,6 @@ class NumberEntity(InputEntity):
         self.valid_value_types = valid_value_types
         self.value_on_not_set = 0
 
-    def set(self, value):
-        # TODO check number for floats, integers and point
-        self._validate_value_type(value)
-        super(NumberEntity, self).set(value)
     def _convert_to_valid_type(self, value):
         if self.decimal:
             if isinstance(value, int):
@@ -401,13 +396,13 @@ class RawJsonEntity(InputEntity):
         self.project_override_metadata = {}
 
     def set(self, value):
-        self._validate_value_type(value)
+        new_value = self.convert_to_valid_type(value)
 
-        if isinstance(value, dict):
+        if isinstance(new_value, dict):
             for key in METADATA_KEYS:
-                if key in value:
-                    value.pop(key)
-        self._current_value = value
+                if key in new_value:
+                    new_value.pop(key)
+        self._current_value = new_value
         self._on_value_change()
 
     @property
