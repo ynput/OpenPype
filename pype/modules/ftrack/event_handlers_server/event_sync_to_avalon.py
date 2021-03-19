@@ -229,15 +229,6 @@ class SyncToAvalonEvent(BaseEvent):
 
         return self._changeability_by_mongo_id
 
-    @property
-    def avalon_custom_attributes(self):
-        """Return info about changeability of entity and it's parents."""
-        if self._avalon_custom_attributes is None:
-            self._avalon_custom_attributes = avalon_sync.get_pype_attr(
-                self.process_session
-            )
-        return self._avalon_custom_attributes
-
     def remove_cached_by_key(self, key, values):
         if self._avalon_ents is None:
             return
@@ -393,7 +384,6 @@ class SyncToAvalonEvent(BaseEvent):
         self._avalon_archived_by_id = None
         self._avalon_archived_by_name = None
 
-        self._avalon_custom_attributes = None
         self._ent_types_by_name = None
 
         self.ftrack_ents_by_id = {}
@@ -1238,7 +1228,7 @@ class SyncToAvalonEvent(BaseEvent):
 
     def get_cust_attr_values(self, entity, keys=None):
         output = {}
-        custom_attrs, hier_attrs = self.avalon_custom_attributes
+        custom_attrs, hier_attrs = self.avalon_cust_attrs
         not_processed_keys = True
         if keys:
             not_processed_keys = [k for k in keys]
