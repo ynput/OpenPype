@@ -2018,7 +2018,7 @@ class SyncToAvalonEvent(BaseEvent):
             self.update_entities()
             return
 
-        cust_attrs, hier_attrs = self.avalon_cust_attrs
+        _, hier_attrs = self.avalon_cust_attrs
 
         # Hierarchical custom attributes preparation ***
         hier_attr_key_by_id = {
