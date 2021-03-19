@@ -120,6 +120,14 @@ def get_pype_attr(session, split_hierarchical=True, query_keys=None):
 
 
 def get_python_type_for_custom_attribute(cust_attr, cust_attr_type_name=None):
+    """Python type that should value of custom attribute have.
+
+    This function is mainly for number type which is always float from ftrack.
+
+    Returns:
+        type: Python type which call be called on object to convert the object
+            to the type or None if can't figure out.
+    """
     if cust_attr_type_name is None:
         cust_attr_type_name = cust_attr["type"]["name"]
 
