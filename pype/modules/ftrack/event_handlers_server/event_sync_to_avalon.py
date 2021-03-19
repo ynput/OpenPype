@@ -131,6 +131,18 @@ class SyncToAvalonEvent(BaseEvent):
         return self._avalon_cust_attrs
 
     @property
+    def cust_attr_types_by_id(self):
+        if self._cust_attr_types_by_id is None:
+            cust_attr_types = self.process_session.query(
+                "select id, name from CustomAttributeType"
+            ).all()
+            self._cust_attr_types_by_id = {
+                cust_attr_type["id"]: cust_attr_type
+                for cust_attr_type in cust_attr_types
+            }
+        return self._cust_attr_types_by_id
+
+    @property
     def avalon_entities(self):
         if self._avalon_ents is None:
             self.dbcon.install()
@@ -382,6 +394,7 @@ class SyncToAvalonEvent(BaseEvent):
         self._cur_project = None
 
         self._avalon_cust_attrs = None
+        self._cust_attr_types_by_id = None
 
         self._avalon_ents = None
         self._avalon_ents_by_id = None
