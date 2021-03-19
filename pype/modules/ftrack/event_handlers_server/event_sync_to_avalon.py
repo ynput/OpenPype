@@ -1,6 +1,7 @@
 import os
 import collections
 import copy
+import json
 import queue
 import time
 import datetime
@@ -10,6 +11,7 @@ import traceback
 from bson.objectid import ObjectId
 from pymongo import UpdateOne
 
+import arrow
 import ftrack_api
 
 from avalon import schema
@@ -1859,6 +1861,41 @@ class SyncToAvalonEvent(BaseEvent):
                         key, value, ent_path
                     )
                 )
+
+    def convert_value_by_cust_attr_conf(self, value, cust_attr_conf):
+        type_id = cust_attr_conf["type_id"]
+        cust_attr_type_name = self.cust_attr_types_by_id[type_id]["name"]
+        ignored = (
+            "expression", "notificationtype", "dynamic enumerator"
+        )
+        if cust_attr_type_name in ignored:
+            return None
+
+        if cust_attr_type_name == "text":
+            return value
+
+        if cust_attr_type_name == "boolean":
+            if value == "1":
+                return True
+            if value == "0":
+                return False
+            return bool(value)
+
+        if cust_attr_type_name == "date":
+            return arrow.get(value)
+
+        cust_attr_config = json.loads(cust_attr_conf["config"])
+
+        if cust_attr_type_name == "number":
+            if cust_attr_config["isdecimal"]:
+                return float(value)
+            return int(value)
+
+        if cust_attr_type_name == "enumerator":
+            if not cust_attr_config["multiSelect"]:
+                return value
+            return value.split(", ")
+        return value
 
     def process_hier_cleanup(self):
         if (
