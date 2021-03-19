@@ -83,15 +83,23 @@ def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
     return False
 
 
-def get_pype_attr(session, split_hierarchical=True):
+def get_pype_attr(session, split_hierarchical=True, query_keys=None):
     custom_attributes = []
     hier_custom_attributes = []
+    if not query_keys:
+        query_keys = [
+            "id",
+            "entity_type",
+            "object_type_id",
+            "is_hierarchical",
+            "default"
+        ]
     # TODO remove deprecated "avalon" group from query
     cust_attrs_query = (
-        "select id, entity_type, object_type_id, is_hierarchical, default"
+        "select {}"
         " from CustomAttributeConfiguration"
-        " where group.name in (\"avalon\", \"pype\")"
-    )
+        " where group.name in (\"avalon\", \"{}\")"
+    ).format(join_query_keys(query_keys), CUST_ATTR_GROUP)
     all_avalon_attr = session.query(cust_attrs_query).all()
     for cust_attr in all_avalon_attr:
         if split_hierarchical and cust_attr["is_hierarchical"]:
