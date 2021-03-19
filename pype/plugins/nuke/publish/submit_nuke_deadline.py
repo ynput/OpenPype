@@ -365,13 +365,21 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         a list of plugin's node class names. Thus, when a plugin uses more
         than one node, these will be captured and the triggered process
         will add the appropriate limit group to the payload jobinfo attributes.
+
+        Returning:
+            str: captured groups devided by comma and no space
         """
         captured_groups = []
         for lg_name, list_node_class in self.deadline_limit_groups.items():
             for node_class in list_node_class:
                 for node in nuke.allNodes(recurseGroups=True):
+                    # ignore all nodes not member of defined class
                     if node.Class() not in node_class:
                         continue
+                    # ignore all disabled nodes
+                    if node["disable"].value():
+                        continue
+                    # add group name if not already added
                     if lg_name not in captured_groups:
                         captured_groups.append(lg_name)
 
