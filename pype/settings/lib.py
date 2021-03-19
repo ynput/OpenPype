@@ -70,6 +70,25 @@ def create_local_settings_handler():
     return MongoLocalSettingsHandler()
 
 
+def calculate_changes(old_value, new_value):
+    changes = {}
+    for key, value in new_value.items():
+        if key not in old_value:
+            changes[key] = value
+            continue
+
+        _value = old_value[key]
+        if isinstance(value, dict) and isinstance(_value, dict):
+            _changes = calculate_changes(_value, value)
+            if _changes:
+                changes[key] = _changes
+            continue
+
+        if _value != value:
+            changes[key] = value
+    return changes
+
+
 @require_handler
 def save_studio_settings(data):
     return _SETTINGS_HANDLER.save_studio_settings(data)
