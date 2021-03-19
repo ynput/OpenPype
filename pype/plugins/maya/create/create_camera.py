@@ -26,7 +26,7 @@ class CreateCamera(plugin.Creator):
         self.data['bakeToWorldSpace'] = True
 
 
-class CreateCameraRig(avalon.maya.Creator):
+class CreateCameraRig(plugin.Creator):
     """Complex hierarchy with camera."""
 
     name = "camerarigMain"
