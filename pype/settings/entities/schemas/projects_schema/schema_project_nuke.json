@@ -8,6 +8,32 @@
         {
             "type": "dict",
             "collapsible": true,
+            "key": "triggers",
+            "label": "Operation triggers",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": false,
+                    "key": "workfile",
+                    "label": "Workfile related",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "open_at_start",
+                            "label": "Open Workfile window at start of a Nuke session"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "open_last_version",
+                            "label": "Open last available workfile version or create a vanila script"
+                        }
+                    ]
+                }
+            ]
+        },{
+            "type": "dict",
+            "collapsible": true,
             "key": "menu",
             "label": "Menu shortcuts",
             "children": [

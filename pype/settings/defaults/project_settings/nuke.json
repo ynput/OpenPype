@@ -1,4 +1,10 @@
-{
+{   
+    "triggers": {
+        "workfile": {
+            "open_at_start": false,
+            "open_last_version": true
+        }
+    },
     "menu": {
         "Pype": {
             "Create...": "ctrl+shift+alt+c",

@@ -1,11 +1,18 @@
 import os
 import re
 import sys
+import getpass
 from collections import OrderedDict
 
+
 from avalon import api, io, lib
+from avalon.tools import workfiles
 import avalon.nuke
 from avalon.nuke import lib as anlib
+from avalon.nuke import (
+    save_file, open_file
+)
+
 from pype.api import (
     Logger,
     Anatomy,
@@ -13,6 +20,7 @@ from pype.api import (
     get_anatomy_settings,
     get_hierarchy,
     get_asset,
+    get_current_project_settings,
     config,
     ApplicationManager
 )
@@ -1613,3 +1621,89 @@ def find_free_space_to_paste_nodes(
             xpos = min(group_xpos)
             ypos = max(group_ypos) + abs(offset)
             return xpos, ypos
+
+
+def launch_workfiles_app():
+    '''Function letting start workfiles after start of host
+    '''
+    # get state from settings
+    open_at_start = get_current_project_settings()["nuke"].get(
+        "triggers", {}).get("workfile", {}).get("open_at_start")
+
+    # return if none is defined
+    if not open_at_start:
+        return
+
+    if not self.workfiles_launched:
+        self.workfiles_launched = True
+        workfiles.show(os.environ["AVALON_WORKDIR"])
+
+
+def open_last_workfile():
+    # get state from settings
+    open_last_version = get_current_project_settings()["nuke"].get(
+        "triggers", {}).get("workfile", {}).get("open_last_version")
+
+    # return if none is defined
+    if not open_last_version:
+        return
+
+    log.info("Opening last workfile...")
+    last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
+    if not last_workfile_path:
+        root_path = api.registered_root()
+        workdir = os.environ["AVALON_WORKDIR"]
+        task = os.environ["AVALON_TASK"]
+        project_name = os.environ["AVALON_PROJECT"]
+        asset_name = os.environ["AVALON_ASSET"]
+
+        io.install()
+        project_entity = io.find_one({
+            "type": "project",
+            "name": project_name
+        })
+        assert project_entity, (
+            "Project '{0}' was not found."
+        ).format(project_name)
+
+        asset_entity = io.find_one({
+            "type": "asset",
+            "name": asset_name,
+            "parent": project_entity["_id"]
+        })
+        assert asset_entity, (
+            "No asset found by the name '{0}' in project '{1}'"
+        ).format(asset_name, project_name)
+
+        project_name = project_entity["name"]
+
+        anatomy = Anatomy()
+        file_template = anatomy.templates["work"]["file"]
+        extensions = api.HOST_WORKFILE_EXTENSIONS.get("nuke")
+
+        # create anatomy data for building file name
+        workdir_data = {
+            "root": root_path,
+            "project": {
+                "name": project_name,
+                "code": project_entity["data"].get("code")
+            },
+            "asset": asset_entity["name"],
+            "task": task,
+            "version": 1,
+            "user": os.environ.get("PYPE_USERNAME") or getpass.getuser(),
+            "ext": extensions[0]
+        }
+
+        # create last workfile name
+        last_workfile_path = api.last_workfile(
+            workdir, file_template, workdir_data, extensions, True
+        )
+    if not os.path.exists(last_workfile_path):
+        save_file(last_workfile_path)
+    else:
+        # to avoid looping of the callback, remove it!
+        nuke.removeOnCreate(open_last_workfile, nodeClass="Root")
+
+        # open workfile
+        open_file(last_workfile_path)
