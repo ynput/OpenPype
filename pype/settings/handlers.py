@@ -492,9 +492,6 @@ class MongoSettingsHandler(SettingsHandler):
                 continue
             update_dict_data[key] = value
 
-        if update_dict_data:
-            update_dict["data"] = update_dict_data
-
         update_dict_config = {}
 
         applications = []
@@ -512,16 +509,23 @@ class MongoSettingsHandler(SettingsHandler):
                 continue
             update_dict_config[key] = value
 
-        if update_dict_config:
-            update_dict["config"] = update_dict_config
-
-        if not update_dict:
+        if not update_dict_data and not update_dict_config:
             return
 
-        _update_dict = self.prepare_mongo_update_dict(update_dict)
+        data_changes = self.prepare_mongo_update_dict(update_dict_data)
+
+        set_dict = {}
+        for key, value in data_changes.items():
+            new_key = "data.{}".format(key)
+            set_dict[new_key] = value
+
+        for key, value in update_dict_config.items():
+            new_key = "config.{}".format(key)
+            set_dict[new_key] = value
+
         collection.update_one(
             {"type": "project"},
-            {"$set": _update_dict}
+            {"$set": set_dict}
         )
 
     def _save_project_data(self, project_name, doc_type, data_cache):
