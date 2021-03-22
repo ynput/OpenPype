@@ -9,7 +9,7 @@ class AlembicPointcacheLoader(api.Loader):
     This will load alembic pointcache into script.
     """
 
-    families = ["pointcache"]
+    families = ["pointcache", "animation"]
     representations = ["abc"]
 
     label = "Load Alembic Pointcache"
