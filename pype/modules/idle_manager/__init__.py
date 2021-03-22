@@ -1,4 +1,4 @@
-from .idle_manager import (
+from .idle_module import (
     IdleManager,
     IIdleManager
 )
