@@ -113,7 +113,7 @@ def save_studio_settings(data):
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
-    modules_manager = ModulesManager()
+    modules_manager = ModulesManager(_system_settings=new_data)
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
             module.on_system_settings_save(old_data, new_data, changes)
