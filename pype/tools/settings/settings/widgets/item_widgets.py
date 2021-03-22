@@ -623,40 +623,21 @@ class PathWidget(BaseWidget):
 class PathInputWidget(InputWidget):
     def _add_inputs_to_layout(self):
         self.input_field = QtWidgets.QLineEdit(self.content_widget)
-        self.args_input_field = None
-        if self.entity.with_arguments:
-            self.input_field.setPlaceholderText("Executable path")
-            self.args_input_field = QtWidgets.QLineEdit(self)
-            self.args_input_field.setPlaceholderText("Arguments")
+        self.input_field.setPlaceholderText("Executable path")
 
         self.setFocusProxy(self.input_field)
-        self.content_layout.addWidget(self.input_field, 8)
+        self.content_layout.addWidget(self.input_field)
         self.input_field.textChanged.connect(self._on_value_change)
-
-        if self.args_input_field:
-            self.content_layout.addWidget(self.args_input_field, 2)
-            self.args_input_field.textChanged.connect(self._on_value_change)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_value():
             self.set_entity_value()
 
     def set_entity_value(self):
-        value = self.entity.value
-        args = ""
-        if isinstance(value, list):
-            value, args = value
-        self.input_field.setText(value)
-        if self.args_input_field:
-            self.args_input_field.setText(args)
+        self.input_field.setText(self.entity.value)
 
     def input_value(self):
-        path_value = self.input_field.text()
-        if self.entity.with_arguments:
-            value = [path_value, self.args_input_field.text()]
-        else:
-            value = path_value
-        return value
+        return self.input_field.text()
 
     def _on_value_change(self):
         if self.ignore_input_changes:
