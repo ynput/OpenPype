@@ -127,6 +127,18 @@
                 "subset": "proxy"
             }
         },
+        "frameMain": {
+            "editable": "1",
+            "note": "Add to publish frame \"main\" subset.",
+            "icon": {
+                "path": "z_layer_main.png"
+            },
+            "metadata": {
+                "family": "frame",
+                "subset": "main",
+                "format": "png"
+            }
+        },
         "review": {
             "editable": "1",
             "note": "Upload to Ftrack as review component.",
