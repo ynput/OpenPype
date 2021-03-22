@@ -312,10 +312,9 @@ class ModulesManager:
         """Import and initialize modules."""
         self.log.debug("*** Pype modules initialization.")
         # Prepare settings for modules
-        if self._system_settings is None:
+        system_settings = getattr(self, "_system_settings", None)
+        if system_settings is None:
             system_settings = get_system_settings()
-        else:
-            system_settings = self._system_settings
         modules_settings = system_settings["modules"]
 
         report = {}
