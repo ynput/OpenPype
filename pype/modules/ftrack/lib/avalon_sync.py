@@ -83,15 +83,27 @@ def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
     return False
 
 
-def get_pype_attr(session, split_hierarchical=True):
+def join_query_keys(keys):
+    return ",".join(["\"{}\"".format(key) for key in keys])
+
+
+def get_pype_attr(session, split_hierarchical=True, query_keys=None):
     custom_attributes = []
     hier_custom_attributes = []
+    if not query_keys:
+        query_keys = [
+            "id",
+            "entity_type",
+            "object_type_id",
+            "is_hierarchical",
+            "default"
+        ]
     # TODO remove deprecated "avalon" group from query
     cust_attrs_query = (
-        "select id, entity_type, object_type_id, is_hierarchical, default"
+        "select {}"
         " from CustomAttributeConfiguration"
-        " where group.name in (\"avalon\", \"pype\")"
-    )
+        " where group.name in (\"avalon\", \"{}\")"
+    ).format(", ".join(query_keys), CUST_ATTR_GROUP)
     all_avalon_attr = session.query(cust_attrs_query).all()
     for cust_attr in all_avalon_attr:
         if split_hierarchical and cust_attr["is_hierarchical"]:
@@ -105,6 +117,39 @@ def get_pype_attr(session, split_hierarchical=True):
         return custom_attributes, hier_custom_attributes
 
     return custom_attributes
+
+
+def get_python_type_for_custom_attribute(cust_attr, cust_attr_type_name=None):
+    """Python type that should value of custom attribute have.
+
+    This function is mainly for number type which is always float from ftrack.
+
+    Returns:
+        type: Python type which call be called on object to convert the object
+            to the type or None if can't figure out.
+    """
+    if cust_attr_type_name is None:
+        cust_attr_type_name = cust_attr["type"]["name"]
+
+    if cust_attr_type_name == "text":
+        return str
+
+    if cust_attr_type_name == "boolean":
+        return bool
+
+    if cust_attr_type_name in ("number", "enumerator"):
+        cust_attr_config = json.loads(cust_attr["config"])
+        if cust_attr_type_name == "number":
+            if cust_attr_config["isdecimal"]:
+                return float
+            return int
+
+        if cust_attr_type_name == "enumerator":
+            if cust_attr_config["multiSelect"]:
+                return list
+            return str
+    # "date", "expression", "notificationtype", "dynamic enumerator"
+    return None
 
 
 def from_dict_to_set(data, is_project):
@@ -191,99 +236,113 @@ def get_project_apps(in_app_list):
     apps = []
     warnings = collections.defaultdict(list)
 
+    if not in_app_list:
+        return apps, warnings
+
     missing_app_msg = "Missing definition of application"
     application_manager = ApplicationManager()
     for app_name in in_app_list:
-        app = application_manager.applications.get(app_name)
-        if app:
-            apps.append({
-                "name": app_name,
-                "label": app.full_label
-            })
+        if application_manager.applications.get(app_name):
+            apps.append({"name": app_name})
         else:
             warnings[missing_app_msg].append(app_name)
     return apps, warnings
 
 
-def get_hierarchical_attributes(session, entity, attr_names, attr_defaults={}):
-    entity_ids = []
-    if entity.entity_type.lower() == "project":
-        entity_ids.append(entity["id"])
-    else:
-        typed_context = session.query((
-            "select ancestors.id, project from TypedContext where id is \"{}\""
-        ).format(entity["id"])).one()
-        entity_ids.append(typed_context["id"])
-        entity_ids.extend(
-            [ent["id"] for ent in reversed(typed_context["ancestors"])]
+def get_hierarchical_attributes_values(
+    session, entity, hier_attrs, cust_attr_types=None
+):
+    if not cust_attr_types:
+        cust_attr_types = session.query(
+            "select id, name from CustomAttributeType"
+        ).all()
+
+    cust_attr_name_by_id = {
+        cust_attr_type["id"]: cust_attr_type["name"]
+        for cust_attr_type in cust_attr_types
+    }
+    # Hierarchical cust attrs
+    attr_key_by_id = {}
+    convert_types_by_attr_id = {}
+    defaults = {}
+    for attr in hier_attrs:
+        attr_id = attr["id"]
+        key = attr["key"]
+        type_id = attr["type_id"]
+
+        attr_key_by_id[attr_id] = key
+        defaults[key] = attr["default"]
+
+        cust_attr_type_name = cust_attr_name_by_id[type_id]
+        convert_type = get_python_type_for_custom_attribute(
+            attr, cust_attr_type_name
         )
-        entity_ids.append(typed_context["project"]["id"])
+        convert_types_by_attr_id[attr_id] = convert_type
 
-    missing_defaults = []
-    for attr_name in attr_names:
-        if attr_name not in attr_defaults:
-            missing_defaults.append(attr_name)
+    entity_ids = [item["id"] for item in entity["link"]]
 
-    join_ent_ids = ", ".join(
-        ["\"{}\"".format(entity_id) for entity_id in entity_ids]
-    )
-    join_attribute_names = ", ".join(
-        ["\"{}\"".format(key) for key in attr_names]
-    )
+    join_ent_ids = join_query_keys(entity_ids)
+    join_attribute_ids = join_query_keys(attr_key_by_id.keys())
+
     queries = []
     queries.append({
         "action": "query",
         "expression": (
-            "select value, entity_id from CustomAttributeValue "
-            "where entity_id in ({}) and configuration.key in ({})"
-        ).format(join_ent_ids, join_attribute_names)
+            "select value, configuration_id, entity_id"
+            " from CustomAttributeValue"
+            " where entity_id in ({}) and configuration_id in ({})"
+        ).format(join_ent_ids, join_attribute_ids)
     })
 
-    if not missing_defaults:
-        if hasattr(session, "call"):
-            [values] = session.call(queries)
-        else:
-            [values] = session._call(queries)
+    if hasattr(session, "call"):
+        [values] = session.call(queries)
     else:
-        join_missing_names = ", ".join(
-            ["\"{}\"".format(key) for key in missing_defaults]
-        )
-        queries.append({
-            "action": "query",
-            "expression": (
-                "select default from CustomAttributeConfiguration "
-                "where key in ({})"
-            ).format(join_missing_names)
-        })
-
-        [values, default_values] = session.call(queries)
-        for default_value in default_values:
-            key = default_value["data"][0]["key"]
-            attr_defaults[key] = default_value["data"][0]["default"]
+        [values] = session._call(queries)
 
     hier_values = {}
-    for key, val in attr_defaults.items():
+    for key, val in defaults.items():
         hier_values[key] = val
 
     if not values["data"]:
         return hier_values
 
-    _hier_values = collections.defaultdict(list)
-    for value in values["data"]:
-        key = value["configuration"]["key"]
-        _hier_values[key].append(value)
+    values_by_entity_id = collections.defaultdict(dict)
+    for item in values["data"]:
+        value = item["value"]
+        if value is None:
+            continue
 
-    for key, values in _hier_values.items():
-        value = sorted(
-            values, key=lambda value: entity_ids.index(value["entity_id"])
-        )[0]
-        hier_values[key] = value["value"]
+        attr_id = item["configuration_id"]
+
+        convert_type = convert_types_by_attr_id[attr_id]
+        if convert_type:
+            value = convert_type(value)
+
+        key = attr_key_by_id[attr_id]
+        entity_id = item["entity_id"]
+        values_by_entity_id[entity_id][key] = value
+
+    for entity_id in entity_ids:
+        for key in attr_key_by_id.values():
+            value = values_by_entity_id[entity_id].get(key)
+            if value is not None:
+                hier_values[key] = value
 
     return hier_values
 
 
 class SyncEntitiesFactory:
     dbcon = AvalonMongoDB()
+
+    cust_attr_query_keys = [
+        "id",
+        "key",
+        "entity_type",
+        "object_type_id",
+        "is_hierarchical",
+        "config",
+        "default"
+    ]
 
     project_query = (
         "select full_name, name, custom_attributes"
@@ -830,10 +889,20 @@ class SyncEntitiesFactory:
     def set_cutom_attributes(self):
         self.log.debug("* Preparing custom attributes")
         # Get custom attributes and values
-        custom_attrs, hier_attrs = get_pype_attr(self.session)
+        custom_attrs, hier_attrs = get_pype_attr(
+            self.session, query_keys=self.cust_attr_query_keys
+        )
         ent_types = self.session.query("select id, name from ObjectType").all()
         ent_types_by_name = {
             ent_type["name"]: ent_type["id"] for ent_type in ent_types
+        }
+        # Custom attribute types
+        cust_attr_types = self.session.query(
+            "select id, name from CustomAttributeType"
+        ).all()
+        cust_attr_type_name_by_id = {
+            cust_attr_type["id"]: cust_attr_type["name"]
+            for cust_attr_type in cust_attr_types
         }
 
         # store default values per entity type
@@ -844,9 +913,20 @@ class SyncEntitiesFactory:
         avalon_attrs_ca_id = collections.defaultdict(dict)
 
         attribute_key_by_id = {}
+        convert_types_by_attr_id = {}
         for cust_attr in custom_attrs:
             key = cust_attr["key"]
-            attribute_key_by_id[cust_attr["id"]] = key
+            attr_id = cust_attr["id"]
+            type_id = cust_attr["type_id"]
+
+            attribute_key_by_id[attr_id] = key
+            cust_attr_type_name = cust_attr_type_name_by_id[type_id]
+
+            convert_type = get_python_type_for_custom_attribute(
+                cust_attr, cust_attr_type_name
+            )
+            convert_types_by_attr_id[attr_id] = convert_type
+
             ca_ent_type = cust_attr["entity_type"]
             if key.startswith("avalon_"):
                 if ca_ent_type == "show":
@@ -924,8 +1004,9 @@ class SyncEntitiesFactory:
         ])
 
         cust_attr_query = (
-            "select value, entity_id from ContextCustomAttributeValue "
-            "where entity_id in ({}) and configuration_id in ({})"
+            "select value, configuration_id, entity_id"
+            " from ContextCustomAttributeValue"
+            " where entity_id in ({}) and configuration_id in ({})"
         )
         call_expr = [{
             "action": "query",
@@ -940,24 +1021,44 @@ class SyncEntitiesFactory:
 
         for item in values["data"]:
             entity_id = item["entity_id"]
-            key = attribute_key_by_id[item["configuration_id"]]
+            attr_id = item["configuration_id"]
+            key = attribute_key_by_id[attr_id]
             store_key = "custom_attributes"
             if key.startswith("avalon_"):
                 store_key = "avalon_attrs"
-            self.entities_dict[entity_id][store_key][key] = item["value"]
+
+            convert_type = convert_types_by_attr_id[attr_id]
+            value = item["value"]
+            if convert_type:
+                value = convert_type(value)
+            self.entities_dict[entity_id][store_key][key] = value
 
         # process hierarchical attributes
-        self.set_hierarchical_attribute(hier_attrs, sync_ids)
+        self.set_hierarchical_attribute(
+            hier_attrs, sync_ids, cust_attr_type_name_by_id
+        )
 
-    def set_hierarchical_attribute(self, hier_attrs, sync_ids):
+    def set_hierarchical_attribute(
+        self, hier_attrs, sync_ids, cust_attr_type_name_by_id
+    ):
         # collect all hierarchical attribute keys
         # and prepare default values to project
         attributes_by_key = {}
         attribute_key_by_id = {}
+        convert_types_by_attr_id = {}
         for attr in hier_attrs:
             key = attr["key"]
-            attribute_key_by_id[attr["id"]] = key
+            attr_id = attr["id"]
+            type_id = attr["type_id"]
+            attribute_key_by_id[attr_id] = key
             attributes_by_key[key] = attr
+
+            cust_attr_type_name = cust_attr_type_name_by_id[type_id]
+            convert_type = get_python_type_for_custom_attribute(
+                attr, cust_attr_type_name
+            )
+            convert_types_by_attr_id[attr_id] = convert_type
+
             self.hier_cust_attr_ids_by_key[key] = attr["id"]
 
             store_key = "hier_attrs"
@@ -992,7 +1093,7 @@ class SyncEntitiesFactory:
             else:
                 prepare_dict[key] = None
 
-        for id, entity_dict in self.entities_dict.items():
+        for entity_dict in self.entities_dict.values():
             # Skip project because has stored defaults at the moment
             if entity_dict["entity_type"] == "project":
                 continue
@@ -1011,8 +1112,9 @@ class SyncEntitiesFactory:
         call_expr = [{
             "action": "query",
             "expression": (
-                "select value, entity_id from ContextCustomAttributeValue "
-                "where entity_id in ({}) and configuration_id in ({})"
+                "select value, entity_id, configuration_id"
+                " from ContextCustomAttributeValue"
+                " where entity_id in ({}) and configuration_id in ({})"
             ).format(entity_ids_joined, attributes_joined)
         }]
         if hasattr(self.session, "call"):
@@ -1030,8 +1132,14 @@ class SyncEntitiesFactory:
                 or (isinstance(value, (tuple, list)) and not value)
             ):
                 continue
+
+            attr_id = item["configuration_id"]
+            convert_type = convert_types_by_attr_id[attr_id]
+            if convert_type:
+                value = convert_type(value)
+
             entity_id = item["entity_id"]
-            key = attribute_key_by_id[item["configuration_id"]]
+            key = attribute_key_by_id[attr_id]
             if key.startswith("avalon_"):
                 store_key = "avalon_attrs"
                 avalon_hier.append(key)
@@ -1141,7 +1249,7 @@ class SyncEntitiesFactory:
                 proj_schema = entity["project_schema"]
                 task_types = proj_schema["_task_type_schema"]["types"]
                 proj_apps, warnings = get_project_apps(
-                    (data.get("applications") or [])
+                    data.pop("applications", [])
                 )
                 for msg, items in warnings.items():
                     if not msg or not items:
@@ -1428,8 +1536,13 @@ class SyncEntitiesFactory:
                         old_parent_name = self.entities_dict[
                             self.ft_project_id]["name"]
                     else:
-                        old_parent_name = self.avalon_ents_by_id[
-                            ftrack_parent_mongo_id]["name"]
+                        old_parent_name = "N/A"
+                        if ftrack_parent_mongo_id in self.avalon_ents_by_id:
+                            old_parent_name = (
+                                self.avalon_ents_by_id
+                                [ftrack_parent_mongo_id]
+                                ["name"]
+                            )
 
                     self.updates[avalon_id]["data"] = {
                         "visualParent": new_parent_id
@@ -2139,11 +2252,22 @@ class SyncEntitiesFactory:
         final_doc_data = self.entities_dict[self.ft_project_id]["final_entity"]
         final_doc_tasks = final_doc_data["config"].pop("tasks")
         current_doc_tasks = self.avalon_project.get("config", {}).get("tasks")
-        # Update project's tasks if tasks are empty or are not same
-        if not final_doc_tasks:
+        # Update project's task types
+        if not current_doc_tasks:
             update_tasks = True
         else:
-            update_tasks = final_doc_tasks != current_doc_tasks
+            # Check if task types are same
+            update_tasks = False
+            for task_type in final_doc_tasks:
+                if task_type not in current_doc_tasks:
+                    update_tasks = True
+                    break
+
+            # Update new task types
+            #   - but keep data about existing types and only add new one
+            if update_tasks:
+                for task_type, type_data in current_doc_tasks.items():
+                    final_doc_tasks[task_type] = type_data
 
         changes = self.compare_dict(final_doc_data, self.avalon_project)
 
@@ -2372,7 +2496,7 @@ class SyncEntitiesFactory:
         if new_entity_id not in p_chilren:
             self.entities_dict[parent_id]["children"].append(new_entity_id)
 
-        cust_attr, hier_attrs = get_pype_attr(self.session)
+        cust_attr, _ = get_pype_attr(self.session)
         for _attr in cust_attr:
             key = _attr["key"]
             if key not in av_entity["data"]:

@@ -1,6 +1,7 @@
 import os
 import collections
 import copy
+import json
 import queue
 import time
 import datetime
@@ -10,6 +11,7 @@ import traceback
 from bson.objectid import ObjectId
 from pymongo import UpdateOne
 
+import arrow
 import ftrack_api
 
 from avalon import schema
@@ -31,6 +33,15 @@ class SyncToAvalonEvent(BaseEvent):
     ignore_ent_types = ["Milestone"]
     ignore_keys = ["statusid", "thumbid"]
 
+    cust_attr_query_keys = [
+        "id",
+        "key",
+        "entity_type",
+        "object_type_id",
+        "is_hierarchical",
+        "config",
+        "default"
+    ]
     project_query = (
         "select full_name, name, custom_attributes"
         ", project_schema._task_type_schema.types.name"
@@ -115,9 +126,21 @@ class SyncToAvalonEvent(BaseEvent):
     def avalon_cust_attrs(self):
         if self._avalon_cust_attrs is None:
             self._avalon_cust_attrs = avalon_sync.get_pype_attr(
-                self.process_session
+                self.process_session, query_keys=self.cust_attr_query_keys
             )
         return self._avalon_cust_attrs
+
+    @property
+    def cust_attr_types_by_id(self):
+        if self._cust_attr_types_by_id is None:
+            cust_attr_types = self.process_session.query(
+                "select id, name from CustomAttributeType"
+            ).all()
+            self._cust_attr_types_by_id = {
+                cust_attr_type["id"]: cust_attr_type
+                for cust_attr_type in cust_attr_types
+            }
+        return self._cust_attr_types_by_id
 
     @property
     def avalon_entities(self):
@@ -226,15 +249,6 @@ class SyncToAvalonEvent(BaseEvent):
             )
 
         return self._changeability_by_mongo_id
-
-    @property
-    def avalon_custom_attributes(self):
-        """Return info about changeability of entity and it's parents."""
-        if self._avalon_custom_attributes is None:
-            self._avalon_custom_attributes = avalon_sync.get_pype_attr(
-                self.process_session
-            )
-        return self._avalon_custom_attributes
 
     def remove_cached_by_key(self, key, values):
         if self._avalon_ents is None:
@@ -380,6 +394,7 @@ class SyncToAvalonEvent(BaseEvent):
         self._cur_project = None
 
         self._avalon_cust_attrs = None
+        self._cust_attr_types_by_id = None
 
         self._avalon_ents = None
         self._avalon_ents_by_id = None
@@ -391,7 +406,6 @@ class SyncToAvalonEvent(BaseEvent):
         self._avalon_archived_by_id = None
         self._avalon_archived_by_name = None
 
-        self._avalon_custom_attributes = None
         self._ent_types_by_name = None
 
         self.ftrack_ents_by_id = {}
@@ -1234,53 +1248,27 @@ class SyncToAvalonEvent(BaseEvent):
 
         return final_entity
 
-    def get_cust_attr_values(self, entity, keys=None):
+    def get_cust_attr_values(self, entity):
         output = {}
-        custom_attrs, hier_attrs = self.avalon_custom_attributes
-        not_processed_keys = True
-        if keys:
-            not_processed_keys = [k for k in keys]
+        custom_attrs, hier_attrs = self.avalon_cust_attrs
+
         # Notmal custom attributes
-        processed_keys = []
         for attr in custom_attrs:
-            if not not_processed_keys:
-                break
             key = attr["key"]
-            if key in processed_keys:
-                continue
+            if key in entity["custom_attributes"]:
+                output[key] = entity["custom_attributes"][key]
 
-            if key not in entity["custom_attributes"]:
-                continue
-
-            if keys:
-                if key not in keys:
-                    continue
-                else:
-                    not_processed_keys.remove(key)
-
-            output[key] = entity["custom_attributes"][key]
-            processed_keys.append(key)
-
-        if not not_processed_keys:
-            return output
-
-        # Hierarchical cust attrs
-        hier_keys = []
-        defaults = {}
-        for attr in hier_attrs:
-            key = attr["key"]
-            if keys and key not in keys:
-                continue
-            hier_keys.append(key)
-            defaults[key] = attr["default"]
-
-        hier_values = avalon_sync.get_hierarchical_attributes(
-            self.process_session, entity, hier_keys, defaults
+        hier_values = avalon_sync.get_hierarchical_attributes_values(
+            self.process_session,
+            entity,
+            hier_attrs,
+            self.cust_attr_types_by_id
         )
         for key, val in hier_values.items():
-            if key == CUST_ATTR_ID_KEY:
-                continue
             output[key] = val
+
+        # Make sure mongo id is not set
+        output.pop(CUST_ATTR_ID_KEY, None)
 
         return output
 
@@ -1548,10 +1536,9 @@ class SyncToAvalonEvent(BaseEvent):
                 ).format(entity_type, ent_info["entityType"]))
                 continue
 
-            _entity_key = collections.OrderedDict({
-                "configuration_id": mongo_id_configuration_id,
-                "entity_id": ftrack_id
-            })
+            _entity_key = collections.OrderedDict()
+            _entity_key["configuration_id"] = mongo_id_configuration_id
+            _entity_key["entity_id"] = ftrack_id
 
             self.process_session.recorded_operations.push(
                 ftrack_api.operation.UpdateEntityOperation(
@@ -1790,6 +1777,10 @@ class SyncToAvalonEvent(BaseEvent):
             return
 
         cust_attrs, hier_attrs = self.avalon_cust_attrs
+        hier_attrs_by_key = {
+            attr["key"]: attr
+            for attr in hier_attrs
+        }
         cust_attrs_by_obj_id = collections.defaultdict(dict)
         for cust_attr in cust_attrs:
             key = cust_attr["key"]
@@ -1805,8 +1796,6 @@ class SyncToAvalonEvent(BaseEvent):
                 obj_id = cust_attr["object_type_id"]
                 cust_attrs_by_obj_id[obj_id][key] = cust_attr
 
-        hier_attrs_keys = [attr["key"] for attr in hier_attrs]
-
         for ftrack_id, ent_info in ent_infos.items():
             mongo_id = ftrack_mongo_mapping[ftrack_id]
             entType = ent_info["entityType"]
@@ -1819,44 +1808,79 @@ class SyncToAvalonEvent(BaseEvent):
 
             # Ftrack's entity_type does not have defined custom attributes
             if ent_cust_attrs is None:
-                ent_cust_attrs = []
+                ent_cust_attrs = {}
 
             for key, values in ent_info["changes"].items():
-                if key in hier_attrs_keys:
+                if key in hier_attrs_by_key:
                     self.hier_cust_attrs_changes[key].append(ftrack_id)
                     continue
 
                 if key not in ent_cust_attrs:
                     continue
 
+                value = values["new"]
+                new_value = self.convert_value_by_cust_attr_conf(
+                    value, ent_cust_attrs[key]
+                )
+
+                if entType == "show" and key == "applications":
+                    # Store apps to project't config
+                    proj_apps, warnings = (
+                        avalon_sync.get_project_apps(new_value)
+                    )
+                    if "config" not in self.updates[mongo_id]:
+                        self.updates[mongo_id]["config"] = {}
+                    self.updates[mongo_id]["config"]["apps"] = proj_apps
+
+                    for msg, items in warnings.items():
+                        if not msg or not items:
+                            continue
+                        self.report_items["warning"][msg] = items
+                    continue
+
                 if "data" not in self.updates[mongo_id]:
                     self.updates[mongo_id]["data"] = {}
-                value = values["new"]
-                self.updates[mongo_id]["data"][key] = value
+                self.updates[mongo_id]["data"][key] = new_value
                 self.log.debug(
                     "Setting data value of \"{}\" to \"{}\" <{}>".format(
-                        key, value, ent_path
+                        key, new_value, ent_path
                     )
                 )
 
-                if entType != "show" or key != "applications":
-                    continue
+    def convert_value_by_cust_attr_conf(self, value, cust_attr_conf):
+        type_id = cust_attr_conf["type_id"]
+        cust_attr_type_name = self.cust_attr_types_by_id[type_id]["name"]
+        ignored = (
+            "expression", "notificationtype", "dynamic enumerator"
+        )
+        if cust_attr_type_name in ignored:
+            return None
 
-                # Store apps to project't config
-                apps_str = ent_info["changes"]["applications"]["new"]
-                cust_attr_apps = [app for app in apps_str.split(", ") if app]
+        if cust_attr_type_name == "text":
+            return value
 
-                proj_apps, warnings = (
-                    avalon_sync.get_project_apps(cust_attr_apps)
-                )
-                if "config" not in self.updates[mongo_id]:
-                    self.updates[mongo_id]["config"] = {}
-                self.updates[mongo_id]["config"]["apps"] = proj_apps
+        if cust_attr_type_name == "boolean":
+            if value == "1":
+                return True
+            if value == "0":
+                return False
+            return bool(value)
 
-                for msg, items in warnings.items():
-                    if not msg or not items:
-                        continue
-                    self.report_items["warning"][msg] = items
+        if cust_attr_type_name == "date":
+            return arrow.get(value)
+
+        cust_attr_config = json.loads(cust_attr_conf["config"])
+
+        if cust_attr_type_name == "number":
+            if cust_attr_config["isdecimal"]:
+                return float(value)
+            return int(value)
+
+        if cust_attr_type_name == "enumerator":
+            if not cust_attr_config["multiSelect"]:
+                return value
+            return value.split(", ")
+        return value
 
     def process_hier_cleanup(self):
         if (
@@ -1968,7 +1992,7 @@ class SyncToAvalonEvent(BaseEvent):
             self.update_entities()
             return
 
-        cust_attrs, hier_attrs = self.avalon_cust_attrs
+        _, hier_attrs = self.avalon_cust_attrs
 
         # Hierarchical custom attributes preparation ***
         hier_attr_key_by_id = {
@@ -2087,21 +2111,18 @@ class SyncToAvalonEvent(BaseEvent):
             parent_queue.put(parent_ent)
 
         # Prepare values to query
-        entity_ids_joined = ", ".join([
-            "\"{}\"".format(id) for id in cust_attrs_ftrack_ids
-        ])
         configuration_ids = set()
         for key in hier_cust_attrs_keys:
             configuration_ids.add(hier_attr_id_by_key[key])
 
-        attributes_joined = ", ".join([
-            "\"{}\"".format(conf_id) for conf_id in configuration_ids
-        ])
+        entity_ids_joined = self.join_query_keys(cust_attrs_ftrack_ids)
+        attributes_joined = self.join_query_keys(configuration_ids)
 
         queries = [{
             "action": "query",
             "expression": (
-                "select value, entity_id from CustomAttributeValue "
+                "select value, entity_id, configuration_id"
+                " from CustomAttributeValue "
                 "where entity_id in ({}) and configuration_id in ({})"
             ).format(entity_ids_joined, attributes_joined)
         }]
@@ -2113,22 +2134,40 @@ class SyncToAvalonEvent(BaseEvent):
 
         ftrack_project_id = self.cur_project["id"]
 
+        attr_types_by_id = self.cust_attr_types_by_id
+        convert_types_by_id = {}
         for attr in hier_attrs:
             key = attr["key"]
             if key not in hier_cust_attrs_keys:
                 continue
+
+            type_id = attr["type_id"]
+            attr_id = attr["id"]
+            cust_attr_type_name = attr_types_by_id[type_id]["name"]
+            convert_type = avalon_sync.get_python_type_for_custom_attribute(
+                attr, cust_attr_type_name
+            )
+
+            convert_types_by_id[attr_id] = convert_type
             entities_dict[ftrack_project_id]["hier_attrs"][key] = (
                 attr["default"]
             )
 
         # PREPARE DATA BEFORE THIS
         avalon_hier = []
-        for value in values["data"]:
-            if value["value"] is None:
+        for item in values["data"]:
+            value = item["value"]
+            if value is None:
                 continue
-            entity_id = value["entity_id"]
-            key = hier_attr_key_by_id[value["configuration_id"]]
-            entities_dict[entity_id]["hier_attrs"][key] = value["value"]
+            entity_id = item["entity_id"]
+            configuration_id = item["configuration_id"]
+
+            convert_type = convert_types_by_id[configuration_id]
+            key = hier_attr_key_by_id[configuration_id]
+
+            if convert_type:
+                value = convert_type(value)
+            entities_dict[entity_id]["hier_attrs"][key] = value
 
         # Get dictionary with not None hierarchical values to pull to childs
         project_values = {}
