@@ -12,6 +12,7 @@ class CollectAudio(pyblish.api.ContextPlugin):
     label = "Collect Audio"
 
     subset_name = "audioMain"
+    hosts = ["nuke"]
 
     def process(self, context):
         version = pype_api.get_latest_version(
