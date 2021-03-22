@@ -14,7 +14,11 @@ else:
 from avalon.api import AvalonMongoDB
 
 import avalon
-from pype.api import Logger, Anatomy, get_anatomy_settings
+from pype.api import (
+    Logger,
+    Anatomy,
+    get_anatomy_settings
+)
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
@@ -1237,6 +1241,7 @@ class SyncEntitiesFactory:
                 data[key] = val
 
             if id == self.ft_project_id:
+                project_name = entity["full_name"]
                 data["code"] = entity["name"]
                 self.entities_dict[id]["final_entity"]["data"] = data
                 self.entities_dict[id]["final_entity"]["type"] = "project"
@@ -1259,10 +1264,23 @@ class SyncEntitiesFactory:
                     tasks[task_type_name] = {
                         "short_name": ""
                     }
-                self.entities_dict[id]["final_entity"]["config"] = {
+
+                current_project_anatomy_data = get_anatomy_settings(
+                    project_name, exclude_locals=True
+                )
+
+                project_config = {
                     "tasks": tasks,
                     "apps": proj_apps
                 }
+                for key, value in current_project_anatomy_data.items():
+                    if key in project_config or key == "attributes":
+                        continue
+                    project_config[key] = value
+
+                self.entities_dict[id]["final_entity"]["config"] = (
+                    project_config
+                )
                 continue
 
             ent_path_items = [ent["name"] for ent in entity["link"]]
