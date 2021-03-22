@@ -61,14 +61,14 @@
                         "object_type": "text"
                     },
                     {
-                        "key": "linux",
-                        "label": "Linux",
+                        "key": "darwin",
+                        "label": "MacOS",
                         "type": "list",
                         "object_type": "text"
                     },
                     {
-                        "key": "darwin",
-                        "label": "MacOS",
+                        "key": "linux",
+                        "label": "Linux",
                         "type": "list",
                         "object_type": "text"
                     }
