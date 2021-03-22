@@ -147,6 +147,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         if not priority:
             priority = self.deadline_priority
 
+        # resolve any limit groups
+        limit_groups = self.get_limit_groups()
+        self.log.info("Limit groups: `{}`".format(limit_groups))
+
         payload = {
             "JobInfo": {
                 # Top-level group name
@@ -181,7 +185,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 "OutputFilename0": output_filename_0.replace("\\", "/"),
 
                 # limiting groups
-                "LimitGroups": self.get_limiting_group_filter()
+                "LimitGroups": ",".join(limit_groups)
 
             },
             "PluginInfo": {
@@ -357,7 +361,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             instance.data["expectedFiles"].append(
                 os.path.join(dir, (file % i)).replace("\\", "/"))
 
-    def get_limiting_group_filter(self):
+    def get_limit_groups(self):
         """Search for limit group nodes and return group name.
 
         Limit groups will be defined as pairs in Nuke deadline submitter
@@ -383,4 +387,4 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                     if lg_name not in captured_groups:
                         captured_groups.append(lg_name)
 
-        return ",".join(captured_groups)
+        return captured_groups
