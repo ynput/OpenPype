@@ -538,7 +538,10 @@ def apply_local_settings_on_anatomy_settings(
 
     # Get active site from settings
     if site_name is None:
-        project_settings = get_project_settings(project_name)
+        if project_name:
+            project_settings = get_project_settings(project_name)
+        else:
+            project_settings = get_default_project_settings()
         site_name = (
             project_settings["global"]["sync_server"]["config"]["active_site"]
         )
