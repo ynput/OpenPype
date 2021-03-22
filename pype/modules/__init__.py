@@ -11,6 +11,7 @@ from .base import (
 )
 from .settings_action import (
     SettingsAction,
+    ISettingsChangeListener,
     LocalSettingsAction
 )
 from .webserver import (

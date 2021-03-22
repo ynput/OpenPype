@@ -126,6 +126,11 @@ class ListEntity(EndpointEntity):
         )
         self.on_change()
 
+    def _convert_to_valid_type(self, value):
+        if isinstance(value, (set, tuple)):
+            return list(value)
+        return NOT_SET
+
     def _item_initalization(self):
         self.valid_value_types = (list, )
         self.children = []
@@ -175,9 +180,9 @@ class ListEntity(EndpointEntity):
         return "/".join([self.path, str(result_idx)])
 
     def set(self, value):
-        self._validate_value_type(value)
+        new_value = self.convert_to_valid_type(value)
         self.clear()
-        for item in value:
+        for item in new_value:
             self.append(item)
 
     def on_child_change(self, _child_entity):

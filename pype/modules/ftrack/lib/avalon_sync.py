@@ -14,7 +14,11 @@ else:
 from avalon.api import AvalonMongoDB
 
 import avalon
-from pype.api import Logger, Anatomy, get_anatomy_settings
+from pype.api import (
+    Logger,
+    Anatomy,
+    get_anatomy_settings
+)
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
@@ -1215,11 +1219,6 @@ class SyncEntitiesFactory:
                     )
 
     def prepare_ftrack_ent_data(self):
-        project_name = self.entities_dict[self.ft_project_id]["name"]
-        project_anatomy_data = get_anatomy_settings(project_name)
-
-        task_type_mapping = project_anatomy_data["tasks"]
-
         not_set_ids = []
         for id, entity_dict in self.entities_dict.items():
             entity = entity_dict["entity"]
@@ -1242,6 +1241,7 @@ class SyncEntitiesFactory:
                 data[key] = val
 
             if id == self.ft_project_id:
+                project_name = entity["full_name"]
                 data["code"] = entity["name"]
                 self.entities_dict[id]["final_entity"]["data"] = data
                 self.entities_dict[id]["final_entity"]["type"] = "project"
@@ -1258,15 +1258,29 @@ class SyncEntitiesFactory:
                 tasks = {}
                 for task_type in task_types:
                     task_type_name = task_type["name"]
-                    task_type_def = task_type_mapping.get(task_type_name) or {}
-                    short_name = task_type_def.get("short_name")
+                    # Set short name to empty string
+                    # QUESTION Maybe better would be to lower and remove spaces
+                    #   from task type name.
                     tasks[task_type_name] = {
-                        "short_name": short_name or task_type_name
+                        "short_name": ""
                     }
-                self.entities_dict[id]["final_entity"]["config"] = {
+
+                current_project_anatomy_data = get_anatomy_settings(
+                    project_name, exclude_locals=True
+                )
+
+                project_config = {
                     "tasks": tasks,
                     "apps": proj_apps
                 }
+                for key, value in current_project_anatomy_data.items():
+                    if key in project_config or key == "attributes":
+                        continue
+                    project_config[key] = value
+
+                self.entities_dict[id]["final_entity"]["config"] = (
+                    project_config
+                )
                 continue
 
             ent_path_items = [ent["name"] for ent in entity["link"]]

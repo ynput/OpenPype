@@ -75,11 +75,11 @@ class DictMutableKeysEntity(EndpointEntity):
             self.pop(key)
 
     def set(self, value):
-        self._validate_value_type(value)
+        new_value = self.convert_to_valid_type(value)
 
         prev_keys = set(self.keys())
 
-        for _key, _value in value.items():
+        for _key, _value in new_value.items():
             self.set_key_value(_key, _value)
             if _key in prev_keys:
                 prev_keys.remove(_key)

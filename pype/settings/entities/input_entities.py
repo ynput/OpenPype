@@ -121,8 +121,7 @@ class InputEntity(EndpointEntity):
 
     def set(self, value):
         """Change value."""
-        self._validate_value_type(value)
-        self._current_value = value
+        self._current_value = self.convert_to_valid_type(value)
         self._on_value_change()
 
     def _on_value_change(self):
@@ -330,16 +329,25 @@ class NumberEntity(InputEntity):
         self.decimal = self.schema_data.get("decimal", 0)
 
         if self.decimal:
-            valid_value_types = (int, float)
+            valid_value_types = (float, )
         else:
             valid_value_types = (int, )
         self.valid_value_types = valid_value_types
         self.value_on_not_set = 0
 
-    def set(self, value):
-        # TODO check number for floats, integers and point
-        self._validate_value_type(value)
-        super(NumberEntity, self).set(value)
+    def _convert_to_valid_type(self, value):
+        if self.decimal:
+            if isinstance(value, int):
+                return float(value)
+        else:
+            if isinstance(value, float):
+                new_value = int(value)
+                if new_value != value:
+                    self.log.info("Converted float {} to int {}".format(
+                        value, new_value
+                    ))
+                return new_value
+        return NOT_SET
 
 
 class BoolEntity(InputEntity):
@@ -400,13 +408,13 @@ class RawJsonEntity(InputEntity):
         return not self._is_list
 
     def set(self, value):
-        self._validate_value_type(value)
+        new_value = self.convert_to_valid_type(value)
 
-        if isinstance(value, dict):
+        if isinstance(new_value, dict):
             for key in METADATA_KEYS:
-                if key in value:
-                    value.pop(key)
-        self._current_value = value
+                if key in new_value:
+                    new_value.pop(key)
+        self._current_value = new_value
         self._on_value_change()
 
     @property

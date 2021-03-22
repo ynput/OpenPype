@@ -324,6 +324,36 @@ class BaseItemEntity(BaseEntity):
 
         raise InvalidValueType(self.valid_value_types, type(value), self.path)
 
+    def _convert_to_valid_type(self, value):
+        """Private method of entity to convert value.
+
+        NOTE: Method is not abstract as more entities won't have implemented
+            logic inside.
+
+        Must return NOT_SET if can't convert the value.
+        """
+        return NOT_SET
+
+    def convert_to_valid_type(self, value):
+        """Check value type with possibility of conversion to valid.
+
+        If entered value has right type than is returned as it is. otherwise
+        is used privete method of entity to try convert.
+
+        Raises:
+            InvalidValueType: If value's type is not valid by entity's
+                definition and can't be converted by entity logic.
+        """
+        #
+        if self.is_value_valid_type(value):
+            return value
+
+        new_value = self._convert_to_valid_type(value)
+        if new_value is not NOT_SET and self.is_value_valid_type(new_value):
+            return new_value
+
+        raise InvalidValueType(self.valid_value_types, type(value), self.path)
+
     # TODO convert to private method
     def _check_update_value(self, value, value_source):
         """Validation of value on update methods.
@@ -345,9 +375,13 @@ class BaseItemEntity(BaseEntity):
         if value is NOT_SET:
             return value
 
-        # Validate value type and return value itself if is valid.
-        if self.is_value_valid_type(value):
-            return value
+        try:
+            new_value = self.convert_to_valid_type(value)
+        except InvalidValueType:
+            new_value = NOT_SET
+
+        if new_value is not NOT_SET:
+            return new_value
 
         # Warning log about invalid value type.
         self.log.warning(

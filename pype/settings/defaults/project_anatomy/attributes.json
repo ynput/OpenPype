@@ -1,5 +1,5 @@
 {
-    "fps": 25,
+    "fps": 25.0,
     "frameStart": 1001,
     "frameEnd": 1001,
     "clipIn": 1,
@@ -8,7 +8,7 @@
     "handleEnd": 0,
     "resolutionWidth": 1920,
     "resolutionHeight": 1080,
-    "pixelAspect": 1,
+    "pixelAspect": 1.0,
     "applications": [],
-    "tools": []
+    "tools_env": []
 }

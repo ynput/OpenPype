@@ -1,4 +1,5 @@
 import os
+import collections
 from abc import ABCMeta, abstractmethod
 import six
 import pype
@@ -8,7 +9,8 @@ from pype.modules import (
     IPluginPaths,
     ITimersManager,
     IUserModule,
-    ILaunchHookPaths
+    ILaunchHookPaths,
+    ISettingsChangeListener
 )
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -31,7 +33,8 @@ class FtrackModule(
     IPluginPaths,
     ITimersManager,
     IUserModule,
-    ILaunchHookPaths
+    ILaunchHookPaths,
+    ISettingsChangeListener
 ):
     name = "ftrack"
 
@@ -114,6 +117,86 @@ class FtrackModule(
         """Implementation of IUserModule interface."""
         if self.tray_module:
             self.tray_module.changed_user()
+
+    def on_system_settings_save(self, *_args, **_kwargs):
+        """Implementation of ISettingsChangeListener interface."""
+        # Ignore
+        return
+
+    def on_project_settings_save(self, *_args, **_kwargs):
+        """Implementation of ISettingsChangeListener interface."""
+        # Ignore
+        return
+
+    def on_project_anatomy_save(
+        self, old_value, new_value, changes, project_name
+    ):
+        """Implementation of ISettingsChangeListener interface."""
+        if not project_name:
+            return
+
+        attributes_changes = changes.get("attributes")
+        if not attributes_changes:
+            return
+
+        import ftrack_api
+        from pype.modules.ftrack.lib import avalon_sync
+
+        session = self.create_ftrack_session()
+        project_entity = session.query(
+            "Project where full_name is \"{}\"".format(project_name)
+        ).first()
+
+        if not project_entity:
+            self.log.warning((
+                "Ftrack project with names \"{}\" was not found."
+                " Skipping settings attributes change callback."
+            ))
+            return
+
+        project_id = project_entity["id"]
+
+        cust_attr, hier_attr = avalon_sync.get_pype_attr(session)
+        cust_attr_by_key = {attr["key"]: attr for attr in cust_attr}
+        hier_attrs_by_key = {attr["key"]: attr for attr in hier_attr}
+        for key, value in attributes_changes.items():
+            configuration = hier_attrs_by_key.get(key)
+            if not configuration:
+                configuration = cust_attr_by_key.get(key)
+            if not configuration:
+                continue
+
+            # TODO add value validations
+            # - value type and list items
+            entity_key = collections.OrderedDict()
+            entity_key["configuration_id"] = configuration["id"]
+            entity_key["entity_id"] = project_id
+
+            session.recorded_operations.push(
+                ftrack_api.operation.UpdateEntityOperation(
+                    "ContextCustomAttributeValue",
+                    entity_key,
+                    "value",
+                    ftrack_api.symbol.NOT_SET,
+                    value
+
+                )
+            )
+        session.commit()
+
+    def create_ftrack_session(self, **session_kwargs):
+        import ftrack_api
+
+        if "server_url" not in session_kwargs:
+            session_kwargs["server_url"] = self.ftrack_url
+
+        if "api_key" not in session_kwargs or "api_user" not in session_kwargs:
+            from .lib import credentials
+            cred = credentials.get_credentials()
+            session_kwargs["api_user"] = cred.get("username")
+            session_kwargs["api_key"] = cred.get("api_key")
+
+        return ftrack_api.Session(**session_kwargs)
 
     def tray_init(self):
         from .tray import FtrackTrayWrapper
