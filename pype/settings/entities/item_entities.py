@@ -67,7 +67,7 @@ class PathEntity(ItemEntity):
             item_schema = {
                 "type": "list",
                 "key": self.key,
-                "object_type":  "path-input"
+                "object_type": "path-input"
             }
 
         else:
