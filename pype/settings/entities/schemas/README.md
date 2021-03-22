@@ -235,13 +235,17 @@
 ### raw-json
 - a little bit enhanced text input for raw json
 - has validations of json format
-    - empty value is invalid value, always must be at least `{}` of `[]`
-
+    - empty value is invalid value, always must be json serializable
+    - valid value types are list `[]` and dictionary `{}`
+- schema also defines valid value type
+    - by default it is dictionary
+    - to be able use list it is required to define `is_list` to `true`
 ```
 {
     "type": "raw-json",
     "key": "profiles",
-    "label": "Extract Review profiles"
+    "label": "Extract Review profiles",
+    "is_list": true
 }
 ```
 

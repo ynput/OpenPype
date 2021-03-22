@@ -366,7 +366,7 @@ class NumberWidget(InputWidget):
 class RawJsonInput(QtWidgets.QPlainTextEdit):
     tab_length = 4
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, valid_type, *args, **kwargs):
         super(RawJsonInput, self).__init__(*args, **kwargs)
         self.setObjectName("RawJsonInput")
         self.setTabStopDistance(
@@ -374,6 +374,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
                 self.font()
             ).horizontalAdvance(" ") * self.tab_length
         )
+        self.valid_type = valid_type
 
     def sizeHint(self):
         document = self.document()
@@ -403,8 +404,8 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
     def has_invalid_value(self):
         try:
-            self.json_value()
-            return False
+            value = self.json_value()
+            return not isinstance(value, self.valid_type)
         except Exception:
             return True
 
@@ -415,7 +416,11 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
 class RawJsonWidget(InputWidget):
     def _add_inputs_to_layout(self):
-        self.input_field = RawJsonInput(self.content_widget)
+        if self.entity.is_list:
+            valid_type = list
+        else:
+            valid_type = dict
+        self.input_field = RawJsonInput(valid_type, self.content_widget)
         self.input_field.setSizePolicy(
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding

@@ -380,12 +380,29 @@ class RawJsonEntity(InputEntity):
 
     def _item_initalization(self):
         # Schema must define if valid value is dict or list
-        self.valid_value_types = (list, dict)
-        self.value_on_not_set = {}
+        is_list = self.schema_data.get("is_list", False)
+        if is_list:
+            valid_value_types = (list, )
+            value_on_not_set = []
+        else:
+            valid_value_types = (dict, )
+            value_on_not_set = {}
+
+        self._is_list = is_list
+        self.valid_value_types = valid_value_types
+        self.value_on_not_set = value_on_not_set
 
         self.default_metadata = {}
         self.studio_override_metadata = {}
         self.project_override_metadata = {}
+
+    @property
+    def is_list(self):
+        return self._is_list
+
+    @property
+    def is_dict(self):
+        return not self._is_list
 
     def set(self, value):
         self._validate_value_type(value)
