@@ -148,7 +148,7 @@ def save_project_settings(project_name, overrides):
         new_data = apply_overrides(studio_values, copy.deepcopy(overrides))
 
     else:
-        old_data = get_default_project_settings()
+        old_data = get_default_project_settings(exclude_locals=True)
         new_data = apply_overrides(default_values, copy.deepcopy(overrides))
 
     clear_metadata_from_settings(new_data)
@@ -191,7 +191,7 @@ def save_project_anatomy(project_name, anatomy_data):
         new_data = apply_overrides(studio_values, copy.deepcopy(anatomy_data))
 
     else:
-        old_data = get_default_anatomy_settings()
+        old_data = get_default_anatomy_settings(exclude_locals=True)
         new_data = apply_overrides(default_values, copy.deepcopy(anatomy_data))
 
     clear_metadata_from_settings(new_data)
@@ -659,19 +659,22 @@ def get_system_settings(clear_metadata=True):
     return result
 
 
-def get_default_project_settings(clear_metadata=True):
+def get_default_project_settings(clear_metadata=True, exclude_locals=False):
     """Project settings with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
     studio_values = get_studio_project_settings_overrides()
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
-        local_settings = get_local_settings()
-        apply_local_settings_on_project_settings(result, local_settings, None)
+        if not exclude_locals:
+            local_settings = get_local_settings()
+            apply_local_settings_on_project_settings(
+                result, local_settings, None
+            )
     return result
 
 
-def get_default_anatomy_settings(clear_metadata=True):
+def get_default_anatomy_settings(clear_metadata=True, exclude_locals=False):
     """Project anatomy data with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     studio_values = get_studio_project_anatomy_overrides()
@@ -681,8 +684,11 @@ def get_default_anatomy_settings(clear_metadata=True):
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
-        local_settings = get_local_settings()
-        apply_local_settings_on_anatomy_settings(result, local_settings, None)
+        if not exclude_locals:
+            local_settings = get_local_settings()
+            apply_local_settings_on_anatomy_settings(
+                result, local_settings, None
+            )
     return result
 
 
