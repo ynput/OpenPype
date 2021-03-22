@@ -371,7 +371,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         will add the appropriate limit group to the payload jobinfo attributes.
 
         Returning:
-            str: captured groups devided by comma and no space
+            list: captured groups list
         """
         captured_groups = []
         for lg_name, list_node_class in self.deadline_limit_groups.items():
