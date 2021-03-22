@@ -596,7 +596,7 @@ class ProjectSettings(RootEntity):
     def system_settings_entity(self):
         output = self._system_settings_entity
         if output is None:
-            output = SystemSettings()
+            output = SystemSettings(set_studio_state=False)
             self._system_settings_entity = output
 
         if self.override_state is OverrideState.DEFAULTS:
