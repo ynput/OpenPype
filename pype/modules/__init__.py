@@ -40,7 +40,7 @@ from .log_viewer import LogViewModule
 from .muster import MusterModule
 from .deadline import DeadlineModule
 from .standalonepublish_action import StandAlonePublishAction
-from .sync_server import SyncServer
+from .sync_server import SyncServerModule
 
 
 __all__ = (
@@ -81,5 +81,5 @@ __all__ = (
     "DeadlineModule",
     "StandAlonePublishAction",
 
-    "SyncServer"
+    "SyncServerModule"
 )
