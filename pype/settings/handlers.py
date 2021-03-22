@@ -476,9 +476,6 @@ class MongoSettingsHandler(SettingsHandler):
                 " Create project first."
             ).format(project_name))
 
-        # Update dictionary of changes that will be changed in mongo
-        update_dict = {}
-
         # Project's data
         update_dict_data = {}
         project_doc_data = project_doc.get("data") or {}
@@ -514,18 +511,19 @@ class MongoSettingsHandler(SettingsHandler):
 
         data_changes = self.prepare_mongo_update_dict(update_dict_data)
 
-        set_dict = {}
+        # Update dictionary of changes that will be changed in mongo
+        update_dict = {}
         for key, value in data_changes.items():
             new_key = "data.{}".format(key)
-            set_dict[new_key] = value
+            update_dict[new_key] = value
 
         for key, value in update_dict_config.items():
             new_key = "config.{}".format(key)
-            set_dict[new_key] = value
+            update_dict[new_key] = value
 
         collection.update_one(
             {"type": "project"},
-            {"$set": set_dict}
+            {"$set": update_dict}
         )
 
     def _save_project_data(self, project_name, doc_type, data_cache):
