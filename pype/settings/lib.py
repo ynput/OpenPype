@@ -91,6 +91,19 @@ def calculate_changes(old_value, new_value):
 
 @require_handler
 def save_studio_settings(data):
+    """Save studio overrides of system settings.
+
+    Triggers callbacks on modules that want to know about system settings
+    changes.
+
+    Callbacks are triggered on all modules. They must check if their enabled
+    value has changed.
+
+    For saving of data cares registered Settings handler.
+
+    Args:
+        data(dict): Overrides data with metadata defying studio overrides.
+    """
     # Notify Pype modules
     from pype.modules import ModulesManager, ISettingsChangeListener
 
@@ -110,6 +123,18 @@ def save_studio_settings(data):
 
 @require_handler
 def save_project_settings(project_name, overrides):
+    """Save studio overrides of project settings.
+
+    Old value, new value and changes are passed to enabled modules that want to
+    know about settings changes.
+
+    For saving of data cares registered Settings handler.
+
+    Args:
+        project_name (str): Project name for which overrides are passed.
+            Default project's value is None.
+        overrides(dict): Overrides data with metadata defying studio overrides.
+    """
     # Notify Pype modules
     from pype.modules import ModulesManager, ISettingsChangeListener
 
@@ -141,6 +166,18 @@ def save_project_settings(project_name, overrides):
 
 @require_handler
 def save_project_anatomy(project_name, anatomy_data):
+    """Save studio overrides of project anatomy.
+
+    Old value, new value and changes are passed to enabled modules that want to
+    know about settings changes.
+
+    For saving of data cares registered Settings handler.
+
+    Args:
+        project_name (str): Project name for which overrides are passed.
+            Default project's value is None.
+        overrides(dict): Overrides data with metadata defying studio overrides.
+    """
     # Notify Pype modules
     from pype.modules import ModulesManager, ISettingsChangeListener
 
