@@ -28,7 +28,17 @@ class InvalidValueType(Exception):
         super(InvalidValueType, self).__init__(msg)
 
 
-class SchemaMissingFileInfo(Exception):
+class RequiredKeyModified(KeyError):
+    def __init__(self, entity_path, key):
+        msg = "{} - Tried to modify required key \"{}\"."
+        super(RequiredKeyModified, self).__init__(msg.format(entity_path, key))
+
+
+class SchemaError(Exception):
+    pass
+
+
+class SchemaMissingFileInfo(SchemaError):
     def __init__(self, invalid):
         full_path_keys = []
         for item in invalid:
@@ -41,7 +51,7 @@ class SchemaMissingFileInfo(Exception):
         super(SchemaMissingFileInfo, self).__init__(msg)
 
 
-class SchemeGroupHierarchyBug(Exception):
+class SchemeGroupHierarchyBug(SchemaError):
     def __init__(self, entity_path):
         msg = (
             "Items with attribute \"is_group\" can't have another item with"
@@ -50,7 +60,7 @@ class SchemeGroupHierarchyBug(Exception):
         super(SchemeGroupHierarchyBug, self).__init__(msg)
 
 
-class SchemaDuplicatedKeys(Exception):
+class SchemaDuplicatedKeys(SchemaError):
     def __init__(self, entity_path, key):
         msg = (
             "Schema item contain duplicated key \"{}\" in"
@@ -59,7 +69,7 @@ class SchemaDuplicatedKeys(Exception):
         super(SchemaDuplicatedKeys, self).__init__(msg)
 
 
-class SchemaDuplicatedEnvGroupKeys(Exception):
+class SchemaDuplicatedEnvGroupKeys(SchemaError):
     def __init__(self, invalid):
         items = []
         for key_path, keys in invalid.items():
@@ -74,7 +84,7 @@ class SchemaDuplicatedEnvGroupKeys(Exception):
         super(SchemaDuplicatedEnvGroupKeys, self).__init__(msg)
 
 
-class SchemaTemplateMissingKeys(Exception):
+class SchemaTemplateMissingKeys(SchemaError):
     def __init__(self, missing_keys, required_keys, template_name=None):
         self.missing_keys = missing_keys
         self.required_keys = required_keys

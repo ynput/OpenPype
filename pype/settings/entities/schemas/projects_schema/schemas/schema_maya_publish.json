@@ -274,7 +274,8 @@
                 {
                     "type": "raw-json",
                     "key": "bake_attributes",
-                    "label": "Bake Attributes"
+                    "label": "Bake Attributes",
+                    "is_list": true
                 }
             ]
         },

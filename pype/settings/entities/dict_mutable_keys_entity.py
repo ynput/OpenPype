@@ -7,7 +7,8 @@ from .lib import (
 from . import EndpointEntity
 from .exceptions import (
     DefaultsNotDefined,
-    StudioDefaultsNotDefined
+    StudioDefaultsNotDefined,
+    RequiredKeyModified
 )
 from pype.settings.constants import (
     METADATA_KEYS,
@@ -51,6 +52,8 @@ class DictMutableKeysEntity(EndpointEntity):
         return key in self.children_by_key
 
     def pop(self, key, *args, **kwargs):
+        if key in self.required_keys:
+            raise RequiredKeyModified(self.path, key)
         result = self.children_by_key.pop(key, *args, **kwargs)
         self.on_change()
         return result
@@ -93,6 +96,9 @@ class DictMutableKeysEntity(EndpointEntity):
         child_obj.set(value)
 
     def change_key(self, old_key, new_key):
+        if old_key in self.required_keys:
+            raise RequiredKeyModified(self.path, old_key)
+
         if new_key == old_key:
             return
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
@@ -309,6 +315,10 @@ class DictMutableKeysEntity(EndpointEntity):
         for key in tuple(self.children_by_key.keys()):
             self.children_by_key.pop(key)
 
+        for required_key in self.required_keys:
+            if required_key not in new_value:
+                new_value[required_key] = NOT_SET
+
         # Create new children
         children_label_by_id = {}
         metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
@@ -441,7 +451,13 @@ class DictMutableKeysEntity(EndpointEntity):
 
     def update_default_value(self, value):
         value = self._check_update_value(value, "default")
-        self.has_default_value = value is not NOT_SET
+        has_default_value = value is not NOT_SET
+        if has_default_value:
+            for required_key in self.required_keys:
+                if required_key not in value:
+                    has_default_value = False
+                    break
+        self.has_default_value = has_default_value
         value, metadata = self._prepare_value(value)
         self._default_value = value
         self._default_metadata = metadata
