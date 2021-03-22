@@ -502,7 +502,7 @@ class MongoSettingsHandler(SettingsHandler):
             if not application:
                 continue
             if isinstance(application, six.string_types):
-                applications.append({application: application})
+                applications.append({"name": application})
 
         new_data["apps"] = applications
 
