@@ -142,6 +142,16 @@
                     }
                 },
                 {
+                    "type": "dict-modifiable",
+                    "key": "modifiable_dict_with_required_keys",
+                    "label": "Modifiable dict with required keys",
+                    "required_keys": [
+                        "key_1",
+                        "key_2"
+                    ],
+                    "object_type": "text"
+                },
+                {
                     "type": "list-strict",
                     "key": "strict_list_labels_horizontal",
                     "label": "StrictList-labels-horizontal (color)",
