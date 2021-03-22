@@ -366,13 +366,8 @@ class PathInput(InputEntity):
     schema_types = ["path-input"]
 
     def _item_initalization(self):
-        self.with_arguments = self.schema_data.get("with_arguments", False)
-        if self.with_arguments:
-            self.valid_value_types = (list, )
-            self.value_on_not_set = ["", ""]
-        else:
-            self.valid_value_types = (STRING_TYPE, )
-            self.value_on_not_set = ""
+        self.valid_value_types = (STRING_TYPE, )
+        self.value_on_not_set = ""
 
 
 class RawJsonEntity(InputEntity):

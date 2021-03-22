@@ -37,18 +37,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Autodesk\\Maya2020\\bin\\maya.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Autodesk\\Maya2020\\bin\\maya.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/autodesk/maya2020/bin/maya",
-                            ""
-                        ]
+                        "/usr/autodesk/maya2020/bin/maya"
                     ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
                 },
                 "environment": {
                     "MAYA_VERSION": "2020",
@@ -66,18 +65,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Autodesk\\Maya2019\\bin\\maya.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\maya.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/autodesk/maya2019/bin/maya",
-                            ""
-                        ]
+                        "/usr/autodesk/maya2019/bin/maya"
                     ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
                 },
                 "environment": {
                     "MAYA_VERSION": "2019",
@@ -95,18 +93,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Autodesk\\Maya2017\\bin\\maya.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Autodesk\\Maya2018\\bin\\maya.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/autodesk/maya2018/bin/maya",
-                            ""
-                        ]
+                        "/usr/autodesk/maya2018/bin/maya"
                     ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
                 },
                 "environment": {
                     "MAYA_VERSION": "2018",
@@ -159,11 +156,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayabatch.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayabatch.exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -183,11 +182,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayabatch.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayabatch.exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -207,11 +208,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Autodesk\\Maya2018\\bin\\mayabatch.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Autodesk\\Maya2018\\bin\\mayabatch.exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -257,18 +260,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke12.2v3Nuke12.2",
-                            ""
-                        ]
+                        "/usr/local/Nuke12.2v3Nuke12.2"
                     ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -283,18 +285,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke12.0v1/Nuke12.0",
-                            ""
-                        ]
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
                     ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -309,18 +310,17 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke11.3v5/Nuke11.3",
-                            ""
-                        ]
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
                     ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -335,11 +335,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -382,17 +384,22 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe",
-                            "--nukex"
-                        ]
+                        "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke12.2v3Nuke12.2",
-                            "--nukex"
-                        ]
+                        "/usr/local/Nuke12.2v3Nuke12.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--nukex"
+                    ],
+                    "darwin": [
+                        "--nukex"
+                    ],
+                    "linux": [
+                        "--nukex"
                     ]
                 },
                 "environment": {
@@ -408,17 +415,22 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe",
-                            "--nukex"
-                        ]
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke12.0v1/Nuke12.0",
-                            "--nukex"
-                        ]
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--nukex"
+                    ],
+                    "darwin": [
+                        "--nukex"
+                    ],
+                    "linux": [
+                        "--nukex"
                     ]
                 },
                 "environment": {
@@ -434,17 +446,22 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe",
-                            "--nukex"
-                        ]
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke11.3v5/Nuke11.3",
-                            "--nukex"
-                        ]
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--nukex"
+                    ],
+                    "darwin": [
+                        "--nukex"
+                    ],
+                    "linux": [
+                        "--nukex"
                     ]
                 },
                 "environment": {
@@ -460,13 +477,21 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe",
-                            "--nukex"
-                        ]
+                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
                     ],
                     "darwin": [],
                     "linux": []
+                },
+                "arguments": {
+                    "windows": [
+                        "--nukex"
+                    ],
+                    "darwin": [
+                        "--nukex"
+                    ],
+                    "linux": [
+                        "--nukex"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -509,17 +534,22 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe",
-                            "--studio"
-                        ]
+                        "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke12.2v3Nuke12.2",
-                            "--studio"
-                        ]
+                        "/usr/local/Nuke12.2v3Nuke12.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--studio"
+                    ],
+                    "darwin": [
+                        "--studio"
+                    ],
+                    "linux": [
+                        "--studio"
                     ]
                 },
                 "environment": {
@@ -535,17 +565,22 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe",
-                            "--studio"
-                        ]
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke12.0v1/Nuke12.0",
-                            "--studio"
-                        ]
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--studio"
+                    ],
+                    "darwin": [
+                        "--studio"
+                    ],
+                    "linux": [
+                        "--studio"
                     ]
                 },
                 "environment": {
@@ -561,17 +596,22 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe",
-                            "--studio"
-                        ]
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke11.3v5/Nuke11.3",
-                            "--studio"
-                        ]
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--studio"
+                    ],
+                    "darwin": [
+                        "--studio"
+                    ],
+                    "linux": [
+                        "--studio"
                     ]
                 },
                 "environment": {
@@ -589,6 +629,17 @@
                     "windows": [],
                     "darwin": [],
                     "linux": []
+                },
+                "arguments": {
+                    "windows": [
+                        "--studio"
+                    ],
+                    "darwin": [
+                        "--studio"
+                    ],
+                    "linux": [
+                        "--studio"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -631,17 +682,22 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe",
-                            "--hiero"
-                        ]
+                        "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke12.2v3Nuke12.2",
-                            "--hiero"
-                        ]
+                        "/usr/local/Nuke12.2v3Nuke12.2"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--hiero"
+                    ],
+                    "darwin": [
+                        "--hiero"
+                    ],
+                    "linux": [
+                        "--hiero"
                     ]
                 },
                 "environment": {
@@ -657,17 +713,22 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe",
-                            "--hiero"
-                        ]
+                        "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke12.0v1/Nuke12.0",
-                            "--hiero"
-                        ]
+                        "/usr/local/Nuke12.0v1/Nuke12.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--hiero"
+                    ],
+                    "darwin": [
+                        "--hiero"
+                    ],
+                    "linux": [
+                        "--hiero"
                     ]
                 },
                 "environment": {
@@ -683,17 +744,22 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe",
-                            "--hiero"
-                        ]
+                        "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
                     ],
                     "darwin": [],
                     "linux": [
-                        [
-                            "/usr/local/Nuke11.3v5/Nuke11.3",
-                            "--hiero"
-                        ]
+                        "/usr/local/Nuke11.3v5/Nuke11.3"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--hiero"
+                    ],
+                    "darwin": [
+                        "--hiero"
+                    ],
+                    "linux": [
+                        "--hiero"
                     ]
                 },
                 "environment": {
@@ -709,13 +775,21 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe",
-                            "--hiero"
-                        ]
+                        "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
                     ],
                     "darwin": [],
                     "linux": []
+                },
+                "arguments": {
+                    "windows": [
+                        "--hiero"
+                    ],
+                    "darwin": [
+                        "--hiero"
+                    ],
+                    "linux": [
+                        "--hiero"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -775,6 +849,11 @@
                     "darwin": [],
                     "linux": []
                 },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
                 "environment": {
                     "__environment_keys__": {
                         "fusion_16": []
@@ -788,11 +867,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Blackmagic Design\\Fusion 9\\Fusion.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Blackmagic Design\\Fusion 9\\Fusion.exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -869,11 +950,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:/Program Files/Blackmagic Design/DaVinci Resolve/Resolve.exe",
-                            ""
-                        ]
+                        "C:/Program Files/Blackmagic Design/DaVinci Resolve/Resolve.exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -919,6 +1002,11 @@
                     "darwin": [],
                     "linux": []
                 },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
                 "environment": {
                     "__environment_keys__": {
                         "houdini_18": []
@@ -931,6 +1019,11 @@
                 "variant_label": "17",
                 "icon": "",
                 "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
                     "windows": [],
                     "darwin": [],
                     "linux": []
@@ -971,13 +1064,21 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe",
-                            "--python-use-system-env"
-                        ]
+                        "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe"
                     ],
                     "darwin": [],
                     "linux": []
+                },
+                "arguments": {
+                    "windows": [
+                        "--python-use-system-env"
+                    ],
+                    "darwin": [
+                        "--python-use-system-env"
+                    ],
+                    "linux": [
+                        "--python-use-system-env"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -992,13 +1093,21 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe",
-                            "--python-use-system-env"
-                        ]
+                        "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe"
                     ],
                     "darwin": [],
                     "linux": []
+                },
+                "arguments": {
+                    "windows": [
+                        "--python-use-system-env"
+                    ],
+                    "darwin": [
+                        "--python-use-system-env"
+                    ],
+                    "linux": [
+                        "--python-use-system-env"
+                    ]
                 },
                 "environment": {
                     "__environment_keys__": {
@@ -1034,6 +1143,11 @@
                     "darwin": [],
                     "linux": []
                 },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
                 "environment": {
                     "__environment_keys__": {
                         "harmony_20": []
@@ -1048,11 +1162,13 @@
                 "executables": {
                     "windows": [],
                     "darwin": [
-                        [
-                            "/Applications/Toon Boom Harmony 17 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium",
-                            ""
-                        ]
+                        "/Applications/Toon Boom Harmony 17 Premium/Harmony Premium.app/Contents/MacOS/Harmony Premium"
                     ],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
                     "linux": []
                 },
                 "environment": {
@@ -1084,15 +1200,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\TVPaint Developpement\\TVPaint Animation 11 (64bits)\\TVPaint Animation 11 (64bits).exe",
-                            ""
-                        ],
-                        [
-                            "C:\\Program Files\\TVPaint Developpement\\TVPaint Animation 11 Pro (64bits) (DEMO)\\TVPaint Animation 11 Pro (64bits) (DEMO).exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\TVPaint Developpement\\TVPaint Animation 11 (64bits)\\TVPaint Animation 11 (64bits).exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -1109,11 +1223,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files (x86)\\TVPaint Developpement\\TVPaint Animation 11 (32bits)\\TVPaint Animation 11 (32bits).exe",
-                            ""
-                        ]
+                        "C:\\Program Files (x86)\\TVPaint Developpement\\TVPaint Animation 11 (32bits)\\TVPaint Animation 11 (32bits).exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -1152,11 +1268,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -1173,11 +1291,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -1216,11 +1336,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Adobe\\Adobe After Effects 2020\\Support Files\\AfterFX.exe",
-                            ""
-                        ]
+                        ""
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -1237,11 +1359,13 @@
                 "icon": "",
                 "executables": {
                     "windows": [
-                        [
-                            "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe",
-                            ""
-                        ]
+                        "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe"
                     ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
                     "darwin": [],
                     "linux": []
                 },
@@ -1272,10 +1396,12 @@
                 "label": "",
                 "variant_label": "Local",
                 "icon": "{}/app_icons/celaction_local.png",
-                "executables": [
-                    "",
-                    ""
-                ],
+                "executables": "",
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
                 "environment": {
                     "__environment_keys__": {
                         "celation_Local": []
@@ -1287,10 +1413,12 @@
                 "label": "",
                 "variant_label": "Pulblish",
                 "icon": "",
-                "executables": [
-                    "",
-                    ""
-                ],
+                "executables": "",
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
                 "environment": {
                     "__environment_keys__": {
                         "celation_Publish": []
@@ -1327,6 +1455,11 @@
                     "darwin": [],
                     "linux": []
                 },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
                 "environment": {
                     "__environment_keys__": {
                         "unreal_4.24": []
@@ -1353,6 +1486,11 @@
                     "darwin": [],
                     "linux": []
                 },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
                 "environment": {
                     "__environment_keys__": {
                         "python_Python 3.7": []
@@ -1369,6 +1507,11 @@
                     "darwin": [],
                     "linux": []
                 },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
                 "environment": {
                     "__environment_keys__": {
                         "python_Python 2.7": []
@@ -1381,6 +1524,11 @@
                 "variant_label": "",
                 "icon": "",
                 "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
                     "windows": [],
                     "darwin": [],
                     "linux": []
@@ -1410,6 +1558,11 @@
                 "variant_label": "1.1",
                 "icon": "",
                 "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
                     "windows": [],
                     "darwin": [],
                     "linux": []
