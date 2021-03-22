@@ -224,11 +224,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         ]
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
-        # self.log.debug("enviro: {}".format(pprint(environment)))
+
         for path in os.environ:
             if path.lower().startswith('pype_'):
                 environment[path] = os.environ[path]
-            if path.lower().startswith('nuke_'):
+            if path.lower().startswith('nuke_') and path != "NUKE_TEMP_DIR":
                 environment[path] = os.environ[path]
             if 'license' in path.lower():
                 environment[path] = os.environ[path]
