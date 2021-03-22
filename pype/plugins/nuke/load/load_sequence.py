@@ -80,6 +80,9 @@ class LoadSequence(api.Loader):
     icon = "file-video-o"
     color = "white"
 
+    # presets
+    name_expression = "{class_name}_{ext}"
+
     @staticmethod
     def fix_hashes_in_path(file, repr_cont):
         if "#" not in file:
@@ -137,10 +140,16 @@ class LoadSequence(api.Loader):
 
         file = self.fix_hashes_in_path(file, repr_cont).replace("\\", "/")
 
-        read_name = "Read_{0}_{1}_{2}".format(
-            repr_cont["asset"],
-            repr_cont["subset"],
-            context["representation"]["name"])
+        name_data = {
+            "asset": repr_cont["asset"],
+            "subset": repr_cont["subset"],
+            "representation": context["representation"]["name"],
+            "ext": repr_cont["representation"],
+            "id": context["representation"]["_id"],
+            "class_name": self.__class__.__name__
+        }
+
+        read_name = self.name_expression.format(**name_data)
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
