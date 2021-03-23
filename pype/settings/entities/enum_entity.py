@@ -72,8 +72,8 @@ class EnumEntity(InputEntity):
         for item in check_values:
             if item not in self.valid_keys:
                 raise ValueError(
-                    "Invalid value \"{}\". Expected: {}".format(
-                        item, self.valid_keys
+                    "{} Invalid value \"{}\". Expected: {}".format(
+                        self.path, item, self.valid_keys
                     )
                 )
         self._current_value = new_value
