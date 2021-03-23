@@ -6,34 +6,14 @@ from .lib import (
 )
 
 
-class EnumEntity(InputEntity):
-    schema_types = ["enum"]
-
+class BaseEnumEntity(InputEntity):
     def _item_initalization(self):
-        self.multiselection = self.schema_data.get("multiselection", False)
-        self.enum_items = self.schema_data["enum_items"]
-        if not self.enum_items:
-            raise ValueError("Attribute `enum_items` is not defined.")
-
-        valid_keys = set()
-        for item in self.enum_items:
-            valid_keys.add(tuple(item.keys())[0])
-
-        self.valid_keys = valid_keys
-
-        if self.multiselection:
-            self.valid_value_types = (list, )
-            self.value_on_not_set = []
-        else:
-            for key in valid_keys:
-                if self.value_on_not_set is NOT_SET:
-                    self.value_on_not_set = key
-                    break
-
-            self.valid_value_types = (STRING_TYPE, )
-
-        # GUI attribute
-        self.placeholder = self.schema_data.get("placeholder")
+        self.multiselection = True
+        self.value_on_not_set = None
+        self.enum_items = None
+        self.valid_keys = None
+        self.valid_value_types = None
+        self.placeholder = None
 
     def schema_validations(self):
         if not isinstance(self.enum_items, list):
@@ -78,7 +58,7 @@ class EnumEntity(InputEntity):
         for item in check_values:
             if item not in self.valid_keys:
                 raise ValueError(
-                    "{} Invalid value \"{}\". Expected: {}".format(
+                    "{} Invalid value \"{}\". Expected one of: {}".format(
                         self.path, item, self.valid_keys
                     )
                 )
@@ -86,7 +66,42 @@ class EnumEntity(InputEntity):
         self._on_value_change()
 
 
-class AppsEnumEntity(EnumEntity):
+class EnumEntity(BaseEnumEntity):
+    schema_types = ["enum"]
+
+    def _item_initalization(self):
+        self.multiselection = self.schema_data.get("multiselection", False)
+        self.enum_items = self.schema_data.get("enum_items")
+
+        valid_keys = set()
+        for item in self.enum_items or []:
+            valid_keys.add(tuple(item.keys())[0])
+
+        self.valid_keys = valid_keys
+
+        if self.multiselection:
+            self.valid_value_types = (list, )
+            self.value_on_not_set = []
+        else:
+            for key in valid_keys:
+                if self.value_on_not_set is NOT_SET:
+                    self.value_on_not_set = key
+                    break
+
+            self.valid_value_types = (STRING_TYPE, )
+
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
+    def schema_validations(self):
+        if not self.enum_items and "enum_items" not in self.schema_data:
+            raise EntitySchemaError(
+                self, "Enum item must have defined `enum_items`"
+            )
+        super().schema_validations()
+
+
+class AppsEnumEntity(BaseEnumEntity):
     schema_types = ["apps-enum"]
 
     def _item_initalization(self):
@@ -139,7 +154,7 @@ class AppsEnumEntity(EnumEntity):
         self._current_value = new_value
 
 
-class ToolsEnumEntity(EnumEntity):
+class ToolsEnumEntity(BaseEnumEntity):
     schema_types = ["tools-enum"]
 
     def _item_initalization(self):

@@ -96,6 +96,7 @@ from .input_entities import (
 )
 
 from .enum_entity import (
+    BaseEnumEntity,
     EnumEntity,
     AppsEnumEntity,
     ToolsEnumEntity
@@ -141,6 +142,7 @@ __all__ = (
     "PathInput",
     "RawJsonEntity",
 
+    "BaseEnumEntity",
     "EnumEntity",
     "AppsEnumEntity",
     "ToolsEnumEntity",

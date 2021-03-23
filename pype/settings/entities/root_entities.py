@@ -175,7 +175,8 @@ class RootEntity(BaseItemEntity):
                 entities.BaseItemEntity,
                 entities.ItemEntity,
                 entities.EndpointEntity,
-                entities.InputEntity
+                entities.InputEntity,
+                entities.BaseEnumEntity
             )
 
             self._loaded_types = {}
