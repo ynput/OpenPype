@@ -378,7 +378,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             for node_class in list_node_class:
                 for node in nuke.allNodes(recurseGroups=True):
                     # ignore all nodes not member of defined class
-                    if node.Class() not in node_class:
+                    if node_class not in node.Class():
                         continue
                     # ignore all disabled nodes
                     if node["disable"].value():
