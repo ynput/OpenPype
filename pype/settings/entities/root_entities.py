@@ -82,8 +82,8 @@ class RootEntity(BaseItemEntity):
 
     def set(self, value):
         """Set value."""
-        self._validate_value_type(value)
-        for _key, _value in value.items():
+        new_value = self.convert_to_valid_type(value)
+        for _key, _value in new_value.items():
             self.non_gui_children[_key].set(_value)
 
     def keys(self):
@@ -596,7 +596,7 @@ class ProjectSettings(RootEntity):
     def system_settings_entity(self):
         output = self._system_settings_entity
         if output is None:
-            output = SystemSettings()
+            output = SystemSettings(set_studio_state=False)
             self._system_settings_entity = output
 
         if self.override_state is OverrideState.DEFAULTS:

@@ -1,4 +1,35 @@
+from abc import ABCMeta, abstractmethod
+
+import six
+
 from . import PypeModule, ITrayAction
+
+
+@six.add_metaclass(ABCMeta)
+class ISettingsChangeListener:
+    """Module has plugin paths to return.
+
+    Expected result is dictionary with keys "publish", "create", "load" or
+    "actions" and values as list or string.
+    {
+        "publish": ["path/to/publish_plugins"]
+    }
+    """
+    @abstractmethod
+    def on_system_settings_save(self, old_value, new_value, changes):
+        pass
+
+    @abstractmethod
+    def on_project_settings_save(
+        self, old_value, new_value, changes, project_name
+    ):
+        pass
+
+    @abstractmethod
+    def on_project_anatomy_save(
+        self, old_value, new_value, changes, project_name
+    ):
+        pass
 
 
 class SettingsAction(PypeModule, ITrayAction):

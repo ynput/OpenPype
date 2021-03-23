@@ -210,32 +210,16 @@ class ApplicationTool:
 
 class ApplicationExecutable:
     def __init__(self, executable):
-        default_launch_args = []
-        executable_path = None
-        if isinstance(executable, str):
-            executable_path = executable
-
-        elif isinstance(executable, list):
-            for arg in executable:
-                if arg:
-                    if executable_path is None:
-                        executable_path = arg
-                    else:
-                        default_launch_args.append(arg)
-
-        self.executable_path = executable_path
-        self.default_launch_args = default_launch_args
-
-    def __iter__(self):
-        yield self._realpath()
-        for arg in self.default_launch_args:
-            yield arg
+        self.executable_path = executable
 
     def __str__(self):
         return self.executable_path
 
+    def __repr__(self):
+        return "<{}> {}".format(self.__class__.__name__, self.executable_path)
+
     def as_args(self):
-        return list(self)
+        return [self.executable_path]
 
     def _realpath(self):
         """Check if path is valid executable path."""
@@ -293,11 +277,19 @@ class Application:
         elif isinstance(_executables, dict):
             _executables = _executables.get(platform.system().lower()) or []
 
+        _arguments = app_data["arguments"]
+        if not _arguments:
+            _arguments = []
+
+        elif isinstance(_arguments, dict):
+            _arguments = _arguments.get(platform.system().lower()) or []
+
         executables = []
         for executable in _executables:
             executables.append(ApplicationExecutable(executable))
 
         self.executables = executables
+        self.arguments = _arguments
 
     @property
     def full_label(self):
@@ -503,6 +495,7 @@ class ApplicationLaunchContext:
 
         # subprocess.Popen launch arguments (first argument in constructor)
         self.launch_args = executable.as_args()
+        self.launch_args.extend(application.arguments)
 
         # Handle launch environemtns
         env = self.data.pop("env", None)
