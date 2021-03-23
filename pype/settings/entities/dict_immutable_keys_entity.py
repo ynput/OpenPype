@@ -97,9 +97,9 @@ class DictImmutableKeysEntity(ItemEntity):
                 raise EntitySchemaError(self, reason)
 
             if not isinstance(checkbox_child, BoolEntity):
-                reason = "Checkbox children \"{}\" is not `boolean` type.".format(
-                    self.checkbox_key
-                )
+                reason = (
+                    "Checkbox children \"{}\" is not `boolean` type."
+                ).format(self.checkbox_key)
                 raise EntitySchemaError(self, reason)
 
         super(DictImmutableKeysEntity, self).schema_validations()
