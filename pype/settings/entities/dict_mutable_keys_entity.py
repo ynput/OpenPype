@@ -8,7 +8,8 @@ from . import EndpointEntity
 from .exceptions import (
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
-    RequiredKeyModified
+    RequiredKeyModified,
+    EntitySchemaError
 )
 from pype.settings.constants import (
     METADATA_KEYS,
@@ -213,10 +214,11 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # TODO Ability to store labels should be defined with different key
         if self.collapsible_key and not self.file_item:
-            raise ValueError((
-                "{}: Modifiable dictionary with collapsible keys is not under"
+            reason = (
+                "Modifiable dictionary with collapsible keys is not under"
                 " file item so can't store metadata."
-            ).format(self.path))
+            )
+            raise EntitySchemaError(self, reason)
 
         for child_obj in self.children_by_key.values():
             child_obj.schema_validations()

@@ -1,55 +1,51 @@
 from .input_entities import InputEntity
-from .lib import NOT_SET
+from .exceptions import EntitySchemaError
+from .lib import (
+    NOT_SET,
+    STRING_TYPE
+)
 
 
-class EnumEntity(InputEntity):
-    schema_types = ["enum"]
-
+class BaseEnumEntity(InputEntity):
     def _item_initalization(self):
-        self.multiselection = self.schema_data.get("multiselection", False)
-        self.enum_items = self.schema_data["enum_items"]
-        if not self.enum_items:
-            raise ValueError("Attribute `enum_items` is not defined.")
-
-        valid_keys = set()
-        for item in self.enum_items:
-            valid_keys.add(tuple(item.keys())[0])
-
-        self.valid_keys = valid_keys
-
-        if self.multiselection:
-            self.valid_value_types = (list, )
-            self.value_on_not_set = []
-        else:
-            valid_value_types = set()
-            for key in valid_keys:
-                if self.value_on_not_set is NOT_SET:
-                    self.value_on_not_set = key
-                valid_value_types.add(type(key))
-
-            self.valid_value_types = tuple(valid_value_types)
-
-        # GUI attribute
-        self.placeholder = self.schema_data.get("placeholder")
+        self.multiselection = True
+        self.value_on_not_set = None
+        self.enum_items = None
+        self.valid_keys = None
+        self.valid_value_types = None
+        self.placeholder = None
 
     def schema_validations(self):
+        if not isinstance(self.enum_items, list):
+            raise EntitySchemaError(
+                self, "Enum item must have defined `enum_items` as list."
+            )
+
         enum_keys = set()
         for item in self.enum_items:
             key = tuple(item.keys())[0]
             if key in enum_keys:
-                raise ValueError(
-                    "{}: Key \"{}\" is more than once in enum items.".format(
-                        self.path, key
-                    )
+                reason = "Key \"{}\" is more than once in enum items.".format(
+                    key
                 )
+                raise EntitySchemaError(self, reason)
+
             enum_keys.add(key)
 
-        super(EnumEntity, self).schema_validations()
+            if not isinstance(key, STRING_TYPE):
+                reason = "Key \"{}\" has invalid type {}, expected {}.".format(
+                    key, type(key), STRING_TYPE
+                )
+                raise EntitySchemaError(self, reason)
+
+        super(BaseEnumEntity, self).schema_validations()
 
     def _convert_to_valid_type(self, value):
         if self.multiselection:
             if isinstance(value, (set, tuple)):
                 return list(value)
+        elif isinstance(value, (int, float)):
+            return str(value)
         return NOT_SET
 
     def set(self, value):
@@ -62,15 +58,50 @@ class EnumEntity(InputEntity):
         for item in check_values:
             if item not in self.valid_keys:
                 raise ValueError(
-                    "Invalid value \"{}\". Expected: {}".format(
-                        item, self.valid_keys
+                    "{} Invalid value \"{}\". Expected one of: {}".format(
+                        self.path, item, self.valid_keys
                     )
                 )
         self._current_value = new_value
         self._on_value_change()
 
 
-class AppsEnumEntity(EnumEntity):
+class EnumEntity(BaseEnumEntity):
+    schema_types = ["enum"]
+
+    def _item_initalization(self):
+        self.multiselection = self.schema_data.get("multiselection", False)
+        self.enum_items = self.schema_data.get("enum_items")
+
+        valid_keys = set()
+        for item in self.enum_items or []:
+            valid_keys.add(tuple(item.keys())[0])
+
+        self.valid_keys = valid_keys
+
+        if self.multiselection:
+            self.valid_value_types = (list, )
+            self.value_on_not_set = []
+        else:
+            for key in valid_keys:
+                if self.value_on_not_set is NOT_SET:
+                    self.value_on_not_set = key
+                    break
+
+            self.valid_value_types = (STRING_TYPE, )
+
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
+    def schema_validations(self):
+        if not self.enum_items and "enum_items" not in self.schema_data:
+            raise EntitySchemaError(
+                self, "Enum item must have defined `enum_items`"
+            )
+        super().schema_validations()
+
+
+class AppsEnumEntity(BaseEnumEntity):
     schema_types = ["apps-enum"]
 
     def _item_initalization(self):
@@ -123,7 +154,7 @@ class AppsEnumEntity(EnumEntity):
         self._current_value = new_value
 
 
-class ToolsEnumEntity(EnumEntity):
+class ToolsEnumEntity(BaseEnumEntity):
     schema_types = ["tools-enum"]
 
     def _item_initalization(self):

@@ -9,7 +9,8 @@ from .lib import (
 )
 from .exceptions import (
     DefaultsNotDefined,
-    StudioDefaultsNotDefined
+    StudioDefaultsNotDefined,
+    EntitySchemaError
 )
 
 
@@ -153,16 +154,18 @@ class ListEntity(EndpointEntity):
         super(ListEntity, self).schema_validations()
 
         if self.is_dynamic_item and self.use_label_wrap:
-            raise ValueError(
+            reason = (
                 "`ListWidget` can't have set `use_label_wrap` to True and"
                 " be used as widget at the same time."
             )
+            raise EntitySchemaError(self, reason)
 
         if self.use_label_wrap and not self.label:
-            raise ValueError(
+            reason = (
                 "`ListWidget` can't have set `use_label_wrap` to True and"
                 " not have set \"label\" key at the same time."
             )
+            raise EntitySchemaError(self, reason)
 
         for child_obj in self.children:
             child_obj.schema_validations()

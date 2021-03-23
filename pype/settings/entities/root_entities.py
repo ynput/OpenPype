@@ -13,6 +13,7 @@ from .lib import (
     get_studio_settings_schema,
     get_project_settings_schema
 )
+from .exceptions import EntitySchemaError
 from pype.settings.constants import (
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
@@ -145,10 +146,11 @@ class RootEntity(BaseItemEntity):
     def schema_validations(self):
         for child_entity in self.children:
             if child_entity.is_group:
-                raise ValueError((
+                reason = (
                     "Root entity \"{}\" has child with `is_group`"
                     " attribute set to True but root can't save overrides."
-                ).format(self.__class__.__name__))
+                ).format(self.__class__.__name__)
+                raise EntitySchemaError(self, reason)
             child_entity.schema_validations()
 
     def get_entity_from_path(self, path):
@@ -173,7 +175,8 @@ class RootEntity(BaseItemEntity):
                 entities.BaseItemEntity,
                 entities.ItemEntity,
                 entities.EndpointEntity,
-                entities.InputEntity
+                entities.InputEntity,
+                entities.BaseEnumEntity
             )
 
             self._loaded_types = {}

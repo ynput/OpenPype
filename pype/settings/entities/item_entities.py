@@ -5,7 +5,8 @@ from .lib import (
 )
 from .exceptions import (
     DefaultsNotDefined,
-    StudioDefaultsNotDefined
+    StudioDefaultsNotDefined,
+    EntitySchemaError
 )
 from .base_entity import ItemEntity
 
@@ -204,8 +205,8 @@ class ListStrictEntity(ItemEntity):
     def schema_validations(self):
         # List entity must have file parent.
         if not self.file_item and not self.is_file:
-            raise ValueError(
-                "{}: Missing file entity in hierarchy.".format(self.path)
+            raise EntitySchemaError(
+                self, "Missing file entity in hierarchy."
             )
 
         super(ListStrictEntity, self).schema_validations()
