@@ -12,9 +12,7 @@ from pype.api import (
     get_local_site_id)
 from pype.lib import PypeLogger
 
-from .sync_server import SyncServerThread
 from .providers.local_drive import LocalDriveHandler
-from .providers import lib
 
 from .utils import time_function, SyncStatus
 
@@ -395,7 +393,9 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
             Externalized for app
         """
-        local_file_path, _ = self._resolve_paths(file_path, collection)
+        handler = LocalDriveHandler()
+        local_file_path = handler.resolve_path(
+            file_path, None, self.get_anatomy(collection))
 
         return local_file_path
 
@@ -426,6 +426,9 @@ class SyncServerModule(PypeModule, ITrayModule):
             Called when tray is initialized, it checks if module should be
             enabled. If not, no initialization necessary.
         """
+        # import only in tray, because of Python2 hosts
+        from .sync_server import SyncServerThread
+
         if not self.enabled:
             return
 
@@ -566,19 +569,6 @@ class SyncServerModule(PypeModule, ITrayModule):
         settings = get_project_settings(project_name)
         return self._parse_sync_settings_from_settings(settings)
 
-    def site_is_working(self, project_name, site_name):
-        """
-            Confirm that 'site_name' is configured correctly for 'project_name'
-            Args:
-                project_name(string):
-                site_name(string):
-            Returns
-                (bool)
-        """
-        if self._get_configured_sites(project_name).get(site_name):
-            return True
-        return False
-
     def _parse_sync_settings_from_settings(self, settings):
         """ settings from api.get_project_settings, TOOD rename """
         sync_settings = settings.get("global").get("sync_server")
@@ -589,45 +579,6 @@ class SyncServerModule(PypeModule, ITrayModule):
             return sync_settings
 
         return {}
-
-    def _get_configured_sites(self, project_name):
-        """
-            Loops through settings and looks for configured sites and checks
-            its handlers for particular 'project_name'.
-
-            Args:
-                project_setting(dict): dictionary from Settings
-                only_project_name(string, optional): only interested in
-                    particular project
-            Returns:
-                (dict of dict)
-                {'ProjectA': {'studio':True, 'gdrive':False}}
-        """
-        settings = self.get_sync_project_setting(project_name)
-        return self._get_configured_sites_from_setting(settings)
-
-    def _get_configured_sites_from_setting(self, project_setting):
-        if not project_setting.get("enabled"):
-            return {}
-
-        initiated_handlers = {}
-        configured_sites = {}
-        all_sites = self._get_default_site_configs()
-        all_sites.update(project_setting.get("sites"))
-        for site_name, config in all_sites.items():
-            handler = initiated_handlers. \
-                get((config["provider"], site_name))
-            if not handler:
-                handler = lib.factory.get_provider(config["provider"],
-                                                   site_name,
-                                                   presets=config)
-                initiated_handlers[(config["provider"], site_name)] = \
-                    handler
-
-            if handler.is_active():
-                configured_sites[site_name] = True
-
-        return configured_sites
 
     def _get_default_site_configs(self):
         """
@@ -1073,9 +1024,9 @@ class SyncServerModule(PypeModule, ITrayModule):
             return
 
         provider_name = self.get_provider_for_site(collection, site_name)
-        handler = lib.factory.get_provider(provider_name, site_name)
 
-        if handler and isinstance(handler, LocalDriveHandler):
+        if provider_name == 'local_drive':
+            handler = LocalDriveHandler()
             query = {
                 "_id": ObjectId(representation_id)
             }
@@ -1090,9 +1041,9 @@ class SyncServerModule(PypeModule, ITrayModule):
             representation = representation.pop()
             local_file_path = ''
             for file in representation.get("files"):
-                local_file_path, _ = self._resolve_paths(file.get("path", ""),
-                                                         collection
-                                                         )
+                local_file_path = self.get_local_file_path(collection,
+                                                           file.get("path", "")
+                                                           )
                 try:
                     self.log.debug("Removing {}".format(local_file_path))
                     os.remove(local_file_path)
@@ -1194,36 +1145,6 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
         val = {"files.$[f].sites.$[s].progress": progress}
         return val
-
-    def _resolve_paths(self, file_path, collection,
-                       remote_site_name=None, remote_handler=None):
-        """
-            Returns tuple of local and remote file paths with {root}
-            placeholders replaced with proper values from Settings or Anatomy
-
-            Args:
-                file_path(string): path with {root}
-                collection(string): project name
-                remote_site_name(string): remote site
-                remote_handler(AbstractProvider): implementation
-            Returns:
-                (string, string) - proper absolute paths
-        """
-        remote_file_path = ''
-        if remote_handler:
-            root_configs = self._get_roots_config(self.sync_project_settings,
-                                                  collection,
-                                                  remote_site_name)
-
-            remote_file_path = remote_handler.resolve_path(file_path,
-                                                           root_configs)
-
-        local_handler = lib.factory.get_provider(
-            'local_drive', self.get_active_site(collection))
-        local_file_path = local_handler.resolve_path(
-            file_path, None, self.get_anatomy(collection))
-
-        return local_file_path, remote_file_path
 
     def _get_retries_arr(self, project_name):
         """

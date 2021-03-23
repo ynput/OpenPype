@@ -1,4 +1,3 @@
-from enum import Enum
 from .gdrive import GDriveHandler
 from .local_drive import LocalDriveHandler
 

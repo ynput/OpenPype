@@ -1,7 +1,8 @@
-from abc import ABCMeta, abstractmethod
+import abc, six
 
 
-class AbstractProvider(metaclass=ABCMeta):
+@six.add_metaclass(abc.ABCMeta)
+class AbstractProvider:
 
     def __init__(self, site_name, tree=None, presets=None):
         self.presets = None
@@ -10,7 +11,7 @@ class AbstractProvider(metaclass=ABCMeta):
 
         self.presets = presets
 
-    @abstractmethod
+    @abc.abstractmethod
     def is_active(self):
         """
             Returns True if provider is activated, eg. has working credentials.
@@ -18,7 +19,7 @@ class AbstractProvider(metaclass=ABCMeta):
             (boolean)
         """
 
-    @abstractmethod
+    @abc.abstractmethod
     def upload_file(self, source_path, target_path, overwrite=True):
         """
             Copy file from 'source_path' to 'target_path' on provider.
@@ -33,7 +34,7 @@ class AbstractProvider(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def download_file(self, source_path, local_path, overwrite=True):
         """
             Download file from provider into local system
@@ -47,7 +48,7 @@ class AbstractProvider(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def delete_file(self, path):
         """
             Deletes file from 'path'. Expects path to specific file.
@@ -60,7 +61,7 @@ class AbstractProvider(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def list_folder(self, folder_path):
         """
             List all files and subfolders of particular path non-recursively.
@@ -72,7 +73,7 @@ class AbstractProvider(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def create_folder(self, folder_path):
         """
             Create all nonexistent folders and subfolders in 'path'.
@@ -85,7 +86,7 @@ class AbstractProvider(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_tree(self):
         """
             Creates folder structure for providers which do not provide
@@ -94,7 +95,7 @@ class AbstractProvider(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
+    @abc.abstractmethod
     def resolve_path(self, path, root_config, anatomy=None):
         """
             Replaces root placeholders with appropriate real value from
