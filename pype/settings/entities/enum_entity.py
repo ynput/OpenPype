@@ -1,5 +1,8 @@
 from .input_entities import InputEntity
-from .lib import NOT_SET
+from .lib import (
+    NOT_SET,
+    STRING_TYPE
+)
 
 
 class EnumEntity(InputEntity):
@@ -21,13 +24,12 @@ class EnumEntity(InputEntity):
             self.valid_value_types = (list, )
             self.value_on_not_set = []
         else:
-            valid_value_types = set()
             for key in valid_keys:
                 if self.value_on_not_set is NOT_SET:
                     self.value_on_not_set = key
-                valid_value_types.add(type(key))
+                    break
 
-            self.valid_value_types = tuple(valid_value_types)
+            self.valid_value_types = (STRING_TYPE, )
 
         # GUI attribute
         self.placeholder = self.schema_data.get("placeholder")
@@ -40,6 +42,12 @@ class EnumEntity(InputEntity):
                 raise ValueError(
                     "{}: Key \"{}\" is more than once in enum items.".format(
                         self.path, key
+                    )
+                )
+            if not isinstance(key, STRING_TYPE):
+                raise ValueError(
+                    "{}: Key \"{}\" has invalid type {}, expected {}.".format(
+                        self.path, key, type(key), STRING_TYPE
                     )
                 )
             enum_keys.add(key)
