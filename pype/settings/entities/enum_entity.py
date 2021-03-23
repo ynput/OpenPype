@@ -50,6 +50,8 @@ class EnumEntity(InputEntity):
         if self.multiselection:
             if isinstance(value, (set, tuple)):
                 return list(value)
+        elif isinstance(value, (int, float)):
+            return str(value)
         return NOT_SET
 
     def set(self, value):

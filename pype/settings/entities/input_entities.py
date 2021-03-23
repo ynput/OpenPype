@@ -369,6 +369,12 @@ class TextEntity(InputEntity):
         self.multiline = self.schema_data.get("multiline", False)
         self.placeholder_text = self.schema_data.get("placeholder")
 
+    def _convert_to_valid_type(self, value):
+        # Allow numbers converted to string
+        if isinstance(value, (int, float)):
+            return str(value)
+        return NOT_SET
+
 
 class PathInput(InputEntity):
     schema_types = ["path-input"]
