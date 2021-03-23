@@ -15,7 +15,10 @@ from . import (
     BoolEntity,
     GUIEntity
 )
-from .exceptions import SchemaDuplicatedKeys
+from .exceptions import (
+    SchemaDuplicatedKeys,
+    EntitySchemaError
+)
 
 
 class DictImmutableKeysEntity(ItemEntity):
@@ -83,20 +86,21 @@ class DictImmutableKeysEntity(ItemEntity):
             elif child_entity.key not in children_keys:
                 children_keys.add(child_entity.key)
             else:
-                raise SchemaDuplicatedKeys(self.path, child_entity.key)
+                raise SchemaDuplicatedKeys(self, child_entity.key)
 
         if self.checkbox_key:
             checkbox_child = self.non_gui_children.get(self.checkbox_key)
             if not checkbox_child:
-                raise ValueError(
-                    "{}: Checkbox children \"{}\" was not found.".format(
-                        self.path, self.checkbox_key
-                    )
+                reason = "Checkbox children \"{}\" was not found.".format(
+                    self.checkbox_key
                 )
+                raise EntitySchemaError(self, reason)
+
             if not isinstance(checkbox_child, BoolEntity):
-                raise TypeError((
-                    "{}: Checkbox children \"{}\" is not `boolean` type."
-                ).format(self.path, self.checkbox_key))
+                reason = "Checkbox children \"{}\" is not `boolean` type.".format(
+                    self.checkbox_key
+                )
+                raise EntitySchemaError(self, reason)
 
         super(DictImmutableKeysEntity, self).schema_validations()
         # Trigger schema validation on children entities

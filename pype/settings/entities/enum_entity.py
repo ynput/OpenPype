@@ -1,4 +1,5 @@
 from .input_entities import InputEntity
+from .exceptions import EntitySchemaError
 from .lib import (
     NOT_SET,
     STRING_TYPE
@@ -35,24 +36,29 @@ class EnumEntity(InputEntity):
         self.placeholder = self.schema_data.get("placeholder")
 
     def schema_validations(self):
+        if not isinstance(self.enum_items, list):
+            raise EntitySchemaError(
+                self, "Enum item must have defined `enum_items` as list."
+            )
+
         enum_keys = set()
         for item in self.enum_items:
             key = tuple(item.keys())[0]
             if key in enum_keys:
-                raise ValueError(
-                    "{}: Key \"{}\" is more than once in enum items.".format(
-                        self.path, key
-                    )
+                reason = "Key \"{}\" is more than once in enum items.".format(
+                    key
                 )
-            if not isinstance(key, STRING_TYPE):
-                raise ValueError(
-                    "{}: Key \"{}\" has invalid type {}, expected {}.".format(
-                        self.path, key, type(key), STRING_TYPE
-                    )
-                )
+                raise EntitySchemaError(self, reason)
+
             enum_keys.add(key)
 
-        super(EnumEntity, self).schema_validations()
+            if not isinstance(key, STRING_TYPE):
+                reason = "Key \"{}\" has invalid type {}, expected {}.".format(
+                    key, type(key), STRING_TYPE
+                )
+                raise EntitySchemaError(self, reason)
+
+        super(BaseEnumEntity, self).schema_validations()
 
     def _convert_to_valid_type(self, value):
         if self.multiselection:

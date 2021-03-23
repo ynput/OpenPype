@@ -38,6 +38,23 @@ class SchemaError(Exception):
     pass
 
 
+class EntitySchemaError(SchemaError):
+    def __init__(self, entity, reason):
+        self.entity = entity
+        self.reason = reason
+        msg = "{} {} - {}".format(entity.__class__, entity.path, reason)
+        super(EntitySchemaError, self).__init__(msg)
+
+
+class SchemeGroupHierarchyBug(EntitySchemaError):
+    def __init__(self, entity):
+        reason = (
+            "Items with attribute \"is_group\" can't have another item with"
+            " \"is_group\" attribute as child."
+        )
+        super(SchemeGroupHierarchyBug, self).__init__(entity, reason)
+
+
 class SchemaMissingFileInfo(SchemaError):
     def __init__(self, invalid):
         full_path_keys = []
@@ -51,22 +68,13 @@ class SchemaMissingFileInfo(SchemaError):
         super(SchemaMissingFileInfo, self).__init__(msg)
 
 
-class SchemeGroupHierarchyBug(SchemaError):
-    def __init__(self, entity_path):
-        msg = (
-            "Items with attribute \"is_group\" can't have another item with"
-            " \"is_group\" attribute as child. Error happened in entity: {}"
-        ).format(entity_path)
-        super(SchemeGroupHierarchyBug, self).__init__(msg)
-
-
 class SchemaDuplicatedKeys(SchemaError):
-    def __init__(self, entity_path, key):
+    def __init__(self, entity, key):
         msg = (
             "Schema item contain duplicated key \"{}\" in"
-            " one hierarchy level. {}"
-        ).format(key, entity_path)
-        super(SchemaDuplicatedKeys, self).__init__(msg)
+            " one hierarchy level."
+        ).format(key)
+        super(SchemaDuplicatedKeys, self).__init__(entity, msg)
 
 
 class SchemaDuplicatedEnvGroupKeys(SchemaError):
