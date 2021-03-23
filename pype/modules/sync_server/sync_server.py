@@ -177,7 +177,7 @@ class SyncServerThread(threading.Thread):
                 import time
                 start_time = None
                 self.module.set_sync_project_settings()  # clean cache
-                for collection, preset in self.module.get_sync_project_settings().\
+                for collection, preset in self.module.sync_project_settings.\
                         items():
                     start_time = time.time()
                     local_site, remote_site = self._working_sites(collection)

@@ -102,7 +102,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         # some parts of code need to run sequentially, not in async
         self.lock = None
         # settings for all enabled projects for sync
-        self.sync_project_settings = None
+        self._sync_project_settings = None
         self.sync_server_thread = None  # asyncio requires new thread
 
         self.action_show_widget = None
@@ -111,8 +111,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         self._paused_representations = set()
         self._anatomies = {}
 
-        self.connection = AvalonMongoDB()
-        self.set_sync_project_settings()
+        self._connection = None
 
     """ Start of Public API """
     def add_site(self, collection, representation_id, site_name=None):
@@ -242,8 +241,8 @@ class SyncServerModule(PypeModule, ITrayModule):
         condition = representation_id in self._paused_representations
         if check_parents and project_name:
             condition = condition or \
-                        self.is_project_paused(project_name) or \
-                        self.is_paused()
+                self.is_project_paused(project_name) or \
+                self.is_paused()
         return condition
 
     def pause_project(self, project_name):
@@ -514,6 +513,20 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
         return self._anatomies.get('project_name') or Anatomy(project_name)
 
+    @property
+    def connection(self):
+        if self._connection is None:
+            self._connection = AvalonMongoDB()
+
+        return self._connection
+
+    @property
+    def sync_project_settings(self):
+        if self._sync_project_settings is None:
+            self.set_sync_project_settings()
+
+        return self._sync_project_settings
+
     def set_sync_project_settings(self):
         """
             Set sync_project_settings for all projects (caching)
@@ -521,9 +534,6 @@ class SyncServerModule(PypeModule, ITrayModule):
             For performance
         """
         sync_project_settings = {}
-        if not self.connection:
-            self.connection = AvalonMongoDB()
-            self.connection.install()
 
         for collection in self.connection.database.collection_names(False):
             sync_settings = self._parse_sync_settings_from_settings(
@@ -536,24 +546,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         if not sync_project_settings:
             log.info("No enabled and configured projects for sync.")
 
-        self.sync_project_settings = sync_project_settings
-
-    def get_sync_project_settings(self, refresh=False):
-        """
-            Collects all projects which have enabled syncing and their settings
-        Args:
-            refresh (bool): refresh presets from settings - used when user
-                changes site in Local Settings or any time up-to-date values
-                are necessary
-        Returns:
-            (dict): of settings, keys are project names
-            {'projectA':{enabled: True, sites:{}...}
-        """
-        # presets set already, do not call again and again
-        if refresh or not self.sync_project_settings:
-            self.set_sync_project_settings()
-
-        return self.sync_project_settings
+        self._sync_project_settings = sync_project_settings
 
     def get_sync_project_setting(self, project_name):
         """ Handles pulling sync_server's settings for enabled 'project_name'
@@ -1254,4 +1247,3 @@ class SyncServerModule(PypeModule, ITrayModule):
             settings ('presets')
         """
         return presets[project_name]['sites'][site_name]['root']
-
