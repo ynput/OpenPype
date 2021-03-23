@@ -221,7 +221,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
     label = "Collect Hierarchy Context"
     order = pyblish.api.CollectorOrder + 0.103
-    families = ["clip"]
+    exclude_families = ["frame"]
 
     def update_dict(self, ex_dict, new_dict):
         for key in ex_dict:
@@ -242,7 +242,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
         temp_context = {}
         for instance in instances:
-            if instance.data["family"] not in self.families:
+            if instance.data["family"] in self.exclude_families:
                 continue
 
             if 'projectfile' in instance.data.get('family', ''):
