@@ -309,8 +309,24 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             dialog = QtWidgets.QMessageBox(self)
             msg = "Unexpected error happened!\n\nError: {}".format(str(exc))
             dialog.setText(msg)
-            dialog.setDetailedText(formatted_traceback)
+            dialog.setDetailedText("\n".join(formatted_traceback))
             dialog.setIcon(QtWidgets.QMessageBox.Critical)
+
+            line_widths = set()
+            metricts = dialog.fontMetrics()
+            for line in formatted_traceback:
+                line_widths.add(metricts.width(line))
+            max_width = max(line_widths)
+
+            spacer = QtWidgets.QSpacerItem(
+                max_width, 0,
+                QtWidgets.QSizePolicy.Minimum,
+                QtWidgets.QSizePolicy.Expanding
+            )
+            layout = dialog.layout()
+            layout.addItem(
+                spacer, layout.rowCount(), 0, 1, layout.columnCount()
+            )
 
         self.set_state(CategoryState.Idle)
 
@@ -345,8 +361,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         msg_box = QtWidgets.QMessageBox(
             QtWidgets.QMessageBox.Warning,
             "Invalid input",
-            "There is invalid value in one of inputs."
-            " Please lead red color and fix them.",
+            (
+                "There is invalid value in one of inputs."
+                " Please lead red color and fix them."
+            ),
             parent=self
         )
         msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
