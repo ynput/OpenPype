@@ -343,24 +343,11 @@ class MongoSettingsHandler(SettingsHandler):
         # Get mongo connection
         from pype.lib import PypeMongoConnection
         from avalon.api import AvalonMongoDB
-        from .entities import ProjectSettings
 
         settings_collection = PypeMongoConnection.get_mongo_client()
 
-        # Prepare anatomy keys and attribute keys
-        # NOTE this is cached on first import
-        # - keys may change only on schema change which should not happen
-        #   during production
-        project_settings_root = ProjectSettings(
-            reset=False, change_state=False
-        )
-        anatomy_entity = project_settings_root["project_anatomy"]
-        anatomy_keys = set(anatomy_entity.keys())
-        anatomy_keys.remove("attributes")
-        attribute_keys = set(anatomy_entity["attributes"].keys())
-
-        self.anatomy_keys = anatomy_keys
-        self.attribute_keys = attribute_keys
+        self._anatomy_keys = None
+        self._attribute_keys = None
         # TODO prepare version of pype
         # - pype version should define how are settings saved and loaded
 
@@ -379,6 +366,35 @@ class MongoSettingsHandler(SettingsHandler):
         self.system_settings_cache = CacheValues()
         self.project_settings_cache = collections.defaultdict(CacheValues)
         self.project_anatomy_cache = collections.defaultdict(CacheValues)
+
+    def _prepare_project_settings_keys(self):
+        from .entities import ProjectSettings
+        # Prepare anatomy keys and attribute keys
+        # NOTE this is cached on first import
+        # - keys may change only on schema change which should not happen
+        #   during production
+        project_settings_root = ProjectSettings(
+            reset=False, change_state=False
+        )
+        anatomy_entity = project_settings_root["project_anatomy"]
+        anatomy_keys = set(anatomy_entity.keys())
+        anatomy_keys.remove("attributes")
+        attribute_keys = set(anatomy_entity["attributes"].keys())
+
+        self._anatomy_keys = anatomy_keys
+        self._attribute_keys = attribute_keys
+
+    @property
+    def anatomy_keys(self):
+        if self._anatomy_keys:
+            self._prepare_project_settings_keys()
+        return self._anatomy_keys
+
+    @property
+    def attribute_keys(self):
+        if self._attribute_keys:
+            self._prepare_project_settings_keys()
+        return self._attribute_keys
 
     def save_studio_settings(self, data):
         """Save studio overrides of system settings.
