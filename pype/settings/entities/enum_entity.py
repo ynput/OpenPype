@@ -98,7 +98,7 @@ class EnumEntity(BaseEnumEntity):
             raise EntitySchemaError(
                 self, "Enum item must have defined `enum_items`"
             )
-        super().schema_validations()
+        super(EnumEntity, self).schema_validations()
 
 
 class AppsEnumEntity(BaseEnumEntity):
