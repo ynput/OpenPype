@@ -8,8 +8,8 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
-            "key": "IntegrateMasterVersion",
-            "label": "IntegrateMasterVersion",
+            "key": "IntegrateHeroVersion",
+            "label": "IntegrateHeroVersion",
             "is_group": true,
             "children": [
                 {

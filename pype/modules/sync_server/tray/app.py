@@ -784,7 +784,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             if context.get("version"):
                 version = "v{:0>3d}".format(context.get("version"))
             else:
-                version = "master"
+                version = "hero"
 
             item = self.SyncRepresentation(
                 repre.get("_id"),

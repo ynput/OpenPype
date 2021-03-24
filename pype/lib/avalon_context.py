@@ -40,7 +40,7 @@ def is_latest(representation):
     """
 
     version = avalon.io.find_one({"_id": representation['parent']})
-    if version["type"] == "master_version":
+    if version["type"] == "hero_version":
         return True
 
     # Get highest version under the parent

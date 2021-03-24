@@ -113,8 +113,8 @@
         },
         {
             "type": "dict",
-            "key": "master",
-            "label": "Master",
+            "key": "hero",
+            "label": "Hero",
             "children": [
                 {
                     "type": "text",
