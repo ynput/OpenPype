@@ -386,13 +386,13 @@ class MongoSettingsHandler(SettingsHandler):
 
     @property
     def anatomy_keys(self):
-        if self._anatomy_keys:
+        if self._anatomy_keys is None:
             self._prepare_project_settings_keys()
         return self._anatomy_keys
 
     @property
     def attribute_keys(self):
-        if self._attribute_keys:
+        if self._attribute_keys is None:
             self._prepare_project_settings_keys()
         return self._attribute_keys
 
