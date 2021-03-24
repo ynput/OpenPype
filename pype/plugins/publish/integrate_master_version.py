@@ -10,8 +10,8 @@ from avalon import api, io, schema
 from avalon.vendor import filelink
 
 
-class IntegrateMasterVersion(pyblish.api.InstancePlugin):
-    label = "Integrate Master Version"
+class IntegrateHeroVersion(pyblish.api.InstancePlugin):
+    label = "Integrate Hero Version"
     # Must happen after IntegrateNew
     order = pyblish.api.IntegratorOrder + 0.1
 
@@ -39,7 +39,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.log.debug(
-            "--- Integration of Master version for subset `{}` begins.".format(
+            "--- Integration of Hero version for subset `{}` begins.".format(
                 instance.data.get("subset", str(instance))
             )
         )
@@ -52,25 +52,25 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         project_name = api.Session["AVALON_PROJECT"]
 
-        # TODO raise error if master not set?
+        # TODO raise error if Hero not set?
         anatomy = instance.context.data["anatomy"]
-        if "master" not in anatomy.templates:
-            self.log.warning("!!! Anatomy does not have set `master` key!")
+        if "hero" not in anatomy.templates:
+            self.log.warning("!!! Anatomy does not have set `hero` key!")
             return
 
-        if "path" not in anatomy.templates["master"]:
+        if "path" not in anatomy.templates["hero"]:
             self.log.warning((
-                "!!! There is not set `path` template in `master` anatomy"
+                "!!! There is not set `path` template in `hero` anatomy"
                 " for project \"{}\"."
             ).format(project_name))
             return
 
-        master_template = anatomy.templates["master"]["path"]
-        self.log.debug("`Master` template check was successful. `{}`".format(
-            master_template
+        hero_template = anatomy.templates["hero"]["path"]
+        self.log.debug("`hero` template check was successful. `{}`".format(
+            hero_template
         ))
 
-        master_publish_dir = self.get_publish_dir(instance)
+        hero_publish_dir = self.get_publish_dir(instance)
 
         src_version_entity = instance.data.get("versionEntity")
         filtered_repre_ids = []
@@ -105,7 +105,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         if not src_version_entity:
             self.log.warning((
                 "!!! Can't find origin version in database."
-                " Skipping Master version publish."
+                " Skipping hero version publish."
             ))
             return
 
@@ -131,7 +131,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                     all_repre_file_paths.append(file_path)
 
         # TODO this is not best practice of getting resources for publish
-        # WARNING due to this we must remove all files from master publish dir
+        # WARNING due to this we must remove all files from hero publish dir
         instance_publish_dir = os.path.normpath(
             instance.data["publishDir"]
         )
@@ -145,13 +145,13 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 continue
 
             dst_filepath = file_path.replace(
-                instance_publish_dir, master_publish_dir
+                instance_publish_dir, hero_publish_dir
             )
             other_file_paths_mapping.append((file_path, dst_filepath))
 
         # Current version
         old_version, old_repres = (
-            self.current_master_ents(src_version_entity)
+            self.current_hero_ents(src_version_entity)
         )
 
         old_repres_by_name = {
@@ -163,30 +163,30 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         else:
             new_version_id = io.ObjectId()
 
-        new_master_version = {
+        new_hero_version = {
             "_id": new_version_id,
             "version_id": src_version_entity["_id"],
             "parent": src_version_entity["parent"],
-            "type": "master_version",
-            "schema": "pype:master_version-1.0"
+            "type": "hero_version",
+            "schema": "pype:hero_version-1.0"
         }
-        schema.validate(new_master_version)
+        schema.validate(new_hero_version)
 
         # Don't make changes in database until everything is O.K.
         bulk_writes = []
 
         if old_version:
-            self.log.debug("Replacing old master version.")
+            self.log.debug("Replacing old hero version.")
             bulk_writes.append(
                 ReplaceOne(
-                    {"_id": new_master_version["_id"]},
-                    new_master_version
+                    {"_id": new_hero_version["_id"]},
+                    new_hero_version
                 )
             )
         else:
-            self.log.debug("Creating first master version.")
+            self.log.debug("Creating first hero version.")
             bulk_writes.append(
-                InsertOne(new_master_version)
+                InsertOne(new_hero_version)
             )
 
         # Separate old representations into `to replace` and `to delete`
@@ -213,21 +213,21 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             repre_name_low = repre["name"].lower()
             archived_repres_by_name[repre_name_low] = repre
 
-        backup_master_publish_dir = None
-        if os.path.exists(master_publish_dir):
-            backup_master_publish_dir = master_publish_dir + ".BACKUP"
+        backup_hero_publish_dir = None
+        if os.path.exists(hero_publish_dir):
+            backup_hero_publish_dir = hero_publish_dir + ".BACKUP"
             max_idx = 10
             idx = 0
-            _backup_master_publish_dir = backup_master_publish_dir
-            while os.path.exists(_backup_master_publish_dir):
+            _backup_hero_publish_dir = backup_hero_publish_dir
+            while os.path.exists(_backup_hero_publish_dir):
                 self.log.debug((
                     "Backup folder already exists."
                     " Trying to remove \"{}\""
-                ).format(_backup_master_publish_dir))
+                ).format(_backup_hero_publish_dir))
 
                 try:
-                    shutil.rmtree(_backup_master_publish_dir)
-                    backup_master_publish_dir = _backup_master_publish_dir
+                    shutil.rmtree(_backup_hero_publish_dir)
+                    backup_hero_publish_dir = _backup_hero_publish_dir
                     break
                 except Exception:
                     self.log.info((
@@ -235,11 +235,11 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                         " Trying to add index to folder name"
                     ))
 
-                _backup_master_publish_dir = (
-                    backup_master_publish_dir + str(idx)
+                _backup_hero_publish_dir = (
+                    backup_hero_publish_dir + str(idx)
                 )
-                if not os.path.exists(_backup_master_publish_dir):
-                    backup_master_publish_dir = _backup_master_publish_dir
+                if not os.path.exists(_backup_hero_publish_dir):
+                    backup_hero_publish_dir = _backup_hero_publish_dir
                     break
 
                 if idx > max_idx:
@@ -251,14 +251,14 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 idx += 1
 
             self.log.debug("Backup folder path is \"{}\"".format(
-                backup_master_publish_dir
+                backup_hero_publish_dir
             ))
             try:
-                os.rename(master_publish_dir, backup_master_publish_dir)
+                os.rename(hero_publish_dir, backup_hero_publish_dir)
             except PermissionError:
                 raise AssertionError((
-                    "Could not create master version because it is not"
-                    " possible to replace current master files."
+                    "Could not create hero version because it is not"
+                    " possible to replace current hero files."
                 ))
         try:
             src_to_dst_file_paths = []
@@ -275,11 +275,11 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
                 # Get filled path to repre context
                 anatomy_filled = anatomy.format(anatomy_data)
-                template_filled = anatomy_filled["master"]["path"]
+                template_filled = anatomy_filled["hero"]["path"]
 
                 repre_data = {
                     "path": str(template_filled),
-                    "template": master_template
+                    "template": hero_template
                 }
                 repre_context = template_filled.used_values
                 for key in self.db_representation_context_keys:
@@ -293,7 +293,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
                 # Prepare new repre
                 repre = copy.deepcopy(repre_info["representation"])
-                repre["parent"] = new_master_version["_id"]
+                repre["parent"] = new_hero_version["_id"]
                 repre["context"] = repre_context
                 repre["data"] = repre_data
                 repre.pop("_id", None)
@@ -319,7 +319,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                     frame_splitter = "_-_FRAME_SPLIT_-_"
                     anatomy_data["frame"] = frame_splitter
                     _anatomy_filled = anatomy.format(anatomy_data)
-                    _template_filled = _anatomy_filled["master"]["path"]
+                    _template_filled = _anatomy_filled["hero"]["path"]
                     head, tail = _template_filled.split(frame_splitter)
                     padding = int(
                         anatomy.templates["render"].get(
@@ -338,7 +338,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                             (src_file, dst_file)
                         )
 
-                # replace original file name with master name in repre doc
+                # replace original file name with hero name in repre doc
                 for index in range(len(repre.get("files"))):
                     file = repre.get("files")[index]
                     file_name = os.path.basename(file.get('path'))
@@ -431,27 +431,27 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                     bulk_writes
                 )
 
-            # Remove backuped previous master
+            # Remove backuped previous hero
             if (
-                backup_master_publish_dir is not None and
-                os.path.exists(backup_master_publish_dir)
+                backup_hero_publish_dir is not None and
+                os.path.exists(backup_hero_publish_dir)
             ):
-                shutil.rmtree(backup_master_publish_dir)
+                shutil.rmtree(backup_hero_publish_dir)
 
         except Exception:
             if (
-                backup_master_publish_dir is not None and
-                os.path.exists(backup_master_publish_dir)
+                backup_hero_publish_dir is not None and
+                os.path.exists(backup_hero_publish_dir)
             ):
-                os.rename(backup_master_publish_dir, master_publish_dir)
+                os.rename(backup_hero_publish_dir, hero_publish_dir)
             self.log.error((
-                "!!! Creating of Master version failed."
-                " Previous master version maybe lost some data!"
+                "!!! Creating of hero version failed."
+                " Previous hero version maybe lost some data!"
             ))
             raise
 
         self.log.debug((
-            "--- Master version integration for subset `{}`"
+            "--- hero version integration for subset `{}`"
             " seems to be successful."
         ).format(
             instance.data.get("subset", str(instance))
@@ -469,9 +469,9 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         anatomy = instance.context.data["anatomy"]
         template_data = copy.deepcopy(instance.data["anatomyData"])
 
-        if "folder" in anatomy.templates["master"]:
+        if "folder" in anatomy.templates["hero"]:
             anatomy_filled = anatomy.format(template_data)
-            publish_folder = anatomy_filled["master"]["folder"]
+            publish_folder = anatomy_filled["hero"]["folder"]
         else:
             # This is for cases of Deprecated anatomy without `folder`
             # TODO remove when all clients have solved this issue
@@ -488,13 +488,13 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 " key underneath `publish` (in global of for project `{}`)."
             ).format(project_name))
 
-            file_path = anatomy_filled["master"]["path"]
+            file_path = anatomy_filled["hero"]["path"]
             # Directory
             publish_folder = os.path.dirname(file_path)
 
         publish_folder = os.path.normpath(publish_folder)
 
-        self.log.debug("Master publish dir: \"{}\"".format(publish_folder))
+        self.log.debug("hero publish dir: \"{}\"".format(publish_folder))
 
         return publish_folder
 
@@ -535,33 +535,33 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             if version:
                 return version
 
-    def current_master_ents(self, version):
-        master_version = io.find_one({
+    def current_hero_ents(self, version):
+        hero_version = io.find_one({
             "parent": version["parent"],
-            "type": "master_version"
+            "type": "hero_version"
         })
 
-        if not master_version:
+        if not hero_version:
             return (None, [])
 
-        master_repres = list(io.find({
-            "parent": master_version["_id"],
+        hero_repres = list(io.find({
+            "parent": hero_version["_id"],
             "type": "representation"
         }))
-        return (master_version, master_repres)
+        return (hero_version, hero_repres)
 
     def _update_path(self, anatomy, path, src_file, dst_file):
         """
-            Replaces source path with new master path
+            Replaces source path with new hero path
 
             'path' contains original path with version, must be replaced with
-            'master' path (with 'master' label and without version)
+            'hero' path (with 'hero' label and without version)
 
             Args:
                 anatomy (Anatomy) - to get rootless style of path
                 path (string) - path from DB
                 src_file (string) - original file path
-                dst_file (string) - master file path
+                dst_file (string) - hero file path
         """
         _, rootless = anatomy.find_root_template_from_path(
             dst_file
@@ -573,13 +573,13 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
     def _update_hash(self, hash, src_file_name, dst_file):
         """
-            Updates hash value with proper master name
+            Updates hash value with proper hero name
         """
         src_file_name = self._get_name_without_ext(
             src_file_name)
-        master_file_name = self._get_name_without_ext(
+        hero_file_name = self._get_name_without_ext(
             dst_file)
-        return hash.replace(src_file_name, master_file_name)
+        return hash.replace(src_file_name, hero_file_name)
 
     def _get_name_without_ext(self, value):
         file_name = os.path.basename(value)

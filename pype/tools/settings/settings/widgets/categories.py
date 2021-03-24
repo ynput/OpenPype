@@ -1,4 +1,6 @@
 import os
+import sys
+import traceback
 from enum import Enum
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -21,7 +23,8 @@ from pype.settings.entities import (
     RawJsonEntity,
 
     DefaultsNotDefined,
-    StudioDefaultsNotDefined
+    StudioDefaultsNotDefined,
+    SchemaError
 )
 
 from pype.settings.lib import get_system_settings
@@ -199,6 +202,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         save_btn.clicked.connect(self._save)
 
+        self.save_btn = save_btn
         self.scroll_widget = scroll_widget
         self.content_layout = content_layout
         self.content_widget = content_widget
@@ -280,18 +284,64 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self.content_layout.removeWidget(widget)
             widget.deleteLater()
 
-        self._create_root_entity()
+        dialog = None
+        try:
+            self._create_root_entity()
 
-        self.add_children_gui()
+            self.add_children_gui()
 
-        self.ignore_input_changes.set_ignore(True)
+            self.ignore_input_changes.set_ignore(True)
 
-        for input_field in self.input_fields:
-            input_field.set_entity_value()
+            for input_field in self.input_fields:
+                input_field.set_entity_value()
 
-        self.ignore_input_changes.set_ignore(False)
+            self.ignore_input_changes.set_ignore(False)
+
+        except SchemaError as exc:
+            dialog = QtWidgets.QMessageBox(self)
+            dialog.setWindowTitle("Schema error")
+            msg = "Implementation bug!\n\nError: {}".format(str(exc))
+            dialog.setText(msg)
+            dialog.setIcon(QtWidgets.QMessageBox.Warning)
+
+        except Exception as exc:
+            formatted_traceback = traceback.format_exception(*sys.exc_info())
+            dialog = QtWidgets.QMessageBox(self)
+            msg = "Unexpected error happened!\n\nError: {}".format(str(exc))
+            dialog.setText(msg)
+            dialog.setDetailedText("\n".join(formatted_traceback))
+            dialog.setIcon(QtWidgets.QMessageBox.Critical)
+
+            line_widths = set()
+            metricts = dialog.fontMetrics()
+            for line in formatted_traceback:
+                line_widths.add(metricts.width(line))
+            max_width = max(line_widths)
+
+            spacer = QtWidgets.QSpacerItem(
+                max_width, 0,
+                QtWidgets.QSizePolicy.Minimum,
+                QtWidgets.QSizePolicy.Expanding
+            )
+            layout = dialog.layout()
+            layout.addItem(
+                spacer, layout.rowCount(), 0, 1, layout.columnCount()
+            )
 
         self.set_state(CategoryState.Idle)
+
+        if dialog:
+            dialog.exec_()
+            self._on_reset_crash()
+        else:
+            self._on_reset_success()
+
+    def _on_reset_crash(self):
+        self.save_btn.setEnabled(False)
+
+    def _on_reset_success(self):
+        if not self.save_btn.isEnabled():
+            self.save_btn.setEnabled(True)
 
     def add_children_gui(self):
         for child_obj in self.entity.children:
@@ -311,8 +361,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         msg_box = QtWidgets.QMessageBox(
             QtWidgets.QMessageBox.Warning,
             "Invalid input",
-            "There is invalid value in one of inputs."
-            " Please lead red color and fix them.",
+            (
+                "There is invalid value in one of inputs."
+                " Please lead red color and fix them."
+            ),
             parent=self
         )
         msg_box.setStandardButtons(QtWidgets.QMessageBox.Ok)
@@ -403,6 +455,15 @@ class ProjectWidget(SettingsCategoryWidget):
         """
         if self is saved_tab_widget:
             return
+
+    def _on_reset_crash(self):
+        self.project_list_widget.setEnabled(False)
+        super(ProjectWidget, self)._on_reset_crash()
+
+    def _on_reset_success(self):
+        if not self.project_list_widget.isEnabled():
+            self.project_list_widget.setEnabled(True)
+        super(ProjectWidget, self)._on_reset_success()
 
     def _create_root_entity(self):
         self.entity = ProjectSettings(change_state=False)

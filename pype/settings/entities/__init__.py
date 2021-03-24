@@ -54,6 +54,7 @@ print(system_settings["general"]["studio_name"].value)
 """
 
 from .exceptions import (
+    SchemaError,
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
     InvalidValueType,
