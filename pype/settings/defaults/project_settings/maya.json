@@ -169,91 +169,113 @@
         },
         "ValidateColorSets": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateMeshHasOverlappingUVs": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateMeshArnoldAttributes": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateMeshShaderConnections": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateMeshSingleUVSet": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateMeshHasUVs": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateMeshLaminaFaces": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateMeshNonManifold": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateMeshNormalsUnlocked": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateMeshUVSetMap1": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateMeshVerticesHaveEdges": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateNoAnimation": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateNoNamespace": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateNoNullTransforms": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateNoUnknownNodes": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateNodeNoGhosting": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateShapeDefaultNames": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateShapeRenderStats": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateTransformZero": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateCameraAttributes": {
             "enabled": false,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateAssemblyName": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateAssRelativePaths": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ExtractPlayblast": {
             "capture_preset": {

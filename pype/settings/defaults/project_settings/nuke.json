@@ -30,19 +30,23 @@
         },
         "ValidateOutputResolution": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateGizmo": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateScript": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ValidateNukeWriteBoundingBox": {
             "enabled": true,
-            "optional": true
+            "optional": true,
+            "active": true
         },
         "ExtractThumbnail": {
             "enabled": true,
