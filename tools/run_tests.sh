@@ -124,5 +124,5 @@ main () {
   PYTHONPATH=$original_pythonpath
 }
 
-
+main || return 1
 
