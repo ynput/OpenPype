@@ -208,17 +208,24 @@
                         {
                             "type": "number",
                             "key": "font_size",
-                            "label": "Font size"
+                            "label": "Font size",
+                            "minimum": 0
                         },
                         {
                             "type": "number",
                             "key": "opacity",
-                            "label": "Font opacity"
+                            "label": "Font opacity",
+                            "decimal": 2,
+                            "maximum": 1,
+                            "minimum": 0
                         },
                         {
                             "type": "number",
                             "key": "bg_opacity",
-                            "label": "Background opacity"
+                            "label": "Background opacity",
+                            "decimal": 2,
+                            "maximum": 1,
+                            "minimum": 0
                         },
                         {
                             "type": "number",
