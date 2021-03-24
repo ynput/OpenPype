@@ -1,3 +1,4 @@
+import re
 import copy
 from abc import abstractmethod
 
@@ -320,6 +321,8 @@ class InputEntity(EndpointEntity):
 
 class NumberEntity(InputEntity):
     schema_types = ["number"]
+    float_number_regex = re.compile(r"^\d+\.\d+$")
+    int_number_regex = re.compile(r"^\d+$")
 
     def _item_initalization(self):
         self.minimum = self.schema_data.get("minimum", -99999)
@@ -334,15 +337,32 @@ class NumberEntity(InputEntity):
         self.value_on_not_set = 0
 
     def _convert_to_valid_type(self, value):
+        if isinstance(value, str):
+            new_value = None
+            if self.float_number_regex.match(value):
+                new_value = float(value)
+            elif self.int_number_regex.match(value):
+                new_value = int(value)
+
+            if new_value is not None:
+                self.log.info("{} - Converted str {} to {} {}".format(
+                    self.path, value, type(new_value).__name__, new_value
+                ))
+                value = new_value
+
         if self.decimal:
+            if isinstance(value, float):
+                return value
             if isinstance(value, int):
                 return float(value)
         else:
+            if isinstance(value, int):
+                return value
             if isinstance(value, float):
                 new_value = int(value)
                 if new_value != value:
-                    self.log.info("Converted float {} to int {}".format(
-                        value, new_value
+                    self.log.info("{} - Converted float {} to int {}".format(
+                        self.path, value, new_value
                     ))
                 return new_value
         return NOT_SET

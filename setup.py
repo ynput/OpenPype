@@ -62,7 +62,12 @@ include_files = [
 ]
 
 if sys.platform == "win32":
-    install_requires.append("win32ctypes")
+    install_requires.extend([
+        # `pywin32` packages
+        "win32ctypes",
+        "win32comext",
+        "pythoncom"
+    ])
 
 build_options = dict(
     packages=install_requires,
