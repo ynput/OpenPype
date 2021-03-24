@@ -15,7 +15,7 @@ from pype.settings.entities import (
 
     NumberEntity,
     BoolEntity,
-    EnumEntity,
+    BaseEnumEntity,
     TextEntity,
     PathInput,
     RawJsonEntity,
@@ -112,7 +112,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         elif isinstance(entity, RawJsonEntity):
             return RawJsonWidget(*args)
 
-        elif isinstance(entity, EnumEntity):
+        elif isinstance(entity, BaseEnumEntity):
             return EnumeratorWidget(*args)
 
         elif isinstance(entity, PathEntity):

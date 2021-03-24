@@ -9,7 +9,8 @@ from .lib import (
 )
 from .exceptions import (
     DefaultsNotDefined,
-    StudioDefaultsNotDefined
+    StudioDefaultsNotDefined,
+    EntitySchemaError
 )
 
 from pype.settings.constants import (
@@ -39,11 +40,10 @@ class EndpointEntity(ItemEntity):
         """Validation of entity schema and schema hierarchy."""
         # Default value when even defaults are not filled must be set
         if self.value_on_not_set is NOT_SET:
-            raise ValueError(
-                "Attribute `value_on_not_set` is not filled. {}".format(
-                    self.__class__.__name__
-                )
+            reason = "Attribute `value_on_not_set` is not filled. {}".format(
+                self.__class__.__name__
             )
+            raise EntitySchemaError(self, reason)
 
         super(EndpointEntity, self).schema_validations()
 
@@ -105,9 +105,7 @@ class InputEntity(EndpointEntity):
     def schema_validations(self):
         # Input entity must have file parent.
         if not self.file_item:
-            raise ValueError(
-                "{}: Missing parent file entity.".format(self.path)
-            )
+            raise EntitySchemaError(self, "Missing parent file entity.")
 
         super(InputEntity, self).schema_validations()
 
@@ -368,6 +366,12 @@ class TextEntity(InputEntity):
         # GUI attributes
         self.multiline = self.schema_data.get("multiline", False)
         self.placeholder_text = self.schema_data.get("placeholder")
+
+    def _convert_to_valid_type(self, value):
+        # Allow numbers converted to string
+        if isinstance(value, (int, float)):
+            return str(value)
+        return NOT_SET
 
 
 class PathInput(InputEntity):
