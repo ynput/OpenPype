@@ -10,7 +10,8 @@ from .lib import (
 
 from .exceptions import (
     InvalidValueType,
-    SchemeGroupHierarchyBug
+    SchemeGroupHierarchyBug,
+    EntitySchemaError
 )
 
 from pype.lib import PypeLogger
@@ -215,49 +216,48 @@ class BaseItemEntity(BaseEntity):
         """
         # Entity must have defined valid value types.
         if self.valid_value_types is NOT_SET:
-            raise ValueError("Attribute `valid_value_types` is not filled.")
+            raise EntitySchemaError(
+                self, "Attribute `valid_value_types` is not filled."
+            )
 
         # Check if entity has defined key when is required.
         if self.require_key and not self.key:
-            error_msg = "{}: Missing \"key\" in schema data. {}".format(
-                self.path, str(self.schema_data).replace("'", '"')
+            error_msg = "Missing \"key\" in schema data. {}".format(
+                str(self.schema_data).replace("'", '"')
             )
-            raise KeyError(error_msg)
+            raise EntitySchemaError(self, error_msg)
 
         # Group entity must have defined label. (UI specific)
         # QUESTION this should not be required?
         if not self.label and self.is_group:
-            raise ValueError(
-                "{}: Item is set as `is_group` but has empty `label`.".format(
-                    self.path
-                )
+            raise EntitySchemaError(
+                self, "Item is set as `is_group` but has empty `label`."
             )
 
         # Group item can be only once in on hierarchy branch.
         if self.is_group and self.group_item:
-            raise SchemeGroupHierarchyBug(self.path)
+            raise SchemeGroupHierarchyBug(self)
 
         # Validate that env group entities will be stored into file.
         #   - env group entities must store metadata which is not possible if
         #       metadata would be outside of file
         if not self.file_item and self.is_env_group:
-            raise ValueError((
-                "{}: Environment item is not inside file"
+            reason = (
+                "Environment item is not inside file"
                 " item so can't store metadata for defaults."
-            ).format(self.path))
+            )
+            raise EntitySchemaError(self, reason)
 
         # Dynamic items must not have defined labels. (UI specific)
         if self.label and self.is_dynamic_item:
-            raise ValueError((
-                "{}: Item has set label but is used as dynamic item."
-            ).format(self.path))
+            raise EntitySchemaError(
+                self, "Item has set label but is used as dynamic item."
+            )
 
         # Dynamic items or items in dynamic item must not have set `is_group`
         if self.is_group and (self.is_dynamic_item or self.is_in_dynamic_item):
-            raise ValueError(
-                "{} Dynamic entity has set `is_group` to true.".format(
-                    self.path
-                )
+            raise EntitySchemaError(
+                self, "Dynamic entity has set `is_group` to true."
             )
 
     @abstractmethod
@@ -324,6 +324,36 @@ class BaseItemEntity(BaseEntity):
 
         raise InvalidValueType(self.valid_value_types, type(value), self.path)
 
+    def _convert_to_valid_type(self, value):
+        """Private method of entity to convert value.
+
+        NOTE: Method is not abstract as more entities won't have implemented
+            logic inside.
+
+        Must return NOT_SET if can't convert the value.
+        """
+        return NOT_SET
+
+    def convert_to_valid_type(self, value):
+        """Check value type with possibility of conversion to valid.
+
+        If entered value has right type than is returned as it is. otherwise
+        is used privete method of entity to try convert.
+
+        Raises:
+            InvalidValueType: If value's type is not valid by entity's
+                definition and can't be converted by entity logic.
+        """
+        #
+        if self.is_value_valid_type(value):
+            return value
+
+        new_value = self._convert_to_valid_type(value)
+        if new_value is not NOT_SET and self.is_value_valid_type(new_value):
+            return new_value
+
+        raise InvalidValueType(self.valid_value_types, type(value), self.path)
+
     # TODO convert to private method
     def _check_update_value(self, value, value_source):
         """Validation of value on update methods.
@@ -345,9 +375,13 @@ class BaseItemEntity(BaseEntity):
         if value is NOT_SET:
             return value
 
-        # Validate value type and return value itself if is valid.
-        if self.is_value_valid_type(value):
-            return value
+        try:
+            new_value = self.convert_to_valid_type(value)
+        except InvalidValueType:
+            new_value = NOT_SET
+
+        if new_value is not NOT_SET:
+            return new_value
 
         # Warning log about invalid value type.
         self.log.warning(
@@ -784,10 +818,11 @@ class ItemEntity(BaseItemEntity):
 
     def schema_validations(self):
         if not self.label and self.use_label_wrap:
-            raise ValueError((
-                "{} Entity has set `use_label_wrap` to true but"
+            reason = (
+                "Entity has set `use_label_wrap` to true but"
                 " does not have set `label`."
-            ).format(self.path))
+            )
+            raise EntitySchemaError(self, reason)
 
         super(ItemEntity, self).schema_validations()
 

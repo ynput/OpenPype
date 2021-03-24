@@ -56,7 +56,7 @@ class AppVariantWidget(QtWidgets.QWidget):
 
         for item in studio_executables:
             path_widget = QtWidgets.QLineEdit(content_widget)
-            path_widget.setText(item.value[0])
+            path_widget.setText(item.value)
             path_widget.setEnabled(False)
             content_layout.addWidget(path_widget)
 

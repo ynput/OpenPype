@@ -96,6 +96,7 @@ from .input_entities import (
 )
 
 from .enum_entity import (
+    BaseEnumEntity,
     EnumEntity,
     AppsEnumEntity,
     ToolsEnumEntity
@@ -105,11 +106,7 @@ from .list_entity import ListEntity
 from .dict_immutable_keys_entity import DictImmutableKeysEntity
 from .dict_mutable_keys_entity import DictMutableKeysEntity
 
-from .anatomy_entities import (
-    AnatomyEntity,
-    AnatomyRootsEntity,
-    AnatomyTemplatesEntity
-)
+from .anatomy_entities import AnatomyEntity
 
 
 __all__ = (
@@ -145,6 +142,7 @@ __all__ = (
     "PathInput",
     "RawJsonEntity",
 
+    "BaseEnumEntity",
     "EnumEntity",
     "AppsEnumEntity",
     "ToolsEnumEntity",
@@ -155,7 +153,5 @@ __all__ = (
 
     "DictMutableKeysEntity",
 
-    "AnatomyEntity",
-    "AnatomyRootsEntity",
-    "AnatomyTemplatesEntity"
+    "AnatomyEntity"
 )

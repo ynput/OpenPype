@@ -70,18 +70,140 @@ def create_local_settings_handler():
     return MongoLocalSettingsHandler()
 
 
+def calculate_changes(old_value, new_value):
+    changes = {}
+    for key, value in new_value.items():
+        if key not in old_value:
+            changes[key] = value
+            continue
+
+        _value = old_value[key]
+        if isinstance(value, dict) and isinstance(_value, dict):
+            _changes = calculate_changes(_value, value)
+            if _changes:
+                changes[key] = _changes
+            continue
+
+        if _value != value:
+            changes[key] = value
+    return changes
+
+
 @require_handler
 def save_studio_settings(data):
+    """Save studio overrides of system settings.
+
+    Triggers callbacks on modules that want to know about system settings
+    changes.
+
+    Callbacks are triggered on all modules. They must check if their enabled
+    value has changed.
+
+    For saving of data cares registered Settings handler.
+
+    Args:
+        data(dict): Overrides data with metadata defying studio overrides.
+    """
+    # Notify Pype modules
+    from pype.modules import ModulesManager, ISettingsChangeListener
+
+    old_data = get_system_settings()
+    default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
+    new_data = apply_overrides(default_values, copy.deepcopy(data))
+    clear_metadata_from_settings(new_data)
+
+    changes = calculate_changes(old_data, new_data)
+    modules_manager = ModulesManager(_system_settings=new_data)
+    for module in modules_manager.get_enabled_modules():
+        if isinstance(module, ISettingsChangeListener):
+            module.on_system_settings_save(old_data, new_data, changes)
+
     return _SETTINGS_HANDLER.save_studio_settings(data)
 
 
 @require_handler
 def save_project_settings(project_name, overrides):
+    """Save studio overrides of project settings.
+
+    Old value, new value and changes are passed to enabled modules that want to
+    know about settings changes.
+
+    For saving of data cares registered Settings handler.
+
+    Args:
+        project_name (str): Project name for which overrides are passed.
+            Default project's value is None.
+        overrides(dict): Overrides data with metadata defying studio overrides.
+    """
+    # Notify Pype modules
+    from pype.modules import ModulesManager, ISettingsChangeListener
+
+    default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
+    if project_name:
+        old_data = get_project_settings(project_name)
+
+        studio_overrides = get_studio_project_settings_overrides()
+        studio_values = apply_overrides(default_values, studio_overrides)
+        clear_metadata_from_settings(studio_values)
+        new_data = apply_overrides(studio_values, copy.deepcopy(overrides))
+
+    else:
+        old_data = get_default_project_settings(exclude_locals=True)
+        new_data = apply_overrides(default_values, copy.deepcopy(overrides))
+
+    clear_metadata_from_settings(new_data)
+
+    changes = calculate_changes(old_data, new_data)
+    modules_manager = ModulesManager()
+    for module in modules_manager.get_enabled_modules():
+        if isinstance(module, ISettingsChangeListener):
+            module.on_project_settings_save(
+                old_data, new_data, project_name, changes
+            )
+
     return _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
 
 
 @require_handler
 def save_project_anatomy(project_name, anatomy_data):
+    """Save studio overrides of project anatomy.
+
+    Old value, new value and changes are passed to enabled modules that want to
+    know about settings changes.
+
+    For saving of data cares registered Settings handler.
+
+    Args:
+        project_name (str): Project name for which overrides are passed.
+            Default project's value is None.
+        overrides(dict): Overrides data with metadata defying studio overrides.
+    """
+    # Notify Pype modules
+    from pype.modules import ModulesManager, ISettingsChangeListener
+
+    default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
+    if project_name:
+        old_data = get_anatomy_settings(project_name)
+
+        studio_overrides = get_studio_project_settings_overrides()
+        studio_values = apply_overrides(default_values, studio_overrides)
+        clear_metadata_from_settings(studio_values)
+        new_data = apply_overrides(studio_values, copy.deepcopy(anatomy_data))
+
+    else:
+        old_data = get_default_anatomy_settings(exclude_locals=True)
+        new_data = apply_overrides(default_values, copy.deepcopy(anatomy_data))
+
+    clear_metadata_from_settings(new_data)
+
+    changes = calculate_changes(old_data, new_data)
+    modules_manager = ModulesManager()
+    for module in modules_manager.get_enabled_modules():
+        if isinstance(module, ISettingsChangeListener):
+            module.on_project_anatomy_save(
+                old_data, new_data, changes, project_name
+            )
+
     return _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
 
 
@@ -416,7 +538,10 @@ def apply_local_settings_on_anatomy_settings(
 
     # Get active site from settings
     if site_name is None:
-        project_settings = get_project_settings(project_name)
+        if project_name:
+            project_settings = get_project_settings(project_name)
+        else:
+            project_settings = get_default_project_settings()
         site_name = (
             project_settings["global"]["sync_server"]["config"]["active_site"]
         )
@@ -534,34 +659,36 @@ def get_system_settings(clear_metadata=True):
     return result
 
 
-def get_default_project_settings(clear_metadata=True):
+def get_default_project_settings(clear_metadata=True, exclude_locals=False):
     """Project settings with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
     studio_values = get_studio_project_settings_overrides()
     result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
-        local_settings = get_local_settings()
-        apply_local_settings_on_project_settings(result, local_settings, None)
+        if not exclude_locals:
+            local_settings = get_local_settings()
+            apply_local_settings_on_project_settings(
+                result, local_settings, None
+            )
     return result
 
 
-def get_default_anatomy_settings(clear_metadata=True):
+def get_default_anatomy_settings(clear_metadata=True, exclude_locals=False):
     """Project anatomy data with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     studio_values = get_studio_project_anatomy_overrides()
 
     # TODO uncomment and remove hotfix result when overrides of anatomy
     #   are stored correctly.
-    # result = apply_overrides(default_values, studio_values)
-    result = copy.deepcopy(default_values)
-    if studio_values:
-        for key, value in studio_values.items():
-            result[key] = value
+    result = apply_overrides(default_values, studio_values)
     if clear_metadata:
         clear_metadata_from_settings(result)
-        local_settings = get_local_settings()
-        apply_local_settings_on_anatomy_settings(result, local_settings, None)
+        if not exclude_locals:
+            local_settings = get_local_settings()
+            apply_local_settings_on_anatomy_settings(
+                result, local_settings, None
+            )
     return result
 
 
@@ -577,8 +704,10 @@ def get_anatomy_settings(project_name, site_name=None, exclude_locals=False):
     project_overrides = get_project_anatomy_overrides(
         project_name
     )
-
-    result = apply_overrides(studio_overrides, project_overrides)
+    result = copy.deepcopy(studio_overrides)
+    if project_overrides:
+        for key, value in project_overrides.items():
+            result[key] = value
 
     clear_metadata_from_settings(result)
 

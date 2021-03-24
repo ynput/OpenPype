@@ -67,7 +67,7 @@
         },
         {
             "type": "tools-enum",
-            "key": "tools",
+            "key": "tools_env",
             "label": "Tools"
         }
     ]

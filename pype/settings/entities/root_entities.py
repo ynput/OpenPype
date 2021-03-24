@@ -13,6 +13,7 @@ from .lib import (
     get_studio_settings_schema,
     get_project_settings_schema
 )
+from .exceptions import EntitySchemaError
 from pype.settings.constants import (
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
@@ -82,8 +83,8 @@ class RootEntity(BaseItemEntity):
 
     def set(self, value):
         """Set value."""
-        self._validate_value_type(value)
-        for _key, _value in value.items():
+        new_value = self.convert_to_valid_type(value)
+        for _key, _value in new_value.items():
             self.non_gui_children[_key].set(_value)
 
     def keys(self):
@@ -145,10 +146,11 @@ class RootEntity(BaseItemEntity):
     def schema_validations(self):
         for child_entity in self.children:
             if child_entity.is_group:
-                raise ValueError((
+                reason = (
                     "Root entity \"{}\" has child with `is_group`"
                     " attribute set to True but root can't save overrides."
-                ).format(self.__class__.__name__))
+                ).format(self.__class__.__name__)
+                raise EntitySchemaError(self, reason)
             child_entity.schema_validations()
 
     def get_entity_from_path(self, path):
@@ -173,7 +175,8 @@ class RootEntity(BaseItemEntity):
                 entities.BaseItemEntity,
                 entities.ItemEntity,
                 entities.EndpointEntity,
-                entities.InputEntity
+                entities.InputEntity,
+                entities.BaseEnumEntity
             )
 
             self._loaded_types = {}
@@ -596,7 +599,7 @@ class ProjectSettings(RootEntity):
     def system_settings_entity(self):
         output = self._system_settings_entity
         if output is None:
-            output = SystemSettings()
+            output = SystemSettings(set_studio_state=False)
             self._system_settings_entity = output
 
         if self.override_state is OverrideState.DEFAULTS:

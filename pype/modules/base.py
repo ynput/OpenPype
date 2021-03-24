@@ -285,11 +285,19 @@ class ITrayService(ITrayModule):
 
 
 class ModulesManager:
+    """Manager of Pype modules helps to load and prepare them to work.
+
+    Args:
+        modules_settings(dict): To be able create module manager with specified
+            data. For settings changes callbacks and testing purposes.
+    """
     # Helper attributes for report
     _report_total_key = "Total"
 
-    def __init__(self):
+    def __init__(self, _system_settings=None):
         self.log = logging.getLogger(self.__class__.__name__)
+
+        self._system_settings = _system_settings
 
         self.modules = []
         self.modules_by_id = {}
@@ -304,7 +312,10 @@ class ModulesManager:
         """Import and initialize modules."""
         self.log.debug("*** Pype modules initialization.")
         # Prepare settings for modules
-        modules_settings = get_system_settings()["modules"]
+        system_settings = getattr(self, "_system_settings", None)
+        if system_settings is None:
+            system_settings = get_system_settings()
+        modules_settings = system_settings["modules"]
 
         report = {}
         time_start = time.time()

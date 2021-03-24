@@ -1,3 +1,4 @@
+import re
 import copy
 from abc import abstractmethod
 
@@ -9,7 +10,8 @@ from .lib import (
 )
 from .exceptions import (
     DefaultsNotDefined,
-    StudioDefaultsNotDefined
+    StudioDefaultsNotDefined,
+    EntitySchemaError
 )
 
 from pype.settings.constants import (
@@ -39,11 +41,10 @@ class EndpointEntity(ItemEntity):
         """Validation of entity schema and schema hierarchy."""
         # Default value when even defaults are not filled must be set
         if self.value_on_not_set is NOT_SET:
-            raise ValueError(
-                "Attribute `value_on_not_set` is not filled. {}".format(
-                    self.__class__.__name__
-                )
+            reason = "Attribute `value_on_not_set` is not filled. {}".format(
+                self.__class__.__name__
             )
+            raise EntitySchemaError(self, reason)
 
         super(EndpointEntity, self).schema_validations()
 
@@ -105,9 +106,7 @@ class InputEntity(EndpointEntity):
     def schema_validations(self):
         # Input entity must have file parent.
         if not self.file_item:
-            raise ValueError(
-                "{}: Missing parent file entity.".format(self.path)
-            )
+            raise EntitySchemaError(self, "Missing parent file entity.")
 
         super(InputEntity, self).schema_validations()
 
@@ -121,8 +120,7 @@ class InputEntity(EndpointEntity):
 
     def set(self, value):
         """Change value."""
-        self._validate_value_type(value)
-        self._current_value = value
+        self._current_value = self.convert_to_valid_type(value)
         self._on_value_change()
 
     def _on_value_change(self):
@@ -323,6 +321,8 @@ class InputEntity(EndpointEntity):
 
 class NumberEntity(InputEntity):
     schema_types = ["number"]
+    float_number_regex = re.compile(r"^\d+\.\d+$")
+    int_number_regex = re.compile(r"^\d+$")
 
     def _item_initalization(self):
         self.minimum = self.schema_data.get("minimum", -99999)
@@ -330,16 +330,42 @@ class NumberEntity(InputEntity):
         self.decimal = self.schema_data.get("decimal", 0)
 
         if self.decimal:
-            valid_value_types = (int, float)
+            valid_value_types = (float, )
         else:
             valid_value_types = (int, )
         self.valid_value_types = valid_value_types
         self.value_on_not_set = 0
 
-    def set(self, value):
-        # TODO check number for floats, integers and point
-        self._validate_value_type(value)
-        super(NumberEntity, self).set(value)
+    def _convert_to_valid_type(self, value):
+        if isinstance(value, str):
+            new_value = None
+            if self.float_number_regex.match(value):
+                new_value = float(value)
+            elif self.int_number_regex.match(value):
+                new_value = int(value)
+
+            if new_value is not None:
+                self.log.info("{} - Converted str {} to {} {}".format(
+                    self.path, value, type(new_value).__name__, new_value
+                ))
+                value = new_value
+
+        if self.decimal:
+            if isinstance(value, float):
+                return value
+            if isinstance(value, int):
+                return float(value)
+        else:
+            if isinstance(value, int):
+                return value
+            if isinstance(value, float):
+                new_value = int(value)
+                if new_value != value:
+                    self.log.info("{} - Converted float {} to int {}".format(
+                        self.path, value, new_value
+                    ))
+                return new_value
+        return NOT_SET
 
 
 class BoolEntity(InputEntity):
@@ -361,18 +387,19 @@ class TextEntity(InputEntity):
         self.multiline = self.schema_data.get("multiline", False)
         self.placeholder_text = self.schema_data.get("placeholder")
 
+    def _convert_to_valid_type(self, value):
+        # Allow numbers converted to string
+        if isinstance(value, (int, float)):
+            return str(value)
+        return NOT_SET
+
 
 class PathInput(InputEntity):
     schema_types = ["path-input"]
 
     def _item_initalization(self):
-        self.with_arguments = self.schema_data.get("with_arguments", False)
-        if self.with_arguments:
-            self.valid_value_types = (list, )
-            self.value_on_not_set = ["", ""]
-        else:
-            self.valid_value_types = (STRING_TYPE, )
-            self.value_on_not_set = ""
+        self.valid_value_types = (STRING_TYPE, )
+        self.value_on_not_set = ""
 
 
 class RawJsonEntity(InputEntity):
@@ -380,21 +407,38 @@ class RawJsonEntity(InputEntity):
 
     def _item_initalization(self):
         # Schema must define if valid value is dict or list
-        self.valid_value_types = (list, dict)
-        self.value_on_not_set = {}
+        is_list = self.schema_data.get("is_list", False)
+        if is_list:
+            valid_value_types = (list, )
+            value_on_not_set = []
+        else:
+            valid_value_types = (dict, )
+            value_on_not_set = {}
+
+        self._is_list = is_list
+        self.valid_value_types = valid_value_types
+        self.value_on_not_set = value_on_not_set
 
         self.default_metadata = {}
         self.studio_override_metadata = {}
         self.project_override_metadata = {}
 
-    def set(self, value):
-        self._validate_value_type(value)
+    @property
+    def is_list(self):
+        return self._is_list
 
-        if isinstance(value, dict):
+    @property
+    def is_dict(self):
+        return not self._is_list
+
+    def set(self, value):
+        new_value = self.convert_to_valid_type(value)
+
+        if isinstance(new_value, dict):
             for key in METADATA_KEYS:
-                if key in value:
-                    value.pop(key)
-        self._current_value = value
+                if key in new_value:
+                    new_value.pop(key)
+        self._current_value = new_value
         self._on_value_change()
 
     @property

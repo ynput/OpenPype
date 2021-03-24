@@ -5,7 +5,8 @@ from .lib import (
 )
 from .exceptions import (
     DefaultsNotDefined,
-    StudioDefaultsNotDefined
+    StudioDefaultsNotDefined,
+    EntitySchemaError
 )
 from .base_entity import ItemEntity
 
@@ -53,15 +54,13 @@ class PathEntity(ItemEntity):
 
         self.multiplatform = self.schema_data.get("multiplatform", False)
         self.multipath = self.schema_data.get("multipath", False)
-        self.with_arguments = self.schema_data.get("with_arguments", False)
 
         # Create child object
         if not self.multiplatform and not self.multipath:
             valid_value_types = (STRING_TYPE, )
             item_schema = {
                 "type": "path-input",
-                "key": self.key,
-                "with_arguments": self.with_arguments
+                "key": self.key
             }
 
         elif not self.multiplatform:
@@ -69,10 +68,7 @@ class PathEntity(ItemEntity):
             item_schema = {
                 "type": "list",
                 "key": self.key,
-                "object_type": {
-                    "type": "path-input",
-                    "with_arguments": self.with_arguments
-                }
+                "object_type": "path-input"
             }
 
         else:
@@ -91,13 +87,9 @@ class PathEntity(ItemEntity):
                 }
                 if self.multipath:
                     child_item["type"] = "list"
-                    child_item["object_type"] = {
-                        "type": "path-input",
-                        "with_arguments": self.with_arguments
-                    }
+                    child_item["object_type"] = "path-input"
                 else:
                     child_item["type"] = "path-input"
-                    child_item["with_arguments"] = self.with_arguments
 
                 item_schema["children"].append(child_item)
 
@@ -213,8 +205,8 @@ class ListStrictEntity(ItemEntity):
     def schema_validations(self):
         # List entity must have file parent.
         if not self.file_item and not self.is_file:
-            raise ValueError(
-                "{}: Missing file entity in hierarchy.".format(self.path)
+            raise EntitySchemaError(
+                self, "Missing file entity in hierarchy."
             )
 
         super(ListStrictEntity, self).schema_validations()
@@ -239,8 +231,8 @@ class ListStrictEntity(ItemEntity):
         return output
 
     def set(self, value):
-        self._validate_value_type(value)
-        for idx, item in enumerate(value):
+        new_value = self.convert_to_valid_type(value)
+        for idx, item in enumerate(new_value):
             self.children[idx].set(item)
 
     def settings_value(self):

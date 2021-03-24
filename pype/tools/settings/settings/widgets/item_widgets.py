@@ -366,7 +366,7 @@ class NumberWidget(InputWidget):
 class RawJsonInput(QtWidgets.QPlainTextEdit):
     tab_length = 4
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, valid_type, *args, **kwargs):
         super(RawJsonInput, self).__init__(*args, **kwargs)
         self.setObjectName("RawJsonInput")
         self.setTabStopDistance(
@@ -374,6 +374,7 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
                 self.font()
             ).horizontalAdvance(" ") * self.tab_length
         )
+        self.valid_type = valid_type
 
     def sizeHint(self):
         document = self.document()
@@ -403,8 +404,8 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
     def has_invalid_value(self):
         try:
-            self.json_value()
-            return False
+            value = self.json_value()
+            return not isinstance(value, self.valid_type)
         except Exception:
             return True
 
@@ -415,7 +416,11 @@ class RawJsonInput(QtWidgets.QPlainTextEdit):
 
 class RawJsonWidget(InputWidget):
     def _add_inputs_to_layout(self):
-        self.input_field = RawJsonInput(self.content_widget)
+        if self.entity.is_list:
+            valid_type = list
+        else:
+            valid_type = dict
+        self.input_field = RawJsonInput(valid_type, self.content_widget)
         self.input_field.setSizePolicy(
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding
@@ -623,40 +628,21 @@ class PathWidget(BaseWidget):
 class PathInputWidget(InputWidget):
     def _add_inputs_to_layout(self):
         self.input_field = QtWidgets.QLineEdit(self.content_widget)
-        self.args_input_field = None
-        if self.entity.with_arguments:
-            self.input_field.setPlaceholderText("Executable path")
-            self.args_input_field = QtWidgets.QLineEdit(self)
-            self.args_input_field.setPlaceholderText("Arguments")
+        self.input_field.setPlaceholderText("Executable path")
 
         self.setFocusProxy(self.input_field)
-        self.content_layout.addWidget(self.input_field, 8)
+        self.content_layout.addWidget(self.input_field)
         self.input_field.textChanged.connect(self._on_value_change)
-
-        if self.args_input_field:
-            self.content_layout.addWidget(self.args_input_field, 2)
-            self.args_input_field.textChanged.connect(self._on_value_change)
 
     def _on_entity_change(self):
         if self.entity.value != self.input_value():
             self.set_entity_value()
 
     def set_entity_value(self):
-        value = self.entity.value
-        args = ""
-        if isinstance(value, list):
-            value, args = value
-        self.input_field.setText(value)
-        if self.args_input_field:
-            self.args_input_field.setText(args)
+        self.input_field.setText(self.entity.value)
 
     def input_value(self):
-        path_value = self.input_field.text()
-        if self.entity.with_arguments:
-            value = [path_value, self.args_input_field.text()]
-        else:
-            value = path_value
-        return value
+        return self.input_field.text()
 
     def _on_value_change(self):
         if self.ignore_input_changes:
