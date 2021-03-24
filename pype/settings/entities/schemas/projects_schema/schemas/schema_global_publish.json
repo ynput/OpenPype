@@ -241,13 +241,12 @@
                             "type": "number",
                             "key": "bg_padding",
                             "label": "Padding aroung text"
-                        },
-                        {
-                            "type": "splitter"
                         }
                     ]
                 },
-
+                {
+                    "type": "separator"
+                },
                 {
                     "type": "list",
                     "key": "profiles",
