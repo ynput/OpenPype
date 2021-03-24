@@ -21,9 +21,9 @@
         "path": "{@folder}/{@file}",
         "thumbnail": "{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}.{ext}"
     },
-    "master": {
-        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/master",
-        "file": "{project[code]}_{asset}_{subset}_master<_{output}><.{frame}>.{ext}",
+    "hero": {
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/hero",
+        "file": "{project[code]}_{asset}_{subset}_hero<_{output}><.{frame}>.{ext}",
         "path": "{@folder}/{@file}"
     },
     "delivery": {},

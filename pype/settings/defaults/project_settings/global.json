@@ -1,6 +1,6 @@
 {
     "publish": {
-        "IntegrateMasterVersion": {
+        "IntegrateHeroVersion": {
             "enabled": true
         },
         "ExtractJpegEXR": {

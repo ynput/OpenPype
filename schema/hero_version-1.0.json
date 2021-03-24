@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:master_version-1.0",
-    "description": "Master version of asset",
+    "title": "pype:hero_version-1.0",
+    "description": "Hero version of asset",
 
     "type": "object",
 
@@ -27,14 +27,14 @@
         "schema": {
             "description": "The schema associated with this document",
             "type": "string",
-            "enum": ["avalon-core:master_version-1.0", "pype:master_version-1.0"],
-            "example": "pype:master_version-1.0"
+            "enum": ["avalon-core:hero_version-1.0", "pype:hero_version-1.0"],
+            "example": "pype:hero_version-1.0"
         },
         "type": {
             "description": "The type of document",
             "type": "string",
-            "enum": ["master_version"],
-            "example": "master_version"
+            "enum": ["hero_version"],
+            "example": "hero_version"
         },
         "parent": {
             "description": "Unique identifier to parent document",
