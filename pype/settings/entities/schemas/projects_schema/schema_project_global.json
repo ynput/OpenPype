@@ -30,6 +30,12 @@
             "multiplatform": true,
             "multipath": true,
             "use_label_wrap": true
+        },
+        {
+            "key": "project_environments",
+            "type": "raw-json",
+            "label": "Additional Project Environments (set on application launch)",
+            "use_label_wrap": true
         }
     ]
 }
