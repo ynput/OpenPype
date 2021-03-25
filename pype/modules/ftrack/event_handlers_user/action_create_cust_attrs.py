@@ -400,11 +400,10 @@ class CustomAttributes(BaseAction):
 
     def tools_attribute(self, event):
         tools_data = []
-        for tool_name, tool in self.app_manager.tools.items():
-            if tool.enabled:
-                tools_data.append({
-                    tool_name: tool_name
-                })
+        for tool_name in self.app_manager.tools.keys():
+            tools_data.append({
+                tool_name: tool_name
+            })
 
         # Make sure there is at least one item
         if not tools_data:
