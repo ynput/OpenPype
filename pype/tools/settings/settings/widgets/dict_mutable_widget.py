@@ -12,6 +12,7 @@ from .lib import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
 )
+from pype.settings.constants import KEY_REGEX
 
 
 def create_add_btn(parent):
@@ -37,6 +38,7 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         self.collapsible_key = entity_widget.entity.collapsible_key
 
         self.is_duplicated = False
+        self.key_is_valid = False
 
         if self.collapsible_key:
             self.create_collapsible_ui()
@@ -86,6 +88,9 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         if self.is_duplicated:
             return
 
+        if not self.key_is_valid:
+            return
+
         key = self.key_input.text()
         if key:
             label = self.key_label_input.text()
@@ -95,9 +100,10 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
 
     def _on_key_change(self):
         key = self.key_input.text()
+        self.key_is_valid = KEY_REGEX.match(key)
         self.is_duplicated = self.entity_widget.is_key_duplicated(key)
         key_input_state = ""
-        if self.is_duplicated:
+        if self.is_duplicated or not self.key_is_valid:
             key_input_state = "invalid"
         elif key != "":
             key_input_state = "modified"
@@ -157,6 +163,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
         self.is_key_duplicated = False
+        self.key_is_valid = False
         self.is_required = False
 
         self.origin_key = None
@@ -382,6 +389,11 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def _on_key_change(self):
         key = self.key_value()
+        self.key_is_valid = KEY_REGEX.match(key)
+        if not self.key_is_valid:
+            self.update_style()
+            return
+
         is_key_duplicated = self.entity_widget.validate_key_duplication(
             self.temp_key, key, self
         )
@@ -458,6 +470,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.is_key_duplicated
             or self.key_value() == ""
             or self.child_invalid
+            or not self.key_is_valid
         )
 
     @property
@@ -473,7 +486,11 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def update_style(self):
         key_input_state = ""
-        if self.is_key_duplicated or self.key_value() == "":
+        if (
+            self.is_key_duplicated
+            or self.key_value() == ""
+            or not self.key_is_valid
+        ):
             key_input_state = "invalid"
         elif self.is_key_modified():
             key_input_state = "modified"
