@@ -85,6 +85,13 @@ def add_shortcuts_from_presets():
     nuke_presets = get_current_project_settings()["nuke"]
 
     if nuke_presets.get("menu"):
+        menu_label_mapping = {
+            "manage": "Manage...",
+            "create": "Create...",
+            "load": "Load...",
+            "build_workfile": "Build Workfile",
+            "publish": "Publish..."
+        }
         for menu_name, menuitems in nuke_presets.get("menu").items():
             menu = menubar.findItem(menu_name)
             for mitem_name, shortcut in menuitems.items():
@@ -92,7 +99,8 @@ def add_shortcuts_from_presets():
                     shortcut, mitem_name
                 ))
                 try:
-                    menuitem = menu.findItem(mitem_name)
+                    item_label = menu_label_mapping[mitem_name]
+                    menuitem = menu.findItem(item_label)
                     menuitem.setShortcut(shortcut)
                 except AttributeError as e:
                     log.error(e)
