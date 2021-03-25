@@ -32,7 +32,7 @@ log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self._project = None
-
+self.workfiles_launched = False
 
 def get_node_imageio_setting(**kwarg):
     ''' Get preset data for dataflow (fileType, compression, bitDepth)
@@ -1627,7 +1627,7 @@ def launch_workfiles_app():
     '''
     # get state from settings
     open_at_start = get_current_project_settings()["nuke"].get(
-        "triggers", {}).get("workfile", {}).get("open_at_start")
+        "general", {}).get("open_workfile_at_start")
 
     # return if none is defined
     if not open_at_start:
@@ -1641,16 +1641,16 @@ def launch_workfiles_app():
 def open_last_workfile():
     # get state from settings
     open_last_version = get_current_project_settings()["nuke"].get(
-        "triggers", {}).get("workfile", {}).get("open_last_version")
-
-    # return if none is defined
-    if not open_last_version:
-        return
+        "general", {}).get("create_initial_workfile")
 
     log.info("Opening last workfile...")
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
 
     if not os.path.exists(last_workfile_path):
+        # return if none is defined
+        if not open_last_version:
+            return
+
         save_file(last_workfile_path)
     else:
         # to avoid looping of the callback, remove it!

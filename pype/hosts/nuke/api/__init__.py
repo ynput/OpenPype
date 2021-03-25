@@ -8,9 +8,6 @@ from pype.api import Logger
 import pype.hosts.nuke
 from . import lib, menu
 
-
-self = sys.modules[__name__]
-self.workfiles_launched = False
 log = Logger().get_logger(__name__)
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")

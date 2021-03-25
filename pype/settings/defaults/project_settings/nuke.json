@@ -1,9 +1,7 @@
-{   
-    "triggers": {
-        "workfile": {
-            "open_at_start": false,
-            "open_last_version": true
-        }
+{
+    "general": {
+        "open_workfile_at_start": false,
+        "create_initial_workfile": true
     },
     "menu": {
         "Pype": {

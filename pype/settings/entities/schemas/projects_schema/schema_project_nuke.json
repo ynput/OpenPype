@@ -8,27 +8,18 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "triggers",
-            "label": "Operation triggers",
+            "key": "general",
+            "label": "General",
             "children": [
                 {
-                    "type": "dict",
-                    "collapsible": false,
-                    "key": "workfile",
-                    "label": "Workfile related",
-                    "is_group": true,
-                    "children": [
-                        {
-                            "type": "boolean",
-                            "key": "open_at_start",
-                            "label": "Open Workfile window at start of a Nuke session"
-                        },
-                        {
-                            "type": "boolean",
-                            "key": "open_last_version",
-                            "label": "Open last available workfile version or create a vanila script"
-                        }
-                    ]
+                    "type": "boolean",
+                    "key": "open_workfile_at_start",
+                    "label": "Open Workfile window at start of a Nuke session"
+                },
+                {
+                    "type": "boolean",
+                    "key": "create_initial_workfile",
+                    "label": "Create initial workfile version if none available"
                 }
             ]
         },{
