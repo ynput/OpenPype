@@ -341,7 +341,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
             else:
                 self._on_focus_lose()
 
-        if not self.is_key_duplicated:
+        if not self.is_key_duplicated and self.key_is_valid:
             self.entity_widget.change_key(self.key_value(), self)
 
     def set_key_label(self, key, label):
@@ -390,15 +390,11 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def _on_key_change(self):
         key = self.key_value()
         self.key_is_valid = KEY_REGEX.match(key)
-        if not self.key_is_valid:
-            self.update_style()
-            return
-
         is_key_duplicated = self.entity_widget.validate_key_duplication(
             self.temp_key, key, self
         )
         self.temp_key = key
-        if is_key_duplicated:
+        if is_key_duplicated or not self.key_is_valid:
             return
 
         if key:
