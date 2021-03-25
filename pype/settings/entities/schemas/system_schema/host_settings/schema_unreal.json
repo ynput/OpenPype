@@ -29,7 +29,7 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "app_variant": "4_24",
+                            "app_variant": "4-24",
                             "app_variant_label": "4.24",
                             "app_name": "unreal"
                         }

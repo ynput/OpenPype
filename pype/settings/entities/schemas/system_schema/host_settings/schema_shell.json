@@ -25,12 +25,12 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "app_variant": "python_3_7",
+                            "app_variant": "python_3-7",
                             "app_variant_label": "Python 3.7",
                             "app_name": "python"
                         },
                         {
-                            "app_variant": "python_2_7",
+                            "app_variant": "python_2-7",
                             "app_variant_label": "Python 2.7",
                             "app_name": "python"
                         },

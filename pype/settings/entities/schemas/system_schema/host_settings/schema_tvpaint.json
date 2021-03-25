@@ -30,12 +30,12 @@
                     "template_data": [
                         {
                             "app_variant_label": "Animation 11 (64bits)",
-                            "app_variant": "animation_11_64bit",
+                            "app_variant": "animation_11-64bits",
                             "app_name": "tvpaint"
                         },
                         {
                             "app_variant_label": "Animation 11 (32bits)",
-                            "app_variant": "animation_11_32bit",
+                            "app_variant": "animation_11-32bits",
                             "app_name": "tvpaint"
                         }
                     ]

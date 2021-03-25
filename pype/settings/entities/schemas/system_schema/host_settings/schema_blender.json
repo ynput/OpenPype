@@ -30,12 +30,12 @@
                     "template_data": [
                         {
                             "app_variant_label": "2.83",
-                            "app_variant": "2_83",
+                            "app_variant": "2-83",
                             "app_name": "blender"
                         },
                         {
                             "app_variant_label": "2.90",
-                            "app_variant": "2_90",
+                            "app_variant": "2-90",
                             "app_name": "blender"
                         }
                     ]
