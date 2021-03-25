@@ -7,7 +7,8 @@ from .lib import (
 )
 from pype.settings.constants import (
     METADATA_KEYS,
-    M_OVERRIDEN_KEY
+    M_OVERRIDEN_KEY,
+    KEY_REGEX
 )
 from . import (
     BaseItemEntity,
@@ -17,7 +18,8 @@ from . import (
 )
 from .exceptions import (
     SchemaDuplicatedKeys,
-    EntitySchemaError
+    EntitySchemaError,
+    InvalidKeySymbols
 )
 
 
@@ -87,6 +89,10 @@ class DictImmutableKeysEntity(ItemEntity):
                 children_keys.add(child_entity.key)
             else:
                 raise SchemaDuplicatedKeys(self, child_entity.key)
+
+        for key in self.keys():
+            if not KEY_REGEX.match(key):
+                raise InvalidKeySymbols(self.path, key)
 
         if self.checkbox_key:
             checkbox_child = self.non_gui_children.get(self.checkbox_key)
