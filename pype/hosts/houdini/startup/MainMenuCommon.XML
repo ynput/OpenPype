@@ -2,7 +2,7 @@
 <mainMenu>
     <menuBar>
         <subMenu id="avalon_menu">
-            <label>Avalon</label>
+            <label>Pype</label>
             <subMenu id="avalon_context">
                 <labelExpression><![CDATA[
 from avalon import api
