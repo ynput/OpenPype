@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
 """Pype module."""
 import os
+import platform
 import functools
 import logging
 
 from .settings import get_project_settings
-from .lib import Anatomy, filter_pyblish_plugins, \
+from .lib import (
+    Anatomy,
+    filter_pyblish_plugins,
     change_timer_to_current_context
+)
 
 pyblish = avalon = _original_discover = None
 
@@ -99,10 +103,29 @@ def install():
 
     project_name = os.environ.get("AVALON_PROJECT")
 
+    # Register studio specific plugins
     if project_name:
         anatomy = Anatomy(project_name)
         anatomy.set_root_environments()
         avalon.register_root(anatomy.roots)
+
+        project_settings = get_project_settings(project_name)
+        platform_name = platform.system().lower()
+        project_plugins = (
+            project_settings
+            .get("global", {})
+            .get("project_plugins", {})
+            .get(platform_name)
+        ) or []
+        for path in project_plugins:
+            if not path or not os.path.exists(path):
+                continue
+
+            pyblish.register_plugin_path(path)
+            avalon.register_plugin_path(avalon.Loader, path)
+            avalon.register_plugin_path(avalon.Creator, path)
+            avalon.register_plugin_path(avalon.InventoryAction, path)
+
     # apply monkey patched discover to original one
     log.info("Patching discovery")
     avalon.discover = patched_discover
