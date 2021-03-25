@@ -1,3 +1,6 @@
+from pype.settings.constants import KEY_ALLOWED_SYMBOLS
+
+
 class DefaultsNotDefined(Exception):
     def __init__(self, obj):
         msg = "Default values for object are not set. {}".format(obj.path)
@@ -32,6 +35,14 @@ class RequiredKeyModified(KeyError):
     def __init__(self, entity_path, key):
         msg = "{} - Tried to modify required key \"{}\"."
         super(RequiredKeyModified, self).__init__(msg.format(entity_path, key))
+
+
+class InvalidKeySymbols(KeyError):
+    def __init__(self, entity_path, key):
+        msg = "{} - Invalid key \"{}\". Allowed symbols are {}"
+        super(InvalidKeySymbols, self).__init__(
+            msg.format(entity_path, key, KEY_ALLOWED_SYMBOLS)
+        )
 
 
 class SchemaError(Exception):
