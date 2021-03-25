@@ -1,4 +1,9 @@
 {
+    "project_plugins": {
+        "windows": [],
+        "darwin": [],
+        "linux": []
+    },
     "publish": {
         "IntegrateHeroVersion": {
             "enabled": true
