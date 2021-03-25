@@ -34,13 +34,6 @@
                             "app_name": "celation",
                             "multiplatform": false,
                             "multipath_executables": false
-                        },
-                        {
-                            "app_variant_label": "Publish",
-                            "app_variant": "Publish",
-                            "app_name": "celation",
-                            "multiplatform": false,
-                            "multipath_executables": false
                         }
                     ]
                 }
