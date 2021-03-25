@@ -784,7 +784,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             if context.get("version"):
                 version = "v{:0>3d}".format(context.get("version"))
             else:
-                version = "hero"
+                version = "master"
 
             item = self.SyncRepresentation(
                 repre.get("_id"),
@@ -1908,19 +1908,15 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
         self.icons = {}
 
     def paint(self, painter, option, index):
-        painter.save()
+        option = QtWidgets.QStyleOptionViewItem(option)
+        option.showDecorationSelected = True
 
-        widget = option.widget
-        if widget:
-            style = widget.style()
-        else:
-            style = QtWidgets.QApplication.style()
-
-        icon_rect = style.subElementRect(
-            QtWidgets.QStyle.SE_ItemViewItemDecoration,
-            option,
-            widget
-        )
+        if (option.showDecorationSelected and
+                (option.state & QtWidgets.QStyle.State_Selected)):
+            painter.setOpacity(0.20)  # highlight color is a bit off
+            painter.fillRect(option.rect,
+                             option.palette.highlight())
+            painter.setOpacity(1)
 
         d = index.data(QtCore.Qt.DisplayRole)
         if d:
@@ -1938,12 +1934,11 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
         else:
             pixmap = self.icons[provider]
 
-        painter.drawPixmap(icon_rect.center(), pixmap)
-
-        painter.restore()
-
-        super(ImageDelegate, self).paint(painter, option, index)
-        painter.save()
+        point = QtCore.QPoint(option.rect.x() +
+                              (option.rect.width() - pixmap.width()) / 2,
+                              option.rect.y() +
+                              (option.rect.height() - pixmap.height()) / 2)
+        painter.drawPixmap(point, pixmap)
 
         painter.setOpacity(0.5)
         overlay_rect = option.rect
@@ -1951,7 +1946,6 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
         painter.fillRect(overlay_rect,
                          QtGui.QBrush(QtGui.QColor(0, 0, 0, 200)))
         painter.setOpacity(1)
-        painter.restore()
 
 
 class SyncRepresentationErrorWindow(QtWidgets.QDialog):
