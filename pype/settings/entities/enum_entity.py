@@ -170,14 +170,12 @@ class ToolsEnumEntity(BaseEnumEntity):
 
         valid_keys = set()
         enum_items = []
-        for tool_group in system_settings_entity["tools"].values():
-            enabled_entity = tool_group.get("enabled")
-            if enabled_entity and not enabled_entity.value:
-                continue
-
+        tools_entity = system_settings_entity["tools"]
+        for group_name, tool_group in tools_entity["tool_groups"].items():
             for variant_name in tool_group["variants"].keys():
-                enum_items.append({variant_name: variant_name})
-                valid_keys.add(variant_name)
+                tool_name = "/".join((group_name, variant_name))
+                enum_items.append({tool_name: tool_name})
+                valid_keys.add(tool_name)
         return enum_items, valid_keys
 
     def set_override_state(self, *args, **kwargs):
