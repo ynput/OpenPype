@@ -177,6 +177,29 @@
                                                     "object_type": "text"
                                                 }
                                             ]
+                                        },
+                                        {
+                                            "type": "separator"
+                                        },
+                                        {
+                                            "type": "label",
+                                            "label": "Width and Height must be both set to higher value than 0 else source resolution is used."
+                                        },
+                                        {
+                                            "key": "width",
+                                            "label": "Output width",
+                                            "type": "number",
+                                            "default": 0,
+                                            "minimum": 0,
+                                            "maximum": 100000
+                                        },
+                                        {
+                                            "key": "height",
+                                            "label": "Output height",
+                                            "type": "number",
+                                            "default": 0,
+                                            "minimum": 0,
+                                            "maximum": 100000
                                         }
                                     ]
                                 }
