@@ -253,7 +253,7 @@
             }
         },
         "variants": {
-            "nuke_12.2": {
+            "nuke_12_2": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "12.2",
@@ -274,11 +274,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nuke_12.2": []
+                        "nuke_12_2": []
                     }
                 }
             },
-            "nuke_12.0": {
+            "nuke_12_0": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "12.0",
@@ -299,11 +299,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nuke_12.0": []
+                        "nuke_12_0": []
                     }
                 }
             },
-            "nuke_11.3": {
+            "nuke_11_3": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "11.3",
@@ -324,11 +324,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nuke_11.3": []
+                        "nuke_11_3": []
                     }
                 }
             },
-            "nuke_11.2": {
+            "nuke_11_2": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "11.2",
@@ -347,7 +347,7 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nuke_11.2": []
+                        "nuke_11_2": []
                     }
                 }
             }
@@ -377,7 +377,7 @@
             }
         },
         "variants": {
-            "nukex_12.2": {
+            "nukex_12_2": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "12.2",
@@ -404,11 +404,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nukex_12.2": []
+                        "nukex_12_2": []
                     }
                 }
             },
-            "nukex_12.0": {
+            "nukex_12_0": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "12.0",
@@ -435,11 +435,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nukex_12.0": []
+                        "nukex_12_0": []
                     }
                 }
             },
-            "nukex_11.3": {
+            "nukex_11_3": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "11.3",
@@ -466,11 +466,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nukex_11.3": []
+                        "nukex_11_3": []
                     }
                 }
             },
-            "nukex_11.2": {
+            "nukex_11_2": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "11.2",
@@ -495,7 +495,7 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nukex_11.2": []
+                        "nukex_11_2": []
                     }
                 }
             }
@@ -527,7 +527,7 @@
             }
         },
         "variants": {
-            "nukestudio_12.2": {
+            "nukestudio_12_2": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "12.2",
@@ -554,11 +554,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nukestudio_12.2": []
+                        "nukestudio_12_2": []
                     }
                 }
             },
-            "nukestudio_12.0": {
+            "nukestudio_12_0": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "12.0",
@@ -585,11 +585,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nukestudio_12.0": []
+                        "nukestudio_12_0": []
                     }
                 }
             },
-            "nukestudio_11.3": {
+            "nukestudio_11_3": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "11.3",
@@ -616,11 +616,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nukestudio_11.3": []
+                        "nukestudio_11_3": []
                     }
                 }
             },
-            "nukestudio_11.2": {
+            "nukestudio_11_2": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "11.2",
@@ -643,7 +643,7 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "nukestudio_11.2": []
+                        "nukestudio_11_2": []
                     }
                 }
             }
@@ -675,7 +675,7 @@
             }
         },
         "variants": {
-            "hiero_12.2": {
+            "hiero_12_2": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "12.2",
@@ -702,11 +702,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "hiero_12.2": []
+                        "hiero_12_2": []
                     }
                 }
             },
-            "hiero_12.0": {
+            "hiero_12_0": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "12.0",
@@ -733,11 +733,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "hiero_12.0": []
+                        "hiero_12_0": []
                     }
                 }
             },
-            "hiero_11.3": {
+            "hiero_11_3": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "11.3",
@@ -764,11 +764,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "hiero_11.3": []
+                        "hiero_11_3": []
                     }
                 }
             },
-            "hiero_11.2": {
+            "hiero_11_2": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "11.2",
@@ -793,7 +793,7 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "hiero_11.2": []
+                        "hiero_11_2": []
                     }
                 }
             }
@@ -1057,36 +1057,7 @@
             }
         },
         "variants": {
-            "blender_2.90": {
-                "enabled": true,
-                "label": "",
-                "variant_label": "2.90",
-                "icon": "",
-                "executables": {
-                    "windows": [
-                        "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe"
-                    ],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [
-                        "--python-use-system-env"
-                    ],
-                    "darwin": [
-                        "--python-use-system-env"
-                    ],
-                    "linux": [
-                        "--python-use-system-env"
-                    ]
-                },
-                "environment": {
-                    "__environment_keys__": {
-                        "blender_2.90": []
-                    }
-                }
-            },
-            "blender_2.83": {
+            "blender_2_83": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "2.83",
@@ -1111,7 +1082,36 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "blender_2.83": []
+                        "blender_2_83": []
+                    }
+                }
+            },
+            "blender_2_90": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "2.90",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [
+                        "--python-use-system-env"
+                    ],
+                    "darwin": [
+                        "--python-use-system-env"
+                    ],
+                    "linux": [
+                        "--python-use-system-env"
+                    ]
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "blender_2_90": []
                     }
                 }
             }
@@ -1193,7 +1193,7 @@
             }
         },
         "variants": {
-            "tvpaint_Animation 11 (64bits)": {
+            "tvpaint_animation_11_64bit": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "11 (64bits)",
@@ -1212,11 +1212,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "tvpaint_Animation 11 (64bits)": []
+                        "tvpaint_animation_11_64bit": []
                     }
                 }
             },
-            "tvpaint_Animation 11 (32bits)": {
+            "tvpaint_animation_11_32bit": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "11 (32bits)",
@@ -1235,7 +1235,7 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "tvpaint_Animation 11 (32bits)": []
+                        "tvpaint_animation_11_32bit": []
                     }
                 }
             }
@@ -1445,7 +1445,7 @@
             }
         },
         "variants": {
-            "unreal_4.24": {
+            "unreal_4_24": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "4.24",
@@ -1462,7 +1462,7 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "unreal_4.24": []
+                        "unreal_4_24": []
                     }
                 }
             }
@@ -1476,7 +1476,7 @@
             }
         },
         "variants": {
-            "python_Python 3.7": {
+            "python_python_3_7": {
                 "enabled": true,
                 "label": "Python",
                 "variant_label": "3.7",
@@ -1493,11 +1493,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "python_Python 3.7": []
+                        "python_python_3_7": []
                     }
                 }
             },
-            "python_Python 2.7": {
+            "python_python_2_7": {
                 "enabled": true,
                 "label": "Python",
                 "variant_label": "2.7",
@@ -1514,11 +1514,11 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "python_Python 2.7": []
+                        "python_python_2_7": []
                     }
                 }
             },
-            "terminal_Terminal": {
+            "terminal_terminal": {
                 "enabled": true,
                 "label": "Terminal",
                 "variant_label": "",
@@ -1535,7 +1535,7 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "terminal_Terminal": []
+                        "terminal_terminal": []
                     }
                 }
             }
@@ -1552,7 +1552,7 @@
             }
         },
         "variants": {
-            "djvview_1.1": {
+            "djvview_1_1": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "1.1",
@@ -1569,7 +1569,7 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "djvview_1.1": []
+                        "djvview_1_1": []
                     }
                 }
             }
