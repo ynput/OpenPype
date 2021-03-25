@@ -91,14 +91,9 @@ def main():
     # Registers pype's Global pyblish plugins
     pype.install()
 
-    for path in PUBLISH_PATHS:
-        path = os.path.normpath(path)
-
-        if not os.path.exists(path):
-            continue
-
-        log.info(f"Registering path: {path}")
-        pyblish.api.register_plugin_path(path)
+    if os.path.exists(PUBLISH_PATH):
+        log.info(f"Registering path: {PUBLISH_PATH}")
+        pyblish.api.register_plugin_path(PUBLISH_PATH)
 
     pyblish.api.register_host(publish_host)
 
