@@ -81,6 +81,7 @@ from .applications import (
     prepare_host_environments,
     prepare_context_environments,
     get_app_environments_for_context,
+    apply_project_environments_value,
 
     compile_list_of_regexes
 )
@@ -174,6 +175,7 @@ __all__ = [
     "prepare_host_environments",
     "prepare_context_environments",
     "get_app_environments_for_context",
+    "apply_project_environments_value",
 
     "compile_list_of_regexes",
 
