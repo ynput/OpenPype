@@ -99,20 +99,7 @@ def install():
     pyblish.register_discovery_filter(filter_pyblish_plugins)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
 
-    # Register project specific plugins
     project_name = os.environ.get("AVALON_PROJECT")
-    if PROJECT_PLUGINS_PATH and project_name:
-        for path in PROJECT_PLUGINS_PATH.split(os.pathsep):
-            if not path:
-                continue
-            plugin_path = os.path.join(path, project_name, "plugins")
-            if os.path.exists(plugin_path):
-                pyblish.register_plugin_path(plugin_path)
-                avalon.register_plugin_path(avalon.Loader, plugin_path)
-                avalon.register_plugin_path(avalon.Creator, plugin_path)
-                avalon.register_plugin_path(
-                    avalon.InventoryAction, plugin_path
-                )
 
     # Register studio specific plugins
     if STUDIO_PLUGINS_PATH and project_name:
