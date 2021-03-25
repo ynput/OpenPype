@@ -68,7 +68,8 @@ def install():
     # Register Avalon event for workfiles loading.
     avalon.api.on("workio.open_file", lib.check_inventory_versions)
 
-    pyblish.api.register_callback("instanceToggled", on_pyblish_instance_toggled)
+    pyblish.api.register_callback(
+        "instanceToggled", on_pyblish_instance_toggled)
     workfile_settings = lib.WorkfileSettings()
     # Disable all families except for the ones we explicitly want to see
     family_states = [
@@ -97,7 +98,8 @@ def uninstall():
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
 
-    pyblish.api.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
+    pyblish.api.deregister_callback(
+        "instanceToggled", on_pyblish_instance_toggled)
 
     reload_config()
     menu.uninstall()
