@@ -3,6 +3,7 @@
         "MayaSubmitDeadline": {
             "enabled": true,
             "optional": false,
+            "active": true,
             "tile_assembler_plugin": "oiio",
             "use_published": true,
             "asset_dependencies": true,
@@ -12,6 +13,7 @@
         "NukeSubmitDeadline": {
             "enabled": true,
             "optional": false,
+            "active": true,
             "use_published": true,
             "priority": 50,
             "chunk_size": 10,
@@ -23,6 +25,7 @@
         "HarmonySubmitDeadline": {
             "enabled": true,
             "optional": false,
+            "active": true,
             "use_published": true,
             "priority": 50,
             "chunk_size": 10000,
@@ -34,6 +37,7 @@
         "AfterEffectsSubmitDeadline": {
             "enabled": true,
             "optional": false,
+            "active": true,
             "use_published": true,
             "priority": 50,
             "chunk_size": 10000,
