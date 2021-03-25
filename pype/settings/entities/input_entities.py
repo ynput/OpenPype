@@ -329,12 +329,15 @@ class NumberEntity(InputEntity):
         self.maximum = self.schema_data.get("maximum", 99999)
         self.decimal = self.schema_data.get("decimal", 0)
 
+        value_on_not_set = self.schema_data.get("default", 0)
         if self.decimal:
             valid_value_types = (float, )
+            value_on_not_set = float(value_on_not_set)
         else:
             valid_value_types = (int, )
+            value_on_not_set = int(value_on_not_set)
         self.valid_value_types = valid_value_types
-        self.value_on_not_set = 0
+        self.value_on_not_set = value_on_not_set
 
     def _convert_to_valid_type(self, value):
         if isinstance(value, str):
