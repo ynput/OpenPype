@@ -29,12 +29,14 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "host_version": "20",
-                            "host_name": "harmony"
+                            "app_variant_label": "20",
+                            "app_variant": "20",
+                            "app_name": "harmony"
                         },
                         {
-                            "host_version": "17",
-                            "host_name": "harmony"
+                            "app_variant_label": "17",
+                            "app_variant": "17",
+                            "app_name": "harmony"
                         }
                     ]
                 }

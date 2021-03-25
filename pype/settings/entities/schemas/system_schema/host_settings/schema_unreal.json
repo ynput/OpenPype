@@ -29,8 +29,9 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "host_version": "4.24",
-                            "host_name": "unreal"
+                            "app_variant": "4_24",
+                            "app_variant_label": "4.24",
+                            "app_name": "unreal"
                         }
                     ]
                 }

@@ -25,16 +25,19 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "host_version": "Python 3.7",
-                            "host_name": "python"
+                            "app_variant": "python_3_7",
+                            "app_variant_label": "Python 3.7",
+                            "app_name": "python"
                         },
                         {
-                            "host_version": "Python 2.7",
-                            "host_name": "python"
+                            "app_variant": "python_2_7",
+                            "app_variant_label": "Python 2.7",
+                            "app_name": "python"
                         },
                         {
-                            "host_version": "Terminal",
-                            "host_name": "terminal"
+                            "app_variant": "terminal",
+                            "app_variant_label": "Terminal",
+                            "app_name": "terminal"
                         }
                     ]
                 }

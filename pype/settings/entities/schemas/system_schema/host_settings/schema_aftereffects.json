@@ -29,12 +29,14 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "host_version": "2020",
-                            "host_name": "aftereffects"
+                            "app_variant_label": "2020",
+                            "app_variant": "2020",
+                            "app_name": "aftereffects"
                         },
                         {
-                            "host_version": "2021",
-                            "host_name": "aftereffects"
+                            "app_variant_label": "2021",
+                            "app_variant": "2021",
+                            "app_name": "aftereffects"
                         }
                     ]
                 }

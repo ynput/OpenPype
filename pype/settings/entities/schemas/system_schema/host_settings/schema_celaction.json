@@ -29,14 +29,16 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "host_version": "Local",
-                            "host_name": "celation",
+                            "app_variant_label": "Local",
+                            "app_variant": "Local",
+                            "app_name": "celation",
                             "multiplatform": false,
                             "multipath_executables": false
                         },
                         {
-                            "host_version": "Publish",
-                            "host_name": "celation",
+                            "app_variant_label": "Publish",
+                            "app_variant": "Publish",
+                            "app_name": "celation",
                             "multiplatform": false,
                             "multipath_executables": false
                         }
