@@ -1,37 +1,35 @@
 {
-    "key": "tools",
     "type": "dict",
-    "label": "Tools",
+    "key": "tools",
     "collapsible": true,
     "is_file": true,
     "children": [
         {
-            "type": "schema",
-            "name": "schema_arnold"
-        },
-        {
-            "type": "schema",
-            "name": "schema_vray"
-        },
-        {
-            "type": "schema",
-            "name": "schema_yeti"
-        },
-        {
-            "type": "dict",
-            "key": "other",
-            "children": [
-                {
-                    "type": "schema_template",
-                    "name": "template_tool_variant",
-                    "template_data": [
-                        {
-                            "tool_name": "othertools",
-                            "tool_label": "Other Tools and Plugins"
+            "type": "dict-modifiable",
+            "label": "Tools",
+            "key": "tool_groups",
+            "collapsible_key": true,
+            "object_type": {
+                "type": "dict",
+                "children": [
+                    {
+                        "key": "environment",
+                        "label": "Environments",
+                        "type": "raw-json"
+                    },
+                    {
+                        "type": "separator"
+                    },
+                    {
+                        "type": "dict-modifiable",
+                        "key": "variants",
+                        "label": "Variants",
+                        "object_type": {
+                            "type": "raw-json"
                         }
-                    ]
-                }
-            ]
+                    }
+                ]
+            }
         }
     ]
 }
