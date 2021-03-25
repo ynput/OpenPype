@@ -765,15 +765,17 @@ class DictMutableKeysWidget(BaseWidget):
                 old_key_items.append(input_field)
 
         if duplicated_items:
-            widget.set_is_key_duplicated(True)
             for input_field in duplicated_items:
                 input_field.set_is_key_duplicated(True)
+            widget.set_is_key_duplicated(True)
         else:
             widget.set_is_key_duplicated(False)
 
         if len(old_key_items) == 1:
             for input_field in old_key_items:
                 input_field.set_is_key_duplicated(False)
+                input_field.set_key(old_key)
+                input_field.update_key_label()
         self.trigger_hierarchical_style_update()
         return bool(duplicated_items)
 
