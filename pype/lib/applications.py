@@ -941,6 +941,20 @@ def prepare_host_environments(data):
 
 
 def apply_project_environments_value(project_name, env, project_settings=None):
+    """Apply project specific environments on passed environments.
+
+    Args:
+        project_name (str): Name of project for which environemnts should be
+            received.
+        env (dict): Environment values on which project specific environments
+            will be applied.
+        project_settings (dict): Project settings for passed project name.
+            Optional if project settings are already prepared.
+
+    Raises:
+        KeyError: If project settings do not contain keys for project specific
+            environments.
+    """
     import acre
 
     if project_settings is None:
