@@ -14,7 +14,7 @@ from .lib import (
     get_project_settings_schema
 )
 from .exceptions import (
-    EntitySchemaError,
+    SchemaError,
     InvalidKeySymbols
 )
 from pype.settings.constants import (
@@ -154,7 +154,7 @@ class RootEntity(BaseItemEntity):
                     "Root entity \"{}\" has child with `is_group`"
                     " attribute set to True but root can't save overrides."
                 ).format(self.__class__.__name__)
-                raise EntitySchemaError(self, reason)
+                raise SchemaError(reason)
             child_entity.schema_validations()
 
         for key in self.non_gui_children.keys():
