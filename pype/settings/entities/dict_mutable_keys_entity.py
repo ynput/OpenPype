@@ -202,7 +202,7 @@ class DictMutableKeysEntity(EndpointEntity):
             self.schema_data.get("highlight_content") or False
         )
 
-        object_type = self.schema_data["object_type"]
+        object_type = self.schema_data.get("object_type") or {}
         if not isinstance(object_type, dict):
             # Backwards compatibility
             object_type = {
@@ -225,6 +225,12 @@ class DictMutableKeysEntity(EndpointEntity):
 
     def schema_validations(self):
         super(DictMutableKeysEntity, self).schema_validations()
+
+        if not self.schema_data.get("object_type"):
+            reason = (
+                "Modifiable dictionary must have specified `object_type`."
+            )
+            raise EntitySchemaError(self, reason)
 
         # TODO Ability to store labels should be defined with different key
         if self.collapsible_key and not self.file_item:
