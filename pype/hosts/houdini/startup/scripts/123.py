@@ -1,10 +1,10 @@
-from avalon import pipeline, houdini
+from avalon import api, houdini
 import hou
 
 
 def main():
     print("Installing Avalon ...")
-    pipeline.install(houdini)
+    api.install(houdini)
 
 
 main()
