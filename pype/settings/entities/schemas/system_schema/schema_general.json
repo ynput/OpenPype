@@ -19,13 +19,6 @@
             "type": "splitter"
         },
         {
-            "key": "project_plugins",
-            "type": "path",
-            "label": "Additional Project Plugins Path",
-            "multiplatform": true,
-            "multipath": false
-        },
-        {
             "key": "studio_soft",
             "type": "path",
             "label": "Studio Software Location",

@@ -22,6 +22,14 @@
         {
             "type": "schema",
             "name": "schema_project_syncserver"
+        },
+        {
+            "key": "project_plugins",
+            "type": "path",
+            "label": "Additional Project Plugin Paths",
+            "multiplatform": true,
+            "multipath": true,
+            "use_label_wrap": true
         }
     ]
 }
