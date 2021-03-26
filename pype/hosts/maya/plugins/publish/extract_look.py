@@ -118,12 +118,53 @@ class ExtractLook(pype.api.Extractor):
     hosts = ["maya"]
     families = ["look"]
     order = pyblish.api.ExtractorOrder + 0.2
+    scene_type = "ma"
+
+    @staticmethod
+    def get_renderer_name():
+        """Get renderer name from Maya.
+
+        Returns:
+            str: Renderer name.
+
+        """
+        renderer = cmds.getAttr(
+            "defaultRenderGlobals.currentRenderer"
+        ).lower()
+        # handle various renderman names
+        if renderer.startswith("renderman"):
+            renderer = "renderman"
+        return renderer
+
+    def get_maya_scene_type(self, instance):
+        """Get Maya scene type from settings.
+
+        Args:
+            instance (pyblish.api.Instance): Instance with collected
+                project settings.
+
+        """
+        ext_mapping = (
+            instance.context.data["project_settings"]["maya"]["ext_mapping"]
+        )
+        if ext_mapping:
+            self.log.info("Looking in settings for scene type ...")
+            # use extension mapping for first family found
+            for family in self.families:
+                try:
+                    self.scene_type = ext_mapping[family]
+                    self.log.info(
+                        "Using {} as scene type".format(self.scene_type))
+                    break
+                except KeyError:
+                    # no preset found
+                    pass
 
     def process(self, instance):
 
         # Define extract output file path
         dir_path = self.staging_dir(instance)
-        maya_fname = "{0}.ma".format(instance.name)
+        maya_fname = "{0}.{1}".format(instance.name, self.scene_type)
         json_fname = "{0}.json".format(instance.name)
 
         # Make texture dump folder
