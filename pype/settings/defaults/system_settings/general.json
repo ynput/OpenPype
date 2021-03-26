@@ -1,11 +1,6 @@
 {
     "studio_name": "Studio name",
     "studio_code": "stu",
-    "project_plugins": {
-        "windows": "convert from \"PYPE_PROJECT_PLUGINS\"",
-        "darwin": "",
-        "linux": ""
-    },
     "studio_soft": {
         "windows": "convert from \"STUDIO_SOFT\"",
         "darwin": "",

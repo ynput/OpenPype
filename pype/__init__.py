@@ -1,20 +1,22 @@
 # -*- coding: utf-8 -*-
 """Pype module."""
 import os
+import platform
 import functools
 import logging
 
 from .settings import get_project_settings
-from .lib import Anatomy, filter_pyblish_plugins, \
+from .lib import (
+    Anatomy,
+    filter_pyblish_plugins,
     change_timer_to_current_context
+)
 
 pyblish = avalon = _original_discover = None
 
 log = logging.getLogger(__name__)
 
 
-PROJECT_PLUGINS_PATH = os.environ.get("PYPE_PROJECT_PLUGINS")
-STUDIO_PLUGINS_PATH = os.environ.get("PYPE_STUDIO_PLUGINS")
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
@@ -99,36 +101,31 @@ def install():
     pyblish.register_discovery_filter(filter_pyblish_plugins)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
 
-    # Register project specific plugins
     project_name = os.environ.get("AVALON_PROJECT")
-    if PROJECT_PLUGINS_PATH and project_name:
-        for path in PROJECT_PLUGINS_PATH.split(os.pathsep):
-            if not path:
-                continue
-            plugin_path = os.path.join(path, project_name, "plugins")
-            if os.path.exists(plugin_path):
-                pyblish.register_plugin_path(plugin_path)
-                avalon.register_plugin_path(avalon.Loader, plugin_path)
-                avalon.register_plugin_path(avalon.Creator, plugin_path)
-                avalon.register_plugin_path(
-                    avalon.InventoryAction, plugin_path
-                )
 
     # Register studio specific plugins
-    if STUDIO_PLUGINS_PATH and project_name:
-        for path in STUDIO_PLUGINS_PATH.split(os.pathsep):
-            if not path:
-                continue
-            if os.path.exists(path):
-                pyblish.register_plugin_path(path)
-                avalon.register_plugin_path(avalon.Loader, path)
-                avalon.register_plugin_path(avalon.Creator, path)
-                avalon.register_plugin_path(avalon.InventoryAction, path)
-
     if project_name:
         anatomy = Anatomy(project_name)
         anatomy.set_root_environments()
         avalon.register_root(anatomy.roots)
+
+        project_settings = get_project_settings(project_name)
+        platform_name = platform.system().lower()
+        project_plugins = (
+            project_settings
+            .get("global", {})
+            .get("project_plugins", {})
+            .get(platform_name)
+        ) or []
+        for path in project_plugins:
+            if not path or not os.path.exists(path):
+                continue
+
+            pyblish.register_plugin_path(path)
+            avalon.register_plugin_path(avalon.Loader, path)
+            avalon.register_plugin_path(avalon.Creator, path)
+            avalon.register_plugin_path(avalon.InventoryAction, path)
+
     # apply monkey patched discover to original one
     log.info("Patching discovery")
     avalon.discover = patched_discover

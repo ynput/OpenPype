@@ -1,4 +1,10 @@
 {
+    "project_plugins": {
+        "windows": [],
+        "darwin": [],
+        "linux": []
+    },
+    "project_environments": {},
     "publish": {
         "IntegrateHeroVersion": {
             "enabled": true

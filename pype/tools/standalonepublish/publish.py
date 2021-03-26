@@ -19,14 +19,6 @@ def main(env):
             continue
         pyblish.api.register_plugin_path(path)
 
-    # Register project specific plugins
-    project_name = os.environ["AVALON_PROJECT"]
-    project_plugins_paths = env.get("PYPE_PROJECT_PLUGINS") or ""
-    for path in project_plugins_paths.split(os.pathsep):
-        plugin_path = os.path.join(path, project_name, "plugins")
-        if os.path.exists(plugin_path):
-            pyblish.api.register_plugin_path(plugin_path)
-
     return publish.show()
 
 
