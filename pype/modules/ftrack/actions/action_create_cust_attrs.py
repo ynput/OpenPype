@@ -439,7 +439,8 @@ class CustomAttributes(BaseAction):
             # - tools have group and variant joined with slash `/`
             parts = tool_name.split("_")
             if len(parts) == 1:
-                new_name = "/".join([parts[0], parts[0]])
+                # This will cause incompatible tool name
+                new_name = parts[0]
             else:
                 tool_group = parts.pop(0)
                 remainder = "_".join(parts)
