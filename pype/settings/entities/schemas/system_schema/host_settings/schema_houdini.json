@@ -29,6 +29,10 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
+                            "host_version": "18.5",
+                            "host_name": "houdini"
+                        },
+                        {
                             "host_version": "18",
                             "host_name": "houdini"
                         },

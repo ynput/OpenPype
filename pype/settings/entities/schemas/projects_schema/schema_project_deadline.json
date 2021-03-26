@@ -30,6 +30,11 @@
                             "label": "Optional"
                         },
                         {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
                             "type": "enum",
                             "key": "tile_assembler_plugin",
                             "label": "Tile Assembler Plugin",
@@ -82,6 +87,11 @@
                             "type": "boolean",
                             "key": "optional",
                             "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
                         },
                         {
                             "type": "boolean",
@@ -139,6 +149,11 @@
                         },
                         {
                             "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "boolean",
                             "key": "use_published",
                             "label": "Use Published scene"
                         },
@@ -190,6 +205,11 @@
                             "type": "boolean",
                             "key": "optional",
                             "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
                         },
                         {
                             "type": "boolean",
