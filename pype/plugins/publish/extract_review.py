@@ -757,8 +757,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("input_height: `{}`".format(input_height))
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
-        output_width = output_def.get("width")
-        output_height = output_def.get("height")
+        # - settings value can't have None but has value of 0
+        output_width = output_def.get("width") or None
+        output_height = output_def.get("height") or None
         # Use instance resolution if output definition has not set it.
         if output_width is None or output_height is None:
             output_width = temp_data["resolution_width"]
