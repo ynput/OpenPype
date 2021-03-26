@@ -100,6 +100,8 @@ import subprocess
 import site
 from pathlib import Path
 
+from pymongo.errors import ServerSelectionTimeoutError
+
 # add dependencies folder to sys.pat for frozen code
 if getattr(sys, 'frozen', False):
     frozen_libs = os.path.normpath(
@@ -569,7 +571,13 @@ def boot():
 
     # Get Pype path from database and set it to environment so Pype can
     # find its versions there and bootstrap them.
-    pype_path = get_pype_path_from_db(pype_mongo)
+    try:
+        pype_path = get_pype_path_from_db(pype_mongo)
+    except ServerSelectionTimeoutError as e:
+        print("!!! Can't connect to mongodb database server.")
+        print("!!! {}".format(e))
+        sys.exit(1)
+
     if not os.getenv("PYPE_PATH") and pype_path:
         os.environ["PYPE_PATH"] = pype_path
 
