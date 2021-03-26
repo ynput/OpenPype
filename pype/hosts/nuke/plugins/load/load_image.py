@@ -12,17 +12,15 @@ from pype.hosts.nuke.api.lib import (
 class LoadImage(api.Loader):
     """Load still image into Nuke"""
 
-    families = [
-        "render2d", "source", "plate",
-        "render", "prerender", "review",
-        "image"
-    ]
+    families = ["render", "source", "plate", "review", "image"]
     representations = ["exr", "dpx", "jpg", "jpeg", "png", "psd"]
 
     label = "Load Image"
     order = -10
     icon = "image"
     color = "white"
+
+    node_name_template = "{class_name}_{ext}"
 
     options = [
         qargparse.Integer(
@@ -75,10 +73,16 @@ class LoadImage(api.Loader):
                 frame,
                 format(frame_number, "0{}".format(padding)))
 
-        read_name = "Read_{0}_{1}_{2}".format(
-            repr_cont["asset"],
-            repr_cont["subset"],
-            repr_cont["representation"])
+        name_data = {
+            "asset": repr_cont["asset"],
+            "subset": repr_cont["subset"],
+            "representation": context["representation"]["name"],
+            "ext": repr_cont["representation"],
+            "id": context["representation"]["_id"],
+            "class_name": self.__class__.__name__
+        }
+
+        read_name = self.node_name_template.format(**name_data)
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():

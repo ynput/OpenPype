@@ -69,19 +69,8 @@ def add_review_presets_config():
 
 class LoadMov(api.Loader):
     """Load mov file into Nuke"""
-    presets = add_review_presets_config()
-    families = [
-        "source",
-        "plate",
-        "render",
-        "prerender",
-        "review"] + presets["families"]
-
-    representations = [
-        "mov",
-        "preview",
-        "review",
-        "mp4"] + presets["representations"]
+    families = ["render", "source", "plate", "review"]
+    representations = ["mov", "review", "mp4"]
 
     label = "Load mov"
     order = -10
@@ -89,6 +78,8 @@ class LoadMov(api.Loader):
     color = "orange"
 
     script_start = nuke.root()["first_frame"].value()
+
+    node_name_template = "{class_name}_{ext}"
 
     def load(self, context, name, namespace, data):
         from avalon.nuke import (
@@ -133,10 +124,16 @@ class LoadMov(api.Loader):
 
         file = file.replace("\\", "/")
 
-        read_name = "Read_{0}_{1}_{2}".format(
-            repr_cont["asset"],
-            repr_cont["subset"],
-            repr_cont["representation"])
+        name_data = {
+            "asset": repr_cont["asset"],
+            "subset": repr_cont["subset"],
+            "representation": context["representation"]["name"],
+            "ext": repr_cont["representation"],
+            "id": context["representation"]["_id"],
+            "class_name": self.__class__.__name__
+        }
+
+        read_name = self.node_name_template.format(**name_data)
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
