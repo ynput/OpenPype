@@ -34,8 +34,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_group = ""
     deadline_department = ""
     deadline_limit_groups = {}
-    env_overrides = {},
+    env_allowed_keys = []
     env_search_replace_values = {}
+
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
@@ -236,19 +237,16 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "TOOL_ENV",
             "PYPE_DEV"
         ]
+
+        # add allowed keys from preset if any
+        if self.env_allowed_keys:
+            keys += self.env_allowed_keys
+
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
 
         for path in os.environ:
             if path.lower().startswith('pype_'):
-                environment[path] = os.environ[path]
-            if path.lower().startswith('nuke_'):
-                if "temp" in path.lower():
-                    continue
-                environment[path] = os.environ[path]
-            if "license" in path.lower():
-                environment[path] = os.environ[path]
-            if "ofx" in path.lower():
                 environment[path] = os.environ[path]
 
         clean_environment = {}
@@ -278,11 +276,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             clean_environment[key] = clean_path
 
         environment = clean_environment
-
-        # override by preset's env vars
-        if self.env_overrides:
-            for key, value in self.env_overrides.items():
-                environment[key] = value
 
         # finally search replace in values of any key
         if self.env_search_replace_values:
