@@ -1,7 +1,7 @@
 import os
 import nuke
 import pyblish.api
-
+import re
 
 @pyblish.api.log
 class CollectNukeWrites(pyblish.api.InstancePlugin):
@@ -113,9 +113,16 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 instance.data["representations"].append(representation)
                 self.log.debug("couldn't collect frames: {}".format(label))
 
+        colorspace = node["colorspace"].value()
+
+        # remove default part of the string
+        if "default (" in colorspace:
+            colorspace = re.sub(r"default.\(|\)", "", colorspace)
+            self.log.debug("colorspace: `{}`".format(colorspace))
+
         # Add version data to instance
         version_data = {
-            "colorspace": node["colorspace"].value(),
+            "colorspace": colorspace,
         }
 
         group_node = [x for x in instance if x.Class() == "Group"][0]
@@ -141,7 +148,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameEndHandle": last_frame,
             "outputType": output_type,
             "families": families,
-            "colorspace": node["colorspace"].value(),
+            "colorspace": colorspace,
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority
         })
