@@ -43,8 +43,8 @@ class CollectFrames(api.ContextPlugin):
             data = {
                 "name": name,
                 "label": "{} {}".format(name, subset_data["frames"]),
-                "family": "frame",
-                "families": ["image"],
+                "family": "image",
+                "families": ["frame"],
                 "asset": context.data["assetEntity"]["name"],
                 "subset": subset_name,
                 "format": subset_data["format"],
