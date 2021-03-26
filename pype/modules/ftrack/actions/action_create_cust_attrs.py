@@ -438,7 +438,12 @@ class CustomAttributes(BaseAction):
             # Forward compatibility with Pype 3
             # - tools have group and variant joined with slash `/`
             parts = tool_name.split("_")
-            new_name = "/".join([parts[0], tool_name])
+            if len(parts) == 1:
+                new_name = "/".join([parts[0], parts[0]])
+            else:
+                tool_group = parts.pop(0)
+                remainder = "_".join(parts)
+                new_name = "/".join([tool_group, remainder])
             tools_data.append({new_name: new_name})
 
         # Make sure there is at least one item
