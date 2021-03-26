@@ -20,6 +20,16 @@ class InstallPySideToBlender(PreLaunchHook):
     platforms = ["windows"]
 
     def execute(self):
+        # Prelaunch hook is not crutial
+        try:
+            self.inner_execute()
+        except Exception:
+            self.log.warning(
+                "Processing of {} crashed.".format(self.__class__.__name__),
+                exc_info=True
+            )
+
+    def inner_execute(self):
         # Get blender's python directory
         executable = self.launch_context.executable.executable_path
         # Blender installation contain subfolder named with it's version where
