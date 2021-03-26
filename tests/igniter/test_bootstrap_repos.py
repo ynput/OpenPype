@@ -145,18 +145,18 @@ def test_search_string_for_pype_version(printer):
         assert PypeVersion.version_in_str(ver_string[0])[0] == ver_string[1]
 
 
+@pytest.mark.slow
 def test_install_live_repos(fix_bootstrap, printer):
-    rf = fix_bootstrap.create_version_from_live_code()
+    pype_version = fix_bootstrap.create_version_from_live_code()
     sep = os.path.sep
     expected_paths = [
-        f"{rf}{sep}avalon-core",
-        f"{rf}{sep}avalon-unreal-integration",
-        f"{rf}{sep}maya-look-assigner",
-        f"{rf}{sep}pype"
+        f"{pype_version.path}{sep}avalon-core",
+        f"{pype_version.path}{sep}avalon-unreal-integration",
+        f"{pype_version.path}{sep}pype"
     ]
     printer("testing zip creation")
-    assert os.path.exists(rf), "zip archive was not created"
-    fix_bootstrap.add_paths_from_archive(rf)
+    assert os.path.exists(pype_version.path), "zip archive was not created"
+    fix_bootstrap.add_paths_from_archive(pype_version.path)
     for ep in expected_paths:
         assert ep in sys.path, f"{ep} not set correctly"
 
@@ -168,7 +168,7 @@ def test_install_live_repos(fix_bootstrap, printer):
     print(pype.__file__)
     assert "pype" in sys.modules.keys(), "Pype not imported"
     assert sys.modules["pype"].__file__ == \
-        f"{rf}{sep}pype{sep}pype{sep}__init__.py"
+        f"{pype_version.path}{sep}pype{sep}pype{sep}__init__.py"
 
 
 def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
