@@ -272,6 +272,11 @@
                     "label": "Optional"
                 },
                 {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
                     "type": "raw-json",
                     "key": "bake_attributes",
                     "label": "Bake Attributes",
