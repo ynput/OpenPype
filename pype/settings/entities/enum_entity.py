@@ -172,9 +172,23 @@ class ToolsEnumEntity(BaseEnumEntity):
         enum_items = []
         tools_entity = system_settings_entity["tools"]
         for group_name, tool_group in tools_entity["tool_groups"].items():
-            for variant_name in tool_group["variants"].keys():
+            group_label = None
+            if hasattr(tool_group, "get_key_label"):
+                group_label = tool_group.get_key_label(group_name)
+
+            for variant_name, variant in tool_group["variants"].items():
+                variant_label = None
+                if hasattr(variant, "get_key_label"):
+                    variant_label = variant.get_key_label(variant_name)
+
+                tool_label = None
+                if group_label and variant_label:
+                    tool_label = " ".join((group_label, variant_label))
+
                 tool_name = "/".join((group_name, variant_name))
-                enum_items.append({tool_name: tool_name})
+                if not tool_label:
+                    tool_label = tool_name
+                enum_items.append({tool_name: tool_label})
                 valid_keys.add(tool_name)
         return enum_items, valid_keys
 
