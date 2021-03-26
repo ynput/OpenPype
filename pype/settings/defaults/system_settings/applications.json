@@ -992,7 +992,7 @@
             }
         },
         "variants": {
-            "houdini_18.5": {
+            "houdini_18-5": {
                 "enabled": true,
                 "label": "",
                 "variant_label": "18.5",
@@ -1011,7 +1011,7 @@
                 },
                 "environment": {
                     "__environment_keys__": {
-                        "houdini_18.5": []
+                        "houdini_18-5": []
                     }
                 }
             },
