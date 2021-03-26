@@ -170,24 +170,30 @@ class ToolsEnumEntity(BaseEnumEntity):
 
         valid_keys = set()
         enum_items = []
-        tools_entity = system_settings_entity["tools"]
-        for group_name, tool_group in tools_entity["tool_groups"].items():
+        tool_groups_entity = system_settings_entity["tools"]["tool_groups"]
+        for group_name, tool_group in tool_groups_entity.items():
+            # Try to get group label from entity
             group_label = None
-            if hasattr(tool_group, "get_key_label"):
-                group_label = tool_group.get_key_label(group_name)
+            if hasattr(tool_groups_entity, "get_key_label"):
+                group_label = tool_groups_entity.get_key_label(group_name)
 
-            for variant_name, variant in tool_group["variants"].items():
+            variants_entity = tool_group["variants"]
+            for variant_name in variants_entity.keys():
+                # Prepare tool name (used as value)
+                tool_name = "/".join((group_name, variant_name))
+
+                # Try to get variant label from entity
                 variant_label = None
-                if hasattr(variant, "get_key_label"):
-                    variant_label = variant.get_key_label(variant_name)
+                if hasattr(variants_entity, "get_key_label"):
+                    variant_label = variants_entity.get_key_label(variant_name)
 
-                tool_label = None
+                # Tool label that will be shown
+                # - use tool name itself if labels are not filled
                 if group_label and variant_label:
                     tool_label = " ".join((group_label, variant_label))
-
-                tool_name = "/".join((group_name, variant_name))
-                if not tool_label:
+                else:
                     tool_label = tool_name
+
                 enum_items.append({tool_name: tool_label})
                 valid_keys.add(tool_name)
         return enum_items, valid_keys
