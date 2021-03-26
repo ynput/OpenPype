@@ -29,6 +29,11 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
+                            "app_variant_label": "18.5",
+                            "app_variant": "18-5",
+                            "app_name": "houdini"
+                        },
+                        {
                             "app_variant_label": "18",
                             "app_variant": "18",
                             "app_name": "houdini"

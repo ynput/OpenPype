@@ -992,6 +992,29 @@
             }
         },
         "variants": {
+            "houdini_18.5": {
+                "enabled": true,
+                "label": "",
+                "variant_label": "18.5",
+                "icon": "",
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Side Effects Software\\Houdini 18.5.499\\bin\\houdini.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "__environment_keys__": {
+                        "houdini_18.5": []
+                    }
+                }
+            },
             "houdini_18": {
                 "enabled": true,
                 "label": "",

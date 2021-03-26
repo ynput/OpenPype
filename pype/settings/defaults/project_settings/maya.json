@@ -379,6 +379,7 @@
         "ExtractCameraAlembic": {
             "enabled": true,
             "optional": true,
+            "active": true,
             "bake_attributes": []
         },
         "MayaSubmitDeadline": {
