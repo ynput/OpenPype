@@ -392,7 +392,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         """
         _id = self.table_view.model().data(index, Qt.UserRole)
         detail_window = SyncServerDetailWindow(
-            self.sync_server, _id, self.table_view.model()._project)
+            self.sync_server, _id, self.table_view.model().project)
         detail_window.exec()
 
     def _on_context_menu(self, point):
@@ -419,7 +419,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
         for site, progress in {local_site: local_progress,
                                remote_site: remote_progress}.items():
-            project = self.table_view.model()._project
+            project = self.table_view.model().project
             provider = self.sync_server.get_provider_for_site(project,
                                                               site)
             if provider == 'local_drive':
@@ -488,7 +488,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.table_view.model().refresh()
 
     def _pause(self):
-        self.sync_server.pause_representation(self.table_view.model()._project,
+        self.sync_server.pause_representation(self.table_view.model().project,
                                               self.representation_id,
                                               self.site_name)
         self.site_name = None
@@ -496,7 +496,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
     def _unpause(self):
         self.sync_server.unpause_representation(
-            self.table_view.model()._project,
+            self.table_view.model().project,
             self.representation_id,
             self.site_name)
         self.site_name = None
@@ -506,7 +506,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     # temporary here for testing, will be removed TODO
     def _add_site(self):
         log.info(self.representation_id)
-        project_name = self.table_view.model()._project
+        project_name = self.table_view.model().project
         local_site_name = self.sync_server.get_my_local_site()
         try:
             self.sync_server.add_site(
@@ -534,7 +534,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         try:
             local_site = get_local_site_id()
             self.sync_server.remove_site(
-                self.table_view.model()._project,
+                self.table_view.model().project,
                 self.representation_id,
                 local_site,
                 True
@@ -549,7 +549,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model()._project,
+            self.table_view.model().project,
             self.representation_id,
             'local'
             )
@@ -560,7 +560,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model()._project,
+            self.table_view.model().project,
             self.representation_id,
             'remote'
             )
@@ -570,7 +570,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             return
 
         fpath = self.item.path
-        project = self.table_view.model()._project
+        project = self.table_view.model().project
         fpath = self.sync_server.get_local_file_path(project,
                                                      site,
                                                      fpath)
@@ -675,8 +675,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site = self.sync_server.get_active_site(self._project)
-        self.remote_site = self.sync_server.get_remote_site(self._project)
+        self.local_site = self.sync_server.get_active_site(self.project)
+        self.remote_site = self.sync_server.get_remote_site(self.project)
 
         self.projection = self.get_default_projection()
 
@@ -700,7 +700,12 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
             All queries should go through this (because of collection).
         """
-        return self.sync_server.connection.database[self._project]
+        return self.sync_server.connection.database[self.project]
+
+    @property
+    def project(self):
+        """Returns project"""
+        return self._project
 
     def data(self, index, role):
         item = self._data[index.row()]
@@ -774,7 +779,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                     than single page of records)
         """
         if self.sync_server.is_paused() or \
-                self.sync_server.is_project_paused(self._project):
+                self.sync_server.is_project_paused(self.project):
             return
 
         self.beginResetModel()
@@ -807,10 +812,10 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._total_records = count
 
         local_provider = _translate_provider_for_icon(self.sync_server,
-                                                      self._project,
+                                                      self.project,
                                                       local_site)
         remote_provider = _translate_provider_for_icon(self.sync_server,
-                                                       self._project,
+                                                       self.project,
                                                        remote_site)
 
         for repre in result.get("paginatedResults"):
@@ -944,8 +949,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         """
         self._project = project
         self.sync_server.set_sync_project_settings()
-        self.local_site = self.sync_server.get_active_site(self._project)
-        self.remote_site = self.sync_server.get_remote_site(self._project)
+        self.local_site = self.sync_server.get_active_site(self.project)
+        self.remote_site = self.sync_server.get_remote_site(self.project)
         self.refresh()
 
     def get_index(self, id):
@@ -1412,7 +1417,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
         for site, progress in {local_site: local_progress,
                                remote_site: remote_progress}.items():
-            project = self.table_view.model()._project
+            project = self.table_view.model().project
             provider = self.sync_server.get_provider_for_site(project,
                                                               site)
             if provider == 'local_drive':
@@ -1459,7 +1464,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model()._project,
+            self.table_view.model().project,
             self.representation_id,
             'local',
             self.item._id)
@@ -1471,7 +1476,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model()._project,
+            self.table_view.model().project,
             self.representation_id,
             'remote',
             self.item._id)
@@ -1570,8 +1575,8 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site = self.sync_server.get_active_site(self._project)
-        self.remote_site = self.sync_server.get_remote_site(self._project)
+        self.local_site = self.sync_server.get_active_site(self.project)
+        self.remote_site = self.sync_server.get_remote_site(self.project)
 
         self.sort = self.DEFAULT_SORT
 
@@ -1594,7 +1599,12 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
 
             All queries should go through this (because of collection).
         """
-        return self.sync_server.connection.database[self._project]
+        return self.sync_server.connection.database[self.project]
+
+    @property
+    def project(self):
+        """Returns project"""
+        return self.project
 
     def tick(self):
         """
@@ -1686,10 +1696,10 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self._total_records = count
 
         local_provider = _translate_provider_for_icon(self.sync_server,
-                                                      self._project,
+                                                      self.project,
                                                       local_site)
         remote_provider = _translate_provider_for_icon(self.sync_server,
-                                                       self._project,
+                                                       self.project,
                                                        remote_site)
 
         for repre in result.get("paginatedResults"):
