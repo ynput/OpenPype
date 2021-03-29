@@ -489,6 +489,9 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     # Deadline tab.
     add_deadline_tab(GN)
 
+    # open the AvalonTab as default
+    GN["AvalonTab"].setFlag(0)
+
     # set tile color
     tile_color = _data.get("tile_color", "0xff0000ff")
     GN["tile_color"].setValue(tile_color)
