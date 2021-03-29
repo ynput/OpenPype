@@ -22,7 +22,10 @@ class ValidateTaskExistence(pyblish.api.ContextPlugin):
                 "type": "asset",
                 "name": {"$in": list(asset_names)}
             },
-            {"data.tasks": 1}
+            {
+                "name": 1,
+                "data.tasks": 1
+            }
         )
         tasks_by_asset_names = {}
         for asset_doc in asset_docs:

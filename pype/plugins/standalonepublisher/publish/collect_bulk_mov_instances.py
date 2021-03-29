@@ -31,7 +31,10 @@ class CollectBulkMovInstances(pyblish.api.InstancePlugin):
                 "type": "asset",
                 "name": asset_name
             },
-            {"data.tasks": 1}
+            {
+                "_id": 1,
+                "data.tasks": 1
+            }
         )
         if not asset_doc:
             raise AssertionError((
