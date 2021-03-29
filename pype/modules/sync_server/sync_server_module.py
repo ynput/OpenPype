@@ -112,7 +112,8 @@ class SyncServerModule(PypeModule, ITrayModule):
         self._connection = None
 
     """ Start of Public API """
-    def add_site(self, collection, representation_id, site_name=None):
+    def add_site(self, collection, representation_id, site_name=None,
+                 force=False):
         """
             Adds new site to representation to be synced.
 
@@ -125,6 +126,7 @@ class SyncServerModule(PypeModule, ITrayModule):
                 collection (string): project name (must match DB)
                 representation_id (string): MongoDB _id value
                 site_name (string): name of configured and active site
+                force (bool): reset site if exists
 
             Returns:
                 throws ValueError if any issue
@@ -137,7 +139,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         self.reset_provider_for_file(collection,
                                      representation_id,
-                                     site_name=site_name)
+                                     site_name=site_name, force=force)
 
     # public facing API
     def remove_site(self, collection, representation_id, site_name,
@@ -335,7 +337,19 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
         sync_settings = self._parse_sync_settings_from_settings(settings)
 
-        return self._get_active_sites_from_settings(sync_settings)
+        return self._get_enabled_sites_from_settings(sync_settings)
+
+    def get_configurable_items_for_site(self, project_name, site_name):
+        """
+            Returns list of items that should be configurable by User
+
+            Returns:
+                (list of dict)
+                [{key:"root", label:"root", value:"valueFromSettings"}]
+        """
+        # if project_name is None: ..for get_default_project_settings
+        # return handler.get_configurable_items()
+        pass
 
     def get_active_site(self, project_name):
         """
@@ -389,13 +403,12 @@ class SyncServerModule(PypeModule, ITrayModule):
 
     """ End of Public API """
 
-    def get_local_file_path(self, collection, file_path):
+    def get_local_file_path(self, collection, site_name, file_path):
         """
             Externalized for app
         """
-        handler = LocalDriveHandler()
-        local_file_path = handler.resolve_path(
-            file_path, None, self.get_anatomy(collection))
+        handler = LocalDriveHandler(collection, site_name)
+        local_file_path = handler.resolve_path(file_path)
 
         return local_file_path
 
@@ -409,7 +422,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return list(set(remote_sites))
 
-    def _get_active_sites_from_settings(self, sync_settings):
+    def _get_enabled_sites_from_settings(self, sync_settings):
         sites = [self.DEFAULT_SITE]
         if self.enabled and sync_settings['enabled']:
             sites.append(self.LOCAL_SITE)
@@ -820,7 +833,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
     def reset_provider_for_file(self, collection, representation_id,
                                 side=None, file_id=None, site_name=None,
-                                remove=False, pause=None):
+                                remove=False, pause=None, force=False):
         """
             Reset information about synchronization for particular 'file_id'
             and provider.
@@ -842,6 +855,7 @@ class SyncServerModule(PypeModule, ITrayModule):
             site_name (string): for adding new site
             remove (bool): if True remove site altogether
             pause (bool or None): if True - pause, False - unpause
+            force (bool): hard reset - currently only for add_site
 
         Returns:
             throws ValueError
@@ -880,7 +894,8 @@ class SyncServerModule(PypeModule, ITrayModule):
             self._pause_unpause_site(collection, query,
                                      representation, site_name, pause)
         else:  # add new site to all files for representation
-            self._add_site(collection, query, representation, elem, site_name)
+            self._add_site(collection, query, representation, elem, site_name,
+                           force)
 
     def _update_site(self, collection, query, update, arr_filter):
         """
@@ -932,8 +947,8 @@ class SyncServerModule(PypeModule, ITrayModule):
             Throws ValueError if 'site_name' not found on 'representation'
         """
         found = False
-        for file in representation.pop().get("files"):
-            for site in file.get("sites"):
+        for repre_file in representation.pop().get("files"):
+            for site in repre_file.get("sites"):
                 if site["name"] == site_name:
                     found = True
                     break
@@ -958,8 +973,8 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
         found = False
         site = None
-        for file in representation.pop().get("files"):
-            for site in file.get("sites"):
+        for repre_file in representation.pop().get("files"):
+            for site in repre_file.get("sites"):
                 if site["name"] == site_name:
                     found = True
                     break
@@ -984,18 +999,25 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         self._update_site(collection, query, update, arr_filter)
 
-    def _add_site(self, collection, query, representation, elem, site_name):
+    def _add_site(self, collection, query, representation, elem, site_name,
+                  force=False):
         """
             Adds 'site_name' to 'representation' on 'collection'
 
-            Throws ValueError if already present
+            Use 'force' to remove existing or raises ValueError
         """
-        for file in representation.pop().get("files"):
-            for site in file.get("sites"):
+        for repre_file in representation.pop().get("files"):
+            for site in repre_file.get("sites"):
                 if site["name"] == site_name:
-                    msg = "Site {} already present".format(site_name)
-                    log.info(msg)
-                    raise ValueError(msg)
+                    if force:
+                        self._reset_site_for_file(collection, query,
+                                                  elem, repre_file["_id"],
+                                                  site_name)
+                        return
+                    else:
+                        msg = "Site {} already present".format(site_name)
+                        log.info(msg)
+                        raise ValueError(msg)
 
         update = {
             "$push": {"files.$[].sites": elem}
@@ -1026,7 +1048,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         provider_name = self.get_provider_for_site(collection, site_name)
 
         if provider_name == 'local_drive':
-            handler = LocalDriveHandler()
+            handler = LocalDriveHandler(collection, site_name)
             query = {
                 "_id": ObjectId(representation_id)
             }
@@ -1042,6 +1064,7 @@ class SyncServerModule(PypeModule, ITrayModule):
             local_file_path = ''
             for file in representation.get("files"):
                 local_file_path = self.get_local_file_path(collection,
+                                                           site_name,
                                                            file.get("path", "")
                                                            )
                 try:
@@ -1056,6 +1079,7 @@ class SyncServerModule(PypeModule, ITrayModule):
                     self.log.warning(msg)
                     raise ValueError(msg)
 
+            folder = None
             try:
                 folder = os.path.dirname(local_file_path)
                 os.rmdir(folder)

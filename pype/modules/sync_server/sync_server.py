@@ -30,6 +30,7 @@ async def upload(module, collection, file, representation, provider_name,
         'projectB')
 
     Args:
+        module(SyncServerModule): object to run SyncServerModule API
         collection (str): source collection
         file (dictionary): of file from representation in Mongo
         representation (dictionary): of representation
@@ -46,14 +47,18 @@ async def upload(module, collection, file, representation, provider_name,
         # thread can do that at a time, upload/download to prepared
         # structure should be run in parallel
         remote_handler = lib.factory.get_provider(provider_name,
+                                                  collection,
                                                   remote_site_name,
                                                   tree=tree,
                                                   presets=preset)
 
         file_path = file.get("path", "")
-        local_file_path, remote_file_path = resolve_paths(module,
-            file_path, collection, remote_site_name, remote_handler
-        )
+        try:
+            local_file_path, remote_file_path = resolve_paths(module,
+                file_path, collection, remote_site_name, remote_handler
+            )
+        except Exception as exp:
+            print(exp)
 
         target_folder = os.path.dirname(remote_file_path)
         folder_id = remote_handler.create_folder(target_folder)
@@ -78,66 +83,35 @@ async def upload(module, collection, file, representation, provider_name,
     return file_id
 
 
-def resolve_paths(module, file_path, collection,
-                  remote_site_name=None, remote_handler=None):
-    """
-        Returns tuple of local and remote file paths with {root}
-        placeholders replaced with proper values from Settings or Anatomy
-
-        Ejected here because of Python 2 hosts (GDriveHandler is an issue)
-
-        Args:
-            module (SyncServerModule):
-            file_path(string): path with {root}
-            collection(string): project name
-            remote_site_name(string): remote site
-            remote_handler(AbstractProvider): implementation
-        Returns:
-            (string, string) - proper absolute paths
-    """
-    remote_file_path = ''
-    if remote_handler:
-        root_configs = module._get_roots_config(module.sync_project_settings,
-                                                collection,
-                                                remote_site_name)
-
-        remote_file_path = remote_handler.resolve_path(file_path,
-                                                       root_configs)
-
-    local_handler = lib.factory.get_provider(
-        'local_drive', module.get_active_site(collection))
-    local_file_path = local_handler.resolve_path(
-        file_path, None, module.get_anatomy(collection))
-
-    return local_file_path, remote_file_path
-
 async def download(module, collection, file, representation, provider_name,
                    remote_site_name, tree=None, preset=None):
     """
         Downloads file to local folder denoted in representation.Context.
 
     Args:
-     collection (str): source collection
-     file (dictionary) : info about processed file
-     representation (dictionary):  repr that 'file' belongs to
-     provider_name (string):  'gdrive' etc
-     site_name (string): site on provider, single provider(gdrive) could
+        module(SyncServerModule): object to run SyncServerModule API
+        collection (str): source collection
+        file (dictionary) : info about processed file
+        representation (dictionary):  repr that 'file' belongs to
+        provider_name (string):  'gdrive' etc
+        site_name (string): site on provider, single provider(gdrive) could
             have multiple sites (different accounts, credentials)
-     tree (dictionary): injected memory structure for performance
-     preset (dictionary): site config ('credentials_url', 'root'...)
+        tree (dictionary): injected memory structure for performance
+        preset (dictionary): site config ('credentials_url', 'root'...)
 
-    Returns:
+        Returns:
         (string) - 'name' of local file
     """
     with module.lock:
         remote_handler = lib.factory.get_provider(provider_name,
+                                                  collection,
                                                   remote_site_name,
                                                   tree=tree,
                                                   presets=preset)
 
         file_path = file.get("path", "")
-        local_file_path, remote_file_path = resolve_paths(module,
-            file_path, collection, remote_site_name, remote_handler
+        local_file_path, remote_file_path = resolve_paths(
+            module, file_path, collection, remote_site_name, remote_handler
         )
 
         local_folder = os.path.dirname(local_file_path)
@@ -158,6 +132,34 @@ async def download(module, collection, file, representation, provider_name,
                                          True
                                          )
     return file_id
+
+
+def resolve_paths(module, file_path, collection,
+                  remote_site_name=None, remote_handler=None):
+    """
+        Returns tuple of local and remote file paths with {root}
+        placeholders replaced with proper values from Settings or Anatomy
+
+        Ejected here because of Python 2 hosts (GDriveHandler is an issue)
+
+        Args:
+            module(SyncServerModule): object to run SyncServerModule API
+            file_path(string): path with {root}
+            collection(string): project name
+            remote_site_name(string): remote site
+            remote_handler(AbstractProvider): implementation
+        Returns:
+            (string, string) - proper absolute paths, remote path is optional
+    """
+    remote_file_path = ''
+    if remote_handler:
+        remote_file_path = remote_handler.resolve_path(file_path)
+
+    local_handler = lib.factory.get_provider(
+        'local_drive', collection, module.get_active_site(collection))
+    local_file_path = local_handler.resolve_path(file_path)
+
+    return local_file_path, remote_file_path
 
 
 def site_is_working(module, project_name, site_name):
@@ -192,10 +194,10 @@ def _get_configured_sites(module, project_name):
             {'ProjectA': {'studio':True, 'gdrive':False}}
     """
     settings = module.get_sync_project_setting(project_name)
-    return _get_configured_sites_from_setting(module, settings)
+    return _get_configured_sites_from_setting(module, project_name, settings)
 
 
-def _get_configured_sites_from_setting(module, project_setting):
+def _get_configured_sites_from_setting(module, project_name, project_setting):
     if not project_setting.get("enabled"):
         return {}
 
@@ -208,6 +210,7 @@ def _get_configured_sites_from_setting(module, project_setting):
             get((config["provider"], site_name))
         if not handler:
             handler = lib.factory.get_provider(config["provider"],
+                                               project_name,
                                                site_name,
                                                presets=config)
             initiated_handlers[(config["provider"], site_name)] = \
@@ -293,6 +296,7 @@ class SyncServerThread(threading.Thread):
                     site_preset = preset.get('sites')[remote_site]
                     remote_provider = site_preset['provider']
                     handler = lib.factory.get_provider(remote_provider,
+                                                       collection,
                                                        remote_site,
                                                        presets=site_preset)
                     limit = lib.factory.get_provider_batch_limit(
