@@ -77,6 +77,10 @@ class CollectBulkMovInstances(pyblish.api.InstancePlugin):
             # can be shared across all new created objects
             new_instance.data[key] = copy.deepcopy(value)
 
+        # Add `render_mov_batch` for specific validators
+        if "families" not in new_instance.data:
+            new_instance.data["families"] = []
+        new_instance.data["families"].append("render_mov_batch")
 
         # delete original instance
         context.remove(instance)
