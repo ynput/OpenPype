@@ -1,6 +1,9 @@
 import copy
+import json
 import pyblish.api
-from pprint import pformat
+
+from avalon import io
+from pype.lib import get_subset_name
 
 
 class CollectBulkMovInstances(pyblish.api.InstancePlugin):
@@ -11,52 +14,78 @@ class CollectBulkMovInstances(pyblish.api.InstancePlugin):
     hosts = ["standalonepublisher"]
     families = ["render_mov_batch"]
 
-    # presets
-    default_subset_task = {
-        "render_mov_batch": "compositing"
-    }
-    subsets = {
-        "render_mov_batch": {
-            "renderCompositingDefault": {
-                "task": "compositing",
-                "family": "render"
-            }
-        }
-    }
-    unchecked_by_default = []
+    new_instance_family = "render"
+    instance_task_names = [
+        "compositing",
+        "comp"
+    ]
+    default_task_name = "compositing"
+    subset_name_variant = "Default"
 
     def process(self, instance):
         context = instance.context
         asset_name = instance.data["asset"]
-        family = instance.data["family"]
 
-        default_task_name = self.default_subset_task.get(family)
-        for subset_name, subset_data in self.subsets[family].items():
-            instance_name = f"{asset_name}_{subset_name}"
-            task_name = subset_data.get("task") or default_task_name
+        asset_doc = io.find_one(
+            {
+                "type": "asset",
+                "name": asset_name
+            },
+            {"data.tasks": 1}
+        )
+        if not asset_doc:
+            raise AssertionError((
+                "Couldn't find Asset document with name \"{}\""
+            ).format(asset_name))
 
-            # create new instance
-            new_instance = context.create_instance(instance_name)
+        available_task_names = {}
+        asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+        for task_name in asset_tasks.keys():
+            available_task_names[task_name.lower()] = task_name
 
-            # add original instance data except name key
-            for key, value in instance.data.items():
-                if key not in ["name"]:
-                    # Make sure value is copy since value may be object which
-                    # can be shared across all new created objects
-                    new_instance.data[key] = copy.deepcopy(value)
+        task_name = self.default_task_name
+        for _task_name in self.instance_task_names:
+            _task_name_low = _task_name.lower()
+            if _task_name_low in available_task_names:
+                task_name = available_task_names[_task_name_low]
+                break
 
-            # add subset data from preset
-            new_instance.data.update(subset_data)
+        subset_name = get_subset_name(
+            self.new_instance_family,
+            self.subset_name_variant,
+            task_name,
+            asset_doc["_id"],
+            io.Session["AVALON_PROJECT"]
+        )
+        instance_name = f"{asset_name}_{subset_name}"
 
-            new_instance.data["label"] = instance_name
-            new_instance.data["subset"] = subset_name
-            new_instance.data["task"] = task_name
+        # create new instance
+        new_instance = context.create_instance(instance_name)
+        new_instance_data = {
+            "name": instance_name,
+            "label": instance_name,
+            "family": self.new_instance_family,
+            "subset": subset_name,
+            "task": task_name
+        }
+        new_instance.data.update(new_instance_data)
+        # add original instance data except name key
+        for key, value in instance.data.items():
+            if key in new_instance_data:
+                continue
+            # Make sure value is copy since value may be object which
+            # can be shared across all new created objects
+            new_instance.data[key] = copy.deepcopy(value)
 
-            if subset_name in self.unchecked_by_default:
-                new_instance.data["publish"] = False
-
-            self.log.info(f"Created new instance: {instance_name}")
-            self.log.debug(f"_ inst_data: {pformat(new_instance.data)}")
 
         # delete original instance
         context.remove(instance)
+
+        self.log.info(f"Created new instance: {instance_name}")
+
+        def convertor(value):
+            return str(value)
+
+        self.log.debug("Instance data: {}".format(
+            json.dumps(new_instance.data, indent=4, default=convertor)
+        ))
