@@ -3,31 +3,23 @@ import pyblish.api
 from pprint import pformat
 
 
-class CollectBatchInstances(pyblish.api.InstancePlugin):
+class CollectBulkMovInstances(pyblish.api.InstancePlugin):
     """Collect all available instances for batch publish."""
 
-    label = "Collect Batch Instances"
+    label = "Collect Bulk Mov Instances"
     order = pyblish.api.CollectorOrder + 0.489
     hosts = ["standalonepublisher"]
-    families = ["background_batch"]
+    families = ["render_mov_batch"]
 
     # presets
     default_subset_task = {
-        "background_batch": "background"
+        "render_mov_batch": "compositing"
     }
     subsets = {
-        "background_batch": {
-            "backgroundLayout": {
-                "task": "background",
-                "family": "backgroundLayout"
-            },
-            "backgroundComp": {
-                "task": "background",
-                "family": "backgroundComp"
-            },
-            "workfileBackground": {
-                "task": "background",
-                "family": "workfile"
+        "render_mov_batch": {
+            "renderCompositingDefault": {
+                "task": "compositing",
+                "family": "render"
             }
         }
     }
