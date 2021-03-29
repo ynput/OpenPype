@@ -6,6 +6,7 @@ from avalon import api
 from avalon.vendor import requests
 import re
 import pyblish.api
+import nuke
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
@@ -29,6 +30,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     secondary_pool = ""
     group = ""
     department = ""
+    limit_groups = {}
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
@@ -149,6 +151,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         if not priority:
             priority = self.priority
 
+        # resolve any limit groups
+        limit_groups = self.get_limit_groups()
+        self.log.info("Limit groups: `{}`".format(limit_groups))
+
         payload = {
             "JobInfo": {
                 # Top-level group name
@@ -180,7 +186,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": output_filename_0.replace("\\", "/")
+                "OutputFilename0": output_filename_0.replace("\\", "/"),
+
+                # limiting groups
+                "LimitGroups": ",".join(limit_groups)
 
             },
             "PluginInfo": {
@@ -329,9 +338,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             return int(search_results[1])
         if "#" in path:
             self.log.debug("_ path: `{}`".format(path))
-            return path
-        else:
-            return path
+        return path
 
     def expected_files(self,
                        instance,
@@ -339,7 +346,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         """ Create expected files in instance data
         """
         if not instance.data.get("expectedFiles"):
-            instance.data["expectedFiles"] = list()
+            instance.data["expectedFiles"] = []
 
         dir = os.path.dirname(path)
         file = os.path.basename(path)
@@ -356,3 +363,28 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         for i in range(self._frame_start, (self._frame_end + 1)):
             instance.data["expectedFiles"].append(
                 os.path.join(dir, (file % i)).replace("\\", "/"))
+
+    def get_limit_groups(self):
+        """Search for limit group nodes and return group name.
+        Limit groups will be defined as pairs in Nuke deadline submitter
+        presents where the key will be name of limit group and value will be
+        a list of plugin's node class names. Thus, when a plugin uses more
+        than one node, these will be captured and the triggered process
+        will add the appropriate limit group to the payload jobinfo attributes.
+        Returning:
+            list: captured groups list
+        """
+        captured_groups = []
+        for lg_name, list_node_class in self.deadline_limit_groups.items():
+            for node_class in list_node_class:
+                for node in nuke.allNodes(recurseGroups=True):
+                    # ignore all nodes not member of defined class
+                    if node.Class() not in node_class:
+                        continue
+                    # ignore all disabled nodes
+                    if node["disable"].value():
+                        continue
+                    # add group name if not already added
+                    if lg_name not in captured_groups:
+                        captured_groups.append(lg_name)
+        return captured_groups
