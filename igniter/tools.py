@@ -6,6 +6,7 @@ Functions ``compose_url()`` and ``decompose_url()`` are the same as in
 version is decided.
 
 """
+import sys
 from typing import Dict, Union
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
@@ -244,6 +245,10 @@ def get_pype_path_from_db(url: str) -> Union[str, None]:
 
     try:
         client = MongoClient(**mongo_args)
+    except ServerSelectionTimeoutError as e:
+        print("!!! Can't connect to mongodb database server.")
+        print("!!! {}".format(e))
+        return None
     except Exception:
         return None
 

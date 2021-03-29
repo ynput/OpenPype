@@ -242,7 +242,7 @@ class BootstrapRepos:
         self.registry = PypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.pype_filter = [
-            "build", "docs", "tests", "repos", "tools", "venv"
+            "build", "docs", "tests", "tools", "venv", "coverage"
         ]
         self._message = message
 
@@ -351,7 +351,7 @@ class BootstrapRepos:
                 Path(temp_dir) / f"pype-v{version}.zip"
             self._print(f"creating zip: {temp_zip}")
 
-            self._create_pype_zip(temp_zip, repo_dir)
+            self._create_pype_zip(temp_zip, repo_dir.parent)
             if not os.path.exists(temp_zip):
                 self._print("make archive failed.", LOG_ERROR)
                 return None
@@ -417,15 +417,14 @@ class BootstrapRepos:
 
         """
         frozen_root = Path(sys.executable).parent
-        repo_dir = frozen_root / "repos"
-        repo_list = self._filter_dir(
-            repo_dir, self.zip_filter)
 
         # from frozen code we need igniter, pype, schema vendor
         pype_list = self._filter_dir(
             frozen_root / "pype", self.zip_filter)
         pype_list += self._filter_dir(
             frozen_root / "igniter", self.zip_filter)
+        pype_list += self._filter_dir(
+            frozen_root / "repos", self.zip_filter)
         pype_list += self._filter_dir(
             frozen_root / "schema", self.zip_filter)
         pype_list += self._filter_dir(
@@ -443,17 +442,7 @@ class BootstrapRepos:
 
             with ZipFile(temp_zip, "w") as zip_file:
                 progress = 0
-                repo_inc = 48.0 / float(len(repo_list))
-                file: Path
-                for file in repo_list:
-                    progress += repo_inc
-                    self._progress_callback(int(progress))
-
-                    # archive name is relative to repos dir
-                    arc_name = file.relative_to(repo_dir)
-                    zip_file.write(file, arc_name)
-
-                pype_inc = 48.0 / float(len(pype_list))
+                pype_inc = 98.0 / float(len(pype_list))
                 file: Path
                 for file in pype_list:
                     progress += pype_inc
@@ -463,17 +452,14 @@ class BootstrapRepos:
                     # we need to replace first part of path which starts with
                     # something like `exe.win/linux....` with `pype` as this
                     # is expected by Pype in zip archive.
-                    arc_name = Path("pype").joinpath(*arc_name.parts[1:])
+                    arc_name = Path().joinpath(*arc_name.parts[1:])
                     zip_file.write(file, arc_name)
 
             destination = self._move_zip_to_data_dir(temp_zip)
 
         return PypeVersion(version=version, path=destination)
 
-    def _create_pype_zip(
-            self,
-            zip_path: Path, include_dir: Path,
-            include_pype: bool = True) -> None:
+    def _create_pype_zip(self, zip_path: Path, pype_path: Path) -> None:
         """Pack repositories and Pype into zip.
 
         We are using :mod:`zipfile` instead :meth:`shutil.make_archive`
@@ -482,70 +468,46 @@ class BootstrapRepos:
         and :attr:`pype_filter` on top level directory in Pype repository.
 
         Args:
-            zip_path (str): path  to zip file.
-            include_dir (Path): repo directories to include.
-            include_pype (bool): add Pype module itself.
+            zip_path (Path): Path to zip file.
+            pype_path (Path): Path to Pype sources.
 
         """
-        include_dir = include_dir.resolve()
-
         pype_list = []
-        # get filtered list of files in repositories (repos directory)
-        repo_list = self._filter_dir(include_dir, self.zip_filter)
-        # count them
-        repo_files = len(repo_list)
-
-        # there must be some files, otherwise `include_dir` path is wrong
-        assert repo_files != 0, f"No repositories to include in {include_dir}"
         pype_inc = 0
-        if include_pype:
-            # get filtered list of file in Pype repository
-            pype_list = self._filter_dir(include_dir.parent, self.zip_filter)
-            pype_files = len(pype_list)
-            repo_inc = 48.0 / float(repo_files)
-            pype_inc = 48.0 / float(pype_files)
-        else:
-            repo_inc = 98.0 / float(repo_files)
+
+        # get filtered list of file in Pype repository
+        pype_list = self._filter_dir(pype_path, self.zip_filter)
+        pype_files = len(pype_list)
+
+        pype_inc = 98.0 / float(pype_files)
 
         with ZipFile(zip_path, "w") as zip_file:
             progress = 0
+            pype_root = pype_path.resolve()
+            # generate list of filtered paths
+            dir_filter = [pype_root / f for f in self.pype_filter]
+
             file: Path
-            for file in repo_list:
-                progress += repo_inc
+            for file in pype_list:
+                progress += pype_inc
                 self._progress_callback(int(progress))
 
-                # archive name is relative to repos dir
-                arc_name = file.relative_to(include_dir)
-                zip_file.write(file, arc_name)
+                # if file resides in filtered path, skip it
+                is_inside = None
+                df: Path
+                for df in dir_filter:
+                    try:
+                        is_inside = file.resolve().relative_to(df)
+                    except ValueError:
+                        pass
 
-            # add pype itself
-            if include_pype:
-                pype_root = include_dir.parent.resolve()
-                # generate list of filtered paths
-                dir_filter = [pype_root / f for f in self.pype_filter]
+                if is_inside:
+                    continue
 
-                file: Path
-                for file in pype_list:
-                    progress += pype_inc
-                    self._progress_callback(int(progress))
+                processed_path = file
+                self._print(f"- processing {processed_path}")
 
-                    # if file resides in filtered path, skip it
-                    is_inside = None
-                    df: Path
-                    for df in dir_filter:
-                        try:
-                            is_inside = file.resolve().relative_to(df)
-                        except ValueError:
-                            pass
-
-                    if is_inside:
-                        continue
-
-                    processed_path = file
-                    self._print(f"- processing {processed_path}")
-
-                    zip_file.write(file,
-                                   "pype" / file.relative_to(pype_root))
+                zip_file.write(file, file.relative_to(pype_root))
 
             # test if zip is ok
             zip_file.testzip()
@@ -553,10 +515,10 @@ class BootstrapRepos:
 
     @staticmethod
     def add_paths_from_archive(archive: Path) -> None:
-        """Add first-level directories as paths to :mod:`sys.path`.
+        """Add first-level directory and 'repos' as paths to :mod:`sys.path`.
 
-        This will enable Python to import modules is second-level directories
-        in zip file.
+        This will enable Python to import Pype and modules in `repos`
+        submodule directory in zip file.
 
         Adding to both `sys.path` and `PYTHONPATH`, skipping duplicates.
 
@@ -574,21 +536,29 @@ class BootstrapRepos:
             name_list = zip_file.namelist()
 
         roots = []
+        paths = []
         for item in name_list:
-            root = item.split("/")[0]
+            if not item.startswith("repos/"):
+                continue
+
+            root = item.split("/")[1]
+
             if root not in roots:
                 roots.append(root)
-                sys.path.insert(0, f"{archive}{os.path.sep}{root}")
+                paths.append(
+                    f"{archive}{os.path.sep}repos{os.path.sep}{root}")
+                sys.path.insert(0, paths[-1])
 
+        sys.path.insert(0, f"{archive}")
         pythonpath = os.getenv("PYTHONPATH", "")
-        paths = pythonpath.split(os.pathsep)
-        paths += roots
+        python_paths = pythonpath.split(os.pathsep)
+        python_paths += paths
 
-        os.environ["PYTHONPATH"] = os.pathsep.join(paths)
+        os.environ["PYTHONPATH"] = os.pathsep.join(python_paths)
 
     @staticmethod
     def add_paths_from_directory(directory: Path) -> None:
-        """Add first level directories as paths to :mod:`sys.path`.
+        """Add repos first level directories as paths to :mod:`sys.path`.
 
         This works the same as :meth:`add_paths_from_archive` but in
         specified directory.
@@ -599,6 +569,8 @@ class BootstrapRepos:
             directory (Path): path to directory.
 
         """
+        sys.path.insert(0, directory.as_posix())
+        directory = directory / "repos"
         if not directory.exists() and not directory.is_dir():
             raise ValueError("directory is invalid")
 
@@ -937,8 +909,7 @@ class BootstrapRepos:
         try:
             # add one 'pype' level as inside dir there should
             # be many other repositories.
-            version_str = BootstrapRepos.get_version(
-                dir_item / "pype")
+            version_str = BootstrapRepos.get_version(dir_item)
             version_check = PypeVersion(version=version_str)
         except ValueError:
             self._print(
@@ -979,7 +950,7 @@ class BootstrapRepos:
         try:
             with ZipFile(zip_item, "r") as zip_file:
                 with zip_file.open(
-                        "pype/pype/version.py") as version_file:
+                        "pype/version.py") as version_file:
                     zip_version = {}
                     exec(version_file.read(), zip_version)
                     version_check = PypeVersion(
