@@ -11,6 +11,7 @@ import queue
 import pymongo
 
 import requests
+import appdirs
 import ftrack_api
 import ftrack_api.session
 import ftrack_api.cache
