@@ -8,7 +8,7 @@ class AddSyncSite(api.Loader):
     families = ["*"]
 
     label = "Add Sync Site"
-    order = 20
+    order = 2  # lower means better
     icon = "download"
     color = "#999999"
 
@@ -22,9 +22,11 @@ class AddSyncSite(api.Loader):
 
     @staticmethod
     def add_site_to_representation(project_name, representation_id, site_name):
+        """Adds new site to representation_id, resets if exists"""
         manager = ModulesManager()
         sync_server = manager.modules_by_name["sync_server"]
-        sync_server.add_site(project_name, representation_id, site_name)
+        sync_server.add_site(project_name, representation_id, site_name,
+                             force=True)
 
     def filepath_from_context(self, context):
         """No real file loading"""
