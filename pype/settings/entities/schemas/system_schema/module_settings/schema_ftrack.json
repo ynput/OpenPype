@@ -35,24 +35,7 @@
             "object_type": "text"
         },
         {
-            "type": "splitter"
-        },
-        {
-            "type": "label",
-            "label": "Ftrack event server advanced settings"
-        },
-        {
-            "type": "text",
-            "key": "mongo_database_name",
-            "label": "Event Mongo DB"
-        },
-        {
-            "type": "text",
-            "key": "mongo_collection_name",
-            "label": "Events Mongo Collection"
-        },
-        {
-            "type": "splitter"
+            "type": "separator"
         },
         {
             "key": "intent",
@@ -71,13 +54,15 @@
                     "key": "items"
                 },
                 {
-                    "type": "label",
-                    "label": " "
+                    "type": "separator"
                 },
                 {
                     "key": "default",
                     "type": "text",
                     "label": "Default Intent"
+                },
+                {
+                    "type": "separator"
                 }
             ]
         },

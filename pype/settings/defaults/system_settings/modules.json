@@ -12,8 +12,6 @@
         "ftrack_server": "https://pype.ftrackapp.com",
         "ftrack_actions_path": [],
         "ftrack_events_path": [],
-        "mongo_database_name": "pype",
-        "mongo_collection_name": "ftrack_events",
         "intent": {
             "items": {
                 "-": "-",
