@@ -32,7 +32,7 @@ class GlobalHostDataHook(PreLaunchHook):
             "project_name": self.data["project_name"],
             "asset_name": self.data["asset_name"],
             "task_name": self.data["task_name"],
-            "app_name": app.app_name,
+
             "app": app,
 
             "dbcon": self.data["dbcon"],

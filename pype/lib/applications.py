@@ -418,7 +418,7 @@ class LaunchHook:
                 return False
 
         if cls.app_groups:
-            if launch_context.app_group not in cls.app_groups:
+            if launch_context.app_group.name not in cls.app_groups:
                 return False
 
         if cls.app_names:
@@ -445,11 +445,11 @@ class LaunchHook:
 
     @property
     def app_group(self):
-        return getattr(self.application, "app_group", None)
+        return getattr(self.application, "group", None)
 
     @property
     def app_name(self):
-        return getattr(self.application, "app_name", None)
+        return getattr(self.application, "name", None)
 
     def validate(self):
         """Optional validation of launch hook on initialization.
@@ -718,7 +718,7 @@ class ApplicationLaunchContext:
 
     @property
     def app_name(self):
-        return self.application.app_name
+        return self.application.name
 
     @property
     def host_name(self):
@@ -726,7 +726,7 @@ class ApplicationLaunchContext:
 
     @property
     def app_group(self):
-        return self.application.app_group
+        return self.application.group
 
     @property
     def manager(self):
@@ -1060,7 +1060,8 @@ def prepare_context_environments(data):
         "AVALON_ASSET": asset_doc["name"],
         "AVALON_TASK": task_name,
         "AVALON_APP": app.host_name,
-        "AVALON_APP_NAME": app.app_name,
+        # TODO this hould be `app.full_name` in future PRs
+        "AVALON_APP_NAME": app.name,
         "AVALON_WORKDIR": workdir
     }
     log.debug(
