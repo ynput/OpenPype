@@ -988,29 +988,42 @@ def prepare_host_environments(data):
     app = data["app"]
     log = data["log"]
 
-    # Keys for getting environments
-    env_keys = [app.app_group, app.app_name]
+    # `added_env_keys` has debug purpose
+    added_env_keys = {app.group.name, app.name}
+    # Environments for application
+    environments = [
+        app.group.environment,
+        app.environment
+    ]
 
     asset_doc = data.get("asset_doc")
+    # Add tools environments
+    groups_by_name = {}
+    tool_by_group_name = collections.defaultdict(list)
     if asset_doc:
-        # Add tools environments
+        # Make sure each tool group can be added only once
         for key in asset_doc["data"].get("tools_env") or []:
             tool = app.manager.tools.get(key)
-            if tool:
-                if tool.group_name not in env_keys:
-                    env_keys.append(tool.group_name)
+            if not tool:
+                continue
+            groups_by_name[tool.group.name] = tool.group
+            tool_by_group_name[tool.group.name].append(tool)
 
-                if tool.name not in env_keys:
-                    env_keys.append(tool.name)
+        for group_name, group in groups_by_name.items():
+            environments.append(group.environment)
+            added_env_keys.add(group_name)
+            for tool in tool_by_group_name[group_name]:
+                environments.append(tool.environment)
+                added_env_keys.add(tool.name)
 
     log.debug(
-        "Finding environment groups for keys: {}".format(env_keys)
+        "Will add environments for apps and tools: {}".format(
+            ", ".join(added_env_keys)
+        )
     )
 
-    settings_env = data["settings_env"]
     env_values = {}
-    for env_key in env_keys:
-        _env_values = settings_env.get(env_key)
+    for _env_values in environments:
         if not _env_values:
             continue
 
