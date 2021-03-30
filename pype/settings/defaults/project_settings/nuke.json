@@ -1,11 +1,11 @@
 {
     "menu": {
         "Pype": {
-            "Create...": "ctrl+shift+alt+c",
-            "Publish...": "ctrl+alt+p",
-            "Load...": "ctrl+alt+l",
-            "Manage...": "ctrl+alt+m",
-            "Build Workfile": "ctrl+alt+b"
+            "create": "ctrl+shift+alt+c",
+            "publish": "ctrl+alt+p",
+            "load": "ctrl+alt+l",
+            "manage": "ctrl+alt+m",
+            "build_workfile": "ctrl+alt+b"
         }
     },
     "create": {

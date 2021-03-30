@@ -1,3 +1,6 @@
+import re
+
+
 # Metadata keys for work with studio and project overrides
 M_OVERRIDEN_KEY = "__overriden_keys__"
 # Metadata key for storing information about environments
@@ -19,6 +22,10 @@ LOCAL_SETTING_KEY = "local_settings"
 
 DEFAULT_PROJECT_KEY = "__default_project__"
 
+KEY_ALLOWED_SYMBOLS = "a-zA-Z0-9-_ "
+KEY_REGEX = re.compile(r"^[{}]+$".format(KEY_ALLOWED_SYMBOLS))
+
+
 __all__ = (
     "M_OVERRIDEN_KEY",
     "M_ENVIRONMENT_KEY",
@@ -29,5 +36,10 @@ __all__ = (
     "SYSTEM_SETTINGS_KEY",
     "PROJECT_SETTINGS_KEY",
     "PROJECT_ANATOMY_KEY",
-    "LOCAL_SETTING_KEY"
+    "LOCAL_SETTING_KEY",
+
+    "DEFAULT_PROJECT_KEY",
+
+    "KEY_ALLOWED_SYMBOLS",
+    "KEY_REGEX"
 )

@@ -13,11 +13,15 @@ from .lib import (
     get_studio_settings_schema,
     get_project_settings_schema
 )
-from .exceptions import EntitySchemaError
+from .exceptions import (
+    SchemaError,
+    InvalidKeySymbols
+)
 from pype.settings.constants import (
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
-    PROJECT_ANATOMY_KEY
+    PROJECT_ANATOMY_KEY,
+    KEY_REGEX
 )
 
 from pype.settings.lib import (
@@ -150,8 +154,12 @@ class RootEntity(BaseItemEntity):
                     "Root entity \"{}\" has child with `is_group`"
                     " attribute set to True but root can't save overrides."
                 ).format(self.__class__.__name__)
-                raise EntitySchemaError(self, reason)
+                raise SchemaError(reason)
             child_entity.schema_validations()
+
+        for key in self.non_gui_children.keys():
+            if not KEY_REGEX.match(key):
+                raise InvalidKeySymbols(self.path, key)
 
     def get_entity_from_path(self, path):
         """Return system settings entity."""

@@ -138,20 +138,16 @@ class ApplicationManager:
                     app_group, app_name, host_name, app_data, self
                 )
 
-        tools_definitions = settings["tools"]
+        tools_definitions = settings["tools"]["tool_groups"]
         for tool_group_name, tool_group_data in tools_definitions.items():
-            enabled = tool_group_data.get("enabled", True)
             tool_variants = tool_group_data.get("variants") or {}
             for tool_name, tool_data in tool_variants.items():
-                if tool_name in self.tools:
+                tool = ApplicationTool(tool_name, tool_group_name)
+                if tool.full_name in self.tools:
                     self.log.warning((
                         "Duplicated tool name in settings \"{}\""
-                    ).format(tool_name))
-
-                _enabled = tool_data.get("enabled", enabled)
-                self.tools[tool_name] = ApplicationTool(
-                    tool_name, tool_group_name, _enabled
-                )
+                    ).format(tool.full_name))
+                self.tools[tool.full_name] = tool
 
     def launch(self, app_name, **data):
         """Launch procedure.
@@ -196,16 +192,15 @@ class ApplicationTool:
     Args:
         tool_name (str): Name of the tool.
         group_name (str): Name of group which wraps tool.
-        enabled (bool): Is tool enabled by studio.
     """
 
-    def __init__(self, tool_name, group_name, enabled):
+    def __init__(self, tool_name, group_name):
         self.name = tool_name
         self.group_name = group_name
-        self.enabled = enabled
 
-    def __bool__(self):
-        return self.enabled
+    @property
+    def full_name(self):
+        return "/".join((self.group_name, self.name))
 
 
 class ApplicationExecutable:

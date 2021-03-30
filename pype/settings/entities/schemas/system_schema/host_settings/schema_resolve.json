@@ -29,8 +29,9 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "host_version": "16",
-                            "host_name": "resolve"
+                            "app_variant_label": "16",
+                            "app_variant": "16",
+                            "app_name": "resolve"
                         }
                     ]
                 }

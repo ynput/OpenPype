@@ -30,24 +30,24 @@
                         "name": "template_host_variant",
                         "template_data": [
                             {
-                                "host_version": "12.2",
-                                "host_name": "{nuke_type}",
-                                "multipath_executables": true
+                                "app_variant": "12-2",
+                                "app_variant_label": "12.2",
+                                "app_name": "{nuke_type}"
                             },
                             {
-                                "host_version": "12.0",
-                                "host_name": "{nuke_type}",
-                                "multipath_executables": true
+                                "app_variant": "12-0",
+                                "app_variant_label": "12.0",
+                                "app_name": "{nuke_type}"
                             },
                             {
-                                "host_version": "11.3",
-                                "host_name": "{nuke_type}",
-                                "multipath_executables": true
+                                "app_variant": "11-3",
+                                "app_variant_label": "11.3",
+                                "app_name": "{nuke_type}"
                             },
                             {
-                                "host_version": "11.2",
-                                "host_name": "{nuke_type}",
-                                "multipath_executables": true
+                                "app_variant": "11-2",
+                                "app_variant_label": "11.2",
+                                "app_name": "{nuke_type}"
                             }
                         ]
                     }

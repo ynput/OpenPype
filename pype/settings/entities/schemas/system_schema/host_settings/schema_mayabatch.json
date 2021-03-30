@@ -29,16 +29,19 @@
                     "name": "template_host_variant",
                     "template_data": [
                         {
-                            "host_version": "2020",
-                            "host_name": "mayabatch"
+                            "app_variant_label": "2020",
+                            "app_variant": "2020",
+                            "app_name": "mayabatch"
                         },
                         {
-                            "host_version": "2019",
-                            "host_name": "mayabatch"
+                            "app_variant_label": "2019",
+                            "app_variant": "2019",
+                            "app_name": "mayabatch"
                         },
                         {
-                            "host_version": "2018",
-                            "host_name": "mayabatch"
+                            "app_variant_label": "2018",
+                            "app_variant": "2018",
+                            "app_name": "mayabatch"
                         }
                     ]
                 }

@@ -1,78 +1,53 @@
 {
-    "mtoa": {
-        "enabled": true,
-        "environment": {
-            "MTOA": "{PYPE_STUDIO_SOFTWARE}/arnold/mtoa_{MAYA_VERSION}_{MTOA_VERSION}",
-            "MAYA_RENDER_DESC_PATH": "{MTOA}",
-            "MAYA_MODULE_PATH": "{MTOA}",
-            "ARNOLD_PLUGIN_PATH": "{MTOA}/shaders",
-            "MTOA_EXTENSIONS_PATH": {
-                "darwin": "{MTOA}/extensions",
-                "linux": "{MTOA}/extensions",
-                "windows": "{MTOA}/extensions"
+    "tool_groups": {
+        "mtoa": {
+            "environment": {
+                "MTOA": "{PYPE_STUDIO_SOFTWARE}/arnold/mtoa_{MAYA_VERSION}_{MTOA_VERSION}",
+                "MAYA_RENDER_DESC_PATH": "{MTOA}",
+                "MAYA_MODULE_PATH": "{MTOA}",
+                "ARNOLD_PLUGIN_PATH": "{MTOA}/shaders",
+                "MTOA_EXTENSIONS_PATH": {
+                    "darwin": "{MTOA}/extensions",
+                    "linux": "{MTOA}/extensions",
+                    "windows": "{MTOA}/extensions"
+                },
+                "MTOA_EXTENSIONS": {
+                    "darwin": "{MTOA}/extensions",
+                    "linux": "{MTOA}/extensions",
+                    "windows": "{MTOA}/extensions"
+                },
+                "DYLD_LIBRARY_PATH": {
+                    "darwin": "{MTOA}/bin"
+                },
+                "PATH": {
+                    "windows": "{PATH};{MTOA}/bin"
+                }
             },
-            "MTOA_EXTENSIONS": {
-                "darwin": "{MTOA}/extensions",
-                "linux": "{MTOA}/extensions",
-                "windows": "{MTOA}/extensions"
-            },
-            "DYLD_LIBRARY_PATH": {
-                "darwin": "{MTOA}/bin"
-            },
-            "PATH": {
-                "windows": "{PATH};{MTOA}/bin"
-            },
-            "__environment_keys__": {
-                "mtoa": [
-                    "MTOA",
-                    "MAYA_RENDER_DESC_PATH",
-                    "MAYA_MODULE_PATH",
-                    "ARNOLD_PLUGIN_PATH",
-                    "MTOA_EXTENSIONS_PATH",
-                    "MTOA_EXTENSIONS",
-                    "DYLD_LIBRARY_PATH",
-                    "PATH"
-                ]
+            "variants": {
+                "3-2": {
+                    "MTOA_VERSION": "3.2"
+                },
+                "3-1": {
+                    "MTOA_VERSION": "3.1"
+                },
+                "__dynamic_keys_labels__": {
+                    "3-2": "3.2",
+                    "3-1": "3.2"
+                }
             }
         },
-        "variants": {
-            "mtoa_3.2": {
-                "MTOA_VERSION": "3.2",
-                "__environment_keys__": {
-                    "mtoa_3.2": [
-                        "MTOA_VERSION"
-                    ]
-                }
-            },
-            "mtoa_3.1": {
-                "MTOA_VERSION": "3.1",
-                "__environment_keys__": {
-                    "mtoa_3.1": [
-                        "MTOA_VERSION"
-                    ]
-                }
-            }
+        "vray": {
+            "environment": {},
+            "variants": {}
+        },
+        "yeti": {
+            "environment": {},
+            "variants": {}
+        },
+        "__dynamic_keys_labels__": {
+            "mtoa": "Autodesk Arnold",
+            "vray": "Chaos Group Vray",
+            "yeti": "Pergrine Labs Yeti"
         }
-    },
-    "vray": {
-        "enabled": true,
-        "environment": {
-            "__environment_keys__": {
-                "vray": []
-            }
-        },
-        "variants": {}
-    },
-    "yeti": {
-        "enabled": true,
-        "environment": {
-            "__environment_keys__": {
-                "yeti": []
-            }
-        },
-        "variants": {}
-    },
-    "other": {
-        "variants": {}
     }
 }

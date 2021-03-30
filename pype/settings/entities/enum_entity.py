@@ -170,14 +170,32 @@ class ToolsEnumEntity(BaseEnumEntity):
 
         valid_keys = set()
         enum_items = []
-        for tool_group in system_settings_entity["tools"].values():
-            enabled_entity = tool_group.get("enabled")
-            if enabled_entity and not enabled_entity.value:
-                continue
+        tool_groups_entity = system_settings_entity["tools"]["tool_groups"]
+        for group_name, tool_group in tool_groups_entity.items():
+            # Try to get group label from entity
+            group_label = None
+            if hasattr(tool_groups_entity, "get_key_label"):
+                group_label = tool_groups_entity.get_key_label(group_name)
 
-            for variant_name in tool_group["variants"].keys():
-                enum_items.append({variant_name: variant_name})
-                valid_keys.add(variant_name)
+            variants_entity = tool_group["variants"]
+            for variant_name in variants_entity.keys():
+                # Prepare tool name (used as value)
+                tool_name = "/".join((group_name, variant_name))
+
+                # Try to get variant label from entity
+                variant_label = None
+                if hasattr(variants_entity, "get_key_label"):
+                    variant_label = variants_entity.get_key_label(variant_name)
+
+                # Tool label that will be shown
+                # - use tool name itself if labels are not filled
+                if group_label and variant_label:
+                    tool_label = " ".join((group_label, variant_label))
+                else:
+                    tool_label = tool_name
+
+                enum_items.append({tool_name: tool_label})
+                valid_keys.add(tool_name)
         return enum_items, valid_keys
 
     def set_override_state(self, *args, **kwargs):

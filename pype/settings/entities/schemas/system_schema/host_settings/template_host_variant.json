@@ -7,8 +7,8 @@
     },
     {
         "type": "dict",
-        "key": "{host_name}_{host_version}",
-        "label": "{host_version}",
+        "key": "{app_name}_{app_variant}",
+        "label": "{app_variant_label}",
         "collapsible": true,
         "checkbox_key": "enabled",
         "children": [
@@ -78,7 +78,7 @@
                 "key": "environment",
                 "label": "Environment",
                 "type": "raw-json",
-                "env_group_key": "{host_name}_{host_version}"
+                "env_group_key": "{app_name}_{app_variant}"
             }
         ]
     }

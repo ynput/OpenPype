@@ -1,3 +1,4 @@
+import re
 import copy
 
 from .lib import (
@@ -7,6 +8,7 @@ from .lib import (
 from . import EndpointEntity
 from .exceptions import (
     DefaultsNotDefined,
+    InvalidKeySymbols,
     StudioDefaultsNotDefined,
     RequiredKeyModified,
     EntitySchemaError
@@ -14,7 +16,9 @@ from .exceptions import (
 from pype.settings.constants import (
     METADATA_KEYS,
     M_DYNAMIC_KEY_LABEL,
-    M_ENVIRONMENT_KEY
+    M_ENVIRONMENT_KEY,
+    KEY_REGEX,
+    KEY_ALLOWED_SYMBOLS
 )
 
 
@@ -92,6 +96,9 @@ class DictMutableKeysEntity(EndpointEntity):
         # TODO Check for value type if is Settings entity?
         child_obj = self.children_by_key.get(key)
         if not child_obj:
+            if not KEY_REGEX.match(key):
+                raise InvalidKeySymbols(self.path, key)
+
             child_obj = self.add_key(key)
 
         child_obj.set(value)
@@ -102,6 +109,10 @@ class DictMutableKeysEntity(EndpointEntity):
 
         if new_key == old_key:
             return
+
+        if not KEY_REGEX.match(new_key):
+            raise InvalidKeySymbols(self.path, new_key)
+
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
         self._on_key_label_change()
 
@@ -115,6 +126,9 @@ class DictMutableKeysEntity(EndpointEntity):
     def _add_key(self, key):
         if key in self.children_by_key:
             self.pop(key)
+
+        if not KEY_REGEX.match(key):
+            raise InvalidKeySymbols(self.path, key)
 
         if self.value_is_env_group:
             item_schema = copy.deepcopy(self.item_schema)
@@ -188,7 +202,7 @@ class DictMutableKeysEntity(EndpointEntity):
             self.schema_data.get("highlight_content") or False
         )
 
-        object_type = self.schema_data["object_type"]
+        object_type = self.schema_data.get("object_type") or {}
         if not isinstance(object_type, dict):
             # Backwards compatibility
             object_type = {
@@ -211,6 +225,12 @@ class DictMutableKeysEntity(EndpointEntity):
 
     def schema_validations(self):
         super(DictMutableKeysEntity, self).schema_validations()
+
+        if not self.schema_data.get("object_type"):
+            reason = (
+                "Modifiable dictionary must have specified `object_type`."
+            )
+            raise EntitySchemaError(self, reason)
 
         # TODO Ability to store labels should be defined with different key
         if self.collapsible_key and not self.file_item:
@@ -325,6 +345,15 @@ class DictMutableKeysEntity(EndpointEntity):
         children_label_by_id = {}
         metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
         for _key, _value in new_value.items():
+            if not KEY_REGEX.match(_key):
+                # Replace invalid characters with underscore
+                # - this is safety to not break already existing settings
+                _key = re.sub(
+                    r"[^{}]+".format(KEY_ALLOWED_SYMBOLS),
+                    "_",
+                    _key
+                )
+
             child_entity = self._add_key(_key)
             child_entity.update_default_value(_value)
             if using_project_overrides:

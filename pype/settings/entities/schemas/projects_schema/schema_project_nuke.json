@@ -20,27 +20,27 @@
                     "children": [
                         {
                             "type": "text",
-                            "key": "Create...",
+                            "key": "create",
                             "label": "Create..."
                         },
                         {
                             "type": "text",
-                            "key": "Publish...",
+                            "key": "publish",
                             "label": "Publish..."
                         },
                         {
                             "type": "text",
-                            "key": "Load...",
+                            "key": "load",
                             "label": "Load..."
                         },
                         {
                             "type": "text",
-                            "key": "Manage...",
+                            "key": "manage",
                             "label": "Manage..."
                         },
                         {
                             "type": "text",
-                            "key": "Build Workfile",
+                            "key": "build_workfile",
                             "label": "Build Workfile"
                         }
                     ]
