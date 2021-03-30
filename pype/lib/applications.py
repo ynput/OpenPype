@@ -114,7 +114,7 @@ class ApplicationGroup:
         self._data = data
 
         self.enabled = data.get("enabled", True)
-        self.label = data.get("label") or name
+        self.label = data.get("label") or None
         self.icon = data.get("icon") or None
         self._environment = data.get("environment") or {}
 
@@ -169,7 +169,12 @@ class Application:
 
         self.label = data.get("variant_label") or name
         self.full_name = "/".join((group.name, name))
-        self.full_label = " ".join((group.label, self.label))
+
+        if group.label:
+            full_label = " ".join((group.label, self.label))
+        else:
+            full_label = self.label
+        self.full_label = full_label
         self._environment = data.get("environment") or {}
 
         _executables = data["executables"]
