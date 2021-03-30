@@ -4,6 +4,7 @@ import copy
 import json
 import platform
 import getpass
+import collections
 import inspect
 import subprocess
 import distutils.spawn
@@ -122,6 +123,10 @@ class ApplicationGroup:
         self.host_name = host_name
 
         variants = data.get("variants") or {}
+        for variant_name, variant_data in variants.items():
+            variants[variant_name] = Application(
+                variant_name, variant_data, self
+            )
 
         self.variants = variants
 
