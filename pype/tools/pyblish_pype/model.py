@@ -1013,7 +1013,9 @@ class TerminalModel(QtGui.QStandardItemModel):
         all_record_items = []
         for record_item in record_items:
             record_type = record_item["type"]
-
+            # Add error message to detail
+            if record_type == "error":
+                record_item["msg"] = record_item["label"]
             terminal_item_type = None
             if record_type == "record":
                 for level, _type in self.level_to_record:
