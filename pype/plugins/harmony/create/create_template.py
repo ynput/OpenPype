@@ -1,5 +1,5 @@
 from avalon import harmony
-from pype.hosts.harmony.api import plugin
+from pype.hosts.harmony import plugin
 
 
 class CreateTemplate(plugin.Creator):
