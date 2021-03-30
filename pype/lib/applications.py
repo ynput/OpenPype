@@ -216,6 +216,31 @@ class Application:
     def is_host(self):
         return self.group.is_host
 
+    def find_executable(self):
+        """Try to find existing executable for application.
+
+        Returns (str): Path to executable from `executables` or None if any
+            exists.
+        """
+        for executable in self.executables:
+            if executable.exists():
+                return executable
+        return None
+
+    def launch(self, *args, **kwargs):
+        """Launch the application.
+
+        For this purpose is used manager's launch method to keep logic at one
+        place.
+
+        Arguments must match with manager's launch method. That's why *args
+        **kwargs are used.
+
+        Returns:
+            subprocess.Popen: Return executed process as Popen object.
+        """
+        return self.manager.launch(self.name, *args, **kwargs)
+
 
 class ApplicationManager:
     def __init__(self):
