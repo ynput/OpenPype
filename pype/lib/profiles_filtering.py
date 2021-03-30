@@ -87,7 +87,7 @@ def validate_value_by_regexes(value, in_list):
 
     regexes = compile_list_of_regexes(in_list)
     for regex in regexes:
-        if re.match(regex, value):
+        if re.fullmatch(regex, value):
             return 1
     return -1
 
