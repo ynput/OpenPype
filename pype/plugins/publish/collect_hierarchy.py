@@ -50,7 +50,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
 
             # suppose that all instances are Shots
             shot_data['entity_type'] = 'Shot'
-            shot_data['tasks'] = instance.data.get("tasks") or []
+            shot_data['tasks'] = instance.data.get("tasks") or {}
             shot_data["comments"] = instance.data.get("comments", [])
 
             shot_data['custom_attributes'] = {
