@@ -314,6 +314,46 @@ class ApplicationManager:
         return context.launch()
 
 
+class EnvironmentToolGroup:
+    """Hold information about environment tool group.
+
+    Environment tool group may hold different variants of same tool and set
+    environments that are same for all of them.
+
+    e.g. "mtoa" may have different versions but all environments except one
+        are same.
+
+    Args:
+        name (str): Name of the tool group.
+        data (dict): Group's information with it's variants.
+        manager (ApplicationManager): Manager that creates the group.
+    """
+
+    def __init__(self, name, data, manager):
+        self.name = name
+        self._data = data
+        self.manager = manager
+        self._environment = data["environment"]
+
+        variants = data.get("variants") or {}
+        variants_by_name = {}
+        for variant_name, variant_env in variants.items():
+            tool = EnvironmentTool(variant_name, variant_env, self)
+            variants_by_name[variant_name] = tool
+        self.variants = variants_by_name
+
+    def __repr__(self):
+        return "<{}> - {}".format(self.__class__.__name__, self.name)
+
+    def __iter__(self):
+        for variant in self.variants.values():
+            yield variant
+
+    @property
+    def environment(self):
+        return copy.deepcopy(self._environment)
+
+
 class ApplicationTool:
     """Hold information about application tool.
 
