@@ -1,4 +1,3 @@
-import os
 import nuke
 from avalon.api import Session
 
