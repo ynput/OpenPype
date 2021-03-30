@@ -3,7 +3,7 @@ import sys
 import nuke
 
 from avalon import api as avalon
-from avalon.tools import workfiles
+from pype.tools import workfiles
 from pyblish import api as pyblish
 from pype.api import Logger
 import pype.hosts.nuke
