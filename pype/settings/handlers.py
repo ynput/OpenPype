@@ -320,10 +320,15 @@ class CacheValues:
         self.creation_time = datetime.datetime.now()
 
     def update_from_document(self, document):
-        value = "{}"
+        data = {}
         if document:
-            value = document.get("value") or value
-        self.data = json.loads(value)
+            if "data" in document:
+                data = document["data"]
+            elif "value" in document:
+                value = document["value"]
+                if value:
+                    data = json.loads(value)
+        self.data = data
 
     def to_json_string(self):
         return json.dumps(self.data or {})
@@ -415,7 +420,7 @@ class MongoSettingsHandler(SettingsHandler):
             },
             {
                 "type": SYSTEM_SETTINGS_KEY,
-                "value": self.system_settings_cache.to_json_string()
+                "data": self.system_settings_cache.data
             },
             upsert=True
         )
@@ -550,7 +555,7 @@ class MongoSettingsHandler(SettingsHandler):
         }
         replace_data = {
             "type": doc_type,
-            "value": data_cache.to_json_string(),
+            "data": data_cache.data,
             "is_default": is_default
         }
         if not is_default:
@@ -730,7 +735,7 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
             {
                 "type": LOCAL_SETTING_KEY,
                 "site_id": self.local_site_id,
-                "value": self.local_settings_cache.to_json_string()
+                "data": self.local_settings_cache.data
             },
             upsert=True
         )
