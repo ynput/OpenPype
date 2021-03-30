@@ -121,6 +121,81 @@ class ApplicationGroup:
         return copy.deepcopy(self._environment)
 
 
+class Application:
+    """Hold information about application.
+
+    Object by itself does nothing special.
+
+    Args:
+        name (str): Specific version (or variant) of application.
+            e.g. "maya2020", "nuke11.3", etc.
+        data (dict): Data for the version containing information about
+            executables, variant label or if is enabled.
+            Only required key is `executables`.
+        group (ApplicationGroup): App group object that created the applicaiton
+            and under which application belongs.
+    """
+
+    def __init__(self, name, data, group):
+        self.name = name
+        self.group = group
+        self._data = data
+
+        enabled = False
+        if group.enabled:
+            enabled = data.get("enabled", True)
+            self.enabled = enabled
+
+        self.label = data.get("variant_label") or name
+        self.full_name = "/".join((group.name, name))
+        self.full_label = " ".join((group.label, self.label))
+        self._environment = data.get("environment") or {}
+
+        _executables = data["executables"]
+        if not _executables:
+            _executables = []
+
+        elif isinstance(_executables, dict):
+            _executables = _executables.get(platform.system().lower()) or []
+
+        _arguments = data["arguments"]
+        if not _arguments:
+            _arguments = []
+
+        elif isinstance(_arguments, dict):
+            _arguments = _arguments.get(platform.system().lower()) or []
+
+        executables = []
+        for executable in _executables:
+            executables.append(ApplicationExecutable(executable))
+
+        self.executables = executables
+        self.arguments = _arguments
+
+    def __repr__(self):
+        return "<{}> - {}".format(self.__class__.__name__, self.full_name)
+
+    @property
+    def environment(self):
+        return copy.deepcopy(self._environment)
+
+    @property
+    def manager(self):
+        return self.group.manager
+
+    @property
+    def host_name(self):
+        return self.group.host_name
+
+    @property
+    def icon(self):
+        return self.group.icon
+
+    @property
+    def is_host(self):
+        return self.group.is_host
+
+
 class ApplicationManager:
     def __init__(self):
         self.log = PypeLogger().get_logger(self.__class__.__name__)
