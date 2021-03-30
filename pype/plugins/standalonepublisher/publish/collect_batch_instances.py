@@ -9,12 +9,11 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
     label = "Collect Batch Instances"
     order = pyblish.api.CollectorOrder + 0.489
     hosts = ["standalonepublisher"]
-    families = ["background_batch", "render_mov_batch"]
+    families = ["background_batch"]
 
     # presets
     default_subset_task = {
-        "background_batch": "background",
-        "render_mov_batch": "compositing"
+        "background_batch": "background"
     }
     subsets = {
         "background_batch": {
@@ -29,12 +28,6 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
             "workfileBackground": {
                 "task": "background",
                 "family": "workfile"
-            }
-        },
-        "render_mov_batch": {
-            "renderCompositingDefault": {
-                "task": "compositing",
-                "family": "render"
             }
         }
     }

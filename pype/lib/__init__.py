@@ -29,6 +29,8 @@ from .applications import (
 from .profiles_filtering import filter_profiles
 
 from .plugin_tools import (
+    TaskNotSetError,
+    get_subset_name,
     filter_pyblish_plugins,
     source_hash,
     get_unique_layer_name,
@@ -73,6 +75,8 @@ __all__ = [
 
     "filter_profiles",
 
+    "TaskNotSetError",
+    "get_subset_name",
     "filter_pyblish_plugins",
     "get_unique_layer_name",
     "get_background_layers",
