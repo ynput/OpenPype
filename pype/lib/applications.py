@@ -354,23 +354,29 @@ class EnvironmentToolGroup:
         return copy.deepcopy(self._environment)
 
 
-class ApplicationTool:
+class EnvironmentTool:
     """Hold information about application tool.
 
     Structure of tool information.
 
     Args:
-        tool_name (str): Name of the tool.
-        group_name (str): Name of group which wraps tool.
+        name (str): Name of the tool.
+        environment (dict): Variant environments.
+        group (str): Name of group which wraps tool.
     """
 
-    def __init__(self, tool_name, group_name):
-        self.name = tool_name
-        self.group_name = group_name
+    def __init__(self, name, environment, group):
+        self.name = name
+        self.group = group
+        self._environment = environment
+        self.full_name = "/".join((group.name, name))
+
+    def __repr__(self):
+        return "<{}> - {}".format(self.__class__.__name__, self.full_name)
 
     @property
-    def full_name(self):
-        return "/".join((self.group_name, self.name))
+    def environment(self):
+        return copy.deepcopy(self._environment)
 
 
 class ApplicationExecutable:
