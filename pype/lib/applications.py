@@ -221,6 +221,7 @@ class ApplicationManager:
     def __init__(self):
         self.log = PypeLogger().get_logger(self.__class__.__name__)
 
+        self.app_groups = {}
         self.applications = {}
         self.tools = {}
 
@@ -228,42 +229,19 @@ class ApplicationManager:
 
     def refresh(self):
         """Refresh applications from settings."""
+        self.app_groups.clear()
         self.applications.clear()
         self.tools.clear()
 
         settings = get_system_settings()
 
-        hosts_definitions = settings["applications"]
-        for app_group, variant_definitions in hosts_definitions.items():
-            enabled = variant_definitions["enabled"]
-            label = variant_definitions.get("label") or app_group
-            variants = variant_definitions.get("variants") or {}
-            icon = variant_definitions.get("icon")
-            group_host_name = variant_definitions.get("host_name") or None
-            for app_name, app_data in variants.items():
-                if app_name in self.applications:
-                    raise AssertionError((
-                        "BUG: Duplicated application name in settings \"{}\""
-                    ).format(app_name))
-
-                # If host is disabled then disable all variants
-                if not enabled:
-                    app_data["enabled"] = enabled
-
-                # Pass label from host definition
-                if not app_data.get("label"):
-                    app_data["label"] = label
-
-                if not app_data.get("icon"):
-                    app_data["icon"] = icon
-
-                host_name = app_data.get("host_name") or group_host_name
-
-                app_data["is_host"] = host_name is not None
-
-                self.applications[app_name] = Application(
-                    app_group, app_name, host_name, app_data, self
-                )
+        app_defs = settings["applications"]
+        for group_name, variant_defs in app_defs.items():
+            group = ApplicationGroup(group_name, variant_defs, self)
+            self.app_groups[group_name] = group
+            for app in group:
+                # TODO This should be replaced with `full_name` in future
+                self.applications[app.name] = app
 
         tools_definitions = settings["tools"]["tool_groups"]
         for tool_group_name, tool_group_data in tools_definitions.items():
