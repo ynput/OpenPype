@@ -41,7 +41,6 @@ class GlobalHostDataHook(PreLaunchHook):
 
             "anatomy": self.data["anatomy"],
 
-            "settings_env": self.data.get("settings_env"),
             "env": self.launch_context.env,
 
             "log": self.log

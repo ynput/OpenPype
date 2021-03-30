@@ -572,12 +572,6 @@ class ApplicationLaunchContext:
 
         self.data = dict(data)
 
-        # Load settings if were not passed in data
-        settings_env = self.data.get("settings_env")
-        if settings_env is None:
-            settings_env = get_environments()
-            self.data["settings_env"] = settings_env
-
         # subprocess.Popen launch arguments (first argument in constructor)
         self.launch_args = executable.as_args()
         self.launch_args.extend(application.arguments)
@@ -895,9 +889,6 @@ class EnvironmentPrepData(dict):
 
         if data.get("env") is None:
             data["env"] = os.environ.copy()
-
-        if data.get("settings_env") is None:
-            data["settings_env"] = get_environments()
 
         super(EnvironmentPrepData, self).__init__(data)
 
