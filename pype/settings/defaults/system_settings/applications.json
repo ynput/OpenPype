@@ -21,9 +21,7 @@
         "variants": {
             "maya_2020": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2020",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2020\\bin\\maya.exe"
@@ -44,9 +42,7 @@
             },
             "maya_2019": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2019",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2019\\bin\\maya.exe"
@@ -67,9 +63,7 @@
             },
             "maya_2018": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2018",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2018\\bin\\maya.exe"
@@ -113,9 +107,7 @@
         "variants": {
             "mayabatch_2020": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2020",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayabatch.exe"
@@ -134,9 +126,7 @@
             },
             "mayabatch_2019": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2019",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayabatch.exe"
@@ -155,9 +145,7 @@
             },
             "mayabatch_2018": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2018",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2018\\bin\\mayabatch.exe"
@@ -195,9 +183,7 @@
         "variants": {
             "nuke_12-2": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "12.2",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -216,9 +202,7 @@
             },
             "nuke_12-0": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "12.0",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -237,9 +221,7 @@
             },
             "nuke_11-3": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "11.3",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -258,9 +240,7 @@
             },
             "nuke_11-2": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "11.2",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
@@ -296,9 +276,7 @@
         "variants": {
             "nukex_12-2": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "12.2",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -323,9 +301,7 @@
             },
             "nukex_12-0": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "12.0",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -350,9 +326,7 @@
             },
             "nukex_11-3": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "11.3",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -377,9 +351,7 @@
             },
             "nukex_11-2": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "11.2",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
@@ -421,9 +393,7 @@
         "variants": {
             "nukestudio_12-2": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "12.2",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -448,9 +418,7 @@
             },
             "nukestudio_12-0": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "12.0",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -475,9 +443,7 @@
             },
             "nukestudio_11-3": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "11.3",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -502,9 +468,7 @@
             },
             "nukestudio_11-2": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "11.2",
-                "icon": "",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -544,9 +508,7 @@
         "variants": {
             "hiero_12-2": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "12.2",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -571,9 +533,7 @@
             },
             "hiero_12-0": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "12.0",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -598,9 +558,7 @@
             },
             "hiero_11-3": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "11.3",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -625,9 +583,7 @@
             },
             "hiero_11-2": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "11.2",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
@@ -682,9 +638,7 @@
         "variants": {
             "fusion_16": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "16",
-                "icon": "",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -699,9 +653,7 @@
             },
             "fusion_9": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "9",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blackmagic Design\\Fusion 9\\Fusion.exe"
@@ -764,9 +716,7 @@
         "variants": {
             "resolve_16": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "16",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:/Program Files/Blackmagic Design/DaVinci Resolve/Resolve.exe"
@@ -803,9 +753,7 @@
         "variants": {
             "houdini_18-5": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "18.5",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Side Effects Software\\Houdini 18.5.499\\bin\\houdini.exe"
@@ -822,9 +770,7 @@
             },
             "houdini_18": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "18",
-                "icon": "",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -839,9 +785,7 @@
             },
             "houdini_17": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "17",
-                "icon": "",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -872,9 +816,7 @@
         "variants": {
             "blender_2-83": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2.83",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe"
@@ -897,9 +839,7 @@
             },
             "blender_2-90": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2.90",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe"
@@ -934,9 +874,7 @@
         "variants": {
             "harmony_20": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "20",
-                "icon": "",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -951,9 +889,7 @@
             },
             "harmony_17": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "17",
-                "icon": "",
                 "executables": {
                     "windows": [],
                     "darwin": [
@@ -981,9 +917,7 @@
         "variants": {
             "tvpaint_animation_11-64bits": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "11 (64bits)",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\TVPaint Developpement\\TVPaint Animation 11 (64bits)\\TVPaint Animation 11 (64bits).exe"
@@ -1000,9 +934,7 @@
             },
             "tvpaint_animation_11-32bits": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "11 (32bits)",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files (x86)\\TVPaint Developpement\\TVPaint Animation 11 (32bits)\\TVPaint Animation 11 (32bits).exe"
@@ -1033,9 +965,7 @@
         "variants": {
             "photoshop_2020": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2020",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe"
@@ -1052,9 +982,7 @@
             },
             "photoshop_2021": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2021",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe"
@@ -1085,9 +1013,7 @@
         "variants": {
             "aftereffects_2020": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2020",
-                "icon": "",
                 "executables": {
                     "windows": [
                         ""
@@ -1104,9 +1030,7 @@
             },
             "aftereffects_2021": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "2021",
-                "icon": "",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe"
@@ -1134,9 +1058,7 @@
         "variants": {
             "celation_Local": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "Local",
-                "icon": "{}/app_icons/celaction_local.png",
                 "executables": "",
                 "arguments": {
                     "windows": [],
@@ -1160,9 +1082,7 @@
         "variants": {
             "unreal_4-24": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "4.24",
-                "icon": "",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1183,9 +1103,7 @@
         "variants": {
             "python_python_3-7": {
                 "enabled": true,
-                "label": "Python",
                 "variant_label": "3.7",
-                "icon": "{}/app_icons/python.png",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1200,9 +1118,7 @@
             },
             "python_python_2-7": {
                 "enabled": true,
-                "label": "Python",
                 "variant_label": "2.7",
-                "icon": "{}/app_icons/python.png",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1217,9 +1133,7 @@
             },
             "terminal_terminal": {
                 "enabled": true,
-                "label": "Terminal",
                 "variant_label": "",
-                "icon": "",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1243,9 +1157,7 @@
         "variants": {
             "djvview_1-1": {
                 "enabled": true,
-                "label": "",
                 "variant_label": "1.1",
-                "icon": "",
                 "executables": {
                     "windows": [],
                     "darwin": [],

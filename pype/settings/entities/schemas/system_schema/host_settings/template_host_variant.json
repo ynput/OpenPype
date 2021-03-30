@@ -19,23 +19,9 @@
             },
             {
                 "type": "text",
-                "key": "label",
-                "label": "Label",
-                "placeholder": "Used from host label if not filled.",
-                "roles": ["developer"]
-            },
-            {
-                "type": "text",
                 "key": "variant_label",
                 "label": "Variant label",
                 "placeholder": "Only \"Label\" is used if not filled.",
-                "roles": ["developer"]
-            },
-            {
-                "type": "text",
-                "key": "icon",
-                "label": "Icon",
-                "placeholder": "Host icon path template. Used from host if not filled.",
                 "roles": ["developer"]
             },
             {
