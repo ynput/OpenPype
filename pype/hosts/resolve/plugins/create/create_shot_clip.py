@@ -244,7 +244,7 @@ class CreateShotClip(resolve.Creator):
         sq_markers = self.timeline.GetMarkers()
 
         # create media bin for compound clips (trackItems)
-        mp_folder = resolve.create_current_sequence_media_bin(self.timeline)
+        mp_folder = resolve.create_bin(self.timeline.GetName())
 
         kwargs = {
             "ui_inputs": widget.result,
