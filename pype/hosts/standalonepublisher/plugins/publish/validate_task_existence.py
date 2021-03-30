@@ -1,4 +1,3 @@
-import collections
 import pyblish.api
 from avalon import io
 
