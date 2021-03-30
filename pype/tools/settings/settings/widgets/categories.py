@@ -260,13 +260,42 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.content_layout.addWidget(widget, 0)
 
     def save(self):
-        if self.items_are_valid():
+        if not self.items_are_valid():
+            return
+
+        try:
             self.entity.save()
+
             # NOTE There are relations to previous entities and C++ callbacks
             #   so it is easier to just use new entity and recreate UI but
             #   would be nice to change this and add cleanup part so this is
             #   not required.
             self.reset()
+
+        except Exception as exc:
+            formatted_traceback = traceback.format_exception(*sys.exc_info())
+            dialog = QtWidgets.QMessageBox(self)
+            msg = "Unexpected error happened!\n\nError: {}".format(str(exc))
+            dialog.setText(msg)
+            dialog.setDetailedText("\n".join(formatted_traceback))
+            dialog.setIcon(QtWidgets.QMessageBox.Critical)
+
+            line_widths = set()
+            metricts = dialog.fontMetrics()
+            for line in formatted_traceback:
+                line_widths.add(metricts.width(line))
+            max_width = max(line_widths)
+
+            spacer = QtWidgets.QSpacerItem(
+                max_width, 0,
+                QtWidgets.QSizePolicy.Minimum,
+                QtWidgets.QSizePolicy.Expanding
+            )
+            layout = dialog.layout()
+            layout.addItem(
+                spacer, layout.rowCount(), 0, 1, layout.columnCount()
+            )
+            dialog.exec_()
 
     def _create_root_entity(self):
         raise NotImplementedError(
