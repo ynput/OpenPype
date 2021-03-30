@@ -9,7 +9,7 @@ from pype.api import (
     get_project_settings,
     Creator
 )
-from pype.plugin import TaskNotSetError
+from pype.lib import TaskNotSetError
 from avalon.tools.creator.app import SubsetAllowedSymbols
 
 
