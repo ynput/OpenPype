@@ -63,7 +63,6 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-
 # Node JS packages
 ##################
 node_modules/
@@ -80,3 +79,4 @@ pype/premiere/ppro/js/debug.log
 .vscode/
 .env
 dump.sql
+test_localsystem.txt
