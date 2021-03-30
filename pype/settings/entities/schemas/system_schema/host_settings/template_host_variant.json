@@ -77,8 +77,7 @@
             {
                 "key": "environment",
                 "label": "Environment",
-                "type": "raw-json",
-                "env_group_key": "{app_name}_{app_variant}"
+                "type": "raw-json"
             }
         ]
     }
