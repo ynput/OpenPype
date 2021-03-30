@@ -9,10 +9,6 @@ from pype.tools import workfiles
 log = Logger().get_logger(__name__)
 
 
-def _show_workfiles(*args, **kwargs):
-    workfiles.show(os.environ["AVALON_WORKDIR"])
-
-
 def install():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(Session["AVALON_LABEL"])
@@ -28,7 +24,7 @@ def install():
     menu.removeItem(rm_item[1].name())
     menu.addCommand(
         name,
-        _show_workfiles,
+        workfiles.show,
         index=(rm_item[0])
     )
 
