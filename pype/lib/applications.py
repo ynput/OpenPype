@@ -90,6 +90,37 @@ class ApplicationLaunchFailed(Exception):
     pass
 
 
+class ApplicationGroup:
+    def __init__(self, name, data, manager):
+        self.name = name
+        self.manager = manager
+        self._data = data
+
+        self.enabled = data.get("enabled", True)
+        self.label = data.get("label") or name
+        self.icon = data.get("icon") or None
+        self._environment = data.get("environment") or {}
+
+        host_name = data.get("host_name", None)
+        self.is_host = host_name is not None
+        self.host_name = host_name
+
+        variants = data.get("variants") or {}
+
+        self.variants = variants
+
+    def __repr__(self):
+        return "<{}> - {}".format(self.__class__.__name__, self.name)
+
+    def __iter__(self):
+        for variant in self.variants.values():
+            yield variant
+
+    @property
+    def environment(self):
+        return copy.deepcopy(self._environment)
+
+
 class ApplicationManager:
     def __init__(self):
         self.log = PypeLogger().get_logger(self.__class__.__name__)
