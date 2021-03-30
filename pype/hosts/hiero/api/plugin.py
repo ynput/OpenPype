@@ -266,7 +266,8 @@ class CreatorWidget(QtWidgets.QDialog):
             elif v["type"] == "QSpinBox":
                 data[k]["value"] = self.create_row(
                     content_layout, "QSpinBox", v["label"],
-                    setValue=v["value"], setMinimum=1, setMaximum=100000, setToolTip=tool_tip)
+                    setValue=v["value"], setMinimum=1,
+                    setMaximum=100000, setToolTip=tool_tip)
         return data
 
 
