@@ -1,5 +1,5 @@
 from avalon.tvpaint import pipeline
-from pype.hosts.tvpaint.api import plugin
+from pype.hosts.tvpaint import plugin
 
 
 class CreateReview(plugin.Creator):
