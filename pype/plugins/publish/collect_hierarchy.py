@@ -40,7 +40,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
                 continue
 
             # exclude if not masterLayer True
-            if not instance.data.get("masterLayer"):
+            if not instance.data.get("heroTrack"):
                 continue
 
             # get asset build data if any available
