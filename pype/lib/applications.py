@@ -248,6 +248,7 @@ class ApplicationManager:
 
         self.app_groups = {}
         self.applications = {}
+        self.tool_groups = {}
         self.tools = {}
 
         self.refresh()
@@ -256,6 +257,7 @@ class ApplicationManager:
         """Refresh applications from settings."""
         self.app_groups.clear()
         self.applications.clear()
+        self.tool_groups.clear()
         self.tools.clear()
 
         settings = get_system_settings()
@@ -270,13 +272,13 @@ class ApplicationManager:
 
         tools_definitions = settings["tools"]["tool_groups"]
         for tool_group_name, tool_group_data in tools_definitions.items():
-            tool_variants = tool_group_data.get("variants") or {}
-            for tool_name, tool_data in tool_variants.items():
-                tool = ApplicationTool(tool_name, tool_group_name)
-                if tool.full_name in self.tools:
-                    self.log.warning((
-                        "Duplicated tool name in settings \"{}\""
-                    ).format(tool.full_name))
+            if not tool_group_name:
+                continue
+            group = EnvironmentToolGroup(
+                tool_group_name, tool_group_data, self
+            )
+            self.tool_groups[tool_group_name] = group
+            for tool in group:
                 self.tools[tool.full_name] = tool
 
     def launch(self, app_name, **data):
