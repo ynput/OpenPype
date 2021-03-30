@@ -91,6 +91,22 @@ class ApplicationLaunchFailed(Exception):
 
 
 class ApplicationGroup:
+    """Hold information about application group.
+
+    Application group wraps different versions(variants) of application.
+    e.g. "maya" is group and "maya_2020" is variant.
+
+    Group hold `host_name` which is implementation name used in pype. Also
+    holds `enabled` if whole app group is enabled or `icon` for application
+    icon path in resources.
+
+    Group has also `environment` which hold same environments for all variants.
+
+    Args:
+        name (str): Groups' name.
+        data (dict): Group defying data loaded from settings.
+        manager (ApplicationManager): Manager that created the group.
+    """
     def __init__(self, name, data, manager):
         self.name = name
         self.manager = manager
