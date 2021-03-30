@@ -120,9 +120,9 @@ class CreateShotClip(phiero.Creator):
                 "vSyncTrack": {
                     "value": gui_tracks,  # noqa
                     "type": "QComboBox",
-                    "label": "Master track",
+                    "label": "Hero track",
                     "target": "ui",
-                    "toolTip": "Select driving track name which should be mastering all others",  # noqa
+                    "toolTip": "Select driving track name which should be hero for all others",  # noqa
                     "order": 1}
             }
         },
