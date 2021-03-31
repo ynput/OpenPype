@@ -3,6 +3,7 @@ from avalon.api import Session
 
 from .lib import WorkfileSettings
 from pype.api import Logger, BuildWorkfile, get_current_project_settings
+from pype.tools import workfiles
 
 log = Logger().get_logger(__name__)
 
@@ -10,6 +11,22 @@ log = Logger().get_logger(__name__)
 def install():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(Session["AVALON_LABEL"])
+
+    # replace reset resolution from avalon core to pype's
+    name = "Work Files..."
+    rm_item = [
+        (i, item) for i, item in enumerate(menu.items()) if name in item.name()
+    ][0]
+
+    log.debug("Changing Item: {}".format(rm_item))
+
+    menu.removeItem(rm_item[1].name())
+    menu.addCommand(
+        name,
+        workfiles.show,
+        index=(rm_item[0])
+    )
+
     # replace reset resolution from avalon core to pype's
     name = "Reset Resolution"
     new_name = "Set Resolution"
