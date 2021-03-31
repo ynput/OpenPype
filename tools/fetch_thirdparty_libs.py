@@ -39,7 +39,7 @@ def sha256_sum(filename: Path):
     """
     _hash = hashlib.sha256()
     with open(filename, 'rb', buffering=0) as f:
-        buffer = bytearray(128*1024)
+        buffer = bytearray(128 * 1024)
         mv = memoryview(buffer)
         for n in iter(lambda: f.readinto(mv), 0):
             _hash.update(mv[:n])
@@ -82,7 +82,6 @@ for k, v in thirdparty.items():
     _print(f"processing {k}")
     destination_path = pype_root / "vendor" / "bin" / k / platform_name
     url = v.get(platform_name).get("url")
-
 
     if not v.get(platform_name):
         _print(("missing definition for current "
