@@ -185,6 +185,44 @@ def validate_path_string(path: str) -> (bool, str):
     return True, "valid path"
 
 
+def get_pype_global_settings(url: str) -> dict:
+    """Load global settings from Mongo database.
+
+    We are loading data from database `pype` and collection `settings`.
+    There we expect document type `global_settings`.
+
+    Returns:
+        dict: With settings data. Empty dictionary is returned if not found.
+    """
+    try:
+        components = decompose_url(url)
+    except RuntimeError:
+        return {}
+    mongo_kwargs = {
+        "host": compose_url(**components),
+        "serverSelectionTimeoutMS": 2000
+    }
+    port = components.get("port")
+    if port is not None:
+        mongo_kwargs["port"] = int(port)
+
+    try:
+        # Create mongo connection
+        client = MongoClient(**mongo_kwargs)
+        # Access settings collection
+        col = client["pype"]["settings"]
+        # Query global settings
+        global_settings = col.find_one({"type": "global_settings"}) or {}
+        # Close Mongo connection
+        client.close()
+
+    except Exception:
+        # TODO log traceback or message
+        return {}
+
+    return global_settings.get("data") or {}
+
+
 def get_pype_path_from_db(url: str) -> Union[str, None]:
     """Get Pype path from database.
 
