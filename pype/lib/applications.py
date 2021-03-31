@@ -244,7 +244,7 @@ class Application:
         Returns:
             subprocess.Popen: Return executed process as Popen object.
         """
-        return self.manager.launch(self.name, *args, **kwargs)
+        return self.manager.launch(self.full_name, *args, **kwargs)
 
 
 class ApplicationManager:
@@ -273,7 +273,7 @@ class ApplicationManager:
             self.app_groups[group_name] = group
             for app in group:
                 # TODO This should be replaced with `full_name` in future
-                self.applications[app.name] = app
+                self.applications[app.full_name] = app
 
         tools_definitions = settings["tools"]["tool_groups"]
         for tool_group_name, tool_group_data in tools_definitions.items():
@@ -502,7 +502,7 @@ class LaunchHook:
 
     @property
     def app_name(self):
-        return getattr(self.application, "name", None)
+        return getattr(self.application, "full_name", None)
 
     def validate(self):
         """Optional validation of launch hook on initialization.
@@ -939,7 +939,7 @@ def get_app_environments_for_context(
         "project_name": project_name,
         "asset_name": asset_name,
         "task_name": task_name,
-        "app_name": app_name,
+
         "app": app,
 
         "dbcon": dbcon,
@@ -1117,8 +1117,7 @@ def prepare_context_environments(data):
         "AVALON_ASSET": asset_doc["name"],
         "AVALON_TASK": task_name,
         "AVALON_APP": app.host_name,
-        # TODO this hould be `app.full_name` in future PRs
-        "AVALON_APP_NAME": app.name,
+        "AVALON_APP_NAME": app.full_name,
         "AVALON_WORKDIR": workdir
     }
     log.debug(
