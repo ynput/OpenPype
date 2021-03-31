@@ -1,3 +1,6 @@
+"""
+Submit write to Deadline.
+"""
 import os
 import json
 import getpass
@@ -8,8 +11,9 @@ import re
 import pyblish.api
 import nuke
 
+
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
-    """Submit write to Deadline
+    """Submit write to Deadline.
 
     Renders are submitted to a Deadline Web Service as
     supplied via the environment variable DEADLINE_REST_URL
@@ -30,7 +34,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_group = ""
     deadline_department = ""
     deadline_limit_groups = {}
-    env_overrides = {}
+    env_allowed_keys = []
+    env_search_replace_values = {}
+
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
@@ -231,15 +237,16 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "TOOL_ENV",
             "PYPE_DEV"
         ]
+
+        # add allowed keys from preset if any
+        if self.env_allowed_keys:
+            keys += self.env_allowed_keys
+
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
 
         for path in os.environ:
             if path.lower().startswith('pype_'):
-                environment[path] = os.environ[path]
-            if path.lower().startswith('nuke_') and path != "NUKE_TEMP_DIR":
-                environment[path] = os.environ[path]
-            if 'license' in path.lower():
                 environment[path] = os.environ[path]
 
         clean_environment = {}
@@ -270,10 +277,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         environment = clean_environment
 
-        # Finally override by preset's env vars
-        if self.env_overrides:
-            for key, value in self.env_overrides.items():
-                environment[key] = value
+        # finally search replace in values of any key
+        if self.env_search_replace_values:
+            for key, value in environment.items():
+                for _k, _v in self.env_search_replace_values.items():
+                    environment[key] = value.replace(_k, _v)
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
@@ -333,9 +341,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             return int(search_results[1])
         if "#" in path:
             self.log.debug("_ path: `{}`".format(path))
-            return path
-        else:
-            return path
+
+        return path
 
     def expected_files(self,
                        instance,
@@ -343,7 +350,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         """ Create expected files in instance data
         """
         if not instance.data.get("expectedFiles"):
-            instance.data["expectedFiles"] = list()
+            instance.data["expectedFiles"] = []
 
         dir = os.path.dirname(path)
         file = os.path.basename(path)
