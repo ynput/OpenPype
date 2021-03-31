@@ -119,7 +119,10 @@
                                                     "slate-frame": "Add slate frame"
                                                 },
                                                 {
-                                                    "no-hnadles": "Skip handle frames"
+                                                    "no-handles": "Skip handle frames"
+                                                },
+                                                {
+                                                    "sequence": "Output as image sequence"
                                                 }
                                             ]
                                         },
