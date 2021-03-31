@@ -30,7 +30,6 @@
                         {
                             "app_variant_label": "Local",
                             "app_variant": "Local",
-                            "app_name": "celation",
                             "multiplatform": false,
                             "multipath_executables": false
                         }

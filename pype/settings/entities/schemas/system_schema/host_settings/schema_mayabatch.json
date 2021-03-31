@@ -29,18 +29,15 @@
                     "template_data": [
                         {
                             "app_variant_label": "2020",
-                            "app_variant": "2020",
-                            "app_name": "mayabatch"
+                            "app_variant": "2020"
                         },
                         {
                             "app_variant_label": "2019",
-                            "app_variant": "2019",
-                            "app_name": "mayabatch"
+                            "app_variant": "2019"
                         },
                         {
                             "app_variant_label": "2018",
-                            "app_variant": "2018",
-                            "app_name": "mayabatch"
+                            "app_variant": "2018"
                         }
                     ]
                 }

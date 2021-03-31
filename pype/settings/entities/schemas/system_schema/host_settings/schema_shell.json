@@ -25,18 +25,15 @@
                     "template_data": [
                         {
                             "app_variant": "python_3-7",
-                            "app_variant_label": "Python 3.7",
-                            "app_name": "python"
+                            "app_variant_label": "Python 3.7"
                         },
                         {
                             "app_variant": "python_2-7",
-                            "app_variant_label": "Python 2.7",
-                            "app_name": "python"
+                            "app_variant_label": "Python 2.7"
                         },
                         {
                             "app_variant": "terminal",
-                            "app_variant_label": "Terminal",
-                            "app_name": "terminal"
+                            "app_variant_label": "Terminal"
                         }
                     ]
                 }
