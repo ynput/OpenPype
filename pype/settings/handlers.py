@@ -403,9 +403,11 @@ class MongoSettingsHandler(SettingsHandler):
         return self._attribute_keys
 
     def _prepare_global_settings(self, data):
-        if "general" not in data:
-            return {}
-        return data["general"].get("pype_path") or {}
+        output = {}
+        # Add "pype_path" key to global settings if is set
+        if "general" in data and "pype_path" in data["general"]:
+            output["pype_path"] = data["general"]["pype_path"]
+        return output
 
     def save_studio_settings(self, data):
         """Save studio overrides of system settings.
