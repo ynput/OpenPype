@@ -81,7 +81,7 @@ class CreatorWidget(QtWidgets.QDialog):
         ok_btn.clicked.connect(self._on_ok_clicked)
         cancel_btn.clicked.connect(self._on_cancel_clicked)
 
-        stylesheet = resolve.menu.load_stylesheet()
+        stylesheet = resolve.api.menu.load_stylesheet()
         self.setStyleSheet(stylesheet)
 
     def _on_ok_clicked(self):
@@ -697,13 +697,13 @@ class PublishClip:
         Populating the tag data into internal variable self.tag_data
         """
         # define vertical sync attributes
-        master_layer = True
+        hero_track = True
         self.review_layer = ""
         if self.vertical_sync:
             # check if track name is not in driving layer
             if self.track_name not in self.driving_layer:
                 # if it is not then define vertical sync as None
-                master_layer = False
+                hero_track = False
 
         # increasing steps by index of rename iteration
         self.count_steps *= self.rename_index
@@ -717,7 +717,7 @@ class PublishClip:
                     self.tag_data[_k] = _v["value"]
 
             # driving layer is set as positive match
-            if master_layer or self.vertical_sync:
+            if hero_track or self.vertical_sync:
                 # mark review layer
                 if self.review_track and (
                         self.review_track not in self.review_track_default):
@@ -751,33 +751,33 @@ class PublishClip:
             hierarchy_formating_data
         )
 
-        tag_hierarchy_data.update({"masterLayer": True})
-        if master_layer and self.vertical_sync:
-            # tag_hierarchy_data.update({"masterLayer": True})
+        tag_hierarchy_data.update({"heroTrack": True})
+        if hero_track and self.vertical_sync:
+            # tag_hierarchy_data.update({"heroTrack": True})
             self.vertical_clip_match.update({
                 (self.clip_in, self.clip_out): tag_hierarchy_data
             })
 
-        if not master_layer and self.vertical_sync:
+        if not hero_track and self.vertical_sync:
             # driving layer is set as negative match
-            for (_in, _out), master_data in self.vertical_clip_match.items():
-                master_data.update({"masterLayer": False})
+            for (_in, _out), hero_data in self.vertical_clip_match.items():
+                hero_data.update({"heroTrack": False})
                 if _in == self.clip_in and _out == self.clip_out:
-                    data_subset = master_data["subset"]
-                    # add track index in case duplicity of names in master data
+                    data_subset = hero_data["subset"]
+                    # add track index in case duplicity of names in hero data
                     if self.subset in data_subset:
-                        master_data["subset"] = self.subset + str(
+                        hero_data["subset"] = self.subset + str(
                             self.track_index)
                     # in case track name and subset name is the same then add
                     if self.subset_name == self.track_name:
-                        master_data["subset"] = self.subset
+                        hero_data["subset"] = self.subset
                     # assing data to return hierarchy data to tag
-                    tag_hierarchy_data = master_data
+                    tag_hierarchy_data = hero_data
 
         # add data to return data dict
         self.tag_data.update(tag_hierarchy_data)
 
-        if master_layer and self.review_layer:
+        if hero_track and self.review_layer:
             self.tag_data.update({"reviewTrack": self.review_layer})
 
     def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
