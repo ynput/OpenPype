@@ -19,20 +19,20 @@
             "type": "splitter"
         },
         {
-            "key": "studio_soft",
-            "type": "path",
-            "label": "Studio Software Location",
-            "multiplatform": true,
-            "multipath": false
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json",
+            "env_group_key": "global"
         },
         {
             "type": "splitter"
         },
         {
-            "key": "environment",
-            "label": "Environment",
-            "type": "raw-json",
-            "env_group_key": "global"
+            "type": "path",
+            "key": "pype_path",
+            "label": "Pype Path",
+            "multiplatform": true,
+            "multipath": true
         }
     ]
 }
