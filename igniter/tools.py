@@ -238,7 +238,6 @@ def get_pype_path_from_db(url: str) -> Union[str, None]:
         path to Pype or None if not found
     """
     global_settings = get_pype_global_settings(url)
-    return global_settings.get("pype_path", {}).get(platform.system().lower())
     paths = (
         global_settings
         .get("pype_path", {})
