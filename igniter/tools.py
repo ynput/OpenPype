@@ -224,40 +224,13 @@ def get_pype_global_settings(url: str) -> dict:
 
 
 def get_pype_path_from_db(url: str) -> Union[str, None]:
-    """Get Pype path from database.
-
-    We are loading data from database `pype` and collection `settings`.
-    There we expect document type `global_settings`.
+    """Get Pype path from global settings.
 
     Args:
         url (str): mongodb url.
 
     Returns:
         path to Pype or None if not found
-
     """
-    try:
-        components = decompose_url(url)
-    except RuntimeError:
-        return None
-    mongo_args = {
-        "host": compose_url(**components),
-        "serverSelectionTimeoutMS": 2000
-    }
-    port = components.get("port")
-    if port is not None:
-        mongo_args["port"] = int(port)
-
-    try:
-        client = MongoClient(**mongo_args)
-    except Exception:
-        return None
-
-    db = client.pype
-    col = db.settings
-
-    global_settings = col.find_one({"type": "global_settings"}, {"data": 1})
-    if not global_settings:
-        return None
-    global_settings.get("data", {})
+    global_settings = get_pype_global_settings(url)
     return global_settings.get("pype_path", {}).get(platform.system().lower())
