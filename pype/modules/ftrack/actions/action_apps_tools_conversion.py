@@ -430,6 +430,11 @@ class PypeAppToolsPrep(BaseAction):
             }
             if app_item not in tool_variants:
                 app_item = app_item.replace(".", "-")
+                if "_" in app_item:
+                    item_parts = app_item.split("_")
+                    group_name = item_parts.pop(0)
+                    app_item = "/".join((group_name, "_".join(item_parts)))
+
             if app_item in app_variants:
                 item["value"] = app_item
             items.append(item)
