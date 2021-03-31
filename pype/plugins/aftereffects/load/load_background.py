@@ -29,7 +29,8 @@ class BackgroundLoader(api.Loader):
             "{}_{}".format(context["asset"]["name"], name))
 
         layers = get_background_layers(self.fname)
-        comp = stub.import_background(None, comp_name, layers)
+        comp = stub.import_background(None, stub.LOADED_ICON + comp_name,
+                                      layers)
 
         if not comp:
             self.log.warning(
@@ -72,7 +73,7 @@ class BackgroundLoader(api.Loader):
 
         layers = get_background_layers(path)
         comp = stub.reload_background(container["members"][1],
-                                      comp_name,
+                                      stub.LOADED_ICON + comp_name,
                                       layers)
 
         # update container
