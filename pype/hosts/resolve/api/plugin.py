@@ -777,8 +777,10 @@ class PublishClip:
         # add data to return data dict
         self.tag_data.update(tag_hierarchy_data)
 
+        # add review track only to hero track
         if hero_track and self.review_layer:
             self.tag_data.update({"reviewTrack": self.review_layer})
+
 
     def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
         """ Solve tag data from hierarchy data and templates. """
