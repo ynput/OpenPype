@@ -117,7 +117,8 @@ class AppsEnumEntity(BaseEnumEntity):
 
         valid_keys = set()
         enum_items = []
-        for app_group in system_settings_entity["applications"].values():
+        applications_entity = system_settings_entity["applications"]
+        for group_name, app_group in applications_entity.items():
             enabled_entity = app_group.get("enabled")
             if enabled_entity and not enabled_entity.value:
                 continue
@@ -134,10 +135,14 @@ class AppsEnumEntity(BaseEnumEntity):
                     continue
 
                 variant_label = variant_entity["variant_label"].value
+                if group_label:
+                    full_label = "{} {}".format(group_label, variant_label)
+                else:
+                    full_label = variant_label
 
-                full_label = "{} {}".format(group_label, variant_label)
-                enum_items.append({variant_name: full_label})
-                valid_keys.add(variant_name)
+                full_name = "/".join((group_name, variant_name))
+                enum_items.append({full_name: full_label})
+                valid_keys.add(full_name)
         return enum_items, valid_keys
 
     def set_override_state(self, *args, **kwargs):
