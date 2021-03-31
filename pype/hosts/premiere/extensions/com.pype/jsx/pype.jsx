@@ -524,7 +524,7 @@ $.pype = {
         currentFile: $.pype.convertPathString(app.project.path),
         framerate: (1 / settings.videoFrameRate.seconds),
         host: $.getenv('AVALON_APP'),
-        hostVersion: $.getenv('AVALON_APP_NAME').split('_')[1],
+        hostVersion: $.getenv('AVALON_APP_NAME').split('/')[1],
         cwd: $.pype.convertPathString(app.project.path).split('\\').slice(0, -1).join('\\')
       };
       var sendInstances = [];
