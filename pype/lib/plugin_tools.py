@@ -8,11 +8,92 @@ import json
 import tempfile
 
 from .execute import run_subprocess
+from .profiles_filtering import filter_profiles
 
 from pype.settings import get_project_settings
 
 
 log = logging.getLogger(__name__)
+
+# Subset name template used when plugin does not have defined any
+DEFAULT_SUBSET_TEMPLATE = "{family}{Variant}"
+
+
+class TaskNotSetError(KeyError):
+    def __init__(self, msg=None):
+        if not msg:
+            msg = "Creator's subset name template requires task name."
+        super(TaskNotSetError, self).__init__(msg)
+
+
+def get_subset_name(
+    family,
+    variant,
+    task_name,
+    asset_id,
+    project_name=None,
+    host_name=None,
+    default_template=None
+):
+    if not family:
+        return ""
+
+    if not host_name:
+        host_name = os.environ["AVALON_APP"]
+
+    # Use only last part of class family value split by dot (`.`)
+    family = family.rsplit(".", 1)[-1]
+
+    # Get settings
+    tools_settings = get_project_settings(project_name)["global"]["tools"]
+    profiles = tools_settings["creator"]["subset_name_profiles"]
+    filtering_criteria = {
+        "families": family,
+        "hosts": host_name,
+        "tasks": task_name
+    }
+
+    matching_profile = filter_profiles(profiles, filtering_criteria)
+    template = None
+    if matching_profile:
+        template = matching_profile["template"]
+
+    # Make sure template is set (matching may have empty string)
+    if not template:
+        template = default_template or DEFAULT_SUBSET_TEMPLATE
+
+    # Simple check of task name existence for template with {task} in
+    #   - missing task should be possible only in Standalone publisher
+    if not task_name and "{task" in template.lower():
+        raise TaskNotSetError()
+
+    fill_pairs = (
+        ("variant", variant),
+        ("family", family),
+        ("task", task_name)
+    )
+    fill_data = {}
+    for key, value in fill_pairs:
+        # Handle cases when value is `None` (standalone publisher)
+        if value is None:
+            continue
+        # Keep value as it is
+        fill_data[key] = value
+        # Both key and value are with upper case
+        fill_data[key.upper()] = value.upper()
+
+        # Capitalize only first char of value
+        # - conditions are because of possible index errors
+        capitalized = ""
+        if value:
+            # Upper first character
+            capitalized += value[0].upper()
+            # Append rest of string if there is any
+            if len(value) > 1:
+                capitalized += value[1:]
+        fill_data[key.capitalize()] = capitalized
+
+    return template.format(**fill_data)
 
 
 def filter_pyblish_plugins(plugins):
