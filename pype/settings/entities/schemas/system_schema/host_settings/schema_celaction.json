@@ -30,8 +30,6 @@
                         {
                             "app_variant_label": "Local",
                             "app_variant": "Local",
-                            "multiplatform": false,
-                            "multipath_executables": false
                         }
                     ]
                 }

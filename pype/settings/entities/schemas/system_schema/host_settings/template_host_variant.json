@@ -1,11 +1,5 @@
 [
     {
-        "__default_values__": {
-            "multipath_executables": true,
-            "multiplatform": true
-        }
-    },
-    {
         "type": "dict",
         "key": "{app_variant}",
         "label": "{app_variant_label}",
@@ -21,15 +15,14 @@
                 "type": "text",
                 "key": "variant_label",
                 "label": "Variant label",
-                "placeholder": "Only \"Label\" is used if not filled.",
-                "roles": ["developer"]
+                "placeholder": "Only \"Label\" is used if not filled."
             },
             {
                 "type": "path",
                 "key": "executables",
                 "label": "Executables",
-                "multiplatform": "{multiplatform}",
-                "multipath": "{multipath_executables}"
+                "multiplatform": true,
+                "multipath": true
             },
             {
                 "type":"separator"

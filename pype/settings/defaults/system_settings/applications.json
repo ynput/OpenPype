@@ -1059,7 +1059,11 @@
             "Local": {
                 "enabled": true,
                 "variant_label": "Local",
-                "executables": "",
+                "executables": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
                 "arguments": {
                     "windows": [],
                     "darwin": [],
