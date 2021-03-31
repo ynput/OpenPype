@@ -59,6 +59,14 @@ def _profile_exclusion(matching_profiles, logger):
     return matching_profiles[0][0]
 
 
+def fullmatch(regex, string, flags=0):
+    """Emulate python-3.4 re.fullmatch()."""
+    matched = re.match(regex, string, flags=flags)
+    if matched and matched.span()[1] == len(string):
+        return matched
+    return None
+
+
 def validate_value_by_regexes(value, in_list):
     """Validates in any regex from list match entered value.
 
@@ -87,7 +95,11 @@ def validate_value_by_regexes(value, in_list):
 
     regexes = compile_list_of_regexes(in_list)
     for regex in regexes:
-        if re.match(regex, value):
+        if hasattr(regex, "fullmatch"):
+            result = regex.fullmatch(value)
+        else:
+            result = fullmatch(regex, value)
+        if result:
             return 1
     return -1
 
