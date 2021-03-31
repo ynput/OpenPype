@@ -44,6 +44,8 @@ class DictMutableKeysEntity(EndpointEntity):
     _miss_arg = object()
 
     def __getitem__(self, key):
+        if key not in self.children_by_key:
+            self.add_key(key)
         return self.children_by_key[key]
 
     def __setitem__(self, key, value):
