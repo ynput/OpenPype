@@ -95,20 +95,60 @@
     "load": {
         "LoadImage": {
             "enabled": true,
-            "representations": []
+            "families": [
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "prerender",
+                "review",
+                "image"
+            ],
+            "representations": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "psd"
+            ],
+            "node_name_template": "{class_name}_{ext}"
         },
         "LoadMov": {
             "enabled": true,
-            "representations": []
+            "families": [
+                "source",
+                "plate",
+                "render",
+                "prerender",
+                "review"
+            ],
+            "representations": [
+                "mov",
+                "review",
+                "mp4",
+                "h264"
+            ],
+            "node_name_template": "{class_name}_{ext}"
         },
         "LoadSequence": {
             "enabled": true,
+            "families": [
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "prerender",
+                "review"
+            ],
             "representations": [
-                "png",
-                "jpg",
                 "exr",
-                ""
-            ]
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png"
+            ],
+            "node_name_template": "{class_name}_{ext}"
         }
     },
     "workfile_build": {

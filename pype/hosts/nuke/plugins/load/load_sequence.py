@@ -72,13 +72,15 @@ def loader_shift(node, frame, relative=False):
 class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
-    families = ["render2d", "source", "plate", "render", "prerender", "review"]
-    representations = ["exr", "dpx", "jpg", "jpeg", "png"]
+    families = ["render", "source", "plate", "review"]
+    representations = ["exr", "dpx"]
 
     label = "Load Image Sequence"
     order = -20
     icon = "file-video-o"
     color = "white"
+
+    node_name_template = "{class_name}_{ext}"
 
     def load(self, context, name, namespace, data):
         from avalon.nuke import (
@@ -125,10 +127,16 @@ class LoadSequence(api.Loader):
                 padding = len(frame)
                 file = file.replace(frame, "#" * padding)
 
-        read_name = "Read_{0}_{1}_{2}".format(
-            repr_cont["asset"],
-            repr_cont["subset"],
-            context["representation"]["name"])
+        name_data = {
+            "asset": repr_cont["asset"],
+            "subset": repr_cont["subset"],
+            "representation": context["representation"]["name"],
+            "ext": repr_cont["representation"],
+            "id": context["representation"]["_id"],
+            "class_name": self.__class__.__name__
+        }
+
+        read_name = self.node_name_template.format(**name_data)
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
