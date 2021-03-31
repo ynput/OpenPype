@@ -4,6 +4,7 @@ import copy
 import json
 import platform
 import getpass
+import collections
 import inspect
 import subprocess
 import distutils.spawn
@@ -90,63 +91,199 @@ class ApplicationLaunchFailed(Exception):
     pass
 
 
+class ApplicationGroup:
+    """Hold information about application group.
+
+    Application group wraps different versions(variants) of application.
+    e.g. "maya" is group and "maya_2020" is variant.
+
+    Group hold `host_name` which is implementation name used in pype. Also
+    holds `enabled` if whole app group is enabled or `icon` for application
+    icon path in resources.
+
+    Group has also `environment` which hold same environments for all variants.
+
+    Args:
+        name (str): Groups' name.
+        data (dict): Group defying data loaded from settings.
+        manager (ApplicationManager): Manager that created the group.
+    """
+    def __init__(self, name, data, manager):
+        self.name = name
+        self.manager = manager
+        self._data = data
+
+        self.enabled = data.get("enabled", True)
+        self.label = data.get("label") or None
+        self.icon = data.get("icon") or None
+        self._environment = data.get("environment") or {}
+
+        host_name = data.get("host_name", None)
+        self.is_host = host_name is not None
+        self.host_name = host_name
+
+        variants = data.get("variants") or {}
+        for variant_name, variant_data in variants.items():
+            variants[variant_name] = Application(
+                variant_name, variant_data, self
+            )
+
+        self.variants = variants
+
+    def __repr__(self):
+        return "<{}> - {}".format(self.__class__.__name__, self.name)
+
+    def __iter__(self):
+        for variant in self.variants.values():
+            yield variant
+
+    @property
+    def environment(self):
+        return copy.deepcopy(self._environment)
+
+
+class Application:
+    """Hold information about application.
+
+    Object by itself does nothing special.
+
+    Args:
+        name (str): Specific version (or variant) of application.
+            e.g. "maya2020", "nuke11.3", etc.
+        data (dict): Data for the version containing information about
+            executables, variant label or if is enabled.
+            Only required key is `executables`.
+        group (ApplicationGroup): App group object that created the applicaiton
+            and under which application belongs.
+    """
+
+    def __init__(self, name, data, group):
+        self.name = name
+        self.group = group
+        self._data = data
+
+        enabled = False
+        if group.enabled:
+            enabled = data.get("enabled", True)
+            self.enabled = enabled
+
+        self.label = data.get("variant_label") or name
+        self.full_name = "/".join((group.name, name))
+
+        if group.label:
+            full_label = " ".join((group.label, self.label))
+        else:
+            full_label = self.label
+        self.full_label = full_label
+        self._environment = data.get("environment") or {}
+
+        _executables = data["executables"]
+        if not _executables:
+            _executables = []
+
+        elif isinstance(_executables, dict):
+            _executables = _executables.get(platform.system().lower()) or []
+
+        _arguments = data["arguments"]
+        if not _arguments:
+            _arguments = []
+
+        elif isinstance(_arguments, dict):
+            _arguments = _arguments.get(platform.system().lower()) or []
+
+        executables = []
+        for executable in _executables:
+            executables.append(ApplicationExecutable(executable))
+
+        self.executables = executables
+        self.arguments = _arguments
+
+    def __repr__(self):
+        return "<{}> - {}".format(self.__class__.__name__, self.full_name)
+
+    @property
+    def environment(self):
+        return copy.deepcopy(self._environment)
+
+    @property
+    def manager(self):
+        return self.group.manager
+
+    @property
+    def host_name(self):
+        return self.group.host_name
+
+    @property
+    def icon(self):
+        return self.group.icon
+
+    @property
+    def is_host(self):
+        return self.group.is_host
+
+    def find_executable(self):
+        """Try to find existing executable for application.
+
+        Returns (str): Path to executable from `executables` or None if any
+            exists.
+        """
+        for executable in self.executables:
+            if executable.exists():
+                return executable
+        return None
+
+    def launch(self, *args, **kwargs):
+        """Launch the application.
+
+        For this purpose is used manager's launch method to keep logic at one
+        place.
+
+        Arguments must match with manager's launch method. That's why *args
+        **kwargs are used.
+
+        Returns:
+            subprocess.Popen: Return executed process as Popen object.
+        """
+        return self.manager.launch(self.name, *args, **kwargs)
+
+
 class ApplicationManager:
     def __init__(self):
         self.log = PypeLogger().get_logger(self.__class__.__name__)
 
+        self.app_groups = {}
         self.applications = {}
+        self.tool_groups = {}
         self.tools = {}
 
         self.refresh()
 
     def refresh(self):
         """Refresh applications from settings."""
+        self.app_groups.clear()
         self.applications.clear()
+        self.tool_groups.clear()
         self.tools.clear()
 
         settings = get_system_settings()
 
-        hosts_definitions = settings["applications"]
-        for app_group, variant_definitions in hosts_definitions.items():
-            enabled = variant_definitions["enabled"]
-            label = variant_definitions.get("label") or app_group
-            variants = variant_definitions.get("variants") or {}
-            icon = variant_definitions.get("icon")
-            group_host_name = variant_definitions.get("host_name") or None
-            for app_name, app_data in variants.items():
-                if app_name in self.applications:
-                    raise AssertionError((
-                        "BUG: Duplicated application name in settings \"{}\""
-                    ).format(app_name))
-
-                # If host is disabled then disable all variants
-                if not enabled:
-                    app_data["enabled"] = enabled
-
-                # Pass label from host definition
-                if not app_data.get("label"):
-                    app_data["label"] = label
-
-                if not app_data.get("icon"):
-                    app_data["icon"] = icon
-
-                host_name = app_data.get("host_name") or group_host_name
-
-                app_data["is_host"] = host_name is not None
-
-                self.applications[app_name] = Application(
-                    app_group, app_name, host_name, app_data, self
-                )
+        app_defs = settings["applications"]
+        for group_name, variant_defs in app_defs.items():
+            group = ApplicationGroup(group_name, variant_defs, self)
+            self.app_groups[group_name] = group
+            for app in group:
+                # TODO This should be replaced with `full_name` in future
+                self.applications[app.name] = app
 
         tools_definitions = settings["tools"]["tool_groups"]
         for tool_group_name, tool_group_data in tools_definitions.items():
-            tool_variants = tool_group_data.get("variants") or {}
-            for tool_name, tool_data in tool_variants.items():
-                tool = ApplicationTool(tool_name, tool_group_name)
-                if tool.full_name in self.tools:
-                    self.log.warning((
-                        "Duplicated tool name in settings \"{}\""
-                    ).format(tool.full_name))
+            if not tool_group_name:
+                continue
+            group = EnvironmentToolGroup(
+                tool_group_name, tool_group_data, self
+            )
+            self.tool_groups[tool_group_name] = group
+            for tool in group:
                 self.tools[tool.full_name] = tool
 
     def launch(self, app_name, **data):
@@ -184,23 +321,69 @@ class ApplicationManager:
         return context.launch()
 
 
-class ApplicationTool:
+class EnvironmentToolGroup:
+    """Hold information about environment tool group.
+
+    Environment tool group may hold different variants of same tool and set
+    environments that are same for all of them.
+
+    e.g. "mtoa" may have different versions but all environments except one
+        are same.
+
+    Args:
+        name (str): Name of the tool group.
+        data (dict): Group's information with it's variants.
+        manager (ApplicationManager): Manager that creates the group.
+    """
+
+    def __init__(self, name, data, manager):
+        self.name = name
+        self._data = data
+        self.manager = manager
+        self._environment = data["environment"]
+
+        variants = data.get("variants") or {}
+        variants_by_name = {}
+        for variant_name, variant_env in variants.items():
+            tool = EnvironmentTool(variant_name, variant_env, self)
+            variants_by_name[variant_name] = tool
+        self.variants = variants_by_name
+
+    def __repr__(self):
+        return "<{}> - {}".format(self.__class__.__name__, self.name)
+
+    def __iter__(self):
+        for variant in self.variants.values():
+            yield variant
+
+    @property
+    def environment(self):
+        return copy.deepcopy(self._environment)
+
+
+class EnvironmentTool:
     """Hold information about application tool.
 
     Structure of tool information.
 
     Args:
-        tool_name (str): Name of the tool.
-        group_name (str): Name of group which wraps tool.
+        name (str): Name of the tool.
+        environment (dict): Variant environments.
+        group (str): Name of group which wraps tool.
     """
 
-    def __init__(self, tool_name, group_name):
-        self.name = tool_name
-        self.group_name = group_name
+    def __init__(self, name, environment, group):
+        self.name = name
+        self.group = group
+        self._environment = environment
+        self.full_name = "/".join((group.name, name))
+
+    def __repr__(self):
+        return "<{}> - {}".format(self.__class__.__name__, self.full_name)
 
     @property
-    def full_name(self):
-        return "/".join((self.group_name, self.name))
+    def environment(self):
+        return copy.deepcopy(self._environment)
 
 
 class ApplicationExecutable:
@@ -233,94 +416,6 @@ class ApplicationExecutable:
         if not self.executable_path:
             return False
         return bool(self._realpath())
-
-
-class Application:
-    """Hold information about application.
-
-    Object by itself does nothing special.
-
-    Args:
-        app_group (str): App group name.
-            e.g. "maya", "nuke", "photoshop", etc.
-        app_name (str): Specific version (or variant) of host.
-            e.g. "maya2020", "nuke11.3", etc.
-        host_name (str): Name of host implementation.
-        app_data (dict): Data for the version containing information about
-            executables, label, variant label, icon or if is enabled.
-            Only required key is `executables`.
-        manager (ApplicationManager): Application manager that created object.
-    """
-
-    def __init__(self, app_group, app_name, host_name, app_data, manager):
-        self.app_group = app_group
-        self.app_name = app_name
-        self.host_name = host_name
-        self.app_data = app_data
-        self.manager = manager
-
-        self.label = app_data.get("label") or app_name
-        self.variant_label = app_data.get("variant_label") or None
-        self.icon = app_data.get("icon") or None
-        self.enabled = app_data.get("enabled", True)
-        self.is_host = app_data.get("is_host", False)
-
-        _executables = app_data["executables"]
-        if not _executables:
-            _executables = []
-
-        elif isinstance(_executables, dict):
-            _executables = _executables.get(platform.system().lower()) or []
-
-        _arguments = app_data["arguments"]
-        if not _arguments:
-            _arguments = []
-
-        elif isinstance(_arguments, dict):
-            _arguments = _arguments.get(platform.system().lower()) or []
-
-        executables = []
-        for executable in _executables:
-            executables.append(ApplicationExecutable(executable))
-
-        self.executables = executables
-        self.arguments = _arguments
-
-    @property
-    def full_label(self):
-        """Full label of application.
-
-        Concatenate `label` and `variant_label` attributes if `variant_label`
-        is set.
-        """
-        if self.variant_label:
-            return "{} {}".format(self.label, self.variant_label)
-        return str(self.label)
-
-    def find_executable(self):
-        """Try to find existing executable for application.
-
-        Returns (str): Path to executable from `executables` or None if any
-            exists.
-        """
-        for executable in self.executables:
-            if executable.exists():
-                return executable
-        return None
-
-    def launch(self, *args, **kwargs):
-        """Launch the application.
-
-        For this purpose is used manager's launch method to keep logic at one
-        place.
-
-        Arguments must match with manager's launch method. That's why *args
-        **kwargs are used.
-
-        Returns:
-            subprocess.Popen: Return executed process as Popen object.
-        """
-        return self.manager.launch(self.app_name, *args, **kwargs)
 
 
 @six.add_metaclass(ABCMeta)
@@ -376,7 +471,7 @@ class LaunchHook:
                 return False
 
         if cls.app_groups:
-            if launch_context.app_group not in cls.app_groups:
+            if launch_context.app_group.name not in cls.app_groups:
                 return False
 
         if cls.app_names:
@@ -403,11 +498,11 @@ class LaunchHook:
 
     @property
     def app_group(self):
-        return getattr(self.application, "app_group", None)
+        return getattr(self.application, "group", None)
 
     @property
     def app_name(self):
-        return getattr(self.application, "app_name", None)
+        return getattr(self.application, "name", None)
 
     def validate(self):
         """Optional validation of launch hook on initialization.
@@ -481,12 +576,6 @@ class ApplicationLaunchContext:
         self.executable = executable
 
         self.data = dict(data)
-
-        # Load settings if were not passed in data
-        settings_env = self.data.get("settings_env")
-        if settings_env is None:
-            settings_env = get_environments()
-            self.data["settings_env"] = settings_env
 
         # subprocess.Popen launch arguments (first argument in constructor)
         self.launch_args = executable.as_args()
@@ -676,7 +765,7 @@ class ApplicationLaunchContext:
 
     @property
     def app_name(self):
-        return self.application.app_name
+        return self.application.name
 
     @property
     def host_name(self):
@@ -684,7 +773,7 @@ class ApplicationLaunchContext:
 
     @property
     def app_group(self):
-        return self.application.app_group
+        return self.application.group
 
     @property
     def manager(self):
@@ -806,9 +895,6 @@ class EnvironmentPrepData(dict):
         if data.get("env") is None:
             data["env"] = os.environ.copy()
 
-        if data.get("settings_env") is None:
-            data["settings_env"] = get_environments()
-
         super(EnvironmentPrepData, self).__init__(data)
 
 
@@ -898,29 +984,42 @@ def prepare_host_environments(data):
     app = data["app"]
     log = data["log"]
 
-    # Keys for getting environments
-    env_keys = [app.app_group, app.app_name]
+    # `added_env_keys` has debug purpose
+    added_env_keys = {app.group.name, app.name}
+    # Environments for application
+    environments = [
+        app.group.environment,
+        app.environment
+    ]
 
     asset_doc = data.get("asset_doc")
+    # Add tools environments
+    groups_by_name = {}
+    tool_by_group_name = collections.defaultdict(list)
     if asset_doc:
-        # Add tools environments
+        # Make sure each tool group can be added only once
         for key in asset_doc["data"].get("tools_env") or []:
             tool = app.manager.tools.get(key)
-            if tool:
-                if tool.group_name not in env_keys:
-                    env_keys.append(tool.group_name)
+            if not tool:
+                continue
+            groups_by_name[tool.group.name] = tool.group
+            tool_by_group_name[tool.group.name].append(tool)
 
-                if tool.name not in env_keys:
-                    env_keys.append(tool.name)
+        for group_name, group in groups_by_name.items():
+            environments.append(group.environment)
+            added_env_keys.add(group_name)
+            for tool in tool_by_group_name[group_name]:
+                environments.append(tool.environment)
+                added_env_keys.add(tool.name)
 
     log.debug(
-        "Finding environment groups for keys: {}".format(env_keys)
+        "Will add environments for apps and tools: {}".format(
+            ", ".join(added_env_keys)
+        )
     )
 
-    settings_env = data["settings_env"]
     env_values = {}
-    for env_key in env_keys:
-        _env_values = settings_env.get(env_key)
+    for _env_values in environments:
         if not _env_values:
             continue
 
@@ -1018,7 +1117,8 @@ def prepare_context_environments(data):
         "AVALON_ASSET": asset_doc["name"],
         "AVALON_TASK": task_name,
         "AVALON_APP": app.host_name,
-        "AVALON_APP_NAME": app.app_name,
+        # TODO this hould be `app.full_name` in future PRs
+        "AVALON_APP_NAME": app.name,
         "AVALON_WORKDIR": workdir
     }
     log.debug(

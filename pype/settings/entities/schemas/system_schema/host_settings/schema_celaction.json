@@ -17,8 +17,7 @@
         {
             "key": "environment",
             "label": "Environment",
-            "type": "raw-json",
-            "env_group_key": "celaction"
+            "type": "raw-json"
         },
         {
             "type": "dict",

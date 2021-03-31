@@ -18,8 +18,7 @@
             {
                 "key": "environment",
                 "label": "Environment",
-                "type": "raw-json",
-                "env_group_key": "{nuke_type}"
+                "type": "raw-json"
             },
             {
                 "type": "dict",
