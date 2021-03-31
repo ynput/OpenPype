@@ -77,7 +77,7 @@ def _prepare_publish_environments():
     env["AVALON_HIERARCHY"] = hierarchy
     env["AVALON_PROJECTCODE"] = project_doc["data"].get("code", "")
     env["AVALON_APP"] = f"hosts.{publish_host}"
-    env["AVALON_APP_NAME"] = "celaction/Local"
+    env["AVALON_APP_NAME"] = "celaction/local"
 
     env["PYBLISH_HOSTS"] = publish_host
 

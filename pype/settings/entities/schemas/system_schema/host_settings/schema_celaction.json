@@ -29,7 +29,7 @@
                     "template_data": [
                         {
                             "app_variant_label": "Local",
-                            "app_variant": "Local",
+                            "app_variant": "local"
                         }
                     ]
                 }
