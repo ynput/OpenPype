@@ -162,9 +162,9 @@ class ActionModel(QtGui.QStandardItemModel):
                 (ApplicationAction,),
                 {
                     "application": app,
-                    "name": app.app_name,
-                    "label": app.label,
-                    "label_variant": app.variant_label,
+                    "name": app.name,
+                    "label": app.group.label,
+                    "label_variant": app.label,
                     "group": None,
                     "icon": app.icon,
                     "color": getattr(app, "color", None),

@@ -133,8 +133,8 @@ class AppplicationsAction(BaseAction):
                     app_icon = None
 
             items.append({
-                "label": app.label,
-                "variant": app.variant_label,
+                "label": app.group.label,
+                "variant": app.label,
                 "description": None,
                 "actionIdentifier": self.identifier + app_name,
                 "icon": app_icon

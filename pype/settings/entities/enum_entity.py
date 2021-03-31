@@ -133,12 +133,9 @@ class AppsEnumEntity(BaseEnumEntity):
                 if enabled_entity and not enabled_entity.value:
                     continue
 
-                _group_label = variant_entity["label"].value
-                if not _group_label:
-                    _group_label = group_label
                 variant_label = variant_entity["variant_label"].value
 
-                full_label = "{} {}".format(_group_label, variant_label)
+                full_label = "{} {}".format(group_label, variant_label)
                 enum_items.append({variant_name: full_label})
                 valid_keys.add(variant_name)
         return enum_items, valid_keys
