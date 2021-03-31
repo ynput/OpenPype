@@ -242,7 +242,9 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
         temp_context = {}
         for instance in instances:
-            if instance.data["family"] in self.exclude_families:
+            families = instance.data.get("families", [])
+            families += [instance.data["family"]]
+            if set(families) & set(self.exclude_families):
                 continue
 
             if 'projectfile' in instance.data.get('family', ''):

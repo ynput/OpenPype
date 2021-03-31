@@ -21,6 +21,21 @@ class CollectFrames(api.ContextPlugin):
 
     def process(self, context):
         sequence = hiero.ui.activeSequence()
+
+        publish_frames = range(
+            int(sequence.timecodeStart()),
+            int(sequence.duration() + sequence.timecodeStart())
+        )
+        selection = hiero.selection
+        if selection:
+            publish_frames = []
+            for track_item in selection:
+                publish_frames.extend(
+                    range(track_item.timelineIn(), track_item.timelineOut())
+                )
+
+        publish_frames = list(set(publish_frames))
+
         subset_data = {}
         for tag in sequence.tags():
             metadata = tag.metadata().dict()
@@ -30,6 +45,10 @@ class CollectFrames(api.ContextPlugin):
                 continue
 
             frame = int(metadata["tag.start"])
+
+            if frame not in publish_frames:
+                continue
+
             subset = metadata["tag.subset"]
             try:
                 subset_data[subset]["frames"].append(frame)
