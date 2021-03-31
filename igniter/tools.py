@@ -185,38 +185,6 @@ def validate_path_string(path: str) -> (bool, str):
     return True, "valid path"
 
 
-def load_environments(sections: list = None) -> dict:
-    """Load environments from Pype.
-
-    This will load environments from database, process them with
-    :mod:`acre` and return them as flattened dictionary.
-
-    Args:
-        sections (list, optional): load specific types
-
-    Returns;
-        dict of str: loaded and processed environments.
-
-    """
-    import acre
-
-    from pype import settings
-
-    all_env = settings.get_environments()
-    merged_env = {}
-
-    sections = sections or all_env.keys()
-
-    for section in sections:
-        try:
-            parsed_env = acre.parse(all_env[section])
-        except AttributeError:
-            continue
-        merged_env = acre.append(merged_env, parsed_env)
-
-    return acre.compute(merged_env, cleanup=True)
-
-
 def get_pype_path_from_db(url: str) -> Union[str, None]:
     """Get Pype path from database.
 
