@@ -59,6 +59,9 @@ class DictImmutableKeysWidget(BaseWidget):
                 )
             )
 
+        if self.entity.use_label_wrap and self.content_layout.count() == 0:
+            self.body_widget.hide_toolbox(True)
+
         self.entity_widget.add_widget_to_layout(self, label)
 
     def _prepare_entity_layouts(self, children, widget):
