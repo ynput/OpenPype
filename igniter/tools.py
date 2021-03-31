@@ -193,6 +193,9 @@ def get_pype_global_settings(url: str) -> dict:
     We are loading data from database `pype` and collection `settings`.
     There we expect document type `global_settings`.
 
+    Args:
+        url (str): MongoDB url.
+
     Returns:
         dict: With settings data. Empty dictionary is returned if not found.
     """
