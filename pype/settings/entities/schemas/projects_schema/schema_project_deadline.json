@@ -127,6 +127,15 @@
                             "type": "text",
                             "key": "department",
                             "label": "Department"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "limit_groups",
+                            "label": "Limit Groups",
+                            "object_type": {
+                                "type": "list",
+                                "object_type": "text"
+                            }
                         }
                     ]
                 },

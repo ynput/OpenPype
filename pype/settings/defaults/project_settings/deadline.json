@@ -20,7 +20,8 @@
             "primary_pool": "",
             "secondary_pool": "",
             "group": "",
-            "department": ""
+            "department": "",
+            "limit_groups": {}
         },
         "HarmonySubmitDeadline": {
             "enabled": true,
