@@ -273,11 +273,15 @@ def list_instances():
 
     for timeline_item_data in selected_timeline_items:
         timeline_item = timeline_item_data["clip"]["item"]
+        ti_name = timeline_item.GetName().split(".")[0]
 
         # get pype tag data
         tag_data = lib.get_timeline_item_pype_tag(timeline_item)
 
         if tag_data:
+            asset = tag_data.get("asset")
+            subset = tag_data.get("subset")
+            tag_data["label"] = f"{ti_name} [{asset}-{subset}]"
             listed_instances.append(tag_data)
 
     return listed_instances
