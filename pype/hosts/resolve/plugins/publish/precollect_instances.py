@@ -5,11 +5,11 @@ from pype.hosts import resolve
 from pprint import pformat
 
 
-class CollectInstances(pyblish.api.ContextPlugin):
+class PrecollectInstances(pyblish.api.ContextPlugin):
     """Collect all Track items selection."""
 
     order = pyblish.api.CollectorOrder - 0.59
-    label = "Collect Instances"
+    label = "Precollect Instances"
     hosts = ["resolve"]
 
     def process(self, context):
