@@ -1056,7 +1056,7 @@
             "CELACTION_TEMPLATE": "{PYPE_ROOT}/pype/hosts/celaction/celaction_template_scene.scn"
         },
         "variants": {
-            "Local": {
+            "local": {
                 "enabled": true,
                 "variant_label": "Local",
                 "executables": {
