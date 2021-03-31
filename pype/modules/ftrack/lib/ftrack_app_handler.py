@@ -101,7 +101,8 @@ class AppAction(BaseAction):
 
             project_apps_config = avalon_project_doc["config"].get("apps", [])
             avalon_project_apps = [
-                app["name"] for app in project_apps_config
+                app["name"].replace("/", "_")
+                for app in project_apps_config
             ] or False
             event["data"]["avalon_project_apps"] = avalon_project_apps
 
