@@ -610,6 +610,9 @@ class MongoSettingsHandler(SettingsHandler):
 
         Probably should fill missing keys and values.
         """
+        if not project_doc:
+            return {}
+
         attributes = {}
         project_doc_data = project_doc.get("data") or {}
         for key in self.attribute_keys:
