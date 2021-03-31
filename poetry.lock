@@ -297,6 +297,18 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 
 [[package]]
+name = "enlighten"
+version = "1.9.0"
+description = "Enlighten Progress Bar"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+blessed = ">=1.17.7"
+prefixed = ">=0.3.2"
+
+[[package]]
 name = "evdev"
 version = "1.4.0"
 description = "Bindings to the Linux input handling subsystem"
@@ -637,7 +649,7 @@ view = ["PySide2 (>=5.11,<6.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://d.r1.wbsprt.com/pype.club/distribute"
+url = "https://distribute.openpype.io/wheels"
 reference = "pype"
 
 [[package]]
@@ -695,6 +707,14 @@ importlib-metadata = {version = ">=0.12", markers = "python_version < \"3.8\""}
 
 [package.extras]
 dev = ["pre-commit", "tox"]
+
+[[package]]
+name = "prefixed"
+version = "0.3.2"
+description = "Prefixed alternative numeric library"
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "protobuf"
@@ -1391,7 +1411,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=1.2.3)", "pytest-flake8", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "3.7.*"
-content-hash = "4905515073ad2bf2a8517d513d68e48669b6a829f24e540b2dd60bc70cbea26b"
+content-hash = "b356e327dbaa1aa38dbf1463901f64539f2c8d07be8d8a017e83b8a1554dbff9"
 
 [metadata.files]
 acre = []
@@ -1635,6 +1655,10 @@ dnspython = [
 docutils = [
     {file = "docutils-0.16-py2.py3-none-any.whl", hash = "sha256:0c5b78adfbf7762415433f5515cd5c9e762339e23369dbe8000d84a4bf4ab3af"},
     {file = "docutils-0.16.tar.gz", hash = "sha256:c2de3a60e9e7d07be26b7f2b00ca0309c207e06c100f9cc2a94931fc75a478fc"},
+]
+enlighten = [
+    {file = "enlighten-1.9.0-py2.py3-none-any.whl", hash = "sha256:5c59e41505702243c6b26437403e371d2a146ac72de5f706376f738ea8f32659"},
+    {file = "enlighten-1.9.0.tar.gz", hash = "sha256:539cc308ccc0c3bfb50feb1b2da94c1a1ac21e80fe95e984221de8966d48f428"},
 ]
 evdev = [
     {file = "evdev-1.4.0.tar.gz", hash = "sha256:8782740eb1a86b187334c07feb5127d3faa0b236e113206dfe3ae8f77fb1aaf1"},
@@ -1895,6 +1919,10 @@ pillow = [
 pluggy = [
     {file = "pluggy-0.13.1-py2.py3-none-any.whl", hash = "sha256:966c145cd83c96502c3c3868f50408687b38434af77734af1e9ca461a4081d2d"},
     {file = "pluggy-0.13.1.tar.gz", hash = "sha256:15b2acde666561e1298d71b523007ed7364de07029219b604cf808bfa1c765b0"},
+]
+prefixed = [
+    {file = "prefixed-0.3.2-py2.py3-none-any.whl", hash = "sha256:5e107306462d63f2f03c529dbf11b0026fdfec621a9a008ca639d71de22995c3"},
+    {file = "prefixed-0.3.2.tar.gz", hash = "sha256:ca48277ba5fa8346dd4b760847da930c7b84416387c39e93affef086add2c029"},
 ]
 protobuf = [
     {file = "protobuf-3.15.6-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:1771ef20e88759c4d81db213e89b7a1fc53937968e12af6603c658ee4bcbfa38"},

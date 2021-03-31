@@ -42,6 +42,7 @@ jinxed = [
     { version = "^1.0.1", markers = "sys_platform == 'linux'" }
 ]
 python3-xlib = { version="*", markers = "sys_platform == 'linux'"}
+enlighten = "^1.9.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"
@@ -61,8 +62,8 @@ sphinx-rtd-theme = "*"
 sphinxcontrib-websupport = "*"
 sphinx-qt-documentation = "*"
 recommonmark = "*"
-tqdm = "*"
 wheel = "*"
+enlighten = "*"  # cool terminal progress bars
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pypeclub/pype/issues"
@@ -70,8 +71,34 @@ wheel = "*"
 
 [[tool.poetry.source]]
 name = "pype"
-url = "https://d.r1.wbsprt.com/pype.club/distribute/"
+url = "https://distribute.openpype.io/wheels/"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[pype]
+
+[pype.thirdparty.ffmpeg.windows]
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.13-windows.zip"
+hash = "43988ebcba98313635f06f2ca7e2dd52670710ebceefaa77107321b1def30472"
+
+[pype.thirdparty.ffmpeg.linux]
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-20200504-linux.tgz"
+hash = "sha256:..."
+
+[pype.thirdparty.ffmpeg.darwin]
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-20200504-darwin.tgz"
+hash = "sha256:..."
+
+[pype.thirdparty.oiio.windows]
+url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.0-windows.zip"
+hash = "fd2e00278e01e85dcee7b4a6969d1a16f13016ec16700fb0366dbb1b1f3c37ad"
+
+[pype.thirdparty.oiio.linux]
+url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-linux.tgz"
+hash = "sha256:..."
+
+[pype.thirdparty.oiio.darwin]
+url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"
+hash = "sha256:..."
