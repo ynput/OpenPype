@@ -1,4 +1,5 @@
 import re
+import uuid
 from avalon import api
 import pype.api as pype
 from pype.hosts import resolve
@@ -776,6 +777,9 @@ class PublishClip:
 
         # add data to return data dict
         self.tag_data.update(tag_hierarchy_data)
+
+        # add uuid to tag data
+        self.tag_data["uuid"] = str(uuid.uuid4())
 
         # add review track only to hero track
         if hero_track and self.review_layer:

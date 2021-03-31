@@ -262,7 +262,28 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
 
 def remove_instance(instance):
     """Remove instance marker from track item."""
-    pass
+    instance_id = instance.get("uuid")
+
+    selected_timeline_items = lib.get_current_timeline_items(
+        filter=True, selecting_color=lib.publish_clip_color)
+
+    found_ti = None
+    for timeline_item_data in selected_timeline_items:
+        timeline_item = timeline_item_data["clip"]["item"]
+
+        # get pype tag data
+        tag_data = lib.get_timeline_item_pype_tag(timeline_item)
+        _ti_id = tag_data.get("uuid")
+        if _ti_id == instance_id:
+            found_ti = timeline_item
+            break
+
+    if found_ti is None:
+        return
+
+    # removing instance by marker color
+    print(f"Removing instance: {found_ti.GetName()}")
+    found_ti.DeleteMarkersByColor(lib.pype_marker_color)
 
 
 def list_instances():
