@@ -6,6 +6,7 @@ Functions ``compose_url()`` and ``decompose_url()`` are the same as in
 version is decided.
 
 """
+import os
 from typing import Dict, Union
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
@@ -234,3 +235,17 @@ def get_pype_path_from_db(url: str) -> Union[str, None]:
     """
     global_settings = get_pype_global_settings(url)
     return global_settings.get("pype_path", {}).get(platform.system().lower())
+    paths = (
+        global_settings
+        .get("pype_path", {})
+        .get(platform.system().lower())
+    ) or []
+    # For cases when `pype_path` is a single path
+    if paths and isinstance(paths, str):
+        paths = [paths]
+
+    # Loop over paths and return only existing
+    for path in paths:
+        if os.path.exists(path):
+            return path
+    return None
