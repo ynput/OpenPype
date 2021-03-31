@@ -131,6 +131,7 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
     try:
         client = MongoClient(**mongo_args)
         client.server_info()
+        client.close()
     except ServerSelectionTimeoutError as e:
         return False, f"Cannot connect to server {cnx} - {e}"
     except ValueError:
