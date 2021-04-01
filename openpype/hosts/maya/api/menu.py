@@ -127,7 +127,7 @@ def uninstall():
 
 def install():
     if cmds.about(batch=True):
-        log.info("Skipping pype.menu initialization in batch mode..")
+        log.info("Skipping openpype.menu initialization in batch mode..")
         return
 
     uninstall()

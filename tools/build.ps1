@@ -95,7 +95,7 @@ $openpype_root = (Get-Item $script_dir).parent.FullName
 
 Set-Location -Path $openpype_root
 
-$version_file = Get-Content -Path "$($openpype_root)\pype\version.py"
+$version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
 $openpype_version = $result[0].Groups['version'].Value
 if (-not $openpype_version) {

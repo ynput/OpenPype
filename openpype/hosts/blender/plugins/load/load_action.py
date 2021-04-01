@@ -9,7 +9,7 @@ from avalon import api, blender
 import bpy
 import openpype.hosts.blender.api.plugin
 
-logger = logging.getLogger("pype").getChild("blender").getChild("load_action")
+logger = logging.getLogger("openpype").getChild("blender").getChild("load_action")
 
 
 class BlendActionLoader(openpype.hosts.blender.api.plugin.AssetLoader):

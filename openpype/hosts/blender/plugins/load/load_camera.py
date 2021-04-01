@@ -9,7 +9,7 @@ from avalon import api, blender
 import bpy
 import openpype.hosts.blender.api.plugin
 
-logger = logging.getLogger("pype").getChild("blender").getChild("load_camera")
+logger = logging.getLogger("openpype").getChild("blender").getChild("load_camera")
 
 
 class BlendCameraLoader(openpype.hosts.blender.api.plugin.AssetLoader):

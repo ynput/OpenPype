@@ -5,7 +5,7 @@ Export Maya nodes from Render Setup layer as if flattened in that layer instead
 of exporting the defaultRenderLayer as Maya forces by default
 
 Credits: Roy Nieterau (BigRoy) / Colorbleed
-Modified for use in Pype
+Modified for use in OpenPype
 
 """
 

@@ -15,7 +15,7 @@ import openpype.hosts.maya
 from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
 
-log = logging.getLogger("pype.hosts.maya")
+log = logging.getLogger("openpype.hosts.maya")
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.maya.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")

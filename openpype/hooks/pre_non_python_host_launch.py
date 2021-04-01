@@ -5,7 +5,7 @@ from openpype.lib import (
     get_pype_execute_args
 )
 
-from openpype import PACKAGE_DIR as PYPE_DIR
+from openpype import PACKAGE_DIR as OPENPYPE_DIR
 
 
 class NonPythonHostHook(PreLaunchHook):
@@ -13,7 +13,7 @@ class NonPythonHostHook(PreLaunchHook):
 
     Non python host implementation do not launch host directly but use
     python script which launch the host. For these cases it is necessary to
-    prepend python (or pype) executable and script path before application's.
+    prepend python (or openpype) executable and script path before application's.
     """
     app_groups = ["harmony", "photoshop", "aftereffects"]
 
@@ -27,7 +27,7 @@ class NonPythonHostHook(PreLaunchHook):
             remainders.append(self.launch_context.launch_args.pop(0))
 
         script_path = os.path.join(
-            PYPE_DIR,
+            OPENPYPE_DIR,
             "scripts",
             "non_python_host_launch.py"
         )

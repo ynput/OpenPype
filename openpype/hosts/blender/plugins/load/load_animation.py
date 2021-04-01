@@ -10,7 +10,7 @@ import bpy
 import openpype.hosts.blender.api.plugin
 
 
-logger = logging.getLogger("pype").getChild(
+logger = logging.getLogger("openpype").getChild(
     "blender").getChild("load_animation")
 
 

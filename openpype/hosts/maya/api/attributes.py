@@ -3,7 +3,7 @@
 
 https://github.com/Colorbleed/colorbleed-config/blob/acre/colorbleed/maya/lib_rendersetup.py
 Credits: Roy Nieterau (BigRoy) / Colorbleed
-Modified for use in Pype
+Modified for use in OpenPype
 
 """
 

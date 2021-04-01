@@ -5,7 +5,7 @@ from avalon import api as avalon
 from pyblish import api as pyblish
 import openpype.hosts.unreal
 
-logger = logging.getLogger("pype.hosts.unreal")
+logger = logging.getLogger("openpype.hosts.unreal")
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.unreal.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
@@ -30,9 +30,9 @@ def install():
 .
 '''
     print(logo)
-    print("installing Pype for Unreal ...")
+    print("installing OpenPype for Unreal ...")
     print("-=" * 40)
-    logger.info("installing Pype for Unreal")
+    logger.info("installing OpenPype for Unreal")
     pyblish.register_plugin_path(str(PUBLISH_PATH))
     avalon.register_plugin_path(avalon.Loader, str(LOAD_PATH))
     avalon.register_plugin_path(avalon.Creator, str(CREATE_PATH))

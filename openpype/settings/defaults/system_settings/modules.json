@@ -9,7 +9,7 @@
     },
     "ftrack": {
         "enabled": true,
-        "ftrack_server": "https://pype.ftrackapp.com",
+        "ftrack_server": "",
         "ftrack_actions_path": [],
         "ftrack_events_path": [],
         "intent": {
@@ -131,7 +131,7 @@
     },
     "clockify": {
         "enabled": false,
-        "workspace_name": "studio name"
+        "workspace_name": ""
     },
     "sync_server": {
         "enabled": false
