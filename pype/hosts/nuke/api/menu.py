@@ -1,3 +1,4 @@
+import os
 import nuke
 from avalon.api import Session
 
@@ -10,7 +11,7 @@ log = Logger().get_logger(__name__)
 
 def install():
     menubar = nuke.menu("Nuke")
-    menu = menubar.findItem(Session["AVALON_LABEL"])
+    menu = menubar.findItem(os.environ["AVALON_LABEL"])
 
     # replace reset resolution from avalon core to pype's
     name = "Work Files..."
@@ -90,7 +91,7 @@ def install():
 def uninstall():
 
     menubar = nuke.menu("Nuke")
-    menu = menubar.findItem(Session["AVALON_LABEL"])
+    menu = menubar.findItem(os.environ["AVALON_LABEL"])
 
     for item in menu.items():
         log.info("Removing menu item: {}".format(item.name()))
