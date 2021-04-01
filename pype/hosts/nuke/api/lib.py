@@ -25,7 +25,7 @@ log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self._project = None
-self._node_tab_name = "{}Tab".format(os.getenv("AVALON_LABEL") or "Avalon")
+self._node_tab_name = "{}".format(os.getenv("AVALON_LABEL") or "Avalon")
 
 def get_node_imageio_setting(**kwarg):
     ''' Get preset data for dataflow (fileType, compression, bitDepth)
