@@ -140,6 +140,7 @@ def set_openpype_global_environments() -> None:
 
     # Hardcoded default values
     os.environ["PYBLISH_GUI"] = "pyblish_pype"
+    os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"  # name of Pype database
     # Change scale factor only if is not set
     if "QT_AUTO_SCREEN_SCALE_FACTOR" not in os.environ:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"

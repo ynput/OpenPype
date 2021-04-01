@@ -170,18 +170,18 @@ class MongoSettingsHandler(SettingsHandler):
 
     def __init__(self):
         # Get mongo connection
-        from openpype.lib import PypeMongoConnection
+        from openpype.lib import OpenPypeMongoConnection
         from avalon.api import AvalonMongoDB
 
-        settings_collection = PypeMongoConnection.get_mongo_client()
+        settings_collection = OpenPypeMongoConnection.get_mongo_client()
 
         self._anatomy_keys = None
         self._attribute_keys = None
         # TODO prepare version of pype
         # - pype version should define how are settings saved and loaded
 
+        database_name = os.environ["OPENPYPE_DATABASE_NAME"]
         # TODO modify to not use hardcoded keys
-        database_name = "pype"
         collection_name = "settings"
 
         self.settings_collection = settings_collection
@@ -541,19 +541,19 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
     def __init__(self, local_site_id=None):
         # Get mongo connection
         from openpype.lib import (
-            PypeMongoConnection,
+            OpenPypeMongoConnection,
             get_local_site_id
         )
 
         if local_site_id is None:
             local_site_id = get_local_site_id()
-        settings_collection = PypeMongoConnection.get_mongo_client()
+        settings_collection = OpenPypeMongoConnection.get_mongo_client()
 
         # TODO prepare version of pype
         # - pype version should define how are settings saved and loaded
 
+        database_name = os.environ["OPENPYPE_DATABASE_NAME"]
         # TODO modify to not use hardcoded keys
-        database_name = "pype"
         collection_name = "settings"
 
         self.settings_collection = settings_collection

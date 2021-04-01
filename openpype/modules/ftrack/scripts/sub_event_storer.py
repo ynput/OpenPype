@@ -14,7 +14,7 @@ from openpype.modules.ftrack.ftrack_server.lib import (
     TOPIC_STATUS_SERVER_RESULT
 )
 from openpype.modules.ftrack.lib import get_ftrack_event_mongo_info
-from openpype.lib import PypeMongoConnection
+from openpype.lib import OpenPypeMongoConnection
 from openpype.api import Logger
 
 log = Logger.get_logger("Event storer")
@@ -35,11 +35,11 @@ ignore_topics = []
 def install_db():
     global dbcon
     try:
-        mongo_client = PypeMongoConnection.get_mongo_client()
+        mongo_client = OpenPypeMongoConnection.get_mongo_client()
         dbcon = mongo_client[database_name][collection_name]
     except pymongo.errors.AutoReconnect:
         log.error("Mongo server \"{}\" is not responding, exiting.".format(
-            PypeMongoConnection.get_default_mongo_url()
+            OpenPypeMongoConnection.get_default_mongo_url()
         ))
         sys.exit(0)
 

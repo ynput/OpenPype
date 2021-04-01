@@ -28,7 +28,7 @@ from . import Terminal
 from .mongo import (
     MongoEnvNotSet,
     decompose_url,
-    PypeMongoConnection
+    OpenPypeMongoConnection
 )
 try:
     import log4mongo
@@ -203,7 +203,7 @@ class PypeLogger:
     log_mongo_url_components = None
 
     # Database name in Mongo
-    log_database_name = "pype"
+    log_database_name = os.environ["OPENPYPE_DATABASE_NAME"]
     # Collection name under database in Mongo
     log_collection_name = "logs"
 
@@ -470,7 +470,7 @@ class PypeLogger:
         if not cls.initialized:
             cls.initialize()
 
-        return PypeMongoConnection.get_mongo_client(cls.log_mongo_url)
+        return OpenPypeMongoConnection.get_mongo_client(cls.log_mongo_url)
 
 
 def timeit(method):

@@ -129,13 +129,13 @@ def validate_mongo_connection(mongo_uri):
     client.close()
 
 
-class PypeMongoConnection:
+class OpenPypeMongoConnection:
     """Singleton MongoDB connection.
 
     Keeps MongoDB connections by url.
     """
     mongo_clients = {}
-    log = logging.getLogger("PypeMongoConnection")
+    log = logging.getLogger("OpenPypeMongoConnection")
 
     @staticmethod
     def get_default_mongo_url():
