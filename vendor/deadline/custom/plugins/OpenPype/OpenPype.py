@@ -12,18 +12,18 @@ import re
 # main DeadlinePlugin class.
 ######################################################################
 def GetDeadlinePlugin():
-    return PypeDeadlinePlugin()
+    return OpenPypeDeadlinePlugin()
 
 
 def CleanupDeadlinePlugin(deadlinePlugin):
     deadlinePlugin.Cleanup()
 
 
-class PypeDeadlinePlugin(DeadlinePlugin):
+class OpenPypeDeadlinePlugin(DeadlinePlugin):
     """
-        Standalone plugin for publishing from Pype.
+        Standalone plugin for publishing from OpenPype.
 
-        Calls Pype executable 'pype_console' from first correctly found
+        Calls OpenPype executable 'openpype_console' from first correctly found
         file based on plugin configuration. Uses 'publish' command and passes
         path to metadata json file, which contains all needed information
         for publish process.
@@ -56,11 +56,11 @@ class PypeDeadlinePlugin(DeadlinePlugin):
         version = self.GetPluginInfoEntry("Version")
 
         exeList = self.GetConfigEntry(
-            "Pype_Executable_" + version.replace(".", "_"))
+            "OpenPype_Executable_" + version.replace(".", "_"))
         exe = FileUtils.SearchFileList(exeList)
         if exe == "":
             self.FailRender(
-                "Pype " + version + " executable was not found " +
+                "OpenPype " + version + " executable was not found " +
                 "in the semicolon separated list \"" + exeList + "\". " +
                 "The path to the render executable can be configured " +
                 "from the Plugin Configuration in the Deadline Monitor.")

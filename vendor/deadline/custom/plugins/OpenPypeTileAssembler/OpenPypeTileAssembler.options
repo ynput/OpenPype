@@ -23,7 +23,7 @@ Index=0
 Label=Cleanup Tiles
 Required=false
 DisableIfBlank=true
-Description=If enabled, the Pype Tile Assembler will cleanup all tiles after assembly.
+Description=If enabled, the OpenPype Tile Assembler will cleanup all tiles after assembly.
 
 [Renderer]
 Type=string

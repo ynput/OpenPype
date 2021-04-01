@@ -28,7 +28,7 @@ LIST_KEYS = {
 
 def GetDeadlinePlugin():  # noqa: N802
     """Helper."""
-    return PypeTileAssembler()
+    return OpenPypeTileAssembler()
 
 
 def CleanupDeadlinePlugin(deadlinePlugin):  # noqa: N802, N803
@@ -36,7 +36,7 @@ def CleanupDeadlinePlugin(deadlinePlugin):  # noqa: N802, N803
     deadlinePlugin.cleanup()
 
 
-class PypeTileAssembler(DeadlinePlugin):
+class OpenPypeTileAssembler(DeadlinePlugin):
     """Deadline plugin for assembling tiles using OIIO."""
 
     def __init__(self):
@@ -157,7 +157,7 @@ class PypeTileAssembler(DeadlinePlugin):
 
     def pre_render_tasks(self):
         """Load config file and do remapping."""
-        self.LogInfo("Pype Tile Assembler starting...")
+        self.LogInfo("OpenPype Tile Assembler starting...")
         scene_filename = self.GetDataFilename()
 
         temp_scene_directory = self.CreateTempDirectory(
@@ -191,7 +191,7 @@ class PypeTileAssembler(DeadlinePlugin):
                         tile["filepath"]))
                     pass
 
-        self.LogInfo("Pype Tile Assembler Job finished.")
+        self.LogInfo("OpenPype Tile Assembler Job finished.")
 
     def handle_stdout_error(self):
         """Handle errors in stdout."""

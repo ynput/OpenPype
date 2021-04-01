@@ -120,6 +120,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "AVALON_TASK",
         "AVALON_APP_NAME",
         "OPENPYPE_PUBLISH_JOB"
+
         "OPENPYPE_LOG_NO_COLORS",
         "OPENPYPE_USERNAME",
         "OPENPYPE_RENDER_JOB",

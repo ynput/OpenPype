@@ -4,7 +4,7 @@ Label=About
 Category=About Plugin
 CategoryOrder=-1
 Index=0
-Default=Pype Plugin for Deadline
+Default=OpenPype Plugin for Deadline
 Description=Not configurable
 
 [ConcurrentTasks]
@@ -16,12 +16,12 @@ Index=0
 Default=True
 Description=Not configurable
 
-[Pype_Executable_3_0]
+[OpenPype_Executable_3_0]
 Type=multilinemultifilename
-Label=Pype 3.0 Executable
-Category=Pype Executables
+Label=OpenPype 3.0 Executable
+Category=OpenPype Executables
 CategoryOrder=0
 Index=0
 Default=
-Description=The path to the Pype executable. Enter alternative paths on separate lines.
+Description=The path to the OpenPype executable. Enter alternative paths on separate lines.
 

@@ -3,16 +3,16 @@ import Deadline.Scripting
 
 
 def GetDeadlineEventListener():
-    return PypeEventListener()
+    return OpenPypeEventListener()
 
 
 def CleanupDeadlineEventListener(eventListener):
     eventListener.Cleanup()
 
 
-class PypeEventListener(Deadline.Events.DeadlineEventListener):
+class OpenPypeEventListener(Deadline.Events.DeadlineEventListener):
     """
-        Called on every Deadline plugin event, used for injecting Pype
+        Called on every Deadline plugin event, used for injecting OpenPype
         environment variables into rendering process.
 
         Expects that job already contains env vars:
@@ -20,10 +20,10 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
                  AVALON_ASSET
                  AVALON_TASK
                  AVALON_APP_NAME
-        Without these only global environment would be pulled from Pype
+        Without these only global environment would be pulled from OpenPype
 
-        Configure 'Path to Pype executable dir' in Deadlines
-            'Tools > Configure Events > pype '
+        Configure 'Path to OpenPype executable dir' in Deadlines
+            'Tools > Configure Events > openpype '
         Only directory path is needed.
 
     """
@@ -85,16 +85,17 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
         del self.OnThermalShutdownCallback
         del self.OnMachineRestartCallback
 
-    def set_pype_executable_path(self, job):
+    def set_openpype_executable_path(self, job):
         """
-            Sets configurable PypeExecutable value to job extra infos.
+            Sets configurable OpenPypeExecutable value to job extra infos.
 
             GlobalJobPreLoad takes this value, pulls env vars for each task
             from specific worker itself. GlobalJobPreLoad is not easily
             configured, so we are configuring Event itself.
         """
-        pype_execs = self.GetConfigEntryWithDefault("PypeExecutable", "")
-        job.SetJobExtraInfoKeyValue("pype_executables", pype_execs)
+        openpype_execs = self.GetConfigEntryWithDefault("OpenPypeExecutable",
+                                                        "")
+        job.SetJobExtraInfoKeyValue("openpype_executables", openpype_execs)
 
         Deadline.Scripting.RepositoryUtils.SaveJob(job)
 
@@ -105,12 +106,12 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
     def OnJobSubmitted(self, job):
         # self.LogInfo("OnJobSubmitted LOGGING")
         # for 1st time submit
-        self.set_pype_executable_path(job)
+        self.set_openpype_executable_path(job)
         self.updateFtrackStatus(job, "Render Queued")
 
     def OnJobStarted(self, job):
         # self.LogInfo("OnJobStarted")
-        self.set_pype_executable_path(job)
+        self.set_openpype_executable_path(job)
         self.updateFtrackStatus(job, "Rendering")
 
     def OnJobFinished(self, job):
@@ -119,7 +120,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
     def OnJobRequeued(self, job):
         # self.LogInfo("OnJobRequeued LOGGING")
-        self.set_pype_executable_path(job)
+        self.set_openpype_executable_path(job)
 
     def OnJobFailed(self, job):
         pass
@@ -130,7 +131,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
     def OnJobResumed(self, job):
         # self.LogInfo("OnJobResumed LOGGING")
-        self.set_pype_executable_path(job)
+        self.set_openpype_executable_path(job)
         self.updateFtrackStatus(job, "Rendering")
 
     def OnJobPended(self, job):
@@ -172,7 +173,7 @@ class PypeEventListener(Deadline.Events.DeadlineEventListener):
 
     def OnSlaveStartingJob(self, host_name, job):
         # self.LogInfo("OnSlaveStartingJob LOGGING")
-        self.set_pype_executable_path(job)
+        self.set_openpype_executable_path(job)
 
     def OnSlaveStalled(self, job):
         pass
