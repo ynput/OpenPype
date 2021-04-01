@@ -1,11 +1,12 @@
 <#
 .SYNOPSIS
-  Helper script create distributable Pype zip.
+  Helper script create distributable OpenPype zip.
 
 .DESCRIPTION
-  This script will detect Python installation, create venv and install
-  all necessary packages from `requirements.txt` needed by Pype to be
-  included during application freeze on Windows.
+  This script will detect Python installation and run OpenPype to create
+  zip. It needs mongodb running. I will create zip from current source code
+  version and copy it top `%LOCALAPPDATA%/pypeclub/pype` if `--path` or `-p`
+  argument is not used.
 
 .EXAMPLE
 
@@ -35,19 +36,16 @@ function Show-PSWarning() {
 
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$pype_root = (Get-Item $script_dir).parent.FullName
-Set-Location -Path $pype_root
+$openpype_root = (Get-Item $script_dir).parent.FullName
+Set-Location -Path $openpype_root
 
 $art = @"
 
-
-        ____________
-       /\      ___  \
-       \ \     \/_\  \
-        \ \     _____/ ______   ___ ___ ___
-         \ \    \___/ /\     \  \  \\  \\  \
-          \ \____\    \ \_____\  \__\\__\\__\
-           \/____/     \/_____/  . PYPE Club .
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 "@
 
@@ -56,12 +54,12 @@ Write-Host $art -ForegroundColor DarkGreen
 # Enable if PS 7.x is needed.
 # Show-PSWarning
 
-$version_file = Get-Content -Path "$($pype_root)\pype\version.py"
+$version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
-$pype_version = $result[0].Groups['version'].Value
-if (-not $pype_version) {
+$openpype_version = $result[0].Groups['version'].Value
+if (-not $openpype_version) {
   Write-Host "!!! " -ForegroundColor yellow -NoNewline
-  Write-Host "Cannot determine Pype version."
+  Write-Host "Cannot determine OpenPype version."
   Exit-WithCode 1
 }
 
@@ -95,5 +93,5 @@ Write-Host "Generating zip from current sources ..."
 Write-Host "... " -NoNewline -ForegroundColor Magenta
 Write-Host "arguments: " -NoNewline -ForegroundColor Gray
 Write-Host $ARGS -ForegroundColor White
-& poetry run python "$($pype_root)\start.py" generate-zip $ARGS
+& poetry run python "$($openpype_root)\start.py" generate-zip $ARGS
 Set-Location -Path $current_dir

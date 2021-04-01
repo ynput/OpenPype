@@ -1,46 +1,46 @@
 # -*- coding: utf-8 -*-
-"""Main entry point for Pype command.
+"""Main entry point for OpenPype command.
 
-Bootstrapping process of Pype is as follows:
+Bootstrapping process of OpenPype is as follows:
 
-`PYPE_PATH` is checked for existence - either one from environment or
+`OPENPYPE_PATH` is checked for existence - either one from environment or
 from user settings. Precedence takes the one set by environment.
 
-On this path we try to find pype in directories version string in their names.
-For example: `pype-v3.0.1-foo` is valid name, or even `foo_3.0.2` - as long
-as version can be determined from its name _AND_ file `pype/pype/version.py`
-can be found inside, it is considered Pype installation.
+On this path we try to find OpenPype in directories version string in their names.
+For example: `openpype-v3.0.1-foo` is valid name, or even `foo_3.0.2` - as long
+as version can be determined from its name _AND_ file `openpype/openpype/version.py`
+can be found inside, it is considered OpenPype installation.
 
-If no Pype repositories are found in `PYPE_PATH` (user data dir)
-then **Igniter** (Pype setup tool) will launch its GUI.
+If no OpenPype repositories are found in `OPENPYPE_PATH` (user data dir)
+then **Igniter** (OpenPype setup tool) will launch its GUI.
 
-It can be used to specify `PYPE_PATH` or if it is _not_ specified, current
+It can be used to specify `OPENPYPE_PATH` or if it is _not_ specified, current
 *"live"* repositories will be used to create zip file and copy it to
 appdata dir in user home and extract it there. Version will be determined by
-version specified in Pype module.
+version specified in OpenPype module.
 
-If Pype repository directories are found in default install location
-(user data dir) or in `PYPE_PATH`, it will get list of those dirs there and
+If OpenPype repository directories are found in default install location
+(user data dir) or in `OPENPYPE_PATH`, it will get list of those dirs there and
 use latest one or the one specified with optional `--use-version` command
 line argument. If the one specified doesn't exist then latest available
 version will be used. All repositories in that dir will be added
 to `sys.path` and `PYTHONPATH`.
 
-If Pype is live (not frozen) then current version of Pype module will be
+If OpenPype is live (not frozen) then current version of OpenPype module will be
 used. All directories under `repos` will be added to `sys.path` and
 `PYTHONPATH`.
 
-Pype depends on connection to `MongoDB`_. You can specify MongoDB connection
-string via `PYPE_MONGO` set in environment or it can be set in user
+OpenPype depends on connection to `MongoDB`_. You can specify MongoDB connection
+string via `OPENPYPE_MONGO` set in environment or it can be set in user
 settings or via **Igniter** GUI.
 
-So, bootstrapping Pype looks like this::
+So, bootstrapping OpenPype looks like this::
 
 .. code-block:: bash
 
 +-------------------------------------------------------+
 | Determine MongoDB connection:                         |
-| Use `PYPE_MONGO`, system keyring `pypeMongo`          |
+| Use `OPENPYPE_MONGO`, system keyring `openPypeMongo`          |
 +--------------------------|----------------------------+
                    .--- Found? --.
                  YES             NO
@@ -52,9 +52,9 @@ So, bootstrapping Pype looks like this::
                   |                                        |
                   |                                        |
 +-----------------v------------------------------------+   |
-| Get location of Pype:                                |   |
-|   1) Test for `PYPE_PATH` environment variable       |   |
-|   2) Test `pypePath` in registry setting             |   |
+| Get location of OpenPype:                            |   |
+|   1) Test for `OPENPYPE_PATH` environment variable   |   |
+|   2) Test `openPypePath` in registry setting         |   |
 |   3) Test user data directory                        |   |
 | ...................................................  |   |
 | If running from frozen code:                         |   |
@@ -63,21 +63,21 @@ So, bootstrapping Pype looks like this::
 |   - Use live code and install it to user data dir    |   |
 | * can be overridden with `--use-version` argument    |   |
 +-------------------------|----------------------------+   |
-               .-- Is Pype found? --.                      |
-             YES                    NO                     |
-              |                     |                      |
-              |      +--------------v------------------+   |
-              |      | Look in `PYPE_PATH`, find       |   |
+             .-- Is OpenPype found? --.                    |
+             YES                     NO                    |
+              |                      |                     |
+              |      +---------------v-----------------+   |
+              |      | Look in `OPENPYPE_PATH`, find   |   |
               |      | latest version and install it   |   |
               |      | to user data dir.               |   |
               |      +--------------|------------------+   |
-              |           .-- Is Pype found? --.           |
-              |         YES                    NO ---------+
+              |         .-- Is OpenPype found? --.         |
+              |         YES                     NO --------+
               |          |
               |<---------+
               |
 +-------------v------------+
-|         Run Pype         |
+|      Run OpenPype        |
 +--------------------------+
 
 
@@ -85,7 +85,7 @@ Todo:
     Move or remove bootstrapping environments out of the code.
 
 Attributes:
-    silent_commands (list): list of commands for which we won't print Pype
+    silent_commands (list): list of commands for which we won't print OpenPype
         logo and info header.
 
 .. _MongoDB:

@@ -13,14 +13,11 @@ PS> .\run_mongo.ps1
 
 $art = @"
 
-
-        ____________
-       /\      ___  \
-       \ \     \/_\  \
-        \ \     _____/ ______   ___ ___ ___
-         \ \    \___/ /\     \  \  \\  \\  \
-          \ \____\    \ \_____\  \__\\__\\__\
-           \/____/     \/_____/  . PYPE Club .
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 "@
 
@@ -80,13 +77,13 @@ function Find-Mongo {
 }
 
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$pype_root = (Get-Item $script_dir).parent.FullName
+$openpype_root = (Get-Item $script_dir).parent.FullName
 
 # mongodb port
 $port = 2707
 
 # path to database
-$dbpath = (Get-Item $pype_root).parent.FullName + "\mongo_db_data"
+$dbpath = (Get-Item $openpype_root).parent.FullName + "\mongo_db_data"
 
 Find-Mongo
 $mongo = Get-Command "mongod" | Select-Object -ExpandProperty Definition

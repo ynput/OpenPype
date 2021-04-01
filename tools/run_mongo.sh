@@ -6,13 +6,12 @@
 
 art () {
   cat <<-EOF
-  ____________
- /\\      ___  \\
- \\ \\     \\/_\\  \\
-  \\ \\     _____/ ______   ___ ___ ___
-   \\ \\    \\___/ /\\     \\  \\  \\\\  \\\\  \\
-    \\ \\____\\    \\ \\_____\\  \\__\\\\__\\\\__\\
-     \\/____/     \\/_____/  . PYPE Club .
+
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 EOF
 }
@@ -72,11 +71,11 @@ main () {
   echo -e "${RST}"
 
   # Directories
-  pype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
-  pushd "$pype_root" > /dev/null || return > /dev/null
+  openpype_root=$(dirname $(realpath $(dirname $(dirname "${BASH_SOURCE[0]}"))))
+  pushd "$openpype_root" > /dev/null || return > /dev/null
 
   mongo_port=2707
-  dbpath="$(dirname $pype_root)/mongo_db_data"
+  dbpath="$(dirname $openpype_root)/mongo_db_data"
 
   echo -e "${BIGreen}>>>${RST} Running mongodb ..."
   mongod --dbpath "$dbpath" --port $mongo_port

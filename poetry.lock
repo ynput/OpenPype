@@ -637,8 +637,8 @@ view = ["PySide2 (>=5.11,<6.0)"]
 
 [package.source]
 type = "legacy"
-url = "https://d.r1.wbsprt.com/pype.club/distribute"
-reference = "pype"
+url = "https://distribute.openpype.io/wheels"
+reference = "openpype"
 
 [[package]]
 name = "packaging"
