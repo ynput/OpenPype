@@ -15,7 +15,7 @@ class StoreThumbnailsToAvalon(BaseAction):
     # Action identifier
     identifier = "store.thubmnail.to.avalon"
     # Action label
-    label = "Pype Admin"
+    label = "OpenPype Admin"
     # Action variant
     variant = "- Store Thumbnails to avalon"
     # Action description

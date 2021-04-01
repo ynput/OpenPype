@@ -15,7 +15,7 @@ class ActionShowWhereIRun(BaseAction):
     #: Action label.
     label = 'Show where I run'
     #: Action description.
-    description = 'Shows PC info where user have running Pype'
+    description = 'Shows PC info where user have running OpenPype'
 
     def discover(self, session, entities, event):
         """ Hide by default - Should be enabled only if you want to run.

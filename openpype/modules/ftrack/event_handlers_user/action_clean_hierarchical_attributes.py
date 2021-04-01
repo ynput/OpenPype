@@ -6,7 +6,7 @@ from openpype.modules.ftrack.lib.avalon_sync import get_pype_attr
 
 class CleanHierarchicalAttrsAction(BaseAction):
     identifier = "clean.hierarchical.attr"
-    label = "Pype Admin"
+    label = "OpenPype Admin"
     variant = "- Clean hierarchical custom attributes"
     description = "Unset empty hierarchical attribute values."
     icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")

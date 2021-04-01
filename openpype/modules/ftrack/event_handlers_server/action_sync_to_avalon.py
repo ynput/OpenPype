@@ -32,7 +32,7 @@ class SyncToAvalonServer(ServerAction):
     #: Action identifier.
     identifier = "sync.to.avalon.server"
     #: Action label.
-    label = "Pype Admin"
+    label = "OpenPype Admin"
     variant = "- Sync To Avalon (Server)"
     #: Action description.
     description = "Send data from Ftrack to Avalon"

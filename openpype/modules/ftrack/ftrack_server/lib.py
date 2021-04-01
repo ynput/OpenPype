@@ -27,8 +27,8 @@ from openpype.modules.ftrack.lib import get_ftrack_event_mongo_info
 from openpype.lib import OpenPypeMongoConnection
 from openpype.api import Logger
 
-TOPIC_STATUS_SERVER = "pype.event.server.status"
-TOPIC_STATUS_SERVER_RESULT = "pype.event.server.status.result"
+TOPIC_STATUS_SERVER = "openpype.event.server.status"
+TOPIC_STATUS_SERVER_RESULT = "openpype.event.server.status.result"
 
 
 def check_ftrack_url(url, log_errors=True):
@@ -92,7 +92,7 @@ class StatusEventHub(SocketBaseEventHub):
         code_name = self._code_name_mapping[code]
         if code_name == "connect":
             event = ftrack_api.event.base.Event(
-                topic="pype.status.started",
+                topic="openpype.status.started",
                 data={},
                 source={
                     "id": self.id,
@@ -115,7 +115,7 @@ class StorerEventHub(SocketBaseEventHub):
         code_name = self._code_name_mapping[code]
         if code_name == "connect":
             event = ftrack_api.event.base.Event(
-                topic="pype.storer.started",
+                topic="openpype.storer.started",
                 data={},
                 source={
                     "id": self.id,

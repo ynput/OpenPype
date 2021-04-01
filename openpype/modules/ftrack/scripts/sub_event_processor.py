@@ -46,7 +46,7 @@ def send_status(event):
     }
 
     new_event = ftrack_api.event.base.Event(
-        topic="pype.event.server.status.result",
+        topic="openpype.event.server.status.result",
         data=new_event_data
     )
 

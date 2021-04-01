@@ -33,7 +33,7 @@ class SyncToAvalonLocal(BaseAction):
     #: Action identifier.
     identifier = "sync.to.avalon.local"
     #: Action label.
-    label = "Pype Admin"
+    label = "OpenPype Admin"
     #: Action variant
     variant = "- Sync To Avalon (Local)"
     #: Action description.

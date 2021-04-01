@@ -8,7 +8,7 @@ class JobKiller(BaseAction):
     #: Action identifier.
     identifier = 'job.killer'
     #: Action label.
-    label = "Pype Admin"
+    label = "OpenPype Admin"
     variant = '- Job Killer'
     #: Action description.
     description = 'Killing selected running jobs'
