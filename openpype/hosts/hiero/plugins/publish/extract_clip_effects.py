@@ -1,4 +1,4 @@
-# from pype import plugins
+# from openpype import plugins
 import os
 import json
 import pyblish.api

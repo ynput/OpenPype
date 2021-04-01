@@ -4,12 +4,12 @@ import six
 import pyblish.api
 from avalon import io
 
-# Copy of constant `pype.modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
+# Copy of constant `openpype.modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
 CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
 CUST_ATTR_GROUP = "openpype"
 
 
-# Copy of `get_pype_attr` from pype.modules.ftrack.lib
+# Copy of `get_pype_attr` from openpype.modules.ftrack.lib
 # TODO import from openpype's ftrack module when possible to not break Python 2
 def get_pype_attr(session, split_hierarchical=True):
     custom_attributes = []
