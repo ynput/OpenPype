@@ -11,9 +11,9 @@ from .install_thread import InstallThread, InstallResult
 from .tools import (
     validate_path_string,
     validate_mongo_connection,
-    get_pype_path_from_db
+    get_openpype_path_from_db
 )
-from .user_settings import PypeSettingsRegistry
+from .user_settings import OpenPypeSettingsRegistry
 from .version import __version__
 
 
@@ -42,18 +42,19 @@ class InstallDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(InstallDialog, self).__init__(parent)
-        self.registry = PypeSettingsRegistry()
+        self.registry = OpenPypeSettingsRegistry()
 
         self.mongo_url = ""
         try:
             self.mongo_url = (
                 os.getenv("OPENPYPE_MONGO", "")
-                or self.registry.get_secure_item("pypeMongo")
+                or self.registry.get_secure_item("openPypeMongo")
             )
         except ValueError:
             pass
 
-        self.setWindowTitle(f"Pype Igniter {__version__} - Pype installation")
+        self.setWindowTitle(
+            f"OpenPype Igniter {__version__} - OpenPype installation")
         self._icon_path = os.path.join(
             os.path.dirname(__file__), 'openpype_icon.png')
         icon = QtGui.QIcon(self._icon_path)
@@ -84,7 +85,7 @@ class InstallDialog(QtWidgets.QDialog):
             os.path.join(
                 os.path.dirname(__file__), 'RobotoMono-Regular.ttf')
         )
-        self._pype_run_ready = False
+        self._openpype_run_ready = False
 
         self._init_ui()
 
@@ -100,35 +101,35 @@ class InstallDialog(QtWidgets.QDialog):
         # Main info
         # --------------------------------------------------------------------
         self.main_label = QtWidgets.QLabel(
-            """Welcome to <b>Pype</b>
+            """Welcome to <b>OpenPype</b>
             <p>
-            We've detected <b>Pype</b> is not configured yet. But don't worry,
+            We've detected <b>OpenPype</b> is not configured yet. But don't worry,
             this is as easy as setting one or two things.
             <p>
             """)
         self.main_label.setWordWrap(True)
         self.main_label.setStyleSheet("color: rgb(200, 200, 200);")
 
-        # Pype path info
+        # OpenPype path info
         # --------------------------------------------------------------------
 
-        self.pype_path_label = QtWidgets.QLabel(
-            """This is <b>Path to studio location</b> where Pype versions
+        self.openpype_path_label = QtWidgets.QLabel(
+            """This is <b>Path to studio location</b> where OpenPype versions
             are stored. It will be pre-filled if your MongoDB connection is
             already set and your studio defined this location.
             <p>
-            Leave it empty if you want to install Pype version that comes with
-            this installation.
+            Leave it empty if you want to install OpenPype version that
+            comes with this installation.
             </p>
             <p>
-            If you want to just try Pype without installing, hit the middle
-            button that states "run without installation".
+            If you want to just try OpenPype without installing, hit the
+            middle button that states "run without installation".
             </p>
             """
         )
 
-        self.pype_path_label.setWordWrap(True)
-        self.pype_path_label.setStyleSheet("color: rgb(150, 150, 150);")
+        self.openpype_path_label.setWordWrap(True)
+        self.openpype_path_label.setStyleSheet("color: rgb(150, 150, 150);")
 
         # Path/Url box | Select button
         # --------------------------------------------------------------------
@@ -138,7 +139,7 @@ class InstallDialog(QtWidgets.QDialog):
         input_layout.setContentsMargins(0, 10, 0, 10)
         self.user_input = FocusHandlingLineEdit()
 
-        self.user_input.setPlaceholderText("Path to Pype versions")
+        self.user_input.setPlaceholderText("Path to OpenPype versions")
         self.user_input.textChanged.connect(self._path_changed)
         self.user_input.setStyleSheet(
             ("color: rgb(233, 233, 233);"
@@ -151,7 +152,7 @@ class InstallDialog(QtWidgets.QDialog):
 
         self._btn_select = QtWidgets.QPushButton("Select")
         self._btn_select.setToolTip(
-            "Select Pype repository"
+            "Select OpenPype repository"
         )
         self._btn_select.setStyleSheet(
             ("color: rgb(64, 64, 64);"
@@ -285,13 +286,13 @@ class InstallDialog(QtWidgets.QDialog):
         # --------------------------------------------------------------------
         bottom_widget = QtWidgets.QWidget()
         bottom_layout = QtWidgets.QHBoxLayout()
-        pype_logo_label = QtWidgets.QLabel("pype logo")
-        pype_logo = QtGui.QPixmap(self._icon_path)
-        # pype_logo.scaled(
-        #     pype_logo_label.width(),
-        #     pype_logo_label.height(), QtCore.Qt.KeepAspectRatio)
-        pype_logo_label.setPixmap(pype_logo)
-        pype_logo_label.setContentsMargins(10, 0, 0, 10)
+        openpype_logo_label = QtWidgets.QLabel("openpype logo")
+        openpype_logo = QtGui.QPixmap(self._icon_path)
+        # openpype_logo.scaled(
+        #     openpype_logo_label.width(),
+        #     openpype_logo_label.height(), QtCore.Qt.KeepAspectRatio)
+        openpype_logo_label.setPixmap(openpype_logo)
+        openpype_logo_label.setContentsMargins(10, 0, 0, 10)
 
         # install button - - - - - - - - - - - - - - - - - - - - - - - - - - -
         self.install_button = QtWidgets.QPushButton("Install")
@@ -301,7 +302,7 @@ class InstallDialog(QtWidgets.QDialog):
              "padding: 0.5em;")
         )
         self.install_button.setMinimumSize(64, 24)
-        self.install_button.setToolTip("Install Pype")
+        self.install_button.setToolTip("Install OpenPype")
         self.install_button.clicked.connect(self._on_ok_clicked)
 
         # run from current button - - - - - - - - - - - - - - - - - - - - - -
@@ -328,7 +329,7 @@ class InstallDialog(QtWidgets.QDialog):
 
         bottom_layout.setContentsMargins(0, 10, 10, 0)
         bottom_layout.setAlignment(QtCore.Qt.AlignVCenter)
-        bottom_layout.addWidget(pype_logo_label, 0, QtCore.Qt.AlignVCenter)
+        bottom_layout.addWidget(openpype_logo_label, 0, QtCore.Qt.AlignVCenter)
         bottom_layout.addStretch(1)
         bottom_layout.addWidget(self.install_button, 0, QtCore.Qt.AlignVCenter)
         bottom_layout.addWidget(self.run_button, 0, QtCore.Qt.AlignVCenter)
@@ -408,7 +409,7 @@ class InstallDialog(QtWidgets.QDialog):
         )
         # add all to main
         main.addWidget(self.main_label, 0)
-        main.addWidget(self.pype_path_label, 0)
+        main.addWidget(self.openpype_path_label, 0)
         main.addLayout(input_layout, 0)
         main.addWidget(self.mongo_label, 0)
         main.addWidget(self._mongo, 0)
@@ -421,9 +422,9 @@ class InstallDialog(QtWidgets.QDialog):
 
         self.setLayout(main)
 
-        # if mongo url is ok, try to get pype path from there
+        # if mongo url is ok, try to get openpype path from there
         if self._mongo.validate_url() and len(self.path) == 0:
-            self.path = get_pype_path_from_db(self.mongo_url)
+            self.path = get_openpype_path_from_db(self.mongo_url)
             self.user_input.setText(self.path)
 
     def _on_select_clicked(self):
@@ -476,7 +477,7 @@ class InstallDialog(QtWidgets.QDialog):
         else:
             self._mongo.set_valid()
 
-        if self._pype_run_ready:
+        if self._openpype_run_ready:
             self.done(3)
             return
 
@@ -501,8 +502,8 @@ class InstallDialog(QtWidgets.QDialog):
         """Change button behaviour based on installation outcome."""
         status = result.status
         if status >= 0:
-            self.install_button.setText("Run installed Pype")
-            self._pype_run_ready = True
+            self.install_button.setText("Run installed OpenPype")
+            self._openpype_run_ready = True
 
     def _update_progress(self, progress: int):
         self._progress_bar.setValue(progress)
@@ -639,7 +640,7 @@ class PathValidator(MongoValidator):
         """Validate path to be accepted by Igniter.
 
         Args:
-            path (str): path to Pype.
+            path (str): path to OpenPype.
             pos (int): current position.
 
         Returns:
@@ -649,7 +650,7 @@ class PathValidator(MongoValidator):
 
         """
         # allow empty path as that will use current version coming with
-        # Pype Igniter
+        # OpenPype Igniter
         if len(path) == 0:
             return self._return_state(
                 QValidator.State.Acceptable, "Use version with Igniter", path)

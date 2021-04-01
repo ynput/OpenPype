@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "Pype"
+name = "OpenPype"
 version = "3.0.0-alpha1"
 description = "Multi-platform open-source pipeline built around the Avalon platform, expanding it with extra features and integrations."
-authors = ["Pype Club <info@pype.club>"]
+authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
-homepage = "https://pype.club"
-documentation = "https://pype.club/docs/artist_getting_started"
-repository = "https://github.com/pypeclub/pype"
+homepage = "https://openpype.io"
+documentation = "https://openpype.io/docs/artist_getting_started"
+repository = "https://github.com/pypeclub/openpype"
 readme = "README.md"
 keywords = ["Pipeline", "Avalon", "VFX", "animation", "automation", "tracking", "asset management"]
 
@@ -15,9 +15,9 @@ python = "3.7.*"
 aiohttp = "^3.7"
 aiohttp_json_rpc = "*" # TVPaint server
 acre = { git = "https://github.com/pypeclub/acre.git" }
-opentimelineio = { version = "0.14.0.dev1", source = "pype" }
+opentimelineio = { version = "0.14.0.dev1", source = "openpype" }
 appdirs = "^1.4.3"
-blessed = "^1.17" # pype terminal formatting
+blessed = "^1.17" # openpype terminal formatting
 clique = "1.5.*"
 Click = "^7"
 dnspython = "^2.1.0"
@@ -65,12 +65,12 @@ tqdm = "*"
 wheel = "*"
 
 [tool.poetry.urls]
-"Bug Tracker" = "https://github.com/pypeclub/pype/issues"
-"Discussions" = "https://github.com/pypeclub/pype/discussions"
+"Bug Tracker" = "https://github.com/pypeclub/openpype/issues"
+"Discussions" = "https://github.com/pypeclub/openpype/discussions"
 
 [[tool.poetry.source]]
-name = "pype"
-url = "https://d.r1.wbsprt.com/pype.club/distribute/"
+name = "openpype"
+url = "https://distribute.openpype.io/wheels/"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
