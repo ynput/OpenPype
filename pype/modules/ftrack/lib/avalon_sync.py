@@ -31,13 +31,13 @@ log = Logger.get_logger(__name__)
 
 # Current schemas for avalon types
 EntitySchemas = {
-    "project": "pype:project-3.0",
-    "asset": "pype:asset-3.0",
-    "config": "pype:config-2.0"
+    "project": "openpype:project-3.0",
+    "asset": "openpype:asset-3.0",
+    "config": "openpype:config-2.0"
 }
 
 # Group name of custom attributes
-CUST_ATTR_GROUP = "pype"
+CUST_ATTR_GROUP = "openpype"
 
 # name of Custom attribute that stores mongo_id from avalon db
 CUST_ATTR_ID_KEY = "avalon_mongo_id"
@@ -102,11 +102,12 @@ def get_pype_attr(session, split_hierarchical=True, query_keys=None):
             "is_hierarchical",
             "default"
         ]
-    # TODO remove deprecated "avalon" group from query
+    # TODO remove deprecated "pype" group from query
     cust_attrs_query = (
         "select {}"
         " from CustomAttributeConfiguration"
-        " where group.name in (\"avalon\", \"{}\")"
+        # Kept `pype` for Backwards Compatiblity
+        " where group.name in (\"pype\", \"{}\")"
     ).format(", ".join(query_keys), CUST_ATTR_GROUP)
     all_avalon_attr = session.query(cust_attrs_query).all()
     for cust_attr in all_avalon_attr:

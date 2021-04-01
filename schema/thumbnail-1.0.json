@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:thumbnail-1.0",
+    "title": "openpype:thumbnail-1.0",
     "description": "Entity with thumbnail data",
 
     "type": "object",
@@ -18,8 +18,8 @@
         "schema": {
             "description": "The schema associated with this document",
             "type": "string",
-            "enum": ["pype:thumbnail-1.0"],
-            "example": "pype:thumbnail-1.0"
+            "enum": ["openpype:thumbnail-1.0"],
+            "example": "openpype:thumbnail-1.0"
         },
         "type": {
             "description": "The type of document",

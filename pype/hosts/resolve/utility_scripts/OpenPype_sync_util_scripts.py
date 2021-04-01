@@ -6,7 +6,7 @@ import pype
 
 def main(env):
     import pype.hosts.resolve as bmdvr
-    # Registers pype's Global pyblish plugins
+    # Registers openpype's Global pyblish plugins
     pype.install()
     bmdvr.setup(env)
 

@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:project-3.0",
+    "title": "openpype:project-3.0",
     "description": "A unit of data",
 
     "type": "object",
@@ -20,8 +20,8 @@
         "schema": {
             "description": "Schema identifier for payload",
             "type": "string",
-            "enum": ["pype:project-3.0"],
-            "example": "pype:project-3.0"
+            "enum": ["openpype:project-3.0"],
+            "example": "openpype:project-3.0"
         },
         "type": {
             "description": "The type of document",

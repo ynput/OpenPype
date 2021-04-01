@@ -26,7 +26,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             data = dict()
             timeline_item = timeline_item_data["clip"]["item"]
 
-            # get pype tag data
+            # get openpype tag data
             tag_data = resolve.get_timeline_item_pype_tag(timeline_item)
             self.log.debug(f"__ tag_data: {pformat(tag_data)}")
 

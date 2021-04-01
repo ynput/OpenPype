@@ -146,4 +146,4 @@ def setup(env=None):
     # synchronize resolve utility scripts
     _sync_utility_scripts(env)
 
-    log.info("Resolve Pype wrapper has been installed")
+    log.info("Resolve OpenPype wrapper has been installed")

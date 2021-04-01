@@ -216,7 +216,7 @@ class BlendCameraLoader(pype.hosts.blender.api.plugin.AssetLoader):
         """Remove an existing container from a Blender scene.
 
         Arguments:
-            container (avalon-core:container-1.0): Container to remove,
+            container (openpype:container-1.0): Container to remove,
                 from `host.ls()`.
 
         Returns:

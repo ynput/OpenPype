@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:subset-3.0",
+    "title": "openpype:subset-3.0",
     "description": "A container of instances",
 
     "type": "object",
@@ -20,8 +20,8 @@
         "schema": {
             "description": "The schema associated with this document",
             "type": "string",
-            "enum": ["avalon-core:subset-3.0", "pype:subset-3.0"],
-            "example": "pype:subset-3.0"
+            "enum": ["openpype:subset-3.0"],
+            "example": "openpype:subset-3.0"
         },
         "type": {
             "description": "The type of document",
@@ -51,7 +51,7 @@
                 }
             },
             "example": {
-                "families" : [ 
+                "families" : [
                     "avalon.camera"
                 ],
                 "frameStart": 1000,

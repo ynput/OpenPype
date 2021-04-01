@@ -99,7 +99,7 @@ class AnimationFBXLoader(api.Loader):
             container=container_name, path=asset_dir)
 
         data = {
-            "schema": "avalon-core:container-2.0",
+            "schema": "openpype:container-2.0",
             "id": pipeline.AVALON_CONTAINER_ID,
             "asset": asset,
             "namespace": asset_dir,

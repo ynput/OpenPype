@@ -241,7 +241,7 @@ def set_track_item_pype_tag(track_item, data=None):
     tag_data = {
         "editable": "0",
         "note": "Pype data holder",
-        "icon": "pype_icon.png",
+        "icon": "openpype_icon.png",
         "metadata": {k: v for k, v in data.items()}
     }
     # get available pype tag if any

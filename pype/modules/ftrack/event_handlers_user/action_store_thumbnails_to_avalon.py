@@ -274,7 +274,7 @@ class StoreThumbnailsToAvalon(BaseAction):
             thumbnail_entity = {
                 "_id": thumbnail_id,
                 "type": "thumbnail",
-                "schema": "pype:thumbnail-1.0",
+                "schema": "openpype:thumbnail-1.0",
                 "data": {
                     "template": thumbnail_template,
                     "template_data": template_data

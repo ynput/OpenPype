@@ -10,10 +10,10 @@ log = Logger().get_logger(__name__)
 
 def main(env):
     import pype.hosts.resolve as bmdvr
-    # Registers pype's Global pyblish plugins
+    # Registers openpype's Global pyblish plugins
     pype.install()
 
-    # activate resolve from pype
+    # activate resolve from openpype
     avalon.install(bmdvr)
 
     log.info(f"Avalon registred hosts: {avalon.registered_host()}")

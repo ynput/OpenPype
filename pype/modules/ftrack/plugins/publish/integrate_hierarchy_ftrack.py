@@ -6,9 +6,11 @@ from avalon import io
 
 # Copy of constant `pype.modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
 CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
+CUST_ATTR_GROUP = "openpype"
 
 
 # Copy of `get_pype_attr` from pype.modules.ftrack.lib
+# TODO import from openpype's ftrack module when possible to not break Python 2
 def get_pype_attr(session, split_hierarchical=True):
     custom_attributes = []
     hier_custom_attributes = []
@@ -16,8 +18,9 @@ def get_pype_attr(session, split_hierarchical=True):
     cust_attrs_query = (
         "select id, entity_type, object_type_id, is_hierarchical, default"
         " from CustomAttributeConfiguration"
-        " where group.name in (\"avalon\", \"pype\")"
-    )
+        # Kept `pype` for Backwards Compatiblity
+        " where group.name in (\"pype\", \"{}\")"
+    ).format(CUST_ATTR_GROUP)
     all_avalon_attr = session.query(cust_attrs_query).all()
     for cust_attr in all_avalon_attr:
         if split_hierarchical and cust_attr["is_hierarchical"]:
