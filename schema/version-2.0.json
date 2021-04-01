@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:version-2.0",
+    "title": "openpype:version-2.0",
     "description": "An individual version",
 
     "type": "object",
@@ -20,8 +20,8 @@
         "schema": {
             "description": "The schema associated with this document",
             "type": "string",
-            "enum": ["pype:version-2.0"],
-            "example": "pype:version-2.0"
+            "enum": ["openpype:version-2.0"],
+            "example": "openpype:version-2.0"
         },
         "type": {
             "description": "The type of document",
@@ -82,10 +82,10 @@
             "example": {
                 "source" : "{root}/f02_prod/assets/BubbleWitch/work/modeling/marcus/maya/scenes/model_v001.ma",
                 "author" : "marcus",
-                "families" : [ 
+                "families" : [
                     "avalon.model"
                 ],
-                "time" : "20170510T090203Z" 
+                "time" : "20170510T090203Z"
             }
         }
     }
