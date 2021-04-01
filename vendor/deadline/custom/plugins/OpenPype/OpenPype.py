@@ -53,14 +53,11 @@ class OpenPypeDeadlinePlugin(DeadlinePlugin):
             ".*Progress: (\d+)%.*").HandleCallback += self.HandleProgress
 
     def RenderExecutable(self):
-        version = self.GetPluginInfoEntry("Version")
-
-        exeList = self.GetConfigEntry(
-            "OpenPype_Executable_" + version.replace(".", "_"))
+        exeList = self.GetConfigEntry("OpenPypeExecutable")
         exe = FileUtils.SearchFileList(exeList)
         if exe == "":
             self.FailRender(
-                "OpenPype " + version + " executable was not found " +
+                "OpenPype executable was not found " +
                 "in the semicolon separated list \"" + exeList + "\". " +
                 "The path to the render executable can be configured " +
                 "from the Plugin Configuration in the Deadline Monitor.")

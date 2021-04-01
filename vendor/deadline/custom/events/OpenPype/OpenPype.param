@@ -28,8 +28,8 @@ Default=DEBUG
 Description=Logging level where printing will start.
 
 [OpenPypeExecutable]
-Type=MultiLineMultiFolder
-Label=Path to OpenPype executable dir
+Type=multilinemultifilename
+Label=Path to OpenPype executable
 Category=Job Plugins
 CategoryOrder=1
 CategoryIndex=1
