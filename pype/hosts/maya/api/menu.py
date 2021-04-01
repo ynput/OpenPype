@@ -8,7 +8,7 @@ from pype.api import BuildWorkfile
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
-self._menu = "OpenPype"
+self._menu = os.environ.get("AVALON_LABEL")
 
 log = logging.getLogger(__name__)
 
