@@ -459,39 +459,6 @@
                 0.8,
                 0.5
             ]
-        },
-        "ReferenceLoader": {
-            "enabled": true,
-            "representations": [
-                "ma",
-                "mb",
-                "abc",
-                "fbx"
-            ]
-        },
-        "AudioLoader": {
-            "enabled": true,
-            "representations": [
-                "wav"
-            ]
-        },
-        "GpuCacheLoader": {
-            "enabled": true,
-            "representations": [
-                "abc"
-            ]
-        },
-        "ImagePlaneLoader": {
-            "enabled": true,
-            "representations": [
-                "jpg",
-                "png",
-                "mov"
-            ]
-        },
-        "MatchmoveLoader": {
-            "enabled": true,
-            "representations": []
         }
     },
     "workfile_build": {

@@ -6,7 +6,7 @@
     "children": [
         {
             "type": "schema_template",
-            "name": "template_loader_plugin",
+            "name": "template_loader_plugin_nuke",
             "template_data": [
                 {
                     "key": "LoadImage",
