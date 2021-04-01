@@ -85,7 +85,7 @@ class ValidateMusterConnection(pyblish.api.ContextPlugin):
         Renew authentication token by logging into Muster
         """
         api_url = "{}/muster/show_login".format(
-            os.environ["PYPE_WEBSERVER_URL"])
+            os.environ["OPENPYPE_WEBSERVER_URL"])
         cls.log.debug(api_url)
         response = cls._requests_get(api_url, timeout=1)
         if response.status_code != 200:
@@ -103,7 +103,7 @@ class ValidateMusterConnection(pyblish.api.ContextPlugin):
             of defense SSL is providing and it is not recommended.
         """
         if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
         return requests.post(*args, **kwargs)
 
     def _requests_get(self, *args, **kwargs):
@@ -117,5 +117,5 @@ class ValidateMusterConnection(pyblish.api.ContextPlugin):
             of defense SSL is providing and it is not recommended.
         """
         if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
         return requests.get(*args, **kwargs)

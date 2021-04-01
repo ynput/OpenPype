@@ -4,7 +4,7 @@ import pype.hosts.maya.api.lib as mlib
 from maya import cmds
 
 
-print("starting PYPE usersetup")
+print("starting OpenPype usersetup")
 
 # build a shelf
 settings = get_project_settings(os.environ['AVALON_PROJECT'])
@@ -14,7 +14,7 @@ shelf_preset = settings['maya'].get('project_shelf')
 if shelf_preset:
     project = os.environ["AVALON_PROJECT"]
 
-    icon_path = os.path.join(os.environ['PYPE_PROJECT_SCRIPTS'],
+    icon_path = os.path.join(os.environ['OPENPYPE_PROJECT_SCRIPTS'],
                              project, "icons")
     icon_path = os.path.abspath(icon_path)
 
@@ -26,4 +26,4 @@ if shelf_preset:
 cmds.evalDeferred("mlib.shelf(name=shelf_preset['name'], iconPath=icon_path, preset=shelf_preset)")
 
 
-print("finished PYPE usersetup")
+print("finished OpenPype usersetup")

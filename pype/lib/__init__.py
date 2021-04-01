@@ -9,7 +9,7 @@ import site
 # add Python version specific vendor folder
 site.addsitedir(
     os.path.join(
-        os.getenv("PYPE_ROOT", ""),
+        os.getenv("OPENPYPE_ROOT", ""),
         "vendor", "python", "python_{}".format(sys.version[0])))
 
 from .terminal import Terminal

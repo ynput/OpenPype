@@ -154,7 +154,7 @@ def application_launch():
     # It is now moved so it it manually called.
     # ensure_scene_settings()
     # check_inventory()
-    # fills PYPE_HARMONY_JS
+    # fills OPENPYPE_HARMONY_JS
     pype_harmony_path = Path(__file__).parent.parent / "js" / "PypeHarmony.js"
     pype_harmony_js = pype_harmony_path.read_text()
 

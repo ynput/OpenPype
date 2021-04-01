@@ -1153,7 +1153,7 @@ def get_creator_by_name(creator_name, case_sensitive=False):
 @with_avalon
 def change_timer_to_current_context():
     """Called after context change to change timers"""
-    webserver_url = os.environ.get("PYPE_WEBSERVER_URL")
+    webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
     if not webserver_url:
         log.warning("Couldn't find webserver url")
         return

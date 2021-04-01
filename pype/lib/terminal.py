@@ -21,7 +21,7 @@ class Terminal:
     If :mod:`Colorama` is not found, it will still work, but without colors.
 
     Depends on :mod:`Colorama`
-    Using **PYPE_LOG_NO_COLORS** environment variable.
+    Using **OPENPYPE_LOG_NO_COLORS** environment variable.
     """
 
     # Is Terminal initialized
@@ -38,7 +38,8 @@ class Terminal:
         """Initialize Terminal class as object.
 
         First check if colorized output is disabled by environment variable
-        `PYPE_LOG_NO_COLORS` value. By default is colorized output turned on.
+        `OPENPYPE_LOG_NO_COLORS` value. By default is colorized output turned
+        on.
 
         Then tries to import python module that do the colors magic and create
         it's terminal object. Colorized output is not used if import of python
@@ -49,7 +50,7 @@ class Terminal:
 
         from pype.lib import env_value_to_bool
         use_colors = env_value_to_bool(
-            "PYPE_LOG_NO_COLORS", default=Terminal.use_colors
+            "OPENPYPE_LOG_NO_COLORS", default=Terminal.use_colors
         )
         if not use_colors:
             Terminal.use_colors = use_colors
@@ -166,7 +167,7 @@ class Terminal:
     def log(message):
         """Return color formatted message.
 
-        If environment variable `PYPE_LOG_NO_COLORS` is set to
+        If environment variable `OPENPYPE_LOG_NO_COLORS` is set to
         whatever value, message will be formatted but not colorized.
 
         Args:

@@ -310,7 +310,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         output_dir = instance.data["outputDir"]
         metadata_path = os.path.join(output_dir, metadata_filename)
 
-        pype_root = os.environ["PYPE_SETUP_PATH"]
+        pype_root = os.environ["OPENPYPE_SETUP_PATH"]
 
         # we must provide either full path to executable or use musters own
         # python named MPython.exe, residing directly in muster bin
@@ -509,7 +509,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 environment[path] = os.environ[path]
 
         environment["PATH"] = os.environ["PATH"]
-        # self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
+        # self.log.debug("enviro: {}".format(environment['OPENPYPE_SCRIPTS']))
         clean_environment = {}
         for key, value in environment.items():
             clean_path = ""
@@ -559,5 +559,5 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             of defense SSL is providing and it is not recommended.
         """
         if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
         return requests.post(*args, **kwargs)

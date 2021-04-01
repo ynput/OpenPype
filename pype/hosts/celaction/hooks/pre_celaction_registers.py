@@ -35,7 +35,7 @@ class CelactionPrelaunchHook(PreLaunchHook):
             winreg.KEY_ALL_ACCESS)
 
         # TODO: this will need to be checked more thoroughly
-        pype_exe = os.getenv("PYPE_EXECUTABLE")
+        pype_exe = os.getenv("OPENPYPE_EXECUTABLE")
 
         winreg.SetValueEx(hKey, "SubmitAppTitle", 0, winreg.REG_SZ, pype_exe)
 
