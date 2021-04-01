@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Setup info for building Pype 3.0."""
+"""Setup info for building OpenPype 3.0."""
 import os
 import sys
 import re
@@ -12,7 +12,7 @@ version = {}
 
 openpype_root = Path(os.path.dirname(__file__))
 
-with open(openpype_root / "pype" / "version.py") as fp:
+with open(openpype_root / "openpype" / "version.py") as fp:
     exec(fp.read(), version)
 
 version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
@@ -53,7 +53,7 @@ excludes = []
 bin_includes = []
 include_files = [
     "igniter",
-    "pype",
+    "openpype",
     "repos",
     "schema",
     "vendor",

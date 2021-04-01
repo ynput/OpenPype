@@ -125,7 +125,7 @@ def set_openpype_global_environments() -> None:
     """Set global OpenPype's environments."""
     import acre
 
-    from pype.settings import get_environments
+    from openpype.settings import get_environments
 
     all_env = get_environments()
 
@@ -181,7 +181,7 @@ def set_avalon_environments():
     before avalon module is imported because avalon works with globals set with
     environment variables.
     """
-    from pype import PACKAGE_DIR
+    from openpype import PACKAGE_DIR
 
     # Path to OpenPype's schema
     schema_path = os.path.join(
@@ -212,7 +212,7 @@ def set_modules_environments():
     This requires to have OpenPype in `sys.path`.
     """
 
-    from pype.modules import ModulesManager
+    from openpype.modules import ModulesManager
     import acre
 
     modules_manager = ModulesManager()
@@ -398,7 +398,7 @@ def _find_frozen_openpype(use_version: str = None,
                 sys.exit(return_code)
 
     if not openpype_versions:
-        # no Pype versions found anyway, lets use then the one
+        # no openpype versions found anyway, lets use then the one
         # shipped with frozen OpenPype
         if not os.getenv("OPENPYPE_TRYOUT"):
             print("*** Still no luck finding OpenPype.")
@@ -433,7 +433,7 @@ def _find_frozen_openpype(use_version: str = None,
         is_inside = openpype_version.path.resolve().relative_to(
             bootstrap.data_dir)
     except ValueError:
-        # if relative path cannot be calculated, Pype version is not
+        # if relative path cannot be calculated, openpype version is not
         # inside user data dir
         pass
 
@@ -572,7 +572,7 @@ def boot():
     else:
         os.environ["OPENPYPE_ROOT"] = os.path.dirname(__file__)
 
-    # Get Pype path from database and set it to environment so Pype can
+    # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.
     openpype_path = get_openpype_path_from_db(openpype_mongo)
     if not openpype_path:
@@ -612,7 +612,7 @@ def boot():
     modules_to_del = [
         sys.modules.pop(module_name)
         for module_name in tuple(sys.modules)
-        if module_name == "pype" or module_name.startswith("pype.")
+        if module_name == "openpype" or module_name.startswith("openpype.")
     ]
 
     try:
@@ -632,9 +632,9 @@ def boot():
     print("  - for modules ...")
     set_modules_environments()
 
-    from pype import cli
-    from pype.lib import terminal as t
-    from pype.version import __version__
+    from openpype import cli
+    from openpype.lib import terminal as t
+    from openpype.version import __version__
 
     assert version_path, "Version path not defined."
     info = get_info()
@@ -656,7 +656,7 @@ def boot():
             t.echo(i)
 
     try:
-        cli.main(obj={}, prog_name="pype")
+        cli.main(obj={}, prog_name="openpype")
     except Exception:  # noqa
         exc_info = sys.exc_info()
         print("!!! OpenPype crashed:")
@@ -666,8 +666,8 @@ def boot():
 
 def get_info() -> list:
     """Print additional information to console."""
-    from pype.lib.mongo import get_default_components
-    from pype.lib.log import PypeLogger
+    from openpype.lib.mongo import get_default_components
+    from openpype.lib.log import PypeLogger
 
     components = get_default_components()
 

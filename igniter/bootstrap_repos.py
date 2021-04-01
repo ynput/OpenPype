@@ -818,7 +818,7 @@ class BootstrapRepos:
 
         """
 
-        if self.is_inside_user_data(openpype_version.path) and not pype_version.path.is_file():  # noqa
+        if self.is_inside_user_data(openpype_version.path) and not openpype_version.path.is_file():  # noqa
             raise OpenPypeVersionExists(
                 "OpenPype already inside user data dir")
 
