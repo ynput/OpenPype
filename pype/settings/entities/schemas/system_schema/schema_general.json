@@ -29,8 +29,8 @@
         },
         {
             "type": "path",
-            "key": "pype_path",
-            "label": "Pype Path",
+            "key": "openpype_path",
+            "label": "Versions Repository",
             "multiplatform": true,
             "multipath": true
         }

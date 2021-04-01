@@ -1,7 +1,7 @@
 """Pype Settings
 
-Settings define how pype and it's modules behave. They became main component of
-dynamism.
+Settings define how openpype and it's modules behave. They became main
+component of dynamism.
 
 Pype settings (ATM) have 3 layers:
 1.) Defaults - defined in code
