@@ -17,7 +17,7 @@ from avalon import api
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
     """
     This collector will try to find json files in provided
-    `PYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
+    `OPENPYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
     """
     order = pyblish.api.CollectorOrder - 0.2
@@ -113,9 +113,9 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     def process(self, context):
         self._context = context
 
-        assert os.environ.get("PYPE_PUBLISH_DATA"), (
-            "Missing `PYPE_PUBLISH_DATA`")
-        paths = os.environ["PYPE_PUBLISH_DATA"].split(os.pathsep)
+        assert os.environ.get("OPENPYPE_PUBLISH_DATA"), (
+            "Missing `OPENPYPE_PUBLISH_DATA`")
+        paths = os.environ["OPENPYPE_PUBLISH_DATA"].split(os.pathsep)
 
         project_name = os.environ.get("AVALON_PROJECT")
         if project_name is None:

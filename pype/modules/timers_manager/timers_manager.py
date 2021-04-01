@@ -221,7 +221,7 @@ class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
 
     def change_timer_from_host(self, project_name, asset_name, task_name):
         """Prepared method for calling change timers on REST api"""
-        webserver_url = os.environ.get("PYPE_WEBSERVER_URL")
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
         if not webserver_url:
             self.log.warning("Couldn't find webserver url")
             return

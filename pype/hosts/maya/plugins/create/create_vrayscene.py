@@ -191,7 +191,7 @@ class CreateVRayScene(plugin.Creator):
         # authentication token expired so we need to login to Muster
         # again to get it. We use Pype API call to show login window.
         api_url = "{}/muster/show_login".format(
-            os.environ["PYPE_WEBSERVER_URL"])
+            os.environ["OPENPYPE_WEBSERVER_URL"])
         self.log.debug(api_url)
         login_response = self._requests_get(api_url, timeout=1)
         if login_response.status_code != 200:
@@ -213,7 +213,7 @@ class CreateVRayScene(plugin.Creator):
         """
         if "verify" not in kwargs:
             kwargs["verify"] = (
-                False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True
+                False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True
             )  # noqa
         return requests.post(*args, **kwargs)
 
@@ -232,6 +232,6 @@ class CreateVRayScene(plugin.Creator):
         """
         if "verify" not in kwargs:
             kwargs["verify"] = (
-                False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True
+                False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True
             )  # noqa
         return requests.get(*args, **kwargs)

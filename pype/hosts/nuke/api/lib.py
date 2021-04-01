@@ -25,7 +25,7 @@ log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self._project = None
-
+self._node_tab_name = "{}".format(os.getenv("AVALON_LABEL") or "Avalon")
 
 def get_node_imageio_setting(**kwarg):
     ''' Get preset data for dataflow (fileType, compression, bitDepth)
@@ -148,7 +148,7 @@ def writes_version_sync():
     for each in nuke.allNodes():
         if each.Class() == 'Write':
             # check if the node is avalon tracked
-            if "AvalonTab" not in each.knobs():
+            if self._node_tab_name not in each.knobs():
                 continue
 
             avalon_knob_data = avalon.nuke.read(
@@ -489,8 +489,8 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     # Deadline tab.
     add_deadline_tab(GN)
 
-    # open the AvalonTab as default
-    GN["AvalonTab"].setFlag(0)
+    # open the our Tab as default
+    GN[self._node_tab_name].setFlag(0)
 
     # set tile color
     tile_color = _data.get("tile_color", "0xff0000ff")

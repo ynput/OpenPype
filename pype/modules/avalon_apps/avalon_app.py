@@ -23,7 +23,7 @@ class AvalonModule(PypeModule, ITrayModule, IWebServerRoutes):
             avalon_mongo_url = avalon_settings["AVALON_MONGO"]
         # Use pype mongo if Avalon's mongo not defined
         if not avalon_mongo_url:
-            avalon_mongo_url = os.environ["PYPE_MONGO"]
+            avalon_mongo_url = os.environ["OPENPYPE_MONGO"]
 
         thumbnail_root = os.environ.get("AVALON_THUMBNAIL_ROOT")
         if not thumbnail_root:

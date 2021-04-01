@@ -15,7 +15,7 @@ from .lib import (
     update_frame_range
 )
 
-from .menu import launch_pype_menu
+from .menu import launch_openpype_menu
 
 
 __all__ = [
@@ -34,5 +34,5 @@ __all__ = [
     "update_frame_range",
 
     # menu
-    "launch_pype_menu",
+    "launch_openpype_menu",
 ]

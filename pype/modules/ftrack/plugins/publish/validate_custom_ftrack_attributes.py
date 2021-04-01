@@ -8,7 +8,7 @@ class ValidateFtrackAttributes(pyblish.api.InstancePlugin):
 
     Attributes to be validated are specified in:
 
-        `$PYPE_CONFIG/presets/<host>/ftrack_attributes.json`
+        `$OPENPYPE_CONFIG/presets/<host>/ftrack_attributes.json`
 
     This is array (list) of checks in format:
     [
