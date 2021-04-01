@@ -8,15 +8,14 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "menu",
-            "label": "Menu shortcuts",
+            "key": "general",
+            "label": "General",
             "children": [
                 {
                     "type": "dict",
-                    "collapsible": false,
-                    "key": "Pype",
-                    "label": "Pype",
-                    "is_group": true,
+                    "collapsible": true,
+                    "key": "menu",
+                    "label": "OpenPype Menu shortcuts",
                     "children": [
                         {
                             "type": "text",
