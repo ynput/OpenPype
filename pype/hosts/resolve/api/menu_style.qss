@@ -52,6 +52,8 @@ QLineEdit {
 }
 
 #OpenPypeMenu {
+    qproperty-alignment: AlignLeft;
+    min-width: 10em;
     border: 1px solid #fef9ef;
 }
 

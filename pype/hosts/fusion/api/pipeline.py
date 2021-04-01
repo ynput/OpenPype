@@ -11,9 +11,6 @@ import pype.hosts.fusion
 
 log = Logger().get_logger(__name__)
 
-
-AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
-
 HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.fusion.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 
