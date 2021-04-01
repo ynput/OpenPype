@@ -106,7 +106,7 @@ from .local_settings import (
     JSONSettingRegistry,
     PypeSettingsRegistry,
     get_local_site_id,
-    change_pype_mongo_url
+    change_openpype_mongo_url
 )
 
 from .path_tools import (
@@ -219,7 +219,7 @@ __all__ = [
     "JSONSettingRegistry",
     "PypeSettingsRegistry",
     "get_local_site_id",
-    "change_pype_mongo_url",
+    "change_openpype_mongo_url",
 
     "timeit",
 

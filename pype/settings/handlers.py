@@ -227,9 +227,9 @@ class MongoSettingsHandler(SettingsHandler):
 
     def _prepare_global_settings(self, data):
         output = {}
-        # Add "pype_path" key to global settings if is set
-        if "general" in data and "pype_path" in data["general"]:
-            output["pype_path"] = data["general"]["pype_path"]
+        # Add "openpype_path" key to global settings if is set
+        if "general" in data and "openpype_path" in data["general"]:
+            output["openpype_path"] = data["general"]["openpype_path"]
         return output
 
     def save_studio_settings(self, data):

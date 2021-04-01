@@ -15,7 +15,7 @@ class MainWidget(QtWidgets.QWidget):
     def __init__(self, user_role, parent=None):
         super(MainWidget, self).__init__(parent)
         self.setObjectName("MainWidget")
-        self.setWindowTitle("Pype Settings")
+        self.setWindowTitle("OpenPype Settings")
 
         self.resize(self.widget_width, self.widget_height)
 

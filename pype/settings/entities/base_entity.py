@@ -611,8 +611,8 @@ class BaseItemEntity(BaseEntity):
     def remove_from_studio_default(self, on_change_trigger=None):
         """Remove studio overrides from entity and it's children.
 
-        Reset values to pype's default and mark entity to not store values as
-        studio overrides if entity is not under group.
+        Reset values to openpype's default and mark entity to not store values
+        as studio overrides if entity is not under group.
 
         This is wrapper method that handles on_change callbacks only when all
         `_remove_from_studio_default` on all children happened. That is
@@ -672,8 +672,8 @@ class BaseItemEntity(BaseEntity):
     def remove_from_project_override(self, on_change_trigger=None):
         """Remove project overrides from entity and it's children.
 
-        Reset values to studio overrides or pype's default and mark entity to
-        not store values as project overrides if entity is not under group.
+        Reset values to studio overrides or openpype's default and mark entity
+        to not store values as project overrides if entity is not under group.
 
         This is wrapper method that handles on_change callbacks only when all
         `_remove_from_project_override` on all children happened. That is
@@ -837,9 +837,9 @@ class ItemEntity(BaseItemEntity):
     def update_default_value(self, parent_values):
         """Fill default values on startup or on refresh.
 
-        Default values stored in `pype` repository should update all items in
-        schema. Each item should take values for his key and set it's value or
-        pass values down to children items.
+        Default values stored in `openpype` repository should update all items
+        in schema. Each item should take values for his key and set it's value
+        or pass values down to children items.
 
         Args:
             parent_values (dict): Values of parent's item. But in case item is
