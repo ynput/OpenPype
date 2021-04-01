@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# TODO: convert this script to be usable with PYPE
+# TODO: convert this script to be usable with OpenPype
 """
 Example DaVinci Resolve script:
 Load a still from DRX file, apply the still to all clips in all timelines.

@@ -44,11 +44,11 @@ class Spacer(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-class PypeMenu(QtWidgets.QWidget):
+class OpenPypeMenu(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
 
-        self.setObjectName("PypeMenu")
+        self.setObjectName("OpenPypeMenu")
 
         self.setWindowFlags(
             QtCore.Qt.Window
@@ -58,7 +58,7 @@ class PypeMenu(QtWidgets.QWidget):
             | QtCore.Qt.WindowStaysOnTopHint
         )
 
-        self.setWindowTitle("Pype")
+        self.setWindowTitle("OpenPype")
         workfiles_btn = QtWidgets.QPushButton("Workfiles", self)
         create_btn = QtWidgets.QPushButton("Create", self)
         publish_btn = QtWidgets.QPushButton("Publish", self)
@@ -144,7 +144,7 @@ class PypeMenu(QtWidgets.QWidget):
 def launch_pype_menu():
     app = QtWidgets.QApplication(sys.argv)
 
-    pype_menu = PypeMenu()
+    pype_menu = OpenPypeMenu()
 
     stylesheet = load_stylesheet()
     pype_menu.setStyleSheet(stylesheet)
