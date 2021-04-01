@@ -44,7 +44,7 @@ publish.show(parent)
                 <label>Work Files ...</label>
                 <scriptCode><![CDATA[
 import hou, os
-from pype.tools import workfiles
+from openpype.tools import workfiles
 workfiles.show(os.environ["AVALON_WORKDIR"])
                 ]]></scriptCode>
             </scriptItem>

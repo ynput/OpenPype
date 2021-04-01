@@ -13,7 +13,7 @@ from openpype.hosts.houdini.api import lib
 
 from openpype.lib import any_outdated
 
-log = logging.getLogger("pype.hosts.houdini")
+log = logging.getLogger("openpype.hosts.houdini")
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.houdini.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
