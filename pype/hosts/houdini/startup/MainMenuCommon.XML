@@ -2,7 +2,7 @@
 <mainMenu>
     <menuBar>
         <subMenu id="avalon_menu">
-            <label>Pype</label>
+            <label>OpenPype</label>
             <subMenu id="avalon_context">
                 <labelExpression><![CDATA[
 from avalon import api
@@ -19,7 +19,7 @@ from avalon.tools import contextmanager; contextmanager.show()
             <separatorItem/>
 
             <scriptItem id="avalon_create">
-                <label>Create ...</label>
+                <label>Create</label>
                 <scriptCode><![CDATA[
 from avalon.tools import creator
 creator.show()
@@ -27,7 +27,7 @@ creator.show()
             </scriptItem>
 
             <scriptItem id="avalon_load">
-                <label>Load ...</label>
+                <label>Load</label>
                 <scriptCode><![CDATA[
 from avalon.tools import cbloader
 cbloader.show(use_context=True)
@@ -35,7 +35,7 @@ cbloader.show(use_context=True)
             </scriptItem>
 
             <scriptItem id="avalon_manage">
-                <label>Manage ...</label>
+                <label>Manage</label>
                 <scriptCode><![CDATA[
 from avalon.tools import cbsceneinventory
 cbsceneinventory.show()
@@ -43,7 +43,7 @@ cbsceneinventory.show()
             </scriptItem>
 
             <scriptItem id="publish">
-                <label>Publish ...</label>
+                <label>Publish</label>
                 <scriptCode><![CDATA[
 import hou
 from avalon.tools import publish
