@@ -72,7 +72,7 @@ class ApplictionExecutableNotFound(Exception):
             for executable in application.executables:
                 details += "\n- " + executable.executable_path
 
-        self.msg = msg.format(application.full_label, application.app_name)
+        self.msg = msg.format(application.full_label, application.name)
         self.details = details
 
         exc_mgs = str(self.msg)
