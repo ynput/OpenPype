@@ -35,9 +35,9 @@ def pype_icon_filepath(debug=None):
         debug = bool(os.getenv("PYPE_DEV"))
 
     if debug:
-        icon_file_name = "pype_icon_dev.png"
+        icon_file_name = "openpype_icon_staging.png"
     else:
-        icon_file_name = "pype_icon.png"
+        icon_file_name = "openpype_icon.png"
     return get_resource("icons", icon_file_name)
 
 
@@ -46,7 +46,7 @@ def pype_splash_filepath(debug=None):
         debug = bool(os.getenv("PYPE_DEV"))
 
     if debug:
-        splash_file_name = "pype_splash_dev.png"
+        splash_file_name = "openpype_splash_staging.png"
     else:
-        splash_file_name = "pype_splash.png"
+        splash_file_name = "openpype_splash.png"
     return get_resource("icons", splash_file_name)

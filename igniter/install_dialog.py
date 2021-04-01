@@ -55,7 +55,7 @@ class InstallDialog(QtWidgets.QDialog):
 
         self.setWindowTitle(f"Pype Igniter {__version__} - Pype installation")
         self._icon_path = os.path.join(
-            os.path.dirname(__file__), 'pype_icon.png')
+            os.path.dirname(__file__), 'openpype_icon.png')
         icon = QtGui.QIcon(self._icon_path)
         self.setWindowIcon(icon)
         self.setWindowFlags(

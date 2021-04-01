@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:shaders-1.0",
+    "title": "openpype:shaders-1.0",
     "description": "Relationships between shaders and Avalon IDs",
 
     "type": "object",

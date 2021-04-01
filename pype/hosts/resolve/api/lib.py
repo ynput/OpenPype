@@ -16,24 +16,24 @@ self = sys.modules[__name__]
 self.project_manager = None
 self.media_storage = None
 
-# Pype sequencial rename variables
+# OpenPype sequencial rename variables
 self.rename_index = 0
 self.rename_add = 0
 
 self.publish_clip_color = "Pink"
 self.pype_marker_workflow = True
 
-# Pype compound clip workflow variable
+# OpenPype compound clip workflow variable
 self.pype_tag_name = "VFX Notes"
 
-# Pype marker workflow variables
-self.pype_marker_name = "PYPEDATA"
+# OpenPype marker workflow variables
+self.pype_marker_name = "OpenPypeData"
 self.pype_marker_duration = 1
 self.pype_marker_color = "Mint"
 self.temp_marker_frame = None
 
-# Pype default timeline
-self.pype_timeline_name = "PypeTimeline"
+# OpenPype default timeline
+self.pype_timeline_name = "OpenPypeTimeline"
 
 
 @contextlib.contextmanager
@@ -360,13 +360,13 @@ def get_pype_timeline_item_by_name(name: str) -> object:
 
 def get_timeline_item_pype_tag(timeline_item):
     """
-    Get pype track item tag created by creator or loader plugin.
+    Get openpype track item tag created by creator or loader plugin.
 
     Attributes:
         trackItem (resolve.TimelineItem): resolve object
 
     Returns:
-        dict: pype tag data
+        dict: openpype tag data
     """
     return_tag = None
 
@@ -389,7 +389,7 @@ def get_timeline_item_pype_tag(timeline_item):
 
 def set_timeline_item_pype_tag(timeline_item, data=None):
     """
-    Set pype track item tag to input timeline_item.
+    Set openpype track item tag to input timeline_item.
 
     Attributes:
         trackItem (resolve.TimelineItem): resolve api object
@@ -399,7 +399,7 @@ def set_timeline_item_pype_tag(timeline_item, data=None):
     """
     data = data or dict()
 
-    # get available pype tag if any
+    # get available openpype tag if any
     tag_data = get_timeline_item_pype_tag(timeline_item)
 
     if self.pype_marker_workflow:
@@ -418,7 +418,7 @@ def set_timeline_item_pype_tag(timeline_item, data=None):
                 self.pype_tag_name, json.dumps(tag_data))
         else:
             tag_data = data
-            # if pype tag available then update with input data
+            # if openpype tag available then update with input data
             # add it to the input track item
             timeline_item.SetMetadata(self.pype_tag_name, json.dumps(tag_data))
 
@@ -672,7 +672,7 @@ def _validate_tc(x):
 
 def get_pype_clip_metadata(clip):
     """
-    Get pype metadata created by creator plugin
+    Get openpype metadata created by creator plugin
 
     Attributes:
         clip (resolve.TimelineItem): resolve's object

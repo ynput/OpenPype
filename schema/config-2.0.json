@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:config-2.0",
+    "title": "openpype:config-2.0",
     "description": "A project configuration.",
 
     "type": "object",

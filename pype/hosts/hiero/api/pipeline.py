@@ -110,7 +110,7 @@ def containerise(track_item,
     """
 
     data_imprint = OrderedDict({
-        "schema": "avalon-core:container-2.0",
+        "schema": "openpype:container-2.0",
         "id": AVALON_CONTAINER_ID,
         "name": str(name),
         "namespace": str(namespace),
