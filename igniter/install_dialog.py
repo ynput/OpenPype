@@ -46,7 +46,10 @@ class InstallDialog(QtWidgets.QDialog):
 
         self.mongo_url = ""
         try:
-            self.mongo_url = os.getenv("PYPE_MONGO", "") or self.registry.get_secure_item("pypeMongo")  # noqa: E501
+            self.mongo_url = (
+                os.getenv("OPENPYPE_MONGO", "")
+                or self.registry.get_secure_item("openPypeMongo")
+            )
         except ValueError:
             pass
 

@@ -1187,7 +1187,7 @@ def _prepare_last_workfile(data, workdir):
         file_template = anatomy.templates["work"]["file"]
         workdir_data.update({
             "version": 1,
-            "user": os.environ.get("PYPE_USERNAME") or getpass.getuser(),
+            "user": os.environ.get("OPENPYPE_USERNAME") or getpass.getuser(),
             "ext": extensions[0]
         })
 

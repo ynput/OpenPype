@@ -49,11 +49,11 @@ class Spacer(QtWidgets.QWidget):
         self.setLayout(layout)
 
 
-class PypeMenu(QtWidgets.QWidget):
+class OpenPypeMenu(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
 
-        self.setObjectName("PypeMenu")
+        self.setObjectName("OpenPypeMenu")
 
         self.setWindowFlags(
             QtCore.Qt.Window
@@ -63,14 +63,14 @@ class PypeMenu(QtWidgets.QWidget):
             | QtCore.Qt.WindowStaysOnTopHint
         )
         self.render_mode_widget = None
-        self.setWindowTitle("Pype")
-        workfiles_btn = QtWidgets.QPushButton("Workfiles", self)
-        create_btn = QtWidgets.QPushButton("Create", self)
-        publish_btn = QtWidgets.QPushButton("Publish", self)
-        load_btn = QtWidgets.QPushButton("Load", self)
-        inventory_btn = QtWidgets.QPushButton("Inventory", self)
-        libload_btn = QtWidgets.QPushButton("Library", self)
-        rendermode_btn = QtWidgets.QPushButton("Set render mode", self)
+        self.setWindowTitle("OpenPype")
+        workfiles_btn = QtWidgets.QPushButton("Workfiles ...", self)
+        create_btn = QtWidgets.QPushButton("Create ...", self)
+        publish_btn = QtWidgets.QPushButton("Publish ...", self)
+        load_btn = QtWidgets.QPushButton("Load ...", self)
+        inventory_btn = QtWidgets.QPushButton("Inventory ...", self)
+        libload_btn = QtWidgets.QPushButton("Library ...", self)
+        rendermode_btn = QtWidgets.QPushButton("Set render mode ...", self)
         duplicate_with_inputs_btn = QtWidgets.QPushButton(
             "Duplicate with input connections", self
         )
@@ -156,11 +156,11 @@ class PypeMenu(QtWidgets.QWidget):
         print("Clicked Reset Resolution")
 
 
-def launch_pype_menu():
+def launch_openpype_menu():
     app = QtWidgets.QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
 
-    pype_menu = PypeMenu()
+    pype_menu = OpenPypeMenu()
 
     stylesheet = load_stylesheet()
     pype_menu.setStyleSheet(stylesheet)

@@ -150,13 +150,13 @@ def get_pype_execute_args(*args):
     It is possible to pass any arguments that will be added after pype
     executables.
     """
-    pype_executable = os.environ["PYPE_EXECUTABLE"]
+    pype_executable = os.environ["OPENPYPE_EXECUTABLE"]
     pype_args = [pype_executable]
 
     executable_filename = os.path.basename(pype_executable)
     if "python" in executable_filename.lower():
         pype_args.append(
-            os.path.join(os.environ["PYPE_ROOT"], "start.py")
+            os.path.join(os.environ["OPENPYPE_ROOT"], "start.py")
         )
 
     if args:

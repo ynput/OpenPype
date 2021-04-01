@@ -49,8 +49,8 @@ class WebServerModule(PypeModule, ITrayService):
         self.server_manager.add_static(static_prefix, resources.RESOURCES_DIR)
 
         webserver_url = "http://localhost:{}".format(self.port)
-        os.environ["PYPE_WEBSERVER_URL"] = webserver_url
-        os.environ["PYPE_STATICS_SERVER"] = "{}{}".format(
+        os.environ["OPENPYPE_WEBSERVER_URL"] = webserver_url
+        os.environ["OPENPYPE_STATICS_SERVER"] = "{}{}".format(
             webserver_url, static_prefix
         )
 

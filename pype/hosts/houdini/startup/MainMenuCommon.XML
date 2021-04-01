@@ -2,21 +2,7 @@
 <mainMenu>
     <menuBar>
         <subMenu id="avalon_menu">
-            <label>Pype</label>
-            <subMenu id="avalon_context">
-                <labelExpression><![CDATA[
-from avalon import api
-return "%s - %s" % (api.Session["AVALON_ASSET"], api.Session["AVALON_TASK"])
-]]></labelExpression>
-                <scriptItem id="avalon_context_switch">
-                    <label>Set Context</label>
-                    <scriptCode><![CDATA[
-from avalon.tools import contextmanager; contextmanager.show()
-]]></scriptCode>
-                </scriptItem>
-            </subMenu>
-
-            <separatorItem/>
+            <label>OpenPype</label>
 
             <scriptItem id="avalon_create">
                 <label>Create ...</label>
@@ -55,7 +41,7 @@ publish.show(parent)
             <separatorItem/>
 
             <scriptItem id="workfiles">
-                <label>Work Files</label>
+                <label>Work Files ...</label>
                 <scriptCode><![CDATA[
 import hou, os
 from pype.tools import workfiles

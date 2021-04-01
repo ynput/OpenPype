@@ -18,7 +18,7 @@ def main(env):
 
     log.info(f"Avalon registred hosts: {avalon.api.registered_host()}")
 
-    menu.launch_pype_menu()
+    menu.launch_openpype_menu()
 
 
 if __name__ == "__main__":

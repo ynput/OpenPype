@@ -12,12 +12,12 @@ Attributes:
 
 */
 
-$scene_file=`getenv "PYPE_ASS_EXPORT_SCENE_FILE"`;
-$step=`getenv "PYPE_ASS_EXPORT_STEP"`;
-$start=`getenv "PYPE_ASS_EXPORT_START"`;
-$end=`getenv "PYPE_ASS_EXPORT_END"`;
-$file_path=`getenv "PYPE_ASS_EXPORT_OUTPUT"`;
-$render_layer = `getenv "PYPE_ASS_EXPORT_RENDER_LAYER"`;
+$scene_file=`getenv "OPENPYPE_ASS_EXPORT_SCENE_FILE"`;
+$step=`getenv "OPENPYPE_ASS_EXPORT_STEP"`;
+$start=`getenv "OPENPYPE_ASS_EXPORT_START"`;
+$end=`getenv "OPENPYPE_ASS_EXPORT_END"`;
+$file_path=`getenv "OPENPYPE_ASS_EXPORT_OUTPUT"`;
+$render_layer = `getenv "OPENPYPE_ASS_EXPORT_RENDER_LAYER"`;
 
 print("*** ASS Export Plugin\n");
 

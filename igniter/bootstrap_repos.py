@@ -633,9 +633,9 @@ class BootstrapRepos:
         if openpype_path:
             dir_to_search = openpype_path
         else:
-            if os.getenv("PYPE_PATH"):
-                if Path(os.getenv("PYPE_PATH")).exists():
-                    dir_to_search = Path(os.getenv("PYPE_PATH"))
+            if os.getenv("OPENPYPE_PATH"):
+                if Path(os.getenv("OPENPYPE_PATH")).exists():
+                    dir_to_search = Path(os.getenv("OPENPYPE_PATH"))
             else:
                 try:
                     registry_dir = Path(
@@ -679,7 +679,7 @@ class BootstrapRepos:
         if location.startswith("mongodb"):
             pype_path = get_openpype_path_from_db(location)
             if not openpype_path:
-                self._print("cannot find PYPE_PATH in settings.")
+                self._print("cannot find OPENPYPE_PATH in settings.")
                 return None
 
         # if not successful, consider location to be fs path.
