@@ -256,7 +256,7 @@ class ReferenceLoader(api.Loader):
         Deprecated; this functionality is replaced by `api.remove()`
 
         Arguments:
-            container (avalon-core:container-1.0): Which container
+            container (openpype:container-1.0): Which container
                 to remove from scene.
 
         """

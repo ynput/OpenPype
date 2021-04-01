@@ -396,7 +396,7 @@ class Window(QtWidgets.QDialog):
         new_asset_info = {
             'parent': av_project['_id'],
             'name': name,
-            'schema': "avalon-core:asset-3.0",
+            'schema': "openpype:asset-3.0",
             'type': 'asset',
             'data': new_asset_data
         }
