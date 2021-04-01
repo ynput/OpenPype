@@ -208,7 +208,7 @@ class PypeInfoWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
-        main_layout.addWidget(self._create_pype_info_widget(), 0)
+        main_layout.addWidget(self._create_openpype_info_widget(), 0)
         main_layout.addWidget(self._create_separator(), 0)
         main_layout.addWidget(self._create_workstation_widget(), 0)
         main_layout.addWidget(self._create_separator(), 0)
@@ -347,8 +347,8 @@ class PypeInfoWidget(QtWidgets.QWidget):
 
         return env_widget
 
-    def _create_pype_info_widget(self):
-        """Create widget with information about pype application."""
+    def _create_openpype_info_widget(self):
+        """Create widget with information about OpenPype application."""
 
         # Get pype info data
         pype_info = get_pype_info()
