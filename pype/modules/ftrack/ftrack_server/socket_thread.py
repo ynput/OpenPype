@@ -12,7 +12,7 @@ from pype.lib import get_pype_execute_args
 class SocketThread(threading.Thread):
     """Thread that checks suprocess of storer of processor of events"""
 
-    MAX_TIMEOUT = int(os.environ.get("PYPE_FTRACK_SOCKET_TIMEOUT", 45))
+    MAX_TIMEOUT = int(os.environ.get("OPENPYPE_FTRACK_SOCKET_TIMEOUT", 45))
 
     def __init__(self, name, port, filepath, additional_args=[]):
         super(SocketThread, self).__init__()
@@ -57,7 +57,7 @@ class SocketThread(threading.Thread):
         )
 
         env = os.environ.copy()
-        env["PYPE_PROCESS_MONGO_ID"] = str(Logger.mongo_process_id)
+        env["OPENPYPE_PROCESS_MONGO_ID"] = str(Logger.mongo_process_id)
         # Pype executable (with path to start script if not build)
         args = get_pype_execute_args(
             # Add `run` command

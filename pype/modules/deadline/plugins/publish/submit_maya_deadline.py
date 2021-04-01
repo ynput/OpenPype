@@ -441,17 +441,17 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AVALON_ASSET",
             "AVALON_TASK",
             "AVALON_APP_NAME",
-            "PYPE_USERNAME",
-            "PYPE_DEV",
-            "PYPE_LOG_NO_COLORS"
+            "OPENPYPE_USERNAME",
+            "OPENPYPE_DEV",
+            "OPENPYPE_LOG_NO_COLORS"
         ]
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
-        environment["PYPE_LOG_NO_COLORS"] = "1"
-        environment["PYPE_MAYA_VERSION"] = cmds.about(v=True)
+        environment["OPENPYPE_LOG_NO_COLORS"] = "1"
+        environment["OPENPYPE_MAYA_VERSION"] = cmds.about(v=True)
         # to recognize job from PYPE for turning Event On/Off
-        environment["PYPE_RENDER_JOB"] = "1"
+        environment["OPENPYPE_RENDER_JOB"] = "1"
         self.payload_skeleton["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,
@@ -858,20 +858,20 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         envs.append(
             "AVALON_APP_NAME={}".format(os.environ.get("AVALON_APP_NAME")))
         envs.append(
-            "PYPE_ASS_EXPORT_RENDER_LAYER={}".format(data["renderlayer"]))
+            "OPENPYPE_ASS_EXPORT_RENDER_LAYER={}".format(data["renderlayer"]))
         envs.append(
-            "PYPE_ASS_EXPORT_SCENE_FILE={}".format(data["filepath"]))
+            "OPENPYPE_ASS_EXPORT_SCENE_FILE={}".format(data["filepath"]))
         envs.append(
-            "PYPE_ASS_EXPORT_OUTPUT={}".format(
+            "OPENPYPE_ASS_EXPORT_OUTPUT={}".format(
                 payload['JobInfo']['OutputFilename0']))
         envs.append(
-            "PYPE_ASS_EXPORT_START={}".format(
+            "OPENPYPE_ASS_EXPORT_START={}".format(
                 int(self._instance.data["frameStartHandle"])))
         envs.append(
-            "PYPE_ASS_EXPORT_END={}".format(
+            "OPENPYPE_ASS_EXPORT_END={}".format(
                 int(self._instance.data["frameEndHandle"])))
         envs.append(
-            "PYPE_ASS_EXPORT_STEP={}".format(1))
+            "OPENPYPE_ASS_EXPORT_STEP={}".format(1))
 
         i = 0
         for e in envs:
@@ -984,7 +984,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
         if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
         # add 10sec timeout before bailing out
         kwargs['timeout'] = 10
         return requests.post(*args, **kwargs)
@@ -1003,7 +1003,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
         if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
         # add 10sec timeout before bailing out
         kwargs['timeout'] = 10
         return requests.get(*args, **kwargs)

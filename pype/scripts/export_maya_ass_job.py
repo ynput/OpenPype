@@ -1,4 +1,8 @@
-"""This module is used for command line exporting of ASS files."""
+"""This module is used for command line exporting of ASS files.
+
+WARNING:
+This need to be rewriten to be able use it in Pype 3!
+"""
 
 import os
 import argparse
@@ -45,10 +49,10 @@ def __main__():
     auto_pype_root = os.path.dirname(os.path.abspath(__file__))
     auto_pype_root = os.path.abspath(auto_pype_root + "../../../../..")
 
-    auto_pype_root = os.environ.get('PYPE_SETUP_PATH') or auto_pype_root
-    if os.environ.get('PYPE_SETUP_PATH'):
+    auto_pype_root = os.environ.get('OPENPYPE_SETUP_PATH') or auto_pype_root
+    if os.environ.get('OPENPYPE_SETUP_PATH'):
         print("Got Pype location from environment: {}".format(
-            os.environ.get('PYPE_SETUP_PATH')))
+            os.environ.get('OPENPYPE_SETUP_PATH')))
 
     pype_command = "pype.ps1"
     if platform.system().lower() == "linux":
@@ -74,7 +78,7 @@ def __main__():
     print("Set pype root to: {}".format(pype_root))
     print("Paths: {}".format(kwargs.paths or [os.getcwd()]))
 
-    # paths = kwargs.paths or [os.environ.get("PYPE_METADATA_FILE")] or [os.getcwd()]  # noqa
+    # paths = kwargs.paths or [os.environ.get("OPENPYPE_METADATA_FILE")] or [os.getcwd()]  # noqa
 
     mayabatch = os.environ.get("AVALON_APP_NAME").replace("maya", "mayabatch")
     args = [
