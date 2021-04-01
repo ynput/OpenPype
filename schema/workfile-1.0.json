@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:workfile-1.0",
+    "title": "openpype:workfile-1.0",
     "description": "Workfile additional information.",
 
     "type": "object",
@@ -20,8 +20,8 @@
         "schema": {
             "description": "Schema identifier for payload",
             "type": "string",
-            "enum": ["pype:workfile-1.0"],
-            "example": "pype:workfile-1.0"
+            "enum": ["openpype:workfile-1.0"],
+            "example": "openpype:workfile-1.0"
         },
         "type": {
             "description": "The type of document",

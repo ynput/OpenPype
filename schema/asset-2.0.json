@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:asset-2.0",
+    "title": "openpype:asset-2.0",
     "description": "A unit of data",
 
     "type": "object",
@@ -20,8 +20,8 @@
         "schema": {
             "description": "Schema identifier for payload",
             "type": "string",
-            "enum": ["avalon-core:asset-2.0"],
-            "example": "avalon-core:asset-2.0"
+            "enum": ["openpype:asset-2.0"],
+            "example": "openpype:asset-2.0"
         },
         "type": {
             "description": "The type of document",

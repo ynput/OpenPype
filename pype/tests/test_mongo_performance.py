@@ -108,7 +108,7 @@ class TestPerformance():
                             "template": "{root}\\{project[name]}\\{hierarchy}\\{asset}\\publish\\{family}\\{subset}\\v{version:0>3}\\{project[code]}_{asset}_{subset}_v{version:0>3}<_{output}><.{frame:0>4}>.{representation}"
                         },
                         "type": "representation",
-                        "schema": "pype:representation-2.0"
+                        "schema": "openpype:representation-2.0"
                         }
 
             insert_recs.append(document)
