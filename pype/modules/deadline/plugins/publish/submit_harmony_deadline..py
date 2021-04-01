@@ -288,7 +288,7 @@ class HarmonySubmitDeadline(
                     value=val)
 
         # to recognize job from PYPE for turning Event On/Off
-        job_info.EnvironmentKeyValue = "PYPE_RENDER_JOB=1"
+        job_info.EnvironmentKeyValue = "OPENPYPE_RENDER_JOB=1"
 
         return job_info
 

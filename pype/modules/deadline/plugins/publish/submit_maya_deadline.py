@@ -451,7 +451,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         environment["PYPE_LOG_NO_COLORS"] = "1"
         environment["PYPE_MAYA_VERSION"] = cmds.about(v=True)
         # to recognize job from PYPE for turning Event On/Off
-        environment["PYPE_RENDER_JOB"] = "1"
+        environment["OPENPYPE_RENDER_JOB"] = "1"
         self.payload_skeleton["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,

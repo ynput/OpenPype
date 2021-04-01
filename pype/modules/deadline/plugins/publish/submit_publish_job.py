@@ -119,11 +119,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "AVALON_ASSET",
         "AVALON_TASK",
         "AVALON_APP_NAME",
-        "PYPE_PUBLISH_JOB"
+        "OPENPYPE_PUBLISH_JOB"
         "PYPE_LOG_NO_COLORS",
         "PYPE_USERNAME",
-        "PYPE_RENDER_JOB",
-        "PYPE_PUBLISH_JOB"
+        "OPENPYPE_RENDER_JOB",
+        "OPENPYPE_PUBLISH_JOB"
     ]
 
     # custom deadline atributes
@@ -225,8 +225,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
         environment["PYPE_LOG_NO_COLORS"] = "1"
         environment["PYPE_USERNAME"] = instance.context.data["user"]
-        environment["PYPE_PUBLISH_JOB"] = "1"
-        environment["PYPE_RENDER_JOB"] = "0"
+        environment["OPENPYPE_PUBLISH_JOB"] = "1"
+        environment["OPENPYPE_RENDER_JOB"] = "0"
 
         args = [
             'publish',

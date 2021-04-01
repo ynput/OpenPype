@@ -279,7 +279,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         environment = clean_environment
         # to recognize job from PYPE for turning Event On/Off
-        environment["PYPE_RENDER_JOB"] = "1"
+        environment["OPENPYPE_RENDER_JOB"] = "1"
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,
