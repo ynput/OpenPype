@@ -3,8 +3,8 @@ import nuke
 from avalon.api import Session
 
 from .lib import WorkfileSettings
-from pype.api import Logger, BuildWorkfile, get_current_project_settings
-from pype.tools import workfiles
+from openpype.api import Logger, BuildWorkfile, get_current_project_settings
+from openpype.tools import workfiles
 
 log = Logger().get_logger(__name__)
 

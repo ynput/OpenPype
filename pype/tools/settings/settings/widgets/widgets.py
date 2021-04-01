@@ -6,7 +6,7 @@ from avalon.mongodb import (
     AvalonMongoDB
 )
 
-from pype.settings.lib import get_system_settings
+from openpype.settings.lib import get_system_settings
 
 
 class ShadowWidget(QtWidgets.QWidget):

@@ -1,5 +1,5 @@
 import os
-from pype.modules import (
+from openpype.modules import (
     PypeModule, IPluginPaths)
 
 

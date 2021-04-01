@@ -3,7 +3,7 @@ from typing import List
 import bpy
 
 import pyblish.api
-import pype.hosts.blender.api.action
+import openpype.hosts.blender.api.action
 
 
 class ValidateMeshNoNegativeScale(pyblish.api.Validator):
@@ -13,7 +13,7 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator):
     hosts = ["blender"]
     families = ["model"]
     label = "Mesh No Negative Scale"
-    actions = [pype.hosts.blender.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.blender.api.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance) -> List:

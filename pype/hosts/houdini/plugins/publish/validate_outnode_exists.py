@@ -1,5 +1,5 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidatOutputNodeExists(pyblish.api.InstancePlugin):
@@ -11,7 +11,7 @@ class ValidatOutputNodeExists(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ["*"]
     hosts = ['houdini']
     label = "Output Node Exists"

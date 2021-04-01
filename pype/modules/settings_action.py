@@ -63,7 +63,7 @@ class SettingsAction(PypeModule, ITrayAction):
         """Initializa Settings Qt window."""
         if self.settings_window:
             return
-        from pype.tools.settings import MainWidget
+        from openpype.tools.settings import MainWidget
         self.settings_window = MainWidget(self.user_role)
 
     def show_settings_window(self):
@@ -118,7 +118,7 @@ class LocalSettingsAction(PypeModule, ITrayAction):
         """Initializa Settings Qt window."""
         if self.settings_window:
             return
-        from pype.tools.settings import LocalSettingsWindow
+        from openpype.tools.settings import LocalSettingsWindow
         self.settings_window = LocalSettingsWindow()
 
     def show_settings_window(self):

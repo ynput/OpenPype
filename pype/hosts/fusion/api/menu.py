@@ -15,7 +15,7 @@ from avalon.tools import (
     libraryloader
 )
 
-from pype.hosts.fusion.scripts import (
+from openpype.hosts.fusion.scripts import (
     set_rendermode,
     duplicate_with_inputs
 )

@@ -21,7 +21,7 @@ from avalon.vendor.six import string_types
 import avalon.maya.lib
 import avalon.maya.interactive
 
-from pype import lib
+from openpype import lib
 
 
 log = logging.getLogger(__name__)
@@ -2677,7 +2677,7 @@ def update_content_on_context_change():
 
 def show_message(title, msg):
     from avalon.vendor.Qt import QtWidgets
-    from pype.widgets import message_window
+    from openpype.widgets import message_window
 
     # Find maya main window
     top_level_widgets = {w.objectName(): w for w in

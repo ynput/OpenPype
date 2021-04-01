@@ -4,16 +4,16 @@ from maya import cmds
 import contextlib
 
 import avalon.maya
-import pype.api
+import openpype.api
 
 
-class ExtractAssProxy(pype.api.Extractor):
+class ExtractAssProxy(openpype.api.Extractor):
     """Extract proxy model as Maya Ascii to use as arnold standin
 
 
     """
 
-    order = pype.api.Extractor.order + 0.2
+    order = openpype.api.Extractor.order + 0.2
     label = "Ass Proxy (Maya ASCII)"
     hosts = ["maya"]
     families = ["ass"]

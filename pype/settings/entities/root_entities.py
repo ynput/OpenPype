@@ -17,14 +17,14 @@ from .exceptions import (
     SchemaError,
     InvalidKeySymbols
 )
-from pype.settings.constants import (
+from openpype.settings.constants import (
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY,
     KEY_REGEX
 )
 
-from pype.settings.lib import (
+from openpype.settings.lib import (
     DEFAULTS_DIR,
 
     get_default_settings,
@@ -175,7 +175,7 @@ class RootEntity(BaseItemEntity):
         """
         if self._loaded_types is None:
             # Load available entities
-            from pype.settings import entities
+            from openpype.settings import entities
 
             # Define known abstract classes
             known_abstract_classes = (

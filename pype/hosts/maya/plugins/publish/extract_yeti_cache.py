@@ -3,10 +3,10 @@ import json
 
 from maya import cmds
 
-import pype.api
+import openpype.api
 
 
-class ExtractYetiCache(pype.api.Extractor):
+class ExtractYetiCache(openpype.api.Extractor):
     """Producing Yeti cache files using scene time range.
 
     This will extract Yeti cache file sequence and fur settings.

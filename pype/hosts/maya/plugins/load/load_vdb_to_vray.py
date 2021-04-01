@@ -1,5 +1,5 @@
 from avalon import api
-from pype.api import get_project_settings
+from openpype.api import get_project_settings
 import os
 
 

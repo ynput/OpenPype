@@ -12,7 +12,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from pype.settings import (
+from openpype.settings import (
     get_system_settings,
     get_project_settings,
     get_environments
@@ -639,8 +639,8 @@ class ApplicationLaunchContext:
         paths = []
 
         # TODO load additional studio paths from settings
-        import pype
-        pype_dir = os.path.dirname(os.path.abspath(pype.__file__))
+        import openpype
+        pype_dir = os.path.dirname(os.path.abspath(openpype.__file__))
 
         # --- START: Backwards compatibility ---
         hooks_dir = os.path.join(pype_dir, "hooks")
@@ -670,7 +670,7 @@ class ApplicationLaunchContext:
                 paths.append(path)
 
         # Load modules paths
-        from pype.modules import ModulesManager
+        from openpype.modules import ModulesManager
 
         manager = ModulesManager()
         paths.extend(manager.collect_launch_hook_paths())

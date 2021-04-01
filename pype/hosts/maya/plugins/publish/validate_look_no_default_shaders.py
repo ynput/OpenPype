@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
 
 class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
@@ -23,11 +23,11 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder + 0.01
+    order = openpype.api.ValidateContentsOrder + 0.01
     families = ['look']
     hosts = ['maya']
     label = 'Look No Default Shaders'
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     DEFAULT_SHADERS = {"lambert1", "initialShadingGroup",
                       "initialParticleSE", "particleCloud1"}

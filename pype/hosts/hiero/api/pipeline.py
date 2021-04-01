@@ -12,7 +12,7 @@ from avalon.pipeline import AVALON_CONTAINER_ID
 from avalon import api as avalon
 from avalon import schema
 from pyblish import api as pyblish
-from pype.api import Logger
+from openpype.api import Logger
 from . import lib, menu, events
 
 log = Logger().get_logger(__name__)
@@ -289,7 +289,7 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
-    from pype.hosts.hiero.api import (
+    from openpype.hosts.hiero.api import (
         get_track_item_pype_tag,
         set_publish_attribute
     )

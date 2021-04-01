@@ -22,10 +22,10 @@ try:
     from weakref import WeakMethod
 except ImportError:
     from ftrack_api._weakref import WeakMethod
-from pype.modules.ftrack.lib import get_ftrack_event_mongo_info
+from openpype.modules.ftrack.lib import get_ftrack_event_mongo_info
 
-from pype.lib import PypeMongoConnection
-from pype.api import Logger
+from openpype.lib import PypeMongoConnection
+from openpype.api import Logger
 
 TOPIC_STATUS_SERVER = "pype.event.server.status"
 TOPIC_STATUS_SERVER_RESULT = "pype.event.server.status.result"

@@ -1,5 +1,5 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateAlembicInputNode(pyblish.api.InstancePlugin):
@@ -11,7 +11,7 @@ class ValidateAlembicInputNode(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder + 0.1
+    order = openpype.api.ValidateContentsOrder + 0.1
     families = ["pointcache"]
     hosts = ["houdini"]
     label = "Validate Input Node (Abc)"

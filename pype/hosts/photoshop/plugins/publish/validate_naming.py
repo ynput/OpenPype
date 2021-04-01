@@ -1,5 +1,5 @@
 import pyblish.api
-import pype.api
+import openpype.api
 from avalon import photoshop
 
 
@@ -45,7 +45,7 @@ class ValidateNaming(pyblish.api.InstancePlugin):
 
     label = "Validate Naming"
     hosts = ["photoshop"]
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ["image"]
     actions = [ValidateNamingRepair]
 

@@ -1,13 +1,13 @@
 import os
 
-import pype.api
+import openpype.api
 
 import bpy
 import bpy_extras
 import bpy_extras.anim_utils
 
 
-class ExtractAnimationFBX(pype.api.Extractor):
+class ExtractAnimationFBX(openpype.api.Extractor):
     """Extract as animation."""
 
     label = "Extract FBX"

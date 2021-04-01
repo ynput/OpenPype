@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 
 from avalon import api, blender
 import bpy
-import pype.hosts.blender.api.plugin as plugin
+import openpype.hosts.blender.api.plugin as plugin
 
 
 class BlendModelLoader(plugin.AssetLoader):

@@ -13,7 +13,7 @@ from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import io
 from avalon.vendor import filelink
-import pype.api
+import openpype.api
 from datetime import datetime
 # from pype.modules import ModulesManager
 
@@ -912,7 +912,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         for _src, dest in resources:
             path = self.get_rootless_path(anatomy, dest)
             dest = self.get_dest_temp_url(dest)
-            file_hash = pype.api.source_hash(dest)
+            file_hash = openpype.api.source_hash(dest)
             if self.TMP_FILE_EXT and \
                ',{}'.format(self.TMP_FILE_EXT) in file_hash:
                 file_hash = file_hash.replace(',{}'.format(self.TMP_FILE_EXT),
@@ -968,7 +968,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                                         ["global"]
                                                         ["sync_server"])
 
-            local_site_id = pype.api.get_local_site_id()
+            local_site_id = openpype.api.get_local_site_id()
             if sync_server_presets["enabled"]:
                 local_site = sync_server_presets["config"].\
                     get("active_site", "studio").strip()

@@ -10,10 +10,10 @@ import zipfile
 
 import pyblish.api
 from avalon import api, io
-import pype.api
+import openpype.api
 
 
-class ExtractHarmonyZip(pype.api.Extractor):
+class ExtractHarmonyZip(openpype.api.Extractor):
     """Extract Harmony zip."""
 
     # Pyblish settings
@@ -216,7 +216,7 @@ class ExtractHarmonyZip(pype.api.Extractor):
                                      "scene.xstage")
 
         # Setup the data needed to form a valid work path filename
-        anatomy = pype.api.Anatomy()
+        anatomy = openpype.api.Anatomy()
         project_entity = instance.context.data["projectEntity"]
 
         data = {
@@ -226,7 +226,7 @@ class ExtractHarmonyZip(pype.api.Extractor):
                 "code": project_entity["data"].get("code", '')
             },
             "asset": instance.data["asset"],
-            "hierarchy": pype.api.get_hierarchy(instance.data["asset"]),
+            "hierarchy": openpype.api.get_hierarchy(instance.data["asset"]),
             "family": instance.data["family"],
             "task": instance.data.get("task"),
             "subset": instance.data["subset"],

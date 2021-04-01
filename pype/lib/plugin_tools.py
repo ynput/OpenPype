@@ -10,7 +10,7 @@ import tempfile
 from .execute import run_subprocess
 from .profiles_filtering import filter_profiles
 
-from pype.settings import get_project_settings
+from openpype.settings import get_project_settings
 
 
 log = logging.getLogger(__name__)

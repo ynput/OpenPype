@@ -14,7 +14,7 @@ else:
 from avalon.api import AvalonMongoDB
 
 import avalon
-from pype.api import (
+from openpype.api import (
     Logger,
     Anatomy,
     get_anatomy_settings
@@ -24,7 +24,7 @@ from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from pymongo import UpdateOne
 import ftrack_api
-from pype.lib import ApplicationManager
+from openpype.lib import ApplicationManager
 
 log = Logger.get_logger(__name__)
 

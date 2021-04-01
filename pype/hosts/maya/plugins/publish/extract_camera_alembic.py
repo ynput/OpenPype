@@ -3,12 +3,12 @@ import os
 from maya import cmds
 
 import avalon.maya
-import pype.api
+import openpype.api
 
-from pype.hosts.maya.api import lib
+from openpype.hosts.maya.api import lib
 
 
-class ExtractCameraAlembic(pype.api.Extractor):
+class ExtractCameraAlembic(openpype.api.Extractor):
     """Extract a Camera as Alembic.
 
     The cameras gets baked to world space by default. Only when the instance's

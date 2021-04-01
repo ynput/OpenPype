@@ -1,6 +1,6 @@
 import json
-from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.clockify.clockify_api import ClockifyAPI
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.modules.clockify.clockify_api import ClockifyAPI
 
 
 class SyncClocifyLocal(BaseAction):

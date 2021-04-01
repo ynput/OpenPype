@@ -1,4 +1,4 @@
-import pype.api
+import openpype.api
 from avalon.vendor import Qt
 from avalon import aftereffects
 
@@ -7,7 +7,7 @@ import logging
 log = logging.getLogger(__name__)
 
 
-class CreateRender(pype.api.Creator):
+class CreateRender(openpype.api.Creator):
     """Render folder for publish.
 
         Creates subsets in format 'familyTaskSubsetname',

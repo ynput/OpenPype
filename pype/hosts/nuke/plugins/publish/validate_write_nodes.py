@@ -1,7 +1,7 @@
 import os
 import pyblish.api
-import pype.utils
-import pype.hosts.nuke.lib as nukelib
+import openpype.utils
+import openpype.hosts.nuke.lib as nukelib
 import avalon.nuke
 
 @pyblish.api.log
@@ -11,7 +11,7 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
     icon = "wrench"
 
     def process(self, context, plugin):
-        instances = pype.utils.filter_instances(context, plugin)
+        instances = openpype.utils.filter_instances(context, plugin)
 
         for instance in instances:
             node = instance[1]

@@ -1,4 +1,4 @@
-from pype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class ActionAskWhereIRun(BaseAction):

@@ -1,8 +1,8 @@
 import os
 import shutil
 
-from pype.hosts import tvpaint
-from pype.lib import (
+from openpype.hosts import tvpaint
+from openpype.lib import (
     PreLaunchHook,
     get_pype_execute_args
 )

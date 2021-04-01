@@ -1,9 +1,9 @@
 import os
 import json
 
-from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.api import config, Anatomy
-from pype.modules.ftrack.lib.avalon_sync import get_pype_attr
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.api import config, Anatomy
+from openpype.modules.ftrack.lib.avalon_sync import get_pype_attr
 
 
 class PrepareProject(BaseAction):

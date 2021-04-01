@@ -1,5 +1,5 @@
 from aiohttp.web_response import Response
-from pype.api import Logger
+from openpype.api import Logger
 
 log = Logger().get_logger("Event processor")
 

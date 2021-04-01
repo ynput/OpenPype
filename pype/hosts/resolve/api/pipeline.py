@@ -9,7 +9,7 @@ from avalon import api as avalon
 from avalon import schema
 from avalon.pipeline import AVALON_CONTAINER_ID
 from pyblish import api as pyblish
-from pype.api import Logger
+from openpype.api import Logger
 from . import lib
 from . import PLUGINS_DIR
 log = Logger().get_logger(__name__)
@@ -251,7 +251,7 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
-    from pype.hosts.resolve import (
+    from openpype.hosts.resolve import (
         set_publish_attribute
     )
 

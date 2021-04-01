@@ -8,8 +8,8 @@ from avalon import api, io, pipeline
 import avalon.fusion
 
 # Config imports
-import pype.lib as pype
-import pype.hosts.fusion.lib as fusion_lib
+import openpype.lib as pype
+import openpype.hosts.fusion.lib as fusion_lib
 
 log = logging.getLogger("Update Slap Comp")
 

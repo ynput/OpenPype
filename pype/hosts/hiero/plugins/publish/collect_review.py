@@ -1,7 +1,7 @@
 from pyblish import api
 import os
 import clique
-from pype.hosts.hiero.api import (
+from openpype.hosts.hiero.api import (
     is_overlapping, get_sequence_pattern_and_padding)
 
 

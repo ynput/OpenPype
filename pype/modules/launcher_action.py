@@ -21,7 +21,7 @@ class LauncherAction(PypeModule, ITrayAction):
     def connect_with_modules(self, enabled_modules):
         # Register actions
         if self.tray_initialized:
-            from pype.tools.launcher import actions
+            from openpype.tools.launcher import actions
             # actions.register_default_actions()
             actions.register_config_actions()
             actions_paths = self.manager.collect_plugin_paths()["actions"]
@@ -31,7 +31,7 @@ class LauncherAction(PypeModule, ITrayAction):
     def create_window(self):
         if self.window:
             return
-        from pype.tools.launcher import LauncherWindow
+        from openpype.tools.launcher import LauncherWindow
         self.window = LauncherWindow()
 
     def on_action_trigger(self):

@@ -4,7 +4,7 @@ import traceback
 from enum import Enum
 from Qt import QtWidgets, QtCore, QtGui
 
-from pype.settings.entities import (
+from openpype.settings.entities import (
     SystemSettings,
     ProjectSettings,
 
@@ -27,7 +27,7 @@ from pype.settings.entities import (
     SchemaError
 )
 
-from pype.settings.lib import get_system_settings
+from openpype.settings.lib import get_system_settings
 from .widgets import ProjectListWidget
 
 from . import lib

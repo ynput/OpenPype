@@ -3,11 +3,11 @@ import os
 from maya import cmds
 
 import avalon.maya
-import pype.api
-from pype.hosts.maya.api.lib import extract_alembic
+import openpype.api
+from openpype.hosts.maya.api.lib import extract_alembic
 
 
-class ExtractAnimation(pype.api.Extractor):
+class ExtractAnimation(openpype.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals, uvs, creases are preserved, but nothing more,

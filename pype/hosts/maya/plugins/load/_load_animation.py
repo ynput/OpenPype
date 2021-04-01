@@ -1,7 +1,7 @@
-import pype.hosts.maya.api.plugin
+import openpype.hosts.maya.api.plugin
 
 
-class AbcLoader(pype.hosts.maya.api.plugin.ReferenceLoader):
+class AbcLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["animation",

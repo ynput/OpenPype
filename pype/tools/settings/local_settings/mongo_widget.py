@@ -5,7 +5,7 @@ import traceback
 from Qt import QtWidgets
 from pymongo.errors import ServerSelectionTimeoutError
 
-from pype.api import change_openpype_mongo_url
+from openpype.api import change_openpype_mongo_url
 
 
 class OpenPypeMongoWidget(QtWidgets.QWidget):

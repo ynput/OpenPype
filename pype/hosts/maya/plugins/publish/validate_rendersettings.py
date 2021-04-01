@@ -5,8 +5,8 @@ from maya import cmds, mel
 import pymel.core as pm
 
 import pyblish.api
-import pype.api
-from pype.hosts.maya.api import lib
+import openpype.api
+from openpype.hosts.maya.api import lib
 
 
 class ValidateRenderSettings(pyblish.api.InstancePlugin):
@@ -38,11 +38,11 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     label = "Render Settings"
     hosts = ["maya"]
     families = ["renderlayer"]
-    actions = [pype.api.RepairAction]
+    actions = [openpype.api.RepairAction]
 
     ImagePrefixes = {
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',

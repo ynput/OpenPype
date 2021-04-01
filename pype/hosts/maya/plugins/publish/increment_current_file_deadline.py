@@ -18,8 +18,8 @@ class IncrementCurrentFileDeadline(pyblish.api.ContextPlugin):
 
         import os
         from maya import cmds
-        from pype.lib import version_up
-        from pype.action import get_errored_plugins_from_data
+        from openpype.lib import version_up
+        from openpype.action import get_errored_plugins_from_data
 
         errored_plugins = get_errored_plugins_from_data(context)
         if any(plugin.__name__ == "MayaSubmitDeadline"

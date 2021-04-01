@@ -5,9 +5,9 @@ from pathlib import Path
 import attr
 from avalon import harmony, api
 
-import pype.lib.abstract_collect_render
-from pype.lib.abstract_collect_render import RenderInstance
-import pype.lib
+import openpype.lib.abstract_collect_render
+from openpype.lib.abstract_collect_render import RenderInstance
+import openpype.lib
 
 
 @attr.s
@@ -18,7 +18,7 @@ class HarmonyRenderInstance(RenderInstance):
     leadingZeros = attr.ib(default=3)
 
 
-class CollectFarmRender(pype.lib.abstract_collect_render.
+class CollectFarmRender(openpype.lib.abstract_collect_render.
                         AbstractCollectRender):
     """Gather all publishable renders."""
 

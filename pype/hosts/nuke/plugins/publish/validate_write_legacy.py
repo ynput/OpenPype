@@ -6,7 +6,7 @@ import nuke
 from avalon import api
 import re
 import pyblish.api
-import pype.api
+import openpype.api
 from avalon.nuke import get_avalon_knob_data
 
 
@@ -18,7 +18,7 @@ class ValidateWriteLegacy(pyblish.api.InstancePlugin):
     families = ["write"]
     label = "Validate Write Legacy"
     hosts = ["nuke"]
-    actions = [pype.api.RepairAction]
+    actions = [openpype.api.RepairAction]
 
     def process(self, instance):
         node = instance[0]

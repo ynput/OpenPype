@@ -1,11 +1,11 @@
 import pyblish.api
 import nuke
 import os
-import pype
+import openpype
 import clique
 
 
-class NukeRenderLocal(pype.api.Extractor):
+class NukeRenderLocal(openpype.api.Extractor):
     # TODO: rewrite docstring to nuke
     """Render the current Fusion composition locally.
 

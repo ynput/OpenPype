@@ -1,8 +1,8 @@
 import os
 import shutil
 import winreg
-from pype.lib import PreLaunchHook
-from pype.hosts.celaction import api as celaction
+from openpype.lib import PreLaunchHook
+from openpype.hosts.celaction import api as celaction
 
 
 class CelactionPrelaunchHook(PreLaunchHook):

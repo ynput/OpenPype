@@ -4,14 +4,14 @@ import glob
 
 import capture
 
-from pype.hosts.maya.api import lib
-import pype.api
+from openpype.hosts.maya.api import lib
+import openpype.api
 
 from maya import cmds
 import pymel.core as pm
 
 
-class ExtractThumbnail(pype.api.Extractor):
+class ExtractThumbnail(openpype.api.Extractor):
     """Extract a Camera as Alembic.
 
     The cameras gets baked to world space by default. Only when the instance's

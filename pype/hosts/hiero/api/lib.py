@@ -9,7 +9,7 @@ import hiero
 import avalon.api as avalon
 import avalon.io
 from avalon.vendor.Qt import QtWidgets
-from pype.api import (Logger, Anatomy, config)
+from openpype.api import (Logger, Anatomy, config)
 from . import tags
 import shutil
 from compiler.ast import flatten

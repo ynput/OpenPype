@@ -6,7 +6,7 @@ import collections
 import datetime
 from abc import ABCMeta, abstractmethod
 import six
-import pype
+import openpype
 from .constants import (
     GLOBAL_SETTINGS_KEY,
     SYSTEM_SETTINGS_KEY,
@@ -170,7 +170,7 @@ class MongoSettingsHandler(SettingsHandler):
 
     def __init__(self):
         # Get mongo connection
-        from pype.lib import PypeMongoConnection
+        from openpype.lib import PypeMongoConnection
         from avalon.api import AvalonMongoDB
 
         settings_collection = PypeMongoConnection.get_mongo_client()
@@ -540,7 +540,7 @@ class MongoLocalSettingsHandler(LocalSettingsHandler):
 
     def __init__(self, local_site_id=None):
         # Get mongo connection
-        from pype.lib import (
+        from openpype.lib import (
             PypeMongoConnection,
             get_local_site_id
         )

@@ -1,11 +1,11 @@
 import os
-from pype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
 from avalon import lib as avalonlib
-from pype.api import (
+from openpype.api import (
     Anatomy,
     get_project_settings
 )
-from pype.lib import ApplicationManager
+from openpype.lib import ApplicationManager
 
 
 class CreateFolders(BaseAction):

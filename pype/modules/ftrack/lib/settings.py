@@ -1,4 +1,4 @@
-from pype.api import get_system_settings
+from openpype.api import get_system_settings
 
 PYPE_DATABASE_NAME = "pype"
 

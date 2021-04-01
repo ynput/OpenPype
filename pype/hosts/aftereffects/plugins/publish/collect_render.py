@@ -1,5 +1,5 @@
-from pype.lib import abstract_collect_render
-from pype.lib.abstract_collect_render import RenderInstance
+from openpype.lib import abstract_collect_render
+from openpype.lib.abstract_collect_render import RenderInstance
 import pyblish.api
 import attr
 import os

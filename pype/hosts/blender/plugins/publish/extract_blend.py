@@ -1,10 +1,10 @@
 import os
 import avalon.blender.workio
 
-import pype.api
+import openpype.api
 
 
-class ExtractBlend(pype.api.Extractor):
+class ExtractBlend(openpype.api.Extractor):
     """Extract a blend file."""
 
     label = "Extract Blend"

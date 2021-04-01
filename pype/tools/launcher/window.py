@@ -5,7 +5,7 @@ from Qt import QtWidgets, QtCore, QtGui
 from avalon import style
 
 from avalon.api import AvalonMongoDB
-from pype.api import resources
+from openpype.api import resources
 
 from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget

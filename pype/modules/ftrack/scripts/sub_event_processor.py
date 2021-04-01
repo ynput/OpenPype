@@ -4,15 +4,15 @@ import signal
 import socket
 import datetime
 
-from pype.modules.ftrack.ftrack_server.ftrack_server import FtrackServer
-from pype.modules.ftrack.ftrack_server.lib import (
+from openpype.modules.ftrack.ftrack_server.ftrack_server import FtrackServer
+from openpype.modules.ftrack.ftrack_server.lib import (
     SocketSession,
     ProcessEventHub,
     TOPIC_STATUS_SERVER
 )
-from pype.modules import ModulesManager
+from openpype.modules import ModulesManager
 
-from pype.api import Logger
+from openpype.api import Logger
 
 import ftrack_api
 

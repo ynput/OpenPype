@@ -8,8 +8,8 @@ from maya import cmds
 
 from avalon import api, io
 from avalon.maya import lib as avalon_lib, pipeline
-from pype.hosts.maya.api import lib
-from pype.api import get_project_settings
+from openpype.hosts.maya.api import lib
+from openpype.api import get_project_settings
 from pprint import pprint
 
 

@@ -7,7 +7,7 @@ from .constants import (
     CLOCKIFY_FTRACK_USER_PATH,
     CLOCKIFY_FTRACK_SERVER_PATH
 )
-from pype.modules import (
+from openpype.modules import (
     PypeModule,
     ITrayModule,
     IPluginPaths,

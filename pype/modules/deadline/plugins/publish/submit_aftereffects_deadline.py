@@ -1,5 +1,5 @@
-from pype.lib import abstract_submit_deadline
-from pype.lib.abstract_submit_deadline import DeadlineJobInfo
+from openpype.lib import abstract_submit_deadline
+from openpype.lib.abstract_submit_deadline import DeadlineJobInfo
 import pyblish.api
 import os
 import attr

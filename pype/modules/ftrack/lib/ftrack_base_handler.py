@@ -1,10 +1,10 @@
 import functools
 import time
-from pype.api import Logger
-from pype.settings import get_project_settings
+from openpype.api import Logger
+from openpype.settings import get_project_settings
 
 import ftrack_api
-from pype.modules.ftrack import ftrack_server
+from openpype.modules.ftrack import ftrack_server
 
 
 class MissingPermision(Exception):

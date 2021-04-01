@@ -2,7 +2,7 @@ import re
 
 from avalon import api, aftereffects
 
-from pype.lib import get_background_layers, get_unique_layer_name
+from openpype.lib import get_background_layers, get_unique_layer_name
 
 stub = aftereffects.stub()
 

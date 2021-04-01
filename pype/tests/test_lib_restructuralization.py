@@ -5,31 +5,31 @@
 def test_backward_compatibility(printer):
     printer("Test if imports still work")
     try:
-        from pype.lib import filter_pyblish_plugins
-        from pype.lib import execute_hook
-        from pype.lib import PypeHook
+        from openpype.lib import filter_pyblish_plugins
+        from openpype.lib import execute_hook
+        from openpype.lib import PypeHook
 
-        from pype.lib import get_latest_version
-        from pype.lib import ApplicationLaunchFailed
+        from openpype.lib import get_latest_version
+        from openpype.lib import ApplicationLaunchFailed
 
-        from pype.lib import get_ffmpeg_tool_path
-        from pype.lib import get_last_version_from_path
-        from pype.lib import get_paths_from_environ
-        from pype.lib import get_version_from_path
-        from pype.lib import version_up
+        from openpype.lib import get_ffmpeg_tool_path
+        from openpype.lib import get_last_version_from_path
+        from openpype.lib import get_paths_from_environ
+        from openpype.lib import get_version_from_path
+        from openpype.lib import version_up
 
-        from pype.lib import is_latest
-        from pype.lib import any_outdated
-        from pype.lib import get_asset
-        from pype.lib import get_hierarchy
-        from pype.lib import get_linked_assets
-        from pype.lib import get_latest_version
-        from pype.lib import ffprobe_streams
+        from openpype.lib import is_latest
+        from openpype.lib import any_outdated
+        from openpype.lib import get_asset
+        from openpype.lib import get_hierarchy
+        from openpype.lib import get_linked_assets
+        from openpype.lib import get_latest_version
+        from openpype.lib import ffprobe_streams
 
-        from pype.hosts.fusion.lib import switch_item
+        from openpype.hosts.fusion.lib import switch_item
 
-        from pype.lib import source_hash
-        from pype.lib import run_subprocess
+        from openpype.lib import source_hash
+        from openpype.lib import run_subprocess
 
     except ImportError as e:
         raise

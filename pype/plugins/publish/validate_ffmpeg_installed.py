@@ -1,7 +1,7 @@
 import pyblish.api
 import os
 import subprocess
-import pype.lib
+import openpype.lib
 try:
     import os.errno as errno
 except ImportError:
@@ -27,7 +27,7 @@ class ValidateFFmpegInstalled(pyblish.api.ContextPlugin):
         return True
 
     def process(self, context):
-        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
         self.log.info("ffmpeg path: `{}`".format(ffmpeg_path))
         if self.is_tool("{}".format(ffmpeg_path)) is False:
             self.log.error("ffmpeg not found in PATH")

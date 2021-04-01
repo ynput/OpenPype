@@ -17,7 +17,7 @@ Optional:
 import os
 import opentimelineio as otio
 import pyblish.api
-from pype import lib as plib
+from openpype import lib as plib
 
 
 class OTIO_View(pyblish.api.Action):

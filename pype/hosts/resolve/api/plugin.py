@@ -1,7 +1,7 @@
 import re
 from avalon import api
-import pype.api as pype
-from pype.hosts import resolve
+import openpype.api as pype
+from openpype.hosts import resolve
 from avalon.vendor import qargparse
 from . import lib
 
@@ -499,7 +499,7 @@ class Creator(pype.PypeCreatorMixin, api.Creator):
 
     def __init__(self, *args, **kwargs):
         super(Creator, self).__init__(*args, **kwargs)
-        from pype.api import get_current_project_settings
+        from openpype.api import get_current_project_settings
         resolve_p_settings = get_current_project_settings().get("resolve")
         self.presets = dict()
         if resolve_p_settings:

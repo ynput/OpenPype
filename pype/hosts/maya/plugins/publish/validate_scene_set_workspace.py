@@ -3,7 +3,7 @@ import os
 import maya.cmds as cmds
 
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 def is_subdir(path, root_dir):
@@ -28,7 +28,7 @@ def is_subdir(path, root_dir):
 class ValidateSceneSetWorkspace(pyblish.api.ContextPlugin):
     """Validate the scene is inside the currently set Maya workspace"""
 
-    order = pype.api.ValidatePipelineOrder
+    order = openpype.api.ValidatePipelineOrder
     hosts = ['maya']
     category = 'scene'
     version = (0, 1, 0)

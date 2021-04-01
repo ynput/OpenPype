@@ -6,7 +6,7 @@ import multiprocessing
 
 import pyblish.api
 from avalon.tvpaint import lib
-from pype.hosts.tvpaint.api.lib import composite_images
+from openpype.hosts.tvpaint.api.lib import composite_images
 from PIL import Image, ImageDraw
 
 

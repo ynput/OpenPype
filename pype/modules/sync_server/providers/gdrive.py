@@ -5,8 +5,8 @@ import google.oauth2.service_account as service_account
 from googleapiclient import errors
 from .abstract_provider import AbstractProvider
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
-from pype.api import Logger
-from pype.api import get_system_settings
+from openpype.api import Logger
+from openpype.api import get_system_settings
 from ..utils import time_function
 import time
 

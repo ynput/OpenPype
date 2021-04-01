@@ -2,7 +2,7 @@ import maya.mel as mel
 import pymel.core as pm
 
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 def get_file_rule(rule):
@@ -15,11 +15,11 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     label = "Images File Rule (Workspace)"
     hosts = ["maya"]
     families = ["renderlayer"]
-    actions = [pype.api.RepairAction]
+    actions = [openpype.api.RepairAction]
 
     def process(self, instance):
 

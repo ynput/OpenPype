@@ -4,9 +4,9 @@ import collections
 
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
-from pype.api import resources
-from pype.settings.lib import get_local_settings
-from pype.lib.pype_info import (
+from openpype.api import resources
+from openpype.settings.lib import get_local_settings
+from openpype.lib.pype_info import (
     get_all_current_info,
     get_pype_info,
     get_workstation_info,

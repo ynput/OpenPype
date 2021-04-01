@@ -10,14 +10,14 @@ from avalon.maya import suspended_refresh
 from avalon.maya.pipeline import IS_HEADLESS
 from avalon.tools import workfiles
 from pyblish import api as pyblish
-from pype.lib import any_outdated
-import pype.hosts.maya
-from pype.hosts.maya.lib import copy_workspace_mel
+from openpype.lib import any_outdated
+import openpype.hosts.maya
+from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
 
 log = logging.getLogger("pype.hosts.maya")
 
-HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.maya.__file__))
+HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.maya.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
@@ -133,7 +133,7 @@ def on_open(_):
     """On scene open let's assume the containers have changed."""
 
     from avalon.vendor.Qt import QtWidgets
-    from pype.widgets import popup
+    from openpype.widgets import popup
 
     cmds.evalDeferred(
         "from pype.hosts.maya.api import lib;"

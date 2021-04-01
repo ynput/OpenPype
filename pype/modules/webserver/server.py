@@ -3,7 +3,7 @@ import asyncio
 
 from aiohttp import web
 
-from pype.lib import PypeLogger
+from openpype.lib import PypeLogger
 
 log = PypeLogger.get_logger("WebServer")
 

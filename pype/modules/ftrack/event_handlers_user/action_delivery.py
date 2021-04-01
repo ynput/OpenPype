@@ -10,9 +10,9 @@ from bson.objectid import ObjectId
 from avalon import pipeline
 from avalon.vendor import filelink
 
-from pype.api import Anatomy, config
-from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
+from openpype.api import Anatomy, config
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 from avalon.api import AvalonMongoDB
 
 

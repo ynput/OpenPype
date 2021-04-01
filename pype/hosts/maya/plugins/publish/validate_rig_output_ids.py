@@ -2,8 +2,8 @@ import pymel.core as pc
 
 import pyblish.api
 
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
 
 class ValidateRigOutputIds(pyblish.api.InstancePlugin):
@@ -13,12 +13,12 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
     to ensure the id from the model is preserved through animation.
 
     """
-    order = pype.api.ValidateContentsOrder + 0.05
+    order = openpype.api.ValidateContentsOrder + 0.05
     label = "Rig Output Ids"
     hosts = ["maya"]
     families = ["rig"]
-    actions = [pype.api.RepairAction,
-               pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.api.RepairAction,
+               openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance, compute=True)

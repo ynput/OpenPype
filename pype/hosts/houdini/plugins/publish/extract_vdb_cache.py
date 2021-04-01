@@ -1,10 +1,10 @@
 import os
 
 import pyblish.api
-import pype.api
+import openpype.api
 
 
-class ExtractVDBCache(pype.api.Extractor):
+class ExtractVDBCache(openpype.api.Extractor):
 
     order = pyblish.api.ExtractorOrder + 0.1
     label = "Extract VDB Cache"

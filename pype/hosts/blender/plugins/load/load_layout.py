@@ -11,8 +11,8 @@ from typing import Dict, List, Optional
 
 from avalon import api, blender, pipeline
 import bpy
-import pype.hosts.blender.api.plugin as plugin
-from pype.lib import get_creator_by_name
+import openpype.hosts.blender.api.plugin as plugin
+from openpype.lib import get_creator_by_name
 
 
 class BlendLayoutLoader(plugin.AssetLoader):

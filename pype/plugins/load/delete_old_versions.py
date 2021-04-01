@@ -11,7 +11,7 @@ from avalon.vendor.Qt import QtWidgets, QtCore
 from avalon.vendor import qargparse
 from avalon.api import AvalonMongoDB
 import avalon.pipeline
-from pype.api import Anatomy
+from openpype.api import Anatomy
 
 
 class DeleteOldVersions(api.Loader):

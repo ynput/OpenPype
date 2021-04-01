@@ -17,7 +17,7 @@ class IncrementScriptVersion(pyblish.api.ContextPlugin):
         assert all(result["success"] for result in context.data["results"]), (
             "Publishing not succesfull so version is not increased.")
 
-        from pype.lib import version_up
+        from openpype.lib import version_up
         path = context.data["currentFile"]
         nuke.scriptSaveAs(version_up(path))
         self.log.info('Incrementing script version')

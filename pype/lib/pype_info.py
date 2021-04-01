@@ -5,15 +5,15 @@ import platform
 import getpass
 import socket
 
-import pype.version
-from pype.settings.lib import get_local_settings
+import openpype.version
+from openpype.settings.lib import get_local_settings
 from .execute import get_pype_execute_args
 from .local_settings import get_local_site_id
 
 
 def get_pype_version():
     """Version of pype that is currently used."""
-    return pype.version.__version__
+    return openpype.version.__version__
 
 
 def get_pype_info():

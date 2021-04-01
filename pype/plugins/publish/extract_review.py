@@ -4,9 +4,9 @@ import copy
 import json
 import pyblish.api
 import clique
-import pype.api
-import pype.lib
-from pype.lib import should_decompress, \
+import openpype.api
+import openpype.lib
+from openpype.lib import should_decompress, \
     get_decompress_dir, decompress
 
 
@@ -43,7 +43,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     supported_exts = image_exts + video_exts
 
     # FFmpeg tools paths
-    ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+    ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
     # Preset attributes
     profiles = None
@@ -207,7 +207,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
 
-                pype.api.run_subprocess(
+                openpype.api.run_subprocess(
                     subprcs_cmd, shell=True, logger=self.log
                 )
 
@@ -726,7 +726,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
-        input_data = pype.lib.ffprobe_streams(
+        input_data = openpype.lib.ffprobe_streams(
             full_input_path_single_file, self.log
         )[0]
         input_width = int(input_data["width"])
@@ -1279,7 +1279,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # get representation and loop them
         representations = inst_data["representations"]
 
-        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         # filter out mov and img sequences
         representations_new = representations[:]
@@ -1630,7 +1630,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
-                pype.api.run_subprocess(
+                openpype.api.run_subprocess(
                     subprcs_cmd, shell=True, logger=self.log
                 )
 

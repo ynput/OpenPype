@@ -1,6 +1,6 @@
 import pyblish.api
-import pype.api
-from pype.hosts.maya.api import lib
+import openpype.api
+from openpype.hosts.maya.api import lib
 
 from maya import cmds
 
@@ -15,10 +15,10 @@ class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     label = "VRay Distributed Rendering"
     families = ["renderlayer"]
-    actions = [pype.api.RepairAction]
+    actions = [openpype.api.RepairAction]
 
     # V-Ray attribute names
     enabled_attr = "vraySettings.sys_distributed_rendering_on"

@@ -1,9 +1,9 @@
 from collections import defaultdict
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
-from pype.hosts.maya.api import lib
+import openpype.api
+import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api import lib
 
 
 class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
@@ -12,7 +12,7 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
     Here we ensure that what has been added to the instance is unique
     """
 
-    order = pype.api.ValidatePipelineOrder
+    order = openpype.api.ValidatePipelineOrder
     label = 'Non Duplicate Instance Members (ID)'
     hosts = ['maya']
     families = ["model",
@@ -20,8 +20,8 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
                 "rig",
                 "yetiRig"]
 
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
-               pype.hosts.maya.api.action.GenerateUUIDsOnInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
+               openpype.hosts.maya.api.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

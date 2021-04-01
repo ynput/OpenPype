@@ -1,6 +1,6 @@
 import os
 import subprocess
-from pype.lib import PreLaunchHook
+from openpype.lib import PreLaunchHook
 
 
 class InstallPySideToBlender(PreLaunchHook):

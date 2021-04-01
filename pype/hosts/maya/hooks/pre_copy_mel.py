@@ -1,5 +1,5 @@
-from pype.lib import PreLaunchHook
-from pype.hosts.maya.lib import copy_workspace_mel
+from openpype.lib import PreLaunchHook
+from openpype.hosts.maya.lib import copy_workspace_mel
 
 
 class PreCopyMel(PreLaunchHook):

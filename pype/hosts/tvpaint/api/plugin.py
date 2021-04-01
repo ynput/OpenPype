@@ -1,4 +1,4 @@
-from pype.api import PypeCreatorMixin
+from openpype.api import PypeCreatorMixin
 from avalon.tvpaint import pipeline
 
 

@@ -6,7 +6,7 @@ import os
 import sys
 import subprocess
 
-from pype.tools.settings import (
+from openpype.tools.settings import (
     ProjectListWidget,
     style
 )
@@ -14,8 +14,8 @@ from pype.tools.settings import (
 from avalon.tools.delegates import PrettyTimeDelegate, pretty_timestamp
 from bson.objectid import ObjectId
 
-from pype.lib import PypeLogger
-from pype.api import get_local_site_id
+from openpype.lib import PypeLogger
+from openpype.api import get_local_site_id
 
 log = PypeLogger().get_logger("SyncServer")
 

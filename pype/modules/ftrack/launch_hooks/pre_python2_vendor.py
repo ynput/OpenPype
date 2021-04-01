@@ -1,6 +1,6 @@
 import os
-from pype.lib import PreLaunchHook
-from pype.modules.ftrack import FTRACK_MODULE_DIR
+from openpype.lib import PreLaunchHook
+from openpype.modules.ftrack import FTRACK_MODULE_DIR
 
 
 class PrePyhton2Support(PreLaunchHook):

@@ -1,10 +1,10 @@
 import os
 from hiero.exporters.FnExportUtil import writeSequenceAudioWithHandles
 import pyblish
-import pype
+import openpype
 
 
-class ExtractAudioFile(pype.api.Extractor):
+class ExtractAudioFile(openpype.api.Extractor):
     """Extracts audio subset file from all active timeline audio tracks"""
 
     order = pyblish.api.ExtractorOrder

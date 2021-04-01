@@ -10,8 +10,8 @@ from avalon import api
 from avalon.vendor import requests
 
 import pyblish.api
-from pype.hosts.maya.api import lib
-from pype.api import get_system_settings
+from openpype.hosts.maya.api import lib
+from openpype.api import get_system_settings
 
 
 # mapping between Maya renderer names and Muster template ids
@@ -40,7 +40,7 @@ def _get_template_id(renderer):
 def _get_script():
     """Get path to the image sequence script"""
     try:
-        from pype.scripts import publish_filesequence
+        from openpype.scripts import publish_filesequence
     except Exception:
         raise RuntimeError("Expected module 'publish_deadline'"
                            "to be available")

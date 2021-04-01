@@ -2,7 +2,7 @@ import sys
 import time
 import logging
 
-from pype.hosts.maya.api.lib import assign_look_by_version
+from openpype.hosts.maya.api.lib import assign_look_by_version
 
 from avalon import style, io
 from avalon.tools import lib

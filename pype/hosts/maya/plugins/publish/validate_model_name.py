@@ -1,7 +1,7 @@
 from maya import cmds
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 import re
 
 
@@ -14,11 +14,11 @@ class ValidateModelName(pyblish.api.InstancePlugin):
 
     """
     optional = True
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
     families = ["model"]
     label = "Model Name"
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     # path to shader names definitions
     # TODO: move it to preset file
     material_file = None

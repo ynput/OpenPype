@@ -6,8 +6,8 @@ try:
     import ftrack_api_old as ftrack_api
 except Exception:
     import ftrack_api
-from pype.api import get_current_project_settings
-from pype import lib as pypelib
+from openpype.api import get_current_project_settings
+from openpype import lib as pypelib
 from avalon.vendor.Qt import QtWidgets, QtCore
 from avalon import io, api, style, schema
 from avalon.tools import lib as parentlib

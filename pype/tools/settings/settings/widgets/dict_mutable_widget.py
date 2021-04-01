@@ -12,7 +12,7 @@ from .lib import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
 )
-from pype.settings.constants import KEY_REGEX
+from openpype.settings.constants import KEY_REGEX
 
 
 def create_add_btn(parent):

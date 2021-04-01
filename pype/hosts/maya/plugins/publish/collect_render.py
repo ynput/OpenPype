@@ -49,8 +49,8 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 import pyblish.api
 
 from avalon import maya, api
-from pype.hosts.maya.api.expected_files import ExpectedFiles
-from pype.hosts.maya.api import lib
+from openpype.hosts.maya.api.expected_files import ExpectedFiles
+from openpype.hosts.maya.api import lib
 
 
 class CollectMayaRender(pyblish.api.ContextPlugin):

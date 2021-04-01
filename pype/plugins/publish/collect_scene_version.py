@@ -1,6 +1,6 @@
 import os
 import pyblish.api
-import pype.api as pype
+import openpype.api as pype
 
 
 class CollectSceneVersion(pyblish.api.ContextPlugin):

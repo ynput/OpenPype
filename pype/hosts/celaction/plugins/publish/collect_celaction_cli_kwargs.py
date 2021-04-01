@@ -1,5 +1,5 @@
 import pyblish.api
-from pype.hosts.celaction import api as celaction
+from openpype.hosts.celaction import api as celaction
 
 
 class CollectCelactionCliKwargs(pyblish.api.Collector):

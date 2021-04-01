@@ -105,7 +105,7 @@ def save_studio_settings(data):
         data(dict): Overrides data with metadata defying studio overrides.
     """
     # Notify Pype modules
-    from pype.modules import ModulesManager, ISettingsChangeListener
+    from openpype.modules import ModulesManager, ISettingsChangeListener
 
     old_data = get_system_settings()
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
@@ -136,7 +136,7 @@ def save_project_settings(project_name, overrides):
         overrides(dict): Overrides data with metadata defying studio overrides.
     """
     # Notify Pype modules
-    from pype.modules import ModulesManager, ISettingsChangeListener
+    from openpype.modules import ModulesManager, ISettingsChangeListener
 
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
     if project_name:
@@ -179,7 +179,7 @@ def save_project_anatomy(project_name, anatomy_data):
         overrides(dict): Overrides data with metadata defying studio overrides.
     """
     # Notify Pype modules
-    from pype.modules import ModulesManager, ISettingsChangeListener
+    from openpype.modules import ModulesManager, ISettingsChangeListener
 
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     if project_name:

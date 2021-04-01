@@ -8,12 +8,12 @@ import sys
 import os
 import shutil
 from . import HOST_DIR
-from pype.api import Logger
+from openpype.api import Logger
 log = Logger().get_logger(__name__)
 
 
 def get_resolve_module():
-    from pype.hosts import resolve
+    from openpype.hosts import resolve
     # dont run if already loaded
     if resolve.api.bmdvr:
         log.info(("resolve module is assigned to "

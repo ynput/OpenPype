@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Create render node."""
 from avalon import harmony
-from pype.hosts.harmony.api import plugin
+from openpype.hosts.harmony.api import plugin
 
 
 class CreateRender(plugin.Creator):

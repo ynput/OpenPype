@@ -1,8 +1,8 @@
 import platform
 import copy
 from Qt import QtWidgets, QtCore, QtGui
-from pype.tools.settings.settings import ProjectListWidget
-from pype.settings.constants import (
+from openpype.tools.settings.settings import ProjectListWidget
+from openpype.settings.constants import (
     PROJECT_ANATOMY_KEY,
     DEFAULT_PROJECT_KEY
 )

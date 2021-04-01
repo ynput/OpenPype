@@ -1,5 +1,5 @@
 from pyblish import api
-import pype.api as pype
+import openpype.api as pype
 
 
 class VersionUpWorkfile(api.ContextPlugin):

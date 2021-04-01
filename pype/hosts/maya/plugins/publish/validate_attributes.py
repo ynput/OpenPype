@@ -1,7 +1,7 @@
 import pymel.core as pm
 
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateAttributes(pyblish.api.ContextPlugin):
@@ -16,10 +16,10 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
         }
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     label = "Attributes"
     hosts = ["maya"]
-    actions = [pype.api.RepairContextAction]
+    actions = [openpype.api.RepairContextAction]
     optional = True
 
     attributes = None

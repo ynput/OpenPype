@@ -1,7 +1,7 @@
 import nuke
 import pyblish.api
 import os
-import pype.api as pype
+import openpype.api as pype
 from avalon.nuke import lib as anlib
 reload(anlib)
 

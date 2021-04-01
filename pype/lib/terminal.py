@@ -48,7 +48,7 @@ class Terminal:
         Set `_initialized` attribute to `True` when is done.
         """
 
-        from pype.lib import env_value_to_bool
+        from openpype.lib import env_value_to_bool
         use_colors = env_value_to_bool(
             "OPENPYPE_LOG_NO_COLORS", default=Terminal.use_colors
         )

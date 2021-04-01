@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
 
 def pairs(iterable):
@@ -73,12 +73,12 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateMeshOrder
+    order = openpype.api.ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
     label = "Mesh Shader Connections"
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
-               pype.api.RepairAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
+               openpype.api.RepairAction]
 
     def process(self, instance):
         """Process all the nodes in the instance 'objectSet'"""

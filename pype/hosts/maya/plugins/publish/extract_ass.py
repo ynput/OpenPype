@@ -1,12 +1,12 @@
 import os
 
 import avalon.maya
-import pype.api
+import openpype.api
 
 from maya import cmds
 
 
-class ExtractAssStandin(pype.api.Extractor):
+class ExtractAssStandin(openpype.api.Extractor):
     """Extract the content of the instance to a ass file
 
     Things to pay attention to:

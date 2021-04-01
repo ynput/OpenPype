@@ -8,10 +8,10 @@ from uuid import uuid4
 from abc import ABCMeta, abstractmethod
 import six
 
-import pype
-from pype.settings import get_system_settings
-from pype.lib import PypeLogger
-from pype import resources
+import openpype
+from openpype.settings import get_system_settings
+from openpype.lib import PypeLogger
+from openpype import resources
 
 
 @six.add_metaclass(ABCMeta)
@@ -322,13 +322,13 @@ class ModulesManager:
         prev_start_time = time_start
 
         # Go through globals in `pype.modules`
-        for name in dir(pype.modules):
-            modules_item = getattr(pype.modules, name, None)
+        for name in dir(openpype.modules):
+            modules_item = getattr(openpype.modules, name, None)
             # Filter globals that are not classes which inherit from PypeModule
             if (
                 not inspect.isclass(modules_item)
-                or modules_item is pype.modules.PypeModule
-                or not issubclass(modules_item, pype.modules.PypeModule)
+                or modules_item is openpype.modules.PypeModule
+                or not issubclass(modules_item, openpype.modules.PypeModule)
             ):
                 continue
 

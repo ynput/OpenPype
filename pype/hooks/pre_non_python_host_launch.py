@@ -1,11 +1,11 @@
 import os
 
-from pype.lib import (
+from openpype.lib import (
     PreLaunchHook,
     get_pype_execute_args
 )
 
-from pype import PACKAGE_DIR as PYPE_DIR
+from openpype import PACKAGE_DIR as PYPE_DIR
 
 
 class NonPythonHostHook(PreLaunchHook):

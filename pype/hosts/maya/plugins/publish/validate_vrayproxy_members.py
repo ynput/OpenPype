@@ -1,9 +1,9 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 from maya import cmds
 
-import pype.hosts.maya.api.action
+import openpype.hosts.maya.api.action
 
 
 class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
@@ -13,7 +13,7 @@ class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
     label = 'VRay Proxy Members'
     hosts = ['maya']
     families = ['vrayproxy']
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
 

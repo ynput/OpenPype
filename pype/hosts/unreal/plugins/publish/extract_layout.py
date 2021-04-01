@@ -6,11 +6,11 @@ import unreal
 from unreal import EditorLevelLibrary as ell
 from unreal import EditorAssetLibrary as eal
 
-import pype.api
+import openpype.api
 from avalon import io
 
 
-class ExtractLayout(pype.api.Extractor):
+class ExtractLayout(openpype.api.Extractor):
     """Extract a layout."""
 
     label = "Extract Layout"

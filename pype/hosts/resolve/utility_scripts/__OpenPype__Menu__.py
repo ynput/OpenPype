@@ -1,17 +1,17 @@
 import os
 import sys
 import avalon.api as avalon
-import pype
+import openpype
 
-from pype.api import Logger
+from openpype.api import Logger
 
 log = Logger().get_logger(__name__)
 
 
 def main(env):
-    import pype.hosts.resolve as bmdvr
+    import openpype.hosts.resolve as bmdvr
     # Registers openpype's Global pyblish plugins
-    pype.install()
+    openpype.install()
 
     # activate resolve from openpype
     avalon.install(bmdvr)

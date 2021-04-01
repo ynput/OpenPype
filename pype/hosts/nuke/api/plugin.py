@@ -1,5 +1,5 @@
 import avalon.nuke
-from pype.api import (
+from openpype.api import (
     get_current_project_settings,
     PypeCreatorMixin
 )

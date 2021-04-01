@@ -7,7 +7,7 @@ import logging
 import collections
 import functools
 
-from pype.settings import get_project_settings
+from openpype.settings import get_project_settings
 from .anatomy import Anatomy
 
 # avalon module is not imported at the top

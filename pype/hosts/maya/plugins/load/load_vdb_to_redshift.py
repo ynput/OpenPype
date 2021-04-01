@@ -1,6 +1,6 @@
 from avalon import api
 import os
-from pype.api import get_project_settings
+from openpype.api import get_project_settings
 
 class LoadVDBtoRedShift(api.Loader):
     """Load OpenVDB in a Redshift Volume Shape"""

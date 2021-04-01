@@ -2,7 +2,7 @@
 Taken from https://github.com/tokejepsen/ftrack-hooks/tree/master/batch_tasks
 """
 
-from pype.modules.ftrack.lib import BaseAction
+from openpype.modules.ftrack.lib import BaseAction
 
 
 class BatchTasksAction(BaseAction):

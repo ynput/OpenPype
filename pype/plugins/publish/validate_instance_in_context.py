@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class SelectInvalidInstances(pyblish.api.Action):
@@ -120,7 +120,7 @@ class ValidateInstanceInContext(pyblish.api.InstancePlugin):
     Action on this validator will select invalid instances in Outliner.
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     label = "Instance in same Context"
     optional = True
     hosts = ["maya", "nuke"]

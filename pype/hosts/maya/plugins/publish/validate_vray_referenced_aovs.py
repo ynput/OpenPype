@@ -4,7 +4,7 @@ import pyblish.api
 import types
 from maya import cmds
 
-import pype.hosts.maya.api.action
+import openpype.hosts.maya.api.action
 
 
 class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
@@ -20,7 +20,7 @@ class ValidateVrayReferencedAOVs(pyblish.api.InstancePlugin):
     label = 'VRay Referenced AOVs'
     hosts = ['maya']
     families = ['renderlayer']
-    actions = [pype.api.RepairContextAction]
+    actions = [openpype.api.RepairContextAction]
 
     def process(self, instance):
         """Plugin main entry point."""

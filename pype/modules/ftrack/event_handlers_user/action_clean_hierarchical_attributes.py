@@ -1,7 +1,7 @@
 import collections
 import ftrack_api
-from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.ftrack.lib.avalon_sync import get_pype_attr
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.modules.ftrack.lib.avalon_sync import get_pype_attr
 
 
 class CleanHierarchicalAttrsAction(BaseAction):

@@ -1,4 +1,4 @@
-from pype.hosts.maya.api import (
+from openpype.hosts.maya.api import (
     lib,
     plugin
 )

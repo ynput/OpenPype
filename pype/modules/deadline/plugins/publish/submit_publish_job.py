@@ -6,7 +6,7 @@ import json
 import re
 from copy import copy, deepcopy
 import sys
-import pype.api
+import openpype.api
 
 from avalon import api, io
 from avalon.vendor import requests, clique
@@ -315,8 +315,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # get latest version of subset
         # this will stop if subset wasn't published yet
-        version = pype.api.get_latest_version(instance.data.get("asset"),
-                                              instance.data.get("subset"))
+        version = openpype.api.get_latest_version(instance.data.get("asset"),
+                                                  instance.data.get("subset"))
         # get its files based on extension
         subset_resources = get_resources(version, representation.get("ext"))
         r_col, _ = clique.assemble(subset_resources)
@@ -975,9 +975,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         prev_start = None
         prev_end = None
 
-        version = pype.api.get_latest_version(asset_name=asset,
-                                              subset_name=subset
-                                              )
+        version = openpype.api.get_latest_version(asset_name=asset,
+                                                  subset_name=subset
+                                                  )
 
         # Set prev start / end frames for comparison
         if not prev_start and not prev_end:
@@ -1022,7 +1022,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 based on 'publish' template
         """
         if not version:
-            version = pype.api.get_latest_version(asset, subset)
+            version = openpype.api.get_latest_version(asset, subset)
             if version:
                 version = int(version["name"]) + 1
             else:

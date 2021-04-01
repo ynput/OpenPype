@@ -2,18 +2,18 @@
 
 from maya import cmds
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateUnrealMeshTriangulated(pyblish.api.InstancePlugin):
     """Validate if mesh is made of triangles for Unreal Engine"""
 
-    order = pype.api.ValidateMeshOder
+    order = openpype.api.ValidateMeshOder
     hosts = ["maya"]
     families = ["unrealStaticMesh"]
     category = "geometry"
     label = "Mesh is Triangulated"
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

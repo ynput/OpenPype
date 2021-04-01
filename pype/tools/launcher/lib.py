@@ -17,7 +17,7 @@ provides a bridge between the file-based project inventory and configuration.
 import os
 from Qt import QtGui
 from avalon.vendor import qtawesome
-from pype.api import resources
+from openpype.api import resources
 
 ICON_CACHE = {}
 NOT_FOUND = type("NotFound", (object, ), {})

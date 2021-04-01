@@ -1,11 +1,11 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
     """Validate Create Intermediate Directories is enabled on ROP node."""
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ['pointcache',
                 'camera',
                 'vdbcache']

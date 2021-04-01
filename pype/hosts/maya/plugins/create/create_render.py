@@ -8,11 +8,11 @@ import requests
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
-from pype.hosts.maya.api import (
+from openpype.hosts.maya.api import (
     lib,
     plugin
 )
-from pype.api import get_system_settings
+from openpype.api import get_system_settings
 
 
 class CreateRender(plugin.Creator):

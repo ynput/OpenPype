@@ -14,21 +14,21 @@ import uuid
 
 import ftrack_api
 import pymongo
-from pype.lib import (
+from openpype.lib import (
     get_pype_execute_args,
     PypeMongoConnection
 )
-from pype.modules.ftrack import FTRACK_MODULE_DIR
-from pype.modules.ftrack.lib import (
+from openpype.modules.ftrack import FTRACK_MODULE_DIR
+from openpype.modules.ftrack.lib import (
     credentials,
     get_ftrack_url_from_settings
 )
-from pype.modules.ftrack.ftrack_server.lib import (
+from openpype.modules.ftrack.ftrack_server.lib import (
     check_ftrack_url,
     get_ftrack_event_mongo_info
 )
 
-from pype.modules.ftrack.ftrack_server import socket_thread
+from openpype.modules.ftrack.ftrack_server import socket_thread
 
 
 class MongoPermissionsError(Exception):

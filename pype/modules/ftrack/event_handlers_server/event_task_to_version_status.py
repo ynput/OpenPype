@@ -1,5 +1,5 @@
 import collections
-from pype.modules.ftrack.lib import BaseEvent
+from openpype.modules.ftrack.lib import BaseEvent
 
 
 class TaskToVersionStatus(BaseEvent):

@@ -7,7 +7,7 @@ import shutil
 import uuid
 
 from avalon import api, harmony
-import pype.lib
+import openpype.lib
 
 
 class TemplateLoader(api.Loader):
@@ -79,7 +79,7 @@ class TemplateLoader(api.Loader):
         self_name = self.__class__.__name__
 
         update_and_replace = False
-        if pype.lib.is_latest(representation):
+        if openpype.lib.is_latest(representation):
             self._set_green(node)
         else:
             self._set_red(node)

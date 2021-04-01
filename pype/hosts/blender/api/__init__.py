@@ -7,9 +7,9 @@ import bpy
 from avalon import api as avalon
 from pyblish import api as pyblish
 
-import pype.hosts.blender
+import openpype.hosts.blender
 
-HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.blender.__file__))
+HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.blender.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")

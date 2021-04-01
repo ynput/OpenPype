@@ -1,8 +1,8 @@
 from collections import OrderedDict
 import avalon.api
 import avalon.nuke
-from pype import api as pype
-from pype.hosts.nuke.api import plugin
+from openpype import api as pype
+from openpype.hosts.nuke.api import plugin
 
 import nuke
 

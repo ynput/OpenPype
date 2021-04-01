@@ -2,7 +2,7 @@ import os
 import json
 
 from avalon import api, harmony
-import pype.lib
+import openpype.lib
 
 
 copy_files = """function copyFile(srcFilename, dstFilename)
@@ -343,7 +343,7 @@ class BackgroundLoader(api.Loader):
             }
             %s
             """ % (sig, sig)
-            if pype.lib.is_latest(representation):
+            if openpype.lib.is_latest(representation):
                 harmony.send({"function": func, "args": [node, "green"]})
             else:
                 harmony.send({"function": func, "args": [node, "red"]})

@@ -2,9 +2,9 @@
 import os
 import sys
 import avalon.api as avalon
-import pype
-from pype.hosts.resolve import TestGUI
-import pype.hosts.resolve as bmdvr
+import openpype
+from openpype.hosts.resolve import TestGUI
+import openpype.hosts.resolve as bmdvr
 import clique
 
 
@@ -14,7 +14,7 @@ class ThisTestGUI(TestGUI):
     def __init__(self):
         super(ThisTestGUI, self).__init__()
         # Registers openpype's Global pyblish plugins
-        pype.install()
+        openpype.install()
         # activate resolve from openpype
         avalon.install(bmdvr)
 

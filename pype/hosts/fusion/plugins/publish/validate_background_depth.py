@@ -1,6 +1,6 @@
 import pyblish.api
 
-from pype import action
+from openpype import action
 
 
 class ValidateBackgroundDepth(pyblish.api.InstancePlugin):

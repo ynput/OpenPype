@@ -23,7 +23,7 @@ class AssemblyLoader(api.Loader):
             suffix="_",
         )
 
-        from pype.hosts.maya.api import setdress
+        from openpype.hosts.maya.api import setdress
 
         containers = setdress.load_package(filepath=self.fname,
                                                name=name,
@@ -45,7 +45,7 @@ class AssemblyLoader(api.Loader):
 
     def update(self, container, representation):
 
-        from pype import setdress
+        from openpype import setdress
         return setdress.update_package(container,
                                            representation)
 
@@ -53,7 +53,7 @@ class AssemblyLoader(api.Loader):
         """Remove all sub containers"""
 
         from avalon import api
-        from pype import setdress
+        from openpype import setdress
         import maya.cmds as cmds
 
         # Remove all members

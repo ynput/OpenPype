@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
@@ -20,7 +20,7 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     label = "Yeti Render Script Callbacks"
     hosts = ["maya"]
     families = ["renderlayer"]

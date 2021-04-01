@@ -18,10 +18,10 @@ import os
 import clique
 import opentimelineio as otio
 from pyblish import api
-import pype
+import openpype
 
 
-class ExtractOTIOReview(pype.api.Extractor):
+class ExtractOTIOReview(openpype.api.Extractor):
     """
     Extract OTIO timeline into one concuted image sequence file.
 
@@ -140,7 +140,7 @@ class ExtractOTIOReview(pype.api.Extractor):
                         dirname = media_ref.target_url_base
                         head = media_ref.name_prefix
                         tail = media_ref.name_suffix
-                        first, last = pype.lib.otio_range_to_frame_range(
+                        first, last = openpype.lib.otio_range_to_frame_range(
                             available_range)
                         collection = clique.Collection(
                             head=head,
@@ -159,7 +159,7 @@ class ExtractOTIOReview(pype.api.Extractor):
                         # in case it is file sequence but not new OTIO schema
                         # `ImageSequenceReference`
                         path = media_ref.target_url
-                        collection_data = pype.lib.make_sequence_collection(
+                        collection_data = openpype.lib.make_sequence_collection(
                             path, available_range, metadata)
                         dir_path, collection = collection_data
 
@@ -282,8 +282,8 @@ class ExtractOTIOReview(pype.api.Extractor):
             duration = avl_durtation
 
         # return correct trimmed range
-        return pype.lib.trim_media_range(
-            avl_range, pype.lib.range_from_frames(start, duration, fps)
+        return openpype.lib.trim_media_range(
+            avl_range, openpype.lib.range_from_frames(start, duration, fps)
         )
 
     def _render_seqment(self, sequence=None,
@@ -304,7 +304,7 @@ class ExtractOTIOReview(pype.api.Extractor):
             otio.time.TimeRange: trimmed available range
         """
         # get rendering app path
-        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         # create path  and frame start to destination
         output_path, out_frame_start = self._get_ffmpeg_output()
@@ -334,8 +334,8 @@ class ExtractOTIOReview(pype.api.Extractor):
             frame_start = otio_range.start_time.value
             input_fps = otio_range.start_time.rate
             frame_duration = otio_range.duration.value
-            sec_start = pype.lib.frames_to_secons(frame_start, input_fps)
-            sec_duration = pype.lib.frames_to_secons(frame_duration, input_fps)
+            sec_start = openpype.lib.frames_to_secons(frame_start, input_fps)
+            sec_duration = openpype.lib.frames_to_secons(frame_duration, input_fps)
 
             # form command for rendering gap files
             command.extend([
@@ -345,7 +345,7 @@ class ExtractOTIOReview(pype.api.Extractor):
             ])
 
         elif gap:
-            sec_duration = pype.lib.frames_to_secons(
+            sec_duration = openpype.lib.frames_to_secons(
                 gap, self.actual_fps)
 
             # form command for rendering gap files
@@ -364,7 +364,7 @@ class ExtractOTIOReview(pype.api.Extractor):
         ])
         # execute
         self.log.debug("Executing: {}".format(" ".join(command)))
-        output = pype.api.run_subprocess(" ".join(command), shell=True)
+        output = openpype.api.run_subprocess(" ".join(command), shell=True)
         self.log.debug("Output: {}".format(output))
 
     def _generate_used_frames(self, duration, end_offset=None):

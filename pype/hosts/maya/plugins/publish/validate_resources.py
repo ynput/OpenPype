@@ -2,7 +2,7 @@ import os
 from collections import defaultdict
 
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateResources(pyblish.api.InstancePlugin):
@@ -17,7 +17,7 @@ class ValidateResources(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     label = "Resources Unique"
 
     def process(self, instance):

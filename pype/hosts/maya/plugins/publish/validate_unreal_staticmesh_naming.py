@@ -2,8 +2,8 @@
 
 from maya import cmds
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 import re
 
 
@@ -47,11 +47,11 @@ class ValidateUnrealStaticmeshName(pyblish.api.InstancePlugin):
 
     """
     optional = True
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
     families = ["unrealStaticMesh"]
     label = "Unreal StaticMesh Name"
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     regex_mesh = r"SM_(?P<renderName>.*)_(\d{2})"
     regex_collision = r"((UBX)|(UCP)|(USP)|(UCX))_(?P<renderName>.*)_(\d{2})"
 

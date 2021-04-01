@@ -1,8 +1,8 @@
 import pymel.core as pc
 from maya import cmds
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 from avalon import maya
 
 
@@ -13,14 +13,14 @@ class ValidateMeshArnoldAttributes(pyblish.api.InstancePlugin):
     later published looks can discover non-default Arnold attributes.
     """
 
-    order = pype.api.ValidateMeshOrder
+    order = openpype.api.ValidateMeshOrder
     hosts = ["maya"]
     families = ["model"]
     category = "geometry"
     label = "Mesh Arnold Attributes"
     actions = [
-        pype.hosts.maya.api.action.SelectInvalidAction,
-        pype.api.RepairAction
+        openpype.hosts.maya.api.action.SelectInvalidAction,
+        openpype.api.RepairAction
     ]
     optional = True
     if cmds.getAttr(

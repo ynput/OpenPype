@@ -2,8 +2,8 @@ from collections import defaultdict
 from maya import cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
 
 class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
@@ -16,12 +16,12 @@ class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ['look']
     hosts = ['maya']
     label = 'Look Id Reference Edits'
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
-               pype.api.RepairAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
+               openpype.api.RepairAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

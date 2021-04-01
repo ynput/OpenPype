@@ -5,7 +5,7 @@ Provides:
 """
 
 import pyblish.api
-from pype.api import config
+from openpype.api import config
 
 
 class CollectDateTimeData(pyblish.api.ContextPlugin):

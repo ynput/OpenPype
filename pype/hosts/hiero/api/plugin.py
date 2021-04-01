@@ -4,7 +4,7 @@ import hiero
 from Qt import QtWidgets, QtCore
 from avalon.vendor import qargparse
 import avalon.api as avalon
-import pype.api as pype
+import openpype.api as pype
 from . import lib
 
 log = pype.Logger().get_logger(__name__)
@@ -599,7 +599,7 @@ class Creator(pype.Creator):
     rename_index = None
 
     def __init__(self, *args, **kwargs):
-        import pype.hosts.hiero.api as phiero
+        import openpype.hosts.hiero.api as phiero
         super(Creator, self).__init__(*args, **kwargs)
         self.presets = pype.get_current_project_settings()[
             "hiero"]["create"].get(self.__class__.__name__, {})

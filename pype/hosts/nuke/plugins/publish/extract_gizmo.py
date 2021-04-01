@@ -1,12 +1,12 @@
 import pyblish.api
 from avalon.nuke import lib as anlib
-from pype.hosts.nuke.api import utils as pnutils
+from openpype.hosts.nuke.api import utils as pnutils
 import nuke
 import os
-import pype
+import openpype
 
 
-class ExtractGizmo(pype.api.Extractor):
+class ExtractGizmo(openpype.api.Extractor):
     """Extracting Gizmo (Group) node
 
     Will create nuke script only with the Gizmo node.

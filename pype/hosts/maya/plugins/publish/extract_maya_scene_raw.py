@@ -5,10 +5,10 @@ import os
 from maya import cmds
 
 import avalon.maya
-import pype.api
+import openpype.api
 
 
-class ExtractMayaSceneRaw(pype.api.Extractor):
+class ExtractMayaSceneRaw(openpype.api.Extractor):
     """Extract as Maya Scene (raw).
 
     This will preserve all references, construction history, etc.

@@ -1,5 +1,5 @@
 from avalon import io, api
-from pype.hosts import resolve
+from openpype.hosts import resolve
 from copy import deepcopy
 
 

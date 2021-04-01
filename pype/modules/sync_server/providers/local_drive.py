@@ -4,7 +4,7 @@ import shutil
 import threading
 import time
 
-from pype.api import Logger
+from openpype.api import Logger
 from .abstract_provider import AbstractProvider
 
 log = Logger().get_logger("SyncServer")

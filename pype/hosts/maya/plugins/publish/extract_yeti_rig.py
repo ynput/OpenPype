@@ -8,8 +8,8 @@ import contextlib
 from maya import cmds
 
 import avalon.maya.lib as lib
-import pype.api
-import pype.hosts.maya.api.lib as maya
+import openpype.api
+import openpype.hosts.maya.api.lib as maya
 
 
 @contextlib.contextmanager
@@ -91,7 +91,7 @@ def yetigraph_attribute_values(assumed_destination, resources):
                 pass
 
 
-class ExtractYetiRig(pype.api.Extractor):
+class ExtractYetiRig(openpype.api.Extractor):
     """Extract the Yeti rig to a Maya Scene and write the Yeti rig data."""
 
     label = "Extract Yeti Rig"

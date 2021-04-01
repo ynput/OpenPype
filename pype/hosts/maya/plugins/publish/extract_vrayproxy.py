@@ -1,12 +1,12 @@
 import os
 
 import avalon.maya
-import pype.api
+import openpype.api
 
 from maya import cmds
 
 
-class ExtractVRayProxy(pype.api.Extractor):
+class ExtractVRayProxy(openpype.api.Extractor):
     """Extract the content of the instance to a vrmesh file
 
     Things to pay attention to:

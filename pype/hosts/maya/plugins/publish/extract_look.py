@@ -13,8 +13,8 @@ import pyblish.api
 import avalon.maya
 from avalon import io, api
 
-import pype.api
-from pype.hosts.maya.api import lib
+import openpype.api
+from openpype.hosts.maya.api import lib
 
 # Modes for transfer
 COPY = 1
@@ -105,7 +105,7 @@ def no_workspace_dir():
         os.rmdir(fake_workspace_dir)
 
 
-class ExtractLook(pype.api.Extractor):
+class ExtractLook(openpype.api.Extractor):
     """Extract Look (Maya Ascii + JSON)
 
     Only extracts the sets (shadingEngines and alike) alongside a .json file
@@ -343,7 +343,7 @@ class ExtractLook(pype.api.Extractor):
         args = []
         if do_maketx:
             args.append("maketx")
-        texture_hash = pype.api.source_hash(filepath, *args)
+        texture_hash = openpype.api.source_hash(filepath, *args)
 
         # If source has been published before with the same settings,
         # then don't reprocess but hardlink from the original

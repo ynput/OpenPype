@@ -1,8 +1,8 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
 
 def has_shape_children(node):
@@ -37,14 +37,14 @@ class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     hosts = ['maya']
     families = ['model']
     category = 'cleanup'
     version = (0, 1, 0)
     label = 'No Empty/Null Transforms'
-    actions = [pype.api.RepairAction,
-               pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.api.RepairAction,
+               openpype.hosts.maya.api.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

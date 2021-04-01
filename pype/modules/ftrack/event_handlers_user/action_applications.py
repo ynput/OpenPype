@@ -1,8 +1,8 @@
 import os
 from uuid import uuid4
 
-from pype.modules.ftrack.lib import BaseAction
-from pype.lib import (
+from openpype.modules.ftrack.lib import BaseAction
+from openpype.lib import (
     ApplicationManager,
     ApplicationLaunchFailed,
     ApplictionExecutableNotFound

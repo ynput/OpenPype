@@ -17,11 +17,11 @@ import ftrack_api
 from avalon import schema
 from avalon.api import AvalonMongoDB
 
-from pype.modules.ftrack.lib import (
+from openpype.modules.ftrack.lib import (
     avalon_sync,
     BaseEvent
 )
-from pype.modules.ftrack.lib.avalon_sync import (
+from openpype.modules.ftrack.lib.avalon_sync import (
     CUST_ATTR_ID_KEY,
     CUST_ATTR_AUTO_SYNC,
     EntitySchemas

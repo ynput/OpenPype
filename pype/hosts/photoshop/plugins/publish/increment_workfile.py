@@ -1,7 +1,7 @@
 import os
 import pyblish.api
-from pype.action import get_errored_plugins_from_data
-from pype.lib import version_up
+from openpype.action import get_errored_plugins_from_data
+from openpype.lib import version_up
 
 from avalon import photoshop
 

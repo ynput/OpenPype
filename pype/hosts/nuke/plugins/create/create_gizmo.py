@@ -1,5 +1,5 @@
 from avalon.nuke import lib as anlib
-from pype.hosts.nuke.api import plugin
+from openpype.hosts.nuke.api import plugin
 import nuke
 
 

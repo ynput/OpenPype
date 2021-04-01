@@ -3,7 +3,7 @@ import threading
 
 from pynput import mouse, keyboard
 
-from pype.lib import PypeLogger
+from openpype.lib import PypeLogger
 
 
 class MouseThread(mouse.Listener):

@@ -1,18 +1,18 @@
 from maya import cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
 
 class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
     """Ensure no default (startup) cameras are to be rendered."""
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     hosts = ['maya']
     families = ['renderlayer']
     label = "No Default Cameras Renderable"
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

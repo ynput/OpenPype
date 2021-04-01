@@ -1,10 +1,10 @@
 import os
 import pyblish.api
-import pype.api
-from pype.hosts import resolve
+import openpype.api
+from openpype.hosts import resolve
 
 
-class ExtractWorkfile(pype.api.Extractor):
+class ExtractWorkfile(openpype.api.Extractor):
     """
     Extractor export DRP workfile file representation
     """

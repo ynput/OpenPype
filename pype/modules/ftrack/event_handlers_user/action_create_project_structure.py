@@ -1,8 +1,8 @@
 import os
 import re
 
-from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.api import Anatomy, get_project_settings
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.api import Anatomy, get_project_settings
 
 
 class CreateProjectFolders(BaseAction):

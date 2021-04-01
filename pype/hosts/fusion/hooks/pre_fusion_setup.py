@@ -1,7 +1,7 @@
 import os
 import importlib
-from pype.lib import PreLaunchHook
-from pype.hosts.fusion.api import utils
+from openpype.lib import PreLaunchHook
+from openpype.hosts.fusion.api import utils
 
 
 class FusionPrelaunch(PreLaunchHook):

@@ -1,7 +1,7 @@
 import os
 import hiero.core.events
 import avalon.api as avalon
-from pype.api import Logger
+from openpype.api import Logger
 from .lib import sync_avalon_data_to_workfile, launch_workfiles_app
 from .tags import add_tags_to_workfile
 from .menu import update_menu_task_label

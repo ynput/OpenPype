@@ -5,9 +5,9 @@ import uuid
 import clique
 from pymongo import UpdateOne
 
-from pype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
 from avalon.api import AvalonMongoDB
-from pype.api import Anatomy
+from openpype.api import Anatomy
 
 import avalon.pipeline
 

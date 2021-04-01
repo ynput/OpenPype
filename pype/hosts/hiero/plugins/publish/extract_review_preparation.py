@@ -3,12 +3,12 @@ import sys
 import six
 import errno
 from pyblish import api
-import pype
+import openpype
 import clique
 from avalon.vendor import filelink
 
 
-class ExtractReviewPreparation(pype.api.Extractor):
+class ExtractReviewPreparation(openpype.api.Extractor):
     """Cut up clips from long video file"""
 
     order = api.ExtractorOrder
@@ -34,8 +34,8 @@ class ExtractReviewPreparation(pype.api.Extractor):
         # frame range data
         media_duration = review_item_data["mediaDuration"]
 
-        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
-        ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
+        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffprobe_path = openpype.lib.get_ffmpeg_tool_path("ffprobe")
 
         # filter out mov and img sequences
         representations_new = representations[:]
@@ -132,7 +132,7 @@ class ExtractReviewPreparation(pype.api.Extractor):
                 ).format(**locals())
 
                 self.log.debug("ffprob_cmd: {}".format(ffprob_cmd))
-                audio_check_output = pype.api.subprocess(ffprob_cmd)
+                audio_check_output = openpype.api.subprocess(ffprob_cmd)
                 self.log.debug(
                     "audio_check_output: {}".format(audio_check_output))
 
@@ -167,7 +167,7 @@ class ExtractReviewPreparation(pype.api.Extractor):
 
                     # try to get video native resolution data
                     try:
-                        resolution_output = pype.api.subprocess((
+                        resolution_output = openpype.api.subprocess((
                             "\"{ffprobe_path}\" -i \"{full_input_path}\""
                             " -v error "
                             "-select_streams v:0 -show_entries "
@@ -280,7 +280,7 @@ class ExtractReviewPreparation(pype.api.Extractor):
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(subprcs_cmd))
-                output = pype.api.subprocess(subprcs_cmd)
+                output = openpype.api.subprocess(subprcs_cmd)
                 self.log.debug("Output: {}".format(output))
 
             repre_new = {

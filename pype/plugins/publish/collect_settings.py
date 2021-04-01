@@ -1,5 +1,5 @@
 from pyblish import api
-from pype.api import get_current_project_settings, get_system_settings
+from openpype.api import get_current_project_settings, get_system_settings
 
 
 class CollectSettings(api.ContextPlugin):

@@ -1,5 +1,5 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateFtrackAttributes(pyblish.api.InstancePlugin):
@@ -34,7 +34,7 @@ class ValidateFtrackAttributes(pyblish.api.InstancePlugin):
     """
 
     label = "Validate Custom Ftrack Attributes"
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ["ftrack"]
     optional = True
     # Ignore standalone host, because it does not have an Ftrack entity

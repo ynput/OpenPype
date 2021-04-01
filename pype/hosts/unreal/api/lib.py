@@ -4,7 +4,7 @@ import platform
 import json
 from distutils import dir_util
 import subprocess
-from pype.api import get_project_settings
+from openpype.api import get_project_settings
 
 
 def get_engine_versions():

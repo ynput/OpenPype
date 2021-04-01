@@ -6,7 +6,7 @@ from avalon.tvpaint import pipeline
 import avalon.api
 import pyblish.api
 
-from pype.hosts import tvpaint
+from openpype.hosts import tvpaint
 
 log = logging.getLogger("pype.hosts.tvpaint")
 

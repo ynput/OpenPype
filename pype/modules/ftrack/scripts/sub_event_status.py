@@ -7,14 +7,14 @@ import socket
 import datetime
 
 import ftrack_api
-from pype.modules.ftrack.ftrack_server.ftrack_server import FtrackServer
-from pype.modules.ftrack.ftrack_server.lib import (
+from openpype.modules.ftrack.ftrack_server.ftrack_server import FtrackServer
+from openpype.modules.ftrack.ftrack_server.lib import (
     SocketSession,
     StatusEventHub,
     TOPIC_STATUS_SERVER,
     TOPIC_STATUS_SERVER_RESULT
 )
-from pype.api import Logger
+from openpype.api import Logger
 
 log = Logger().get_logger("Event storer")
 action_identifier = (

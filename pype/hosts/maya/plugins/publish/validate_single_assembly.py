@@ -1,5 +1,5 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateSingleAssembly(pyblish.api.InstancePlugin):
@@ -17,7 +17,7 @@ class ValidateSingleAssembly(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     hosts = ['maya']
     families = ['rig', 'animation']
     label = 'Single Assembly'

@@ -2,7 +2,7 @@ import re
 import os
 import hiero
 
-from pype.api import Logger
+from openpype.api import Logger
 from avalon import io
 
 log = Logger().get_logger(__name__)

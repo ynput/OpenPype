@@ -2,8 +2,8 @@ import nuke
 import contextlib
 
 from avalon import api, io
-from pype.api import get_current_project_settings
-from pype.hosts.nuke.api.lib import (
+from openpype.api import get_current_project_settings
+from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace
 )
 

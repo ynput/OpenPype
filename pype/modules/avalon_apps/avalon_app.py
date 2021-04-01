@@ -1,6 +1,6 @@
 import os
-import pype
-from pype import resources
+import openpype
+from openpype import resources
 from .. import (
     PypeModule,
     ITrayModule,

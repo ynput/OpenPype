@@ -2,12 +2,12 @@ import nuke
 import os
 import math
 import pyblish.api
-import pype.api
+import openpype.api
 from avalon.nuke import lib as anlib
 from pprint import pformat
 
 
-class ExtractCamera(pype.api.Extractor):
+class ExtractCamera(openpype.api.Extractor):
     """ 3D camera exctractor
     """
     label = 'Exctract Camera'

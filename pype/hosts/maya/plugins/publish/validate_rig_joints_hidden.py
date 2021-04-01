@@ -1,9 +1,9 @@
 from maya import cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
-from pype.hosts.maya.api import lib
+import openpype.api
+import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api import lib
 
 
 class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
@@ -17,13 +17,13 @@ class ValidateRigJointsHidden(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     hosts = ['maya']
     families = ['rig']
     version = (0, 1, 0)
     label = "Joints Hidden"
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
-               pype.api.RepairAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
+               openpype.api.RepairAction]
 
     @staticmethod
     def get_invalid(instance):

@@ -5,7 +5,7 @@ from .lib import (
     OverrideState,
     NOT_SET
 )
-from pype.settings.constants import (
+from openpype.settings.constants import (
     METADATA_KEYS,
     M_OVERRIDEN_KEY,
     KEY_REGEX

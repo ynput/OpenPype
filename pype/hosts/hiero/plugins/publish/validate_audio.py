@@ -1,5 +1,5 @@
 import pyblish
-from pype.hosts.hiero.api import is_overlapping
+from openpype.hosts.hiero.api import is_overlapping
 
 
 class ValidateAudioFile(pyblish.api.InstancePlugin):

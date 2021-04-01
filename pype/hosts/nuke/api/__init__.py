@@ -3,10 +3,10 @@ import sys
 import nuke
 
 from avalon import api as avalon
-from pype.tools import workfiles
+from openpype.tools import workfiles
 from pyblish import api as pyblish
-from pype.api import Logger
-import pype.hosts.nuke
+from openpype.api import Logger
+import openpype.hosts.nuke
 from . import lib, menu
 
 
@@ -15,7 +15,7 @@ self.workfiles_launched = False
 log = Logger().get_logger(__name__)
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
-HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.nuke.__file__))
+HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.nuke.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")

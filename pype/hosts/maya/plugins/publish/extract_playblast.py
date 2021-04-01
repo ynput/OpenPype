@@ -4,14 +4,14 @@ import contextlib
 import clique
 import capture
 
-from pype.hosts.maya.api import lib
-import pype.api
+from openpype.hosts.maya.api import lib
+import openpype.api
 
 from maya import cmds
 import pymel.core as pm
 
 
-class ExtractPlayblast(pype.api.Extractor):
+class ExtractPlayblast(openpype.api.Extractor):
     """Extract viewport playblast.
 
     Takes review camera and creates review Quicktime video based on viewport

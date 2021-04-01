@@ -1,10 +1,10 @@
-from pype.hosts.nuke.api.lib import (
+from openpype.hosts.nuke.api.lib import (
     on_script_load,
     check_inventory_versions
 )
 
 import nuke
-from pype.api import Logger
+from openpype.api import Logger
 
 log = Logger().get_logger(__name__)
 

@@ -11,7 +11,7 @@ from ..lib import credentials
 from ..ftrack_module import FTRACK_MODULE_DIR
 from . import login_dialog
 
-from pype.api import Logger, resources
+from openpype.api import Logger, resources
 
 
 log = Logger().get_logger("FtrackModule")

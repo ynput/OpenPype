@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Create Composite node for render on farm."""
 from avalon import harmony
-from pype.hosts.harmony.api import plugin
+from openpype.hosts.harmony.api import plugin
 
 
 class CreateFarmRender(plugin.Creator):

@@ -1,10 +1,10 @@
 import os
 
-import pype.api
+import openpype.api
 from avalon import photoshop
 
 
-class ExtractImage(pype.api.Extractor):
+class ExtractImage(openpype.api.Extractor):
     """Produce a flattened image file from instance
 
     This plug-in takes into account only the layers in the group.

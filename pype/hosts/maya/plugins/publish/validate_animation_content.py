@@ -1,6 +1,6 @@
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
 
 class ValidateAnimationContent(pyblish.api.InstancePlugin):
@@ -11,11 +11,11 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
     families = ["animation"]
     label = "Animation Content"
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

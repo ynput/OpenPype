@@ -5,11 +5,11 @@ import os
 from maya import cmds
 
 import avalon.maya
-import pype.api
-from pype.hosts.maya.api import lib
+import openpype.api
+from openpype.hosts.maya.api import lib
 
 
-class ExtractModel(pype.api.Extractor):
+class ExtractModel(openpype.api.Extractor):
     """Extract as Model (Maya Scene).
 
     Only extracts contents based on the original "setMembers" data to ensure

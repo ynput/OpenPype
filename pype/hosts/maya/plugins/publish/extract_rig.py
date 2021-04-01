@@ -5,10 +5,10 @@ import os
 from maya import cmds
 
 import avalon.maya
-import pype.api
+import openpype.api
 
 
-class ExtractRig(pype.api.Extractor):
+class ExtractRig(openpype.api.Extractor):
     """Extract rig as Maya Scene."""
 
     label = "Extract Rig (Maya Scene)"

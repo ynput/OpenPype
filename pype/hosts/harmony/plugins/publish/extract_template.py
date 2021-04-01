@@ -3,12 +3,12 @@
 import os
 import shutil
 
-import pype.api
+import openpype.api
 from avalon import harmony
-import pype.hosts.harmony
+import openpype.hosts.harmony
 
 
-class ExtractTemplate(pype.api.Extractor):
+class ExtractTemplate(openpype.api.Extractor):
     """Extract the connected nodes to the composite instance."""
 
     label = "Extract Template"
@@ -50,7 +50,7 @@ class ExtractTemplate(pype.api.Extractor):
             dependencies.remove(instance.data["setMembers"][0])
 
         # Export template.
-        pype.hosts.harmony.api.export_template(
+        openpype.hosts.harmony.api.export_template(
             unique_backdrops, dependencies, filepath
         )
 

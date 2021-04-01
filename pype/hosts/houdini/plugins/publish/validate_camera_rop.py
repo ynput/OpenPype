@@ -1,11 +1,11 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateCameraROP(pyblish.api.InstancePlugin):
     """Validate Camera ROP settings."""
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ['camera']
     hosts = ['houdini']
     label = 'Camera ROP'

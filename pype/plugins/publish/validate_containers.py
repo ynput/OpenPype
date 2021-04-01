@@ -1,6 +1,6 @@
 import pyblish.api
 
-import pype.lib
+import openpype.lib
 from avalon.tools import cbsceneinventory
 
 
@@ -24,5 +24,5 @@ class ValidateContainers(pyblish.api.ContextPlugin):
     actions = [ShowInventory]
 
     def process(self, context):
-        if pype.lib.any_outdated():
+        if openpype.lib.any_outdated():
             raise ValueError("There are outdated containers in the scene.")

@@ -1,13 +1,13 @@
 import os
 import copy
-import pype.api
+import openpype.api
 import pyblish.api
 from avalon import io
 
 PSDImage = None
 
 
-class ExtractImagesFromPSD(pype.api.Extractor):
+class ExtractImagesFromPSD(openpype.api.Extractor):
     # PLUGIN is not currently enabled because was decided to use different
     # approach
     enabled = False

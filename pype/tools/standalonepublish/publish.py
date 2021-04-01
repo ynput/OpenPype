@@ -1,14 +1,14 @@
 import os
 import sys
 
-import pype
+import openpype
 import pyblish.api
 
 
 def main(env):
     from avalon.tools import publish
     # Registers pype's Global pyblish plugins
-    pype.install()
+    openpype.install()
 
     # Register additional paths
     addition_paths_str = env.get("PUBLISH_PATHS") or ""

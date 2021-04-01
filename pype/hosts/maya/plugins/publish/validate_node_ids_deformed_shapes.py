@@ -1,9 +1,9 @@
 from maya import cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
-from pype.hosts.maya.api import lib
+import openpype.api
+import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api import lib
 
 
 class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
@@ -16,13 +16,13 @@ class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ['look']
     hosts = ['maya']
     label = 'Deformed shape ids'
     actions = [
-        pype.hosts.maya.api.action.SelectInvalidAction,
-        pype.api.RepairAction
+        openpype.hosts.maya.api.action.SelectInvalidAction,
+        openpype.api.RepairAction
     ]
 
     def process(self, instance):

@@ -1,11 +1,11 @@
 import os
 import pyblish.api
 from avalon.nuke import lib as anlib
-from pype.hosts.nuke.api import lib as pnlib
-import pype
+from openpype.hosts.nuke.api import lib as pnlib
+import openpype
 
 
-class ExtractReviewDataMov(pype.api.Extractor):
+class ExtractReviewDataMov(openpype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py

@@ -9,8 +9,8 @@ import re
 import attr
 import pyblish.api
 
-import pype.lib.abstract_submit_deadline
-from pype.lib.abstract_submit_deadline import DeadlineJobInfo
+import openpype.lib.abstract_submit_deadline
+from openpype.lib.abstract_submit_deadline import DeadlineJobInfo
 from avalon import api
 
 
@@ -217,7 +217,7 @@ class PluginInfo(object):
 
 
 class HarmonySubmitDeadline(
-        pype.lib.abstract_submit_deadline.AbstractSubmitDeadline):
+        openpype.lib.abstract_submit_deadline.AbstractSubmitDeadline):
     """Submit render write of Harmony scene to Deadline.
 
     Renders are submitted to a Deadline Web Service as

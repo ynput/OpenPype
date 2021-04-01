@@ -2,14 +2,14 @@ import sys
 import signal
 import socket
 
-from pype.modules.ftrack.ftrack_server.ftrack_server import FtrackServer
-from pype.modules.ftrack.ftrack_server.lib import (
+from openpype.modules.ftrack.ftrack_server.ftrack_server import FtrackServer
+from openpype.modules.ftrack.ftrack_server.lib import (
     SocketSession,
     SocketBaseEventHub
 )
-from pype.modules import ModulesManager
+from openpype.modules import ModulesManager
 
-from pype.api import Logger
+from openpype.api import Logger
 
 log = Logger().get_logger("FtrackUserServer")
 

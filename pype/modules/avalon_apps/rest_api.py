@@ -10,7 +10,7 @@ import bson.json_util
 from aiohttp.web_response import Response
 
 from avalon.api import AvalonMongoDB
-from pype.modules.webserver.base_routes import RestApiEndpoint
+from openpype.modules.webserver.base_routes import RestApiEndpoint
 
 
 class _RestApiEndpoint(RestApiEndpoint):

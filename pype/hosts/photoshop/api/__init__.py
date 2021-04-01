@@ -5,13 +5,13 @@ import logging
 from avalon import io
 from avalon import api as avalon
 from avalon.vendor import Qt
-from pype import lib
+from openpype import lib
 from pyblish import api as pyblish
-import pype.hosts.photoshop
+import openpype.hosts.photoshop
 
 log = logging.getLogger("pype.hosts.photoshop")
 
-HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.photoshop.__file__))
+HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.photoshop.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")

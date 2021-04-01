@@ -1,5 +1,5 @@
 import pyblish.api
-from pype.hosts.nuke.api import lib as pnlib
+from openpype.hosts.nuke.api import lib as pnlib
 import nuke
 
 

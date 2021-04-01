@@ -4,7 +4,7 @@ import subprocess
 
 import pyblish.api
 from avalon import harmony
-import pype.lib
+import openpype.lib
 
 import clique
 
@@ -89,7 +89,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
 
         # Generate thumbnail.
         thumbnail_path = os.path.join(path, "thumbnail.png")
-        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
         args = [
             "{}".format(ffmpeg_path), "-y",
             "-i", os.path.join(path, list(collections[0])[0]),

@@ -3,7 +3,7 @@ import os
 import pyblish.api
 import avalon.api
 
-from pype.lib import get_subset_name
+from openpype.lib import get_subset_name
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
 ValidateContentsOrder = pyblish.api.ValidatorOrder + 0.1

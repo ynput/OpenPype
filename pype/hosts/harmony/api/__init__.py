@@ -4,9 +4,9 @@ import os
 from pathlib import Path
 import logging
 
-from pype import lib
-from pype.api import (get_current_project_settings)
-import pype.hosts.harmony
+from openpype import lib
+from openpype.api import (get_current_project_settings)
+import openpype.hosts.harmony
 
 import pyblish.api
 
@@ -17,7 +17,7 @@ import avalon.tools.sceneinventory
 
 log = logging.getLogger("pype.hosts.harmony")
 
-HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.harmony.__file__))
+HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.harmony.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")

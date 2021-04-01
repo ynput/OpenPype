@@ -14,7 +14,7 @@ from .exceptions import (
     EntitySchemaError
 )
 
-from pype.lib import PypeLogger
+from openpype.lib import PypeLogger
 
 
 @six.add_metaclass(ABCMeta)

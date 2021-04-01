@@ -4,13 +4,13 @@ import os
 import re
 
 import avalon.maya
-import pype.api
-from pype.hosts.maya.render_setup_tools import export_in_rs_layer
+import openpype.api
+from openpype.hosts.maya.render_setup_tools import export_in_rs_layer
 
 from maya import cmds
 
 
-class ExtractVrayscene(pype.api.Extractor):
+class ExtractVrayscene(openpype.api.Extractor):
     """Extractor for vrscene."""
 
     label = "VRay Scene (.vrscene)"

@@ -2,7 +2,7 @@ from . import lib
 import pyblish.api
 import pyblish.util
 import pyblish.plugin
-from pype.lib import filter_pyblish_plugins
+from openpype.lib import filter_pyblish_plugins
 import os
 
 

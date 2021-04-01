@@ -6,12 +6,12 @@ import os
 from avalon.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
-from pype.api import Logger
-import pype.hosts.fusion
+from openpype.api import Logger
+import openpype.hosts.fusion
 
 log = Logger().get_logger(__name__)
 
-HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.fusion.__file__))
+HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.fusion.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")

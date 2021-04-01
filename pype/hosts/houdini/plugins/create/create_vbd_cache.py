@@ -1,4 +1,4 @@
-from pype.hosts.houdini.api import plugin
+from openpype.hosts.houdini.api import plugin
 
 
 class CreateVDBCache(plugin.Creator):

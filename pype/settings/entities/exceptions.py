@@ -1,4 +1,4 @@
-from pype.settings.constants import KEY_ALLOWED_SYMBOLS
+from openpype.settings.constants import KEY_ALLOWED_SYMBOLS
 
 
 class DefaultsNotDefined(Exception):

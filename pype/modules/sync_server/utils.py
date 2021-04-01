@@ -1,5 +1,5 @@
 import time
-from pype.api import  Logger
+from openpype.api import  Logger
 log = Logger().get_logger("SyncServer")
 
 

@@ -2,8 +2,8 @@ import os
 import tempfile
 import subprocess
 import pyblish.api
-import pype.api
-import pype.lib
+import openpype.api
+import openpype.lib
 
 
 class ExtractThumbnailSP(pyblish.api.InstancePlugin):
@@ -73,7 +73,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             full_thumbnail_path = tempfile.mkstemp(suffix=".jpg")[1]
             self.log.info("output {}".format(full_thumbnail_path))
 
-            ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+            ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
             ffmpeg_args = self.ffmpeg_args or {}
 

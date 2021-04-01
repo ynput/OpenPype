@@ -4,7 +4,7 @@ import glob
 
 from maya import cmds
 import pyblish.api
-from pype.hosts.maya.api import lib
+from openpype.hosts.maya.api import lib
 
 SHAPE_ATTRS = ["castsShadows",
                "receiveShadows",

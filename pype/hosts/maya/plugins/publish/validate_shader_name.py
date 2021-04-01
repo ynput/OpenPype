@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 import re
 
 
@@ -13,11 +13,11 @@ class ValidateShaderName(pyblish.api.InstancePlugin):
 
     """
     optional = True
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ["look"]
     hosts = ['maya']
     label = 'Validate Shaders Name'
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     regex = r'(?P<asset>.*)_(.*)_SHD'
 
     # The default connections to check

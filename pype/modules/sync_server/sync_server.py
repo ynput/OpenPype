@@ -1,4 +1,4 @@
-from pype.api import (
+from openpype.api import (
     Anatomy,
     get_project_settings,
     get_local_site_id)
@@ -18,7 +18,7 @@ from avalon.api import AvalonMongoDB
 from .utils import time_function
 
 import six
-from pype.lib import PypeLogger
+from openpype.lib import PypeLogger
 from .. import PypeModule, ITrayModule
 from .providers.local_drive import LocalDriveHandler
 

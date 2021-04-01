@@ -18,7 +18,7 @@ from avalon.tools.delegates import PrettyTimeDelegate
 from .model import FilesModel
 from .view import FilesView
 
-from pype.lib import (
+from openpype.lib import (
     Anatomy,
     get_workdir,
     get_workfile_doc,

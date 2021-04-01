@@ -2,8 +2,8 @@ import os
 import importlib
 
 from avalon import api, lib, style
-from pype.api import Logger, resources
-from pype.lib import (
+from openpype.api import Logger, resources
+from openpype.lib import (
     ApplictionExecutableNotFound,
     ApplicationLaunchFailed
 )

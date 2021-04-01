@@ -1,12 +1,12 @@
-import pype.hosts.maya.api.plugin
+import openpype.hosts.maya.api.plugin
 from avalon import api, maya
 from maya import cmds
 import os
-from pype.api import get_project_settings
-from pype.lib import get_creator_by_name
+from openpype.api import get_project_settings
+from openpype.lib import get_creator_by_name
 
 
-class ReferenceLoader(pype.hosts.maya.api.plugin.ReferenceLoader):
+class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
     """Load the model"""
 
     families = ["model",

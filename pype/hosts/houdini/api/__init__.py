@@ -8,14 +8,14 @@ from pyblish import api as pyblish
 from avalon import api as avalon
 from avalon.houdini import pipeline as houdini
 
-import pype.hosts.houdini
-from pype.hosts.houdini.api import lib
+import openpype.hosts.houdini
+from openpype.hosts.houdini.api import lib
 
-from pype.lib import any_outdated
+from openpype.lib import any_outdated
 
 log = logging.getLogger("pype.hosts.houdini")
 
-HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.houdini.__file__))
+HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.houdini.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")

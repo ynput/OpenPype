@@ -4,11 +4,11 @@ import json
 import requests
 
 from bson.objectid import ObjectId
-from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.api import Anatomy
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.api import Anatomy
 from avalon.api import AvalonMongoDB
 
-from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
+from openpype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 
 
 class StoreThumbnailsToAvalon(BaseAction):

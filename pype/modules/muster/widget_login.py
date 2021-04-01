@@ -1,7 +1,7 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
 from avalon import style
-from pype import resources
+from openpype import resources
 
 
 class MusterLogin(QtWidgets.QWidget):

@@ -1,7 +1,7 @@
 import pyblish.api
 
 from avalon.vendor import requests
-from pype.plugin import contextplugin_should_run
+from openpype.plugin import contextplugin_should_run
 import os
 
 

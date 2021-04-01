@@ -2,7 +2,7 @@ import traceback
 
 # activate hiero from pype
 import avalon.api
-import pype.hosts.hiero.api as phiero
+import openpype.hosts.hiero.api as phiero
 avalon.api.install(phiero)
 
 try:
@@ -15,5 +15,5 @@ except ImportError as e:
 
 else:
     # Setup integration
-    import pype.hosts.hiero.api as phiero
+    import openpype.hosts.hiero.api as phiero
     phiero.lib.setup()

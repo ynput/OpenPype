@@ -1,12 +1,12 @@
 import pyblish.api
 from avalon.nuke import lib as anlib
-from pype.hosts.nuke.api import lib as pnlib
+from openpype.hosts.nuke.api import lib as pnlib
 import nuke
 import os
-import pype
+import openpype
 reload(pnlib)
 
-class ExtractBackdropNode(pype.api.Extractor):
+class ExtractBackdropNode(openpype.api.Extractor):
     """Extracting content of backdrop nodes
 
     Will create nuke script only with containing nodes.

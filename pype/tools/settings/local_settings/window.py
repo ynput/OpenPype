@@ -3,15 +3,15 @@ from Qt import QtWidgets, QtGui
 
 from ..settings import style
 
-from pype.settings.lib import (
+from openpype.settings.lib import (
     get_local_settings,
     save_local_settings
 )
-from pype.api import (
+from openpype.api import (
     SystemSettings,
     ProjectSettings
 )
-from pype.modules import ModulesManager
+from openpype.modules import ModulesManager
 
 from .widgets import (
     SpacerWidget,

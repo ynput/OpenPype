@@ -1,10 +1,10 @@
 import os
 
-from pype.lib import (
+from openpype.lib import (
     PreLaunchHook,
     ApplicationLaunchFailed
 )
-from pype.hosts.unreal.api import lib as unreal_lib
+from openpype.hosts.unreal.api import lib as unreal_lib
 
 
 class UnrealPrelaunchHook(PreLaunchHook):

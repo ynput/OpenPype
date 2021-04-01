@@ -2,10 +2,10 @@ import os
 import nuke
 from avalon.nuke import lib as anlib
 import pyblish.api
-import pype
+import openpype
 
 
-class ExtractThumbnail(pype.api.Extractor):
+class ExtractThumbnail(openpype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py

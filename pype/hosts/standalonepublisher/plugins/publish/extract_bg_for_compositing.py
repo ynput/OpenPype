@@ -1,13 +1,13 @@
 import os
 import json
 import copy
-import pype.api
+import openpype.api
 from avalon import io
 
 PSDImage = None
 
 
-class ExtractBGForComp(pype.api.Extractor):
+class ExtractBGForComp(openpype.api.Extractor):
     label = "Extract Background for Compositing"
     families = ["backgroundComp"]
     hosts = ["standalonepublisher"]

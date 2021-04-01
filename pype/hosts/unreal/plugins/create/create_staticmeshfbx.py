@@ -1,5 +1,5 @@
 import unreal
-from pype.hosts.unreal.api.plugin import Creator
+from openpype.hosts.unreal.api.plugin import Creator
 from avalon.unreal import (
     instantiate,
 )

@@ -1,10 +1,10 @@
 import os
 
 import pyblish.api
-import pype.api
+import openpype.api
 
 
-class ExtractAlembic(pype.api.Extractor):
+class ExtractAlembic(openpype.api.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract Alembic"

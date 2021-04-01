@@ -2,11 +2,11 @@
 import os
 import sys
 import avalon.api as avalon
-import pype
+import openpype
 import opentimelineio as otio
-from pype.hosts.resolve import TestGUI
-import pype.hosts.resolve as bmdvr
-from pype.hosts.resolve.otio import davinci_export as otio_export
+from openpype.hosts.resolve import TestGUI
+import openpype.hosts.resolve as bmdvr
+from openpype.hosts.resolve.otio import davinci_export as otio_export
 
 
 class ThisTestGUI(TestGUI):
@@ -15,7 +15,7 @@ class ThisTestGUI(TestGUI):
     def __init__(self):
         super(ThisTestGUI, self).__init__()
         # Registers openpype's Global pyblish plugins
-        pype.install()
+        openpype.install()
         # activate resolve from openpype
         avalon.install(bmdvr)
 

@@ -4,7 +4,7 @@ import os
 
 import maya.cmds as cmds
 
-from pype.hosts.maya.api import lib
+from openpype.hosts.maya.api import lib
 
 from avalon import io, api
 

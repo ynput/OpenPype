@@ -1,6 +1,6 @@
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 import math
 import maya.api.OpenMaya as om
 import pymel.core as pm
@@ -230,12 +230,12 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
     It is optional to warn publisher about it.
     """
 
-    order = pype.api.ValidateMeshOrder
+    order = openpype.api.ValidateMeshOrder
     hosts = ['maya']
     families = ['model']
     category = 'geometry'
     label = 'Mesh Has Overlapping UVs'
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     optional = True
 
     @classmethod

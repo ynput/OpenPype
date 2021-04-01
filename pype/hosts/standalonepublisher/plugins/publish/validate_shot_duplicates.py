@@ -1,5 +1,5 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateShotDuplicates(pyblish.api.ContextPlugin):
@@ -7,7 +7,7 @@ class ValidateShotDuplicates(pyblish.api.ContextPlugin):
 
     label = "Validate Shot Duplicates"
     hosts = ["standalonepublisher"]
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
 
     def process(self, context):
         shot_names = []

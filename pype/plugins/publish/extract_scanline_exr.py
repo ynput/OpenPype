@@ -4,8 +4,8 @@ import os
 import shutil
 
 import pyblish.api
-import pype.api
-import pype.lib
+import openpype.api
+import openpype.lib
 
 
 class ExtractScanlineExr(pyblish.api.InstancePlugin):
@@ -65,7 +65,7 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
 
                 subprocess_exr = " ".join(oiio_cmd)
                 self.log.info(f"running: {subprocess_exr}")
-                pype.api.run_subprocess(subprocess_exr, logger=self.log)
+                openpype.api.run_subprocess(subprocess_exr, logger=self.log)
 
                 # raise error if there is no ouptput
                 if not os.path.exists(os.path.join(stagingdir, original_name)):

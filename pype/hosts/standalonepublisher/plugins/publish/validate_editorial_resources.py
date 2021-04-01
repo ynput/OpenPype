@@ -1,5 +1,5 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateEditorialResources(pyblish.api.InstancePlugin):
@@ -12,7 +12,7 @@ class ValidateEditorialResources(pyblish.api.InstancePlugin):
     # make sure it is enabled only if at least both families are available
     match = pyblish.api.Subset
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
 
     def process(self, instance):
         self.log.debug(

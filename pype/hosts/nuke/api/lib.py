@@ -6,7 +6,7 @@ from collections import OrderedDict
 from avalon import api, io, lib
 import avalon.nuke
 from avalon.nuke import lib as anlib
-from pype.api import (
+from openpype.api import (
     Logger,
     Anatomy,
     get_version_from_path,

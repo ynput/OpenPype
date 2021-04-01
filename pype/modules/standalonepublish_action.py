@@ -1,7 +1,7 @@
 import os
 import sys
 import subprocess
-from pype.lib import get_pype_execute_args
+from openpype.lib import get_pype_execute_args
 from . import PypeModule, ITrayAction
 
 
@@ -10,11 +10,11 @@ class StandAlonePublishAction(PypeModule, ITrayAction):
     name = "standalonepublish_tool"
 
     def initialize(self, modules_settings):
-        import pype
+        import openpype
         self.enabled = modules_settings[self.name]["enabled"]
         self.publish_paths = [
             os.path.join(
-                pype.PACKAGE_DIR,
+                openpype.PACKAGE_DIR,
                 "hosts",
                 "standalonepublisher",
                 "plugins",

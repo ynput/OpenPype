@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from pype import resources
+from openpype import resources
 from .. import PypeModule, ITrayService
 
 

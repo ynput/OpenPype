@@ -1,7 +1,7 @@
 import os
 
 import pyblish.api
-import pype.api
+import openpype.api
 from avalon import harmony
 
 
@@ -36,7 +36,7 @@ class ValidateInstance(pyblish.api.InstancePlugin):
     label = "Validate Instance"
     hosts = ["harmony"]
     actions = [ValidateInstanceRepair]
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
 
     def process(self, instance):
         instance_asset = instance.data["asset"]

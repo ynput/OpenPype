@@ -1,14 +1,14 @@
 import os
 import copy
 import json
-import pype.api
+import openpype.api
 import pyblish.api
 from avalon import io
 
 PSDImage = None
 
 
-class ExtractBGMainGroups(pype.api.Extractor):
+class ExtractBGMainGroups(openpype.api.Extractor):
     label = "Extract Background Layout"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["backgroundLayout"]

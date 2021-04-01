@@ -10,7 +10,7 @@ import os
 import clique
 import opentimelineio as otio
 import pyblish.api
-import pype
+import openpype
 
 
 class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
@@ -34,21 +34,21 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
         # generate range in parent
         otio_src_range = otio_clip.source_range
         otio_avalable_range = otio_clip.available_range()
-        trimmed_media_range = pype.lib.trim_media_range(
+        trimmed_media_range = openpype.lib.trim_media_range(
             otio_avalable_range, otio_src_range)
 
         # calculate wth handles
-        otio_src_range_handles = pype.lib.otio_range_with_handles(
+        otio_src_range_handles = openpype.lib.otio_range_with_handles(
             otio_src_range, instance)
-        trimmed_media_range_h = pype.lib.trim_media_range(
+        trimmed_media_range_h = openpype.lib.trim_media_range(
             otio_avalable_range, otio_src_range_handles)
 
         # frame start and end from media
-        s_frame_start, s_frame_end = pype.lib.otio_range_to_frame_range(
+        s_frame_start, s_frame_end = openpype.lib.otio_range_to_frame_range(
             trimmed_media_range)
-        a_frame_start, a_frame_end = pype.lib.otio_range_to_frame_range(
+        a_frame_start, a_frame_end = openpype.lib.otio_range_to_frame_range(
             otio_avalable_range)
-        a_frame_start_h, a_frame_end_h = pype.lib.otio_range_to_frame_range(
+        a_frame_start_h, a_frame_end_h = openpype.lib.otio_range_to_frame_range(
             trimmed_media_range_h)
 
         # fix frame_start and frame_end frame to be in range of media
@@ -115,7 +115,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
                 # in case it is file sequence but not new OTIO schema
                 # `ImageSequenceReference`
                 path = media_ref.target_url
-                collection_data = pype.lib.make_sequence_collection(
+                collection_data = openpype.lib.make_sequence_collection(
                     path, trimmed_media_range, metadata)
                 self.staging_dir, collection = collection_data
 

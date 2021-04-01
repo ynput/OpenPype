@@ -1,6 +1,6 @@
 import os
 from avalon import api
-from pype.api import get_project_settings
+from openpype.api import get_project_settings
 
 class GpuCacheLoader(api.Loader):
     """Load model Alembic as gpuCache"""

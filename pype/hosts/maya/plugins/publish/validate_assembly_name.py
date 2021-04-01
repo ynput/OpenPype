@@ -1,6 +1,6 @@
 import pyblish.api
 import maya.cmds as cmds
-import pype.hosts.maya.api.action
+import openpype.hosts.maya.api.action
 
 
 class ValidateAssemblyName(pyblish.api.InstancePlugin):
@@ -12,7 +12,7 @@ class ValidateAssemblyName(pyblish.api.InstancePlugin):
     label = "Validate Assembly Name"
     order = pyblish.api.ValidatorOrder
     families = ["assembly"]
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     active = False
 
     @classmethod

@@ -1,6 +1,6 @@
 import os
 import pyblish.api
-from pype.api import ValidationException
+from openpype.api import ValidationException
 import clique
 
 

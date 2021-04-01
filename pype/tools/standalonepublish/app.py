@@ -11,9 +11,9 @@ from .widgets import (
 )
 from .widgets.constants import HOST_NAME
 from avalon import style
-from pype.api import resources
+from openpype.api import resources
 from avalon.api import AvalonMongoDB
-from pype.modules import ModulesManager
+from openpype.modules import ModulesManager
 
 
 class Window(QtWidgets.QDialog):

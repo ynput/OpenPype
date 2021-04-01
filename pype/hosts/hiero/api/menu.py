@@ -1,7 +1,7 @@
 import os
 import sys
 import hiero.core
-from pype.api import Logger
+from openpype.api import Logger
 from avalon.api import Session
 from hiero.ui import findMenuAction
 

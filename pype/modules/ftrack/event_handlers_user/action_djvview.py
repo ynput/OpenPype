@@ -1,7 +1,7 @@
 import os
 import subprocess
 from operator import itemgetter
-from pype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class DJVViewAction(BaseAction):

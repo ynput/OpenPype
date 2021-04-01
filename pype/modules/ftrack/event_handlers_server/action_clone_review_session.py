@@ -1,6 +1,6 @@
 import json
 
-from pype.modules.ftrack.lib import ServerAction
+from openpype.modules.ftrack.lib import ServerAction
 
 
 def clone_review_session(session, entity):

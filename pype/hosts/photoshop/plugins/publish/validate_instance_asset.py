@@ -1,7 +1,7 @@
 import os
 
 import pyblish.api
-import pype.api
+import openpype.api
 from avalon import photoshop
 
 
@@ -37,7 +37,7 @@ class ValidateInstanceAsset(pyblish.api.InstancePlugin):
     label = "Validate Instance Asset"
     hosts = ["photoshop"]
     actions = [ValidateInstanceAssetRepair]
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
 
     def process(self, instance):
         instance_asset = instance.data["asset"]

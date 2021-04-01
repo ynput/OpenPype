@@ -1,4 +1,4 @@
-from pype.hosts.harmony.api import plugin
+from openpype.hosts.harmony.api import plugin
 
 
 class CreateTemplate(plugin.Creator):

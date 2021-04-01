@@ -5,7 +5,7 @@ import traceback
 
 import ftrack_api
 
-from pype.lib import (
+from openpype.lib import (
     PypeLogger,
     modules_from_path
 )

@@ -2,12 +2,12 @@ import collections
 import json
 import arrow
 import ftrack_api
-from pype.modules.ftrack.lib import BaseAction, statics_icon
-from pype.modules.ftrack.lib.avalon_sync import (
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.modules.ftrack.lib.avalon_sync import (
     CUST_ATTR_ID_KEY, CUST_ATTR_GROUP, default_custom_attributes_definition
 )
-from pype.api import get_system_settings
-from pype.lib import ApplicationManager
+from openpype.api import get_system_settings
+from openpype.lib import ApplicationManager
 
 """
 This action creates/updates custom attributes.

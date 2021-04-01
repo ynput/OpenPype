@@ -1,5 +1,5 @@
-from pype.api import Anatomy
-from pype.lib import (
+from openpype.api import Anatomy
+from openpype.lib import (
     PreLaunchHook,
     EnvironmentPrepData,
     prepare_host_environments,

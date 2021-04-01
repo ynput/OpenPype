@@ -12,7 +12,7 @@ import sys
 
 from avalon import api
 from avalon.maya import lib
-from pype.hosts.maya.api import lib as pypelib
+from openpype.hosts.maya.api import lib as pypelib
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup

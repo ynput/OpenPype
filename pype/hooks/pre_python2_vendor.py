@@ -1,5 +1,5 @@
 import os
-from pype.lib import PreLaunchHook
+from openpype.lib import PreLaunchHook
 
 
 class PrePython2Vendor(PreLaunchHook):

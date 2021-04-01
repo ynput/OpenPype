@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-from pype.hosts.resolve.otio import davinci_import as otio_import
+from openpype.hosts.resolve.otio import davinci_import as otio_import
 
 resolve = bmd.scriptapp("Resolve")  # noqa
 fu = resolve.Fusion()

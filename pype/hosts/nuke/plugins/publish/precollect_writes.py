@@ -1,7 +1,7 @@
 import os
 import nuke
 import pyblish.api
-import pype.api as pype
+import openpype.api as pype
 from avalon import io, api
 
 

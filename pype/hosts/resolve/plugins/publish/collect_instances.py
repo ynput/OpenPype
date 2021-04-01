@@ -1,5 +1,5 @@
 import pyblish
-from pype.hosts import resolve
+from openpype.hosts import resolve
 
 # # developer reload modules
 from pprint import pformat

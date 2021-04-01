@@ -1,4 +1,4 @@
-import pype.hosts.hiero.api as phiero
+import openpype.hosts.hiero.api as phiero
 # from pype.hosts.hiero.api import plugin, lib
 # reload(lib)
 # reload(plugin)

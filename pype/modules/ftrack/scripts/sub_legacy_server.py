@@ -5,9 +5,9 @@ import signal
 import threading
 
 import ftrack_api
-from pype.api import Logger
-from pype.modules import ModulesManager
-from pype.modules.ftrack.ftrack_server.ftrack_server import FtrackServer
+from openpype.api import Logger
+from openpype.modules import ModulesManager
+from openpype.modules.ftrack.ftrack_server.ftrack_server import FtrackServer
 
 log = Logger().get_logger("Event Server Legacy")
 

@@ -1,6 +1,6 @@
 import pyblish.api
 from avalon import io
-from pype import lib
+from openpype import lib
 
 
 @pyblish.api.log

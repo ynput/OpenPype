@@ -1,8 +1,8 @@
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
-from pype.hosts.maya.api import lib
+from openpype.hosts.maya.api import lib
 
 
 class ValidateNodeIDs(pyblish.api.InstancePlugin):
@@ -14,7 +14,7 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidatePipelineOrder
+    order = openpype.api.ValidatePipelineOrder
     label = 'Instance Nodes Have ID'
     hosts = ['maya']
     families = ["model",
@@ -25,8 +25,8 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
                 "yetiRig",
                 "assembly"]
 
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
-               pype.hosts.maya.api.action.GenerateUUIDsOnInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
+               openpype.hosts.maya.api.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

@@ -4,8 +4,8 @@ import click
 from avalon import io, api
 from pprint import pprint
 
-from pype.lib import Terminal
-from pype.api import Anatomy
+from openpype.lib import Terminal
+from openpype.api import Anatomy
 
 import shutil
 import speedcopy

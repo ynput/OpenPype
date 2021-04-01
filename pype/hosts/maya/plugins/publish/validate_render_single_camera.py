@@ -1,8 +1,8 @@
 import re
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
 from maya import cmds
 
@@ -23,12 +23,12 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
     prefix must contain <Camera> token.
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     label = "Render Single Camera"
     hosts = ['maya']
     families = ["renderlayer",
                 "vrayscene"]
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     R_CAMERA_TOKEN = re.compile(r'%c|<camera>', re.IGNORECASE)
 

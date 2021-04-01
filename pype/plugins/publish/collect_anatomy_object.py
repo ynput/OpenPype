@@ -7,7 +7,7 @@ Provides:
     context -> anatomy (pype.api.Anatomy)
 """
 import os
-from pype.api import Anatomy
+from openpype.api import Anatomy
 import pyblish.api
 
 

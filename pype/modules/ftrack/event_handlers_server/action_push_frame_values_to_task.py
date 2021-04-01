@@ -1,7 +1,7 @@
 import json
 import collections
 import ftrack_api
-from pype.modules.ftrack.lib import ServerAction
+from openpype.modules.ftrack.lib import ServerAction
 
 
 class PushHierValuesToNonHier(ServerAction):

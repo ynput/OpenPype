@@ -1,18 +1,18 @@
 from maya import cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
 
 class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
     """Validate if all input nodes are part of the instance's hierarchy"""
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     hosts = ["maya"]
     families = ["yetiRig"]
     label = "Yeti Rig Input Shapes In Instance"
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
 

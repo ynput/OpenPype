@@ -5,12 +5,12 @@ import subprocess
 import platform
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-from pype.api import resources
-import pype.lib
+from openpype.api import resources
+import openpype.lib
 
 
-ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
-ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
+ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+ffprobe_path = openpype.lib.get_ffmpeg_tool_path("ffprobe")
 
 
 FFMPEG = (

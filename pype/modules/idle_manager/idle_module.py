@@ -3,7 +3,7 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from pype.modules import PypeModule, ITrayService
+from openpype.modules import PypeModule, ITrayService
 
 
 @six.add_metaclass(ABCMeta)

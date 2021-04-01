@@ -3,7 +3,7 @@ import json
 import pyblish.api
 
 from avalon import io
-from pype.lib import get_subset_name
+from openpype.lib import get_subset_name
 
 
 class CollectBulkMovInstances(pyblish.api.InstancePlugin):

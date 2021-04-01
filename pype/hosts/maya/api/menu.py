@@ -4,7 +4,7 @@ import logging
 
 from avalon.vendor.Qt import QtWidgets, QtGui
 from avalon.maya import pipeline
-from pype.api import BuildWorkfile
+from openpype.api import BuildWorkfile
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
@@ -44,7 +44,7 @@ def deferred():
         )
 
     def modify_workfiles():
-        from pype.tools import workfiles
+        from openpype.tools import workfiles
 
         def launch_workfiles_app(*_args, **_kwargs):
             workfiles.show(

@@ -7,7 +7,7 @@ from pathlib import Path
 import clique
 
 from avalon import api, harmony
-import pype.lib
+import openpype.lib
 
 
 class ImageSequenceLoader(api.Loader):
@@ -105,7 +105,7 @@ class ImageSequenceLoader(api.Loader):
         )
 
         # Colour node.
-        if pype.lib.is_latest(representation):
+        if openpype.lib.is_latest(representation):
             harmony.send(
                 {
                     "function": "PypeHarmony.setColor",

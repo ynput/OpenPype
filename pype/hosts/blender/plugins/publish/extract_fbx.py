@@ -1,11 +1,11 @@
 import os
 
-import pype.api
+import openpype.api
 
 import bpy
 
 
-class ExtractFBX(pype.api.Extractor):
+class ExtractFBX(openpype.api.Extractor):
     """Extract as FBX."""
 
     label = "Extract FBX"

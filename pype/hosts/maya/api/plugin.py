@@ -1,7 +1,7 @@
 from avalon import api
 from avalon.vendor import qargparse
 import avalon.maya
-from pype.api import PypeCreatorMixin
+from openpype.api import PypeCreatorMixin
 
 
 def get_reference_node_parents(ref):

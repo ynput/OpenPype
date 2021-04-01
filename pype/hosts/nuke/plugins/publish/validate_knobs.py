@@ -1,7 +1,7 @@
 import nuke
 
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateKnobs(pyblish.api.ContextPlugin):
@@ -23,7 +23,7 @@ class ValidateKnobs(pyblish.api.ContextPlugin):
     order = pyblish.api.ValidatorOrder
     label = "Validate Knobs"
     hosts = ["nuke"]
-    actions = [pype.api.RepairContextAction]
+    actions = [openpype.api.RepairContextAction]
     optional = True
 
     def process(self, context):

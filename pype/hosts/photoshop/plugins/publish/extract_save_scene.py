@@ -1,11 +1,11 @@
-import pype.api
+import openpype.api
 from avalon import photoshop
 
 
-class ExtractSaveScene(pype.api.Extractor):
+class ExtractSaveScene(openpype.api.Extractor):
     """Save scene before extraction."""
 
-    order = pype.api.Extractor.order - 0.49
+    order = openpype.api.Extractor.order - 0.49
     label = "Extract Save Scene"
     hosts = ["photoshop"]
     families = ["workfile"]

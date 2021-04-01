@@ -14,7 +14,7 @@ from .actions import ApplicationAction
 from Qt import QtCore, QtGui
 from avalon.vendor import qtawesome
 from avalon import style, api
-from pype.lib import ApplicationManager
+from openpype.lib import ApplicationManager
 
 log = logging.getLogger(__name__)
 

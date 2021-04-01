@@ -1,11 +1,11 @@
 import os
 
-import pype.api
-import pype.lib
+import openpype.api
+import openpype.lib
 from avalon import photoshop
 
 
-class ExtractReview(pype.api.Extractor):
+class ExtractReview(openpype.api.Extractor):
     """Produce a flattened image file from all instances."""
 
     label = "Extract Review"
@@ -41,7 +41,7 @@ class ExtractReview(pype.api.Extractor):
 
             stub.saveAs(output_image_path, 'jpg', True)
 
-        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         instance.data["representations"].append({
             "name": "jpg",
@@ -60,7 +60,7 @@ class ExtractReview(pype.api.Extractor):
             "-vframes", "1",
             thumbnail_path
         ]
-        output = pype.lib.run_subprocess(args)
+        output = openpype.lib.run_subprocess(args)
 
         instance.data["representations"].append({
             "name": "thumbnail",
@@ -78,7 +78,7 @@ class ExtractReview(pype.api.Extractor):
             "-vframes", "1",
             mov_path
         ]
-        output = pype.lib.run_subprocess(args)
+        output = openpype.lib.run_subprocess(args)
         self.log.debug(output)
         instance.data["representations"].append({
             "name": "mov",

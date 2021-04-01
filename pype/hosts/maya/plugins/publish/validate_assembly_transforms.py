@@ -1,9 +1,9 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 from maya import cmds
 
-import pype.hosts.maya.api.action
+import openpype.hosts.maya.api.action
 
 
 class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
@@ -28,8 +28,8 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder + 0.49
     label = "Assembly Model Transforms"
     families = ["assembly"]
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction,
-               pype.api.RepairAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction,
+               openpype.api.RepairAction]
 
     prompt_message = ("You are about to reset the matrix to the default values."
                       " This can alter the look of your scene. "
@@ -44,7 +44,7 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        from pype.hosts.maya.api import lib
+        from openpype.hosts.maya.api import lib
 
         # Get all transforms in the loaded containers
         container_roots = cmds.listRelatives(instance.data["hierarchy"],
@@ -89,7 +89,7 @@ class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
 
         """
 
-        from pype.hosts.maya.api import lib
+        from openpype.hosts.maya.api import lib
         from avalon.vendor.Qt import QtWidgets
 
         # Store namespace in variable, cosmetics thingy

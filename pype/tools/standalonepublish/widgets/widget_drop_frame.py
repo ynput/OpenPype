@@ -3,7 +3,7 @@ import re
 import json
 import clique
 import subprocess
-import pype.lib
+import openpype.lib
 from Qt import QtWidgets, QtCore
 from . import DropEmpty, ComponentsList, ComponentItem
 
@@ -264,7 +264,7 @@ class DropDataFrame(QtWidgets.QFrame):
         self._process_data(data)
 
     def load_data_with_probe(self, filepath):
-        ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
+        ffprobe_path = openpype.lib.get_ffmpeg_tool_path("ffprobe")
         args = [
             "\"{}\"".format(ffprobe_path),
             '-v', 'quiet',

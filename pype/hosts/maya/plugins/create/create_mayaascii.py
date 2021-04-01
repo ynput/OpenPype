@@ -1,4 +1,4 @@
-from pype.hosts.maya.api import plugin
+from openpype.hosts.maya.api import plugin
 
 
 class CreateMayaAscii(plugin.Creator):

@@ -14,7 +14,7 @@ from .exceptions import (
     EntitySchemaError
 )
 
-from pype.settings.constants import (
+from openpype.settings.constants import (
     METADATA_KEYS,
     M_ENVIRONMENT_KEY
 )

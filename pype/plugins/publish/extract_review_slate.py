@@ -1,10 +1,10 @@
 import os
-import pype.api
-import pype.lib
+import openpype.api
+import openpype.lib
 import pyblish
 
 
-class ExtractReviewSlate(pype.api.Extractor):
+class ExtractReviewSlate(openpype.api.Extractor):
     """
     Will add slate frame at the start of the video files
     """
@@ -24,9 +24,9 @@ class ExtractReviewSlate(pype.api.Extractor):
 
         suffix = "_slate"
         slate_path = inst_data.get("slateFrame")
-        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        slate_stream = pype.lib.ffprobe_streams(slate_path, self.log)[0]
+        slate_stream = openpype.lib.ffprobe_streams(slate_path, self.log)[0]
         slate_width = slate_stream["width"]
         slate_height = slate_stream["height"]
 
@@ -186,7 +186,7 @@ class ExtractReviewSlate(pype.api.Extractor):
 
             # run slate generation subprocess
             self.log.debug("Slate Executing: {}".format(slate_subprcs_cmd))
-            pype.api.run_subprocess(
+            openpype.api.run_subprocess(
                 slate_subprcs_cmd, shell=True, logger=self.log
             )
 
@@ -222,7 +222,7 @@ class ExtractReviewSlate(pype.api.Extractor):
 
             # ffmpeg concat subprocess
             self.log.debug("Executing concat: {}".format(concat_subprcs_cmd))
-            pype.api.run_subprocess(
+            openpype.api.run_subprocess(
                 concat_subprcs_cmd, shell=True, logger=self.log
             )
 
@@ -301,7 +301,7 @@ class ExtractReviewSlate(pype.api.Extractor):
 
         try:
             # Get information about input file via ffprobe tool
-            streams = pype.lib.ffprobe_streams(full_input_path, self.log)
+            streams = openpype.lib.ffprobe_streams(full_input_path, self.log)
         except Exception:
             self.log.warning(
                 "Could not get codec data from input.",

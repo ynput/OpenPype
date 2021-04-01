@@ -1,6 +1,6 @@
 import collections
 from Qt import QtCore, QtGui
-from pype.lib.log import PypeLogger
+from openpype.lib.log import PypeLogger
 
 
 class LogModel(QtGui.QStandardItemModel):

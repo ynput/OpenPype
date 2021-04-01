@@ -4,10 +4,10 @@ import sys
 import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
-from pype.api import Logger, resources
-from pype.modules import TrayModulesManager, ITrayService
-from pype.settings.lib import get_system_settings
-import pype.version
+from openpype.api import Logger, resources
+from openpype.modules import TrayModulesManager, ITrayService
+from openpype.settings.lib import get_system_settings
+import openpype.version
 from .pype_info_widget import PypeInfoWidget
 
 
@@ -80,7 +80,7 @@ class TrayManager:
         subversion = os.environ.get("OPENPYPE_SUBVERSION")
         client_name = os.environ.get("OPENPYPE_CLIENT")
 
-        version_string = pype.version.__version__
+        version_string = openpype.version.__version__
         if subversion:
             version_string += " ({})".format(subversion)
 

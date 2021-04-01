@@ -9,16 +9,16 @@ from avalon.tools import publish
 import pyblish.api
 import pyblish.util
 
-from pype.api import Logger
-import pype
-import pype.hosts.celaction
-from pype.hosts.celaction import api as celaction
+from openpype.api import Logger
+import openpype
+import openpype.hosts.celaction
+from openpype.hosts.celaction import api as celaction
 
 log = Logger().get_logger("Celaction_cli_publisher")
 
 publish_host = "celaction"
 
-HOST_DIR = os.path.dirname(os.path.abspath(pype.hosts.celaction.__file__))
+HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.celaction.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
@@ -89,7 +89,7 @@ def main():
     _prepare_publish_environments()
 
     # Registers pype's Global pyblish plugins
-    pype.install()
+    openpype.install()
 
     if os.path.exists(PUBLISH_PATH):
         log.info(f"Registering path: {PUBLISH_PATH}")

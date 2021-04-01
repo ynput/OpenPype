@@ -15,7 +15,7 @@ Provides:
 import os
 import json
 
-from pype.lib import ApplicationManager
+from openpype.lib import ApplicationManager
 from avalon import api, lib
 import pyblish.api
 

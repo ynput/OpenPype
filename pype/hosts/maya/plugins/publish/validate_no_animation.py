@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
+import openpype.api
+import openpype.hosts.maya.api.action
 
 
 class ValidateNoAnimation(pyblish.api.Validator):
@@ -14,12 +14,12 @@ class ValidateNoAnimation(pyblish.api.Validator):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     label = "No Animation"
     hosts = ["maya"]
     families = ["model"]
     optional = True
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
 

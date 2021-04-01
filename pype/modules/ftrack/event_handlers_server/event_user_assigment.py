@@ -2,13 +2,13 @@ import os
 import re
 import subprocess
 
-from pype.modules.ftrack.lib import BaseEvent
-from pype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
+from openpype.modules.ftrack.lib import BaseEvent
+from openpype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 from avalon.api import AvalonMongoDB
 
 from bson.objectid import ObjectId
 
-from pype.api import Anatomy, get_project_settings
+from openpype.api import Anatomy, get_project_settings
 
 
 class UserAssigmentEvent(BaseEvent):

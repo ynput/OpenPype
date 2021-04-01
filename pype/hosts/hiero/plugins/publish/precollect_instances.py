@@ -1,6 +1,6 @@
 from compiler.ast import flatten
 from pyblish import api
-from pype.hosts.hiero import api as phiero
+from openpype.hosts.hiero import api as phiero
 import hiero
 # from pype.hosts.hiero.api import lib
 # reload(lib)

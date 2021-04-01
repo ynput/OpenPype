@@ -5,7 +5,7 @@ import platform
 import collections
 import numbers
 
-from pype.settings.lib import (
+from openpype.settings.lib import (
     get_default_anatomy_settings,
     get_anatomy_settings
 )

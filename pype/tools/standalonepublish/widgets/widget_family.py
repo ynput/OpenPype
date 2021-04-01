@@ -5,11 +5,11 @@ from Qt import QtWidgets, QtCore
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
 from . import FamilyDescriptionWidget
 
-from pype.api import (
+from openpype.api import (
     get_project_settings,
     Creator
 )
-from pype.lib import TaskNotSetError
+from openpype.lib import TaskNotSetError
 from avalon.tools.creator.app import SubsetAllowedSymbols
 
 

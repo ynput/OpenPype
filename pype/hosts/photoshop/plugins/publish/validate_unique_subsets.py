@@ -1,5 +1,5 @@
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
@@ -9,7 +9,7 @@ class ValidateSubsetUniqueness(pyblish.api.ContextPlugin):
 
     label = "Validate Subset Uniqueness"
     hosts = ["photoshop"]
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ["image"]
 
     def process(self, context):

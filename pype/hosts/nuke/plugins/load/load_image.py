@@ -4,7 +4,7 @@ import nuke
 from avalon.vendor import qargparse
 from avalon import api, io
 
-from pype.hosts.nuke.api.lib import (
+from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace
 )
 

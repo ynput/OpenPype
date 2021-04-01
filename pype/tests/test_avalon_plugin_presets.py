@@ -1,5 +1,5 @@
 import avalon.api as api
-import pype
+import openpype
 
 
 class MyTestCreator(api.Creator):
@@ -24,7 +24,7 @@ class Test:
 
 def test_avalon_plugin_presets(monkeypatch, printer):
 
-    pype.install()
+    openpype.install()
     api.register_host(Test())
     api.register_plugin(api.Creator, MyTestCreator)
     plugins = api.discover(api.Creator)

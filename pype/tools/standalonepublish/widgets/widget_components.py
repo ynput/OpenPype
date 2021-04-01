@@ -8,8 +8,8 @@ from Qt import QtWidgets, QtCore
 from . import DropDataFrame
 from .constants import HOST_NAME
 from avalon import io
-from pype.api import execute, Logger
-from pype.lib import (
+from openpype.api import execute, Logger
+from openpype.lib import (
     get_pype_execute_args,
     apply_project_environments_value
 )

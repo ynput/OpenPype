@@ -4,10 +4,10 @@ import json
 import copy
 import tempfile
 
-import pype
-import pype.api
+import openpype
+import openpype.api
 import pyblish
-from pype.lib import (
+from openpype.lib import (
     get_pype_execute_args,
     should_decompress,
     get_decompress_dir,
@@ -16,7 +16,7 @@ from pype.lib import (
 import shutil
 
 
-class ExtractBurnin(pype.api.Extractor):
+class ExtractBurnin(openpype.api.Extractor):
     """
     Extractor to create video with pre-defined burnins from
     existing extracted video representation.
@@ -273,7 +273,7 @@ class ExtractBurnin(pype.api.Extractor):
                 self.log.debug("Executing: {}".format(" ".join(args)))
 
                 # Run burnin script
-                pype.api.run_subprocess(
+                openpype.api.run_subprocess(
                     args, shell=True, logger=self.log, env=env
                 )
 
@@ -822,7 +822,7 @@ class ExtractBurnin(pype.api.Extractor):
         """Return path to python script for burnin processing."""
         scriptpath = os.path.normpath(
             os.path.join(
-                pype.PACKAGE_DIR,
+                openpype.PACKAGE_DIR,
                 "scripts",
                 "otio_burnin.py"
             )

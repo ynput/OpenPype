@@ -5,8 +5,8 @@ import sys
 import json
 from pathlib import Path
 
-from pype.lib import PypeLogger
-from pype.api import get_app_environments_for_context
+from openpype.lib import PypeLogger
+from openpype.api import get_app_environments_for_context
 
 
 class PypeCommands:
@@ -18,13 +18,13 @@ class PypeCommands:
     def launch_tray(debug=False):
         PypeLogger.set_process_name("Tray")
 
-        from pype.tools import tray
+        from openpype.tools import tray
 
         tray.main()
 
     @staticmethod
     def launch_settings_gui(dev):
-        from pype.tools import settings
+        from openpype.tools import settings
 
         # TODO change argument options to allow enum of user roles
         user_role = "developer"
@@ -32,14 +32,14 @@ class PypeCommands:
 
     @staticmethod
     def launch_eventservercli(*args):
-        from pype.modules.ftrack.ftrack_server.event_server_cli import (
+        from openpype.modules.ftrack.ftrack_server.event_server_cli import (
             run_event_server
         )
         return run_event_server(*args)
 
     @staticmethod
     def launch_standalone_publisher():
-        from pype.tools import standalonepublish
+        from openpype.tools import standalonepublish
         standalonepublish.main()
 
     @staticmethod
@@ -57,8 +57,8 @@ class PypeCommands:
         if not any(paths):
             raise RuntimeError("No publish paths specified")
 
-        from pype import install, uninstall
-        from pype.api import Logger
+        from openpype import install, uninstall
+        from openpype.api import Logger
 
         # Register target and host
         import pyblish.api
@@ -98,7 +98,7 @@ class PypeCommands:
     def extractenvironments(output_json_path, project, asset, task, app):
         env = os.environ.copy()
         if all((project, asset, task, app)):
-            from pype.api import get_app_environments_for_context
+            from openpype.api import get_app_environments_for_context
             env = get_app_environments_for_context(
                 project, asset, task, app, env
             )

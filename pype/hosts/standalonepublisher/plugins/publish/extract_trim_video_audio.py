@@ -1,11 +1,11 @@
 import os
 import pyblish.api
-import pype.api
+import openpype.api
 
 from pprint import pformat
 
 
-class ExtractTrimVideoAudio(pype.api.Extractor):
+class ExtractTrimVideoAudio(openpype.api.Extractor):
     """Trim with ffmpeg "mov" and "wav" files."""
 
     # must be before `ExtractThumbnailSP`
@@ -27,7 +27,7 @@ class ExtractTrimVideoAudio(pype.api.Extractor):
             instance.data["representations"] = list()
 
         # get ffmpet path
-        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         # get staging dir
         staging_dir = self.staging_dir(instance)
@@ -80,7 +80,7 @@ class ExtractTrimVideoAudio(pype.api.Extractor):
 
             self.log.info(f"Processing: {args}")
             ffmpeg_args = " ".join(args)
-            pype.api.run_subprocess(
+            openpype.api.run_subprocess(
                 ffmpeg_args, shell=True, logger=self.log
             )
 

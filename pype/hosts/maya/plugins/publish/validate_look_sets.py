@@ -1,8 +1,8 @@
-import pype.hosts.maya.api.action
-from pype.hosts.maya.api import lib
+import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api import lib
 
 import pyblish.api
-import pype.api
+import openpype.api
 
 
 class ValidateLookSets(pyblish.api.InstancePlugin):
@@ -38,11 +38,11 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ['look']
     hosts = ['maya']
     label = 'Look Sets'
-    actions = [pype.hosts.maya.api.action.SelectInvalidAction]
+    actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""

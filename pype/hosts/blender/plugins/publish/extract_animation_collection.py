@@ -1,13 +1,13 @@
 import os
 import json
 
-import pype.api
+import openpype.api
 import pyblish.api
 
 import bpy
 
 
-class ExtractSetDress(pype.api.Extractor):
+class ExtractSetDress(openpype.api.Extractor):
     """Extract setdress."""
 
     label = "Extract SetDress"

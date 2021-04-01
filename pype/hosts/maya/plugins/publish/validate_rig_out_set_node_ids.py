@@ -1,9 +1,9 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import pype.api
-import pype.hosts.maya.api.action
-from pype.hosts.maya.api import lib
+import openpype.api
+import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api import lib
 
 
 class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
@@ -16,13 +16,13 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
 
     """
 
-    order = pype.api.ValidateContentsOrder
+    order = openpype.api.ValidateContentsOrder
     families = ["rig"]
     hosts = ['maya']
     label = 'Rig Out Set Node Ids'
     actions = [
-        pype.hosts.maya.api.action.SelectInvalidAction,
-        pype.api.RepairAction
+        openpype.hosts.maya.api.action.SelectInvalidAction,
+        openpype.api.RepairAction
     ]
 
     def process(self, instance):

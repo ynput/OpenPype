@@ -1,6 +1,6 @@
 import os
-from pype.api import get_project_settings
-import pype.hosts.maya.api.lib as mlib
+from openpype.api import get_project_settings
+import openpype.hosts.maya.api.lib as mlib
 from maya import cmds
 
 

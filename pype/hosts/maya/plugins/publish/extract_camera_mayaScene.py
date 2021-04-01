@@ -6,8 +6,8 @@ import itertools
 from maya import cmds
 
 import avalon.maya
-import pype.api
-from pype.hosts.maya.api import lib
+import openpype.api
+from openpype.hosts.maya.api import lib
 
 
 def massage_ma_file(path):
@@ -78,7 +78,7 @@ def unlock(plug):
             cmds.disconnectAttr(source, destination)
 
 
-class ExtractCameraMayaScene(pype.api.Extractor):
+class ExtractCameraMayaScene(openpype.api.Extractor):
     """Extract a Camera as Maya Scene.
 
     This will create a duplicate of the camera that will be baked *with*

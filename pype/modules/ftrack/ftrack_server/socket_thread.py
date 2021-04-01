@@ -5,8 +5,8 @@ import socket
 import threading
 import traceback
 import subprocess
-from pype.api import Logger
-from pype.lib import get_pype_execute_args
+from openpype.api import Logger
+from openpype.lib import get_pype_execute_args
 
 
 class SocketThread(threading.Thread):

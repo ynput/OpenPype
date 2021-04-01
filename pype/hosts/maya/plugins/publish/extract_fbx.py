@@ -6,10 +6,10 @@ import maya.mel as mel
 import pyblish.api
 import avalon.maya
 
-import pype.api
+import openpype.api
 
 
-class ExtractFBX(pype.api.Extractor):
+class ExtractFBX(openpype.api.Extractor):
     """Extract FBX from Maya.
 
     This extracts reproducible FBX exports ignoring any of the settings set

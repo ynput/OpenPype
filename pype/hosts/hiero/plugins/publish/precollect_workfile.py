@@ -1,6 +1,6 @@
 import os
 import pyblish.api
-from pype.hosts.hiero import api as phiero
+from openpype.hosts.hiero import api as phiero
 from avalon import api as avalon
 
 

@@ -1,12 +1,12 @@
 import os
 
-import pype.api
-import pype.hosts.blender.api.plugin
+import openpype.api
+import openpype.hosts.blender.api.plugin
 
 import bpy
 
 
-class ExtractABC(pype.api.Extractor):
+class ExtractABC(openpype.api.Extractor):
     """Extract as ABC."""
 
     label = "Extract ABC"
@@ -61,7 +61,7 @@ class ExtractABC(pype.api.Extractor):
             except:
                 continue
 
-        new_context = pype.hosts.blender.api.plugin.create_blender_context(
+        new_context = openpype.hosts.blender.api.plugin.create_blender_context(
             active=selected[0], selected=selected)
 
         # We set the scale of the scene for the export

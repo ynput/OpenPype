@@ -35,7 +35,7 @@ from maya import cmds
 from avalon import api
 import pyblish.api
 
-from pype.hosts.maya.api import lib
+from openpype.hosts.maya.api import lib
 
 # Documentation for keys available at:
 # https://docs.thinkboxsoftware.com
@@ -816,7 +816,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     def _get_arnold_export_payload(self, data):
 
         try:
-            from pype.scripts import export_maya_ass_job
+            from openpype.scripts import export_maya_ass_job
         except Exception:
             raise AssertionError(
                 "Expected module 'export_maya_ass_job' to be available")

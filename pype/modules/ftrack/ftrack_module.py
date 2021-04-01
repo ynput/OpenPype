@@ -2,8 +2,8 @@ import os
 import collections
 from abc import ABCMeta, abstractmethod
 import six
-import pype
-from pype.modules import (
+import openpype
+from openpype.modules import (
     PypeModule,
     ITrayModule,
     IPluginPaths,
@@ -140,7 +140,7 @@ class FtrackModule(
             return
 
         import ftrack_api
-        from pype.modules.ftrack.lib import avalon_sync
+        from openpype.modules.ftrack.lib import avalon_sync
 
         session = self.create_ftrack_session()
         project_entity = session.query(

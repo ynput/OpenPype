@@ -3,7 +3,7 @@
 """
 
 from avalon import api
-from pype.api import Logger
+from openpype.api import Logger
 
 log = Logger().get_logger(__name__)
 
@@ -25,7 +25,7 @@ class SetFrameRangeLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        from pype.hosts.nuke.api import lib
+        from openpype.hosts.nuke.api import lib
 
         version = context['version']
         version_data = version.get("data", {})
@@ -59,7 +59,7 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        from pype.hosts.nuke.api import lib
+        from openpype.hosts.nuke.api import lib
 
         version = context['version']
         version_data = version.get("data", {})

@@ -1,5 +1,5 @@
 from avalon.tvpaint import pipeline, lib
-from pype.hosts.tvpaint.api import plugin
+from openpype.hosts.tvpaint.api import plugin
 
 
 class CreateRenderPass(plugin.Creator):
