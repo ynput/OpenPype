@@ -78,7 +78,7 @@ build_options = dict(
     optimize=0
 )
 
-icon_path = pype_root / "igniter" / "pype.ico"
+icon_path = pype_root / "igniter" / "openpype.ico"
 
 executables = [
     Executable("start.py", base=None,
