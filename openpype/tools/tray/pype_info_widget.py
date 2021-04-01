@@ -204,7 +204,7 @@ class PypeInfoWidget(QtWidgets.QWidget):
 
         icon = QtGui.QIcon(resources.pype_icon_filepath())
         self.setWindowIcon(icon)
-        self.setWindowTitle("Pype info")
+        self.setWindowTitle("OpenPype info")
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setAlignment(QtCore.Qt.AlignTop)
@@ -360,10 +360,10 @@ class PypeInfoWidget(QtWidgets.QWidget):
         pype_info["version_value"] = version_value
         # Prepare lable mapping
         key_label_mapping = {
-            "version_value": "Pype version:",
-            "executable": "Pype executable:",
-            "pype_root": "Pype location:",
-            "mongo_url": "Pype  Mongo URL:"
+            "version_value": "OpenPype version:",
+            "executable": "OpenPype executable:",
+            "pype_root": "OpenPype location:",
+            "mongo_url": "OpenPype  Mongo URL:"
         }
         # Prepare keys order
         keys_order = ["version_value", "executable", "pype_root", "mongo_url"]

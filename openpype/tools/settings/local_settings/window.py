@@ -56,7 +56,7 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(SpacerWidget(self), 1)
 
     def _create_pype_mongo_ui(self):
-        pype_mongo_expand_widget = ExpandingWidget("Pype Mongo URL", self)
+        pype_mongo_expand_widget = ExpandingWidget("OpenPype Mongo URL", self)
         pype_mongo_content = QtWidgets.QWidget(self)
         pype_mongo_layout = QtWidgets.QVBoxLayout(pype_mongo_content)
         pype_mongo_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
