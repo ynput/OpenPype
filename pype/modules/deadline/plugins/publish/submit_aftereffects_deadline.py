@@ -64,9 +64,9 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
             "AVALON_ASSET",
             "AVALON_TASK",
             "AVALON_APP_NAME",
-            "PYPE_USERNAME",
-            "PYPE_DEV",
-            "PYPE_LOG_NO_COLORS"
+            "OPENPYPE_USERNAME",
+            "OPENPYPE_DEV",
+            "OPENPYPE_LOG_NO_COLORS"
         ]
 
         environment = dict({key: os.environ[key] for key in keys
@@ -78,7 +78,7 @@ class AfterEffectsSubmitDeadline(abstract_submit_deadline.AbstractSubmitDeadline
                      key=key,
                      value=val)
         # to recognize job from PYPE for turning Event On/Off
-        dln_job_info.EnvironmentKeyValue = "PYPE_RENDER_JOB=1"
+        dln_job_info.EnvironmentKeyValue = "OPENPYPE_RENDER_JOB=1"
 
         return dln_job_info
 

@@ -29,7 +29,7 @@ class UserModule(PypeModule, ITrayModule, IWebServerRoutes):
         appdirs.user_data_dir('pype-app', 'pype')
     )
     cred_filename = 'user_info.json'
-    env_name = "PYPE_USERNAME"
+    env_name = "OPENPYPE_USERNAME"
 
     name = "user"
 
