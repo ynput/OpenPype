@@ -1,3 +1,4 @@
+import os
 import nuke
 from avalon.api import Session
 
@@ -7,10 +8,11 @@ from pype.tools import workfiles
 
 log = Logger().get_logger(__name__)
 
+menu_label = os.environ["AVALON_LABEL"]
 
 def install():
     menubar = nuke.menu("Nuke")
-    menu = menubar.findItem(Session["AVALON_LABEL"])
+    menu = menubar.findItem(menu_label)
 
     # replace reset resolution from avalon core to pype's
     name = "Work Files..."
@@ -90,7 +92,7 @@ def install():
 def uninstall():
 
     menubar = nuke.menu("Nuke")
-    menu = menubar.findItem(Session["AVALON_LABEL"])
+    menu = menubar.findItem(menu_label)
 
     for item in menu.items():
         log.info("Removing menu item: {}".format(item.name()))
@@ -99,7 +101,7 @@ def uninstall():
 
 def add_shortcuts_from_presets():
     menubar = nuke.menu("Nuke")
-    nuke_presets = get_current_project_settings()["nuke"]
+    nuke_presets = get_current_project_settings()["nuke"]["general"]
 
     if nuke_presets.get("menu"):
         menu_label_mapping = {
@@ -109,15 +111,18 @@ def add_shortcuts_from_presets():
             "build_workfile": "Build Workfile",
             "publish": "Publish..."
         }
-        for menu_name, menuitems in nuke_presets.get("menu").items():
-            menu = menubar.findItem(menu_name)
-            for mitem_name, shortcut in menuitems.items():
-                log.info("Adding Shortcut `{}` to `{}`".format(
-                    shortcut, mitem_name
-                ))
-                try:
-                    item_label = menu_label_mapping[mitem_name]
-                    menuitem = menu.findItem(item_label)
-                    menuitem.setShortcut(shortcut)
-                except AttributeError as e:
-                    log.error(e)
+
+        for command_name, shortcut_str in nuke_presets.get("menu").items():
+            log.info("menu_name `{}` | menu_label `{}`".format(
+                command_name, menu_label
+            ))
+            log.info("Adding Shortcut `{}` to `{}`".format(
+                shortcut_str, command_name
+            ))
+            try:
+                menu = menubar.findItem(menu_label)
+                item_label = menu_label_mapping[command_name]
+                menuitem = menu.findItem(item_label)
+                menuitem.setShortcut(shortcut_str)
+            except AttributeError as e:
+                log.error(e)
