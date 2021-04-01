@@ -5,9 +5,9 @@
 [submodule "repos/avalon-unreal-integration"]
 	path = repos/avalon-unreal-integration
 	url = git@github.com:pypeclub/avalon-unreal-integration.git
-[submodule "pype/modules/ftrack/python2_vendor/ftrack-python-api"]
-	path = pype/modules/ftrack/python2_vendor/ftrack-python-api
+[submodule "openpype/modules/ftrack/python2_vendor/ftrack-python-api"]
+	path = openpype/modules/ftrack/python2_vendor/ftrack-python-api
 	url = https://bitbucket.org/ftrack/ftrack-python-api.git
-[submodule "pype/modules/ftrack/python2_vendor/arrow"]
-	path = pype/modules/ftrack/python2_vendor/arrow
+[submodule "openpype/modules/ftrack/python2_vendor/arrow"]
+	path = openpype/modules/ftrack/python2_vendor/arrow
 	url = git@github.com:arrow-py/arrow.git
