@@ -9,4 +9,4 @@ def load_stylesheet():
 
 
 def app_icon_path():
-    return os.path.join(os.path.dirname(__file__), "pype_icon.png")
+    return os.path.join(os.path.dirname(__file__), "openpype_icon.png")
