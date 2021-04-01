@@ -6,6 +6,7 @@ Functions ``compose_url()`` and ``decompose_url()`` are the same as in
 version is decided.
 
 """
+import sys
 import os
 from typing import Dict, Union
 from urllib.parse import urlparse, parse_qs

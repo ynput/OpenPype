@@ -100,6 +100,7 @@ import subprocess
 import site
 from pathlib import Path
 
+
 # add dependencies folder to sys.pat for frozen code
 if getattr(sys, 'frozen', False):
     frozen_libs = os.path.normpath(
@@ -568,9 +569,13 @@ def boot():
     else:
         os.environ["PYPE_ROOT"] = os.path.dirname(__file__)
 
-    # Get OpenPype path from database and set it to environment so OpenPype
-    # can find its versions there and bootstrap them.
+    # Get Pype path from database and set it to environment so Pype can
+    # find its versions there and bootstrap them.
+
     openpype_path = get_pype_path_from_db(openpype_mongo)
+    if not openpype_path:
+        print("*** Cannot get Pype path from database.")
+
     if not os.getenv("PYPE_PATH") and openpype_path:
         os.environ["PYPE_PATH"] = openpype_path
 
