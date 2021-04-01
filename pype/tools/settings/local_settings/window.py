@@ -158,7 +158,7 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
         self.resize(1000, 600)
 
-        self.setWindowTitle("Pype Local settings")
+        self.setWindowTitle("OpenPype Local settings")
 
         stylesheet = style.load_stylesheet()
         self.setStyleSheet(stylesheet)
