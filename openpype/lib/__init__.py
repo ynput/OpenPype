@@ -24,7 +24,7 @@ from .mongo import (
     compose_url,
     get_default_components,
     validate_mongo_connection,
-    PypeMongoConnection
+    OpenPypeMongoConnection
 )
 from .anatomy import (
     merge_dict,
@@ -213,7 +213,7 @@ __all__ = [
     "compose_url",
     "get_default_components",
     "validate_mongo_connection",
-    "PypeMongoConnection",
+    "OpenPypeMongoConnection",
 
     "IniSettingRegistry",
     "JSONSettingRegistry",

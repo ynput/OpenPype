@@ -561,6 +561,7 @@ def boot():
         sys.exit(1)
 
     os.environ["OPENPYPE_MONGO"] = openpype_mongo
+    os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"  # name of Pype database
 
     # ------------------------------------------------------------------------
     # Set environments - load OpenPype path from database (if set)

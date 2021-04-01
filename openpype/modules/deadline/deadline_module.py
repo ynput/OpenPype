@@ -13,7 +13,7 @@ class DeadlineModule(PypeModule, IPluginPaths):
         self.deadline_url = deadline_settings["DEADLINE_REST_URL"]
 
     def get_global_environments(self):
-        """Deadline global environments for pype implementation."""
+        """Deadline global environments for OpenPype implementation."""
         return {
             "DEADLINE_REST_URL": self.deadline_url
         }

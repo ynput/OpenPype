@@ -98,7 +98,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     label = "Submit image sequence jobs to Deadline or Muster"
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
-    deadline_plugin = "Pype"
+    deadline_plugin = "OpenPype"
 
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 

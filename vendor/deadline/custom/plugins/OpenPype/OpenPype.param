@@ -7,18 +7,9 @@ Index=0
 Default=OpenPype Plugin for Deadline
 Description=Not configurable
 
-[ConcurrentTasks]
-Type=label
-Label=ConcurrentTasks
-Category=About Plugin
-CategoryOrder=-1
-Index=0
-Default=True
-Description=Not configurable
-
-[OpenPype_Executable_3_0]
+[OpenPypeExecutable]
 Type=multilinemultifilename
-Label=OpenPype 3.0 Executable
+Label=OpenPype Executable
 Category=OpenPype Executables
 CategoryOrder=0
 Index=0

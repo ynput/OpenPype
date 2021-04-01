@@ -16,7 +16,7 @@ import ftrack_api
 import pymongo
 from openpype.lib import (
     get_pype_execute_args,
-    PypeMongoConnection
+    OpenPypeMongoConnection
 )
 from openpype.modules.ftrack import FTRACK_MODULE_DIR
 from openpype.modules.ftrack.lib import (
@@ -181,7 +181,7 @@ def main_loop(ftrack_url):
 
     os.environ["FTRACK_EVENT_SUB_ID"] = str(uuid.uuid1())
 
-    mongo_uri = PypeMongoConnection.get_default_mongo_url()
+    mongo_uri = OpenPypeMongoConnection.get_default_mongo_url()
 
     # Current file
     scripts_dir = os.path.join(FTRACK_MODULE_DIR, "scripts")

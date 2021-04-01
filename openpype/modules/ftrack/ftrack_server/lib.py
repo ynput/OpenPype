@@ -24,7 +24,7 @@ except ImportError:
     from ftrack_api._weakref import WeakMethod
 from openpype.modules.ftrack.lib import get_ftrack_event_mongo_info
 
-from openpype.lib import PypeMongoConnection
+from openpype.lib import OpenPypeMongoConnection
 from openpype.api import Logger
 
 TOPIC_STATUS_SERVER = "pype.event.server.status"
@@ -144,14 +144,14 @@ class ProcessEventHub(SocketBaseEventHub):
     def prepare_dbcon(self):
         try:
             database_name, collection_name = get_ftrack_event_mongo_info()
-            mongo_client = PypeMongoConnection.get_mongo_client()
+            mongo_client = OpenPypeMongoConnection.get_mongo_client()
             self.dbcon = mongo_client[database_name][collection_name]
             self.mongo_client = mongo_client
 
         except pymongo.errors.AutoReconnect:
             self.pypelog.error((
                 "Mongo server \"{}\" is not responding, exiting."
-            ).format(PypeMongoConnection.get_default_mongo_url()))
+            ).format(OpenPypeMongoConnection.get_default_mongo_url()))
             sys.exit(0)
 
         except pymongo.errors.OperationFailure:
