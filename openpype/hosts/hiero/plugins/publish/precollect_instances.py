@@ -2,7 +2,7 @@ from compiler.ast import flatten
 from pyblish import api
 from openpype.hosts.hiero import api as phiero
 import hiero
-# from pype.hosts.hiero.api import lib
+# from openpype.hosts.hiero.api import lib
 # reload(lib)
 # reload(phiero)
 

@@ -136,13 +136,13 @@ def on_open(_):
     from openpype.widgets import popup
 
     cmds.evalDeferred(
-        "from pype.hosts.maya.api import lib;"
+        "from openpype.hosts.maya.api import lib;"
         "lib.remove_render_layer_observer()")
     cmds.evalDeferred(
-        "from pype.hosts.maya.api import lib;"
+        "from openpype.hosts.maya.api import lib;"
         "lib.add_render_layer_observer()")
     cmds.evalDeferred(
-        "from pype.hosts.maya.api import lib;"
+        "from openpype.hosts.maya.api import lib;"
         "lib.add_render_layer_change_observer()")
     # # Update current task for the current scene
     # update_task_from_path(cmds.file(query=True, sceneName=True))
@@ -183,13 +183,13 @@ def on_new(_):
     avalon.logger.info("Running callback on new..")
     with suspended_refresh():
         cmds.evalDeferred(
-            "from pype.hosts.maya.api import lib;"
+            "from openpype.hosts.maya.api import lib;"
             "lib.remove_render_layer_observer()")
         cmds.evalDeferred(
-            "from pype.hosts.maya.api import lib;"
+            "from openpype.hosts.maya.api import lib;"
             "lib.add_render_layer_observer()")
         cmds.evalDeferred(
-            "from pype.hosts.maya.api import lib;"
+            "from openpype.hosts.maya.api import lib;"
             "lib.add_render_layer_change_observer()")
         lib.set_context_settings()
 
