@@ -32,7 +32,7 @@ def get_liberation_font_path(bold=False, italic=False):
 
 def pype_icon_filepath(debug=None):
     if debug is None:
-        debug = bool(os.getenv("PYPE_DEV"))
+        debug = bool(os.getenv("OPENPYPE_DEV"))
 
     if debug:
         icon_file_name = "openpype_icon_staging.png"
@@ -43,7 +43,7 @@ def pype_icon_filepath(debug=None):
 
 def pype_splash_filepath(debug=None):
     if debug is None:
-        debug = bool(os.getenv("PYPE_DEV"))
+        debug = bool(os.getenv("OPENPYPE_DEV"))
 
     if debug:
         splash_file_name = "openpype_splash_staging.png"

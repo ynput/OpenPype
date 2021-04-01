@@ -3,19 +3,19 @@
     "studio_code": "stu",
     "environment": {
         "FFMPEG_PATH": {
-            "windows": "{PYPE_ROOT}/vendor/bin/ffmpeg_exec/windows/bin",
-            "darwin": "{PYPE_ROOT}/vendor/bin/ffmpeg_exec/darwin/bin",
-            "linux": ":{PYPE_ROOT}/vendor/bin/ffmpeg_exec/linux"
+            "windows": "{OPENPYPE_ROOT}/vendor/bin/ffmpeg_exec/windows/bin",
+            "darwin": "{OPENPYPE_ROOT}/vendor/bin/ffmpeg_exec/darwin/bin",
+            "linux": ":{OPENPYPE_ROOT}/vendor/bin/ffmpeg_exec/linux"
         },
-        "PYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
+        "OPENPYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
         "__environment_keys__": {
             "global": [
                 "FFMPEG_PATH",
-                "PYPE_OCIO_CONFIG"
+                "OPENPYPE_OCIO_CONFIG"
             ]
         }
     },
-    "pype_path": {
+    "openpype_path": {
         "windows": [],
         "darwin": [],
         "linux": []

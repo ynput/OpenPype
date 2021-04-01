@@ -1,11 +1,11 @@
 """
 Logging to console and to mongo. For mongo logging, you need to set either
-``PYPE_LOG_MONGO_URL`` to something like:
+``OPENPYPE_LOG_MONGO_URL`` to something like:
 
 .. example::
    mongo://user:password@hostname:port/database/collection?authSource=avalon
 
-or set ``PYPE_LOG_MONGO_HOST`` and other variables.
+or set ``OPENPYPE_LOG_MONGO_HOST`` and other variables.
 See :func:`_mongo_settings`
 
 Best place for it is in ``repos/pype-config/environments/global.json``
@@ -207,7 +207,7 @@ class PypeLogger:
     # Collection name under database in Mongo
     log_collection_name = "logs"
 
-    # PYPE_DEBUG
+    # OPENPYPE_DEBUG
     pype_debug = 0
 
     # Data same for all record documents
@@ -335,7 +335,7 @@ class PypeLogger:
             #   like Ftrack event server has 3 other subprocesses that should
             #   use same mongo id
             if use_mongo_logging:
-                mongo_id = os.environ.pop("PYPE_PROCESS_MONGO_ID", None)
+                mongo_id = os.environ.pop("OPENPYPE_PROCESS_MONGO_ID", None)
                 if not mongo_id:
                     # Create new object id
                     mongo_id = ObjectId()
@@ -347,11 +347,11 @@ class PypeLogger:
         # Store result to class definition
         cls.use_mongo_logging = use_mongo_logging
 
-        # Define if is in PYPE_DEBUG mode
-        cls.pype_debug = int(os.getenv("PYPE_DEBUG") or "0")
+        # Define if is in OPENPYPE_DEBUG mode
+        cls.pype_debug = int(os.getenv("OPENPYPE_DEBUG") or "0")
 
         # Mongo URL where logs will be stored
-        cls.log_mongo_url = os.environ.get("PYPE_MONGO")
+        cls.log_mongo_url = os.environ.get("OPENPYPE_MONGO")
 
         if not cls.log_mongo_url:
             cls.use_mongo_logging = False

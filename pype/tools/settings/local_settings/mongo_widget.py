@@ -5,16 +5,16 @@ import traceback
 from Qt import QtWidgets
 from pymongo.errors import ServerSelectionTimeoutError
 
-from pype.api import change_pype_mongo_url
+from pype.api import change_openpype_mongo_url
 
 
-class PypeMongoWidget(QtWidgets.QWidget):
+class OpenPypeMongoWidget(QtWidgets.QWidget):
     def __init__(self, parent):
-        super(PypeMongoWidget, self).__init__(parent)
+        super(OpenPypeMongoWidget, self).__init__(parent)
 
         # Warning label
         warning_label = QtWidgets.QLabel((
-            "WARNING: Requires restart. Change of Pype Mongo requires to"
+            "WARNING: Requires restart. Change of OpenPype Mongo requires to"
             " restart of all running Pype processes and process using Pype"
             " (Including this)."
             "\n- all changes in different categories won't be saved."
@@ -22,12 +22,12 @@ class PypeMongoWidget(QtWidgets.QWidget):
         warning_label.setStyleSheet("font-weight: bold;")
 
         # Label
-        mongo_url_label = QtWidgets.QLabel("Pype Mongo URL", self)
+        mongo_url_label = QtWidgets.QLabel("OpenPype Mongo URL", self)
 
         # Input
         mongo_url_input = QtWidgets.QLineEdit(self)
-        mongo_url_input.setPlaceholderText("< Pype Mongo URL >")
-        mongo_url_input.setText(os.environ["PYPE_MONGO"])
+        mongo_url_input.setPlaceholderText("< OpenPype Mongo URL >")
+        mongo_url_input.setText(os.environ["OPENPYPE_MONGO"])
 
         # Confirm button
         mongo_url_change_btn = QtWidgets.QPushButton("Confirm Change", self)
@@ -48,14 +48,14 @@ class PypeMongoWidget(QtWidgets.QWidget):
 
         dialog = QtWidgets.QMessageBox(self)
 
-        title = "Pype mongo changed"
+        title = "OpenPype mongo changed"
         message = (
-            "Pype mongo url was successfully changed. Restart Pype please."
+            "OpenPype mongo url was successfully changed. Restart Pype please."
         )
         details = None
 
         try:
-            change_pype_mongo_url(value)
+            change_openpype_mongo_url(value)
         except Exception as exc:
             if isinstance(exc, ServerSelectionTimeoutError):
                 error_message = (
@@ -65,10 +65,10 @@ class PypeMongoWidget(QtWidgets.QWidget):
             else:
                 error_message = str(exc)
 
-            title = "Pype mongo change failed"
+            title = "OpenPype mongo change failed"
             # TODO catch exception message more gracefully
             message = (
-                "Pype mongo change was not successful."
+                "OpenPype mongo change was not successful."
                 " Full traceback can be found in details section.\n\n"
                 "Error message:\n{}"
             ).format(error_message)

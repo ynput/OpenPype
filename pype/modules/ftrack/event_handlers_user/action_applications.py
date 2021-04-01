@@ -26,7 +26,7 @@ class AppplicationsAction(BaseAction):
     type = "Application"
     label = "Application action"
     identifier = "pype_app.{}.".format(str(uuid4()))
-    icon_url = os.environ.get("PYPE_STATICS_SERVER")
+    icon_url = os.environ.get("OPENPYPE_STATICS_SERVER")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

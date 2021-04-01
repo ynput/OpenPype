@@ -156,7 +156,7 @@ class Anatomy:
         return self._roots_obj
 
     def root_environments(self):
-        """Return PYPE_ROOT_* environments for current project in dict."""
+        """Return OPENPYPE_ROOT_* environments for current project in dict."""
         return self._roots_obj.root_environments()
 
     def root_environmets_fill_data(self, template=None):
@@ -181,7 +181,7 @@ class Anatomy:
         return self.roots_obj.all_root_paths()
 
     def set_root_environments(self):
-        """Set PYPE_ROOT_* environments for current project."""
+        """Set OPENPYPE_ROOT_* environments for current project."""
         self._roots_obj.set_root_environments()
 
     def root_names(self):
@@ -320,7 +320,7 @@ class Anatomy:
         "<{}>"
 
         ## Output
-        "<PYPE_PROJECT_ROOT_NAS>/project/asset/task/animation_v001.ma"
+        "<OPENPYPE_PROJECT_ROOT_NAS>/project/asset/task/animation_v001.ma"
 
         Args:
             filepath (str): Full file path where root should be replaced.
@@ -1359,7 +1359,7 @@ class Roots:
         anatomy Anatomy: Anatomy object created for a specific project.
     """
 
-    env_prefix = "PYPE_PROJECT_ROOT"
+    env_prefix = "OPENPYPE_PROJECT_ROOT"
     roots_filename = "roots.json"
 
     def __init__(self, anatomy):
@@ -1465,7 +1465,8 @@ class Roots:
     def root_environments(self):
         """Use root keys to create unique keys for environment variables.
 
-        Concatenates prefix "PYPE_ROOT" with root keys to create unique keys.
+        Concatenates prefix "OPENPYPE_ROOT" with root keys to create unique
+        keys.
 
         Returns:
             dict: Result is `{(str): (str)}` dicitonary where key represents
@@ -1487,13 +1488,13 @@ class Roots:
 
             Result on windows platform::
                 {
-                    "PYPE_ROOT_WORK": "P:/projects/work",
-                    "PYPE_ROOT_PUBLISH": "P:/projects/publish"
+                    "OPENPYPE_ROOT_WORK": "P:/projects/work",
+                    "OPENPYPE_ROOT_PUBLISH": "P:/projects/publish"
                 }
 
             Short example when multiroot is not used::
                 {
-                    "PYPE_ROOT": "P:/projects"
+                    "OPENPYPE_ROOT": "P:/projects"
                 }
         """
         return self._root_environments()

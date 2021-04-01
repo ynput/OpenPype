@@ -1,21 +1,21 @@
 [
     {
         "type": "action",
-        "command": "$PYPE_SCRIPTS\\others\\save_scene_incremental.py",
+        "command": "$OPENPYPE_SCRIPTS\\others\\save_scene_incremental.py",
         "sourcetype": "file",
         "title": "# Version Up",
         "tooltip": "Incremental save with a specific format"
     },
     {
         "type": "action",
-        "command": "$PYPE_SCRIPTS\\others\\open_current_folder.py",
+        "command": "$OPENPYPE_SCRIPTS\\others\\open_current_folder.py",
         "sourcetype": "file",
         "title": "Open working folder..",
         "tooltip": "Show current scene in Explorer"
     },
     {
         "type": "action",
-        "command": "$PYPE_SCRIPTS\\avalon\\launch_manager.py",
+        "command": "$OPENPYPE_SCRIPTS\\avalon\\launch_manager.py",
         "sourcetype": "file",
         "title": "# Project Manager",
         "tooltip": "Add assets to the project"
@@ -44,7 +44,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\modeling\\separateMeshPerShader.py",
+                "command": "$OPENPYPE_SCRIPTS\\modeling\\separateMeshPerShader.py",
                 "sourcetype": "file",
                 "tags": ["modeling", "separateMeshPerShader"],
                 "title": "# Separate Mesh Per Shader",
@@ -52,7 +52,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\modeling\\polyDetachSeparate.py",
+                "command": "$OPENPYPE_SCRIPTS\\modeling\\polyDetachSeparate.py",
                 "sourcetype": "file",
                 "tags": ["modeling", "poly", "detach", "separate"],
                 "title": "# Polygon Detach and Separate",
@@ -60,14 +60,14 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\modeling\\polySelectEveryNthEdgeUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\modeling\\polySelectEveryNthEdgeUI.py",
                 "sourcetype": "file",
                 "tags": ["modeling", "select", "nth", "edge", "ui"],
                 "title": "# Select Every Nth Edge"
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\modeling\\djPFXUVs.py",
+                "command": "$OPENPYPE_SCRIPTS\\modeling\\djPFXUVs.py",
                 "sourcetype": "file",
                 "tags": ["modeling", "djPFX", "UVs"],
                 "title": "# dj PFX UVs",
@@ -81,7 +81,7 @@
         "items": [
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\rigging\\advancedSkeleton.py",
+                "command": "$OPENPYPE_SCRIPTS\\rigging\\advancedSkeleton.py",
                 "sourcetype": "file",
                 "tags": [
                     "rigging",
@@ -106,7 +106,7 @@
                     {
                         "type": "action",
                         "title": "# Import Proxies",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\vrayImportProxies.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\vrayImportProxies.py",
                         "sourcetype": "file",
                         "tags": ["shading", "vray", "import", "proxies"],
                         "tooltip": ""
@@ -117,7 +117,7 @@
                     {
                         "type": "action",
                         "title": "# Select All GES",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\selectAllGES.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\selectAllGES.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": ["shading", "vray", "select All GES"]
@@ -125,7 +125,7 @@
                     {
                         "type": "action",
                         "title": "# Select All GES Under Selection",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\selectAllGESUnderSelection.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\selectAllGESUnderSelection.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": ["shading", "vray", "select", "all", "GES"]
@@ -136,7 +136,7 @@
                     {
                         "type": "action",
                         "title": "# Selection To VRay Mesh",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\selectionToVrayMesh.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\selectionToVrayMesh.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": ["shading", "vray", "selection", "vraymesh"]
@@ -144,7 +144,7 @@
                     {
                         "type": "action",
                         "title": "# Add VRay Round Edges Attribute",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\addVrayRoundEdgesAttribute.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\addVrayRoundEdgesAttribute.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": ["shading", "vray", "round edges", "attribute"]
@@ -152,7 +152,7 @@
                     {
                         "type": "action",
                         "title": "# Add Gamma",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\vrayAddGamma.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\vrayAddGamma.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": ["shading", "vray", "add gamma"]
@@ -162,7 +162,7 @@
                     },
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\select_vraymesh_materials_with_unconnected_shader_slots.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\select_vraymesh_materials_with_unconnected_shader_slots.py",
                         "sourcetype": "file",
                         "title": "# Select Unconnected Shader Materials",
                         "tags": [
@@ -177,7 +177,7 @@
                     },
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\vrayMergeSimilarVRayMeshMaterials.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\vrayMergeSimilarVRayMeshMaterials.py",
                         "sourcetype": "file",
                         "title": "# Merge Similar VRay Mesh Materials",
                         "tags": [
@@ -192,7 +192,7 @@
                     {
                         "type": "action",
                         "title": "# Create Two Sided Material",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\vrayCreate2SidedMtlForSelectedMtlRenamed.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\vrayCreate2SidedMtlForSelectedMtlRenamed.py",
                         "sourcetype": "file",
                         "tooltip": "Creates two sided material for selected material and renames it",
                         "tags": ["shading", "vray", "two sided", "material"]
@@ -200,7 +200,7 @@
                     {
                         "type": "action",
                         "title": "# Create Two Sided Material For Selected",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\vrayCreate2SidedMtlForSelectedMtl.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\vrayCreate2SidedMtlForSelectedMtl.py",
                         "sourcetype": "file",
                         "tooltip": "Select material to create a two sided version from it",
                         "tags": [
@@ -215,7 +215,7 @@
                     {
                         "type": "action",
                         "title": "# Add OpenSubdiv Attribute",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\addVrayOpenSubdivAttribute.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\addVrayOpenSubdivAttribute.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": [
@@ -229,7 +229,7 @@
                     {
                         "type": "action",
                         "title": "# Remove OpenSubdiv Attribute",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\removeVrayOpenSubdivAttribute.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\removeVrayOpenSubdivAttribute.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": [
@@ -246,7 +246,7 @@
                     {
                         "type": "action",
                         "title": "# Add Subdivision Attribute",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\addVraySubdivisionAttribute.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\addVraySubdivisionAttribute.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": [
@@ -258,7 +258,7 @@
                     {
                         "type": "action",
                         "title": "# Remove Subdivision Attribute.py",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\removeVraySubdivisionAttribute.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\removeVraySubdivisionAttribute.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": [
@@ -275,7 +275,7 @@
                     {
                         "type": "action",
                         "title": "# Add Vray Object Ids",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\addVrayObjectIds.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\addVrayObjectIds.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": ["shading", "vray", "add", "object id"]
@@ -283,7 +283,7 @@
                     {
                         "type": "action",
                         "title": "# Add Vray Material Ids",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\addVrayMaterialIds.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\addVrayMaterialIds.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": ["shading", "vray", "addVrayMaterialIds.py"]
@@ -294,7 +294,7 @@
                     {
                         "type": "action",
                         "title": "# Set Physical DOF Depth",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\vrayPhysicalDOFSetDepth.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\vrayPhysicalDOFSetDepth.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": ["shading", "vray", "physical", "DOF ", "Depth"]
@@ -302,7 +302,7 @@
                     {
                         "type": "action",
                         "title": "# Magic Vray Proxy UI",
-                        "command": "$PYPE_SCRIPTS\\shading\\vray\\magicVrayProxyUI.py",
+                        "command": "$OPENPYPE_SCRIPTS\\shading\\vray\\magicVrayProxyUI.py",
                         "sourcetype": "file",
                         "tooltip": "",
                         "tags": ["shading", "vray", "magicVrayProxyUI"]
@@ -311,7 +311,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\pyblish\\lighting\\set_filename_prefix.py",
+                "command": "$OPENPYPE_SCRIPTS\\pyblish\\lighting\\set_filename_prefix.py",
                 "sourcetype": "file",
                 "tags": [
                     "shading",
@@ -335,7 +335,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\shading\\LightLinkUi.py",
+                "command": "$OPENPYPE_SCRIPTS\\shading\\LightLinkUi.py",
                 "sourcetype": "file",
                 "tags": ["shading", "light", "link", "ui"],
                 "title": "# Light Link UI",
@@ -343,7 +343,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\shading\\vdviewer_ui.py",
+                "command": "$OPENPYPE_SCRIPTS\\shading\\vdviewer_ui.py",
                 "sourcetype": "file",
                 "tags": [
                     "shading",
@@ -358,7 +358,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\shading\\setTexturePreviewToCLRImage.py",
+                "command": "$OPENPYPE_SCRIPTS\\shading\\setTexturePreviewToCLRImage.py",
                 "sourcetype": "file",
                 "tags": ["shading", "CLRImage", "textures", "preview"],
                 "title": "# Set Texture Preview To CLRImage",
@@ -366,7 +366,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\shading\\fixDefaultShaderSetBehavior.py",
+                "command": "$OPENPYPE_SCRIPTS\\shading\\fixDefaultShaderSetBehavior.py",
                 "sourcetype": "file",
                 "tags": ["shading", "fix", "DefaultShaderSet", "Behavior"],
                 "title": "# Fix Default Shader Set Behavior",
@@ -374,7 +374,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\shading\\fixSelectedShapesReferenceAssignments.py",
+                "command": "$OPENPYPE_SCRIPTS\\shading\\fixSelectedShapesReferenceAssignments.py",
                 "sourcetype": "file",
                 "tags": [
                     "shading",
@@ -389,7 +389,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\shading\\selectLambert1Members.py",
+                "command": "$OPENPYPE_SCRIPTS\\shading\\selectLambert1Members.py",
                 "sourcetype": "file",
                 "tags": ["shading", "selectLambert1Members"],
                 "title": "# Select Lambert1 Members",
@@ -397,7 +397,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\shading\\selectShapesWithoutShader.py",
+                "command": "$OPENPYPE_SCRIPTS\\shading\\selectShapesWithoutShader.py",
                 "sourcetype": "file",
                 "tags": ["shading", "selectShapesWithoutShader"],
                 "title": "# Select Shapes Without Shader",
@@ -405,7 +405,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\shading\\fixRenderLayerOutAdjustmentErrors.py",
+                "command": "$OPENPYPE_SCRIPTS\\shading\\fixRenderLayerOutAdjustmentErrors.py",
                 "sourcetype": "file",
                 "tags": ["shading", "fixRenderLayerOutAdjustmentErrors"],
                 "title": "# Fix RenderLayer Out Adjustment Errors",
@@ -413,7 +413,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\shading\\fix_renderlayer_missing_node_override.py",
+                "command": "$OPENPYPE_SCRIPTS\\shading\\fix_renderlayer_missing_node_override.py",
                 "sourcetype": "file",
                 "tags": [
                     "shading",
@@ -429,7 +429,7 @@
             {
                 "type": "action",
                 "title": "# Image 2 Tiled EXR",
-                "command": "$PYPE_SCRIPTS\\shading\\open_img2exr.py",
+                "command": "$OPENPYPE_SCRIPTS\\shading\\open_img2exr.py",
                 "sourcetype": "file",
                 "tooltip": "",
                 "tags": ["shading", "vray", "exr"]
@@ -442,7 +442,7 @@
         "items": [
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\pyblish\\open_deadline_submission_settings.py",
+                "command": "$OPENPYPE_SCRIPTS\\pyblish\\open_deadline_submission_settings.py",
                 "sourcetype": "file",
                 "tags": ["settings", "deadline", "globals", "render"],
                 "title": "# DL Submission Settings UI",
@@ -461,7 +461,7 @@
                 "items": [
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\animation\\attributes\\copyValues.py",
+                        "command": "$OPENPYPE_SCRIPTS\\animation\\attributes\\copyValues.py",
                         "sourcetype": "file",
                         "tags": ["animation", "copy", "attributes"],
                         "title": "# Copy Values",
@@ -469,7 +469,7 @@
                     },
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\animation\\attributes\\copyInConnections.py",
+                        "command": "$OPENPYPE_SCRIPTS\\animation\\attributes\\copyInConnections.py",
                         "sourcetype": "file",
                         "tags": [
                             "animation",
@@ -483,7 +483,7 @@
                     },
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\animation\\attributes\\copyOutConnections.py",
+                        "command": "$OPENPYPE_SCRIPTS\\animation\\attributes\\copyOutConnections.py",
                         "sourcetype": "file",
                         "tags": [
                             "animation",
@@ -497,7 +497,7 @@
                     },
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\animation\\attributes\\copyTransformLocal.py",
+                        "command": "$OPENPYPE_SCRIPTS\\animation\\attributes\\copyTransformLocal.py",
                         "sourcetype": "file",
                         "tags": [
                             "animation",
@@ -511,7 +511,7 @@
                     },
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\animation\\attributes\\copyTransformMatrix.py",
+                        "command": "$OPENPYPE_SCRIPTS\\animation\\attributes\\copyTransformMatrix.py",
                         "sourcetype": "file",
                         "tags": [
                             "animation",
@@ -525,7 +525,7 @@
                     },
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\animation\\attributes\\copyTransformUI.py",
+                        "command": "$OPENPYPE_SCRIPTS\\animation\\attributes\\copyTransformUI.py",
                         "sourcetype": "file",
                         "tags": [
                             "animation",
@@ -539,7 +539,7 @@
                     },
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\animation\\attributes\\simpleCopyUI.py",
+                        "command": "$OPENPYPE_SCRIPTS\\animation\\attributes\\simpleCopyUI.py",
                         "sourcetype": "file",
                         "tags": [
                             "animation",
@@ -561,7 +561,7 @@
                 "items": [
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\animation\\optimize\\toggleFreezeHierarchy.py",
+                        "command": "$OPENPYPE_SCRIPTS\\animation\\optimize\\toggleFreezeHierarchy.py",
                         "sourcetype": "file",
                         "tags": ["animation", "hierarchy", "toggle", "freeze"],
                         "title": "# Toggle Freeze Hierarchy",
@@ -569,7 +569,7 @@
                     },
                     {
                         "type": "action",
-                        "command": "$PYPE_SCRIPTS\\animation\\optimize\\toggleParallelNucleus.py",
+                        "command": "$OPENPYPE_SCRIPTS\\animation\\optimize\\toggleParallelNucleus.py",
                         "sourcetype": "file",
                         "tags": ["animation", "nucleus", "toggle", "parallel"],
                         "title": "# Toggle Parallel Nucleus",
@@ -579,21 +579,21 @@
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\bakeSelectedToWorldSpace.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\bakeSelectedToWorldSpace.py",
                 "tags": ["animation", "bake", "selection", "worldspace.py"],
                 "title": "# Bake Selected To Worldspace",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\timeStepper.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\timeStepper.py",
                 "tags": ["animation", "time", "stepper"],
                 "title": "# Time Stepper",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\capture_ui.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\capture_ui.py",
                 "tags": [
                     "animation",
                     "capture",
@@ -607,63 +607,63 @@
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\simplePlayblastUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\simplePlayblastUI.py",
                 "tags": ["animation", "simple", "playblast", "ui"],
                 "title": "# Simple Playblast UI",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\tweenMachineUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\tweenMachineUI.py",
                 "tags": ["animation", "tween", "machine"],
                 "title": "# Tween Machine UI",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\selectAllAnimationCurves.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\selectAllAnimationCurves.py",
                 "tags": ["animation", "select", "curves"],
                 "title": "# Select All Animation Curves",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\pathAnimation.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\pathAnimation.py",
                 "tags": ["animation", "path", "along"],
                 "title": "# Path Animation",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\offsetSelectedObjectsUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\offsetSelectedObjectsUI.py",
                 "tags": ["animation", "offsetSelectedObjectsUI.py"],
                 "title": "# Offset Selected Objects UI",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\key_amplifier_ui.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\key_amplifier_ui.py",
                 "tags": ["animation", "key", "amplifier"],
                 "title": "# Key Amplifier UI",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\anim_scene_optimizer.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\anim_scene_optimizer.py",
                 "tags": ["animation", "anim_scene_optimizer.py"],
                 "title": "# Anim_Scene_Optimizer",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\zvParentMaster.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\zvParentMaster.py",
                 "tags": ["animation", "zvParentMaster.py"],
                 "title": "# ZV Parent Master",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "$PYPE_SCRIPTS\\animation\\animLibrary.py",
+                "command": "$OPENPYPE_SCRIPTS\\animation\\animLibrary.py",
                 "tags": ["animation", "studiolibrary.py"],
                 "title": "Anim Library",
                 "type": "action"
@@ -676,7 +676,7 @@
         "items": [
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\alignDistributeUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\alignDistributeUI.py",
                 "sourcetype": "file",
                 "tags": ["layout", "align", "Distribute", "UI"],
                 "title": "# Align Distribute UI",
@@ -684,7 +684,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\alignSimpleUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\alignSimpleUI.py",
                 "sourcetype": "file",
                 "tags": ["layout", "align", "UI", "Simple"],
                 "title": "# Align Simple UI",
@@ -692,7 +692,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\center_locator.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\center_locator.py",
                 "sourcetype": "file",
                 "tags": ["layout", "center", "locator"],
                 "title": "# Center Locator",
@@ -700,7 +700,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\average_locator.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\average_locator.py",
                 "sourcetype": "file",
                 "tags": ["layout", "average", "locator"],
                 "title": "# Average Locator",
@@ -708,7 +708,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\selectWithinProximityUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\selectWithinProximityUI.py",
                 "sourcetype": "file",
                 "tags": ["layout", "select", "proximity", "ui"],
                 "title": "# Select Within Proximity UI",
@@ -716,7 +716,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\dupCurveUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\dupCurveUI.py",
                 "sourcetype": "file",
                 "tags": ["layout", "Duplicate", "Curve", "UI"],
                 "title": "# Duplicate Curve UI",
@@ -724,7 +724,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\randomDeselectUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\randomDeselectUI.py",
                 "sourcetype": "file",
                 "tags": ["layout", "random", "Deselect", "UI"],
                 "title": "# Random Deselect UI",
@@ -732,7 +732,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\multiReferencerUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\multiReferencerUI.py",
                 "sourcetype": "file",
                 "tags": ["layout", "multi", "reference"],
                 "title": "# Multi Referencer UI",
@@ -740,7 +740,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\duplicateOffsetUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\duplicateOffsetUI.py",
                 "sourcetype": "file",
                 "tags": ["layout", "duplicate", "offset", "UI"],
                 "title": "# Duplicate Offset UI",
@@ -748,7 +748,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\spPaint3d.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\spPaint3d.py",
                 "sourcetype": "file",
                 "tags": ["layout", "spPaint3d", "paint", "tool"],
                 "title": "# SP Paint 3d",
@@ -756,7 +756,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\randomizeUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\randomizeUI.py",
                 "sourcetype": "file",
                 "tags": ["layout", "randomize", "UI"],
                 "title": "# Randomize UI",
@@ -764,7 +764,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\layout\\distributeWithinObjectUI.py",
+                "command": "$OPENPYPE_SCRIPTS\\layout\\distributeWithinObjectUI.py",
                 "sourcetype": "file",
                 "tags": ["layout", "distribute", "ObjectUI", "within"],
                 "title": "# Distribute Within Object UI",
@@ -778,7 +778,7 @@
         "items": [
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\particles\\instancerToObjects.py",
+                "command": "$OPENPYPE_SCRIPTS\\particles\\instancerToObjects.py",
                 "sourcetype": "file",
                 "tags": ["particles", "instancerToObjects"],
                 "title": "# Instancer To Objects",
@@ -786,7 +786,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\particles\\instancerToObjectsInstances.py",
+                "command": "$OPENPYPE_SCRIPTS\\particles\\instancerToObjectsInstances.py",
                 "sourcetype": "file",
                 "tags": ["particles", "instancerToObjectsInstances"],
                 "title": "# Instancer To Objects Instances",
@@ -794,7 +794,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\particles\\instancerToObjectsInstancesWithAnimation.py",
+                "command": "$OPENPYPE_SCRIPTS\\particles\\instancerToObjectsInstancesWithAnimation.py",
                 "sourcetype": "file",
                 "tags": [
                     "particles",
@@ -805,7 +805,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\particles\\instancerToObjectsWithAnimation.py",
+                "command": "$OPENPYPE_SCRIPTS\\particles\\instancerToObjectsWithAnimation.py",
                 "sourcetype": "file",
                 "tags": ["particles", "instancerToObjectsWithAnimation"],
                 "title": "# Instancer To Objects With Animation",
@@ -819,7 +819,7 @@
         "items": [
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\repair_faulty_containers.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\repair_faulty_containers.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "repair", "containers"],
                 "title": "# Find and Repair Containers",
@@ -830,7 +830,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\removeNamespaces.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\removeNamespaces.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "remove", "namespaces"],
                 "title": "# Remove Namespaces",
@@ -838,7 +838,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\remove_user_defined_attributes.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\remove_user_defined_attributes.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "remove_user_defined_attributes"],
                 "title": "# Remove User Defined Attributes",
@@ -846,7 +846,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\removeUnknownNodes.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\removeUnknownNodes.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "removeUnknownNodes"],
                 "title": "# Remove Unknown Nodes",
@@ -854,7 +854,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\removeUnloadedReferences.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\removeUnloadedReferences.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "removeUnloadedReferences"],
                 "title": "# Remove Unloaded References",
@@ -862,7 +862,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\removeReferencesFailedEdits.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\removeReferencesFailedEdits.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "removeReferencesFailedEdits"],
                 "title": "# Remove References Failed Edits",
@@ -870,7 +870,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\remove_unused_looks.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\remove_unused_looks.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "removeUnusedLooks"],
                 "title": "# Remove Unused Looks",
@@ -881,7 +881,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\uniqifyNodeNames.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\uniqifyNodeNames.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "uniqifyNodeNames"],
                 "title": "# Uniqify Node Names",
@@ -889,7 +889,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\autoRenameFileNodes.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\autoRenameFileNodes.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "auto", "rename", "filenodes"],
                 "title": "# Auto Rename File Nodes",
@@ -897,7 +897,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\update_asset_id.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\update_asset_id.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "update", "database", "asset", "id"],
                 "title": "# Update Asset ID",
@@ -905,7 +905,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\ccRenameReplace.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\ccRenameReplace.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "rename", "ui"],
                 "title": "Renamer",
@@ -913,7 +913,7 @@
             },
             {
                 "type": "action",
-                "command": "$PYPE_SCRIPTS\\cleanup\\renameShapesToTransform.py",
+                "command": "$OPENPYPE_SCRIPTS\\cleanup\\renameShapesToTransform.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "renameShapesToTransform"],
                 "title": "# Rename Shapes To Transform",

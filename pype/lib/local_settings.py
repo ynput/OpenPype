@@ -213,7 +213,7 @@ class IniSettingRegistry(ASettingRegistry):
         # type: (str, str) -> IniSettingRegistry
         super(IniSettingRegistry, self).__init__(name)
         # get registry file
-        version = os.getenv("PYPE_VERSION", "N/A")
+        version = os.getenv("OPENPYPE_VERSION", "N/A")
         self._registry_file = os.path.join(path, "{}.ini".format(name))
         if not os.path.exists(self._registry_file):
             with open(self._registry_file, mode="w") as cfg:
@@ -369,7 +369,7 @@ class JSONSettingRegistry(ASettingRegistry):
         now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         header = {
             "__metadata__": {
-                "pype-version": os.getenv("PYPE_VERSION", "N/A"),
+                "pype-version": os.getenv("OPENPYPE_VERSION", "N/A"),
                 "generated": now
             },
             "registry": {}
@@ -496,10 +496,10 @@ def get_local_site_id():
         return _create_local_site_id()
 
 
-def change_pype_mongo_url(new_mongo_url):
+def change_openpype_mongo_url(new_mongo_url):
     """Change mongo url in pype registry.
 
-    Change of Pype mongo URL require restart of running pype processes or
+    Change of OpenPype mongo URL require restart of running pype processes or
     processes using pype.
     """
 

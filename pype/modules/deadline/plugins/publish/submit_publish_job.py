@@ -114,14 +114,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
-        "PYPE_METADATA_FILE",
+        "OPENPYPE_METADATA_FILE",
         "AVALON_PROJECT",
         "AVALON_ASSET",
         "AVALON_TASK",
         "AVALON_APP_NAME",
         "OPENPYPE_PUBLISH_JOB"
-        "PYPE_LOG_NO_COLORS",
-        "PYPE_USERNAME",
+
+        "OPENPYPE_LOG_NO_COLORS",
+        "OPENPYPE_USERNAME",
         "OPENPYPE_RENDER_JOB",
         "OPENPYPE_PUBLISH_JOB"
     ]
@@ -223,8 +224,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["AVALON_ASSET"] = io.Session["AVALON_ASSET"]
         environment["AVALON_TASK"] = io.Session["AVALON_TASK"]
         environment["AVALON_APP_NAME"] = os.environ.get("AVALON_APP_NAME")
-        environment["PYPE_LOG_NO_COLORS"] = "1"
-        environment["PYPE_USERNAME"] = instance.context.data["user"]
+        environment["OPENPYPE_LOG_NO_COLORS"] = "1"
+        environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
         environment["OPENPYPE_PUBLISH_JOB"] = "1"
         environment["OPENPYPE_RENDER_JOB"] = "0"
 

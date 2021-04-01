@@ -77,7 +77,7 @@ def compose_url(scheme=None,
 
 
 def get_default_components():
-    mongo_url = os.environ.get("PYPE_MONGO")
+    mongo_url = os.environ.get("OPENPYPE_MONGO")
     if mongo_url is None:
         raise MongoEnvNotSet(
             "URL for Mongo logging connection is not set."
@@ -139,7 +139,7 @@ class PypeMongoConnection:
 
     @staticmethod
     def get_default_mongo_url():
-        return os.environ["PYPE_MONGO"]
+        return os.environ["OPENPYPE_MONGO"]
 
     @classmethod
     def get_mongo_client(cls, mongo_url=None):

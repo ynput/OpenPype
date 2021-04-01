@@ -17,7 +17,7 @@ from .widgets import (
     SpacerWidget,
     ExpandingWidget
 )
-from .mongo_widget import PypeMongoWidget
+from .mongo_widget import OpenPypeMongoWidget
 from .general_widget import LocalGeneralWidgets
 from .apps_widget import LocalApplicationsWidgets
 from .projects_widget import ProjectSettingsWidget
@@ -62,7 +62,7 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         pype_mongo_layout.setContentsMargins(CHILD_OFFSET, 5, 0, 0)
         pype_mongo_expand_widget.set_content_widget(pype_mongo_content)
 
-        pype_mongo_widget = PypeMongoWidget(self)
+        pype_mongo_widget = OpenPypeMongoWidget(self)
         pype_mongo_layout.addWidget(pype_mongo_widget)
 
         self.main_layout.addWidget(pype_mongo_expand_widget)

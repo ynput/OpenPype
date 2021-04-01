@@ -273,9 +273,9 @@ class HarmonySubmitDeadline(
             "AVALON_ASSET",
             "AVALON_TASK",
             "AVALON_APP_NAME",
-            "PYPE_USERNAME",
-            "PYPE_DEV",
-            "PYPE_LOG_NO_COLORS"
+            "OPENPYPE_USERNAME",
+            "OPENPYPE_DEV",
+            "OPENPYPE_LOG_NO_COLORS"
         ]
 
         environment = dict({key: os.environ[key] for key in keys

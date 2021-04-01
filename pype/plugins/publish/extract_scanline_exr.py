@@ -45,7 +45,7 @@ class ExtractScanlineExr(pyblish.api.InstancePlugin):
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
 
-            oiio_tool_path = os.getenv("PYPE_OIIO_PATH", "")
+            oiio_tool_path = os.getenv("OPENPYPE_OIIO_PATH", "")
             if not os.path.exists(oiio_tool_path):
                 self.log.error(
                     "OIIO tool not found in {}".format(oiio_tool_path))

@@ -3,7 +3,7 @@ import hou
 
 
 def main():
-    print("Installing Avalon ...")
+    print("Installing OpenPype ...")
     api.install(houdini)
 
 

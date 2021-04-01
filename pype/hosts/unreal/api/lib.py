@@ -146,7 +146,7 @@ def create_unreal_project(project_name: str,
                      directory is not found in plugin folders as this indicates
                      this is only source distribution of the plugin. Dev mode
                      is also set by preset file `unreal/project_setup.json` in
-                     **PYPE_CONFIG**.
+                     **OPENPYPE_CONFIG**.
     :type dev_mode: bool
     :returns: None
     """
@@ -180,17 +180,17 @@ def create_unreal_project(project_name: str,
     }
 
     if preset["install_unreal_python_engine"]:
-        # If `PYPE_UNREAL_ENGINE_PYTHON_PLUGIN` is set, copy it from there to
-        # support offline installation.
+        # If `OPENPYPE_UNREAL_ENGINE_PYTHON_PLUGIN` is set, copy it from there
+        # to support offline installation.
         # Otherwise clone UnrealEnginePython to Plugins directory
         # https://github.com/20tab/UnrealEnginePython.git
         uep_path = os.path.join(plugins_path, "UnrealEnginePython")
-        if os.environ.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
+        if os.environ.get("OPENPYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
 
             os.makedirs(uep_path, exist_ok=True)
             dir_util._path_created = {}
             dir_util.copy_tree(
-                os.environ.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
+                os.environ.get("OPENPYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
                 uep_path)
         else:
             # WARNING: this will trigger dev_mode, because we need to compile

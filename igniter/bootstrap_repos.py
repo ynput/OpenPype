@@ -625,7 +625,7 @@ class BootstrapRepos:
 
         Resolution order for Pype is following:
 
-            1) First we test for ``PYPE_PATH`` environment variable
+            1) First we test for ``OPENPYPE_PATH`` environment variable
             2) We try to find ``pypePath`` in registry setting
             3) We use user data directory
 
@@ -660,9 +660,9 @@ class BootstrapRepos:
         if pype_path:
             dir_to_search = pype_path
         else:
-            if os.getenv("PYPE_PATH"):
-                if Path(os.getenv("PYPE_PATH")).exists():
-                    dir_to_search = Path(os.getenv("PYPE_PATH"))
+            if os.getenv("OPENPYPE_PATH"):
+                if Path(os.getenv("OPENPYPE_PATH")).exists():
+                    dir_to_search = Path(os.getenv("OPENPYPE_PATH"))
             else:
                 try:
                     registry_dir = Path(
@@ -688,7 +688,7 @@ class BootstrapRepos:
         """Process user entered location string.
 
         It decides if location string is mongodb url or path.
-        If it is mongodb url, it will connect and load ``PYPE_PATH`` from
+        If it is mongodb url, it will connect and load ``OPENPYPE_PATH`` from
         there and use it as path to Pype. In it is _not_ mongodb url, it
         is assumed we have a path, this is tested and zip file is
         produced and installed using :meth:`create_version_from_live_code`.
@@ -706,7 +706,7 @@ class BootstrapRepos:
         if location.startswith("mongodb"):
             pype_path = get_pype_path_from_db(location)
             if not pype_path:
-                self._print("cannot find PYPE_PATH in settings.")
+                self._print("cannot find OPENPYPE_PATH in settings.")
                 return None
 
         # if not successful, consider location to be fs path.

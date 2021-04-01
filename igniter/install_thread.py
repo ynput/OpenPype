@@ -68,7 +68,7 @@ class InstallThread(QThread):
             # user did not entered url
             if not self._mongo:
                 # it not set in environment
-                if not os.getenv("PYPE_MONGO"):
+                if not os.getenv("OPENPYPE_MONGO"):
                     # try to get it from settings registry
                     try:
                         self._mongo = bs.registry.get_secure_item("pypeMongo")
@@ -78,12 +78,12 @@ class InstallThread(QThread):
                         self.finished.emit(InstallResult(-1))
                         return
                 else:
-                    self._mongo = os.getenv("PYPE_MONGO")
+                    self._mongo = os.getenv("OPENPYPE_MONGO")
             else:
                 self.message.emit("Saving mongo connection string ...", False)
                 bs.registry.set_secure_item("pypeMongo", self._mongo)
 
-            os.environ["PYPE_MONGO"] = self._mongo
+            os.environ["OPENPYPE_MONGO"] = self._mongo
 
             self.message.emit(
                 f"Detecting installed Pype versions in {bs.data_dir}", False)
@@ -160,7 +160,7 @@ class InstallThread(QThread):
             return
         else:
             # if we have mongo connection string, validate it, set it to
-            # user settings and get PYPE_PATH from there.
+            # user settings and get OPENPYPE_PATH from there.
             if self._mongo:
                 if not validate_mongo_connection(self._mongo):
                     self.message.emit(
@@ -168,7 +168,7 @@ class InstallThread(QThread):
                     self.finished.emit(InstallResult(-1))
                     return
                 bs.registry.set_secure_item("pypeMongo", self._mongo)
-                os.environ["PYPE_MONGO"] = self._mongo
+                os.environ["OPENPYPE_MONGO"] = self._mongo
 
             self.message.emit(f"processing {self._path}", True)
             repo_file = bs.process_entered_location(self._path)

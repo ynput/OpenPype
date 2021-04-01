@@ -44,5 +44,5 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
             of defense SSL is providing and it is not recommended.
         """
         if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
         return requests.get(*args, **kwargs)
