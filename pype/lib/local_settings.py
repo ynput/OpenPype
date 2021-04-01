@@ -496,10 +496,10 @@ def get_local_site_id():
         return _create_local_site_id()
 
 
-def change_pype_mongo_url(new_mongo_url):
+def change_openpype_mongo_url(new_mongo_url):
     """Change mongo url in pype registry.
 
-    Change of Pype mongo URL require restart of running pype processes or
+    Change of OpenPype mongo URL require restart of running pype processes or
     processes using pype.
     """
 
