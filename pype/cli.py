@@ -93,7 +93,7 @@ def eventserver(debug,
     provided credentials will be stored for later use.
     """
     if debug:
-        os.environ['PYPE_DEBUG'] = "3"
+        os.environ['OPENPYPE_DEBUG'] = "3"
 
     PypeCommands().launch_eventservercli(
         ftrack_url,
@@ -139,7 +139,7 @@ def publish(debug, paths):
     More than one path is allowed.
     """
     if debug:
-        os.environ['PYPE_DEBUG'] = '3'
+        os.environ['OPENPYPE_DEBUG'] = '3'
     PypeCommands.publish(list(paths))
 
 
@@ -164,7 +164,7 @@ def texturecopy(debug, project, asset, path):
     Nothing is written to database.
     """
     if debug:
-        os.environ['PYPE_DEBUG'] = '3'
+        os.environ['OPENPYPE_DEBUG'] = '3'
     PypeCommands().texture_copy(project, asset, path)
 
 
@@ -178,7 +178,7 @@ def texturecopy(debug, project, asset, path):
               default=lambda: os.environ.get('AVALON_TASK', ''))
 @click.option("--tools", help="List of tools to add")
 @click.option("--user", help="Pype user name",
-              default=lambda: os.environ.get('PYPE_USERNAME', ''))
+              default=lambda: os.environ.get('OPENPYPE_USERNAME', ''))
 @click.option("-fs",
               "--ftrack-server",
               help="Registered application name",
@@ -214,7 +214,7 @@ def launch(app, project, asset, task,
         os.environ["FTRACK_API_KEY"] = ftrack_key
 
     if user:
-        os.environ["PYPE_USERNAME"] = user
+        os.environ["OPENPYPE_USERNAME"] = user
 
     # test required
     if not project or not asset or not task:

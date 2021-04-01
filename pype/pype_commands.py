@@ -79,7 +79,7 @@ class PypeCommands:
         pyblish.api.register_target("filesequence")
         pyblish.api.register_host("shell")
 
-        os.environ["PYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
+        os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
 
         log.info("Running publish ...")
 

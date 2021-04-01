@@ -3,7 +3,7 @@
 
 Bootstrapping process of Pype is as follows:
 
-`PYPE_PATH` is checked for existence - either one from environment or
+`OPENPYPE_PATH` is checked for existence - either one from environment or
 from user settings. Precedence takes the one set by environment.
 
 On this path we try to find pype in directories version string in their names.
@@ -11,16 +11,16 @@ For example: `pype-v3.0.1-foo` is valid name, or even `foo_3.0.2` - as long
 as version can be determined from its name _AND_ file `pype/pype/version.py`
 can be found inside, it is considered Pype installation.
 
-If no Pype repositories are found in `PYPE_PATH` (user data dir)
+If no Pype repositories are found in `OPENPYPE_PATH` (user data dir)
 then **Igniter** (Pype setup tool) will launch its GUI.
 
-It can be used to specify `PYPE_PATH` or if it is _not_ specified, current
+It can be used to specify `OPENPYPE_PATH` or if it is _not_ specified, current
 *"live"* repositories will be used to create zip file and copy it to
 appdata dir in user home and extract it there. Version will be determined by
 version specified in Pype module.
 
 If Pype repository directories are found in default install location
-(user data dir) or in `PYPE_PATH`, it will get list of those dirs there and
+(user data dir) or in `OPENPYPE_PATH`, it will get list of those dirs there and
 use latest one or the one specified with optional `--use-version` command
 line argument. If the one specified doesn't exist then latest available
 version will be used. All repositories in that dir will be added
@@ -31,7 +31,7 @@ used. All directories under `repos` will be added to `sys.path` and
 `PYTHONPATH`.
 
 Pype depends on connection to `MongoDB`_. You can specify MongoDB connection
-string via `PYPE_MONGO` set in environment or it can be set in user
+string via `OPENPYPE_MONGO` set in environment or it can be set in user
 settings or via **Igniter** GUI.
 
 So, bootstrapping Pype looks like this::
@@ -40,7 +40,7 @@ So, bootstrapping Pype looks like this::
 
 +-------------------------------------------------------+
 | Determine MongoDB connection:                         |
-| Use `PYPE_MONGO`, system keyring `pypeMongo`          |
+| Use `OPENPYPE_MONGO`, system keyring `pypeMongo`      |
 +--------------------------|----------------------------+
                    .--- Found? --.
                  YES             NO
@@ -53,7 +53,7 @@ So, bootstrapping Pype looks like this::
                   |                                        |
 +-----------------v------------------------------------+   |
 | Get location of Pype:                                |   |
-|   1) Test for `PYPE_PATH` environment variable       |   |
+|   1) Test for `OPENPYPE_PATH` environment variable   |   |
 |   2) Test `pypePath` in registry setting             |   |
 |   3) Test user data directory                        |   |
 | ...................................................  |   |
@@ -67,7 +67,7 @@ So, bootstrapping Pype looks like this::
              YES                    NO                     |
               |                     |                      |
               |      +--------------v------------------+   |
-              |      | Look in `PYPE_PATH`, find       |   |
+              |      | Look in `OPENPYPE_PATH`, find   |   |
               |      | latest version and install it   |   |
               |      | to user data dir.               |   |
               |      +--------------|------------------+   |
@@ -191,7 +191,7 @@ def set_avalon_environments():
     # Avalon mongo URL
     avalon_mongo_url = (
         os.environ.get("AVALON_MONGO")
-        or os.environ["PYPE_MONGO"]
+        or os.environ["OPENPYPE_MONGO"]
     )
     os.environ.update({
         # Mongo url (use same as pype has)
@@ -379,7 +379,7 @@ def _find_frozen_pype(use_version: str = None,
             import igniter
             return_code = igniter.open_dialog()
             if return_code == 2:
-                os.environ["PYPE_TRYOUT"] = "1"
+                os.environ["OPENPYPE_TRYOUT"] = "1"
             if return_code == 3:
                 # run Pype after installation
 

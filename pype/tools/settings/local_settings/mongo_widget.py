@@ -27,7 +27,7 @@ class PypeMongoWidget(QtWidgets.QWidget):
         # Input
         mongo_url_input = QtWidgets.QLineEdit(self)
         mongo_url_input.setPlaceholderText("< Pype Mongo URL >")
-        mongo_url_input.setText(os.environ["PYPE_MONGO"])
+        mongo_url_input.setText(os.environ["OPENPYPE_MONGO"])
 
         # Confirm button
         mongo_url_change_btn = QtWidgets.QPushButton("Confirm Change", self)

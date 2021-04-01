@@ -77,8 +77,8 @@ class TrayManager:
         self.tray_widget.showMessage(*args, **kwargs)
 
     def _add_version_item(self):
-        subversion = os.environ.get("PYPE_SUBVERSION")
-        client_name = os.environ.get("PYPE_CLIENT")
+        subversion = os.environ.get("OPENPYPE_SUBVERSION")
+        client_name = os.environ.get("OPENPYPE_CLIENT")
 
         version_string = pype.version.__version__
         if subversion:
