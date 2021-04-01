@@ -31,9 +31,9 @@ log = Logger.get_logger(__name__)
 
 # Current schemas for avalon types
 EntitySchemas = {
-    "project": "pype:project-3.0",
-    "asset": "pype:asset-3.0",
-    "config": "pype:config-2.0"
+    "project": "openpype:project-3.0",
+    "asset": "openpype:asset-3.0",
+    "config": "openpype:config-2.0"
 }
 
 # Group name of custom attributes
