@@ -24,7 +24,7 @@ from .lib import (
     get_latest_version,
     get_global_environments,
     get_local_site_id,
-    change_pype_mongo_url
+    change_openpype_mongo_url
 )
 
 from .lib.mongo import (
@@ -120,5 +120,5 @@ __all__ = [
     "get_global_environments",
 
     "get_local_site_id",
-    "change_pype_mongo_url"
+    "change_openpype_mongo_url"
 ]
