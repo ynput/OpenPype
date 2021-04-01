@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 import six
 import pype
 from .constants import (
+    GLOBAL_SETTINGS_KEY,
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY,
@@ -224,6 +225,13 @@ class MongoSettingsHandler(SettingsHandler):
             self._prepare_project_settings_keys()
         return self._attribute_keys
 
+    def _prepare_global_settings(self, data):
+        output = {}
+        # Add "pype_path" key to global settings if is set
+        if "general" in data and "pype_path" in data["general"]:
+            output["pype_path"] = data["general"]["pype_path"]
+        return output
+
     def save_studio_settings(self, data):
         """Save studio overrides of system settings.
 
@@ -235,8 +243,8 @@ class MongoSettingsHandler(SettingsHandler):
         Args:
             data(dict): Data of studio overrides with override metadata.
         """
+        # Store system settings
         self.system_settings_cache.update_data(data)
-
         self.collection.replace_one(
             {
                 "type": SYSTEM_SETTINGS_KEY
@@ -244,6 +252,22 @@ class MongoSettingsHandler(SettingsHandler):
             {
                 "type": SYSTEM_SETTINGS_KEY,
                 "data": self.system_settings_cache.data
+            },
+            upsert=True
+        )
+
+        # Get global settings from system settings
+        global_settings = self._prepare_global_settings(
+            self.system_settings_cache.data
+        )
+        # Store global settings
+        self.collection.replace_one(
+            {
+                "type": GLOBAL_SETTINGS_KEY
+            },
+            {
+                "type": GLOBAL_SETTINGS_KEY,
+                "data": global_settings
             },
             upsert=True
         )

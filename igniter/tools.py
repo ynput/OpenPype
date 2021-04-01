@@ -6,6 +6,7 @@ Functions ``compose_url()`` and ``decompose_url()`` are the same as in
 version is decided.
 
 """
+import os
 from typing import Dict, Union
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
@@ -130,6 +131,7 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
     try:
         client = MongoClient(**mongo_args)
         client.server_info()
+        client.close()
     except ServerSelectionTimeoutError as e:
         return False, f"Cannot connect to server {cnx} - {e}"
     except ValueError:
@@ -185,73 +187,68 @@ def validate_path_string(path: str) -> (bool, str):
     return True, "valid path"
 
 
-def load_environments(sections: list = None) -> dict:
-    """Load environments from Pype.
-
-    This will load environments from database, process them with
-    :mod:`acre` and return them as flattened dictionary.
-
-    Args:
-        sections (list, optional): load specific types
-
-    Returns;
-        dict of str: loaded and processed environments.
-
-    """
-    import acre
-
-    from pype import settings
-
-    all_env = settings.get_environments()
-    merged_env = {}
-
-    sections = sections or all_env.keys()
-
-    for section in sections:
-        try:
-            parsed_env = acre.parse(all_env[section])
-        except AttributeError:
-            continue
-        merged_env = acre.append(merged_env, parsed_env)
-
-    return acre.compute(merged_env, cleanup=True)
-
-
-def get_pype_path_from_db(url: str) -> Union[str, None]:
-    """Get Pype path from database.
+def get_pype_global_settings(url: str) -> dict:
+    """Load global settings from Mongo database.
 
     We are loading data from database `pype` and collection `settings`.
     There we expect document type `global_settings`.
+
+    Args:
+        url (str): MongoDB url.
+
+    Returns:
+        dict: With settings data. Empty dictionary is returned if not found.
+    """
+    try:
+        components = decompose_url(url)
+    except RuntimeError:
+        return {}
+    mongo_kwargs = {
+        "host": compose_url(**components),
+        "serverSelectionTimeoutMS": 2000
+    }
+    port = components.get("port")
+    if port is not None:
+        mongo_kwargs["port"] = int(port)
+
+    try:
+        # Create mongo connection
+        client = MongoClient(**mongo_kwargs)
+        # Access settings collection
+        col = client["pype"]["settings"]
+        # Query global settings
+        global_settings = col.find_one({"type": "global_settings"}) or {}
+        # Close Mongo connection
+        client.close()
+
+    except Exception:
+        # TODO log traceback or message
+        return {}
+
+    return global_settings.get("data") or {}
+
+
+def get_pype_path_from_db(url: str) -> Union[str, None]:
+    """Get Pype path from global settings.
 
     Args:
         url (str): mongodb url.
 
     Returns:
         path to Pype or None if not found
-
     """
-    try:
-        components = decompose_url(url)
-    except RuntimeError:
-        return None
-    mongo_args = {
-        "host": compose_url(**components),
-        "serverSelectionTimeoutMS": 2000
-    }
-    port = components.get("port")
-    if port is not None:
-        mongo_args["port"] = int(port)
+    global_settings = get_pype_global_settings(url)
+    paths = (
+        global_settings
+        .get("pype_path", {})
+        .get(platform.system().lower())
+    ) or []
+    # For cases when `pype_path` is a single path
+    if paths and isinstance(paths, str):
+        paths = [paths]
 
-    try:
-        client = MongoClient(**mongo_args)
-    except Exception:
-        return None
-
-    db = client.pype
-    col = db.settings
-
-    global_settings = col.find_one({"type": "global_settings"}, {"data": 1})
-    if not global_settings:
-        return None
-    global_settings.get("data", {})
-    return global_settings.get("pype_path", {}).get(platform.system().lower())
+    # Loop over paths and return only existing
+    for path in paths:
+        if os.path.exists(path):
+            return path
+    return None

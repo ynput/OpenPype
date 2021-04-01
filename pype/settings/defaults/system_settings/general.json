@@ -1,11 +1,6 @@
 {
     "studio_name": "Studio name",
     "studio_code": "stu",
-    "studio_soft": {
-        "windows": "convert from \"STUDIO_SOFT\"",
-        "darwin": "",
-        "linux": ""
-    },
     "environment": {
         "FFMPEG_PATH": {
             "windows": "{PYPE_ROOT}/vendor/bin/ffmpeg_exec/windows/bin",
@@ -19,5 +14,10 @@
                 "PYPE_OCIO_CONFIG"
             ]
         }
+    },
+    "pype_path": {
+        "windows": [],
+        "darwin": [],
+        "linux": []
     }
 }

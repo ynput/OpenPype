@@ -15,6 +15,7 @@ METADATA_KEYS = (
 )
 
 # File where studio's system overrides are stored
+GLOBAL_SETTINGS_KEY = "global_settings"
 SYSTEM_SETTINGS_KEY = "system_settings"
 PROJECT_SETTINGS_KEY = "project_settings"
 PROJECT_ANATOMY_KEY = "project_anatomy"
