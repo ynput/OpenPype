@@ -8,7 +8,7 @@ from pype.api import BuildWorkfile
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
-self._menu = os.environ.get('PYPE_STUDIO_NAME') or "Pype"
+self._menu = "OpenPype"
 
 log = logging.getLogger(__name__)
 
