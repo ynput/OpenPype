@@ -1,4 +1,8 @@
-"""This module is used for command line exporting of ASS files."""
+"""This module is used for command line exporting of ASS files.
+
+WARNING:
+This need to be rewriten to be able use it in Pype 3!
+"""
 
 import os
 import argparse
