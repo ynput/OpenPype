@@ -17,7 +17,7 @@ class CredentialsDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(CredentialsDialog, self).__init__(parent)
 
-        self.setWindowTitle("Pype - Ftrack Login")
+        self.setWindowTitle("OpenPype - Ftrack Login")
 
         self._login_server_thread = None
         self._is_logged = False

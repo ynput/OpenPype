@@ -50,7 +50,8 @@ class OpenPypeMongoWidget(QtWidgets.QWidget):
 
         title = "OpenPype mongo changed"
         message = (
-            "OpenPype mongo url was successfully changed. Restart Pype please."
+            "OpenPype mongo url was successfully changed."
+            " Restart OpenPype application please."
         )
         details = None
 
