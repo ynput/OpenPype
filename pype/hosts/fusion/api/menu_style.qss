@@ -20,7 +20,7 @@ QPushButton:hover {
     color: #e64b3d;
 }
 
-#PypeMenu {
+#OpenPypeMenu {
     border: 1px solid #fef9ef;
 }
 
