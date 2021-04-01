@@ -235,7 +235,7 @@ def oiio_supported():
         Returns:
             (bool)
     """
-    oiio_path = os.getenv("PYPE_OIIO_PATH", "")
+    oiio_path = os.getenv("OPENPYPE_OIIO_PATH", "")
     if not oiio_path or not os.path.exists(oiio_path):
         log.debug("OIIOTool is not configured or not present at {}".
                   format(oiio_path))
@@ -269,7 +269,7 @@ def decompress(target_dir, file_url,
         (int(input_frame_end) > int(input_frame_start))
 
     oiio_cmd = []
-    oiio_cmd.append(os.getenv("PYPE_OIIO_PATH"))
+    oiio_cmd.append(os.getenv("OPENPYPE_OIIO_PATH"))
 
     oiio_cmd.append("--compression none")
 
@@ -328,7 +328,7 @@ def should_decompress(file_url):
     """
     if oiio_supported():
         output = run_subprocess([
-            os.getenv("PYPE_OIIO_PATH"),
+            os.getenv("OPENPYPE_OIIO_PATH"),
             "--info", "-v", file_url])
         return "compression: \"dwaa\"" in output or \
             "compression: \"dwab\"" in output

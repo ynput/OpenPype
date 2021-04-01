@@ -607,7 +607,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
         if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
         # add 10sec timeout before bailing out
         kwargs['timeout'] = 10
         return requests.post(*args, **kwargs)
@@ -626,7 +626,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
         if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
         # add 10sec timeout before bailing out
         kwargs['timeout'] = 10
         return requests.get(*args, **kwargs)
