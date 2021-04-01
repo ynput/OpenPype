@@ -27,9 +27,9 @@ Items=DEBUG;INFO;WARNING;ERROR
 Default=DEBUG
 Description=Logging level where printing will start.
 
-[PypeExecutable]
+[OpenPypeExecutable]
 Type=MultiLineMultiFolder
-Label=Path to Pype executable dir
+Label=Path to OpenPype executable dir
 Category=Job Plugins
 CategoryOrder=1
 CategoryIndex=1

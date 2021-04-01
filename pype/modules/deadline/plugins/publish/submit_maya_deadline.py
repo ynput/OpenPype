@@ -252,7 +252,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     families = ["renderlayer"]
 
     use_published = True
-    tile_assembler_plugin = "PypeTileAssembler"
+    tile_assembler_plugin = "OpenPypeTileAssembler"
     asset_dependencies = False
     limit_groups = []
     group = "none"

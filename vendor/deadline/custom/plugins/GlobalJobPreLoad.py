@@ -7,33 +7,33 @@ import json
 from Deadline.Scripting import RepositoryUtils, FileUtils
 
 
-def inject_pype_environment(deadlinePlugin):
+def inject_openpype_environment(deadlinePlugin):
     job = deadlinePlugin.GetJob()
     job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
-    pype_render_job = job.GetJobEnvironmentKeyValue('PYPE_RENDER_JOB') \
-        or '0'
-    pype_publish_job = job.GetJobEnvironmentKeyValue('PYPE_PUBLISH_JOB') \
-        or '0'
+    openpype_render_job = \
+        job.GetJobEnvironmentKeyValue('OPENPYPE_RENDER_JOB') or '0'
+    openpype_publish_job = \
+        job.GetJobEnvironmentKeyValue('OPENPYPE_PUBLISH_JOB') or '0'
 
-    if pype_publish_job == '1' and pype_render_job == '1':
+    if openpype_publish_job == '1' and openpype_render_job == '1':
         raise RuntimeError("Misconfiguration. Job couldn't be both " +
                            "render and publish.")
 
-    if pype_publish_job == '1':
+    if openpype_publish_job == '1':
         print("Publish job, skipping inject.")
         return
-    elif pype_render_job == '0':
-        # not pype triggered job
+    elif openpype_render_job == '0':
+        # not openpype triggered job
         return
 
-    print("inject_pype_environment start")
+    print("inject_openpype_environment start")
     try:
-        exe_list = job.GetJobExtraInfoKeyValue("pype_executables")
-        pype_app = FileUtils.SearchFileList(exe_list)
-        if pype_app == "":
+        exe_list = job.GetJobExtraInfoKeyValue("openpype_executables")
+        openpype_app = FileUtils.SearchFileList(exe_list)
+        if openpype_app == "":
             raise RuntimeError(
-                "Pype executable was not found " +
+                "OpenPype executable was not found " +
                 "in the semicolon separated list \"" + exe_list + "\". " +
                 "The path to the render executable can be configured " +
                 "from the Plugin Configuration in the Deadline Monitor.")
@@ -45,7 +45,7 @@ def inject_pype_environment(deadlinePlugin):
         print("export_url {}".format(export_url))
 
         args = [
-            pype_app,
+            openpype_app,
             'extractenvironments',
             export_url
         ]
@@ -79,14 +79,14 @@ def inject_pype_environment(deadlinePlugin):
 
         os.remove(export_url)
 
-        print("inject_pype_environment end")
+        print("inject_openpype_environment end")
     except Exception:
         import traceback
         print(traceback.format_exc())
-        print("inject_pype_environment failed")
+        print("inject_openpype_environment failed")
         RepositoryUtils.FailJob(job)
         raise
 
 
 def __main__(deadlinePlugin):
-    inject_pype_environment(deadlinePlugin)
+    inject_openpype_environment(deadlinePlugin)

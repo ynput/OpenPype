@@ -4,7 +4,7 @@ Label=About
 Category=About Plugin
 CategoryOrder=-1
 Index=0
-Default=Pype Tile Assembler Plugin for Deadline
+Default=OpenPype Tile Assembler Plugin for Deadline
 Description=Not configurable
 
 [OIIOTool_RenderExecutable]
