@@ -15,7 +15,7 @@ import openpype.hosts.maya
 from openpype.hosts.maya.lib import copy_workspace_mel
 from . import menu, lib
 
-log = logging.getLogger("pype.hosts.maya")
+log = logging.getLogger("openpype.hosts.maya")
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.maya.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
@@ -136,13 +136,13 @@ def on_open(_):
     from openpype.widgets import popup
 
     cmds.evalDeferred(
-        "from pype.hosts.maya.api import lib;"
+        "from openpype.hosts.maya.api import lib;"
         "lib.remove_render_layer_observer()")
     cmds.evalDeferred(
-        "from pype.hosts.maya.api import lib;"
+        "from openpype.hosts.maya.api import lib;"
         "lib.add_render_layer_observer()")
     cmds.evalDeferred(
-        "from pype.hosts.maya.api import lib;"
+        "from openpype.hosts.maya.api import lib;"
         "lib.add_render_layer_change_observer()")
     # # Update current task for the current scene
     # update_task_from_path(cmds.file(query=True, sceneName=True))
@@ -183,13 +183,13 @@ def on_new(_):
     avalon.logger.info("Running callback on new..")
     with suspended_refresh():
         cmds.evalDeferred(
-            "from pype.hosts.maya.api import lib;"
+            "from openpype.hosts.maya.api import lib;"
             "lib.remove_render_layer_observer()")
         cmds.evalDeferred(
-            "from pype.hosts.maya.api import lib;"
+            "from openpype.hosts.maya.api import lib;"
             "lib.add_render_layer_observer()")
         cmds.evalDeferred(
-            "from pype.hosts.maya.api import lib;"
+            "from openpype.hosts.maya.api import lib;"
             "lib.add_render_layer_change_observer()")
         lib.set_context_settings()
 
