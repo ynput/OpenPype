@@ -53,7 +53,7 @@ excludes = []
 bin_includes = []
 include_files = [
     "igniter",
-    "openpype",
+    "pype",
     "repos",
     "schema",
     "vendor",
@@ -78,7 +78,7 @@ build_options = dict(
     optimize=0
 )
 
-icon_path = openpype_root / "igniter" / "pype.ico"
+icon_path = openpype_root / "igniter" / "openpype.ico"
 
 executables = [
     Executable("start.py", base=None,
