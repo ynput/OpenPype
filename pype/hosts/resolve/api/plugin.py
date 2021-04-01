@@ -81,7 +81,7 @@ class CreatorWidget(QtWidgets.QDialog):
         ok_btn.clicked.connect(self._on_ok_clicked)
         cancel_btn.clicked.connect(self._on_cancel_clicked)
 
-        stylesheet = resolve.menu.load_stylesheet()
+        stylesheet = resolve.api.menu.load_stylesheet()
         self.setStyleSheet(stylesheet)
 
     def _on_ok_clicked(self):
