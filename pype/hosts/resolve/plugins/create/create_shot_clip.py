@@ -12,7 +12,7 @@ class CreateShotClip(resolve.Creator):
     defaults = ["Main"]
 
     gui_tracks = resolve.get_video_track_names()
-    gui_name = "Pype publish attributes creator"
+    gui_name = "OpenPype publish attributes creator"
     gui_info = "Define sequential rename and fill hierarchy data."
     gui_inputs = {
         "renameHierarchy": {

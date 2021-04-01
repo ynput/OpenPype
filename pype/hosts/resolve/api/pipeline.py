@@ -150,7 +150,7 @@ def ls():
 
 
 def parse_container(timeline_item, validate=True):
-    """Return container data from timeline_item's pype tag.
+    """Return container data from timeline_item's openpype tag.
 
     Args:
         timeline_item (hiero.core.TrackItem): A containerised track item.
@@ -187,7 +187,7 @@ def parse_container(timeline_item, validate=True):
 
 
 def update_container(timeline_item, data=None):
-    """Update container data to input timeline_item's pype tag.
+    """Update container data to input timeline_item's openpype tag.
 
     Args:
         timeline_item (hiero.core.TrackItem): A containerised track item.
