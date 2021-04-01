@@ -151,32 +151,6 @@
                     ]
                 }
             ]
-        },
-        {
-            "type": "schema_template",
-            "name": "template_loader_plugin",
-            "template_data": [
-                {
-                    "key": "ReferenceLoader",
-                    "label": "Reference Loader"
-                },
-                {
-                    "key": "AudioLoader",
-                    "label": "Audio Loader"
-                },
-                {
-                    "key": "GpuCacheLoader",
-                    "label": "GpuCache Loader"
-                },
-                {
-                    "key": "ImagePlaneLoader",
-                    "label": "Imageplane Loader"
-                },
-                {
-                    "key": "MatchmoveLoader",
-                    "label": "Matchmove Loader"
-                }
-            ]
         }
     ]
 }

@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:representation-2.0",
+    "title": "openpype:representation-2.0",
     "description": "The inverse of an instance",
 
     "type": "object",
@@ -20,8 +20,8 @@
         "schema": {
             "description": "Schema identifier for payload",
             "type": "string",
-            "enum": ["avalon-core:representation-2.0", "pype:representation-2.0"],
-            "example": "pype:representation-2.0"
+            "enum": ["openpype:representation-2.0"],
+            "example": "openpype:representation-2.0"
         },
         "type": {
             "description": "The type of document",

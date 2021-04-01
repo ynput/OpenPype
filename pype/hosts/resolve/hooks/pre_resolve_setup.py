@@ -14,7 +14,7 @@ class ResolvePrelaunch(PreLaunchHook):
     app_groups = ["resolve"]
 
     def execute(self):
-        # TODO: add OTIO installation from  `pype/requirements.py`
+        # TODO: add OTIO installation from  `openpype/requirements.py`
         # making sure pyton 3.6 is installed at provided path
         py36_dir = os.path.normpath(
             self.launch_context.env.get("PYTHON36_RESOLVE", ""))

@@ -14,9 +14,9 @@ class ThisTestGUI(TestGUI):
 
     def __init__(self):
         super(ThisTestGUI, self).__init__()
-        # Registers pype's Global pyblish plugins
+        # Registers openpype's Global pyblish plugins
         pype.install()
-        # activate resolve from pype
+        # activate resolve from openpype
         avalon.install(bmdvr)
 
     def _open_dir_button_pressed(self, event):

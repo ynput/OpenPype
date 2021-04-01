@@ -501,7 +501,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             data.update({'path': dst, 'template': template})
             representation = {
                 "_id": repre_id,
-                "schema": "pype:representation-2.0",
+                "schema": "openpype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": repre['name'],
@@ -685,7 +685,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     families.append(_family)
 
             _id = io.insert_one({
-                "schema": "pype:subset-3.0",
+                "schema": "openpype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
                 "data": {
@@ -726,7 +726,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             dict: collection of data to create a version
         """
 
-        return {"schema": "pype:version-3.0",
+        return {"schema": "openpype:version-3.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,

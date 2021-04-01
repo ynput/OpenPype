@@ -168,7 +168,7 @@ class IntegrateHeroVersion(pyblish.api.InstancePlugin):
             "version_id": src_version_entity["_id"],
             "parent": src_version_entity["parent"],
             "type": "hero_version",
-            "schema": "pype:hero_version-1.0"
+            "schema": "openpype:hero_version-1.0"
         }
         schema.validate(new_hero_version)
 

@@ -9,6 +9,18 @@
     "resolutionWidth": 1920,
     "resolutionHeight": 1080,
     "pixelAspect": 1.0,
-    "applications": [],
+    "applications": [
+        "maya_2020",
+        "nuke_12-2",
+        "nukex_12-2",
+        "hiero_12-2",
+        "resolve_16",
+        "houdini_18-5",
+        "blender_2-90",
+        "harmony_20",
+        "photoshop_2021",
+        "aftereffects_2021",
+        "unreal_4-24"
+    ],
     "tools_env": []
 }

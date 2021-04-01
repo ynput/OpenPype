@@ -25,7 +25,7 @@ class CreatorWidget(QtWidgets.QDialog):
             | QtCore.Qt.WindowCloseButtonHint
             | QtCore.Qt.WindowStaysOnTopHint
         )
-        self.setWindowTitle(name or "Pype Creator Input")
+        self.setWindowTitle(name or "OpenPype Creator Input")
         self.resize(500, 700)
 
         # Where inputs and labels are set
@@ -527,7 +527,7 @@ class PublishClip:
         kwargs (optional): additional data needed for rename=True (presets)
 
     Returns:
-        hiero.core.TrackItem: hiero track item object with pype tag
+        hiero.core.TrackItem: hiero track item object with openpype tag
     """
     vertical_clip_match = dict()
     tag_data = dict()
@@ -623,7 +623,7 @@ class PublishClip:
                 "track_data": self.timeline_item_data["track"]
             })
 
-        # create pype tag on timeline_item and add data
+        # create openpype tag on timeline_item and add data
         lib.imprint(self.timeline_item, self.tag_data)
 
         return self.timeline_item

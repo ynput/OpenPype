@@ -51,7 +51,7 @@ QLineEdit {
   qproperty-alignment: AlignCenter;
 }
 
-#PypeMenu {
+#OpenPypeMenu {
     border: 1px solid #fef9ef;
 }
 
