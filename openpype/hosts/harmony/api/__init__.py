@@ -15,7 +15,7 @@ import avalon.api
 import avalon.tools.sceneinventory
 
 
-log = logging.getLogger("pype.hosts.harmony")
+log = logging.getLogger("openpype.hosts.harmony")
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.harmony.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")

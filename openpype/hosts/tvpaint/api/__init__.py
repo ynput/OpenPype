@@ -8,7 +8,7 @@ import pyblish.api
 
 from openpype.hosts import tvpaint
 
-log = logging.getLogger("pype.hosts.tvpaint")
+log = logging.getLogger("openpype.hosts.tvpaint")
 
 HOST_DIR = os.path.dirname(os.path.abspath(tvpaint.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
@@ -35,7 +35,7 @@ def on_instance_toggle(instance, old_value, new_value):
 
 
 def install():
-    log.info("Pype - Installing TVPaint integration")
+    log.info("OpenPype - Installing TVPaint integration")
     localization_file = os.path.join(HOST_DIR, "resources", "avalon.loc")
     register_localization_file(localization_file)
 
@@ -51,7 +51,7 @@ def install():
 
 
 def uninstall():
-    log.info("Pype - Uninstalling TVPaint integration")
+    log.info("OpenPype - Uninstalling TVPaint integration")
     pyblish.api.deregister_plugin_path(PUBLISH_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
     avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
