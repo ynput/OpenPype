@@ -3,11 +3,11 @@ import sys
 import logging
 import getpass
 import atexit
-import tempfile
 import threading
 import datetime
 import time
 import queue
+import appdirs
 import pymongo
 
 import requests
