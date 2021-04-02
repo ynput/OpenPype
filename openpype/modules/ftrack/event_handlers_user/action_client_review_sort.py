@@ -1,4 +1,4 @@
-from openpype.modules.ftrack.lib import BaseAction
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
 try:
     from functools import cmp_to_key
 except Exception:
@@ -49,6 +49,8 @@ class ClientReviewSort(BaseAction):
 
     #: Action label.
     label = 'Sort Review'
+
+    icon = statics_icon("ftrack", "action_icons", "SortReview.svg")
 
     def discover(self, session, entities, event):
         ''' Validation '''
