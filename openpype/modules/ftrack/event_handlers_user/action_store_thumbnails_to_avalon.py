@@ -15,13 +15,13 @@ class StoreThumbnailsToAvalon(BaseAction):
     # Action identifier
     identifier = "store.thubmnail.to.avalon"
     # Action label
-    label = "Pype Admin"
+    label = "OpenPype Admin"
     # Action variant
     variant = "- Store Thumbnails to avalon"
     # Action description
     description = 'Test action'
     # roles that are allowed to register this action
-    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
+    icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
     settings_key = "store_thubmnail_to_avalon"
 
     thumbnail_key = "AVALON_THUMBNAIL_ROOT"

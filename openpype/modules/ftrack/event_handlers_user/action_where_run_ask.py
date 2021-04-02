@@ -8,7 +8,7 @@ class ActionAskWhereIRun(BaseAction):
     ignore_me = True
     identifier = 'ask.where.i.run'
     label = 'Ask where I run'
-    description = 'Triggers PC info where user have running Pype'
+    description = 'Triggers PC info where user have running OpenPype'
     icon = statics_icon("ftrack", "action_icons", "ActionAskWhereIRun.svg")
 
     def discover(self, session, entities, event):

@@ -22,7 +22,7 @@ action_identifier = (
 )
 host_ip = socket.gethostbyname(socket.gethostname())
 action_data = {
-    "label": "Pype Admin",
+    "label": "OpenPype Admin",
     "variant": "- Event server Status ({})".format(host_ip),
     "description": "Get Infromation about event server",
     "actionIdentifier": action_identifier
@@ -322,7 +322,7 @@ def register(session):
         "topic=ftrack.action.discover",
         server_activity_discover
     )
-    session.event_hub.subscribe("topic=pype.status.started", on_start)
+    session.event_hub.subscribe("topic=openpype.status.started", on_start)
 
     status_launch_subscription = (
         "topic=ftrack.action.launch and data.actionIdentifier={}"

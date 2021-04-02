@@ -2,7 +2,7 @@
 Taken from https://github.com/tokejepsen/ftrack-hooks/tree/master/batch_tasks
 """
 
-from openpype.modules.ftrack.lib import BaseAction
+from openpype.modules.ftrack.lib import BaseAction, statics_icon
 
 
 class BatchTasksAction(BaseAction):
@@ -13,10 +13,11 @@ class BatchTasksAction(BaseAction):
     `identifier` a unique identifier for your action.
     `description` a verbose descriptive text for you action
      '''
-    label = "Batch Tasks"
+    label = "Batch Task Create"
     variant = None
     identifier = "batch-tasks"
     description = None
+    icon = statics_icon("ftrack", "action_icons", "BatchTasks.svg")
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
@@ -29,11 +30,13 @@ class BatchTasksAction(BaseAction):
         or Asset Build.
         *event* the unmodified original event
         '''
-        # Only discover the action if any selection is made.
-        if entities:
-            return True
 
-        return False
+        not_allowed = ["assetversion", "project", "ReviewSession"]
+        if entities[0].entity_type.lower() in not_allowed:
+            return False
+
+        return True
+
 
     def get_task_form_items(self, session, number_of_tasks):
         items = []

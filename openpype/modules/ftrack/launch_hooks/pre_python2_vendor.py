@@ -3,7 +3,7 @@ from openpype.lib import PreLaunchHook
 from openpype.modules.ftrack import FTRACK_MODULE_DIR
 
 
-class PrePyhton2Support(PreLaunchHook):
+class PrePython2Support(PreLaunchHook):
     """Add python ftrack api module for Python 2 to PYTHONPATH.
 
     Path to vendor modules is added to the beggining of PYTHONPATH.
@@ -23,7 +23,7 @@ class PrePyhton2Support(PreLaunchHook):
             os.path.join(python_2_vendor, "arrow"),
             # `builtins` from `python-future`
             # - `python-future` is strict Python 2 module that cause crashes
-            #   of Python 3 scripts executed through pype (burnin script etc.)
+            #   of Python 3 scripts executed through OpenPype (burnin script etc.)
             os.path.join(python_2_vendor, "builtins"),
             # `backports.functools_lru_cache`
             os.path.join(

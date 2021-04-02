@@ -170,7 +170,7 @@ def register(session):
     '''Registers the event, subscribing the discover and launch topics.'''
     install_db()
     session.event_hub.subscribe("topic=*", launch)
-    session.event_hub.subscribe("topic=pype.storer.started", trigger_sync)
+    session.event_hub.subscribe("topic=openpype.storer.started", trigger_sync)
     session.event_hub.subscribe(
         "topic={}".format(TOPIC_STATUS_SERVER), send_status
     )

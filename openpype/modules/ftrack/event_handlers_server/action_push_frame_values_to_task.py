@@ -38,7 +38,7 @@ class PushHierValuesToNonHier(ServerAction):
     """
 
     identifier = "admin.push_hier_values_to_non_hier"
-    label = "Pype Admin"
+    label = "OpenPype Admin"
     variant = "- Push Hierarchical values To Non-Hierarchical"
 
     hierarchy_entities_query = (

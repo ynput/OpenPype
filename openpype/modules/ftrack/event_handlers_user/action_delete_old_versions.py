@@ -15,13 +15,13 @@ import avalon.pipeline
 class DeleteOldVersions(BaseAction):
 
     identifier = "delete.old.versions"
-    label = "Pype Admin"
+    label = "OpenPype Admin"
     variant = "- Delete old versions"
     description = (
         "Delete files from older publishes so project can be"
         " archived with only lates versions."
     )
-    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
+    icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
 
     dbcon = AvalonMongoDB()
 

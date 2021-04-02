@@ -58,7 +58,7 @@ class SocketThread(threading.Thread):
 
         env = os.environ.copy()
         env["OPENPYPE_PROCESS_MONGO_ID"] = str(Logger.mongo_process_id)
-        # Pype executable (with path to start script if not build)
+        # OpenPype executable (with path to start script if not build)
         args = get_pype_execute_args(
             # Add `run` command
             "run",

@@ -8,12 +8,12 @@ class JobKiller(BaseAction):
     #: Action identifier.
     identifier = 'job.killer'
     #: Action label.
-    label = "Pype Admin"
+    label = "OpenPype Admin"
     variant = '- Job Killer'
     #: Action description.
     description = 'Killing selected running jobs'
     #: roles that are allowed to register this action
-    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
+    icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
     settings_key = "job_killer"
 
     def discover(self, session, entities, event):
