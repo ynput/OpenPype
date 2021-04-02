@@ -88,7 +88,7 @@ class FileLoader(api.Loader):
             layer_name = container["namespace"]
         path = api.get_representation_path(representation)
         # with aftereffects.maintained_selection():  # TODO
-        stub.replace_item(layer, path, stub.LOADED_ICON + layer_name)
+        stub.replace_item(layer.id, path, stub.LOADED_ICON + layer_name)
         stub.imprint(
             layer, {"representation": str(representation["_id"]),
                     "name": context["subset"],

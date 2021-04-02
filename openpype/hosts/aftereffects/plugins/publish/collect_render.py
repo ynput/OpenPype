@@ -23,6 +23,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
     padding_width = 6
     rendered_extension = 'png'
 
+    stub = aftereffects.stub()
+
     def get_instances(self, context):
         instances = []
 
@@ -31,9 +33,9 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         asset_entity = context.data["assetEntity"]
         project_entity = context.data["projectEntity"]
 
-        compositions = aftereffects.stub().get_items(True)
+        compositions = self.stub.get_items(True)
         compositions_by_id = {item.id: item for item in compositions}
-        for inst in aftereffects.stub().get_metadata():
+        for inst in self.stub.get_metadata():
             schema = inst.get('schema')
             # loaded asset container skip it
             if schema and 'container' in schema:
@@ -43,7 +45,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 raise ValueError("Couldn't find id, unable to publish. " +
                                  "Please recreate instance.")
             item_id = inst["members"][0]
-            work_area_info = aftereffects.stub().get_work_area(int(item_id))
+            work_area_info = self.stub.get_work_area(int(item_id))
             frameStart = work_area_info.workAreaStart
 
             frameEnd = round(work_area_info.workAreaStart +
@@ -94,6 +96,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
                 instances.append(instance)
 
+        self.log.debug("instances::{}".format(instances))
         return instances
 
     def get_expected_files(self, render_instance):
@@ -113,7 +116,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         end = render_instance.frameEnd
 
         # pull file name from Render Queue Output module
-        render_q = aftereffects.stub().get_render_info()
+        render_q = self.stub.get_render_info()
         if not render_q:
             raise ValueError("No file extension set in Render Queue")
         _, ext = os.path.splitext(os.path.basename(render_q.file_name))
