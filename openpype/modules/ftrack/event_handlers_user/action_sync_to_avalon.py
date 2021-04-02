@@ -41,7 +41,7 @@ class SyncToAvalonLocal(BaseAction):
     #: priority
     priority = 200
     #: roles that are allowed to register this action
-    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
+    icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
 
     settings_key = "sync_to_avalon_local"
 

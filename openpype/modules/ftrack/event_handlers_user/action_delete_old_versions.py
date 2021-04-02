@@ -21,7 +21,7 @@ class DeleteOldVersions(BaseAction):
         "Delete files from older publishes so project can be"
         " archived with only lates versions."
     )
-    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
+    icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
 
     dbcon = AvalonMongoDB()
 

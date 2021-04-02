@@ -131,7 +131,7 @@ class CustomAttributes(BaseAction):
     variant = '- Create/Update Avalon Attributes'
     #: Action description.
     description = 'Creates Avalon/Mongo ID for double check'
-    icon = statics_icon("ftrack", "action_icons", "PypeAdmin.svg")
+    icon = statics_icon("ftrack", "action_icons", "OpenPypeAdmin.svg")
     settings_key = "create_update_attributes"
 
     required_keys = ("key", "label", "type")
