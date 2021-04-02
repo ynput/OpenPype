@@ -127,7 +127,7 @@ class CustomAttributes(BaseAction):
     #: Action identifier.
     identifier = 'create.update.attributes'
     #: Action label.
-    label = "Pype Admin"
+    label = "OpenPype Admin"
     variant = '- Create/Update Avalon Attributes'
     #: Action description.
     description = 'Creates Avalon/Mongo ID for double check'
