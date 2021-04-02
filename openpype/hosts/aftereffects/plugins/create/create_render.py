@@ -49,7 +49,7 @@ class CreateRender(openpype.api.Creator):
         self.data["uuid"] = item.id  # for SubsetManager
         stub.imprint(item, self.data)
         stub.set_label_color(item.id, 14)  # Cyan options 0 - 16
-        stub.rename_item(item, stub.PUBLISH_ICON + self.data["subset"])
+        stub.rename_item(item.id, stub.PUBLISH_ICON + self.data["subset"])
 
     def _show_msg(self, txt):
         msg = Qt.QtWidgets.QMessageBox()
