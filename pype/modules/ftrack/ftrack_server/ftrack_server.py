@@ -1,4 +1,5 @@
 import os
+import time
 import types
 import logging
 import traceback
@@ -9,7 +10,6 @@ from pype.lib import (
     PypeLogger,
     modules_from_path
 )
-
 
 log = PypeLogger.get_logger(__name__)
 
@@ -119,6 +119,18 @@ class FtrackServer:
         self.is_running = True
         if not session:
             session = ftrack_api.Session(auto_connect_event_hub=True)
+
+        # Wait until session has connected event hub
+        if session._auto_connect_event_hub_thread:
+            # Use timeout from session (since ftrack-api 2.1.0)
+            timeout = getattr(session, "request_timeout", 60)
+            started = time.time()
+            while not session.event_hub.connected:
+                if (time.time() - started) > timeout:
+                    raise RuntimeError((
+                        "Connection to Ftrack was not created in {} seconds"
+                    ).format(timeout))
+                time.sleep(0.1)
 
         self.session = session
         if load_files:
