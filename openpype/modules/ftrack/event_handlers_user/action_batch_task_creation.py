@@ -31,7 +31,7 @@ class BatchTasksAction(BaseAction):
         *event* the unmodified original event
         '''
 
-        not_allowed = ["assetversion", "project", "ReviewSession"
+        not_allowed = ["assetversion", "project", "ReviewSession"]
         if entities[0].entity_type.lower() in not_allowed:
             return False
 
