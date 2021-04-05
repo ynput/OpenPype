@@ -2,10 +2,11 @@
 """Tools used in **Igniter** GUI.
 
 Functions ``compose_url()`` and ``decompose_url()`` are the same as in
-``pype.lib`` and they are here to avoid importing pype module before its
+``openpype.lib`` and they are here to avoid importing OpenPype module before its
 version is decided.
 
 """
+import sys
 import os
 from typing import Dict, Union
 from urllib.parse import urlparse, parse_qs
@@ -163,7 +164,7 @@ def validate_mongo_string(mongo: str) -> (bool, str):
 
 
 def validate_path_string(path: str) -> (bool, str):
-    """Validate string if it is path to Pype repository.
+    """Validate string if it is path to OpenPype repository.
 
     Args:
         path (str): Path to validate.
@@ -187,10 +188,10 @@ def validate_path_string(path: str) -> (bool, str):
     return True, "valid path"
 
 
-def get_pype_global_settings(url: str) -> dict:
+def get_openpype_global_settings(url: str) -> dict:
     """Load global settings from Mongo database.
 
-    We are loading data from database `pype` and collection `settings`.
+    We are loading data from database `openpype` and collection `settings`.
     There we expect document type `global_settings`.
 
     Args:
@@ -215,7 +216,7 @@ def get_pype_global_settings(url: str) -> dict:
         # Create mongo connection
         client = MongoClient(**mongo_kwargs)
         # Access settings collection
-        col = client["pype"]["settings"]
+        col = client["openpype"]["settings"]
         # Query global settings
         global_settings = col.find_one({"type": "global_settings"}) or {}
         # Close Mongo connection
@@ -228,22 +229,22 @@ def get_pype_global_settings(url: str) -> dict:
     return global_settings.get("data") or {}
 
 
-def get_pype_path_from_db(url: str) -> Union[str, None]:
-    """Get Pype path from global settings.
+def get_openpype_path_from_db(url: str) -> Union[str, None]:
+    """Get OpenPype path from global settings.
 
     Args:
         url (str): mongodb url.
 
     Returns:
-        path to Pype or None if not found
+        path to OpenPype or None if not found
     """
-    global_settings = get_pype_global_settings(url)
+    global_settings = get_openpype_global_settings(url)
     paths = (
         global_settings
-        .get("pype_path", {})
+        .get("openpype_path", {})
         .get(platform.system().lower())
     ) or []
-    # For cases when `pype_path` is a single path
+    # For cases when `openpype_path` is a single path
     if paths and isinstance(paths, str):
         paths = [paths]
 

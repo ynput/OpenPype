@@ -1,0 +1,181 @@
+{
+    "general": {
+        "menu": {
+            "create": "ctrl+shift+alt+c",
+            "publish": "ctrl+alt+p",
+            "load": "ctrl+alt+l",
+            "manage": "ctrl+alt+m",
+            "build_workfile": "ctrl+alt+b"
+        }
+    },
+    "create": {
+        "CreateWriteRender": {
+            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
+        },
+        "CreateWritePrerender": {
+            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}"
+        }
+    },
+    "publish": {
+        "PreCollectNukeInstances": {
+            "sync_workfile_version": true
+        },
+        "ValidateKnobs": {
+            "enabled": false,
+            "knobs": {
+                "render": {
+                    "review": true
+                }
+            }
+        },
+        "ValidateOutputResolution": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateGizmo": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateScript": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateNukeWriteBoundingBox": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractThumbnail": {
+            "enabled": true,
+            "nodes": {
+                "Reformat": [
+                    [
+                        "type",
+                        "to format"
+                    ],
+                    [
+                        "format",
+                        "HD_1080"
+                    ],
+                    [
+                        "filter",
+                        "Lanczos6"
+                    ],
+                    [
+                        "black_outside",
+                        true
+                    ],
+                    [
+                        "pbb",
+                        false
+                    ]
+                ]
+            }
+        },
+        "ExtractReviewDataLut": {
+            "enabled": false
+        },
+        "ExtractReviewDataMov": {
+            "enabled": true,
+            "viewer_lut_raw": false
+        },
+        "ExtractSlateFrame": {
+            "viewer_lut_raw": false
+        },
+        "NukeSubmitDeadline": {
+            "deadline_priority": 50,
+            "deadline_pool": "",
+            "deadline_pool_secondary": "",
+            "deadline_chunk_size": 1
+        }
+    },
+    "load": {
+        "LoadImage": {
+            "enabled": true,
+            "families": [
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "prerender",
+                "review",
+                "image"
+            ],
+            "representations": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "psd"
+            ],
+            "node_name_template": "{class_name}_{ext}"
+        },
+        "LoadMov": {
+            "enabled": true,
+            "families": [
+                "source",
+                "plate",
+                "render",
+                "prerender",
+                "review"
+            ],
+            "representations": [
+                "mov",
+                "review",
+                "mp4",
+                "h264"
+            ],
+            "node_name_template": "{class_name}_{ext}"
+        },
+        "LoadSequence": {
+            "enabled": true,
+            "families": [
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "prerender",
+                "review"
+            ],
+            "representations": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png"
+            ],
+            "node_name_template": "{class_name}_{ext}"
+        }
+    },
+    "workfile_build": {
+        "profiles": [
+            {
+                "tasks": [
+                    "compositing"
+                ],
+                "current_context": [
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "render",
+                            "plate"
+                        ],
+                        "repre_names": [
+                            "exr",
+                            "dpx"
+                        ],
+                        "loaders": [
+                            "LoadSequence"
+                        ]
+                    }
+                ],
+                "linked_assets": []
+            }
+        ]
+    },
+    "filters": {}
+}

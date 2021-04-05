@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
 
-# Make Pype documentation
-
+# This script will run apidoc over OpenPype sources and generate new source rst
+# files for documentation. Then it will run build_sphinx to create test html
+# documentation build.
 
 art () {
   cat <<-EOF
-  ____________
- /\\      ___  \\
- \\ \\     \\/_\\  \\
-  \\ \\     _____/ ______   ___ ___ ___
-   \\ \\    \\___/ /\\     \\  \\  \\\\  \\\\  \\
-    \\ \\____\\    \\ \\_____\\  \\__\\\\__\\\\__\\
-     \\/____/     \\/_____/  . PYPE Club .
 
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 EOF
 }
 
@@ -71,15 +70,15 @@ main () {
   echo -e "${RST}"
 
   # Directories
-  pype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
-  pushd "$pype_root" > /dev/null || return > /dev/null
+  openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+  pushd "$openpype_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Running apidoc ..."
-  poetry run sphinx-apidoc -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$pype_root/docs/source" igniter
-  poetry run sphinx-apidoc -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$pype_root/docs/source" pype vendor, pype\vendor
+  poetry run sphinx-apidoc -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$openpype_root/docs/source" igniter
+  poetry run sphinx-apidoc -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$openpype_root/docs/source" openpype vendor, openpype\vendor
 
   echo -e "${BIGreen}>>>${RST} Building html ..."
-  poetry run python3 "$pype_root/setup.py" build_sphinx
+  poetry run python3 "$openpype_root/setup.py" build_sphinx
 }
 
 main

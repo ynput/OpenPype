@@ -1,0 +1,156 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "load",
+    "label": "Loader plugins",
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "colors",
+            "label": "Loaded Subsets Outliner Colors",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Model",
+                            "name": "model"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Rig",
+                            "name": "rig"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Pointcache",
+                            "name": "pointcache"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Animation",
+                            "name": "animation"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Arnold Standin",
+                            "name": "ass"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Camera",
+                            "name": "camera"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "FBX",
+                            "name": "fbx"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Maya Scene",
+                            "name": "mayaAscii"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Set Dress",
+                            "name": "setdress"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Layout",
+                            "name": "layout"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "VDB Cache",
+                            "name": "vdbcache"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Vray Proxy",
+                            "name": "vrayproxy"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Yeti Cache",
+                            "name": "yeticache"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_color",
+                    "template_data": [
+                        {
+                            "label": "Yeti Rig",
+                            "name": "yetiRig"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
