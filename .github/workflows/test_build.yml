@@ -1,0 +1,29 @@
+# This workflow will upload a Python Package using Twine when a release is created
+# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+
+name: Build Python Package
+
+on:
+  pull_request:
+    branches: [develop]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.7'
+    - name: Install Venv
+      shell: pwsh
+      run: |
+        ./tools/create_env.ps1
+
+    - name: Build
+      shell: pwsh
+      run: |
+        ./tools/build.ps1
