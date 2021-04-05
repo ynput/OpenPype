@@ -16,17 +16,18 @@ jobs:
         python-version: [3.7]
 
     steps:
-    - uses: actions/checkout@v2
+    - name: 🚛 Checkout Code
+      uses: actions/checkout@v2
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Venv
+    - name: 🧵 Install Requirements
       shell: pwsh
       run: |
         ./tools/create_env.ps1
 
-    - name: Build
+    - name: 🔨 Build
       shell: pwsh
       run: |
         ./tools/build.ps1
@@ -44,10 +45,31 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install Venv
+    - name: 🧵 Install Requirements
       run: |
         ./tools/create_env.sh
 
-    - name: Build
+    - name: 🔨 Build
+      run: |
+        ./tools/build.sh
+
+  MacOS-latest:
+
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: 🧵 Install Requirements
+      run: |
+        ./tools/create_env.sh
+
+    - name: 🔨 Build
       run: |
         ./tools/build.sh
