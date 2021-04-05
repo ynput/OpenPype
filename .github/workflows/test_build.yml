@@ -46,7 +46,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Venv
       run: |
-        apt-get install -y --no-install-recommends zlib
+        sudo apt-get install -y --no-install-recommends zlib
         ./tools/create_env.sh
 
     - name: Build
