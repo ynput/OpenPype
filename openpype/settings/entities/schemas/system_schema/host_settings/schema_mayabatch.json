@@ -1,0 +1,50 @@
+{
+    "type": "dict",
+    "key": "mayabatch",
+    "label": "Autodesk Maya Batch",
+    "collapsible": true,
+    "checkbox_key": "enabled",
+    "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "schema_template",
+            "name": "template_host_unchangables"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json"
+        },
+        {
+            "type": "dict",
+            "key": "variants",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_host_variant",
+                    "template_data": [
+                        {
+                            "app_variant_label": "2020",
+                            "app_variant": "2020",
+                            "app_name": "mayabatch"
+                        },
+                        {
+                            "app_variant_label": "2019",
+                            "app_variant": "2019",
+                            "app_name": "mayabatch"
+                        },
+                        {
+                            "app_variant_label": "2018",
+                            "app_variant": "2018",
+                            "app_name": "mayabatch"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

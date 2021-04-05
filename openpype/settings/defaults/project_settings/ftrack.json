@@ -1,0 +1,206 @@
+{
+    "events": {
+        "sync_to_avalon": {
+            "enabled": true,
+            "statuses_name_change": [
+                "ready",
+                "not ready"
+            ]
+        },
+        "sync_hier_entity_attributes": {
+            "enabled": true,
+            "interest_entity_types": [
+                "Shot",
+                "Asset Build"
+            ],
+            "interest_attributes": [
+                "frameStart",
+                "frameEnd"
+            ],
+            "action_enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project Manager"
+            ]
+        },
+        "clone_review_session": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project Manager"
+            ]
+        },
+        "thumbnail_updates": {
+            "enabled": true,
+            "levels": 1
+        },
+        "user_assignment": {
+            "enabled": true
+        },
+        "status_update": {
+            "enabled": true,
+            "mapping": {
+                "In Progress": [
+                    "__any__"
+                ],
+                "Ready": [
+                    "Not Ready"
+                ],
+                "__ignore__": [
+                    "in prgoress",
+                    "omitted",
+                    "on hold"
+                ]
+            }
+        },
+        "status_task_to_parent": {
+            "enabled": true,
+            "parent_object_types": [
+                "Shot",
+                "Asset Build"
+            ],
+            "parent_status_match_all_task_statuses": {
+                "Completed": [
+                    "Approved",
+                    "Omitted"
+                ]
+            },
+            "parent_status_by_task_status": [
+                {
+                    "new_status": "In Progress",
+                    "task_statuses": [
+                        "in progress",
+                        "change requested",
+                        "retake",
+                        "pending review"
+                    ]
+                }
+            ]
+        },
+        "status_task_to_version": {
+            "enabled": true,
+            "mapping": {},
+            "asset_types_filter": []
+        },
+        "status_version_to_task": {
+            "enabled": true,
+            "mapping": {},
+            "asset_types_to_skip": []
+        },
+        "first_version_status": {
+            "enabled": true,
+            "status": ""
+        },
+        "next_task_update": {
+            "enabled": true,
+            "mapping": {
+                "Not Ready": "Ready"
+            },
+            "ignored_statuses": [
+                "Omitted"
+            ],
+            "name_sorting": false
+        }
+    },
+    "user_handlers": {
+        "application_launch_statuses": {
+            "enabled": true,
+            "ignored_statuses": [
+                "In Progress",
+                "Omitted",
+                "On hold",
+                "Approved"
+            ],
+            "status_change": {
+                "In Progress": []
+            }
+        },
+        "create_update_attributes": {
+            "role_list": [
+                "Pypeclub",
+                "Administrator"
+            ]
+        },
+        "prepare_project": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project manager"
+            ]
+        },
+        "clean_hierarchical_attr": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project manager"
+            ]
+        },
+        "delete_asset_subset": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project Manager"
+            ]
+        },
+        "delete_old_versions": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Project Manager",
+                "Administrator"
+            ]
+        },
+        "delivery_action": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Project Manager",
+                "Administrator"
+            ]
+        },
+        "store_thubmnail_to_avalon": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Project Manager",
+                "Administrator"
+            ]
+        },
+        "job_killer": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator"
+            ]
+        },
+        "sync_to_avalon_local": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator"
+            ]
+        },
+        "seed_project": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub"
+            ]
+        }
+    },
+    "publish": {
+        "IntegrateFtrackNote": {
+            "enabled": true,
+            "note_with_intent_template": "",
+            "note_labels": []
+        },
+        "ValidateFtrackAttributes": {
+            "enabled": false,
+            "ftrack_custom_attributes": {}
+        }
+    }
+}

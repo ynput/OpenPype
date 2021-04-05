@@ -101,8 +101,8 @@ for d in libs_dir.iterdir():
         to_delete.append(d)
         _print(f"found {d}", 3)
 
-# add pype and igniter in libs too
-to_delete.append(libs_dir / "pype")
+# add openpype and igniter in libs too
+to_delete.append(libs_dir / "openpype")
 to_delete.append(libs_dir / "igniter")
 
 # delete duplicates

@@ -1,26 +1,20 @@
 <#
 .SYNOPSIS
-  Helper script to run mongodb.
-
-.DESCRIPTION
-  This script will detect mongodb, add it to the PATH and launch it on specified port and db location.
+  Helper script to update submodules.
 
 .EXAMPLE
 
-PS> .\run_mongo.ps1
+PS> .\update_submodules.ps1
 
 #>
 
 $art = @"
 
-
-        ____________
-       /\      ___  \
-       \ \     \/_\  \
-        \ \     _____/ ______   ___ ___ ___
-         \ \    \___/ /\     \  \  \\  \\  \
-          \ \____\    \ \_____\  \__\\__\\__\
-           \/____/     \/_____/  . PYPE Club .
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 "@
 
@@ -37,9 +31,9 @@ function Exit-WithCode($exitcode) {
 
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$pype_root = (Get-Item $script_dir).parent.FullName
+$openpype_root = (Get-Item $script_dir).parent.FullName
 
-Set-Location -Path $pype_root
+Set-Location -Path $openpype_root
 
 git submodule update --recursive --remote
 

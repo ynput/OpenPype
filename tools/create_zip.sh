@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 
-# Helper script to create Pype zip.
-
+# This script will detect Python installation and run OpenPype to create
+# zip. It needs mongodb running. I will create zip from current source code
+# version and copy it top `~/.local/share/pype` if `--path` or `-p`
+# argument is not used.
 
 art () {
   cat <<-EOF
-  ____________
- /\\      ___  \\
- \\ \\     \\/_\\  \\
-  \\ \\     _____/ ______   ___ ___ ___
-   \\ \\    \\___/ /\\     \\  \\  \\\\  \\\\  \\
-    \\ \\____\\    \\ \\_____\\  \\__\\\\__\\\\__\\
-     \\/____/     \\/_____/  . PYPE Club .
+
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 EOF
 }
@@ -91,7 +92,7 @@ detect_python () {
 ###############################################################################
 clean_pyc () {
   local path
-  path=$pype_root
+  path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
@@ -118,11 +119,11 @@ main () {
   detect_python || return 1
 
   # Directories
-  pype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
-  pushd "$pype_root" > /dev/null || return > /dev/null
+  openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+  pushd "$openpype_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
-  poetry run python3 "$pype_root/start.py" generate-zip "$@"
+  poetry run python3 "$openpype_root/start.py" generate-zip "$@"
 }
 
 main "$@"

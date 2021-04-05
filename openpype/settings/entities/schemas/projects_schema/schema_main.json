@@ -1,0 +1,104 @@
+{
+    "key": "project",
+    "type": "dict",
+    "children": [
+        {
+            "type": "anatomy",
+            "key": "project_anatomy",
+            "label": "Anatomy",
+            "children": [
+                {
+                    "key": "roots",
+                    "label": "Roots",
+                    "type": "dict-modifiable",
+                    "is_file": true,
+                    "is_group": true,
+                    "expandable": false,
+                    "object_type": {
+                        "type": "path",
+                        "multiplatform": true
+                    }
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_anatomy_templates"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_anatomy_attributes"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "key": "tasks",
+                    "label": "Task types",
+                    "is_file": true,
+                    "is_group": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "text",
+                                "key": "short_name",
+                                "label": "Short name"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_anatomy_imageio"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "key": "project_settings",
+            "children": [
+                {
+                    "type": "schema",
+                    "name": "schema_project_global"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_ftrack"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_deadline"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_maya"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_nuke"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_hiero"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_harmony"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_celaction"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_resolve"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_standalonepublisher"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_unreal"
+                }
+            ]
+        }
+    ]
+}
