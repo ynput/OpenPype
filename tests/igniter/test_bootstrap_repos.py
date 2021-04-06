@@ -145,18 +145,18 @@ def test_search_string_for_pype_version(printer):
         assert PypeVersion.version_in_str(ver_string[0])[0] == ver_string[1]
 
 
+@pytest.mark.slow
 def test_install_live_repos(fix_bootstrap, printer):
-    rf = fix_bootstrap.create_version_from_live_code()
+    pype_version = fix_bootstrap.create_version_from_live_code()
     sep = os.path.sep
     expected_paths = [
-        f"{rf}{sep}avalon-core",
-        f"{rf}{sep}avalon-unreal-integration",
-        f"{rf}{sep}maya-look-assigner",
-        f"{rf}{sep}pype"
+        f"{pype_version.path}{sep}repos{sep}avalon-core",
+        f"{pype_version.path}{sep}repos{sep}avalon-unreal-integration",
+        f"{pype_version.path}"
     ]
     printer("testing zip creation")
-    assert os.path.exists(rf), "zip archive was not created"
-    fix_bootstrap.add_paths_from_archive(rf)
+    assert os.path.exists(pype_version.path), "zip archive was not created"
+    fix_bootstrap.add_paths_from_archive(pype_version.path)
     for ep in expected_paths:
         assert ep in sys.path, f"{ep} not set correctly"
 
@@ -165,10 +165,9 @@ def test_install_live_repos(fix_bootstrap, printer):
     import pype  # noqa: F401
 
     # test if pype is imported from specific location in zip
-    print(pype.__file__)
     assert "pype" in sys.modules.keys(), "Pype not imported"
     assert sys.modules["pype"].__file__ == \
-        f"{rf}{sep}pype{sep}pype{sep}__init__.py"
+        f"{pype_version.path}{sep}pype{sep}__init__.py"
 
 
 def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
@@ -252,7 +251,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     def _create_valid_zip(path: Path, version: str):
         with ZipFile(path, "w") as zf:
             zf.writestr(
-                "pype/pype/version.py", f"__version__ = '{version}'\n\n")
+                "pype/version.py", f"__version__ = '{version}'\n\n")
 
     def _create_invalid_dir(path: Path):
         path.mkdir(parents=True, exist_ok=True)
@@ -260,7 +259,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
             fp.write("invalid")
 
     def _create_valid_dir(path: Path, version: str):
-        pype_path = path / "pype" / "pype"
+        pype_path = path / "pype"
         version_path = pype_path / "version.py"
         pype_path.mkdir(parents=True, exist_ok=True)
         with open(version_path, "w") as fp:
