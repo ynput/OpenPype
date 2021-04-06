@@ -8,10 +8,10 @@ from Qt.QtCore import QThread, Signal, QObject  # noqa
 
 from .bootstrap_repos import (
     BootstrapRepos,
-    PypeVersionInvalid,
-    PypeVersionIOError,
-    PypeVersionExists,
-    PypeVersion
+    OpenPypeVersionInvalid,
+    OpenPypeVersionIOError,
+    OpenPypeVersionExists,
+    OpenPypeVersion
 )
 
 from .tools import validate_mongo_connection
@@ -26,9 +26,9 @@ class InstallResult(QObject):
 class InstallThread(QThread):
     """Install Worker thread.
 
-    This class takes care of finding Pype version on user entered path
+    This class takes care of finding OpenPype version on user entered path
     (or loading this path from database). If nothing is entered by user,
-    Pype will create its zip files from repositories that comes with it.
+    OpenPype will create its zip files from repositories that comes with it.
 
     If path contains plain repositories, they are zipped and installed to
     user data dir.
@@ -49,65 +49,67 @@ class InstallThread(QThread):
     def run(self):
         """Thread entry point.
 
-        Using :class:`BootstrapRepos` to either install Pype as zip files
+        Using :class:`BootstrapRepos` to either install OpenPype as zip files
         or copy them from location specified by user or retrieved from
         database.
 
         """
-        self.message.emit("Installing Pype ...", False)
+        self.message.emit("Installing OpenPype ...", False)
 
-        # find local version of Pype
+        # find local version of OpenPype
         bs = BootstrapRepos(
             progress_callback=self.set_progress, message=self.message)
         local_version = bs.get_local_live_version()
 
-        # if user did entered nothing, we install Pype from local version.
+        # if user did entered nothing, we install OpenPype from local version.
         # zip content of `repos`, copy it to user data dir and append
         # version to it.
         if not self._path:
             # user did not entered url
             if not self._mongo:
                 # it not set in environment
-                if not os.getenv("PYPE_MONGO"):
+                if not os.getenv("OPENPYPE_MONGO"):
                     # try to get it from settings registry
                     try:
-                        self._mongo = bs.registry.get_secure_item("pypeMongo")
+                        self._mongo = bs.registry.get_secure_item(
+                            "openPypeMongo")
                     except ValueError:
                         self.message.emit(
                             "!!! We need MongoDB URL to proceed.", True)
                         self.finished.emit(InstallResult(-1))
                         return
                 else:
-                    self._mongo = os.getenv("PYPE_MONGO")
+                    self._mongo = os.getenv("OPENPYPE_MONGO")
             else:
                 self.message.emit("Saving mongo connection string ...", False)
-                bs.registry.set_secure_item("pypeMongo", self._mongo)
+                bs.registry.set_secure_item("openPypeMongo", self._mongo)
 
-            os.environ["PYPE_MONGO"] = self._mongo
+            os.environ["OPENPYPE_MONGO"] = self._mongo
 
             self.message.emit(
-                f"Detecting installed Pype versions in {bs.data_dir}", False)
-            detected = bs.find_pype(include_zips=True)
+                f"Detecting installed OpenPype versions in {bs.data_dir}",
+                False)
+            detected = bs.find_openpype(include_zips=True)
 
             if detected:
-                if PypeVersion(
+                if OpenPypeVersion(
                         version=local_version, path=Path()) < detected[-1]:
                     self.message.emit((
                         f"Latest installed version {detected[-1]} is newer "
                         f"then currently running {local_version}"
                     ), False)
-                    self.message.emit("Skipping Pype install ...", False)
+                    self.message.emit("Skipping OpenPype install ...", False)
                     if detected[-1].path.suffix.lower() == ".zip":
-                        bs.extract_pype(detected[-1])
+                        bs.extract_openpype(detected[-1])
                     self.finished.emit(InstallResult(0))
                     return
 
-                if PypeVersion(version=local_version).get_main_version() == detected[-1].get_main_version():  # noqa
+                if OpenPypeVersion(version=local_version).get_main_version() == detected[-1].get_main_version():  # noqa
                     self.message.emit((
                         f"Latest installed version is the same as "
                         f"currently running {local_version}"
                     ), False)
-                    self.message.emit("Skipping Pype install ...", False)
+                    self.message.emit("Skipping OpenPype install ...", False)
                     self.finished.emit(InstallResult(0))
                     return
 
@@ -118,17 +120,17 @@ class InstallThread(QThread):
             else:
                 if getattr(sys, 'frozen', False):
                     self.message.emit("None detected.", True)
-                    self.message.emit(("We will use Pype coming with "
+                    self.message.emit(("We will use OpenPype coming with "
                                        "installer."), False)
-                    pype_version = bs.create_version_from_frozen_code()
-                    if not pype_version:
+                    openpype_version = bs.create_version_from_frozen_code()
+                    if not openpype_version:
                         self.message.emit(
-                            f"!!! Install failed - {pype_version}", True)
+                            f"!!! Install failed - {openpype_version}", True)
                         self.finished.emit(InstallResult(-1))
                         return
-                    self.message.emit(f"Using: {pype_version}", False)
-                    bs.install_version(pype_version)
-                    self.message.emit(f"Installed as {pype_version}", False)
+                    self.message.emit(f"Using: {openpype_version}", False)
+                    bs.install_version(openpype_version)
+                    self.message.emit(f"Installed as {openpype_version}", False)
                     self.progress.emit(100)
                     self.finished.emit(InstallResult(1))
                     return
@@ -136,39 +138,39 @@ class InstallThread(QThread):
                     self.message.emit("None detected.", False)
 
             self.message.emit(
-                f"We will use local Pype version {local_version}", False)
+                f"We will use local OpenPype version {local_version}", False)
 
-            local_pype = bs.create_version_from_live_code()
-            if not local_pype:
+            local_openpype = bs.create_version_from_live_code()
+            if not local_openpype:
                 self.message.emit(
-                    f"!!! Install failed - {local_pype}", True)
+                    f"!!! Install failed - {local_openpype}", True)
                 self.finished.emit(InstallResult(-1))
                 return
 
             try:
-                bs.install_version(local_pype)
-            except (PypeVersionExists,
-                    PypeVersionInvalid,
-                    PypeVersionIOError) as e:
+                bs.install_version(local_openpype)
+            except (OpenPypeVersionExists,
+                    OpenPypeVersionInvalid,
+                    OpenPypeVersionIOError) as e:
                 self.message.emit(f"Installed failed: ", True)
                 self.message.emit(str(e), True)
                 self.finished.emit(InstallResult(-1))
                 return
 
-            self.message.emit(f"Installed as {local_pype}", False)
+            self.message.emit(f"Installed as {local_openpype}", False)
             self.progress.emit(100)
             return
         else:
             # if we have mongo connection string, validate it, set it to
-            # user settings and get PYPE_PATH from there.
+            # user settings and get OPENPYPE_PATH from there.
             if self._mongo:
                 if not validate_mongo_connection(self._mongo):
                     self.message.emit(
                         f"!!! invalid mongo url {self._mongo}", True)
                     self.finished.emit(InstallResult(-1))
                     return
-                bs.registry.set_secure_item("pypeMongo", self._mongo)
-                os.environ["PYPE_MONGO"] = self._mongo
+                bs.registry.set_secure_item("openPypeMongo", self._mongo)
+                os.environ["OPENPYPE_MONGO"] = self._mongo
 
             self.message.emit(f"processing {self._path}", True)
             repo_file = bs.process_entered_location(self._path)

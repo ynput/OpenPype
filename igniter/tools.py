@@ -2,10 +2,12 @@
 """Tools used in **Igniter** GUI.
 
 Functions ``compose_url()`` and ``decompose_url()`` are the same as in
-``pype.lib`` and they are here to avoid importing pype module before its
+``openpype.lib`` and they are here to avoid importing OpenPype module before its
 version is decided.
 
 """
+import sys
+import os
 from typing import Dict, Union
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
@@ -130,6 +132,7 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
     try:
         client = MongoClient(**mongo_args)
         client.server_info()
+        client.close()
     except ServerSelectionTimeoutError as e:
         return False, f"Cannot connect to server {cnx} - {e}"
     except ValueError:
@@ -161,7 +164,7 @@ def validate_mongo_string(mongo: str) -> (bool, str):
 
 
 def validate_path_string(path: str) -> (bool, str):
-    """Validate string if it is path to Pype repository.
+    """Validate string if it is path to OpenPype repository.
 
     Args:
         path (str): Path to validate.
@@ -185,73 +188,68 @@ def validate_path_string(path: str) -> (bool, str):
     return True, "valid path"
 
 
-def load_environments(sections: list = None) -> dict:
-    """Load environments from Pype.
+def get_openpype_global_settings(url: str) -> dict:
+    """Load global settings from Mongo database.
 
-    This will load environments from database, process them with
-    :mod:`acre` and return them as flattened dictionary.
-
-    Args:
-        sections (list, optional): load specific types
-
-    Returns;
-        dict of str: loaded and processed environments.
-
-    """
-    import acre
-
-    from pype import settings
-
-    all_env = settings.get_environments()
-    merged_env = {}
-
-    sections = sections or all_env.keys()
-
-    for section in sections:
-        try:
-            parsed_env = acre.parse(all_env[section])
-        except AttributeError:
-            continue
-        merged_env = acre.append(merged_env, parsed_env)
-
-    return acre.compute(merged_env, cleanup=True)
-
-
-def get_pype_path_from_db(url: str) -> Union[str, None]:
-    """Get Pype path from database.
-
-    We are loading data from database `pype` and collection `settings`.
+    We are loading data from database `openpype` and collection `settings`.
     There we expect document type `global_settings`.
 
     Args:
-        url (str): mongodb url.
+        url (str): MongoDB url.
 
     Returns:
-        path to Pype or None if not found
-
+        dict: With settings data. Empty dictionary is returned if not found.
     """
     try:
         components = decompose_url(url)
     except RuntimeError:
-        return None
-    mongo_args = {
+        return {}
+    mongo_kwargs = {
         "host": compose_url(**components),
         "serverSelectionTimeoutMS": 2000
     }
     port = components.get("port")
     if port is not None:
-        mongo_args["port"] = int(port)
+        mongo_kwargs["port"] = int(port)
 
     try:
-        client = MongoClient(**mongo_args)
+        # Create mongo connection
+        client = MongoClient(**mongo_kwargs)
+        # Access settings collection
+        col = client["openpype"]["settings"]
+        # Query global settings
+        global_settings = col.find_one({"type": "global_settings"}) or {}
+        # Close Mongo connection
+        client.close()
+
     except Exception:
-        return None
+        # TODO log traceback or message
+        return {}
 
-    db = client.pype
-    col = db.settings
+    return global_settings.get("data") or {}
 
-    global_settings = col.find_one({"type": "global_settings"}, {"data": 1})
-    if not global_settings:
-        return None
-    global_settings.get("data", {})
-    return global_settings.get("pype_path", {}).get(platform.system().lower())
+
+def get_openpype_path_from_db(url: str) -> Union[str, None]:
+    """Get OpenPype path from global settings.
+
+    Args:
+        url (str): mongodb url.
+
+    Returns:
+        path to OpenPype or None if not found
+    """
+    global_settings = get_openpype_global_settings(url)
+    paths = (
+        global_settings
+        .get("openpype_path", {})
+        .get(platform.system().lower())
+    ) or []
+    # For cases when `openpype_path` is a single path
+    if paths and isinstance(paths, str):
+        paths = [paths]
+
+    # Loop over paths and return only existing
+    for path in paths:
+        if os.path.exists(path):
+            return path
+    return None
