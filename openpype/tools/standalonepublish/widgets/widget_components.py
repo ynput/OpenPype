@@ -160,31 +160,10 @@ def set_context(project, asset, task):
     os.environ["AVALON_TASK"] = task
     io.Session["AVALON_TASK"] = task
 
-    io.install()
-
-    av_project = io.find_one({'type': 'project'})
-    av_asset = io.find_one({
-        "type": 'asset',
-        "name": asset
-    })
-
-    parents = av_asset['data']['parents']
-    hierarchy = ''
-    if parents and len(parents) > 0:
-        hierarchy = os.path.sep.join(parents)
-
-    os.environ["AVALON_HIERARCHY"] = hierarchy
-    io.Session["AVALON_HIERARCHY"] = hierarchy
-
-    os.environ["AVALON_PROJECTCODE"] = av_project['data'].get('code', '')
-    io.Session["AVALON_PROJECTCODE"] = av_project['data'].get('code', '')
-
     io.Session["current_dir"] = os.path.normpath(os.getcwd())
 
     os.environ["AVALON_APP"] = HOST_NAME
     io.Session["AVALON_APP"] = HOST_NAME
-
-    io.uninstall()
 
 
 def cli_publish(data, publish_paths, gui=True):
