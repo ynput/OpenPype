@@ -12,37 +12,47 @@
             "label": "General",
             "children": [
                 {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "menu",
-                    "label": "OpenPype Menu shortcuts",
-                    "children": [
-                        {
-                            "type": "text",
-                            "key": "create",
-                            "label": "Create..."
-                        },
-                        {
-                            "type": "text",
-                            "key": "publish",
-                            "label": "Publish..."
-                        },
-                        {
-                            "type": "text",
-                            "key": "load",
-                            "label": "Load..."
-                        },
-                        {
-                            "type": "text",
-                            "key": "manage",
-                            "label": "Manage..."
-                        },
-                        {
-                            "type": "text",
-                            "key": "build_workfile",
-                            "label": "Build Workfile"
-                        }
-                    ]
+                    "type": "boolean",
+                    "key": "open_workfile_at_start",
+                    "label": "Open Workfile window at start of a Nuke session"
+                },
+                {
+                    "type": "boolean",
+                    "key": "create_initial_workfile",
+                    "label": "Create initial workfile version if none available"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "menu",
+            "label": "OpenPype Menu shortcuts",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "create",
+                    "label": "Create..."
+                },
+                {
+                    "type": "text",
+                    "key": "publish",
+                    "label": "Publish..."
+                },
+                {
+                    "type": "text",
+                    "key": "load",
+                    "label": "Load..."
+                },
+                {
+                    "type": "text",
+                    "key": "manage",
+                    "label": "Manage..."
+                },
+                {
+                    "type": "text",
+                    "key": "build_workfile",
+                    "label": "Build Workfile"
                 }
             ]
         },
@@ -87,7 +97,7 @@
             "name": "schema_nuke_publish",
             "template_data": []
         },
-                {
+        {
             "type": "schema",
             "name": "schema_nuke_load",
             "template_data": []

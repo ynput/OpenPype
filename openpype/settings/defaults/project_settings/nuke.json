@@ -1,5 +1,8 @@
 {
     "general": {
+        "open_workfile_at_start": false,
+        "create_initial_workfile": true
+    },
         "menu": {
             "create": "ctrl+shift+alt+c",
             "publish": "ctrl+alt+p",

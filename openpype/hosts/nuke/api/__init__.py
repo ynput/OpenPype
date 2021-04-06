@@ -2,16 +2,12 @@ import os
 import sys
 import nuke
 
-from avalon import api as avalon
-from openpype.tools import workfiles
-from pyblish import api as pyblish
+import avalon.api
+import pyblish.api
+from pype.api import Logger
 from openpype.api import Logger
-import openpype.hosts.nuke
 from . import lib, menu
 
-
-self = sys.modules[__name__]
-self.workfiles_launched = False
 log = Logger().get_logger(__name__)
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
@@ -25,7 +21,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 # registering pyblish gui regarding settings in presets
 if os.getenv("PYBLISH_GUI", None):
-    pyblish.register_gui(os.getenv("PYBLISH_GUI", None))
+    pyblish.api.register_gui(os.getenv("PYBLISH_GUI", None))
 
 
 def reload_config():
@@ -61,15 +57,16 @@ def install():
     '''
 
     log.info("Registering Nuke plug-ins..")
-    pyblish.register_plugin_path(PUBLISH_PATH)
-    avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
-    avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+    pyblish.api.register_plugin_path(PUBLISH_PATH)
+    avalon.api.register_plugin_path(avalon.api.Loader, LOAD_PATH)
+    avalon.api.register_plugin_path(avalon.api.Creator, CREATE_PATH)
+    avalon.api.register_plugin_path(avalon.api.InventoryAction, INVENTORY_PATH)
 
     # Register Avalon event for workfiles loading.
-    avalon.on("workio.open_file", lib.check_inventory_versions)
+    avalon.api.on("workio.open_file", lib.check_inventory_versions)
 
-    pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
+    pyblish.api.register_callback(
+        "instanceToggled", on_pyblish_instance_toggled)
     workfile_settings = lib.WorkfileSettings()
     # Disable all families except for the ones we explicitly want to see
     family_states = [
@@ -79,39 +76,27 @@ def install():
         "gizmo"
     ]
 
-    avalon.data["familiesStateDefault"] = False
-    avalon.data["familiesStateToggled"] = family_states
-
-    # Workfiles.
-    launch_workfiles = os.environ.get("WORKFILES_STARTUP")
-
-    if launch_workfiles:
-        nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
+    avalon.api.data["familiesStateDefault"] = False
+    avalon.api.data["familiesStateToggled"] = family_states
 
     # Set context settings.
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
-    # nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
-
+    nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
+    nuke.addOnCreate(lib.open_last_workfile, nodeClass="Root")
+    nuke.addOnCreate(lib.launch_workfiles_app, nodeClass="Root")
     menu.install()
-
-
-def launch_workfiles_app():
-    '''Function letting start workfiles after start of host
-    '''
-    if not self.workfiles_launched:
-        self.workfiles_launched = True
-        workfiles.show(os.environ["AVALON_WORKDIR"])
 
 
 def uninstall():
     '''Uninstalling host's integration
     '''
     log.info("Deregistering Nuke plug-ins..")
-    pyblish.deregister_plugin_path(PUBLISH_PATH)
-    avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
+    pyblish.api.deregister_plugin_path(PUBLISH_PATH)
+    avalon.api.deregister_plugin_path(avalon.api.Loader, LOAD_PATH)
+    avalon.api.deregister_plugin_path(avalon.api.Creator, CREATE_PATH)
 
-    pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
+    pyblish.api.deregister_callback(
+        "instanceToggled", on_pyblish_instance_toggled)
 
     reload_config()
     menu.uninstall()
@@ -123,7 +108,7 @@ def on_pyblish_instance_toggled(instance, old_value, new_value):
     log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
-    from avalon.nuke import (
+    from avalon.api.nuke import (
         viewer_update_and_undo_stop,
         add_publish_knob
     )
