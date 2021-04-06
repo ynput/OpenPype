@@ -1,14 +1,12 @@
 import os
-import sys
 import nuke
 
 import avalon.api
 import pyblish.api
-from pype.api import Logger
-from openpype.api import Logger
+import openpype
 from . import lib, menu
 
-log = Logger().get_logger(__name__)
+log = openpype.api.Logger().get_logger(__name__)
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.nuke.__file__))
