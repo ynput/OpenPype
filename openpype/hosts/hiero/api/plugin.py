@@ -4,10 +4,10 @@ import hiero
 from Qt import QtWidgets, QtCore
 from avalon.vendor import qargparse
 import avalon.api as avalon
-import pype.api as pype
+import openpype.api as openpype
 from . import lib
 
-log = pype.Logger().get_logger(__name__)
+log = openpype.Logger().get_logger(__name__)
 
 
 def load_stylesheet():
@@ -477,7 +477,7 @@ class ClipLoader:
 
         """
         asset_name = self.context["representation"]["context"]["asset"]
-        self.data["assetData"] = pype.get_asset(asset_name)["data"]
+        self.data["assetData"] = openpype.get_asset(asset_name)["data"]
 
     def _make_track_item(self, source_bin_item, audio=False):
         """ Create track item with """
@@ -593,16 +593,16 @@ class ClipLoader:
         return track_item
 
 
-class Creator(pype.Creator):
+class Creator(openpype.Creator):
     """Creator class wrapper
     """
     clip_color = "Purple"
     rename_index = None
 
     def __init__(self, *args, **kwargs):
-        import pype.hosts.hiero.api as phiero
+        import openpype.hosts.hiero.api as phiero
         super(Creator, self).__init__(*args, **kwargs)
-        self.presets = pype.get_current_project_settings()[
+        self.presets = openpype.get_current_project_settings()[
             "hiero"]["create"].get(self.__class__.__name__, {})
 
         # adding basic current context resolve objects
@@ -774,8 +774,8 @@ class PublishClip:
         _spl = text.split("#")
         _len = (len(_spl) - 1)
         _repl = "{{{0}:0>{1}}}".format(name, _len)
-        new_text = text.replace(("#" * _len), _repl)
-        return new_text
+        return text.replace(("#" * _len), _repl)
+
 
     def _convert_to_tag_data(self):
         """ Convert internal data to tag data.

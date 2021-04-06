@@ -14,6 +14,7 @@ class PreCollectInstances(api.ContextPlugin):
     label = "Pre-collect Instances"
     hosts = ["hiero"]
 
+
     def process(self, context):
         track_items = phiero.get_track_items(
             selected=True, check_tagged=True, check_enabled=True)
@@ -34,7 +35,7 @@ class PreCollectInstances(api.ContextPlugin):
             "Processing enabled track items: {}".format(len(track_items)))
 
         for _ti in track_items:
-            data = dict()
+            data = {}
             clip = _ti.source()
 
             # get clips subtracks and anotations
@@ -60,7 +61,8 @@ class PreCollectInstances(api.ContextPlugin):
 
             asset = tag_parsed_data["asset"]
             subset = tag_parsed_data["subset"]
-            review = tag_parsed_data.get("review")
+            review_track = tag_parsed_data.get("reviewTrack")
+            hiero_track = tag_parsed_data.get("heroTrack")
             audio = tag_parsed_data.get("audio")
 
             # remove audio attribute from data
@@ -78,8 +80,8 @@ class PreCollectInstances(api.ContextPlugin):
             file_info = media_source.fileinfos().pop()
             source_first_frame = int(file_info.startFrame())
 
-            # apply only for feview and master track instance
-            if review:
+            # apply only for review and master track instance
+            if review_track and hiero_track:
                 families += ["review", "ftrack"]
 
             data.update({
@@ -94,6 +96,7 @@ class PreCollectInstances(api.ContextPlugin):
                 # track item attributes
                 "track": track.name(),
                 "trackItem": track,
+                "reviewTrack": review_track,
 
                 # version data
                 "versionData": {
@@ -113,7 +116,7 @@ class PreCollectInstances(api.ContextPlugin):
 
             instance = context.create_instance(**data)
 
-            self.log.info("Creating instance: {}".format(instance))
+            self.log.info("Creating instance.data: {}".format(instance.data))
 
             if audio:
                 a_data = dict()
