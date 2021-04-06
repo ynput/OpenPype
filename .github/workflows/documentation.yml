@@ -3,6 +3,7 @@ name: documentation
 on:
   pull_request:
     branches: [develop]
+    types: [review_requested, ready_for_review]
     paths:
     - 'website/**'
   push:
