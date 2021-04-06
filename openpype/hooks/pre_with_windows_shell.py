@@ -35,3 +35,7 @@ class LaunchWithWindowsShell(PreLaunchHook):
 
         # Replace launch args with new one
         self.launch_context.launch_args = args_string
+        # Change `creationflags` to CREATE_NEW_CONSOLE
+        self.launch_context.kwargs["creationflags"] = (
+            subprocess.CREATE_NEW_CONSOLE
+        )
