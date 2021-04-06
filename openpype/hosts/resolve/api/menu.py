@@ -67,13 +67,13 @@ class OpenPypeMenu(QtWidgets.QWidget):
         inventory_btn = QtWidgets.QPushButton("Inventory", self)
         subsetm_btn = QtWidgets.QPushButton("Subset Manager", self)
         libload_btn = QtWidgets.QPushButton("Library", self)
-        rename_btn = QtWidgets.QPushButton("Rename", self)
-        set_colorspace_btn = QtWidgets.QPushButton(
-            "Set colorspace from presets", self
-        )
-        reset_resolution_btn = QtWidgets.QPushButton(
-            "Reset Resolution from peresets", self
-        )
+        # rename_btn = QtWidgets.QPushButton("Rename", self)
+        # set_colorspace_btn = QtWidgets.QPushButton(
+        #     "Set colorspace from presets", self
+        # )
+        # reset_resolution_btn = QtWidgets.QPushButton(
+        #     "Reset Resolution from peresets", self
+        # )
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 20, 10, 20)
@@ -91,12 +91,12 @@ class OpenPypeMenu(QtWidgets.QWidget):
 
         layout.addWidget(Spacer(15, self))
 
-        layout.addWidget(rename_btn)
+        # layout.addWidget(rename_btn)
 
-        layout.addWidget(Spacer(15, self))
+        # layout.addWidget(Spacer(15, self))
 
-        layout.addWidget(set_colorspace_btn)
-        layout.addWidget(reset_resolution_btn)
+        # layout.addWidget(set_colorspace_btn)
+        # layout.addWidget(reset_resolution_btn)
 
         self.setLayout(layout)
 
@@ -107,9 +107,9 @@ class OpenPypeMenu(QtWidgets.QWidget):
         inventory_btn.clicked.connect(self.on_inventory_clicked)
         subsetm_btn.clicked.connect(self.on_subsetm_clicked)
         libload_btn.clicked.connect(self.on_libload_clicked)
-        rename_btn.clicked.connect(self.on_rename_clicked)
-        set_colorspace_btn.clicked.connect(self.on_set_colorspace_clicked)
-        reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
+        # rename_btn.clicked.connect(self.on_rename_clicked)
+        # set_colorspace_btn.clicked.connect(self.on_set_colorspace_clicked)
+        # reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
