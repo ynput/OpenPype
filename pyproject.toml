@@ -77,28 +77,28 @@ url = "https://distribute.openpype.io/wheels/"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
-[pype]
+[openpype]
 
-[pype.thirdparty.ffmpeg.windows]
+[openpype.thirdparty.ffmpeg.windows]
 url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.13-windows.zip"
 hash = "43988ebcba98313635f06f2ca7e2dd52670710ebceefaa77107321b1def30472"
 
-[pype.thirdparty.ffmpeg.linux]
+[openpype.thirdparty.ffmpeg.linux]
 url = "https://distribute.openpype.io/thirdparty/ffmpeg-20200504-linux.tgz"
 hash = "sha256:..."
 
-[pype.thirdparty.ffmpeg.darwin]
+[openpype.thirdparty.ffmpeg.darwin]
 url = "https://distribute.openpype.io/thirdparty/ffmpeg-20200504-darwin.tgz"
 hash = "sha256:..."
 
-[pype.thirdparty.oiio.windows]
+[openpype.thirdparty.oiio.windows]
 url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.0-windows.zip"
 hash = "fd2e00278e01e85dcee7b4a6969d1a16f13016ec16700fb0366dbb1b1f3c37ad"
 
-[pype.thirdparty.oiio.linux]
+[openpype.thirdparty.oiio.linux]
 url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-linux.tgz"
 hash = "sha256:..."
 
-[pype.thirdparty.oiio.darwin]
+[openpype.thirdparty.oiio.darwin]
 url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"
 hash = "sha256:..."

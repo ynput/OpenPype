@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Fetch, verify and process third-party dependencies of Pype.
+"""Fetch, verify and process third-party dependencies of OpenPype.
 
-Those should be defined in `pyproject.toml` in Pype sources root.
+Those should be defined in `pyproject.toml` in OpenPype sources root.
 
 """
 import os
@@ -68,19 +68,19 @@ def _print(msg: str, message_type: int = 0) -> None:
 
 _print("Processing third-party dependencies ...")
 start_time = time.time_ns()
-pype_root = Path(os.path.dirname(__file__)).parent
-pyproject = toml.load(pype_root / "pyproject.toml")
+openpype_root = Path(os.path.dirname(__file__)).parent
+pyproject = toml.load(openpype_root / "pyproject.toml")
 platform_name = platform.system().lower()
 
 try:
-    thirdparty = pyproject["pype"]["thirdparty"]
+    thirdparty = pyproject["openpype"]["thirdparty"]
 except AttributeError:
     _print("No third-party libraries specified in pyproject.toml", 1)
     sys.exit(1)
 
 for k, v in thirdparty.items():
     _print(f"processing {k}")
-    destination_path = pype_root / "vendor" / "bin" / k / platform_name
+    destination_path = openpype_root / "vendor" / "bin" / k / platform_name
     url = v.get(platform_name).get("url")
 
     if not v.get(platform_name):
@@ -150,11 +150,7 @@ for k, v in thirdparty.items():
             try:
                 tar_file = tarfile.open(temp_file, tar_type)
             except tarfile.ReadError:
-                raise SystemExit(
-                    "corrupted archive: also consider to download the "
-                    "archive manually, add its path to the url, run "
-                    "`./pype deploy`"
-                )
+                raise SystemExit("corrupted archive")
             tar_file.extractall(destination_path)
             tar_file.close()
         _print("Extraction OK", 3)
