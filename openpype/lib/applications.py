@@ -858,7 +858,10 @@ class ApplicationLaunchContext:
         Return:
             list: Unpacked arguments.
         """
-        while True:
+        if isinstance(args, str):
+            return args
+        all_cleared = False
+        while not all_cleared:
             all_cleared = True
             new_args = []
             for arg in args:
@@ -870,8 +873,6 @@ class ApplicationLaunchContext:
                     new_args.append(arg)
             args = new_args
 
-            if all_cleared:
-                break
         return args
 
 
