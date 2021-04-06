@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:version-1.0",
+    "title": "openpype:version-1.0",
     "description": "An individual version",
 
     "type": "object",

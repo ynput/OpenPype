@@ -1,0 +1,35 @@
+{
+    "type": "dict",
+    "key": "tools",
+    "collapsible": true,
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict-modifiable",
+            "label": "Tools",
+            "key": "tool_groups",
+            "collapsible_key": true,
+            "object_type": {
+                "type": "dict",
+                "children": [
+                    {
+                        "key": "environment",
+                        "label": "Environments",
+                        "type": "raw-json"
+                    },
+                    {
+                        "type": "separator"
+                    },
+                    {
+                        "type": "dict-modifiable",
+                        "key": "variants",
+                        "collapsible_key": true,
+                        "object_type": {
+                            "type": "raw-json"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -1,0 +1,46 @@
+{
+    "type": "dict",
+    "key": "shell",
+    "label": "Shell",
+    "collapsible": true,
+    "checkbox_key": "enabled",
+    "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json"
+        },
+        {
+            "type": "dict",
+            "key": "variants",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_host_variant",
+                    "template_data": [
+                        {
+                            "app_variant": "python_3-7",
+                            "app_variant_label": "Python 3.7",
+                            "app_name": "python"
+                        },
+                        {
+                            "app_variant": "python_2-7",
+                            "app_variant_label": "Python 2.7",
+                            "app_name": "python"
+                        },
+                        {
+                            "app_variant": "terminal",
+                            "app_variant_label": "Terminal",
+                            "app_name": "terminal"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

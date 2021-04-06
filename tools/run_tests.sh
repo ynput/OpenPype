@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
 
-# Run tests for Pype
-
+# Run tests for OpenPype
+# This will use virtual environment and pytest to run test for OpenPype.
 
 art () {
   cat <<-EOF
-  ____________
- /\\      ___  \\
- \\ \\     \\/_\\  \\
-  \\ \\     _____/ ______   ___ ___ ___
-   \\ \\    \\___/ /\\     \\  \\  \\\\  \\\\  \\
-    \\ \\____\\    \\ \\_____\\  \\__\\\\__\\\\__\\
-     \\/____/     \\/_____/  . PYPE Club .
+
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 EOF
 }
@@ -87,7 +86,7 @@ detect_python () {
 ###############################################################################
 clean_pyc () {
   local path
-  path=$pype_root
+  path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
@@ -114,13 +113,13 @@ main () {
   detect_python || return 1
 
   # Directories
-  pype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
-  pushd "$pype_root" || return > /dev/null
+  openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+  pushd "$openpype_root" || return > /dev/null
 
-  echo -e "${BIGreen}>>>${RST} Testing Pype ..."
+  echo -e "${BIGreen}>>>${RST} Testing OpenPype ..."
   original_pythonpath=$PYTHONPATH
-  export PYTHONPATH="$pype_root:$PYTHONPATH"
-  poetry run pytest -x --capture=sys --print -W ignore::DeprecationWarning "$pype_root/tests"
+  export PYTHONPATH="$openpype_root:$PYTHONPATH"
+  poetry run pytest -x --capture=sys --print -W ignore::DeprecationWarning "$openpype_root/tests"
   PYTHONPATH=$original_pythonpath
 }
 
