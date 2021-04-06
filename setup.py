@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Setup info for building Pype 3.0."""
+"""Setup info for building OpenPype 3.0."""
 import os
 import sys
 import re
@@ -10,9 +10,9 @@ from sphinx.setup_command import BuildDoc
 
 version = {}
 
-pype_root = Path(os.path.dirname(__file__))
+openpype_root = Path(os.path.dirname(__file__))
 
-with open(pype_root / "pype" / "version.py") as fp:
+with open(openpype_root / "openpype" / "version.py") as fp:
     exec(fp.read(), version)
 
 version_match = re.search(r"(\d+\.\d+.\d+).*", version["__version__"])
@@ -53,7 +53,7 @@ excludes = []
 bin_includes = []
 include_files = [
     "igniter",
-    "pype",
+    "openpype",
     "repos",
     "schema",
     "vendor",
@@ -62,7 +62,12 @@ include_files = [
 ]
 
 if sys.platform == "win32":
-    install_requires.append("win32ctypes")
+    install_requires.extend([
+        # `pywin32` packages
+        "win32ctypes",
+        "win32comext",
+        "pythoncom"
+    ])
 
 build_options = dict(
     packages=install_requires,
@@ -73,28 +78,28 @@ build_options = dict(
     optimize=0
 )
 
-icon_path = pype_root / "igniter" / "pype.ico"
+icon_path = openpype_root / "igniter" / "openpype.ico"
 
 executables = [
     Executable("start.py", base=None,
-               target_name="pype_console", icon=icon_path.as_posix()),
+               target_name="openpype_console", icon=icon_path.as_posix()),
     Executable("start.py", base=base,
-               target_name="pype_gui", icon=icon_path.as_posix())
+               target_name="openpype_gui", icon=icon_path.as_posix())
 ]
 
 setup(
-    name="pype",
+    name="OpenPype",
     version=__version__,
     description="Ultimate pipeline",
     cmdclass={"build_sphinx": BuildDoc},
     options={
         "build_exe": build_options,
         "build_sphinx": {
-            "project": "Pype",
+            "project": "OpenPype",
             "version": __version__,
             "release": __version__,
-            "source_dir": (pype_root / "docs" / "source").as_posix(),
-            "build_dir": (pype_root / "docs" / "build").as_posix()
+            "source_dir": (openpype_root / "docs" / "source").as_posix(),
+            "build_dir": (openpype_root / "docs" / "build").as_posix()
         }
     },
     executables=executables

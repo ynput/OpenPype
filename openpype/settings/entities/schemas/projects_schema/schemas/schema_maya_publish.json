@@ -1,0 +1,316 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "publish",
+    "label": "Publish plugins",
+    "children": [
+        {
+            "type": "label",
+            "label": "Collectors"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectMayaRender",
+            "label": "Collect Render Layers",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "sync_workfile_version",
+                    "label": "Sync render version with workfile"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Validators"
+        },
+
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateShaderName",
+            "label": "ValidateShaderName",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "Shader name regex can use named capture group <b>asset</b> to validate against current asset name.<p><b>Example:</b><br/><code>^.*(?P=&lt;asset&gt;.+)_SHD</code></p>"
+                },
+                {
+                    "type": "text",
+                    "key": "regex",
+                    "label": "Validation regex"
+                }
+            ]
+        },
+
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateAttributes",
+            "label": "ValidateAttributes",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "raw-json",
+                    "key": "attributes",
+                    "label": "Attributes"
+                }
+            ]
+        },
+        {
+            "type": "collapsible-wrap",
+            "label": "Model",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ValidateModelName",
+                    "label": "Validate Model Name",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Path to material file defining list of material names to check. This is material name per line simple text file.<br/>It will be checked against named group <b>shader</b> in your <em>Validation regex</em>.<p>For example: <br/> <code>^.*(?P=&lt;shader&gt;.+)_GEO</code></p>"
+                        },
+                        {
+                            "type": "path",
+                            "key": "material_file",
+                            "label": "Material File",
+                            "multiplatform": true,
+                            "multipath": false
+                        },
+                        {
+                            "type": "text",
+                            "key": "regex",
+                            "label": "Validation regex"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ValidateTransformNamingSuffix",
+                    "label": "ValidateTransformNamingSuffix",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Validates transform suffix based on the type of its children shapes."
+                        },
+                        {
+                            "type": "raw-json",
+                            "key": "SUFFIX_NAMING_TABLE",
+                            "label": "Suffix Naming Table"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "ALLOW_IF_NOT_IN_SUFFIX_TABLE",
+                            "label": "Allow if suffix not in table"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateColorSets",
+                            "label": "ValidateColorSets"
+                        },
+                        {
+                            "key": "ValidateMeshHasOverlappingUVs",
+                            "label": "ValidateMeshHasOverlappingUVs"
+                        },
+                        {
+                            "key": "ValidateMeshArnoldAttributes",
+                            "label": "ValidateMeshArnoldAttributes"
+                        },
+                        {
+                            "key": "ValidateMeshShaderConnections",
+                            "label": "ValidateMeshShaderConnections"
+                        },
+                        {
+                            "key": "ValidateMeshSingleUVSet",
+                            "label": "ValidateMeshSingleUVSet"
+                        },
+                        {
+                            "key": "ValidateMeshHasUVs",
+                            "label": "ValidateMeshHasUVs"
+                        },
+                        {
+                            "key": "ValidateMeshLaminaFaces",
+                            "label": "ValidateMeshLaminaFaces"
+                        },
+                        {
+                            "key": "ValidateMeshNonManifold",
+                            "label": "ValidateMeshNonManifold"
+                        },
+                        {
+                            "key": "ValidateMeshNormalsUnlocked",
+                            "label": "ValidateMeshNormalsUnlocked"
+                        },
+                        {
+                            "key": "ValidateMeshUVSetMap1",
+                            "label": "ValidateMeshUVSetMap1",
+                            "docstring": "Validate model's default uv set exists and is named 'map1'.<br><br>In Maya meshes by default have a uv set named 'map1' that cannot be deleted. It can be renamed, however,<br> introducing some issues with some renderers. As such we ensure the first (default) UV set index is named 'map1'."
+                        },
+                        {
+                            "key": "ValidateMeshVerticesHaveEdges",
+                            "label": "ValidateMeshVerticesHaveEdges"
+                        },
+                        {
+                            "key": "ValidateNoAnimation",
+                            "label": "ValidateNoAnimation",
+                            "docstring": "Ensure no keyframes on nodes in the Instance.<br>Even though a Model would extract without animCurves correctly this avoids getting different <br> output from a model when extracted from a different frame than the first frame. (Might be overly restrictive though)."
+                        },
+                        {
+                            "key": "ValidateNoNamespace",
+                            "label": "ValidateNoNamespace"
+                        },
+                        {
+                            "key": "ValidateNoNullTransforms",
+                            "label": "ValidateNoNullTransforms"
+                        },
+                        {
+                            "key": "ValidateNoUnknownNodes",
+                            "label": "ValidateNoUnknownNodes"
+                        },
+                        {
+                            "key": "ValidateNodeNoGhosting",
+                            "label": "ValidateNodeNoGhosting"
+                        },
+                        {
+                            "key": "ValidateShapeDefaultNames",
+                            "label": "ValidateShapeDefaultNames"
+                        },
+                        {
+                            "key": "ValidateShapeRenderStats",
+                            "label": "ValidateShapeRenderStats"
+                        },
+                        {
+                            "key": "ValidateTransformZero",
+                            "label": "ValidateTransformZero"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateCameraAttributes",
+                    "label": "Validate Camera Attributes",
+                    "docstring": ""
+                },
+                {
+                    "key": "ValidateAssemblyName",
+                    "label": "Validate Assembly Name"
+                },
+                {
+                    "key": "ValidateAssRelativePaths",
+                    "label": "ValidateAssRelativePaths"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Extractors"
+        },
+        {
+            "type": "schema_template",
+            "name": "template_maya_capture"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractCameraAlembic",
+            "label": "Extract camera to Alembic",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "label",
+                    "label": "List of attributes that will be added to the baked alembic camera. Needs to be written in python list syntax.<p>For example: <br/> <code>[\"attributeName\", \"anotherAttribute\"]</code></p>"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "raw-json",
+                    "key": "bake_attributes",
+                    "label": "Bake Attributes",
+                    "is_list": true
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "MayaSubmitDeadline",
+            "label": "Submit maya job to deadline",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "enum",
+                    "key": "tile_assembler_plugin",
+                    "label": "Tile Assembler Plugin",
+                    "multiselection": false,
+                    "enum_items": [
+                        {
+                            "DraftTileAssembler": "Draft Tile Assembler"
+                        },
+                        {
+                            "oiio": "Open Image IO"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
