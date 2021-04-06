@@ -57,25 +57,10 @@ def _prepare_publish_environments():
     project_name = os.getenv("AVALON_PROJECT")
     asset_name = os.getenv("AVALON_ASSET")
 
-    io.install()
-    project_doc = io.find_one({
-        "type": "project"
-    })
-    av_asset = io.find_one({
-        "type": "asset",
-        "name": asset_name
-    })
-    parents = av_asset["data"]["parents"]
-    hierarchy = ""
-    if parents:
-        hierarchy = "/".join(parents)
-
     env["AVALON_PROJECT"] = project_name
     env["AVALON_ASSET"] = asset_name
     env["AVALON_TASK"] = os.getenv("AVALON_TASK")
     env["AVALON_WORKDIR"] = os.getenv("AVALON_WORKDIR")
-    env["AVALON_HIERARCHY"] = hierarchy
-    env["AVALON_PROJECTCODE"] = project_doc["data"].get("code", "")
     env["AVALON_APP"] = f"hosts.{publish_host}"
     env["AVALON_APP_NAME"] = "celaction_local"
 
