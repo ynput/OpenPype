@@ -804,10 +804,15 @@ class ApplicationLaunchContext:
         self.log.debug("All prelaunch hook executed. Starting new process.")
 
         # Prepare subprocess args
-        args = self.clear_launch_args(self.launch_args)
-        self.log.debug(
-            "Launching \"{}\" with args ({}): {}".format(
-                self.app_name, len(args), args
+        args_len_str = ""
+        if isinstance(self.launch_args, str):
+            args = self.launch_args
+        else:
+            args = self.clear_launch_args(self.launch_args)
+            args_len_str = " ({})".format(len(args))
+        self.log.info(
+            "Launching \"{}\" with args{}: {}".format(
+                self.app_name, args_len_str, args
             )
         )
         # Run process
