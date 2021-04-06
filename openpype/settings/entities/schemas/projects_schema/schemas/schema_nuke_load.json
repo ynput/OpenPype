@@ -1,0 +1,26 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "load",
+    "label": "Loader plugins",
+    "children": [
+        {
+            "type": "schema_template",
+            "name": "template_loader_plugin_nuke",
+            "template_data": [
+                {
+                    "key": "LoadImage",
+                    "label": "Image Loader"
+                },
+                {
+                    "key": "LoadMov",
+                    "label": "Movie Loader"
+                },
+                {
+                    "key": "LoadSequence",
+                    "label": "Image Sequence Loader"
+                }
+            ]
+        }
+    ]
+}

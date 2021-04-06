@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mainMenu>
+    <menuBar>
+        <subMenu id="avalon_menu">
+            <label>OpenPype</label>
+
+            <scriptItem id="avalon_create">
+                <label>Create ...</label>
+                <scriptCode><![CDATA[
+from avalon.tools import creator
+creator.show()
+]]></scriptCode>
+            </scriptItem>
+
+            <scriptItem id="avalon_load">
+                <label>Load ...</label>
+                <scriptCode><![CDATA[
+from avalon.tools import cbloader
+cbloader.show(use_context=True)
+]]></scriptCode>
+            </scriptItem>
+
+            <scriptItem id="avalon_manage">
+                <label>Manage ...</label>
+                <scriptCode><![CDATA[
+from avalon.tools import cbsceneinventory
+cbsceneinventory.show()
+]]></scriptCode>
+            </scriptItem>
+
+            <scriptItem id="publish">
+                <label>Publish ...</label>
+                <scriptCode><![CDATA[
+import hou
+from avalon.tools import publish
+parent = hou.qt.mainWindow()
+publish.show(parent)
+                ]]></scriptCode>
+            </scriptItem>
+
+            <separatorItem/>
+
+            <scriptItem id="workfiles">
+                <label>Work Files ...</label>
+                <scriptCode><![CDATA[
+import hou, os
+from openpype.tools import workfiles
+workfiles.show(os.environ["AVALON_WORKDIR"])
+                ]]></scriptCode>
+            </scriptItem>
+
+            <separatorItem/>
+
+            <subMenu id="avalon_reload_pipeline">
+                <label>System</label>
+                <scriptItem>
+                    <label>Reload Pipeline (unstable)</label>
+                    <scriptCode><![CDATA[
+from avalon.houdini import pipeline
+pipeline.reload_pipeline()]]></scriptCode>
+                </scriptItem>
+            </subMenu>
+        </subMenu>
+    </menuBar>
+</mainMenu>
