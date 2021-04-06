@@ -7,6 +7,10 @@ on:
   pull_request:
     branches: [develop]
     types: [review_requested, ready_for_review]
+    paths-ignore:
+    - 'docs/**',
+    - 'website/**'
+    - 'vendor/**'
 
 jobs:
   Windows-latest:
