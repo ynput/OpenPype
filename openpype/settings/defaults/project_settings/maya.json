@@ -1,0 +1,562 @@
+{
+    "ext_mapping": {
+        "model": "ma",
+        "mayaAscii": "ma",
+        "camera": "ma",
+        "rig": "ma",
+        "workfile": "ma",
+        "yetiRig": "ma"
+    },
+    "create": {
+        "CreateAnimation": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateAss": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateAssembly": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateCamera": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateLayout": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateLook": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateMayaScene": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateModel": {
+            "enabled": true,
+            "defaults": [
+                "Main",
+                "Proxy",
+                "Sculpt"
+            ]
+        },
+        "CreatePointCache": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateRender": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateRenderSetup": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateReview": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateRig": {
+            "enabled": true,
+            "defaults": [
+                "Main",
+                "Sim",
+                "Cloth"
+            ]
+        },
+        "CreateSetDress": {
+            "enabled": true,
+            "defaults": [
+                "Main",
+                "Anim"
+            ]
+        },
+        "CreateUnrealStaticMesh": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateVrayProxy": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateVRayScene": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateYetiRig": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        }
+    },
+    "publish": {
+        "CollectMayaRender": {
+            "sync_workfile_version": false
+        },
+        "ValidateShaderName": {
+            "enabled": false,
+            "regex": "(?P<asset>.*)_(.*)_SHD"
+        },
+        "ValidateAttributes": {
+            "enabled": false,
+            "attributes": {}
+        },
+        "ValidateModelName": {
+            "enabled": false,
+            "material_file": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            },
+            "regex": "(.*)_(\\\\d)*_(.*)_(GEO)"
+        },
+        "ValidateTransformNamingSuffix": {
+            "enabled": true,
+            "SUFFIX_NAMING_TABLE": {
+                "mesh": [
+                    "_GEO",
+                    "_GES",
+                    "_GEP",
+                    "_OSD"
+                ],
+                "nurbsCurve": [
+                    "_CRV"
+                ],
+                "nurbsSurface": [
+                    "_NRB"
+                ],
+                "locator": [
+                    "_LOC"
+                ],
+                "group": [
+                    "_GRP"
+                ]
+            },
+            "ALLOW_IF_NOT_IN_SUFFIX_TABLE": true
+        },
+        "ValidateColorSets": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshHasOverlappingUVs": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshArnoldAttributes": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshShaderConnections": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshSingleUVSet": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshHasUVs": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshLaminaFaces": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshNonManifold": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshNormalsUnlocked": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshUVSetMap1": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMeshVerticesHaveEdges": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateNoAnimation": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateNoNamespace": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateNoNullTransforms": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateNoUnknownNodes": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateNodeNoGhosting": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateShapeDefaultNames": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateShapeRenderStats": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateTransformZero": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateCameraAttributes": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
+        "ValidateAssemblyName": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateAssRelativePaths": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ExtractPlayblast": {
+            "capture_preset": {
+                "Codec": {
+                    "compression": "jpg",
+                    "format": "image",
+                    "quality": 95
+                },
+                "Display Options": {
+                    "background": [
+                        0.7,
+                        0.7,
+                        0.7
+                    ],
+                    "backgroundBottom": [
+                        0.7,
+                        0.7,
+                        0.7
+                    ],
+                    "backgroundTop": [
+                        0.7,
+                        0.7,
+                        0.7
+                    ],
+                    "override_display": true
+                },
+                "Generic": {
+                    "isolate_view": true,
+                    "off_screen": true
+                },
+                "PanZoom": {
+                    "pan_zoom": true
+                },
+                "Renderer": {
+                    "rendererName": "vp2Renderer"
+                },
+                "Resolution": {
+                    "width": 1080,
+                    "height": 1920,
+                    "percent": 1.0,
+                    "mode": "Custom"
+                },
+                "Viewport Options": {
+                    "override_viewport_options": true,
+                    "displayLights": "default",
+                    "textureMaxResolution": 1024,
+                    "multiSample": 4,
+                    "shadows": true,
+                    "textures": true,
+                    "twoSidedLighting": true,
+                    "ssaoEnable": true,
+                    "cameras": false,
+                    "clipGhosts": false,
+                    "controlVertices": false,
+                    "deformers": false,
+                    "dimensions": false,
+                    "dynamicConstraints": false,
+                    "dynamics": false,
+                    "fluids": false,
+                    "follicles": false,
+                    "gpuCacheDisplayFilter": false,
+                    "greasePencils": false,
+                    "grid": false,
+                    "hairSystems": true,
+                    "handles": false,
+                    "hud": false,
+                    "hulls": false,
+                    "ikHandles": false,
+                    "imagePlane": true,
+                    "joints": false,
+                    "lights": false,
+                    "locators": false,
+                    "manipulators": false,
+                    "motionTrails": false,
+                    "nCloths": false,
+                    "nParticles": false,
+                    "nRigids": false,
+                    "nurbsCurves": false,
+                    "nurbsSurfaces": false,
+                    "particleInstancers": false,
+                    "pivots": false,
+                    "planes": false,
+                    "pluginShapes": false,
+                    "polymeshes": true,
+                    "strokes": false,
+                    "subdivSurfaces": false
+                },
+                "Camera Options": {
+                    "displayGateMask": false,
+                    "displayResolution": false,
+                    "displayFilmGate": false,
+                    "displayFieldChart": false,
+                    "displaySafeAction": false,
+                    "displaySafeTitle": false,
+                    "displayFilmPivot": false,
+                    "displayFilmOrigin": false,
+                    "overscan": 1.0
+                }
+            }
+        },
+        "ExtractCameraAlembic": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "bake_attributes": []
+        },
+        "MayaSubmitDeadline": {
+            "enabled": true,
+            "tile_assembler_plugin": "DraftTileAssembler"
+        }
+    },
+    "load": {
+        "colors": {
+            "model": [
+                0.821,
+                0.518,
+                0.117
+            ],
+            "rig": [
+                0.144,
+                0.443,
+                0.463
+            ],
+            "pointcache": [
+                0.368,
+                0.821,
+                0.117
+            ],
+            "animation": [
+                0.368,
+                0.821,
+                0.117
+            ],
+            "ass": [
+                1.0,
+                0.332,
+                0.312
+            ],
+            "camera": [
+                0.447,
+                0.312,
+                1.0
+            ],
+            "fbx": [
+                1.0,
+                0.931,
+                0.312
+            ],
+            "mayaAscii": [
+                0.312,
+                1.0,
+                0.747
+            ],
+            "setdress": [
+                0.312,
+                1.0,
+                0.747
+            ],
+            "layout": [
+                0.312,
+                1.0,
+                0.747
+            ],
+            "vdbcache": [
+                0.312,
+                1.0,
+                0.428
+            ],
+            "vrayproxy": [
+                0.258,
+                0.95,
+                0.541
+            ],
+            "yeticache": [
+                0.2,
+                0.8,
+                0.3
+            ],
+            "yetiRig": [
+                0.0,
+                0.8,
+                0.5
+            ]
+        }
+    },
+    "workfile_build": {
+        "profiles": [
+            {
+                "tasks": [
+                    "Lighting"
+                ],
+                "current_context": [
+                    {
+                        "subset_name_filters": [
+                            "\".+[Mm]ain\""
+                        ],
+                        "families": [
+                            "model"
+                        ],
+                        "repre_names": [
+                            "abc",
+                            "ma"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
+                        ]
+                    },
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "animation",
+                            "pointcache"
+                        ],
+                        "repre_names": [
+                            "abc"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
+                        ]
+                    },
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "rendersetup"
+                        ],
+                        "repre_names": [
+                            "json"
+                        ],
+                        "loaders": [
+                            "RenderSetupLoader"
+                        ]
+                    },
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "camera"
+                        ],
+                        "repre_names": [
+                            "abc"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
+                        ]
+                    }
+                ],
+                "linked_assets": [
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "sedress"
+                        ],
+                        "repre_names": [
+                            "ma"
+                        ],
+                        "loaders": [
+                            "ReferenceLoader"
+                        ]
+                    },
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "ArnoldStandin"
+                        ],
+                        "repre_names": [
+                            "ass"
+                        ],
+                        "loaders": [
+                            "assLoader"
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    "filters": {
+        "preset 1": {
+            "ValidateNoAnimation": false,
+            "ValidateShapeDefaultNames": false
+        },
+        "preset 2": {
+            "ValidateNoAnimation": false
+        }
+    }
+}

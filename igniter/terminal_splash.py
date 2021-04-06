@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Pype terminal animation."""
+"""OpenPype terminal animation."""
 import blessed
 from pathlib import Path
 from time import sleep
@@ -15,7 +15,7 @@ except AttributeError:
 
 
 def play_animation():
-    """Play ASCII art Pype animation."""
+    """Play ASCII art OpenPype animation."""
     if NO_TERMINAL:
         return
     print(term.home + term.clear)

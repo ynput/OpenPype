@@ -1,0 +1,31 @@
+{
+    "defaults": {
+        "version_padding": 3,
+        "version": "v{version:0>{@version_padding}}",
+        "frame_padding": 4,
+        "frame": "{frame:0>{@frame_padding}}"
+    },
+    "work": {
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task}",
+        "file": "{project[code]}_{asset}_{task}_{@version}<_{comment}>.{ext}",
+        "path": "{@folder}/{@file}"
+    },
+    "render": {
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/render/{subset}/{@version}",
+        "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+        "path": "{@folder}/{@file}"
+    },
+    "publish": {
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
+        "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
+        "path": "{@folder}/{@file}",
+        "thumbnail": "{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}.{ext}"
+    },
+    "hero": {
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/hero",
+        "file": "{project[code]}_{asset}_{subset}_hero<_{output}><.{frame}>.{ext}",
+        "path": "{@folder}/{@file}"
+    },
+    "delivery": {},
+    "others": {}
+}
