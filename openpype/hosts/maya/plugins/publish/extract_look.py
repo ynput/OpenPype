@@ -1,13 +1,14 @@
+# -*- coding: utf-8 -*-
+"""Maya look extractor."""
 import os
 import sys
 import json
-import copy
 import tempfile
 import contextlib
 import subprocess
 from collections import OrderedDict
 
-from maya import cmds
+from maya import cmds  # noqa
 
 import pyblish.api
 import avalon.maya
@@ -22,23 +23,38 @@ HARDLINK = 2
 
 
 def find_paths_by_hash(texture_hash):
-    # Find the texture hash key in the dictionary and all paths that
-    # originate from it.
+    """Find the texture hash key in the dictionary.
+
+    All paths that originate from it.
+
+    Args:
+        texture_hash (str): Hash of the texture.
+
+    Return:
+        str: path to texture if found.
+
+    """
     key = "data.sourceHashes.{0}".format(texture_hash)
     return io.distinct(key, {"type": "version"})
 
 
 def maketx(source, destination, *args):
-    """Make .tx using maketx with some default settings.
+    """Make `.tx` using `maketx` with some default settings.
+
     The settings are based on default as used in Arnold's
     txManager in the scene.
     This function requires the `maketx` executable to be
     on the `PATH`.
+
     Args:
         source (str): Path to source file.
         destination (str): Writing destination path.
-    """
+        *args: Additional arguments for `maketx`.
 
+    Returns:
+        str: Output of `maketx` command.
+
+    """
     cmd = [
         "maketx",
         "-v",  # verbose
@@ -56,7 +72,7 @@ def maketx(source, destination, *args):
 
     cmd = " ".join(cmd)
 
-    CREATE_NO_WINDOW = 0x08000000
+    CREATE_NO_WINDOW = 0x08000000  # noqa
     kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
 
     if sys.platform == "win32":
@@ -118,12 +134,58 @@ class ExtractLook(openpype.api.Extractor):
     hosts = ["maya"]
     families = ["look"]
     order = pyblish.api.ExtractorOrder + 0.2
+    scene_type = "ma"
+
+    @staticmethod
+    def get_renderer_name():
+        """Get renderer name from Maya.
+
+        Returns:
+            str: Renderer name.
+
+        """
+        renderer = cmds.getAttr(
+            "defaultRenderGlobals.currentRenderer"
+        ).lower()
+        # handle various renderman names
+        if renderer.startswith("renderman"):
+            renderer = "renderman"
+        return renderer
+
+    def get_maya_scene_type(self, instance):
+        """Get Maya scene type from settings.
+
+        Args:
+            instance (pyblish.api.Instance): Instance with collected
+                project settings.
+
+        """
+        ext_mapping = (
+            instance.context.data["project_settings"]["maya"]["ext_mapping"]
+        )
+        if ext_mapping:
+            self.log.info("Looking in settings for scene type ...")
+            # use extension mapping for first family found
+            for family in self.families:
+                try:
+                    self.scene_type = ext_mapping[family]
+                    self.log.info(
+                        "Using {} as scene type".format(self.scene_type))
+                    break
+                except KeyError:
+                    # no preset found
+                    pass
 
     def process(self, instance):
+        """Plugin entry point.
 
+        Args:
+            instance: Instance to process.
+
+        """
         # Define extract output file path
         dir_path = self.staging_dir(instance)
-        maya_fname = "{0}.ma".format(instance.name)
+        maya_fname = "{0}.{1}".format(instance.name, self.scene_type)
         json_fname = "{0}.json".format(instance.name)
 
         # Make texture dump folder
@@ -148,7 +210,7 @@ class ExtractLook(openpype.api.Extractor):
 
         # Collect all unique files used in the resources
         files = set()
-        files_metadata = dict()
+        files_metadata = {}
         for resource in resources:
             # Preserve color space values (force value after filepath change)
             # This will also trigger in the same order at end of context to
@@ -162,35 +224,33 @@ class ExtractLook(openpype.api.Extractor):
                 # files.update(os.path.normpath(f))
 
         # Process the resource files
-        transfers = list()
-        hardlinks = list()
-        hashes = dict()
-        forceCopy = instance.data.get("forceCopy", False)
+        transfers = []
+        hardlinks = []
+        hashes = {}
+        force_copy = instance.data.get("forceCopy", False)
 
         self.log.info(files)
         for filepath in files_metadata:
 
-            cspace = files_metadata[filepath]["color_space"]
-            linearise = False
-            if do_maketx:
-                if cspace == "sRGB":
-                    linearise = True
-                    # set its file node to 'raw' as tx will be linearized
-                    files_metadata[filepath]["color_space"] = "raw"
+            linearize = False
+            if do_maketx and files_metadata[filepath]["color_space"] == "sRGB":  # noqa: E501
+                linearize = True
+                # set its file node to 'raw' as tx will be linearized
+                files_metadata[filepath]["color_space"] = "raw"
 
-            source, mode, hash = self._process_texture(
+            source, mode, texture_hash = self._process_texture(
                 filepath,
                 do_maketx,
                 staging=dir_path,
-                linearise=linearise,
-                force=forceCopy
+                linearize=linearize,
+                force=force_copy
             )
             destination = self.resource_destination(instance,
                                                     source,
                                                     do_maketx)
 
             # Force copy is specified.
-            if forceCopy:
+            if force_copy:
                 mode = COPY
 
             if mode == COPY:
@@ -202,10 +262,10 @@ class ExtractLook(openpype.api.Extractor):
 
             # Store the hashes from hash to destination to include in the
             # database
-            hashes[hash] = destination
+            hashes[texture_hash] = destination
 
         # Remap the resources to the destination path (change node attributes)
-        destinations = dict()
+        destinations = {}
         remap = OrderedDict()  # needs to be ordered, see color space values
         for resource in resources:
             source = os.path.normpath(resource["source"])
@@ -222,7 +282,7 @@ class ExtractLook(openpype.api.Extractor):
             color_space_attr = resource["node"] + ".colorSpace"
             color_space = cmds.getAttr(color_space_attr)
             if files_metadata[source]["color_space"] == "raw":
-                # set colorpsace to raw if we linearized it
+                # set color space to raw if we linearized it
                 color_space = "Raw"
             # Remap file node filename to destination
             attr = resource["attribute"]
@@ -267,11 +327,11 @@ class ExtractLook(openpype.api.Extractor):
             json.dump(data, f)
 
         if "files" not in instance.data:
-            instance.data["files"] = list()
+            instance.data["files"] = []
         if "hardlinks" not in instance.data:
-            instance.data["hardlinks"] = list()
+            instance.data["hardlinks"] = []
         if "transfers" not in instance.data:
-            instance.data["transfers"] = list()
+            instance.data["transfers"] = []
 
         instance.data["files"].append(maya_fname)
         instance.data["files"].append(json_fname)
@@ -311,14 +371,26 @@ class ExtractLook(openpype.api.Extractor):
                                                           maya_path))
 
     def resource_destination(self, instance, filepath, do_maketx):
-        anatomy = instance.context.data["anatomy"]
+        """Get resource destination path.
 
+        This is utility function to change path if resource file name is
+        changed by some external tool like `maketx`.
+
+        Args:
+            instance: Current Instance.
+            filepath (str): Resource path
+            do_maketx (bool): Flag if resource is processed by `maketx`.
+
+        Returns:
+            str: Path to resource file
+
+        """
         resources_dir = instance.data["resourcesDir"]
 
         # Compute destination location
         basename, ext = os.path.splitext(os.path.basename(filepath))
 
-        # If maketx then the texture will always end with .tx
+        # If `maketx` then the texture will always end with .tx
         if do_maketx:
             ext = ".tx"
 
@@ -326,7 +398,7 @@ class ExtractLook(openpype.api.Extractor):
             resources_dir, basename + ext
         )
 
-    def _process_texture(self, filepath, do_maketx, staging, linearise, force):
+    def _process_texture(self, filepath, do_maketx, staging, linearize, force):
         """Process a single texture file on disk for publishing.
         This will:
             1. Check whether it's already published, if so it will do hardlink
@@ -363,7 +435,7 @@ class ExtractLook(openpype.api.Extractor):
             # Produce .tx file in staging if source file is not .tx
             converted = os.path.join(staging, "resources", fname + ".tx")
 
-            if linearise:
+            if linearize:
                 self.log.info("tx: converting sRGB -> linear")
                 colorconvert = "--colorconvert sRGB linear"
             else:
