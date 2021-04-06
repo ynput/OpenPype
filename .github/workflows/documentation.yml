@@ -3,8 +3,12 @@ name: documentation
 on:
   pull_request:
     branches: [develop]
+    paths:
+    - 'website/**'
   push:
     branches: [main]
+    paths:
+    - 'website/**'
 
 jobs:
   check-build:
