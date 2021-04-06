@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
 
-# Run Pype Tray
+# Run OpenPype Tray
 
 
 art () {
   cat <<-EOF
-  ____________
- /\\      ___  \\
- \\ \\     \\/_\\  \\
-  \\ \\     _____/ ______   ___ ___ ___
-   \\ \\    \\___/ /\\     \\  \\  \\\\  \\\\  \\
-    \\ \\____\\    \\ \\_____\\  \\__\\\\__\\\\__\\
-     \\/____/     \\/_____/  . PYPE Club .
+
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 EOF
 }
@@ -92,7 +91,7 @@ detect_python () {
 ###############################################################################
 clean_pyc () {
   local path
-  path=$pype_root
+  path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
@@ -119,11 +118,11 @@ main () {
   detect_python || return 1
 
   # Directories
-  pype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
-  pushd "$pype_root" > /dev/null || return > /dev/null
+  openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+  pushd "$openpype_root" > /dev/null || return > /dev/null
 
-  echo -e "${BIGreen}>>>${RST} Running Pype Tray with debug option ..."
-  poetry run python3 "$pype_root/start.py" tray --debug
+  echo -e "${BIGreen}>>>${RST} Running OpenPype Tray with debug option ..."
+  poetry run python3 "$openpype_root/start.py" tray --debug
 }
 
 main

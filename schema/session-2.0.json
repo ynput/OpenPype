@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:session-2.0",
+    "title": "openpype:session-2.0",
     "description": "The Avalon environment",
 
     "type": "object",

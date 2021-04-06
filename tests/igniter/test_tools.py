@@ -10,7 +10,3 @@ def test_validate_path_string(tmp_path):
     status2, _ = validate_path_string("booo" + str(uuid4()))
     assert status2 is False
 
-    # todo: change when Pype token is implemented
-    status3, reason = validate_path_string(str(uuid4()))
-    assert status3 is False
-    assert reason == "Not implemented yet"
