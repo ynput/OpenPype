@@ -59,26 +59,26 @@ jobs:
       run: |
         ./tools/build.sh
 
-  MacOS-latest:
+  # MacOS-latest:
 
-    runs-on: macos-latest
-    strategy:
-      matrix:
-        python-version: [3.7]
+  #   runs-on: macos-latest
+  #   strategy:
+  #     matrix:
+  #       python-version: [3.7]
 
-    steps:
-    - name: 🚛 Checkout Code
-      uses: actions/checkout@v2
+  #   steps:
+  #   - name: 🚛 Checkout Code
+  #     uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: ${{ matrix.python-version }}
 
-    - name: 🧵 Install Requirements
-      run: |
-        ./tools/create_env.sh
+  #   - name: 🧵 Install Requirements
+  #     run: |
+  #       ./tools/create_env.sh
 
-    - name: 🔨 Build
-      run: |
-        ./tools/build.sh
+  #   - name: 🔨 Build
+  #     run: |
+  #       ./tools/build.sh
