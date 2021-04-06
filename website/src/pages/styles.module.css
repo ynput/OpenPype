@@ -1,0 +1,105 @@
+/**
+ * CSS files with the .module.css suffix will be treated as CSS modules
+ * and scoped locally.
+ */
+
+ .hero__title img {
+     border-style: none;
+     box-sizing: content-box;
+     max-width: 350px;
+     width: 80%;
+ }
+
+ .hero__subtitle {
+    font-size: 30px;
+}
+
+ .center {
+     text-align: center;
+ }
+
+ .heroBanner p {
+    margin-top: 30px;
+    font-size: 20px;
+    font-weight: var(--ifm-font-weight-light);
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: #282c34 url(../../static/img/background.jpg);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.button {
+  margin: 5px;
+  border-color: rgb(200, 201, 204);
+  color: #f5f6f7;
+}
+
+.features {
+  display: flex;
+  align-items: center;
+  padding: 4rem 0;
+  width: 100%;
+}
+
+.featureImage {
+  height: 150px;
+  width: 250px;
+}
+
+.gallery {
+  align-items: center;
+  padding: 4rem 0;
+  width: 100%;
+  text-align: center;
+}
+
+.collaborators {
+  align-items: center;
+  padding: 4rem 0 0 0;
+  width: 100%;
+  text-align: center;
+}
+
+.card_container {
+    align-items: center;
+}
+
+.card_container h2 {
+    text-align: center;
+}
+
+.card_container h3 {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.card_box {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: center;
+}
+
+.more_item {
+  display: flex;
+  font-size: 12.8px;
+  font-weight: 700;
+  margin-left: auto!important;
+}
+
+.card a{
+  color: var(--ifm-font-color-base);
+}
