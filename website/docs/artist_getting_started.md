@@ -1,43 +1,84 @@
 ---
-title: Getting started with Pype
+title: Getting started with OpenPype
 sidebar_label: Getting started
 ---
 
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
-## Basic use
 
-If you have Pype installed and deployed, you can start using it. Ideally you should
-have Pype icon on your desktop or even have your computer set up so Pype will start
-automatically.
+## Working in the studio
 
-Otherwise for most common stuff there are so-called *launchers* - scripts you can just run from desktop shortcut or
-whatever and you are done. There is also manual invocation of Pype command you can use
-for slightly more control.
+In studio environment you should have OpenPype already installed and deployed,  so you can start using it without much setup. Your admin has probably put OpenPype icon on your desktop or even had your computer set up so OpenPype will start automatically.
 
-:::tip Launchers
-Launchers can be found in `pype/launchers` directory. They are basically shell scripts running Pype. You can create shortcuts on desktop for them for easy Pype launching.
-:::
+If this is not the case, please contact your administrator to consult on how to launch OpenPype in your studio
 
-### Starting tray manually
+## Working from home
 
-**Pype Tray** is most common Pype command for artists. It runs Pype GUI in system tray
-from which you can work with Pype. To use Pype, **Pype Tray** must be running.
+If you are working from home though, you'll need to install it yourself. You should, however, receive the OpenPype installer files from your studio
+admin, supervisor or production, because OpenPype versions and executables might not be compatible between studios.  
 
-To run **Pype Tray**:
+To install OpenPype you just need to unzip it anywhere on the disk
 
-```sh
-pype tray
-```
+To use it, you have two options
 
-or run launcher `launchers/pype_tray.bat` (Windows) or `launchers/pype_tray.sh` (Linux)
+**openpype_gui.exe** is the most common for artists. It runs OpenPype GUI in system tray. From there you can run all the available tools. To use any of the features, OpenPype must be running in the tray.
 
-:::note Debugging
-To get more information on what's going on in Pype, you can run Tray with `--debug` option. This will show text console window with lots of useful information.
-```sh
-pype tray --debug
-```
-:::
+**openpype_console.exe** in usefull for debugging and error reporting. It opens console window where all the necessary information will appear during user's work. 
 
-### Advanced use
 
-For more advanced use of Pype command please visit [Admin section](admin_pype_commands).
+<Tabs
+  groupId="platforms"
+  defaultValue="win"
+  values={[
+    {label: 'Windows', value: 'win'},
+    {label: 'Linux', value: 'linux'},
+    {label: 'Mac', value: 'mac'},
+  ]}>
+
+<TabItem value="win">
+
+WIP - Windows instructions once installers are finished
+
+</TabItem>
+<TabItem value="linux">
+
+WIP - Linux instructions once installers are finished
+
+</TabItem>
+<TabItem value="mac">
+
+WIP - Mac instructions once installers are finished
+
+</TabItem>
+</Tabs>
+
+
+## First Launch
+
+
+When you first start OpenPype, you will be asked to give it some basic information.
+### MongoDB
+
+In most cases that will only be your studio MongoDB Address.
+
+It is a URL that you should receive from you studio and most often will look like this `mongodb://username:passwword@mongo.mystudiodomain.com:12345` or  `mongodb://192.168.100.15:27071`, it really depends on your studio setup. When OpenPype Igniter
+asks for it, just put it in the corresponding text field and press `install` button.
+
+### OpenPype Version Repository
+
+Sometimes your studio might also ask you to fill in the path to it's version
+repository. This is a location where OpenPype will be looking for when checking
+if it's up to date and where updates are installed from automatically. 
+
+This pat is usually taken from the database directly, so you shouldn't need it. 
+
+
+## Updates
+
+If you're connected to your studio, OpenPype will check for, and install updates automatically everytime you run it. That's why during the first start, it will go through a quick update installation process, even though you might have just installed it. 
+
+
+## Advanced use
+
+For more advanced use of OpenPype commands please visit [Admin section](admin_openpype_commands).

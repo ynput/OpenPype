@@ -8,7 +8,11 @@ sidebar_label: Nuke
 After Nuke starts it will automatically **Apply All Settings** for you. If you are sure the settings are wrong just contact your supervisor and he will set them correctly for you in project database.
 :::
 
-## Pype global tools
+:::note
+The workflows are identical for both. We are supporting versions **`11.0`** and above.
+:::
+
+## OpenPype global tools
 
 -   [Set Context](artist_tools.md#set-context)
 -   [Work Files](artist_tools.md#workfiles)
@@ -35,7 +39,7 @@ Use this feature in case you are not sure the frame range is correct.
 </div>
 <div class="col col--6 markdown">
 
-![Set Frame Ranges](assets/nuke_setFrameRanges.png)
+![Set Frame Ranges](assets/nuke_setFrameRanges.png) <!-- picture needs to be changed -->
 
 </div>
 </div>
@@ -70,7 +74,7 @@ This menu item will set correct resolution format for you defined by your produc
 </div>
 <div class="col col--6 markdown">
 
-![Set Resolution](assets/nuke_setResolution.png)
+![Set Resolution](assets/nuke_setResolution.png) <!-- picture needs to be changed -->
 
 </div>
 </div>
@@ -87,11 +91,12 @@ This menu item will set correct Colorspace definitions for you. All has to be co
 
 -   set Colorspace in your script settings
 -   set preview LUT to your viewers
+-   set correct colorspace to all discovered Read nodes (following expression set in settings)
 
 </div>
 <div class="col col--6 markdown">
 
-![Set Colorspace](assets/nuke_setColorspace.png)
+![Set Colorspace](assets/nuke_setColorspace.png) <!-- picture needs to be changed -->
 
 </div>
 </div>
@@ -113,49 +118,28 @@ It is usually enough if you once per while use this option just to make yourself
 </div>
 <div class="col col--6 markdown">
 
-![Apply All Settings](assets/nuke_applyAllSettings.png)
+![Apply All Settings](assets/nuke_applyAllSettings.png) <!-- picture needs to be changed -->
 
 </div>
 </div>
 
-### Build First Work File
+### Build Workfile
 
 <div class="row markdown">
 <div class="col col--6 markdown">
 
-This tool will create your first version of workfile and save it to correct folder with correct file name convention. It will look into database and get all last [versions](artist_concepts.md#version) of available [subsets](artist_concepts.md#subset).
-
-</div>
-<div class="col col--6 markdown">
-
-![Build First Work File](assets/nuke_buildFirstWorkfile.png)
-
-</div>
-</div>
+This tool will append all available subsets into an actual node graph. It will look into database and get all last [versions](artist_concepts.md#version) of available [subsets](artist_concepts.md#subset).
 
 
 ##### Result
 
-<div class="row markdown">
-<div class="col col--6 markdown">
-
 -   adds all last versions of subsets (rendered image sequences) as read nodes
--   adds available color transformations under Read nodes
 -   adds publishable write node as `renderMain` subset
 
 </div>
 <div class="col col--6 markdown">
 
-<figure>
-
-![Set Frame Ranges Timeline](assets/nuke_autoBuild.png)
-
-<figcaption>
-
-Orange arrow is pointing at `Lut` groups.
-
-</figcaption>
-</figure>
+![Build First Work File](assets/nuke_buildFirstWorkfile.png)
 
 </div>
 </div>

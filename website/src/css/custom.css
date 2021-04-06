@@ -2,13 +2,13 @@
 
 :root{
 
-  --ifm-color-primary-lightest: #9debc1;
-  --ifm-color-primary-lighter: #77e3a9;
-  --ifm-color-primary-light: #6be0a1;
-  --ifm-color-primary: #52db91;
-  --ifm-color-primary-dark: #39d681;
-  --ifm-color-primary-darker: #2dd379;
-  --ifm-color-primary-darkest: #24ae64;
+  --ifm-color-primary: #36b2ca;
+  --ifm-color-primary-dark: #30a1b6;
+  --ifm-color-primary-darker: #2d98ac;
+  --ifm-color-primary-darkest: #257d8e;
+  --ifm-color-primary-light: #4abacf;
+  --ifm-color-primary-lighter: #54bed2;
+  --ifm-color-primary-lightest: #73c9da;
 
   --ifm-color-info-lightest: rgba(170, 227, 246, 0.75);
   --ifm-color-success-lightest: rgba(204, 241, 204, 0.71);
@@ -51,6 +51,19 @@ h5, h6 { font-weight: var(--ifm-font-weight-semibold); }
   width: 24px;
   height: 24px;
   background: url("/img/brand-github.svg");
+  background-repeat: no-repeat;
+}
+
+.navbar__item.navbar__link[href*="pype.club"] {
+  display: flex;
+  font-size: 0;
+  padding: 0 0px;
+}
+.navbar__item.navbar__link[href*="pype.club"]:before {
+  content: "";
+  width: 100px;
+  height: 24px;
+  background: url("/img/logos/pypeclub_white.svg");
   background-repeat: no-repeat;
 }
 
@@ -149,7 +162,7 @@ h5, h6 { font-weight: var(--ifm-font-weight-semibold); }
 }
 
 .section {
-    padding: 4rem 0;
+    padding: 6rem 0;
 }
 
 .sectionDescription {
@@ -202,11 +215,16 @@ h5, h6 { font-weight: var(--ifm-font-weight-semibold); }
 }
 
 .showcase .collab img {
-    max-height: 060px;
+    max-height: 60px;
     padding: 20px;
     align-self: center;
     max-width: 200px;
 }
+
+.showcase .pype_logo img{
+    height: 80px;
+}
+
 
 .card {
   max-width: 230px;

@@ -1,10 +1,10 @@
 module.exports = {
-  title: 'PYPE',
-  tagline: 'code . training . support',
-  url: 'http://pype.club/',
+  title: 'openPYPE',
+  tagline: 'Pipeline with support, for studios and remote teams.',
+  url: 'http://openpype.io/',
   baseUrl: '/',
-  organizationName: 'pypeclub',
-  projectName: 'pypeclub.github.io',
+  organizationName: 'Orbi Tools s.r.o',
+  projectName: 'openPype',
   favicon: 'img/favicon/favicon.ico',
   onBrokenLinks: 'ignore',
   customFields: {
@@ -30,11 +30,18 @@ module.exports = {
       // Useful if you want to support a single color mode
       disableSwitch: true
     },
+    announcementBar: {
+      id: 'help_with_docs', // Any value that will identify this message.
+      content:
+      'This documentation is work in progress, <b><a href="https://openpype.io">help us make it better.</a></b>. Current working version is 3.0.0-beta.',
+      backgroundColor: '#fff', // Defaults to `#fff`.
+      textColor: '#000', // Defaults to `#000`.
+    },
     navbar: {
       style: 'dark',
-      title: 'PYPE',
+      title: 'openPYPE',
       logo: {
-        src: 'img/favicon/P.png'
+        src: 'img/logos/splash_main.svg'
       },
       items: [
         {
@@ -46,14 +53,19 @@ module.exports = {
           label: 'User Docs',
           position: 'left'
         }, {
-          to: 'docs/admin_getting_started',
+          to: 'docs/system_introduction',
           label: 'Admin Docs',
           position: 'left'
-        }, {
+        },
+          {
+            href: 'https://pype.club',
+            label: 'pypeclub',
+            position: 'right',
+          },{
           href: 'https://github.com/pypeclub',
           label: 'Github',
           position: 'right',
-        }
+        },
       ]
     },
     footer: {
@@ -63,18 +75,9 @@ module.exports = {
           title: 'Pages',
           items: [
             {
-              label: 'Index',
-              to: '/',
-            },
-            {
               label: 'Features',
               to: 'features',
             },
-          ],
-        },
-        {
-          title: 'Docs',
-          items: [
             {
               label: 'Artist',
               to: 'docs/artist_getting_started',
@@ -82,9 +85,10 @@ module.exports = {
             {
               label: 'Admin',
               to: 'docs/admin_getting_started',
-            },
-          ],
-        },{
+            }
+          ]
+        },
+        {
           title: 'Community',
           items: [
             {
@@ -92,21 +96,21 @@ module.exports = {
               to: 'https://gitter.im/getavalon/Lobby',
             },
             {
-              label: 'Pyblish Chat',
-              to: 'https://gitter.im/pyblish/pyblish',
-            },
-            {
-              label: 'Pype Chat',
+              label: 'OpenPype Chat',
               to: 'https://discord.gg/sFNPWXG',
             },
+            {
+              label: 'Github Discussions',
+              to: 'https://github.com/pypeclub/pype/discussions',
+            }
           ],
         },
       ],
-      copyright: 'Copyright © 2020 Orbi Tools',
+      copyright: 'Copyright © 2021 Orbi Tools',
     },
     algolia: {
       apiKey: '5e01ee3bfbb744ca6f25d4b281ce38a9',
-      indexName: 'pype',
+      indexName: 'openpype',
       // Optional: see doc section bellow
       contextualSearch: true,
       // Optional: Algolia search parameters

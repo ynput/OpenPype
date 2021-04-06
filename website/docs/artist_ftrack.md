@@ -4,10 +4,10 @@ title: Ftrack
 sidebar_label: Artist
 ---
 
-# How to use Ftrack in Pype
+# How to use Ftrack in OpenPype
 
-## Login to Ftrack module in Pype tray (best case scenario)
-1. Launch Pype tray if not launched yet
+## Login to Ftrack module in OpenPype tray (best case scenario)
+1. Launch OpenPype tray if not launched yet
 2. *Ftrack login* window pop up on start
     - or press **login** in **Ftrack menu** to pop up *Ftrack login* window
 
@@ -26,7 +26,7 @@ sidebar_label: Artist
 
 ---
 ## Application launch (best case scenario)
-1. Make sure Pype tray is running and you passed [Login to Ftrack](#login-to-ftrack-module-in-pype-tray-best-case-scenario) guide
+1. Make sure OpenPype is running and you passed [Login to Ftrack](#login-to-ftrack-module-in-pype-tray-best-case-scenario) guide
 2. Open web browser and go to your studio Ftrack web page *(e.g. https://mystudio.ftrackapp.com/)*
 3. Locate the task on which you want to run the application
 4. Display actions for the task
@@ -50,10 +50,10 @@ sidebar_label: Artist
 ## What if...
 
 ### Ftrack login window didn't pop up and Ftrack menu is not in tray
-**1. possibility - Pype tray didn't load properly**
-- try to restart tray
+**1. possibility - OpenPype tray didn't load properly**
+- try to restart OpenPype
 
-**2. possibility - Ftrack is not set in Pype**
+**2. possibility - Ftrack is not set in OpenPype**
 - inform your administrator
 
 
@@ -65,12 +65,12 @@ sidebar_label: Artist
 - Check **Ftrack URL** value in *Ftrack login* window
 - Inform your administrator if URL is incorrect and launch tray again when administrator fix it
 
-**3. possibility - Ftrack Web app can't be reached the way Pype use it**
+**3. possibility - Ftrack Web app can't be reached the way OpenPype use it**
 - Enter your **Username** and [API key](#where-to-find-api-key) in *Ftrack login* window and press **Login** button
 
 ### Ftrack action menu is empty
-**1. possibility - Pype tray is not running**
-- launch Pype tray
+**1. possibility - OpenPype is not running**
+- launch OpenPype
 
 **2. possibility - You didn't go through Login to Ftrack guide**
 - please go through [Login to Ftrack](#login-to-ftrack-module-in-pype-tray-best-case-scenario) guide

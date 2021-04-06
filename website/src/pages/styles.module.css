@@ -6,12 +6,12 @@
  .hero__title img {
      border-style: none;
      box-sizing: content-box;
-     max-width: 350px;
-     width: 80%;
+     max-width: 700px;
  }
 
  .hero__subtitle {
-    font-size: 30px;
+    font-size: 18pt;
+    font-weight: var(--ifm-font-weight-normal);
 }
 
  .center {
@@ -32,7 +32,8 @@
   text-align: center;
   position: relative;
   overflow: hidden;
-  background: #282c34 url(../../static/img/background.jpg);
+background: rgb(51,55,64);
+background: radial-gradient(at 80% 10%, rgba(51,55,64,1) 0%, rgba(32,36,45,1) 70%);
 }
 
 .buttons {

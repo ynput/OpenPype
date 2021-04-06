@@ -30,7 +30,7 @@ Keep in mind that while publishing the data might take you some extra time, it w
 
 The Instances are categorized into ‘families’ based on what type of data they contain. Some instances might have multiple families if needed. A shot camera will for example have families 'camera' and  'review' to indicate that it's going to be used for review quicktime, but also exported into a file on disk.
 
-Following family definitions and requirements are Pype defaults and what we consider good industry practice, but most of the requirements can be easily altered to suit the studio or project needs.
+Following family definitions and requirements are OpenPype defaults and what we consider good industry practice, but most of the requirements can be easily altered to suit the studio or project needs.
 Here's a list of supported families
 
 | Family                  | Comment                                          | Example Subsets           |
@@ -53,7 +53,7 @@ Here's a list of supported families
 | LayeredImage            | Software agnostic layered image with metadata    | Reference, ConceptArt     |
 | Review                  | Reviewable video or image.                       |                           |
 | Matchmove               | Matchmoved camera, potentially with geometry     | main                      |
-| Workfile                | Backup of the workfile with all it's content     | uses the task name        |
+| Workfile                | Backup of the workfile with all its content      | uses the task name        |
 | Nukenodes               | Any collection of nuke nodes                     | maskSetup, usefulBackdrop |
 | Yeticache               | Cached out yeti fur setup                        |                           |
 | YetiRig                 | Yeti groom ready to be applied to geometry cache | main, destroyed           |
@@ -73,7 +73,7 @@ Here's a list of supported families
 
 Clean geometry without any material assignments. Published model can be as small as a single mesh, or as complex as a full building. That is purely up to the artist or the supervisor. Models can contain hierarchy defined by groups or nulls for better organisation.
 
-Apart from model subsets, we also support LODs as extra level on top of subset. To publish LODs, you just need to prepare subsets for publishing names `modelMySubsetName_LOD##`, if pype finds `_LOD##` (hashes replaced with LOD level), it will automatically be considered a LOD of the given subset.
+Apart from model subsets, we also support LODs as extra level on top of subset. To publish LODs, you just need to prepare subsets for publishing names `modelMySubsetName_LOD##`, if OpenPype finds `_LOD##` (hashes replaced with LOD level), it will automatically be considered a LOD of the given subset.
 
 Example Subsets:
 `modelMain`, `modelProxy`, `modelSculpt`, `modelBroken`, `modelMain_LOD01`, `modelMain_LOD02`
@@ -84,7 +84,7 @@ Example representations:
 
 ### Look
 
-A package of materials, shaders, assignments, textures and attributes that collectively define a look of a model for rendering or preview purposes. This ca usually be applied only to the model is was authored for, or it's corresponding cache, however material sharing across multiple models is also possible. A look should be fully self-contained and ready for rendering.
+A package of materials, shaders, assignments, textures and attributes that collectively define a look of a model for rendering or preview purposes. This can usually be applied only to the model is was authored for, or its corresponding cache, however, material sharing across multiple models is also possible. A look should be fully self-contained and ready for rendering.
 
 Example Subsets:
 `lookMain`, `lookProxy`, `lookWet`, `lookDirty`, `lookBlue`, `lookRed`
@@ -99,7 +99,7 @@ contains the attributes and assignments and `/resources` folder with all the req
 
 ### Rig
 
-Characters or props with animation controls or other parameters, ready to be referenced into a scene and animated. Animation Rigs tend to be very software specific, but in general they tend to consist of Geometry, Bones or Joints, Controllers and Deformers. Pype in maya supports both, self-contained rigs, that include everything in one file, but also rigs that use nested references to bring in geometry, or even skeleton. By default we bake rigs into a single file during publishing, but that behaviour can be turned off to keep the nested references live in the animation scenes.
+Characters or props with animation controls or other parameters, ready to be referenced into a scene and animated. Animation Rigs tend to be very software specific, but in general they tend to consist of Geometry, Bones or Joints, Controllers and Deformers. OpenPype in maya supports both, self-contained rigs, that include everything in one file, but also rigs that use nested references to bring in geometry, or even skeleton. By default we bake rigs into a single file during publishing, but that behaviour can be turned off to keep the nested references live in the animation scenes.
 
 Example Subsets:
 `rigMain`, `rigMocap`, `rigSim`, `rigCamera`, `rigMuscle`

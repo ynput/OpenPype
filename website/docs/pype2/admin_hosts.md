@@ -73,7 +73,7 @@ PATHS="path/1;path/2;path/3"
 You need to add your new application to ftrack so it knows about it. This is done in System Preferences of
 ftrack in `Advanced:Custom Attributes`. There you can find `applications` attribute. It looks like this:
 
-![Ftrack - custom attributes - applications](assets/ftrack/ftrack-custom_attrib_apps.jpg)
+![Ftrack - custom attributes - applications](../assets/ftrack/ftrack-custom_attrib_apps.jpg)
 
 Menu/value consists of two rows per application - first row is application name and second is basically filename of this **TOML** file mentioned above without `.toml` extension. After you add or modify whatever you need here, you need to add you new application to project in ftrack. Just open project Info in ftrack, find out
 **Applications** and add your new application there. If you are running [event server](admin_ftrack#event-server) then this information is synced to avalon automatically. If not, you need to sync it manually by running **Sync to Avalon** action.

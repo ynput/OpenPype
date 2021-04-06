@@ -241,7 +241,7 @@ Plugin is responsible for adding burnins into review representations.
 
 Burnins are text values painted on top of input and may be surrounded with box in 6 available positions `Top Left`, `Top Center`, `Top Right`, `Bottom Left`, `Bottom Center`, `Bottom Right`.
 
-![presets_plugins_extract_burnin](assets/presets_plugins_extract_burnin_01.png)
+![presets_plugins_extract_burnin](../assets/presets_plugins_extract_burnin_01.png)
 
 ExtractBurnin creates new representations based on plugin presets and representations in instance. Presets may contain 3 keys **options**, **profiles** and **fields**.
 

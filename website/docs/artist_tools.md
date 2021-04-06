@@ -39,10 +39,10 @@ In Nuke it's either converting an existing write node to a publishable one, or s
 ### Usage
 
 1.  select what you want to publish from your scenes
-2.  Open Creator from Avalon menu
+2.  Open *Creator* from OpenPype menu
 3.  Choose what family (data type) you need to export
 4.  Type the name for you export. This name is how others are going to be able to refer to this particular subset when loading it into their scenes. Every assets should have a Main subset, but can have any number of other variants.
-5.  Click on Create
+5.  Click on *Create*
 
   * * *
 
@@ -50,14 +50,14 @@ In Nuke it's either converting an existing write node to a publishable one, or s
 Loader loads published subsets into your current scene or script.
 
 ### Usage
-1. open Loader from pipeline menu
+1. open *Loader* from OpenPype menu
 2. select the asset where the subset you want to load is published
 3. from subset list select the subset you want
 4. right-click the subset
 5. from action menu select what you want to do *(load, reference, ...)*
 
 
-![tools_loader_1](assets/tools/tools_loader_1.png)
+![tools_loader_1](assets/tools/tools_loader_1.png) <!-- picture needs to be changed -->
 
 <div class="row markdown">
 <div class="col col--6 markdown">
@@ -151,12 +151,12 @@ Library loader is extended [loader](#loader) which allows to load published subs
 <div class="row markdown">
 <div class="col col--6 markdown">
 
-![tools_library_1](assets/tools/tools_library_1-small.png)
+![tools_library_1](assets/tools/tools_library_1-small.png) <!-- picture needs to be changed -->
 
 </div>
 <div class="col col--6 markdown">
 
-![tools_library_2](assets/tools/tools_library_2-small.png)
+![tools_library_2](assets/tools/tools_library_2-small.png) <!-- picture needs to be changed -->
 
 </div>
 </div>
@@ -212,7 +212,7 @@ Once a subset is loaded, it turns into a container within a scene. This containe
 
 The scene manager has a simple GUI focused on efficiency. You can see everything that has been previously loaded into the scene, how many time it's been loaded, what version and a lot of other information. Loaded assets are grouped by their asset name, subset name and representation. This grouping gives ability to apply changes for all instances of the loaded asset *(e.g. when __tree__ is loaded 20 times you can easily update version for all of them)*.
 
-![tools_scene_inventory_10](assets/tools/tools_scene_inventory_10-small.png)
+![tools_scene_inventory_10](assets/tools/tools_scene_inventory_10-small.png) <!-- picture needs to be changed -->
 
 To interact with any container, you need to right click it and you'll see a drop down with possible actions. The key actions for production are already implemented, but more will be added over time.
 
@@ -240,8 +240,7 @@ Select containers or subsets you want to change, right-click selection, press `S
 It's tool in Scene inventory tool that gives ability to switch asset, subset and representation of loaded assets.
 
 
-
-![tools_scene_inventory_50](assets/tools/tools_scene_inventory_50.png)
+![tools_scene_inventory_50](assets/tools/tools_scene_inventory_50.png) <!-- picture needs to be changed -->
 
 
 Because loaded asset is in fact representation of version published in asset's subset it is possible to switch each of this part *(representation, version, subset and asset)*, but with limitations. Limitations are obvious as you can imagine when you have loaded `.ma` representation of `modelMain` subset from `car` asset it is not possible to switch subset to `modelHD` and keep same representation if `modelHD` does not have published `.ma` representation. It is possible to switch multiple loaded assets at once that makes this tool very powerful helper if all published assets contain same subsets and representations.
@@ -249,7 +248,7 @@ Because loaded asset is in fact representation of version published in asset's s
 Switch tool won't let you cross the border of limitations and inform you when you have to specify more if impossible combination occurs *(It is also possible that there will be no possible combination for selected assets)*. Border is colored to red and confirm button is not enabled when specification is required.
 
 
-![tools_scene_inventory_55](assets/tools/tools_scene_inventory_55.png)
+![tools_scene_inventory_55](assets/tools/tools_scene_inventory_55.png) <!-- picture needs to be changed -->
 
 
 Possible switches:
@@ -265,8 +264,7 @@ Possible switches:
 
 We added one more switch layer above subset for LOD (Level Of Depth). That requires to have published subsets with name ending with **"_LOD{number}"** where number represents level (e.g. modelMain_LOD1). Has the same limitations as mentioned above. This is handy when you want to change only subset but keep same LOD or keep same subset but change LOD for multiple assets. This option is hidden if you didn't select subset that have published subset with LODs.
 
-![tools_scene_inventory_54](assets/tools/tools_scene_inventory_54.png)
-
+![tools_scene_inventory_54](assets/tools/tools_scene_inventory_54.png) <!-- picture needs to be changed -->
 ### Filtering
 
 #### Filter by name
@@ -341,7 +339,7 @@ Let's say that the last version of the comp you published was v003 and now you'r
 
 #### To open existing file:
 
-1. Open Workfiles tool from pipeline menu
+1. Open Workfiles tool from OpenPype menu
 2. Select file from list - the latest version is the highest *(descendent ordering)*
 3. Press `Open` button
 
@@ -355,7 +353,7 @@ Let's say that the last version of the comp you published was v003 and now you'r
 
 
 #### To save new workfile
-1. Open Workfiles tool from pipeline menu
+1. Open Workfiles tool from OpenPype menu
 2. Press `Save As` button
 3. You can add optional comment to the filename, that will be appended at the end
 4. Press `OK`
@@ -382,3 +380,35 @@ Look Assigner has GUI is made of two parts. On the left you will see the list of
 4.  Choose "Assign"
 
 At this point you should have a model with all it's shaders applied correctly. The tool automatically loads the latest look available.
+
+
+## Subset Manager
+
+> Subset Manager lists all items which are meant for publishig and will be published if Publish is triggered
+
+### Details
+
+One or more items (instances) could be published any time Publish process is started. Each this publishable
+item must be created by Creator tool previously. Subset Manager provides easy way how to check which items, 
+and how many, will be published. 
+
+It also provides clean and preferrable way how to remove unwanted item from publishing.
+
+### Usage
+
+Subset Manager has GUI is made of two parts. On the left you will see the list of all the available publishable items in the scene and on the right side, details about these items.
+
+<div class="col col--6 markdown">
+
+![subset_manager](assets/tools_subset_manager.png)
+</div>
+
+Any time new item is Created, it will show up here.
+
+Currently there is only single action, 'Remove instance' which cleans workfile file from publishable item metadata.
+This might not remove underlying host item, it depends on host and implementation!
+
+It might also happen that user deletes underlying host item(for example layer in Photoshop) directly in the host, but metadata will stay.
+This could result in phantom issues during publishing. Use Subset Manager to purge workfile from abandoned items.
+
+Please check behaviour in host of your choice.

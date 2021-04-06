@@ -39,7 +39,7 @@ Filtering can be more complicated for example a lot of actions can be shown only
 * Entity types: Task
 * User roles: All
 
-These actions *launch application with Pype initiated* and *start timer* for the selected Task. We recommend you to launch application this way.
+These actions *launch application with OpenPype initiated* and *start timer* for the selected Task. We recommend you to launch application this way.
 
 :::important
 Project Manager or Supervisor must set project's applications during project preparation otherwise you won't see them.
@@ -69,7 +69,7 @@ You must have DJV View installed and configured in studio-config to be able use 
 <div class="ImagePanel" data-image-align='right'>
 <div class="ImagePanel.content">
 
-## Pype Admin
+## OpenPype Admin
 </div>
 <div class="ImagePanel.image">
 
@@ -77,23 +77,23 @@ You must have DJV View installed and configured in studio-config to be able use 
 </div>
 </div>
 
-A group of actions that are used for Pype Administration.
+A group of actions that are used for OpenPype Administration.
 
 ### Create/Update Avalon Attributes
 * Entity types: All
 * User roles: Pypeclub, Administrator
 
-Action creates and updates Ftrack's Custom Attributes that are needed to manage and run Pype within Ftrack. Most of custom attribute configurations are stored in Pype presets (*~/presets/ftrack/ftrack_custom_attributes.json*). It is not recommended to modify values stored in the file unless your studio used completely custom configuration.
+Action creates and updates Ftrack's Custom Attributes that are needed to manage and run OpenPype within Ftrack. Most of custom attribute configurations are stored in OpenPype presets (*Pype Settings → Project → Anatomy → Attributes*). It is not recommended to modify values stored in the file unless your studio used completely custom configuration.
 
 ### Sync to Avalon
 * Entity types: Project, Typed Context
 * User roles: Pypeclub, Administrator, Project manager
 
-Synchronization to Avalon is key process to keep Pype data updated. Action updates selected entities (Project, Shot, Sequence, etc.) and all nested entities to Avalon database. If action is successfully finished [Sync Hier Attrs](#sync-hier-attrs) action is triggered.
+Synchronization to Avalon is key process to keep OpenPype data updated. Action updates selected entities (Project, Shot, Sequence, etc.) and all nested entities to Avalon database. If action is successfully finished [Sync Hier Attrs](#sync-hier-attrs) action is triggered.
 
 There are 2 versions of **Sync to Avalon** first labeled as **server** second as **local**.
 * **server** version will be processed with [event server](admin_ftrack#event-server)
-* **local** version will be processed with user's Pype tray application
+* **local** version will be processed with user's OpenPype tray application
 
 It is recommended to use **local** version if possible to avoid unnecessary deceleration of event server.
 
@@ -105,7 +105,7 @@ Synchronization to Avalon of Ftrack's hierarchical Custom attributes is a bit co
 
 There are 2 versions of **Sync Hier Attrs** first labeled as **server** second as **local**.
 * **server** version will be processed with [event server](admin_ftrack#event-server)
-* **local** version will be processed with user's Pype tray application
+* **local** version will be processed with user's OpenPype tray application
 
 It is recommended to use **local** version if possible to avoid unnecessary deceleration of event server.
 
@@ -147,35 +147,6 @@ Propagates the thumbnail of the selected entity to its first direct children ent
 <div class="ImagePanel" data-image-align='right'>
 <div class="ImagePanel.content">
 
-## Pype Doctor
-</div>
-<div class="ImagePanel.image">
-
-![pype_doctor-icon](assets/ftrack/ftrack-pype_doctor-icon.png)
-</div>
-</div>
-
-A group of actions that are used after significant workflow or Pype codebase changes. They are mostly single-use.
-
-### Custom attr doc (deprecated)
-This action is project specific and fixes some custom attributes after previous significant and backwards incompatible changes introduced during early Pype development.
-
-Pype requires few changes in Ftrack's default custom attributes, specifically **Frame start**, **Frame end** and **Handles** *(fstart, fend, handles)*. This action modifies them based on these requirements. Splits **Handles** to **Frame handles start** and **Frame handles end** *(handleStart, handleEnd)* and sets **Frame start** and **Frame end** as hierarchical. Action is time-consuming hence it is possible to make changes only on specific projects. It also keeps a backup of values on older projects by adding **_old** suffix to the names of default custom attributes *(e.g. fstart_old)*.
-
-:::warning
-Do not remove Custom attributes with supplement **_old** if you didn't convert all projects. You'll lose that data if you do.
-:::
-
-
-### Attrs remap (deprecated)
-This action helps with changes of attributes that happened during early Pype development.
-
-Fixes are made in pipeline database. Action is required when you update Pype pipeline to version 2.1.0 or higher. You can totally ignore this action if you never used an older version of Pype pipeline than version 2.1.0 .
-
----
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
-
 ## Prepare Project
 </div>
 <div class="ImagePanel.image">
@@ -187,7 +158,7 @@ Fixes are made in pipeline database. Action is required when you update Pype pip
 * Entity types: Project
 * User roles: Pypeclub, Administrator, Project manager
 
-Allows project managers and coordinator to *set basic project attributes* needed for Pype to operate, *Create project folders* if you want and especially *prepare Project specific [anatomy](admin_config#anatomy) and [presets](admin_config#presets)* files for you.
+Allows project managers and coordinator to *set basic project attributes* needed for OpenPype to operate, *Create project folders* if you want and especially *prepare Project specific [anatomy](admin_config#anatomy) and [presets](admin_config#presets)* files for you.
 
 :::tip
 It is possible to use this action during the lifetime of a project but we recommend using it only once at the start of the project.
@@ -249,7 +220,7 @@ You should use this action if you need to delete Entities or Asset Versions othe
 
 *Create Project Structure* helps to create basic folder structure and may create the main ftrack entities for the project.
 
-Structure is loaded from [presets](admin_config#presets) *(~/presets/tools/project_folder_structure.json)*. You should examine that preset to see how it works. Preset may contain dictionaries of nested dictionaries where each key represents a folder name. Key and all it's parents will be also created in Ftrack if the key ends with `[ftrack]`. Default Ftrack entity type is *Folder* but entity type can be specified using `[ftrack.{entity type}]`. To create *Sequence* with name *Seq_001* key should look like `Seq_001[ftrack.Sequence]`.
+Structure is loaded from [presets](admin_config#presets) *(Pype Settings → Project → Global → Project Folder Structure)*. You should examine that preset to see how it works. Preset may contain dictionaries of nested dictionaries where each key represents a folder name. Key and all it's parents will be also created in Ftrack if the key ends with `[ftrack]`. Default Ftrack entity type is *Folder* but entity type can be specified using `[ftrack.{entity type}]`. To create *Sequence* with name *Seq_001* key should look like `Seq_001[ftrack.Sequence]`.
 
 :::note
 Please keep in mind this action is meant to make your project setup faster at the very beginning, but it does not create folders for each shot and asset. For creating asset folder refer to `Create Folders` Action
@@ -270,13 +241,16 @@ Please keep in mind this action is meant to make your project setup faster at th
 * Entity types: Typed Context, Task
 * User roles: All
 
-Creates folders for a selected asset in based on project [Anatomy](admin_config#anatomy) templates.
+Creates folders for a selected asset in based on project templates.
 
 It is usually not necessary to launch this action because folders are created automatically every time you start working on a task. However it can be handy if you need to create folders before any work begins or you want to use applications that don't have pipeline implementation.
 
-:::tip
+<!--:::tip
 If your Anatomy contains `{app}` you can set which app folders will be created for specific task types with [presets](admin_config#presets) *(~/presets/tools/sw_folders.json)*.
 :::
+ 
+rewrite -->
+
 
 ---
 <div class="ImagePanel" data-image-align='right'>

@@ -8,7 +8,7 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 :::note
-All the information also applies to **_Nuke Studio_**, but for simplicity we only refer to hiero. The workflows are identical for both. We are supporting versions **`11.0`** and above.
+All the information also applies to **_Nuke Studio_**, but for simplicity we only refer to Hiero. The workflows are identical for both. We are supporting versions **`11.0`** and above.
 :::
 
 
@@ -21,12 +21,12 @@ All the information also applies to **_Nuke Studio_**, but for simplicity we onl
 
 ### Create Default Tags
 
-This tool will recreate all necessary pype tags needed for successful publishing. It is automatically ran at start of the hiero. Use this tool to manually re-create all the tags if you accidentaly delete them, or you want to reset them to default values.
+This tool will recreate all necessary OpenPype tags needed for successful publishing. It is automatically ran at start of the Hiero. Use this tool to manually re-create all the tags if you accidentaly delete them, or you want to reset them to default values.
 
 </div>
 <div class="col col--6 markdown">
 
-![Default Tags](assets/nukestudio_defaultTags.png)
+![Default Tags](assets/nukestudio_defaultTags.png) <!-- picture needs to be changed -->
 
 </div>
 </div>
@@ -43,9 +43,9 @@ This tool will recreate all necessary pype tags needed for successful publishing
 <div class="row markdown">
 <div class="col col--6 markdown">
 
-With Pype, you can use hiero as a starting point for creating project hierarchy in avalon and ftrack database (episodes, sequences, shots, folders etc.), publishing plates, reference quicktimes, audio and various soft effects that will be evailable later on for compositors and 3d artist to use.
+With OpenPype, you can use Hiero as a starting point for creating project hierarchy in avalon and ftrack database (episodes, sequences, shots, folders etc.), publishing plates, reference quicktimes, audio and various soft effects that will be evailable later on for compositors and 3D artist to use.
 
-There are two ways to `Publish` data and create shots in database from hiero. Use either context menu on right clicking selected clips or go to top `menu > Pype > Publish`.
+There are two ways to `Publish` data and create shots in database from Hiero. Use either context menu on right clicking selected clips or go to top `menu > OpenPype > Publish`.
 
 </div>
 <div class="col col--6 markdown">
@@ -59,11 +59,11 @@ Keep in mind that the publishing currently works on selected shots
 
 Shot names for all the related plates that you want to publish (subsets) has to be the same to be correctly paired together (as it is shown in image).
 Note the layer **review** which contains `plateMainReview`.
-This media is just h264,1920x1080 video for tha will be used as preview of the actua `plateMain` subset and will be uploaded to Ftrack. We explain how to work with review tag in [**Reviewing**](#reviewing).
+This media is just h264, 1920x1080 video for that will be used as preview of the actual `plateMain` subset and will be uploaded to Ftrack. We explain how to work with review tag in [**Reviewing**](#reviewing).
 
 
 :::important
-To to successfuly publish a shot from hiero:
+To to successfuly publish a shot from Hiero:
 1. At least one clip of your shot must be tagged with `Hierarchy`, `subset` and `handleStart/End`.
 2. Your source media must be pre-cut to correct length (including handles)
 :::
@@ -71,7 +71,7 @@ To to successfuly publish a shot from hiero:
 ### Tagging
 
 
-Pype's custom tags are used for defining shot parameters and to define which clips and how they are going to be published.
+OpenPype's custom tags are used for defining shot parameters and to define which clips and how they are going to be published.
 
 If you want to add any properties to your clips you'll need to adjust values on the given tag and then drag it onto the clip.
 
@@ -85,7 +85,7 @@ If you want to add any properties to your clips you'll need to adjust values on 
 1.  double click on preferable tag and drag&drop it to selected clip(s)
 2.  Basic set of tags on clip (usually subset: plateMain)
 3.  Additionally select clip and edit its parameters
-4.  Edit parameters here but Do not touch `family`
+4.  Edit parameters here but do not touch `family`
 
 </figcaption>
 </figure>
@@ -99,7 +99,7 @@ Only clips with `subset` will be directly processed for publishing.
 #### Asset related
 | Icon                | Description                                                                        | Editable                              | Options                                                                                  |
 | ------------------- | ---------------------------------------------------------------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------- |
-| ![Hierarchy][hi]    | Define parent hierarchy of the shot. Usually combined with one of subset tags.     | root, folder, sequence, episode, shot | example: {sequence} = name of hiero sequence or overwrite by any text without `-` or `_` |
+| ![Hierarchy][hi]    | Define parent hierarchy of the shot. Usually combined with one of subset tags.     | root, folder, sequence, episode, shot | example: {sequence} = name of Hiero sequence or overwrite by any text without `-` or `_` |
 | ![Frame Start][fst] | Set start frame of the shot. Using `"source"` will keep original frame numbers.    | number                                | int `number` or `"source"`                                                                |
 
 
@@ -154,7 +154,7 @@ Only clips with `subset` will be directly processed for publishing.
 
 ### Handles
 
-Pype requires handle information in shot metadata even if they are set to 0.
+OpenPype requires handle information in shot metadata even if they are set to 0.
 For this you need to add handles tags to the main clip (Should be the one with Hierarchy tag).
 This way we are defining a shot property. In case you wish to have different
 handles on other subsets (e.g. when plateBG is longer than plateFG) you can add handle tags with different value to this longer plate.
@@ -169,7 +169,7 @@ Even if you don't need any handles you have to add `start: add 0 frames` and `en
 
 ### Retiming
 
-Pype is also able to publish retiming parameters into the database.
+OpenPype is also able to publish retiming parameters into the database.
 Any clip with **editorial**/**retime** or **TimeWarp** soft effect has to be tagged with `Retiming` tag, if you want this information preserved during publishing.
 
 Any animation on **TimeWarp** is also preserved and reapplied in _Nuke_.
@@ -178,7 +178,7 @@ You can only combine **retime** and with a single **Timewarp**.
 
 ### Reviewing
 
-There are two ways to publish reviewable h264 mov into Pype (and ftrack).
+There are two ways to publish reviewable **h264 mov** into OpenPype (and Ftrack).
 
 <Tabs
   defaultValue="reviewtag"
@@ -193,9 +193,9 @@ There are two ways to publish reviewable h264 mov into Pype (and ftrack).
 
 The first one uses the Review Tag pointing to the track that holds the reviewable quicktimes for plates.
 
-This tag metadata has `track` key inside that points to `review` track by default. If you drop this tag onto any publishable clip on the timeline you're  telling pype "you will find quicktime version of this plate on `review` track (clips must have the same name)"
+This tag metadata has `track` key inside that points to `review` track by default. If you drop this tag onto any publishable clip on the timeline you're  telling OpenPype "you will find quicktime version of this plate on `review` track (clips must have the same name)"
 
-In the image on the right we dropped it to **plateMain** clip. Then we renamed the layer tha hold reviewable quicktime called `plateMainReview`. YOu can see that the clip names are the same.
+In the image on the right we dropped it to **plateMain** clip. Then we renamed the layer tha hold reviewable quicktime called `plateMainReview`. You can see that the clip names are the same.
 
 
 
@@ -205,7 +205,7 @@ In the image on the right we dropped it to **plateMain** clip. Then we renamed t
 
 <figcaption>
 
-1.  `- review` suffix is added to publishing item label if any reviewable file is found
+1.  `-review` suffix is added to publishing item label if any reviewable file is found
 2.  `plateMain` clip is holding the Review tag
 3.  layer name is `review` as it is used as default in _Review_ Tag in _track_
 4.  name of clip is the same across all subsets
@@ -240,8 +240,8 @@ Example:
 <div class="row markdown">
 <div class="col col--6 markdown">
 
-It is possible to publish hiero soft effects for compositors to use later on. You can add the effect to a particular clip or to whole layer as shows on the picture. All clips
-below the `Video 6` layer (green arrow) will be published with the **lut** subset which combines all the colour corrections from he soft effects. Any clips above the `Video 6` layer will have no **lut** published with them.  
+It is possible to publish Hiero soft effects for compositors to use later on. You can add the effect to a particular clip or to whole layer as shows on the picture. All clips
+below the `Video 6` layer (green arrow) will be published with the **LUT** subset which combines all the colour corrections from he soft effects. Any clips above the `Video 6` layer will have no **LUT** published with them.  
 
 
 </div>
@@ -276,7 +276,7 @@ You cannot currently publish soft effects on their own because at the moment we 
 
 ### Basic publishing with soft effects
 
-<iframe src="https://drive.google.com/file/d/1-BN6ia9ic9om69mq3T4jiwZnbrBGdyNi/preview"></iframe>
+<iframe src="https://drive.google.com/file/d/1-BN6ia9ic9om69mq3T4jiwZnbrBGdyNi/preview"></iframe> 
 
 
 ### Extending premade handles tags

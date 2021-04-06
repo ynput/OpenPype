@@ -11,58 +11,93 @@ import {
     } from 'react-popupbox';
 
 const key_features = [
-  {
-    label: "Workfiles",
-    description: "Save and load workfiles in progress. Change the context inside of the application.",
-    docs: "/docs/artist_tools#workfiles"
-  }, {
-    label: "Creator",
-    description: "Universal GUI for defining content for publishing from your DCC app.",
-    docs: "/docs/artist_tools#creator"
-  }, {
-    label: "Loader",
-    description: "Universal GUI for loading published assets into your DCC app.",
-    docs: "/docs/artist_tools#loader"
-  }, {
-    label: "Publisher",
-    description: "Universal GUI for validating and publishng content from your DCC app.",
-    image: "",
-    docs: "/docs/artist_tools#publisher"
-  }, {
-    label: "Inventory",
-    description: "Universal GUI for managing versions of assets loaded into your working scene.",
-    docs: "docs/artist_tools#inventory",
-  }, {
-    label: "Library Loader",
-    description: "A loader GUI that allows yo to load content from dedicated cross project asset library",
-    docs: "docs/artist_tools#library-loader",
-    image: ""
-  }, {
-    label: "Tray Publisher",
-    link: "",
-    description: "A standalone GUI for publishing data into pipeline without going though DCC app.",
-    image: ""
-  }, {
-    label: "Pype Tray",
-    link: "",
-    description: "Cross platform wrapper app, which is the central point of pype. All other tools are ran from here."
-  }, {
-    label: "App Launcher",
-    link: "",
-    description: "Standalone GUI for launching application in the chosen context directly from tray"
-  }, {
-    label: "Timer Manager",
-    link: "",
-    description: "Service for monitoring the user activity to start, stop and synchronise time tracking."
-  }, {
-    label: "Farm rendering",
-    link: "",
-    description: "Integrations with Deadline and Muster render managers. Render, publish and generate reviews on the farm."
-  }, {
-    label: "Remote",
-    link: "",
-    description: "Production proven in fully remote workflows. Pype can run of cloud servers and storage."
-  }
+    {
+        label: "Workfiles",
+        description:
+            "Save and load workfiles in progress. Change the context inside of the application.",
+        docs: "/docs/artist_tools#workfiles",
+    },
+    {
+        label: "Creator",
+        description:
+            "Universal GUI for defining content for publishing from your DCC app.",
+        docs: "/docs/artist_tools#creator",
+    },
+    {
+        label: "Loader",
+        description:
+            "Universal GUI for loading published assets into your DCC app.",
+        docs: "/docs/artist_tools#loader",
+    },
+    {
+        label: "Publisher",
+        description:
+            "Universal GUI for validating and publishng content from your DCC app.",
+        image: "",
+        docs: "/docs/artist_tools#publisher",
+    },
+    {
+        label: "Inventory",
+        description:
+            "Universal GUI for managing versions of assets loaded into your working scene.",
+        docs: "docs/artist_tools#inventory",
+    },
+    {
+        label: "Library Loader",
+        description:
+            "A loader GUI that allows yo to load content from dedicated cross project asset library",
+        docs: "docs/artist_tools#library-loader",
+        image: "",
+    },
+    {
+        label: "Tray Publisher",
+        link: "",
+        description:
+            "A standalone GUI for publishing data into pipeline without going though DCC app.",
+        image: "",
+    },
+    {
+        label: "Pype Tray",
+        link: "",
+        description:
+            "Cross platform wrapper app, which is the central point of pype. All other tools are ran from here.",
+    },
+    {
+        label: "App Launcher",
+        link: "",
+        description:
+            "Standalone GUI for launching application in the chosen context directly from tray",
+    },
+    {
+        label: "Timer Manager",
+        link: "",
+        description:
+            "Service for monitoring the user activity to start, stop and synchronise time tracking.",
+    },
+    {
+        label: "Farm rendering",
+        link: "",
+        description:
+            "Integrations with Deadline and Muster render managers. Render, publish and generate reviews on the farm.",
+    },
+    {
+        label: "Remote",
+        link: "",
+        description:
+            "Production proven in fully remote workflows. Pype can run of cloud servers and storage.",
+    },
+    {
+        label: "Scene Builder",
+        link: "",
+        description:
+            "System for simple scene building. Loads pre-defined publishes to scene with single click, speeding up scene preparation.",
+    },
+    {
+        label: "Configuration GUI",
+        link: "",
+        description:
+            "All settings and configuration are done via openPype Settings tool. No need to dig around .json and .yaml",
+    },
 ];
 
 const ftrack = [
@@ -151,12 +186,17 @@ const maya_features = [
   },
   {
     label: "Model > Render",
-    description:"We cover full project data flow from model throght animation, till final render.",
+    description:"We cover full project data flow from model through animation, till final render.",
+    docs: "docs/artist_hosts_maya#working-with-pype-in-maya"
+  },
+  {
+    label: "Farm Renders",
+    description:"Send RenderSetup layers to the farm, generate quicktimes and publish multi-layer or individual AOVs.",
     docs: "docs/artist_hosts_maya#working-with-pype-in-maya"
   },
   {
     label: "Plugins Support",
-    description:"Full support for Arnold, Vray, Redshift and Yeti. With more added upon client requests.",
+    description:"OpenPYPE plays well with Arnold, Vray, Redshift and Yeti. With more plugins added upon client requests.",
     docs: "docs/artist_hosts_maya#working-with-yeti-in-pype"
   }
 ]
@@ -230,19 +270,23 @@ const deadline_features = [
   },
   {
     label: "Maya",
-    description:"Render maya scenes ."
+    description:"Render maya rendersetup layers."
   },
   {
     label: "Nuke",
-    description:"Template system for centrally controlled node parameters."
+    description:"Render write nodes and generate review quicktimes with baked colours."
   },
   {
-    label: "Vray Standalone",
-    description:"Support for local and farm renders, including baked reviews."
+    label: "Harmony",
+    description:"Render write nodes."
+  },
+  {
+    label: "After Effects",
+    description:"Render compositions."
   },
   {
     label: "Publishing",
-    description:"Generate slates and attach them to rendered."
+    description:"All renders are automatically published. Generate reviewable quicktimes with optional burnins."
   }
 ]
 
@@ -274,9 +318,6 @@ const blender_families = [
     {label:"Animation"},
     {label:"Point Cache"},
     {label:"Camera"},
-    {label:"RenderSetup"},
-    {label:"Render"},
-    {label:"Review"},
     {label:"Workfile"},
 ]
 
@@ -310,7 +351,7 @@ const harmony_families = [
     {label: "Review"},
     {label: "Template"},
     {label: "Rig"},
-    {label: "Pallete"},
+    {label: "Palette"},
     {label: "Workfile"}
 ]
 
