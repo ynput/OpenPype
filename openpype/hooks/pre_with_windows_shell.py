@@ -11,7 +11,8 @@ class LaunchWithWindowsShell(PreLaunchHook):
     instead.
     """
 
-    order = 10
+    # Should be as last hook becuase must change launch arguments to string
+    order = 1000
     app_groups = ["resolve", "nuke", "nukex", "hiero", "nukestudio"]
     platforms = ["windows"]
 
