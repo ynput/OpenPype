@@ -550,7 +550,9 @@ class DictMutableKeysWidget(BaseWidget):
 
         label = self.entity.label
         body_widget = None
+        content_left_margin = 0
         if label:
+            content_left_margin = CHILD_OFFSET
             body_widget = ExpandingWidget(label, self)
             main_layout.addWidget(body_widget)
             label = None
@@ -565,7 +567,9 @@ class DictMutableKeysWidget(BaseWidget):
         content_widget.setObjectName("ContentWidget")
         content_widget.setProperty("content_state", content_state)
         content_layout = QtWidgets.QVBoxLayout(content_widget)
-        content_layout.setContentsMargins(CHILD_OFFSET, 5, 0, bottom_margin)
+        content_layout.setContentsMargins(
+            content_left_margin, 5, 0, bottom_margin
+        )
 
         if body_widget is None:
             main_layout.addWidget(content_widget)
