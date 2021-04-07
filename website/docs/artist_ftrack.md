@@ -8,8 +8,7 @@ sidebar_label: Artist
 
 ## Login to Ftrack module in OpenPype (best case scenario) 
 1. Launch OpenPype and go to systray OpenPype icon.
-2. *Ftrack login* window pop up on start
-    - or press **login** in **Ftrack menu** to pop up *Ftrack login* window
+2. *Ftrack login* window pop up on start or press **login** in **Ftrack menu** to pop up *Ftrack login* window
 
     ![ftrack-login-2](assets/ftrack/ftrack-login_50.png)
 
@@ -18,7 +17,7 @@ sidebar_label: Artist
         ![Login widget](assets/ftrack/ftrack-login_1.png)
    - Web browser opens
    
-   - Sign in Ftrack if you're requested. If you are already sign up to Ftrack via web browser, you can jump to point 6.
+   - Sign into Ftrack if requested. If you are already signed in to Ftrack via web browser, you can jump to [Application launch](#application-launch-best-case-scenario)
 
     ![ftrack-login-2](assets/ftrack/ftrack-login_2.png)
 
@@ -34,18 +33,18 @@ sidebar_label: Artist
 ## Application launch (best case scenario)
 1. Make sure OpenPype is running and you passed [Login to Ftrack](#login-to-ftrack-module-in-openpype-best-case-scenario) guide
    
-2. Open web browser and go to your studio Ftrack web page *(e.g. https://mystudio.ftrackapp.com/)*
+2. Open Web browser and go to your studio Ftrack web page *(e.g. https://mystudio.ftrackapp.com/)*
    
-3. Locate the task on which you want to run the application
+3. Locate the task to run the application on.
    
 4. Display actions for the task
     ![ftrack-login-3](assets/ftrack/ftrack-login_60.png)
    
 5. Select application you want to launch
-    - application versions may be grouped to one action in that case press the action to reveal versions to choose *(like Maya in the picture)*, only applications permitted to the particular project are appeared. 
+    - application versions may be grouped to one action. In that case, press the action to reveal versions to choose from *(like Maya in the picture)*, only applications permitted on the particular project will appear. 
     ![ftrack-login-3](assets/ftrack/ftrack-login_71-small.png)
    
-6. Work
+6. Start working ;)
 
 ---
 
@@ -54,9 +53,22 @@ sidebar_label: Artist
 
     ![ftrack-login-3](assets/ftrack/ftrack-login_80-small.png)
 
-2. Log out the previous user from Ftrack module in tray
+2. Log out the previous user from Ftrack module in OpenPype tray
 
-    ![ftrack-login-3](assets/ftrack/ftrack-login_81.png)
+<div class="row markdown">
+<div class="col col--6 markdown">
+
+![ftrack-login-3](assets/ftrack/ftrack_logout.gif)
+
+</div>
+<div class="col col--6 markdown">
+
+![ftrack-login-3](assets/ftrack/ftrack-login_81.png)
+
+</div>
+</div>
+
+<br></br>
 
 3. Follow [Login to Ftrack](#login-to-ftrack-module-in-openpype-best-case-scenario) guide
 
@@ -64,6 +76,7 @@ sidebar_label: Artist
 
 ## Where to find API key
 - Your API key can be found in Ftrack. In the upper right corner of Ftrack click on the avatar, choose System settings. 
+- You shouldn't need to use your personal API key if previous steps went through correctly
   
     ![ftrack-api](assets/ftrack/ftrack-api.png)
 
@@ -92,8 +105,7 @@ sidebar_label: Artist
 - try to restart OpenPype
 
 **2. possibility - Ftrack is not set in OpenPype**
-- inform your administrator
-- The Ftrack URL can be changed in OpenPype Settings → System → Modules → Ftrack
+- inform your administrator or supervisor
 
 
 ### Web browser did not open
@@ -119,5 +131,5 @@ sidebar_label: Artist
 **3. possibility - User logged to Ftrack Web is not the same as user logged to Ftrack module in tray**
 - Follow [Change user](#change-ftrack-user) guide
 
-**4. possibility - Project don't have set applications**
+**4. possibility - Project doesn't have applications set correctly**
 - ask your Project Manager to check if he set applications for the project
