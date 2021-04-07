@@ -361,9 +361,16 @@ class EnvironmentToolGroup:
         self._environment = data["environment"]
 
         variants = data.get("variants") or {}
+        label_by_key = variants.pop(M_DYNAMIC_KEY_LABEL, {})
         variants_by_name = {}
         for variant_name, variant_env in variants.items():
-            tool = EnvironmentTool(variant_name, variant_env, self)
+            if variant_name in METADATA_KEYS:
+                continue
+
+            variant_label = label_by_key.get(variant_name) or variant_name
+            tool = EnvironmentTool(
+                variant_name, variant_label, variant_env, self
+            )
             variants_by_name[variant_name] = tool
         self.variants = variants_by_name
 
@@ -390,8 +397,9 @@ class EnvironmentTool:
         group (str): Name of group which wraps tool.
     """
 
-    def __init__(self, name, environment, group):
+    def __init__(self, name, label, environment, group):
         self.name = name
+        self.label = label
         self.group = group
         self._environment = environment
         self.full_name = "/".join((group.name, name))
