@@ -1,11 +1,11 @@
 import pyblish.api
-from pype.hosts import resolve
+from openpype.hosts import resolve
 from avalon import api as avalon
 from pprint import pformat
 
 # dev
 from importlib import reload
-from pype.hosts.resolve.otio import davinci_export
+from openpype.hosts.resolve.otio import davinci_export
 reload(davinci_export)
 
 
