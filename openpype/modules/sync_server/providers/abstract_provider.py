@@ -145,10 +145,11 @@ class AbstractProvider:
             Returns:
                 (string): proper url
         """
+        if not root_config:
+            root_config = self.get_roots_config(anatomy)
+
         if root_config and not root_config.get("root"):
             root_config = {"root": root_config}
-        else:
-            root_config = self.get_roots_config(anatomy)
 
         try:
             if not root_config:
