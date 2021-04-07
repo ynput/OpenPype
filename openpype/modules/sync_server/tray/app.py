@@ -1604,7 +1604,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
     @property
     def project(self):
         """Returns project"""
-        return self.project
+        return self._project
 
     def tick(self):
         """
