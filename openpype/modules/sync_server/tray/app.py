@@ -1437,7 +1437,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             menu.addAction(action)
 
         if float(remote_progress) == 1.0:
-            action = QtWidgets.QAction("Reset local site")
+            action = QtWidgets.QAction("Reset active site")
             actions_mapping[action] = self._reset_local_site
             menu.addAction(action)
 
