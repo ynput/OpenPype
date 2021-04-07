@@ -293,11 +293,16 @@ class ApplicationManager:
                 self.applications[app.full_name] = app
 
         tools_definitions = settings["tools"]["tool_groups"]
+        tool_label_mapping = tools_definitions.pop(M_DYNAMIC_KEY_LABEL, {})
         for tool_group_name, tool_group_data in tools_definitions.items():
             if not tool_group_name or tool_group_name in METADATA_KEYS:
                 continue
+
+            tool_group_label = (
+                tool_label_mapping.get(tool_group_name) or tool_group_name
+            )
             group = EnvironmentToolGroup(
-                tool_group_name, tool_group_data, self
+                tool_group_name, tool_group_label, tool_group_data, self
             )
             self.tool_groups[tool_group_name] = group
             for tool in group:
@@ -353,8 +358,9 @@ class EnvironmentToolGroup:
         manager (ApplicationManager): Manager that creates the group.
     """
 
-    def __init__(self, name, data, manager):
+    def __init__(self, name, label, data, manager):
         self.name = name
+        self.label = label
         self._data = data
         self.manager = manager
         self._environment = data["environment"]
@@ -398,7 +404,8 @@ class EnvironmentTool:
 
     def __init__(self, name, label, environment, group):
         self.name = name
-        self.label = label
+        self.variant_label = label
+        self.label = " ".join((group.label, label))
         self.group = group
         self._environment = environment
         self.full_name = "/".join((group.name, name))
