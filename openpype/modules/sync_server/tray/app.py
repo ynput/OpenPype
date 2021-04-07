@@ -507,7 +507,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     def _add_site(self):
         log.info(self.representation_id)
         project_name = self.table_view.model().project
-        local_site_name = self.sync_server.get_my_local_site()
+        local_site_name = get_local_site_id()
         try:
             self.sync_server.add_site(
                 project_name,
