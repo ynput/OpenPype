@@ -5,7 +5,7 @@ class CollectFrameRanges(pyblish.api.InstancePlugin):
     """ Collect all framranges.
     """
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.1
     label = "Collect Frame Ranges"
     hosts = ["hiero"]
     families = ["clip", "effect"]
