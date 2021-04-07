@@ -48,7 +48,7 @@ These actions *launch application with OpenPype * and *start timer* for the sele
 Project Manager or Supervisor must set project's applications during project preparation otherwise you won't see them. Applications can be added even if the project is in progress.
 :::
 
-
+---
 <div class="row markdown">
 <div class="col col--10 markdown">
 
@@ -110,14 +110,16 @@ This action gives ability to *stop running jobs*. When action is triggered, an i
 With this action it's possible to delete up to 15 entities at once from active project in pipeline database. Entered names must match exactly the names stored in database. These entities also must not have children entities *(Sequence must not have Shots but Task is not entity)*.
 
 ---
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
+<div class="row markdown">
+<div class="col col--10 markdown">
 
 ## Prepare Project
+
 </div>
-<div class="ImagePanel.image">
+<div class="col col--2 markdown">
 
 ![prepare_project-icon](assets/ftrack/ftrack-prepare_project-icon.png)
+
 </div>
 </div>
 
@@ -133,14 +135,16 @@ It is possible to use this action during the lifetime of a project but we recomm
 ![prepare_project_1](assets/ftrack/ftrack-prepare_project_1-small.png)
 
 ---
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
+<div class="row markdown">
+<div class="col col--10 markdown">
 
 ## Multiple Notes
+
 </div>
-<div class="ImagePanel.image">
+<div class="col col--2 markdown">
 
 ![multiple_notes-icon](assets/ftrack/ftrack-multiple_notes-icon.png)
+
 </div>
 </div>
 
@@ -151,14 +155,16 @@ You can add same note to multiple Asset Versions at once with this action.
 ![multiple_notes_1](assets/ftrack/ftrack-multiple_notes_1-small.png)
 
 ---
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
+<div class="row markdown">
+<div class="col col--10 markdown">
 
 ## Delete Asset/Subset
+
 </div>
-<div class="ImagePanel.image">
+<div class="col col--2 markdown">
 
 ![delete_asset-icon](assets/ftrack/ftrack-delete_asset-icon.png)
+
 </div>
 </div>
 
@@ -170,14 +176,16 @@ Action deletes Entities and Asset Versions from Ftrack and Avalon database.
 You should use this action if you need to delete Entities or Asset Versions otherwise deletion will not take effect in Avalon database. Currently the action allows to only delete one entity at the time. Entity also must not have any children.
 
 ---
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
+<div class="row markdown">
+<div class="col col--10 markdown">
 
 ## Create Project Structure
+
 </div>
-<div class="ImagePanel.image">
+<div class="col col--2 markdown">
 
 ![create_project_folders-icon](assets/ftrack/ftrack-create_project_folders-icon.png)
+
 </div>
 </div>
 
@@ -193,14 +201,16 @@ Please keep in mind this action is meant to make your project setup faster at th
 :::
 
 ---
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
+<div class="row markdown">
+<div class="col col--10 markdown">
 
 ## Delivery
+
 </div>
-<div class="ImagePanel.image">
+<div class="col col--2 markdown">
 
 ![ftrack-delivery-icon](assets/ftrack/ftrack-delivery-icon.png)
+
 </div>
 </div>
 
@@ -211,14 +221,16 @@ Collects approved hires files and copy them into a folder. It usually creates h.
 
 
 ---
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
+<div class="row markdown">
+<div class="col col--10 markdown">
 
 ## Create Folders
+
 </div>
-<div class="ImagePanel.image">
+<div class="col col--2 markdown">
 
 ![create_folders-icon](assets/ftrack/ftrack-create_folders-icon.png)
+
 </div>
 </div>
 
@@ -228,14 +240,16 @@ Collects approved hires files and copy them into a folder. It usually creates h.
 It is usually not necessary to launch this action because folders are created automatically every time you start working on a task. However it can be handy if you need to create folders before any work begins or you want to use applications that don't have pipeline implementation.
 
 ---
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
+<div class="row markdown">
+<div class="col col--10 markdown">
 
 ## Thumbnail
+
 </div>
-<div class="ImagePanel.image">
+<div class="col col--2 markdown">
 
 ![thumbnail-icon](assets/ftrack/ftrack-thumbnail-icon.png)
+
 </div>
 </div>
 
@@ -248,7 +262,7 @@ Propagates the thumbnail of the selected entity to its parent.
 Propagates the thumbnail of the selected entity to its first direct children entities.
 
 ---
-### RV
+## RV
 * Entity types: All
 * User roles: All
 
@@ -259,7 +273,7 @@ You must have RV player installed and licensed and have correct RV environments 
 :::
 
 ---
-### DJV View
+## DJV View
 * Entity types: Task, Asset Version
 * User roles: All
 
@@ -269,16 +283,17 @@ You can launch DJV View with one playable component from selected entities. You 
 You must have DJV View installed and configured in studio-config to be able use this action.
 :::
 
-
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
-
 ---
+<div class="row markdown">
+<div class="col col--10 markdown">
+
 ## Open File
+
 </div>
-<div class="ImagePanel.image">
+<div class="col col--2 markdown">
 
 ![component_open-icon](assets/ftrack/ftrack-component_open-icon.png)
+
 </div>
 </div>
 
