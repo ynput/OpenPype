@@ -1,0 +1,272 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap");
+
+:root{
+
+  --ifm-color-primary: #36b2ca;
+  --ifm-color-primary-dark: #30a1b6;
+  --ifm-color-primary-darker: #2d98ac;
+  --ifm-color-primary-darkest: #257d8e;
+  --ifm-color-primary-light: #4abacf;
+  --ifm-color-primary-lighter: #54bed2;
+  --ifm-color-primary-lightest: #73c9da;
+
+  --ifm-color-info-lightest: rgba(170, 227, 246, 0.75);
+  --ifm-color-success-lightest: rgba(204, 241, 204, 0.71);
+  --ifm-color-warning-lightest: rgba(255, 221, 128, 0.55);
+  --ifm-color-danger-lightest: rgba(251, 178, 181, 0.53);
+
+  --ifm-navbar-background-color:#1f2329;
+
+  --ifm-card-border-radius: calc(0.4rem);
+  --ifm-global-shadow-lw: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+
+  --ifm-font-family-base: "Poppins", sans-serif;
+  --ifm-font-weight-light: 200;
+  --ifm-font-weight-normal: 300;
+  --ifm-font-weight-semibold: 500;
+  --ifm-font-weight-bold: 700;
+  --ifm-font-size-base: 95%;
+
+  --ifm-button-font-weight: var(--ifm-font-weight-semibold);
+
+}
+
+body {
+  font-weight: var(--ifm-font-weight-normal);
+}
+
+h2 {
+  margin-bottom: 2rem;
+}
+
+h5, h6 { font-weight: var(--ifm-font-weight-semibold); }
+
+.navbar__item.navbar__link[href*="github"] {
+  display: flex;
+  font-size: 0;
+  padding: 0 12px;
+}
+.navbar__item.navbar__link[href*="github"]:before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  background: url("/img/brand-github.svg");
+  background-repeat: no-repeat;
+}
+
+.navbar__item.navbar__link[href*="pype.club"] {
+  display: flex;
+  font-size: 0;
+  padding: 0 0px;
+}
+.navbar__item.navbar__link[href*="pype.club"]:before {
+  content: "";
+  width: 100px;
+  height: 24px;
+  background: url("/img/logos/pypeclub_white.svg");
+  background-repeat: no-repeat;
+}
+
+
+.admonition-note {
+  --ra-admonition-color: var(--ra-color-text-dark);
+}
+
+.admonition {
+  --ra-admonition-icon-color: var(--ifm-alert-border-color);
+}
+
+.alert {
+  color: var(--ra-color-text-dark);
+  border-style: unset;
+  border-left: 8px solid var(--ifm-alert-border-color);
+}
+
+.alert a {
+    color: unset;
+    text-decoration: underline;
+    font-weight: var(--ifm-font-weight-semibold);
+}
+
+.alert--primary {
+      --ifm-alert-background-color: var(--ifm-color-primary-lightest);
+      --ifm-alert-border-color: var(--ifm-color-primary);
+    }
+.alert--secondary {
+      --ifm-alert-background-color: var(--ifm-color-secondary-light);
+      --ifm-alert-border-color: var(--ifm-color-secondary-darkest);
+      border-style: unset;
+    }
+.alert--success {
+      --ifm-alert-background-color: var(--ifm-color-success-lightest);
+      --ifm-alert-border-color: var(--ifm-color-success);
+    }
+.alert--info {
+      --ifm-alert-background-color: var(--ifm-color-info-lightest);
+      --ifm-alert-border-color: var(--ifm-color-info);
+    }
+.alert--warning {
+      --ifm-alert-background-color: var(--ifm-color-warning-lightest);
+      --ifm-alert-border-color: var(--ifm-color-warning);
+    }
+.alert--danger {
+      --ifm-alert-background-color: var(--ifm-color-danger-lightest);
+      --ifm-alert-border-color: var(--ifm-color-danger);
+    }
+
+
+.navbar--dark {
+    --ifm-navbar-background-color: #161a20f5;
+}
+
+.navbar__brand:hover {
+      text-decoration: none;
+      color: var(--ifm-color-primary);
+    }
+
+.navbar__toggle {
+      color: white;
+  }
+
+.navbar__title {
+      margin-left: 10px;
+  }
+
+.footer__links {
+    text-align: center;
+}
+
+.docusaurus-highlight-code-line {
+  background-color: rgb(72, 77, 91);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+}
+
+.darkBackground {
+    background: linear-gradient(135deg,
+                rgba(135, 135, 135, .3) 60%,
+                rgba(100, 100, 100, .3) 60.01%);
+    background-position: 50% 0;
+    position: relative;
+    color: black
+}
+
+.lightBackground {
+    background: linear-gradient(-135deg,
+                #f5fffb 40%,
+                white 40.01%);
+    background-position: 50% 0;
+    position: relative;
+    color: black
+}
+
+.section {
+    padding: 6rem 0;
+}
+
+.sectionDescription {
+    text-align: center;
+    font-weight: 500;
+}
+
+
+.showcase {
+    display: flex;
+    align-items: center;
+    flex-flow: row wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.showcase  a{
+    color: black;
+    text-decoration: none
+}
+
+.showcase .link {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px
+}
+
+.showcase .client {
+    display: flex;
+    justify-content: space-between;
+}
+
+.showcase .client img {
+    max-height: 80px;
+    padding: 20px;
+    max-width: 120px;
+    align-self: center;
+}
+
+.showcase .link img {
+    max-height: 80px;
+    padding: 10px;
+    width: 80px;
+    align-self: center;
+}
+
+.showcase .link span {
+    text-align: center;
+}
+
+.showcase .collab img {
+    max-height: 60px;
+    padding: 20px;
+    align-self: center;
+    max-width: 200px;
+}
+
+.showcase .pype_logo img{
+    height: 80px;
+}
+
+
+.card {
+  max-width: 230px;
+  margin: 10px;
+  font-size: 10pt
+}
+
+.card_medium {
+  max-width: 180px;
+}
+
+.card_small {
+  width: 130px;
+}
+
+.card a{
+  color: var(--ifm-font-color-base);
+}
+
+.markdown img {
+    border-radius: calc(0.4rem);
+    box-shadow: var(--ifm-global-shadow-lw);
+}
+
+.markdown .row {
+  margin-top: calc(var(--ifm-h3-vertical-rhythm-top) * var(--ifm-leading));
+}
+
+/* image with caption */
+figure {
+    margin-inline-start: 0px;
+    margin-inline-end: 0px;
+}
+
+figure>p {
+    margin-bottom: 0px;
+    background-color: var(--ifm-color-secondary);
+}
+
+figure>figcaption {
+    background-color: var(--ifm-color-secondary);
+    font-size: 1rem;
+}
+
+/* END caption */
