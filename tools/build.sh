@@ -5,13 +5,12 @@
 
 art () {
   cat <<-EOF
-  ____________
- /\\      ___  \\
- \\ \\     \\/_\\  \\
-  \\ \\     _____/ ______   ___ ___ ___
-   \\ \\    \\___/ /\\     \\  \\  \\\\  \\\\  \\
-    \\ \\____\\    \\ \\_____\\  \\__\\\\__\\\\__\\
-     \\/____/     \\/_____/  . PYPE Club .
+
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 EOF
 }
@@ -93,7 +92,7 @@ detect_python () {
 ###############################################################################
 clean_pyc () {
   local path
-  path=$pype_root
+  path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
@@ -136,16 +135,16 @@ main () {
   detect_python || return 1
 
   # Directories
-  pype_root=$(dirname $(dirname "$(realpath ${BASH_SOURCE[0]})"))
-  pushd "$pype_root" > /dev/null || return > /dev/null
+  openpype_root=$(dirname $(dirname "$(realpath ${BASH_SOURCE[0]})"))
+  pushd "$openpype_root" > /dev/null || return > /dev/null
 
-  version_command="import os;exec(open(os.path.join('$pype_root', 'pype', 'version.py')).read());print(__version__);"
-  pype_version="$(python3 <<< ${version_command})"
+  version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);"
+  openpype_version="$(python3 <<< ${version_command})"
 
   echo -e "${BIYellow}---${RST} Cleaning build directory ..."
-  rm -rf "$pype_root/build" && mkdir "$pype_root/build" > /dev/null
+  rm -rf "$openpype_root/build" && mkdir "$openpype_root/build" > /dev/null
 
-  echo -e "${BIGreen}>>>${RST} Building Pype ${BIWhite}[${RST} ${BIGreen}$pype_version${RST} ${BIWhite}]${RST}"
+  echo -e "${BIGreen}>>>${RST} Building OpenPype ${BIWhite}[${RST} ${BIGreen}$openpype_version${RST} ${BIWhite}]${RST}"
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
 
@@ -159,11 +158,11 @@ main () {
   fi
 
   echo -e "${BIGreen}>>>${RST} Building ..."
-  poetry run python3 "$pype_root/setup.py" build > "$pype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
-  poetry run python3 "$pype_root/tools/build_dependencies.py"
+  poetry run python3 "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+  poetry run python3 "$openpype_root/tools/build_dependencies.py"
 
-  echo -e "${BICyan}>>>${RST} All done. You will find Pype and build log in \c"
-  echo -e "${BIWhite}$pype_root/build${RST} directory."
+  echo -e "${BICyan}>>>${RST} All done. You will find OpenPype and build log in \c"
+  echo -e "${BIWhite}$openpype_root/build${RST} directory."
 }
 
 main

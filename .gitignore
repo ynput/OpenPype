@@ -32,6 +32,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+
 # CX_Freeze
 ###########
 /build
@@ -63,13 +64,12 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-
 # Node JS packages
 ##################
 node_modules/
 package-lock.json
 
-pype/premiere/ppro/js/debug.log
+openpype/premiere/ppro/js/debug.log
 
 
 # IDEA
@@ -80,3 +80,4 @@ pype/premiere/ppro/js/debug.log
 .vscode/
 .env
 dump.sql
+test_localsystem.txt

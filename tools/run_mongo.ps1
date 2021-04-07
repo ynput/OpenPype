@@ -13,14 +13,11 @@ PS> .\run_mongo.ps1
 
 $art = @"
 
-
-        ____________
-       /\      ___  \
-       \ \     \/_\  \
-        \ \     _____/ ______   ___ ___ ___
-         \ \    \___/ /\     \  \  \\  \\  \
-          \ \____\    \ \_____\  \__\\__\\__\
-           \/____/     \/_____/  . PYPE Club .
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 "@
 
@@ -37,37 +34,39 @@ function Exit-WithCode($exitcode) {
 
 
 function Find-Mongo {
-  Write-Host ">>> " -NoNewLine -ForegroundColor Green
-  Write-Host "Detecting MongoDB ... " -NoNewline
-  if (-not (Get-Command "mongod" -ErrorAction SilentlyContinue)) {
-    if(Test-Path 'C:\Program Files\MongoDB\Server\*\bin\mongod.exe' -PathType Leaf) {
-      # we have mongo server installed on standard Windows location
-      # so we can inject it to the PATH. We'll use latest version available.
-      $mongoVersions = Get-ChildItem -Directory 'C:\Program Files\MongoDB\Server' | Sort-Object -Property {$_.Name -as [int]}
-      if(Test-Path "$($mongoVersions[-1])\bin\mongod.exe" -PathType Leaf) {
-        $env:PATH="$($env:PATH);$($mongoVersions[-1])\bin\"
-        Write-Host "OK" -ForegroundColor Green
-        Write-Host "  - auto-added from [ " -NoNewline
-        Write-Host "$($mongoVersions[-1])\bin\" -NoNewLine -ForegroundColor Cyan
-        Write-Host " ]"
-      } else {
-          Write-Host "FAILED " -NoNewLine -ForegroundColor Red
-          Write-Host "MongoDB not detected" -ForegroundColor Yellow
-          Write-Host "Tried to find it on standard location " -NoNewline -ForegroundColor Gray
-          Write-Host " [ " -NoNewline -ForegroundColor Cyan
-          Write-Host "$($mongoVersions[-1])\bin\" -NoNewline -ForegroundColor White
-          Write-Host " ] " -NonNewLine -ForegroundColor Cyan
-          Write-Host "but failed." -ForegroundColor Gray
-          Exit-WithCode 1
-      }
+    $defaultPath = "C:\Program Files\MongoDB\Server"
+    Write-Host ">>> " -NoNewLine -ForegroundColor Green
+    Write-Host "Detecting MongoDB ... " -NoNewline
+    if (-not (Get-Command "mongod" -ErrorAction SilentlyContinue)) {
+        if(Test-Path "$($defaultPath)\*\bin\mongod.exe" -PathType Leaf) {
+        # we have mongo server installed on standard Windows location
+        # so we can inject it to the PATH. We'll use latest version available.
+        $mongoVersions = Get-ChildItem -Directory 'C:\Program Files\MongoDB\Server' | Sort-Object -Property {$_.Name -as [int]}
+        if(Test-Path "$($mongoVersions[-1])\bin\mongod.exe" -PathType Leaf) {
+            $env:PATH = "$($env:PATH);$($mongoVersions[-1])\bin\"
+            Write-Host "OK" -ForegroundColor Green
+            Write-Host "  - auto-added from [ " -NoNewline
+            Write-Host "$($mongoVersions[-1])\bin\mongod.exe" -NoNewLine -ForegroundColor Cyan
+            Write-Host " ]"
+            return "$($mongoVersions[-1])\bin\mongod.exe"
+        } else {
+            Write-Host "FAILED " -NoNewLine -ForegroundColor Red
+            Write-Host "MongoDB not detected" -ForegroundColor Yellow
+            Write-Host "Tried to find it on standard location " -NoNewline -ForegroundColor Gray
+            Write-Host " [ " -NoNewline -ForegroundColor Cyan
+            Write-Host "$($mongoVersions[-1])\bin\mongod.exe" -NoNewline -ForegroundColor White
+            Write-Host " ] " -NoNewLine -ForegroundColor Cyan
+            Write-Host "but failed." -ForegroundColor Gray
+            Exit-WithCode 1
+        }
     } else {
-      Write-Host "FAILED " -NoNewLine -ForegroundColor Red
-      Write-Host "MongoDB not detected in PATH" -ForegroundColor Yellow
-      Exit-WithCode 1
+        Write-Host "FAILED " -NoNewLine -ForegroundColor Red
+        Write-Host "MongoDB not detected in PATH" -ForegroundColor Yellow
+        Exit-WithCode 1
     }
-
   } else {
-    Write-Host "OK" -ForegroundColor Green
+        Write-Host "OK" -ForegroundColor Green
+        return Get-Command "mongod" -ErrorAction SilentlyContinue
   }
   <#
   .SYNOPSIS
@@ -80,14 +79,15 @@ function Find-Mongo {
 }
 
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$pype_root = (Get-Item $script_dir).parent.FullName
+$openpype_root = (Get-Item $script_dir).parent.FullName
 
 # mongodb port
 $port = 2707
 
 # path to database
-$dbpath = (Get-Item $pype_root).parent.FullName + "\mongo_db_data"
+$dbpath = (Get-Item $openpype_root).parent.FullName + "\mongo_db_data"
 
-Find-Mongo
-$mongo = Get-Command "mongod" | Select-Object -ExpandProperty Definition
-Start-Process -FilePath $mongo "--dbpath $($dbpath) --port $($port)"
+$mongoPath = Find-Mongo
+Start-Process -FilePath $mongopath "--dbpath $($dbpath) --port $($port)" -PassThru
+
+

@@ -1,11 +1,9 @@
 <#
 .SYNOPSIS
-  Helper script to build Pype.
+  Helper script to run tests for OpenPype.
 
 .DESCRIPTION
-  This script will detect Python installation, create venv and install
-  all necessary packages from `requirements.txt` needed by Pype to be
-  included during application freeze on Windows.
+  This will use virtual environment and pytest to run test for OpenPype.
 
 .EXAMPLE
 
@@ -34,14 +32,11 @@ function Show-PSWarning() {
 
 $art = @"
 
-
-        ____________
-       /\      ___  \
-       \ \     \/_\  \
-        \ \     _____/ ______   ___ ___ ___
-         \ \    \___/ /\     \  \  \\  \\  \
-          \ \____\    \ \_____\  \__\\__\\__\
-           \/____/     \/_____/  . PYPE Club .
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 "@
 
@@ -52,22 +47,22 @@ Write-Host $art -ForegroundColor DarkGreen
 
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$pype_root = (Get-Item $script_dir).parent.FullName
+$openpype_root = (Get-Item $script_dir).parent.FullName
 
-Set-Location -Path $pype_root
+Set-Location -Path $openpype_root
 
-$version_file = Get-Content -Path "$($pype_root)\pype\version.py"
+$version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
-$pype_version = $result[0].Groups['version'].Value
-if (-not $pype_version) {
+$openpype_version = $result[0].Groups['version'].Value
+if (-not $openpype_version) {
   Write-Host "!!! " -ForegroundColor yellow -NoNewline
-  Write-Host "Cannot determine Pype version."
+  Write-Host "Cannot determine OpenPype version."
   Exit-WithCode 1
 }
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Building Pype [ " -NoNewline -ForegroundColor white
-Write-host $pype_version  -NoNewline -ForegroundColor green
+Write-Host "Building OpenPype [ " -NoNewline -ForegroundColor white
+Write-host $openpype_version  -NoNewline -ForegroundColor green
 Write-Host " ] ..." -ForegroundColor white
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
@@ -97,15 +92,15 @@ Write-Host "OK [ $p ]" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
-Get-ChildItem $pype_root -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
-Get-ChildItem $pype_root -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
+Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
+Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
 Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Testing Pype ..."
+Write-Host "Testing OpenPype ..."
 $original_pythonpath = $env:PYTHONPATH
-$env:PYTHONPATH="$($pype_root);$($env:PYTHONPATH)"
-& poetry run pytest -x --capture=sys --print -W ignore::DeprecationWarning "$($pype_root)/tests"
+$env:PYTHONPATH="$($openpype_root);$($env:PYTHONPATH)"
+& poetry run pytest -x --capture=sys --print -W ignore::DeprecationWarning "$($openpype_root)/tests"
 $env:PYTHONPATH = $original_pythonpath
 
 Write-Host ">>> " -NoNewline -ForegroundColor green

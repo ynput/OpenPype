@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-  Helper script create virtual env.
+  Helper script create virtual environment using Poetry.
 
 .DESCRIPTION
-  This script will detect Python installation, create venv and install
-  all necessary packages from `requirements.txt` needed by Pype to be
-  included during application freeze on Windows.
+  This script will detect Python installation, create venv with Poetry
+  and install all necessary packages from `poetry.lock` or `pyproject.toml`
+  needed by OpenPype to be included during application freeze on Windows.
 
 .EXAMPLE
 
@@ -82,20 +82,17 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
 
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$pype_root = (Get-Item $script_dir).parent.FullName
+$openpype_root = (Get-Item $script_dir).parent.FullName
 
-Set-Location -Path $pype_root
+Set-Location -Path $openpype_root
 
 $art = @"
 
-
-        ____________
-       /\      ___  \
-       \ \     \/_\  \
-        \ \     _____/ ______   ___ ___ ___
-         \ \    \___/ /\     \  \  \\  \\  \
-          \ \____\    \ \_____\  \__\\__\\__\
-           \/____/     \/_____/  . PYPE Club .
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 "@
 
@@ -104,18 +101,18 @@ Write-Host $art -ForegroundColor DarkGreen
 # Enable if PS 7.x is needed.
 # Show-PSWarning
 
-$version_file = Get-Content -Path "$($pype_root)\pype\version.py"
+$version_file = Get-Content -Path "$($openpype_root)\openpype\version.py"
 $result = [regex]::Matches($version_file, '__version__ = "(?<version>\d+\.\d+.\d+.*)"')
-$pype_version = $result[0].Groups['version'].Value
-if (-not $pype_version) {
+$openpype_version = $result[0].Groups['version'].Value
+if (-not $openpype_version) {
   Write-Host "!!! " -ForegroundColor yellow -NoNewline
-  Write-Host "Cannot determine Pype version."
+  Write-Host "Cannot determine OpenPype version."
   Set-Location -Path $current_dir
   Exit-WithCode 1
 }
 Write-Host ">>> " -NoNewline -ForegroundColor Green
-Write-Host "Found Pype version " -NoNewline
-Write-Host "[ $($pype_version) ]" -ForegroundColor Green
+Write-Host "Found OpenPype version " -NoNewline
+Write-Host "[ $($openpype_version) ]" -ForegroundColor Green
 
 Test-Python
 
@@ -129,7 +126,7 @@ if (-not (Test-Path -PathType Container -Path "$($env:USERPROFILE)\.poetry\bin")
     Write-Host "OK" -ForegroundColor Green
 }
 
-if (-not (Test-Path -PathType Leaf -Path "$($pype_root)\poetry.lock")) {
+if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
     Write-Host ">>> " -NoNewline -ForegroundColor green
     Write-Host "Installing virtual environment and creating lock."
 } else {
@@ -145,4 +142,4 @@ if ($LASTEXITCODE -ne 0) {
 }
 Set-Location -Path $current_dir
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Virtual environment created. "
+Write-Host "Virtual environment created."
