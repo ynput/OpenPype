@@ -28,6 +28,9 @@ In most cases actions filtered by entity type:
 
 So if you do not see action you need to use check if action is available for selected *entity type* or ask *administrator* to check if you have permissions to use it.
 
+
+Actions can be highly customized according to specific client's requests. 
+
 :::important
 Filtering can be more complicated for example a lot of actions can be shown only when one particular entity is selected.
 :::
@@ -39,33 +42,12 @@ Filtering can be more complicated for example a lot of actions can be shown only
 * Entity types: Task
 * User roles: All
 
-These actions *launch application with OpenPype initiated* and *start timer* for the selected Task. We recommend you to launch application this way.
+These actions *launch application with OpenPype * and *start timer* for the selected Task. We recommend you to launch application this way.
 
 :::important
-Project Manager or Supervisor must set project's applications during project preparation otherwise you won't see them.
+Project Manager or Supervisor must set project's applications during project preparation otherwise you won't see them. Applications can be added even if the project is in progress.
 :::
 
-### RV
-* Entity types: All
-* User roles: All
-
-You can launch RV player with playable components from selected entities. You can choose which components will be played.
-
-:::important
-You must have RV player installed and licensed and have correct RV environments set to be able use this action.
-:::
-
-### DJV View
-* Entity types: Task, Asset Version
-* User roles: All
-
-You can launch DJV View with one playable component from selected entities. You can choose which component will be played.
-
-:::important
-You must have DJV View installed and configured in studio-config to be able use this action.
-:::
-
----
 <div class="ImagePanel" data-image-align='right'>
 <div class="ImagePanel.content">
 
@@ -79,11 +61,11 @@ You must have DJV View installed and configured in studio-config to be able use 
 
 A group of actions that are used for OpenPype Administration.
 
-### Create/Update Avalon Attributes
+### Create Update Avalon Attributes
 * Entity types: All
 * User roles: Pypeclub, Administrator
 
-Action creates and updates Ftrack's Custom Attributes that are needed to manage and run OpenPype within Ftrack. Most of custom attribute configurations are stored in OpenPype presets (*Pype Settings → Project → Anatomy → Attributes*). It is not recommended to modify values stored in the file unless your studio used completely custom configuration.
+Action creates and updates Ftrack's Custom Attributes that are needed to manage and run OpenPype within Ftrack. Most of custom attribute configurations are stored in OpenPype settings (*click on the systray OpenPype icon → Settings → Project → Anatomy → Attributes*). It is not recommended to modify values stored in the file unless your studio used completely custom configuration.
 
 ### Sync to Avalon
 * Entity types: Project, Typed Context
@@ -91,8 +73,8 @@ Action creates and updates Ftrack's Custom Attributes that are needed to manage 
 
 Synchronization to Avalon is key process to keep OpenPype data updated. Action updates selected entities (Project, Shot, Sequence, etc.) and all nested entities to Avalon database. If action is successfully finished [Sync Hier Attrs](#sync-hier-attrs) action is triggered.
 
-There are 2 versions of **Sync to Avalon** first labeled as **server** second as **local**.
-* **server** version will be processed with [event server](admin_ftrack#event-server)
+There are 2 versions of **Sync to Avalon**, first labeled as **server** second as **local**.
+* **server** version will be processed with [event server](module_ftrack#event-server)
 * **local** version will be processed with user's OpenPype tray application
 
 It is recommended to use **local** version if possible to avoid unnecessary deceleration of event server.
@@ -101,11 +83,11 @@ It is recommended to use **local** version if possible to avoid unnecessary dece
 * Entity types: Project, Typed Context
 * User roles: Pypeclub, Administrator, Project manager
 
-Synchronization to Avalon of Ftrack's hierarchical Custom attributes is a bit complicated so we decided to split synchronization process into 2 actions. This action updates hierarchical Custom attributes of selected  entities (Project, Shot, Sequence, etc.) and all their nested entities to pipeline database. This action is also triggered automatically after successfully finished [Sync To Avalon](#sync-to-avalon) action.
+Synchronization to Avalon of Ftrack's hierarchical Custom attributes is a bit complicated so we decided to split synchronization process into 2 actions. This action updates hierarchical Custom attributes of selected entities (Project, Shot, Sequence, etc.) and all their nested entities to pipeline database. This action is also triggered automatically after successfully finished [Sync To Avalon](#sync-to-avalon) action.
 
 There are 2 versions of **Sync Hier Attrs** first labeled as **server** second as **local**.
-* **server** version will be processed with [event server](admin_ftrack#event-server)
-* **local** version will be processed with user's OpenPype tray application
+* **server** version will be processed with [event server](module_ftrack#event-server)
+* **local** version will be processed with user's OpenPype application
 
 It is recommended to use **local** version if possible to avoid unnecessary deceleration of event server.
 
@@ -127,26 +109,6 @@ With this action it's possible to delete up to 15 entities at once from active p
 <div class="ImagePanel" data-image-align='right'>
 <div class="ImagePanel.content">
 
-## Thumbnail
-</div>
-<div class="ImagePanel.image">
-
-![thumbnail-icon](assets/ftrack/ftrack-thumbnail-icon.png)
-</div>
-</div>
-
-A group of actions for thumbnail management.
-
-### Thumbnail to Parent
-Propagates the thumbnail of the selected entity to its parent.
-
-### Thumbnail to Children
-Propagates the thumbnail of the selected entity to its first direct children entities.
-
----
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
-
 ## Prepare Project
 </div>
 <div class="ImagePanel.image">
@@ -158,7 +120,7 @@ Propagates the thumbnail of the selected entity to its first direct children ent
 * Entity types: Project
 * User roles: Pypeclub, Administrator, Project manager
 
-Allows project managers and coordinator to *set basic project attributes* needed for OpenPype to operate, *Create project folders* if you want and especially *prepare Project specific [anatomy](admin_config#anatomy) and [presets](admin_config#presets)* files for you.
+Allows project managers and coordinator to *set basic project attributes* needed for OpenPype to operate, *Create project folders* if you want and especially prepare project specific [anatomy](admin_settings_project_anatomy) or [settings](admin_settings_project).
 
 :::tip
 It is possible to use this action during the lifetime of a project but we recommend using it only once at the start of the project.
@@ -220,11 +182,29 @@ You should use this action if you need to delete Entities or Asset Versions othe
 
 *Create Project Structure* helps to create basic folder structure and may create the main ftrack entities for the project.
 
-Structure is loaded from [presets](admin_config#presets) *(Pype Settings → Project → Global → Project Folder Structure)*. You should examine that preset to see how it works. Preset may contain dictionaries of nested dictionaries where each key represents a folder name. Key and all it's parents will be also created in Ftrack if the key ends with `[ftrack]`. Default Ftrack entity type is *Folder* but entity type can be specified using `[ftrack.{entity type}]`. To create *Sequence* with name *Seq_001* key should look like `Seq_001[ftrack.Sequence]`.
+Structure is loaded from settings *(OpenPype Settings → Project → Global → Project Folder Structure)*. You should examine these settings to see how it works. Settings may contain dictionaries of nested dictionaries where each key represents a folder name. Key and all it's parents will be also created in Ftrack if the key ends with `[ftrack]`. Default Ftrack entity type is *Folder* but entity type can be specified using `[ftrack.{entity type}]`. To create *Sequence* with name *Seq_001* key should look like `Seq_001[ftrack.Sequence]`.
 
 :::note
 Please keep in mind this action is meant to make your project setup faster at the very beginning, but it does not create folders for each shot and asset. For creating asset folder refer to `Create Folders` Action
 :::
+
+---
+<div class="ImagePanel" data-image-align='right'>
+<div class="ImagePanel.content">
+
+## Delivery
+</div>
+<div class="ImagePanel.image">
+
+![ftrack-delivery-icon](assets/ftrack/ftrack-delivery-icon.png)
+</div>
+</div>
+
+* Entity types: Task
+* User roles: Pypeclub, Project manager, Administrator
+
+Collects approved hires files and copy them into a folder. It usually creates h.264 files for preview and mov for editorial. All files are then copied according to predefined naming convention to a specific folder.  
+
 
 ---
 <div class="ImagePanel" data-image-align='right'>
@@ -241,21 +221,55 @@ Please keep in mind this action is meant to make your project setup faster at th
 * Entity types: Typed Context, Task
 * User roles: All
 
-Creates folders for a selected asset in based on project templates.
-
 It is usually not necessary to launch this action because folders are created automatically every time you start working on a task. However it can be handy if you need to create folders before any work begins or you want to use applications that don't have pipeline implementation.
-
-<!--:::tip
-If your Anatomy contains `{app}` you can set which app folders will be created for specific task types with [presets](admin_config#presets) *(~/presets/tools/sw_folders.json)*.
-:::
- 
-rewrite -->
-
 
 ---
 <div class="ImagePanel" data-image-align='right'>
 <div class="ImagePanel.content">
 
+## Thumbnail
+</div>
+<div class="ImagePanel.image">
+
+![thumbnail-icon](assets/ftrack/ftrack-thumbnail-icon.png)
+</div>
+</div>
+
+A group of actions for thumbnail management.
+
+### Thumbnail to Parent
+Propagates the thumbnail of the selected entity to its parent.
+
+### Thumbnail to Children
+Propagates the thumbnail of the selected entity to its first direct children entities.
+
+---
+### RV
+* Entity types: All
+* User roles: All
+
+You can launch RV player with playable components from selected entities. You can choose which components will be played.
+
+:::important
+You must have RV player installed and licensed and have correct RV environments set to be able use this action.
+:::
+
+---
+### DJV View
+* Entity types: Task, Asset Version
+* User roles: All
+
+You can launch DJV View with one playable component from selected entities. You can choose which component will be played.
+
+:::important
+You must have DJV View installed and configured in studio-config to be able use this action.
+:::
+
+
+<div class="ImagePanel" data-image-align='right'>
+<div class="ImagePanel.content">
+
+---
 ## Open File
 </div>
 <div class="ImagePanel.image">

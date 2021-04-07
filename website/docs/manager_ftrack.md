@@ -31,7 +31,7 @@ This process is how data from Ftrack will get into Avalon database.
 ### How to synchronize
 You can do synchronization with [Sync To Avalon](manager_ftrack_actions#sync-to-avalon) action.
 
-Synchronization can be automated with OpenPype's [event server](#event-server) and synchronization events. If your Ftrack is [prepared for OpenPype](#prepare-ftrack-for-pype), the project should have custom attribute `Avalon auto-sync`. Check the custom attribute to allow auto-updates with event server.
+Synchronization can be automated with OpenPype's [event server](#event-server) and synchronization events. If your Ftrack is [prepared for OpenPype](#prepare-ftrack-for-openpype), the project should have custom attribute `Avalon auto-sync`. Check the custom attribute to allow auto-updates with event server.
 
 :::important
 Always use `Sync To Avalon` action before you enable `Avalon auto-sync`!
