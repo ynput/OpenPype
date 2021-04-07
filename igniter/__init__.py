@@ -36,7 +36,6 @@ def open_dialog():
 
 
 __all__ = [
-    "InstallDialog",
     "BootstrapRepos",
     "open_dialog",
     "version"
