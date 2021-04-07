@@ -29,8 +29,7 @@
                     "template_data": [
                         {
                             "app_variant": "4-24",
-                            "app_variant_label": "4.24",
-                            "app_name": "unreal"
+                            "app_variant_label": "4.24"
                         }
                     ]
                 }
