@@ -326,6 +326,7 @@ def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
     # TODO move additional paths to `boot` part when OPENPYPE_ROOT will point
     # to same hierarchy from code and from frozen OpenPype
     additional_paths = [
+        os.environ["OPENPYPE_ROOT"],
         # add OpenPype tools
         os.path.join(os.environ["OPENPYPE_ROOT"], "openpype", "tools"),
         # add common OpenPype vendor
