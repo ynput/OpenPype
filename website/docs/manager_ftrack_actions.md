@@ -48,18 +48,22 @@ These actions *launch application with OpenPype * and *start timer* for the sele
 Project Manager or Supervisor must set project's applications during project preparation otherwise you won't see them. Applications can be added even if the project is in progress.
 :::
 
-<div class="ImagePanel" data-image-align='right'>
-<div class="ImagePanel.content">
 
-## OpenPype Admin
-</div>
-<div class="ImagePanel.image">
+<div class="row markdown">
+<div class="col col--1 markdown">
 
 ![pype_admin-icon](assets/ftrack/ftrack-pype_admin-icon.png)
+
+</div>
+<div class="col col--11 markdown">
+
+## OpenPype Admin
+
 </div>
 </div>
 
-A group of actions that are used for OpenPype Administration.
+
+#### A group of actions that are used for OpenPype Administration.
 
 ### Create Update Avalon Attributes
 * Entity types: All
