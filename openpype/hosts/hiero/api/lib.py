@@ -150,15 +150,27 @@ def get_track_items(
 
     # get selected track items or all in active sequence
     if selected:
-        selected_items = list(hiero.selection)
-        for item in selected_items:
-            if track_name and track_name in item.parent().name():
-                # filter only items fitting input track name
-                track_items.append(item)
-            elif not track_name:
-                # or add all if no track_name was defined
-                track_items.append(item)
-    else:
+        try:
+            selected_items = list(hiero.selection)
+            for item in selected_items:
+                if track_name and track_name in item.parent().name():
+                    # filter only items fitting input track name
+                    track_items.append(item)
+                elif not track_name:
+                    # or add all if no track_name was defined
+                    track_items.append(item)
+        except AttributeError:
+            pass
+
+    # check if any collected track items are
+    # `core.Hiero.Python.TrackItem` instance
+    if track_items:
+        any_track_item = track_items.pop()
+        if not isinstance(any_track_item, hiero.core.TrackItem):
+            selected_items = []
+
+    # collect all available active sequence track items
+    if not track_items:
         sequence = get_current_sequence(name=sequence_name)
         # get all available tracks from sequence
         tracks = list(sequence.audioTracks()) + list(sequence.videoTracks())
