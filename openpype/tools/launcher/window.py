@@ -11,6 +11,7 @@ from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget
 from avalon.vendor import qtawesome
 from .models import ProjectModel
+from .lib import get_action_label
 from .widgets import (
     ProjectBar,
     ActionBar,
@@ -407,7 +408,7 @@ class LauncherWindow(QtWidgets.QDialog):
         self.discover_actions()
 
     def on_action_clicked(self, action):
-        self.echo("Running action: {}".format(action.name))
+        self.echo("Running action: {}".format(get_action_label(action)))
         self.run_action(action)
 
     def on_history_action(self, history_data):

@@ -62,7 +62,7 @@ def _prepare_publish_environments():
     env["AVALON_TASK"] = os.getenv("AVALON_TASK")
     env["AVALON_WORKDIR"] = os.getenv("AVALON_WORKDIR")
     env["AVALON_APP"] = f"hosts.{publish_host}"
-    env["AVALON_APP_NAME"] = "celaction_local"
+    env["AVALON_APP_NAME"] = "celaction/local"
 
     env["PYBLISH_HOSTS"] = publish_host
 
