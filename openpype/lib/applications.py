@@ -290,7 +290,6 @@ class ApplicationManager:
             group = ApplicationGroup(group_name, variant_defs, self)
             self.app_groups[group_name] = group
             for app in group:
-                # TODO This should be replaced with `full_name` in future
                 self.applications[app.full_name] = app
 
         tools_definitions = settings["tools"]["tool_groups"]
