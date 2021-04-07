@@ -178,7 +178,7 @@ class Application:
         enabled = False
         if group.enabled:
             enabled = data.get("enabled", True)
-            self.enabled = enabled
+        self.enabled = enabled
 
         self.label = data.get("variant_label") or name
         self.full_name = "/".join((group.name, name))
