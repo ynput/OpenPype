@@ -50,14 +50,14 @@ Project Manager or Supervisor must set project's applications during project pre
 
 
 <div class="row markdown">
-<div class="col col--1 markdown">
-
-![pype_admin-icon](assets/ftrack/ftrack-pype_admin-icon.png)
-
-</div>
-<div class="col col--11 markdown">
+<div class="col col--10 markdown">
 
 ## OpenPype Admin
+
+</div>
+<div class="col col--2 markdown">
+
+![pype_admin-icon](assets/ftrack/ftrack-pype_admin-icon.png)
 
 </div>
 </div>
