@@ -532,5 +532,5 @@ def change_openpype_mongo_url(new_mongo_url):
     """
 
     validate_mongo_connection(new_mongo_url)
-    registry = OpenPypeSecureRegistry("Settings")
+    registry = OpenPypeSecureRegistry("mongodb")
     registry.set_item("openPypeMongo", new_mongo_url)

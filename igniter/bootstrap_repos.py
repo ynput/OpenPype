@@ -242,7 +242,7 @@ class BootstrapRepos:
         self._app = "openpype"
         self._log = log.getLogger(str(__class__))
         self.data_dir = Path(user_data_dir(self._app, self._vendor))
-        self.secure_registry = OpenPypeSecureRegistry("Settings")
+        self.secure_registry = OpenPypeSecureRegistry("mongodb")
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.openpype_filter = [

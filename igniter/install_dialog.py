@@ -42,7 +42,7 @@ class InstallDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(InstallDialog, self).__init__(parent)
-        self.secure_registry = OpenPypeSecureRegistry("Settings")
+        self.secure_registry = OpenPypeSecureRegistry("mongodb")
 
         self.mongo_url = ""
         try:
