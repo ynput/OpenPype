@@ -28,6 +28,99 @@ import platform
 import appdirs
 import six
 
+_PLACEHOLDER = object()
+
+
+class OpenPypeSecureRegistry:
+    def __init__(self, name):
+        try:
+            import keyring
+
+        except Exception:
+            raise NotImplementedError(
+                "Python module `keyring` is not available."
+            )
+
+        # hack for cx_freeze and Windows keyring backend
+        if platform.system().lower() == "windows":
+            from keyring.backends import Windows
+
+            keyring.set_keyring(Windows.WinVaultKeyring())
+
+        # Force "OpenPype" prefix
+        self._name = "/".join(("OpenPype", name))
+
+    def set_item(self, name, value):
+        # type: (str, str) -> None
+        """Set sensitive item into system's keyring.
+
+        This uses `Keyring module`_ to save sensitive stuff into system's
+        keyring.
+
+        Args:
+            name (str): Name of the item.
+            value (str): Value of the item.
+
+        .. _Keyring module:
+            https://github.com/jaraco/keyring
+
+        """
+        import keyring
+
+        keyring.set_password(self._name, name, value)
+
+    @lru_cache(maxsize=32)
+    def get_item(self, name, default=_PLACEHOLDER):
+        """Get value of sensitive item from system's keyring.
+
+        See also `Keyring module`_
+
+        Args:
+            name (str): Name of the item.
+            default (Any): Default value if item is not available.
+
+        Returns:
+            value (str): Value of the item.
+
+        Raises:
+            ValueError: If item doesn't exist and default is not defined.
+
+        .. _Keyring module:
+            https://github.com/jaraco/keyring
+
+        """
+        import keyring
+
+        value = keyring.get_password(self._name, name)
+        if value:
+            return value
+
+        if default is not _PLACEHOLDER:
+            return default
+
+        # NOTE Should raise `KeyError`
+        raise ValueError(
+            "Item {}:{} does not exist in keyring.".format(self._name, name)
+        )
+
+    def delete_item(self, name):
+        # type: (str) -> None
+        """Delete value stored in system's keyring.
+
+        See also `Keyring module`_
+
+        Args:
+            name (str): Name of the item to be deleted.
+
+        .. _Keyring module:
+            https://github.com/jaraco/keyring
+
+        """
+        import keyring
+
+        self.get_item.cache_clear()
+        keyring.delete_password(self._name, name)
+
 
 @six.add_metaclass(ABCMeta)
 class ASettingRegistry():
