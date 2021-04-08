@@ -78,80 +78,6 @@
             }
         }
     },
-    "mayabatch": {
-        "enabled": true,
-        "label": "MayaBatch",
-        "icon": "{}/app_icons/maya.png",
-        "host_name": "maya",
-        "environment": {
-            "PYTHONPATH": [
-                "{OPENPYPE_ROOT}/avalon-core/setup/maya",
-                "{OPENPYPE_ROOT}/maya-look-assigner",
-                "{PYTHON_ENV}/python2/Lib/site-packages",
-                "{PYTHONPATH}"
-            ],
-            "MAYA_DISABLE_CLIC_IPM": "Yes",
-            "MAYA_DISABLE_CIP": "Yes",
-            "MAYA_DISABLE_CER": "Yes",
-            "PYMEL_SKIP_MEL_INIT": "Yes",
-            "LC_ALL": "C",
-            "OPENPYPE_LOG_NO_COLORS": "Yes",
-            "MAYA_TEST": "{MAYA_VERSION}"
-        },
-        "variants": {
-            "2020": {
-                "executables": {
-                    "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayabatch.exe"
-                    ],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "MAYA_VERSION": "2020"
-                }
-            },
-            "2019": {
-                "executables": {
-                    "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayabatch.exe"
-                    ],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "MAYA_VERSION": "2019"
-                }
-            },
-            "2018": {
-                "executables": {
-                    "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2018\\bin\\mayabatch.exe"
-                    ],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "MAYA_VERSION": "2018"
-                }
-            }
-        }
-    },
     "nuke": {
         "enabled": true,
         "label": "Nuke",
@@ -1063,8 +989,6 @@
         },
         "variants": {
             "4-24": {
-                "enabled": true,
-                "variant_label": "4.24",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1084,8 +1008,6 @@
         "environment": {},
         "variants": {
             "python_3-7": {
-                "enabled": true,
-                "variant_label": "3.7",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1099,8 +1021,6 @@
                 "environment": {}
             },
             "python_2-7": {
-                "enabled": true,
-                "variant_label": "2.7",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1114,8 +1034,6 @@
                 "environment": {}
             },
             "terminal": {
-                "enabled": true,
-                "variant_label": "",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1127,6 +1045,10 @@
                     "linux": []
                 },
                 "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "python_3-7": "Python 3.7",
+                "python_2-7": "Python 2.7"
             }
         }
     },
