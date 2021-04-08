@@ -43,6 +43,11 @@
                     "label": "Enabled"
                 },
                 {
+                    "type": "boolean",
+                    "key": "auto_stop",
+                    "label": "Auto stop timer"
+                },
+                {
                     "type": "number",
                     "decimal": 2,
                     "key": "full_time",

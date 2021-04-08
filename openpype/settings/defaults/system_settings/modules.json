@@ -126,6 +126,7 @@
     },
     "timers_manager": {
         "enabled": true,
+        "auto_stop": true,
         "full_time": 15.0,
         "message_time": 0.5
     },
