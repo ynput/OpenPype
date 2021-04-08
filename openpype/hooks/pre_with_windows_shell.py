@@ -13,7 +13,7 @@ class LaunchWithWindowsShell(PreLaunchHook):
 
     # Should be as last hook becuase must change launch arguments to string
     order = 1000
-    app_groups = ["resolve", "nuke", "nukex", "hiero", "nukestudio"]
+    app_groups = ["nuke", "nukex", "hiero", "nukestudio"]
     platforms = ["windows"]
 
     def execute(self):
