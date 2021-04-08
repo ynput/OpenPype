@@ -24,7 +24,7 @@ You can only use our Ftrack Actions and publish to Ftrack if each artist is logg
 
 
 ### Custom Attributes
-After successfully connecting OpenPype with you Ftrack, you can right on any project in Ftrack and you should see a bunch of actions available. The most important one is called `OpenPype Admin` and contains multiple options inside.
+After successfully connecting OpenPype with you Ftrack, you can right click on any project in Ftrack and you should see a bunch of actions available. The most important one is called `OpenPype Admin` and contains multiple options inside.
 
 To prepare Ftrack for working with OpenPype you'll need to run [OpenPype Admin - Create/Update Avalon Attributes](manager_ftrack_actions#create-update-avalon-attributes), which creates and sets the Custom Attributes necessary for OpenPype to function. 
 
@@ -56,7 +56,7 @@ There are specific launch arguments for event server. With `openpype eventserver
 -   `--ftrack-url "https://yourdomain.ftrackapp.com/"` : Ftrack server URL _(it is not needed to enter if you have set `FTRACK_SERVER` in OpenPype' environments)_
 -   `--ftrack-events-path "//Paths/To/Events/"` : Paths to events folder. May contain multiple paths separated by `;`. _(it is not needed to enter if you have set `FTRACK_EVENTS_PATH` in OpenPype' environments)_
 
-So if you want to use OpenPype's environments then you can launch event server for first time with these arguments `$OPENPYPE_SETUP/openpype eventserver --ftrack-user "my.username" --ftrack-api-key "00000aaa-11bb-22cc-33dd-444444eeeee" --store-credentials`. Since that time, if everything was entered correctly, you can launch event server with `$OPENPYPE_SETUP/openpype eventserver`.
+So if you want to use OpenPype's environments then you can launch event server for first time with these arguments `openpype.exe eventserver --ftrack-user "my.username" --ftrack-api-key "00000aaa-11bb-22cc-33dd-444444eeeee" --store-credentials`. Since that time, if everything was entered correctly, you can launch event server with `openpype.exe eventserver`.
 
 </TabItem>
 <TabItem value="env">
@@ -186,7 +186,7 @@ Push thumbnails from version, up through multiple hierarchy levels
 
 Change status of next task from `Not started` to `Ready` when previous task is approved.
 
-Multiple detailed rules for next task update can be configured in the presets.
+Multiple detailed rules for next task update can be configured in the settings.
 
 ### Delete Avalon ID from new entity 
 

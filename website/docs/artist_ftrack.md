@@ -115,7 +115,6 @@ sidebar_label: Artist
 **2. possibility - Ftrack URL is not set or is not right**
 - Check **Ftrack URL** value in *Ftrack login* window
 - Inform your administrator if URL is incorrect and launch OpenPype again when administrator fix it
-- The Ftrack URL can be changed in OpenPype Settings → System → Modules → Ftrack 
 
 **3. possibility - Ftrack Web app can't be reached the way OpenPype use it**
 - Enter your **Username** and [API key](#where-to-find-api-key) in *Ftrack login* window and press **Login** button

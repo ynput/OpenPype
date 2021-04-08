@@ -28,8 +28,9 @@ In most cases actions filtered by entity type:
 
 So if you do not see action you need to use check if action is available for selected *entity type* or ask *administrator* to check if you have permissions to use it.
 
-
-Actions can be highly customized according to specific client's requests. 
+:::note
+Actions can be heavily customised by your studio, so this guide might not fit 100 %.
+:::
 
 :::important
 Filtering can be more complicated for example a lot of actions can be shown only when one particular entity is selected.
@@ -64,12 +65,6 @@ Project Manager or Supervisor must set project's applications during project pre
 
 
 #### A group of actions that are used for OpenPype Administration.
-
-### Create Update Avalon Attributes
-* Entity types: All
-* User roles: Pypeclub, Administrator
-
-Action creates and updates Ftrack's Custom Attributes that are needed to manage and run OpenPype within Ftrack. Most of custom attribute configurations are stored in OpenPype settings (*click on the systray OpenPype icon → Settings → Project → Anatomy → Attributes*). It is not recommended to modify values stored in the file unless your studio used completely custom configuration.
 
 ### Sync to Avalon
 * Entity types: Project, Typed Context
@@ -126,7 +121,7 @@ With this action it's possible to delete up to 15 entities at once from active p
 * Entity types: Project
 * User roles: Pypeclub, Administrator, Project manager
 
-Allows project managers and coordinator to *set basic project attributes* needed for OpenPype to operate, *Create project folders* if you want and especially prepare project specific [anatomy](admin_settings_project_anatomy) or [settings](admin_settings_project).
+Allows project managers and coordinator to *set basic project attributes* needed for OpenPype to operate, *Create project folders* if you want and especially prepare project specific [settings](admin_settings_project).
 
 :::tip
 It is possible to use this action during the lifetime of a project but we recommend using it only once at the start of the project.
@@ -217,7 +212,7 @@ Please keep in mind this action is meant to make your project setup faster at th
 * Entity types: Task
 * User roles: Pypeclub, Project manager, Administrator
 
-Collects approved hires files and copy them into a folder. It usually creates h.264 files for preview and mov for editorial. All files are then copied according to predefined naming convention to a specific folder.  
+Collects approved hires files and copy them into a folder. It takes any components of any versions and copies and renames them correctly.
 
 
 ---
