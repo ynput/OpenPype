@@ -71,7 +71,7 @@ class InstallThread(QThread):
                 if not os.getenv("OPENPYPE_MONGO"):
                     # try to get it from settings registry
                     try:
-                        self._mongo = bs.registry.get_secure_item(
+                        self._mongo = bs.secure_registry.get_item(
                             "openPypeMongo")
                     except ValueError:
                         self.message.emit(
@@ -82,7 +82,7 @@ class InstallThread(QThread):
                     self._mongo = os.getenv("OPENPYPE_MONGO")
             else:
                 self.message.emit("Saving mongo connection string ...", False)
-                bs.registry.set_secure_item("openPypeMongo", self._mongo)
+                bs.secure_registry.set_item("openPypeMongo", self._mongo)
 
             os.environ["OPENPYPE_MONGO"] = self._mongo
 
@@ -169,7 +169,7 @@ class InstallThread(QThread):
                         f"!!! invalid mongo url {self._mongo}", True)
                     self.finished.emit(InstallResult(-1))
                     return
-                bs.registry.set_secure_item("openPypeMongo", self._mongo)
+                bs.secure_registry.set_item("openPypeMongo", self._mongo)
                 os.environ["OPENPYPE_MONGO"] = self._mongo
 
             self.message.emit(f"processing {self._path}", True)

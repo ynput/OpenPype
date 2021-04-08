@@ -14,7 +14,10 @@ from zipfile import ZipFile, BadZipFile
 from appdirs import user_data_dir
 from speedcopy import copyfile
 
-from .user_settings import OpenPypeSettingsRegistry
+from .user_settings import (
+    OpenPypeSecureRegistry,
+    OpenPypeSettingsRegistry
+)
 from .tools import get_openpype_path_from_db
 
 
@@ -239,6 +242,7 @@ class BootstrapRepos:
         self._app = "openpype"
         self._log = log.getLogger(str(__class__))
         self.data_dir = Path(user_data_dir(self._app, self._vendor))
+        self.secure_registry = OpenPypeSecureRegistry("Settings")
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.openpype_filter = [
