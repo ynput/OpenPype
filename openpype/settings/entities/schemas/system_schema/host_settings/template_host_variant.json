@@ -1,13 +1,7 @@
 [
     {
-        "__default_values__": {
-            "multipath_executables": true,
-            "multiplatform": true
-        }
-    },
-    {
         "type": "dict",
-        "key": "{app_name}_{app_variant}",
+        "key": "{app_variant}",
         "label": "{app_variant_label}",
         "collapsible": true,
         "checkbox_key": "enabled",
@@ -21,49 +15,11 @@
                 "type": "text",
                 "key": "variant_label",
                 "label": "Variant label",
-                "placeholder": "Only \"Label\" is used if not filled.",
-                "roles": ["developer"]
+                "placeholder": "< {app_variant} >"
             },
             {
-                "type": "path",
-                "key": "executables",
-                "label": "Executables",
-                "multiplatform": "{multiplatform}",
-                "multipath": "{multipath_executables}"
-            },
-            {
-                "type":"separator"
-            },
-            {
-                "type": "dict",
-                "key": "arguments",
-                "label": "Arguments",
-                "use_label_wrap": false,
-                "children": [
-                    {
-                        "key": "windows",
-                        "label": "Windows",
-                        "type": "list",
-                        "object_type": "text"
-                    },
-                    {
-                        "key": "darwin",
-                        "label": "MacOS",
-                        "type": "list",
-                        "object_type": "text"
-                    },
-                    {
-                        "key": "linux",
-                        "label": "Linux",
-                        "type": "list",
-                        "object_type": "text"
-                    }
-                ]
-            },
-            {
-                "key": "environment",
-                "label": "Environment",
-                "type": "raw-json"
+                "type": "schema_template",
+                "name": "template_host_variant_items"
             }
         ]
     }

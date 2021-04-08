@@ -10,12 +10,20 @@ from .constants import CHILD_OFFSET
 class AppVariantWidget(QtWidgets.QWidget):
     exec_placeholder = "< Specific path for this machine >"
 
-    def __init__(self, group_label, variant_entity, parent):
+    def __init__(self, group_label, variant_name, variant_entity, parent):
         super(AppVariantWidget, self).__init__(parent)
 
         self.executable_input_widget = None
+        variant_label = variant_entity.label
+        if variant_label is None:
+            parent_entity = variant_entity.parent
+            if hasattr(parent_entity, "get_key_label"):
+                variant_label = parent_entity.get_key_label(variant_name)
 
-        label = " ".join([group_label, variant_entity.label])
+        if not variant_label:
+            variant_label = variant_name
+
+        label = " ".join([group_label, variant_label])
 
         expading_widget = ExpandingWidget(label, self)
         content_widget = QtWidgets.QWidget(expading_widget)
@@ -102,7 +110,7 @@ class AppGroupWidget(QtWidgets.QWidget):
 
         valid_variants = {}
         for key, entity in group_entity["variants"].items():
-            if entity["enabled"].value:
+            if "enabled" not in entity or entity["enabled"].value:
                 valid_variants[key] = entity
 
         group_label = group_entity.label
@@ -114,7 +122,7 @@ class AppGroupWidget(QtWidgets.QWidget):
         widgets_by_variant_name = {}
         for variant_name, variant_entity in valid_variants.items():
             variant_widget = AppVariantWidget(
-                group_label, variant_entity, content_widget
+                group_label, variant_name, variant_entity, content_widget
             )
             widgets_by_variant_name[variant_name] = variant_widget
             content_layout.addWidget(variant_widget)
@@ -173,7 +181,10 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
             # Check if has enabled any variant
             enabled_variant = False
             for variant_entity in entity["variants"].values():
-                if variant_entity["enabled"].value:
+                if (
+                    "enabled" not in variant_entity
+                    or variant_entity["enabled"].value
+                ):
                     enabled_variant = True
                     break
 
