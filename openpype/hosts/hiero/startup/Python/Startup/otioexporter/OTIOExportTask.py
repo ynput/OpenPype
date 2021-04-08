@@ -9,8 +9,7 @@ import hiero.core
 from hiero.core import util
 
 import opentimelineio as otio
-from pype.hosts.hiero.otio.hiero_export import create_OTIO
-
+from openpype.hosts.hiero.otio import hiero_export
 
 class OTIOExportTask(hiero.core.TaskBase):
 
@@ -23,8 +22,7 @@ class OTIOExportTask(hiero.core.TaskBase):
         return str(type(self))
 
     def startTask(self):
-        self.otio_timeline = create_OTIO(
-            self._sequence)
+        self.otio_timeline = hiero_export.create_otio_timeline()
 
     def taskStep(self):
         return False
@@ -42,7 +40,7 @@ class OTIOExportTask(hiero.core.TaskBase):
             util.filesystem.makeDirs(dirname)
 
             # write otio file
-            otio.adapters.write_to_file(self.otio_timeline, exportPath)
+            hiero_export.write_to_file(self.otio_timeline, exportPath)
 
         # Catch all exceptions and log error
         except Exception as e:
