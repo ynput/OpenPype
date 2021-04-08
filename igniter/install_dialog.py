@@ -13,7 +13,7 @@ from .tools import (
     validate_mongo_connection,
     get_openpype_path_from_db
 )
-from .user_settings import OpenPypeSettingsRegistry
+from .user_settings import OpenPypeSecureRegistry
 from .version import __version__
 
 
@@ -42,13 +42,13 @@ class InstallDialog(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super(InstallDialog, self).__init__(parent)
-        self.registry = OpenPypeSettingsRegistry()
+        self.secure_registry = OpenPypeSecureRegistry("Settings")
 
         self.mongo_url = ""
         try:
             self.mongo_url = (
                 os.getenv("OPENPYPE_MONGO", "")
-                or self.registry.get_secure_item("openPypeMongo")
+                or self.secure_registry.get_item("openPypeMongo")
             )
         except ValueError:
             pass
