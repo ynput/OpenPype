@@ -25,8 +25,8 @@ except ImportError:
 
 import platform
 
-import appdirs
 import six
+import appdirs
 
 _PLACEHOLDER = object()
 
@@ -139,13 +139,6 @@ class ASettingRegistry():
         # type: (str) -> ASettingRegistry
         super(ASettingRegistry, self).__init__()
 
-        if six.PY3:
-            import keyring
-            # hack for cx_freeze and Windows keyring backend
-            if platform.system() == "Windows":
-                from keyring.backends import Windows
-                keyring.set_keyring(Windows.WinVaultKeyring())
-
         self._name = name
         self._items = {}
 
@@ -219,78 +212,6 @@ class ASettingRegistry():
     def __delitem__(self, name):
         del self._items[name]
         self._delete_item(name)
-
-    def set_secure_item(self, name, value):
-        # type: (str, str) -> None
-        """Set sensitive item into system's keyring.
-
-        This uses `Keyring module`_ to save sensitive stuff into system's
-        keyring.
-
-        Args:
-            name (str): Name of the item.
-            value (str): Value of the item.
-
-        .. _Keyring module:
-            https://github.com/jaraco/keyring
-
-        """
-        if six.PY2:
-            raise NotImplementedError(
-                "Keyring not available on Python 2 hosts")
-        import keyring
-        keyring.set_password(self._name, name, value)
-
-    @lru_cache(maxsize=32)
-    def get_secure_item(self, name):
-        # type: (str) -> str
-        """Get value of sensitive item from system's keyring.
-
-        See also `Keyring module`_
-
-        Args:
-            name (str): Name of the item.
-
-        Returns:
-            value (str): Value of the item.
-
-        Raises:
-            ValueError: If item doesn't exist.
-
-        .. _Keyring module:
-            https://github.com/jaraco/keyring
-
-        """
-        if six.PY2:
-            raise NotImplementedError(
-                "Keyring not available on Python 2 hosts")
-        import keyring
-        value = keyring.get_password(self._name, name)
-        if not value:
-            raise ValueError(
-                "Item {}:{} does not exist in keyring.".format(
-                    self._name, name))
-        return value
-
-    def delete_secure_item(self, name):
-        # type: (str) -> None
-        """Delete value stored in system's keyring.
-
-        See also `Keyring module`_
-
-        Args:
-            name (str): Name of the item to be deleted.
-
-        .. _Keyring module:
-            https://github.com/jaraco/keyring
-
-        """
-        if six.PY2:
-            raise NotImplementedError(
-                "Keyring not available on Python 2 hosts")
-        import keyring
-        self.get_secure_item.cache_clear()
-        keyring.delete_password(self._name, name)
 
 
 class IniSettingRegistry(ASettingRegistry):
@@ -555,7 +476,7 @@ class OpenPypeSettingsRegistry(JSONSettingRegistry):
     def __init__(self, name=None):
         self.vendor = "pypeclub"
         self.product = "openpype"
-        if name is None:
+        if not name:
             name = "openpype_settings"
         path = appdirs.user_data_dir(self.product, self.vendor)
         super(OpenPypeSettingsRegistry, self).__init__(name, path)
