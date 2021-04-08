@@ -69,6 +69,11 @@ sudo ./tools/docker_build.sh
 and you should have built OpenPype in `build` directory. It is using **Centos 7**
 as a base image.
 
+You can pull the image:
+
+```sh
+docker pull pypeclub/openpype:latest
+```
 
 #### Manual build
 To build OpenPype on Linux you wil need:
