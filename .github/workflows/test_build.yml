@@ -1,0 +1,88 @@
+# This workflow will upload a Python Package using Twine when a release is created
+# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
+
+name: Test Build
+
+on:
+  pull_request:
+    branches: [develop]
+    types: [review_requested, ready_for_review]
+    paths-ignore:
+    - 'docs/**',
+    - 'website/**'
+    - 'vendor/**'
+
+jobs:
+  Windows-latest:
+
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+
+    steps:
+    - name: 🚛 Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: 🧵 Install Requirements
+      shell: pwsh
+      run: |
+        ./tools/create_env.ps1
+
+    - name: 🔨 Build
+      shell: pwsh
+      run: |
+        ./tools/build.ps1
+
+  Ubuntu-latest:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7]
+
+    steps:
+    - name: 🚛 Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: 🧵 Install Requirements
+      run: |
+        ./tools/create_env.sh
+
+    - name: 🔨 Build
+      run: |
+        ./tools/build.sh
+
+  # MacOS-latest:
+
+  #   runs-on: macos-latest
+  #   strategy:
+  #     matrix:
+  #       python-version: [3.7]
+
+  #   steps:
+  #   - name: 🚛 Checkout Code
+  #     uses: actions/checkout@v2
+
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v2
+  #     with:
+  #       python-version: ${{ matrix.python-version }}
+
+  #   - name: 🧵 Install Requirements
+  #     run: |
+  #       ./tools/create_env.sh
+
+  #   - name: 🔨 Build
+  #     run: |
+  #       ./tools/build.sh

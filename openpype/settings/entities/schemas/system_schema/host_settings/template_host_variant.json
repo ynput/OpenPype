@@ -1,0 +1,26 @@
+[
+    {
+        "type": "dict",
+        "key": "{app_variant}",
+        "label": "{app_variant_label}",
+        "collapsible": true,
+        "checkbox_key": "enabled",
+        "children": [
+            {
+                "type": "boolean",
+                "key": "enabled",
+                "label": "Enabled"
+            },
+            {
+                "type": "text",
+                "key": "variant_label",
+                "label": "Variant label",
+                "placeholder": "< {app_variant} >"
+            },
+            {
+                "type": "schema_template",
+                "name": "template_host_variant_items"
+            }
+        ]
+    }
+]

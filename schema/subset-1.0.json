@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
 
-    "title": "pype:subset-1.0",
+    "title": "openpype:subset-1.0",
     "description": "A container of instances",
 
     "type": "object",

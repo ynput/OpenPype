@@ -1,19 +1,17 @@
 #!/usr/bin/env bash
 
-# This script will detect Python installation, and create virtual environment
-# for Pype to run or build.
-
+# This script will detect Python installation, create venv with Poetry
+# and install all necessary packages from `poetry.lock` or `pyproject.toml`
+# needed by OpenPype to be included during application freeze on unix.
 
 art () {
   cat <<-EOF
-  ____________
- /\\      ___  \\
- \\ \\     \\/_\\  \\
-  \\ \\     _____/ ______   ___ ___ ___
-   \\ \\    \\___/ /\\     \\  \\  \\\\  \\\\  \\
-    \\ \\____\\    \\ \\_____\\  \\__\\\\__\\\\__\\
-     \\/____/     \\/_____/  . PYPE Club .
 
+▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
+▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
+▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
+            .---= [ by Pype Club ] =---.
+                 https://openpype.io
 
 EOF
 }
@@ -117,7 +115,7 @@ install_poetry () {
 ###############################################################################
 clean_pyc () {
   local path
-  path=$pype_root
+  path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
@@ -144,8 +142,8 @@ main () {
   detect_python || return 1
 
   # Directories
-  pype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
-  pushd "$pype_root" > /dev/null || return > /dev/null
+  openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+  pushd "$openpype_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
   if [ -f "$HOME/.poetry/bin/poetry" ]; then
@@ -156,7 +154,7 @@ main () {
     install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
   fi
 
-  if [ -f "$pype_root/poetry.lock" ]; then
+  if [ -f "$openpype_root/poetry.lock" ]; then
     echo -e "${BIGreen}>>>${RST} Updating dependencies ..."
   else
     echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
@@ -174,6 +172,7 @@ main () {
   poetry run python -m pip install --upgrade pip
   poetry run pip install --force-reinstall setuptools
   poetry run pip install --force-reinstall wheel
+  poetry run python -m pip install --force-reinstall pip
 }
 
 main -3

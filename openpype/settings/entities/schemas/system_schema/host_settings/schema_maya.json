@@ -1,0 +1,41 @@
+{
+    "type": "dict",
+    "key": "maya",
+    "label": "Autodesk Maya",
+    "collapsible": true,
+    "checkbox_key": "enabled",
+    "children": [
+        {
+            "type": "boolean",
+            "key": "enabled",
+            "label": "Enabled"
+        },
+        {
+            "type": "schema_template",
+            "name": "template_host_unchangables"
+        },
+        {
+            "key": "environment",
+            "label": "Environment",
+            "type": "raw-json"
+        },
+        {
+            "type": "dict-modifiable",
+            "key": "variants",
+            "collapsible_key": true,
+            "dynamic_label": false,
+            "use_label_wrap": false,
+            "object_type": {
+                "type": "dict",
+                "collapsible": true,
+                "checkbox_key": "enabled",
+                "children": [
+                    {
+                        "type": "schema_template",
+                        "name": "template_host_variant_items"
+                    }
+                ]
+            }
+        }
+    ]
+}

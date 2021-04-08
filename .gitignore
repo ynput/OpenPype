@@ -32,6 +32,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+
 # CX_Freeze
 ###########
 /build
@@ -66,10 +67,10 @@ coverage.xml
 
 # Node JS packages
 ##################
-node_modules/
+node_modules
 package-lock.json
 
-pype/premiere/ppro/js/debug.log
+openpype/premiere/ppro/js/debug.log
 
 
 # IDEA
@@ -80,3 +81,15 @@ pype/premiere/ppro/js/debug.log
 .vscode/
 .env
 dump.sql
+test_localsystem.txt
+
+# website
+##########
+website/translated_docs
+website/build/
+website/node_modules
+website/i18n/*
+
+website/debug.log
+
+website/.docusaurus
