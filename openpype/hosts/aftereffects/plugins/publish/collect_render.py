@@ -46,6 +46,12 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                                  "Please recreate instance.")
             item_id = inst["members"][0]
             work_area_info = self.stub.get_work_area(int(item_id))
+
+            if not work_area_info:
+                self.log.warning("Orphaned instance, deleting metadata")
+                self.stub.remove_instance(int(item_id))
+                continue
+
             frameStart = work_area_info.workAreaStart
 
             frameEnd = round(work_area_info.workAreaStart +

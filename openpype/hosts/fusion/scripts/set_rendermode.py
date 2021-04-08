@@ -96,11 +96,11 @@ class SetRenderMode(QtWidgets.QWidget):
         return self._comp.GetAttrs("COMPS_Name")
 
     def _get_comp_rendermode(self):
-        return self._comp.GetData("pype.rendermode") or "local"
+        return self._comp.GetData("openpype.rendermode") or "local"
 
     def _set_comp_rendermode(self):
         rendermode = self.mode_options.currentText()
-        self._comp.SetData("pype.rendermode", rendermode)
+        self._comp.SetData("openpype.rendermode", rendermode)
 
         self._comp.Print("Updated render mode to '%s'\n" % rendermode)
         self.hide()

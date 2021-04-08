@@ -128,13 +128,21 @@ class AppsEnumEntity(BaseEnumEntity):
                 continue
 
             group_label = app_group["label"].value
-
-            for variant_name, variant_entity in app_group["variants"].items():
+            variants_entity = app_group["variants"]
+            for variant_name, variant_entity in variants_entity.items():
                 enabled_entity = variant_entity.get("enabled")
                 if enabled_entity and not enabled_entity.value:
                     continue
 
-                variant_label = variant_entity["variant_label"].value
+                variant_label = None
+                if "variant_label" in variant_entity:
+                    variant_label = variant_entity["variant_label"].value
+                elif hasattr(variants_entity, "get_key_label"):
+                    variant_label = variants_entity.get_key_label(variant_name)
+
+                if not variant_label:
+                    variant_label = variant_name
+
                 if group_label:
                     full_label = "{} {}".format(group_label, variant_label)
                 else:

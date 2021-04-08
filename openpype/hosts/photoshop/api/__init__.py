@@ -9,7 +9,7 @@ from openpype import lib
 from pyblish import api as pyblish
 import openpype.hosts.photoshop
 
-log = logging.getLogger("pype.hosts.photoshop")
+log = logging.getLogger("openpype.hosts.photoshop")
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.photoshop.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
