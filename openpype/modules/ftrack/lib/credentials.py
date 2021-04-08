@@ -17,8 +17,6 @@ CREDENTIALS_FOLDER = os.path.dirname(CREDENTIALS_PATH)
 if not os.path.isdir(CREDENTIALS_FOLDER):
     os.makedirs(CREDENTIALS_FOLDER)
 
-USER_GETTER = None
-
 
 def get_ftrack_hostname(ftrack_server=None):
     if not ftrack_server:
@@ -30,13 +28,7 @@ def get_ftrack_hostname(ftrack_server=None):
     return urlparse(ftrack_server).hostname
 
 
-def get_user():
-    if USER_GETTER:
-        return USER_GETTER()
-    return getpass.getuser()
-
-
-def get_credentials(ftrack_server=None, user=None):
+def get_credentials(ftrack_server=None):
     credentials = {}
     if not os.path.exists(CREDENTIALS_PATH):
         with open(CREDENTIALS_PATH, "w") as file:
@@ -48,28 +40,22 @@ def get_credentials(ftrack_server=None, user=None):
         content = file.read()
 
     hostname = get_ftrack_hostname(ftrack_server)
-    if not user:
-        user = get_user()
 
     content_json = json.loads(content or "{}")
-    credentials = content_json.get(hostname, {}).get(user) or {}
+    credentials = content_json.get(hostname) or {}
 
     return credentials
 
 
-def save_credentials(ft_user, ft_api_key, ftrack_server=None, user=None):
+def save_credentials(ft_user, ft_api_key, ftrack_server=None):
     hostname = get_ftrack_hostname(ftrack_server)
-    if not user:
-        user = get_user()
 
     with open(CREDENTIALS_PATH, "r") as file:
         content = file.read()
 
     content_json = json.loads(content or "{}")
-    if hostname not in content_json:
-        content_json[hostname] = {}
 
-    content_json[hostname][user] = {
+    content_json[hostname] = {
         "username": ft_user,
         "api_key": ft_api_key
     }
@@ -84,7 +70,7 @@ def save_credentials(ft_user, ft_api_key, ftrack_server=None, user=None):
         file.write(json.dumps(content_json, indent=4))
 
 
-def clear_credentials(ft_user=None, ftrack_server=None, user=None):
+def clear_credentials(ft_user=None, ftrack_server=None):
     if not ft_user:
         ft_user = os.environ.get("FTRACK_API_USER")
 
@@ -92,9 +78,6 @@ def clear_credentials(ft_user=None, ftrack_server=None, user=None):
         return
 
     hostname = get_ftrack_hostname(ftrack_server)
-    if not user:
-        user = get_user()
-
     with open(CREDENTIALS_PATH, "r") as file:
         content = file.read()
 
@@ -102,7 +85,7 @@ def clear_credentials(ft_user=None, ftrack_server=None, user=None):
     if hostname not in content_json:
         content_json[hostname] = {}
 
-    content_json[hostname].pop(user, None)
+    content_json.pop(hostname, None)
 
     with open(CREDENTIALS_PATH, "w") as file:
         file.write(json.dumps(content_json))
