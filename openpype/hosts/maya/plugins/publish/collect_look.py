@@ -4,7 +4,7 @@ import re
 import os
 import glob
 
-from maya import cmds
+from maya import cmds  # noqa
 import pyblish.api
 from openpype.hosts.maya.api import lib
 
@@ -36,7 +36,6 @@ def get_look_attrs(node):
         list: Attribute names to extract
 
     """
-
     # When referenced get only attributes that are "changed since file open"
     # which includes any reference edits, otherwise take *all* user defined
     # attributes
@@ -227,7 +226,12 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.collect(instance)
 
     def collect(self, instance):
+        """Collect looks.
 
+        Args:
+            instance: Instance to collect.
+
+        """
         self.log.info("Looking for look associations "
                       "for %s" % instance.data['name'])
 
@@ -477,6 +481,11 @@ class CollectLook(pyblish.api.InstancePlugin):
         """
 
         self.log.debug("processing: {}".format(node))
+        if cmds.nodeType(node) not in ["file", "aiImage"]:
+            self.log.error(
+                "Unsupported file node: {}".format(cmds.nodeType(node)))
+            raise AssertionError("Unsupported file node")
+
         if cmds.nodeType(node) == 'file':
             self.log.debug("  - file node")
             attribute = "{}.fileTextureName".format(node)
@@ -485,6 +494,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.log.debug("aiImage node")
             attribute = "{}.filename".format(node)
             computed_attribute = attribute
+
         source = cmds.getAttr(attribute)
         self.log.info("  - file source: {}".format(source))
         color_space_attr = "{}.colorSpace".format(node)
