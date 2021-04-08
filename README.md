@@ -166,14 +166,23 @@ sudo yum install qt5-qtbase-devel
 <details>
 <summary>Use pyenv to install Python version for OpenPype build</summary>
 
-You will need **bzip2**, **readline** and **sqlite3** libraries.
+You will need **bzip2**, **readline**, **sqlite3** and other libraries.
 
-**Ubuntu:**
+For more details about Python build environments see:
+
+https://github.com/pyenv/pyenv/wiki#suggested-build-environment
+
+**For Ubuntu:**
 ```sh
-sudo apt install  libbz2-dev libreadline-dev libsqlite3-dev
+sudo apt-get update; sudo apt-get install --no-install-recommends make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
 ```
 
-1) install **pyenv**
+**For Centos:**
+```sh
+yum install gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel tk-devel libffi-devel
+```
+
+**install pyenv**
 ```sh
 curl https://pyenv.run | bash
 
