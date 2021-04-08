@@ -113,13 +113,6 @@ def set_env(ft_user=None, ft_api_key=None):
     os.environ["FTRACK_API_KEY"] = ft_api_key or ""
 
 
-def get_env_credentials():
-    return (
-        os.environ.get("FTRACK_API_USER"),
-        os.environ.get("FTRACK_API_KEY")
-    )
-
-
 def check_credentials(ft_user, ft_api_key, ftrack_server=None):
     if not ftrack_server:
         ftrack_server = os.environ["FTRACK_SERVER"]
