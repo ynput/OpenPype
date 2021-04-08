@@ -7,11 +7,19 @@
 art () {
   cat <<-EOF
 
-▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
-▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
-▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
-            .---= [ by Pype Club ] =---.
-                 https://openpype.io
+             . .   ..     .    ..
+        _oOOP3OPP3Op_. .
+     .PPpo~·   ··   ~2p.  ··  ····  ·  ·
+    ·Ppo · .pPO3Op.· · O:· · · ·
+   .3Pp · oP3'· 'P33· · 4 ··   ·  ·   · ·· ·  ·  ·
+  ·~OP    3PO·  .Op3    : · ··  _____  _____  _____
+  ·P3O  · oP3oP3O3P' · · ·   · /    /·/    /·/    /
+   O3:·   O3p~ ·       ·:· · ·/____/·/____/ /____/
+   'P ·   3p3·  oP3~· ·.P:· ·  · ··  ·   · ·· ·  ·  ·
+  · ':  · Po'  ·Opo'· .3O· .  o[ by Pype Club ]]]==- - - ·  ·
+    · '_ ..  ·    . _OP3··  ·  ·https://openpype.io·· ·
+         ~P3·OPPPO3OP~ · ··  ·
+           ·  ' '· ·  ·· · · · ··  ·
 
 EOF
 }
@@ -169,7 +177,7 @@ main () {
   # cx_freeze will crash on missing __pychache__ on these but
   # reinstalling them solves the problem.
   echo -e "${BIGreen}>>>${RST} Fixing pycache bug ..."
-  poetry run python -m pip install --upgrade pip
+  poetry run python -m pip install --force-reinstall pip
   poetry run pip install --force-reinstall setuptools
   poetry run pip install --force-reinstall wheel
   poetry run python -m pip install --force-reinstall pip
