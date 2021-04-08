@@ -28,6 +28,11 @@ def get_ftrack_hostname(ftrack_server=None):
     return urlparse(ftrack_server).hostname
 
 
+def _get_ftrack_secure_key(hostname):
+    """Secure item key for entered hostname."""
+    return "/".join(("ftrack", hostname))
+
+
 def get_credentials(ftrack_server=None):
     credentials = {}
     if not os.path.exists(CREDENTIALS_PATH):
