@@ -165,8 +165,5 @@
     },
     "standalonepublish_tool": {
         "enabled": true
-    },
-    "idle_manager": {
-        "enabled": true
     }
 }

@@ -176,20 +176,6 @@
                     "label": "Enabled"
                 }
             ]
-        },
-        {
-            "type": "dict",
-            "key": "idle_manager",
-            "label": "Idle Manager",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                }
-            ]
         }
     ]
 }
