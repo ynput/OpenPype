@@ -1,6 +1,6 @@
 ---
 id: dev_build
-title: Build openPYPE from source
+title: Build OpenPYPE from source
 sidebar_label: Build
 ---
 
@@ -45,12 +45,12 @@ To start OpenPype from source you need to
 2) Run `.\tools\run_tray.ps1` if you have all required dependencies on your machine you should be greeted with OpenPype igniter window and once you give it your Mongo URL, with OpenPype icon in the system tray.
 
 
-### To build openPype:
+### To build OpenPype:
 
 1) Run `.\tools\create_env.ps1` to create virtual environment in `.\venv`
 2) Run `.\tools\build.ps1` to build pype executables in `.\build\`
 
-To create distributable openPype versions, run `./tools/create_zip.ps1` - that will
+To create distributable OpenPype versions, run `./tools/create_zip.ps1` - that will
 create zip file with name `pype-vx.x.x.zip` parsed from current pype repository and
 copy it to user data dir. You can specify `--path /path/to/zip` to force it into a different 
 location. This can be used to prepare new version releases for artists in the studio environment
@@ -61,7 +61,17 @@ without the need to re-build the whole package
 </TabItem>
 <TabItem value="linux">
 
-To build pype on linux you wil need:
+#### Docker
+You can use Docker to build OpenPype. Just run:
+```sh
+sudo ./tools/docker_build.sh
+```
+and you should have built OpenPype in `build` directory. It is using **Centos 7**
+as a base image.
+
+
+#### Manual build
+To build OpenPype on Linux you wil need:
 
 - **[curl](https://curl.se)** on systems that doesn't have one preinstalled.
 - Python header files installed (**python3-dev** on Ubuntu for example).
@@ -143,7 +153,7 @@ pyenv local 3.7.9
 To build pype on MacOS you wil need:
 
 - **[Homebrew](https://brew.sh)**, Easy way of installing everything necessary is to use.
-- **[CMake](https://cmake.org/)** to build some external openPype dependencies.
+- **[CMake](https://cmake.org/)** to build some external OpenPype dependencies.
 - **XCode Command Line Tools** (or some other build system)
 
 1) Install **Homebrew**:
