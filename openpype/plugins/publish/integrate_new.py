@@ -976,6 +976,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     local_site = local_site_id
 
                 remote_site = sync_server_presets["config"].get("remote_site")
+                if remote_site == local_site:
+                    remote_site = None
+
                 if remote_site == 'local':
                     remote_site = local_site_id
 
