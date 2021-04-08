@@ -35,6 +35,17 @@ _PLACEHOLDER = object()
 
 
 class OpenPypeSecureRegistry:
+    """Store information using keyring.
+
+    Registry should be used for private data that should be available only for
+    user.
+
+    All passed registry names will have added prefix `OpenPype/` to easier
+    identify which data were created by OpenPype.
+
+    Args:
+        name(str): Name of registry used as identifier for data.
+    """
     def __init__(self, name):
         try:
             import keyring
