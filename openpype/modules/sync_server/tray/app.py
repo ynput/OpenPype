@@ -307,6 +307,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representations..")
 
+        self._scrollbar_pos = None
+
         top_bar_layout = QtWidgets.QHBoxLayout()
         top_bar_layout.addWidget(self.filter)
 
@@ -361,6 +363,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.table_view.customContextMenuRequested.connect(
             self._on_context_menu)
 
+        model.refresh_started.connect(self._save_scrollbar)
+        model.refresh_finished.connect(self._set_scrollbar)
         self.table_view.model().modelReset.connect(self._set_selection)
 
         self.selection_model = self.table_view.selectionModel()
@@ -542,6 +546,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             self.message_generated.emit("Site {} removed".format(local_site))
         except ValueError as exp:
             self.message_generated.emit("Error {}".format(str(exp)))
+        self.table_view.model().refresh(
+            load_records=self.table_view.model()._rec_loaded)
 
     def _reset_local_site(self):
         """
@@ -553,6 +559,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             self.representation_id,
             'local'
             )
+        self.table_view.model().refresh(
+            load_records=self.table_view.model()._rec_loaded)
 
     def _reset_remote_site(self):
         """
@@ -564,6 +572,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             self.representation_id,
             'remote'
             )
+        self.table_view.model().refresh(
+            load_records=self.table_view.model()._rec_loaded)
 
     def _open_in_explorer(self, site):
         if not self.item:
@@ -586,6 +596,13 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
                     subprocess.Popen(['xdg-open', fpath])
                 except OSError:
                     raise OSError('unsupported xdg-open call??')
+
+    def _save_scrollbar(self):
+        self._scrollbar_pos = self.table_view.verticalScrollBar().value()
+
+    def _set_scrollbar(self):
+        if self._scrollbar_pos:
+            self.table_view.verticalScrollBar().setValue(self._scrollbar_pos)
 
 
 ProviderRole = QtCore.Qt.UserRole + 2
@@ -631,6 +648,9 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         "context.asset",  # priority TODO
         "status"  # state
     ]
+
+    refresh_started = QtCore.Signal()
+    refresh_finished = QtCore.Signal()
 
     @attr.s
     class SyncRepresentation:
@@ -781,7 +801,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         if self.sync_server.is_paused() or \
                 self.sync_server.is_project_paused(self.project):
             return
-
+        self.refresh_started.emit()
         self.beginResetModel()
         self._data = []
         self._rec_loaded = 0
@@ -793,6 +813,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._add_page_records(self.local_site, self.remote_site,
                                representations)
         self.endResetModel()
+        self.refresh_finished.emit()
 
     def _add_page_records(self, local_site, remote_site, representations):
         """
@@ -1307,6 +1328,8 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representation..")
 
+        self._scrollbar_pos = None
+
         top_bar_layout = QtWidgets.QHBoxLayout()
         top_bar_layout.addWidget(self.filter)
 
@@ -1360,6 +1383,8 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.table_view.customContextMenuRequested.connect(
             self._on_context_menu)
 
+        model.refresh_started.connect(self._save_scrollbar)
+        model.refresh_finished.connect(self._set_scrollbar)
         self.table_view.model().modelReset.connect(self._set_selection)
 
         self.selection_model = self.table_view.selectionModel()
@@ -1377,7 +1402,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         """
         if self._selected_id:
             index = self.table_view.model().get_index(self._selected_id)
-            if index.isValid():
+            if index and index.isValid():
                 mode = QtCore.QItemSelectionModel.Select | \
                     QtCore.QItemSelectionModel.Rows
                 self.selection_model.setCurrentIndex(index, mode)
@@ -1468,7 +1493,8 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             self.representation_id,
             'local',
             self.item._id)
-        self.table_view.model().refresh()
+        self.table_view.model().refresh(
+            load_records=self.table_view.model()._rec_loaded)
 
     def _reset_remote_site(self):
         """
@@ -1480,7 +1506,8 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             self.representation_id,
             'remote',
             self.item._id)
-        self.table_view.model().refresh()
+        self.table_view.model().refresh(
+            load_records=self.table_view.model()._rec_loaded)
 
     def _open_in_explorer(self, site):
         if not self.item:
@@ -1501,6 +1528,13 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
                     subprocess.Popen(['xdg-open', fpath])
                 except OSError:
                     raise OSError('unsupported xdg-open call??')
+
+    def _save_scrollbar(self):
+        self._scrollbar_pos = self.table_view.verticalScrollBar().value()
+
+    def _set_scrollbar(self):
+        if self._scrollbar_pos:
+            self.table_view.verticalScrollBar().setValue(self._scrollbar_pos)
 
 
 class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
@@ -1534,6 +1568,9 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         "context.asset",  # priority TODO
         "status"  # state
     ]
+
+    refresh_started = QtCore.Signal()
+    refresh_finished = QtCore.Signal()
 
     @attr.s
     class SyncRepresentationDetail:
@@ -1665,6 +1702,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         if self.sync_server.is_paused():
             return
 
+        self.refresh_started.emit()
         self.beginResetModel()
         self._data = []
         self._rec_loaded = 0
@@ -1676,6 +1714,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self._add_page_records(self.local_site, self.remote_site,
                                representations)
         self.endResetModel()
+        self.refresh_finished.emit()
 
     def _add_page_records(self, local_site, remote_site, representations):
         """
