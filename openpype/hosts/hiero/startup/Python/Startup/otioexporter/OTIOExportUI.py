@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+__author__ = "Daniel Flehner Heen"
+__credits__ = ["Jakub Jezek", "Daniel Flehner Heen"]
+
 import hiero.ui
 import OTIOExportTask
 
@@ -14,6 +20,8 @@ except ImportError:
 
     FormLayout = QFormLayout  # lint:ok
 
+from pype.hosts.hiero.otio import hiero_export
+
 
 class OTIOExportUI(hiero.ui.TaskUIBase):
     def __init__(self, preset):
@@ -27,7 +35,7 @@ class OTIOExportUI(hiero.ui.TaskUIBase):
 
     def includeMarkersCheckboxChanged(self, state):
         # Slot to handle change of checkbox state
-        self._preset.properties()["includeTags"] = state == QtCore.Qt.Checked
+        hiero_export.hiero_sequence = state == QtCore.Qt.Checked
 
     def populateUI(self, widget, exportTemplate):
         layout = widget.layout()
