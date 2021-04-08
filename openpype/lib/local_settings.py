@@ -461,11 +461,13 @@ class OpenPypeSettingsRegistry(JSONSettingRegistry):
 
     """
 
-    def __init__(self):
+    def __init__(self, name=None):
         self.vendor = "pypeclub"
         self.product = "openpype"
+        if name is None:
+            name = "openpype_settings"
         path = appdirs.user_data_dir(self.product, self.vendor)
-        super(OpenPypeSettingsRegistry, self).__init__("openpype_settings", path)
+        super(OpenPypeSettingsRegistry, self).__init__(name, path)
 
 
 def _create_local_site_id(registry=None):
