@@ -106,7 +106,7 @@ class OpenPypeSecureRegistry:
         import keyring
 
         value = keyring.get_password(self._name, name)
-        if value:
+        if value is not None:
             return value
 
         if default is not _PLACEHOLDER:
@@ -532,5 +532,9 @@ def change_openpype_mongo_url(new_mongo_url):
     """
 
     validate_mongo_connection(new_mongo_url)
+    key = "openPypeMongo"
     registry = OpenPypeSecureRegistry("mongodb")
-    registry.set_item("openPypeMongo", new_mongo_url)
+    existing_value = registry.get_item(key, None)
+    if existing_value is not None:
+        registry.delete_item(key)
+    registry.set_item(key, new_mongo_url)
