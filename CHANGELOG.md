@@ -1,5 +1,29 @@
 # Changelog
 
+## 3.0.0 - Unreleased
+
+**Major Features:**
+### Configuration
+- Studio Settings GUI: no more json configuration files
+- Local Settings GUI
+- OpenPype Modules can be turned on and off
+- Easy to add Applications
+- Per Project Environment and plugin management
+- Robust profile system for creating reviewables and burnins, with filtering based on Application, Task and data family
+Configurable publish plugins. Options to make any validator or extractor, optional or disabled.
+### Build, Installation and Deployments
+- No requirements on artist machine
+- Fully distributed workflow possible
+- Self-contained installation
+- Available on all three major platforms
+- Automatic artist installation updates
+- Easy Build system
+- Safe versioning system with staging and production options
+
+### Site Sync
+
+to be continued...
+
 
 ## [2.16.0](https://github.com/pypeclub/pype/tree/2.16.0) (2021-03-22)
 
