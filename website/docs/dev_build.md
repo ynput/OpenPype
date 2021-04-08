@@ -65,23 +65,20 @@ To build pype on linux you wil need:
 
 - **[curl](https://curl.se)** on systems that doesn't have one preinstalled.
 - Python header files installed (**python3-dev** on Ubuntu for example).
-- **[CMake](https://cmake.org/)**: to build some external openPype dependencies.
-- **bzip2**, **readline** and **sqlite3** libraries.
+- **bzip2**, **readline**, **sqlite3** and other libraries.
 
 Because some Linux distros come with newer Python version pre-installed, you might 
 need to install **3.7** version and make use of it explicitly. 
 Your best bet is probably using [pyenv](https://github.com/pyenv/pyenv).
 
-You can use your package manager to install **git** and **cmake**. 
+You can use your package manager to install **git** and other packages to your build
+environment.
 Use curl for pyenv installation
 
 :::note Install build requirements for **Ubuntu**
 
-
 ```sh
-sudo apt install build-essential checkinstall
-sudo apt install git cmake curl
-sudo apt install libbz2-dev libreadline-dev libsqlite3-dev
+sudo apt-get update; sudo apt-get install --no-install-recommends make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev git
 ```
 
 In case you run in error about `xcb` when running Pype,
@@ -95,8 +92,7 @@ sudo apt install qt5-default
 :::note Install build requirements for **Centos**
 
 ```sh
-sudo yum install git cmake python3-devel python3-pip
-sudo yum install bzip2-devel readline-devel sqlite-devel
+yum install gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel tk-devel libffi-devel git
 ```
 
 In case you run in error about `xcb` when running Pype,
@@ -107,6 +103,8 @@ sudo yum install qt5-qtbase-devel
 ```
 
 :::
+
+For more information about setting your build environmet please refer to [pyenv suggested build environment](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)
 
 #### Common steps for all Distros
 
