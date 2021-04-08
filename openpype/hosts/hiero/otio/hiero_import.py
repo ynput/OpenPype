@@ -21,6 +21,7 @@ import opentimelineio as otio
 
 _otio_old = False
 
+
 def inform(messages):
     if isinstance(messages, type('')):
         messages = [messages]
@@ -114,10 +115,9 @@ def apply_transition(otio_track, otio_item, track):
         # Catch error raised if transition is bigger than TrackItem source
         except RuntimeError as e:
             transition = None
-            warning = \
-                'Unable to apply transition "{t.name}": {e} ' \
-                'Ignoring the transition.' \
-                .format(t=otio_item, e=e.message)
+            warning = (
+                "Unable to apply transition \"{t.name}\": {e} "
+                "Ignoring the transition.").format(t=otio_item, e=e.message)
 
     elif transition_type == 'fade_in':
         transition_func = getattr(
@@ -384,7 +384,8 @@ def create_trackitem(playhead, track, otio_clip, clip):
             time_scalar = effect.time_scalar
             # Only reverse effect can be applied here
             if abs(time_scalar) == 1.:
-                trackitem.setPlaybackSpeed(trackitem.playbackSpeed() * time_scalar)
+                trackitem.setPlaybackSpeed(
+                    trackitem.playbackSpeed() * time_scalar)
 
         elif isinstance(effect, otio.schema.FreezeFrame):
             # For freeze frame, playback speed must be set after range
@@ -433,7 +434,8 @@ def create_trackitem(playhead, track, otio_clip, clip):
     return trackitem
 
 
-def build_sequence(otio_timeline, project=None, sequence=None, track_kind=None):
+def build_sequence(
+        otio_timeline, project=None, sequence=None, track_kind=None):
     if project is None:
         if sequence:
             project = sequence.project()
@@ -449,11 +451,13 @@ def build_sequence(otio_timeline, project=None, sequence=None, track_kind=None):
         sequence = hiero.core.Sequence(otio_timeline.name or 'OTIOSequence')
 
         # Set sequence settings from otio timeline if available
-        if hasattr(otio_timeline, 'global_start_time'):
-            if otio_timeline.global_start_time:
-                start_time = otio_timeline.global_start_time
-                sequence.setFramerate(start_time.rate)
-                sequence.setTimecodeStart(start_time.value)
+        if (
+            hasattr(otio_timeline, 'global_start_time')
+            and otio_timeline.global_start_time
+        ):
+            start_time = otio_timeline.global_start_time
+            sequence.setFramerate(start_time.rate)
+            sequence.setTimecodeStart(start_time.value)
 
         # Create a Bin to hold clips
         projectbin.addItem(hiero.core.BinItem(sequence))
@@ -485,7 +489,7 @@ def build_sequence(otio_timeline, project=None, sequence=None, track_kind=None):
         sequence.addTrack(track)
 
         # iterate over items in track
-        for itemnum, otio_clip in enumerate(otio_track):
+        for _itemnum, otio_clip in enumerate(otio_track):
             if isinstance(otio_clip, (otio.schema.Track, otio.schema.Stack)):
                 inform('Nested sequences/tracks are created separately.')
 
@@ -529,9 +533,10 @@ def build_sequence(otio_timeline, project=None, sequence=None, track_kind=None):
                 playhead += otio_clip.source_range.duration.value
 
         # Apply transitions we stored earlier now that all clips are present
-        warnings = list()
+        warnings = []
         for otio_track, otio_item in _transitions:
-            # Catch warnings form transitions in case of unsupported transitions
+            # Catch warnings form transitions in case
+            # of unsupported transitions
             warning = apply_transition(otio_track, otio_item, track)
             if warning:
                 warnings.append(warning)

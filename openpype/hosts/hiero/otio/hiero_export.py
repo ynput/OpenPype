@@ -9,7 +9,6 @@ import opentimelineio as otio
 from . import utils
 import hiero.core
 import hiero.ui
-reload(utils)
 
 self = sys.modules[__name__]
 self.track_types = {
