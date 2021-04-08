@@ -4,10 +4,12 @@
 import os
 import re
 import sys
+import ast
 import opentimelineio as otio
 from . import utils
 import hiero.core
 import hiero.ui
+reload(utils)
 
 self = sys.modules[__name__]
 self.track_types = {
@@ -43,7 +45,7 @@ def create_otio_time_range(start_frame, frame_duration, fps):
 
 def _get_metadata(item):
     if hasattr(item, 'metadata'):
-        return {key: value for key, value in item.metadata().items()}
+        return {key: value for key, value in dict(item.metadata()).items()}
     return {}
 
 
@@ -61,7 +63,7 @@ def create_otio_reference(clip):
     file_head = media_source.filenameHead()
     is_sequence = not media_source.singleFile()
     frame_duration = media_source.duration()
-    fps = utils.get_rate(clip)
+    fps = utils.get_rate(clip) or self.project_fps
     extension = os.path.splitext(path)[-1]
 
     if is_sequence:
@@ -69,6 +71,13 @@ def create_otio_reference(clip):
             "isSequence": True,
             "padding": padding
         })
+
+    # add resolution metadata
+    metadata.update({
+        "width": int(media_source.width()),
+        "height": int(media_source.height()),
+        "pixelAspect": float(media_source.pixelAspect())
+    })
 
     otio_ex_ref_item = None
 
@@ -133,7 +142,7 @@ def create_otio_markers(otio_item, item):
             # Hiero adds this tag to a lot of clips
             continue
 
-        frame_rate = utils.get_rate(item)
+        frame_rate = utils.get_rate(item) or self.project_fps
 
         marked_range = otio.opentime.TimeRange(
             start_time=otio.opentime.RationalTime(
@@ -145,12 +154,22 @@ def create_otio_markers(otio_item, item):
                 frame_rate
             )
         )
+        # add tag metadata but remove "tag." string
+        metadata = {}
 
-        metadata = dict(
-            Hiero=tag.metadata().dict()
-        )
+        for key, value in tag.metadata().dict().items():
+            _key = key.replace("tag.", "")
+
+            try:
+            # capture exceptions which are related to strings only
+                _value = ast.literal_eval(value)
+            except (ValueError, SyntaxError):
+                _value = value
+
+            metadata.update({_key: _value})
+
         # Store the source item for future import assignment
-        metadata['Hiero']['source_type'] = item.__class__.__name__
+        metadata['hiero_source_type'] = item.__class__.__name__
 
         marker = otio.schema.Marker(
             name=tag.name(),
@@ -166,7 +185,7 @@ def create_otio_clip(track_item):
     clip = track_item.source()
     source_in = track_item.sourceIn()
     duration = track_item.sourceDuration()
-    fps = utils.get_rate(track_item)
+    fps = utils.get_rate(track_item) or self.project_fps
     name = track_item.name()
 
     media_reference = create_otio_reference(clip)
@@ -212,29 +231,6 @@ def _create_otio_timeline():
     )
 
 
-def _get_metadata_media_pool_item(media_pool_item):
-    data = dict()
-    data.update({k: v for k, v in media_pool_item.GetMetadata().items()})
-    property = media_pool_item.GetClipProperty() or {}
-    for name, value in property.items():
-        if "Resolution" in name and "" != value:
-            width, height = value.split("x")
-            data.update({
-                "width": int(width),
-                "height": int(height)
-            })
-        if "PAR" in name and "" != value:
-            try:
-                data.update({"pixelAspect": float(value)})
-            except ValueError:
-                if "Square" in value:
-                    data.update({"pixelAspect": float(1)})
-                else:
-                    data.update({"pixelAspect": float(1)})
-
-    return data
-
-
 def create_otio_track(track_type, track_name):
     return otio.schema.Track(
         name=track_name,
@@ -271,6 +267,7 @@ def add_otio_metadata(otio_item, media_source, **kwargs):
 
 def create_otio_timeline():
 
+    print(">>>>>> self.include_tags: {}".format(self.include_tags))
     # get current timeline
     self.timeline = hiero.ui.activeSequence()
     self.project_fps = self.timeline.framerate().toFloat()
@@ -278,12 +275,8 @@ def create_otio_timeline():
     # convert timeline to otio
     otio_timeline = _create_otio_timeline()
 
-    # Add tags as markers
-    if self.include_tags:
-        create_otio_markers(otio_timeline, self.timeline)
-
     # loop all defined track types
-    for track in self.hiero_sequence.items():
+    for track in self.timeline.items():
         # skip if track is disabled
         if not track.isEnabled():
             continue

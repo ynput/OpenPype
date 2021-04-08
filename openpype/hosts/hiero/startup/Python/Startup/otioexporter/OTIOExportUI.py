@@ -20,8 +20,7 @@ except ImportError:
 
     FormLayout = QFormLayout  # lint:ok
 
-from pype.hosts.hiero.otio import hiero_export
-
+from openpype.hosts.hiero.otio import hiero_export
 
 class OTIOExportUI(hiero.ui.TaskUIBase):
     def __init__(self, preset):
@@ -35,7 +34,7 @@ class OTIOExportUI(hiero.ui.TaskUIBase):
 
     def includeMarkersCheckboxChanged(self, state):
         # Slot to handle change of checkbox state
-        hiero_export.hiero_sequence = state == QtCore.Qt.Checked
+        hiero_export.include_tags = state == QtCore.Qt.Checked
 
     def populateUI(self, widget, exportTemplate):
         layout = widget.layout()

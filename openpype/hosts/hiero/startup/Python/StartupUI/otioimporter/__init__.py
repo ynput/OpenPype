@@ -9,7 +9,7 @@ import hiero.core
 
 import PySide2.QtWidgets as qw
 
-from pype.hosts.hiero.otio.hiero_import import load_otio
+from openpype.hosts.hiero.otio.hiero_import import load_otio
 
 
 class OTIOProjectSelect(qw.QDialog):

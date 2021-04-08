@@ -60,7 +60,7 @@ class OTIOExportPreset(hiero.core.TaskPresetBase):
         """Initialise presets to default values"""
         hiero.core.TaskPresetBase.__init__(self, OTIOExportTask, name)
 
-        self.properties()["includeTags"] = True
+        self.properties()["includeTags"] = hiero_export.include_tags = True
         self.properties().update(properties)
 
     def supportedItems(self):

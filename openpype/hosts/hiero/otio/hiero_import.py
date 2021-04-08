@@ -19,6 +19,7 @@ except ImportError:
 
 import opentimelineio as otio
 
+_otio_old = False
 
 def inform(messages):
     if isinstance(messages, type('')):
@@ -180,14 +181,23 @@ def prep_url(url_in):
 
 
 def create_offline_mediasource(otio_clip, path=None):
+    global _otio_old
+
     hiero_rate = hiero.core.TimeBase(
         otio_clip.source_range.start_time.rate
     )
 
-    legal_media_refs = (
-        otio.schema.ExternalReference,
-        otio.schema.ImageSequenceReference
-    )
+    try:
+        legal_media_refs = (
+            otio.schema.ExternalReference,
+            otio.schema.ImageSequenceReference
+        )
+    except AttributeError:
+        _otio_old = True
+        legal_media_refs = (
+            otio.schema.ExternalReference
+        )
+
     if isinstance(otio_clip.media_reference, legal_media_refs):
         source_range = otio_clip.available_range()
 
@@ -331,9 +341,10 @@ def create_clip(otio_clip, tagsbin, sequencebin):
         url = prep_url(otio_media.target_url)
         media = hiero.core.MediaSource(url)
 
-    elif isinstance(otio_media, otio.schema.ImageSequenceReference):
-        url = prep_url(otio_media.abstract_target_url('#'))
-        media = hiero.core.MediaSource(url)
+    elif not _otio_old:
+        if isinstance(otio_media, otio.schema.ImageSequenceReference):
+            url = prep_url(otio_media.abstract_target_url('#'))
+            media = hiero.core.MediaSource(url)
 
     if media is None or media.isOffline():
         media = create_offline_mediasource(otio_clip, url)
