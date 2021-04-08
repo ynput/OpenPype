@@ -17,6 +17,10 @@ from openpype.settings import (
     get_project_settings,
     get_environments
 )
+from openpype.settings.constants import (
+    METADATA_KEYS,
+    M_DYNAMIC_KEY_LABEL
+)
 from . import (
     PypeLogger,
     Anatomy
@@ -123,7 +127,16 @@ class ApplicationGroup:
         self.host_name = host_name
 
         variants = data.get("variants") or {}
+        key_label_mapping = variants.pop(M_DYNAMIC_KEY_LABEL, {})
         for variant_name, variant_data in variants.items():
+            if variant_name in METADATA_KEYS:
+                continue
+
+            if "variant_label" not in variant_data:
+                variant_label = key_label_mapping.get(variant_name)
+                if variant_label:
+                    variant_data["variant_label"] = variant_label
+
             variants[variant_name] = Application(
                 variant_name, variant_data, self
             )
@@ -165,7 +178,7 @@ class Application:
         enabled = False
         if group.enabled:
             enabled = data.get("enabled", True)
-            self.enabled = enabled
+        self.enabled = enabled
 
         self.label = data.get("variant_label") or name
         self.full_name = "/".join((group.name, name))
@@ -265,22 +278,31 @@ class ApplicationManager:
         self.tool_groups.clear()
         self.tools.clear()
 
-        settings = get_system_settings()
+        settings = get_system_settings(
+            clear_metadata=False, exclude_locals=False
+        )
 
         app_defs = settings["applications"]
         for group_name, variant_defs in app_defs.items():
+            if group_name in METADATA_KEYS:
+                continue
+
             group = ApplicationGroup(group_name, variant_defs, self)
             self.app_groups[group_name] = group
             for app in group:
-                # TODO This should be replaced with `full_name` in future
                 self.applications[app.full_name] = app
 
         tools_definitions = settings["tools"]["tool_groups"]
+        tool_label_mapping = tools_definitions.pop(M_DYNAMIC_KEY_LABEL, {})
         for tool_group_name, tool_group_data in tools_definitions.items():
-            if not tool_group_name:
+            if not tool_group_name or tool_group_name in METADATA_KEYS:
                 continue
+
+            tool_group_label = (
+                tool_label_mapping.get(tool_group_name) or tool_group_name
+            )
             group = EnvironmentToolGroup(
-                tool_group_name, tool_group_data, self
+                tool_group_name, tool_group_label, tool_group_data, self
             )
             self.tool_groups[tool_group_name] = group
             for tool in group:
@@ -336,16 +358,24 @@ class EnvironmentToolGroup:
         manager (ApplicationManager): Manager that creates the group.
     """
 
-    def __init__(self, name, data, manager):
+    def __init__(self, name, label, data, manager):
         self.name = name
+        self.label = label
         self._data = data
         self.manager = manager
         self._environment = data["environment"]
 
         variants = data.get("variants") or {}
+        label_by_key = variants.pop(M_DYNAMIC_KEY_LABEL, {})
         variants_by_name = {}
         for variant_name, variant_env in variants.items():
-            tool = EnvironmentTool(variant_name, variant_env, self)
+            if variant_name in METADATA_KEYS:
+                continue
+
+            variant_label = label_by_key.get(variant_name) or variant_name
+            tool = EnvironmentTool(
+                variant_name, variant_label, variant_env, self
+            )
             variants_by_name[variant_name] = tool
         self.variants = variants_by_name
 
@@ -372,8 +402,10 @@ class EnvironmentTool:
         group (str): Name of group which wraps tool.
     """
 
-    def __init__(self, name, environment, group):
+    def __init__(self, name, label, environment, group):
         self.name = name
+        self.variant_label = label
+        self.label = " ".join((group.label, label))
         self.group = group
         self._environment = environment
         self.full_name = "/".join((group.name, name))

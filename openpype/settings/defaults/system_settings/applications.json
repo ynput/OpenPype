@@ -20,8 +20,6 @@
         },
         "variants": {
             "2020": {
-                "enabled": true,
-                "variant_label": "2020",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2020\\bin\\maya.exe"
@@ -41,8 +39,6 @@
                 }
             },
             "2019": {
-                "enabled": true,
-                "variant_label": "2019",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2019\\bin\\maya.exe"
@@ -62,8 +58,6 @@
                 }
             },
             "2018": {
-                "enabled": true,
-                "variant_label": "2018",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2018\\bin\\maya.exe"
@@ -72,86 +66,6 @@
                     "linux": [
                         "/usr/autodesk/maya2018/bin/maya"
                     ]
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "MAYA_VERSION": "2018"
-                }
-            }
-        }
-    },
-    "mayabatch": {
-        "enabled": true,
-        "label": "MayaBatch",
-        "icon": "{}/app_icons/maya.png",
-        "host_name": "maya",
-        "environment": {
-            "PYTHONPATH": [
-                "{OPENPYPE_ROOT}/avalon-core/setup/maya",
-                "{OPENPYPE_ROOT}/maya-look-assigner",
-                "{PYTHON_ENV}/python2/Lib/site-packages",
-                "{PYTHONPATH}"
-            ],
-            "MAYA_DISABLE_CLIC_IPM": "Yes",
-            "MAYA_DISABLE_CIP": "Yes",
-            "MAYA_DISABLE_CER": "Yes",
-            "PYMEL_SKIP_MEL_INIT": "Yes",
-            "LC_ALL": "C",
-            "OPENPYPE_LOG_NO_COLORS": "Yes",
-            "MAYA_TEST": "{MAYA_VERSION}"
-        },
-        "variants": {
-            "2020": {
-                "enabled": true,
-                "variant_label": "2020",
-                "executables": {
-                    "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2020\\bin\\mayabatch.exe"
-                    ],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "MAYA_VERSION": "2020"
-                }
-            },
-            "2019": {
-                "enabled": true,
-                "variant_label": "2019",
-                "executables": {
-                    "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2019\\bin\\mayabatch.exe"
-                    ],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "environment": {
-                    "MAYA_VERSION": "2019"
-                }
-            },
-            "2018": {
-                "enabled": true,
-                "variant_label": "2018",
-                "executables": {
-                    "windows": [
-                        "C:\\Program Files\\Autodesk\\Maya2018\\bin\\mayabatch.exe"
-                    ],
-                    "darwin": [],
-                    "linux": []
                 },
                 "arguments": {
                     "windows": [],
@@ -182,8 +96,6 @@
         },
         "variants": {
             "12-2": {
-                "enabled": true,
-                "variant_label": "12.2",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -201,8 +113,6 @@
                 "environment": {}
             },
             "12-0": {
-                "enabled": true,
-                "variant_label": "12.0",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -220,8 +130,6 @@
                 "environment": {}
             },
             "11-3": {
-                "enabled": true,
-                "variant_label": "11.3",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -239,8 +147,6 @@
                 "environment": {}
             },
             "11-2": {
-                "enabled": true,
-                "variant_label": "11.2",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
@@ -254,6 +160,11 @@
                     "linux": []
                 },
                 "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "12-2": "12.2",
+                "12-0": "12.0",
+                "11-3": "11.3"
             }
         }
     },
@@ -275,8 +186,6 @@
         },
         "variants": {
             "12-2": {
-                "enabled": true,
-                "variant_label": "12.2",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -300,8 +209,6 @@
                 "environment": {}
             },
             "12-0": {
-                "enabled": true,
-                "variant_label": "12.0",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -325,8 +232,6 @@
                 "environment": {}
             },
             "11-3": {
-                "enabled": true,
-                "variant_label": "11.3",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -350,8 +255,6 @@
                 "environment": {}
             },
             "11-2": {
-                "enabled": true,
-                "variant_label": "11.2",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
@@ -371,6 +274,12 @@
                     ]
                 },
                 "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "12-2": "12.2",
+                "12-0": "12.0",
+                "11-3": "11.3",
+                "11-2": "11.2"
             }
         }
     },
@@ -392,8 +301,6 @@
         },
         "variants": {
             "12-2": {
-                "enabled": true,
-                "variant_label": "12.2",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -417,8 +324,6 @@
                 "environment": {}
             },
             "12-0": {
-                "enabled": true,
-                "variant_label": "12.0",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -442,8 +347,6 @@
                 "environment": {}
             },
             "11-3": {
-                "enabled": true,
-                "variant_label": "11.3",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -467,8 +370,6 @@
                 "environment": {}
             },
             "11-2": {
-                "enabled": true,
-                "variant_label": "11.2",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -486,6 +387,12 @@
                     ]
                 },
                 "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "12-2": "12.2",
+                "12-0": "12.0",
+                "11-3": "11.3",
+                "11-2": "11.2"
             }
         }
     },
@@ -507,8 +414,6 @@
         },
         "variants": {
             "12-2": {
-                "enabled": true,
-                "variant_label": "12.2",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -532,8 +437,6 @@
                 "environment": {}
             },
             "12-0": {
-                "enabled": true,
-                "variant_label": "12.0",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -557,8 +460,6 @@
                 "environment": {}
             },
             "11-3": {
-                "enabled": true,
-                "variant_label": "11.3",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -582,8 +483,6 @@
                 "environment": {}
             },
             "11-2": {
-                "enabled": true,
-                "variant_label": "11.2",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
@@ -603,6 +502,12 @@
                     ]
                 },
                 "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "12-2": "12.2",
+                "12-0": "12.0",
+                "11-3": "11.3",
+                "11-2": "11.2"
             }
         }
     },
@@ -752,8 +657,6 @@
         },
         "variants": {
             "18-5": {
-                "enabled": true,
-                "variant_label": "18.5",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Side Effects Software\\Houdini 18.5.499\\bin\\houdini.exe"
@@ -769,8 +672,6 @@
                 "environment": {}
             },
             "18": {
-                "enabled": true,
-                "variant_label": "18",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -784,8 +685,6 @@
                 "environment": {}
             },
             "17": {
-                "enabled": true,
-                "variant_label": "17",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -797,6 +696,11 @@
                     "linux": []
                 },
                 "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "18-5": "18.5",
+                "18": "18",
+                "17": "17"
             }
         }
     },
@@ -815,8 +719,6 @@
         },
         "variants": {
             "2-83": {
-                "enabled": true,
-                "variant_label": "2.83",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe"
@@ -838,8 +740,6 @@
                 "environment": {}
             },
             "2-90": {
-                "enabled": true,
-                "variant_label": "2.90",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe"
@@ -859,6 +759,10 @@
                     ]
                 },
                 "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "2-83": "2.83",
+                "2-90": "2.90"
             }
         }
     },
@@ -916,8 +820,6 @@
         },
         "variants": {
             "animation_11-64bits": {
-                "enabled": true,
-                "variant_label": "11 (64bits)",
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\TVPaint Developpement\\TVPaint Animation 11 (64bits)\\TVPaint Animation 11 (64bits).exe"
@@ -933,8 +835,6 @@
                 "environment": {}
             },
             "animation_11-32bits": {
-                "enabled": true,
-                "variant_label": "11 (32bits)",
                 "executables": {
                     "windows": [
                         "C:\\Program Files (x86)\\TVPaint Developpement\\TVPaint Animation 11 (32bits)\\TVPaint Animation 11 (32bits).exe"
@@ -948,6 +848,10 @@
                     "linux": []
                 },
                 "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "animation_11-64bits": "11 (64bits)",
+                "animation_11-32bits": "11 (32bits)"
             }
         }
     },
@@ -1085,8 +989,6 @@
         },
         "variants": {
             "4-24": {
-                "enabled": true,
-                "variant_label": "4.24",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1106,8 +1008,6 @@
         "environment": {},
         "variants": {
             "python_3-7": {
-                "enabled": true,
-                "variant_label": "3.7",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1121,8 +1021,6 @@
                 "environment": {}
             },
             "python_2-7": {
-                "enabled": true,
-                "variant_label": "2.7",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1136,8 +1034,6 @@
                 "environment": {}
             },
             "terminal": {
-                "enabled": true,
-                "variant_label": "",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1149,6 +1045,10 @@
                     "linux": []
                 },
                 "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "python_3-7": "Python 3.7",
+                "python_2-7": "Python 2.7"
             }
         }
     },
@@ -1160,8 +1060,6 @@
         "environment": {},
         "variants": {
             "1-1": {
-                "enabled": true,
-                "variant_label": "1.1",
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1173,6 +1071,9 @@
                     "linux": []
                 },
                 "environment": {}
+            },
+            "__dynamic_keys_labels__": {
+                "1-1": "1.1"
             }
         }
     }
