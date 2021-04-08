@@ -16,6 +16,7 @@ from bson.objectid import ObjectId
 
 from openpype.lib import PypeLogger
 from openpype.api import get_local_site_id
+from openpype import resources
 
 log = PypeLogger().get_logger("SyncServer")
 
@@ -44,7 +45,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self.setStyleSheet(style.load_stylesheet())
-        self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
+        self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
         self.resize(1400, 800)
 
         self.timer = QtCore.QTimer()
@@ -327,6 +328,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.table_view.horizontalHeader().setSortIndicator(
             -1, Qt.AscendingOrder)
         self.table_view.setSortingEnabled(True)
+        self.table_view.horizontalHeader().setSortIndicatorShown(True)
         self.table_view.setAlternatingRowColors(True)
         self.table_view.verticalHeader().hide()
 
@@ -1348,6 +1350,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.table_view.horizontalHeader().setSortIndicator(-1,
                                                             Qt.AscendingOrder)
         self.table_view.setSortingEnabled(True)
+        self.table_view.horizontalHeader().setSortIndicatorShown(True)
         self.table_view.setAlternatingRowColors(True)
         self.table_view.verticalHeader().hide()
 

@@ -1,4 +1,5 @@
 import os
+from openpype import resources
 
 
 def load_stylesheet():
@@ -9,4 +10,4 @@ def load_stylesheet():
 
 
 def app_icon_path():
-    return os.path.join(os.path.dirname(__file__), "openpype_icon.png")
+    return resources.pype_icon_filepath()
