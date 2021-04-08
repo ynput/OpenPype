@@ -165,7 +165,6 @@ class ProcessEventHub(SocketBaseEventHub):
 
     def wait(self, duration=None):
         """Overriden wait
-
         Event are loaded from Mongo DB when queue is empty. Handled event is
         set as processed in Mongo DB.
         """
