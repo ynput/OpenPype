@@ -104,7 +104,7 @@ from .plugin_tools import (
 from .local_settings import (
     IniSettingRegistry,
     JSONSettingRegistry,
-    PypeSettingsRegistry,
+    OpenPypeSettingsRegistry,
     get_local_site_id,
     change_openpype_mongo_url
 )
@@ -217,7 +217,7 @@ __all__ = [
 
     "IniSettingRegistry",
     "JSONSettingRegistry",
-    "PypeSettingsRegistry",
+    "OpenPypeSettingsRegistry",
     "get_local_site_id",
     "change_openpype_mongo_url",
 

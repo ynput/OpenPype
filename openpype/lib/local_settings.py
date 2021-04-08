@@ -452,7 +452,7 @@ class JSONSettingRegistry(ASettingRegistry):
             json.dump(data, cfg, indent=4)
 
 
-class PypeSettingsRegistry(JSONSettingRegistry):
+class OpenPypeSettingsRegistry(JSONSettingRegistry):
     """Class handling Pype general settings registry.
 
     Attributes:
@@ -463,9 +463,9 @@ class PypeSettingsRegistry(JSONSettingRegistry):
 
     def __init__(self):
         self.vendor = "pypeclub"
-        self.product = "pype"
+        self.product = "openpype"
         path = appdirs.user_data_dir(self.product, self.vendor)
-        super(PypeSettingsRegistry, self).__init__("pype_settings", path)
+        super(OpenPypeSettingsRegistry, self).__init__("openpype_settings", path)
 
 
 def _create_local_site_id(registry=None):
@@ -473,7 +473,7 @@ def _create_local_site_id(registry=None):
     from uuid import uuid4
 
     if registry is None:
-        registry = PypeSettingsRegistry()
+        registry = OpenPypeSettingsRegistry()
 
     new_id = str(uuid4())
 
@@ -489,7 +489,7 @@ def get_local_site_id():
 
     Identifier is created if does not exists yet.
     """
-    registry = PypeSettingsRegistry()
+    registry = OpenPypeSettingsRegistry()
     try:
         return registry.get_item("localId")
     except ValueError:
@@ -504,5 +504,5 @@ def change_openpype_mongo_url(new_mongo_url):
     """
 
     validate_mongo_connection(new_mongo_url)
-    registry = PypeSettingsRegistry()
-    registry.set_secure_item("pypeMongo", new_mongo_url)
+    registry = OpenPypeSettingsRegistry()
+    registry.set_secure_item("openPypeMongo", new_mongo_url)
