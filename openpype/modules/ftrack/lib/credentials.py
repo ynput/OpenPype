@@ -108,11 +108,6 @@ def clear_credentials(ft_user=None, ftrack_server=None, user=None):
         file.write(json.dumps(content_json))
 
 
-def set_env(ft_user=None, ft_api_key=None):
-    os.environ["FTRACK_API_USER"] = ft_user or ""
-    os.environ["FTRACK_API_KEY"] = ft_api_key or ""
-
-
 def check_credentials(ft_user, ft_api_key, ftrack_server=None):
     if not ftrack_server:
         ftrack_server = os.environ["FTRACK_SERVER"]

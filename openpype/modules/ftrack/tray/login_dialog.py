@@ -14,10 +14,12 @@ class CredentialsDialog(QtWidgets.QDialog):
     login_changed = QtCore.Signal()
     logout_signal = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, module, parent=None):
         super(CredentialsDialog, self).__init__(parent)
 
         self.setWindowTitle("OpenPype - Ftrack Login")
+
+        self._module = module
 
         self._login_server_thread = None
         self._is_logged = False
@@ -268,7 +270,7 @@ class CredentialsDialog(QtWidgets.QDialog):
         verification = credentials.check_credentials(username, api_key)
         if verification:
             credentials.save_credentials(username, api_key, False)
-            credentials.set_env(username, api_key)
+            self._module.set_credentials_to_env(username, api_key)
             self.set_credentials(username, api_key)
             self.login_changed.emit()
         return verification
