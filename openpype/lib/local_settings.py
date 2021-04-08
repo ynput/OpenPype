@@ -5,6 +5,7 @@ from datetime import datetime
 from abc import ABCMeta, abstractmethod
 import json
 
+# TODO Use pype igniter logic instead of using duplicated code
 # disable lru cache in Python 2
 try:
     from functools import lru_cache
@@ -25,10 +26,103 @@ except ImportError:
 
 import platform
 
-import appdirs
 import six
+import appdirs
 
 from .import validate_mongo_connection
+
+_PLACEHOLDER = object()
+
+
+class OpenPypeSecureRegistry:
+    def __init__(self, name):
+        try:
+            import keyring
+
+        except Exception:
+            raise NotImplementedError(
+                "Python module `keyring` is not available."
+            )
+
+        # hack for cx_freeze and Windows keyring backend
+        if platform.system().lower() == "windows":
+            from keyring.backends import Windows
+
+            keyring.set_keyring(Windows.WinVaultKeyring())
+
+        # Force "OpenPype" prefix
+        self._name = "/".join(("OpenPype", name))
+
+    def set_item(self, name, value):
+        # type: (str, str) -> None
+        """Set sensitive item into system's keyring.
+
+        This uses `Keyring module`_ to save sensitive stuff into system's
+        keyring.
+
+        Args:
+            name (str): Name of the item.
+            value (str): Value of the item.
+
+        .. _Keyring module:
+            https://github.com/jaraco/keyring
+
+        """
+        import keyring
+
+        keyring.set_password(self._name, name, value)
+
+    @lru_cache(maxsize=32)
+    def get_item(self, name, default=_PLACEHOLDER):
+        """Get value of sensitive item from system's keyring.
+
+        See also `Keyring module`_
+
+        Args:
+            name (str): Name of the item.
+            default (Any): Default value if item is not available.
+
+        Returns:
+            value (str): Value of the item.
+
+        Raises:
+            ValueError: If item doesn't exist and default is not defined.
+
+        .. _Keyring module:
+            https://github.com/jaraco/keyring
+
+        """
+        import keyring
+
+        value = keyring.get_password(self._name, name)
+        if value:
+            return value
+
+        if default is not _PLACEHOLDER:
+            return default
+
+        # NOTE Should raise `KeyError`
+        raise ValueError(
+            "Item {}:{} does not exist in keyring.".format(self._name, name)
+        )
+
+    def delete_item(self, name):
+        # type: (str) -> None
+        """Delete value stored in system's keyring.
+
+        See also `Keyring module`_
+
+        Args:
+            name (str): Name of the item to be deleted.
+
+        .. _Keyring module:
+            https://github.com/jaraco/keyring
+
+        """
+        import keyring
+
+        self.get_item.cache_clear()
+        keyring.delete_password(self._name, name)
 
 
 @six.add_metaclass(ABCMeta)
@@ -47,13 +141,6 @@ class ASettingRegistry():
     def __init__(self, name):
         # type: (str) -> ASettingRegistry
         super(ASettingRegistry, self).__init__()
-
-        if six.PY3:
-            import keyring
-            # hack for cx_freeze and Windows keyring backend
-            if platform.system() == "Windows":
-                from keyring.backends import Windows
-                keyring.set_keyring(Windows.WinVaultKeyring())
 
         self._name = name
         self._items = {}
@@ -120,7 +207,7 @@ class ASettingRegistry():
         """Delete item from settings.
 
         Note:
-            see :meth:`pype.lib.local_settings.ARegistrySettings.delete_item`
+            see :meth:`openpype.lib.user_settings.ARegistrySettings.delete_item`
 
         """
         pass
@@ -128,78 +215,6 @@ class ASettingRegistry():
     def __delitem__(self, name):
         del self._items[name]
         self._delete_item(name)
-
-    def set_secure_item(self, name, value):
-        # type: (str, str) -> None
-        """Set sensitive item into system's keyring.
-
-        This uses `Keyring module`_ to save sensitive stuff into system's
-        keyring.
-
-        Args:
-            name (str): Name of the item.
-            value (str): Value of the item.
-
-        .. _Keyring module:
-            https://github.com/jaraco/keyring
-
-        """
-        if six.PY2:
-            raise NotImplementedError(
-                "Keyring not available on Python 2 hosts")
-        import keyring
-        keyring.set_password(self._name, name, value)
-
-    @lru_cache(maxsize=32)
-    def get_secure_item(self, name):
-        # type: (str) -> str
-        """Get value of sensitive item from system's keyring.
-
-        See also `Keyring module`_
-
-        Args:
-            name (str): Name of the item.
-
-        Returns:
-            value (str): Value of the item.
-
-        Raises:
-            ValueError: If item doesn't exist.
-
-        .. _Keyring module:
-            https://github.com/jaraco/keyring
-
-        """
-        if six.PY2:
-            raise NotImplementedError(
-                "Keyring not available on Python 2 hosts")
-        import keyring
-        value = keyring.get_password(self._name, name)
-        if not value:
-            raise ValueError(
-                "Item {}:{} does not exist in keyring.".format(
-                    self._name, name))
-        return value
-
-    def delete_secure_item(self, name):
-        # type: (str) -> None
-        """Delete value stored in system's keyring.
-
-        See also `Keyring module`_
-
-        Args:
-            name (str): Name of the item to be deleted.
-
-        .. _Keyring module:
-            https://github.com/jaraco/keyring
-
-        """
-        if six.PY2:
-            raise NotImplementedError(
-                "Keyring not available on Python 2 hosts")
-        import keyring
-        self.get_secure_item.cache_clear()
-        keyring.delete_password(self._name, name)
 
 
 class IniSettingRegistry(ASettingRegistry):
@@ -218,7 +233,7 @@ class IniSettingRegistry(ASettingRegistry):
         if not os.path.exists(self._registry_file):
             with open(self._registry_file, mode="w") as cfg:
                 print("# Settings registry", cfg)
-                print("# Generated by Pype {}".format(version), cfg)
+                print("# Generated by OpenPype {}".format(version), cfg)
                 now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
                 print("# {}".format(now), cfg)
 
@@ -352,7 +367,7 @@ class IniSettingRegistry(ASettingRegistry):
         """Delete item from default section.
 
         Note:
-            See :meth:`~pype.lib.IniSettingsRegistry.delete_item_from_section`
+            See :meth:`~openpype.lib.IniSettingsRegistry.delete_item_from_section`
 
         """
         self.delete_item_from_section("MAIN", name)
@@ -369,7 +384,7 @@ class JSONSettingRegistry(ASettingRegistry):
         now = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         header = {
             "__metadata__": {
-                "pype-version": os.getenv("OPENPYPE_VERSION", "N/A"),
+                "openpype-version": os.getenv("OPENPYPE_VERSION", "N/A"),
                 "generated": now
             },
             "registry": {}
@@ -387,7 +402,7 @@ class JSONSettingRegistry(ASettingRegistry):
         """Get item value from registry json.
 
         Note:
-            See :meth:`pype.lib.JSONSettingRegistry.get_item`
+            See :meth:`openpype.lib.JSONSettingRegistry.get_item`
 
         """
         with open(self._registry_file, mode="r") as cfg:
@@ -420,7 +435,7 @@ class JSONSettingRegistry(ASettingRegistry):
         """Set item value to registry json.
 
         Note:
-            See :meth:`pype.lib.JSONSettingRegistry.set_item`
+            See :meth:`openpype.lib.JSONSettingRegistry.set_item`
 
         """
         with open(self._registry_file, "r+") as cfg:
@@ -453,7 +468,7 @@ class JSONSettingRegistry(ASettingRegistry):
 
 
 class OpenPypeSettingsRegistry(JSONSettingRegistry):
-    """Class handling Pype general settings registry.
+    """Class handling OpenPype general settings registry.
 
     Attributes:
         vendor (str): Name used for path construction.
@@ -464,7 +479,7 @@ class OpenPypeSettingsRegistry(JSONSettingRegistry):
     def __init__(self, name=None):
         self.vendor = "pypeclub"
         self.product = "openpype"
-        if name is None:
+        if not name:
             name = "openpype_settings"
         path = appdirs.user_data_dir(self.product, self.vendor)
         super(OpenPypeSettingsRegistry, self).__init__(name, path)
@@ -506,5 +521,5 @@ def change_openpype_mongo_url(new_mongo_url):
     """
 
     validate_mongo_connection(new_mongo_url)
-    registry = OpenPypeSettingsRegistry()
-    registry.set_secure_item("openPypeMongo", new_mongo_url)
+    registry = OpenPypeSecureRegistry("Settings")
+    registry.set_item("openPypeMongo", new_mongo_url)
