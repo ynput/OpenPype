@@ -1223,12 +1223,6 @@ class SyncEntitiesFactory:
 
     def prepare_ftrack_ent_data(self):
         not_set_ids = []
-        # Prepare short task type mapping
-        _task_short_names = get_ftrack_settings()["task_short_names"]
-        task_short_names = {
-            key.lower(): value
-            for key, value in _task_short_names.items()
-        }
         for id, entity_dict in self.entities_dict.items():
             entity = entity_dict["entity"]
             if entity is None:
@@ -1264,18 +1258,21 @@ class SyncEntitiesFactory:
                     if not msg or not items:
                         continue
                     self.report_items["warning"][msg] = items
-                tasks = {}
-                for task_type in task_types:
-                    task_type_name = task_type["name"]
-                    # Set short name to mapping from settings or empty string
-                    short_name = task_short_names.get(task_type_name.lower())
-                    tasks[task_type_name] = {
-                        "short_name": short_name or ""
-                    }
 
                 current_project_anatomy_data = get_anatomy_settings(
                     project_name, exclude_locals=True
                 )
+                anatomy_tasks = current_project_anatomy_data["tasks"]
+                tasks = {}
+                default_type_data = {
+                    "short_name": ""
+                }
+                for task_type in task_types:
+                    task_type_name = task_type["name"]
+                    tasks[task_type_name] = copy.deepcopy(
+                        anatomy_tasks.get(task_type_name)
+                        or default_type_data
+                    )
 
                 project_config = {
                     "tasks": tasks,
