@@ -26,8 +26,6 @@ from pymongo import UpdateOne
 import ftrack_api
 from openpype.lib import ApplicationManager
 
-from .settings import get_ftrack_settings
-
 log = Logger.get_logger(__name__)
 
 
