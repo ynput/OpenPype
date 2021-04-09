@@ -10,7 +10,7 @@ import pyblish.api as pyblish
 import openpype.hosts.aftereffects
 
 
-log = logging.getLogger("pype.hosts.aftereffects")
+log = logging.getLogger("openpype.hosts.aftereffects")
 
 
 HOST_DIR = os.path.dirname(os.path.abspath(openpype.hosts.aftereffects.__file__))

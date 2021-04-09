@@ -54,11 +54,11 @@ def __main__():
         print("Got Pype location from environment: {}".format(
             os.environ.get('OPENPYPE_SETUP_PATH')))
 
-    pype_command = "pype.ps1"
+    pype_command = "openpype.ps1"
     if platform.system().lower() == "linux":
         pype_command = "pype"
     elif platform.system().lower() == "windows":
-        pype_command = "pype.bat"
+        pype_command = "openpype.bat"
 
     if kwargs.pype:
         pype_root = kwargs.pype

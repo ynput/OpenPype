@@ -3,11 +3,11 @@ import sys
 import logging
 import getpass
 import atexit
-import tempfile
 import threading
 import datetime
 import time
 import queue
+import appdirs
 import pymongo
 
 import requests
@@ -165,7 +165,6 @@ class ProcessEventHub(SocketBaseEventHub):
 
     def wait(self, duration=None):
         """Overriden wait
-
         Event are loaded from Mongo DB when queue is empty. Handled event is
         set as processed in Mongo DB.
         """
@@ -252,7 +251,7 @@ class CustomEventHubSession(ftrack_api.session.Session):
         self, server_url=None, api_key=None, api_user=None, auto_populate=True,
         plugin_paths=None, cache=None, cache_key_maker=None,
         auto_connect_event_hub=False, schema_cache_path=None,
-        plugin_arguments=None, **kwargs
+        plugin_arguments=None, timeout=60, **kwargs
     ):
         self.kwargs = kwargs
 
@@ -331,6 +330,7 @@ class CustomEventHubSession(ftrack_api.session.Session):
         self._request.auth = ftrack_api.session.SessionAuthentication(
             self._api_key, self._api_user
         )
+        self.request_timeout = timeout
 
         self.auto_populate = auto_populate
 
@@ -368,8 +368,9 @@ class CustomEventHubSession(ftrack_api.session.Session):
         # rebuilding types)?
         if schema_cache_path is not False:
             if schema_cache_path is None:
+                schema_cache_path = appdirs.user_cache_dir()
                 schema_cache_path = os.environ.get(
-                    'FTRACK_API_SCHEMA_CACHE_PATH', tempfile.gettempdir()
+                    'FTRACK_API_SCHEMA_CACHE_PATH', schema_cache_path
                 )
 
             schema_cache_path = os.path.join(

@@ -6,7 +6,7 @@ import openpype.hosts.hiero.api as phiero
 avalon.api.install(phiero)
 
 try:
-    __import__("pype.hosts.hiero.api")
+    __import__("openpype.hosts.hiero.api")
     __import__("pyblish")
 
 except ImportError as e:

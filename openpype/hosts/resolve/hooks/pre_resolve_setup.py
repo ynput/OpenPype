@@ -44,7 +44,7 @@ class ResolvePrelaunch(PreLaunchHook):
         self.launch_context.env["PRE_PYTHON_SCRIPT"] = pre_py_sc
         self.log.debug(f"-- pre_py_sc: `{pre_py_sc}`...")
         try:
-            __import__("pype.hosts.resolve")
+            __import__("openpype.hosts.resolve")
             __import__("pyblish")
 
         except ImportError:

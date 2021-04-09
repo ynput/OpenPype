@@ -45,11 +45,13 @@ class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
         timers_settings = modules_settings[self.name]
 
         self.enabled = timers_settings["enabled"]
+        auto_stop = timers_settings["auto_stop"]
         # When timer will stop if idle manager is running (minutes)
         full_time = int(timers_settings["full_time"] * 60)
         # How many minutes before the timer is stopped will popup the message
         message_time = int(timers_settings["message_time"] * 60)
 
+        self.auto_stop = auto_stop
         self.time_show_message = full_time - message_time
         self.time_stop_timer = full_time
 
@@ -160,6 +162,9 @@ class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
     def callbacks_by_idle_time(self):
         """Implementation of IIdleManager interface."""
         # Time when message is shown
+        if not self.auto_stop:
+            return {}
+
         callbacks = collections.defaultdict(list)
         callbacks[self.time_show_message].append(lambda: self.time_callback(0))
 

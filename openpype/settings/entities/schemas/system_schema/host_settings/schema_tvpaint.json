@@ -20,24 +20,22 @@
             "type": "raw-json"
         },
         {
-            "type": "dict",
+            "type": "dict-modifiable",
             "key": "variants",
-            "children": [
-                {
-                    "type": "schema_template",
-                    "name": "template_host_variant",
-                    "template_data": [
-                        {
-                            "app_variant_label": "Animation 11 (64bits)",
-                            "app_variant": "animation_11-64bits"
-                        },
-                        {
-                            "app_variant_label": "Animation 11 (32bits)",
-                            "app_variant": "animation_11-32bits"
-                        }
-                    ]
-                }
-            ]
+            "collapsible_key": true,
+            "dynamic_label": false,
+            "use_label_wrap": false,
+            "object_type": {
+                "type": "dict",
+                "collapsible": true,
+                "checkbox_key": "enabled",
+                "children": [
+                    {
+                        "type": "schema_template",
+                        "name": "template_host_variant_items"
+                    }
+                ]
+            }
         }
     ]
 }

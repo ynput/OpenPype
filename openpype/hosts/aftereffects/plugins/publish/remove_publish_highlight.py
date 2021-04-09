@@ -21,3 +21,4 @@ class RemovePublishHighlight(openpype.api.Extractor):
         item = instance.data
         comp_name = item["comp_name"].replace(stub.PUBLISH_ICON, '')
         stub.rename_item(item["comp_id"], comp_name)
+        instance.data["comp_name"] = comp_name
