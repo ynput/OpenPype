@@ -1048,7 +1048,6 @@ class SyncServerModule(PypeModule, ITrayModule):
         provider_name = self.get_provider_for_site(collection, site_name)
 
         if provider_name == 'local_drive':
-            handler = LocalDriveHandler(collection, site_name)
             query = {
                 "_id": ObjectId(representation_id)
             }

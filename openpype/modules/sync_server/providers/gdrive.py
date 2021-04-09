@@ -6,7 +6,7 @@ from googleapiclient import errors
 from .abstract_provider import AbstractProvider
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from openpype.api import Logger
-from openpype.api import get_system_settings, Anatomy
+from openpype.api import get_system_settings
 from ..utils import time_function
 import time
 
