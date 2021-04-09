@@ -296,7 +296,7 @@ def _determine_mongodb() -> str:
     if not openpype_mongo:
         # try system keyring
         try:
-            openpype_mongo = bootstrap.registry.get_secure_item(
+            openpype_mongo = bootstrap.secure_registry.get_item(
                 "openPypeMongo")
         except ValueError:
             print("*** No DB connection string specified.")
@@ -305,7 +305,7 @@ def _determine_mongodb() -> str:
             igniter.open_dialog()
 
             try:
-                openpype_mongo = bootstrap.registry.get_secure_item(
+                openpype_mongo = bootstrap.secure_registry.get_item(
                     "openPypeMongo")
             except ValueError:
                 raise RuntimeError("missing mongodb url")

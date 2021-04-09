@@ -103,7 +103,10 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         self.key_is_valid = KEY_REGEX.match(key)
         self.is_duplicated = self.entity_widget.is_key_duplicated(key)
         key_input_state = ""
-        if self.is_duplicated or not self.key_is_valid:
+        # Collapsible key and empty key are not invalid
+        if self.collapsible_key and self.key_input.text() == "":
+            pass
+        elif self.is_duplicated or not self.key_is_valid:
             key_input_state = "invalid"
         elif key != "":
             key_input_state = "modified"
