@@ -2,7 +2,9 @@ import os
 import logging
 
 from avalon.tvpaint.communication_server import register_localization_file
-from avalon.tvpaint import pipeline, lib
+import avalon.tvpaint.lib
+import avalon.tvpaint.pipeline
+from . import lib
 import pype.lib
 import avalon.api
 import avalon.io
@@ -22,7 +24,7 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 def on_instance_toggle(instance, old_value, new_value):
     instance_id = instance.data["uuid"]
     found_idx = None
-    current_instances = pipeline.list_instances()
+    current_instances = avalon.tvpaint.pipeline.list_instances()
     for idx, workfile_instance in enumerate(current_instances):
         if workfile_instance["uuid"] == instance_id:
             found_idx = idx
@@ -33,45 +35,16 @@ def on_instance_toggle(instance, old_value, new_value):
 
     if "active" in current_instances[found_idx]:
         current_instances[found_idx]["active"] = new_value
-        pipeline._write_instances(current_instances)
+        avalon.tvpaint.pipeline._write_instances(current_instances)
 
 
-def application_launch():
+def initial_launch():
     # Setup project settings if its the template that's launched.
-    if "PYPE_TVPAINT_LAUNCHED_TEMPLATE_FILE" in os.environ:
-        print("Setting up project...")
+    if os.environ.get("PYPE_TVPAINT_LAUNCHED_TEMPLATE_FILE") != "1":
+        return
 
-        project_doc = avalon.io.find_one({"type": "project"})
-        project_data = project_doc["data"]
-        asset_data = pype.lib.get_asset()["data"]
-
-        framerate = asset_data.get("fps", project_data.get("fps", 25))
-
-        width_key = "resolutionWidth"
-        height_key = "resolutionHeight"
-        width = asset_data.get(width_key, project_data.get(width_key, 1920))
-        height = asset_data.get(height_key, project_data.get(height_key, 1080))
-
-        lib.execute_george("tv_resizepage {} {} 0".format(width, height))
-        lib.execute_george("tv_framerate {} \"timestretch\"".format(framerate))
-
-        frame_start = asset_data.get("frameStart")
-        frame_end = asset_data.get("frameEnd")
-
-        handles = asset_data.get("handles") or 0
-        handle_start = asset_data.get("handleStart")
-        if handle_start is None:
-            handle_start = handles
-
-        handle_end = asset_data.get("handleEnd")
-        if handle_end is None:
-            handle_end = handles
-
-        frame_start -= int(handle_start)
-        frame_end += int(handle_end)
-
-        lib.execute_george("tv_markin {} set".format(frame_start - 1))
-        lib.execute_george("tv_markout {} set".format(frame_end - 1))
+    print("Setting up project...")
+    lib.set_context_settings(pype.lib.get_asset())
 
 
 def install():
@@ -89,7 +62,7 @@ def install():
     if on_instance_toggle not in registered_callbacks:
         pyblish.api.register_callback("instanceToggled", on_instance_toggle)
 
-    avalon.api.on("application.launched", application_launch)
+    avalon.api.on("application.launched", initial_launch)
 
 
 def uninstall():
