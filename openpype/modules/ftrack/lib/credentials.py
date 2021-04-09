@@ -7,7 +7,7 @@ except ImportError:
     from urlparse import urlparse
 
 
-from openpype.lib import OpenPypeSettingsRegistry
+from openpype.lib import OpenPypeSecureRegistry
 
 USERNAME_KEY = "username"
 API_KEY_KEY = "api_key"
@@ -23,38 +23,56 @@ def get_ftrack_hostname(ftrack_server=None):
     return urlparse(ftrack_server).hostname
 
 
-def _get_ftrack_secure_key(hostname):
+def _get_ftrack_secure_key(hostname, key):
     """Secure item key for entered hostname."""
-    return "/".join(("ftrack", hostname))
+    return "/".join(("ftrack", hostname, key))
 
 
 def get_credentials(ftrack_server=None):
     hostname = get_ftrack_hostname(ftrack_server)
-    secure_key = _get_ftrack_secure_key(hostname)
+    username_name = _get_ftrack_secure_key(hostname, USERNAME_KEY)
+    api_key_name = _get_ftrack_secure_key(hostname, API_KEY_KEY)
 
-    registry = OpenPypeSettingsRegistry(secure_key)
+    username_registry = OpenPypeSecureRegistry(username_name)
+    api_key_registry = OpenPypeSecureRegistry(api_key_name)
+
     return {
-        USERNAME_KEY: registry.get_secure_item(USERNAME_KEY, None),
-        API_KEY_KEY: registry.get_secure_item(API_KEY_KEY, None)
+        USERNAME_KEY: username_registry.get_item(USERNAME_KEY, None),
+        API_KEY_KEY: api_key_registry.get_item(API_KEY_KEY, None)
     }
 
 
 def save_credentials(username, api_key, ftrack_server=None):
     hostname = get_ftrack_hostname(ftrack_server)
-    secure_key = _get_ftrack_secure_key(hostname)
+    username_name = _get_ftrack_secure_key(hostname, USERNAME_KEY)
+    api_key_name = _get_ftrack_secure_key(hostname, API_KEY_KEY)
 
-    registry = OpenPypeSettingsRegistry(secure_key)
-    registry.set_secure_item(USERNAME_KEY, username)
-    registry.set_secure_item(API_KEY_KEY, api_key)
+    # Clear credentials
+    clear_credentials(ftrack_server)
+
+    username_registry = OpenPypeSecureRegistry(username_name)
+    api_key_registry = OpenPypeSecureRegistry(api_key_name)
+
+    username_registry.set_item(USERNAME_KEY, username)
+    api_key_registry.set_item(API_KEY_KEY, api_key)
 
 
 def clear_credentials(ftrack_server=None):
     hostname = get_ftrack_hostname(ftrack_server)
-    secure_key = _get_ftrack_secure_key(hostname)
+    username_name = _get_ftrack_secure_key(hostname, USERNAME_KEY)
+    api_key_name = _get_ftrack_secure_key(hostname, API_KEY_KEY)
 
-    registry = OpenPypeSettingsRegistry(secure_key)
-    registry.delete_secure_item(USERNAME_KEY)
-    registry.delete_secure_item(API_KEY_KEY)
+    username_registry = OpenPypeSecureRegistry(username_name)
+    api_key_registry = OpenPypeSecureRegistry(api_key_name)
+
+    current_username = username_registry.get_item(USERNAME_KEY, None)
+    current_api_key = api_key_registry.get_item(API_KEY_KEY, None)
+
+    if current_username is not None:
+        username_registry.delete_item(USERNAME_KEY)
+
+    if current_api_key is not None:
+        api_key_registry.delete_item(API_KEY_KEY)
 
 
 def check_credentials(username, api_key, ftrack_server=None):

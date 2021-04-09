@@ -9,8 +9,7 @@ from .constants import (
     ADMIN_PERMISSION_NAMES
 )
 
-# from openpype.lib import OpenPypeSettingsRegistry
-from openpype.lib.local_settings import OpenPypeSecureRegistry as OpenPypeSettingsRegistry
+from openpype.lib.local_settings import OpenPypeSecureRegistry
 
 
 def time_check(obj):
@@ -35,7 +34,7 @@ class ClockifyAPI:
         self.request_counter = 0
         self.request_time = time.time()
 
-        self.secure_registry = OpenPypeSettingsRegistry("clockify")
+        self.secure_registry = OpenPypeSecureRegistry("clockify")
 
     @property
     def headers(self):
@@ -135,10 +134,10 @@ class ClockifyAPI:
         return False
 
     def get_api_key(self):
-        return self.secure_registry.get_secure_item("api_key", None)
+        return self.secure_registry.get_item("api_key", None)
 
     def save_api_key(self, api_key):
-        self.secure_registry.set_secure_item("api_key", api_key)
+        self.secure_registry.set_item("api_key", api_key)
 
     def get_workspaces(self):
         action_url = 'workspaces/'
