@@ -11,7 +11,7 @@ import pytest
 
 from igniter.bootstrap_repos import BootstrapRepos
 from igniter.bootstrap_repos import PypeVersion
-from pype.lib import PypeSettingsRegistry
+from pype.lib import OpenPypeSettingsRegistry
 
 
 @pytest.fixture
@@ -348,7 +348,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         return d_path.as_posix()
 
     monkeypatch.setattr(appdirs, "user_data_dir", mock_user_data_dir)
-    fix_bootstrap.registry = PypeSettingsRegistry()
+    fix_bootstrap.registry = OpenPypeSettingsRegistry()
     fix_bootstrap.registry.set_item("pypePath", d_path.as_posix())
 
     result = fix_bootstrap.find_pype(include_zips=True)
