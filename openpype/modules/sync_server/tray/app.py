@@ -16,6 +16,7 @@ from bson.objectid import ObjectId
 
 from openpype.lib import PypeLogger
 from openpype.api import get_local_site_id
+from openpype import resources
 
 log = PypeLogger().get_logger("SyncServer")
 
@@ -44,7 +45,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
         self.setStyleSheet(style.load_stylesheet())
-        self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
+        self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
         self.resize(1400, 800)
 
         self.timer = QtCore.QTimer()
@@ -159,7 +160,7 @@ class SyncProjectListWidget(ProjectListWidget):
         model.clear()
 
         project_name = None
-        for project_name in self.sync_server.get_sync_project_settings().\
+        for project_name in self.sync_server.sync_project_settings.\
                 keys():
             if self.sync_server.is_paused() or \
                self.sync_server.is_project_paused(project_name):
@@ -169,7 +170,7 @@ class SyncProjectListWidget(ProjectListWidget):
 
             model.appendRow(QtGui.QStandardItem(icon, project_name))
 
-        if len(self.sync_server.get_sync_project_settings().keys()) == 0:
+        if len(self.sync_server.sync_project_settings.keys()) == 0:
             model.appendRow(QtGui.QStandardItem(DUMMY_PROJECT))
 
         self.current_project = self.project_list.currentIndex().data(
@@ -271,14 +272,28 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         ("subset", 190),
         ("version", 10),
         ("representation", 90),
-        ("created_dt", 100),
-        ("sync_dt", 100),
-        ("local_site", 60),
-        ("remote_site", 70),
-        ("files_count", 70),
-        ("files_size", 70),
+        ("created_dt", 105),
+        ("sync_dt", 105),
+        ("local_site", 80),
+        ("remote_site", 80),
+        ("files_count", 50),
+        ("files_size", 60),
         ("priority", 20),
         ("state", 50)
+    )
+    column_labels = (
+        ("asset", "Asset"),
+        ("subset", "Subset"),
+        ("version", "Version"),
+        ("representation", "Representation"),
+        ("created_dt", "Created"),
+        ("sync_dt", "Synced"),
+        ("local_site", "Active site"),
+        ("remote_site", "Remote site"),
+        ("files_count", "Files"),
+        ("files_size", "Size"),
+        ("priority", "Priority"),
+        ("state", "Status")
     )
 
     def __init__(self, sync_server, project=None, parent=None):
@@ -293,13 +308,17 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representations..")
 
+        self._scrollbar_pos = None
+
         top_bar_layout = QtWidgets.QHBoxLayout()
         top_bar_layout.addWidget(self.filter)
 
         self.table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
+        header_labels = [item[1] for item in self.column_labels]
 
-        model = SyncRepresentationModel(sync_server, headers, project)
+        model = SyncRepresentationModel(sync_server, headers,
+                                        project, header_labels)
         self.table_view.setModel(model)
         self.table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table_view.setSelectionMode(
@@ -309,6 +328,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.table_view.horizontalHeader().setSortIndicator(
             -1, Qt.AscendingOrder)
         self.table_view.setSortingEnabled(True)
+        self.table_view.horizontalHeader().setSortIndicatorShown(True)
         self.table_view.setAlternatingRowColors(True)
         self.table_view.verticalHeader().hide()
 
@@ -345,6 +365,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.table_view.customContextMenuRequested.connect(
             self._on_context_menu)
 
+        model.refresh_started.connect(self._save_scrollbar)
+        model.refresh_finished.connect(self._set_scrollbar)
         self.table_view.model().modelReset.connect(self._set_selection)
 
         self.selection_model = self.table_view.selectionModel()
@@ -376,7 +398,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         """
         _id = self.table_view.model().data(index, Qt.UserRole)
         detail_window = SyncServerDetailWindow(
-            self.sync_server, _id, self.table_view.model()._project)
+            self.sync_server, _id, self.table_view.model().project)
         detail_window.exec()
 
     def _on_context_menu(self, point):
@@ -394,15 +416,28 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
         menu = QtWidgets.QMenu()
         actions_mapping = {}
+        actions_kwargs_mapping = {}
 
-        action = QtWidgets.QAction("Open in explorer")
-        actions_mapping[action] = self._open_in_explorer
-        menu.addAction(action)
+        local_site = self.item.local_site
+        local_progress = self.item.local_progress
+        remote_site = self.item.remote_site
+        remote_progress = self.item.remote_progress
 
-        local_site, local_progress = self.item.local_site.split()
-        remote_site, remote_progress = self.item.remote_site.split()
-        local_progress = float(local_progress)
-        remote_progress = float(remote_progress)
+        for site, progress in {local_site: local_progress,
+                               remote_site: remote_progress}.items():
+            project = self.table_view.model().project
+            provider = self.sync_server.get_provider_for_site(project,
+                                                              site)
+            if provider == 'local_drive':
+                if 'studio' in site:
+                    txt = " studio version"
+                else:
+                    txt = " local version"
+                action = QtWidgets.QAction("Open in explorer" + txt)
+                if progress == 1.0:
+                    actions_mapping[action] = self._open_in_explorer
+                    actions_kwargs_mapping[action] = {'site': site}
+                    menu.addAction(action)
 
         # progress smaller then 1.0 --> in progress or queued
         if local_progress < 1.0:
@@ -452,13 +487,14 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
             to_run = actions_mapping[result]
+            to_run_kwargs = actions_kwargs_mapping.get(result, {})
             if to_run:
-                to_run()
+                to_run(**to_run_kwargs)
 
         self.table_view.model().refresh()
 
     def _pause(self):
-        self.sync_server.pause_representation(self.table_view.model()._project,
+        self.sync_server.pause_representation(self.table_view.model().project,
                                               self.representation_id,
                                               self.site_name)
         self.site_name = None
@@ -466,7 +502,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
     def _unpause(self):
         self.sync_server.unpause_representation(
-            self.table_view.model()._project,
+            self.table_view.model().project,
             self.representation_id,
             self.site_name)
         self.site_name = None
@@ -476,8 +512,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     # temporary here for testing, will be removed TODO
     def _add_site(self):
         log.info(self.representation_id)
-        project_name = self.table_view.model()._project
-        local_site_name = self.sync_server.get_my_local_site()
+        project_name = self.table_view.model().project
+        local_site_name = get_local_site_id()
         try:
             self.sync_server.add_site(
                 project_name,
@@ -504,7 +540,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         try:
             local_site = get_local_site_id()
             self.sync_server.remove_site(
-                self.table_view.model()._project,
+                self.table_view.model().project,
                 self.representation_id,
                 local_site,
                 True
@@ -512,6 +548,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             self.message_generated.emit("Site {} removed".format(local_site))
         except ValueError as exp:
             self.message_generated.emit("Error {}".format(str(exp)))
+        self.table_view.model().refresh(
+            load_records=self.table_view.model()._rec_loaded)
 
     def _reset_local_site(self):
         """
@@ -519,10 +557,12 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model()._project,
+            self.table_view.model().project,
             self.representation_id,
             'local'
             )
+        self.table_view.model().refresh(
+            load_records=self.table_view.model()._rec_loaded)
 
     def _reset_remote_site(self):
         """
@@ -530,18 +570,22 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model()._project,
+            self.table_view.model().project,
             self.representation_id,
             'remote'
             )
+        self.table_view.model().refresh(
+            load_records=self.table_view.model()._rec_loaded)
 
-    def _open_in_explorer(self):
+    def _open_in_explorer(self, site):
         if not self.item:
             return
 
         fpath = self.item.path
-        project = self.table_view.model()._project
-        fpath = self.sync_server.get_local_file_path(project, fpath)
+        project = self.table_view.model().project
+        fpath = self.sync_server.get_local_file_path(project,
+                                                     site,
+                                                     fpath)
 
         fpath = os.path.normpath(os.path.dirname(fpath))
         if os.path.isdir(fpath):
@@ -554,6 +598,17 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
                     subprocess.Popen(['xdg-open', fpath])
                 except OSError:
                     raise OSError('unsupported xdg-open call??')
+
+    def _save_scrollbar(self):
+        self._scrollbar_pos = self.table_view.verticalScrollBar().value()
+
+    def _set_scrollbar(self):
+        if self._scrollbar_pos:
+            self.table_view.verticalScrollBar().setValue(self._scrollbar_pos)
+
+
+ProviderRole = QtCore.Qt.UserRole + 2
+ProgressRole = QtCore.Qt.UserRole + 4
 
 
 class SyncRepresentationModel(QtCore.QAbstractTableModel):
@@ -596,6 +651,9 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         "status"  # state
     ]
 
+    refresh_started = QtCore.Signal()
+    refresh_finished = QtCore.Signal()
+
     @attr.s
     class SyncRepresentation:
         """
@@ -612,15 +670,20 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         sync_dt = attr.ib(default=None)
         local_site = attr.ib(default=None)
         remote_site = attr.ib(default=None)
+        local_provider = attr.ib(default=None)
+        remote_provider = attr.ib(default=None)
+        local_progress = attr.ib(default=None)
+        remote_progress = attr.ib(default=None)
         files_count = attr.ib(default=None)
         files_size = attr.ib(default=None)
         priority = attr.ib(default=None)
         state = attr.ib(default=None)
         path = attr.ib(default=None)
 
-    def __init__(self, sync_server, header, project=None):
+    def __init__(self, sync_server, header, project=None, header_labels=None):
         super(SyncRepresentationModel, self).__init__()
         self._header = header
+        self._header_labels = header_labels
         self._data = []
         self._project = project
         self._rec_loaded = 0
@@ -634,8 +697,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site = self.sync_server.get_active_site(self._project)
-        self.remote_site = self.sync_server.get_remote_site(self._project)
+        self.local_site = self.sync_server.get_active_site(self.project)
+        self.remote_site = self.sync_server.get_remote_site(self.project)
 
         self.projection = self.get_default_projection()
 
@@ -659,26 +722,46 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
 
             All queries should go through this (because of collection).
         """
-        return self.sync_server.connection.database[self._project]
+        return self.sync_server.connection.database[self.project]
+
+    @property
+    def project(self):
+        """Returns project"""
+        return self._project
 
     def data(self, index, role):
         item = self._data[index.row()]
+
+        if role == ProviderRole:
+            if self._header[index.column()] == 'local_site':
+                return item.local_provider
+            if self._header[index.column()] == 'remote_site':
+                return item.remote_provider
+
+        if role == ProgressRole:
+            if self._header[index.column()] == 'local_site':
+                return item.local_progress
+            if self._header[index.column()] == 'remote_site':
+                return item.remote_progress
 
         if role == Qt.DisplayRole:
             return attr.asdict(item)[self._header[index.column()]]
         if role == Qt.UserRole:
             return item._id
 
-    def rowCount(self, index):
+    def rowCount(self, _index):
         return len(self._data)
 
-    def columnCount(self, index):
+    def columnCount(self, _index):
         return len(self._header)
 
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
-                return str(self._header[section])
+                if self._header_labels:
+                    return str(self._header_labels[section])
+                else:
+                    return str(self._header[section])
 
     def tick(self):
         """
@@ -718,9 +801,9 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                     than single page of records)
         """
         if self.sync_server.is_paused() or \
-                self.sync_server.is_project_paused(self._project):
+                self.sync_server.is_project_paused(self.project):
             return
-
+        self.refresh_started.emit()
         self.beginResetModel()
         self._data = []
         self._rec_loaded = 0
@@ -732,6 +815,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._add_page_records(self.local_site, self.remote_site,
                                representations)
         self.endResetModel()
+        self.refresh_finished.emit()
 
     def _add_page_records(self, local_site, remote_site, representations):
         """
@@ -751,10 +835,10 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._total_records = count
 
         local_provider = _translate_provider_for_icon(self.sync_server,
-                                                      self._project,
+                                                      self.project,
                                                       local_site)
         remote_provider = _translate_provider_for_icon(self.sync_server,
-                                                       self._project,
+                                                       self.project,
                                                        remote_site)
 
         for repre in result.get("paginatedResults"):
@@ -784,7 +868,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             if context.get("version"):
                 version = "v{:0>3d}".format(context.get("version"))
             else:
-                version = "hero"
+                version = "master"
 
             item = self.SyncRepresentation(
                 repre.get("_id"),
@@ -794,8 +878,12 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 context.get("representation"),
                 local_updated,
                 remote_updated,
-                '{} {}'.format(local_provider, avg_progress_local),
-                '{} {}'.format(remote_provider, avg_progress_remote),
+                local_site,
+                remote_site,
+                local_provider,
+                remote_provider,
+                avg_progress_local,
+                avg_progress_remote,
                 repre.get("files_count", 1),
                 repre.get("files_size", 0),
                 1,
@@ -806,7 +894,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
             self._data.append(item)
             self._rec_loaded += 1
 
-    def canFetchMore(self, index):
+    def canFetchMore(self, _index):
         """
             Check if there are more records than currently loaded
         """
@@ -858,7 +946,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.sort = {self.SORT_BY_COLUMN[index]: order, '_id': 1}
         self.query = self.get_default_query()
         # import json
-        # log.debug(json.dumps(self.query, indent=4).replace('False', 'false').\
+        # log.debug(json.dumps(self.query, indent=4).\
+        #           replace('False', 'false').\
         #           replace('True', 'true').replace('None', 'null'))
 
         representations = self.dbcon.aggregate(self.query)
@@ -883,8 +972,8 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         """
         self._project = project
         self.sync_server.set_sync_project_settings()
-        self.local_site = self.sync_server.get_active_site(self._project)
-        self.remote_site = self.sync_server.get_remote_site(self._project)
+        self.local_site = self.sync_server.get_active_site(self.project)
+        self.remote_site = self.sync_server.get_remote_site(self.project)
         self.refresh()
 
     def get_index(self, id):
@@ -1206,13 +1295,24 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
     default_widths = (
         ("file", 290),
-        ("created_dt", 120),
-        ("sync_dt", 120),
-        ("local_site", 60),
-        ("remote_site", 60),
+        ("created_dt", 105),
+        ("sync_dt", 105),
+        ("local_site", 80),
+        ("remote_site", 80),
         ("size", 60),
         ("priority", 20),
         ("state", 90)
+    )
+
+    column_labels = (
+        ("file", "File name"),
+        ("created_dt", "Created"),
+        ("sync_dt", "Synced"),
+        ("local_site", "Active site"),
+        ("remote_site", "Remote site"),
+        ("files_size", "Size"),
+        ("priority", "Priority"),
+        ("state", "Status")
     )
 
     def __init__(self, sync_server, _id=None, project=None, parent=None):
@@ -1230,14 +1330,17 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.filter = QtWidgets.QLineEdit()
         self.filter.setPlaceholderText("Filter representation..")
 
+        self._scrollbar_pos = None
+
         top_bar_layout = QtWidgets.QHBoxLayout()
         top_bar_layout.addWidget(self.filter)
 
         self.table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
+        header_labels = [item[1] for item in self.column_labels]
 
         model = SyncRepresentationDetailModel(sync_server, headers, _id,
-                                              project)
+                                              project, header_labels)
         self.table_view.setModel(model)
         self.table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table_view.setSelectionMode(
@@ -1247,6 +1350,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.table_view.horizontalHeader().setSortIndicator(-1,
                                                             Qt.AscendingOrder)
         self.table_view.setSortingEnabled(True)
+        self.table_view.horizontalHeader().setSortIndicatorShown(True)
         self.table_view.setAlternatingRowColors(True)
         self.table_view.verticalHeader().hide()
 
@@ -1282,6 +1386,8 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.table_view.customContextMenuRequested.connect(
             self._on_context_menu)
 
+        model.refresh_started.connect(self._save_scrollbar)
+        model.refresh_finished.connect(self._set_scrollbar)
         self.table_view.model().modelReset.connect(self._set_selection)
 
         self.selection_model = self.table_view.selectionModel()
@@ -1299,7 +1405,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         """
         if self._selected_id:
             index = self.table_view.model().get_index(self._selected_id)
-            if index.isValid():
+            if index and index.isValid():
                 mode = QtCore.QItemSelectionModel.Select | \
                     QtCore.QItemSelectionModel.Rows
                 self.selection_model.setCurrentIndex(index, mode)
@@ -1330,23 +1436,39 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
         menu = QtWidgets.QMenu()
         actions_mapping = {}
+        actions_kwargs_mapping = {}
 
-        action = QtWidgets.QAction("Open in explorer")
-        actions_mapping[action] = self._open_in_explorer
-        menu.addAction(action)
+        local_site = self.item.local_site
+        local_progress = self.item.local_progress
+        remote_site = self.item.remote_site
+        remote_progress = self.item.remote_progress
+
+        for site, progress in {local_site: local_progress,
+                               remote_site: remote_progress}.items():
+            project = self.table_view.model().project
+            provider = self.sync_server.get_provider_for_site(project,
+                                                              site)
+            if provider == 'local_drive':
+                if 'studio' in site:
+                    txt = " studio version"
+                else:
+                    txt = " local version"
+                action = QtWidgets.QAction("Open in explorer" + txt)
+                if progress == 1:
+                    actions_mapping[action] = self._open_in_explorer
+                    actions_kwargs_mapping[action] = {'site': site}
+                    menu.addAction(action)
 
         if self.item.state == STATUS[1]:
             action = QtWidgets.QAction("Open error detail")
             actions_mapping[action] = self._show_detail
             menu.addAction(action)
 
-        remote_site, remote_progress = self.item.remote_site.split()
         if float(remote_progress) == 1.0:
-            action = QtWidgets.QAction("Reset local site")
+            action = QtWidgets.QAction("Reset active site")
             actions_mapping[action] = self._reset_local_site
             menu.addAction(action)
 
-        local_site, local_progress = self.item.local_site.split()
         if float(local_progress) == 1.0:
             action = QtWidgets.QAction("Reset remote site")
             actions_mapping[action] = self._reset_remote_site
@@ -1360,8 +1482,9 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
             to_run = actions_mapping[result]
+            to_run_kwargs = actions_kwargs_mapping.get(result, {})
             if to_run:
-                to_run()
+                to_run(**to_run_kwargs)
 
     def _reset_local_site(self):
         """
@@ -1369,11 +1492,12 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model()._project,
+            self.table_view.model().project,
             self.representation_id,
             'local',
             self.item._id)
-        self.table_view.model().refresh()
+        self.table_view.model().refresh(
+            load_records=self.table_view.model()._rec_loaded)
 
     def _reset_remote_site(self):
         """
@@ -1381,19 +1505,20 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model()._project,
+            self.table_view.model().project,
             self.representation_id,
             'remote',
             self.item._id)
-        self.table_view.model().refresh()
+        self.table_view.model().refresh(
+            load_records=self.table_view.model()._rec_loaded)
 
-    def _open_in_explorer(self):
+    def _open_in_explorer(self, site):
         if not self.item:
             return
 
         fpath = self.item.path
-        project = self.table_view.model()._project
-        fpath = self.sync_server.get_local_file_path(project, fpath)
+        project = self.project
+        fpath = self.sync_server.get_local_file_path(project, site, fpath)
 
         fpath = os.path.normpath(os.path.dirname(fpath))
         if os.path.isdir(fpath):
@@ -1407,6 +1532,13 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
                 except OSError:
                     raise OSError('unsupported xdg-open call??')
 
+    def _save_scrollbar(self):
+        self._scrollbar_pos = self.table_view.verticalScrollBar().value()
+
+    def _set_scrollbar(self):
+        if self._scrollbar_pos:
+            self.table_view.verticalScrollBar().setValue(self._scrollbar_pos)
+
 
 class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
     """
@@ -1414,6 +1546,8 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
 
         Used in detail window accessible after clicking on single repre in the
         summary.
+
+        TODO refactor - merge with SyncRepresentationModel if possible
 
         Args:
             sync_server (SyncServer) - object to call server operations (update
@@ -1424,7 +1558,6 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                 a specific collection
     """
     PAGE_SIZE = 30
-    # TODO add filter filename
     DEFAULT_SORT = {
         "files.path": 1
     }
@@ -1439,6 +1572,9 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         "status"  # state
     ]
 
+    refresh_started = QtCore.Signal()
+    refresh_finished = QtCore.Signal()
+
     @attr.s
     class SyncRepresentationDetail:
         """
@@ -1452,6 +1588,10 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         sync_dt = attr.ib(default=None)
         local_site = attr.ib(default=None)
         remote_site = attr.ib(default=None)
+        local_provider = attr.ib(default=None)
+        remote_provider = attr.ib(default=None)
+        local_progress = attr.ib(default=None)
+        remote_progress = attr.ib(default=None)
         size = attr.ib(default=None)
         priority = attr.ib(default=None)
         state = attr.ib(default=None)
@@ -1459,9 +1599,11 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         error = attr.ib(default=None)
         path = attr.ib(default=None)
 
-    def __init__(self, sync_server, header, _id, project=None):
+    def __init__(self, sync_server, header, _id,
+                 project=None, header_labels=None):
         super(SyncRepresentationDetailModel, self).__init__()
         self._header = header
+        self._header_labels = header_labels
         self._data = []
         self._project = project
         self._rec_loaded = 0
@@ -1473,8 +1615,8 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site = self.sync_server.get_active_site(self._project)
-        self.remote_site = self.sync_server.get_remote_site(self._project)
+        self.local_site = self.sync_server.get_active_site(self.project)
+        self.remote_site = self.sync_server.get_remote_site(self.project)
 
         self.sort = self.DEFAULT_SORT
 
@@ -1491,9 +1633,26 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
 
     @property
     def dbcon(self):
-        return self.sync_server.connection.database[self._project]
+        """
+            Database object with preselected project (collection) to run DB
+            operations (find, aggregate).
+
+            All queries should go through this (because of collection).
+        """
+        return self.sync_server.connection.database[self.project]
+
+    @property
+    def project(self):
+        """Returns project"""
+        return self._project
 
     def tick(self):
+        """
+            Triggers refresh of model.
+
+            Because of pagination, prepared (sorting, filtering) query needs
+            to be run on DB every X seconds.
+        """
         self.refresh(representations=None, load_records=self._rec_loaded)
         self.timer.start(SyncRepresentationModel.REFRESH_SEC)
 
@@ -1510,26 +1669,43 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
 
     def data(self, index, role):
         item = self._data[index.row()]
+
+        if role == ProviderRole:
+            if self._header[index.column()] == 'local_site':
+                return item.local_provider
+            if self._header[index.column()] == 'remote_site':
+                return item.remote_provider
+
+        if role == ProgressRole:
+            if self._header[index.column()] == 'local_site':
+                return item.local_progress
+            if self._header[index.column()] == 'remote_site':
+                return item.remote_progress
+
         if role == Qt.DisplayRole:
             return attr.asdict(item)[self._header[index.column()]]
         if role == Qt.UserRole:
             return item._id
 
-    def rowCount(self, index):
+    def rowCount(self, _index):
         return len(self._data)
 
-    def columnCount(self, index):
+    def columnCount(self, _index):
         return len(self._header)
 
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
-                return str(self._header[section])
+                if self._header_labels:
+                    return str(self._header_labels[section])
+                else:
+                    return str(self._header[section])
 
     def refresh(self, representations=None, load_records=0):
         if self.sync_server.is_paused():
             return
 
+        self.refresh_started.emit()
         self.beginResetModel()
         self._data = []
         self._rec_loaded = 0
@@ -1541,6 +1717,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self._add_page_records(self.local_site, self.remote_site,
                                representations)
         self.endResetModel()
+        self.refresh_finished.emit()
 
     def _add_page_records(self, local_site, remote_site, representations):
         """
@@ -1561,10 +1738,10 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         self._total_records = count
 
         local_provider = _translate_provider_for_icon(self.sync_server,
-                                                      self._project,
+                                                      self.project,
                                                       local_site)
         remote_provider = _translate_provider_for_icon(self.sync_server,
-                                                       self._project,
+                                                       self.project,
                                                        remote_site)
 
         for repre in result.get("paginatedResults"):
@@ -1585,9 +1762,9 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                         repre.get('updated_dt_remote').strftime(
                             "%Y%m%dT%H%M%SZ")
 
-                progress_remote = _convert_progress(
+                remote_progress = _convert_progress(
                     repre.get('progress_remote', '0'))
-                progress_local = _convert_progress(
+                local_progress = _convert_progress(
                     repre.get('progress_local', '0'))
 
                 errors = []
@@ -1601,8 +1778,12 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                     os.path.basename(file["path"]),
                     local_updated,
                     remote_updated,
-                    '{} {}'.format(local_provider, progress_local),
-                    '{} {}'.format(remote_provider, progress_remote),
+                    local_site,
+                    remote_site,
+                    local_provider,
+                    remote_provider,
+                    local_progress,
+                    remote_progress,
                     file.get('size', 0),
                     1,
                     STATUS[repre.get("status", -1)],
@@ -1614,7 +1795,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                 self._data.append(item)
                 self._rec_loaded += 1
 
-    def canFetchMore(self, index):
+    def canFetchMore(self, _index):
         """
             Check if there are more records than currently loaded
         """
@@ -1918,11 +2099,8 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
                              option.palette.highlight())
             painter.setOpacity(1)
 
-        d = index.data(QtCore.Qt.DisplayRole)
-        if d:
-            provider, value = d.split()
-        else:
-            return
+        provider = index.data(ProviderRole)
+        value = index.data(ProgressRole)
 
         if not self.icons.get(provider):
             resource_path = os.path.dirname(__file__)
@@ -2008,7 +2186,7 @@ class SizeDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent=None):
         super(SizeDelegate, self).__init__(parent)
 
-    def displayText(self, value, locale):
+    def displayText(self, value, _locale):
         if value is None:
             # Ignore None value
             return
