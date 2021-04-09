@@ -22,7 +22,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
     label = "Collect OTIO Review"
     order = pyblish.api.CollectorOrder - 0.57
     families = ["clip"]
-    hosts = ["resolve"]
+    hosts = ["resolve", "hiero"]
 
     def process(self, instance):
         # get basic variables

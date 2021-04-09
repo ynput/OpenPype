@@ -40,8 +40,8 @@ class ExtractOTIOReview(openpype.api.Extractor):
 
     order = api.ExtractorOrder - 0.45
     label = "Extract OTIO review"
-    hosts = ["resolve"]
     families = ["review"]
+    hosts = ["resolve", "hiero"]
 
     # plugin default attributes
     temp_file_head = "tempFile."
