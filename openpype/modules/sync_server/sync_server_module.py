@@ -85,7 +85,7 @@ class SyncServerModule(PypeModule, ITrayModule):
     LOG_PROGRESS_SEC = 5  # how often log progress to DB
 
     name = "sync_server"
-    label = "Sync Server"
+    label = "Sync Queue"
 
     def initialize(self, module_settings):
         """
