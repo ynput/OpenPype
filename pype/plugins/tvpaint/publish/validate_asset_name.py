@@ -1,5 +1,5 @@
 import pyblish.api
-from avalon.tvpaint import pipeline, lib
+from avalon.tvpaint import pipeline
 
 
 class FixAssetNames(pyblish.api.Action):
