@@ -506,7 +506,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         from Qt import QtWidgets
         """Add menu or action to Tray(or parent)'s menu"""
-        action = QtWidgets.QAction("SyncServer", parent_menu)
+        action = QtWidgets.QAction(self.label, parent_menu)
         action.triggered.connect(self.show_widget)
         parent_menu.addAction(action)
         parent_menu.addSeparator()
