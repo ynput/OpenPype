@@ -30,9 +30,9 @@ self = sys.modules[__name__]
 self._has_been_setup = False
 self._has_menu = False
 self._registered_gui = None
-self.pype_tag_name = "Pype Data"
-self.default_sequence_name = "PypeSequence"
-self.default_bin_name = "PypeBin"
+self.pype_tag_name = "openpypeData"
+self.default_sequence_name = "openpypeSequence"
+self.default_bin_name = "openpypeBin"
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -165,7 +165,7 @@ def get_track_items(
     # check if any collected track items are
     # `core.Hiero.Python.TrackItem` instance
     if track_items:
-        any_track_item = track_items.pop()
+        any_track_item = track_items[0]
         if not isinstance(any_track_item, hiero.core.TrackItem):
             selected_items = []
 
@@ -252,7 +252,7 @@ def set_track_item_pype_tag(track_item, data=None):
     # basic Tag's attribute
     tag_data = {
         "editable": "0",
-        "note": "Pype data holder",
+        "note": "OpenPype data container",
         "icon": "openpype_icon.png",
         "metadata": {k: v for k, v in data.items()}
     }
