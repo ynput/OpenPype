@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import ast
+from compiler.ast import flatten
 import opentimelineio as otio
 from . import utils
 import hiero.core
@@ -25,7 +26,20 @@ self.marker_color_map = {
     "blue": otio.schema.MarkerColor.BLUE,
 }
 self.timeline = None
-self.include_tags = None
+self.include_tags = True
+
+
+def get_current_hiero_project(remove_untitled=False):
+    projects = flatten(hiero.core.projects())
+    if not remove_untitled:
+        return next(iter(projects))
+
+    # if remove_untitled
+    for proj in projects:
+        if "Untitled" in proj.name():
+            proj.close()
+        else:
+            return proj
 
 
 def create_otio_rational_time(frame, fps):
@@ -73,9 +87,10 @@ def create_otio_reference(clip):
 
     # add resolution metadata
     metadata.update({
-        "width": int(media_source.width()),
-        "height": int(media_source.height()),
-        "pixelAspect": float(media_source.pixelAspect())
+        "openpype.source.colourtransform": clip.sourceMediaColourTransform(),
+        "openpype.source.width": int(media_source.width()),
+        "openpype.source.height": int(media_source.height()),
+        "openpype.source.pixelAspect": float(media_source.pixelAspect())
     })
 
     otio_ex_ref_item = None
@@ -219,7 +234,25 @@ def create_otio_gap(gap_start, clip_start, tl_start_frame, fps):
 
 
 def _create_otio_timeline():
+    project = get_current_hiero_project(remove_untitled=False)
     metadata = _get_metadata(self.timeline)
+
+    metadata.update({
+        "openpype.timeline.width": int(self.timeline.format().width()),
+        "openpype.timeline.height": int(self.timeline.format().height()),
+        "openpype.timeline.pixelAspect": int(self.timeline.format().pixelAspect()),  # noqa
+        "openpype.project.useOCIOEnvironmentOverride": project.useOCIOEnvironmentOverride(),  # noqa
+        "openpype.project.lutSetting16Bit": project.lutSetting16Bit(),
+        "openpype.project.lutSetting8Bit": project.lutSetting8Bit(),
+        "openpype.project.lutSettingFloat": project.lutSettingFloat(),
+        "openpype.project.lutSettingLog": project.lutSettingLog(),
+        "openpype.project.lutSettingViewer": project.lutSettingViewer(),
+        "openpype.project.lutSettingWorkingSpace": project.lutSettingWorkingSpace(),  # noqa
+        "openpype.project.lutUseOCIOForExport": project.lutUseOCIOForExport(),
+        "openpype.project.ocioConfigName": project.ocioConfigName(),
+        "openpype.project.ocioConfigPath": project.ocioConfigPath()
+    })
+
     start_time = create_otio_rational_time(
         self.timeline.timecodeStart(), self.project_fps)
 
@@ -266,7 +299,6 @@ def add_otio_metadata(otio_item, media_source, **kwargs):
 
 def create_otio_timeline():
 
-    print(">>>>>> self.include_tags: {}".format(self.include_tags))
     # get current timeline
     self.timeline = hiero.ui.activeSequence()
     self.project_fps = self.timeline.framerate().toFloat()
