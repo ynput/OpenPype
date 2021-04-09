@@ -46,7 +46,7 @@ class SyncServerWindow(QtWidgets.QDialog):
 
         self.setStyleSheet(style.load_stylesheet())
         self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
-        self.resize(1400, 800)
+        self.resize(1450, 700)
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self._hide_message)
@@ -270,8 +270,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     default_widths = (
         ("asset", 210),
         ("subset", 190),
-        ("version", 10),
-        ("representation", 90),
+        ("version", 15),
+        ("representation", 95),
         ("created_dt", 105),
         ("sync_dt", 105),
         ("local_site", 80),
@@ -279,7 +279,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         ("files_count", 50),
         ("files_size", 60),
         ("priority", 20),
-        ("state", 50)
+        ("state", 110)
     )
     column_labels = (
         ("asset", "Asset"),
@@ -1300,8 +1300,8 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         ("local_site", 80),
         ("remote_site", 80),
         ("size", 60),
-        ("priority", 20),
-        ("state", 90)
+        ("priority", 25),
+        ("state", 110)
     )
 
     column_labels = (
