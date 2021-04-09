@@ -273,10 +273,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         ("subset", 190),
         ("version", 15),
         ("representation", 95),
-        ("created_dt", 105),
-        ("sync_dt", 105),
-        ("local_site", 80),
-        ("remote_site", 80),
+        ("local_site", 185),
+        ("remote_site", 185),
         ("files_count", 50),
         ("files_size", 60),
         ("priority", 20),
@@ -287,8 +285,6 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         ("subset", "Subset"),
         ("version", "Version"),
         ("representation", "Representation"),
-        ("created_dt", "Created"),
-        ("sync_dt", "Synced"),
         ("local_site", "Active site"),
         ("remote_site", "Remote site"),
         ("files_count", "Files"),
@@ -333,11 +329,11 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.table_view.setAlternatingRowColors(True)
         self.table_view.verticalHeader().hide()
 
-        time_delegate = PrettyTimeDelegate(self)
-        column = self.table_view.model().get_header_index("created_dt")
-        self.table_view.setItemDelegateForColumn(column, time_delegate)
-        column = self.table_view.model().get_header_index("sync_dt")
-        self.table_view.setItemDelegateForColumn(column, time_delegate)
+        # time_delegate = PrettyTimeDelegate(self)
+        # column = self.table_view.model().get_header_index("created_dt")
+        # self.table_view.setItemDelegateForColumn(column, time_delegate)
+        # column = self.table_view.model().get_header_index("sync_dt")
+        # self.table_view.setItemDelegateForColumn(column, time_delegate)
 
         column = self.table_view.model().get_header_index("local_site")
         delegate = ImageDelegate(self)
@@ -345,10 +341,6 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
         column = self.table_view.model().get_header_index("remote_site")
         delegate = ImageDelegate(self)
-        self.table_view.setItemDelegateForColumn(column, delegate)
-
-        column = self.table_view.model().get_header_index("files_size")
-        delegate = SizeDelegate(self)
         self.table_view.setItemDelegateForColumn(column, delegate)
 
         for column_name, width in self.default_widths:
@@ -611,6 +603,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
 ProviderRole = QtCore.Qt.UserRole + 2
 ProgressRole = QtCore.Qt.UserRole + 4
+DateRole = QtCore.Qt.UserRole + 6
+FailedRole = QtCore.Qt.UserRole + 8
 
 
 class SyncRepresentationModel(QtCore.QAbstractTableModel):
@@ -645,8 +639,6 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
         "context.representation",  # representation
         "updated_dt_local",  # local created_dt
         "updated_dt_remote",  # remote created_dt
-        "avg_progress_local",  # local progress
-        "avg_progress_remote",  # remote progress
         "files_count",  # count of files
         "files_size",  # file size of all files
         "context.asset",  # priority TODO
@@ -734,19 +726,38 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
     def data(self, index, role):
         item = self._data[index.row()]
 
+        header_value = self._header[index.column()]
         if role == ProviderRole:
-            if self._header[index.column()] == 'local_site':
+            if header_value == 'local_site':
                 return item.local_provider
-            if self._header[index.column()] == 'remote_site':
+            if header_value == 'remote_site':
                 return item.remote_provider
 
         if role == ProgressRole:
-            if self._header[index.column()] == 'local_site':
+            if header_value == 'local_site':
                 return item.local_progress
-            if self._header[index.column()] == 'remote_site':
+            if header_value == 'remote_site':
                 return item.remote_progress
 
+        if role == DateRole:
+            if header_value == 'local_site':
+                if item.created_dt:
+                    return pretty_timestamp(item.created_dt)
+            if header_value == 'remote_site':
+                if item.sync_dt:
+                    return pretty_timestamp(item.sync_dt)
+
+        if role == FailedRole:
+            if header_value == 'local_site':
+                return item.state == STATUS[2] and item.local_progress < 1
+            if header_value == 'remote_site':
+                return item.state == STATUS[2] and item.remote_progress < 1
+
         if role == Qt.DisplayRole:
+            # because of ImageDelegate
+            if header_value in ['remote_site', 'local_site']:
+                return ""
+
             return attr.asdict(item)[self._header[index.column()]]
         if role == Qt.UserRole:
             return item._id
@@ -887,7 +898,7 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                 avg_progress_local,
                 avg_progress_remote,
                 repre.get("files_count", 1),
-                repre.get("files_size", 0),
+                _pretty_size(repre.get("files_size", 0)),
                 1,
                 STATUS[repre.get("status", -1)],
                 files[0].get('path')
@@ -1297,10 +1308,8 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
     default_widths = (
         ("file", 290),
-        ("created_dt", 105),
-        ("sync_dt", 105),
-        ("local_site", 80),
-        ("remote_site", 80),
+        ("local_site", 185),
+        ("remote_site", 185),
         ("size", 60),
         ("priority", 25),
         ("state", 110)
@@ -1308,8 +1317,6 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
     column_labels = (
         ("file", "File name"),
-        ("created_dt", "Created"),
-        ("sync_dt", "Synced"),
         ("local_site", "Active site"),
         ("remote_site", "Remote site"),
         ("files_size", "Size"),
@@ -1356,22 +1363,12 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.table_view.setAlternatingRowColors(True)
         self.table_view.verticalHeader().hide()
 
-        time_delegate = PrettyTimeDelegate(self)
-        column = self.table_view.model().get_header_index("created_dt")
-        self.table_view.setItemDelegateForColumn(column, time_delegate)
-        column = self.table_view.model().get_header_index("sync_dt")
-        self.table_view.setItemDelegateForColumn(column, time_delegate)
-
         column = self.table_view.model().get_header_index("local_site")
         delegate = ImageDelegate(self)
         self.table_view.setItemDelegateForColumn(column, delegate)
 
         column = self.table_view.model().get_header_index("remote_site")
         delegate = ImageDelegate(self)
-        self.table_view.setItemDelegateForColumn(column, delegate)
-
-        column = self.table_view.model().get_header_index("size")
-        delegate = SizeDelegate(self)
         self.table_view.setItemDelegateForColumn(column, delegate)
 
         for column_name, width in self.default_widths:
@@ -1568,8 +1565,6 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
         "files.path",
         "updated_dt_local",  # local created_dt
         "updated_dt_remote",  # remote created_dt
-        "progress_local",  # local progress
-        "progress_remote",  # remote progress
         "size",  # remote progress
         "context.asset",  # priority TODO
         "status"  # state
@@ -1673,19 +1668,37 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
     def data(self, index, role):
         item = self._data[index.row()]
 
+        header_value = self._header[index.column()]
         if role == ProviderRole:
-            if self._header[index.column()] == 'local_site':
+            if header_value == 'local_site':
                 return item.local_provider
-            if self._header[index.column()] == 'remote_site':
+            if header_value == 'remote_site':
                 return item.remote_provider
 
         if role == ProgressRole:
-            if self._header[index.column()] == 'local_site':
+            if header_value == 'local_site':
                 return item.local_progress
-            if self._header[index.column()] == 'remote_site':
+            if header_value == 'remote_site':
                 return item.remote_progress
 
+        if role == DateRole:
+            if header_value == 'local_site':
+                if item.created_dt:
+                    return pretty_timestamp(item.created_dt)
+            if header_value == 'remote_site':
+                if item.sync_dt:
+                    return pretty_timestamp(item.sync_dt)
+
+        if role == FailedRole:
+            if header_value == 'local_site':
+                return item.state == STATUS[2] and item.local_progress < 1
+            if header_value == 'remote_site':
+                return item.state == STATUS[2] and item.remote_progress < 1
+
         if role == Qt.DisplayRole:
+            # because of ImageDelegate
+            if header_value in ['remote_site', 'local_site']:
+                return ""
             return attr.asdict(item)[self._header[index.column()]]
         if role == Qt.UserRole:
             return item._id
@@ -1787,7 +1800,7 @@ class SyncRepresentationDetailModel(QtCore.QAbstractTableModel):
                     remote_provider,
                     local_progress,
                     remote_progress,
-                    file.get('size', 0),
+                    _pretty_size(file.get('size', 0)),
                     1,
                     STATUS[repre.get("status", -1)],
                     repre.get("tries"),
@@ -2092,18 +2105,14 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
         self.icons = {}
 
     def paint(self, painter, option, index):
+        super(ImageDelegate, self).paint(painter, option, index)
         option = QtWidgets.QStyleOptionViewItem(option)
         option.showDecorationSelected = True
 
-        if (option.showDecorationSelected and
-                (option.state & QtWidgets.QStyle.State_Selected)):
-            painter.setOpacity(0.20)  # highlight color is a bit off
-            painter.fillRect(option.rect,
-                             option.palette.highlight())
-            painter.setOpacity(1)
-
         provider = index.data(ProviderRole)
         value = index.data(ProgressRole)
+        date_value = index.data(DateRole)
+        is_failed = index.data(FailedRole)
 
         if not self.icons.get(provider):
             resource_path = os.path.dirname(__file__)
@@ -2115,18 +2124,24 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
         else:
             pixmap = self.icons[provider]
 
-        point = QtCore.QPoint(option.rect.x() +
-                              (option.rect.width() - pixmap.width()) / 2,
+        padding = 10
+        point = QtCore.QPoint(option.rect.x() + padding,
                               option.rect.y() +
                               (option.rect.height() - pixmap.height()) / 2)
         painter.drawPixmap(point, pixmap)
 
-        painter.setOpacity(0.5)
-        overlay_rect = option.rect
+        overlay_rect = option.rect.translated(0, 0)
         overlay_rect.setHeight(overlay_rect.height() * (1.0 - float(value)))
         painter.fillRect(overlay_rect,
-                         QtGui.QBrush(QtGui.QColor(0, 0, 0, 200)))
-        painter.setOpacity(1)
+                         QtGui.QBrush(QtGui.QColor(0, 0, 0, 100)))
+        painter.drawText(option.rect,
+                         QtCore.Qt.AlignCenter,
+                         date_value)
+
+        if is_failed:
+            overlay_rect = option.rect.translated(0, 0)
+            painter.fillRect(overlay_rect,
+                             QtGui.QBrush(QtGui.QColor(255, 0, 0, 35)))
 
 
 class SyncRepresentationErrorWindow(QtWidgets.QDialog):
@@ -2181,27 +2196,12 @@ class SyncRepresentationErrorWidget(QtWidgets.QWidget):
                       QtWidgets.QLabel(msg))
 
 
-class SizeDelegate(QtWidgets.QStyledItemDelegate):
-    """
-        Pretty print for file size
-    """
-
-    def __init__(self, parent=None):
-        super(SizeDelegate, self).__init__(parent)
-
-    def displayText(self, value, _locale):
-        if value is None:
-            # Ignore None value
-            return
-
-        return self._pretty_size(value)
-
-    def _pretty_size(self, value, suffix='B'):
-        for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
-            if abs(value) < 1024.0:
-                return "%3.1f%s%s" % (value, unit, suffix)
-            value /= 1024.0
-        return "%.1f%s%s" % (value, 'Yi', suffix)
+def _pretty_size(value, suffix='B'):
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+        if abs(value) < 1024.0:
+            return "%3.1f%s%s" % (value, unit, suffix)
+        value /= 1024.0
+    return "%.1f%s%s" % (value, 'Yi', suffix)
 
 
 def _convert_progress(value):
