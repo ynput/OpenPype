@@ -203,6 +203,7 @@ class SyncProjectListWidget(ProjectListWidget):
         self.project_name = point_index.data(QtCore.Qt.DisplayRole)
 
         menu = QtWidgets.QMenu()
+        menu.setStyleSheet(style.load_stylesheet())
         actions_mapping = {}
 
         if self.sync_server.is_project_paused(self.project_name):
@@ -415,6 +416,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
                   format(self.representation_id))
 
         menu = QtWidgets.QMenu()
+        menu.setStyleSheet(style.load_stylesheet())
         actions_mapping = {}
         actions_kwargs_mapping = {}
 
@@ -461,12 +463,12 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         #     menu.addAction(action)
 
         if remote_progress == 1.0:
-            action = QtWidgets.QAction("Reset local site")
+            action = QtWidgets.QAction("Re-sync Active site")
             actions_mapping[action] = self._reset_local_site
             menu.addAction(action)
 
         if local_progress == 1.0:
-            action = QtWidgets.QAction("Reset remote site")
+            action = QtWidgets.QAction("Re-sync Remote site")
             actions_mapping[action] = self._reset_remote_site
             menu.addAction(action)
 
@@ -1435,6 +1437,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.item = self.table_view.model()._data[point_index.row()]
 
         menu = QtWidgets.QMenu()
+        menu.setStyleSheet(style.load_stylesheet())
         actions_mapping = {}
         actions_kwargs_mapping = {}
 
