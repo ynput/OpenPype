@@ -9,7 +9,7 @@ class PrePython2Support(PreLaunchHook):
     Path to vendor modules is added to the beggining of PYTHONPATH.
     """
     # There will be needed more granular filtering in future
-    app_groups = ["maya", "nuke", "nukex", "hiero", "nukestudio"]
+    app_groups = ["maya", "nuke", "nukex", "hiero", "nukestudio", "unreal"]
 
     def execute(self):
         # Prepare vendor dir path
