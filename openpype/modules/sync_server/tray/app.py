@@ -22,8 +22,8 @@ log = PypeLogger().get_logger("SyncServer")
 
 STATUS = {
     0: 'In Progress',
-    1: 'Failed',
-    2: 'Queued',
+    1: 'Queued',
+    2: 'Failed',
     3: 'Paused',
     4: 'Synced OK',
     -1: 'Not available'
@@ -445,7 +445,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         else:
             self.site_name = remote_site
 
-        if self.item.state in [STATUS[0], STATUS[2]]:
+        if self.item.state in [STATUS[0], STATUS[1]]:
             action = QtWidgets.QAction("Pause")
             actions_mapping[action] = self._pause
             menu.addAction(action)
@@ -1212,12 +1212,12 @@ class SyncRepresentationModel(QtCore.QAbstractTableModel):
                                     {'$gte': ['$failed_local_tries', 3]},
                                     {'$gte': ['$failed_remote_tries', 3]}
                                 ]},
-                            'then': 1},
+                            'then': 2},  # Failed
                         {
                             'case': {
                                 '$or': [{'$eq': ['$avg_progress_remote', 0]},
                                         {'$eq': ['$avg_progress_local', 0]}]},
-                            'then': 2  # Queued
+                            'then': 1  # Queued
                         },
                         {
                             'case': {'$or': [{'$and': [
@@ -1459,7 +1459,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
                     actions_kwargs_mapping[action] = {'site': site}
                     menu.addAction(action)
 
-        if self.item.state == STATUS[1]:
+        if self.item.state == STATUS[2]:
             action = QtWidgets.QAction("Open error detail")
             actions_mapping[action] = self._show_detail
             menu.addAction(action)
