@@ -67,6 +67,12 @@
             ]
         },
         {
+            "type": "dict-modifiable",
+            "key": "task_short_names",
+            "label": "Default task short names (by Task type)",
+            "object_type": "text"
+        },
+        {
             "key": "custom_attributes",
             "label": "Custom Attributes",
             "type": "dict",
