@@ -21,22 +21,6 @@
             },
             "default": "-"
         },
-        "task_short_names": {
-            "Generic": "gener",
-            "Art": "art",
-            "Modeling": "mdl",
-            "Texture": "tex",
-            "Lookdev": "look",
-            "Rigging": "rig",
-            "Edit": "edit",
-            "Layout": "lay",
-            "Setdress": "dress",
-            "Animation": "anim",
-            "FX": "fx",
-            "Lighting": "lgt",
-            "Paint": "paint",
-            "Compositing": "comp"
-        },
         "custom_attributes": {
             "show": {
                 "avalon_auto_sync": {
