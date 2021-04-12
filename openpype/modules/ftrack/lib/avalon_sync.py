@@ -1035,31 +1035,13 @@ class SyncEntitiesFactory:
                     copy.deepcopy(prepared_avalon_attr_ca_id)
                 )
 
-        # TODO query custom attributes by entity_id
-        entity_ids_joined = ", ".join([
-            "\"{}\"".format(id) for id in sync_ids
-        ])
-        attributes_joined = ", ".join([
-            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
-        ])
-
-        cust_attr_query = (
-            "select value, configuration_id, entity_id"
-            " from ContextCustomAttributeValue"
-            " where entity_id in ({}) and configuration_id in ({})"
+        items = self._query_custom_attributes(
+            self.session,
+            list(attribute_key_by_id.keys()),
+            sync_ids
         )
-        call_expr = [{
-            "action": "query",
-            "expression": cust_attr_query.format(
-                entity_ids_joined, attributes_joined
-            )
-        }]
-        if hasattr(self.session, "call"):
-            [values] = self.session.call(call_expr)
-        else:
-            [values] = self.session._call(call_expr)
 
-        for item in values["data"]:
+        for item in items:
             entity_id = item["entity_id"]
             attr_id = item["configuration_id"]
             key = attribute_key_by_id[attr_id]
@@ -1141,28 +1123,14 @@ class SyncEntitiesFactory:
             for key, val in prepare_dict_avalon.items():
                 entity_dict["avalon_attrs"][key] = val
 
-        # Prepare values to query
-        entity_ids_joined = ", ".join([
-            "\"{}\"".format(id) for id in sync_ids
-        ])
-        attributes_joined = ", ".join([
-            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
-        ])
-        avalon_hier = []
-        call_expr = [{
-            "action": "query",
-            "expression": (
-                "select value, entity_id, configuration_id"
-                " from ContextCustomAttributeValue"
-                " where entity_id in ({}) and configuration_id in ({})"
-            ).format(entity_ids_joined, attributes_joined)
-        }]
-        if hasattr(self.session, "call"):
-            [values] = self.session.call(call_expr)
-        else:
-            [values] = self.session._call(call_expr)
+        items = self._query_custom_attributes(
+            self.session,
+            list(attribute_key_by_id.keys()),
+            sync_ids
+        )
 
-        for item in values["data"]:
+        avalon_hier = []
+        for item in items:
             value = item["value"]
             # WARNING It is not possible to propage enumerate hierachical
             # attributes with multiselection 100% right. Unseting all values
