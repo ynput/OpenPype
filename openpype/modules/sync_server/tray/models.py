@@ -2,7 +2,7 @@ import os
 import attr
 from bson.objectid import ObjectId
 
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtCore
 from Qt.QtCore import Qt
 
 from avalon.tools.delegates import pretty_timestamp
@@ -610,9 +610,9 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 context.representation  names AND _id (ObjectId)
         """
         base_match = {
-                "type": "representation",
-                'files.sites.name': {'$all': [self.local_site,
-                                              self.remote_site]}
+            "type": "representation",
+            'files.sites.name': {'$all': [self.local_site,
+                                          self.remote_site]}
         }
         if not self.word_filter:
             return base_match

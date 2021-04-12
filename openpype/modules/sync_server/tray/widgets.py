@@ -173,8 +173,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
 
-        model = SyncRepresentationSummaryModel(sync_server, headers,
-                                        project)
+        model = SyncRepresentationSummaryModel(sync_server, headers, project)
         self.table_view.setModel(model)
         self.table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table_view.setSelectionMode(
@@ -218,7 +217,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
 
-    def _selection_changed(self, new_selection):
+    def _selection_changed(self, _new_selection):
         index = self.selection_model.currentIndex()
         self._selected_id = \
             self.table_view.model().data(index, Qt.UserRole)
@@ -390,8 +389,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
                 self.table_view.model().project,
                 self.representation_id,
                 local_site,
-                True
-                )
+                True)
             self.message_generated.emit("Site {} removed".format(local_site))
         except ValueError as exp:
             self.message_generated.emit("Error {}".format(str(exp)))
@@ -406,8 +404,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.sync_server.reset_provider_for_file(
             self.table_view.model().project,
             self.representation_id,
-            'local'
-            )
+            'local')
         self.table_view.model().refresh(
             load_records=self.table_view.model()._rec_loaded)
 
@@ -419,8 +416,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.sync_server.reset_provider_for_file(
             self.table_view.model().project,
             self.representation_id,
-            'remote'
-            )
+            'remote')
         self.table_view.model().refresh(
             load_records=self.table_view.model()._rec_loaded)
 
@@ -694,7 +690,7 @@ class SyncRepresentationErrorWidget(QtWidgets.QWidget):
         Dialog to show when sync error happened, prints error message
     """
 
-    def __init__(self, _id, project, dt, tries, msg, parent=None):
+    def __init__(self, _id, dt, tries, msg, parent=None):
         super(SyncRepresentationErrorWidget, self).__init__(parent)
 
         layout = QtWidgets.QFormLayout(self)
@@ -806,7 +802,7 @@ class SyncRepresentationErrorWindow(QtWidgets.QDialog):
         footer = QtWidgets.QWidget()
         footer.setFixedHeight(20)
 
-        container = SyncRepresentationErrorWidget(_id, project, dt, tries, msg,
+        container = SyncRepresentationErrorWidget(_id, dt, tries, msg,
                                                   parent=self)
         body_layout = QtWidgets.QHBoxLayout(body)
         body_layout.addWidget(container)
