@@ -13,7 +13,7 @@ class CollectFusionRenderMode(pyblish.api.InstancePlugin):
     available tool does not visualize which render mode is set for the
     current comp, please run the following line in the console (Py2)
 
-    comp.GetData("pype.rendermode")
+    comp.GetData("openpype.rendermode")
 
     This will return the name of the current render mode as seen above under
     Options.
@@ -34,7 +34,7 @@ class CollectFusionRenderMode(pyblish.api.InstancePlugin):
             raise RuntimeError("No comp previously collected, unable to "
                                "retrieve Fusion version.")
 
-        rendermode = comp.GetData("pype.rendermode") or "local"
+        rendermode = comp.GetData("openpype.rendermode") or "local"
         assert rendermode in options, "Must be supported render mode"
 
         self.log.info("Render mode: {0}".format(rendermode))

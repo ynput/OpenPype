@@ -67,7 +67,7 @@ coverage.xml
 
 # Node JS packages
 ##################
-node_modules/
+node_modules
 package-lock.json
 
 openpype/premiere/ppro/js/debug.log
@@ -82,3 +82,14 @@ openpype/premiere/ppro/js/debug.log
 .env
 dump.sql
 test_localsystem.txt
+
+# website
+##########
+website/translated_docs
+website/build/
+website/node_modules
+website/i18n/*
+
+website/debug.log
+
+website/.docusaurus

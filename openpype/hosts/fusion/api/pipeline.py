@@ -39,7 +39,7 @@ def install():
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
 
-    log.info("pype.hosts.fusion installed")
+    log.info("openpype.hosts.fusion installed")
 
     pyblish.register_host("fusion")
     pyblish.register_plugin_path(PUBLISH_PATH)

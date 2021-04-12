@@ -226,7 +226,16 @@ class DictMutableKeysEntity(EndpointEntity):
             self.is_group = True
 
     def schema_validations(self):
+        # Allow to have not set label if keys are collapsible
+        # - this it to bypass label validation
+        used_temp_label = False
+        if self.is_group and not self.label and self.collapsible_key:
+            used_temp_label = True
+            self.label = "LABEL"
+
         super(DictMutableKeysEntity, self).schema_validations()
+        if used_temp_label:
+            self.label = None
 
         if not self.schema_data.get("object_type"):
             reason = (

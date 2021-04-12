@@ -363,7 +363,7 @@ class PypeInfoWidget(QtWidgets.QWidget):
             "version_value": "OpenPype version:",
             "executable": "OpenPype executable:",
             "pype_root": "OpenPype location:",
-            "mongo_url": "OpenPype  Mongo URL:"
+            "mongo_url": "OpenPype Mongo URL:"
         }
         # Prepare keys order
         keys_order = ["version_value", "executable", "pype_root", "mongo_url"]

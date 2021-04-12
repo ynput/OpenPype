@@ -51,9 +51,18 @@ def set_start_end_frames():
         "name": asset_name
     })
 
-    bpy.context.scene.frame_start = asset_doc["data"]["frameStart"]
-    bpy.context.scene.frame_end = asset_doc["data"]["frameEnd"]
+    # Default frame start/end
+    frameStart = 0
+    frameEnd = 100
 
+    # Check if frameStart/frameEnd are set
+    if asset_doc["data"]["frameStart"]:
+        frameStart = asset_doc["data"]["frameStart"]
+    if asset_doc["data"]["frameEnd"]:
+        frameEnd = asset_doc["data"]["frameEnd"]
+
+    bpy.context.scene.frame_start = frameStart
+    bpy.context.scene.frame_end = frameEnd
 
 def on_new(arg1, arg2):
     set_start_end_frames()

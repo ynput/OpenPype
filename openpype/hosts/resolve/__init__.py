@@ -11,7 +11,9 @@ from .api.pipeline import (
     update_container,
     publish,
     launch_workfiles_app,
-    maintained_selection
+    maintained_selection,
+    remove_instance,
+    list_instances
 )
 
 from .api.lib import (
@@ -73,6 +75,8 @@ __all__ = [
     "publish",
     "launch_workfiles_app",
     "maintained_selection",
+    "remove_instance",
+    "list_instances",
 
     # utils
     "setup",

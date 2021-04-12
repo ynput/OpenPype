@@ -10,10 +10,6 @@
       "name": "schema_maya"
     },
     {
-      "type": "schema",
-      "name": "schema_mayabatch"
-    },
-    {
       "type": "schema_template",
       "name": "template_nuke",
       "template_data": {

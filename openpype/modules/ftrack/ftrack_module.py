@@ -42,7 +42,7 @@ class FtrackModule(
         ftrack_settings = settings[self.name]
 
         self.enabled = ftrack_settings["enabled"]
-        self.ftrack_url = ftrack_settings["ftrack_server"]
+        self.ftrack_url = ftrack_settings["ftrack_server"].strip("/ ")
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         server_event_handlers_paths = [
@@ -210,3 +210,7 @@ class FtrackModule(
 
     def tray_exit(self):
         return self.tray_module.stop_action_server()
+
+    def set_credentials_to_env(self, username, api_key):
+        os.environ["FTRACK_API_USER"] = username or ""
+        os.environ["FTRACK_API_KEY"] = api_key or ""
