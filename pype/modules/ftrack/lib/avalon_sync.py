@@ -1097,10 +1097,10 @@ class SyncEntitiesFactory:
                     "where entity_id in ({}) and configuration_id in ({})"
                 ).format(entity_ids_joined, attributes_joined)
             }]
-            if hasattr(self.session, "call"):
-                [result] = self.session.call(call_expr)
+            if hasattr(session, "call"):
+                [result] = session.call(call_expr)
             else:
-                [result] = self.session._call(call_expr)
+                [result] = session._call(call_expr)
 
             for item in result["data"]:
                 output.append(item)
