@@ -664,8 +664,7 @@ class WorkfileSettings(object):
         ]
 
         erased_viewers = []
-        for v in [n for n in self._nodes
-                  if "Viewer" in n.Class()]:
+        for v in [n for n in nuke.allNodes(filter="Viewer")]:
             v['viewerProcess'].setValue(str(viewer_dict["viewerProcess"]))
             if str(viewer_dict["viewerProcess"]) \
                     not in v['viewerProcess'].value():
