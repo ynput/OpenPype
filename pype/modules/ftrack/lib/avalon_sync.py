@@ -1079,12 +1079,8 @@ class SyncEntitiesFactory:
         ])
         attributes_len = len(conf_ids)
         chunk_size = int(5000 / attributes_len)
-        if chunk_size < 1:
-            chunk_size = 1
-        for idx in range(0, attributes_len, chunk_size):
+        for idx in range(0, len(entity_ids), chunk_size):
             _entity_ids = entity_ids[idx:idx + chunk_size]
-            if not _entity_ids:
-                continue
             entity_ids_joined = ", ".join([
                 "\"{}\"".format(entity_id)
                 for entity_id in _entity_ids
