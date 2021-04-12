@@ -1,8 +1,12 @@
 import os
 import json
 
-from openpype.modules.ftrack.lib import BaseAction, statics_icon
-from openpype.api import config, Anatomy
+from openpype.api import config, ProjectSettings
+
+from openpype.modules.ftrack.lib import (
+    BaseAction,
+    statics_icon
+)
 from openpype.modules.ftrack.lib.avalon_sync import (
     get_pype_attr,
     CUST_ATTR_AUTO_SYNC
@@ -50,11 +54,20 @@ class PrepareProject(BaseAction):
         project_entity = entities[0]
         project_name = project_entity["full_name"]
 
-        root_items = self.prepare_root_items(project_name)
+        try:
+            project_settings = ProjectSettings(project_name)
+        except ValueError:
+            return {
+                "message": "Project is not synchronized yet",
+                "success": False
+            }
 
-        # ca_items, multiselect_enumerators = (
-        #     self.prepare_custom_attribute_items(project_defaults)
-        # )
+        project_anatom_settings = project_settings["project_anatomy"]
+        root_items = self.prepare_root_items(project_anatom_settings)
+
+        ca_items, multiselect_enumerators = (
+            self.prepare_custom_attribute_items(project_anatom_settings)
+        )
 
         self.log.debug("Heavy items are ready. Preparing last items group.")
 
@@ -83,7 +96,7 @@ class PrepareProject(BaseAction):
             "value": "<h3>Set basic Attributes:</h3>"
         })
 
-        # items.extend(ca_items)
+        items.extend(ca_items)
 
         # This item will be last (before enumerators)
         # - sets value of auto synchronization
@@ -100,22 +113,19 @@ class PrepareProject(BaseAction):
         # Add autosync attribute
         items.append(auto_sync_item)
 
-        # # Add enumerator items at the end
-        # for item in multiselect_enumerators:
-        #     items.append(item)
+        # Add enumerator items at the end
+        for item in multiselect_enumerators:
+            items.append(item)
 
         return {
             "items": items,
             "title": title
         }
 
-    def prepare_root_items(self, project_name):
-        root_items = []
+    def prepare_root_items(self, project_anatom_settings):
         self.log.debug("Root items preparation begins.")
-        anatomy = Anatomy(project_name)
-        root_names = anatomy.root_names()
-        roots = anatomy.roots
 
+        root_items = []
         root_items.append({
             "type": "label",
             "value": "<h3>Check your Project root settings</h3>"
@@ -135,84 +145,39 @@ class PrepareProject(BaseAction):
             )
         })
 
-        default_roots = anatomy.roots
-        while isinstance(default_roots, dict):
-            key = tuple(default_roots.keys())[0]
-            default_roots = default_roots[key]
-
         empty_text = "Enter root path here..."
 
-        # Root names is None when anatomy templates contain "{root}"
-        all_platforms = ["windows", "linux", "darwin"]
-        if root_names is None:
-            root_items.append(self.item_splitter)
-            # find first possible key
-            for platform in all_platforms:
-                value = default_roots.raw_data.get(platform) or ""
-                root_items.append({
-                    "label": platform,
-                    "name": "__root__{}".format(platform),
-                    "type": "text",
-                    "value": value,
-                    "empty_text": empty_text
-                })
-            return root_items
-
-        root_name_data = {}
-        missing_roots = []
-        for root_name in root_names:
-            root_name_data[root_name] = {}
-            if not isinstance(roots, dict):
-                missing_roots.append(root_name)
-                continue
-
-            root_item = roots.get(root_name)
-            if not root_item:
-                missing_roots.append(root_name)
-                continue
-
-            for platform in all_platforms:
-                root_name_data[root_name][platform] = (
-                    root_item.raw_data.get(platform) or ""
-                )
-
-        if missing_roots:
-            default_values = {}
-            for platform in all_platforms:
-                default_values[platform] = (
-                    default_roots.raw_data.get(platform) or ""
-                )
-
-            for root_name in missing_roots:
-                root_name_data[root_name] = default_values
-
-        root_names = list(root_name_data.keys())
-        root_items.append({
-            "type": "hidden",
-            "name": "__rootnames__",
-            "value": json.dumps(root_names)
-        })
-
-        for root_name, values in root_name_data.items():
+        roots_entity = project_anatom_settings["roots"]
+        for root_name, root_entity in roots_entity.items():
             root_items.append(self.item_splitter)
             root_items.append({
                 "type": "label",
                 "value": "Root: \"{}\"".format(root_name)
             })
-            for platform, value in values.items():
+            for platform_name, value_entity in root_entity.items():
                 root_items.append({
-                    "label": platform,
-                    "name": "__root__{}{}".format(root_name, platform),
+                    "label": platform_name,
+                    "name": "__root__{}{}".format(root_name, platform_name),
                     "type": "text",
-                    "value": value,
+                    "value": value_entity.value,
                     "empty_text": empty_text
                 })
+
+        root_items.append({
+            "type": "hidden",
+            "name": "__rootnames__",
+            "value": json.dumps(list(roots_entity.keys()))
+        })
 
         self.log.debug("Root items preparation ended.")
         return root_items
 
-    def _attributes_to_set(self, project_defaults):
+    def _attributes_to_set(self, project_anatom_settings):
         attributes_to_set = {}
+
+        attribute_values_by_key = {}
+        for key, entity in project_anatom_settings["attributes"].items():
+            attribute_values_by_key[key] = entity.value
 
         cust_attrs, hier_cust_attrs = get_pype_attr(self.session, True)
 
@@ -223,7 +188,7 @@ class PrepareProject(BaseAction):
             attributes_to_set[key] = {
                 "label": attr["label"],
                 "object": attr,
-                "default": project_defaults.get(key)
+                "default": attribute_values_by_key.get(key)
             }
 
         for attr in cust_attrs:
@@ -235,7 +200,7 @@ class PrepareProject(BaseAction):
             attributes_to_set[key] = {
                 "label": attr["label"],
                 "object": attr,
-                "default": project_defaults.get(key)
+                "default": attribute_values_by_key.get(key)
             }
 
         # Sort by label
@@ -245,10 +210,10 @@ class PrepareProject(BaseAction):
         ))
         return attributes_to_set
 
-    def prepare_custom_attribute_items(self, project_defaults):
+    def prepare_custom_attribute_items(self, project_anatom_settings):
         items = []
         multiselect_enumerators = []
-        attributes_to_set = self._attributes_to_set(project_defaults)
+        attributes_to_set = self._attributes_to_set(project_anatom_settings)
 
         self.log.debug("Preparing interface for keys: \"{}\"".format(
             str([key for key in attributes_to_set])
