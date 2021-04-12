@@ -1256,19 +1256,21 @@ class SyncEntitiesFactory:
                     if not msg or not items:
                         continue
                     self.report_items["warning"][msg] = items
-                tasks = {}
-                for task_type in task_types:
-                    task_type_name = task_type["name"]
-                    # Set short name to empty string
-                    # QUESTION Maybe better would be to lower and remove spaces
-                    #   from task type name.
-                    tasks[task_type_name] = {
-                        "short_name": ""
-                    }
 
                 current_project_anatomy_data = get_anatomy_settings(
                     project_name, exclude_locals=True
                 )
+                anatomy_tasks = current_project_anatomy_data["tasks"]
+                tasks = {}
+                default_type_data = {
+                    "short_name": ""
+                }
+                for task_type in task_types:
+                    task_type_name = task_type["name"]
+                    tasks[task_type_name] = copy.deepcopy(
+                        anatomy_tasks.get(task_type_name)
+                        or default_type_data
+                    )
 
                 project_config = {
                     "tasks": tasks,
