@@ -3,7 +3,10 @@ import json
 
 from openpype.modules.ftrack.lib import BaseAction, statics_icon
 from openpype.api import config, Anatomy
-from openpype.modules.ftrack.lib.avalon_sync import get_pype_attr
+from openpype.modules.ftrack.lib.avalon_sync import (
+    get_pype_attr,
+    CUST_ATTR_AUTO_SYNC
+)
 
 
 class PrepareProject(BaseAction):
@@ -44,24 +47,10 @@ class PrepareProject(BaseAction):
 
         self.log.debug("Loading custom attributes")
 
-        project_name = entities[0]["full_name"]
+        project_entity = entities[0]
+        project_name = project_entity["full_name"]
 
-        project_defaults = (
-            config.get_presets(project_name)
-            .get("ftrack", {})
-            .get("project_defaults", {})
-        )
-
-        anatomy = Anatomy(project_name)
-        if not anatomy.roots:
-            return {
-                "success": False,
-                "message": (
-                    "Have issues with loading Roots for project \"{}\"."
-                ).format(anatomy.project_name)
-            }
-
-        root_items = self.prepare_root_items(anatomy)
+        root_items = self.prepare_root_items(project_name)
 
         # ca_items, multiselect_enumerators = (
         #     self.prepare_custom_attribute_items(project_defaults)
@@ -99,10 +88,13 @@ class PrepareProject(BaseAction):
         # This item will be last (before enumerators)
         # - sets value of auto synchronization
         auto_sync_name = "avalon_auto_sync"
+        auto_sync_value = project_entity["custom_attributes"].get(
+            CUST_ATTR_AUTO_SYNC, False
+        )
         auto_sync_item = {
             "name": auto_sync_name,
             "type": "boolean",
-            "value": project_defaults.get(auto_sync_name, False),
+            "value": auto_sync_value,
             "label": "AutoSync to Avalon"
         }
         # Add autosync attribute
@@ -117,10 +109,10 @@ class PrepareProject(BaseAction):
             "title": title
         }
 
-    def prepare_root_items(self, anatomy):
+    def prepare_root_items(self, project_name):
         root_items = []
         self.log.debug("Root items preparation begins.")
-
+        anatomy = Anatomy(project_name)
         root_names = anatomy.root_names()
         roots = anatomy.roots
 
