@@ -28,7 +28,6 @@ class PrepareProject(BaseAction):
     settings_key = "prepare_project"
 
     # Key to store info about trigerring create folder structure
-    create_project_structure_key = "create_folder_structure"
     item_splitter = {'type': 'label', 'value': '---'}
 
     def discover(self, session, entities, event):
@@ -76,19 +75,6 @@ class PrepareProject(BaseAction):
 
         # Add root items
         items.extend(root_items)
-        items.append(self.item_splitter)
-
-        # Ask if want to trigger Action Create Folder Structure
-        items.append({
-            "type": "label",
-            "value": "<h3>Want to create basic Folder Structure?</h3>"
-        })
-        items.append({
-            "name": self.create_project_structure_key,
-            "type": "boolean",
-            "value": False,
-            "label": "Check if Yes"
-        })
 
         items.append(self.item_splitter)
         items.append({
@@ -157,7 +143,7 @@ class PrepareProject(BaseAction):
             for platform_name, value_entity in root_entity.items():
                 root_items.append({
                     "label": platform_name,
-                    "name": "__root__{}{}".format(root_name, platform_name),
+                    "name": "__root__{}__{}".format(root_name, platform_name),
                     "type": "text",
                     "value": value_entity.value,
                     "empty_text": empty_text
@@ -320,24 +306,15 @@ class PrepareProject(BaseAction):
 
         root_names = in_data.pop("__rootnames__", None)
         root_data = {}
-        if root_names:
-            for root_name in json.loads(root_names):
-                root_data[root_name] = {}
-                for key, value in tuple(root_values.items()):
-                    if key.startswith(root_name):
-                        _key = key[len(root_name):]
-                        root_data[root_name][_key] = value
+        for root_name in json.loads(root_names):
+            root_data[root_name] = {}
+            for key, value in tuple(root_values.items()):
+                prefix = "{}__".format(root_name)
+                if not key.startswith(prefix):
+                    continue
 
-        else:
-            for key, value in root_values.items():
-                root_data[key] = value
-
-        # TODO implement creating of anatomy for new projects
-        # project_name = entities[0]["full_name"]
-        # anatomy = Anatomy(project_name)
-
-        # pop out info about creating project structure
-        create_proj_struct = in_data.pop(self.create_project_structure_key)
+                _key = key[len(prefix):]
+                root_data[root_name][_key] = value
 
         # Find hidden items for multiselect enumerators
         keys_to_process = []
@@ -364,52 +341,29 @@ class PrepareProject(BaseAction):
                     new_key = item.replace(name, "")
                     in_data[key].append(new_key)
 
-        self.log.debug("Setting Custom Attribute values:")
-        entity = entities[0]
+        self.log.debug("Setting Custom Attribute values")
+
+        project_name = entities[0]["full_name"]
+        project_settings = ProjectSettings(project_name)
+        project_anatomy_settings = project_settings["project_anatomy"]
+        project_anatomy_settings["roots"] = root_data
+
+        custom_attribute_values = {}
+        attributes_entity = project_anatomy_settings["attributes"]
         for key, value in in_data.items():
+            if key not in attributes_entity:
+                custom_attribute_values[key] = value
+            else:
+                attributes_entity[key] = value
+
+        project_settings.save()
+
+        entity = entities[0]
+        for key, value in custom_attribute_values.items():
             entity["custom_attributes"][key] = value
             self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
 
-        session.commit()
-
-        # Create project structure
-        self.create_project_specific_config(entities[0]["full_name"], in_data)
-
-        # Trigger Create Project Structure action
-        if create_proj_struct is True:
-            self.trigger_action("create.project.structure", event)
-
         return True
-
-    def create_project_specific_config(self, project_name, json_data):
-        self.log.debug("*** Creating project specifig configs ***")
-        project_specific_path = project_overrides_dir_path(project_name)
-        if not os.path.exists(project_specific_path):
-            os.makedirs(project_specific_path)
-            self.log.debug((
-                "Project specific config folder for project \"{}\" created."
-            ).format(project_name))
-
-        # Presets ####################################
-        self.log.debug("--- Processing Presets Begins: ---")
-
-        project_defaults_dir = os.path.normpath(os.path.join(
-            project_specific_path, "presets", "ftrack"
-        ))
-        project_defaults_path = os.path.normpath(os.path.join(
-            project_defaults_dir, "project_defaults.json"
-        ))
-        # Create folder if not exist
-        if not os.path.exists(project_defaults_dir):
-            self.log.debug("Creating Ftrack Presets folder: \"{}\"".format(
-                project_defaults_dir
-            ))
-            os.makedirs(project_defaults_dir)
-
-        with open(project_defaults_path, 'w') as file_stream:
-            json.dump(json_data, file_stream, indent=4)
-
-        self.log.debug("*** Creating project specifig configs Finished ***")
 
 
 def register(session):
