@@ -27,12 +27,11 @@ class ProjectModel(QtCore.QAbstractListModel):
             # Return the todo text only.
             return text
 
-    def rowCount(self, index):
+    def rowCount(self, _index):
         return len(self.todos)
 
     def columnCount(self, _index):
         return len(self._header)
-
 
 
 class _SyncRepresentationModel(QtCore.QAbstractTableModel):
@@ -108,7 +107,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             representations = self.dbcon.aggregate(self.query)
 
         self.add_page_records(self.local_site, self.remote_site,
-                               representations)
+                              representations)
         self.endResetModel()
         self.refresh_finished.emit()
 
@@ -146,7 +145,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                              self._rec_loaded + items_to_fetch - 1)
 
         self.add_page_records(self.local_site, self.remote_site,
-                               representations)
+                              representations)
 
         self.endInsertRows()
 
@@ -221,6 +220,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             if value == id:
                 return index
         return None
+
 
 class SyncRepresentationSummaryModel(_SyncRepresentationModel):
     """
@@ -372,7 +372,6 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         if role == Qt.UserRole:
             return item._id
 
-
     def add_page_records(self, local_site, remote_site, representations):
         """
             Process all records from 'representation' and add them to storage.
@@ -391,11 +390,11 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self._total_records = count
 
         local_provider = lib.translate_provider_for_icon(self.sync_server,
-                                                      self.project,
-                                                      local_site)
+                                                         self.project,
+                                                         local_site)
         remote_provider = lib.translate_provider_for_icon(self.sync_server,
-                                                       self.project,
-                                                       remote_site)
+                                                          self.project,
+                                                          remote_site)
 
         for repre in result.get("paginatedResults"):
             context = repre.get("context").pop()
@@ -620,10 +619,10 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         else:
             regex_str = '.*{}.*'.format(self.word_filter)
             base_match['$or'] = [
-                    {'context.subset': {'$regex': regex_str, '$options': 'i'}},
-                    {'context.asset': {'$regex': regex_str, '$options': 'i'}},
-                    {'context.representation': {'$regex': regex_str,
-                                                '$options': 'i'}}]
+                {'context.subset': {'$regex': regex_str, '$options': 'i'}},
+                {'context.asset': {'$regex': regex_str, '$options': 'i'}},
+                {'context.representation': {'$regex': regex_str,
+                                            '$options': 'i'}}]
 
             if ObjectId.is_valid(self.word_filter):
                 base_match['$or'] = [{'_id': ObjectId(self.word_filter)}]
@@ -853,11 +852,11 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self._total_records = count
 
         local_provider = lib.translate_provider_for_icon(self.sync_server,
-                                                      self.project,
-                                                      local_site)
+                                                         self.project,
+                                                         local_site)
         remote_provider = lib.translate_provider_for_icon(self.sync_server,
-                                                       self.project,
-                                                       remote_site)
+                                                          self.project,
+                                                          remote_site)
 
         for repre in result.get("paginatedResults"):
             # log.info("!!! repre:: {}".format(repre))
