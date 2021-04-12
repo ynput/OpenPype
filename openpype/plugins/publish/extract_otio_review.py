@@ -188,7 +188,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
         # creating and registering representation
         representation = self._create_representation(start, duration)
         instance.data["representations"].append(representation)
-        self.log.info(f"Adding representation: {representation}")
+        self.log.info("Adding representation: {}".format(representation))
 
     def _create_representation(self, start, duration):
         """
@@ -388,7 +388,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
                                (int(end_offset + duration) + 1)):
                 seq_number = padding.format(start_frame + index)
                 self.log.debug(
-                    f"index: `{index}` | seq_number: `{seq_number}`")
+                    "index: `{}` | seq_number: `{}`".format(index, seq_number))
                 new_frames.append(int(seq_number))
             new_frames += self.used_frames
             self.used_frames = new_frames
