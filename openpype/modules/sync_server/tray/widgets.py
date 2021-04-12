@@ -693,13 +693,16 @@ class SyncRepresentationErrorWidget(QtWidgets.QWidget):
     def __init__(self, _id, dt, tries, msg, parent=None):
         super(SyncRepresentationErrorWidget, self).__init__(parent)
 
-        layout = QtWidgets.QFormLayout(self)
-        layout.addRow(QtWidgets.QLabel("Last update date"),
-                      QtWidgets.QLabel(pretty_timestamp(dt)))
-        layout.addRow(QtWidgets.QLabel("Retries"),
-                      QtWidgets.QLabel(str(tries)))
-        layout.addRow(QtWidgets.QLabel("Error message"),
-                      QtWidgets.QLabel(msg))
+        layout = QtWidgets.QHBoxLayout(self)
+
+        txts = []
+        txts.append("{}: {}".format("Last update date", pretty_timestamp(dt)))
+        txts.append("{}: {}".format("Retries", str(tries)))
+        txts.append("{}: {}".format("Error message", msg))
+
+        text_area = QtWidgets.QPlainTextEdit("\n\n".join(txts))
+        text_area.setReadOnly(True)
+        layout.addWidget(text_area)
 
 
 class ImageDelegate(QtWidgets.QStyledItemDelegate):
@@ -797,11 +800,9 @@ class SyncRepresentationErrorWindow(QtWidgets.QDialog):
 
         self.setStyleSheet(style.load_stylesheet())
         self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
-        self.resize(250, 200)
+        self.resize(900, 150)
 
         body = QtWidgets.QWidget()
-        footer = QtWidgets.QWidget()
-        footer.setFixedHeight(20)
 
         container = SyncRepresentationErrorWidget(_id, dt, tries, msg,
                                                   parent=self)
@@ -812,13 +813,8 @@ class SyncRepresentationErrorWindow(QtWidgets.QDialog):
         message = QtWidgets.QLabel()
         message.hide()
 
-        footer_layout = QtWidgets.QVBoxLayout(footer)
-        footer_layout.addWidget(message)
-        footer_layout.setContentsMargins(0, 0, 0, 0)
-
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(body)
-        layout.addWidget(footer)
 
         self.setLayout(body_layout)
         self.setWindowTitle("Sync Representation Error Detail")
