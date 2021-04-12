@@ -63,9 +63,9 @@ class PrepareProject(BaseAction):
 
         root_items = self.prepare_root_items(anatomy)
 
-        ca_items, multiselect_enumerators = (
-            self.prepare_custom_attribute_items(project_defaults)
-        )
+        # ca_items, multiselect_enumerators = (
+        #     self.prepare_custom_attribute_items(project_defaults)
+        # )
 
         self.log.debug("Heavy items are ready. Preparing last items group.")
 
@@ -94,7 +94,7 @@ class PrepareProject(BaseAction):
             "value": "<h3>Set basic Attributes:</h3>"
         })
 
-        items.extend(ca_items)
+        # items.extend(ca_items)
 
         # This item will be last (before enumerators)
         # - sets value of auto synchronization
@@ -108,9 +108,9 @@ class PrepareProject(BaseAction):
         # Add autosync attribute
         items.append(auto_sync_item)
 
-        # Add enumerator items at the end
-        for item in multiselect_enumerators:
-            items.append(item)
+        # # Add enumerator items at the end
+        # for item in multiselect_enumerators:
+        #     items.append(item)
 
         return {
             "items": items,
