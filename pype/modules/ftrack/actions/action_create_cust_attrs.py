@@ -199,6 +199,9 @@ class CustomAttributes(BaseAction):
             for role in session.query("SecurityRole").all()
         }
 
+        if "pypeclub" not in self.security_roles:
+            self.log.info("Pypeclub role is not available. Will be skipped.")
+
         object_types = session.query("ObjectType").all()
         self.object_types_per_id = {
             object_type["id"]: object_type for object_type in object_types
@@ -752,6 +755,8 @@ class CustomAttributes(BaseAction):
             for role_name in security_roles_lowered:
                 if role_name in self.security_roles:
                     output.append(self.security_roles[role_name])
+                elif role_name == "pypeclub":
+                    continue
                 else:
                     raise CustAttrException((
                         "Securit role \"{}\" was not found in Ftrack."
