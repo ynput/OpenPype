@@ -210,3 +210,7 @@ class FtrackModule(
 
     def tray_exit(self):
         return self.tray_module.stop_action_server()
+
+    def set_credentials_to_env(self, username, api_key):
+        os.environ["FTRACK_API_USER"] = username or ""
+        os.environ["FTRACK_API_KEY"] = api_key or ""
