@@ -894,21 +894,13 @@ class SyncEntitiesFactory:
     def _query_custom_attributes(self, session, conf_ids, entity_ids):
         output = []
         # Prepare values to query
-        attributes_joined = ", ".join([
-            "\"{}\"".format(conf_id) for conf_id in conf_ids
-        ])
+        attributes_joined = join_query_keys(conf_ids)
         attributes_len = len(conf_ids)
         chunk_size = int(5000 / attributes_len)
-        if chunk_size < 1:
-            chunk_size = 1
-        for idx in range(0, attributes_len, chunk_size):
-            _entity_ids = entity_ids[idx:idx + chunk_size]
-            if not _entity_ids:
-                continue
-            entity_ids_joined = ", ".join([
-                "\"{}\"".format(entity_id)
-                for entity_id in _entity_ids
-            ])
+        for idx in range(0, len(entity_ids), chunk_size):
+            entity_ids_joined = join_query_keys(
+                entity_ids[idx:idx + chunk_size]
+            )
 
             call_expr = [{
                 "action": "query",
