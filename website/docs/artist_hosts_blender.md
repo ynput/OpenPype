@@ -196,8 +196,30 @@ this:
 Publishing rig is done in same way as publishing everything else. Save your scene
 and go **OpenPype → Publish**. For more detail see [Publisher](artist_tools#publisher).
 
-
 ### Loading rigs
 
 You can load rig with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
 select your rig, right click on it and click **Link rig (blend)**.
+
+## Layouts in Blender
+
+A layout is a set of elements that populate a scene. OpenPype allows to version
+and manage those sets.
+
+### Publishing a layout
+
+Working with Set dresses is very easy. Just load your assets into scene with
+[Loader](artist_tools.md#loader) (**OpenPype → Load...**). Populate your scene as
+you wish, translate each piece to fit your need. When ready, select all imported
+stuff and go **OpenPype → Create...** and select **Layout**. When selecting rigs,
+you need to select only the armature, the geometry will automatically be included.
+This will create set containing your selection and marking it for publishing.
+
+Now you can publish is with **OpenPype → Publish**.
+
+### Loading layouts
+
+You can load a Layout using [Loader](artist_tools.md#loader)
+(**OpenPype → Load...**). Select your layout, right click on it and
+select **Link Layout (blend)**. This will populate your scene with all those
+models you've put into layout.
