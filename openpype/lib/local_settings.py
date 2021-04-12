@@ -498,12 +498,12 @@ class OpenPypeSettingsRegistry(JSONSettingRegistry):
 
 def _create_local_site_id(registry=None):
     """Create a local site identifier."""
-    from uuid import uuid4
+    from coolname import generate_slug
 
     if registry is None:
         registry = OpenPypeSettingsRegistry()
 
-    new_id = str(uuid4())
+    new_id = generate_slug(3)
 
     print("Created local site id \"{}\"".format(new_id))
 
