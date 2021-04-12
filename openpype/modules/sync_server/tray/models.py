@@ -1084,18 +1084,18 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                                 '$and': [{'$or': ['$failed_remote',
                                                   '$failed_local']},
                                          {'$eq': ['$tries', 3]}]},
-                            'then': 1  # Failed (3 tries)
+                            'then': 2  # Failed (3 tries)
                         },
                         {
                             'case': {
                                 '$or': [{'$eq': ['$progress_remote', 0]},
                                         {'$eq': ['$progress_local', 0]}]},
-                            'then': 2  # Queued
+                            'then': 1  # Queued
                         },
                         {
                             'case': {
                                 '$or': ['$failed_remote', '$failed_local']},
-                            'then': 1  # Failed
+                            'then': 2  # Failed
                         },
                         {
                             'case': {'$or': [{'$and': [
