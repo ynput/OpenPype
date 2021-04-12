@@ -891,6 +891,41 @@ class SyncEntitiesFactory:
 
             self.entities_dict[parent_id]["children"].remove(id)
 
+    def _query_custom_attributes(self, session, conf_ids, entity_ids):
+        output = []
+        # Prepare values to query
+        attributes_joined = ", ".join([
+            "\"{}\"".format(conf_id) for conf_id in conf_ids
+        ])
+        attributes_len = len(conf_ids)
+        chunk_size = int(5000 / attributes_len)
+        if chunk_size < 1:
+            chunk_size = 1
+        for idx in range(0, attributes_len, chunk_size):
+            _entity_ids = entity_ids[idx:idx + chunk_size]
+            if not _entity_ids:
+                continue
+            entity_ids_joined = ", ".join([
+                "\"{}\"".format(entity_id)
+                for entity_id in _entity_ids
+            ])
+
+            call_expr = [{
+                "action": "query",
+                "expression": (
+                    "select value, entity_id from ContextCustomAttributeValue "
+                    "where entity_id in ({}) and configuration_id in ({})"
+                ).format(entity_ids_joined, attributes_joined)
+            }]
+            if hasattr(session, "call"):
+                [result] = session.call(call_expr)
+            else:
+                [result] = session._call(call_expr)
+
+            for item in result["data"]:
+                output.append(item)
+        return output
+
     def set_cutom_attributes(self):
         self.log.debug("* Preparing custom attributes")
         # Get custom attributes and values
