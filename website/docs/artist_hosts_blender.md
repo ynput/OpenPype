@@ -145,9 +145,59 @@ To check for yourself that model is published, open
 [Asset Loader](artist_tools#loader) - **OpenPype → Load...**.
 There you should see your model, named `modelDefault`.
 
+### Loading models
+
+You can load rig with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
+select your rig, right click on it and click **Link model (blend)**.
 
 ## Setting scene data
 
 Blender settings concerning framerate, resolution and frame range are handled
 by OpenPype. If set correctly in Ftrack, Blender will automatically set the 
 values for you.
+
+
+## Creating rigs with OpenPype
+
+Creating and publishing rigs with OpenPype follows similar workflow as with
+other data types. Create your rig and mark parts of your hierarchy in sets to
+help OpenPype validators and extractors to check it and publish it.
+
+### Preparing rig for publish
+
+When creating rigs in Blender, it is important to keep a specific structure for
+the bones and the geometry. Let's first create a model and its rig. For
+demonstration, I'll create a simple model for a robotic arm made of simple boxes.
+
+![Maya - Simple model for rigging](assets/blender-rig_model_setup.jpg)
+
+I have now created the armature `RIG_RobotArm`. While the naming is not important,
+you can just adhere to your naming conventions, the hierarchy is. Once the models
+are skinned to the armature, the geometry must be organized in a separate Collection.
+In this case, I have the armature in the main Collection, and the geometry in 
+the `Geometry` Collection.
+
+![Maya - Rig Hierarchy Example](assets/blender-rig_hierarchy_example.jpg)
+
+When you've prepared your hierarchy, it's time to create *Rig instance* in OpenPype.
+Select your whole rig hierarchy and go **OpenPype → Create...**. Select **Rig**.
+
+![Maya - Rig Hierarchy Example](assets/blender-rig_create.jpg)
+
+A new collection named after the selected Asset and Subset should have been created.
+In our case, it is `character1_rigDefault`. All the selected armature and models
+have been linked in this new collection. You should end up with something like
+this:
+
+![Maya - Rig Hierarchy Example](assets/blender-rig_hierarchy_before_publish.jpg)
+
+### Publishing rigs
+
+Publishing rig is done in same way as publishing everything else. Save your scene
+and go **OpenPype → Publish**. For more detail see [Publisher](artist_tools#publisher).
+
+
+### Loading rigs
+
+You can load rig with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
+select your rig, right click on it and click **Link rig (blend)**.
