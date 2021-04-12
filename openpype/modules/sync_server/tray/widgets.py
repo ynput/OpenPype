@@ -141,15 +141,15 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     message_generated = QtCore.Signal(str)
 
     default_widths = (
-        ("asset", 210),
+        ("asset", 220),
         ("subset", 190),
-        ("version", 15),
+        ("version", 55),
         ("representation", 95),
-        ("local_site", 185),
-        ("remote_site", 185),
+        ("local_site", 170),
+        ("remote_site", 170),
         ("files_count", 50),
         ("files_size", 60),
-        ("priority", 20),
+        ("priority", 50),
         ("state", 110)
     )
 
@@ -741,7 +741,8 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
         overlay_rect.setHeight(overlay_rect.height() * (1.0 - float(value)))
         painter.fillRect(overlay_rect,
                          QtGui.QBrush(QtGui.QColor(0, 0, 0, 100)))
-        painter.drawText(option.rect,
+        text_rect = option.rect.translated(10, 0)
+        painter.drawText(text_rect,
                          QtCore.Qt.AlignCenter,
                          date_value)
 
