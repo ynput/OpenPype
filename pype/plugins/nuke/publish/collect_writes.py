@@ -122,6 +122,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         # Add version data to instance
         version_data = {
+            "families": [f.replace(".local", "").replace(".farm", "")
+                         for f in families if "write" not in f],
             "colorspace": colorspace,
         }
 
