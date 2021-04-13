@@ -715,6 +715,7 @@
                 "{OPENPYPE_ROOT}/repos/avalon-core/setup/blender",
                 "{PYTHONPATH}"
             ],
+            "QT_PREFERRED_BINDING": "PySide2"
         },
         "variants": {
             "2-83": {
