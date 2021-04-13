@@ -962,6 +962,8 @@ def main(config_dir):
         project_settings,
         config_dir
     )
+    system_settings.save()
+    project_settings.save()
 
 
 if __name__ == "__main__":
