@@ -162,7 +162,7 @@ def set_openpype_global_environments() -> None:
     if platform_name == "windows":
         ffmpeg_path_parts.append("bin")
 
-    ffmpeg_path = os.path.join(ffmpeg_path_parts)
+    ffmpeg_path = os.path.join(*ffmpeg_path_parts)
 
     os.environ["OPENPYPE_FFMPEG_PATH"] = ffmpeg_path
 
