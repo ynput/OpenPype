@@ -75,7 +75,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             )
             workfile_context = current_context.copy()
 
-        context.data["asset"] = avalon.api.Session["AVALON_ASSET"]
+        context.data["asset"] = workfile_context["AVALON_ASSET"]
         context.data["workfile_context"] = workfile_context
         self.log.info("Context changed to: {}".format(workfile_context))
 
