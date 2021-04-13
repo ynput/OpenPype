@@ -461,7 +461,12 @@ def _convert_anatomy_templates(templates_data, roots_converted):
     others_templates = {}
     # Template key `master` was renamed to `hero`
     if "master" in templates_data:
-        templates_data["hero"] = templates_data.pop("master")
+        master_values = templates_data.pop("master")
+        hero_values = {}
+        for key, value in master_values.items():
+            hero_values[key] = value.replace("master", "hero")
+        templates_data["hero"] = hero_values
+
     for key in tuple(templates_data.keys()):
         if isinstance(templates_data[key], dict):
             if key not in global_template_keys:
