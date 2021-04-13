@@ -467,6 +467,11 @@ def _convert_anatomy_templates(templates_data, roots_converted):
             hero_values[key] = value.replace("master", "hero")
         templates_data["hero"] = hero_values
 
+    # Replace representation at the end of template value with `.{ext}`
+    representation_ending = ".{representation}"
+    ext_ending = "{ext}"
+    ext_dot_ending = "." + ext_ending
+
     for key in tuple(templates_data.keys()):
         if isinstance(templates_data[key], dict):
             if key not in global_template_keys:
@@ -480,6 +485,30 @@ def _convert_anatomy_templates(templates_data, roots_converted):
             default_values[key] = int(value)
         else:
             default_values[key] = value
+
+    for template_data in templates_data.values():
+        if not isinstance(template_data, dict):
+            continue
+
+        for key in tuple(template_data.keys()):
+            value = template_data[key]
+            if not isinstance(value, str):
+                continue
+
+            # Check for ending of template and replace end of template value
+            # with ".{ext}" if ends with ".{representation}"
+            # or "{ext}" without dot
+            ending_index = None
+            if value.endswith(representation_ending):
+                ending_index = len(value) - len(representation_ending)
+            elif (
+                value.endswith(ext_ending)
+                and not value.endswith(ext_dot_ending)
+            ):
+                ending_index = len(value) - len(ext_ending)
+
+            if ending_index is not None:
+                template_data[key] = value[:ending_index] + ext_dot_ending
 
     if invalid_values:
         log.warning("Skipped anatomy templates default values.\n{}".format(
