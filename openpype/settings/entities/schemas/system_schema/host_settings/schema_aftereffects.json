@@ -29,13 +29,11 @@
                     "template_data": [
                         {
                             "app_variant_label": "2020",
-                            "app_variant": "2020",
-                            "app_name": "aftereffects"
+                            "app_variant": "2020"
                         },
                         {
                             "app_variant_label": "2021",
-                            "app_variant": "2021",
-                            "app_name": "aftereffects"
+                            "app_variant": "2021"
                         }
                     ]
                 }

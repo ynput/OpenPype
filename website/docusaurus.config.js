@@ -1,0 +1,128 @@
+module.exports = {
+  title: 'openPYPE',
+  tagline: 'Pipeline with support, for studios and remote teams.',
+  url: 'http://openpype.io/',
+  baseUrl: '/',
+  organizationName: 'Orbi Tools s.r.o',
+  projectName: 'openPype',
+  favicon: 'img/favicon/favicon.ico',
+  onBrokenLinks: 'ignore',
+  customFields: {
+  },
+  presets: [
+    [
+      '@docusaurus/preset-classic', {
+        docs: {
+          sidebarPath: require.resolve('./sidebars.js'),
+        },
+        theme: {
+          customCss: require.resolve('./src/css/custom.css')
+        }
+      }
+    ]
+  ],
+  themeConfig: {
+    colorMode: {
+      // "light" | "dark"
+      defaultMode: 'light',
+
+      // Hides the switch in the navbar
+      // Useful if you want to support a single color mode
+      disableSwitch: true
+    },
+    announcementBar: {
+      id: 'help_with_docs', // Any value that will identify this message.
+      content:
+      'This documentation is work in progress, <b><a href="https://openpype.io">help us make it better.</a></b>. Current working version is 3.0.0-beta.',
+      backgroundColor: '#fff', // Defaults to `#fff`.
+      textColor: '#000', // Defaults to `#000`.
+    },
+    navbar: {
+      style: 'dark',
+      title: 'openPYPE',
+      logo: {
+        src: 'img/logos/splash_main.svg'
+      },
+      items: [
+        {
+          to: '/features',
+          label: 'Features',
+          position: 'left'
+        }, {
+          to: 'docs/artist_getting_started',
+          label: 'User Docs',
+          position: 'left'
+        }, {
+          to: 'docs/system_introduction',
+          label: 'Admin Docs',
+          position: 'left'
+        },
+          {
+            href: 'https://pype.club',
+            label: 'pypeclub',
+            position: 'right',
+          },{
+          href: 'https://github.com/pypeclub',
+          label: 'Github',
+          position: 'right',
+        },
+      ]
+    },
+    footer: {
+      style: 'dark',
+      links: [
+        {
+          title: 'Pages',
+          items: [
+            {
+              label: 'Features',
+              to: 'features',
+            },
+            {
+              label: 'Artist',
+              to: 'docs/artist_getting_started',
+            },
+            {
+              label: 'Admin',
+              to: 'docs/admin_getting_started',
+            }
+          ]
+        },
+        {
+          title: 'Community',
+          items: [
+            {
+              label: 'Avalon Chat',
+              to: 'https://gitter.im/getavalon/Lobby',
+            },
+            {
+              label: 'OpenPype Chat',
+              to: 'https://discord.gg/sFNPWXG',
+            },
+            {
+              label: 'Github Discussions',
+              to: 'https://github.com/pypeclub/pype/discussions',
+            }
+          ],
+        },
+      ],
+      copyright: 'Copyright © 2021 Orbi Tools',
+    },
+    algolia: {
+      apiKey: '5e01ee3bfbb744ca6f25d4b281ce38a9',
+      indexName: 'openpype',
+      // Optional: see doc section bellow
+      contextualSearch: true,
+      // Optional: Algolia search parameters
+      searchParameters: {},
+    },
+    googleAnalytics: {
+      trackingID: 'G-HHJZ9VF0FG',
+      // Optional fields.
+      anonymizeIP: false, // Should IPs be anonymized?
+    },
+  },
+  stylesheets: [
+        'https://use.fontawesome.com/releases/v5.7.2/css/all.css'
+    ],
+};

@@ -1123,6 +1123,7 @@ class BuildWorkfile:
         return output
 
 
+@with_avalon
 def get_creator_by_name(creator_name, case_sensitive=False):
     """Find creator plugin by name.
 

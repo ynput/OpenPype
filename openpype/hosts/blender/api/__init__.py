@@ -51,8 +51,37 @@ def set_start_end_frames():
         "name": asset_name
     })
 
-    bpy.context.scene.frame_start = asset_doc["data"]["frameStart"]
-    bpy.context.scene.frame_end = asset_doc["data"]["frameEnd"]
+    scene = bpy.context.scene
+
+    # Default scene settings
+    frameStart = scene.frame_start
+    frameEnd = scene.frame_end
+    fps = scene.render.fps
+    resolution_x = scene.render.resolution_x
+    resolution_y = scene.render.resolution_y
+
+    # Check if settings are set
+    data = asset_doc.get("data")
+
+    if not data:
+        return
+
+    if data.get("frameStart"):
+        frameStart = data.get("frameStart")
+    if data.get("frameEnd"):
+        frameEnd = data.get("frameEnd")
+    if data.get("fps"):
+        fps = data.get("fps")
+    if data.get("resolutionWidth"):
+        resolution_x = data.get("resolutionWidth")
+    if data.get("resolutionHeight"):
+        resolution_y = data.get("resolutionHeight")
+
+    scene.frame_start = frameStart
+    scene.frame_end = frameEnd
+    scene.render.fps = fps
+    scene.render.resolution_x = resolution_x
+    scene.render.resolution_y = resolution_y
 
 
 def on_new(arg1, arg2):
