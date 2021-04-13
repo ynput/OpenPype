@@ -1,14 +1,11 @@
 import os
 import logging
 
-from avalon.tvpaint.communication_server import register_localization_file
-import avalon.tvpaint.lib
-import avalon.tvpaint.pipeline
-from . import lib
-import pype.lib
 import avalon.api
-import avalon.io
 import pyblish.api
+from avalon.tvpaint import pipeline
+from avalon.tvpaint.communication_server import register_localization_file
+from .lib import set_context_settings
 
 from openpype.hosts import tvpaint
 
@@ -24,7 +21,7 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 def on_instance_toggle(instance, old_value, new_value):
     instance_id = instance.data["uuid"]
     found_idx = None
-    current_instances = avalon.tvpaint.pipeline.list_instances()
+    current_instances = pipeline.list_instances()
     for idx, workfile_instance in enumerate(current_instances):
         if workfile_instance["uuid"] == instance_id:
             found_idx = idx
@@ -35,7 +32,7 @@ def on_instance_toggle(instance, old_value, new_value):
 
     if "active" in current_instances[found_idx]:
         current_instances[found_idx]["active"] = new_value
-        avalon.tvpaint.pipeline._write_instances(current_instances)
+        pipeline._write_instances(current_instances)
 
 
 def initial_launch():
@@ -43,8 +40,8 @@ def initial_launch():
     if os.environ.get("PYPE_TVPAINT_LAUNCHED_TEMPLATE_FILE") != "1":
         return
 
-    print("Setting up project...")
-    lib.set_context_settings(pype.lib.get_asset())
+    log.info("Setting up project...")
+    set_context_settings()
 
 
 def install():
