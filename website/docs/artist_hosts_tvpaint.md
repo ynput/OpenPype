@@ -41,11 +41,11 @@ You can start your work.
 ---
 
 ## Usage
-In TVPaint you can find the Tools in OpenPype menu extension. The OpenPype Tools menu should be available in your work area. However, sometimes it is happening that the Tools menu is hidden. You can display the extension panel by going to `Windows -> Plugins -> OpenPype`.
+In TVPaint you can find the Tools in OpenPype menu extension. The OpenPype Tools menu should be available in your work area. However, sometimes it happens that the Tools menu is hidden. You can display the extension panel by going to `Windows -> Plugins -> OpenPype`.
 
 
 ## Create 
-In TVPaint you can create and publish [Reviews](#review), [Render Passes](#render-pass), and [Render Layers](#render-layer). 
+In TVPaint you can create and publish **[Reviews](#review)**, **[Render Passes](#render-pass)**, and **[Render Layers](#render-layer)**. 
 
 You have the possibility to organize your layers by using `Color group`.  
 
@@ -68,39 +68,117 @@ OpenPype specifically never tries to guess what you want to publish from the sce
 When you want to publish `review` or `render layer` or `render pass`, open the `Creator` through the Tools menu `Create` button.
 
 ### Review 
-Review renders the whole file as is and sends its QuickTime to Ftrack. For the animation review select `Review` in the `Creator` and press `Create`. 
+
+<div class="row markdown">
+<div class="col col--6 markdown">
+
+`Review` renders the whole file as is and sends the resulting QuickTime to Ftrack. 
+
+To create reviewable quicktime of your animation:
+
+- select `Review` in the `Creator`
+- press `Create`
+- When you run [publish](#publish), file will be rendered and converted to quicktime.`
+
+</div>
+<div class="col col--6 markdown">
 
 ![createreview](assets/tvp_create_review.png)
 
+</div>
+</div>
+
 ### Render Layer
-Render Layer bakes all layers of one particular color group. Choose any amount of animation layers that need to be grouped together and assign them a color. Select any layer of a particular color, go to `Creator` and choose `RenderLayer`. In the `Subset`, you type what is gonna be its name *(L10, L20, etc.)* according to the naming convention in your studio. After publishing all layers within one color group will be rendered as one. 
+
+<div class="row markdown">
+<div class="col col--6 markdown">
+
+
+Render Layer bakes all the animation layers of one particular color group together. 
+
+- Choose any amount of animation layers that need to be rendered together and assign them a color group. 
+- Select any layer of a particular color
+- Go to `Creator` and choose `RenderLayer`. 
+- In the `Subset`, type in the name that the final published RenderLayer should have according to the naming convention in your studio. *(L10, BG, Hero, etc.)* 
+- Press `Create`
+- When you run [publish](#publish), the whole color group will be rendered together and published as a single `RenderLayer`
+
+</div>
+<div class="col col--6 markdown">
 
 ![createlayer](assets/tvp_create_layer.png)
 
-### Render Pass
-Render Passes are specific because they have to belong to a particular layer. If you try to create a render pass and did not do any render layer before, it will pop up an error message. 
+</div>
+</div>
 
-When you need to create `RenderPass` choose one or several layers within one color group that you want to publish (*L020_colour_fx*, *L020_colour_mouth*, and *L020_colour_eye* from a yellow group of animation layers). In Creator pick `RenderPass` and the `Subset` fill out with e.g. `YellowColor`. You can check your render instances in [Subset Manager](#subset-manager) or you can start to publish. The publishing process will show you a collection of all instances.
+
+
+
+
+### Render Pass
+
+Render Passes are smaller individual elements of a Render Layer. A `character` render layer might
+consist of multiple render passes such as `Line`, `Color` and `Shadow`.
+
+
+<div class="row markdown">
+<div class="col col--6 markdown">
+Render Passes are specific because they have to belong to a particular layer. If you try to create a render pass and did not create any render layers before, an error message will pop up. 
+
+When you want to create `RenderPass`
+- choose one or several animation layers within one color group that you want to publish
+- In the Creator, pick `RenderPass`
+- Fill the `Subset` with the name of your pass, e.g. `Color`. 
+- Press `Create`
+
+</div>
+<div class="col col--6 markdown">
 
 ![createpass](assets/tvp_create_pass.png)
 
-It will render selected layers within the color group. E.i. the layers *L020_colour_fx*, *L020_colour_mouth*, and *L020_colour_eye* will be rendered as one pass.  
+</div>
+</div>
+
+<br></br>
+
+In this example, OpenPype will render selected animation layers within the given color group. E.i. the layers *L020_colour_fx*, *L020_colour_mouth*, and *L020_colour_eye* will be rendered as one pass belonging to the yellow RenderLayer.  
 
 ![renderpass](assets/tvp_timeline_color2.png)
+
+
+:::note
+You can check your RendrePasses and RenderLayers in [Subset Manager](#subset-manager) or you can start publishing. The publisher will show you a collection of all instances on the left side.
+:::
+
 
 ---
 
 ## Publish 
-Now you have created the required instances and you can publish them via `Publish` tool. Just click on `Publish` in OpenPype Tools menu, wait until all instances are collected correctly. You can check on the left side whether all your instances have been created and ready for publishing. Then press the `Play` button. 
+
+<div class="row markdown">
+<div class="col col--6 markdown">
+
+Now that you have created the required instances, you can publish them via `Publish` tool. 
+- Click on `Publish` in OpenPype Tools menu.
+- wait until all instances are collected. 
+- You can check on the left side whether all your instances have been created and are ready for publishing. 
+- Fill the comment on the bottom of the window.
+- Press the `Play` button to publish
+
+</div>
+<div class="col col--6 markdown">
 
 ![pyblish](assets/tvp_pyblish_render.png)
 
-Once the `Publish` window gets green your renders have been published. 
+</div>
+</div>
+
+Once the `Publisher` turns gets green your renders have been published. 
 
 ---
 
 ## Subset Manager
-All created instances (render layers, passes, and reviews) will be shown as a simple list. If you don't want to publish them, right click on the item in the list and select `Remove instance`.
+All created instances (render layers, passes, and reviews) will be shown as a simple list. If you don't want to publish some, right click on the item in the list and select `Remove instance`.
 
 ![subsetmanager](assets/tvp_subset_manager.png)
 
