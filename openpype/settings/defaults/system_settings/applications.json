@@ -6,7 +6,7 @@
         "host_name": "maya",
         "environment": {
             "PYTHONPATH": [
-                "{OPENPYPE_ROOT}/pype/hosts/maya/startup",
+                "{OPENPYPE_ROOT}/openpype/hosts/maya/startup",
                 "{OPENPYPE_ROOT}/repos/avalon-core/setup/maya",
                 "{OPENPYPE_ROOT}/repos/maya-look-assigner",
                 "{PYTHONPATH}"
