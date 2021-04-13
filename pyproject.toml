@@ -81,8 +81,8 @@ build-backend = "poetry.core.masonry.api"
 [openpype]
 
 [openpype.thirdparty.ffmpeg.windows]
-url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.13-windows.zip"
-hash = "43988ebcba98313635f06f2ca7e2dd52670710ebceefaa77107321b1def30472"
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-windows.zip"
+hash = "dd51ba29d64ee238e7c4c3c7301b19754c3f0ee2e2a729c20a0e2789e72db925"
 
 [openpype.thirdparty.ffmpeg.linux]
 url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-linux.tar.xz"
