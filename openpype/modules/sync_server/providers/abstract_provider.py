@@ -1,5 +1,6 @@
-import abc, six
-from openpype.api import Anatomy, Logger
+import abc
+import six
+from openpype.api import Logger
 
 log = Logger().get_logger("SyncServer")
 

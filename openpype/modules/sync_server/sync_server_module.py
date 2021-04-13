@@ -85,7 +85,7 @@ class SyncServerModule(PypeModule, ITrayModule):
     LOG_PROGRESS_SEC = 5  # how often log progress to DB
 
     name = "sync_server"
-    label = "Sync Server"
+    label = "Sync Queue"
 
     def initialize(self, module_settings):
         """
@@ -506,7 +506,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         from Qt import QtWidgets
         """Add menu or action to Tray(or parent)'s menu"""
-        action = QtWidgets.QAction("SyncServer", parent_menu)
+        action = QtWidgets.QAction(self.label, parent_menu)
         action.triggered.connect(self.show_widget)
         parent_menu.addAction(action)
         parent_menu.addSeparator()
@@ -1048,7 +1048,6 @@ class SyncServerModule(PypeModule, ITrayModule):
         provider_name = self.get_provider_for_site(collection, site_name)
 
         if provider_name == 'local_drive':
-            handler = LocalDriveHandler(collection, site_name)
             query = {
                 "_id": ObjectId(representation_id)
             }
