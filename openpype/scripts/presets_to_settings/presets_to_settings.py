@@ -184,7 +184,10 @@ def convert_environments(environments_data, system_settings):
 
     # - avalon timeout
     avalon_timeout = avalon_envs.get("AVALON_TIMEOUT")
-    if avalon_timeout:
+    if (
+        avalon_timeout
+        and int(avalon_timeout) != modules_entity["avalon"]["AVALON_TIMEOUT"]
+    ):
         log.debug("Avalon timeout changed to {}".format(avalon_timeout))
         modules_entity["avalon"]["AVALON_TIMEOUT"] = int(avalon_timeout)
 
