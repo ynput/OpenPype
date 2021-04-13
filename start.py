@@ -101,10 +101,17 @@ import subprocess
 import site
 from pathlib import Path
 
-# add dependencies folder to sys.pat for frozen code
-if getattr(sys, 'frozen', False):
+# BUILD_ROOT is variable pointing to build (or code) directory
+if not getattr(sys, 'frozen', False):
+    # Code root defined by `start.py` directory
+    BUILD_ROOT = os.path.dirname(os.path.abspath(__file__))
+else:
+    BUILD_ROOT = os.path.dirname(sys.executable)
+
+    # add dependencies folder to sys.pat for frozen code
     frozen_libs = os.path.normpath(
-        os.path.join(os.path.dirname(sys.executable), "dependencies"))
+        os.path.join(BUILD_ROOT, "dependencies")
+    )
     sys.path.append(frozen_libs)
     # add stuff from `<frozen>/dependencies` to PYTHONPATH.
     pythonpath = os.getenv("PYTHONPATH", "")
