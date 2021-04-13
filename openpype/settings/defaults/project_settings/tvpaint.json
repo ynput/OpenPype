@@ -1,0 +1,10 @@
+{
+    "publish": {
+        "ValidateMissingLayers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        }
+    },
+    "filters": {}
+}
