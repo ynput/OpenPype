@@ -276,6 +276,14 @@ def convert_environments(environments_data, system_settings):
     # TODO add mapping of previous variant names -> new variant names
     apps_entity = system_settings["applications"]
     for app_group, app_entity in apps_entity.items():
+        if "enabled" in app_entity and not app_entity["enabled"].value:
+            log.info(
+                "Skipping application group \"{}\". Not enabled.".format(
+                    app_group
+                )
+            )
+            continue
+
         # App environments
         if app_group in environments_data:
             _value = environments_data.pop(app_group)
@@ -309,6 +317,16 @@ def convert_environments(environments_data, system_settings):
                 full_name = "_".join((app_group, variant_name))
                 if full_name not in environments_data:
                     continue
+
+                if (
+                    "enabled" in variant_entity
+                    and not variant_entity["enabled"].value
+                ):
+                    log.info((
+                        "Skipping application variant \"{}\". Not enabled."
+                    ).format(full_name))
+                    continue
+
                 _value = environments_data.pop(full_name)
                 log.debug((
                     "App variant \"{}\" - convering environments."
