@@ -155,11 +155,7 @@ def set_openpype_global_environments() -> None:
     # --- Set environment variables to vendorized binaries(FFmpeg and OIIO) ---
     # TODO add validations of existing binaries
     # Prepare path to bin vendor directory
-    bin_vendor_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "vendor",
-        "bin"
-    )
+    bin_vendor_dir = os.path.join(BUILD_ROOT, "vendor", "bin")
     # Prepare platform name
     platform_name = platform.system().lower()
 
@@ -498,16 +494,12 @@ def _bootstrap_from_code(use_version):
     # run through repos and add them to `sys.path` and `PYTHONPATH`
     # set root
     if getattr(sys, 'frozen', False):
-        openpype_root = os.path.normpath(
-            os.path.dirname(sys.executable))
+        openpype_root = os.path.normpath(BUILD_ROOT)
         local_version = bootstrap.get_version(Path(openpype_root))
         print(f"  - running version: {local_version}")
         assert local_version
     else:
-        openpype_root = os.path.normpath(
-            os.path.dirname(
-                os.path.dirname(
-                    os.path.realpath(igniter.__file__))))
+        openpype_root = os.path.normpath(BUILD_ROOT)
         # get current version of OpenPype
         local_version = bootstrap.get_local_live_version()
 
@@ -602,10 +594,7 @@ def boot():
     # ------------------------------------------------------------------------
     # set OPENPYPE_ROOT to running location until proper version can be
     # determined.
-    if getattr(sys, 'frozen', False):
-        os.environ["OPENPYPE_ROOT"] = os.path.dirname(sys.executable)
-    else:
-        os.environ["OPENPYPE_ROOT"] = os.path.dirname(__file__)
+    os.environ["OPENPYPE_ROOT"] = BUILD_ROOT
 
     # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.
