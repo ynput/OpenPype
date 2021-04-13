@@ -21,6 +21,8 @@ class PrepareProjectLocal(BaseAction):
     description = "Set basic attributes on the project"
     icon = statics_icon("ftrack", "action_icons", "PrepareProject.svg")
 
+    role_list = ["Pypeclub", "Administrator", "Project Manager"]
+
     settings_key = "prepare_project"
 
     # Key to store info about trigerring create folder structure
