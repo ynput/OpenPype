@@ -7,6 +7,14 @@
                 "not ready"
             ]
         },
+        "prepare_project": {
+            "enabled": true,
+            "role_list": [
+                "Pypeclub",
+                "Administrator",
+                "Project manager"
+            ]
+        },
         "sync_hier_entity_attributes": {
             "enabled": true,
             "interest_entity_types": [
