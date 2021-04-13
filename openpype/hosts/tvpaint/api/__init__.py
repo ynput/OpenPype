@@ -37,7 +37,10 @@ def on_instance_toggle(instance, old_value, new_value):
 
 def initial_launch():
     # Setup project settings if its the template that's launched.
-    if os.environ.get("PYPE_TVPAINT_LAUNCHED_TEMPLATE_FILE") != "1":
+    # TODO also check for template creation when it's possible to define
+    #   templates
+    last_workfile = os.environ.get("AVALON_LAST_WORKFILE")
+    if not last_workfile or os.path.exists(last_workfile):
         return
 
     log.info("Setting up project...")
