@@ -23,6 +23,14 @@ concept of being _"data driven"_. This means that what happens when publishing
 is influenced by data in scene. This can by slightly confusing so let's get to
 it with few examples.
 
+
+## Setting scene data
+
+Blender settings concerning framerate, resolution and frame range are handled
+by OpenPype. If set correctly in Ftrack, Blender will automatically set the 
+values for you.
+
+
 ## Publishing models
 
 ### Intro
@@ -125,16 +133,16 @@ From there you can see in **Records** entry that there is problem with the
 object `Suzanne`. Some validators have option to fix problem for you or just 
 select objects that cause trouble. This is the case with our failed validator.
 
-In main overview you can notice little up arrow in a circle next to validator
+In main overview you can notice little A in a circle next to validator
 name. Right click on it and you can see menu item `select invalid`. This
-will select offending object in Maya.
+will select offending object in Blender.
 
 Fix is easy. Without closing Publisher window we just turn back the Object Mode.
 Then we need to reset it to make it notice changes we've made. Click on arrow
-circle button at the bottom and it will reset Publisher to initial state. Run
+circle button at the bottom and it will reset the Publisher to initial state. Run
 validators again (flask icon) to see if everything is ok.
 
-It should be now. Write some comment if you want and click play icon button
+It should OK be now. Write some comment if you want and click play icon button
 when ready.
 
 Publish process will now take its course. Depending on data you are publishing
@@ -147,17 +155,10 @@ There you should see your model, named `modelDefault`.
 
 ### Loading models
 
-You can load rig with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
+You can load model with [Loader](artist_tools.md#loader). Go **OpenPype → Load...**,
 select your rig, right click on it and click **Link model (blend)**.
 
-## Setting scene data
-
-Blender settings concerning framerate, resolution and frame range are handled
-by OpenPype. If set correctly in Ftrack, Blender will automatically set the 
-values for you.
-
-
-## Creating rigs with OpenPype
+## Creating Rigs
 
 Creating and publishing rigs with OpenPype follows similar workflow as with
 other data types. Create your rig and mark parts of your hierarchy in sets to
@@ -169,7 +170,7 @@ When creating rigs in Blender, it is important to keep a specific structure for
 the bones and the geometry. Let's first create a model and its rig. For
 demonstration, I'll create a simple model for a robotic arm made of simple boxes.
 
-![Maya - Simple model for rigging](assets/blender-rig_model_setup.jpg)
+![Blender - Simple model for rigging](assets/blender-rig_model_setup.jpg)
 
 I have now created the armature `RIG_RobotArm`. While the naming is not important,
 you can just adhere to your naming conventions, the hierarchy is. Once the models
@@ -177,19 +178,19 @@ are skinned to the armature, the geometry must be organized in a separate Collec
 In this case, I have the armature in the main Collection, and the geometry in 
 the `Geometry` Collection.
 
-![Maya - Rig Hierarchy Example](assets/blender-rig_hierarchy_example.jpg)
+![Blender - Rig Hierarchy Example](assets/blender-rig_hierarchy_example.jpg)
 
 When you've prepared your hierarchy, it's time to create *Rig instance* in OpenPype.
 Select your whole rig hierarchy and go **OpenPype → Create...**. Select **Rig**.
 
-![Maya - Rig Hierarchy Example](assets/blender-rig_create.jpg)
+![Blender - Rig Hierarchy Example](assets/blender-rig_create.jpg)
 
 A new collection named after the selected Asset and Subset should have been created.
 In our case, it is `character1_rigDefault`. All the selected armature and models
 have been linked in this new collection. You should end up with something like
 this:
 
-![Maya - Rig Hierarchy Example](assets/blender-rig_hierarchy_before_publish.jpg)
+![Blender - Rig Hierarchy Example](assets/blender-rig_hierarchy_before_publish.jpg)
 
 ### Publishing rigs
 
@@ -208,7 +209,7 @@ and manage those sets.
 
 ### Publishing a layout
 
-Working with Set dresses is very easy. Just load your assets into scene with
+Working with Layout is easy. Just load your assets into scene with
 [Loader](artist_tools.md#loader) (**OpenPype → Load...**). Populate your scene as
 you wish, translate each piece to fit your need. When ready, select all imported
 stuff and go **OpenPype → Create...** and select **Layout**. When selecting rigs,
