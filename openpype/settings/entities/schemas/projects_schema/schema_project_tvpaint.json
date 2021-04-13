@@ -1,0 +1,32 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "tvpaint",
+    "label": "TVPaint",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "is_file": true,
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateMissingLayers",
+                            "label": "ValidateMissingLayers"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "schema",
+            "name": "schema_publish_gui_filter"
+        }
+    ]
+}

@@ -296,7 +296,7 @@ def _determine_mongodb() -> str:
     if not openpype_mongo:
         # try system keyring
         try:
-            openpype_mongo = bootstrap.registry.get_secure_item(
+            openpype_mongo = bootstrap.secure_registry.get_item(
                 "openPypeMongo")
         except ValueError:
             print("*** No DB connection string specified.")
@@ -305,7 +305,7 @@ def _determine_mongodb() -> str:
             igniter.open_dialog()
 
             try:
-                openpype_mongo = bootstrap.registry.get_secure_item(
+                openpype_mongo = bootstrap.secure_registry.get_item(
                     "openPypeMongo")
             except ValueError:
                 raise RuntimeError("missing mongodb url")
@@ -326,6 +326,7 @@ def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
     # TODO move additional paths to `boot` part when OPENPYPE_ROOT will point
     # to same hierarchy from code and from frozen OpenPype
     additional_paths = [
+        os.environ["OPENPYPE_ROOT"],
         # add OpenPype tools
         os.path.join(os.environ["OPENPYPE_ROOT"], "openpype", "tools"),
         # add common OpenPype vendor

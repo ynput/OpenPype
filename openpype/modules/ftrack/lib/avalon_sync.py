@@ -891,6 +891,33 @@ class SyncEntitiesFactory:
 
             self.entities_dict[parent_id]["children"].remove(id)
 
+    def _query_custom_attributes(self, session, conf_ids, entity_ids):
+        output = []
+        # Prepare values to query
+        attributes_joined = join_query_keys(conf_ids)
+        attributes_len = len(conf_ids)
+        chunk_size = int(5000 / attributes_len)
+        for idx in range(0, len(entity_ids), chunk_size):
+            entity_ids_joined = join_query_keys(
+                entity_ids[idx:idx + chunk_size]
+            )
+
+            call_expr = [{
+                "action": "query",
+                "expression": (
+                    "select value, entity_id from ContextCustomAttributeValue "
+                    "where entity_id in ({}) and configuration_id in ({})"
+                ).format(entity_ids_joined, attributes_joined)
+            }]
+            if hasattr(session, "call"):
+                [result] = session.call(call_expr)
+            else:
+                [result] = session._call(call_expr)
+
+            for item in result["data"]:
+                output.append(item)
+        return output
+
     def set_cutom_attributes(self):
         self.log.debug("* Preparing custom attributes")
         # Get custom attributes and values
@@ -1000,31 +1027,13 @@ class SyncEntitiesFactory:
                     copy.deepcopy(prepared_avalon_attr_ca_id)
                 )
 
-        # TODO query custom attributes by entity_id
-        entity_ids_joined = ", ".join([
-            "\"{}\"".format(id) for id in sync_ids
-        ])
-        attributes_joined = ", ".join([
-            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
-        ])
-
-        cust_attr_query = (
-            "select value, configuration_id, entity_id"
-            " from ContextCustomAttributeValue"
-            " where entity_id in ({}) and configuration_id in ({})"
+        items = self._query_custom_attributes(
+            self.session,
+            list(attribute_key_by_id.keys()),
+            sync_ids
         )
-        call_expr = [{
-            "action": "query",
-            "expression": cust_attr_query.format(
-                entity_ids_joined, attributes_joined
-            )
-        }]
-        if hasattr(self.session, "call"):
-            [values] = self.session.call(call_expr)
-        else:
-            [values] = self.session._call(call_expr)
 
-        for item in values["data"]:
+        for item in items:
             entity_id = item["entity_id"]
             attr_id = item["configuration_id"]
             key = attribute_key_by_id[attr_id]
@@ -1106,28 +1115,14 @@ class SyncEntitiesFactory:
             for key, val in prepare_dict_avalon.items():
                 entity_dict["avalon_attrs"][key] = val
 
-        # Prepare values to query
-        entity_ids_joined = ", ".join([
-            "\"{}\"".format(id) for id in sync_ids
-        ])
-        attributes_joined = ", ".join([
-            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
-        ])
-        avalon_hier = []
-        call_expr = [{
-            "action": "query",
-            "expression": (
-                "select value, entity_id, configuration_id"
-                " from ContextCustomAttributeValue"
-                " where entity_id in ({}) and configuration_id in ({})"
-            ).format(entity_ids_joined, attributes_joined)
-        }]
-        if hasattr(self.session, "call"):
-            [values] = self.session.call(call_expr)
-        else:
-            [values] = self.session._call(call_expr)
+        items = self._query_custom_attributes(
+            self.session,
+            list(attribute_key_by_id.keys()),
+            sync_ids
+        )
 
-        for item in values["data"]:
+        avalon_hier = []
+        for item in items:
             value = item["value"]
             # WARNING It is not possible to propage enumerate hierachical
             # attributes with multiselection 100% right. Unseting all values
@@ -1256,19 +1251,21 @@ class SyncEntitiesFactory:
                     if not msg or not items:
                         continue
                     self.report_items["warning"][msg] = items
-                tasks = {}
-                for task_type in task_types:
-                    task_type_name = task_type["name"]
-                    # Set short name to empty string
-                    # QUESTION Maybe better would be to lower and remove spaces
-                    #   from task type name.
-                    tasks[task_type_name] = {
-                        "short_name": ""
-                    }
 
                 current_project_anatomy_data = get_anatomy_settings(
                     project_name, exclude_locals=True
                 )
+                anatomy_tasks = current_project_anatomy_data["tasks"]
+                tasks = {}
+                default_type_data = {
+                    "short_name": ""
+                }
+                for task_type in task_types:
+                    task_type_name = task_type["name"]
+                    tasks[task_type_name] = copy.deepcopy(
+                        anatomy_tasks.get(task_type_name)
+                        or default_type_data
+                    )
 
                 project_config = {
                     "tasks": tasks,

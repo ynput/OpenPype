@@ -9,10 +9,10 @@ from openpype.hosts.resolve.otio import davinci_export
 reload(davinci_export)
 
 
-class CollectWorkfile(pyblish.api.ContextPlugin):
-    """Inject the current working file into context"""
+class PrecollectWorkfile(pyblish.api.ContextPlugin):
+    """Precollect the current working file into context"""
 
-    label = "Collect Workfile"
+    label = "Precollect Workfile"
     order = pyblish.api.CollectorOrder - 0.6
 
     def process(self, context):
@@ -21,8 +21,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         subset = "workfile"
         project = resolve.get_current_project()
         fps = project.GetSetting("timelineFrameRate")
-
-        active_timeline = resolve.get_current_timeline()
         video_tracks = resolve.get_video_track_names()
 
         # adding otio timeline to context
