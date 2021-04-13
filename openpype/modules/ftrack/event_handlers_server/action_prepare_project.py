@@ -14,7 +14,8 @@ class PrepareProjectServer(ServerAction):
     """Prepare project attributes in Anatomy."""
 
     identifier = "prepare.project.server"
-    label = "Prepare Project (Server)"
+    label = "OpenPype Admin"
+    variant = "- Prepare Project (Server)"
     description = "Set basic attributes on the project"
 
     settings_key = "prepare_project"

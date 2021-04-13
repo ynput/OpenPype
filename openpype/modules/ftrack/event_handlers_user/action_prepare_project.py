@@ -17,7 +17,8 @@ class PrepareProjectLocal(BaseAction):
     """Prepare project attributes in Anatomy."""
 
     identifier = "prepare.project.local"
-    label = "Prepare Project (Local)"
+    label = "OpenPype Admin"
+    variant = "- Prepare Project (Local)"
     description = "Set basic attributes on the project"
     icon = statics_icon("ftrack", "action_icons", "PrepareProject.svg")
 
