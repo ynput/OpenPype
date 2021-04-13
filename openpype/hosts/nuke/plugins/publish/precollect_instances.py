@@ -80,24 +80,30 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
 
             # Add all nodes in group instances.
             if node.Class() == "Group":
-                # check if it is write node in family
-                if "write" in families:
+                # only alter families for render family
+                if "write" in families_ak:
                     target = node["render"].value()
                     if target == "Use existing frames":
                         # Local rendering
                         self.log.info("flagged for no render")
-                        families.append("render")
+                        families.append(family)
                     elif target == "Local":
                         # Local rendering
                         self.log.info("flagged for local render")
-                        families.append("{}.local".format("render"))
+                        families.append("{}.local".format(family))
                     elif target == "On farm":
                         # Farm rendering
                         self.log.info("flagged for farm render")
                         instance.data["transfer"] = False
-                        families.append("{}.farm".format("render"))
+                        families.append("{}.farm".format(family))
+
+                    # suffle family to `write` as it is main family
+                    # this will be changed later on in process
                     if "render" in families:
                         families.remove("render")
+                        family = "write"
+                    elif "prerender" in families:
+                        families.remove("prerender")
                         family = "write"
 
                 node.begin()
