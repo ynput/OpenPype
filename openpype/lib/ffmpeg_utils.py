@@ -9,10 +9,10 @@ log = logging.getLogger("FFmpeg utils")
 
 
 def get_ffmpeg_tool_path(tool="ffmpeg"):
-    """Find path to ffmpeg tool in FFMPEG_PATH paths.
+    """Find path to ffmpeg tool in OPENPYPE_FFMPEG_PATH paths.
 
-    Function looks for tool in paths set in FFMPEG_PATH environment. If tool
-    exists then returns it's full path.
+    Function looks for tool in paths set in OPENPYPE_FFMPEG_PATH environment.
+    If tool exists then returns it's full path.
 
     Args:
         tool (string): tool name
@@ -21,7 +21,7 @@ def get_ffmpeg_tool_path(tool="ffmpeg"):
         (str): tool name itself when tool path was not found. (FFmpeg path
         may be set in PATH environment variable)
     """
-    dir_paths = get_paths_from_environ("FFMPEG_PATH")
+    dir_paths = get_paths_from_environ("OPENPYPE_FFMPEG_PATH")
     for dir_path in dir_paths:
         for file_name in os.listdir(dir_path):
             base, _ext = os.path.splitext(file_name)
