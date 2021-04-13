@@ -117,7 +117,7 @@ def apply_transition(otio_track, otio_item, track):
             transition = None
             warning = (
                 "Unable to apply transition \"{t.name}\": {e} "
-                "Ignoring the transition.").format(t=otio_item, e=e.message)
+                "Ignoring the transition.").format(t=otio_item, e=str(e))
 
     elif transition_type == 'fade_in':
         transition_func = getattr(

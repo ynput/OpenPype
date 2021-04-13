@@ -14,7 +14,6 @@ class PreCollectInstances(api.ContextPlugin):
     label = "Pre-collect Instances"
     hosts = ["hiero"]
 
-
     def process(self, context):
         track_items = phiero.get_track_items(
             selected=True, check_tagged=True, check_enabled=True)

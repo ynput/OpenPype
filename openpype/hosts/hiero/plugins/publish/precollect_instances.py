@@ -6,8 +6,8 @@ from openpype.hosts.hiero.otio import hiero_export
 
 # # developer reload modules
 from pprint import pformat
-reload(lib)
-reload(phiero)
+# reload(lib)
+# reload(phiero)
 
 
 class PrecollectInstances(pyblish.api.ContextPlugin):
@@ -20,7 +20,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         otio_timeline = context.data["otioTimeline"]
         selected_timeline_items = phiero.get_track_items(
-                selected=True, check_enabled=True, check_tagged=True)
+            selected=True, check_enabled=True, check_tagged=True)
         self.log.info(
             "Processing enabled track items: {}".format(
                 selected_timeline_items))
@@ -38,8 +38,6 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
             if tag_data.get("id") != "pyblish.avalon.instance":
                 continue
-
-            clip = track_item.source()
 
             # add tag data to instance data
             data.update({
@@ -95,16 +93,18 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "resolutionWidth": otio_clip_metadata[
                         "openpype.source.width"],
                 "resolutionHeight": otio_clip_metadata[
-                        "openpype.source.height"],
+                    "openpype.source.height"],
                 "pixelAspect": otio_clip_metadata[
-                        "openpype.source.pixelAspect"]
+                    "openpype.source.pixelAspect"]
             })
         else:
             otio_tl_metadata = context.data["otioTimeline"].metadata
             data.update({
                 "resolutionWidth": otio_tl_metadata["openpype.timeline.width"],
-                "resolutionHeight": otio_tl_metadata["openpype.timeline.height"],
-                "pixelAspect": otio_tl_metadata["openpype.timeline.pixelAspect"]
+                "resolutionHeight": otio_tl_metadata[
+                    "openpype.timeline.height"],
+                "pixelAspect": otio_tl_metadata[
+                    "openpype.timeline.pixelAspect"]
             })
 
     def create_shot_instance(self, context, **data):

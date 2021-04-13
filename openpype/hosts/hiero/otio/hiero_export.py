@@ -175,7 +175,7 @@ def create_otio_markers(otio_item, item):
             _key = key.replace("tag.", "")
 
             try:
-            # capture exceptions which are related to strings only
+                # capture exceptions which are related to strings only
                 _value = ast.literal_eval(value)
             except (ValueError, SyntaxError):
                 _value = value
