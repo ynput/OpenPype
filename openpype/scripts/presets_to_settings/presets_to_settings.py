@@ -633,26 +633,15 @@ def _convert_modules_data(presets, system_settings):
 
 
 def _convert_applications_data(presets, system_settings):
-    # TODO name apps mapping
-    apps_mapping = {}
     global_data = presets.get("global")
     if not global_data:
         return
+
     applications_data = global_data.get("applications")
     if not applications_data:
         return
 
-    app_variant_by_name = {}
-    apps_entity = system_settings["applications"]
-    for app_group, app_entity in apps_entity.items():
-        # Variant environments
-        variants_entity = app_entity.get("variants")
-        if not variants_entity:
-            continue
-        for variant_name, variant_entity in variants_entity.items():
-            full_name = "/".join([app_group, variant_name])
-            app_variant_by_name[full_name] = variant_entity
-
+    applications_entity = system_settings["applications"]
     for app_name, is_enabled in applications_data.items():
         if "_" not in app_name:
             log.info((
@@ -660,17 +649,33 @@ def _convert_applications_data(presets, system_settings):
                 " Don't know how to convert."
             ).format(app_name))
             continue
-        variant_name = app_name.replace(".", "-")
-        group_name = app_name.split("_").pop(0)
-        _app_name = "/".join([group_name, variant_name])
-        _app_name = apps_mapping.get(_app_name, _app_name)
-        variant_entity = app_variant_by_name.get(_app_name)
+
+        app_name_parts = app_name.split("_")
+        group_name = app_name_parts.pop(0)
+        variant_name = "_".join(app_name_parts).replace(".", "-")
+        app_group_entity = applications_entity.get(group_name)
+        if not app_group_entity:
+            log.info(
+                "Unknown Application group \"{}\". Skipping".format(group_name)
+            )
+            continue
+
+        variants_entity = app_group_entity["variants"]
+        is_dynamic = hasattr(variants_entity, "set_key_label")
+        if is_dynamic:
+            # Create variant - all that can be done
+            _ = variants_entity[variant_name]
+            continue
+
+        variant_entity = variants_entity.get(variant_name)
         if not variant_entity:
-            log.info("Variant \"{}\" was not found.".format(_app_name))
+            log.info("Application \"{}/{}\" was not found.".format(
+                group_name, variant_name
+            ))
             continue
-        if "enabled" not in variant_entity:
-            continue
-        variant_entity["enabled"] = bool(is_enabled)
+
+        if "enabled" in variant_entity:
+            variant_entity["enabled"] = bool(is_enabled)
 
 
 def _convert_project_settings(presets, project_settings):
