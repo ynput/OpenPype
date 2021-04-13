@@ -890,12 +890,6 @@ def convert_global_presets(
 def convert_presets_to_settings(
     system_settings, project_settings, pype_config_dir
 ):
-    # Environments
-    environments_dir = os.path.join(pype_config_dir, "environments")
-    environments_data = lib.load_jsons_from_dir(environments_dir)
-
-    convert_environments(environments_data, system_settings)
-
     # Prepare data for presets and anatomy
     project_settings.change_project(None)
     templates_data = load_yaml(
@@ -919,6 +913,12 @@ def convert_presets_to_settings(
         system_settings,
         project_settings
     )
+
+    # Environments
+    environments_dir = os.path.join(pype_config_dir, "environments")
+    environments_data = lib.load_jsons_from_dir(environments_dir)
+
+    convert_environments(environments_data, system_settings)
 
 
 def main(config_dir):
