@@ -1,7 +1,7 @@
 from PIL import Image
 
 import avalon.io
-import avalon.tvpaint.lib
+from avalon.tvpaint.lib import execute_george
 
 
 def composite_images(input_image_paths, output_filepath):
@@ -23,12 +23,26 @@ def composite_images(input_image_paths, output_filepath):
     img_obj.save(output_filepath)
 
 
-def set_context_settings(asset):
-    project = avalon.io.find_one({"_id": asset["parent"]})
+def set_context_settings(asset_doc=None):
+    """Set workfile settings by asset document data.
 
-    framerate = asset["data"].get("fps", project["data"].get("fps"))
-    if framerate:
-        avalon.tvpaint.lib.execute_george(
+    Change fps, resolution and frame start/end.
+    """
+    if asset_doc is None:
+        # Use current session asset if not passed
+        asset_doc = avalon.io.find_one({
+            "type": "asset",
+            "name": avalon.io.Session["AVALON_ASSET"]
+        })
+
+    project_doc = avalon.io.find_one({"type": "project"})
+
+    framerate = asset_doc["data"].get("fps")
+    if framerate is None:
+        framerate = project_doc["data"].get("fps")
+
+    if framerate is not None:
+        execute_george(
             "tv_framerate {} \"timestretch\"".format(framerate)
         )
     else:
@@ -36,36 +50,35 @@ def set_context_settings(asset):
 
     width_key = "resolutionWidth"
     height_key = "resolutionHeight"
-    width = asset["data"].get(width_key, project["data"].get(width_key))
-    height = asset["data"].get(height_key, project["data"].get(height_key))
-    if width and height:
-        avalon.tvpaint.lib.execute_george(
-            "tv_resizepage {} {} 0".format(width, height)
-        )
-    else:
+
+    width = asset_doc["data"].get(width_key)
+    height = asset_doc["data"].get(height_key)
+    if width is None or height is None:
+        width = project_doc["data"].get(width_key)
+        height = project_doc["data"].get(height_key)
+
+    if width is None or height is None:
         print("Resolution was not found!")
-
-    frame_start = asset["data"].get("frameStart")
-    frame_end = asset["data"].get("frameEnd")
-
-    if frame_start and frame_end:
-        handles = asset["data"].get("handles") or 0
-        handle_start = asset["data"].get("handleStart")
-        if handle_start is None:
-            handle_start = handles
-
-        handle_end = asset["data"].get("handleEnd")
-        if handle_end is None:
-            handle_end = handles
-
-        frame_start -= int(handle_start)
-        frame_end += int(handle_end)
-
-        avalon.tvpaint.lib.execute_george(
-            "tv_markin {} set".format(frame_start - 1)
-        )
-        avalon.tvpaint.lib.execute_george(
-            "tv_markout {} set".format(frame_end - 1)
-        )
     else:
+        execute_george("tv_resizepage {} {} 0".format(width, height))
+
+    frame_start = asset_doc["data"].get("frameStart")
+    frame_end = asset_doc["data"].get("frameEnd")
+
+    if frame_start is None or frame_end is None:
         print("Frame range was not found!")
+        return
+
+    handles = asset_doc["data"].get("handles") or 0
+    handle_start = asset_doc["data"].get("handleStart")
+    handle_end = asset_doc["data"].get("handleEnd")
+
+    if handle_start is None or handle_end is None:
+        handle_start = handles
+        handle_end = handles
+
+    frame_start -= int(handle_start)
+    frame_end += int(handle_end)
+
+    execute_george("tv_markin {} set".format(frame_start - 1))
+    execute_george("tv_markout {} set".format(frame_end - 1))
