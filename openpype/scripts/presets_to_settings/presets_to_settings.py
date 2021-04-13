@@ -954,8 +954,8 @@ def main(config_dir):
             e.g. "Y:\pipeline\pype-production\pype-setup\repos\client-config"
     """
 
-    system_settings = SystemSettings(set_studio_state=False)
-    project_settings = ProjectSettings(change_state=False)
+    system_settings = SystemSettings()
+    project_settings = ProjectSettings()
 
     convert_presets_to_settings(
         system_settings,
