@@ -715,7 +715,6 @@
                 "{OPENPYPE_ROOT}/repos/avalon-core/setup/blender",
                 "{PYTHONPATH}"
             ],
-            "CREATE_NEW_CONSOLE": "yes"
         },
         "variants": {
             "2-83": {
