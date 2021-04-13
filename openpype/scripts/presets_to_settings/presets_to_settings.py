@@ -223,29 +223,8 @@ def convert_environments(environments_data, system_settings):
         modules_entity["ftrack"]["ftrack_actions_path"] = ftrack_server_path
 
     # --- Global ---
-    skip_env_variables = (
-        # - Deprecated
-        "PYPE_APP_ROOT",
-        "PYPE_MODULE_ROOT",
-        "PYPE_PROJECT_CONFIGS",
-        "PYPE_PYTHON_EXE",
-        "PYPE_SITE_PACKAGES",
-        # - FFmpeg and OIIO should be installed and defined by us
-        "FFMPEG_PATH",
-        "PYPE_OIIO_PATH",
-        # - DJV is set with settings
-        "DJV_PATH",
-        # - All PATH and PYTHONPATH modifications must be set again
-        #   as previously set paths to Pype's repository can't be used anymore
-        "PATH",
-        "PYTHONPATH",
-        # - Is set on pype start automatically
-        "PYBLISH_GUI"
-    )
-    log.info((
-        "Converting global environments."
-        " Environment keys that will be skipped {}"
-    ).format(", ".join(skip_env_variables)))
+
+    log.info("Converting global environments.")
     global_envs = environments_data.pop("global", {})
 
     # Studio name
@@ -279,9 +258,8 @@ def convert_environments(environments_data, system_settings):
 
     new_global_envs = {}
     for key, value in global_envs.items():
-        if key in skip_env_variables:
-            continue
-        new_global_envs[key] = value
+        if key not in SKIP_ENV_KEYS:
+            new_global_envs[key] = value
 
     log.debug("New global environments value. {}".format(
         pjson(new_global_envs)
@@ -290,8 +268,7 @@ def convert_environments(environments_data, system_settings):
 
     # Applications
     # Obsolete
-    obsolete_keys = ["premiere", "storyboardpro"]
-    for key in obsolete_keys:
+    for key in OBSOLETE_APP_GROUPS:
         if key in environments_data:
             environments_data.pop(key)
             log.info("Skipping obsolete application \"{}\"".format(key))
@@ -305,7 +282,20 @@ def convert_environments(environments_data, system_settings):
             log.debug("App group \"{}\" - convering environments.".format(
                 app_group
             ))
-            app_entity["environment"] = _value
+
+            env_values = app_entity["environment"].value
+            for key, value in _value.items():
+                # Skip if should be skipped
+                if key in SKIP_ENV_KEYS:
+                    continue
+
+                # Map to new key
+                elif key in ENV_KEY_MAPPING:
+                    key = ENV_KEY_MAPPING[key]
+
+                env_values[key] = value
+            app_entity["environment"] = env_values
+
         else:
             log.debug("App group \"{}\" - didn't have environments.".format(
                 app_group
@@ -317,12 +307,24 @@ def convert_environments(environments_data, system_settings):
         if not is_dynamic:
             for variant_name, variant_entity in variants_entity.items():
                 full_name = "_".join((app_group, variant_name))
-                if full_name in environments_data:
-                    _value = environments_data.pop(full_name)
-                    log.debug((
-                        "App variant \"{}\" - convering environments."
-                    ).format(full_name))
-                    variant_entity["environment"] = _value
+                if full_name not in environments_data:
+                    continue
+                _value = environments_data.pop(full_name)
+                log.debug((
+                    "App variant \"{}\" - convering environments."
+                ).format(full_name))
+                env_values = variant_entity["environment"].value
+                for key, value in _value.items():
+                    # Skip if should be skipped
+                    if key in SKIP_ENV_KEYS:
+                        continue
+
+                    # Map to new key
+                    elif key in ENV_KEY_MAPPING:
+                        key = ENV_KEY_MAPPING[key]
+
+                    env_values[key] = value
+                variant_entity["environment"] = env_values
         else:
             variant_start = "{}_".format(app_group)
             matching_keys = set()
@@ -335,7 +337,18 @@ def convert_environments(environments_data, system_settings):
                 _value = environments_data.pop(env_key)
 
                 variant_entity = variants_entity[variant_name]
-                variant_entity["environment"] = _value
+                env_values = variant_entity["environment"].value
+                for key, value in _value.items():
+                    # Skip if should be skipped
+                    if key in SKIP_ENV_KEYS:
+                        continue
+
+                    # Map to new key
+                    elif key in ENV_KEY_MAPPING:
+                        key = ENV_KEY_MAPPING[key]
+
+                    env_values[key] = value
+                variant_entity["environment"] = env_values
 
     # Cleanup of environments for app variant versions that are not available
     #   in Pype settings.
@@ -622,6 +635,9 @@ def _convert_applications_data(presets, system_settings):
 
     applications_entity = system_settings["applications"]
     for app_name, is_enabled in applications_data.items():
+        if app_name in OBSOLETE_APP_GROUPS:
+            continue
+
         if "_" not in app_name:
             log.info((
                 "Skipped application with name \"{}\"."
@@ -631,6 +647,9 @@ def _convert_applications_data(presets, system_settings):
 
         app_name_parts = app_name.split("_")
         group_name = app_name_parts.pop(0)
+        if group_name in OBSOLETE_APP_GROUPS:
+            continue
+
         variant_name = "_".join(app_name_parts).replace(".", "-")
         app_group_entity = applications_entity.get(group_name)
         if not app_group_entity:
