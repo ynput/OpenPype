@@ -203,7 +203,7 @@
     "publish": {
         "IntegrateFtrackNote": {
             "enabled": true,
-            "note_with_intent_template": "",
+            "note_with_intent_template": "{intent}: {comment}",
             "note_labels": []
         },
         "ValidateFtrackAttributes": {
