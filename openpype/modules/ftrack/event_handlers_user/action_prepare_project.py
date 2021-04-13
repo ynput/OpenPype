@@ -1,7 +1,7 @@
 import os
 import json
 
-from openpype.api import config, ProjectSettings
+from openpype.api import ProjectSettings
 
 from openpype.modules.ftrack.lib import (
     BaseAction,
