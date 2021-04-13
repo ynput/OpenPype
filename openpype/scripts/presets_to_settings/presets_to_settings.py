@@ -30,6 +30,7 @@ SKIP_ENV_KEYS = (
     "PATH",
     "PYTHONPATH",
 
+    # All pointing to different paths than expected (pype internal paths)
     "NUKE_PATH",
     "HIERO_PLUGIN_PATH",
     "HOUDINI_PATH",
@@ -37,7 +38,10 @@ SKIP_ENV_KEYS = (
     "BLENDER_USER_SCRIPTS",
 
     # Resolve
-    "PRE_PYTHON_SCRIPT"
+    "PRE_PYTHON_SCRIPT",
+
+    # Deprecated key (used in avalon's launch system)
+    "CREATE_NEW_CONSOLE"
 )
 
 # Add vendor modules to sys path
