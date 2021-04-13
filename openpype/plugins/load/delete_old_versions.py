@@ -15,11 +15,12 @@ from openpype.api import Anatomy
 
 
 class DeleteOldVersions(api.Loader):
-
+    """Deletes specific number of old version"""
     representations = ["*"]
     families = ["*"]
 
     label = "Delete Old Versions"
+    order = 35
     icon = "trash"
     color = "#d8d8d8"
 
@@ -421,8 +422,9 @@ class DeleteOldVersions(api.Loader):
 
 
 class CalculateOldVersions(DeleteOldVersions):
-
+    """Calculate file size of old versions"""
     label = "Calculate Old Versions"
+    order = 30
 
     options = [
         qargparse.Integer(
