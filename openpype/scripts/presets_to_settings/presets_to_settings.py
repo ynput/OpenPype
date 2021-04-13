@@ -454,7 +454,17 @@ def convert_global_anatomy(
         .get("ftrack", {})
         .get("project_defaults") or {}
     )
+    # Pop auto sync (not in attributes)
+    presets_project_defaults.pop("avalon_auto_sync", None)
+
+    # Pop task mapping and modify
+    tasks_mapping = anatomy_entity["tasks"]
+    task_mapping = presets_project_defaults.pop("task_short_names", None)
+    for task_type, short_name in task_mapping.items():
+        tasks_mapping[task_type] = {"short_name": short_name}
+
     attributes_entity = anatomy_entity["attributes"]
+
     for key, value in presets_project_defaults.items():
         if key not in attributes_entity:
             log.info(
