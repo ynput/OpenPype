@@ -571,7 +571,7 @@ def _convert_modules_data(presets, system_settings):
     menu_items = presets["tray"]["menu_items"] or {}
     items_usage = menu_items.get("item_usage") or {}
     for old_module_name, usage_value in items_usage.items():
-        if old_module_name in ignored_modules:
+        if not old_module_name or old_module_name in ignored_modules:
             continue
         module_name = attr_key_mapping.get(old_module_name)
         if module_name not in modules_entity:
@@ -586,6 +586,8 @@ def _convert_modules_data(presets, system_settings):
 
     attributes = menu_items.get("attributes") or {}
     for old_module_name, module_attributes in attributes.items():
+        if not old_module_name or old_module_name in ignored_modules:
+            continue
         module_name = attr_key_mapping.get(old_module_name)
         if module_name not in modules_entity:
             log.info((
