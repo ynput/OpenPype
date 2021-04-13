@@ -3,6 +3,43 @@ import sys
 import json
 import logging
 
+ENV_KEY_MAPPING = {
+    "PYPE_LOG_NO_COLORS": "OPENPYPE_LOG_NO_COLORS"
+}
+OBSOLETE_APP_GROUPS = (
+    "premiere",
+    "storyboardpro"
+)
+
+SKIP_ENV_KEYS = (
+    # - Deprecated
+    "PYPE_APP_ROOT",
+    "PYPE_MODULE_ROOT",
+    "PYPE_PROJECT_CONFIGS",
+    "PYPE_PYTHON_EXE",
+    "PYPE_SITE_PACKAGES",
+    # - FFmpeg and OIIO should be installed and defined by us
+    "FFMPEG_PATH",
+    "PYPE_OIIO_PATH",
+    # - DJV is set with settings
+    "DJV_PATH",
+    # - Is set on pype start automatically
+    "PYBLISH_GUI",
+    # - All PATH and PYTHONPATH modifications must be set again
+    #   as previously set paths to Pype's repository can't be used anymore
+    "PATH",
+    "PYTHONPATH",
+
+    "NUKE_PATH",
+    "HIERO_PLUGIN_PATH",
+    "HOUDINI_PATH",
+    "HOUDINI_MENU_PATH",
+    "BLENDER_USER_SCRIPTS",
+
+    # Resolve
+    "PRE_PYTHON_SCRIPT"
+)
+
 # Add vendor modules to sys path
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(CURRENT_DIR, "vendor"))
