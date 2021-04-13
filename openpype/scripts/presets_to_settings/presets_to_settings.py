@@ -380,19 +380,6 @@ def convert_environments(environments_data, system_settings):
             " into tool group \"{}\" and variant \"{}\"."
         ).format(key, group_key, variant_key))
         tools_entity[group_key]["variants"][variant_key] = value
-    #
-    #
-    # for tool_group, tool_entity in tools_entity.items():
-    #     if tool_group in environments_data:
-    #         _value = environments_data.pop(tool_group)
-    #         log.debug("Tool group \"{}\" - convering environments.".format(
-    #             tool_group
-    #         ))
-    #         tool_entity["environment"] = _value
-    #     else:
-    #         log.debug("Tool group \"{}\" - didn't have environments.".format(
-    #             tool_group
-    #         ))
 
     if not environments_data:
         return
