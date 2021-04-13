@@ -1,7 +1,5 @@
 from typing import List
 
-import bpy
-
 import pyblish.api
 import openpype.hosts.blender.api.action
 
@@ -26,11 +24,12 @@ class ValidateObjectIsInObjectMode(pyblish.api.InstancePlugin):
                     # Check if the object is in object mode.
                     if not obj.mode == 'OBJECT':
                         invalid.append(obj)
-            except:
+            except Exception:
                 continue
         return invalid
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError(f"Object found in instance is not in Object Mode: {invalid}")
+            raise RuntimeError(
+                f"Object found in instance is not in Object Mode: {invalid}")
