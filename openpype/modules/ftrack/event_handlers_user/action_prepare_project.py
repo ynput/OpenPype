@@ -13,25 +13,21 @@ from openpype.modules.ftrack.lib.avalon_sync import (
 )
 
 
-class PrepareProject(BaseAction):
-    '''Edit meta data action.'''
+class PrepareProjectLocal(BaseAction):
+    """Prepare project attributes in Anatomy."""
 
-    #: Action identifier.
-    identifier = 'prepare.project'
-    #: Action label.
-    label = 'Prepare Project'
-    #: Action description.
-    description = 'Set basic attributes on the project'
-    #: roles that are allowed to register this action
+    identifier = "prepare.project.local"
+    label = "Prepare Project (Local)"
+    description = "Set basic attributes on the project"
     icon = statics_icon("ftrack", "action_icons", "PrepareProject.svg")
 
     settings_key = "prepare_project"
 
     # Key to store info about trigerring create folder structure
-    item_splitter = {'type': 'label', 'value': '---'}
+    item_splitter = {"type": "label", "value": "---"}
 
     def discover(self, session, entities, event):
-        ''' Validation '''
+        """Show only on project."""
         if (
             len(entities) != 1
             or entities[0].entity_type.lower() != "project"
@@ -368,4 +364,4 @@ class PrepareProject(BaseAction):
 
 def register(session):
     '''Register plugin. Called when used as an plugin.'''
-    PrepareProject(session).register()
+    PrepareProjectLocal(session).register()
