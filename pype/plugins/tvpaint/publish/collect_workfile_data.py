@@ -73,10 +73,10 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         else:
             asset_name = current_context["asset"]
             # Handle older workfiles or workfiles without metadata
-            self.log.warning(
+            self.log.warning((
                 "Workfile does not contain information about context."
                 " Using current Session context."
-            )
+            ))
 
         # Store context asset name
         context.data["asset"] = asset_name
