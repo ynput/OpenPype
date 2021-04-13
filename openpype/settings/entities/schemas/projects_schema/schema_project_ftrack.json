@@ -38,6 +38,25 @@
                 },
                 {
                     "type": "dict",
+                    "key": "prepare_project",
+                    "label": "Prepare Project",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "list",
+                            "key": "role_list",
+                            "label": "Roles",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
                     "key": "sync_hier_entity_attributes",
                     "label": "Sync Hierarchical and Entity Attributes",
                     "checkbox_key": "enabled",

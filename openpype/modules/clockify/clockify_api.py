@@ -1,12 +1,15 @@
 import os
 import re
 import time
-import requests
 import json
 import datetime
+import requests
 from .constants import (
-    CLOCKIFY_ENDPOINT, ADMIN_PERMISSION_NAMES, CREDENTIALS_JSON_PATH
+    CLOCKIFY_ENDPOINT,
+    ADMIN_PERMISSION_NAMES
 )
+
+from openpype.lib.local_settings import OpenPypeSecureRegistry
 
 
 def time_check(obj):
@@ -30,6 +33,8 @@ class ClockifyAPI:
         self.api_key = api_key
         self.request_counter = 0
         self.request_time = time.time()
+
+        self.secure_registry = OpenPypeSecureRegistry("clockify")
 
     @property
     def headers(self):
@@ -129,22 +134,10 @@ class ClockifyAPI:
         return False
 
     def get_api_key(self):
-        api_key = None
-        try:
-            file = open(CREDENTIALS_JSON_PATH, 'r')
-            api_key = json.load(file).get('api_key', None)
-            if api_key == '':
-                api_key = None
-        except Exception:
-            file = open(CREDENTIALS_JSON_PATH, 'w')
-        file.close()
-        return api_key
+        return self.secure_registry.get_item("api_key", None)
 
     def save_api_key(self, api_key):
-        data = {'api_key': api_key}
-        file = open(CREDENTIALS_JSON_PATH, 'w')
-        file.write(json.dumps(data))
-        file.close()
+        self.secure_registry.set_item("api_key", api_key)
 
     def get_workspaces(self):
         action_url = 'workspaces/'

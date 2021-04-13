@@ -5,11 +5,11 @@ from openpype.hosts import resolve
 from pprint import pformat
 
 
-class CollectInstances(pyblish.api.ContextPlugin):
+class PrecollectInstances(pyblish.api.ContextPlugin):
     """Collect all Track items selection."""
 
     order = pyblish.api.CollectorOrder - 0.59
-    label = "Collect Instances"
+    label = "Precollect Instances"
     hosts = ["resolve"]
 
     def process(self, context):
@@ -26,7 +26,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             data = dict()
             timeline_item = timeline_item_data["clip"]["item"]
 
-            # get openpype tag data
+            # get pype tag data
             tag_data = resolve.get_timeline_item_pype_tag(timeline_item)
             self.log.debug(f"__ tag_data: {pformat(tag_data)}")
 
@@ -102,10 +102,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
             })
 
     def create_shot_instance(self, context, timeline_item, **data):
-        master_layer = data.get("masterLayer")
+        hero_track = data.get("heroTrack")
         hierarchy_data = data.get("hierarchyData")
 
-        if not master_layer:
+        if not hero_track:
             return
 
         if not hierarchy_data:

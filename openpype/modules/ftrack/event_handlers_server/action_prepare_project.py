@@ -2,27 +2,24 @@ import json
 
 from openpype.api import ProjectSettings
 
-from openpype.modules.ftrack.lib import (
-    BaseAction,
-    statics_icon
-)
+from openpype.modules.ftrack.lib import ServerAction
 from openpype.modules.ftrack.lib.avalon_sync import (
     get_pype_attr,
     CUST_ATTR_AUTO_SYNC
 )
 
 
-class PrepareProjectLocal(BaseAction):
+class PrepareProjectServer(ServerAction):
     """Prepare project attributes in Anatomy."""
 
-    identifier = "prepare.project.local"
-    label = "Prepare Project"
+    identifier = "prepare.project.server"
+    label = "OpenPype Admin"
+    variant = "- Prepare Project (Server)"
     description = "Set basic attributes on the project"
-    icon = statics_icon("ftrack", "action_icons", "PrepareProject.svg")
-
-    role_list = ["Pypeclub", "Administrator", "Project Manager"]
 
     settings_key = "prepare_project"
+
+    role_list = ["Pypeclub", "Administrator", "Project Manager"]
 
     # Key to store info about trigerring create folder structure
     item_splitter = {"type": "label", "value": "---"}
@@ -365,4 +362,4 @@ class PrepareProjectLocal(BaseAction):
 
 def register(session):
     '''Register plugin. Called when used as an plugin.'''
-    PrepareProjectLocal(session).register()
+    PrepareProjectServer(session).register()
