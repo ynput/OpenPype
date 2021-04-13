@@ -146,13 +146,13 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             dict: otio clip object
 
         """
-        track_name = track_item.parent().name()
+        ti_track_name = track_item.parent().name()
         timeline_range = self.create_otio_time_range_from_timeline_item_data(
             track_item)
         for otio_clip in otio_timeline.each_clip():
             track_name = otio_clip.parent().name
             parent_range = otio_clip.range_in_parent()
-            if track_name not in track_name:
+            if ti_track_name not in track_name:
                 continue
             if otio_clip.name not in track_item.name():
                 continue

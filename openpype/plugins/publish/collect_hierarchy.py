@@ -15,7 +15,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
     label = "Collect Hierarchy"
     order = pyblish.api.CollectorOrder - 0.57
     families = ["shot"]
-    hosts = ["resolve"]
+    hosts = ["resolve", "hiero"]
 
     def process(self, context):
         temp_context = {}

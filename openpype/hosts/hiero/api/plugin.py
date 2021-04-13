@@ -675,6 +675,9 @@ class PublishClip:
         if kwargs.get("avalon"):
             self.tag_data.update(kwargs["avalon"])
 
+        # add publish attribute to tag data
+        self.tag_data.update({"publish": True})
+
         # adding ui inputs if any
         self.ui_inputs = kwargs.get("ui_inputs", {})
 
@@ -688,6 +691,7 @@ class PublishClip:
         self._create_parents()
 
     def convert(self):
+
         # solve track item data and add them to tag data
         self._convert_to_tag_data()
 
@@ -706,6 +710,11 @@ class PublishClip:
             self.tag_data["asset"] = new_name
         else:
             self.tag_data["asset"] = self.ti_name
+
+        if self.tag_data["heroTrack"] and self.review_layer:
+            self.tag_data.update({"reviewTrack": self.review_layer})
+        else:
+            self.tag_data.update({"reviewTrack": None})
 
         # create pype tag on track_item and add data
         lib.imprint(self.track_item, self.tag_data)
@@ -861,9 +870,6 @@ class PublishClip:
 
         # add data to return data dict
         self.tag_data.update(tag_hierarchy_data)
-
-        if hero_track and self.review_layer:
-            self.tag_data.update({"reviewTrack": self.review_layer})
 
     def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
         """ Solve tag data from hierarchy data and templates. """
