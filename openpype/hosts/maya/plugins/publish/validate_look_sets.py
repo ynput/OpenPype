@@ -47,7 +47,6 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Process all the nodes in the instance"""
 
-        self.log.debug(instance.data.get("lookData"))
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError("'{}' has invalid look "
@@ -61,8 +60,6 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
                      "'{}'".format(instance.name))
 
         relationships = instance.data["lookData"]["relationships"]
-        render_nodes_data = instance.data["lookData"].get("render_nodes") or []
-        render_node_names = [n["name"] for n in render_nodes_data]
         invalid = []
 
         renderlayer = instance.data.get("renderlayer", "defaultRenderLayer")
