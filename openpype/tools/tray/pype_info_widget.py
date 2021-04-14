@@ -275,6 +275,24 @@ class PypeInfoWidget(QtWidgets.QWidget):
             mime_data
         )
 
+
+class PypeInfoSubWidget(QtWidgets.QWidget):
+    not_applicable = "N/A"
+
+    def __init__(self, parent=None):
+        super(PypeInfoSubWidget, self).__init__(parent)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setAlignment(QtCore.Qt.AlignTop)
+        main_layout.addWidget(self._create_openpype_info_widget(), 0)
+        main_layout.addWidget(self._create_separator(), 0)
+        main_layout.addWidget(self._create_workstation_widget(), 0)
+        main_layout.addWidget(self._create_separator(), 0)
+        main_layout.addWidget(self._create_local_settings_widget(), 0)
+        main_layout.addWidget(self._create_separator(), 0)
+        main_layout.addWidget(self._create_environ_widget(), 1)
+
     def _create_separator(self):
         separator_widget = QtWidgets.QWidget(self)
         separator_widget.setStyleSheet("background: #222222;")
