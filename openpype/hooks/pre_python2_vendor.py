@@ -11,7 +11,7 @@ class PrePython2Vendor(PreLaunchHook):
     def execute(self):
         # Prepare vendor dir path
         self.log.info("adding global python 2 vendor")
-        pype_root = os.getenv("OPENPYPE_ROOT")
+        pype_root = os.getenv("OPENPYPE_REPOS_ROOT")
         python_2_vendor = os.path.join(
             pype_root,
             "openpype",

@@ -4,7 +4,7 @@ import shutil
 import threading
 import time
 
-from openpype.api import Logger
+from openpype.api import Logger, Anatomy
 from .abstract_provider import AbstractProvider
 
 log = Logger().get_logger("SyncServer")
@@ -12,6 +12,14 @@ log = Logger().get_logger("SyncServer")
 
 class LocalDriveHandler(AbstractProvider):
     """ Handles required operations on mounted disks with OS """
+    def __init__(self, project_name, site_name, tree=None, presets=None):
+        self.presets = None
+        self.active = False
+        self.project_name = project_name
+        self.site_name = site_name
+
+        self.active = self.is_active()
+
     def is_active(self):
         return True
 
@@ -82,27 +90,37 @@ class LocalDriveHandler(AbstractProvider):
         os.makedirs(folder_path, exist_ok=True)
         return folder_path
 
+    def get_roots_config(self, anatomy=None):
+        """
+            Returns root values for path resolving
+
+            Takes value from Anatomy which takes values from Settings
+            overridden by Local Settings
+
+        Returns:
+            (dict) - {"root": {"root": "/My Drive"}}
+                     OR
+                     {"root": {"root_ONE": "value", "root_TWO":"value}}
+            Format is importing for usage of python's format ** approach
+        """
+        if not anatomy:
+            anatomy = Anatomy(self.project_name,
+                              self._normalize_site_name(self.site_name))
+
+        return {'root': anatomy.roots}
+
     def get_tree(self):
         return
 
-    def resolve_path(self, path, root_config, anatomy=None):
-        if root_config and not root_config.get("root"):
-            root_config = {"root": root_config}
+    def get_configurable_items_for_site(self):
+        """
+            Returns list of items that should be configurable by User
 
-        try:
-            if not root_config:
-                raise KeyError
-
-            path = path.format(**root_config)
-        except KeyError:
-            try:
-                path = anatomy.fill_root(path)
-            except KeyError:
-                msg = "Error in resolving local root from anatomy"
-                log.error(msg)
-                raise ValueError(msg)
-
-        return path
+            Returns:
+                (list of dict)
+                [{key:"root", label:"root", value:"valueFromSettings"}]
+        """
+        pass
 
     def _copy(self, source_path, target_path):
         print("copying {}->{}".format(source_path, target_path))
@@ -133,3 +151,9 @@ class LocalDriveHandler(AbstractProvider):
                                  )
             target_file_size = os.path.getsize(target_path)
             time.sleep(0.5)
+
+    def _normalize_site_name(self, site_name):
+        """Transform user id to 'local' for Local settings"""
+        if site_name != 'studio':
+            return 'local'
+        return site_name
