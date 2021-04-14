@@ -348,6 +348,7 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
             )
 
         wokstation_info_widget.set_content_widget(info_widget)
+        wokstation_info_widget.toggle_content()
 
         return wokstation_info_widget
 
