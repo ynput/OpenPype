@@ -4,6 +4,11 @@
             "enabled": true,
             "optional": true,
             "active": true
+        },
+        "ValidateMarks": {
+            "enabled": true,
+            "optional": true,
+            "active": true
         }
     },
     "filters": {}
