@@ -475,16 +475,10 @@ def _bootstrap_from_code(use_version):
     # run through repos and add them to `sys.path` and `PYTHONPATH`
     # set root
     if getattr(sys, 'frozen', False):
-        openpype_root = os.path.normpath(
-            os.path.dirname(sys.executable))
-        local_version = bootstrap.get_version(Path(openpype_root))
+        local_version = bootstrap.get_version(Path(OPENPYPE_ROOT))
         print(f"  - running version: {local_version}")
         assert local_version
     else:
-        openpype_root = os.path.normpath(
-            os.path.dirname(
-                os.path.dirname(
-                    os.path.realpath(igniter.__file__))))
         # get current version of OpenPype
         local_version = bootstrap.get_local_live_version()
 
@@ -498,14 +492,17 @@ def _bootstrap_from_code(use_version):
             bootstrap.add_paths_from_directory(version_path)
             os.environ["OPENPYPE_VERSION"] = use_version
     else:
-        version_path = openpype_root
-    os.environ["OPENPYPE_ROOT"] = openpype_root
-    repos = os.listdir(os.path.join(openpype_root, "repos"))
-    repos = [os.path.join(openpype_root, "repos", repo) for repo in repos]
+        version_path = OPENPYPE_ROOT
+
+    repos = os.listdir(os.path.join(OPENPYPE_ROOT, "repos"))
+    repos = [os.path.join(OPENPYPE_ROOT, "repos", repo) for repo in repos]
     # add self to python paths
-    repos.insert(0, openpype_root)
+    repos.insert(0, OPENPYPE_ROOT)
     for repo in repos:
         sys.path.insert(0, repo)
+
+    # Set OPENPYPE_REPOS_ROOT to code root
+    os.environ["OPENPYPE_REPOS_ROOT"] = OPENPYPE_ROOT
 
     # add venv 'site-packages' to PYTHONPATH
     python_path = os.getenv("PYTHONPATH", "")
@@ -517,15 +514,15 @@ def _bootstrap_from_code(use_version):
     # in case when we are running without any version installed.
     if not getattr(sys, 'frozen', False):
         split_paths.append(site.getsitepackages()[-1])
-        # TODO move additional paths to `boot` part when OPENPYPE_ROOT will point
-        # to same hierarchy from code and from frozen OpenPype
+        # TODO move additional paths to `boot` part when OPENPYPE_ROOT will
+        # point to same hierarchy from code and from frozen OpenPype
         additional_paths = [
             # add OpenPype tools
-            os.path.join(os.environ["OPENPYPE_ROOT"], "openpype", "tools"),
+            os.path.join(OPENPYPE_ROOT, "openpype", "tools"),
             # add common OpenPype vendor
             # (common for multiple Python interpreter versions)
             os.path.join(
-                os.environ["OPENPYPE_ROOT"],
+                OPENPYPE_ROOT,
                 "openpype",
                 "vendor",
                 "python",
