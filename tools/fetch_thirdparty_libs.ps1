@@ -5,7 +5,6 @@
 .DESCRIPTION
   This will download third-party dependencies specified in pyproject.toml
   and extract them to vendor/bin folder.
- #>
 
 .EXAMPLE
 
