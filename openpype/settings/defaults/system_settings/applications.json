@@ -19,6 +19,25 @@
             "OPENPYPE_LOG_NO_COLORS": "Yes"
         },
         "variants": {
+            "2022": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2022\\bin\\maya.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2022/bin/maya"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2022"
+                }
+            },
             "2020": {
                 "executables": {
                     "windows": [
@@ -75,6 +94,9 @@
                 "environment": {
                     "MAYA_VERSION": "2018"
                 }
+            },
+            "__dynamic_keys_labels__": {
+                "2022": "2022 (Testing Only)"
             }
         }
     },
@@ -95,6 +117,23 @@
             "LOGLEVEL": "DEBUG"
         },
         "variants": {
+            "13-0": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.0v1\\Nuke13.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.0v1/Nuke13.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "12-2": {
                 "executables": {
                     "windows": [
@@ -164,7 +203,9 @@
             "__dynamic_keys_labels__": {
                 "12-2": "12.2",
                 "12-0": "12.0",
-                "11-3": "11.3"
+                "11-3": "11.3",
+                "11-2": "11.2",
+                "13-0": "13.0 (Testing only)"
             }
         }
     },
@@ -185,6 +226,29 @@
             "LOGLEVEL": "DEBUG"
         },
         "variants": {
+            "13-0": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.0v1\\Nuke13.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.0v1/Nuke13.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--nukex"
+                    ],
+                    "darwin": [
+                        "--nukex"
+                    ],
+                    "linux": [
+                        "--nukex"
+                    ]
+                },
+                "environment": {}
+            },
             "12-2": {
                 "executables": {
                     "windows": [
@@ -279,7 +343,8 @@
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
-                "11-2": "11.2"
+                "11-2": "11.2",
+                "13-0": "13.0 (Testing only)"
             }
         }
     },
@@ -300,6 +365,29 @@
             "LOGLEVEL": "DEBUG"
         },
         "variants": {
+            "13-0": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.0v1\\Nuke13.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.0v1/Nuke13.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--studio"
+                    ],
+                    "darwin": [
+                        "--studio"
+                    ],
+                    "linux": [
+                        "--studio"
+                    ]
+                },
+                "environment": {}
+            },
             "12-2": {
                 "executables": {
                     "windows": [
@@ -392,7 +480,8 @@
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
-                "11-2": "11.2"
+                "11-2": "11.2",
+                "13-0": "13.0 (Testing only)"
             }
         }
     },
@@ -413,6 +502,29 @@
             "LOGLEVEL": "DEBUG"
         },
         "variants": {
+            "13-0": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.0v1\\Nuke13.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.0v1/Nuke13.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--hiero"
+                    ],
+                    "darwin": [
+                        "--hiero"
+                    ],
+                    "linux": [
+                        "--hiero"
+                    ]
+                },
+                "environment": {}
+            },
             "12-2": {
                 "executables": {
                     "windows": [
@@ -507,7 +619,8 @@
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
-                "11-2": "11.2"
+                "11-2": "11.2",
+                "13-0": "13.0 (Testing only)"
             }
         }
     },
@@ -760,9 +873,31 @@
                 },
                 "environment": {}
             },
+            "2-91": {
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Blender Foundation\\Blender 2.91\\blender.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [
+                        "--python-use-system-env"
+                    ],
+                    "darwin": [
+                        "--python-use-system-env"
+                    ],
+                    "linux": [
+                        "--python-use-system-env"
+                    ]
+                },
+                "environment": {}
+            },
             "__dynamic_keys_labels__": {
                 "2-83": "2.83",
-                "2-90": "2.90"
+                "2-90": "2.90",
+                "2-91": "2.91"
             }
         }
     },
