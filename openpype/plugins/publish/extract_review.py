@@ -2,12 +2,18 @@ import os
 import re
 import copy
 import json
-import pyblish.api
+
 import clique
+
+import pyblish.api
 import openpype.api
-import openpype.lib
-from openpype.lib import should_decompress, \
-    get_decompress_dir, decompress
+from openpype.lib import (
+    get_ffmpeg_tool_path,
+    ffprobe_streams,
+    should_decompress,
+    get_decompress_dir,
+    decompress
+)
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -43,7 +49,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     supported_exts = image_exts + video_exts
 
     # FFmpeg tools paths
-    ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+    ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
     # Preset attributes
     profiles = None
@@ -716,7 +722,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
-        input_data = openpype.lib.ffprobe_streams(
+        input_data = ffprobe_streams(
             full_input_path_single_file, self.log
         )[0]
         input_width = int(input_data["width"])
