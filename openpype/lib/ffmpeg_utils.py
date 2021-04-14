@@ -30,6 +30,17 @@ def get_vendor_bin_path(bin_app):
     )
 
 
+def get_oiio_tools_path(tool="oiiotool"):
+    """Path to vendorized OpenImageIO tool executables.
+
+    Args:
+        tool (string): Tool name (oiiotool, maketx, ...).
+            Default is "oiiotool".
+    """
+    oiio_dir = get_vendor_bin_path("oiio")
+    return os.path.join(oiio_dir, tool)
+
+
 def get_ffmpeg_tool_path(tool="ffmpeg"):
     """Path to vendorized FFmpeg executable.
 
