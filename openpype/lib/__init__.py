@@ -117,6 +117,8 @@ from .path_tools import (
 )
 
 from .ffmpeg_utils import (
+    get_vendor_bin_path,
+    get_oiio_tools_path,
     get_ffmpeg_tool_path,
     ffprobe_streams
 )
@@ -199,8 +201,10 @@ __all__ = [
     "get_version_from_path",
     "get_last_version_from_path",
 
-    "ffprobe_streams",
+    "get_vendor_bin_path",
+    "get_oiio_tools_path",
     "get_ffmpeg_tool_path",
+    "ffprobe_streams",
 
     "terminal",
 
