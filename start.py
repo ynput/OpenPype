@@ -100,10 +100,20 @@ import subprocess
 import site
 from pathlib import Path
 
-# add dependencies folder to sys.pat for frozen code
-if getattr(sys, 'frozen', False):
+# OPENPYPE_ROOT is variable pointing to build (or code) directory
+# WARNING `OPENPYPE_ROOT` must be defined before igniter import
+# - igniter changes cwd which cause that filepath of this script won't lead
+#   to right directory
+if not getattr(sys, 'frozen', False):
+    # Code root defined by `start.py` directory
+    OPENPYPE_ROOT = os.path.dirname(os.path.abspath(__file__))
+else:
+    OPENPYPE_ROOT = os.path.dirname(sys.executable)
+
+    # add dependencies folder to sys.pat for frozen code
     frozen_libs = os.path.normpath(
-        os.path.join(os.path.dirname(sys.executable), "dependencies"))
+        os.path.join(OPENPYPE_ROOT, "dependencies")
+    )
     sys.path.append(frozen_libs)
     # add stuff from `<frozen>/dependencies` to PYTHONPATH.
     pythonpath = os.getenv("PYTHONPATH", "")
