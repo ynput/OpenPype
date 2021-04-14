@@ -4,8 +4,6 @@ import json
 import platform
 import subprocess
 
-from . import get_paths_from_environ
-
 log = logging.getLogger("FFmpeg utils")
 
 
@@ -31,27 +29,21 @@ def get_vendor_bin_path(bin_app):
         platform.system().lower()
     )
 
-    
-def get_ffmpeg_tool_path(tool="ffmpeg"):
-    """Find path to ffmpeg tool in OPENPYPE_FFMPEG_PATH paths.
 
-    Function looks for tool in paths set in OPENPYPE_FFMPEG_PATH environment.
-    If tool exists then returns it's full path.
+def get_ffmpeg_tool_path(tool="ffmpeg"):
+    """Path to vendorized FFmpeg executable.
 
     Args:
-        tool (string): tool name
+        tool (string): Tool name (ffmpeg, ffprobe, ...).
+            Default is "ffmpeg".
 
     Returns:
-        (str): tool name itself when tool path was not found. (FFmpeg path
-        may be set in PATH environment variable)
+        str: Full path to ffmpeg executable.
     """
-    dir_paths = get_paths_from_environ("OPENPYPE_FFMPEG_PATH")
-    for dir_path in dir_paths:
-        for file_name in os.listdir(dir_path):
-            base, _ext = os.path.splitext(file_name)
-            if base.lower() == tool.lower():
-                return os.path.join(dir_path, tool)
-    return tool
+    ffmpeg_dir = get_vendor_bin_path("ffmpeg")
+    if platform.system().lower() == "windows":
+        ffmpeg_dir = os.path.join(ffmpeg_dir, "bin")
+    return os.path.join(ffmpeg_dir, tool)
 
 
 def ffprobe_streams(path_to_file, logger=None):
