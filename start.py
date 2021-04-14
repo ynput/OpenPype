@@ -676,7 +676,9 @@ def get_info() -> list:
         inf.append(("OpenPype variant", "staging"))
     else:
         inf.append(("OpenPype variant", "production"))
-    inf.append(("Running OpenPype from", os.environ.get('OPENPYPE_ROOT')))
+    inf.append(
+        ("Running OpenPype from", os.environ.get('OPENPYPE_REPOS_ROOT'))
+    )
     inf.append(("Using mongodb", components["host"]))
 
     if os.environ.get("FTRACK_SERVER"):
