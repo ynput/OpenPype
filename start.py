@@ -95,7 +95,6 @@ Attributes:
 import os
 import re
 import sys
-import platform
 import traceback
 import subprocess
 import site
@@ -154,27 +153,6 @@ def set_openpype_global_environments() -> None:
     # Change scale factor only if is not set
     if "QT_AUTO_SCREEN_SCALE_FACTOR" not in os.environ:
         os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-
-    # --- Set environment variables to vendorized binaries(FFmpeg and OIIO) ---
-    # TODO add validations of existing binaries
-    # Prepare path to bin vendor directory
-    bin_vendor_dir = os.path.join(BUILD_ROOT, "vendor", "bin")
-    # Prepare platform name
-    platform_name = platform.system().lower()
-
-    # FFmpeg path
-    ffmpeg_path_parts = [bin_vendor_dir, "ffmpeg", platform_name]
-    # Windows version has executables in `bin` directory
-    if platform_name == "windows":
-        ffmpeg_path_parts.append("bin")
-
-    ffmpeg_path = os.path.join(*ffmpeg_path_parts)
-
-    os.environ["OPENPYPE_FFMPEG_PATH"] = ffmpeg_path
-
-    # OIIO path
-    oiio_path = os.path.join(bin_vendor_dir, "oiio", platform_name)
-    os.environ["OPENPYPE_OIIO_PATH"] = oiio_path
 
 
 def run(arguments: list, env: dict = None) -> int:
