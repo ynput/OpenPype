@@ -273,21 +273,21 @@ class CollectLook(pyblish.api.InstancePlugin):
                     if cmds.getAttr("{}.{}".format(obj_set, attr), type=True) in disabled_types:  # noqa
                         continue
 
-                    # self.log.debug("{}: {}".format(attr, cmds.getAttr("{}.{}".format(obj_set, attr), type=True)))  # noqa
                     node_attrs.append((
                         attr,
-                        cmds.getAttr("{}.{}".format(obj_set, attr))
+                        cmds.getAttr("{}.{}".format(obj_set, attr)),
+                        cmds.getAttr(
+                            "{}.{}".format(obj_set, attr), type=True)
                     ))
 
-                render_nodes.append(
-                    {
-                        "name": obj_set,
-                        "type": cmds.nodeType(obj_set),
-                        "members": cmds.ls(cmds.sets(
-                            obj_set, query=True), long=True),
-                        "attributes": node_attrs
-                    }
-                )
+                for member in cmds.ls(cmds.sets(obj_set, query=True), long=True):
+                    member_data = self.collect_member_data(member,
+                                                           instance_lookup)
+                    if not member_data:
+                        continue
+
+                    # Add information of the node to the members list
+                    sets[obj_set]["members"].append(member_data)
 
             # Get all nodes of the current objectSet (shadingEngine)
             for member in cmds.ls(cmds.sets(obj_set, query=True), long=True):
@@ -302,7 +302,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             # Remove sets that didn't have any members assigned in the end
             # Thus the data will be limited to only what we need.
             self.log.info("obj_set {}".format(sets[obj_set]))
-            if not sets[obj_set]["members"] or (not obj_set.endswith("SG")):
+            if not sets[obj_set]["members"]:
                 self.log.info(
                     "Removing redundant set information: {}".format(obj_set))
                 sets.pop(obj_set, None)
@@ -313,8 +313,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         # Store data on the instance
         instance.data["lookData"] = {
             "attributes": attributes,
-            "relationships": sets,
-            "render_nodes": render_nodes
+            "relationships": sets
         }
 
         # Collect file nodes used by shading engines (if we have any)
