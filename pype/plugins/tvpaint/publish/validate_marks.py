@@ -41,18 +41,11 @@ class ValidateMarks(pyblish.api.ContextPlugin):
         }
 
     def process(self, context):
-        # Marks return as "{frame - 1} {state} ", example "0 set".
-        result = lib.execute_george("tv_markin")
-        mark_in_frame, mark_in_state, _ = result.split(" ")
-
-        result = lib.execute_george("tv_markout")
-        mark_out_frame, mark_out_state, _ = result.split(" ")
-
         current_data = {
-            "markIn": int(mark_in_frame) + 1,
-            "markInState": mark_in_state == "set",
-            "markOut": int(mark_out_frame) + 1,
-            "markOutState": mark_out_state == "set"
+            "markIn": context.data["sceneMarkIn"] + 1,
+            "markInState": context.data["sceneMarkInState"],
+            "markOut": context.data["sceneMarkOut"] + 1,
+            "markOutState": context.data["sceneMarkOutState"]
         }
         expected_data = self.get_expected_data(context)
         invalid = {}
