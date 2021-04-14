@@ -91,6 +91,9 @@ class TvpaintPrelaunchHook(pype.lib.PypeHook):
                 os.path.normpath(workfile_path)
             )
 
+            # Register the event in the environment for later.
+            env["PYPE_TVPAINT_LAUNCHED_TEMPLATE_FILE"] = "1"
+
         self.log.info(f"Workfile to open: `{workfile_path}`")
 
         # adding compulsory environment var for openting file
