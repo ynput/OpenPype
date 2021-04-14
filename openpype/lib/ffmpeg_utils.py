@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import platform
 import subprocess
 
 from . import get_paths_from_environ
@@ -8,6 +9,29 @@ from . import get_paths_from_environ
 log = logging.getLogger("FFmpeg utils")
 
 
+def get_vendor_bin_path(bin_app):
+    """Path to OpenPype vendorized binaries.
+
+    Vendorized executables are expected in specific hierarchy inside build or
+    in code source.
+
+    "{OPENPYPE_ROOT}/vendor/bin/{name of vendorized app}/{platform}"
+
+    Args:
+        bin_app (str): Name of vendorized application.
+
+    Returns:
+        str: Path to vendorized binaries folder.
+    """
+    return os.path.join(
+        os.environ["OPENPYPE_ROOT"],
+        "vendor",
+        "bin",
+        bin_app,
+        platform.system().lower()
+    )
+
+    
 def get_ffmpeg_tool_path(tool="ffmpeg"):
     """Find path to ffmpeg tool in OPENPYPE_FFMPEG_PATH paths.
 
