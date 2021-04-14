@@ -72,8 +72,10 @@ as a base image.
 You can pull the image:
 
 ```sh
-docker pull pypeclub/openpype:latest
+# replace 3.0.0 tag with version you want
+docker pull pypeclub/openpype:3.0.0
 ```
+See https://hub.docker.com/r/pypeclub/openpype/tag for more.
 
 #### Manual build
 To build OpenPype on Linux you wil need:
