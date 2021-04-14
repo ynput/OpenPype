@@ -113,12 +113,15 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             if current_node in shader_nodes:
                 continue
             print("processing {}".format(rel))
-            current_members = set(cmds.ls(cmds.sets(current_node, query=True) or [],  long=True))
-            new_members = {"{}".format(m["name"]) for m in data["members"] or []}
+            current_members = set(cmds.ls(
+                cmds.sets(current_node, query=True) or [], long=True))
+            new_members = {"{}".format(
+                m["name"]) for m in data["members"] or []}
             dif = new_members.difference(current_members)
 
             # add to set
-            cmds.sets(dif, forceElement="{}:{}".format(container["namespace"], rel))
+            cmds.sets(
+                dif, forceElement="{}:{}".format(container["namespace"], rel))
 
         # update of reference could result in failed edits - material is not
         # present because of renaming etc.

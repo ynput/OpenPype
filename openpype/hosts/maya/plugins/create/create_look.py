@@ -12,6 +12,7 @@ class CreateLook(plugin.Creator):
     family = "look"
     icon = "paint-brush"
     defaults = ['Main']
+    make_txt = True
 
     def __init__(self, *args, **kwargs):
         super(CreateLook, self).__init__(*args, **kwargs)
@@ -19,7 +20,7 @@ class CreateLook(plugin.Creator):
         self.data["renderlayer"] = lib.get_current_renderlayer()
 
         # Whether to automatically convert the textures to .tx upon publish.
-        self.data["maketx"] = True
+        self.data["maketx"] = self.make_tx
 
         # Enable users to force a copy.
         self.data["forceCopy"] = False

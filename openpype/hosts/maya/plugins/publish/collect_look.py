@@ -238,7 +238,6 @@ class CollectLook(pyblish.api.InstancePlugin):
         # Discover related object sets
         self.log.info("Gathering sets..")
         sets = self.collect_sets(instance)
-        render_nodes = []
 
         # Lookup set (optimization)
         instance_lookup = set(cmds.ls(instance, long=True))
@@ -280,7 +279,8 @@ class CollectLook(pyblish.api.InstancePlugin):
                             "{}.{}".format(obj_set, attr), type=True)
                     ))
 
-                for member in cmds.ls(cmds.sets(obj_set, query=True), long=True):
+                for member in cmds.ls(
+                        cmds.sets(obj_set, query=True), long=True):
                     member_data = self.collect_member_data(member,
                                                            instance_lookup)
                     if not member_data:
