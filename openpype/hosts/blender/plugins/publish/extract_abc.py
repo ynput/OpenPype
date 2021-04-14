@@ -18,7 +18,7 @@ class ExtractABC(openpype.api.Extractor):
         # Define extract output file path
 
         stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.fbx"
+        filename = f"{instance.name}.abc"
         filepath = os.path.join(stagingdir, filename)
 
         context = bpy.context
@@ -72,9 +72,7 @@ class ExtractABC(openpype.api.Extractor):
         # We export the abc
         bpy.ops.wm.alembic_export(
             new_context,
-            filepath=filepath,
-            start=1,
-            end=1
+            filepath=filepath
         )
 
         view_layer.active_layer_collection = old_active_layer_collection
