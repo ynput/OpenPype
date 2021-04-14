@@ -82,7 +82,7 @@
         },  {
             "type": "dict",
             "key": "sync_server",
-            "label": "Sync Server",
+            "label": "Site Sync",
             "collapsible": true,
             "checkbox_key": "enabled",
             "children": [{

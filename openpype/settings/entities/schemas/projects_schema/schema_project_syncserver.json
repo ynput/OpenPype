@@ -1,7 +1,7 @@
 {
     "type": "dict",
     "key": "sync_server",
-    "label": "Sync Server (currently unused)",
+    "label": "Site Sync (beta testing)",
     "collapsible": true,
     "checkbox_key": "enabled",
     "is_file": true,
