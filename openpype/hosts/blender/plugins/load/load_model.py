@@ -260,6 +260,12 @@ class CacheModelLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
+    def _remove(self, objects, container):
+        for obj in list(objects):
+            bpy.data.meshes.remove(obj.data)
+
+        bpy.data.collections.remove(container)
+
     def _process(self, libpath, container_name, parent_collection):
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -282,8 +288,20 @@ class CacheModelLoader(plugin.AssetLoader):
         for obj in bpy.context.selected_objects:
             model_container.objects.link(obj)
             view_layer_collection.objects.unlink(obj)
-            obj.name = f"{obj.name}:{container_name}"
-            obj.data.name = f"{obj.data.name}:{container_name}"
+
+            name = obj.name
+            data_name = obj.data.name
+            obj.name = f"{name}:{container_name}"
+            obj.data.name = f"{data_name}:{container_name}"
+
+            # Blender handles alembic with a modifier linked to a cache file.
+            # Here we create the modifier for the object and link it with the
+            # loaded cache file.
+            modifier = obj.modifiers.new(
+                name="MeshSequenceCache", type='MESH_SEQUENCE_CACHE')
+            cache_file = bpy.path.basename(libpath)
+            modifier.cache_file = bpy.data.cache_files[cache_file]
+            modifier.object_path = f"/{name}/{data_name}"
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
                 obj[blender.pipeline.AVALON_PROPERTY] = dict()
@@ -350,3 +368,117 @@ class CacheModelLoader(plugin.AssetLoader):
         nodes.append(container)
         self[:] = nodes
         return nodes
+
+    def update(self, container: Dict, representation: Dict):
+        """Update the loaded asset.
+
+        This will remove all objects of the current collection, load the new
+        ones and add them to the collection.
+        If the objects of the collection are used in another collection they
+        will not be removed, only unlinked. Normally this should not be the
+        case though.
+
+        Warning:
+            No nested collections are supported at the moment!
+        """
+        collection = bpy.data.collections.get(
+            container["objectName"]
+        )
+        libpath = Path(api.get_representation_path(representation))
+        extension = libpath.suffix.lower()
+
+        self.log.info(
+            "Container: %s\nRepresentation: %s",
+            pformat(container, indent=2),
+            pformat(representation, indent=2),
+        )
+
+        assert collection, (
+            f"The asset is not loaded: {container['objectName']}"
+        )
+        assert not (collection.children), (
+            "Nested collections are not supported."
+        )
+        assert libpath, (
+            "No existing library file found for {container['objectName']}"
+        )
+        assert libpath.is_file(), (
+            f"The file doesn't exist: {libpath}"
+        )
+        assert extension in plugin.VALID_EXTENSIONS, (
+            f"Unsupported file: {libpath}"
+        )
+
+        collection_metadata = collection.get(
+            blender.pipeline.AVALON_PROPERTY)
+        collection_libpath = collection_metadata["libpath"]
+
+        obj_container = plugin.get_local_collection_with_name(
+            collection_metadata["obj_container"].name
+        )
+        objects = obj_container.all_objects
+
+        normalized_collection_libpath = (
+            str(Path(bpy.path.abspath(collection_libpath)).resolve())
+        )
+        normalized_libpath = (
+            str(Path(bpy.path.abspath(str(libpath))).resolve())
+        )
+        self.log.debug(
+            "normalized_collection_libpath:\n  %s\nnormalized_libpath:\n  %s",
+            normalized_collection_libpath,
+            normalized_libpath,
+        )
+        if normalized_collection_libpath == normalized_libpath:
+            self.log.info("Library already loaded, not updating...")
+            return
+
+        # Check if the cache file has already been loaded
+        if bpy.path.basename(str(libpath)) not in bpy.data.cache_files:
+            bpy.ops.cachefile.open(filepath=str(libpath))
+
+        # Set the new cache file in the objects that use the modifier
+        for obj in objects:
+            for modifier in obj.modifiers:
+                if modifier.type == 'MESH_SEQUENCE_CACHE':
+                    cache_file = bpy.path.basename(str(libpath))
+                    modifier.cache_file = bpy.data.cache_files[cache_file]
+
+    def remove(self, container: Dict) -> bool:
+        """Remove an existing container from a Blender scene.
+
+        Arguments:
+            container (openpype:container-1.0): Container to remove,
+                from `host.ls()`.
+
+        Returns:
+            bool: Whether the container was deleted.
+
+        Warning:
+            No nested collections are supported at the moment!
+        """
+        collection = bpy.data.collections.get(
+            container["objectName"]
+        )
+        if not collection:
+            return False
+        assert not (collection.children), (
+            "Nested collections are not supported."
+        )
+
+        collection_metadata = collection.get(
+            blender.pipeline.AVALON_PROPERTY)
+
+        obj_container = plugin.get_local_collection_with_name(
+            collection_metadata["obj_container"].name
+        )
+        objects = obj_container.all_objects
+
+        self._remove(objects, obj_container)
+
+        bpy.data.collections.remove(collection)
+
+        # We should delete the cache file used in the modifier too,
+        # but Blender does not allow to do that from python.
+
+        return True
