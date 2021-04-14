@@ -202,8 +202,6 @@ class CollapsibleWidget(QtWidgets.QWidget):
 
 
 class PypeInfoWidget(QtWidgets.QWidget):
-    not_applicable = "N/A"
-
     def __init__(self, parent=None):
         super(PypeInfoWidget, self).__init__(parent)
 
@@ -213,16 +211,19 @@ class PypeInfoWidget(QtWidgets.QWidget):
         self.setWindowIcon(icon)
         self.setWindowTitle("OpenPype info")
 
+        scroll_area = QtWidgets.QScrollArea(self)
+        info_widget = PypeInfoSubWidget(scroll_area)
+
+        scroll_area.setWidget(info_widget)
+        scroll_area.setWidgetResizable(True)
+
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.setAlignment(QtCore.Qt.AlignTop)
-        main_layout.addWidget(self._create_openpype_info_widget(), 0)
-        main_layout.addWidget(self._create_separator(), 0)
-        main_layout.addWidget(self._create_workstation_widget(), 0)
-        main_layout.addWidget(self._create_separator(), 0)
-        main_layout.addWidget(self._create_local_settings_widget(), 0)
-        main_layout.addWidget(self._create_separator(), 0)
-        main_layout.addWidget(self._create_environ_widget(), 1)
+        main_layout.addWidget(scroll_area, 1)
+
         main_layout.addWidget(self._create_btns_section(), 0)
+
+        self.scroll_area = scroll_area
+        self.info_widget = info_widget
 
     def _create_btns_section(self):
         btns_widget = QtWidgets.QWidget(self)
@@ -367,6 +368,7 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
         env_widget = CollapsibleWidget("Environments", self)
 
         env_view = EnvironmentsView(env_widget)
+        env_view.setMinimumHeight(300)
 
         env_widget.set_content_widget(env_view)
 
