@@ -23,6 +23,7 @@ class RepairCollectionActionToLocal(pyblish.api.Action):
         context[0][0]["render"].setValue("Local")
         self.log.info("Rendering toggled to `Local`")
 
+
 @pyblish.api.log
 class RepairCollectionActionToFarm(pyblish.api.Action):
     label = "Repair > rerender `On farm` with remote machines"
