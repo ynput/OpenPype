@@ -86,8 +86,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             instance.data["publish"] = any_visible
 
-            instance.data["frameStart"] = context.data["frameStart"]
-            instance.data["frameEnd"] = context.data["frameEnd"]
+            instance.data["frameStart"] = context.data["sceneFrameStart"]
+            instance.data["frameEnd"] = context.data["sceneFrameEnd"]
 
             self.log.debug("Created instance: {}\n{}".format(
                 instance, json.dumps(instance.data, indent=4)
