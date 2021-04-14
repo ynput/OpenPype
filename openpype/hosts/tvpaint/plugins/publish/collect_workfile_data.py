@@ -141,11 +141,11 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "currentFile": workfile_path,
             "sceneWidth": width,
             "sceneHeight": height,
-            "pixelAspect": pixel_apsect,
-            "frameStart": frame_start,
-            "frameEnd": frame_end,
-            "fps": frame_rate,
-            "fieldOrder": field_order
+            "scenePixelAspect": pixel_apsect,
+            "sceneFrameStart": frame_start,
+            "sceneFrameEnd": frame_end,
+            "sceneFps": frame_rate,
+            "sceneFieldOrder": field_order
         }
         self.log.debug(
             "Scene data: {}".format(json.dumps(scene_data, indent=4))

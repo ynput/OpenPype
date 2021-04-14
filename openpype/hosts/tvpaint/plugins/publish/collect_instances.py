@@ -18,7 +18,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
         ))
 
         for instance_data in workfile_instances:
-            instance_data["fps"] = context.data["fps"]
+            instance_data["fps"] = context.data["sceneFps"]
 
             # Store workfile instance data to instance data
             instance_data["originData"] = copy.deepcopy(instance_data)
@@ -32,6 +32,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
             subset_name = instance_data["subset"]
             name = instance_data.get("name", subset_name)
             instance_data["name"] = name
+            instance_data["label"] = "{} [{}-{}]".format(
+                name,
+                context.data["sceneFrameStart"],
+                context.data["sceneFrameEnd"]
+            )
 
             active = instance_data.get("active", True)
             instance_data["active"] = active
