@@ -34,8 +34,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance_data["name"] = name
             instance_data["label"] = "{} [{}-{}]".format(
                 name,
-                context.data["sceneFrameStart"],
-                context.data["sceneFrameEnd"]
+                context.data["sceneMarkIn"] + 1,
+                context.data["sceneMarkOut"] + 1
             )
 
             active = instance_data.get("active", True)
@@ -78,8 +78,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if instance is None:
                 continue
 
-            instance.data["frameStart"] = context.data["sceneFrameStart"]
-            instance.data["frameEnd"] = context.data["sceneFrameEnd"]
+            instance.data["frameStart"] = context.data["sceneMarkIn"] + 1
+            instance.data["frameEnd"] = context.data["sceneMarkOut"] + 1
 
             self.log.debug("Created instance: {}\n{}".format(
                 instance, json.dumps(instance.data, indent=4)
