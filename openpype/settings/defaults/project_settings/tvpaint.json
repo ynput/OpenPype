@@ -1,6 +1,6 @@
 {
     "publish": {
-        "ValidateMissingLayers": {
+        "ValidateProjectSettings": {
             "enabled": true,
             "optional": true,
             "active": true
