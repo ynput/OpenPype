@@ -223,7 +223,7 @@ class BootstrapRepos:
             otherwise `None`.
         registry (OpenPypeSettingsRegistry): OpenPype registry object.
         zip_filter (list): List of files to exclude from zip
-        openpype_filter (list): list of top level directories not to
+        openpype_filter (list): list of top level directories to
             include in zip in OpenPype repository.
 
     """
@@ -246,7 +246,8 @@ class BootstrapRepos:
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.openpype_filter = [
-            "build", "docs", "tests", "tools", "venv", "coverage"
+            "igniter", "openpype", "repos", "schema", "LICENSE",
+            "CHANGELOG.md"
         ]
         self._message = message
 
@@ -506,7 +507,7 @@ class BootstrapRepos:
                     except ValueError:
                         pass
 
-                if is_inside:
+                if not is_inside:
                     continue
 
                 processed_path = file
