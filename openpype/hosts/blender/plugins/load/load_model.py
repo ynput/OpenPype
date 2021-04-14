@@ -7,6 +7,7 @@ from typing import Dict, List, Optional
 
 from avalon import api, blender
 import bpy
+import openpype.api
 import openpype.hosts.blender.api.plugin as plugin
 
 
@@ -107,6 +108,10 @@ class BlendModelLoader(plugin.AssetLoader):
             context,
             self.__class__.__name__,
         )
+
+        print(lib_container)
+        print(container)
+
 
         container_metadata = container.get(
             blender.pipeline.AVALON_PROPERTY)
@@ -271,36 +276,62 @@ class CacheModelLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-        raise NotImplementedError(
-            "Loading of Alembic files is not yet implemented.")
-        # TODO (jasper): implement Alembic import.
 
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        # TODO (jasper): evaluate use of namespace which is 'alien' to Blender.
-        lib_container = container_name = (
-            plugin.asset_name(asset, subset, namespace)
-        )
-        relative = bpy.context.preferences.filepaths.use_relative_paths
 
-        with bpy.data.libraries.load(
-            libpath, link=True, relative=relative
-        ) as (data_from, data_to):
-            data_to.collections = [lib_container]
+        lib_container = plugin.asset_name(
+            asset, subset
+        )
+        unique_number = plugin.get_unique_number(
+            asset, subset
+        )
+        namespace = namespace or f"{asset}_{unique_number}"
+        container_name = plugin.asset_name(
+            asset, subset, unique_number
+        )
+
+        container = bpy.data.collections.new(lib_container)
+        container.name = container_name
+        blender.pipeline.containerise_existing(
+            container,
+            name,
+            namespace,
+            context,
+            self.__class__.__name__,
+        )
+
+        container_metadata = container.get(
+            blender.pipeline.AVALON_PROPERTY)
+
+        container_metadata["libpath"] = libpath
+        container_metadata["lib_container"] = lib_container
+
+        bpy.ops.object.select_all(action='DESELECT')
+
+        view_layer = bpy.context.view_layer
+        view_layer_collection = view_layer.active_layer_collection.collection
+
+        relative = bpy.context.preferences.filepaths.use_relative_paths
+        bpy.ops.wm.alembic_import(
+            filepath=libpath,
+            relative_path=relative
+        )
+
+        parent = bpy.data.collections.new(container_name)
+        for obj in bpy.context.selected_objects:
+            parent.objects.link(obj)
+            view_layer_collection.objects.unlink(obj)
+            obj.name = f"{obj.name}:{container_name}"
+            obj.data.name = f"{obj.data.name}:{container_name}"
+
+        bpy.ops.object.select_all(action='DESELECT')
 
         scene = bpy.context.scene
-        instance_empty = bpy.data.objects.new(
-            container_name, None
-        )
-        scene.collection.objects.link(instance_empty)
-        instance_empty.instance_type = 'COLLECTION'
-        collection = bpy.data.collections[lib_container]
-        collection.name = container_name
-        instance_empty.instance_collection = collection
+        scene.collection.children.link(parent)
 
-        nodes = list(collection.objects)
-        nodes.append(collection)
-        nodes.append(instance_empty)
+        nodes = list(parent.objects)
+        nodes.append(parent)
         self[:] = nodes
         return nodes
