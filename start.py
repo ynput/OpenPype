@@ -326,23 +326,25 @@ def _determine_mongodb() -> str:
 def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
     version_path = openpype_version.path
     os.environ["OPENPYPE_VERSION"] = openpype_version.version
-    # set OPENPYPE_ROOT to point to currently used OpenPype version.
-    os.environ["OPENPYPE_ROOT"] = os.path.normpath(version_path.as_posix())
+    # set OPENPYPE_REPOS_ROOT to point to currently used OpenPype version.
+    os.environ["OPENPYPE_REPOS_ROOT"] = os.path.normpath(
+        version_path.as_posix()
+    )
     # inject version to Python environment (sys.path, ...)
     print(">>> Injecting OpenPype version to running environment  ...")
     bootstrap.add_paths_from_directory(version_path)
 
-    # Additional sys paths related to OPENPYPE_ROOT directory
-    # TODO move additional paths to `boot` part when OPENPYPE_ROOT will point
-    # to same hierarchy from code and from frozen OpenPype
+    # Additional sys paths related to OPENPYPE_REPOS_ROOT directory
+    # TODO move additional paths to `boot` part when OPENPYPE_REPOS_ROOT will
+    # point to same hierarchy from code and from frozen OpenPype
     additional_paths = [
-        os.environ["OPENPYPE_ROOT"],
+        os.environ["OPENPYPE_REPOS_ROOT"],
         # add OpenPype tools
-        os.path.join(os.environ["OPENPYPE_ROOT"], "openpype", "tools"),
+        os.path.join(os.environ["OPENPYPE_REPOS_ROOT"], "openpype", "tools"),
         # add common OpenPype vendor
         # (common for multiple Python interpreter versions)
         os.path.join(
-            os.environ["OPENPYPE_ROOT"],
+            os.environ["OPENPYPE_REPOS_ROOT"],
             "openpype",
             "vendor",
             "python",
@@ -363,7 +365,7 @@ def _find_frozen_openpype(use_version: str = None,
     """Find OpenPype to run from frozen code.
 
     This will process and modify environment variables:
-    ``PYTHONPATH``, ``OPENPYPE_VERSION``, ``OPENPYPE_ROOT``
+    ``PYTHONPATH``, ``OPENPYPE_VERSION``, ``OPENPYPE_REPOS_ROOT``
 
     Args:
         use_version (str, optional): Try to use specified version.
