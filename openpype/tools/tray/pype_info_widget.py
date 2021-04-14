@@ -219,8 +219,9 @@ class PypeInfoWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(scroll_area, 1)
-
         main_layout.addWidget(self._create_btns_section(), 0)
+
+        self.resize(740, 540)
 
         self.scroll_area = scroll_area
         self.info_widget = info_widget
