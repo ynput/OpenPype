@@ -13,6 +13,10 @@ class ValidateMarksRepair(pyblish.api.Action):
 
     def process(self, context, plugin):
         expected_data = ValidateMarks.get_expected_data(context)
+
+        expected_data["markIn"] -= 1
+        expected_data["markOut"] -= 1
+
         lib.execute_george("tv_markin {} set".format(expected_data["markIn"]))
         lib.execute_george(
             "tv_markout {} set".format(expected_data["markOut"])
@@ -30,9 +34,9 @@ class ValidateMarks(pyblish.api.ContextPlugin):
     @staticmethod
     def get_expected_data(context):
         return {
-            "markIn": context.data["assetEntity"]["data"]["frameStart"] - 1,
+            "markIn": int(context.data["frameStart"]),
             "markInState": True,
-            "markOut": context.data["assetEntity"]["data"]["frameEnd"] - 1,
+            "markOut": int(context.data["frameEnd"]),
             "markOutState": True
         }
 
@@ -45,9 +49,9 @@ class ValidateMarks(pyblish.api.ContextPlugin):
         mark_out_frame, mark_out_state, _ = result.split(" ")
 
         current_data = {
-            "markIn": int(mark_in_frame),
+            "markIn": int(mark_in_frame) + 1,
             "markInState": mark_in_state == "set",
-            "markOut": int(mark_out_frame),
+            "markOut": int(mark_out_frame) + 1,
             "markOutState": mark_out_state == "set"
         }
         expected_data = self.get_expected_data(context)
