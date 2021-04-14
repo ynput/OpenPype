@@ -544,6 +544,11 @@ def boot():
     """Bootstrap OpenPype."""
 
     # ------------------------------------------------------------------------
+    # Set environment to OpenPype root path
+    # ------------------------------------------------------------------------
+    os.environ["OPENPYPE_ROOT"] = OPENPYPE_ROOT
+
+    # ------------------------------------------------------------------------
     # Play animation
     # ------------------------------------------------------------------------
 
@@ -573,16 +578,6 @@ def boot():
     os.environ["OPENPYPE_MONGO"] = openpype_mongo
     os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"  # name of Pype database
 
-    # ------------------------------------------------------------------------
-    # Set environments - load OpenPype path from database (if set)
-    # ------------------------------------------------------------------------
-    # set OPENPYPE_ROOT to running location until proper version can be
-    # determined.
-    if getattr(sys, 'frozen', False):
-        os.environ["OPENPYPE_ROOT"] = os.path.dirname(sys.executable)
-    else:
-        os.environ["OPENPYPE_ROOT"] = os.path.dirname(__file__)
-
     # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.
     openpype_path = get_openpype_path_from_db(openpype_mongo)
@@ -611,12 +606,6 @@ def boot():
     # set this to point either to `python` from venv in case of live code
     # or to `openpype` or `openpype_console` in case of frozen code
     os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
-
-    if getattr(sys, 'frozen', False):
-        os.environ["OPENPYPE_REPOS_ROOT"] = os.environ["OPENPYPE_ROOT"]
-    else:
-        os.environ["OPENPYPE_REPOS_ROOT"] = os.path.join(
-            os.environ["OPENPYPE_ROOT"], "repos")
 
     # delete OpenPype module and it's submodules from cache so it is used from
     # specific version
