@@ -39,6 +39,13 @@ from .env_tools import (
     get_global_environments
 )
 
+from .vendor_bin_utils import (
+    get_vendor_bin_path,
+    get_oiio_tools_path,
+    get_ffmpeg_tool_path,
+    ffprobe_streams
+)
+
 from .python_module_tools import (
     modules_from_path,
     recursive_bases_from_class,
@@ -116,13 +123,6 @@ from .path_tools import (
     get_last_version_from_path
 )
 
-from .ffmpeg_utils import (
-    get_vendor_bin_path,
-    get_oiio_tools_path,
-    get_ffmpeg_tool_path,
-    ffprobe_streams
-)
-
 from .editorial import (
     is_overlapping_otio_ranges,
     otio_range_to_frame_range,
@@ -144,6 +144,11 @@ __all__ = [
     "env_value_to_bool",
     "get_paths_from_environ",
     "get_global_environments",
+
+    "get_vendor_bin_path",
+    "get_oiio_tools_path",
+    "get_ffmpeg_tool_path",
+    "ffprobe_streams",
 
     "modules_from_path",
     "recursive_bases_from_class",
@@ -200,11 +205,6 @@ __all__ = [
     "version_up",
     "get_version_from_path",
     "get_last_version_from_path",
-
-    "get_vendor_bin_path",
-    "get_oiio_tools_path",
-    "get_ffmpeg_tool_path",
-    "ffprobe_streams",
 
     "terminal",
 
