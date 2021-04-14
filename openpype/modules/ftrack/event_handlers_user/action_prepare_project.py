@@ -1,31 +1,34 @@
-import os
 import json
 
-from openpype.modules.ftrack.lib import BaseAction, statics_icon
-from openpype.api import config, Anatomy
-from openpype.modules.ftrack.lib.avalon_sync import get_pype_attr
+from openpype.api import ProjectSettings
+
+from openpype.modules.ftrack.lib import (
+    BaseAction,
+    statics_icon
+)
+from openpype.modules.ftrack.lib.avalon_sync import (
+    get_pype_attr,
+    CUST_ATTR_AUTO_SYNC
+)
 
 
-class PrepareProject(BaseAction):
-    '''Edit meta data action.'''
+class PrepareProjectLocal(BaseAction):
+    """Prepare project attributes in Anatomy."""
 
-    #: Action identifier.
-    identifier = 'prepare.project'
-    #: Action label.
-    label = 'Prepare Project'
-    #: Action description.
-    description = 'Set basic attributes on the project'
-    #: roles that are allowed to register this action
+    identifier = "prepare.project.local"
+    label = "Prepare Project"
+    description = "Set basic attributes on the project"
     icon = statics_icon("ftrack", "action_icons", "PrepareProject.svg")
+
+    role_list = ["Pypeclub", "Administrator", "Project Manager"]
 
     settings_key = "prepare_project"
 
     # Key to store info about trigerring create folder structure
-    create_project_structure_key = "create_folder_structure"
-    item_splitter = {'type': 'label', 'value': '---'}
+    item_splitter = {"type": "label", "value": "---"}
 
     def discover(self, session, entities, event):
-        ''' Validation '''
+        """Show only on project."""
         if (
             len(entities) != 1
             or entities[0].entity_type.lower() != "project"
@@ -44,27 +47,22 @@ class PrepareProject(BaseAction):
 
         self.log.debug("Loading custom attributes")
 
-        project_name = entities[0]["full_name"]
+        project_entity = entities[0]
+        project_name = project_entity["full_name"]
 
-        project_defaults = (
-            config.get_presets(project_name)
-            .get("ftrack", {})
-            .get("project_defaults", {})
-        )
-
-        anatomy = Anatomy(project_name)
-        if not anatomy.roots:
+        try:
+            project_settings = ProjectSettings(project_name)
+        except ValueError:
             return {
-                "success": False,
-                "message": (
-                    "Have issues with loading Roots for project \"{}\"."
-                ).format(anatomy.project_name)
+                "message": "Project is not synchronized yet",
+                "success": False
             }
 
-        root_items = self.prepare_root_items(anatomy)
+        project_anatom_settings = project_settings["project_anatomy"]
+        root_items = self.prepare_root_items(project_anatom_settings)
 
         ca_items, multiselect_enumerators = (
-            self.prepare_custom_attribute_items(project_defaults)
+            self.prepare_custom_attribute_items(project_anatom_settings)
         )
 
         self.log.debug("Heavy items are ready. Preparing last items group.")
@@ -74,19 +72,6 @@ class PrepareProject(BaseAction):
 
         # Add root items
         items.extend(root_items)
-        items.append(self.item_splitter)
-
-        # Ask if want to trigger Action Create Folder Structure
-        items.append({
-            "type": "label",
-            "value": "<h3>Want to create basic Folder Structure?</h3>"
-        })
-        items.append({
-            "name": self.create_project_structure_key,
-            "type": "boolean",
-            "value": False,
-            "label": "Check if Yes"
-        })
 
         items.append(self.item_splitter)
         items.append({
@@ -99,10 +84,13 @@ class PrepareProject(BaseAction):
         # This item will be last (before enumerators)
         # - sets value of auto synchronization
         auto_sync_name = "avalon_auto_sync"
+        auto_sync_value = project_entity["custom_attributes"].get(
+            CUST_ATTR_AUTO_SYNC, False
+        )
         auto_sync_item = {
             "name": auto_sync_name,
             "type": "boolean",
-            "value": project_defaults.get(auto_sync_name, False),
+            "value": auto_sync_value,
             "label": "AutoSync to Avalon"
         }
         # Add autosync attribute
@@ -117,13 +105,10 @@ class PrepareProject(BaseAction):
             "title": title
         }
 
-    def prepare_root_items(self, anatomy):
-        root_items = []
+    def prepare_root_items(self, project_anatom_settings):
         self.log.debug("Root items preparation begins.")
 
-        root_names = anatomy.root_names()
-        roots = anatomy.roots
-
+        root_items = []
         root_items.append({
             "type": "label",
             "value": "<h3>Check your Project root settings</h3>"
@@ -143,84 +128,39 @@ class PrepareProject(BaseAction):
             )
         })
 
-        default_roots = anatomy.roots
-        while isinstance(default_roots, dict):
-            key = tuple(default_roots.keys())[0]
-            default_roots = default_roots[key]
-
         empty_text = "Enter root path here..."
 
-        # Root names is None when anatomy templates contain "{root}"
-        all_platforms = ["windows", "linux", "darwin"]
-        if root_names is None:
-            root_items.append(self.item_splitter)
-            # find first possible key
-            for platform in all_platforms:
-                value = default_roots.raw_data.get(platform) or ""
-                root_items.append({
-                    "label": platform,
-                    "name": "__root__{}".format(platform),
-                    "type": "text",
-                    "value": value,
-                    "empty_text": empty_text
-                })
-            return root_items
-
-        root_name_data = {}
-        missing_roots = []
-        for root_name in root_names:
-            root_name_data[root_name] = {}
-            if not isinstance(roots, dict):
-                missing_roots.append(root_name)
-                continue
-
-            root_item = roots.get(root_name)
-            if not root_item:
-                missing_roots.append(root_name)
-                continue
-
-            for platform in all_platforms:
-                root_name_data[root_name][platform] = (
-                    root_item.raw_data.get(platform) or ""
-                )
-
-        if missing_roots:
-            default_values = {}
-            for platform in all_platforms:
-                default_values[platform] = (
-                    default_roots.raw_data.get(platform) or ""
-                )
-
-            for root_name in missing_roots:
-                root_name_data[root_name] = default_values
-
-        root_names = list(root_name_data.keys())
-        root_items.append({
-            "type": "hidden",
-            "name": "__rootnames__",
-            "value": json.dumps(root_names)
-        })
-
-        for root_name, values in root_name_data.items():
+        roots_entity = project_anatom_settings["roots"]
+        for root_name, root_entity in roots_entity.items():
             root_items.append(self.item_splitter)
             root_items.append({
                 "type": "label",
                 "value": "Root: \"{}\"".format(root_name)
             })
-            for platform, value in values.items():
+            for platform_name, value_entity in root_entity.items():
                 root_items.append({
-                    "label": platform,
-                    "name": "__root__{}{}".format(root_name, platform),
+                    "label": platform_name,
+                    "name": "__root__{}__{}".format(root_name, platform_name),
                     "type": "text",
-                    "value": value,
+                    "value": value_entity.value,
                     "empty_text": empty_text
                 })
+
+        root_items.append({
+            "type": "hidden",
+            "name": "__rootnames__",
+            "value": json.dumps(list(roots_entity.keys()))
+        })
 
         self.log.debug("Root items preparation ended.")
         return root_items
 
-    def _attributes_to_set(self, project_defaults):
+    def _attributes_to_set(self, project_anatom_settings):
         attributes_to_set = {}
+
+        attribute_values_by_key = {}
+        for key, entity in project_anatom_settings["attributes"].items():
+            attribute_values_by_key[key] = entity.value
 
         cust_attrs, hier_cust_attrs = get_pype_attr(self.session, True)
 
@@ -231,7 +171,7 @@ class PrepareProject(BaseAction):
             attributes_to_set[key] = {
                 "label": attr["label"],
                 "object": attr,
-                "default": project_defaults.get(key)
+                "default": attribute_values_by_key.get(key)
             }
 
         for attr in cust_attrs:
@@ -243,7 +183,7 @@ class PrepareProject(BaseAction):
             attributes_to_set[key] = {
                 "label": attr["label"],
                 "object": attr,
-                "default": project_defaults.get(key)
+                "default": attribute_values_by_key.get(key)
             }
 
         # Sort by label
@@ -253,10 +193,10 @@ class PrepareProject(BaseAction):
         ))
         return attributes_to_set
 
-    def prepare_custom_attribute_items(self, project_defaults):
+    def prepare_custom_attribute_items(self, project_anatom_settings):
         items = []
         multiselect_enumerators = []
-        attributes_to_set = self._attributes_to_set(project_defaults)
+        attributes_to_set = self._attributes_to_set(project_anatom_settings)
 
         self.log.debug("Preparing interface for keys: \"{}\"".format(
             str([key for key in attributes_to_set])
@@ -363,24 +303,15 @@ class PrepareProject(BaseAction):
 
         root_names = in_data.pop("__rootnames__", None)
         root_data = {}
-        if root_names:
-            for root_name in json.loads(root_names):
-                root_data[root_name] = {}
-                for key, value in tuple(root_values.items()):
-                    if key.startswith(root_name):
-                        _key = key[len(root_name):]
-                        root_data[root_name][_key] = value
+        for root_name in json.loads(root_names):
+            root_data[root_name] = {}
+            for key, value in tuple(root_values.items()):
+                prefix = "{}__".format(root_name)
+                if not key.startswith(prefix):
+                    continue
 
-        else:
-            for key, value in root_values.items():
-                root_data[key] = value
-
-        # TODO implement creating of anatomy for new projects
-        # project_name = entities[0]["full_name"]
-        # anatomy = Anatomy(project_name)
-
-        # pop out info about creating project structure
-        create_proj_struct = in_data.pop(self.create_project_structure_key)
+                _key = key[len(prefix):]
+                root_data[root_name][_key] = value
 
         # Find hidden items for multiselect enumerators
         keys_to_process = []
@@ -407,54 +338,31 @@ class PrepareProject(BaseAction):
                     new_key = item.replace(name, "")
                     in_data[key].append(new_key)
 
-        self.log.debug("Setting Custom Attribute values:")
-        entity = entities[0]
+        self.log.debug("Setting Custom Attribute values")
+
+        project_name = entities[0]["full_name"]
+        project_settings = ProjectSettings(project_name)
+        project_anatomy_settings = project_settings["project_anatomy"]
+        project_anatomy_settings["roots"] = root_data
+
+        custom_attribute_values = {}
+        attributes_entity = project_anatomy_settings["attributes"]
         for key, value in in_data.items():
+            if key not in attributes_entity:
+                custom_attribute_values[key] = value
+            else:
+                attributes_entity[key] = value
+
+        project_settings.save()
+
+        entity = entities[0]
+        for key, value in custom_attribute_values.items():
             entity["custom_attributes"][key] = value
             self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
 
-        session.commit()
-
-        # Create project structure
-        self.create_project_specific_config(entities[0]["full_name"], in_data)
-
-        # Trigger Create Project Structure action
-        if create_proj_struct is True:
-            self.trigger_action("create.project.structure", event)
-
         return True
-
-    def create_project_specific_config(self, project_name, json_data):
-        self.log.debug("*** Creating project specifig configs ***")
-        project_specific_path = project_overrides_dir_path(project_name)
-        if not os.path.exists(project_specific_path):
-            os.makedirs(project_specific_path)
-            self.log.debug((
-                "Project specific config folder for project \"{}\" created."
-            ).format(project_name))
-
-        # Presets ####################################
-        self.log.debug("--- Processing Presets Begins: ---")
-
-        project_defaults_dir = os.path.normpath(os.path.join(
-            project_specific_path, "presets", "ftrack"
-        ))
-        project_defaults_path = os.path.normpath(os.path.join(
-            project_defaults_dir, "project_defaults.json"
-        ))
-        # Create folder if not exist
-        if not os.path.exists(project_defaults_dir):
-            self.log.debug("Creating Ftrack Presets folder: \"{}\"".format(
-                project_defaults_dir
-            ))
-            os.makedirs(project_defaults_dir)
-
-        with open(project_defaults_path, 'w') as file_stream:
-            json.dump(json_data, file_stream, indent=4)
-
-        self.log.debug("*** Creating project specifig configs Finished ***")
 
 
 def register(session):
     '''Register plugin. Called when used as an plugin.'''
-    PrepareProject(session).register()
+    PrepareProjectLocal(session).register()

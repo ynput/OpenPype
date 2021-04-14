@@ -216,7 +216,7 @@ class Anatomy:
         """Returns value of root key from template."""
         root_templates = []
         for group in re.findall(self.root_key_regex, template):
-            root_templates.append(group)
+            root_templates.append("{" + group + "}")
 
         if not root_templates:
             return None

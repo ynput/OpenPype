@@ -3,9 +3,14 @@ import re
 import sys
 from collections import OrderedDict
 
+
 from avalon import api, io, lib
+from avalon.tools import workfiles
 import avalon.nuke
 from avalon.nuke import lib as anlib
+from avalon.nuke import (
+    save_file, open_file
+)
 from openpype.api import (
     Logger,
     Anatomy,
@@ -13,6 +18,7 @@ from openpype.api import (
     get_anatomy_settings,
     get_hierarchy,
     get_asset,
+    get_current_project_settings,
     config,
     ApplicationManager
 )
@@ -25,7 +31,9 @@ log = Logger().get_logger(__name__)
 
 self = sys.modules[__name__]
 self._project = None
+self.workfiles_launched = False
 self._node_tab_name = "{}".format(os.getenv("AVALON_LABEL") or "Avalon")
+
 
 def get_node_imageio_setting(**kwarg):
     ''' Get preset data for dataflow (fileType, compression, bitDepth)
@@ -1616,3 +1624,41 @@ def find_free_space_to_paste_nodes(
             xpos = min(group_xpos)
             ypos = max(group_ypos) + abs(offset)
             return xpos, ypos
+
+
+def launch_workfiles_app():
+    '''Function letting start workfiles after start of host
+    '''
+    # get state from settings
+    open_at_start = get_current_project_settings()["nuke"].get(
+        "general", {}).get("open_workfile_at_start")
+
+    # return if none is defined
+    if not open_at_start:
+        return
+
+    if not self.workfiles_launched:
+        self.workfiles_launched = True
+        workfiles.show(os.environ["AVALON_WORKDIR"])
+
+
+def open_last_workfile():
+    # get state from settings
+    open_last_version = get_current_project_settings()["nuke"].get(
+        "general", {}).get("create_initial_workfile")
+
+    log.info("Opening last workfile...")
+    last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
+
+    if not os.path.exists(last_workfile_path):
+        # return if none is defined
+        if not open_last_version:
+            return
+
+        save_file(last_workfile_path)
+    else:
+        # to avoid looping of the callback, remove it!
+        nuke.removeOnCreate(open_last_workfile, nodeClass="Root")
+
+        # open workfile
+        open_file(last_workfile_path)

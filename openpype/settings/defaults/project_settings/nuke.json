@@ -6,7 +6,9 @@
             "load": "ctrl+alt+l",
             "manage": "ctrl+alt+m",
             "build_workfile": "ctrl+alt+b"
-        }
+        },
+        "open_workfile_at_start": false,
+        "create_initial_workfile": true
     },
     "create": {
         "CreateWriteRender": {

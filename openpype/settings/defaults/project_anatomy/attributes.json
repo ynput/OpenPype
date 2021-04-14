@@ -10,17 +10,17 @@
     "resolutionHeight": 1080,
     "pixelAspect": 1.0,
     "applications": [
-        "maya_2020",
-        "nuke_12-2",
-        "nukex_12-2",
-        "hiero_12-2",
-        "resolve_16",
-        "houdini_18-5",
-        "blender_2-90",
-        "harmony_20",
-        "photoshop_2021",
-        "aftereffects_2021",
-        "unreal_4-24"
+        "maya/2020",
+        "nuke/12-2",
+        "nukex/12-2",
+        "hiero/12-2",
+        "resolve/16",
+        "houdini/18-5",
+        "blender/2-91",
+        "harmony/20",
+        "photoshop/2021",
+        "aftereffects/2021",
+        "unreal/4-24"
     ],
     "tools_env": []
 }

@@ -12,7 +12,7 @@ class CreateLook(plugin.Creator):
     family = "look"
     icon = "paint-brush"
     defaults = ['Main']
-    make_txt = True
+    make_tx = True
 
     def __init__(self, *args, **kwargs):
         super(CreateLook, self).__init__(*args, **kwargs)

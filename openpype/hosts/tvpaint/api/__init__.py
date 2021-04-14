@@ -1,14 +1,15 @@
 import os
 import logging
 
-from avalon.tvpaint.communication_server import register_localization_file
-from avalon.tvpaint import pipeline
 import avalon.api
 import pyblish.api
+from avalon.tvpaint import pipeline
+from avalon.tvpaint.communication_server import register_localization_file
+from .lib import set_context_settings
 
 from openpype.hosts import tvpaint
 
-log = logging.getLogger("openpype.hosts.tvpaint")
+log = logging.getLogger(__name__)
 
 HOST_DIR = os.path.dirname(os.path.abspath(tvpaint.__file__))
 PLUGINS_DIR = os.path.join(HOST_DIR, "plugins")
@@ -34,6 +35,18 @@ def on_instance_toggle(instance, old_value, new_value):
         pipeline._write_instances(current_instances)
 
 
+def initial_launch():
+    # Setup project settings if its the template that's launched.
+    # TODO also check for template creation when it's possible to define
+    #   templates
+    last_workfile = os.environ.get("AVALON_LAST_WORKFILE")
+    if not last_workfile or os.path.exists(last_workfile):
+        return
+
+    log.info("Setting up project...")
+    set_context_settings()
+
+
 def install():
     log.info("OpenPype - Installing TVPaint integration")
     localization_file = os.path.join(HOST_DIR, "resources", "avalon.loc")
@@ -48,6 +61,8 @@ def install():
     )
     if on_instance_toggle not in registered_callbacks:
         pyblish.api.register_callback("instanceToggled", on_instance_toggle)
+
+    avalon.api.on("application.launched", initial_launch)
 
 
 def uninstall():

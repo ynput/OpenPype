@@ -40,8 +40,7 @@ class IdleManager(PypeModule, ITrayService):
     name = "idle_manager"
 
     def initialize(self, module_settings):
-        idle_man_settings = module_settings[self.name]
-        self.enabled = idle_man_settings["enabled"]
+        self.enabled = True
 
         self.time_callbacks = collections.defaultdict(list)
         self.idle_thread = None
@@ -50,7 +49,8 @@ class IdleManager(PypeModule, ITrayService):
         return
 
     def tray_start(self):
-        self.start_thread()
+        if self.time_callbacks:
+            self.start_thread()
 
     def tray_exit(self):
         self.stop_thread()

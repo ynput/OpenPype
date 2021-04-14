@@ -122,36 +122,26 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         width = int(workfile_info_parts.pop(-1))
         workfile_path = " ".join(workfile_info_parts).replace("\"", "")
 
-        frame_start, frame_end = self.collect_clip_frames()
+        # Marks return as "{frame - 1} {state} ", example "0 set".
+        result = lib.execute_george("tv_markin")
+        mark_in_frame, mark_in_state, _ = result.split(" ")
+
+        result = lib.execute_george("tv_markout")
+        mark_out_frame, mark_out_state, _ = result.split(" ")
+
         scene_data = {
             "currentFile": workfile_path,
             "sceneWidth": width,
             "sceneHeight": height,
-            "pixelAspect": pixel_apsect,
-            "frameStart": frame_start,
-            "frameEnd": frame_end,
-            "fps": frame_rate,
-            "fieldOrder": field_order
+            "scenePixelAspect": pixel_apsect,
+            "sceneFps": frame_rate,
+            "sceneFieldOrder": field_order,
+            "sceneMarkIn": int(mark_in_frame),
+            "sceneMarkInState": mark_in_state == "set",
+            "sceneMarkOut": int(mark_out_frame),
+            "sceneMarkOutState": mark_out_state == "set"
         }
         self.log.debug(
             "Scene data: {}".format(json.dumps(scene_data, indent=4))
         )
         context.data.update(scene_data)
-
-    def collect_clip_frames(self):
-        clip_info_str = lib.execute_george("tv_clipinfo")
-        self.log.debug("Clip info: {}".format(clip_info_str))
-        clip_info_items = clip_info_str.split(" ")
-        # Color index - not used
-        clip_info_items.pop(-1)
-        clip_info_items.pop(-1)
-
-        mark_out = int(clip_info_items.pop(-1))
-        frame_end = mark_out + 1
-        clip_info_items.pop(-1)
-
-        mark_in = int(clip_info_items.pop(-1))
-        frame_start = mark_in + 1
-        clip_info_items.pop(-1)
-
-        return frame_start, frame_end

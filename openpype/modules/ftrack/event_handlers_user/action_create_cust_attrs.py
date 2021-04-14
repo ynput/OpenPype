@@ -400,9 +400,9 @@ class CustomAttributes(BaseAction):
 
     def tools_attribute(self, event):
         tools_data = []
-        for tool_name in self.app_manager.tools.keys():
+        for tool_name, tool in self.app_manager.tools.items():
             tools_data.append({
-                tool_name: tool_name
+                tool_name: tool.label
             })
 
         # Make sure there is at least one item

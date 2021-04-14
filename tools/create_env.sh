@@ -172,6 +172,7 @@ main () {
   poetry run python -m pip install --upgrade pip
   poetry run pip install --force-reinstall setuptools
   poetry run pip install --force-reinstall wheel
+  poetry run python -m pip install --force-reinstall pip
 }
 
 main -3

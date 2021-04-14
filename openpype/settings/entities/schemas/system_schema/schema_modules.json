@@ -43,6 +43,11 @@
                     "label": "Enabled"
                 },
                 {
+                    "type": "boolean",
+                    "key": "auto_stop",
+                    "label": "Auto stop timer"
+                },
+                {
                     "type": "number",
                     "decimal": 2,
                     "key": "full_time",
@@ -77,7 +82,7 @@
         },  {
             "type": "dict",
             "key": "sync_server",
-            "label": "Sync Server",
+            "label": "Site Sync",
             "collapsible": true,
             "checkbox_key": "enabled",
             "children": [{
@@ -167,20 +172,6 @@
             "type": "dict",
             "key": "standalonepublish_tool",
             "label": "Standalone Publish",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "key": "idle_manager",
-            "label": "Idle Manager",
             "collapsible": true,
             "checkbox_key": "enabled",
             "children": [
