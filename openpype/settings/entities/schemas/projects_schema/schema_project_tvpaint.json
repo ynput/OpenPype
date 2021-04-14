@@ -17,8 +17,20 @@
                     "name": "template_publish_plugin",
                     "template_data": [
                         {
-                            "key": "ValidateMissingLayers",
-                            "label": "ValidateMissingLayers"
+                            "key": "ValidateProjectSettings",
+                            "label": "ValidateProjectSettings",
+                            "docstring": "Validate if FPS and Resolution match shot data"
+                        }
+                    ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateMarks",
+                            "label": "Validate MarkIn/Out",
+                            "docstring": "Validate MarkIn/Out match Frame start/end on shot data"
                         }
                     ]
                 }
