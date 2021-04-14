@@ -111,6 +111,13 @@ class EnvironmentsView(QtWidgets.QTreeView):
         else:
             return super(EnvironmentsView, self).keyPressEvent(event)
 
+    def wheelEvent(self, event):
+        if not self.hasFocus():
+            event.ignore()
+            return
+        return super(EnvironmentsView, self).wheelEvent(event)
+
+
 
 class ClickableWidget(QtWidgets.QWidget):
     clicked = QtCore.Signal()
