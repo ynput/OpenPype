@@ -590,7 +590,7 @@ def boot():
     # ------------------------------------------------------------------------
     # Find OpenPype versions
     # ------------------------------------------------------------------------
-    # WARNING: Environment OPENPYPE_ROOT may change if frozen OpenPype
+    # WARNING: Environment OPENPYPE_REPOS_ROOT may change if frozen OpenPype
     # is executed
     if getattr(sys, 'frozen', False):
         # find versions of OpenPype to be used with frozen code
