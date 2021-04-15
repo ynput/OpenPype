@@ -128,7 +128,7 @@ def filter_pyblish_plugins(plugins):
         plugin_kind = file.split(os.path.sep)[-2:-1][0]
 
         # TODO: change after all plugins are moved one level up
-        if host_from_file == "pype":
+        if host_from_file == "openpype":
             host_from_file = "global"
 
         try:

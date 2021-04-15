@@ -1,5 +1,4 @@
 import os
-from openpype.settings import get_environments
 
 
 def env_value_to_bool(env_key=None, value=None, default=False):
@@ -89,6 +88,7 @@ def get_global_environments(env=None):
     """
     import acre
     from openpype.modules import ModulesManager
+    from openpype.settings import get_environments
 
     if env is None:
         env = {}
