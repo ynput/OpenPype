@@ -262,7 +262,10 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
                     self.lines[line] = [item]
                     line += 1
             else:
-                self.lines[line].append(item)
+                if line in self.lines:
+                    self.lines[line].append(item)
+                else:
+                    self.lines[line] = [item]
                 left_x = left_x + width + self.item_spacing
 
         self.update()
