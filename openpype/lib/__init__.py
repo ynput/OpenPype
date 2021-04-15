@@ -12,6 +12,12 @@ site.addsitedir(
         os.getenv("OPENPYPE_REPOS_ROOT", ""),
         "vendor", "python", "python_{}".format(sys.version[0])))
 
+from .env_tools import (
+    env_value_to_bool,
+    get_paths_from_environ,
+    get_global_environments
+)
+
 from .terminal import Terminal
 from .execute import (
     get_pype_execute_args,
@@ -32,12 +38,6 @@ from .anatomy import (
 )
 
 from .config import get_datetime_data
-
-from .env_tools import (
-    env_value_to_bool,
-    get_paths_from_environ,
-    get_global_environments
-)
 
 from .python_module_tools import (
     modules_from_path,
