@@ -6,11 +6,15 @@ import sys
 import os
 import site
 
-# add Python version specific vendor folder
-site.addsitedir(
-    os.path.join(
-        os.getenv("OPENPYPE_REPOS_ROOT", ""),
-        "vendor", "python", "python_{}".format(sys.version[0])))
+# Add Python version specific vendor folder
+python_version_dir = os.path.join(
+    os.getenv("OPENPYPE_REPOS_ROOT", ""),
+    "openpype", "vendor", "python", "python_{}".format(sys.version[0])
+)
+# Prepend path in sys paths
+sys.path.insert(0, python_version_dir)
+site.addsitedir(python_version_dir)
+
 
 from .env_tools import (
     env_value_to_bool,
