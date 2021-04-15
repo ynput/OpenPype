@@ -2,6 +2,10 @@
 OpenPype
 ====
 
+[![documentation](https://github.com/pypeclub/pype/actions/workflows/documentation.yml/badge.svg)](https://github.com/pypeclub/pype/actions/workflows/documentation.yml) ![GitHub Requirements](https://img.shields.io/requires/github/pypeclub/pype?labelColor=303846) ![GitHub VFX Platform](https://img.shields.io/badge/vfx%20platform-2021-lightgrey?labelColor=303846)
+
+
+
 Introduction
 ------------
 

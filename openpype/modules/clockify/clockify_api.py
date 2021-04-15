@@ -34,7 +34,12 @@ class ClockifyAPI:
         self.request_counter = 0
         self.request_time = time.time()
 
-        self.secure_registry = OpenPypeSecureRegistry("clockify")
+        self._secure_registry = None
+
+    def secure_registry(self):
+        if self._secure_registry is None:
+            self._secure_registry = OpenPypeSecureRegistry("clockify")
+        return self._secure_registry
 
     @property
     def headers(self):
