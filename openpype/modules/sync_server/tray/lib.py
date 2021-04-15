@@ -1,4 +1,5 @@
 from Qt import QtCore
+import attr
 
 from openpype.lib import PypeLogger
 
@@ -20,7 +21,13 @@ ProviderRole = QtCore.Qt.UserRole + 2
 ProgressRole = QtCore.Qt.UserRole + 4
 DateRole = QtCore.Qt.UserRole + 6
 FailedRole = QtCore.Qt.UserRole + 8
+HeaderNameRole = QtCore.Qt.UserRole + 10
 
+
+@attr.s
+class FilterDefinition:
+    type = attr.ib()
+    values = attr.ib(factory=list)
 
 def pretty_size(value, suffix='B'):
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:

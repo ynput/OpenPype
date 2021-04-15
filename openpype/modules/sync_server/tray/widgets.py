@@ -1,6 +1,7 @@
 import os
 import subprocess
 import sys
+from functools import partial
 
 from Qt import QtWidgets, QtCore, QtGui
 from Qt.QtCore import Qt
@@ -91,7 +92,7 @@ class SyncProjectListWidget(ProjectListWidget):
         self.project_name = point_index.data(QtCore.Qt.DisplayRole)
 
         menu = QtWidgets.QMenu()
-        menu.setStyleSheet(style.load_stylesheet())
+        #menu.setStyleSheet(style.load_stylesheet())
         actions_mapping = {}
 
         if self.sync_server.is_project_paused(self.project_name):
@@ -150,7 +151,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         ("files_count", 50),
         ("files_size", 60),
         ("priority", 50),
-        ("state", 110)
+        ("status", 110)
     )
 
     def __init__(self, sync_server, project=None, parent=None):
@@ -217,6 +218,14 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
 
+        self.checked_values = {}
+
+        self.horizontal_header = self.table_view.horizontalHeader()
+        self.horizontal_header.setContextMenuPolicy(
+            QtCore.Qt.CustomContextMenu)
+        self.horizontal_header.customContextMenuRequested.connect(
+            self._on_section_clicked)
+
     def _selection_changed(self, _new_selection):
         index = self.selection_model.currentIndex()
         self._selected_id = \
@@ -245,6 +254,136 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         detail_window = SyncServerDetailWindow(
             self.sync_server, _id, self.table_view.model().project)
         detail_window.exec()
+
+    def _on_section_clicked(self, point):
+
+        logical_index = self.horizontal_header.logicalIndexAt(point)
+
+        model = self.table_view.model()
+        column_name = model.headerData(logical_index,
+                                       Qt.Horizontal, lib.HeaderNameRole)
+        items_dict = model.get_column_filter_values(logical_index)
+
+        if not items_dict:
+            return
+
+        menu = QtWidgets.QMenu(self)
+
+        # text filtering only if labels same as values, not if codes are used
+        if list(items_dict.keys())[0] == list(items_dict.values())[0]:
+            self.line_edit = QtWidgets.QLineEdit(self)
+            self.line_edit.setPlaceholderText("Type and enter...")
+            action_le = QtWidgets.QWidgetAction(menu)
+            action_le.setDefaultWidget(self.line_edit)
+            self.line_edit.returnPressed.connect(
+                partial(self._apply_text_filter, column_name, items_dict))
+            menu.addAction(action_le)
+            menu.addSeparator()
+
+        action_all = QtWidgets.QAction("All", self)
+        state_checked = 2
+        # action_all.triggered.connect(partial(self._apply_filter, column_name,
+        #                                      items_dict, state_checked))
+        action_all.triggered.connect(partial(self._reset_filter, column_name))
+        menu.addAction(action_all)
+
+        action_none = QtWidgets.QAction("Unselect all", self)
+        state_unchecked = 0
+        action_none.triggered.connect(partial(self._apply_filter, column_name,
+                                              items_dict, state_unchecked))
+        menu.addAction(action_none)
+        menu.addSeparator()
+
+        # nothing explicitly >> ALL implicitly >> first time
+        if self.checked_values.get(column_name) is None:
+            checked_keys = items_dict.keys()
+        else:
+            checked_keys = self.checked_values[column_name]
+
+        for value, label in items_dict.items():
+            checkbox = QtWidgets.QCheckBox(str(label), menu)
+            if value in checked_keys:
+                checkbox.setChecked(True)
+
+            action = QtWidgets.QWidgetAction(menu)
+            action.setDefaultWidget(checkbox)
+
+            checkbox.stateChanged.connect(partial(self._apply_filter,
+                                                  column_name, {value: label}))
+            menu.addAction(action)
+
+        self.menu = menu
+        self.menu_items_dict = items_dict  # all available items
+        self.menu.exec_(QtGui.QCursor.pos())
+
+    def _reset_filter(self, column_name):
+        """
+            Remove whole column from filter >> not in $match at all (faster)
+        """
+        if self.checked_values.get(column_name) is not None:
+            self.checked_values.pop(column_name)
+        self._refresh_model_and_menu(column_name, True, True)
+
+    def _apply_filter(self, column_name, values, state):
+        """
+            Sets 'values' to specific 'state' (checked/unchecked),
+            sends to model.
+        """
+        self._update_checked_values(column_name, values, state)
+        self._refresh_model_and_menu(column_name, True, False)
+
+    def _apply_text_filter(self, column_name, items):
+        """
+            Resets all checkboxes, prefers inserted text.
+        """
+        self._update_checked_values(column_name, items, 0)  # reset other
+        text_item = {self.line_edit.text(): self.line_edit.text()}
+        self._update_checked_values(column_name, text_item, 2)
+        self._refresh_model_and_menu(column_name, True, True)
+
+    def _refresh_model_and_menu(self, column_name, model=True, menu=True):
+        """
+            Refresh model and its content and possibly menu for big changes.
+        """
+        if model:
+            self.table_view.model().set_column_filtering(self.checked_values)
+            self.table_view.model().refresh()
+        if menu:
+            self._menu_refresh(column_name)
+
+    def _menu_refresh(self, column_name):
+        """
+            Reset boxes after big change - word filtering or reset
+        """
+        for action in self.menu.actions():
+            if not isinstance(action, QtWidgets.QWidgetAction):
+                continue
+
+            widget = action.defaultWidget()
+            if not isinstance(widget, QtWidgets.QCheckBox):
+                continue
+
+            if not self.checked_values.get(column_name) or \
+                    widget.text() in self.checked_values[column_name].values():
+                widget.setChecked(True)
+            else:
+                widget.setChecked(False)
+
+    def _update_checked_values(self, column_name, values, state):
+        """
+            Modify dictionary of set values in columns for filtering.
+
+            Modifies 'self.checked_values'
+        """
+        checked = self.checked_values.get(column_name, self.menu_items_dict)
+        set_items = dict(values.items())  # prevent dictionary change during iter
+        for value, label in set_items.items():
+            if state == 2:  # checked
+                checked[value] = label
+            elif state == 0 and checked.get(value):
+                checked.pop(value)
+
+        self.checked_values[column_name] = checked
 
     def _on_context_menu(self, point):
         """
@@ -291,17 +430,17 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         else:
             self.site_name = remote_site
 
-        if self.item.state in [lib.STATUS[0], lib.STATUS[1]]:
+        if self.item.status in [lib.STATUS[0], lib.STATUS[1]]:
             action = QtWidgets.QAction("Pause")
             actions_mapping[action] = self._pause
             menu.addAction(action)
 
-        if self.item.state == lib.STATUS[3]:
+        if self.item.status == lib.STATUS[3]:
             action = QtWidgets.QAction("Unpause")
             actions_mapping[action] = self._unpause
             menu.addAction(action)
 
-        # if self.item.state == lib.STATUS[1]:
+        # if self.item.status == lib.STATUS[1]:
         #     action = QtWidgets.QAction("Open error detail")
         #     actions_mapping[action] = self._show_detail
         #     menu.addAction(action)
@@ -467,7 +606,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         ("remote_site", 185),
         ("size", 60),
         ("priority", 25),
-        ("state", 110)
+        ("status", 110)
     )
 
     def __init__(self, sync_server, _id=None, project=None, parent=None):
@@ -579,7 +718,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.item = self.table_view.model()._data[point_index.row()]
 
         menu = QtWidgets.QMenu()
-        menu.setStyleSheet(style.load_stylesheet())
+        #menu.setStyleSheet(style.load_stylesheet())
         actions_mapping = {}
         actions_kwargs_mapping = {}
 
@@ -604,7 +743,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
                     actions_kwargs_mapping[action] = {'site': site}
                     menu.addAction(action)
 
-        if self.item.state == lib.STATUS[2]:
+        if self.item.status == lib.STATUS[2]:
             action = QtWidgets.QAction("Open error detail")
             actions_mapping[action] = self._show_detail
             menu.addAction(action)

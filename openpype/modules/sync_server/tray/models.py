@@ -56,6 +56,10 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         """Returns project"""
         return self._project
 
+    @property
+    def column_filtering(self):
+        return self._column_filtering
+
     def rowCount(self, _index):
         return len(self._data)
 
@@ -65,7 +69,15 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
     def headerData(self, section, orientation, role):
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
-                return self.COLUMN_LABELS[section][1]
+                name = self.COLUMN_LABELS[section][0]
+                txt = ""
+                if name in self.column_filtering.keys():
+                    txt = "(F)"
+                return self.COLUMN_LABELS[section][1] + txt  # return label
+
+        if role == lib.HeaderNameRole:
+            if orientation == Qt.Horizontal:
+                return self.COLUMN_LABELS[section][0]  # return name
 
     def get_header_index(self, value):
         """
@@ -190,6 +202,35 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.word_filter = word_filter
         self.refresh()
 
+    def get_column_filter_values(self, index):
+        """
+            Returns list of available values for filtering in the column
+
+            Args:
+                index(int): index of column in header
+
+            Returns:
+                (dict) of value: label shown in filtering menu
+                'value' is used in MongoDB query, 'label' is human readable for
+                menu
+                for some columns ('subset') might be 'value' and 'label' same
+        """
+        column_name = self._header[index]
+
+        filter_def = self.COLUMN_FILTERS.get(column_name)
+        if not filter_def:
+            return {}
+
+        if filter_def['type'] == 'predefined_set':
+            return dict(filter_def['values'])
+        elif filter_def['type'] == 'available_values':
+            recs = self.dbcon.find({'type': column_name}, {"name": 1,
+                                                           "_id": -1})
+            values = {}
+            for item in recs:
+                values[item["name"]] = item["name"]
+            return dict(sorted(values.items(), key=lambda item: item[1]))
+
     def set_project(self, project):
         """
             Changes project, called after project selection is changed
@@ -251,7 +292,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         ("files_count", "Files"),
         ("files_size", "Size"),
         ("priority", "Priority"),
-        ("state", "Status")
+        ("status", "Status")
     ]
 
     DEFAULT_SORT = {
@@ -259,17 +300,25 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         "_id": 1
     }
     SORT_BY_COLUMN = [
-        "context.asset",  # asset
-        "context.subset",  # subset
-        "context.version",  # version
-        "context.representation",  # representation
+        "asset",  # asset
+        "subset",  # subset
+        "version",  # version
+        "representation",  # representation
         "updated_dt_local",  # local created_dt
         "updated_dt_remote",  # remote created_dt
         "files_count",  # count of files
         "files_size",  # file size of all files
         "context.asset",  # priority TODO
-        "status"  # state
+        "status"  # status
     ]
+
+    COLUMN_FILTERS = {
+        'status': {'type': 'predefined_set',
+                   'values': {k: v for k, v in lib.STATUS.items()}},
+        'subset': {'type': 'available_values'},
+        'asset': {'type': 'available_values'},
+        'representation': {'type': 'available_values'}
+    }
 
     refresh_started = QtCore.Signal()
     refresh_finished = QtCore.Signal()
@@ -297,7 +346,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         files_count = attr.ib(default=None)
         files_size = attr.ib(default=None)
         priority = attr.ib(default=None)
-        state = attr.ib(default=None)
+        status = attr.ib(default=None)
         path = attr.ib(default=None)
 
     def __init__(self, sync_server, header, project=None):
@@ -308,6 +357,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self._rec_loaded = 0
         self._total_records = 0  # how many documents query actually found
         self.word_filter = None
+        self._column_filtering = {}
 
         self._initialized = False
         if not self._project or self._project == lib.DUMMY_PROJECT:
@@ -359,9 +409,9 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
         if role == lib.FailedRole:
             if header_value == 'local_site':
-                return item.state == lib.STATUS[2] and item.local_progress < 1
+                return item.status == lib.STATUS[2] and item.local_progress < 1
             if header_value == 'remote_site':
-                return item.state == lib.STATUS[2] and item.remote_progress < 1
+                return item.status == lib.STATUS[2] and item.remote_progress < 1
 
         if role == Qt.DisplayRole:
             # because of ImageDelegate
@@ -397,7 +447,6 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                                                           remote_site)
 
         for repre in result.get("paginatedResults"):
-            context = repre.get("context").pop()
             files = repre.get("files", [])
             if isinstance(files, dict):  # aggregate returns dictionary
                 files = [files]
@@ -420,17 +469,17 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             avg_progress_local = lib.convert_progress(
                 repre.get('avg_progress_local', '0'))
 
-            if context.get("version"):
-                version = "v{:0>3d}".format(context.get("version"))
+            if repre.get("version"):
+                version = "v{:0>3d}".format(repre.get("version"))
             else:
                 version = "master"
 
             item = self.SyncRepresentation(
                 repre.get("_id"),
-                context.get("asset"),
-                context.get("subset"),
+                repre.get("asset"),
+                repre.get("subset"),
                 version,
-                context.get("representation"),
+                repre.get("representation"),
                 local_updated,
                 remote_updated,
                 local_site,
@@ -461,7 +510,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 'sync_dt' - same for remote side
                 'local_site' - progress of repr on local side, 1 = finished
                 'remote_site' - progress on remote side, calculates from files
-                'state' -
+                'status' -
                     0 - in progress
                     1 - failed
                     2 - queued
@@ -481,7 +530,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         if limit == 0:
             limit = SyncRepresentationSummaryModel.PAGE_SIZE
 
-        return [
+        aggr = [
             {"$match": self.get_match_part()},
             {'$unwind': '$files'},
             # merge potentially unwinded records back to single per repre
@@ -584,16 +633,43 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 'paused_local': {'$sum': '$paused_local'},
                 'updated_dt_local': {'$max': "$updated_dt_local"}
             }},
-            {"$project": self.projection},
-            {"$sort": self.sort},
-            {
+            {"$project": self.projection}
+        ]
+
+        if self.column_filtering:
+            aggr.append(
+                {"$match": self.column_filtering}
+            )
+            print(self.column_filtering)
+
+        aggr.extend(
+            [{"$sort": self.sort},
+             {
                 '$facet': {
                     'paginatedResults': [{'$skip': self._rec_loaded},
                                          {'$limit': limit}],
                     'totalCount': [{'$count': 'count'}]
                 }
-            }
-        ]
+             }]
+        )
+
+        return aggr
+
+    def set_column_filtering(self, checked_values):
+        """
+            Sets dictionary used in '$match' part of MongoDB aggregate
+
+            Args:
+                checked_values(dict): key:values ({'status':{1:"Foo",3:"Bar"}}
+
+            Modifies:
+                self._column_filtering : {'status': {'$in': [1, 2, 3]}}
+        """
+        filtering = {}
+        for key, dict_value in checked_values.items():
+            filtering[key] = {'$in': list(dict_value.keys())}
+
+        self._column_filtering = filtering
 
     def get_match_part(self):
         """
@@ -639,10 +715,10 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 (dict)
         """
         return {
-            "context.subset": 1,
-            "context.asset": 1,
-            "context.version": 1,
-            "context.representation": 1,
+            "subset": {"$first": "$context.subset"},
+            "asset": {"$first": "$context.asset"},
+            "version": {"$first": "$context.version"},
+            "representation": {"$first": "$context.representation"},
             "data.path": 1,
             "files": 1,
             'files_count': 1,
@@ -721,7 +797,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         ("remote_site", "Remote site"),
         ("files_size", "Size"),
         ("priority", "Priority"),
-        ("state", "Status")
+        ("status", "Status")
     ]
 
     PAGE_SIZE = 30
@@ -734,7 +810,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         "updated_dt_remote",  # remote created_dt
         "size",  # remote progress
         "context.asset",  # priority TODO
-        "status"  # state
+        "status"  # status
     ]
 
     refresh_started = QtCore.Signal()
@@ -759,7 +835,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         remote_progress = attr.ib(default=None)
         size = attr.ib(default=None)
         priority = attr.ib(default=None)
-        state = attr.ib(default=None)
+        status = attr.ib(default=None)
         tries = attr.ib(default=None)
         error = attr.ib(default=None)
         path = attr.ib(default=None)
@@ -821,9 +897,9 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
 
         if role == lib.FailedRole:
             if header_value == 'local_site':
-                return item.state == lib.STATUS[2] and item.local_progress < 1
+                return item.status == lib.STATUS[2] and item.local_progress < 1
             if header_value == 'remote_site':
-                return item.state == lib.STATUS[2] and item.remote_progress < 1
+                return item.status == lib.STATUS[2] and item.remote_progress < 1
 
         if role == Qt.DisplayRole:
             # because of ImageDelegate
