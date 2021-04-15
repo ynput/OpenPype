@@ -16,7 +16,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     sync_workfile_version = True
 
     def process(self, instance):
-        families = instance.data["families"]
+        families = _families_test = instance.data["families"]
+        _families_test = [instance.data["family"]] + _families_test
 
         node = None
         for x in instance:
@@ -54,7 +55,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         output_dir = os.path.dirname(path)
         self.log.debug('output dir: {}'.format(output_dir))
 
-        if not next((f for f in families
+        self.log.info(">> _families_test: `{}`".format(_families_test))
+        # synchronize version if it is set in presets
+        # and not prerender in _families_test
+        if not next((f for f in _families_test
                      if "prerender" in f),
                     None) and self.sync_workfile_version:
             # get version to instance for integration
@@ -71,7 +75,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             int(last_frame)
         )
 
-        if [fm for fm in families
+        if [fm for fm in _families_test
                 if fm in ["render", "prerender"]]:
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
@@ -98,9 +102,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                             collected_frames_len))
                     # this will only run if slate frame is not already
                     # rendered from previews publishes
-                    if "slate" in instance.data["families"] \
+                    if "slate" in _families_test \
                             and (frame_length == collected_frames_len) \
-                            and ("prerender" not in instance.data["families"]):
+                            and ("prerender" not in _families_test):
                         frame_slate_str = "%0{}d".format(
                             len(str(last_frame))) % (first_frame - 1)
                         slate_frame = collected_frames[0].replace(
@@ -122,6 +126,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         # Add version data to instance
         version_data = {
+            "families": [f.replace(".local", "").replace(".farm", "")
+                         for f in _families_test if "write" not in f],
             "colorspace": colorspace,
         }
 
@@ -147,7 +153,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameStartHandle": first_frame,
             "frameEndHandle": last_frame,
             "outputType": output_type,
-            "families": families,
             "colorspace": colorspace,
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority
