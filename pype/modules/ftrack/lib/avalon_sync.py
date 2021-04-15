@@ -944,30 +944,13 @@ class SyncEntitiesFactory:
                     copy.deepcopy(prepared_avalon_attr_ca_id)
                 )
 
-        # TODO query custom attributes by entity_id
-        entity_ids_joined = ", ".join([
-            "\"{}\"".format(id) for id in sync_ids
-        ])
-        attributes_joined = ", ".join([
-            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
-        ])
-
-        cust_attr_query = (
-            "select value, entity_id from ContextCustomAttributeValue "
-            "where entity_id in ({}) and configuration_id in ({})"
+        items = self._query_custom_attributes(
+            self.session,
+            list(attribute_key_by_id.keys()),
+            sync_ids
         )
-        call_expr = [{
-            "action": "query",
-            "expression": cust_attr_query.format(
-                entity_ids_joined, attributes_joined
-            )
-        }]
-        if hasattr(self.session, "call"):
-            [values] = self.session.call(call_expr)
-        else:
-            [values] = self.session._call(call_expr)
 
-        for item in values["data"]:
+        for item in items:
             entity_id = item["entity_id"]
             key = attribute_key_by_id[item["configuration_id"]]
             store_key = "custom_attributes"
@@ -1021,7 +1004,7 @@ class SyncEntitiesFactory:
             else:
                 prepare_dict[key] = None
 
-        for id, entity_dict in self.entities_dict.items():
+        for entity_dict in self.entities_dict.values():
             # Skip project because has stored defaults at the moment
             if entity_dict["entity_type"] == "project":
                 continue
@@ -1029,27 +1012,14 @@ class SyncEntitiesFactory:
             for key, val in prepare_dict_avalon.items():
                 entity_dict["avalon_attrs"][key] = val
 
-        # Prepare values to query
-        entity_ids_joined = ", ".join([
-            "\"{}\"".format(id) for id in sync_ids
-        ])
-        attributes_joined = ", ".join([
-            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
-        ])
-        avalon_hier = []
-        call_expr = [{
-            "action": "query",
-            "expression": (
-                "select value, entity_id from ContextCustomAttributeValue "
-                "where entity_id in ({}) and configuration_id in ({})"
-            ).format(entity_ids_joined, attributes_joined)
-        }]
-        if hasattr(self.session, "call"):
-            [values] = self.session.call(call_expr)
-        else:
-            [values] = self.session._call(call_expr)
+        items = self._query_custom_attributes(
+            self.session,
+            list(attribute_key_by_id.keys()),
+            sync_ids
+        )
 
-        for item in values["data"]:
+        avalon_hier = []
+        for item in items:
             value = item["value"]
             # WARNING It is not possible to propage enumerate hierachical
             # attributes with multiselection 100% right. Unseting all values
@@ -1100,6 +1070,37 @@ class SyncEntitiesFactory:
 
                 self.entities_dict[child_id]["hier_attrs"].update(_hier_values)
                 hier_down_queue.put((_hier_values, child_id))
+
+    def _query_custom_attributes(self, session, conf_ids, entity_ids):
+        output = []
+        # Prepare values to query
+        attributes_joined = ", ".join([
+            "\"{}\"".format(conf_id) for conf_id in conf_ids
+        ])
+        attributes_len = len(conf_ids)
+        chunk_size = int(5000 / attributes_len)
+        for idx in range(0, len(entity_ids), chunk_size):
+            _entity_ids = entity_ids[idx:idx + chunk_size]
+            entity_ids_joined = ", ".join([
+                "\"{}\"".format(entity_id)
+                for entity_id in _entity_ids
+            ])
+
+            call_expr = [{
+                "action": "query",
+                "expression": (
+                    "select value, entity_id from ContextCustomAttributeValue "
+                    "where entity_id in ({}) and configuration_id in ({})"
+                ).format(entity_ids_joined, attributes_joined)
+            }]
+            if hasattr(session, "call"):
+                [result] = session.call(call_expr)
+            else:
+                [result] = session._call(call_expr)
+
+            for item in result["data"]:
+                output.append(item)
+        return output
 
     def remove_from_archived(self, mongo_id):
         entity = self.avalon_archived_by_id.pop(mongo_id, None)
