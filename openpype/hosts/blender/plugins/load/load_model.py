@@ -262,7 +262,10 @@ class CacheModelLoader(plugin.AssetLoader):
 
     def _remove(self, objects, container):
         for obj in list(objects):
-            bpy.data.meshes.remove(obj.data)
+            if obj.type == 'MESH':
+                bpy.data.meshes.remove(obj.data)
+            elif obj.type == 'EMPTY':
+                bpy.data.objects.remove(obj)
 
         bpy.data.collections.remove(container)
 
@@ -290,18 +293,12 @@ class CacheModelLoader(plugin.AssetLoader):
             view_layer_collection.objects.unlink(obj)
 
             name = obj.name
-            data_name = obj.data.name
             obj.name = f"{name}:{container_name}"
-            obj.data.name = f"{data_name}:{container_name}"
 
-            # Blender handles alembic with a modifier linked to a cache file.
-            # Here we create the modifier for the object and link it with the
-            # loaded cache file.
-            modifier = obj.modifiers.new(
-                name="MeshSequenceCache", type='MESH_SEQUENCE_CACHE')
-            cache_file = bpy.path.basename(libpath)
-            modifier.cache_file = bpy.data.cache_files[cache_file]
-            modifier.object_path = f"/{name}/{data_name}"
+            # Groups are imported as Empty objects in Blender
+            if obj.type == 'MESH':
+                data_name = obj.data.name
+                obj.data.name = f"{data_name}:{container_name}"
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
                 obj[blender.pipeline.AVALON_PROPERTY] = dict()
@@ -418,6 +415,8 @@ class CacheModelLoader(plugin.AssetLoader):
         )
         objects = obj_container.all_objects
 
+        container_name = obj_container.name
+
         normalized_collection_libpath = (
             str(Path(bpy.path.abspath(collection_libpath)).resolve())
         )
@@ -433,16 +432,17 @@ class CacheModelLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
-        # Check if the cache file has already been loaded
-        if bpy.path.basename(str(libpath)) not in bpy.data.cache_files:
-            bpy.ops.cachefile.open(filepath=str(libpath))
+        parent = plugin.get_parent_collection(obj_container)
 
-        # Set the new cache file in the objects that use the modifier
-        for obj in objects:
-            for modifier in obj.modifiers:
-                if modifier.type == 'MESH_SEQUENCE_CACHE':
-                    cache_file = bpy.path.basename(str(libpath))
-                    modifier.cache_file = bpy.data.cache_files[cache_file]
+        self._remove(objects, obj_container)
+
+        obj_container = self._process(
+            str(libpath), container_name, parent)
+
+        collection_metadata["obj_container"] = obj_container
+        collection_metadata["objects"] = obj_container.all_objects
+        collection_metadata["libpath"] = str(libpath)
+        collection_metadata["representation"] = str(representation["_id"])
 
     def remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -477,8 +477,5 @@ class CacheModelLoader(plugin.AssetLoader):
         self._remove(objects, obj_container)
 
         bpy.data.collections.remove(collection)
-
-        # We should delete the cache file used in the modifier too,
-        # but Blender does not allow to do that from python.
 
         return True
