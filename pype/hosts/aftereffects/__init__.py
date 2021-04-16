@@ -104,7 +104,6 @@ def get_asset_settings():
         "duration": duration
     }
 
-
     try:
         # temporary, in pype3 replace with api.get_current_project_settings
         skip_resolution_check = (
@@ -140,6 +139,7 @@ def get_asset_settings():
         scene_data.pop('handleEnd', None)
 
     return scene_data
+
 
 # temporary, in pype3 replace with api.get_current_project_settings
 def get_current_project_settings():

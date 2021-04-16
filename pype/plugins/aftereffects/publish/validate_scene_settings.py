@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
 """Validate scene settings."""
 import os
-import json
 
 import pyblish.api
 
-from avalon import harmony
 from avalon import aftereffects
 
 import pype.hosts.aftereffects
 
 stub = aftereffects.stub()
-
-from pype.api import config
 
 
 class ValidateSceneSettings(pyblish.api.InstancePlugin):
@@ -50,9 +46,8 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             resolutionWidth
             resolutionHeight
             TODO support in extension is missing for now
-
+            
          By defaults validates duration (how many frames should be published)
-    
     """
 
     order = pyblish.api.ValidatorOrder
