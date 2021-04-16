@@ -13,8 +13,6 @@ class ValidateProjectSettings(pyblish.api.ContextPlugin):
 
     def process(self, context):
         scene_data = {
-            "frameStart": context.data.get("sceneFrameStart"),
-            "frameEnd": context.data.get("sceneFrameEnd"),
             "fps": context.data.get("sceneFps"),
             "resolutionWidth": context.data.get("sceneWidth"),
             "resolutionHeight": context.data.get("sceneHeight"),
