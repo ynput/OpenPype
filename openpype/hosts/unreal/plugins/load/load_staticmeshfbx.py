@@ -156,6 +156,7 @@ class StaticMeshFBXLoader(api.Loader):
         if len(asset_content) == 0:
             unreal.EditorAssetLibrary.delete_directory(parent_path)
 
+
 class StaticMeshAlembicLoader(api.Loader):
     """Load Unreal StaticMesh from Alembic"""
 
@@ -215,7 +216,7 @@ class StaticMeshAlembicLoader(api.Loader):
         task.set_editor_property('save', True)
 
         # set import options here
-        # TODO: it seems that Unreal is ignoring any setting from python, 
+        # TODO: it seems that Unreal is ignoring any setting from python,
         # at least in Unreal 4.24. Need to test in 4.26.
         options = unreal.AbcImportSettings()
         options.set_editor_property(
@@ -268,7 +269,7 @@ class StaticMeshAlembicLoader(api.Loader):
         task.set_editor_property('save', True)
 
         # set import options here
-        # TODO: it seems that Unreal is ignoring any setting from python, 
+        # TODO: it seems that Unreal is ignoring any setting from python,
         # at least in Unreal 4.24. Need to test in 4.26.
         options = unreal.AbcImportSettings()
         options.set_editor_property(
