@@ -44,12 +44,9 @@ class ExtractRedshiftProxy(openpype.api.Extractor):
             root, ext = os.path.splitext(file_path)
             # Padding is taken from number of digits of the end_frame.
             # Not sure where Redshift is taking it.
-            repr_files = ["{}.{}{}".format(
-                        root,
-                        str(frame).rjust(
-                            int(math.log10(int(end_frame)) + 1), "0"),
-                        ext,
-                    ) for frame in range(
+            repr_files = [
+                "{}.{}{}".format(root, str(frame).rjust(int(math.log10(int(end_frame)) + 1), "0"), ext)  # noqa: E501
+                for frame in range(
                     int(start_frame),
                     int(end_frame) + 1,
                     int(instance.data["proxyFrameStep"]),

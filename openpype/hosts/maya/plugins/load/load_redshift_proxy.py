@@ -119,7 +119,8 @@ class RedshiftProxyLoader(api.Loader):
                 transform.
 
         """
-        rs_mesh = cmds.createNode('RedshiftProxyMesh', name="{}_RS".format(name))
+        rs_mesh = cmds.createNode(
+            'RedshiftProxyMesh', name="{}_RS".format(name))
         mesh_shape = cmds.createNode("mesh", name="{}_GEOShape".format(name))
 
         cmds.setAttr("{}.fileName".format(rs_mesh),
