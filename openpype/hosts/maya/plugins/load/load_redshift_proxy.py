@@ -5,13 +5,14 @@ from avalon import api
 from openpype.api import get_project_settings
 import os
 import maya.cmds as cmds
+import clique
 
 
 class RedshiftProxyLoader(api.Loader):
     """Load Redshift proxy"""
 
     families = ["redshiftproxy"]
-    representations = ["vrmesh"]
+    representations = ["rs"]
 
     label = "Import Redshift Proxy"
     order = -10
@@ -42,8 +43,8 @@ class RedshiftProxyLoader(api.Loader):
         with lib.maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
-                nodes, group_node = self.create_redshift_proxy(name,
-                                               filename=self.fname)
+                nodes, group_node = self.create_rs_proxy(
+                    name, self.fname)
 
         self[:] = nodes
         if not nodes:
@@ -114,16 +115,31 @@ class RedshiftProxyLoader(api.Loader):
             path (str): Path to proxy file.
 
         Returns:
-            node
+            (str, str): Name of mesh with Redshift proxy and its parent
+                transform.
+
         """
-        import pymel.core as pm
+        rs_mesh = cmds.createNode('RedshiftProxyMesh', name="{}_RS".format(name))
+        mesh_shape = cmds.createNode("mesh", name="{}_GEOShape".format(name))
 
-        proxy_mesh_node = pm.createNode('RedshiftProxyMesh')
-        proxy_mesh_node.fileName.set(path)
-        proxy_mesh_shape = pm.createNode('mesh', n=name)
-        proxy_mesh_node.outMesh >> proxy_mesh_shape.inMesh
+        cmds.setAttr("{}.fileName".format(rs_mesh),
+                     path,
+                     type="string")
 
-        # assign default material
-        pm.sets('initialShadingGroup', fe=proxy_mesh_shape)
+        cmds.connectAttr("{}.outMesh".format(rs_mesh),
+                         "{}.inMesh".format(mesh_shape))
 
-        return proxy_mesh_node, proxy_mesh_shape
+        group_node = cmds.group(empty=True, name="{}_GRP".format(name))
+        mesh_transform = cmds.listRelatives(mesh_shape,
+                                            parent=True, fullPath=True)
+        cmds.parent(mesh_transform, group_node)
+        nodes = [rs_mesh, mesh_shape, group_node]
+
+        # determine if we need to enable animation support
+        files_in_folder = os.listdir(os.path.dirname(path))
+        collections, remainder = clique.assemble(files_in_folder)
+
+        if collections:
+            cmds.setAttr("{}.useFrameExtension".format(rs_mesh), 1)
+
+        return nodes, group_node
