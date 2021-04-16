@@ -216,8 +216,7 @@ class StaticMeshAlembicLoader(api.Loader):
         task.set_editor_property('save', True)
 
         # set import options here
-        # TODO: it seems that Unreal is ignoring any setting from python,
-        # at least in Unreal 4.24. Need to test in 4.26.
+        # Unreal 4.24 ignores the settings. It works with Unreal 4.26
         options = unreal.AbcImportSettings()
         options.set_editor_property(
             'import_type', unreal.AlembicImportType.STATIC_MESH)
@@ -269,8 +268,7 @@ class StaticMeshAlembicLoader(api.Loader):
         task.set_editor_property('save', True)
 
         # set import options here
-        # TODO: it seems that Unreal is ignoring any setting from python,
-        # at least in Unreal 4.24. Need to test in 4.26.
+        # Unreal 4.24 ignores the settings. It works with Unreal 4.26
         options = unreal.AbcImportSettings()
         options.set_editor_property(
             'import_type', unreal.AlembicImportType.STATIC_MESH)
