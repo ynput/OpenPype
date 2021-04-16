@@ -11,15 +11,18 @@ class CollectClipFrameRanges(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         data = dict()
-
+        track_item = instance.data["item"]
+        item_handle_in = int(track_item.handleInLength())
+        item_handle_out = int(track_item.handleOutLength())
+        
         # Timeline data.
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
 
         source_in_h = instance.data("sourceInH",
-                                    instance.data("sourceIn") - handle_start)
+            (instance.data("sourceIn") + item_handle_in) - handle_start)
         source_out_h = instance.data("sourceOutH",
-                                     instance.data("sourceOut") + handle_end)
+            (instance.data("sourceOut") - item_handle_out) + handle_end)
 
         timeline_in = instance.data["clipIn"]
         timeline_out = instance.data["clipOut"]

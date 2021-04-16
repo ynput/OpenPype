@@ -45,6 +45,7 @@ class CollectClips(api.ContextPlugin):
 
                 asset = item.name()
                 track = item.parent()
+                clip = item.source()
                 source = item.source().mediaSource()
                 source_path = source.firstpath()
                 clip_in = int(item.timelineIn())
@@ -130,10 +131,9 @@ class CollectClips(api.ContextPlugin):
                     "isSequence": is_sequence,
                     "track": track.name(),
                     "trackIndex": track_index,
-                    "sourceFirst": source_first_frame,
                     "effects": effects,
-                    "sourceIn": int(item.sourceIn()),
-                    "sourceOut": int(item.sourceOut()),
+                    "sourceIn": int(clip.sourceIn()),
+                    "sourceOut": int(clip.sourceOut()),
                     "mediaDuration": int(source.duration()),
                     "clipIn": clip_in,
                     "clipOut": clip_out,

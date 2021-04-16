@@ -20,12 +20,16 @@ class CollectCalculateRetime(api.InstancePlugin):
         handle_end = instance.data["handleEnd"]
 
         track_item = instance.data["item"]
+        clip = track_item.source()
+        mediaSource = clip.mediaSource()
+        file_info = mediaSource.fileinfos().pop()
+        start_frame = file_info.startFrame()
 
         # define basic clip frame range variables
         timeline_in = int(track_item.timelineIn())
         timeline_out = int(track_item.timelineOut())
-        source_in = int(track_item.sourceIn())
-        source_out = int(track_item.sourceOut())
+        source_in = int(clip.sourceIn())
+        source_out = int(clip.sourceOut())
         speed = track_item.playbackSpeed()
         self.log.debug("_BEFORE: \n timeline_in: `{0}`,\n timeline_out: `{1}`,\
         \n source_in: `{2}`,\n source_out: `{3}`,\n speed: `{4}`,\n handle_start: `{5}`,\n handle_end: `{6}`".format(
@@ -102,8 +106,16 @@ class CollectCalculateRetime(api.InstancePlugin):
 
         source_in += int(source_in_change)
         source_out += int(source_out_change * speed)
-        handle_start += (margin_in)
-        handle_end += (margin_out)
+
+        # make sure there are frames for margin in
+        if (track_item.handleInLength() >= margin_in) and (
+                source_in - (handle_start + margin_in >= start_frame)):
+            handle_start += (margin_in)
+        # make sure there are frames for margin out
+        if (track_item.handleOutLength() >= margin_out) and (
+                (source_out + handle_end + margin_out) <= (start_frame + track_item.sourceDuration() - 1)):
+            handle_end += (margin_out)
+
         self.log.debug("margin: handle_start: '{0}', handle_end: '{1}'".format(handle_start, handle_end))
 
         # add all data to Instance
@@ -115,7 +127,6 @@ class CollectCalculateRetime(api.InstancePlugin):
             (handle_end * 1000) / 1000.0))
         instance.data["speed"] = speed
 
-        self.log.debug("timeWarpNodes: {}".format(instance.data["timeWarpNodes"]))
         self.log.debug("sourceIn: {}".format(instance.data["sourceIn"]))
         self.log.debug("sourceOut: {}".format(instance.data["sourceOut"]))
         self.log.debug("speed: {}".format(instance.data["speed"]))

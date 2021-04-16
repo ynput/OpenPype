@@ -144,9 +144,7 @@ class CollectPlatesData(api.InstancePlugin):
                 "version": version
             })
 
-        source_first_frame = instance.data.get("sourceFirst")
         source_file_head = instance.data.get("sourceFileHead")
-        self.log.debug("source_first_frame: `{}`".format(source_first_frame))
 
         if instance.data.get("isSequence", False):
             self.log.info("Is sequence of files")
@@ -154,7 +152,7 @@ class CollectPlatesData(api.InstancePlugin):
             ext = os.path.splitext(file)[-1][1:]
             self.log.debug("source_file_head: `{}`".format(source_file_head))
             head = source_file_head[:-1]
-            start_frame = int(source_first_frame + instance.data["sourceInH"])
+            start_frame = int(instance.data["sourceInH"])
             duration = int(
                 instance.data["sourceOutH"] - instance.data["sourceInH"])
             end_frame = start_frame + duration
@@ -192,8 +190,7 @@ class CollectPlatesData(api.InstancePlugin):
                 instance.data["representations"].append(
                     plates_mov_representation)
 
-        thumb_frame = instance.data["sourceInH"] + (
-            (instance.data["sourceOutH"] - instance.data["sourceInH"]) / 2)
+        thumb_frame = item.sourceIn() + (item.sourceDuration() / 2)
         thumb_file = "{}_{}{}".format(head, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
         self.log.debug("__ thumb_path: `{}`, frame: `{}`".format(
