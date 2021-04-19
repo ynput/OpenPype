@@ -33,6 +33,17 @@
                             "docstring": "Validate MarkIn/Out match Frame start/end on shot data"
                         }
                     ]
+                },
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateAssetName",
+                            "label": "ValidateAssetName",
+                            "docstring": "Validate if shot on instances metadata is same as workfiles shot"
+                        }
+                    ]
                 }
             ]
         },
