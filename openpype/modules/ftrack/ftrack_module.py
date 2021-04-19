@@ -44,12 +44,13 @@ class FtrackModule(
         self.enabled = ftrack_settings["enabled"]
         # Add http schema
         ftrack_url = ftrack_settings["ftrack_server"].strip("/ ")
-        if "http" not in ftrack_url:
-            ftrack_url = "https://" + ftrack_url
+        if ftrack_url:
+            if "http" not in ftrack_url:
+                ftrack_url = "https://" + ftrack_url
 
-        # Check if "ftrack.app" is part os url
-        if "ftrackapp.com" not in ftrack_url:
-            ftrack_url = ftrack_url + ".ftrackapp.com"
+            # Check if "ftrack.app" is part os url
+            if "ftrackapp.com" not in ftrack_url:
+                ftrack_url = ftrack_url + ".ftrackapp.com"
 
         self.ftrack_url = ftrack_url
 
