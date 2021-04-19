@@ -134,11 +134,11 @@ class CredentialsDialog(QtWidgets.QDialog):
 
     def fill_ftrack_url(self):
         url = os.getenv("FTRACK_SERVER")
-        if url == self.ftsite_input.text():
+        checked_url = self.check_url(url)
+        if checked_url == self.ftsite_input.text():
             return
 
-        checked_url = self.check_url(url)
-        self.ftsite_input.setText(checked_url or "")
+        self.ftsite_input.setText(checked_url or "< Not set >")
 
         enabled = bool(checked_url)
 
@@ -147,7 +147,15 @@ class CredentialsDialog(QtWidgets.QDialog):
 
         self.api_input.setEnabled(enabled)
         self.user_input.setEnabled(enabled)
-        self.ftsite_input.setEnabled(enabled)
+
+        if not url:
+            self.btn_advanced.hide()
+            self.btn_simple.hide()
+            self.btn_ftrack_login.hide()
+            self.btn_login.hide()
+            self.note_label.hide()
+            self.api_input.hide()
+            self.user_input.hide()
 
     def set_advanced_mode(self, is_advanced):
         self._in_advance_mode = is_advanced
@@ -293,10 +301,9 @@ class CredentialsDialog(QtWidgets.QDialog):
             url = url.strip("/ ")
 
         if not url:
-            self.set_error((
-                "You need to specify a valid server URL, "
-                "for example https://server-name.ftrackapp.com"
-            ))
+            self.set_error(
+                "Ftrack URL is not defined in settings!"
+            )
             return
 
         if "http" not in url:
