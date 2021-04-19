@@ -68,7 +68,7 @@ class CreateRender(plugin.Creator):
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
-        'renderman': 'defaultRenderGlobals.imageFilePrefix',
+        'renderman': 'rmanGlobals.imageFileFormat',
         'redshift': 'defaultRenderGlobals.imageFilePrefix'
     }
 
@@ -76,7 +76,8 @@ class CreateRender(plugin.Creator):
         'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
         'vray': 'maya/<scene>/<Layer>/<Layer>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
-        'renderman': 'maya/<Scene>/<layer>/<layer>_<aov>',
+        # this needs `imageOutputDir` set separately
+        'renderman': '<layer>_<aov>.<f4>.<ext>',
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>'
     }
 
@@ -93,7 +94,7 @@ class CreateRender(plugin.Creator):
 
         use_selection = self.options.get("useSelection")
         with lib.undo_chunk():
-            self._create_render_settings()
+            self._create_instance_options()
             instance = super(CreateRender, self).process()
             # create namespace with instance
             index = 1
@@ -137,11 +138,30 @@ class CreateRender(plugin.Creator):
             if renderer.startswith('renderman'):
                 renderer = 'renderman'
 
-            cmds.setAttr(self._image_prefix_nodes[renderer],
-                         self._image_prefixes[renderer],
-                         type="string")
+            self._create_render_settings(renderer)
 
-    def _create_render_settings(self):
+    def _create_render_settings(self, renderer):
+        """Change Render Settings to match what OpenPype expects.
+
+        This will change Render Settings to values required by OpenPype -
+        like image prefixes (paths), frame ranges, output options, etc.
+
+        Some of those values are configurable through Settings.
+
+        Args:
+            renderer (str): name of renderer.
+
+        """
+        cmds.setAttr(self._image_prefix_nodes[renderer],
+                     self._image_prefixes[renderer],
+                     type="string")
+
+        if renderer == "renderman":
+            cmds.setAttr("rmanGlobals.imageOutputDir",
+                         "<ws>/maya/<scene>/<layer>", type="string")
+
+
+    def _create_instance_options(self):
         # get pools
         pools = []
 

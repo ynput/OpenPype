@@ -187,6 +187,7 @@ def get_renderer_variables(renderlayer, root):
     filename_0 = re.sub('_<RenderPass>', '_beauty',
                         filename_0, flags=re.IGNORECASE)
     prefix_attr = "defaultRenderGlobals.imageFilePrefix"
+    extension = os.path.splitext(filename_0)[-1].strip(".")
     if renderer == "vray":
         renderlayer = renderlayer.split("_")[-1]
         # Maya's renderSettings function does not return V-Ray file extension
@@ -199,7 +200,7 @@ def get_renderer_variables(renderlayer, root):
         if extension is None:
             extension = "png"
 
-        if extension == "exr (multichannel)" or extension == "exr (deep)":
+        if extension in ["exr (multichannel)", "exr (deep)"]:
             extension = "exr"
 
         prefix_attr = "vraySettings.fileNamePrefix"
