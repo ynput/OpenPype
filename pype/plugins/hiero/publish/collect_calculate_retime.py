@@ -14,7 +14,8 @@ class CollectCalculateRetime(api.InstancePlugin):
     def process(self, instance):
         margin_in = instance.data["retimeMarginIn"]
         margin_out = instance.data["retimeMarginOut"]
-        self.log.debug("margin_in: '{0}', margin_out: '{1}'".format(margin_in, margin_out))
+        self.log.debug(
+            "margin_in: '{0}', margin_out: '{1}'".format(margin_in, margin_out))
 
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
@@ -31,16 +32,19 @@ class CollectCalculateRetime(api.InstancePlugin):
         source_in = int(clip.sourceIn())
         source_out = int(clip.sourceOut())
         speed = track_item.playbackSpeed()
-        self.log.debug("_BEFORE: \n timeline_in: `{0}`,\n timeline_out: `{1}`,\
-        \n source_in: `{2}`,\n source_out: `{3}`,\n speed: `{4}`,\n handle_start: `{5}`,\n handle_end: `{6}`".format(
-            timeline_in,
-            timeline_out,
-            source_in,
-            source_out,
-            speed,
-            handle_start,
-            handle_end
-        ))
+        self.log.debug(
+            "_BEFORE: \n timeline_in: `{0}`,\n timeline_out: `{1}`,\
+            \n source_in: `{2}`,\n source_out: `{3}`,\n speed: `{4}`, \
+            \n handle_start: `{5}`,\n handle_end: `{6}`".format(
+                timeline_in,
+                timeline_out,
+                source_in,
+                source_out,
+                speed,
+                handle_start,
+                handle_end
+            )
+        )
 
         # loop withing subtrack items
         source_in_change = 0
