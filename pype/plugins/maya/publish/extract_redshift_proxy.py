@@ -45,7 +45,7 @@ class ExtractRedshiftProxy(pype.api.Extractor):
             # Padding is taken from number of digits of the end_frame.
             # Not sure where Redshift is taking it.
             repr_files = [
-                "{}.{}{}".format(root, str(frame).rjust(int(math.log10(int(end_frame)) + 1), "0"), ext)  # noqa: E501
+                "{}.{}{}".format(root, str(frame).rjust(4, "0"), ext)  # noqa: E501
                 for frame in range(
                     int(start_frame),
                     int(end_frame) + 1,
