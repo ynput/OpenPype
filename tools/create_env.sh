@@ -160,7 +160,7 @@ main () {
     echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
   fi
 
-  poetry install $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
+  poetry install --no-root $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
 
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
