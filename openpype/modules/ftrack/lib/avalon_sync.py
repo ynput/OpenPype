@@ -31,6 +31,7 @@ from .constants import (
     CUST_ATTR_AUTO_SYNC,
     CUST_ATTR_GROUP
 )
+from .custom_attributes import get_openpype_attr
 
 log = Logger.get_logger(__name__)
 
@@ -78,39 +79,6 @@ def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
 
 def join_query_keys(keys):
     return ",".join(["\"{}\"".format(key) for key in keys])
-
-
-def get_pype_attr(session, split_hierarchical=True, query_keys=None):
-    custom_attributes = []
-    hier_custom_attributes = []
-    if not query_keys:
-        query_keys = [
-            "id",
-            "entity_type",
-            "object_type_id",
-            "is_hierarchical",
-            "default"
-        ]
-    # TODO remove deprecated "pype" group from query
-    cust_attrs_query = (
-        "select {}"
-        " from CustomAttributeConfiguration"
-        # Kept `pype` for Backwards Compatiblity
-        " where group.name in (\"pype\", \"{}\")"
-    ).format(", ".join(query_keys), CUST_ATTR_GROUP)
-    all_avalon_attr = session.query(cust_attrs_query).all()
-    for cust_attr in all_avalon_attr:
-        if split_hierarchical and cust_attr["is_hierarchical"]:
-            hier_custom_attributes.append(cust_attr)
-            continue
-
-        custom_attributes.append(cust_attr)
-
-    if split_hierarchical:
-        # return tuple
-        return custom_attributes, hier_custom_attributes
-
-    return custom_attributes
 
 
 def get_python_type_for_custom_attribute(cust_attr, cust_attr_type_name=None):
@@ -910,7 +878,7 @@ class SyncEntitiesFactory:
     def set_cutom_attributes(self):
         self.log.debug("* Preparing custom attributes")
         # Get custom attributes and values
-        custom_attrs, hier_attrs = get_pype_attr(
+        custom_attrs, hier_attrs = get_openpype_attr(
             self.session, query_keys=self.cust_attr_query_keys
         )
         ent_types = self.session.query("select id, name from ObjectType").all()
@@ -2497,7 +2465,7 @@ class SyncEntitiesFactory:
         if new_entity_id not in p_chilren:
             self.entities_dict[parent_id]["children"].append(new_entity_id)
 
-        cust_attr, _ = get_pype_attr(self.session)
+        cust_attr, _ = get_openpype_attr(self.session)
         for _attr in cust_attr:
             key = _attr["key"]
             if key not in av_entity["data"]:

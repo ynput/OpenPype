@@ -150,7 +150,7 @@ class FtrackModule(
             return
 
         import ftrack_api
-        from openpype.modules.ftrack.lib import avalon_sync
+        from openpype.modules.ftrack.lib import get_openpype_attr
 
         session = self.create_ftrack_session()
         project_entity = session.query(
@@ -166,7 +166,7 @@ class FtrackModule(
 
         project_id = project_entity["id"]
 
-        cust_attr, hier_attr = avalon_sync.get_pype_attr(session)
+        cust_attr, hier_attr = get_openpype_attr(session)
         cust_attr_by_key = {attr["key"]: attr for attr in cust_attr}
         hier_attrs_by_key = {attr["key"]: attr for attr in hier_attr}
         for key, value in attributes_changes.items():
