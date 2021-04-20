@@ -15,6 +15,7 @@ from openpype.api import get_local_site_id
 from openpype.lib import PypeLogger
 
 from avalon.tools.delegates import pretty_timestamp
+from avalon.vendor import qtawesome
 
 from openpype.modules.sync_server.tray.models import (
     SyncRepresentationSummaryModel,
@@ -142,15 +143,15 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     message_generated = QtCore.Signal(str)
 
     default_widths = (
-        ("asset", 220),
-        ("subset", 190),
-        ("version", 55),
-        ("representation", 95),
+        ("asset", 200),
+        ("subset", 170),
+        ("version", 60),
+        ("representation", 135),
         ("local_site", 170),
         ("remote_site", 170),
         ("files_count", 50),
         ("files_size", 60),
-        ("priority", 50),
+        ("priority", 70),
         ("status", 110)
     )
 
@@ -183,8 +184,6 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             QtWidgets.QAbstractItemView.SelectRows)
         self.table_view.horizontalHeader().setSortIndicator(
             -1, Qt.AscendingOrder)
-        self.table_view.setSortingEnabled(True)
-        self.table_view.horizontalHeader().setSortIndicatorShown(True)
         self.table_view.setAlternatingRowColors(True)
         self.table_view.verticalHeader().hide()
 
@@ -195,10 +194,6 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         column = self.table_view.model().get_header_index("remote_site")
         delegate = ImageDelegate(self)
         self.table_view.setItemDelegateForColumn(column, delegate)
-
-        for column_name, width in self.default_widths:
-            idx = model.get_header_index(column_name)
-            self.table_view.setColumnWidth(idx, width)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -213,23 +208,26 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
         model.refresh_started.connect(self._save_scrollbar)
         model.refresh_finished.connect(self._set_scrollbar)
-        self.table_view.model().modelReset.connect(self._set_selection)
+        model.modelReset.connect(self._set_selection)
+
+        self.model = model
 
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
 
-        self.checked_values = {}
+        self.horizontal_header = HorizontalHeader(self)
+        self.table_view.setHorizontalHeader(self.horizontal_header)
+        # self.table_view.setSortingEnabled(True)
+        # self.table_view.horizontalHeader().setSortIndicatorShown(True)
 
-        self.horizontal_header = self.table_view.horizontalHeader()
-        self.horizontal_header.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        self.horizontal_header.customContextMenuRequested.connect(
-            self._on_section_clicked)
+        for column_name, width in self.default_widths:
+            idx = model.get_header_index(column_name)
+            self.table_view.setColumnWidth(idx, width)
 
     def _selection_changed(self, _new_selection):
         index = self.selection_model.currentIndex()
         self._selected_id = \
-            self.table_view.model().data(index, Qt.UserRole)
+            self.model.data(index, Qt.UserRole)
 
     def _set_selection(self):
         """
@@ -238,7 +236,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             Keep selection during model refresh.
         """
         if self._selected_id:
-            index = self.table_view.model().get_index(self._selected_id)
+            index = self.model.get_index(self._selected_id)
             if index and index.isValid():
                 mode = QtCore.QItemSelectionModel.Select | \
                     QtCore.QItemSelectionModel.Rows
@@ -250,140 +248,10 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         """
             Opens representation dialog with all files after doubleclick
         """
-        _id = self.table_view.model().data(index, Qt.UserRole)
+        _id = self.model.data(index, Qt.UserRole)
         detail_window = SyncServerDetailWindow(
-            self.sync_server, _id, self.table_view.model().project)
+            self.sync_server, _id, self.model.project)
         detail_window.exec()
-
-    def _on_section_clicked(self, point):
-
-        logical_index = self.horizontal_header.logicalIndexAt(point)
-
-        model = self.table_view.model()
-        column_name = model.headerData(logical_index,
-                                       Qt.Horizontal, lib.HeaderNameRole)
-        items_dict = model.get_column_filter_values(logical_index)
-
-        if not items_dict:
-            return
-
-        menu = QtWidgets.QMenu(self)
-
-        # text filtering only if labels same as values, not if codes are used
-        if list(items_dict.keys())[0] == list(items_dict.values())[0]:
-            self.line_edit = QtWidgets.QLineEdit(self)
-            self.line_edit.setPlaceholderText("Type and enter...")
-            action_le = QtWidgets.QWidgetAction(menu)
-            action_le.setDefaultWidget(self.line_edit)
-            self.line_edit.returnPressed.connect(
-                partial(self._apply_text_filter, column_name, items_dict))
-            menu.addAction(action_le)
-            menu.addSeparator()
-
-        action_all = QtWidgets.QAction("All", self)
-        state_checked = 2
-        # action_all.triggered.connect(partial(self._apply_filter, column_name,
-        #                                      items_dict, state_checked))
-        action_all.triggered.connect(partial(self._reset_filter, column_name))
-        menu.addAction(action_all)
-
-        action_none = QtWidgets.QAction("Unselect all", self)
-        state_unchecked = 0
-        action_none.triggered.connect(partial(self._apply_filter, column_name,
-                                              items_dict, state_unchecked))
-        menu.addAction(action_none)
-        menu.addSeparator()
-
-        # nothing explicitly >> ALL implicitly >> first time
-        if self.checked_values.get(column_name) is None:
-            checked_keys = items_dict.keys()
-        else:
-            checked_keys = self.checked_values[column_name]
-
-        for value, label in items_dict.items():
-            checkbox = QtWidgets.QCheckBox(str(label), menu)
-            if value in checked_keys:
-                checkbox.setChecked(True)
-
-            action = QtWidgets.QWidgetAction(menu)
-            action.setDefaultWidget(checkbox)
-
-            checkbox.stateChanged.connect(partial(self._apply_filter,
-                                                  column_name, {value: label}))
-            menu.addAction(action)
-
-        self.menu = menu
-        self.menu_items_dict = items_dict  # all available items
-        self.menu.exec_(QtGui.QCursor.pos())
-
-    def _reset_filter(self, column_name):
-        """
-            Remove whole column from filter >> not in $match at all (faster)
-        """
-        if self.checked_values.get(column_name) is not None:
-            self.checked_values.pop(column_name)
-        self._refresh_model_and_menu(column_name, True, True)
-
-    def _apply_filter(self, column_name, values, state):
-        """
-            Sets 'values' to specific 'state' (checked/unchecked),
-            sends to model.
-        """
-        self._update_checked_values(column_name, values, state)
-        self._refresh_model_and_menu(column_name, True, False)
-
-    def _apply_text_filter(self, column_name, items):
-        """
-            Resets all checkboxes, prefers inserted text.
-        """
-        self._update_checked_values(column_name, items, 0)  # reset other
-        text_item = {self.line_edit.text(): self.line_edit.text()}
-        self._update_checked_values(column_name, text_item, 2)
-        self._refresh_model_and_menu(column_name, True, True)
-
-    def _refresh_model_and_menu(self, column_name, model=True, menu=True):
-        """
-            Refresh model and its content and possibly menu for big changes.
-        """
-        if model:
-            self.table_view.model().set_column_filtering(self.checked_values)
-            self.table_view.model().refresh()
-        if menu:
-            self._menu_refresh(column_name)
-
-    def _menu_refresh(self, column_name):
-        """
-            Reset boxes after big change - word filtering or reset
-        """
-        for action in self.menu.actions():
-            if not isinstance(action, QtWidgets.QWidgetAction):
-                continue
-
-            widget = action.defaultWidget()
-            if not isinstance(widget, QtWidgets.QCheckBox):
-                continue
-
-            if not self.checked_values.get(column_name) or \
-                    widget.text() in self.checked_values[column_name].values():
-                widget.setChecked(True)
-            else:
-                widget.setChecked(False)
-
-    def _update_checked_values(self, column_name, values, state):
-        """
-            Modify dictionary of set values in columns for filtering.
-
-            Modifies 'self.checked_values'
-        """
-        checked = self.checked_values.get(column_name, self.menu_items_dict)
-        set_items = dict(values.items())  # prevent dictionary change during iter
-        for value, label in set_items.items():
-            if state == 2:  # checked
-                checked[value] = label
-            elif state == 0 and checked.get(value):
-                checked.pop(value)
-
-        self.checked_values[column_name] = checked
 
     def _on_context_menu(self, point):
         """
@@ -393,7 +261,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         if not point_index.isValid():
             return
 
-        self.item = self.table_view.model()._data[point_index.row()]
+        self.item = self.model._data[point_index.row()]
         self.representation_id = self.item._id
         log.debug("menu representation _id:: {}".
                   format(self.representation_id))
@@ -410,7 +278,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
         for site, progress in {local_site: local_progress,
                                remote_site: remote_progress}.items():
-            project = self.table_view.model().project
+            project = self.model.project
             provider = self.sync_server.get_provider_for_site(project,
                                                               site)
             if provider == 'local_drive':
@@ -476,10 +344,10 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             if to_run:
                 to_run(**to_run_kwargs)
 
-        self.table_view.model().refresh()
+        self.model.refresh()
 
     def _pause(self):
-        self.sync_server.pause_representation(self.table_view.model().project,
+        self.sync_server.pause_representation(self.model.project,
                                               self.representation_id,
                                               self.site_name)
         self.site_name = None
@@ -487,7 +355,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
     def _unpause(self):
         self.sync_server.unpause_representation(
-            self.table_view.model().project,
+            self.model.project,
             self.representation_id,
             self.site_name)
         self.site_name = None
@@ -497,7 +365,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     # temporary here for testing, will be removed TODO
     def _add_site(self):
         log.info(self.representation_id)
-        project_name = self.table_view.model().project
+        project_name = self.model.project
         local_site_name = get_local_site_id()
         try:
             self.sync_server.add_site(
@@ -525,15 +393,15 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         try:
             local_site = get_local_site_id()
             self.sync_server.remove_site(
-                self.table_view.model().project,
+                self.model.project,
                 self.representation_id,
                 local_site,
                 True)
             self.message_generated.emit("Site {} removed".format(local_site))
         except ValueError as exp:
             self.message_generated.emit("Error {}".format(str(exp)))
-        self.table_view.model().refresh(
-            load_records=self.table_view.model()._rec_loaded)
+        self.model.refresh(
+            load_records=self.model._rec_loaded)
 
     def _reset_local_site(self):
         """
@@ -541,11 +409,11 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model().project,
+            self.model.project,
             self.representation_id,
             'local')
-        self.table_view.model().refresh(
-            load_records=self.table_view.model()._rec_loaded)
+        self.model.refresh(
+            load_records=self.model._rec_loaded)
 
     def _reset_remote_site(self):
         """
@@ -553,18 +421,18 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model().project,
+            self.model.project,
             self.representation_id,
             'remote')
-        self.table_view.model().refresh(
-            load_records=self.table_view.model()._rec_loaded)
+        self.model.refresh(
+            load_records=self.model._rec_loaded)
 
     def _open_in_explorer(self, site):
         if not self.item:
             return
 
         fpath = self.item.path
-        project = self.table_view.model().project
+        project = self.model.project
         fpath = self.sync_server.get_local_file_path(project,
                                                      site,
                                                      fpath)
@@ -647,11 +515,11 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.table_view.setAlternatingRowColors(True)
         self.table_view.verticalHeader().hide()
 
-        column = self.table_view.model().get_header_index("local_site")
+        column = model.get_header_index("local_site")
         delegate = ImageDelegate(self)
         self.table_view.setItemDelegateForColumn(column, delegate)
 
-        column = self.table_view.model().get_header_index("remote_site")
+        column = model.get_header_index("remote_site")
         delegate = ImageDelegate(self)
         self.table_view.setItemDelegateForColumn(column, delegate)
 
@@ -671,14 +539,15 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
         model.refresh_started.connect(self._save_scrollbar)
         model.refresh_finished.connect(self._set_scrollbar)
-        self.table_view.model().modelReset.connect(self._set_selection)
+        model.modelReset.connect(self._set_selection)
+        self.model = model
 
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
 
     def _selection_changed(self):
         index = self.selection_model.currentIndex()
-        self._selected_id = self.table_view.model().data(index, Qt.UserRole)
+        self._selected_id = self.model.data(index, Qt.UserRole)
 
     def _set_selection(self):
         """
@@ -687,7 +556,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             Keep selection during model refresh.
         """
         if self._selected_id:
-            index = self.table_view.model().get_index(self._selected_id)
+            index = self.model.get_index(self._selected_id)
             if index and index.isValid():
                 mode = QtCore.QItemSelectionModel.Select | \
                     QtCore.QItemSelectionModel.Rows
@@ -715,7 +584,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         if not point_index.isValid():
             return
 
-        self.item = self.table_view.model()._data[point_index.row()]
+        self.item = self.model._data[point_index.row()]
 
         menu = QtWidgets.QMenu()
         #menu.setStyleSheet(style.load_stylesheet())
@@ -729,7 +598,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
         for site, progress in {local_site: local_progress,
                                remote_site: remote_progress}.items():
-            project = self.table_view.model().project
+            project = self.model.project
             provider = self.sync_server.get_provider_for_site(project,
                                                               site)
             if provider == 'local_drive':
@@ -776,12 +645,12 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model().project,
+            self.model.project,
             self.representation_id,
             'local',
             self.item._id)
-        self.table_view.model().refresh(
-            load_records=self.table_view.model()._rec_loaded)
+        self.model.refresh(
+            load_records=self.model._rec_loaded)
 
     def _reset_remote_site(self):
         """
@@ -789,12 +658,12 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
             redo of upload/download
         """
         self.sync_server.reset_provider_for_file(
-            self.table_view.model().project,
+            self.model.project,
             self.representation_id,
             'remote',
             self.item._id)
-        self.table_view.model().refresh(
-            load_records=self.table_view.model()._rec_loaded)
+        self.model.refresh(
+            load_records=self.model._rec_loaded)
 
     def _open_in_explorer(self, site):
         if not self.item:
@@ -957,3 +826,277 @@ class SyncRepresentationErrorWindow(QtWidgets.QDialog):
 
         self.setLayout(body_layout)
         self.setWindowTitle("Sync Representation Error Detail")
+
+
+class HorizontalHeader(QtWidgets.QHeaderView):
+
+    def __init__(self, parent=None):
+        super(HorizontalHeader, self).__init__(QtCore.Qt.Horizontal, parent)
+        self._parent = parent
+        self.checked_values = {}
+
+        self.setSectionsMovable(True)
+        self.setSectionsClickable(True)
+        self.setHighlightSections(True)
+
+        self.menu_items_dict = {}
+        self.menu = None
+        self.header_cells = []
+        self.filter_buttons = {}
+
+        self.init_layout()
+
+        self.filter_icon = qtawesome.icon("fa.filter", color="gray")
+        self.filter_set_icon = qtawesome.icon("fa.filter", color="white")
+
+        self._resetting = False
+
+        self.sectionResized.connect(self.handleSectionResized)
+        self.sectionMoved.connect(self.handleSectionMoved)
+        #self.sectionPressed.connect(self.model.sort)
+
+
+    @property
+    def model(self):
+        """Keep model synchronized with parent widget"""
+        return self._parent.model
+
+    def init_layout(self):
+        for i in range(self.count()):
+            cell_content = QtWidgets.QWidget(self)
+            column_name, column_label = self.model.get_column(i)
+
+            layout = QtWidgets.QHBoxLayout()
+            layout.setContentsMargins(5, 5, 5, 0)
+            layout.setAlignment(Qt.AlignVCenter)
+            layout.addWidget(QtWidgets.QLabel(column_label))
+
+            filter_rec = self.model.get_filters().get(column_name)
+            if filter_rec:
+                icon = self.filter_icon
+                button = QtWidgets.QPushButton(icon, "")
+                layout.addWidget(button)
+
+                # button.setMenu(menu)
+                button.setFixedSize(24, 24)
+                # button.setAlignment(Qt.AlignRight)
+                button.setStyleSheet("QPushButton::menu-indicator{width:0px;}"
+                                     "QPushButton{border: none}")
+                button.clicked.connect(partial(self._get_menu,
+                                               column_name, i))
+                button.setFlat(True)
+                self.filter_buttons[column_name] = button
+
+            cell_content.setLayout(layout)
+
+            self.header_cells.append(cell_content)
+
+    def showEvent(self, event):
+        if not self.header_cells:
+            self.init_layout()
+
+        for i in range(len(self.header_cells)):
+            cell_content = self.header_cells[i]
+            cell_content.setGeometry(self.sectionViewportPosition(i), 0,
+                                     self.sectionSize(i)-1, self.height())
+
+            cell_content.show()
+
+        if len(self.model.get_filters()) > self.count():
+            for i in range(self.count(), len(self.header_cells)):
+                self.header_cells[i].deleteLater()
+
+        super(HorizontalHeader, self).showEvent(event)
+
+    def _set_filter_icon(self, column_name):
+        button = self.filter_buttons.get(column_name)
+        if button:
+            if self.checked_values.get(column_name):
+                button.setIcon(self.filter_set_icon)
+            else:
+                button.setIcon(self.filter_icon)
+
+    def _reset_filter(self, column_name):
+        """
+            Remove whole column from filter >> not in $match at all (faster)
+        """
+        self._resetting = True  # mark changes to consume them
+        if self.checked_values.get(column_name) is not None:
+            self.checked_values.pop(column_name)
+            self._set_filter_icon(column_name)
+        self._filter_and_refresh_model_and_menu(column_name, True, True)
+        self._resetting = False
+
+    def _apply_filter(self, column_name, values, state):
+        """
+            Sets 'values' to specific 'state' (checked/unchecked),
+            sends to model.
+        """
+        if self._resetting:  # event triggered by _resetting, skip it
+            return
+
+        self._update_checked_values(column_name, values, state)
+        self._set_filter_icon(column_name)
+        self._filter_and_refresh_model_and_menu(column_name, True, False)
+
+    def _apply_text_filter(self, column_name, items):
+        """
+            Resets all checkboxes, prefers inserted text.
+        """
+        self._update_checked_values(column_name, items, 0)  # reset other
+        if self.checked_values.get(column_name) is not None or \
+                self.line_edit.text() == '':
+            self.checked_values.pop(column_name)  # reset during typing
+
+        text_item = {self.line_edit.text(): self.line_edit.text()}
+        if self.line_edit.text():
+            self._update_checked_values(column_name, text_item, 2)
+        self._set_filter_icon(column_name)
+        self._filter_and_refresh_model_and_menu(column_name, True, True)
+
+    def _filter_and_refresh_model_and_menu(self, column_name,
+                                           model=True, menu=True):
+        """
+            Refresh model and its content and possibly menu for big changes.
+        """
+        if model:
+            self.model.set_column_filtering(self.checked_values)
+            self.model.refresh()
+        if menu:
+            self._menu_refresh(column_name)
+
+    def _get_menu(self, column_name, index):
+        """Prepares content of menu for 'column_name'"""
+        menu = QtWidgets.QMenu(self)
+        filter_rec = self.model.get_filters()[column_name]
+        self.menu_items_dict[column_name] = filter_rec.values()
+        self.line_edit = None
+
+        # text filtering only if labels same as values, not if codes are used
+        if 'text' in filter_rec.search_variants():
+            self.line_edit = QtWidgets.QLineEdit(self)
+            self.line_edit.setSizePolicy(
+                QtWidgets.QSizePolicy.Maximum,
+                QtWidgets.QSizePolicy.Maximum)
+            txt = "Type..."
+            if self.checked_values.get(column_name):
+                txt = list(self.checked_values.get(column_name).keys())[0]
+            self.line_edit.setPlaceholderText(txt)
+
+            action_le = QtWidgets.QWidgetAction(menu)
+            action_le.setDefaultWidget(self.line_edit)
+            self.line_edit.textChanged.connect(
+                partial(self._apply_text_filter, column_name,
+                        filter_rec.values()))
+            menu.addAction(action_le)
+            menu.addSeparator()
+
+        if 'checkbox' in filter_rec.search_variants():
+            action_all = QtWidgets.QAction("All", self)
+            action_all.triggered.connect(partial(self._reset_filter,
+                                                 column_name))
+            menu.addAction(action_all)
+
+            action_none = QtWidgets.QAction("Unselect all", self)
+            state_unchecked = 0
+            action_none.triggered.connect(partial(self._apply_filter,
+                                                  column_name,
+                                                  filter_rec.values(),
+                                                  state_unchecked))
+            menu.addAction(action_none)
+            menu.addSeparator()
+
+        # nothing explicitly >> ALL implicitly >> first time
+        if self.checked_values.get(column_name) is None:
+            checked_keys = self.menu_items_dict[column_name].keys()
+        else:
+            checked_keys = self.checked_values[column_name]
+
+        for value, label in self.menu_items_dict[column_name].items():
+            checkbox = QtWidgets.QCheckBox(str(label), menu)
+
+            # temp
+            checkbox.setStyleSheet("QCheckBox{spacing: 5px;"
+                                   "padding:5px 5px 5px 5px;}")
+            if value in checked_keys:
+                checkbox.setChecked(True)
+
+            action = QtWidgets.QWidgetAction(menu)
+            action.setDefaultWidget(checkbox)
+
+            checkbox.stateChanged.connect(partial(self._apply_filter,
+                                                  column_name, {value: label}))
+            menu.addAction(action)
+
+        self.menu = menu
+
+        self._show_menu(index, menu)
+
+    def _show_menu(self, index, menu):
+        """Shows 'menu' under header column of 'index'"""
+        global_pos_point = self.mapToGlobal(
+            QtCore.QPoint(self.sectionViewportPosition(index), 0))
+        menu.setMinimumWidth(self.sectionSize(index))
+        menu.setMinimumHeight(self.height())
+        menu.exec_(QtCore.QPoint(global_pos_point.x(),
+                                 global_pos_point.y() + self.height()))
+
+    def _menu_refresh(self, column_name):
+        """
+            Reset boxes after big change - word filtering or reset
+        """
+        for action in self.menu.actions():
+            if not isinstance(action, QtWidgets.QWidgetAction):
+                continue
+
+            widget = action.defaultWidget()
+            if not isinstance(widget, QtWidgets.QCheckBox):
+                continue
+
+            if not self.checked_values.get(column_name) or \
+                    widget.text() in self.checked_values[column_name].values():
+                widget.setChecked(True)
+            else:
+                widget.setChecked(False)
+
+    def _update_checked_values(self, column_name, values, state):
+        """
+            Modify dictionary of set values in columns for filtering.
+
+            Modifies 'self.checked_values'
+        """
+        checked = self.checked_values.get(column_name,
+            dict(self.menu_items_dict[column_name]))
+        set_items = dict(values.items())  # prevent dict change during loop
+        for value, label in set_items.items():
+            if state == 2 and label:  # checked
+                checked[value] = label
+            elif state == 0 and checked.get(value):
+                checked.pop(value)
+
+        self.checked_values[column_name] = checked
+
+    def handleSectionResized(self, i):
+        if not self.header_cells:
+            self.init_layout()
+        for i in range(self.count()):
+            j = self.visualIndex(i)
+            logical = self.logicalIndex(j)
+            self.header_cells[i].setGeometry(
+                self.sectionViewportPosition(logical), 0,
+                self.sectionSize(logical) - 1, self.height())
+
+    def handleSectionMoved(self, i, oldVisualIndex, newVisualIndex):
+        if not self.header_cells:
+            self.init_layout()
+        for i in range(min(oldVisualIndex, newVisualIndex), self.count()):
+            logical = self.logicalIndex(i)
+            self.header_cells[i].setGeometry(
+                self.ectionViewportPosition(logical), 0,
+                self.sectionSize(logical) - 2, self.height())
+
+    def fixComboPositions(self):
+        for i in range(self.count()):
+            self.header_cells[i].setGeometry(
+                self.sectionViewportPosition(i), 0,
+                self.sectionSize(i) - 2, self.height())

@@ -1,5 +1,7 @@
 from Qt import QtCore
 import attr
+import abc
+import six
 
 from openpype.lib import PypeLogger
 
@@ -22,6 +24,100 @@ ProgressRole = QtCore.Qt.UserRole + 4
 DateRole = QtCore.Qt.UserRole + 6
 FailedRole = QtCore.Qt.UserRole + 8
 HeaderNameRole = QtCore.Qt.UserRole + 10
+
+
+@six.add_metaclass(abc.ABCMeta)
+class AbstractColumnFilter:
+
+    def __init__(self, column_name, dbcon=None):
+        self.column_name = column_name
+        self.dbcon = dbcon
+        self._search_variants = []
+
+    def search_variants(self):
+        """
+            Returns all flavors of search available for this column,
+        """
+        return self._search_variants
+
+    @abc.abstractmethod
+    def values(self):
+        """
+            Returns dict of available values for filter {'label':'value'}
+        """
+        pass
+
+    @abc.abstractmethod
+    def prepare_match_part(self, values):
+        """
+            Prepares format valid for $match part from 'values
+
+            Args:
+                values (dict): {'label': 'value'}
+            Returns:
+                (dict): {'COLUMN_NAME': {'$in': ['val1', 'val2']}}
+        """
+        pass
+
+
+class PredefinedSetFilter(AbstractColumnFilter):
+
+    def __init__(self, column_name, values):
+        super().__init__(column_name)
+        self._search_variants = ['text', 'checkbox']
+        self._values = values
+
+    def values(self):
+        return {k: v for k, v in self._values.items()}
+
+    def prepare_match_part(self, values):
+        return {'$in': list(values.keys())}
+
+
+class RegexTextFilter(AbstractColumnFilter):
+
+    def __init__(self, column_name):
+        super().__init__(column_name)
+        self._search_variants = ['text']
+
+    def values(self):
+        return {}
+
+    def prepare_match_part(self, values):
+        """ values = {'text1 text2': 'text1 text2'} """
+        if not values:
+            return {}
+
+        regex_strs = set()
+        text = list(values.keys())[0]  # only single key always expected
+        for word in text.split():
+            regex_strs.add('.*{}.*'.format(word))
+
+        return {"$regex": "|".join(regex_strs),
+                "$options": 'i'}
+
+
+class MultiSelectFilter(AbstractColumnFilter):
+
+    def __init__(self, column_name, values=None, dbcon=None):
+        super().__init__(column_name)
+        self._values = values
+        self.dbcon = dbcon
+        self._search_variants = ['checkbox']
+
+    def values(self):
+        if self._values:
+            return {k: v for k, v in self._values.items()}
+
+        recs = self.dbcon.find({'type': self.column_name}, {"name": 1,
+                                                            "_id": -1})
+        values = {}
+        for item in recs:
+            values[item["name"]] = item["name"]
+        return dict(sorted(values.items(), key=lambda it: it[1]))
+
+    def prepare_match_part(self, values):
+        return {'$in': list(values.keys())}
 
 
 @attr.s

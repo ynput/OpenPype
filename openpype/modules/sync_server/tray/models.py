@@ -6,6 +6,7 @@ from Qt import QtCore
 from Qt.QtCore import Qt
 
 from avalon.tools.delegates import pretty_timestamp
+from avalon.vendor import qtawesome
 
 from openpype.lib import PypeLogger
 
@@ -67,17 +68,23 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         return len(self._header)
 
     def headerData(self, section, orientation, role):
+        name = self.COLUMN_LABELS[section][0]
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
-                name = self.COLUMN_LABELS[section][0]
-                txt = ""
-                if name in self.column_filtering.keys():
-                    txt = "(F)"
-                return self.COLUMN_LABELS[section][1] + txt  # return label
+                return self.COLUMN_LABELS[section][1]
+
+        if role == Qt.DecorationRole:
+            if name in self.column_filtering.keys():
+                return qtawesome.icon("fa.filter", color="white")
+            if self.COLUMN_FILTERS.get(name):
+                return qtawesome.icon("fa.filter", color="gray")
 
         if role == lib.HeaderNameRole:
             if orientation == Qt.Horizontal:
                 return self.COLUMN_LABELS[section][0]  # return name
+
+    def get_column(self, index):
+        return self.COLUMN_LABELS[index]
 
     def get_header_index(self, value):
         """
@@ -199,8 +206,27 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             Args:
                 word_filter (str): string inputted by user
         """
-        self.word_filter = word_filter
+        self._word_filter = word_filter
         self.refresh()
+
+    def get_column_filter(self, index):
+        """
+            Returns filter object for column 'index
+
+            Args:
+                index(int): index of column in header
+
+            Returns:
+                (AbstractColumnFilter)
+        """
+        column_name = self._header[index]
+
+        filter_rec = self.COLUMN_FILTERS.get(column_name)
+        if filter_rec:
+            filter_rec.dbcon = self.dbcon  # up-to-date db connection
+
+        return filter_rec
+
 
     def get_column_filter_values(self, index):
         """
@@ -215,21 +241,11 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                 menu
                 for some columns ('subset') might be 'value' and 'label' same
         """
-        column_name = self._header[index]
-
-        filter_def = self.COLUMN_FILTERS.get(column_name)
-        if not filter_def:
+        filter_rec = self.get_column_filter(index)
+        if not filter_rec:
             return {}
 
-        if filter_def['type'] == 'predefined_set':
-            return dict(filter_def['values'])
-        elif filter_def['type'] == 'available_values':
-            recs = self.dbcon.find({'type': column_name}, {"name": 1,
-                                                           "_id": -1})
-            values = {}
-            for item in recs:
-                values[item["name"]] = item["name"]
-            return dict(sorted(values.items(), key=lambda item: item[1]))
+        return filter_rec.values()
 
     def set_project(self, project):
         """
@@ -313,11 +329,10 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
     ]
 
     COLUMN_FILTERS = {
-        'status': {'type': 'predefined_set',
-                   'values': {k: v for k, v in lib.STATUS.items()}},
-        'subset': {'type': 'available_values'},
-        'asset': {'type': 'available_values'},
-        'representation': {'type': 'available_values'}
+        'status': lib.PredefinedSetFilter('status', lib.STATUS),
+        'subset': lib.RegexTextFilter('subset'),
+        'asset': lib.RegexTextFilter('asset'),
+        'representation': lib.MultiSelectFilter('representation')
     }
 
     refresh_started = QtCore.Signal()
@@ -356,8 +371,10 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self._project = project
         self._rec_loaded = 0
         self._total_records = 0  # how many documents query actually found
-        self.word_filter = None
+        self._word_filter = None
         self._column_filtering = {}
+
+        self._word_filter = None
 
         self._initialized = False
         if not self._project or self._project == lib.DUMMY_PROJECT:
@@ -382,6 +399,19 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.tick)
         self.timer.start(self.REFRESH_SEC)
+
+    def get_filters(self):
+        """
+            Returns all available filter editors per column_name keys.
+        """
+        filters = {}
+        for column_name, _ in self.COLUMN_LABELS:
+            filter_rec = self.COLUMN_FILTERS.get(column_name)
+            if filter_rec:
+                filter_rec.dbcon = self.dbcon
+            filters[column_name] = filter_rec
+
+        return filters
 
     def data(self, index, role):
         item = self._data[index.row()]
@@ -666,8 +696,12 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 self._column_filtering : {'status': {'$in': [1, 2, 3]}}
         """
         filtering = {}
-        for key, dict_value in checked_values.items():
-            filtering[key] = {'$in': list(dict_value.keys())}
+        for column_name, dict_value in checked_values.items():
+            column_f = self.COLUMN_FILTERS.get(column_name)
+            if not column_f:
+                continue
+            column_f.dbcon = self.dbcon
+            filtering[column_name] = column_f.prepare_match_part(dict_value)
 
         self._column_filtering = filtering
 
@@ -690,18 +724,18 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             'files.sites.name': {'$all': [self.local_site,
                                           self.remote_site]}
         }
-        if not self.word_filter:
+        if not self._word_filter:
             return base_match
         else:
-            regex_str = '.*{}.*'.format(self.word_filter)
+            regex_str = '.*{}.*'.format(self._word_filter)
             base_match['$or'] = [
                 {'context.subset': {'$regex': regex_str, '$options': 'i'}},
                 {'context.asset': {'$regex': regex_str, '$options': 'i'}},
                 {'context.representation': {'$regex': regex_str,
                                             '$options': 'i'}}]
 
-            if ObjectId.is_valid(self.word_filter):
-                base_match['$or'] = [{'_id': ObjectId(self.word_filter)}]
+            if ObjectId.is_valid(self._word_filter):
+                base_match['$or'] = [{'_id': ObjectId(self._word_filter)}]
 
             return base_match
 
@@ -848,7 +882,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self._project = project
         self._rec_loaded = 0
         self._total_records = 0  # how many documents query actually found
-        self.word_filter = None
+        self._word_filter = None
         self._id = _id
         self._initialized = False
 
@@ -1114,13 +1148,13 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
             Returns:
                 (dict)
         """
-        if not self.word_filter:
+        if not self._word_filter:
             return {
                 "type": "representation",
                 "_id": self._id
             }
         else:
-            regex_str = '.*{}.*'.format(self.word_filter)
+            regex_str = '.*{}.*'.format(self._word_filter)
             return {
                 "type": "representation",
                 "_id": self._id,
