@@ -18,10 +18,6 @@ from .webserver import (
     WebServerModule,
     IWebServerRoutes
 )
-from .user import (
-    UserModule,
-    IUserModule
-)
 from .idle_manager import (
     IdleManager,
     IIdleManager
@@ -59,9 +55,6 @@ __all__ = (
 
     "WebServerModule",
     "IWebServerRoutes",
-
-    "UserModule",
-    "IUserModule",
 
     "IdleManager",
     "IIdleManager",

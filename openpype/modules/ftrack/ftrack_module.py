@@ -8,7 +8,6 @@ from openpype.modules import (
     ITrayModule,
     IPluginPaths,
     ITimersManager,
-    IUserModule,
     ILaunchHookPaths,
     ISettingsChangeListener
 )
@@ -32,7 +31,6 @@ class FtrackModule(
     ITrayModule,
     IPluginPaths,
     ITimersManager,
-    IUserModule,
     ILaunchHookPaths,
     ISettingsChangeListener
 ):
@@ -122,11 +120,6 @@ class FtrackModule(
         """Implementation of ITimersManager interface."""
         if self.tray_module:
             self.tray_module.stop_timer_manager()
-
-    def on_pype_user_change(self, username):
-        """Implementation of IUserModule interface."""
-        if self.tray_module:
-            self.tray_module.changed_user()
 
     def on_system_settings_save(self, *_args, **_kwargs):
         """Implementation of ISettingsChangeListener interface."""
