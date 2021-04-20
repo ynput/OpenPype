@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
+"""Maya look collector."""
 import re
 import os
 import glob
 
-from maya import cmds
+from maya import cmds  # noqa
 import pyblish.api
 from openpype.hosts.maya.api import lib
 
@@ -15,6 +17,11 @@ SHAPE_ATTRS = ["castsShadows",
                "visibleInRefractions",
                "doubleSided",
                "opposite"]
+
+RENDERER_NODE_TYPES = [
+    # redshift
+    "RedshiftMeshParameters"
+]
 
 SHAPE_ATTRS = set(SHAPE_ATTRS)
 
@@ -29,7 +36,6 @@ def get_look_attrs(node):
         list: Attribute names to extract
 
     """
-
     # When referenced get only attributes that are "changed since file open"
     # which includes any reference edits, otherwise take *all* user defined
     # attributes
@@ -219,9 +225,13 @@ class CollectLook(pyblish.api.InstancePlugin):
         with lib.renderlayer(instance.data["renderlayer"]):
             self.collect(instance)
 
-
     def collect(self, instance):
+        """Collect looks.
 
+        Args:
+            instance: Instance to collect.
+
+        """
         self.log.info("Looking for look associations "
                       "for %s" % instance.data['name'])
 
@@ -235,48 +245,91 @@ class CollectLook(pyblish.api.InstancePlugin):
         self.log.info("Gathering set relations..")
         # Ensure iteration happen in a list so we can remove keys from the
         # dict within the loop
-        for objset in list(sets):
-            self.log.debug("From %s.." % objset)
+
+        # skipped types of attribute on render specific nodes
+        disabled_types = ["message", "TdataCompound"]
+
+        for obj_set in list(sets):
+            self.log.debug("From {}".format(obj_set))
+
+            # if node is specified as renderer node type, it will be
+            # serialized with its attributes.
+            if cmds.nodeType(obj_set) in RENDERER_NODE_TYPES:
+                self.log.info("- {} is {}".format(
+                    obj_set, cmds.nodeType(obj_set)))
+
+                node_attrs = []
+
+                # serialize its attributes so they can be recreated on look
+                # load.
+                for attr in cmds.listAttr(obj_set):
+                    # skip publishedNodeInfo attributes as they break
+                    # getAttr() and we don't need them anyway
+                    if attr.startswith("publishedNodeInfo"):
+                        continue
+
+                    # skip attributes types defined in 'disabled_type' list
+                    if cmds.getAttr("{}.{}".format(obj_set, attr), type=True) in disabled_types:  # noqa
+                        continue
+
+                    node_attrs.append((
+                        attr,
+                        cmds.getAttr("{}.{}".format(obj_set, attr)),
+                        cmds.getAttr(
+                            "{}.{}".format(obj_set, attr), type=True)
+                    ))
+
+                for member in cmds.ls(
+                        cmds.sets(obj_set, query=True), long=True):
+                    member_data = self.collect_member_data(member,
+                                                           instance_lookup)
+                    if not member_data:
+                        continue
+
+                    # Add information of the node to the members list
+                    sets[obj_set]["members"].append(member_data)
 
             # Get all nodes of the current objectSet (shadingEngine)
-            for member in cmds.ls(cmds.sets(objset, query=True), long=True):
+            for member in cmds.ls(cmds.sets(obj_set, query=True), long=True):
                 member_data = self.collect_member_data(member,
                                                        instance_lookup)
                 if not member_data:
                     continue
 
                 # Add information of the node to the members list
-                sets[objset]["members"].append(member_data)
+                sets[obj_set]["members"].append(member_data)
 
             # Remove sets that didn't have any members assigned in the end
             # Thus the data will be limited to only what we need.
-            self.log.info("objset {}".format(sets[objset]))
-            if not sets[objset]["members"] or (not objset.endswith("SG")):
-                self.log.info("Removing redundant set information: "
-                              "%s" % objset)
-                sets.pop(objset, None)
+            self.log.info("obj_set {}".format(sets[obj_set]))
+            if not sets[obj_set]["members"]:
+                self.log.info(
+                    "Removing redundant set information: {}".format(obj_set))
+                sets.pop(obj_set, None)
 
         self.log.info("Gathering attribute changes to instance members..")
         attributes = self.collect_attributes_changed(instance)
 
         # Store data on the instance
-        instance.data["lookData"] = {"attributes": attributes,
-                                     "relationships": sets}
+        instance.data["lookData"] = {
+            "attributes": attributes,
+            "relationships": sets
+        }
 
         # Collect file nodes used by shading engines (if we have any)
-        files = list()
-        looksets = sets.keys()
-        shaderAttrs = [
-                    "surfaceShader",
-                    "volumeShader",
-                    "displacementShader",
-                    "aiSurfaceShader",
-                    "aiVolumeShader"]
-        materials = list()
+        files = []
+        look_sets = sets.keys()
+        shader_attrs = [
+            "surfaceShader",
+            "volumeShader",
+            "displacementShader",
+            "aiSurfaceShader",
+            "aiVolumeShader"]
+        if look_sets:
+            materials = []
 
-        if looksets:
-            for look in looksets:
-                for at in shaderAttrs:
+            for look in look_sets:
+                for at in shader_attrs:
                     try:
                         con = cmds.listConnections("{}.{}".format(look, at))
                     except ValueError:
@@ -289,10 +342,10 @@ class CollectLook(pyblish.api.InstancePlugin):
 
             self.log.info("Found materials:\n{}".format(materials))
 
-            self.log.info("Found the following sets:\n{}".format(looksets))
+            self.log.info("Found the following sets:\n{}".format(look_sets))
             # Get the entire node chain of the look sets
-            # history = cmds.listHistory(looksets)
-            history = list()
+            # history = cmds.listHistory(look_sets)
+            history = []
             for material in materials:
                 history.extend(cmds.listHistory(material))
             files = cmds.ls(history, type="file", long=True)
@@ -313,7 +366,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # Ensure unique shader sets
         # Add shader sets to the instance for unify ID validation
-        instance.extend(shader for shader in looksets if shader
+        instance.extend(shader for shader in look_sets if shader
                         not in instance_lookup)
 
         self.log.info("Collected look for %s" % instance)
@@ -331,7 +384,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             dict
         """
 
-        sets = dict()
+        sets = {}
         for node in instance:
             related_sets = lib.get_related_sets(node)
             if not related_sets:
@@ -427,6 +480,11 @@ class CollectLook(pyblish.api.InstancePlugin):
         """
 
         self.log.debug("processing: {}".format(node))
+        if cmds.nodeType(node) not in ["file", "aiImage"]:
+            self.log.error(
+                "Unsupported file node: {}".format(cmds.nodeType(node)))
+            raise AssertionError("Unsupported file node")
+
         if cmds.nodeType(node) == 'file':
             self.log.debug("  - file node")
             attribute = "{}.fileTextureName".format(node)
@@ -435,6 +493,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.log.debug("aiImage node")
             attribute = "{}.filename".format(node)
             computed_attribute = attribute
+
         source = cmds.getAttr(attribute)
         self.log.info("  - file source: {}".format(source))
         color_space_attr = "{}.colorSpace".format(node)
