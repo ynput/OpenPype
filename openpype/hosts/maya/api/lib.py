@@ -581,7 +581,7 @@ def get_shader_assignments_from_shapes(shapes, components=True):
 
         # Build a mapping from parent to shapes to include in lookup.
         transforms = {shape.rsplit("|", 1)[0]: shape for shape in shapes}
-        lookup = set(shapes + transforms.keys())
+        lookup = set(shapes) | set(transforms.keys())
 
         component_assignments = defaultdict(list)
         for shading_group in assignments.keys():
