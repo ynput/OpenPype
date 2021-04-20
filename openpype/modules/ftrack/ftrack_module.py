@@ -1,4 +1,5 @@
 import os
+import json
 import collections
 from abc import ABCMeta, abstractmethod
 import six
@@ -12,6 +13,7 @@ from openpype.modules import (
     ILaunchHookPaths,
     ISettingsChangeListener
 )
+from openpype.settings import SaveWarning
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -128,10 +130,86 @@ class FtrackModule(
         if self.tray_module:
             self.tray_module.changed_user()
 
-    def on_system_settings_save(self, *_args, **_kwargs):
+    def on_system_settings_save(self, old_value, new_value, changes):
         """Implementation of ISettingsChangeListener interface."""
-        # Ignore
-        return
+        try:
+            session = self.create_ftrack_session()
+        except Exception:
+            self.log.warning("Couldn't create ftrack session.", exc_info=True)
+            raise SaveWarning((
+                "Couldn't create Ftrack session."
+                " You may need to update applications"
+                " and tools in Ftrack custom attributes using defined action."
+            ))
+
+        from .lib import (
+            get_openpype_attr,
+            CUST_ATTR_APPLICATIONS,
+            CUST_ATTR_TOOLS,
+            app_definitions_from_app_manager,
+            tool_definitions_from_app_manager
+        )
+        from openpype.api import ApplicationManager
+        query_keys = [
+            "id",
+            "key",
+            "config"
+        ]
+        custom_attributes = get_openpype_attr(
+            session,
+            split_hierarchical=False,
+            query_keys=query_keys
+        )
+        app_attribute = None
+        tool_attribute = None
+        for custom_attribute in custom_attributes:
+            key = custom_attribute["key"]
+            if key == CUST_ATTR_APPLICATIONS:
+                app_attribute = custom_attribute
+            elif key == CUST_ATTR_TOOLS:
+                tool_attribute = custom_attribute
+
+        app_manager = ApplicationManager(new_value)
+        missing_attributes = []
+        if not app_attribute:
+            missing_attributes.append(CUST_ATTR_APPLICATIONS)
+        else:
+            config = json.loads(app_attribute["config"])
+            new_data = app_definitions_from_app_manager(app_manager)
+            prepared_data = []
+            for item in new_data:
+                for key, label in item.items():
+                    prepared_data.append({
+                        "menu": label,
+                        "value": key
+                    })
+
+            config["data"] = json.dumps(prepared_data)
+            app_attribute["config"] = json.dumps(config)
+
+        if not tool_attribute:
+            missing_attributes.append(CUST_ATTR_TOOLS)
+        else:
+            config = json.loads(tool_attribute["config"])
+            new_data = tool_definitions_from_app_manager(app_manager)
+            prepared_data = []
+            for item in new_data:
+                for key, label in item.items():
+                    prepared_data.append({
+                        "menu": label,
+                        "value": key
+                    })
+            config["data"] = json.dumps(prepared_data)
+            tool_attribute["config"] = json.dumps(config)
+
+        session.commit()
+
+        if missing_attributes:
+            raise SaveWarning((
+                "Couldn't find custom attribute/s ({}) to update."
+                " You may need to update applications"
+                " and tools in Ftrack custom attributes using defined action."
+            ).format(", ".join(missing_attributes)))
 
     def on_project_settings_save(self, *_args, **_kwargs):
         """Implementation of ISettingsChangeListener interface."""
