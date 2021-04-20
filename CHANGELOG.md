@@ -1,8 +1,8 @@
 # Changelog
 
-## [2.16.1](https://github.com/pypeclub/pype/tree/2.16.1) (2021-04-20)
+## [2.17.0](https://github.com/pypeclub/pype/tree/2.17.0) (2021-04-20)
 
-[Full Changelog](https://github.com/pypeclub/pype/compare/2.16.0...2.16.1)
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.16.0...2.17.0)
 
 **Enhancements:**
 
@@ -11,12 +11,13 @@
 - TV Paint: Set initial project settings. [\#1299](https://github.com/pypeclub/pype/pull/1299)
 - TV Paint: Validate mark in and out. [\#1298](https://github.com/pypeclub/pype/pull/1298)
 - Validate project settings [\#1297](https://github.com/pypeclub/pype/pull/1297)
-- Forward compatible ftrack group [\#1243](https://github.com/pypeclub/pype/pull/1243)
+- 3.0 Forward compatible ftrack group [\#1243](https://github.com/pypeclub/pype/pull/1243)
 - After Effects: added SubsetManager [\#1234](https://github.com/pypeclub/pype/pull/1234)
 - Show error message in pyblish UI [\#1206](https://github.com/pypeclub/pype/pull/1206)
 
 **Fixed bugs:**
 
+- Hiero: fixing source frame from correct object [\#1362](https://github.com/pypeclub/pype/pull/1362)
 - Ftrack custom attributes in bulks [\#1312](https://github.com/pypeclub/pype/pull/1312)
 - Nuke: fix colourspace, prerenders and nuke panes opening [\#1308](https://github.com/pypeclub/pype/pull/1308)
 - Ftrack optional pypclub role [\#1303](https://github.com/pypeclub/pype/pull/1303)
