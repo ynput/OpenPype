@@ -15,7 +15,10 @@ API_KEY_KEY = "api_key"
 
 def get_ftrack_hostname(ftrack_server=None):
     if not ftrack_server:
-        ftrack_server = os.environ["FTRACK_SERVER"]
+        ftrack_server = os.environ.get("FTRACK_SERVER")
+
+    if not ftrack_server:
+        return None
 
     if "//" not in ftrack_server:
         ftrack_server = "//" + ftrack_server
@@ -29,17 +32,24 @@ def _get_ftrack_secure_key(hostname, key):
 
 
 def get_credentials(ftrack_server=None):
+    output = {
+        USERNAME_KEY: None,
+        API_KEY_KEY: None
+    }
     hostname = get_ftrack_hostname(ftrack_server)
+    if not hostname:
+        return output
+
     username_name = _get_ftrack_secure_key(hostname, USERNAME_KEY)
     api_key_name = _get_ftrack_secure_key(hostname, API_KEY_KEY)
 
     username_registry = OpenPypeSecureRegistry(username_name)
     api_key_registry = OpenPypeSecureRegistry(api_key_name)
 
-    return {
-        USERNAME_KEY: username_registry.get_item(USERNAME_KEY, None),
-        API_KEY_KEY: api_key_registry.get_item(API_KEY_KEY, None)
-    }
+    output[USERNAME_KEY] = username_registry.get_item(USERNAME_KEY, None)
+    output[API_KEY_KEY] = api_key_registry.get_item(API_KEY_KEY, None)
+
+    return output
 
 
 def save_credentials(username, api_key, ftrack_server=None):
@@ -77,9 +87,9 @@ def clear_credentials(ftrack_server=None):
 
 def check_credentials(username, api_key, ftrack_server=None):
     if not ftrack_server:
-        ftrack_server = os.environ["FTRACK_SERVER"]
+        ftrack_server = os.environ.get("FTRACK_SERVER")
 
-    if not username or not api_key:
+    if not ftrack_server or not username or not api_key:
         return False
 
     try:

@@ -6,7 +6,9 @@
         "ExtractJpegEXR": {
             "enabled": true,
             "ffmpeg_args": {
-                "input": [],
+                "input": [
+                    "-gamma 2.2"
+                ],
                 "output": []
             }
         },

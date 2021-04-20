@@ -10,6 +10,7 @@ from openpype.api import get_system_settings
 from ..utils import time_function
 import time
 
+
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file',
           'https://www.googleapis.com/auth/drive.readonly']  # for write|delete
@@ -45,9 +46,10 @@ class GDriveHandler(AbstractProvider):
     MY_DRIVE_STR = 'My Drive'  # name of root folder of regular Google drive
     CHUNK_SIZE = 2097152  # must be divisible by 256!
 
-    def __init__(self, site_name, tree=None, presets=None):
+    def __init__(self, project_name, site_name, tree=None, presets=None):
         self.presets = None
         self.active = False
+        self.project_name = project_name
         self.site_name = site_name
 
         self.presets = presets
@@ -65,137 +67,6 @@ class GDriveHandler(AbstractProvider):
         self._tree = tree
         self.active = True
 
-    def _get_gd_service(self):
-        """
-            Authorize client with 'credentials.json', uses service account.
-            Service account needs to have target folder shared with.
-            Produces service that communicates with GDrive API.
-
-        Returns:
-            None
-        """
-        creds = service_account.Credentials.from_service_account_file(
-            self.presets["credentials_url"],
-            scopes=SCOPES)
-        service = build('drive', 'v3',
-                        credentials=creds, cache_discovery=False)
-        return service
-
-    def _prepare_root_info(self):
-        """
-            Prepare info about roots and theirs folder ids from 'presets'.
-            Configuration might be for single or multiroot projects.
-            Regular My Drive and Shared drives are implemented, their root
-            folder ids need to be queried in slightly different way.
-
-        Returns:
-            (dicts) of dicts where root folders are keys
-        """
-        roots = {}
-        for path in self.get_roots_config().values():
-            if self.MY_DRIVE_STR in path:
-                roots[self.MY_DRIVE_STR] = self.service.files()\
-                                               .get(fileId='root').execute()
-            else:
-                shared_drives = []
-                page_token = None
-
-                while True:
-                    response = self.service.drives().list(
-                        pageSize=100,
-                        pageToken=page_token).execute()
-                    shared_drives.extend(response.get('drives', []))
-                    page_token = response.get('nextPageToken', None)
-                    if page_token is None:
-                        break
-
-                folders = path.split('/')
-                if len(folders) < 2:
-                    raise ValueError("Wrong root folder definition {}".
-                                     format(path))
-
-                for shared_drive in shared_drives:
-                    if folders[1] in shared_drive["name"]:
-                        roots[shared_drive["name"]] = {
-                            "name": shared_drive["name"],
-                            "id": shared_drive["id"]}
-        if self.MY_DRIVE_STR not in roots:  # add My Drive always
-            roots[self.MY_DRIVE_STR] = self.service.files() \
-                .get(fileId='root').execute()
-
-        return roots
-
-    @time_function
-    def _build_tree(self, folders):
-        """
-            Create in-memory structure resolving paths to folder id as
-            recursive querying might be slower.
-            Initialized in the time of class initialization.
-            Maybe should be persisted
-            Tree is structure of path to id:
-                '/ROOT': {'id': '1234567'}
-                '/ROOT/PROJECT_FOLDER': {'id':'222222'}
-                '/ROOT/PROJECT_FOLDER/Assets': {'id': '3434545'}
-        Args:
-            folders (list): list of dictionaries with folder metadata
-        Returns:
-            (dictionary) path as a key, folder id as a value
-        """
-        log.debug("build_tree len {}".format(len(folders)))
-        root_ids = []
-        default_root_id = None
-        tree = {}
-        ending_by = {}
-        for root_name, root in self.root.items():  # might be multiple roots
-            if root["id"] not in root_ids:
-                tree["/" + root_name] = {"id": root["id"]}
-                ending_by[root["id"]] = "/" + root_name
-                root_ids.append(root["id"])
-
-                if self.MY_DRIVE_STR == root_name:
-                    default_root_id = root["id"]
-
-        no_parents_yet = {}
-        while folders:
-            folder = folders.pop(0)
-            parents = folder.get("parents", [])
-            # weird cases, shared folders, etc, parent under root
-            if not parents:
-                parent = default_root_id
-            else:
-                parent = parents[0]
-
-            if folder["id"] in root_ids:  # do not process root
-                continue
-
-            if parent in ending_by:
-                path_key = ending_by[parent] + "/" + folder["name"]
-                ending_by[folder["id"]] = path_key
-                tree[path_key] = {"id": folder["id"]}
-            else:
-                no_parents_yet.setdefault(parent, []).append((folder["id"],
-                                                              folder["name"]))
-        loop_cnt = 0
-        # break if looped more then X times - safety against infinite loop
-        while no_parents_yet and loop_cnt < 20:
-
-            keys = list(no_parents_yet.keys())
-            for parent in keys:
-                if parent in ending_by.keys():
-                    subfolders = no_parents_yet.pop(parent)
-                    for folder_id, folder_name in subfolders:
-                        path_key = ending_by[parent] + "/" + folder_name
-                        ending_by[folder_id] = path_key
-                        tree[path_key] = {"id": folder_id}
-            loop_cnt += 1
-
-        if len(no_parents_yet) > 0:
-            log.debug("Some folders path are not resolved {}".
-                      format(no_parents_yet))
-            log.debug("Remove deleted folders from trash.")
-
-        return tree
-
     def is_active(self):
         """
             Returns True if provider is activated, eg. has working credentials.
@@ -203,6 +74,21 @@ class GDriveHandler(AbstractProvider):
             (boolean)
         """
         return self.active
+
+    def get_roots_config(self, anatomy=None):
+        """
+            Returns root values for path resolving
+
+            Use only Settings as GDrive cannot be modified by Local Settings
+
+        Returns:
+            (dict) - {"root": {"root": "/My Drive"}}
+                     OR
+                     {"root": {"root_ONE": "value", "root_TWO":"value}}
+            Format is importing for usage of python's format ** approach
+        """
+        # GDrive roots cannot be locally overridden
+        return self.presets['root']
 
     def get_tree(self):
         """
@@ -216,26 +102,6 @@ class GDriveHandler(AbstractProvider):
         if not self._tree:
             self._tree = self._build_tree(self.list_folders())
         return self._tree
-
-    def get_roots_config(self):
-        """
-            Returns value from presets of roots. It calculates with multi
-            roots. Config should be simple key value, or dictionary.
-
-            Examples:
-                "root": "/My Drive"
-              OR
-                "root": {"root_ONE": "value", "root_TWO":"value}
-        Returns:
-            (dict) - {"root": {"root": "/My Drive"}}
-                     OR
-                     {"root": {"root_ONE": "value", "root_TWO":"value}}
-            Format is importing for usage of python's format ** approach
-        """
-        roots = self.presets["root"]
-        if isinstance(roots, str):
-            roots = {"root": roots}
-        return roots
 
     def create_folder(self, path):
         """
@@ -510,20 +376,6 @@ class GDriveHandler(AbstractProvider):
         self.service.files().delete(fileId=file["id"],
                                     supportsAllDrives=True).execute()
 
-    def _get_folder_metadata(self, path):
-        """
-            Get info about folder with 'path'
-        Args:
-            path (string):
-
-        Returns:
-         (dictionary) with metadata or raises ValueError
-        """
-        try:
-            return self.get_tree()[path]
-        except Exception:
-            raise ValueError("Uknown folder id {}".format(id))
-
     def list_folder(self, folder_path):
         """
             List all files and subfolders of particular path non-recursively.
@@ -678,15 +530,151 @@ class GDriveHandler(AbstractProvider):
             return
         return provider_presets
 
-    def resolve_path(self, path, root_config, anatomy=None):
-        if not root_config.get("root"):
-            root_config = {"root": root_config}
+    def _get_gd_service(self):
+        """
+            Authorize client with 'credentials.json', uses service account.
+            Service account needs to have target folder shared with.
+            Produces service that communicates with GDrive API.
 
+        Returns:
+            None
+        """
+        creds = service_account.Credentials.from_service_account_file(
+            self.presets["credentials_url"],
+            scopes=SCOPES)
+        service = build('drive', 'v3',
+                        credentials=creds, cache_discovery=False)
+        return service
+
+    def _prepare_root_info(self):
+        """
+            Prepare info about roots and theirs folder ids from 'presets'.
+            Configuration might be for single or multiroot projects.
+            Regular My Drive and Shared drives are implemented, their root
+            folder ids need to be queried in slightly different way.
+
+        Returns:
+            (dicts) of dicts where root folders are keys
+        """
+        roots = {}
+        config_roots = self.get_roots_config()
+        for path in config_roots.values():
+            if self.MY_DRIVE_STR in path:
+                roots[self.MY_DRIVE_STR] = self.service.files()\
+                                               .get(fileId='root').execute()
+            else:
+                shared_drives = []
+                page_token = None
+
+                while True:
+                    response = self.service.drives().list(
+                        pageSize=100,
+                        pageToken=page_token).execute()
+                    shared_drives.extend(response.get('drives', []))
+                    page_token = response.get('nextPageToken', None)
+                    if page_token is None:
+                        break
+
+                folders = path.split('/')
+                if len(folders) < 2:
+                    raise ValueError("Wrong root folder definition {}".
+                                     format(path))
+
+                for shared_drive in shared_drives:
+                    if folders[1] in shared_drive["name"]:
+                        roots[shared_drive["name"]] = {
+                            "name": shared_drive["name"],
+                            "id": shared_drive["id"]}
+        if self.MY_DRIVE_STR not in roots:  # add My Drive always
+            roots[self.MY_DRIVE_STR] = self.service.files() \
+                .get(fileId='root').execute()
+
+        return roots
+
+    @time_function
+    def _build_tree(self, folders):
+        """
+            Create in-memory structure resolving paths to folder id as
+            recursive querying might be slower.
+            Initialized in the time of class initialization.
+            Maybe should be persisted
+            Tree is structure of path to id:
+                '/ROOT': {'id': '1234567'}
+                '/ROOT/PROJECT_FOLDER': {'id':'222222'}
+                '/ROOT/PROJECT_FOLDER/Assets': {'id': '3434545'}
+        Args:
+            folders (list): list of dictionaries with folder metadata
+        Returns:
+            (dictionary) path as a key, folder id as a value
+        """
+        log.debug("build_tree len {}".format(len(folders)))
+        root_ids = []
+        default_root_id = None
+        tree = {}
+        ending_by = {}
+        for root_name, root in self.root.items():  # might be multiple roots
+            if root["id"] not in root_ids:
+                tree["/" + root_name] = {"id": root["id"]}
+                ending_by[root["id"]] = "/" + root_name
+                root_ids.append(root["id"])
+
+                if self.MY_DRIVE_STR == root_name:
+                    default_root_id = root["id"]
+
+        no_parents_yet = {}
+        while folders:
+            folder = folders.pop(0)
+            parents = folder.get("parents", [])
+            # weird cases, shared folders, etc, parent under root
+            if not parents:
+                parent = default_root_id
+            else:
+                parent = parents[0]
+
+            if folder["id"] in root_ids:  # do not process root
+                continue
+
+            if parent in ending_by:
+                path_key = ending_by[parent] + "/" + folder["name"]
+                ending_by[folder["id"]] = path_key
+                tree[path_key] = {"id": folder["id"]}
+            else:
+                no_parents_yet.setdefault(parent, []).append((folder["id"],
+                                                              folder["name"]))
+        loop_cnt = 0
+        # break if looped more then X times - safety against infinite loop
+        while no_parents_yet and loop_cnt < 20:
+
+            keys = list(no_parents_yet.keys())
+            for parent in keys:
+                if parent in ending_by.keys():
+                    subfolders = no_parents_yet.pop(parent)
+                    for folder_id, folder_name in subfolders:
+                        path_key = ending_by[parent] + "/" + folder_name
+                        ending_by[folder_id] = path_key
+                        tree[path_key] = {"id": folder_id}
+            loop_cnt += 1
+
+        if len(no_parents_yet) > 0:
+            log.debug("Some folders path are not resolved {}".
+                      format(no_parents_yet))
+            log.debug("Remove deleted folders from trash.")
+
+        return tree
+
+    def _get_folder_metadata(self, path):
+        """
+            Get info about folder with 'path'
+        Args:
+            path (string):
+
+        Returns:
+         (dictionary) with metadata or raises ValueError
+        """
         try:
-            return path.format(**root_config)
-        except KeyError:
-            msg = "Error in resolving remote root, unknown key"
-            log.error(msg)
+            return self.get_tree()[path]
+        except Exception:
+            raise ValueError("Uknown folder id {}".format(id))
 
     def _handle_q(self, q, trashed=False):
         """ API list call contain trashed and hidden files/folder by default.

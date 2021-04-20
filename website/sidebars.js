@@ -19,6 +19,7 @@ module.exports = {
                 "artist_hosts_nukestudio",
                 "artist_hosts_nuke",
                 "artist_hosts_maya",
+                "artist_hosts_blender",
                 "artist_hosts_harmony",
                 "artist_hosts_aftereffects",
                 "artist_hosts_photoshop",

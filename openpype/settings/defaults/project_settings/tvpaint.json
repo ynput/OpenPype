@@ -1,6 +1,16 @@
 {
     "publish": {
-        "ValidateMissingLayers": {
+        "ValidateProjectSettings": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateMarks": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateAssetName": {
             "enabled": true,
             "optional": true,
             "active": true
