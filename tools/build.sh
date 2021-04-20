@@ -158,7 +158,12 @@ main () {
   fi
 
   echo -e "${BIGreen}>>>${RST} Building ..."
-  poetry run python3 "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    poetry run python3 "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    poetry run python3 "$openpype_root/setup.py" bdist_mac > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+  fi
+  
   poetry run python3 "$openpype_root/tools/build_dependencies.py"
 
   echo -e "${BICyan}>>>${RST} All done. You will find OpenPype and build log in \c"
