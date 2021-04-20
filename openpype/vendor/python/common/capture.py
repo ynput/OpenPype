@@ -161,37 +161,62 @@ def capture(camera=None,
     cmds.currentTime(cmds.currentTime(query=True))
 
     padding = 10  # Extend panel to accommodate for OS window manager
+
     with _independent_panel(width=width + padding,
                             height=height + padding,
                             off_screen=off_screen) as panel:
         cmds.setFocus(panel)
 
-        with contextlib.nested(
-             _disabled_inview_messages(),
-             _maintain_camera(panel, camera),
-             _applied_viewport_options(viewport_options, panel),
-             _applied_camera_options(camera_options, panel),
-             _applied_display_options(display_options),
-             _applied_viewport2_options(viewport2_options),
-             _isolated_nodes(isolate, panel),
-             _maintained_time()):
+        all_playblast_kwargs = {
+            "compression": compression,
+            "format": format,
+            "percent": 100,
+            "quality": quality,
+            "viewer": viewer,
+            "startTime": start_frame,
+            "endTime": end_frame,
+            "offScreen": off_screen,
+            "showOrnaments": show_ornaments,
+            "forceOverwrite": overwrite,
+            "filename": filename,
+            "widthHeight": [width, height],
+            "rawFrameNumbers": raw_frame_numbers,
+            "framePadding": frame_padding
+        }
+        all_playblast_kwargs.update(playblast_kwargs)
 
-                output = cmds.playblast(
-                    compression=compression,
-                    format=format,
-                    percent=100,
-                    quality=quality,
-                    viewer=viewer,
-                    startTime=start_frame,
-                    endTime=end_frame,
-                    offScreen=off_screen,
-                    showOrnaments=show_ornaments,
-                    forceOverwrite=overwrite,
-                    filename=filename,
-                    widthHeight=[width, height],
-                    rawFrameNumbers=raw_frame_numbers,
-                    framePadding=frame_padding,
-                    **playblast_kwargs)
+        if getattr(contextlib, "nested", None):
+            with contextlib.nested(
+                _disabled_inview_messages(),
+                _maintain_camera(panel, camera),
+                _applied_viewport_options(viewport_options, panel),
+                _applied_camera_options(camera_options, panel),
+                _applied_display_options(display_options),
+                _applied_viewport2_options(viewport2_options),
+                _isolated_nodes(isolate, panel),
+                _maintained_time()
+            ):
+                output = cmds.playblast(**all_playblast_kwargs)
+        else:
+            with contextlib.ExitStack() as stack:
+                stack.enter_context(_disabled_inview_messages())
+                stack.enter_context(_maintain_camera(panel, camera))
+                stack.enter_context(
+                    _applied_viewport_options(viewport_options, panel)
+                )
+                stack.enter_context(
+                    _applied_camera_options(camera_options, panel)
+                )
+                stack.enter_context(
+                    _applied_display_options(display_options)
+                )
+                stack.enter_context(
+                    _applied_viewport2_options(viewport2_options)
+                )
+                stack.enter_context(_isolated_nodes(isolate, panel))
+                stack.enter_context(_maintained_time())
+
+                output = cmds.playblast(**all_playblast_kwargs)
 
         return output
 
