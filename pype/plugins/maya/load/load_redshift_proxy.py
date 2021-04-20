@@ -108,7 +108,7 @@ class RedshiftProxyLoader(api.Loader):
     def switch(self, container, representation):
         self.update(container, representation)
 
-    def create_rs_proxy(self, name, path):
+        def create_rs_proxy(self, name, path):
         """Creates Redshift Proxies showing a proxy object.
 
         Args:
@@ -123,14 +123,28 @@ class RedshiftProxyLoader(api.Loader):
         rs_mesh = cmds.createNode(
             'RedshiftProxyMesh', name="{}_RS".format(name))
         mesh_shape = cmds.createNode("mesh", name="{}_GEOShape".format(name))
+        # Create a new shader RedshiftMaterial shader
+        rs_shader = cmds.shadingNode('RedshiftMaterial', asShader=True)
+        cmds.setAttr(
+            "{}.diffuse_color".format(rs_shader),
+            0.35, 0.35, 0.35, type='double3')
+        # Create shading group for it
+        rs_shading_group = cmds.sets(
+            renderable=True, noSurfaceShader=True, empty=True, name='rsSG')
+        cmds.connectAttr("{}.outColor".format(rs_shader),
+                         "{}.surfaceShader".format(rs_shading_group),
+                         force=True)
 
+        # add path to proxy
         cmds.setAttr("{}.fileName".format(rs_mesh),
                      path,
                      type="string")
 
+        # connect nodes
         cmds.connectAttr("{}.outMesh".format(rs_mesh),
                          "{}.inMesh".format(mesh_shape))
 
+        # put proxy under group node
         group_node = cmds.group(empty=True, name="{}_GRP".format(name))
         mesh_transform = cmds.listRelatives(mesh_shape,
                                             parent=True, fullPath=True)
@@ -139,9 +153,16 @@ class RedshiftProxyLoader(api.Loader):
 
         # determine if we need to enable animation support
         files_in_folder = os.listdir(os.path.dirname(path))
-        collections, remainder = clique.assemble(files_in_folder)
+        collections, _ = clique.assemble(files_in_folder)
 
+        # set Preview Mesh on proxy
         if collections:
             cmds.setAttr("{}.useFrameExtension".format(rs_mesh), 1)
+
+        cmds.setAttr("{}.displayMode".format(rs_mesh), 1)
+        cmds.refresh()
+
+        # add mesh to new shading group
+        cmds.sets([mesh_shape], addElement=rs_shading_group)
 
         return nodes, group_node
