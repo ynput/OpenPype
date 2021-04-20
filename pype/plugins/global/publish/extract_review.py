@@ -747,6 +747,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return audio_in_args, audio_filters, audio_out_args
 
+    def get_letterbox_filters(self, ratio, thickness="fill", color="black"):
+        top_box = (
+            "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t={}:c={}"
+        ).format(ratio, thickness, color)
+
+        bottom_box = (
+            "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
+            ":iw:round((ih-(iw*(1/{0})))/2):t={1}:c={2}"
+        ).format(ratio, thickness, color)
+
+        return [top_box, bottom_box]
+
     def rescaling_filters(self, temp_data, output_def, new_repre):
         """Prepare vieo filters based on tags in new representation.
 
@@ -880,28 +892,61 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # letter_box
         if letter_box:
+            letter_box_ratio = letter_box
+            if isinstance(letter_box, dict):
+                letter_box_ratio = letter_box["ratio"]
+
             if input_res_ratio == output_res_ratio:
-                letter_box /= pixel_aspect
+                letter_box_ratio /= pixel_aspect
             elif input_res_ratio < output_res_ratio:
-                letter_box /= scale_factor_by_width
+                letter_box_ratio /= scale_factor_by_width
             else:
-                letter_box /= scale_factor_by_height
+                letter_box_ratio /= scale_factor_by_height
 
-            scale_filter = "scale={}x{}:flags=lanczos".format(
-                output_width, output_height
-            )
+            filters.extend([
+                "scale={}x{}:flags=lanczos".format(
+                    output_width, output_height
+                ),
+                "setsar=1"
+            ])
 
-            top_box = (
-                "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c=black"
-            ).format(letter_box)
+        if letter_box and isinstance(letter_box, float):
+            filters.extend(self.get_letterbox_filters(letter_box))
 
-            bottom_box = (
-                "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
-                ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black"
-            ).format(letter_box)
+        if letter_box and isinstance(letter_box, dict):
+            if letter_box["state"] == "letterbox":
+                filters.extend(
+                    self.get_letterbox_filters(
+                        letter_box["ratio"],
+                        letter_box["thickness"],
+                        letter_box["color"]
+                    )
+                )
+            elif letter_box["state"] == "pillar":
+                right_box = (
+                    "drawbox=0:0:round((iw-(ih*{}))/2):ih:t={}:c={}"
+                ).format(
+                    letter_box["ratio"],
+                    letter_box["thickness"],
+                    letter_box["color"]
+                )
 
-            # Add letter box filters
-            filters.extend([scale_filter, "setsar=1", top_box, bottom_box])
+                left_box = (
+                    "drawbox=(round(ih*{0})+round((iw-(ih*{0}))/2))"
+                    ":0:round((iw-(ih*{0}))/2):ih:t={1}:c={2}"
+                ).format(
+                    letter_box["ratio"],
+                    letter_box["thickness"],
+                    letter_box["color"]
+                )
+
+                filters.extend([right_box, left_box])
+            else:
+                raise ValueError(
+                    "Letterbox state \"{}\" is not recognized".format(
+                        letter_box["state"]
+                    )
+                )
 
         # scaling none square pixels and 1920 width
         if (
