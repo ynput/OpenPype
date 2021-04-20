@@ -9,7 +9,7 @@ import hiero
 import avalon.api as avalon
 import avalon.io
 from avalon.vendor.Qt import QtWidgets
-from openpype.api import (Logger, Anatomy, config)
+from openpype.api import (Logger, Anatomy, get_anatomy_settings)
 from . import tags
 import shutil
 from compiler.ast import flatten
@@ -756,10 +756,13 @@ def _set_hrox_project_knobs(doc, **knobs):
     # set attributes to Project Tag
     proj_elem = doc.documentElement().firstChildElement("Project")
     for k, v in knobs.items():
-        proj_elem.setAttribute(k, v)
+        if isinstance(v, dict):
+            continue
+        proj_elem.setAttribute(str(k), v)
 
 
 def apply_colorspace_project():
+    project_name = os.getenv("AVALON_PROJECT")
     # get path the the active projects
     project = get_current_project(remove_untitled=True)
     current_file = project.path()
@@ -768,9 +771,9 @@ def apply_colorspace_project():
     project.close()
 
     # get presets for hiero
-    presets = config.get_init_presets()
-    colorspace = presets["colorspace"]
-    hiero_project_clrs = colorspace.get("hiero", {}).get("project", {})
+    imageio = (get_anatomy_settings(project_name)
+        ["imageio"].get("hiero", None))
+    presets = imageio.get("workfile")
 
     # save the workfile as subversion "comment:_colorspaceChange"
     split_current_file = os.path.splitext(current_file)
@@ -801,13 +804,13 @@ def apply_colorspace_project():
         os.remove(copy_current_file_tmp)
 
     # use the code from bellow for changing xml hrox Attributes
-    hiero_project_clrs.update({"name": os.path.basename(copy_current_file)})
+    presets.update({"name": os.path.basename(copy_current_file)})
 
     # read HROX in as QDomSocument
     doc = _read_doc_from_path(copy_current_file)
 
     # apply project colorspace properties
-    _set_hrox_project_knobs(doc, **hiero_project_clrs)
+    _set_hrox_project_knobs(doc, **presets)
 
     # write QDomSocument back as HROX
     _write_doc_to_path(doc, copy_current_file)
@@ -817,14 +820,17 @@ def apply_colorspace_project():
 
 
 def apply_colorspace_clips():
+    project_name = os.getenv("AVALON_PROJECT")
     project = get_current_project(remove_untitled=True)
     clips = project.clips()
 
     # get presets for hiero
-    presets = config.get_init_presets()
-    colorspace = presets["colorspace"]
-    hiero_clips_clrs = colorspace.get("hiero", {}).get("clips", {})
+    imageio = (get_anatomy_settings(project_name)
+        ["imageio"].get("hiero", None))
+    from pprint import pprint
 
+    presets = imageio.get("regexInputs", {}).get("inputs", {})
+    pprint(presets)
     for clip in clips:
         clip_media_source_path = clip.mediaSource().firstpath()
         clip_name = clip.name()
@@ -834,10 +840,11 @@ def apply_colorspace_clips():
             continue
 
         # check if any colorspace presets for read is mathing
-        preset_clrsp = next((hiero_clips_clrs[k]
-                             for k in hiero_clips_clrs
-                             if bool(re.search(k, clip_media_source_path))),
-                            None)
+        preset_clrsp = None
+        for k in presets:
+            if not bool(re.search(k["regex"], clip_media_source_path)):
+                continue
+            preset_clrsp = k["colorspace"]
 
         if preset_clrsp:
             log.debug("Changing clip.path: {}".format(clip_media_source_path))
