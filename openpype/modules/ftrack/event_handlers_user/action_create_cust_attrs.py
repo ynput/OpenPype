@@ -2,9 +2,16 @@ import collections
 import json
 import arrow
 import ftrack_api
-from openpype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.modules.ftrack.lib import (
+    BaseAction,
+    statics_icon,
+    CUST_ATTR_ID_KEY,
+    CUST_ATTR_GROUP,
+    CUST_ATTR_TOOLS,
+    CUST_ATTR_APPLICATIONS
+)
 from openpype.modules.ftrack.lib.avalon_sync import (
-    CUST_ATTR_ID_KEY, CUST_ATTR_GROUP, default_custom_attributes_definition
+    default_custom_attributes_definition
 )
 from openpype.api import get_system_settings
 from openpype.lib import ApplicationManager
@@ -387,7 +394,7 @@ class CustomAttributes(BaseAction):
 
         applications_custom_attr_data = {
             "label": "Applications",
-            "key": "applications",
+            "key": CUST_ATTR_APPLICATIONS,
             "type": "enumerator",
             "entity_type": "show",
             "group": CUST_ATTR_GROUP,
@@ -411,7 +418,7 @@ class CustomAttributes(BaseAction):
 
         tools_custom_attr_data = {
             "label": "Tools",
-            "key": "tools_env",
+            "key": CUST_ATTR_TOOLS,
             "type": "enumerator",
             "is_hierarchical": True,
             "group": CUST_ATTR_GROUP,
