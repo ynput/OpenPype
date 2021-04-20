@@ -42,15 +42,6 @@ EntitySchemas = {
     "config": "openpype:config-2.0"
 }
 
-def default_custom_attributes_definition():
-    json_file_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "custom_attributes.json"
-    )
-    with open(json_file_path, "r") as json_stream:
-        data = json.load(json_stream)
-    return data
-
 
 def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
     schema_name = "asset-3.0"

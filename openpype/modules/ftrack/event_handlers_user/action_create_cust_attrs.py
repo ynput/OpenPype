@@ -5,14 +5,17 @@ import ftrack_api
 from openpype.modules.ftrack.lib import (
     BaseAction,
     statics_icon,
+
     CUST_ATTR_ID_KEY,
     CUST_ATTR_GROUP,
     CUST_ATTR_TOOLS,
-    CUST_ATTR_APPLICATIONS
+    CUST_ATTR_APPLICATIONS,
+
+    default_custom_attributes_definition,
+    app_definitions_from_app_manager,
+    tool_definitions_from_app_manager
 )
-from openpype.modules.ftrack.lib.avalon_sync import (
-    default_custom_attributes_definition
-)
+
 from openpype.api import get_system_settings
 from openpype.lib import ApplicationManager
 
@@ -377,20 +380,8 @@ class CustomAttributes(BaseAction):
                     exc_info=True
                 )
 
-    def app_defs_from_app_manager(self):
-        app_definitions = []
-        for app_name, app in self.app_manager.applications.items():
-            if app.enabled and app.is_host:
-                app_definitions.append({
-                    app_name: app.full_label
-                })
-
-        if not app_definitions:
-            app_definitions.append({"empty": "< Empty >"})
-        return app_definitions
-
     def applications_attribute(self, event):
-        apps_data = self.app_defs_from_app_manager()
+        apps_data = app_definitions_from_app_manager(self.app_manager)
 
         applications_custom_attr_data = {
             "label": "Applications",
@@ -406,15 +397,7 @@ class CustomAttributes(BaseAction):
         self.process_attr_data(applications_custom_attr_data, event)
 
     def tools_attribute(self, event):
-        tools_data = []
-        for tool_name, tool in self.app_manager.tools.items():
-            tools_data.append({
-                tool_name: tool.label
-            })
-
-        # Make sure there is at least one item
-        if not tools_data:
-            tools_data.append({"empty": "< Empty >"})
+        tools_data = tool_definitions_from_app_manager(self.app_manager)
 
         tools_custom_attr_data = {
             "label": "Tools",
