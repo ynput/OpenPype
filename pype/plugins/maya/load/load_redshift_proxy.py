@@ -108,7 +108,7 @@ class RedshiftProxyLoader(api.Loader):
     def switch(self, container, representation):
         self.update(container, representation)
 
-        def create_rs_proxy(self, name, path):
+    def create_rs_proxy(self, name, path):
         """Creates Redshift Proxies showing a proxy object.
 
         Args:
