@@ -115,6 +115,7 @@ else:
         os.path.join(OPENPYPE_ROOT, "dependencies")
     )
     sys.path.append(frozen_libs)
+    sys.path.insert(0, OPENPYPE_ROOT)
     # add stuff from `<frozen>/dependencies` to PYTHONPATH.
     pythonpath = os.getenv("PYTHONPATH", "")
     paths = pythonpath.split(os.pathsep)
