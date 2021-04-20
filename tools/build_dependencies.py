@@ -78,15 +78,13 @@ build_dir = "exe.{}-{}".format(get_platform(), sys.version[0:3])
 
 # create full path
 if platform.system().lower() == "darwin":
-    build_dir = os.path.join(Path(os.path.dirname(__file__)).parent,
-                             "build",
-                             "OpenPype.app",
-                             "Contents",
-                             "MacOS")
+    build_dir = Path(os.path.dirname(__file__)).parent.joinpath(
+        "build",
+        "OpenPype.app",
+        "Contents",
+        "MacOS")
 else:
-    build_dir = os.path.join(Path(os.path.dirname(__file__)).parent,
-                             "build",
-                             build_dir)
+    build_dir = Path(os.path.dirname(__file__)).parent / "build" / build_dir
 
 _print(f"Using build at {build_dir}", 2)
 if not build_dir.exists():
