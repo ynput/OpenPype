@@ -383,7 +383,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "attributes": {
                         "environmental_variables": {
                             "value": ", ".join("{!s}={!r}".format(k, v)
-                                               for (k, v) in env.iteritems()),
+                                               for (k, v) in env.items()),
 
                             "state": True,
                             "subst": False

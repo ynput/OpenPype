@@ -33,7 +33,8 @@ class ValidateShapeRenderStats(pyblish.api.Validator):
         shapes = cmds.ls(instance, long=True, type='surfaceShape')
         invalid = []
         for shape in shapes:
-            for attr, default_value in cls.defaults.iteritems():
+            _iteritems = getattr(cls.defaults, "iteritems", cls.defaults.items)
+            for attr, default_value in _iteritems():
                 if cmds.attributeQuery(attr, node=shape, exists=True):
                     value = cmds.getAttr('{}.{}'.format(shape, attr))
                     if value != default_value:
@@ -52,7 +53,8 @@ class ValidateShapeRenderStats(pyblish.api.Validator):
     @classmethod
     def repair(cls, instance):
         for shape in cls.get_invalid(instance):
-            for attr, default_value in cls.defaults.iteritems():
+            _iteritems = getattr(cls.defaults, "iteritems", cls.defaults.items)
+            for attr, default_value in _iteritems():
 
                 if cmds.attributeQuery(attr, node=shape, exists=True):
                     plug = '{0}.{1}'.format(shape, attr)

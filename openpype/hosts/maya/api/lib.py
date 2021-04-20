@@ -437,7 +437,8 @@ def empty_sets(sets, force=False):
             cmds.connectAttr(src, dest)
 
         # Restore original members
-        for origin_set, members in original.iteritems():
+        _iteritems = getattr(original, "iteritems", original.items)
+        for origin_set, members in _iteritems():
             cmds.sets(members, forceElement=origin_set)
 
 
@@ -669,7 +670,8 @@ def displaySmoothness(nodes,
         yield
     finally:
         # Revert state
-        for node, state in originals.iteritems():
+        _iteritems = getattr(originals, "iteritems", originals.items)
+        for node, state in _iteritems():
             if state:
                 cmds.displaySmoothness(node, **state)
 
@@ -712,7 +714,8 @@ def no_display_layers(nodes):
         yield
     finally:
         # Restore original members
-        for layer, members in original.iteritems():
+        _iteritems = getattr(original, "iteritems", original.items)
+        for layer, members in _iteritems():
             cmds.editDisplayLayerMembers(layer, members, noRecurse=True)
 
 
