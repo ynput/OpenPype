@@ -15,7 +15,8 @@ class CollectCalculateRetime(api.InstancePlugin):
         margin_in = instance.data["retimeMarginIn"]
         margin_out = instance.data["retimeMarginOut"]
         self.log.debug(
-            "margin_in: '{0}', margin_out: '{1}'".format(margin_in, margin_out))
+            "margin_in: '{0}', margin_out: '{1}'".format(
+                margin_in, margin_out))
 
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
