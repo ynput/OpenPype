@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Redshift Proxy extractor."""
 import os
-import math
 
 import avalon.maya
 import pype.api
