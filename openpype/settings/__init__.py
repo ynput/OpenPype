@@ -1,3 +1,7 @@
+from .exceptions import (
+    SaveWarning,
+    SaveSettingsValidation
+)
 from .lib import (
     get_system_settings,
     get_project_settings,
@@ -12,6 +16,9 @@ from .entities import (
 
 
 __all__ = (
+    "SaveWarning",
+    "SaveSettingsValidation",
+
     "get_system_settings",
     "get_project_settings",
     "get_current_project_settings",
