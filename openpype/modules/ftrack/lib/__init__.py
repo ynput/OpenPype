@@ -9,10 +9,11 @@ from . settings import (
     get_ftrack_url_from_settings,
     get_ftrack_event_mongo_info
 )
-from .custm_attributes import (
+from .custom_attributes import (
     default_custom_attributes_definition,
     app_definitions_from_app_manager,
-    tool_definitions_from_app_manager
+    tool_definitions_from_app_manager,
+    get_openpype_attr
 )
 
 from . import avalon_sync
@@ -35,6 +36,7 @@ __all__ = (
     "default_custom_attributes_definition",
     "app_definitions_from_app_manager",
     "tool_definitions_from_app_manager",
+    "get_openpype_attr",
 
     "avalon_sync",
 

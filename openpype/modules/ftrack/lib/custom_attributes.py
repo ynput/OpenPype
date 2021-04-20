@@ -1,6 +1,8 @@
 import os
 import json
 
+from .constants import CUST_ATTR_GROUP
+
 
 def default_custom_attributes_definition():
     json_file_path = os.path.join(
@@ -36,3 +38,36 @@ def tool_definitions_from_app_manager(app_manager):
     if not tools_data:
         tools_data.append({"empty": "< Empty >"})
     return tools_data
+
+
+def get_openpype_attr(session, split_hierarchical=True, query_keys=None):
+    custom_attributes = []
+    hier_custom_attributes = []
+    if not query_keys:
+        query_keys = [
+            "id",
+            "entity_type",
+            "object_type_id",
+            "is_hierarchical",
+            "default"
+        ]
+    # TODO remove deprecated "pype" group from query
+    cust_attrs_query = (
+        "select {}"
+        " from CustomAttributeConfiguration"
+        # Kept `pype` for Backwards Compatiblity
+        " where group.name in (\"pype\", \"{}\")"
+    ).format(", ".join(query_keys), CUST_ATTR_GROUP)
+    all_avalon_attr = session.query(cust_attrs_query).all()
+    for cust_attr in all_avalon_attr:
+        if split_hierarchical and cust_attr["is_hierarchical"]:
+            hier_custom_attributes.append(cust_attr)
+            continue
+
+        custom_attributes.append(cust_attr)
+
+    if split_hierarchical:
+        # return tuple
+        return custom_attributes, hier_custom_attributes
+
+    return custom_attributes
