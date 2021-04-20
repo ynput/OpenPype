@@ -45,7 +45,8 @@ install_requires = [
     "googleapiclient",
     "httplib2",
     # Harmony implementation
-    "filecmp"
+    "filecmp",
+    "dns"
 ]
 
 includes = []
@@ -69,7 +70,11 @@ if sys.platform == "win32":
         "pythoncom"
     ])
 
-build_options = dict(
+
+icon_path = openpype_root / "igniter" / "openpype.ico"
+mac_icon_path = openpype_root / "igniter" / "openpype.icns"
+
+build_exe_options = dict(
     packages=install_requires,
     includes=includes,
     excludes=excludes,
@@ -78,13 +83,16 @@ build_options = dict(
     optimize=0
 )
 
-icon_path = openpype_root / "igniter" / "openpype.ico"
+bdist_mac_options = dict(
+    bundle_name="OpenPype",
+    iconfile=mac_icon_path
+)
 
 executables = [
-    Executable("start.py", base=None,
-               target_name="openpype_console", icon=icon_path.as_posix()),
     Executable("start.py", base=base,
-               target_name="openpype_gui", icon=icon_path.as_posix())
+               target_name="openpype_gui", icon=icon_path.as_posix()),           
+    Executable("start.py", base=None,
+               target_name="openpype_console", icon=icon_path.as_posix())
 ]
 
 setup(
@@ -93,7 +101,8 @@ setup(
     description="Ultimate pipeline",
     cmdclass={"build_sphinx": BuildDoc},
     options={
-        "build_exe": build_options,
+        "build_exe": build_exe_options,
+        "bdist_mac": bdist_mac_options,
         "build_sphinx": {
             "project": "OpenPype",
             "version": __version__,

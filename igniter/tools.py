@@ -130,7 +130,7 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
         mongo_args["port"] = int(port)
 
     try:
-        client = MongoClient(**mongo_args)
+        client = MongoClient(cnx)
         client.server_info()
         client.close()
     except ServerSelectionTimeoutError as e:
