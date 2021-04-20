@@ -90,7 +90,7 @@ bdist_mac_options = dict(
 
 executables = [
     Executable("start.py", base=base,
-               target_name="openpype_gui", icon=icon_path.as_posix()),           
+               target_name="openpype_gui", icon=icon_path.as_posix()),
     Executable("start.py", base=None,
                target_name="openpype_console", icon=icon_path.as_posix())
 ]
