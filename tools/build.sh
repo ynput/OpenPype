@@ -163,8 +163,20 @@ main () {
   elif [[ "$OSTYPE" == "darwin"* ]]; then
     poetry run python3 "$openpype_root/setup.py" bdist_mac > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
   fi
-  
   poetry run python3 "$openpype_root/tools/build_dependencies.py"
+
+
+if command -v create-dmg > /dev/null 2>&1; then
+    create-dmg \
+      --volname "OpenPype Installer" \
+      --window-pos 200 120 \
+      --window-size 600 300 \
+      --app-drop-link 100 50 \
+      "$openpype_root/build/OpenPype-Installer.dmg" \
+      "$openpype_root/build/OpenPype.app"
+  elseß
+    echo create-dmg command is not availableg
+  fi
 
   echo -e "${BICyan}>>>${RST} All done. You will find OpenPype and build log in \c"
   echo -e "${BIWhite}$openpype_root/build${RST} directory."
