@@ -1119,11 +1119,10 @@
         "host_name": "unreal",
         "environment": {
             "AVALON_UNREAL_PLUGIN": "{OPENPYPE_REPOS_ROOT}/repos/avalon-unreal-integration",
-            "OPENPYPE_LOG_NO_COLORS": "True",
-            "QT_PREFERRED_BINDING": "PySide"
+            "OPENPYPE_LOG_NO_COLORS": "True"
         },
         "variants": {
-            "4-24": {
+            "4-26": {
                 "executables": {
                     "windows": [],
                     "darwin": [],
