@@ -9,6 +9,12 @@ from . settings import (
     get_ftrack_url_from_settings,
     get_ftrack_event_mongo_info
 )
+from .custm_attributes import (
+    default_custom_attributes_definition,
+    app_definitions_from_app_manager,
+    tool_definitions_from_app_manager
+)
+
 from . import avalon_sync
 from . import credentials
 from .ftrack_base_handler import BaseHandler
@@ -25,6 +31,10 @@ __all__ = (
 
     "get_ftrack_url_from_settings",
     "get_ftrack_event_mongo_info",
+
+    "default_custom_attributes_definition",
+    "app_definitions_from_app_manager",
+    "tool_definitions_from_app_manager",
 
     "avalon_sync",
 
