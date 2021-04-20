@@ -26,6 +26,12 @@ from pymongo import UpdateOne
 import ftrack_api
 from openpype.lib import ApplicationManager
 
+from .constants import (
+    CUST_ATTR_ID_KEY,
+    CUST_ATTR_AUTO_SYNC,
+    CUST_ATTR_GROUP
+)
+
 log = Logger.get_logger(__name__)
 
 
@@ -35,14 +41,6 @@ EntitySchemas = {
     "asset": "openpype:asset-3.0",
     "config": "openpype:config-2.0"
 }
-
-# Group name of custom attributes
-CUST_ATTR_GROUP = "openpype"
-
-# name of Custom attribute that stores mongo_id from avalon db
-CUST_ATTR_ID_KEY = "avalon_mongo_id"
-CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
-
 
 def default_custom_attributes_definition():
     json_file_path = os.path.join(
