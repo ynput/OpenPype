@@ -1,13 +1,10 @@
 import pyblish
 import openpype
 from openpype.hosts.hiero import api as phiero
-from openpype.hosts.hiero.api import lib
 from openpype.hosts.hiero.otio import hiero_export
 
 # # developer reload modules
 from pprint import pformat
-# reload(lib)
-# reload(phiero)
 
 
 class PrecollectInstances(pyblish.api.ContextPlugin):
