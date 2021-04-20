@@ -7,7 +7,7 @@ class PrePython2Vendor(PreLaunchHook):
     # WARNING This hook will probably be deprecated in OpenPype 3 - kept for
     # test
     order = 10
-    app_groups = ["hiero", "nuke", "nukex", "unreal", "maya", "houdini"]
+    app_groups = ["hiero", "nuke", "nukex", "maya", "houdini"]
 
     def execute(self):
         # Prepare vendor dir path
