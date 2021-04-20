@@ -771,8 +771,8 @@ def apply_colorspace_project():
     project.close()
 
     # get presets for hiero
-    imageio = (get_anatomy_settings(project_name)
-        ["imageio"].get("hiero", None))
+    imageio = get_anatomy_settings(
+        project_name)["imageio"].get("hiero", None)
     presets = imageio.get("workfile")
 
     # save the workfile as subversion "comment:_colorspaceChange"
@@ -825,8 +825,8 @@ def apply_colorspace_clips():
     clips = project.clips()
 
     # get presets for hiero
-    imageio = (get_anatomy_settings(project_name)
-        ["imageio"].get("hiero", None))
+    imageio = get_anatomy_settings(
+        project_name)["imageio"].get("hiero", None)
     from pprint import pprint
 
     presets = imageio.get("regexInputs", {}).get("inputs", {})
