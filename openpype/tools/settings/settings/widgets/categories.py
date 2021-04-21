@@ -273,13 +273,20 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self.reset()
 
         except SaveWarning as exc:
-            msg = "<b>Settings were saved but few issues happened.</b>\n\n"
-            msg += "\n".join(exc.warnings)
+            warnings = [
+                "<b>Settings were saved but few issues happened.</b>"
+            ]
+            for item in exc.warnings:
+                warnings.append(item.replace("\n", "<br>"))
+
+            msg = "<br><br>".join(warnings)
 
             dialog = QtWidgets.QMessageBox(self)
             dialog.setText(msg)
             dialog.setIcon(QtWidgets.QMessageBox.Warning)
             dialog.exec_()
+
+            self.reset()
 
         except Exception as exc:
             formatted_traceback = traceback.format_exception(*sys.exc_info())
