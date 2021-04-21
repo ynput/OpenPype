@@ -226,6 +226,9 @@ def on_task_changed(*args):
         lib.set_context_settings()
         lib.update_content_on_context_change()
 
-    lib.show_message("Context was changed",
-                     ("Context was changed to {}".format(
-                        avalon.Session["AVALON_ASSET"])))
+    lib.show_message(
+        "Context was changed",
+        "Context was changed to {}/{}".format(
+            avalon.Session["AVALON_ASSET"], avalon.Session["AVALON_TASK"]
+        )
+    )
