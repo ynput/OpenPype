@@ -67,7 +67,7 @@ def install():
     )
     log.debug("Adding menu item: {}".format(name))
 
-     # add item that applies all setting above
+    # add item that applies all setting above
     name = "Apply All Settings"
     menu.addCommand(
         name,
