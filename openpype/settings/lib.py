@@ -5,7 +5,6 @@ import logging
 import platform
 import copy
 from .exceptions import (
-    SaveSettingsValidation,
     SaveWarning
 )
 from .constants import (
@@ -118,11 +117,18 @@ def save_studio_settings(data):
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager(_system_settings=new_data)
+
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_system_settings_save(old_data, new_data, changes)
+            try:
+                module.on_system_settings_save(old_data, new_data, changes)
+            except SaveWarning as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_studio_settings(data)
+    _SETTINGS_HANDLER.save_studio_settings(data)
+    if warnings:
+        raise SaveWarning(warnings)
 
 
 @require_handler
@@ -159,13 +165,20 @@ def save_project_settings(project_name, overrides):
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager()
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_project_settings_save(
-                old_data, new_data, project_name, changes
-            )
+            try:
+                module.on_project_settings_save(
+                    old_data, new_data, project_name, changes
+                )
+            except SaveWarning as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
+    _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
+
+    if warnings:
+        raise SaveWarning(warnings)
 
 
 @require_handler
@@ -202,13 +215,20 @@ def save_project_anatomy(project_name, anatomy_data):
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager()
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_project_anatomy_save(
-                old_data, new_data, changes, project_name
-            )
+            try:
+                module.on_project_anatomy_save(
+                    old_data, new_data, changes, project_name
+                )
+            except SaveWarning as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+    _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+
+    if warnings:
+        raise SaveWarning(warnings)
 
 
 @require_handler
