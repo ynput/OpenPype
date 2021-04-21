@@ -23,6 +23,7 @@ from openpype.settings.constants import (
     PROJECT_ANATOMY_KEY,
     KEY_REGEX
 )
+from openpype.settings.exceptions import SaveWarning
 
 from openpype.settings.lib import (
     DEFAULTS_DIR,
@@ -724,8 +725,19 @@ class ProjectSettings(RootEntity):
         project_settings = settings_value.get(PROJECT_SETTINGS_KEY) or {}
         project_anatomy = settings_value.get(PROJECT_ANATOMY_KEY) or {}
 
-        save_project_settings(self.project_name, project_settings)
-        save_project_anatomy(self.project_name, project_anatomy)
+        warnings = []
+        try:
+            save_project_settings(self.project_name, project_settings)
+        except SaveWarning as exc:
+            warnings.extend(exc.warnings)
+
+        try:
+            save_project_anatomy(self.project_name, project_anatomy)
+        except SaveWarning as exc:
+            warnings.extend(exc.warnings)
+
+        if warnings:
+            raise SaveWarning(warnings)
 
     def _validate_defaults_to_save(self, value):
         """Valiations of default values before save."""
