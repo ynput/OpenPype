@@ -30,7 +30,7 @@ def register_actions_from_paths(paths):
 
         api.register_plugin_path(api.Action, path)
 
-        
+
 def register_config_actions():
     """Register actions from the configuration for Launcher"""
 
