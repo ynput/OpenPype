@@ -230,30 +230,45 @@ class FtrackModule(
         import ftrack_api
         from openpype.modules.ftrack.lib import get_openpype_attr
 
-        session = self.create_ftrack_session()
+        try:
+            session = self.create_ftrack_session()
+        except Exception:
+            self.log.warning("Couldn't create ftrack session.", exc_info=True)
+            raise SaveWarning((
+                "Couldn't create Ftrack session."
+                " You may need to update applications"
+                " and tools in Ftrack custom attributes using defined action."
+            ))
+
         project_entity = session.query(
             "Project where full_name is \"{}\"".format(project_name)
         ).first()
 
         if not project_entity:
-            self.log.warning((
-                "Ftrack project with names \"{}\" was not found."
+            msg = (
+                "Ftrack project with names \"{}\" was not found in Ftrack."
                 " Skipping settings attributes change callback."
-            ))
-            return
+            ).format(project_name)
+            self.log.warning(msg)
+            raise SaveWarning(msg)
 
         project_id = project_entity["id"]
 
         cust_attr, hier_attr = get_openpype_attr(session)
         cust_attr_by_key = {attr["key"]: attr for attr in cust_attr}
         hier_attrs_by_key = {attr["key"]: attr for attr in hier_attr}
+
+        failed = {}
+        missing = {}
         for key, value in attributes_changes.items():
             configuration = hier_attrs_by_key.get(key)
             if not configuration:
                 configuration = cust_attr_by_key.get(key)
             if not configuration:
+                missing[key] = value
                 continue
 
+            # TODO add add permissions check
             # TODO add value validations
             # - value type and list items
             entity_key = collections.OrderedDict()
@@ -267,10 +282,43 @@ class FtrackModule(
                     "value",
                     ftrack_api.symbol.NOT_SET,
                     value
-
                 )
             )
-        session.commit()
+            try:
+                session.commit()
+                self.log.debug(
+                    "Changed project custom attribute \"{}\" to \"{}\"".format(
+                        key, value
+                    )
+                )
+            except Exception:
+                self.log.warning(
+                    "Failed to set \"{}\" to \"{}\"".format(key, value),
+                    exc_info=True
+                )
+                session.rollback()
+                failed[key] = value
+
+        if not failed and not missing:
+            return
+
+        error_msg = (
+            "Values were not updated on Ftrack which may cause issues."
+        )
+        if missing:
+            error_msg += " Missing Custom attributes on Ftrack: {}.".format(
+                ", ".join([
+                    '"{}"'.format(key)
+                    for key in missing.keys()
+                ])
+            )
+        if failed:
+            joined_failed = ", ".join([
+                '"{}": "{}"'.format(key, value)
+                for key, value in failed.items()
+            ])
+            error_msg += " Failed to set: {}".format(joined_failed)
+        raise SaveWarning(error_msg)
 
     def create_ftrack_session(self, **session_kwargs):
         import ftrack_api
