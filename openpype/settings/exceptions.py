@@ -7,5 +7,5 @@ class SaveWarning(SaveSettingsValidation):
         if isinstance(warnings, str):
             warnings = [warnings]
         self.warnings = warnings
-        msg = ", ".join(warnings)
+        msg = " | ".join(warnings)
         super(SaveWarning, self).__init__(msg)
