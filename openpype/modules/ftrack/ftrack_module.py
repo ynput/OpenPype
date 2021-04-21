@@ -13,7 +13,7 @@ from openpype.modules import (
     ILaunchHookPaths,
     ISettingsChangeListener
 )
-from openpype.settings import SaveWarning
+from openpype.settings import SaveWarningExc
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -136,7 +136,7 @@ class FtrackModule(
             session = self.create_ftrack_session()
         except Exception:
             self.log.warning("Couldn't create ftrack session.", exc_info=True)
-            raise SaveWarning((
+            raise SaveWarningExc((
                 "Couldn't create Ftrack session."
                 " You may need to update applications"
                 " and tools in Ftrack custom attributes using defined action."
@@ -205,7 +205,7 @@ class FtrackModule(
         session.commit()
 
         if missing_attributes:
-            raise SaveWarning((
+            raise SaveWarningExc((
                 "Couldn't find custom attribute/s ({}) to update."
                 " You may need to update applications"
                 " and tools in Ftrack custom attributes using defined action."
@@ -234,7 +234,7 @@ class FtrackModule(
             session = self.create_ftrack_session()
         except Exception:
             self.log.warning("Couldn't create ftrack session.", exc_info=True)
-            raise SaveWarning((
+            raise SaveWarningExc((
                 "Couldn't create Ftrack session."
                 " You may need to update applications"
                 " and tools in Ftrack custom attributes using defined action."
@@ -250,7 +250,7 @@ class FtrackModule(
                 " Can't push attribute changes."
             ).format(project_name)
             self.log.warning(msg)
-            raise SaveWarning(msg)
+            raise SaveWarningExc(msg)
 
         project_id = project_entity["id"]
 
@@ -323,7 +323,7 @@ class FtrackModule(
                 for key, value in failed.items()
             ])
             error_msg += "\nFailed to set: {}".format(joined_failed)
-        raise SaveWarning(error_msg)
+        raise SaveWarningExc(error_msg)
 
     def create_ftrack_session(self, **session_kwargs):
         import ftrack_api

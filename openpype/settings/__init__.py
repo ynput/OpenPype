@@ -1,5 +1,5 @@
 from .exceptions import (
-    SaveWarning
+    SaveWarningExc
 )
 from .lib import (
     get_system_settings,
@@ -15,7 +15,7 @@ from .entities import (
 
 
 __all__ = (
-    "SaveWarning",
+    "SaveWarningExc",
 
     "get_system_settings",
     "get_project_settings",
