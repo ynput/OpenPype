@@ -306,7 +306,7 @@ class FtrackModule(
             "Values were not updated on Ftrack which may cause issues."
         )
         if missing:
-            error_msg += " Missing Custom attributes on Ftrack: {}.".format(
+            error_msg += "\nMissing Custom attributes on Ftrack: {}.".format(
                 ", ".join([
                     '"{}"'.format(key)
                     for key in missing.keys()
@@ -317,7 +317,7 @@ class FtrackModule(
                 '"{}": "{}"'.format(key, value)
                 for key, value in failed.items()
             ])
-            error_msg += " Failed to set: {}".format(joined_failed)
+            error_msg += "\nFailed to set: {}".format(joined_failed)
         raise SaveWarning(error_msg)
 
     def create_ftrack_session(self, **session_kwargs):
