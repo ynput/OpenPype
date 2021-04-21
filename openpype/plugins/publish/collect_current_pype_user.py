@@ -1,6 +1,7 @@
 import os
 import getpass
 import pyblish.api
+from openpype.lib import get_openpype_username
 
 
 class CollectCurrentUserPype(pyblish.api.ContextPlugin):
@@ -11,9 +12,6 @@ class CollectCurrentUserPype(pyblish.api.ContextPlugin):
     label = "Collect Pype User"
 
     def process(self, context):
-        user = os.getenv("OPENPYPE_USERNAME", "").strip()
-        if not user:
-            user = context.data.get("user", getpass.getuser())
-
+        user = get_openpype_username()
         context.data["user"] = user
         self.log.debug("Colected user \"{}\"".format(user))
