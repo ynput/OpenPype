@@ -104,8 +104,14 @@ def save_studio_settings(data):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         data(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarning: If any module raises the exception.
     """
     # Notify Pype modules
     from openpype.modules import ModulesManager, ISettingsChangeListener
@@ -140,10 +146,16 @@ def save_project_settings(project_name, overrides):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         project_name (str): Project name for which overrides are passed.
             Default project's value is None.
         overrides(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarning: If any module raises the exception.
     """
     # Notify Pype modules
     from openpype.modules import ModulesManager, ISettingsChangeListener
@@ -190,10 +202,16 @@ def save_project_anatomy(project_name, anatomy_data):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         project_name (str): Project name for which overrides are passed.
             Default project's value is None.
         overrides(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarning: If any module raises the exception.
     """
     # Notify Pype modules
     from openpype.modules import ModulesManager, ISettingsChangeListener
