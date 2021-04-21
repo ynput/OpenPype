@@ -27,7 +27,7 @@ from openpype.settings.entities import (
     SchemaError
 )
 
-from openpype.settings.lib import get_system_settings
+from openpype.settings import SaveWarning
 from .widgets import ProjectListWidget
 
 from . import lib
@@ -271,6 +271,15 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             #   would be nice to change this and add cleanup part so this is
             #   not required.
             self.reset()
+
+        except SaveWarning as exc:
+            msg = "<b>Settings were saved but few issues happened.</b>\n\n"
+            msg += "\n".join(exc.warnings)
+
+            dialog = QtWidgets.QMessageBox(self)
+            dialog.setText(msg)
+            dialog.setIcon(QtWidgets.QMessageBox.Warning)
+            dialog.exec_()
 
         except Exception as exc:
             formatted_traceback = traceback.format_exception(*sys.exc_info())
