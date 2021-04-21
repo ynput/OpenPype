@@ -452,10 +452,10 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         if role == lib.FailedRole:
             if header_value == 'local_site':
                 return item.status == lib.STATUS[2] and \
-                       item.local_progress < 1
+                    item.local_progress < 1
             if header_value == 'remote_site':
                 return item.status == lib.STATUS[2] and \
-                       item.remote_progress < 1
+                    item.remote_progress < 1
 
         if role == Qt.DisplayRole:
             # because of ImageDelegate
@@ -929,10 +929,10 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         if role == lib.FailedRole:
             if header_value == 'local_site':
                 return item.status == lib.STATUS[2] and \
-                       item.local_progress < 1
+                    item.local_progress < 1
             if header_value == 'remote_site':
                 return item.status == lib.STATUS[2] and \
-                       item.remote_progress <1
+                    item.remote_progress <1
 
         if role == Qt.DisplayRole:
             # because of ImageDelegate

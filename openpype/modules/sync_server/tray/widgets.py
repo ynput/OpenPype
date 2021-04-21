@@ -1101,4 +1101,3 @@ class HorizontalHeader(QtWidgets.QHeaderView):
                 pos_y,
                 self.height(),
                 self.height())
-
