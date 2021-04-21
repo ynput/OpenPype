@@ -119,7 +119,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         self._rec_loaded = 0
 
         if not representations:
-            self.query = self.get_default_query(load_records)
+            self.query = self.get_query(load_records)
             representations = self.dbcon.aggregate(self.query)
 
         self.add_page_records(self.local_site, self.remote_site,
@@ -154,7 +154,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         log.debug("fetchMore")
         items_to_fetch = min(self._total_records - self._rec_loaded,
                              self.PAGE_SIZE)
-        self.query = self.get_default_query(self._rec_loaded)
+        self.query = self.get_query(self._rec_loaded)
         representations = self.dbcon.aggregate(self.query)
         self.beginInsertRows(index,
                              self._rec_loaded,
@@ -187,7 +187,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             order = -1
 
         self.sort = {self.SORT_BY_COLUMN[index]: order, '_id': 1}
-        self.query = self.get_default_query()
+        self.query = self.get_query()
         # import json
         # log.debug(json.dumps(self.query, indent=4).\
         #           replace('False', 'false').\
@@ -415,12 +415,10 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self.local_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
-        self.projection = self.get_default_projection()
-
         self.sort = self.DEFAULT_SORT
 
-        self.query = self.get_default_query()
-        self.default_query = list(self.get_default_query())
+        self.query = self.get_query()
+        self.default_query = list(self.get_query())
 
         representations = self.dbcon.aggregate(self.query)
         self.refresh(representations)
@@ -544,7 +542,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             self._data.append(item)
             self._rec_loaded += 1
 
-    def get_default_query(self, limit=0):
+    def get_query(self, limit=0):
         """
             Returns basic aggregate query for main table.
 
@@ -735,7 +733,8 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
             return base_match
 
-    def get_default_projection(self):
+    @property
+    def projection(self):
         """
             Projection part for aggregate query.
 
@@ -896,10 +895,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
 
         self.sort = self.DEFAULT_SORT
 
-        # in case we would like to hide/show some columns
-        self.projection = self.get_default_projection()
-
-        self.query = self.get_default_query()
+        self.query = self.get_query()
         representations = self.dbcon.aggregate(self.query)
         self.refresh(representations)
 
@@ -1021,7 +1017,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                 self._data.append(item)
                 self._rec_loaded += 1
 
-    def get_default_query(self, limit=0):
+    def get_query(self, limit=0):
         """
             Gets query that gets used when no extra sorting, filtering or
             projecting is needed.
@@ -1174,7 +1170,8 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                 '$or': [{'files.path': {'$regex': regex_str, '$options': 'i'}}]
             }
 
-    def get_default_projection(self):
+    @property
+    def projection(self):
         """
             Projection part for aggregate query.
 
