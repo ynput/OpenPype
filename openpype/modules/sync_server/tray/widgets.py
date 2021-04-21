@@ -95,7 +95,6 @@ class SyncProjectListWidget(ProjectListWidget):
         self.project_name = point_index.data(QtCore.Qt.DisplayRole)
 
         menu = QtWidgets.QMenu()
-        #menu.setStyleSheet(style.load_stylesheet())
         actions_mapping = {}
 
         if self.sync_server.is_project_paused(self.project_name):
@@ -269,7 +268,6 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
                   format(self.representation_id))
 
         menu = QtWidgets.QMenu()
-        menu.setStyleSheet(style.load_stylesheet())
         actions_mapping = {}
         actions_kwargs_mapping = {}
 
@@ -594,7 +592,6 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         self.item = self.model._data[point_index.row()]
 
         menu = QtWidgets.QMenu()
-        #menu.setStyleSheet(style.load_stylesheet())
         actions_mapping = {}
         actions_kwargs_mapping = {}
 
@@ -889,7 +886,8 @@ class HorizontalHeader(QtWidgets.QHeaderView):
             button = QtWidgets.QPushButton(icon, "", self)
 
             button.setFixedSize(24, 24)
-            button.setStyleSheet("QPushButton::menu-indicator{width:0px;}"
+            button.setStyleSheet(
+                "QPushButton::menu-indicator{width:0px;}"
                 "QPushButton{border: none;background: transparent;}")
             button.clicked.connect(partial(self._get_menu,
                                            column_name, column_idx))
@@ -902,7 +900,7 @@ class HorizontalHeader(QtWidgets.QHeaderView):
         for i in range(len(self.header_cells)):
             cell_content = self.header_cells[i]
             cell_content.setGeometry(self.sectionViewportPosition(i), 0,
-                                     self.sectionSize(i)-1, self.height())
+                                     self.sectionSize(i) - 1, self.height())
 
             cell_content.show()
 
@@ -1064,8 +1062,8 @@ class HorizontalHeader(QtWidgets.QHeaderView):
 
             Modifies 'self.checked_values'
         """
-        checked = self.checked_values.get(column_name,
-            dict(self.menu_items_dict[column_name]))
+        copy_menu_items = dict(self.menu_items_dict[column_name])
+        checked = self.checked_values.get(column_name, copy_menu_items)
         set_items = dict(values.items())  # prevent dict change during loop
         for value, label in set_items.items():
             if state == 2 and label:  # checked

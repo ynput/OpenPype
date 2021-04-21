@@ -6,7 +6,6 @@ from Qt import QtCore
 from Qt.QtCore import Qt
 
 from avalon.tools.delegates import pretty_timestamp
-from avalon.vendor import qtawesome
 
 from openpype.lib import PypeLogger
 
@@ -71,7 +70,6 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         if section >= len(self.COLUMN_LABELS):
             return
 
-        name = self.COLUMN_LABELS[section][0]
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 return self.COLUMN_LABELS[section][1]
@@ -453,9 +451,11 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
         if role == lib.FailedRole:
             if header_value == 'local_site':
-                return item.status == lib.STATUS[2] and item.local_progress < 1
+                return item.status == lib.STATUS[2] and \
+                       item.local_progress < 1
             if header_value == 'remote_site':
-                return item.status == lib.STATUS[2] and item.remote_progress < 1
+                return item.status == lib.STATUS[2] and \
+                       item.remote_progress < 1
 
         if role == Qt.DisplayRole:
             # because of ImageDelegate
@@ -928,9 +928,11 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
 
         if role == lib.FailedRole:
             if header_value == 'local_site':
-                return item.status == lib.STATUS[2] and item.local_progress < 1
+                return item.status == lib.STATUS[2] and \
+                       item.local_progress < 1
             if header_value == 'remote_site':
-                return item.status == lib.STATUS[2] and item.remote_progress < 1
+                return item.status == lib.STATUS[2] and \
+                       item.remote_progress <1
 
         if role == Qt.DisplayRole:
             # because of ImageDelegate
