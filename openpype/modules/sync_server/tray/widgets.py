@@ -873,8 +873,6 @@ class HorizontalHeader(QtWidgets.QHeaderView):
 
         self._resetting = False
 
-        self.sectionClicked.connect(self.on_section_clicked)
-
     @property
     def model(self):
         """Keep model synchronized with parent widget"""
@@ -897,9 +895,6 @@ class HorizontalHeader(QtWidgets.QHeaderView):
                                            column_name, column_idx))
             button.setFlat(True)
             self.filter_buttons[column_name] = button
-
-    def on_section_clicked(self, column_name):
-        print("on_section_clicked {}".format(column_name))
 
     def showEvent(self, event):
         super(HorizontalHeader, self).showEvent(event)
@@ -978,6 +973,8 @@ class HorizontalHeader(QtWidgets.QHeaderView):
         if 'text' in filter_rec.search_variants():
             line_edit = QtWidgets.QLineEdit(menu)
             line_edit.setClearButtonEnabled(True)
+            line_edit.addAction(self.filter_icon,
+                                QtWidgets.QLineEdit.LeadingPosition)
 
             line_edit.setFixedHeight(line_edit.height())
             txt = "Type..."

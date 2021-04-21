@@ -684,7 +684,6 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             aggr.append(
                 {"$match": self.column_filtering}
             )
-            print(self.column_filtering)
 
         aggr.extend(
             [{"$sort": self.sort},
