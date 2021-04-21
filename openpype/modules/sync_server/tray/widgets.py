@@ -203,7 +203,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         layout.addWidget(self.table_view)
 
         self.table_view.doubleClicked.connect(self._double_clicked)
-        self.filter.textChanged.connect(lambda: model.set_filter(
+        self.filter.textChanged.connect(lambda: model.set_word_filter(
             self.filter.text()))
         self.table_view.customContextMenuRequested.connect(
             self._on_context_menu)
@@ -475,7 +475,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         ("local_site", 185),
         ("remote_site", 185),
         ("size", 60),
-        ("priority", 25),
+        ("priority", 60),
         ("status", 110)
     )
 
@@ -499,53 +499,58 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         top_bar_layout = QtWidgets.QHBoxLayout()
         top_bar_layout.addWidget(self.filter)
 
-        self.table_view = QtWidgets.QTableView()
+        table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
 
         model = SyncRepresentationDetailModel(sync_server, headers, _id,
                                               project)
-        self.table_view.setModel(model)
-        self.table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.table_view.setSelectionMode(
+        table_view.setModel(model)
+        table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        table_view.setSelectionMode(
             QtWidgets.QAbstractItemView.SingleSelection)
-        self.table_view.setSelectionBehavior(
+        table_view.setSelectionBehavior(
             QtWidgets.QTableView.SelectRows)
-        self.table_view.horizontalHeader().setSortIndicator(-1,
-                                                            Qt.AscendingOrder)
-        self.table_view.setSortingEnabled(True)
-        self.table_view.horizontalHeader().setSortIndicatorShown(True)
-        self.table_view.setAlternatingRowColors(True)
-        self.table_view.verticalHeader().hide()
+        table_view.horizontalHeader().setSortIndicator(-1, Qt.AscendingOrder)
+        table_view.horizontalHeader().setSortIndicatorShown(True)
+        table_view.setAlternatingRowColors(True)
+        table_view.verticalHeader().hide()
 
         column = model.get_header_index("local_site")
         delegate = ImageDelegate(self)
-        self.table_view.setItemDelegateForColumn(column, delegate)
+        table_view.setItemDelegateForColumn(column, delegate)
 
         column = model.get_header_index("remote_site")
         delegate = ImageDelegate(self)
-        self.table_view.setItemDelegateForColumn(column, delegate)
-
-        for column_name, width in self.default_widths:
-            idx = model.get_header_index(column_name)
-            self.table_view.setColumnWidth(idx, width)
+        table_view.setItemDelegateForColumn(column, delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(top_bar_layout)
-        layout.addWidget(self.table_view)
+        layout.addWidget(table_view)
 
-        self.filter.textChanged.connect(lambda: model.set_filter(
+        self.model = model
+
+        self.selection_model = table_view.selectionModel()
+        self.selection_model.selectionChanged.connect(self._selection_changed)
+
+        horizontal_header = HorizontalHeader(self)
+
+        table_view.setHorizontalHeader(horizontal_header)
+        table_view.setSortingEnabled(True)
+
+        for column_name, width in self.default_widths:
+            idx = model.get_header_index(column_name)
+            table_view.setColumnWidth(idx, width)
+
+        self.table_view = table_view
+
+        self.filter.textChanged.connect(lambda: model.set_word_filter(
             self.filter.text()))
-        self.table_view.customContextMenuRequested.connect(
-            self._on_context_menu)
+        table_view.customContextMenuRequested.connect(self._on_context_menu)
 
         model.refresh_started.connect(self._save_scrollbar)
         model.refresh_finished.connect(self._set_scrollbar)
         model.modelReset.connect(self._set_selection)
-        self.model = model
-
-        self.selection_model = self.table_view.selectionModel()
-        self.selection_model.selectionChanged.connect(self._selection_changed)
 
     def _selection_changed(self):
         index = self.selection_model.currentIndex()
@@ -885,9 +890,7 @@ class HorizontalHeader(QtWidgets.QHeaderView):
             icon = self.filter_icon
             button = QtWidgets.QPushButton(icon, "", self)
 
-            # button.setMenu(menu)
             button.setFixedSize(24, 24)
-            # button.setAlignment(Qt.AlignRight)
             button.setStyleSheet("QPushButton::menu-indicator{width:0px;}"
                 "QPushButton{border: none;background: transparent;}")
             button.clicked.connect(partial(self._get_menu,
@@ -1080,7 +1083,7 @@ class HorizontalHeader(QtWidgets.QHeaderView):
         super(HorizontalHeader, self).paintEvent(event)
 
     def _fix_size(self):
-        for column_idx in range(self.count()):
+        for column_idx in range(self.model.columnCount()):
             vis_index = self.visualIndex(column_idx)
             index = self.logicalIndex(vis_index)
             section_width = self.sectionSize(index)

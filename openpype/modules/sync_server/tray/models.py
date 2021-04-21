@@ -68,16 +68,13 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         return len(self._header)
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
+        if section >= len(self.COLUMN_LABELS):
+            return
+
         name = self.COLUMN_LABELS[section][0]
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 return self.COLUMN_LABELS[section][1]
-
-        # if role == Qt.DecorationRole:
-        #     if name in self.column_filtering.keys():
-        #         return qtawesome.icon("fa.filter", color="white")
-        #     if self.COLUMN_FILTERS.get(name):
-        #         return qtawesome.icon("fa.filter", color="gray")
 
         if role == lib.HeaderNameRole:
             if orientation == Qt.Horizontal:
@@ -199,7 +196,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         representations = self.dbcon.aggregate(self.query)
         self.refresh(representations)
 
-    def set_filter(self, word_filter):
+    def set_word_filter(self, word_filter):
         """
             Adds text value filtering
 
@@ -208,6 +205,19 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         """
         self._word_filter = word_filter
         self.refresh()
+
+    def get_filters(self):
+        """
+            Returns all available filter editors per column_name keys.
+        """
+        filters = {}
+        for column_name, _ in self.COLUMN_LABELS:
+            filter_rec = self.COLUMN_FILTERS.get(column_name)
+            if filter_rec:
+                filter_rec.dbcon = self.dbcon
+            filters[column_name] = filter_rec
+
+        return filters
 
     def get_column_filter(self, index):
         """
@@ -227,6 +237,25 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
 
         return filter_rec
 
+    def set_column_filtering(self, checked_values):
+        """
+            Sets dictionary used in '$match' part of MongoDB aggregate
+
+            Args:
+                checked_values(dict): key:values ({'status':{1:"Foo",3:"Bar"}}
+
+            Modifies:
+                self._column_filtering : {'status': {'$in': [1, 2, 3]}}
+        """
+        filtering = {}
+        for column_name, dict_value in checked_values.items():
+            column_f = self.COLUMN_FILTERS.get(column_name)
+            if not column_f:
+                continue
+            column_f.dbcon = self.dbcon
+            filtering[column_name] = column_f.prepare_match_part(dict_value)
+
+        self._column_filtering = filtering
 
     def get_column_filter_values(self, index):
         """
@@ -399,19 +428,6 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.tick)
         self.timer.start(self.REFRESH_SEC)
-
-    def get_filters(self):
-        """
-            Returns all available filter editors per column_name keys.
-        """
-        filters = {}
-        for column_name, _ in self.COLUMN_LABELS:
-            filter_rec = self.COLUMN_FILTERS.get(column_name)
-            if filter_rec:
-                filter_rec.dbcon = self.dbcon
-            filters[column_name] = filter_rec
-
-        return filters
 
     def data(self, index, role):
         item = self._data[index.row()]
@@ -685,26 +701,6 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
         return aggr
 
-    def set_column_filtering(self, checked_values):
-        """
-            Sets dictionary used in '$match' part of MongoDB aggregate
-
-            Args:
-                checked_values(dict): key:values ({'status':{1:"Foo",3:"Bar"}}
-
-            Modifies:
-                self._column_filtering : {'status': {'$in': [1, 2, 3]}}
-        """
-        filtering = {}
-        for column_name, dict_value in checked_values.items():
-            column_f = self.COLUMN_FILTERS.get(column_name)
-            if not column_f:
-                continue
-            column_f.dbcon = self.dbcon
-            filtering[column_name] = column_f.prepare_match_part(dict_value)
-
-        self._column_filtering = filtering
-
     def get_match_part(self):
         """
             Extend match part with word_filter if present.
@@ -843,9 +839,14 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         "updated_dt_local",  # local created_dt
         "updated_dt_remote",  # remote created_dt
         "size",  # remote progress
-        "context.asset",  # priority TODO
+        "size",  # priority TODO
         "status"  # status
     ]
+
+    COLUMN_FILTERS = {
+        'status': lib.PredefinedSetFilter('status', lib.STATUS),
+        'file': lib.RegexTextFilter('file'),
+    }
 
     refresh_started = QtCore.Signal()
     refresh_finished = QtCore.Signal()
@@ -885,6 +886,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self._word_filter = None
         self._id = _id
         self._initialized = False
+        self._column_filtering = {}
 
         self.sync_server = sync_server
         # TODO think about admin mode
@@ -1033,7 +1035,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         if limit == 0:
             limit = SyncRepresentationSummaryModel.PAGE_SIZE
 
-        return [
+        aggr = [
             {"$match": self.get_match_part()},
             {"$unwind": "$files"},
             {'$addFields': {
@@ -1129,7 +1131,16 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                         ]}
                     ]}}
             }},
-            {"$project": self.projection},
+            {"$project": self.projection}
+        ]
+
+        if self.column_filtering:
+            aggr.append(
+                {"$match": self.column_filtering}
+            )
+            print(self.column_filtering)
+
+        aggr.extend([
             {"$sort": self.sort},
             {
                 '$facet': {
@@ -1138,7 +1149,9 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                     'totalCount': [{'$count': 'count'}]
                 }
             }
-        ]
+        ])
+
+        return aggr
 
     def get_match_part(self):
         """
