@@ -11,7 +11,7 @@ class ExtractABC(openpype.api.Extractor):
 
     label = "Extract ABC"
     hosts = ["blender"]
-    families = ["model"]
+    families = ["model", "pointcache"]
     optional = True
 
     def process(self, instance):
