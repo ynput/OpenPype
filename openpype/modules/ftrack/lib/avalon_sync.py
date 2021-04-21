@@ -14,24 +14,21 @@ else:
 from avalon.api import AvalonMongoDB
 
 import avalon
+
 from openpype.api import (
     Logger,
     Anatomy,
     get_anatomy_settings
 )
+from openpype.lib import ApplicationManager
+
+from .constants import CUST_ATTR_ID_KEY
+from .custom_attributes import get_openpype_attr
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from pymongo import UpdateOne
 import ftrack_api
-from openpype.lib import ApplicationManager
-
-from .constants import (
-    CUST_ATTR_ID_KEY,
-    CUST_ATTR_AUTO_SYNC,
-    CUST_ATTR_GROUP
-)
-from .custom_attributes import get_openpype_attr
 
 log = Logger.get_logger(__name__)
 
