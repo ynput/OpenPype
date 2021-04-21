@@ -108,19 +108,21 @@ class BlendModelLoader(plugin.AssetLoader):
             self.__class__.__name__,
         )
 
-        container_metadata = container.get(
-            blender.pipeline.AVALON_PROPERTY)
+        metadata = container.get(blender.pipeline.AVALON_PROPERTY)
 
-        container_metadata["libpath"] = libpath
-        container_metadata["lib_container"] = lib_container
+        metadata["libpath"] = libpath
+        metadata["lib_container"] = lib_container
 
         obj_container = self._process(
             libpath, lib_container, container_name, None)
 
-        container_metadata["obj_container"] = obj_container
+        metadata["obj_container"] = obj_container
 
         # Save the list of objects in the metadata container
-        container_metadata["objects"] = obj_container.all_objects
+        metadata["objects"] = obj_container.all_objects
+
+        metadata["parent"] = str(context["representation"]["parent"])
+        metadata["family"] = context["representation"]["context"]["family"]
 
         nodes = list(container.objects)
         nodes.append(container)
