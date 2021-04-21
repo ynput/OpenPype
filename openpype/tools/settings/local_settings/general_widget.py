@@ -1,3 +1,5 @@
+import getpass
+
 from Qt import QtWidgets
 
 
@@ -6,6 +8,7 @@ class LocalGeneralWidgets(QtWidgets.QWidget):
         super(LocalGeneralWidgets, self).__init__(parent)
 
         username_input = QtWidgets.QLineEdit(self)
+        username_input.setPlaceholderText(getpass.getuser())
 
         layout = QtWidgets.QFormLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
