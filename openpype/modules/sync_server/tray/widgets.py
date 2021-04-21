@@ -42,6 +42,8 @@ class SyncProjectListWidget(ProjectListWidget):
         self.local_site = None
         self.icons = {}
 
+        self.layout().setContentsMargins(0, 0, 0, 0)
+
     def validate_context_change(self):
         return True
 
@@ -143,12 +145,12 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     message_generated = QtCore.Signal(str)
 
     default_widths = (
-        ("asset", 200),
+        ("asset", 190),
         ("subset", 170),
         ("version", 60),
-        ("representation", 135),
-        ("local_site", 170),
-        ("remote_site", 170),
+        ("representation", 145),
+        ("local_site", 160),
+        ("remote_site", 160),
         ("files_count", 50),
         ("files_size", 60),
         ("priority", 70),
@@ -215,10 +217,10 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
 
-        self.horizontal_header = HorizontalHeader(self)
-        self.table_view.setHorizontalHeader(self.horizontal_header)
-        # self.table_view.setSortingEnabled(True)
-        # self.table_view.horizontalHeader().setSortIndicatorShown(True)
+        horizontal_header = HorizontalHeader(self)
+
+        self.table_view.setHorizontalHeader(horizontal_header)
+        self.table_view.setSortingEnabled(True)
 
         for column_name, width in self.default_widths:
             idx = model.get_header_index(column_name)
@@ -828,6 +830,21 @@ class SyncRepresentationErrorWindow(QtWidgets.QDialog):
         self.setWindowTitle("Sync Representation Error Detail")
 
 
+class TransparentWidget(QtWidgets.QWidget):
+    clicked = QtCore.Signal(str)
+
+    def __init__(self, column_name, *args, **kwargs):
+        super(TransparentWidget, self).__init__(*args, **kwargs)
+        self.column_name = column_name
+        # self.setStyleSheet("background: red;")
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.clicked.emit(self.column_name)
+
+        super(TransparentWidget, self).mouseReleaseEvent(event)
+
+
 class HorizontalHeader(QtWidgets.QHeaderView):
 
     def __init__(self, parent=None):
@@ -835,26 +852,23 @@ class HorizontalHeader(QtWidgets.QHeaderView):
         self._parent = parent
         self.checked_values = {}
 
-        self.setSectionsMovable(True)
+        self.setModel(self._parent.model)
+
         self.setSectionsClickable(True)
-        self.setHighlightSections(True)
 
         self.menu_items_dict = {}
         self.menu = None
         self.header_cells = []
         self.filter_buttons = {}
 
-        self.init_layout()
-
         self.filter_icon = qtawesome.icon("fa.filter", color="gray")
         self.filter_set_icon = qtawesome.icon("fa.filter", color="white")
 
+        self.init_layout()
+
         self._resetting = False
 
-        self.sectionResized.connect(self.handleSectionResized)
-        self.sectionMoved.connect(self.handleSectionMoved)
-        #self.sectionPressed.connect(self.model.sort)
-
+        self.sectionClicked.connect(self.on_section_clicked)
 
     @property
     def model(self):
@@ -862,38 +876,30 @@ class HorizontalHeader(QtWidgets.QHeaderView):
         return self._parent.model
 
     def init_layout(self):
-        for i in range(self.count()):
-            cell_content = QtWidgets.QWidget(self)
-            column_name, column_label = self.model.get_column(i)
-
-            layout = QtWidgets.QHBoxLayout()
-            layout.setContentsMargins(5, 5, 5, 0)
-            layout.setAlignment(Qt.AlignVCenter)
-            layout.addWidget(QtWidgets.QLabel(column_label))
-
+        for column_idx in range(self.model.columnCount()):
+            column_name, column_label = self.model.get_column(column_idx)
             filter_rec = self.model.get_filters().get(column_name)
-            if filter_rec:
-                icon = self.filter_icon
-                button = QtWidgets.QPushButton(icon, "")
-                layout.addWidget(button)
+            if not filter_rec:
+                continue
 
-                # button.setMenu(menu)
-                button.setFixedSize(24, 24)
-                # button.setAlignment(Qt.AlignRight)
-                button.setStyleSheet("QPushButton::menu-indicator{width:0px;}"
-                                     "QPushButton{border: none}")
-                button.clicked.connect(partial(self._get_menu,
-                                               column_name, i))
-                button.setFlat(True)
-                self.filter_buttons[column_name] = button
+            icon = self.filter_icon
+            button = QtWidgets.QPushButton(icon, "", self)
 
-            cell_content.setLayout(layout)
+            # button.setMenu(menu)
+            button.setFixedSize(24, 24)
+            # button.setAlignment(Qt.AlignRight)
+            button.setStyleSheet("QPushButton::menu-indicator{width:0px;}"
+                "QPushButton{border: none;background: transparent;}")
+            button.clicked.connect(partial(self._get_menu,
+                                           column_name, column_idx))
+            button.setFlat(True)
+            self.filter_buttons[column_name] = button
 
-            self.header_cells.append(cell_content)
+    def on_section_clicked(self, column_name):
+        print("on_section_clicked {}".format(column_name))
 
     def showEvent(self, event):
-        if not self.header_cells:
-            self.init_layout()
+        super(HorizontalHeader, self).showEvent(event)
 
         for i in range(len(self.header_cells)):
             cell_content = self.header_cells[i]
@@ -901,12 +907,6 @@ class HorizontalHeader(QtWidgets.QHeaderView):
                                      self.sectionSize(i)-1, self.height())
 
             cell_content.show()
-
-        if len(self.model.get_filters()) > self.count():
-            for i in range(self.count(), len(self.header_cells)):
-                self.header_cells[i].deleteLater()
-
-        super(HorizontalHeader, self).showEvent(event)
 
     def _set_filter_icon(self, column_name):
         button = self.filter_buttons.get(column_name)
@@ -939,18 +939,18 @@ class HorizontalHeader(QtWidgets.QHeaderView):
         self._set_filter_icon(column_name)
         self._filter_and_refresh_model_and_menu(column_name, True, False)
 
-    def _apply_text_filter(self, column_name, items):
+    def _apply_text_filter(self, column_name, items, line_edit):
         """
             Resets all checkboxes, prefers inserted text.
         """
+        le_text = line_edit.text()
         self._update_checked_values(column_name, items, 0)  # reset other
         if self.checked_values.get(column_name) is not None or \
-                self.line_edit.text() == '':
+                le_text == '':
             self.checked_values.pop(column_name)  # reset during typing
 
-        text_item = {self.line_edit.text(): self.line_edit.text()}
-        if self.line_edit.text():
-            self._update_checked_values(column_name, text_item, 2)
+        if le_text:
+            self._update_checked_values(column_name, {le_text: le_text}, 2)
         self._set_filter_icon(column_name)
         self._filter_and_refresh_model_and_menu(column_name, True, True)
 
@@ -970,24 +970,23 @@ class HorizontalHeader(QtWidgets.QHeaderView):
         menu = QtWidgets.QMenu(self)
         filter_rec = self.model.get_filters()[column_name]
         self.menu_items_dict[column_name] = filter_rec.values()
-        self.line_edit = None
 
         # text filtering only if labels same as values, not if codes are used
         if 'text' in filter_rec.search_variants():
-            self.line_edit = QtWidgets.QLineEdit(self)
-            self.line_edit.setSizePolicy(
-                QtWidgets.QSizePolicy.Maximum,
-                QtWidgets.QSizePolicy.Maximum)
+            line_edit = QtWidgets.QLineEdit(menu)
+            line_edit.setClearButtonEnabled(True)
+
+            line_edit.setFixedHeight(line_edit.height())
             txt = "Type..."
             if self.checked_values.get(column_name):
                 txt = list(self.checked_values.get(column_name).keys())[0]
-            self.line_edit.setPlaceholderText(txt)
+            line_edit.setPlaceholderText(txt)
 
             action_le = QtWidgets.QWidgetAction(menu)
-            action_le.setDefaultWidget(self.line_edit)
-            self.line_edit.textChanged.connect(
+            action_le.setDefaultWidget(line_edit)
+            line_edit.textChanged.connect(
                 partial(self._apply_text_filter, column_name,
-                        filter_rec.values()))
+                        filter_rec.values(), line_edit))
             menu.addAction(action_le)
             menu.addSeparator()
 
@@ -1076,27 +1075,32 @@ class HorizontalHeader(QtWidgets.QHeaderView):
 
         self.checked_values[column_name] = checked
 
-    def handleSectionResized(self, i):
-        if not self.header_cells:
-            self.init_layout()
-        for i in range(self.count()):
-            j = self.visualIndex(i)
-            logical = self.logicalIndex(j)
-            self.header_cells[i].setGeometry(
-                self.sectionViewportPosition(logical), 0,
-                self.sectionSize(logical) - 1, self.height())
+    def paintEvent(self, event):
+        self._fix_size()
+        super(HorizontalHeader, self).paintEvent(event)
 
-    def handleSectionMoved(self, i, oldVisualIndex, newVisualIndex):
-        if not self.header_cells:
-            self.init_layout()
-        for i in range(min(oldVisualIndex, newVisualIndex), self.count()):
-            logical = self.logicalIndex(i)
-            self.header_cells[i].setGeometry(
-                self.ectionViewportPosition(logical), 0,
-                self.sectionSize(logical) - 2, self.height())
+    def _fix_size(self):
+        for column_idx in range(self.count()):
+            vis_index = self.visualIndex(column_idx)
+            index = self.logicalIndex(vis_index)
+            section_width = self.sectionSize(index)
 
-    def fixComboPositions(self):
-        for i in range(self.count()):
-            self.header_cells[i].setGeometry(
-                self.sectionViewportPosition(i), 0,
-                self.sectionSize(i) - 2, self.height())
+            column_name = self.model.headerData(column_idx,
+                                                QtCore.Qt.Horizontal,
+                                                lib.HeaderNameRole)
+            button = self.filter_buttons.get(column_name)
+            if not button:
+                continue
+
+            pos_x = self.sectionViewportPosition(
+                index) + section_width - self.height()
+
+            pos_y = 0
+            if button.height() < self.height():
+                pos_y = int((self.height() - button.height()) / 2)
+            button.setGeometry(
+                pos_x,
+                pos_y,
+                self.height(),
+                self.height())
+

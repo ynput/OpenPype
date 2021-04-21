@@ -64,20 +64,20 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
     def rowCount(self, _index):
         return len(self._data)
 
-    def columnCount(self, _index):
+    def columnCount(self, _index=None):
         return len(self._header)
 
-    def headerData(self, section, orientation, role):
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
         name = self.COLUMN_LABELS[section][0]
         if role == Qt.DisplayRole:
             if orientation == Qt.Horizontal:
                 return self.COLUMN_LABELS[section][1]
 
-        if role == Qt.DecorationRole:
-            if name in self.column_filtering.keys():
-                return qtawesome.icon("fa.filter", color="white")
-            if self.COLUMN_FILTERS.get(name):
-                return qtawesome.icon("fa.filter", color="gray")
+        # if role == Qt.DecorationRole:
+        #     if name in self.column_filtering.keys():
+        #         return qtawesome.icon("fa.filter", color="white")
+        #     if self.COLUMN_FILTERS.get(name):
+        #         return qtawesome.icon("fa.filter", color="gray")
 
         if role == lib.HeaderNameRole:
             if orientation == Qt.Horizontal:
