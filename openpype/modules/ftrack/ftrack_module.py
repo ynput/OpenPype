@@ -42,7 +42,17 @@ class FtrackModule(
         ftrack_settings = settings[self.name]
 
         self.enabled = ftrack_settings["enabled"]
-        self.ftrack_url = ftrack_settings["ftrack_server"].strip("/ ")
+        # Add http schema
+        ftrack_url = ftrack_settings["ftrack_server"].strip("/ ")
+        if ftrack_url:
+            if "http" not in ftrack_url:
+                ftrack_url = "https://" + ftrack_url
+
+            # Check if "ftrack.app" is part os url
+            if "ftrackapp.com" not in ftrack_url:
+                ftrack_url = ftrack_url + ".ftrackapp.com"
+
+        self.ftrack_url = ftrack_url
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         server_event_handlers_paths = [

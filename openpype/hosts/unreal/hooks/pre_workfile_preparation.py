@@ -24,7 +24,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
         asset_name = self.data["asset_name"]
         task_name = self.data["task_name"]
         workdir = self.launch_context.env["AVALON_WORKDIR"]
-        engine_version = self.app_name.split("_")[-1].replace("-", ".")
+        engine_version = self.app_name.split("/")[-1].replace("-", ".")
         unreal_project_name = f"{asset_name}_{task_name}"
 
         # Unreal is sensitive about project names longer then 20 chars

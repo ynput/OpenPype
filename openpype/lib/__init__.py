@@ -6,11 +6,21 @@ import sys
 import os
 import site
 
-# add Python version specific vendor folder
-site.addsitedir(
-    os.path.join(
-        os.getenv("OPENPYPE_REPOS_ROOT", ""),
-        "vendor", "python", "python_{}".format(sys.version[0])))
+# Add Python version specific vendor folder
+python_version_dir = os.path.join(
+    os.getenv("OPENPYPE_REPOS_ROOT", ""),
+    "openpype", "vendor", "python", "python_{}".format(sys.version[0])
+)
+# Prepend path in sys paths
+sys.path.insert(0, python_version_dir)
+site.addsitedir(python_version_dir)
+
+
+from .env_tools import (
+    env_value_to_bool,
+    get_paths_from_environ,
+    get_global_environments
+)
 
 from .terminal import Terminal
 from .execute import (
@@ -33,10 +43,11 @@ from .anatomy import (
 
 from .config import get_datetime_data
 
-from .env_tools import (
-    env_value_to_bool,
-    get_paths_from_environ,
-    get_global_environments
+from .vendor_bin_utils import (
+    get_vendor_bin_path,
+    get_oiio_tools_path,
+    get_ffmpeg_tool_path,
+    ffprobe_streams
 )
 
 from .python_module_tools import (
@@ -116,11 +127,6 @@ from .path_tools import (
     get_last_version_from_path
 )
 
-from .ffmpeg_utils import (
-    get_ffmpeg_tool_path,
-    ffprobe_streams
-)
-
 from .editorial import (
     is_overlapping_otio_ranges,
     otio_range_to_frame_range,
@@ -142,6 +148,11 @@ __all__ = [
     "env_value_to_bool",
     "get_paths_from_environ",
     "get_global_environments",
+
+    "get_vendor_bin_path",
+    "get_oiio_tools_path",
+    "get_ffmpeg_tool_path",
+    "ffprobe_streams",
 
     "modules_from_path",
     "recursive_bases_from_class",
@@ -198,9 +209,6 @@ __all__ = [
     "version_up",
     "get_version_from_path",
     "get_last_version_from_path",
-
-    "ffprobe_streams",
-    "get_ffmpeg_tool_path",
 
     "terminal",
 

@@ -57,7 +57,10 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
 
         # Collect context from workfile metadata
         self.log.info("Collecting workfile context")
+
         workfile_context = pipeline.get_current_workfile_context()
+        # Store workfile context to pyblish context
+        context.data["workfile_context"] = workfile_context
         if workfile_context:
             # Change current context with context from workfile
             key_map = (
@@ -67,16 +70,27 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             for env_key, key in key_map:
                 avalon.api.Session[env_key] = workfile_context[key]
                 os.environ[env_key] = workfile_context[key]
+            self.log.info("Context changed to: {}".format(workfile_context))
+
+            asset_name = workfile_context["asset"]
+            task_name = workfile_context["task"]
+
         else:
+            asset_name = current_context["asset"]
+            task_name = current_context["task"]
             # Handle older workfiles or workfiles without metadata
-            self.log.warning(
+            self.log.warning((
                 "Workfile does not contain information about context."
                 " Using current Session context."
-            )
-            workfile_context = current_context.copy()
+            ))
 
-        context.data["workfile_context"] = workfile_context
-        self.log.info("Context changed to: {}".format(workfile_context))
+        # Store context asset name
+        context.data["asset"] = asset_name
+        self.log.info(
+            "Context is set to Asset: \"{}\" and Task: \"{}\"".format(
+                asset_name, task_name
+            )
+        )
 
         # Collect instances
         self.log.info("Collecting instance data from workfile")
