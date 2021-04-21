@@ -1,6 +1,5 @@
 """Load an asset in Blender from an Alembic file."""
 
-import logging
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
