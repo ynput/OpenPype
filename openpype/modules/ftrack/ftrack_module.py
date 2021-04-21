@@ -246,8 +246,8 @@ class FtrackModule(
 
         if not project_entity:
             msg = (
-                "Ftrack project with names \"{}\" was not found in Ftrack."
-                " Skipping settings attributes change callback."
+                "Ftrack project with name \"{}\" was not found in Ftrack."
+                " Can't push attribute changes."
             ).format(project_name)
             self.log.warning(msg)
             raise SaveWarning(msg)
@@ -265,6 +265,9 @@ class FtrackModule(
             if not configuration:
                 configuration = cust_attr_by_key.get(key)
             if not configuration:
+                self.log.warning(
+                    "Custom attribute \"{}\" was not found.".format(key)
+                )
                 missing[key] = value
                 continue
 
@@ -304,6 +307,8 @@ class FtrackModule(
 
         error_msg = (
             "Values were not updated on Ftrack which may cause issues."
+            " Try to update OpenPype custom attributes and resave"
+            " project settings."
         )
         if missing:
             error_msg += "\nMissing Custom attributes on Ftrack: {}.".format(
