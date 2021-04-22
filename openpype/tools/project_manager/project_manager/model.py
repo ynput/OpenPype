@@ -14,23 +14,6 @@ from Qt import QtWidgets, QtCore
 
 class HierarchySelectionModel(QtCore.QItemSelectionModel):
     def setCurrentIndex(self, index, command):
-        # v = ""
-        # if command == QtCore.QItemSelectionModel.NoUpdate:
-        #     v += "NoUpdate"
-        # if command & QtCore.QItemSelectionModel.Clear:
-        #     v += "Clear"
-        # if command & QtCore.QItemSelectionModel.Select:
-        #     v += "Select"
-        # if command & QtCore.QItemSelectionModel.Deselect:
-        #     v += "Deselect"
-        # if command & QtCore.QItemSelectionModel.Toggle:
-        #     v += "Toggle"
-        # if command & QtCore.QItemSelectionModel.Current:
-        #     v += "Current"
-        # if command & QtCore.QItemSelectionModel.Rows:
-        #     v += "Rows"
-        # if command & QtCore.QItemSelectionModel.Columns:
-        #     v += "Columns"
         if index.column() > 0:
             if (
                 command & QtCore.QItemSelectionModel.Clear
