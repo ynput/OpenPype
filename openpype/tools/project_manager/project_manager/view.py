@@ -116,7 +116,10 @@ class HierarchyView(QtWidgets.QTreeView):
             self._delete_item()
 
         elif event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
-            if event.modifiers() == QtCore.Qt.ShiftModifier:
+            mdfs = event.modifiers()
+            if mdfs == (QtCore.Qt.ShiftModifier | QtCore.Qt.ControlModifier):
+                self._on_ctrl_shift_enter_pressed()
+            elif mdfs == QtCore.Qt.ShiftModifier:
                 self._on_shift_enter_pressed()
             else:
                 if self.state() == HierarchyView.NoState:
@@ -142,6 +145,24 @@ class HierarchyView(QtWidgets.QTreeView):
     def _delete_item(self):
         index = self.currentIndex()
         self._source_model.remove_index(index)
+
+    def _on_ctrl_shift_enter_pressed(self):
+        index = self.currentIndex()
+        if not index.isValid():
+            return
+
+        new_index = self._source_model.add_new_task(index)
+        if new_index is None:
+            return
+
+        # Stop editing
+        self.setState(HierarchyView.NoState)
+        QtWidgets.QApplication.processEvents()
+
+        # Change current index
+        self.setCurrentIndex(new_index)
+        # Start editing
+        self.edit(new_index)
 
     def _on_shift_enter_pressed(self):
         index = self.currentIndex()
