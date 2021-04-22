@@ -704,6 +704,59 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return audio_in_args, audio_filters, audio_out_args
 
+    def get_letterbox_filters(
+        self,
+        letter_box_def,
+        input_res_ratio,
+        output_res_ratio,
+        pixel_aspect,
+        scale_factor_by_width,
+        scale_factor_by_height
+    ):
+        output = []
+
+        ratio = letter_box_def["ratio"]
+        state = letter_box_def["state"]
+        thickness = letter_box_def["thickness"]
+        color = letter_box_def["color"]
+
+        if input_res_ratio == output_res_ratio:
+            ratio /= pixel_aspect
+        elif input_res_ratio < output_res_ratio:
+            ratio /= scale_factor_by_width
+        else:
+            ratio /= scale_factor_by_height
+
+        if state == "letterbox":
+            top_box = (
+                "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t={}:c={}"
+            ).format(ratio, thickness, color)
+
+            bottom_box = (
+                "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
+                ":iw:round((ih-(iw*(1/{0})))/2):t={1}:c={2}"
+            ).format(ratio, thickness, color)
+
+            output.extend([top_box, bottom_box])
+
+        elif state == "pillar":
+            right_box = (
+                "drawbox=0:0:round((iw-(ih*{}))/2):ih:t={}:c={}"
+            ).format(ratio, thickness, color)
+
+            left_box = (
+                "drawbox=(round(ih*{0})+round((iw-(ih*{0}))/2))"
+                ":0:round((iw-(ih*{0}))/2):ih:t={1}:c={2}"
+            ).format(ratio, thickness, color)
+
+            output.extend([right_box, left_box])
+        else:
+            raise ValueError(
+                "Letterbox state \"{}\" is not recognized".format(state)
+            )
+
+        return output
+
     def rescaling_filters(self, temp_data, output_def, new_repre):
         """Prepare vieo filters based on tags in new representation.
 
@@ -715,7 +768,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
         filters = []
 
-        letter_box = output_def.get("letter_box")
+        letter_box_def = output_def["letter_box"]
+        letter_box_enabled = letter_box_def["enabled"]
 
         # Get instance data
         pixel_aspect = temp_data["pixel_aspect"]
@@ -795,7 +849,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if (
             output_width == input_width
             and output_height == input_height
-            and not letter_box
+            and not letter_box_enabled
             and pixel_aspect == 1
         ):
             self.log.debug(
@@ -834,29 +888,23 @@ class ExtractReview(pyblish.api.InstancePlugin):
         )
 
         # letter_box
-        if letter_box:
-            if input_res_ratio == output_res_ratio:
-                letter_box /= pixel_aspect
-            elif input_res_ratio < output_res_ratio:
-                letter_box /= scale_factor_by_width
-            else:
-                letter_box /= scale_factor_by_height
-
-            scale_filter = "scale={}x{}:flags=lanczos".format(
-                output_width, output_height
+        if letter_box_enabled:
+            filters.extend([
+                "scale={}x{}:flags=lanczos".format(
+                    output_width, output_height
+                ),
+                "setsar=1"
+            ])
+            filters.extend(
+                self.get_letterbox_filters(
+                    letter_box_def,
+                    input_res_ratio,
+                    output_res_ratio,
+                    pixel_aspect,
+                    scale_factor_by_width,
+                    scale_factor_by_height
+                )
             )
-
-            top_box = (
-                "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c=black"
-            ).format(letter_box)
-
-            bottom_box = (
-                "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
-                ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black"
-            ).format(letter_box)
-
-            # Add letter box filters
-            filters.extend([scale_filter, "setsar=1", top_box, bottom_box])
 
         # scaling none square pixels and 1920 width
         if (
