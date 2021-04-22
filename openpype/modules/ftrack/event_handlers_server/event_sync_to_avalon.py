@@ -18,12 +18,15 @@ from avalon import schema
 from avalon.api import AvalonMongoDB
 
 from openpype.modules.ftrack.lib import (
+    get_openpype_attr,
+    CUST_ATTR_ID_KEY,
+    CUST_ATTR_AUTO_SYNC,
+
     avalon_sync,
+
     BaseEvent
 )
 from openpype.modules.ftrack.lib.avalon_sync import (
-    CUST_ATTR_ID_KEY,
-    CUST_ATTR_AUTO_SYNC,
     EntitySchemas
 )
 
@@ -125,7 +128,7 @@ class SyncToAvalonEvent(BaseEvent):
     @property
     def avalon_cust_attrs(self):
         if self._avalon_cust_attrs is None:
-            self._avalon_cust_attrs = avalon_sync.get_pype_attr(
+            self._avalon_cust_attrs = get_openpype_attr(
                 self.process_session, query_keys=self.cust_attr_query_keys
             )
         return self._avalon_cust_attrs

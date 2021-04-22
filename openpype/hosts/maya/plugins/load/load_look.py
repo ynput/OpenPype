@@ -105,7 +105,23 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         # Load relationships
         shader_relation = api.get_representation_path(json_representation)
         with open(shader_relation, "r") as f:
-            relationships = json.load(f)
+            json_data = json.load(f)
+
+        for rel, data in json_data["relationships"].items():
+            # process only non-shading nodes
+            current_node = "{}:{}".format(container["namespace"], rel)
+            if current_node in shader_nodes:
+                continue
+            print("processing {}".format(rel))
+            current_members = set(cmds.ls(
+                cmds.sets(current_node, query=True) or [], long=True))
+            new_members = {"{}".format(
+                m["name"]) for m in data["members"] or []}
+            dif = new_members.difference(current_members)
+
+            # add to set
+            cmds.sets(
+                dif, forceElement="{}:{}".format(container["namespace"], rel))
 
         # update of reference could result in failed edits - material is not
         # present because of renaming etc.
@@ -120,7 +136,7 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             cmds.file(cr=reference_node)  # cleanReference
 
             # reapply shading groups from json representation on orig nodes
-            openpype.hosts.maya.api.lib.apply_shaders(relationships,
+            openpype.hosts.maya.api.lib.apply_shaders(json_data,
                                                       shader_nodes,
                                                       orig_nodes)
 
@@ -128,12 +144,13 @@ class LookLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                    "All successful edits were kept intact.\n",
                    "Failed and removed edits:"]
             msg.extend(failed_edits)
+
             msg = ScrollMessageBox(QtWidgets.QMessageBox.Warning,
                                    "Some reference edit failed",
                                    msg)
             msg.exec_()
 
-        attributes = relationships.get("attributes", [])
+        attributes = json_data.get("attributes", [])
 
         # region compute lookup
         nodes_by_id = defaultdict(list)
