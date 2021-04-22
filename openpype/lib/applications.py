@@ -25,6 +25,7 @@ from . import (
     PypeLogger,
     Anatomy
 )
+from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
     get_workdir_with_workdir_data
@@ -1225,7 +1226,7 @@ def _prepare_last_workfile(data, workdir):
         file_template = anatomy.templates["work"]["file"]
         workdir_data.update({
             "version": 1,
-            "user": os.environ.get("OPENPYPE_USERNAME") or getpass.getuser(),
+            "user": get_openpype_username(),
             "ext": extensions[0]
         })
 
