@@ -1,5 +1,11 @@
 [
     {
+        "type": "boolean",
+        "key": "use_python_2",
+        "label": "Use Python 2",
+        "default": false
+    },
+    {
         "type": "path",
         "key": "executables",
         "label": "Executables",

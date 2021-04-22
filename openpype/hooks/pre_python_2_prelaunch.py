@@ -4,12 +4,12 @@ from openpype.lib import PreLaunchHook
 
 class PrePython2Vendor(PreLaunchHook):
     """Prepend python 2 dependencies for py2 hosts."""
-    # WARNING This hook will probably be deprecated in OpenPype 3 - kept for
-    # test
     order = 10
-    app_groups = ["hiero", "nuke", "nukex", "unreal", "maya", "houdini"]
 
     def execute(self):
+        if not self.application.use_python_2:
+            return
+
         # Prepare vendor dir path
         self.log.info("adding global python 2 vendor")
         pype_root = os.getenv("OPENPYPE_REPOS_ROOT")

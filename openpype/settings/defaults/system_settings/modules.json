@@ -161,9 +161,6 @@
     "log_viewer": {
         "enabled": true
     },
-    "user": {
-        "enabled": true
-    },
     "standalonepublish_tool": {
         "enabled": true
     }

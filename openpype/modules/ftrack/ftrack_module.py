@@ -8,7 +8,6 @@ from openpype.modules import (
     ITrayModule,
     IPluginPaths,
     ITimersManager,
-    IUserModule,
     ILaunchHookPaths,
     ISettingsChangeListener
 )
@@ -32,7 +31,6 @@ class FtrackModule(
     ITrayModule,
     IPluginPaths,
     ITimersManager,
-    IUserModule,
     ILaunchHookPaths,
     ISettingsChangeListener
 ):
@@ -42,7 +40,17 @@ class FtrackModule(
         ftrack_settings = settings[self.name]
 
         self.enabled = ftrack_settings["enabled"]
-        self.ftrack_url = ftrack_settings["ftrack_server"].strip("/ ")
+        # Add http schema
+        ftrack_url = ftrack_settings["ftrack_server"].strip("/ ")
+        if ftrack_url:
+            if "http" not in ftrack_url:
+                ftrack_url = "https://" + ftrack_url
+
+            # Check if "ftrack.app" is part os url
+            if "ftrackapp.com" not in ftrack_url:
+                ftrack_url = ftrack_url + ".ftrackapp.com"
+
+        self.ftrack_url = ftrack_url
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         server_event_handlers_paths = [
@@ -112,11 +120,6 @@ class FtrackModule(
         """Implementation of ITimersManager interface."""
         if self.tray_module:
             self.tray_module.stop_timer_manager()
-
-    def on_pype_user_change(self, username):
-        """Implementation of IUserModule interface."""
-        if self.tray_module:
-            self.tray_module.changed_user()
 
     def on_system_settings_save(self, *_args, **_kwargs):
         """Implementation of ISettingsChangeListener interface."""
