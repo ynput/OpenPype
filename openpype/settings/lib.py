@@ -4,6 +4,9 @@ import functools
 import logging
 import platform
 import copy
+from .exceptions import (
+    SaveWarningExc
+)
 from .constants import (
     M_OVERRIDEN_KEY,
     M_ENVIRONMENT_KEY,
@@ -101,8 +104,14 @@ def save_studio_settings(data):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         data(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
     from openpype.modules import ModulesManager, ISettingsChangeListener
@@ -110,15 +119,25 @@ def save_studio_settings(data):
     old_data = get_system_settings()
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
     new_data = apply_overrides(default_values, copy.deepcopy(data))
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager(_system_settings=new_data)
+
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_system_settings_save(old_data, new_data, changes)
+            try:
+                module.on_system_settings_save(
+                    old_data, new_data, changes, new_data_with_metadata
+                )
+            except SaveWarningExc as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_studio_settings(data)
+    _SETTINGS_HANDLER.save_studio_settings(data)
+    if warnings:
+        raise SaveWarningExc(warnings)
 
 
 @require_handler
@@ -130,10 +149,16 @@ def save_project_settings(project_name, overrides):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         project_name (str): Project name for which overrides are passed.
             Default project's value is None.
         overrides(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
     from openpype.modules import ModulesManager, ISettingsChangeListener
@@ -151,17 +176,29 @@ def save_project_settings(project_name, overrides):
         old_data = get_default_project_settings(exclude_locals=True)
         new_data = apply_overrides(default_values, copy.deepcopy(overrides))
 
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager()
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_project_settings_save(
-                old_data, new_data, project_name, changes
-            )
+            try:
+                module.on_project_settings_save(
+                    old_data,
+                    new_data,
+                    project_name,
+                    changes,
+                    new_data_with_metadata
+                )
+            except SaveWarningExc as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
+    _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
+
+    if warnings:
+        raise SaveWarningExc(warnings)
 
 
 @require_handler
@@ -173,10 +210,16 @@ def save_project_anatomy(project_name, anatomy_data):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         project_name (str): Project name for which overrides are passed.
             Default project's value is None.
         overrides(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
     from openpype.modules import ModulesManager, ISettingsChangeListener
@@ -194,17 +237,29 @@ def save_project_anatomy(project_name, anatomy_data):
         old_data = get_default_anatomy_settings(exclude_locals=True)
         new_data = apply_overrides(default_values, copy.deepcopy(anatomy_data))
 
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager()
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_project_anatomy_save(
-                old_data, new_data, changes, project_name
-            )
+            try:
+                module.on_project_anatomy_save(
+                    old_data,
+                    new_data,
+                    changes,
+                    project_name,
+                    new_data_with_metadata
+                )
+            except SaveWarningExc as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+    _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+
+    if warnings:
+        raise SaveWarningExc(warnings)
 
 
 @require_handler
