@@ -45,7 +45,14 @@
                                 ]
                             },
                             "width": 0,
-                            "height": 0
+                            "height": 0,
+                            "letter_box": {
+                                "enabled": false,
+                                "ratio": 0.0,
+                                "state": "letterbox",
+                                "thickness": "fill",
+                                "color": "black"
+                            }
                         }
                     }
                 }

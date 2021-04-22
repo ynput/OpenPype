@@ -203,6 +203,54 @@
                                             "default": 0,
                                             "minimum": 0,
                                             "maximum": 100000
+                                        },
+                                        {
+                                            "key": "letter_box",
+                                            "label": "Letter box",
+                                            "type": "dict",
+                                            "checkbox_key": "enabled",
+                                            "children": [
+                                                {
+                                                    "type": "boolean",
+                                                    "key": "enabled",
+                                                    "label": "Enabled",
+                                                    "default": false
+                                                },
+                                                {
+                                                    "key": "ratio",
+                                                    "label": "Letter box ratio",
+                                                    "type": "number",
+                                                    "decimal": 4,
+                                                    "default": 0,
+                                                    "minimum": 0,
+                                                    "maximum": 10000
+                                                },
+                                                {
+                                                    "key": "state",
+                                                    "label": "Type",
+                                                    "type": "enum",
+                                                    "enum_items": [
+                                                        {
+                                                            "letterbox": "Letterbox"
+                                                        },
+                                                        {
+                                                            "pillar": "Pillar"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "key": "thickness",
+                                                    "label": "Thickness",
+                                                    "type": "text",
+                                                    "default": "fill"
+                                                },
+                                                {
+                                                    "key": "color",
+                                                    "label": "Color",
+                                                    "type": "text",
+                                                    "default": "#000000"
+                                                }
+                                            ]
                                         }
                                     ]
                                 }
