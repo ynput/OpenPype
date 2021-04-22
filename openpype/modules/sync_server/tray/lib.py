@@ -24,6 +24,7 @@ ProgressRole = QtCore.Qt.UserRole + 4
 DateRole = QtCore.Qt.UserRole + 6
 FailedRole = QtCore.Qt.UserRole + 8
 HeaderNameRole = QtCore.Qt.UserRole + 10
+FullItemRole = QtCore.Qt.UserRole + 12
 
 
 @six.add_metaclass(abc.ABCMeta)

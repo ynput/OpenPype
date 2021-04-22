@@ -161,9 +161,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
         self.sync_server = sync_server
 
-        self._selected_id = None  # keep last selected _id
-        self.representation_id = None
-        self.site_name = None  # to pause/unpause representation
+        self._selected_ids = []  # keep last selected _id
 
         self.txt_filter = QtWidgets.QLineEdit()
         self.txt_filter.setPlaceholderText("Quick filter representations..")
@@ -183,7 +181,7 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.table_view.setModel(model)
         self.table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.table_view.setSelectionMode(
-            QtWidgets.QAbstractItemView.SingleSelection)
+            QtWidgets.QAbstractItemView.ExtendedSelection)
         self.table_view.setSelectionBehavior(
             QtWidgets.QAbstractItemView.SelectRows)
         self.table_view.horizontalHeader().setSortIndicator(
@@ -228,10 +226,12 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             idx = model.get_header_index(column_name)
             self.table_view.setColumnWidth(idx, width)
 
-    def _selection_changed(self, _new_selection):
-        index = self.selection_model.currentIndex()
-        self._selected_id = \
-            self.model.data(index, Qt.UserRole)
+    def _selection_changed(self, new_selected, all_selected):
+        idxs = self.selection_model.selectedRows()
+        self._selected_ids = []
+
+        for index in idxs:
+            self._selected_ids.append(self.model.data(index, Qt.UserRole))
 
     def _set_selection(self):
         """
@@ -239,14 +239,16 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
 
             Keep selection during model refresh.
         """
-        if self._selected_id:
-            index = self.model.get_index(self._selected_id)
+        existing_ids = []
+        for selected_id in self._selected_ids:
+            index = self.model.get_index(selected_id)
             if index and index.isValid():
                 mode = QtCore.QItemSelectionModel.Select | \
                     QtCore.QItemSelectionModel.Rows
-                self.selection_model.setCurrentIndex(index, mode)
-            else:
-                self._selected_id = None
+                self.selection_model.select(index, mode)
+                existing_ids.append(selected_id)
+
+        self._selected_ids = existing_ids
 
     def _double_clicked(self, index):
         """
@@ -256,59 +258,62 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         detail_window = SyncServerDetailWindow(
             self.sync_server, _id, self.model.project)
         detail_window.exec()
-
+        
     def _on_context_menu(self, point):
         """
             Shows menu with loader actions on Right-click.
+
+            Supports multiple selects - adds all available actions, each
+            action handles if it appropriate for item itself, if not it skips.
         """
+        is_multi = len(self._selected_ids) > 1
         point_index = self.table_view.indexAt(point)
-        if not point_index.isValid():
+        if not point_index.isValid() and not is_multi:
             return
 
-        self.item = self.model._data[point_index.row()]
-        self.representation_id = self.item._id
-        log.debug("menu representation _id:: {}".
-                  format(self.representation_id))
+        if is_multi:
+            index = self.model.get_index(self._selected_ids[0])
+            self.item = self.model.data(index, lib.FullItemRole)
+        else:
+            self.item = self.model.data(point_index, lib.FullItemRole)
 
         menu = QtWidgets.QMenu()
         actions_mapping = {}
-        actions_kwargs_mapping = {}
+        action_kwarg_map = {}
 
-        local_site = self.item.local_site
+        active_site = self.model.active_site
+        remote_site = self.model.remote_site
+
         local_progress = self.item.local_progress
-        remote_site = self.item.remote_site
         remote_progress = self.item.remote_progress
 
-        for site, progress in {local_site: local_progress,
+        project = self.model.project
+        for site, progress in {active_site: local_progress,
                                remote_site: remote_progress}.items():
-            project = self.model.project
-            provider = self.sync_server.get_provider_for_site(project,
-                                                              site)
+            provider = self.sync_server.get_provider_for_site(project, site)
             if provider == 'local_drive':
                 if 'studio' in site:
                     txt = " studio version"
                 else:
                     txt = " local version"
                 action = QtWidgets.QAction("Open in explorer" + txt)
-                if progress == 1.0:
+                if progress == 1.0 or is_multi:
                     actions_mapping[action] = self._open_in_explorer
-                    actions_kwargs_mapping[action] = {'site': site}
+                    action_kwarg_map[action] = \
+                        self._get_action_kwargs(site)
                     menu.addAction(action)
 
-        # progress smaller then 1.0 --> in progress or queued
-        if local_progress < 1.0:
-            self.site_name = local_site
-        else:
-            self.site_name = remote_site
-
-        if self.item.status in [lib.STATUS[0], lib.STATUS[1]]:
-            action = QtWidgets.QAction("Pause")
+        if self.item.status in [lib.STATUS[0], lib.STATUS[1]] or is_multi:
+            action = QtWidgets.QAction("Pause in queue")
             actions_mapping[action] = self._pause
+            # pause handles which site_name it will pause itself
+            action_kwarg_map[action] = {"repre_ids": self._selected_ids}
             menu.addAction(action)
 
-        if self.item.status == lib.STATUS[3]:
-            action = QtWidgets.QAction("Unpause")
+        if self.item.status == lib.STATUS[3] or is_multi:
+            action = QtWidgets.QAction("Unpause  in queue")
             actions_mapping[action] = self._unpause
+            action_kwarg_map[action] = {"repre_ids": self._selected_ids}
             menu.addAction(action)
 
         # if self.item.status == lib.STATUS[1]:
@@ -316,24 +321,29 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         #     actions_mapping[action] = self._show_detail
         #     menu.addAction(action)
 
-        if remote_progress == 1.0:
+        if remote_progress == 1.0 or is_multi:
             action = QtWidgets.QAction("Re-sync Active site")
-            actions_mapping[action] = self._reset_local_site
+            action_kwarg_map[action] = self._get_action_kwargs(active_site)
+            actions_mapping[action] = self._reset_site
             menu.addAction(action)
 
-        if local_progress == 1.0:
+        if local_progress == 1.0 or is_multi:
             action = QtWidgets.QAction("Re-sync Remote site")
-            actions_mapping[action] = self._reset_remote_site
+            action_kwarg_map[action] = self._get_action_kwargs(remote_site)
+            actions_mapping[action] = self._reset_site
             menu.addAction(action)
 
-        if local_site != self.sync_server.DEFAULT_SITE:
+        if active_site == get_local_site_id():
             action = QtWidgets.QAction("Completely remove from local")
+            action_kwarg_map[action] = self._get_action_kwargs(active_site)
             actions_mapping[action] = self._remove_site
             menu.addAction(action)
-        else:
-            action = QtWidgets.QAction("Mark for sync to local")
-            actions_mapping[action] = self._add_site
-            menu.addAction(action)
+
+        # # temp for testing only !!!
+        # action = QtWidgets.QAction("Download")
+        # action_kwarg_map[action] = self._get_action_kwargs(active_site)
+        # actions_mapping[action] = self._add_site
+        # menu.addAction(action)
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
@@ -343,46 +353,65 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
             to_run = actions_mapping[result]
-            to_run_kwargs = actions_kwargs_mapping.get(result, {})
+            to_run_kwargs = action_kwarg_map.get(result, {})
             if to_run:
                 to_run(**to_run_kwargs)
 
         self.model.refresh()
 
-    def _pause(self):
-        self.sync_server.pause_representation(self.model.project,
-                                              self.representation_id,
-                                              self.site_name)
-        self.site_name = None
-        self.message_generated.emit("Paused {}".format(self.representation_id))
+    def _pause(self, repre_ids=None):
+        log.debug("Pause {}".format(repre_ids))
+        for representation_id in repre_ids:
+            item = self._get_item_by_repre_id(representation_id)
+            if item.status not in [lib.STATUS[0], lib.STATUS[1]]:
+                continue
+            for site_name in [self.model.active_site, self.model.remote_site]:
+                check_progress = self._get_progress(item, site_name)
+                if check_progress < 1:
+                    self.sync_server.pause_representation(self.model.project,
+                                                          representation_id,
+                                                          site_name)
 
-    def _unpause(self):
-        self.sync_server.unpause_representation(
-            self.model.project,
-            self.representation_id,
-            self.site_name)
-        self.site_name = None
-        self.message_generated.emit("Unpaused {}".format(
-            self.representation_id))
+            self.message_generated.emit("Paused {}".format(representation_id))
+
+    def _unpause(self, repre_ids=None):
+        log.debug("UnPause {}".format(repre_ids))
+        for representation_id in repre_ids:
+            item = self._get_item_by_repre_id(representation_id)
+            if item.status not in lib.STATUS[3]:
+                continue
+            for site_name in [self.model.active_site, self.model.remote_site]:
+                check_progress = self._get_progress(item, site_name)
+                if check_progress < 1:
+                    self.sync_server.unpause_representation(
+                        self.model.project,
+                        representation_id,
+                        site_name)
+
+            self.message_generated.emit("Unpause {}".format(representation_id))
 
     # temporary here for testing, will be removed TODO
-    def _add_site(self):
-        log.info(self.representation_id)
-        project_name = self.model.project
-        local_site_name = get_local_site_id()
-        try:
-            self.sync_server.add_site(
-                project_name,
-                self.representation_id,
-                local_site_name
-                )
-            self.message_generated.emit(
-                "Site {} added for {}".format(local_site_name,
-                                              self.representation_id))
-        except ValueError as exp:
-            self.message_generated.emit("Error {}".format(str(exp)))
+    def _add_site(self, repre_ids=None, site_name=None):
+        log.debug("Add site {}:{}".format(repre_ids, site_name))
+        for representation_id in repre_ids:
+            item = self._get_item_by_repre_id(representation_id)
+            if item.local_site == site_name or item.remote_site == site_name:
+                # site already exists skip
+                continue
 
-    def _remove_site(self):
+            try:
+                self.sync_server.add_site(
+                    self.model.project,
+                    representation_id,
+                    site_name
+                    )
+                self.message_generated.emit(
+                    "Site {} added for {}".format(site_name,
+                                                  representation_id))
+            except ValueError as exp:
+                self.message_generated.emit("Error {}".format(str(exp)))
+
+    def _remove_site(self, repre_ids=None, site_name=None):
         """
             Removes site record AND files.
 
@@ -392,65 +421,93 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
             This could only happen when artist work on local machine, not
             connected to studio mounted drives.
         """
-        log.info("Removing {}".format(self.representation_id))
-        try:
-            local_site = get_local_site_id()
-            self.sync_server.remove_site(
+        log.debug("Remove site {}:{}".format(repre_ids, site_name))
+        for representation_id in repre_ids:
+            log.info("Removing {}".format(representation_id))
+            try:
+                self.sync_server.remove_site(
+                    self.model.project,
+                    representation_id,
+                    site_name,
+                    True)
+                self.message_generated.emit(
+                    "Site {} removed".format(site_name))
+            except ValueError as exp:
+                self.message_generated.emit("Error {}".format(str(exp)))
+
+        self.model.refresh(
+            load_records=self.model._rec_loaded)
+
+    def _reset_site(self, repre_ids=None, site_name=None):
+        """
+            Removes errors or success metadata for particular file >> forces
+            redo of upload/download
+        """
+        log.debug("Reset site {}:{}".format(repre_ids, site_name))
+        for representation_id in repre_ids:
+            item = self._get_item_by_repre_id(representation_id)
+            check_progress = self._get_progress(item, site_name, True)
+
+            # do not reset if opposite side is not fully there
+            if check_progress != 1:
+                log.debug("Not fully available {} on other side, skipping".
+                          format(check_progress))
+                continue
+
+            self.sync_server.reset_provider_for_file(
                 self.model.project,
-                self.representation_id,
-                local_site,
-                True)
-            self.message_generated.emit("Site {} removed".format(local_site))
-        except ValueError as exp:
-            self.message_generated.emit("Error {}".format(str(exp)))
+                representation_id,
+                site_name=site_name,
+                force=True)
+
         self.model.refresh(
             load_records=self.model._rec_loaded)
 
-    def _reset_local_site(self):
-        """
-            Removes errors or success metadata for particular file >> forces
-            redo of upload/download
-        """
-        self.sync_server.reset_provider_for_file(
-            self.model.project,
-            self.representation_id,
-            'local')
-        self.model.refresh(
-            load_records=self.model._rec_loaded)
+    def _open_in_explorer(self, repre_ids=None, site_name=None):
+        log.debug("Open in Explorer {}:{}".format(repre_ids, site_name))
+        for representation_id in repre_ids:
+            item = self._get_item_by_repre_id(representation_id)
+            if not item:
+                return
 
-    def _reset_remote_site(self):
-        """
-            Removes errors or success metadata for particular file >> forces
-            redo of upload/download
-        """
-        self.sync_server.reset_provider_for_file(
-            self.model.project,
-            self.representation_id,
-            'remote')
-        self.model.refresh(
-            load_records=self.model._rec_loaded)
+            fpath = item.path
+            project = self.model.project
+            fpath = self.sync_server.get_local_file_path(project,
+                                                         site_name,
+                                                         fpath)
 
-    def _open_in_explorer(self, site):
-        if not self.item:
-            return
+            fpath = os.path.normpath(os.path.dirname(fpath))
+            if os.path.isdir(fpath):
+                if 'win' in sys.platform:  # windows
+                    subprocess.Popen('explorer "%s"' % fpath)
+                elif sys.platform == 'darwin':  # macOS
+                    subprocess.Popen(['open', fpath])
+                else:  # linux
+                    try:
+                        subprocess.Popen(['xdg-open', fpath])
+                    except OSError:
+                        raise OSError('unsupported xdg-open call??')
 
-        fpath = self.item.path
-        project = self.model.project
-        fpath = self.sync_server.get_local_file_path(project,
-                                                     site,
-                                                     fpath)
+    def _get_progress(self, item, site_name, opposite=False):
+        """Returns progress value according to site (side)"""
+        progress = {'local': item.local_progress,
+                    'remote': item.remote_progress}
+        side = 'remote'
+        if site_name == self.model.active_site:
+            side = 'local'
+        if opposite:
+            side = 'remote' if side == 'local' else 'local'
 
-        fpath = os.path.normpath(os.path.dirname(fpath))
-        if os.path.isdir(fpath):
-            if 'win' in sys.platform:  # windows
-                subprocess.Popen('explorer "%s"' % fpath)
-            elif sys.platform == 'darwin':  # macOS
-                subprocess.Popen(['open', fpath])
-            else:  # linux
-                try:
-                    subprocess.Popen(['xdg-open', fpath])
-                except OSError:
-                    raise OSError('unsupported xdg-open call??')
+        return progress[side]
+
+    def _get_item_by_repre_id(self, representation_id):
+        index = self.model.get_index(representation_id)
+        item = self.model.data(index, lib.FullItemRole)
+        return item
+
+    def _get_action_kwargs(self, site_name):
+        """Default format of kwargs for action"""
+        return {"repre_ids": self._selected_ids, "site_name": site_name}
 
     def _save_scrollbar(self):
         self._scrollbar_pos = self.table_view.verticalScrollBar().value()
@@ -599,7 +656,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
         menu = QtWidgets.QMenu()
         actions_mapping = {}
-        actions_kwargs_mapping = {}
+        action_kwarg_map = {}
 
         local_site = self.item.local_site
         local_progress = self.item.local_progress
@@ -619,7 +676,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
                 action = QtWidgets.QAction("Open in explorer" + txt)
                 if progress == 1:
                     actions_mapping[action] = self._open_in_explorer
-                    actions_kwargs_mapping[action] = {'site': site}
+                    action_kwarg_map[action] = {'site': site}
                     menu.addAction(action)
 
         if self.item.status == lib.STATUS[2]:
@@ -645,7 +702,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
             to_run = actions_mapping[result]
-            to_run_kwargs = actions_kwargs_mapping.get(result, {})
+            to_run_kwargs = action_kwarg_map.get(result, {})
             if to_run:
                 to_run(**to_run_kwargs)
 
