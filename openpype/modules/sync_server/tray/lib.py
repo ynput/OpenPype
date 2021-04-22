@@ -64,8 +64,11 @@ class PredefinedSetFilter(AbstractColumnFilter):
 
     def __init__(self, column_name, values):
         super().__init__(column_name)
-        self._search_variants = ['text', 'checkbox']
+        self._search_variants = ['checkbox']
         self._values = values
+        if self._values and \
+                list(self._values.keys())[0] == list(self._values.values())[0]:
+            self._search_variants.append('text')
 
     def values(self):
         return {k: v for k, v in self._values.items()}

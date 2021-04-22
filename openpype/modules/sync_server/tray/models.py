@@ -932,7 +932,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                     item.local_progress < 1
             if header_value == 'remote_site':
                 return item.status == lib.STATUS[2] and \
-                    item.remote_progress <1
+                    item.remote_progress < 1
 
         if role == Qt.DisplayRole:
             # because of ImageDelegate

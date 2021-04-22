@@ -165,13 +165,16 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         self.representation_id = None
         self.site_name = None  # to pause/unpause representation
 
-        self.filter = QtWidgets.QLineEdit()
-        self.filter.setPlaceholderText("Filter representations..")
+        self.txt_filter = QtWidgets.QLineEdit()
+        self.txt_filter.setPlaceholderText("Quick filter representations..")
+        self.txt_filter.setClearButtonEnabled(True)
+        self.txt_filter.addAction(qtawesome.icon("fa.filter", color="gray"),
+                                  QtWidgets.QLineEdit.LeadingPosition)
 
         self._scrollbar_pos = None
 
         top_bar_layout = QtWidgets.QHBoxLayout()
-        top_bar_layout.addWidget(self.filter)
+        top_bar_layout.addWidget(self.txt_filter)
 
         self.table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
@@ -202,8 +205,8 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
         layout.addWidget(self.table_view)
 
         self.table_view.doubleClicked.connect(self._double_clicked)
-        self.filter.textChanged.connect(lambda: model.set_word_filter(
-            self.filter.text()))
+        self.txt_filter.textChanged.connect(lambda: model.set_word_filter(
+            self.txt_filter.text()))
         self.table_view.customContextMenuRequested.connect(
             self._on_context_menu)
 
@@ -489,13 +492,16 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
         self._selected_id = None
 
-        self.filter = QtWidgets.QLineEdit()
-        self.filter.setPlaceholderText("Filter representation..")
+        self.txt_filter = QtWidgets.QLineEdit()
+        self.txt_filter.setPlaceholderText("Quick filter representation..")
+        self.txt_filter.setClearButtonEnabled(True)
+        self.txt_filter.addAction(qtawesome.icon("fa.filter", color="gray"),
+                                  QtWidgets.QLineEdit.LeadingPosition)
 
         self._scrollbar_pos = None
 
         top_bar_layout = QtWidgets.QHBoxLayout()
-        top_bar_layout.addWidget(self.filter)
+        top_bar_layout.addWidget(self.txt_filter)
 
         table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
@@ -542,8 +548,8 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
 
         self.table_view = table_view
 
-        self.filter.textChanged.connect(lambda: model.set_word_filter(
-            self.filter.text()))
+        self.txt_filter.textChanged.connect(lambda: model.set_word_filter(
+            self.txt_filter.text()))
         table_view.customContextMenuRequested.connect(self._on_context_menu)
 
         model.refresh_started.connect(self._save_scrollbar)
@@ -975,10 +981,10 @@ class HorizontalHeader(QtWidgets.QHeaderView):
                                 QtWidgets.QLineEdit.LeadingPosition)
 
             line_edit.setFixedHeight(line_edit.height())
-            txt = "Type..."
+            txt = ""
             if self.checked_values.get(column_name):
                 txt = list(self.checked_values.get(column_name).keys())[0]
-            line_edit.setPlaceholderText(txt)
+            line_edit.setText(txt)
 
             action_le = QtWidgets.QWidgetAction(menu)
             action_le.setDefaultWidget(line_edit)
