@@ -74,6 +74,8 @@ class ExtractRedshiftProxy(openpype.api.Extractor):
             'files': repr_files,
             "stagingDir": staging_dir,
         }
+        if anim_on:
+            representation["frameStart"] = instance.data["proxyFrameStart"]
         instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '%s' to: %s"

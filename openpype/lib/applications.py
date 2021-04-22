@@ -25,6 +25,7 @@ from . import (
     PypeLogger,
     Anatomy
 )
+from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
     get_workdir_with_workdir_data
@@ -262,13 +263,31 @@ class Application:
 
 
 class ApplicationManager:
-    def __init__(self):
-        self.log = PypeLogger().get_logger(self.__class__.__name__)
+    """Load applications and tools and store them by their full name.
+
+    Args:
+        system_settings (dict): Preloaded system settings. When passed manager
+            will always use these values. Gives ability to create manager
+            using different settings.
+    """
+    def __init__(self, system_settings=None):
+        self.log = PypeLogger.get_logger(self.__class__.__name__)
 
         self.app_groups = {}
         self.applications = {}
         self.tool_groups = {}
         self.tools = {}
+
+        self._system_settings = system_settings
+
+        self.refresh()
+
+    def set_system_settings(self, system_settings):
+        """Ability to change init system settings.
+
+        This will trigger refresh of manager.
+        """
+        self._system_settings = system_settings
 
         self.refresh()
 
@@ -279,9 +298,12 @@ class ApplicationManager:
         self.tool_groups.clear()
         self.tools.clear()
 
-        settings = get_system_settings(
-            clear_metadata=False, exclude_locals=False
-        )
+        if self._system_settings is not None:
+            settings = copy.deepcopy(self._system_settings)
+        else:
+            settings = get_system_settings(
+                clear_metadata=False, exclude_locals=False
+            )
 
         app_defs = settings["applications"]
         for group_name, variant_defs in app_defs.items():
@@ -1225,7 +1247,7 @@ def _prepare_last_workfile(data, workdir):
         file_template = anatomy.templates["work"]["file"]
         workdir_data.update({
             "version": 1,
-            "user": os.environ.get("OPENPYPE_USERNAME") or getpass.getuser(),
+            "user": get_openpype_username(),
             "ext": extensions[0]
         })
 

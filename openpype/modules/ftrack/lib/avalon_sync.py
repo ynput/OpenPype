@@ -14,17 +14,21 @@ else:
 from avalon.api import AvalonMongoDB
 
 import avalon
+
 from openpype.api import (
     Logger,
     Anatomy,
     get_anatomy_settings
 )
+from openpype.lib import ApplicationManager
+
+from .constants import CUST_ATTR_ID_KEY
+from .custom_attributes import get_openpype_attr
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from pymongo import UpdateOne
 import ftrack_api
-from openpype.lib import ApplicationManager
 
 log = Logger.get_logger(__name__)
 
@@ -35,23 +39,6 @@ EntitySchemas = {
     "asset": "openpype:asset-3.0",
     "config": "openpype:config-2.0"
 }
-
-# Group name of custom attributes
-CUST_ATTR_GROUP = "openpype"
-
-# name of Custom attribute that stores mongo_id from avalon db
-CUST_ATTR_ID_KEY = "avalon_mongo_id"
-CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
-
-
-def default_custom_attributes_definition():
-    json_file_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "custom_attributes.json"
-    )
-    with open(json_file_path, "r") as json_stream:
-        data = json.load(json_stream)
-    return data
 
 
 def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
@@ -89,39 +76,6 @@ def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
 
 def join_query_keys(keys):
     return ",".join(["\"{}\"".format(key) for key in keys])
-
-
-def get_pype_attr(session, split_hierarchical=True, query_keys=None):
-    custom_attributes = []
-    hier_custom_attributes = []
-    if not query_keys:
-        query_keys = [
-            "id",
-            "entity_type",
-            "object_type_id",
-            "is_hierarchical",
-            "default"
-        ]
-    # TODO remove deprecated "pype" group from query
-    cust_attrs_query = (
-        "select {}"
-        " from CustomAttributeConfiguration"
-        # Kept `pype` for Backwards Compatiblity
-        " where group.name in (\"pype\", \"{}\")"
-    ).format(", ".join(query_keys), CUST_ATTR_GROUP)
-    all_avalon_attr = session.query(cust_attrs_query).all()
-    for cust_attr in all_avalon_attr:
-        if split_hierarchical and cust_attr["is_hierarchical"]:
-            hier_custom_attributes.append(cust_attr)
-            continue
-
-        custom_attributes.append(cust_attr)
-
-    if split_hierarchical:
-        # return tuple
-        return custom_attributes, hier_custom_attributes
-
-    return custom_attributes
 
 
 def get_python_type_for_custom_attribute(cust_attr, cust_attr_type_name=None):
@@ -921,7 +875,7 @@ class SyncEntitiesFactory:
     def set_cutom_attributes(self):
         self.log.debug("* Preparing custom attributes")
         # Get custom attributes and values
-        custom_attrs, hier_attrs = get_pype_attr(
+        custom_attrs, hier_attrs = get_openpype_attr(
             self.session, query_keys=self.cust_attr_query_keys
         )
         ent_types = self.session.query("select id, name from ObjectType").all()
@@ -2508,7 +2462,7 @@ class SyncEntitiesFactory:
         if new_entity_id not in p_chilren:
             self.entities_dict[parent_id]["children"].append(new_entity_id)
 
-        cust_attr, _ = get_pype_attr(self.session)
+        cust_attr, _ = get_openpype_attr(self.session)
         for _attr in cust_attr:
             key = _attr["key"]
             if key not in av_entity["data"]:

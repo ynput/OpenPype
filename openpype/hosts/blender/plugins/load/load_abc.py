@@ -1,6 +1,5 @@
-"""Load a model asset in Blender."""
+"""Load an asset in Blender from an Alembic file."""
 
-import logging
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
@@ -10,62 +9,67 @@ import bpy
 import openpype.hosts.blender.api.plugin as plugin
 
 
-class BlendModelLoader(plugin.AssetLoader):
-    """Load models from a .blend file.
+class CacheModelLoader(plugin.AssetLoader):
+    """Load cache models.
 
-    Because they come from a .blend file we can simply link the collection that
-    contains the model. There is no further need to 'containerise' it.
+    Stores the imported asset in a collection named after the asset.
+
+    Note:
+        At least for now it only supports Alembic files.
     """
 
-    families = ["model"]
-    representations = ["blend"]
+    families = ["model", "pointcache"]
+    representations = ["abc"]
 
-    label = "Link Model"
+    label = "Link Alembic"
     icon = "code-fork"
     color = "orange"
 
     def _remove(self, objects, container):
         for obj in list(objects):
-            for material_slot in list(obj.material_slots):
-                bpy.data.materials.remove(material_slot.material)
-            bpy.data.meshes.remove(obj.data)
+            if obj.type == 'MESH':
+                bpy.data.meshes.remove(obj.data)
+            elif obj.type == 'EMPTY':
+                bpy.data.objects.remove(obj)
 
         bpy.data.collections.remove(container)
 
-    def _process(
-        self, libpath, lib_container, container_name,
-        parent_collection
-    ):
+    def _process(self, libpath, container_name, parent_collection):
+        bpy.ops.object.select_all(action='DESELECT')
+
+        view_layer = bpy.context.view_layer
+        view_layer_collection = view_layer.active_layer_collection.collection
+
         relative = bpy.context.preferences.filepaths.use_relative_paths
-        with bpy.data.libraries.load(
-            libpath, link=True, relative=relative
-        ) as (_, data_to):
-            data_to.collections = [lib_container]
+        bpy.ops.wm.alembic_import(
+            filepath=libpath,
+            relative_path=relative
+        )
 
         parent = parent_collection
 
         if parent is None:
             parent = bpy.context.scene.collection
 
-        parent.children.link(bpy.data.collections[lib_container])
+        model_container = bpy.data.collections.new(container_name)
+        parent.children.link(model_container)
+        for obj in bpy.context.selected_objects:
+            model_container.objects.link(obj)
+            view_layer_collection.objects.unlink(obj)
 
-        model_container = parent.children[lib_container].make_local()
-        model_container.name = container_name
+            name = obj.name
+            obj.name = f"{name}:{container_name}"
 
-        for obj in model_container.objects:
-            local_obj = plugin.prepare_data(obj, container_name)
-            plugin.prepare_data(local_obj.data, container_name)
-
-            for material_slot in local_obj.material_slots:
-                plugin.prepare_data(material_slot.material, container_name)
+            # Groups are imported as Empty objects in Blender
+            if obj.type == 'MESH':
+                data_name = obj.data.name
+                obj.data.name = f"{data_name}:{container_name}"
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
-                local_obj[blender.pipeline.AVALON_PROPERTY] = dict()
+                obj[blender.pipeline.AVALON_PROPERTY] = dict()
 
-            avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
+            avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
-
-        model_container.pop(blender.pipeline.AVALON_PROPERTY)
 
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -115,7 +119,7 @@ class BlendModelLoader(plugin.AssetLoader):
         container_metadata["lib_container"] = lib_container
 
         obj_container = self._process(
-            libpath, lib_container, container_name, None)
+            libpath, container_name, None)
 
         container_metadata["obj_container"] = obj_container
 
@@ -170,7 +174,6 @@ class BlendModelLoader(plugin.AssetLoader):
         collection_metadata = collection.get(
             blender.pipeline.AVALON_PROPERTY)
         collection_libpath = collection_metadata["libpath"]
-        lib_container = collection_metadata["lib_container"]
 
         obj_container = plugin.get_local_collection_with_name(
             collection_metadata["obj_container"].name
@@ -199,9 +202,8 @@ class BlendModelLoader(plugin.AssetLoader):
         self._remove(objects, obj_container)
 
         obj_container = self._process(
-            str(libpath), lib_container, container_name, parent)
+            str(libpath), container_name, parent)
 
-        # Save the list of objects in the metadata container
         collection_metadata["obj_container"] = obj_container
         collection_metadata["objects"] = obj_container.all_objects
         collection_metadata["libpath"] = str(libpath)

@@ -12,6 +12,7 @@ class AERenderInstance(RenderInstance):
     # extend generic, composition name is needed
     comp_name = attr.ib(default=None)
     comp_id = attr.ib(default=None)
+    fps = attr.ib(default=None)
 
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
@@ -45,6 +46,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 raise ValueError("Couldn't find id, unable to publish. " +
                                  "Please recreate instance.")
             item_id = inst["members"][0]
+
             work_area_info = self.stub.get_work_area(int(item_id))
 
             if not work_area_info:
@@ -57,6 +59,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
             frameEnd = round(work_area_info.workAreaStart +
                              float(work_area_info.workAreaDuration) *
                              float(work_area_info.frameRate)) - 1
+            fps = work_area_info.frameRate
+            # TODO add resolution when supported by extension
 
             if inst["family"] == "render" and inst["active"]:
                 instance = AERenderInstance(
@@ -86,7 +90,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     frameStart=frameStart,
                     frameEnd=frameEnd,
                     frameStep=1,
-                    toBeRenderedOn='deadline'
+                    toBeRenderedOn='deadline',
+                    fps=fps
                 )
 
                 comp = compositions_by_id.get(int(item_id))
@@ -102,7 +107,6 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
 
                 instances.append(instance)
 
-        self.log.debug("instances::{}".format(instances))
         return instances
 
     def get_expected_files(self, render_instance):

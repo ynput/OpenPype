@@ -79,6 +79,16 @@ from .avalon_context import (
     change_timer_to_current_context
 )
 
+from .local_settings import (
+    IniSettingRegistry,
+    JSONSettingRegistry,
+    OpenPypeSecureRegistry,
+    OpenPypeSettingsRegistry,
+    get_local_site_id,
+    change_openpype_mongo_url,
+    get_openpype_username
+)
+
 from .applications import (
     ApplicationLaunchFailed,
     ApplictionExecutableNotFound,
@@ -110,15 +120,6 @@ from .plugin_tools import (
     decompress,
     get_decompress_dir,
     should_decompress
-)
-
-from .local_settings import (
-    IniSettingRegistry,
-    JSONSettingRegistry,
-    OpenPypeSecureRegistry,
-    OpenPypeSettingsRegistry,
-    get_local_site_id,
-    change_openpype_mongo_url
 )
 
 from .path_tools import (
@@ -179,6 +180,14 @@ __all__ = [
 
     "change_timer_to_current_context",
 
+    "IniSettingRegistry",
+    "JSONSettingRegistry",
+    "OpenPypeSecureRegistry",
+    "OpenPypeSettingsRegistry",
+    "get_local_site_id",
+    "change_openpype_mongo_url",
+    "get_openpype_username",
+
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",
     "ApplicationNotFound",
@@ -223,13 +232,6 @@ __all__ = [
     "get_default_components",
     "validate_mongo_connection",
     "OpenPypeMongoConnection",
-
-    "IniSettingRegistry",
-    "JSONSettingRegistry",
-    "OpenPypeSecureRegistry",
-    "OpenPypeSettingsRegistry",
-    "get_local_site_id",
-    "change_openpype_mongo_url",
 
     "timeit",
 
