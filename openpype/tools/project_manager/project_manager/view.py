@@ -18,7 +18,11 @@ class HierarchyView(QtWidgets.QTreeView):
         "resolutionHeight": NumberDelegate
     }
     persistent_columns = [
-        "frameStart", "frameEnd", "fps", "resolutionWidth", "resolutionHeight"
+        "frameStart",
+        "frameEnd",
+        "fps",
+        "resolutionWidth",
+        "resolutionHeight"
     ]
 
     def __init__(self, source_model, *args, **kwargs):
