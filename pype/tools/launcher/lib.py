@@ -38,7 +38,7 @@ def get_application_actions(project):
     apps = []
     for app in project["config"]["apps"]:
         try:
-            app_name = app["name"]
+            app_name = app["name"].replace("/", "_")
             app_definition = lib.get_application(app_name)
         except Exception as exc:
             print("Unable to load application: %s - %s" % (app['name'], exc))

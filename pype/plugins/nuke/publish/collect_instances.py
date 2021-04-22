@@ -57,8 +57,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             if families_ak:
                 families.append(families_ak)
 
-            families.append(family)
-
             # except disabled nodes but exclude backdrops in test
             if ("nukenodes" not in family) and (node["disable"].value()):
                 continue
@@ -78,18 +76,16 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                     if target == "Use existing frames":
                         # Local rendering
                         self.log.info("flagged for no render")
-                        families.append("render")
                     elif target == "Local":
                         # Local rendering
                         self.log.info("flagged for local render")
-                        families.append("{}.local".format("render"))
+                        families.append("{}.local".format(family))
+                        family = "write"
                     elif target == "On farm":
                         # Farm rendering
                         self.log.info("flagged for farm render")
                         instance.data["transfer"] = False
-                        families.append("{}.farm".format("render"))
-                    if "render" in families:
-                        families.remove("render")
+                        families.append("{}.farm".format(family))
                         family = "write"
 
                 node.begin()
@@ -97,6 +93,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                     instance.append(i)
                 node.end()
 
+            self.log.debug("__ family: `{}`".format(family))
             self.log.debug("__ families: `{}`".format(families))
 
             # Get format

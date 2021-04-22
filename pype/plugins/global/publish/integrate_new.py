@@ -92,7 +92,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "harmony.palette",
                 "editorial",
                 "background",
-                "camerarig"
+                "camerarig",
+                "redshiftproxy"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
