@@ -348,6 +348,13 @@ class CollectLook(pyblish.api.InstancePlugin):
             history = []
             for material in materials:
                 history.extend(cmds.listHistory(material))
+
+            # handle VrayPluginNodeMtl node - see #1397
+            vray_plugin_nodes = cmds.ls(
+                history, type="VRayPluginNodeMtl", long=True)
+            for vray_node in vray_plugin_nodes:
+                history.extend(cmds.listHistory(vray_node))
+
             files = cmds.ls(history, type="file", long=True)
             files.extend(cmds.ls(history, type="aiImage", long=True))
 
