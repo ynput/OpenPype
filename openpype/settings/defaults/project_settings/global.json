@@ -50,8 +50,19 @@
                                 "enabled": false,
                                 "ratio": 0.0,
                                 "state": "letterbox",
-                                "thickness": "fill",
-                                "color": "black"
+                                "fill_color": [
+                                    0,
+                                    0,
+                                    0,
+                                    255
+                                ],
+                                "line_thickness": 0,
+                                "line_color": [
+                                    255,
+                                    0,
+                                    0,
+                                    255
+                                ]
                             }
                         }
                     }

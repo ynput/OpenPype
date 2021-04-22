@@ -239,16 +239,31 @@
                                                     ]
                                                 },
                                                 {
-                                                    "key": "thickness",
-                                                    "label": "Thickness",
-                                                    "type": "text",
-                                                    "default": "fill"
+                                                    "type": "schema_template",
+                                                    "name": "template_rgba_color",
+                                                    "template_data": [
+                                                        {
+                                                            "label": "Fill Color",
+                                                            "name": "fill_color"
+                                                        }
+                                                    ]
                                                 },
                                                 {
-                                                    "key": "color",
-                                                    "label": "Color",
-                                                    "type": "text",
-                                                    "default": "#000000"
+                                                    "key": "line_thickness",
+                                                    "label": "Line Thickness",
+                                                    "type": "number",
+                                                    "minimum": 0,
+                                                    "maximum": 1000
+                                                },
+                                                {
+                                                    "type": "schema_template",
+                                                    "name": "template_rgba_color",
+                                                    "template_data": [
+                                                        {
+                                                            "label": "Line Color",
+                                                            "name": "line_color"
+                                                        }
+                                                    ]
                                                 }
                                             ]
                                         }

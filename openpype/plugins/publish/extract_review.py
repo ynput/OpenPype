@@ -717,8 +717,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         ratio = letter_box_def["ratio"]
         state = letter_box_def["state"]
-        thickness = letter_box_def["thickness"]
-        color = letter_box_def["color"]
+        fill_color = letter_box_def["fill_color"]
+        f_red, f_green, f_blue, f_alpha = fill_color
+        fill_color_hex = "{0:0>2X}{1:0>2X}{2:0>2X}".format(
+            f_red, f_green, f_blue
+        )
+        fill_color_alpha = float(f_alpha) / 255
+
+        line_thickness = letter_box_def["line_thickness"]
+        line_color = letter_box_def["line_color"]
+        l_red, l_green, l_blue, l_alpha = line_color
+        line_color_hex = "{0:0>2X}{1:0>2X}{2:0>2X}".format(
+            l_red, l_green, l_blue
+        )
+        line_color_alpha = float(l_alpha) / 255
 
         if input_res_ratio == output_res_ratio:
             ratio /= pixel_aspect
@@ -728,28 +740,62 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ratio /= scale_factor_by_height
 
         if state == "letterbox":
-            top_box = (
-                "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t={}:c={}"
-            ).format(ratio, thickness, color)
+            if fill_color_alpha > 0:
+                top_box = (
+                    "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c={}@{}"
+                ).format(ratio, fill_color_hex, fill_color_alpha)
 
-            bottom_box = (
-                "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
-                ":iw:round((ih-(iw*(1/{0})))/2):t={1}:c={2}"
-            ).format(ratio, thickness, color)
+                bottom_box = (
+                    "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
+                    ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c={1}@{2}"
+                ).format(ratio, fill_color_hex, fill_color_alpha)
 
-            output.extend([top_box, bottom_box])
+                output.extend([top_box, bottom_box])
+
+            if line_color_alpha > 0 and line_thickness > 0:
+                top_line = (
+                    "drawbox=0:round((ih-(iw*(1/{0})))/2)-{1}:iw:{1}:"
+                    "t=fill:c={2}@{3}"
+                ).format(
+                    ratio, line_thickness, line_color_hex, line_color_alpha
+                )
+                bottom_line = (
+                    "drawbox=0:ih-round((ih-(iw*(1/{})))/2)"
+                    ":iw:{}:t=fill:c={}@{}"
+                ).format(
+                    ratio, line_thickness, line_color_hex, line_color_alpha
+                )
+                output.extend([top_line, bottom_line])
 
         elif state == "pillar":
-            right_box = (
-                "drawbox=0:0:round((iw-(ih*{}))/2):ih:t={}:c={}"
-            ).format(ratio, thickness, color)
+            if fill_color_alpha > 0:
+                left_box = (
+                    "drawbox=0:0:round((iw-(ih*{}))/2):ih:t=fill:c={}@{}"
+                ).format(ratio, fill_color_hex, fill_color_alpha)
 
-            left_box = (
-                "drawbox=(round(ih*{0})+round((iw-(ih*{0}))/2))"
-                ":0:round((iw-(ih*{0}))/2):ih:t={1}:c={2}"
-            ).format(ratio, thickness, color)
+                right_box = (
+                    "drawbox=iw-round((iw-(ih*{0}))/2))"
+                    ":0:round((iw-(ih*{0}))/2):ih:t=fill:c={1}@{2}"
+                ).format(ratio, fill_color_hex, fill_color_alpha)
 
-            output.extend([right_box, left_box])
+                output.extend([left_box, right_box])
+
+            if line_color_alpha > 0 and line_thickness > 0:
+                left_line = (
+                    "drawbox=round((iw-(ih*{}))/2):0:{}:ih:t=fill:c={}@{}"
+                ).format(
+                    ratio, line_thickness, line_color_hex, line_color_alpha
+                )
+
+                right_line = (
+                    "drawbox=iw-round((iw-(ih*{}))/2))"
+                    ":0:{}:ih:t=fill:c={}@{}"
+                ).format(
+                    ratio, line_thickness, line_color_hex, line_color_alpha
+                )
+
+                output.extend([left_line, right_line])
+
         else:
             raise ValueError(
                 "Letterbox state \"{}\" is not recognized".format(state)
