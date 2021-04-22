@@ -9,7 +9,6 @@ from openpype.modules import (
     ITrayModule,
     IPluginPaths,
     ITimersManager,
-    IUserModule,
     ILaunchHookPaths,
     ISettingsChangeListener
 )
@@ -34,7 +33,6 @@ class FtrackModule(
     ITrayModule,
     IPluginPaths,
     ITimersManager,
-    IUserModule,
     ILaunchHookPaths,
     ISettingsChangeListener
 ):
@@ -125,11 +123,6 @@ class FtrackModule(
         if self.tray_module:
             self.tray_module.stop_timer_manager()
 
-    def on_pype_user_change(self, username):
-        """Implementation of IUserModule interface."""
-        if self.tray_module:
-            self.tray_module.changed_user()
-
     def on_system_settings_save(
         self, old_value, new_value, changes, new_value_metadata
     ):
@@ -139,9 +132,8 @@ class FtrackModule(
         except Exception:
             self.log.warning("Couldn't create ftrack session.", exc_info=True)
             raise SaveWarningExc((
-                "Couldn't create Ftrack session."
-                " You may need to update applications"
-                " and tools in Ftrack custom attributes using defined action."
+                "Saving of attributes to ftrack wasn't successful,"
+                " try running Create/Update Avalon Attributes in ftrack."
             ))
 
         from .lib import (
@@ -209,8 +201,7 @@ class FtrackModule(
         if missing_attributes:
             raise SaveWarningExc((
                 "Couldn't find custom attribute/s ({}) to update."
-                " You may need to update applications"
-                " and tools in Ftrack custom attributes using defined action."
+                " Try running Create/Update Avalon Attributes in ftrack."
             ).format(", ".join(missing_attributes)))
 
     def on_project_settings_save(self, *_args, **_kwargs):
@@ -237,9 +228,8 @@ class FtrackModule(
         except Exception:
             self.log.warning("Couldn't create ftrack session.", exc_info=True)
             raise SaveWarningExc((
-                "Couldn't create Ftrack session."
-                " You may need to update applications"
-                " and tools in Ftrack custom attributes using defined action."
+                "Saving of attributes to ftrack wasn't successful,"
+                " try running Create/Update Avalon Attributes in ftrack."
             ))
 
         project_entity = session.query(
@@ -309,8 +299,8 @@ class FtrackModule(
 
         error_msg = (
             "Values were not updated on Ftrack which may cause issues."
-            " Try to update OpenPype custom attributes and resave"
-            " project settings."
+            " try running Create/Update Avalon Attributes in ftrack "
+            " and resave project settings."
         )
         if missing:
             error_msg += "\nMissing Custom attributes on Ftrack: {}.".format(

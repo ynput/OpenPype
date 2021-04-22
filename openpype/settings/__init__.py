@@ -6,7 +6,8 @@ from .lib import (
     get_project_settings,
     get_current_project_settings,
     get_anatomy_settings,
-    get_environments
+    get_environments,
+    get_local_settings
 )
 from .entities import (
     SystemSettings,
@@ -22,6 +23,7 @@ __all__ = (
     "get_current_project_settings",
     "get_anatomy_settings",
     "get_environments",
+    "get_local_settings",
 
     "SystemSettings",
     "ProjectSettings"
