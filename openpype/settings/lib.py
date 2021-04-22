@@ -119,6 +119,7 @@ def save_studio_settings(data):
     old_data = get_system_settings()
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
     new_data = apply_overrides(default_values, copy.deepcopy(data))
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
@@ -128,7 +129,9 @@ def save_studio_settings(data):
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
             try:
-                module.on_system_settings_save(old_data, new_data, changes)
+                module.on_system_settings_save(
+                    old_data, new_data, changes, new_data_with_metadata
+                )
             except SaveWarningExc as exc:
                 warnings.extend(exc.warnings)
 
@@ -173,6 +176,7 @@ def save_project_settings(project_name, overrides):
         old_data = get_default_project_settings(exclude_locals=True)
         new_data = apply_overrides(default_values, copy.deepcopy(overrides))
 
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
@@ -182,7 +186,11 @@ def save_project_settings(project_name, overrides):
         if isinstance(module, ISettingsChangeListener):
             try:
                 module.on_project_settings_save(
-                    old_data, new_data, project_name, changes
+                    old_data,
+                    new_data,
+                    project_name,
+                    changes,
+                    new_data_with_metadata
                 )
             except SaveWarningExc as exc:
                 warnings.extend(exc.warnings)
@@ -229,6 +237,7 @@ def save_project_anatomy(project_name, anatomy_data):
         old_data = get_default_anatomy_settings(exclude_locals=True)
         new_data = apply_overrides(default_values, copy.deepcopy(anatomy_data))
 
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
@@ -238,7 +247,11 @@ def save_project_anatomy(project_name, anatomy_data):
         if isinstance(module, ISettingsChangeListener):
             try:
                 module.on_project_anatomy_save(
-                    old_data, new_data, changes, project_name
+                    old_data,
+                    new_data,
+                    changes,
+                    project_name,
+                    new_data_with_metadata
                 )
             except SaveWarningExc as exc:
                 warnings.extend(exc.warnings)

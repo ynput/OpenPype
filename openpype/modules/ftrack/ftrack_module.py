@@ -130,7 +130,9 @@ class FtrackModule(
         if self.tray_module:
             self.tray_module.changed_user()
 
-    def on_system_settings_save(self, old_value, new_value, changes):
+    def on_system_settings_save(
+        self, old_value, new_value, changes, new_value_metadata
+    ):
         """Implementation of ISettingsChangeListener interface."""
         try:
             session = self.create_ftrack_session()
@@ -169,7 +171,7 @@ class FtrackModule(
             elif key == CUST_ATTR_TOOLS:
                 tool_attribute = custom_attribute
 
-        app_manager = ApplicationManager(new_value)
+        app_manager = ApplicationManager(new_value_metadata)
         missing_attributes = []
         if not app_attribute:
             missing_attributes.append(CUST_ATTR_APPLICATIONS)
@@ -217,7 +219,7 @@ class FtrackModule(
         return
 
     def on_project_anatomy_save(
-        self, old_value, new_value, changes, project_name
+        self, old_value, new_value, changes, project_name, new_value_metadata
     ):
         """Implementation of ISettingsChangeListener interface."""
         if not project_name:
