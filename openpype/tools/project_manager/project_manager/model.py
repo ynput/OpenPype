@@ -170,8 +170,19 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         new_child = AssetItem(data)
         return self.add_item(new_child, parent)
 
-    def add_new_task(self, parent):
-        pass
+    def add_new_task(self, source_index):
+        item_id = source_index.data(IDENTIFIER_ROLE)
+        item = self.items_by_id[item_id]
+
+        if not isinstance(item, AssetItem):
+            return None
+
+        name = "task"
+        parent = item.parent()
+
+        data = {"name": name}
+        new_child = TaskItem(data)
+        return self.add_item(new_child, parent)
 
     def add_new_item(self, parent):
         data = {"name": "Test {}".format(parent.childCount())}
