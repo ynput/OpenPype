@@ -80,7 +80,6 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
         general_widget = LocalGeneralWidgets(general_content)
         general_layout.addWidget(general_widget)
-        general_expand_widget.hide()
 
         self.main_layout.addWidget(general_expand_widget)
 
@@ -127,9 +126,9 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         self.system_settings.reset()
         self.project_settings.reset()
 
-        # self.general_widget.update_local_settings(
-        #     value.get(LOCAL_GENERAL_KEY)
-        # )
+        self.general_widget.update_local_settings(
+            value.get(LOCAL_GENERAL_KEY)
+        )
         self.app_widget.update_local_settings(
             value.get(LOCAL_APPS_KEY)
         )
@@ -139,9 +138,9 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
     def settings_value(self):
         output = {}
-        # general_value = self.general_widget.settings_value()
-        # if general_value:
-        #     output[LOCAL_GENERAL_KEY] = general_value
+        general_value = self.general_widget.settings_value()
+        if general_value:
+            output[LOCAL_GENERAL_KEY] = general_value
 
         app_value = self.app_widget.settings_value()
         if app_value:
