@@ -908,6 +908,9 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
     def data(self, index, role):
         item = self._data[index.row()]
 
+        if role == lib.FullItemRole:
+            return item
+
         header_value = self._header[index.column()]
         if role == lib.ProviderRole:
             if header_value == 'local_site':

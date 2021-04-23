@@ -129,6 +129,7 @@ class FilterDefinition:
     type = attr.ib()
     values = attr.ib(factory=list)
 
+
 def pretty_size(value, suffix='B'):
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
         if abs(value) < 1024.0:
@@ -157,3 +158,9 @@ def translate_provider_for_icon(sync_server, project, site):
     if site == sync_server.DEFAULT_SITE:
         return sync_server.DEFAULT_SITE
     return sync_server.get_provider_for_site(project, site)
+
+
+def get_item_by_id(model, object_id):
+    index = model.get_index(object_id)
+    item = model.data(index, FullItemRole)
+    return item
