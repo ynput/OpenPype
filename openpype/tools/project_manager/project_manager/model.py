@@ -9,7 +9,7 @@ from .constants import (
 
 from avalon.api import AvalonMongoDB
 
-from Qt import QtWidgets, QtCore
+from Qt import QtCore
 
 
 class HierarchySelectionModel(QtCore.QItemSelectionModel):
@@ -64,7 +64,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             parent_item = self._root_item
         else:
             parent_item = parent.internalPointer()
-        return parent_item.childCount()
+        return parent_item.rowCount()
 
     def columnCount(self, *args, **kwargs):
         return len(self.columns)
@@ -168,7 +168,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return self.add_item(new_child, parent)
 
     def add_new_item(self, parent):
-        data = {"name": "Test {}".format(parent.childCount())}
+        data = {"name": "Test {}".format(parent.rowCount())}
         new_child = AssetItem(data)
 
         return self.add_item(new_child, parent)
@@ -177,7 +177,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if parent is None:
             parent = self._root_item
 
-        idx = parent.childCount()
+        idx = parent.rowCount()
 
         parent_index = self.index_from_item(parent.row(), 0, parent.parent())
         self.beginInsertRows(parent_index, idx, idx)
@@ -216,7 +216,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         todo_queue.put(item)
         while not todo_queue.empty():
             _item = todo_queue.get()
-            for row in range(_item.childCount()):
+            for row in range(_item.rowCount()):
                 child_item = _item.child(row)
                 all_descendants[_item.id][child_item.id] = child_item
                 todo_queue.put(child_item)
@@ -273,7 +273,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         # Move under parent before or after if before is None
         elif direction == 1:
-            if src_parent.childCount() == 1:
+            if src_parent.rowCount() == 1:
                 return
 
             if item.row() == 0:
@@ -281,7 +281,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             else:
                 parent_row = item.row() - 1
             dst_parent = src_parent.child(parent_row)
-            dst_row = dst_parent.childCount()
+            dst_row = dst_parent.rowCount()
 
         if src_parent is dst_parent:
             return
@@ -329,7 +329,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         _destination_row = None
         # Down
         if direction == 1:
-            if source_row < src_parent.childCount() - 1:
+            if source_row < src_parent.rowCount() - 1:
                 dst_parent_index = src_parent_index
                 dst_parent = src_parent
                 destination_row = source_row + 1
@@ -361,7 +361,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 if not previous_parent:
                     return
                 dst_parent = previous_parent
-                destination_row = previous_parent.childCount()
+                destination_row = previous_parent.rowCount()
 
         if dst_parent_index is None:
             dst_parent_index = self.index_from_item(
@@ -468,11 +468,11 @@ class BaseItem:
     def id(self):
         return self._id
 
-    def childCount(self):
+    def rowCount(self):
         return len(self._children)
 
     def child(self, row):
-        if -1 < row < self.childCount():
+        if -1 < row < self.rowCount():
             return self._children[row]
         return None
 
