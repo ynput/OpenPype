@@ -25,6 +25,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         for track_item in selected_timeline_items:
 
             data = dict()
+            clip_name = track_item.name()
 
             # get openpype tag data
             tag_data = phiero.get_track_item_pype_data(track_item)
@@ -50,8 +51,16 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             families = [str(f) for f in tag_data["families"]]
             families.insert(0, str(family))
 
+            # form label
+            label = asset
+            if asset != clip_name:
+                label += " ({})".format(clip_name)
+            label += " {}".format(subset)
+            label += " {}".format("[" + ", ".join(families) + "]")
+
             data.update({
-                "name": "{} {} {}".format(asset, subset, families),
+                "name": "{}_{}".format(asset, subset),
+                "label": label,
                 "asset": asset,
                 "item": track_item,
                 "families": families,
@@ -107,6 +116,9 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
     def create_shot_instance(self, context, **data):
         master_layer = data.get("heroTrack")
         hierarchy_data = data.get("hierarchyData")
+        asset = data.get("asset")
+        item = data.get("item")
+        clip_name = item.name()
 
         if not master_layer:
             return
@@ -120,8 +132,16 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         # insert family into families
         family = "shot"
 
+        # form label
+        label = asset
+        if asset != clip_name:
+            label += " ({}) ".format(clip_name)
+        label += " {}".format(subset)
+        label += " [{}]".format(family)
+
         data.update({
-            "name": "{} {} {}".format(asset, subset, family),
+            "name": "{}_{}".format(asset, subset),
+            "label": label,
             "subset": subset,
             "asset": asset,
             "family": family,
