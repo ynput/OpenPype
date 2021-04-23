@@ -174,7 +174,7 @@ if command -v create-dmg > /dev/null 2>&1; then
       --app-drop-link 100 50 \
       "$openpype_root/build/OpenPype-Installer.dmg" \
       "$openpype_root/build/OpenPype.app"
-  elseß
+  else
     echo create-dmg command is not availableg
   fi
 
