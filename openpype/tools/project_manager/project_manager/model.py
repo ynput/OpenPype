@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from .constants import (
     IDENTIFIER_ROLE,
-    COLUMNS_ROLE
+    DUPLICATED_ROLE
 )
 
 from avalon.api import AvalonMongoDB
@@ -39,6 +39,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         super(HierarchyModel, self).__init__(parent)
         self._root_item = None
         self._items_by_id = {}
+        self._asset_items_by_name = collections.defaultdict(list)
         self.dbcon = AvalonMongoDB()
 
         self._hierarchy_mode = True
@@ -87,6 +88,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         item = index.internalPointer()
         column = index.column()
         key = self.columns[column]
+        if (
+            key == "name"
+            and role in (QtCore.Qt.EditRole, QtCore.Qt.DisplayRole)
+        ):
+            self._rename_asset(item, value)
+
         result = item.setData(key, value, role)
         if result:
             self.dataChanged.emit(index, index, [role])
@@ -154,8 +161,13 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         data = {"name": name}
         new_child = AssetItem(data)
+        self._asset_items_by_name[name].append(new_child)
 
-        return self.add_item(new_child, parent, new_row)
+        result = self.add_item(new_child, parent, new_row)
+
+        self._validate_asset_duplicity(name)
+
+        return result
 
     def add_new_task(self, parent_index):
         item_id = parent_index.data(IDENTIFIER_ROLE)
@@ -171,12 +183,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         data = {"name": "task"}
         new_child = TaskItem(data)
-        return self.add_item(new_child, parent)
-
-    def add_new_item(self, parent):
-        data = {"name": "Test {}".format(parent.rowCount())}
-        new_child = AssetItem(data)
-
         return self.add_item(new_child, parent)
 
     def add_item(self, item, parent=None, row=None):
@@ -240,11 +246,45 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                     if child_id in all_descendants:
                         continue
 
+                    if isinstance(child_item, AssetItem):
+                        self._rename_asset(child_item, None)
                     children.pop(child_id)
                     child_item.set_parent(None)
                     self._items_by_id.pop(child_id)
 
         self.endRemoveRows()
+
+    def _rename_asset(self, asset_item, new_name):
+        if not isinstance(asset_item, AssetItem):
+            return
+
+        prev_name = asset_item.data("name", QtCore.Qt.DisplayRole)
+        print(prev_name)
+        self._asset_items_by_name[prev_name].remove(asset_item)
+
+        self._validate_asset_duplicity(prev_name)
+
+        if new_name is None:
+            return
+        self._asset_items_by_name[new_name].append(asset_item)
+
+        self._validate_asset_duplicity(new_name)
+
+    def _validate_asset_duplicity(self, name):
+        if name not in self._asset_items_by_name:
+            return
+
+        items = self._asset_items_by_name[name]
+        if not items:
+            self._asset_items_by_name.pop(name)
+
+        elif len(items) == 1:
+            index = self.index_for_item(items[0])
+            self.setData(index, False, DUPLICATED_ROLE)
+        else:
+            for item in items:
+                index = self.index_for_item(item)
+                self.setData(index, True, DUPLICATED_ROLE)
 
     def move_vertical(self, index, direction):
         if not index.isValid():
@@ -455,9 +495,6 @@ class BaseItem:
     def data(self, key, role):
         if role == IDENTIFIER_ROLE:
             return self._id
-
-        if role == COLUMNS_ROLE:
-            return self.columns
 
         if key not in self.columns:
             return None
