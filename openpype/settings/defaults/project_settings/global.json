@@ -26,11 +26,11 @@
                                 "ftrackreview"
                             ],
                             "ffmpeg_args": {
-                                "video_filters": [],
-                                "audio_filters": [],
-                                "input": [
-                                    "-gamma 2.2"
+                                "video_filters": [
+                                    "eq=gamma=2.2"
                                 ],
+                                "audio_filters": [],
+                                "input": [],
                                 "output": [
                                     "-pix_fmt yuv420p",
                                     "-crf 18",
