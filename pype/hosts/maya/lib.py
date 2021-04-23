@@ -1887,6 +1887,15 @@ def set_context_settings():
     # Set frame range.
     avalon.maya.interactive.reset_frame_range()
 
+    # Set pixel aspect.
+    key = "pixelAspect"
+    pixel_aspect = asset_data.get(key, project_data.get(key, 1.0))
+    cmds.setAttr(
+        "defaultResolution.deviceAspectRatio",
+        (float(width) / height) / pixel_aspect
+    )
+    log.info("Setting scene pixel aspect to: {}".format(pixel_aspect))
+
 
 # Valid FPS
 def validate_fps():
