@@ -32,7 +32,7 @@ class InstallPySideToBlender(PreLaunchHook):
 
     def inner_execute(self):
         # Get blender's python directory
-        version_regex = re.compile("^2\.[0-9]{2}$")
+        version_regex = re.compile(r"^2\.[0-9]{2}$")
 
         executable = self.launch_context.executable.executable_path
         if os.path.basename(executable).lower() != "blender.exe":
@@ -102,6 +102,7 @@ class InstallPySideToBlender(PreLaunchHook):
 
         # Check if PySide2 is installed and skip if yes
         if self.is_pyside_installed(python_executable):
+            self.log.debug("Blender has already installed PySide2.")
             return
 
         # Install PySide2 in blender's python
