@@ -310,8 +310,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
                 self.sync_server.add_site(
                     self.model.project,
                     representation_id,
-                    site_name
-                    )
+                    site_name)
                 self.message_generated.emit(
                     "Site {} added for {}".format(site_name,
                                                   representation_id))
@@ -444,7 +443,8 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         txt_filter = QtWidgets.QLineEdit()
         txt_filter.setPlaceholderText("Quick filter representations..")
         txt_filter.setClearButtonEnabled(True)
-        txt_filter.addAction(qtawesome.icon("fa.filter", color="gray"),
+        txt_filter.addAction(
+            qtawesome.icon("fa.filter", color="gray"),
             QtWidgets.QLineEdit.LeadingPosition)
         self.txt_filter = txt_filter
 
@@ -504,7 +504,6 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
 
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
-
 
     def _prepare_menu(self, item, is_multi):
         action_kwarg_map, actions_mapping, menu = \
@@ -683,7 +682,7 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
             menu.addAction(action)
 
         return action_kwarg_map, actions_mapping, menu
-    
+
     def _reset_site(self, selected_ids=None, site_name=None):
         """
             Removes errors or success metadata for particular file >> forces
