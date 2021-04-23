@@ -143,28 +143,33 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         item_id = source_index.data(IDENTIFIER_ROLE)
         item = self.items_by_id[item_id]
 
+        new_row = None
         if isinstance(item, (RootItem, ProjectItem)):
             name = "eq"
             parent = item
         else:
             name = source_index.data(QtCore.Qt.DisplayRole)
             parent = item.parent()
+            new_row = item.row() + 1
 
         data = {"name": name}
         new_child = AssetItem(data)
-        return self.add_item(new_child, parent)
 
-    def add_new_task(self, source_index):
-        item_id = source_index.data(IDENTIFIER_ROLE)
+        return self.add_item(new_child, parent, new_row)
+
+    def add_new_task(self, parent_index):
+        item_id = parent_index.data(IDENTIFIER_ROLE)
         item = self.items_by_id[item_id]
 
-        if not isinstance(item, AssetItem):
+        if isinstance(item, TaskItem):
+            parent = item.parent()
+        else:
+            parent = item
+
+        if not isinstance(parent, AssetItem):
             return None
 
-        name = "task"
-        parent = item.parent()
-
-        data = {"name": name}
+        data = {"name": "task"}
         new_child = TaskItem(data)
         return self.add_item(new_child, parent)
 
@@ -174,28 +179,29 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         return self.add_item(new_child, parent)
 
-    def add_item(self, item, parent=None):
+    def add_item(self, item, parent=None, row=None):
         if parent is None:
             parent = self._root_item
 
-        idx = parent.rowCount()
+        if row is None:
+            row = parent.rowCount()
 
         parent_index = self.index_from_item(parent.row(), 0, parent.parent())
-        self.beginInsertRows(parent_index, idx, idx)
+        self.beginInsertRows(parent_index, row, row)
 
         if item.parent() is not parent:
             item.set_parent(parent)
 
-        parent.add_child(item)
+        parent.add_child(item, row)
 
         if item.id not in self._items_by_id:
             self._items_by_id[item.id] = item
 
         self.endInsertRows()
 
-        self.rowsInserted.emit(parent_index, idx, idx)
+        self.rowsInserted.emit(parent_index, row, row)
 
-        return self.index_from_item(idx, 0, parent)
+        return self.index_from_item(row, 0, parent)
 
     def remove_index(self, index):
         if not index.isValid():
