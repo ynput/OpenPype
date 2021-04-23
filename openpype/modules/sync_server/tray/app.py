@@ -7,7 +7,7 @@ from openpype import resources
 
 from openpype.modules.sync_server.tray.widgets import (
     SyncProjectListWidget,
-    SyncRepresentationWidget
+    SyncRepresentationSummaryWidget
 )
 
 log = PypeLogger().get_logger("SyncServer")
@@ -47,7 +47,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         left_column_layout.addWidget(self.pause_btn)
         left_column.setLayout(left_column_layout)
 
-        repres = SyncRepresentationWidget(
+        repres = SyncRepresentationSummaryWidget(
             sync_server,
             project=self.projects.current_project,
             parent=self)

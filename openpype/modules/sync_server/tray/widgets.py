@@ -135,13 +135,290 @@ class SyncProjectListWidget(ProjectListWidget):
         self.refresh()
 
 
-class SyncRepresentationWidget(QtWidgets.QWidget):
+class _SyncRepresentationWidget(QtWidgets.QWidget):
     """
         Summary dialog with list of representations that matches current
         settings 'local_site' and 'remote_site'.
     """
     active_changed = QtCore.Signal()  # active index changed
     message_generated = QtCore.Signal(str)
+
+    def _selection_changed(self, _new_selected, _all_selected):
+        idxs = self.selection_model.selectedRows()
+        self._selected_ids = []
+
+        for index in idxs:
+            self._selected_ids.append(self.model.data(index, Qt.UserRole))
+
+    def _set_selection(self):
+        """
+            Sets selection to 'self._selected_id' if exists.
+
+            Keep selection during model refresh.
+        """
+        existing_ids = []
+        for selected_id in self._selected_ids:
+            index = self.model.get_index(selected_id)
+            if index and index.isValid():
+                mode = QtCore.QItemSelectionModel.Select | \
+                    QtCore.QItemSelectionModel.Rows
+                self.selection_model.select(index, mode)
+                existing_ids.append(selected_id)
+
+        self._selected_ids = existing_ids
+
+    def _double_clicked(self, index):
+        """
+            Opens representation dialog with all files after doubleclick
+        """
+        _id = self.model.data(index, Qt.UserRole)
+        detail_window = SyncServerDetailWindow(
+            self.sync_server, _id, self.model.project)
+        detail_window.exec()
+        
+    def _on_context_menu(self, point):
+        """
+            Shows menu with loader actions on Right-click.
+
+            Supports multiple selects - adds all available actions, each
+            action handles if it appropriate for item itself, if not it skips.
+        """
+        is_multi = len(self._selected_ids) > 1
+        point_index = self.table_view.indexAt(point)
+        if not point_index.isValid() and not is_multi:
+            return
+
+        if is_multi:
+            index = self.model.get_index(self._selected_ids[0])
+            item = self.model.data(index, lib.FullItemRole)
+        else:
+            item = self.model.data(point_index, lib.FullItemRole)
+
+        action_kwarg_map, actions_mapping, menu = self._prepare_menu(item,
+                                                                     is_multi)
+
+        result = menu.exec_(QtGui.QCursor.pos())
+        if result:
+            to_run = actions_mapping[result]
+            to_run_kwargs = action_kwarg_map.get(result, {})
+            if to_run:
+                to_run(**to_run_kwargs)
+
+        self.model.refresh()
+
+    def _prepare_menu(self, item, is_multi):
+        menu = QtWidgets.QMenu()
+
+        actions_mapping = {}
+        action_kwarg_map = {}
+
+        active_site = self.model.active_site
+        remote_site = self.model.remote_site
+
+        local_progress = item.local_progress
+        remote_progress = item.remote_progress
+
+        project = self.model.project
+
+        for site, progress in {active_site: local_progress,
+                               remote_site: remote_progress}.items():
+            provider = self.sync_server.get_provider_for_site(project, site)
+            if provider == 'local_drive':
+                if 'studio' in site:
+                    txt = " studio version"
+                else:
+                    txt = " local version"
+                action = QtWidgets.QAction("Open in explorer" + txt)
+                if progress == 1.0 or is_multi:
+                    actions_mapping[action] = self._open_in_explorer
+                    action_kwarg_map[action] = \
+                        self._get_action_kwargs(site)
+                    menu.addAction(action)
+
+        if remote_progress == 1.0 or is_multi:
+            action = QtWidgets.QAction("Re-sync Active site")
+            action_kwarg_map[action] = self._get_action_kwargs(active_site)
+            actions_mapping[action] = self._reset_site
+            menu.addAction(action)
+
+        if local_progress == 1.0 or is_multi:
+            action = QtWidgets.QAction("Re-sync Remote site")
+            action_kwarg_map[action] = self._get_action_kwargs(remote_site)
+            actions_mapping[action] = self._reset_site
+            menu.addAction(action)
+
+        if active_site == get_local_site_id():
+            action = QtWidgets.QAction("Completely remove from local")
+            action_kwarg_map[action] = self._get_action_kwargs(active_site)
+            actions_mapping[action] = self._remove_site
+            menu.addAction(action)
+
+        # # temp for testing only !!!
+        # action = QtWidgets.QAction("Download")
+        # action_kwarg_map[action] = self._get_action_kwargs(active_site)
+        # actions_mapping[action] = self._add_site
+        # menu.addAction(action)
+
+        if not actions_mapping:
+            action = QtWidgets.QAction("< No action >")
+            actions_mapping[action] = None
+            menu.addAction(action)
+
+        return action_kwarg_map, actions_mapping, menu
+
+    def _pause(self, selected_ids=None):
+        log.debug("Pause {}".format(selected_ids))
+        for representation_id in selected_ids:
+            item = lib.get_item_by_id(self.model, representation_id)
+            if item.status not in [lib.STATUS[0], lib.STATUS[1]]:
+                continue
+            for site_name in [self.model.active_site, self.model.remote_site]:
+                check_progress = self._get_progress(item, site_name)
+                if check_progress < 1:
+                    self.sync_server.pause_representation(self.model.project,
+                                                          representation_id,
+                                                          site_name)
+
+            self.message_generated.emit("Paused {}".format(representation_id))
+
+    def _unpause(self, selected_ids=None):
+        log.debug("UnPause {}".format(selected_ids))
+        for representation_id in selected_ids:
+            item = lib.get_item_by_id(self.model, representation_id)
+            if item.status not in lib.STATUS[3]:
+                continue
+            for site_name in [self.model.active_site, self.model.remote_site]:
+                check_progress = self._get_progress(item, site_name)
+                if check_progress < 1:
+                    self.sync_server.unpause_representation(
+                        self.model.project,
+                        representation_id,
+                        site_name)
+
+            self.message_generated.emit("Unpause {}".format(representation_id))
+
+    # temporary here for testing, will be removed TODO
+    def _add_site(self, selected_ids=None, site_name=None):
+        log.debug("Add site {}:{}".format(selected_ids, site_name))
+        for representation_id in selected_ids:
+            item = lib.get_item_by_id(self.model, representation_id)
+            if item.local_site == site_name or item.remote_site == site_name:
+                # site already exists skip
+                continue
+
+            try:
+                self.sync_server.add_site(
+                    self.model.project,
+                    representation_id,
+                    site_name)
+                self.message_generated.emit(
+                    "Site {} added for {}".format(site_name,
+                                                  representation_id))
+            except ValueError as exp:
+                self.message_generated.emit("Error {}".format(str(exp)))
+
+    def _remove_site(self, selected_ids=None, site_name=None):
+        """
+            Removes site record AND files.
+
+            This is ONLY for representations stored on local site, which
+            cannot be same as SyncServer.DEFAULT_SITE.
+
+            This could only happen when artist work on local machine, not
+            connected to studio mounted drives.
+        """
+        log.debug("Remove site {}:{}".format(selected_ids, site_name))
+        for representation_id in selected_ids:
+            log.info("Removing {}".format(representation_id))
+            try:
+                self.sync_server.remove_site(
+                    self.model.project,
+                    representation_id,
+                    site_name,
+                    True)
+                self.message_generated.emit(
+                    "Site {} removed".format(site_name))
+            except ValueError as exp:
+                self.message_generated.emit("Error {}".format(str(exp)))
+
+        self.model.refresh(
+            load_records=self.model._rec_loaded)
+
+    def _reset_site(self, selected_ids=None, site_name=None):
+        """
+            Removes errors or success metadata for particular file >> forces
+            redo of upload/download
+        """
+        log.debug("Reset site {}:{}".format(selected_ids, site_name))
+        for representation_id in selected_ids:
+            item = lib.get_item_by_id(self.model, representation_id)
+            check_progress = self._get_progress(item, site_name, True)
+
+            # do not reset if opposite side is not fully there
+            if check_progress != 1:
+                log.debug("Not fully available {} on other side, skipping".
+                          format(check_progress))
+                continue
+
+            self.sync_server.reset_provider_for_file(
+                self.model.project,
+                representation_id,
+                site_name=site_name,
+                force=True)
+
+        self.model.refresh(
+            load_records=self.model._rec_loaded)
+
+    def _open_in_explorer(self, selected_ids=None, site_name=None):
+        log.debug("Open in Explorer {}:{}".format(selected_ids, site_name))
+        for selected_id in selected_ids:
+            item = lib.get_item_by_id(self.model, selected_id)
+            if not item:
+                return
+
+            fpath = item.path
+            project = self.model.project
+            fpath = self.sync_server.get_local_file_path(project,
+                                                         site_name,
+                                                         fpath)
+
+            fpath = os.path.normpath(os.path.dirname(fpath))
+            if os.path.isdir(fpath):
+                if 'win' in sys.platform:  # windows
+                    subprocess.Popen('explorer "%s"' % fpath)
+                elif sys.platform == 'darwin':  # macOS
+                    subprocess.Popen(['open', fpath])
+                else:  # linux
+                    try:
+                        subprocess.Popen(['xdg-open', fpath])
+                    except OSError:
+                        raise OSError('unsupported xdg-open call??')
+
+    def _get_progress(self, item, site_name, opposite=False):
+        """Returns progress value according to site (side)"""
+        progress = {'local': item.local_progress,
+                    'remote': item.remote_progress}
+        side = 'remote'
+        if site_name == self.model.active_site:
+            side = 'local'
+        if opposite:
+            side = 'remote' if side == 'local' else 'local'
+
+        return progress[side]
+
+    def _get_action_kwargs(self, site_name):
+        """Default format of kwargs for action"""
+        return {"selected_ids": self._selected_ids, "site_name": site_name}
+
+    def _save_scrollbar(self):
+        self._scrollbar_pos = self.table_view.verticalScrollBar().value()
+
+    def _set_scrollbar(self):
+        if self._scrollbar_pos:
+            self.table_view.verticalScrollBar().setValue(self._scrollbar_pos)
+
+
+class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
 
     default_widths = (
         ("asset", 190),
@@ -157,310 +434,139 @@ class SyncRepresentationWidget(QtWidgets.QWidget):
     )
 
     def __init__(self, sync_server, project=None, parent=None):
-        super(SyncRepresentationWidget, self).__init__(parent)
+        super(SyncRepresentationSummaryWidget, self).__init__(parent)
 
         self.sync_server = sync_server
 
-        self._selected_id = None  # keep last selected _id
-        self.representation_id = None
-        self.site_name = None  # to pause/unpause representation
+        self._selected_ids = []  # keep last selected _id
 
-        self.txt_filter = QtWidgets.QLineEdit()
-        self.txt_filter.setPlaceholderText("Quick filter representations..")
-        self.txt_filter.setClearButtonEnabled(True)
-        self.txt_filter.addAction(qtawesome.icon("fa.filter", color="gray"),
-                                  QtWidgets.QLineEdit.LeadingPosition)
+        txt_filter = QtWidgets.QLineEdit()
+        txt_filter.setPlaceholderText("Quick filter representations..")
+        txt_filter.setClearButtonEnabled(True)
+        txt_filter.addAction(
+            qtawesome.icon("fa.filter", color="gray"),
+            QtWidgets.QLineEdit.LeadingPosition)
+        self.txt_filter = txt_filter
 
         self._scrollbar_pos = None
 
         top_bar_layout = QtWidgets.QHBoxLayout()
         top_bar_layout.addWidget(self.txt_filter)
 
-        self.table_view = QtWidgets.QTableView()
+        table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
 
         model = SyncRepresentationSummaryModel(sync_server, headers, project)
-        self.table_view.setModel(model)
-        self.table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.table_view.setSelectionMode(
-            QtWidgets.QAbstractItemView.SingleSelection)
-        self.table_view.setSelectionBehavior(
+        table_view.setModel(model)
+        table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        table_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection)
+        table_view.setSelectionBehavior(
             QtWidgets.QAbstractItemView.SelectRows)
-        self.table_view.horizontalHeader().setSortIndicator(
+        table_view.horizontalHeader().setSortIndicator(
             -1, Qt.AscendingOrder)
-        self.table_view.setAlternatingRowColors(True)
-        self.table_view.verticalHeader().hide()
+        table_view.setAlternatingRowColors(True)
+        table_view.verticalHeader().hide()
 
-        column = self.table_view.model().get_header_index("local_site")
+        column = table_view.model().get_header_index("local_site")
         delegate = ImageDelegate(self)
-        self.table_view.setItemDelegateForColumn(column, delegate)
+        table_view.setItemDelegateForColumn(column, delegate)
 
-        column = self.table_view.model().get_header_index("remote_site")
+        column = table_view.model().get_header_index("remote_site")
         delegate = ImageDelegate(self)
-        self.table_view.setItemDelegateForColumn(column, delegate)
+        table_view.setItemDelegateForColumn(column, delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(top_bar_layout)
-        layout.addWidget(self.table_view)
+        layout.addWidget(table_view)
 
-        self.table_view.doubleClicked.connect(self._double_clicked)
+        self.table_view = table_view
+        self.model = model
+
+        horizontal_header = HorizontalHeader(self)
+
+        table_view.setHorizontalHeader(horizontal_header)
+        table_view.setSortingEnabled(True)
+
+        for column_name, width in self.default_widths:
+            idx = model.get_header_index(column_name)
+            table_view.setColumnWidth(idx, width)
+
+        table_view.doubleClicked.connect(self._double_clicked)
         self.txt_filter.textChanged.connect(lambda: model.set_word_filter(
             self.txt_filter.text()))
-        self.table_view.customContextMenuRequested.connect(
-            self._on_context_menu)
+        table_view.customContextMenuRequested.connect(self._on_context_menu)
 
         model.refresh_started.connect(self._save_scrollbar)
         model.refresh_finished.connect(self._set_scrollbar)
         model.modelReset.connect(self._set_selection)
 
-        self.model = model
-
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
 
-        horizontal_header = HorizontalHeader(self)
+    def _prepare_menu(self, item, is_multi):
+        action_kwarg_map, actions_mapping, menu = \
+            super()._prepare_menu(item, is_multi)
 
-        self.table_view.setHorizontalHeader(horizontal_header)
-        self.table_view.setSortingEnabled(True)
-
-        for column_name, width in self.default_widths:
-            idx = model.get_header_index(column_name)
-            self.table_view.setColumnWidth(idx, width)
-
-    def _selection_changed(self, _new_selection):
-        index = self.selection_model.currentIndex()
-        self._selected_id = \
-            self.model.data(index, Qt.UserRole)
-
-    def _set_selection(self):
-        """
-            Sets selection to 'self._selected_id' if exists.
-
-            Keep selection during model refresh.
-        """
-        if self._selected_id:
-            index = self.model.get_index(self._selected_id)
-            if index and index.isValid():
-                mode = QtCore.QItemSelectionModel.Select | \
-                    QtCore.QItemSelectionModel.Rows
-                self.selection_model.setCurrentIndex(index, mode)
-            else:
-                self._selected_id = None
-
-    def _double_clicked(self, index):
-        """
-            Opens representation dialog with all files after doubleclick
-        """
-        _id = self.model.data(index, Qt.UserRole)
-        detail_window = SyncServerDetailWindow(
-            self.sync_server, _id, self.model.project)
-        detail_window.exec()
-
-    def _on_context_menu(self, point):
-        """
-            Shows menu with loader actions on Right-click.
-        """
-        point_index = self.table_view.indexAt(point)
-        if not point_index.isValid():
-            return
-
-        self.item = self.model._data[point_index.row()]
-        self.representation_id = self.item._id
-        log.debug("menu representation _id:: {}".
-                  format(self.representation_id))
-
-        menu = QtWidgets.QMenu()
-        actions_mapping = {}
-        actions_kwargs_mapping = {}
-
-        local_site = self.item.local_site
-        local_progress = self.item.local_progress
-        remote_site = self.item.remote_site
-        remote_progress = self.item.remote_progress
-
-        for site, progress in {local_site: local_progress,
-                               remote_site: remote_progress}.items():
-            project = self.model.project
-            provider = self.sync_server.get_provider_for_site(project,
-                                                              site)
-            if provider == 'local_drive':
-                if 'studio' in site:
-                    txt = " studio version"
-                else:
-                    txt = " local version"
-                action = QtWidgets.QAction("Open in explorer" + txt)
-                if progress == 1.0:
-                    actions_mapping[action] = self._open_in_explorer
-                    actions_kwargs_mapping[action] = {'site': site}
-                    menu.addAction(action)
-
-        # progress smaller then 1.0 --> in progress or queued
-        if local_progress < 1.0:
-            self.site_name = local_site
-        else:
-            self.site_name = remote_site
-
-        if self.item.status in [lib.STATUS[0], lib.STATUS[1]]:
-            action = QtWidgets.QAction("Pause")
+        if item.status in [lib.STATUS[0], lib.STATUS[1]] or is_multi:
+            action = QtWidgets.QAction("Pause in queue")
             actions_mapping[action] = self._pause
+            # pause handles which site_name it will pause itself
+            action_kwarg_map[action] = {"selected_ids": self._selected_ids}
             menu.addAction(action)
 
-        if self.item.status == lib.STATUS[3]:
-            action = QtWidgets.QAction("Unpause")
+        if item.status == lib.STATUS[3] or is_multi:
+            action = QtWidgets.QAction("Unpause  in queue")
             actions_mapping[action] = self._unpause
+            action_kwarg_map[action] = {"selected_ids": self._selected_ids}
             menu.addAction(action)
 
-        # if self.item.status == lib.STATUS[1]:
-        #     action = QtWidgets.QAction("Open error detail")
-        #     actions_mapping[action] = self._show_detail
-        #     menu.addAction(action)
-
-        if remote_progress == 1.0:
-            action = QtWidgets.QAction("Re-sync Active site")
-            actions_mapping[action] = self._reset_local_site
-            menu.addAction(action)
-
-        if local_progress == 1.0:
-            action = QtWidgets.QAction("Re-sync Remote site")
-            actions_mapping[action] = self._reset_remote_site
-            menu.addAction(action)
-
-        if local_site != self.sync_server.DEFAULT_SITE:
-            action = QtWidgets.QAction("Completely remove from local")
-            actions_mapping[action] = self._remove_site
-            menu.addAction(action)
-        else:
-            action = QtWidgets.QAction("Mark for sync to local")
-            actions_mapping[action] = self._add_site
-            menu.addAction(action)
-
-        if not actions_mapping:
-            action = QtWidgets.QAction("< No action >")
-            actions_mapping[action] = None
-            menu.addAction(action)
-
-        result = menu.exec_(QtGui.QCursor.pos())
-        if result:
-            to_run = actions_mapping[result]
-            to_run_kwargs = actions_kwargs_mapping.get(result, {})
-            if to_run:
-                to_run(**to_run_kwargs)
-
-        self.model.refresh()
-
-    def _pause(self):
-        self.sync_server.pause_representation(self.model.project,
-                                              self.representation_id,
-                                              self.site_name)
-        self.site_name = None
-        self.message_generated.emit("Paused {}".format(self.representation_id))
-
-    def _unpause(self):
-        self.sync_server.unpause_representation(
-            self.model.project,
-            self.representation_id,
-            self.site_name)
-        self.site_name = None
-        self.message_generated.emit("Unpaused {}".format(
-            self.representation_id))
-
-    # temporary here for testing, will be removed TODO
-    def _add_site(self):
-        log.info(self.representation_id)
-        project_name = self.model.project
-        local_site_name = get_local_site_id()
-        try:
-            self.sync_server.add_site(
-                project_name,
-                self.representation_id,
-                local_site_name
-                )
-            self.message_generated.emit(
-                "Site {} added for {}".format(local_site_name,
-                                              self.representation_id))
-        except ValueError as exp:
-            self.message_generated.emit("Error {}".format(str(exp)))
-
-    def _remove_site(self):
-        """
-            Removes site record AND files.
-
-            This is ONLY for representations stored on local site, which
-            cannot be same as SyncServer.DEFAULT_SITE.
-
-            This could only happen when artist work on local machine, not
-            connected to studio mounted drives.
-        """
-        log.info("Removing {}".format(self.representation_id))
-        try:
-            local_site = get_local_site_id()
-            self.sync_server.remove_site(
-                self.model.project,
-                self.representation_id,
-                local_site,
-                True)
-            self.message_generated.emit("Site {} removed".format(local_site))
-        except ValueError as exp:
-            self.message_generated.emit("Error {}".format(str(exp)))
-        self.model.refresh(
-            load_records=self.model._rec_loaded)
-
-    def _reset_local_site(self):
-        """
-            Removes errors or success metadata for particular file >> forces
-            redo of upload/download
-        """
-        self.sync_server.reset_provider_for_file(
-            self.model.project,
-            self.representation_id,
-            'local')
-        self.model.refresh(
-            load_records=self.model._rec_loaded)
-
-    def _reset_remote_site(self):
-        """
-            Removes errors or success metadata for particular file >> forces
-            redo of upload/download
-        """
-        self.sync_server.reset_provider_for_file(
-            self.model.project,
-            self.representation_id,
-            'remote')
-        self.model.refresh(
-            load_records=self.model._rec_loaded)
-
-    def _open_in_explorer(self, site):
-        if not self.item:
-            return
-
-        fpath = self.item.path
-        project = self.model.project
-        fpath = self.sync_server.get_local_file_path(project,
-                                                     site,
-                                                     fpath)
-
-        fpath = os.path.normpath(os.path.dirname(fpath))
-        if os.path.isdir(fpath):
-            if 'win' in sys.platform:  # windows
-                subprocess.Popen('explorer "%s"' % fpath)
-            elif sys.platform == 'darwin':  # macOS
-                subprocess.Popen(['open', fpath])
-            else:  # linux
-                try:
-                    subprocess.Popen(['xdg-open', fpath])
-                except OSError:
-                    raise OSError('unsupported xdg-open call??')
-
-    def _save_scrollbar(self):
-        self._scrollbar_pos = self.table_view.verticalScrollBar().value()
-
-    def _set_scrollbar(self):
-        if self._scrollbar_pos:
-            self.table_view.verticalScrollBar().setValue(self._scrollbar_pos)
+        return action_kwarg_map, actions_mapping, menu
 
 
-class SyncRepresentationDetailWidget(QtWidgets.QWidget):
+class SyncServerDetailWindow(QtWidgets.QDialog):
+    """Wrapper window for SyncRepresentationDetailWidget
+
+        Creates standalone window with list of files for selected repre_id.
+    """
+    def __init__(self, sync_server, _id, project, parent=None):
+        log.debug(
+            "!!! SyncServerDetailWindow _id:: {}".format(_id))
+        super(SyncServerDetailWindow, self).__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Window)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+
+        self.setStyleSheet(style.load_stylesheet())
+        self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
+        self.resize(1000, 400)
+
+        body = QtWidgets.QWidget()
+        footer = QtWidgets.QWidget()
+        footer.setFixedHeight(20)
+
+        container = SyncRepresentationDetailWidget(sync_server, _id, project,
+                                                   parent=self)
+        body_layout = QtWidgets.QHBoxLayout(body)
+        body_layout.addWidget(container)
+        body_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.message = QtWidgets.QLabel()
+        self.message.hide()
+
+        footer_layout = QtWidgets.QVBoxLayout(footer)
+        footer_layout.addWidget(self.message)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(body)
+        layout.addWidget(footer)
+
+        self.setLayout(body_layout)
+        self.setWindowTitle("Sync Representation Detail")
+
+
+class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
     """
         Widget to display list of synchronizable files for single repre.
 
@@ -484,13 +590,12 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         super(SyncRepresentationDetailWidget, self).__init__(parent)
 
         log.debug("Representation_id:{}".format(_id))
-        self.representation_id = _id
-        self.item = None  # set to item that mouse was clicked over
         self.project = project
 
         self.sync_server = sync_server
 
-        self._selected_id = None
+        self.representation_id = _id
+        self._selected_ids = []
 
         self.txt_filter = QtWidgets.QLineEdit()
         self.txt_filter.setPlaceholderText("Quick filter representation..")
@@ -511,7 +616,7 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         table_view.setModel(model)
         table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         table_view.setSelectionMode(
-            QtWidgets.QAbstractItemView.SingleSelection)
+            QtWidgets.QAbstractItemView.ExtendedSelection)
         table_view.setSelectionBehavior(
             QtWidgets.QTableView.SelectRows)
         table_view.horizontalHeader().setSortIndicator(-1, Qt.AscendingOrder)
@@ -556,171 +661,118 @@ class SyncRepresentationDetailWidget(QtWidgets.QWidget):
         model.refresh_finished.connect(self._set_scrollbar)
         model.modelReset.connect(self._set_selection)
 
-    def _selection_changed(self):
-        index = self.selection_model.currentIndex()
-        self._selected_id = self.model.data(index, Qt.UserRole)
-
-    def _set_selection(self):
-        """
-            Sets selection to 'self._selected_id' if exists.
-
-            Keep selection during model refresh.
-        """
-        if self._selected_id:
-            index = self.model.get_index(self._selected_id)
-            if index and index.isValid():
-                mode = QtCore.QItemSelectionModel.Select | \
-                    QtCore.QItemSelectionModel.Rows
-                self.selection_model.setCurrentIndex(index, mode)
-            else:
-                self._selected_id = None
-
-    def _show_detail(self):
+    def _show_detail(self, selected_ids=None):
         """
             Shows windows with error message for failed sync of a file.
         """
-        dt = max(self.item.created_dt, self.item.sync_dt)
-        detail_window = SyncRepresentationErrorWindow(self.item._id,
-                                                      self.project,
-                                                      dt,
-                                                      self.item.tries,
-                                                      self.item.error)
+        detail_window = SyncRepresentationErrorWindow(self.model, selected_ids)
+
         detail_window.exec()
 
-    def _on_context_menu(self, point):
-        """
-            Shows menu with loader actions on Right-click.
-        """
-        point_index = self.table_view.indexAt(point)
-        if not point_index.isValid():
-            return
+    def _prepare_menu(self, item, is_multi):
+        """Adds view (and model) dependent actions to default ones"""
+        action_kwarg_map, actions_mapping, menu = \
+            super()._prepare_menu(item, is_multi)
 
-        self.item = self.model._data[point_index.row()]
-
-        menu = QtWidgets.QMenu()
-        actions_mapping = {}
-        actions_kwargs_mapping = {}
-
-        local_site = self.item.local_site
-        local_progress = self.item.local_progress
-        remote_site = self.item.remote_site
-        remote_progress = self.item.remote_progress
-
-        for site, progress in {local_site: local_progress,
-                               remote_site: remote_progress}.items():
-            project = self.model.project
-            provider = self.sync_server.get_provider_for_site(project,
-                                                              site)
-            if provider == 'local_drive':
-                if 'studio' in site:
-                    txt = " studio version"
-                else:
-                    txt = " local version"
-                action = QtWidgets.QAction("Open in explorer" + txt)
-                if progress == 1:
-                    actions_mapping[action] = self._open_in_explorer
-                    actions_kwargs_mapping[action] = {'site': site}
-                    menu.addAction(action)
-
-        if self.item.status == lib.STATUS[2]:
+        if item.status == lib.STATUS[2] or is_multi:
             action = QtWidgets.QAction("Open error detail")
             actions_mapping[action] = self._show_detail
+            action_kwarg_map[action] = {"selected_ids": self._selected_ids}
+
             menu.addAction(action)
 
-        if float(remote_progress) == 1.0:
-            action = QtWidgets.QAction("Re-sync active site")
-            actions_mapping[action] = self._reset_local_site
-            menu.addAction(action)
+        return action_kwarg_map, actions_mapping, menu
 
-        if float(local_progress) == 1.0:
-            action = QtWidgets.QAction("Re-sync remote site")
-            actions_mapping[action] = self._reset_remote_site
-            menu.addAction(action)
-
-        if not actions_mapping:
-            action = QtWidgets.QAction("< No action >")
-            actions_mapping[action] = None
-            menu.addAction(action)
-
-        result = menu.exec_(QtGui.QCursor.pos())
-        if result:
-            to_run = actions_mapping[result]
-            to_run_kwargs = actions_kwargs_mapping.get(result, {})
-            if to_run:
-                to_run(**to_run_kwargs)
-
-    def _reset_local_site(self):
+    def _reset_site(self, selected_ids=None, site_name=None):
         """
             Removes errors or success metadata for particular file >> forces
             redo of upload/download
         """
-        self.sync_server.reset_provider_for_file(
-            self.model.project,
-            self.representation_id,
-            'local',
-            self.item._id)
+        for file_id in selected_ids:
+            item = lib.get_item_by_id(self.model, file_id)
+            check_progress = self._get_progress(item, site_name, True)
+
+            # do not reset if opposite side is not fully there
+            if check_progress != 1:
+                log.debug("Not fully available {} on other side, skipping".
+                          format(check_progress))
+                continue
+
+            self.sync_server.reset_provider_for_file(
+                self.model.project,
+                self.representation_id,
+                site_name=site_name,
+                file_id=file_id,
+                force=True)
         self.model.refresh(
             load_records=self.model._rec_loaded)
 
-    def _reset_remote_site(self):
-        """
-            Removes errors or success metadata for particular file >> forces
-            redo of upload/download
-        """
-        self.sync_server.reset_provider_for_file(
-            self.model.project,
-            self.representation_id,
-            'remote',
-            self.item._id)
-        self.model.refresh(
-            load_records=self.model._rec_loaded)
 
-    def _open_in_explorer(self, site):
-        if not self.item:
-            return
+class SyncRepresentationErrorWindow(QtWidgets.QDialog):
+    """Wrapper window to show errors during sync on file(s)"""
+    def __init__(self, model, selected_ids, parent=None):
+        super(SyncRepresentationErrorWindow, self).__init__(parent)
+        self.setWindowFlags(QtCore.Qt.Window)
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
-        fpath = self.item.path
-        project = self.project
-        fpath = self.sync_server.get_local_file_path(project, site, fpath)
+        self.setStyleSheet(style.load_stylesheet())
+        self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
+        self.resize(900, 150)
 
-        fpath = os.path.normpath(os.path.dirname(fpath))
-        if os.path.isdir(fpath):
-            if 'win' in sys.platform:  # windows
-                subprocess.Popen('explorer "%s"' % fpath)
-            elif sys.platform == 'darwin':  # macOS
-                subprocess.Popen(['open', fpath])
-            else:  # linux
-                try:
-                    subprocess.Popen(['xdg-open', fpath])
-                except OSError:
-                    raise OSError('unsupported xdg-open call??')
+        body = QtWidgets.QWidget()
 
-    def _save_scrollbar(self):
-        self._scrollbar_pos = self.table_view.verticalScrollBar().value()
+        container = SyncRepresentationErrorWidget(model,
+                                                  selected_ids,
+                                                  parent=self)
+        body_layout = QtWidgets.QHBoxLayout(body)
+        body_layout.addWidget(container)
+        body_layout.setContentsMargins(0, 0, 0, 0)
 
-    def _set_scrollbar(self):
-        if self._scrollbar_pos:
-            self.table_view.verticalScrollBar().setValue(self._scrollbar_pos)
+        message = QtWidgets.QLabel()
+        message.hide()
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(body)
+
+        self.setLayout(body_layout)
+        self.setWindowTitle("Sync Representation Error Detail")
 
 
 class SyncRepresentationErrorWidget(QtWidgets.QWidget):
     """
-        Dialog to show when sync error happened, prints error message
+        Dialog to show when sync error happened, prints formatted error message
     """
-
-    def __init__(self, _id, dt, tries, msg, parent=None):
+    def __init__(self, model, selected_ids, parent=None):
         super(SyncRepresentationErrorWidget, self).__init__(parent)
 
-        layout = QtWidgets.QHBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout(self)
 
-        txts = []
-        txts.append("{}: {}".format("Last update date", pretty_timestamp(dt)))
-        txts.append("{}: {}".format("Retries", str(tries)))
-        txts.append("{}: {}".format("Error message", msg))
+        no_errors = True
+        for file_id in selected_ids:
+            item = lib.get_item_by_id(model, file_id)
+            if not item.created_dt or not item.sync_dt or not item.error:
+                continue
 
-        text_area = QtWidgets.QPlainTextEdit("\n\n".join(txts))
-        text_area.setReadOnly(True)
-        layout.addWidget(text_area)
+            no_errors = False
+            dt = max(item.created_dt, item.sync_dt)
+
+            txts = []
+            txts.append("{}: {}<br>".format("<b>Last update date</b>",
+                                            pretty_timestamp(dt)))
+            txts.append("{}: {}<br>".format("<b>Retries</b>",
+                                            str(item.tries)))
+            txts.append("{}: {}<br>".format("<b>Error message</b>",
+                                            item.error))
+
+            text_area = QtWidgets.QTextEdit("\n\n".join(txts))
+            text_area.setReadOnly(True)
+            layout.addWidget(text_area)
+
+        if no_errors:
+            text_area = QtWidgets.QTextEdit()
+            text_area.setText("<h4>No errors located</h4>")
+            text_area.setReadOnly(True)
+            layout.addWidget(text_area)
 
 
 class ImageDelegate(QtWidgets.QStyledItemDelegate):
@@ -773,72 +825,8 @@ class ImageDelegate(QtWidgets.QStyledItemDelegate):
                              QtGui.QBrush(QtGui.QColor(255, 0, 0, 35)))
 
 
-class SyncServerDetailWindow(QtWidgets.QDialog):
-    def __init__(self, sync_server, _id, project, parent=None):
-        log.debug(
-            "!!! SyncServerDetailWindow _id:: {}".format(_id))
-        super(SyncServerDetailWindow, self).__init__(parent)
-        self.setWindowFlags(QtCore.Qt.Window)
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
-
-        self.setStyleSheet(style.load_stylesheet())
-        self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
-        self.resize(1000, 400)
-
-        body = QtWidgets.QWidget()
-        footer = QtWidgets.QWidget()
-        footer.setFixedHeight(20)
-
-        container = SyncRepresentationDetailWidget(sync_server, _id, project,
-                                                   parent=self)
-        body_layout = QtWidgets.QHBoxLayout(body)
-        body_layout.addWidget(container)
-        body_layout.setContentsMargins(0, 0, 0, 0)
-
-        self.message = QtWidgets.QLabel()
-        self.message.hide()
-
-        footer_layout = QtWidgets.QVBoxLayout(footer)
-        footer_layout.addWidget(self.message)
-        footer_layout.setContentsMargins(0, 0, 0, 0)
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(body)
-        layout.addWidget(footer)
-
-        self.setLayout(body_layout)
-        self.setWindowTitle("Sync Representation Detail")
-
-
-class SyncRepresentationErrorWindow(QtWidgets.QDialog):
-    def __init__(self, _id, project, dt, tries, msg, parent=None):
-        super(SyncRepresentationErrorWindow, self).__init__(parent)
-        self.setWindowFlags(QtCore.Qt.Window)
-        self.setFocusPolicy(QtCore.Qt.StrongFocus)
-
-        self.setStyleSheet(style.load_stylesheet())
-        self.setWindowIcon(QtGui.QIcon(style.app_icon_path()))
-        self.resize(900, 150)
-
-        body = QtWidgets.QWidget()
-
-        container = SyncRepresentationErrorWidget(_id, dt, tries, msg,
-                                                  parent=self)
-        body_layout = QtWidgets.QHBoxLayout(body)
-        body_layout.addWidget(container)
-        body_layout.setContentsMargins(0, 0, 0, 0)
-
-        message = QtWidgets.QLabel()
-        message.hide()
-
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(body)
-
-        self.setLayout(body_layout)
-        self.setWindowTitle("Sync Representation Error Detail")
-
-
 class TransparentWidget(QtWidgets.QWidget):
+    """Used for header cell for resizing to work properly"""
     clicked = QtCore.Signal(str)
 
     def __init__(self, column_name, *args, **kwargs):
@@ -854,7 +842,7 @@ class TransparentWidget(QtWidgets.QWidget):
 
 
 class HorizontalHeader(QtWidgets.QHeaderView):
-
+    """Reiplemented QHeaderView to contain clickable changeable button"""
     def __init__(self, parent=None):
         super(HorizontalHeader, self).__init__(QtCore.Qt.Horizontal, parent)
         self._parent = parent
@@ -882,6 +870,7 @@ class HorizontalHeader(QtWidgets.QHeaderView):
         return self._parent.model
 
     def init_layout(self):
+        """Initial preparation of header's content"""
         for column_idx in range(self.model.columnCount()):
             column_name, column_label = self.model.get_column(column_idx)
             filter_rec = self.model.get_filters().get(column_name)
@@ -901,6 +890,7 @@ class HorizontalHeader(QtWidgets.QHeaderView):
             self.filter_buttons[column_name] = button
 
     def showEvent(self, event):
+        """Paint header"""
         super(HorizontalHeader, self).showEvent(event)
 
         for i in range(len(self.header_cells)):
@@ -911,6 +901,7 @@ class HorizontalHeader(QtWidgets.QHeaderView):
             cell_content.show()
 
     def _set_filter_icon(self, column_name):
+        """Set different states of button depending on its engagement"""
         button = self.filter_buttons.get(column_name)
         if button:
             if self.checked_values.get(column_name):
