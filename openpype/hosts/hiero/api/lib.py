@@ -913,6 +913,7 @@ def get_sequence_pattern_and_padding(file):
     else:
         return None, None
 
+
 def sync_clip_name_to_data_asset(track_items_list):
     # loop trough all selected clips
     for track_item in track_items_list:
@@ -944,6 +945,7 @@ def sync_clip_name_to_data_asset(track_items_list):
             # create new tag with updated data
             set_track_item_pype_tag(track_item, data)
             print("asset was changed in clip: {}".format(ti_name))
+
 
 def selection_changed_timeline(event):
     """Callback on timeline to check if asset in data is the same as clip name.
