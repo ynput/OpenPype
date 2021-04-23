@@ -710,6 +710,7 @@ class PublishClip:
             self.tag_data["asset"] = new_name
         else:
             self.tag_data["asset"] = self.ti_name
+            self.tag_data["hierarchyData"]["shot"] = self.ti_name
 
         if self.tag_data["heroTrack"] and self.review_layer:
             self.tag_data.update({"reviewTrack": self.review_layer})
@@ -876,6 +877,9 @@ class PublishClip:
         # fill up clip name and hierarchy keys
         hierarchy_filled = self.hierarchy.format(**hierarchy_formating_data)
         clip_name_filled = self.clip_name.format(**hierarchy_formating_data)
+
+        # remove shot from hierarchy data: is not needed anymore
+        hierarchy_formating_data.pop("shot")
 
         return {
             "newClipName": clip_name_filled,
