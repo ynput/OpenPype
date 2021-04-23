@@ -92,7 +92,11 @@ class HierarchyView(QtWidgets.QTreeView):
                 if key not in self.persistent_columns:
                     continue
                 col_index = self._source_model.index(row, column, parent_index)
-                self.openPersistentEditor(col_index)
+                if bool(
+                    self._source_model.flags(col_index)
+                    & QtCore.Qt.ItemIsEditable
+                ):
+                    self.openPersistentEditor(col_index)
 
         # Expand parent on insert
         if not self.isExpanded(parent_index):

@@ -589,6 +589,10 @@ class AssetItem(BaseItem):
 
 
 class TaskItem(BaseItem):
+    columns = [
+        "name",
+        "type"
+    ]
     @classmethod
     def name_icon(cls):
         if cls._name_icon is None:
