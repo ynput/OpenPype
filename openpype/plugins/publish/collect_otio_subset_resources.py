@@ -80,6 +80,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
         media_ref = otio_clip.media_reference
         metadata = media_ref.metadata
 
+        is_sequence = None
         # check in two way if it is sequence
         if hasattr(otio.schema, "ImageSequenceReference"):
             # for OpenTimelineIO 0.13 and newer
@@ -126,7 +127,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
             dirname, filename = os.path.split(media_ref.target_url)
             self.staging_dir = dirname
 
-            self.log.debug(path)
+            self.log.debug(filename)
             repre = self._create_representation(
                 frame_start, frame_end, file=filename)
 
