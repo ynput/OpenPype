@@ -912,3 +912,59 @@ def get_sequence_pattern_and_padding(file):
         return found, padding
     else:
         return None, None
+
+def sync_clip_name_to_data_asset(track_items_list):
+    # loop trough all selected clips
+    for track_item in track_items_list:
+        # ignore if parent track is locked or disabled
+        if track_item.parent().isLocked():
+            continue
+        if not track_item.parent().isEnabled():
+            continue
+        # ignore if the track item is disabled
+        if not track_item.isEnabled():
+            continue
+
+        # get name and data
+        ti_name = track_item.name()
+        data = get_track_item_pype_data(track_item)
+
+        # ignore if no data on the clip or not publish instance
+        if not data:
+            continue
+        if data.get("id") != "pyblish.avalon.instance":
+            continue
+
+        # fix data if wrong name
+        if data["asset"] != ti_name:
+            data["asset"] = ti_name
+            # remove the original tag
+            tag = get_track_item_pype_tag(track_item)
+            track_item.removeTag(tag)
+            # create new tag with updated data
+            set_track_item_pype_tag(track_item, data)
+            print("asset was changed in clip: {}".format(ti_name))
+
+def selection_changed_timeline(event):
+    """Callback on timeline to check if asset in data is the same as clip name.
+
+    Args:
+        event (hiero.core.Event): timeline event
+    """
+    timeline_editor = event.sender
+    selection = timeline_editor.selection()
+
+    # run checking function
+    sync_clip_name_to_data_asset(selection)
+
+
+def before_project_save(event):
+    track_items = get_track_items(
+        selected=False,
+        track_type="video",
+        check_enabled=True,
+        check_locked=True,
+        check_tagged=True)
+
+    # run checking function
+    sync_clip_name_to_data_asset(track_items)
