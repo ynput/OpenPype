@@ -8,6 +8,7 @@ from .constants import (
 )
 
 from avalon.api import AvalonMongoDB
+from avalon.vendor import qtawesome
 
 from Qt import QtCore
 
@@ -407,6 +408,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
 class BaseItem:
     columns = ["name"]
+    _name_icon = None
 
     def __init__(self, data=None):
         self._id = uuid4()
@@ -422,6 +424,10 @@ class BaseItem:
             for key, value in data.items():
                 if key in self.columns:
                     self._data[key] = value
+
+    @classmethod
+    def name_icon(cls):
+        return cls._name_icon
 
     def model(self):
         return self._parent.model
@@ -450,6 +456,8 @@ class BaseItem:
                 value = self.parent().data(key, role)
             return value
 
+        if role == QtCore.Qt.DecorationRole and key == "name":
+            return self.name_icon()
         return None
 
     def setData(self, key, value, role):
@@ -500,9 +508,23 @@ class BaseItem:
             return self._parent.child_row(self)
         return -1
 
-    def add_child(self, item):
-        if item not in self._children:
+    def add_child(self, item, row=None):
+        if item in self._children:
+            return
+
+        row_count = self.rowCount()
+        if row is None or row == row_count:
             self._children.append(item)
+            return
+
+        if row > row_count or row < 0:
+            raise ValueError(
+                "Invalid row number {} expected range 0 - {}".format(
+                    row, row_count
+                )
+            )
+
+        self._children.insert(row, item)
 
     def remove_child(self, item):
         if item in self._children:
@@ -547,10 +569,16 @@ class AssetItem(BaseItem):
         "resolutionHeight"
     ]
 
-    def __init__(self, data=None):
-        super(AssetItem, self).__init__(data)
+    @classmethod
+    def name_icon(cls):
+        if cls._name_icon is None:
+            cls._name_icon = qtawesome.icon("fa.folder", color="#333333")
+        return cls._name_icon
 
 
 class TaskItem(BaseItem):
-    def __init__(self, data=None):
-        super(TaskItem, self).__init__(data)
+    @classmethod
+    def name_icon(cls):
+        if cls._name_icon is None:
+            cls._name_icon = qtawesome.icon("fa.file-o", color="#333333")
+        return cls._name_icon
