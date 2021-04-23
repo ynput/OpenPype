@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from Qt import QtCore
 
 
 IDENTIFIER_ROLE = QtCore.Qt.UserRole + 1

@@ -1,9 +1,5 @@
 from Qt import QtWidgets, QtCore
 
-from .constants import (
-    IDENTIFIER_ROLE,
-    COLUMNS_ROLE
-)
 from .delegates import NumberDelegate, StringDelegate
 
 
@@ -92,8 +88,6 @@ class HierarchyView(QtWidgets.QTreeView):
         super(HierarchyView, self).rowsInserted(parent_index, start, end)
 
         for row in range(start, end + 1):
-            index = self._source_model.index(row, 0, parent_index)
-            columns = index.data(COLUMNS_ROLE) or []
             for key, column in self._column_key_to_index.items():
                 if key not in self.persistent_columns:
                     continue
