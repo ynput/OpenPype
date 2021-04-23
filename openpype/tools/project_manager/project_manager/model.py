@@ -293,6 +293,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if src_parent is dst_parent:
             return
 
+        if (
+            isinstance(item, TaskItem)
+            and not isinstance(dst_parent, AssetItem)
+        ):
+            return
+
         if dst_parent_index is None:
             dst_parent_index = self.index_from_item(
                 dst_parent.row(), 0, dst_parent.parent()
