@@ -324,7 +324,7 @@ def _determine_mongodb() -> str:
     if not openpype_mongo:
         print("*** No DB connection string specified.")
         print("--- launching setup UI ...")
-        import igniter
+
         result = igniter.open_dialog()
         if result == 0:
             raise RuntimeError("MongoDB URL was not defined")
