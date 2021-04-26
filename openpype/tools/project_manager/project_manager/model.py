@@ -10,7 +10,7 @@ from .constants import (
 from avalon.api import AvalonMongoDB
 from avalon.vendor import qtawesome
 
-from Qt import QtCore
+from Qt import QtCore, QtGui
 
 
 class HierarchySelectionModel(QtCore.QItemSelectionModel):
@@ -259,7 +259,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             return
 
         prev_name = asset_item.data("name", QtCore.Qt.DisplayRole)
-        print(prev_name)
         self._asset_items_by_name[prev_name].remove(asset_item)
 
         self._validate_asset_duplicity(prev_name)
@@ -461,6 +460,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 class BaseItem:
     columns = ["name"]
     _name_icon = None
+    _is_duplicated = False
 
     def __init__(self, data=None):
         self._id = uuid4()
@@ -496,6 +496,19 @@ class BaseItem:
         if role == IDENTIFIER_ROLE:
             return self._id
 
+        if role == DUPLICATED_ROLE:
+            return self._is_duplicated
+
+        if role == QtCore.Qt.ForegroundRole:
+            if self._is_duplicated:
+                return QtGui.QColor(255, 0, 0)
+
+        if role == QtCore.Qt.ToolTipRole:
+            if self._is_duplicated:
+                return "Asset with name \"{}\" already exists.".format(
+                    self._data["name"]
+                )
+
         if key not in self.columns:
             return None
 
@@ -510,6 +523,13 @@ class BaseItem:
         return None
 
     def setData(self, key, value, role):
+        if role == DUPLICATED_ROLE:
+            if value == self._is_duplicated:
+                return False
+
+            self._is_duplicated = value
+            return True
+
         if key not in self.columns:
             return False
 
