@@ -16,3 +16,23 @@ Project is always using default project values if is not overriding them with ow
 ## Global
 
 ### Publish plugins
+
+Publish plugins used across all integrations.
+
+#### ExtractReview
+Plugin responsible for automatic FFmpeg conversion to variety of formats.
+
+Extract review is using profile filtering to be able render different outputs for different situations.
+
+**Profile filters**
+
+You can define multiple profiles for different contexts. Profile with filters matching current context the most is used. You can define profile without filters and use it as **default**. Only **one or none** profile is processed per instance.
+
+All context filters are lists which may contain strings or Regular expressions (RegEx).
+- **hosts** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **families** - Main family of processed instance. `["plate", "model"]`
+
+:::important Filtering
+Filters are optional and may not be set. In case when multiple profiles match current context, profile with filters has higher priority that profile without filters.
+:::
+
