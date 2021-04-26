@@ -157,6 +157,9 @@ main () {
     install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
   fi
 
+  echo -e "${BIGreen}>>>${RST} Making sure submodules are up-to-date ..."
+  git submodule update --init --recursive
+
   echo -e "${BIGreen}>>>${RST} Building ..."
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     poetry run python3 "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
@@ -165,17 +168,18 @@ main () {
   fi
   poetry run python3 "$openpype_root/tools/build_dependencies.py"
 
-
-if command -v create-dmg > /dev/null 2>&1; then
-    create-dmg \
-      --volname "OpenPype Installer" \
-      --window-pos 200 120 \
-      --window-size 600 300 \
-      --app-drop-link 100 50 \
-      "$openpype_root/build/OpenPype-Installer.dmg" \
-      "$openpype_root/build/OpenPype.app"
-  else
-    echo create-dmg command is not availableg
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    if command -v create-dmg > /dev/null 2>&1; then
+      create-dmg \
+        --volname "OpenPype Installer" \
+        --window-pos 200 120 \
+        --window-size 600 300 \
+        --app-drop-link 100 50 \
+        "$openpype_root/build/OpenPype-Installer.dmg" \
+        "$openpype_root/build/OpenPype.app"
+    else
+      echo -e "${BIYellow}!!!${RST} ${BIWhite}create-dmg${RST} command is not available."
+    fi
   fi
 
   echo -e "${BICyan}>>>${RST} All done. You will find OpenPype and build log in \c"
