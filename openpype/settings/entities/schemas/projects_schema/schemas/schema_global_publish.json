@@ -218,7 +218,7 @@
                                                 },
                                                 {
                                                     "key": "ratio",
-                                                    "label": "Letter box ratio",
+                                                    "label": "Ratio",
                                                     "type": "number",
                                                     "decimal": 4,
                                                     "default": 0,
