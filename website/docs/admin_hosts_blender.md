@@ -8,7 +8,7 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 ## Blender requirements
-Blender's integration requires to use **PySide2** module inside blender. Module is different for Blender versions and platforms so can't be bundled with OpenPype.
+Blender integration requires to use **PySide2** module inside blender. Module is different for Blender versions and platforms so can't be bundled with OpenPype.
 
 ### How to install
 
@@ -26,9 +26,12 @@ This step requires Admin persmission.
 
 <TabItem value="win">
 
-Find python executable inside your Blender installation folder. Usually is located in **C:\\Program Files\\Blender Foundation\\Blender {version}\\{version}\\python\\bin\\python.exe** (This may differ in future blender version).
+Find python executable inside your Blender installation folder. It is usually located in **C:\\Program Files\\Blender Foundation\\Blender {version}\\{version}\\python\\bin\\python.exe** (This may differ in future blender version).
 
-Open Powershell or Command Prompt as Administrator and run commands below (Example commands are for **Blender 2.83** installed to default directory).
+Open Powershell or Command Prompt as Administrator and run commands below.
+
+*Replace `C:\Program Files\Blender Foundation\Blender 2.83\2.83\python\bin` with your path.*
+
 ```bash
 # Change directory to python executable directory.
 > cd C:\Program Files\Blender Foundation\Blender 2.83\2.83\python\bin
@@ -64,7 +67,7 @@ Open terminal and run pip install command below.
 ```
 
 :::warning No module named pip
-If you'll get error `No module named pip` you'll have to do few steps first. Open new terminal and run the python executable from Blender (entering full path).
+If you get error `No module named pip` you'll have to do few steps first. Open new terminal and run the python executable from Blender (entering full path).
 ```bash
 # Run Python executable
 > /usr/bin/blender/2.83/python/bin/python3.7m
