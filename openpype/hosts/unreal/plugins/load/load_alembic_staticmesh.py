@@ -6,12 +6,12 @@ from avalon.unreal import pipeline as unreal_pipeline
 import unreal
 
 
-class StaticMeshFBXLoader(api.Loader):
-    """Load Unreal StaticMesh from FBX"""
+class StaticMeshAlembicLoader(api.Loader):
+    """Load Unreal StaticMesh from Alembic"""
 
-    families = ["model", "unrealStaticMesh"]
-    label = "Import FBX Static Mesh"
-    representations = ["fbx"]
+    families = ["model"]
+    label = "Import Alembic Static Mesh"
+    representations = ["abc"]
     icon = "cube"
     color = "orange"
 
@@ -65,10 +65,10 @@ class StaticMeshFBXLoader(api.Loader):
         task.set_editor_property('save', True)
 
         # set import options here
-        options = unreal.FbxImportUI()
+        # Unreal 4.24 ignores the settings. It works with Unreal 4.26
+        options = unreal.AbcImportSettings()
         options.set_editor_property(
-            'automated_import_should_detect_type', False)
-        options.set_editor_property('import_animations', False)
+            'import_type', unreal.AlembicImportType.STATIC_MESH)
 
         task.options = options
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])  # noqa: E501
@@ -102,7 +102,7 @@ class StaticMeshFBXLoader(api.Loader):
         return asset_content
 
     def update(self, container, representation):
-        name = container["name"]
+        name = container["asset_name"]
         source_path = api.get_representation_path(representation)
         destination_path = container["namespace"]
 
@@ -117,10 +117,10 @@ class StaticMeshFBXLoader(api.Loader):
         task.set_editor_property('save', True)
 
         # set import options here
-        options = unreal.FbxImportUI()
+        # Unreal 4.24 ignores the settings. It works with Unreal 4.26
+        options = unreal.AbcImportSettings()
         options.set_editor_property(
-            'automated_import_should_detect_type', False)
-        options.set_editor_property('import_animations', False)
+            'import_type', unreal.AlembicImportType.STATIC_MESH)
 
         task.options = options
         # do import fbx and replace existing data
