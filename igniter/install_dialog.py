@@ -37,9 +37,8 @@ class MongoWidget(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
         super(MongoWidget, self).__init__(parent)
-        mongo_layout = QtWidgets.QHBoxLayout()
-        mongo_layout.setContentsMargins(0, 0, 0, 0)
-        self._mongo_input = FocusHandlingLineEdit()
+
+        self._mongo_input = FocusHandlingLineEdit(self)
         self._mongo_input.setPlaceholderText("Mongo URL")
         self._mongo_input.textChanged.connect(self._mongo_changed)
         self._mongo_input.focusIn.connect(self._focus_in)
@@ -53,8 +52,10 @@ class MongoWidget(QtWidgets.QWidget):
              "border: 1px solid rgb(32, 32, 32);")
         )
 
+        mongo_layout = QtWidgets.QHBoxLayout(self)
+        mongo_layout.setContentsMargins(0, 0, 0, 0)
+
         mongo_layout.addWidget(self._mongo_input)
-        self.setLayout(mongo_layout)
 
     def _focus_out(self):
         self.validate_url()
@@ -153,11 +154,14 @@ class InstallDialog(QtWidgets.QDialog):
             pass
 
         self.setWindowTitle(
-            f"OpenPype Igniter {__version__} - OpenPype installation")
-        self._icon_path = os.path.join(
-            os.path.dirname(__file__), 'openpype_icon.png')
-        icon = QtGui.QIcon(self._icon_path)
-        self.setWindowIcon(icon)
+            f"OpenPype Igniter {__version__} - OpenPype installation"
+        )
+        icon_path = os.path.join(
+            os.path.dirname(__file__), 'openpype_icon.png'
+        )
+        pixmap_openpype_logo = QtGui.QPixmap(icon_path)
+
+        self.setWindowIcon(QtGui.QIcon(pixmap_openpype_logo))
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint |
             QtCore.Qt.WindowMinimizeButtonHint
@@ -181,6 +185,8 @@ class InstallDialog(QtWidgets.QDialog):
         )
         self._openpype_run_ready = False
 
+        self._pixmap_openpype_logo = pixmap_openpype_logo
+
         self._init_ui()
 
     def _init_ui(self):
@@ -189,8 +195,6 @@ class InstallDialog(QtWidgets.QDialog):
             color: rgb(200, 200, 200);
             background-color: rgb(23, 23, 23);
         """)
-
-        main = QtWidgets.QVBoxLayout(self)
 
         # Main info
         # --------------------------------------------------------------------
@@ -231,11 +235,10 @@ class InstallDialog(QtWidgets.QDialog):
         bottom_widget = QtWidgets.QWidget()
         bottom_layout = QtWidgets.QHBoxLayout()
         openpype_logo_label = QtWidgets.QLabel("openpype logo")
-        openpype_logo = QtGui.QPixmap(self._icon_path)
         # openpype_logo.scaled(
         #     openpype_logo_label.width(),
         #     openpype_logo_label.height(), QtCore.Qt.KeepAspectRatio)
-        openpype_logo_label.setPixmap(openpype_logo)
+        openpype_logo_label.setPixmap(self._pixmap_openpype_logo)
         openpype_logo_label.setContentsMargins(10, 0, 0, 10)
 
         # install button - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -352,6 +355,7 @@ class InstallDialog(QtWidgets.QDialog):
             """
         )
         # add all to main
+        main = QtWidgets.QVBoxLayout(self)
         main.addWidget(self.main_label, 0)
         main.addWidget(self.openpype_path_label, 0)
         main.addWidget(self.mongo_label, 0)
@@ -363,9 +367,7 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(self._progress_bar, 0)
         main.addWidget(bottom_widget, 0)
 
-        self.setLayout(main)
-
-        # if mongo url is ok, try to get openpype path from there
+        # Trigger mongo validation
         self._mongo.validate_url()
 
     def _on_run_clicked(self):
