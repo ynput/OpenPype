@@ -39,9 +39,16 @@ class HierarchyView(QtWidgets.QTreeView):
             column_delegates[key] = delegate
             column_key_to_index[key] = column
 
+        source_model.index_moved.connect(self._on_rows_moved)
+
         self._delegate = main_delegate
         self._column_delegates = column_delegates
         self._column_key_to_index = column_key_to_index
+
+    def _on_rows_moved(self, index):
+        parent_index = index.parent()
+        if not self.isExpanded(parent_index):
+            self.expand(parent_index)
 
     def commitData(self, editor):
         super(HierarchyView, self).commitData(editor)
@@ -183,29 +190,16 @@ class HierarchyView(QtWidgets.QTreeView):
         self.edit(new_index)
 
     def _on_up_ctrl_pressed(self):
-        index = self.currentIndex()
-        self._source_model.move_horizontal(index, -1)
-        parent_index = index.parent()
-        if not self.isExpanded(parent_index):
-            self.expand(parent_index)
+        self._source_model.move_horizontal(self.currentIndex(), -1)
 
     def _on_down_ctrl_pressed(self):
-        index = self.currentIndex()
-        self._source_model.move_horizontal(index, 1)
-        parent_index = index.parent()
-        if not self.isExpanded(parent_index):
-            self.expand(parent_index)
+        self._source_model.move_horizontal(self.currentIndex(), 1)
 
     def _on_left_ctrl_pressed(self):
         self._source_model.move_vertical(self.currentIndex(), -1)
 
     def _on_right_ctrl_pressed(self):
-        index = self.currentIndex()
-        self._source_model.move_vertical(index, 1)
-
-        parent_index = index.parent()
-        if not self.isExpanded(parent_index):
-            self.expand(parent_index)
+        self._source_model.move_vertical(self.currentIndex(), 1)
 
     def _on_enter_pressed(self):
         index = self.currentIndex()
