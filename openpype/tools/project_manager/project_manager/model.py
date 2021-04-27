@@ -374,7 +374,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         self.index_moved.emit(index)
 
-    def move_horizontal(self, index, direction):
+    def _move_horizontal_single(self, index, direction):
         if not index.isValid():
             return
 
@@ -460,6 +460,46 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self.endMoveRows()
 
         self.index_moved.emit(index)
+
+    def move_horizontal(self, indexes, direction):
+        if not indexes:
+            return
+
+        if isinstance(indexes, QtCore.QModelIndex):
+            indexes = [indexes]
+
+        if len(indexes) == 1:
+            self._move_horizontal_single(indexes[0], direction)
+            return
+
+        items_by_id = {}
+        for index in indexes:
+            item_id = index.data(IDENTIFIER_ROLE)
+            items_by_id[item_id] = self._items_by_id[item_id]
+
+        skip_ids = set(items_by_id.keys())
+        for item_id, item in tuple(items_by_id.items()):
+            parent = item.parent()
+            parent_ids = set()
+            skip_item = False
+            while parent is not None:
+                if parent.id in skip_ids:
+                    skip_item = True
+                    skip_ids |= parent_ids
+                    break
+                parent_ids.add(parent.id)
+                parent = parent.parent()
+
+            if skip_item:
+                items_by_id.pop(item_id)
+
+        items = tuple(items_by_id.values())
+        if direction == 1:
+            items = reversed(items)
+
+        for item in items:
+            index = self.index_for_item(item)
+            self._move_horizontal_single(index, direction)
 
     def child_removed(self, child):
         self._items_by_id.pop(child.id, None)
