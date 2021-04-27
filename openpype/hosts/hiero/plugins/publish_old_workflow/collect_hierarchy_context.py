@@ -39,8 +39,8 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
             if not set(self.families).intersection(families):
                 continue
 
-            # exclude if not masterLayer True
-            if not instance.data.get("masterLayer"):
+            # exclude if not heroTrack True
+            if not instance.data.get("heroTrack"):
                 continue
 
             # update families to include `shot` for hierarchy integration

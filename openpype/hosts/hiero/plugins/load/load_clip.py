@@ -29,13 +29,19 @@ class LoadClip(phiero.SequenceLoader):
     clip_color_last = "green"
     clip_color = "red"
 
-    def load(self, context, name, namespace, options):
+    clip_name_template = "{asset}_{subset}_{representation}"
 
+    def load(self, context, name, namespace, options):
+        # add clip name template to options
+        options.update({
+            "clipNameTemplate": self.clip_name_template
+        })
         # in case loader uses multiselection
         if self.track and self.sequence:
             options.update({
                 "sequence": self.sequence,
-                "track": self.track
+                "track": self.track,
+                "clipNameTemplate": self.clip_name_template
             })
 
         # load clip to timeline and get main variables
@@ -45,7 +51,8 @@ class LoadClip(phiero.SequenceLoader):
         version_data = version.get("data", {})
         version_name = version.get("name", None)
         colorspace = version_data.get("colorspace", None)
-        object_name = "{}_{}".format(name, namespace)
+        object_name = self.clip_name_template.format(
+            **context["representation"]["context"])
 
         # add additional metadata from the version to imprint Avalon knob
         add_keys = [
