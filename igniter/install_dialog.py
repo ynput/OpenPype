@@ -213,7 +213,8 @@ class InstallDialog(QtWidgets.QDialog):
             If you want to just try OpenPype without installing, hit the
             middle button that states "run without installation".
             </p>
-            """
+            """,
+            self
         )
 
         openpype_path_label.setWordWrap(True)
@@ -225,7 +226,6 @@ class InstallDialog(QtWidgets.QDialog):
         mongo_label = QtWidgets.QLabel(
             """Enter URL for running MongoDB instance:"""
         )
-
         mongo_label.setWordWrap(True)
         mongo_label.setStyleSheet("color: rgb(150, 150, 150);")
 
@@ -235,10 +235,10 @@ class InstallDialog(QtWidgets.QDialog):
 
         # Bottom button bar
         # --------------------------------------------------------------------
-        bottom_widget = QtWidgets.QWidget()
+        bottom_widget = QtWidgets.QWidget(self)
         bottom_widget.setStyleSheet("background-color: rgb(32, 32, 32);")
 
-        openpype_logo_label = QtWidgets.QLabel("openpype logo")
+        openpype_logo_label = QtWidgets.QLabel("openpype logo", bottom_widget)
         # openpype_logo.scaled(
         #     openpype_logo_label.width(),
         #     openpype_logo_label.height(), QtCore.Qt.KeepAspectRatio)
@@ -246,7 +246,7 @@ class InstallDialog(QtWidgets.QDialog):
         openpype_logo_label.setContentsMargins(10, 0, 0, 10)
 
         # install button - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        install_button = QtWidgets.QPushButton("Install")
+        install_button = QtWidgets.QPushButton("Install", bottom_widget)
         install_button.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(72, 200, 150);"
@@ -256,7 +256,9 @@ class InstallDialog(QtWidgets.QDialog):
         install_button.setToolTip("Install OpenPype")
 
         # run from current button - - - - - - - - - - - - - - - - - - - - - -
-        run_button = QtWidgets.QPushButton("Run without installation")
+        run_button = QtWidgets.QPushButton(
+            "Run without installation", bottom_widget
+        )
         run_button.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(200, 164, 64);"
@@ -266,7 +268,7 @@ class InstallDialog(QtWidgets.QDialog):
         run_button.setToolTip("Run without installing Pype")
 
         # install button - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        exit_button = QtWidgets.QPushButton("Exit")
+        exit_button = QtWidgets.QPushButton("Exit", bottom_widget)
         exit_button.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(128, 128, 128);"
