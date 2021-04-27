@@ -388,7 +388,8 @@ class ClipLoader:
         # try to get value from options or evaluate key value for `load_to`
         self.new_sequence = options.get("newSequence") or bool(
             "New timeline" in options.get("load_to", ""))
-
+        self.clip_name_template = options.get(
+            "clipNameTemplate") or "{asset}_{subset}_{representation}"
         assert self._populate_data(), str(
             "Cannot Load selected data, look into database "
             "or call your supervisor")
@@ -433,7 +434,7 @@ class ClipLoader:
         asset = str(repr_cntx["asset"])
         subset = str(repr_cntx["subset"])
         representation = str(repr_cntx["representation"])
-        self.data["clip_name"] = "_".join([asset, subset, representation])
+        self.data["clip_name"] = self.clip_name_template.format(**repr_cntx)
         self.data["track_name"] = "_".join([subset, representation])
         self.data["versionData"] = self.context["version"]["data"]
         # gets file path
@@ -544,15 +545,9 @@ class ClipLoader:
              if "slate" in f),
             # if nothing was found then use default None
             # so other bool could be used
-            None) or bool(((
-                # put together duration of clip attributes
-                self.timeline_out - self.timeline_in + 1) \
-                + self.handle_start \
-                + self.handle_end
-                # and compare it with meda duration
-            ) > self.media_duration)
-
-        print("__ slate_on: `{}`".format(slate_on))
+            None) or bool(int(
+                (self.timeline_out - self.timeline_in + 1)
+                + self.handle_start + self.handle_end) < self.media_duration)
 
         # if slate is on then remove the slate frame from begining
         if slate_on:
