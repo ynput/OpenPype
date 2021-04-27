@@ -319,14 +319,30 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         # Move under parent before or after if before is None
         elif direction == 1:
-            if src_parent.rowCount() == 1:
+            src_row_count = src_parent.rowCount()
+            if src_row_count == 1:
                 return
 
-            if item.row() == 0:
-                parent_row = item.row() + 1
-            else:
-                parent_row = item.row() - 1
-            dst_parent = src_parent.child(parent_row)
+            item_row = item.row()
+            dst_parent = None
+            for row in reversed(range(item_row)):
+                if row == item_row:
+                    continue
+                _item = src_parent.child(row)
+                if not isinstance(_item, TaskItem):
+                    dst_parent = _item
+                    break
+
+            if dst_parent is None:
+                for row in range(item_row + 1, src_row_count + 2):
+                    _item = src_parent.child(row)
+                    if not isinstance(_item, TaskItem):
+                        dst_parent = _item
+                        break
+
+                if dst_parent is None:
+                    return
+
             dst_row = dst_parent.rowCount()
 
         if src_parent is dst_parent:
@@ -655,3 +671,6 @@ class TaskItem(BaseItem):
         if cls._name_icon is None:
             cls._name_icon = qtawesome.icon("fa.file-o", color="#333333")
         return cls._name_icon
+
+    def add_child(self, item, row=None):
+        raise AssertionError("BUG: Can't add children to Task")
