@@ -96,7 +96,6 @@ class MongoWidget(QtWidgets.QWidget):
             border: 1px solid rgb(32, 64, 32);
             """
         )
-        self.parent().install_button.setEnabled(True)
 
     def set_invalid(self):
         """Set invalid state on mongo url input."""
@@ -108,7 +107,6 @@ class MongoWidget(QtWidgets.QWidget):
             border: 1px solid rgb(64, 32, 32);
             """
         )
-        self.parent().install_button.setEnabled(False)
 
     def set_read_only(self, state: bool):
         """Set input read-only."""
@@ -245,27 +243,7 @@ class InstallDialog(QtWidgets.QDialog):
         openpype_logo_label.setPixmap(self._pixmap_openpype_logo)
         openpype_logo_label.setContentsMargins(10, 0, 0, 10)
 
-        # install button - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        install_button = QtWidgets.QPushButton("Install", bottom_widget)
-        install_button.setStyleSheet(
-            ("color: rgb(64, 64, 64);"
-             "background-color: rgb(72, 200, 150);"
-             "padding: 0.5em;")
         )
-        install_button.setMinimumSize(64, 24)
-        install_button.setToolTip("Install OpenPype")
-
-        # run from current button - - - - - - - - - - - - - - - - - - - - - -
-        run_button = QtWidgets.QPushButton(
-            "Run without installation", bottom_widget
-        )
-        run_button.setStyleSheet(
-            ("color: rgb(64, 64, 64);"
-             "background-color: rgb(200, 164, 64);"
-             "padding: 0.5em;")
-        )
-        run_button.setMinimumSize(64, 24)
-        run_button.setToolTip("Run without installing Pype")
 
         # install button - - - - - - - - - - - - - - - - - - - - - - - - - - -
         exit_button = QtWidgets.QPushButton("Exit", bottom_widget)
@@ -282,8 +260,6 @@ class InstallDialog(QtWidgets.QDialog):
         bottom_layout.setAlignment(QtCore.Qt.AlignVCenter)
         bottom_layout.addWidget(openpype_logo_label, 0, QtCore.Qt.AlignVCenter)
         bottom_layout.addStretch(1)
-        bottom_layout.addWidget(install_button, 0, QtCore.Qt.AlignVCenter)
-        bottom_layout.addWidget(run_button, 0, QtCore.Qt.AlignVCenter)
         bottom_layout.addWidget(exit_button, 0, QtCore.Qt.AlignVCenter)
 
         # Console label
@@ -368,8 +344,6 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(progress_bar, 0)
         main.addWidget(bottom_widget, 0)
 
-        run_button.clicked.connect(self._on_run_clicked)
-        install_button.clicked.connect(self._on_ok_clicked)
         exit_button.clicked.connect(self._on_exit_clicked)
 
         self.main_label = main_label
@@ -381,8 +355,6 @@ class InstallDialog(QtWidgets.QDialog):
         self._status_label = status_label
         self._status_box = status_box
 
-        self.install_button = install_button
-        self.run_button = run_button
         self._exit_button = exit_button
         self._progress_bar = progress_bar
 
@@ -436,7 +408,6 @@ class InstallDialog(QtWidgets.QDialog):
         """Change button behaviour based on installation outcome."""
         status = result.status
         if status >= 0:
-            self.install_button.setText("Run installed OpenPype")
             self._openpype_run_ready = True
 
     def _update_progress(self, progress: int):
@@ -460,16 +431,12 @@ class InstallDialog(QtWidgets.QDialog):
 
     def _disable_buttons(self):
         """Disable buttons so user interaction doesn't interfere."""
-        self.run_button.setEnabled(False)
         self._exit_button.setEnabled(False)
-        self.install_button.setEnabled(False)
         self._controls_disabled = True
 
     def _enable_buttons(self):
         """Enable buttons after operation is complete."""
-        self.run_button.setEnabled(True)
         self._exit_button.setEnabled(True)
-        self.install_button.setEnabled(True)
         self._controls_disabled = False
 
     def closeEvent(self, event):  # noqa
