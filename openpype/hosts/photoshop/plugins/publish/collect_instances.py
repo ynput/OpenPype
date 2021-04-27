@@ -1,5 +1,5 @@
-import os
 import pyblish.api
+import avalon.api
 
 from avalon import photoshop
 
@@ -54,7 +54,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance.data["publish"] = layer.visible
 
             if self.group_by_task_name:
-                task = os.getenv("AVALON_TASK", None)
+                task = avalon.api.Session["AVALON_TASK"]
                 sanitized_task_name = task[0].upper() + task[1:]
                 instance.data["subsetGroup"] = sanitized_task_name
 
