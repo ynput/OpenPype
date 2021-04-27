@@ -137,8 +137,6 @@ class MongoWidget(QtWidgets.QWidget):
 
 class InstallDialog(QtWidgets.QDialog):
     """Main Igniter dialog window."""
-    _size_w = 400
-    _size_h = 600
     _controls_disabled = False
 
     def __init__(self, parent=None):
@@ -164,11 +162,6 @@ class InstallDialog(QtWidgets.QDialog):
             QtCore.Qt.WindowCloseButtonHint |
             QtCore.Qt.WindowMinimizeButtonHint
         )
-
-        self.setMinimumSize(
-            QtCore.QSize(self._size_w, self._size_h))
-        self.setMaximumSize(
-            QtCore.QSize(self._size_w + 100, self._size_h + 500))
 
         # style for normal console text
         self.default_console_style = QtGui.QTextCharFormat()
