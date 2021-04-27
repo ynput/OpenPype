@@ -16,6 +16,65 @@ from .user_settings import OpenPypeSecureRegistry
 from .version import __version__
 
 
+class ButtonWithOptions(QtWidgets.QFrame):
+    option_clicked = QtCore.Signal(str)
+
+    def __init__(self, options, default=None, parent=None):
+        super(ButtonWithOptions, self).__init__(parent)
+
+        self.setObjectName("ButtonWithOptions")
+
+        if default:
+            if default not in options:
+                default = None
+
+        if default is None:
+            default = options[0]
+
+        main_btn = QtWidgets.QPushButton(default, self)
+        main_btn.setFlat(True)
+
+        options_btn = QtWidgets.QToolButton(self)
+        options_btn.setArrowType(QtCore.Qt.DownArrow)
+        options_btn.setFixedWidth(10)
+
+        options_menu = QtWidgets.QMenu(self)
+        for option in options:
+            action = QtWidgets.QAction(option, options_menu)
+            action.setData(option)
+            options_menu.addAction(action)
+
+        main_btn.setStyleSheet("border: none;")
+        # options_btn.setStyleSheet("border: none;")
+        self.setStyleSheet("border: 1px solid white;border-radius: 0.4em;")
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(5, 0, 5, 0)
+        main_layout.setSpacing(5)
+
+        main_layout.addWidget(main_btn, 1)
+        main_layout.addWidget(options_btn, 0)
+
+        main_btn.clicked.connect(self._on_main_button)
+        options_btn.clicked.connect(self._on_options_click)
+        options_menu.triggered.connect(self._on_trigger)
+
+        self.options_btn = options_btn
+        self.options_menu = options_menu
+
+        self._default_value = default
+
+    def _on_options_click(self):
+        point = self.mapToGlobal(self.rect().bottomLeft())
+        self.options_menu.popup(point)
+
+    def _on_trigger(self, action):
+        self.option_clicked.emit(action.data())
+
+    def _on_main_button(self):
+        self.option_clicked.emit(self._default_value)
+
+
 class FocusHandlingLineEdit(QtWidgets.QLineEdit):
     """Handling focus in/out on QLineEdit."""
     focusIn = QtCore.Signal()
