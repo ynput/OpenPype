@@ -198,14 +198,14 @@ class InstallDialog(QtWidgets.QDialog):
 
         # Main info
         # --------------------------------------------------------------------
-        self.main_label = QtWidgets.QLabel("Welcome to <b>OpenPype</b>")
-        self.main_label.setWordWrap(True)
-        self.main_label.setStyleSheet("color: rgb(200, 200, 200);")
+        main_label = QtWidgets.QLabel("Welcome to <b>OpenPype</b>", self)
+        main_label.setWordWrap(True)
+        main_label.setStyleSheet("color: rgb(200, 200, 200);")
 
         # OpenPype path info
         # --------------------------------------------------------------------
 
-        self.openpype_path_label = QtWidgets.QLabel(
+        openpype_path_label = QtWidgets.QLabel(
             """<p>
             If you want to just try OpenPype without installing, hit the
             middle button that states "run without installation".
@@ -213,18 +213,18 @@ class InstallDialog(QtWidgets.QDialog):
             """
         )
 
-        self.openpype_path_label.setWordWrap(True)
-        self.openpype_path_label.setStyleSheet("color: rgb(150, 150, 150);")
+        openpype_path_label.setWordWrap(True)
+        openpype_path_label.setStyleSheet("color: rgb(150, 150, 150);")
 
         # Mongo box | OK button
         # --------------------------------------------------------------------
 
-        self.mongo_label = QtWidgets.QLabel(
+        mongo_label = QtWidgets.QLabel(
             """Enter URL for running MongoDB instance:"""
         )
 
-        self.mongo_label.setWordWrap(True)
-        self.mongo_label.setStyleSheet("color: rgb(150, 150, 150);")
+        mongo_label.setWordWrap(True)
+        mongo_label.setStyleSheet("color: rgb(150, 150, 150);")
 
         self._mongo = MongoWidget(self)
         if self.mongo_url:
@@ -242,61 +242,58 @@ class InstallDialog(QtWidgets.QDialog):
         openpype_logo_label.setContentsMargins(10, 0, 0, 10)
 
         # install button - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        self.install_button = QtWidgets.QPushButton("Install")
-        self.install_button.setStyleSheet(
+        install_button = QtWidgets.QPushButton("Install")
+        install_button.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(72, 200, 150);"
              "padding: 0.5em;")
         )
-        self.install_button.setMinimumSize(64, 24)
-        self.install_button.setToolTip("Install OpenPype")
-        self.install_button.clicked.connect(self._on_ok_clicked)
+        install_button.setMinimumSize(64, 24)
+        install_button.setToolTip("Install OpenPype")
 
         # run from current button - - - - - - - - - - - - - - - - - - - - - -
-        self.run_button = QtWidgets.QPushButton("Run without installation")
-        self.run_button.setStyleSheet(
+        run_button = QtWidgets.QPushButton("Run without installation")
+        run_button.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(200, 164, 64);"
              "padding: 0.5em;")
         )
-        self.run_button.setMinimumSize(64, 24)
-        self.run_button.setToolTip("Run without installing Pype")
-        self.run_button.clicked.connect(self._on_run_clicked)
+        run_button.setMinimumSize(64, 24)
+        run_button.setToolTip("Run without installing Pype")
 
         # install button - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        self._exit_button = QtWidgets.QPushButton("Exit")
-        self._exit_button.setStyleSheet(
+        exit_button = QtWidgets.QPushButton("Exit")
+        exit_button.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(128, 128, 128);"
              "padding: 0.5em;")
         )
-        self._exit_button.setMinimumSize(64, 24)
-        self._exit_button.setToolTip("Exit")
-        self._exit_button.clicked.connect(self._on_exit_clicked)
+        exit_button.setMinimumSize(64, 24)
+        exit_button.setToolTip("Exit")
 
         bottom_layout.setContentsMargins(0, 10, 10, 0)
         bottom_layout.setAlignment(QtCore.Qt.AlignVCenter)
         bottom_layout.addWidget(openpype_logo_label, 0, QtCore.Qt.AlignVCenter)
         bottom_layout.addStretch(1)
-        bottom_layout.addWidget(self.install_button, 0, QtCore.Qt.AlignVCenter)
-        bottom_layout.addWidget(self.run_button, 0, QtCore.Qt.AlignVCenter)
-        bottom_layout.addWidget(self._exit_button, 0, QtCore.Qt.AlignVCenter)
 
         bottom_widget.setLayout(bottom_layout)
         bottom_widget.setStyleSheet("background-color: rgb(32, 32, 32);")
+        bottom_layout.addWidget(install_button, 0, QtCore.Qt.AlignVCenter)
+        bottom_layout.addWidget(run_button, 0, QtCore.Qt.AlignVCenter)
+        bottom_layout.addWidget(exit_button, 0, QtCore.Qt.AlignVCenter)
 
         # Console label
         # --------------------------------------------------------------------
-        self._status_label = QtWidgets.QLabel("Console:")
-        self._status_label.setContentsMargins(0, 10, 0, 10)
-        self._status_label.setStyleSheet("color: rgb(61, 115, 97);")
+        status_label = QtWidgets.QLabel("Console:", self)
+        status_label.setContentsMargins(0, 10, 0, 10)
+        status_label.setStyleSheet("color: rgb(61, 115, 97);")
 
         # Console
         # --------------------------------------------------------------------
-        self._status_box = QtWidgets.QPlainTextEdit()
-        self._status_box.setReadOnly(True)
-        self._status_box.setCurrentCharFormat(self.default_console_style)
-        self._status_box.setStyleSheet(
+        status_box = QtWidgets.QPlainTextEdit(self)
+        status_box.setReadOnly(True)
+        status_box.setCurrentCharFormat(self.default_console_style)
+        status_box.setStyleSheet(
             """QPlainTextEdit {
                 background-color: rgb(32, 32, 32);
                 color: rgb(72, 200, 150);
@@ -337,13 +334,13 @@ class InstallDialog(QtWidgets.QDialog):
 
         # Progress bar
         # --------------------------------------------------------------------
-        self._progress_bar = QtWidgets.QProgressBar()
-        self._progress_bar.setValue(0)
-        self._progress_bar.setAlignment(QtCore.Qt.AlignCenter)
-        self._progress_bar.setTextVisible(False)
+        progress_bar = QtWidgets.QProgressBar(self)
+        progress_bar.setValue(0)
+        progress_bar.setAlignment(QtCore.Qt.AlignCenter)
+        progress_bar.setTextVisible(False)
         # setting font and the size
-        self._progress_bar.setFont(QtGui.QFont('Arial', 7))
-        self._progress_bar.setStyleSheet(
+        progress_bar.setFont(QtGui.QFont('Arial', 7))
+        progress_bar.setStyleSheet(
             """QProgressBar:horizontal {
                 height: 5px;
                 border: 1px solid rgb(31, 62, 50);
@@ -356,19 +353,34 @@ class InstallDialog(QtWidgets.QDialog):
         )
         # add all to main
         main = QtWidgets.QVBoxLayout(self)
-        main.addWidget(self.main_label, 0)
-        main.addWidget(self.openpype_path_label, 0)
-        main.addWidget(self.mongo_label, 0)
+        main.addWidget(main_label, 0)
+        main.addWidget(openpype_path_label, 0)
+        main.addWidget(mongo_label, 0)
         main.addWidget(self._mongo, 0)
 
-        main.addWidget(self._status_label, 0)
-        main.addWidget(self._status_box, 1)
+        main.addWidget(status_label, 0)
+        main.addWidget(status_box, 1)
 
-        main.addWidget(self._progress_bar, 0)
+        main.addWidget(progress_bar, 0)
         main.addWidget(bottom_widget, 0)
 
         # Trigger mongo validation
         self._mongo.validate_url()
+        run_button.clicked.connect(self._on_run_clicked)
+        install_button.clicked.connect(self._on_ok_clicked)
+        exit_button.clicked.connect(self._on_exit_clicked)
+
+        self.main_label = main_label
+        self.openpype_path_label = openpype_path_label
+        self.mongo_label = mongo_label
+
+        self._status_label = status_label
+        self._status_box = status_box
+
+        self.install_button = install_button
+        self.run_button = run_button
+        self._exit_button = exit_button
+        self._progress_bar = progress_bar
 
     def _on_run_clicked(self):
         valid, reason = validate_mongo_connection(
