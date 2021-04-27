@@ -16,6 +16,17 @@ from .user_settings import OpenPypeSecureRegistry
 from .version import __version__
 
 
+def load_stylesheet():
+    stylesheet_path = os.path.join(
+        os.path.dirname(__file__),
+        "stylesheet.css"
+    )
+    with open(stylesheet_path, "r") as file_stream:
+        stylesheet = file_stream.read()
+
+    return stylesheet
+
+
 class ButtonWithOptions(QtWidgets.QFrame):
     option_clicked = QtCore.Signal(str)
 
@@ -43,10 +54,6 @@ class ButtonWithOptions(QtWidgets.QFrame):
             action = QtWidgets.QAction(option, options_menu)
             action.setData(option)
             options_menu.addAction(action)
-
-        main_btn.setStyleSheet("border: none;")
-        # options_btn.setStyleSheet("border: none;")
-        self.setStyleSheet("border: 1px solid white;border-radius: 0.4em;")
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(5, 0, 5, 0)
@@ -104,12 +111,6 @@ class MongoWidget(QtWidgets.QWidget):
         self._mongo_input.focusOut.connect(self._focus_out)
         self._mongo_input.setValidator(
             MongoValidator(self._mongo_input))
-        self._mongo_input.setStyleSheet(
-            ("color: rgb(233, 233, 233);"
-             "background-color: rgb(64, 64, 64);"
-             "padding: 0.5em;"
-             "border: 1px solid rgb(32, 32, 32);")
-        )
 
         mongo_layout = QtWidgets.QHBoxLayout(self)
         mongo_layout.setContentsMargins(0, 0, 0, 0)
@@ -147,25 +148,13 @@ class MongoWidget(QtWidgets.QWidget):
 
     def set_valid(self):
         """Set valid state on mongo url input."""
-        self._mongo_input.setStyleSheet(
-            """
-            background-color: rgb(19, 19, 19);
-            color: rgb(64, 230, 132);
-            padding: 0.5em;
-            border: 1px solid rgb(32, 64, 32);
-            """
-        )
+        self.setProperty("state", "valid")
+        self.ensurePolished()
 
     def set_invalid(self):
         """Set invalid state on mongo url input."""
-        self._mongo_input.setStyleSheet(
-            """
-            background-color: rgb(32, 19, 19);
-            color: rgb(255, 69, 0);
-            padding: 0.5em;
-            border: 1px solid rgb(64, 32, 32);
-            """
-        )
+        self.setProperty("state", "invalid")
+        self.ensurePolished()
 
     def set_read_only(self, state: bool):
         """Set input read-only."""
@@ -248,13 +237,10 @@ class InstallDialog(QtWidgets.QDialog):
 
         # Trigger mongo validation
         self._mongo_widget.validate_url()
+        self.setStyleSheet(load_stylesheet())
 
     def _init_ui(self):
         # basic visual style - dark background, light text
-        self.setStyleSheet("""
-            color: rgb(200, 200, 200);
-            background-color: rgb(23, 23, 23);
-        """)
 
         # Main info
         # --------------------------------------------------------------------
@@ -342,44 +328,7 @@ class InstallDialog(QtWidgets.QDialog):
         status_box = QtWidgets.QPlainTextEdit(self)
         status_box.setReadOnly(True)
         status_box.setCurrentCharFormat(self.default_console_style)
-        status_box.setStyleSheet(
-            """QPlainTextEdit {
-                background-color: rgb(32, 32, 32);
-                color: rgb(72, 200, 150);
-                font-family: "Roboto Mono";
-                font-size: 0.5em;
-                border: 1px solid rgb(48, 48, 48);
-                }
-                QScrollBar:vertical {
-                 border: 1px solid rgb(61, 115, 97);
-                 background: #000;
-                 width:5px;
-                 margin: 0px 0px 0px 0px;
-                }
-                QScrollBar::handle:vertical {
-                 background: rgb(72, 200, 150);
-                 min-height: 0px;
-                }
-                QScrollBar::sub-page:vertical {
-                 background: rgb(31, 62, 50);
-                }
-                QScrollBar::add-page:vertical {
-                 background: rgb(31, 62, 50);
-                }
-                QScrollBar::add-line:vertical {
-                 background: rgb(72, 200, 150);
-                 height: 0px;
-                 subcontrol-position: bottom;
-                 subcontrol-origin: margin;
-                }
-                QScrollBar::sub-line:vertical {
-                 background: rgb(72, 200, 150);
-                 height: 0 px;
-                 subcontrol-position: top;
-                 subcontrol-origin: margin;
-                }
-            """
-        )
+        status_box.setObjectName("Console")
 
         # Progress bar
         # --------------------------------------------------------------------
@@ -387,19 +336,7 @@ class InstallDialog(QtWidgets.QDialog):
         progress_bar.setValue(0)
         progress_bar.setAlignment(QtCore.Qt.AlignCenter)
         progress_bar.setTextVisible(False)
-        # setting font and the size
-        progress_bar.setFont(QtGui.QFont('Arial', 7))
-        progress_bar.setStyleSheet(
-            """QProgressBar:horizontal {
-                height: 5px;
-                border: 1px solid rgb(31, 62, 50);
-                color: rgb(72, 200, 150);
-               }
-               QProgressBar::chunk:horizontal {
-               background-color: rgb(72, 200, 150);
-               }
-            """
-        )
+
         # add all to main
         main = QtWidgets.QVBoxLayout(self)
         main.addWidget(main_label, 0)
