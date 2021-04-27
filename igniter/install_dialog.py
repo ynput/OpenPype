@@ -9,7 +9,6 @@ from Qt.QtCore import QTimer  # noqa
 
 from .install_thread import InstallThread, InstallResult
 from .tools import (
-    validate_path_string,
     validate_mongo_connection,
     get_openpype_path_from_db
 )
@@ -141,7 +140,6 @@ class InstallDialog(QtWidgets.QDialog):
     """Main Igniter dialog window."""
     _size_w = 400
     _size_h = 600
-    path = ""
     _controls_disabled = False
 
     def __init__(self, parent=None):
@@ -204,13 +202,7 @@ class InstallDialog(QtWidgets.QDialog):
 
         # Main info
         # --------------------------------------------------------------------
-        self.main_label = QtWidgets.QLabel(
-            """Welcome to <b>OpenPype</b>
-            <p>
-            We've detected <b>OpenPype</b> is not configured yet. But don't worry,
-            this is as easy as setting one or two things.
-            <p>
-            """)
+        self.main_label = QtWidgets.QLabel("Welcome to <b>OpenPype</b>")
         self.main_label.setWordWrap(True)
         self.main_label.setStyleSheet("color: rgb(200, 200, 200);")
 
@@ -218,14 +210,7 @@ class InstallDialog(QtWidgets.QDialog):
         # --------------------------------------------------------------------
 
         self.openpype_path_label = QtWidgets.QLabel(
-            """This is <b>Path to studio location</b> where OpenPype versions
-            are stored. It will be pre-filled if your MongoDB connection is
-            already set and your studio defined this location.
-            <p>
-            Leave it empty if you want to install OpenPype version that
-            comes with this installation.
-            </p>
-            <p>
+            """<p>
             If you want to just try OpenPype without installing, hit the
             middle button that states "run without installation".
             </p>
@@ -234,40 +219,6 @@ class InstallDialog(QtWidgets.QDialog):
 
         self.openpype_path_label.setWordWrap(True)
         self.openpype_path_label.setStyleSheet("color: rgb(150, 150, 150);")
-
-        # Path/Url box | Select button
-        # --------------------------------------------------------------------
-
-        input_layout = QtWidgets.QHBoxLayout()
-
-        input_layout.setContentsMargins(0, 10, 0, 10)
-        self.user_input = FocusHandlingLineEdit()
-
-        self.user_input.setPlaceholderText("Path to OpenPype versions")
-        self.user_input.textChanged.connect(self._path_changed)
-        self.user_input.setStyleSheet(
-            ("color: rgb(233, 233, 233);"
-             "background-color: rgb(64, 64, 64);"
-             "padding: 0.5em;"
-             "border: 1px solid rgb(32, 32, 32);")
-        )
-
-        self.user_input.setValidator(PathValidator(self.user_input))
-
-        self._btn_select = QtWidgets.QPushButton("Select")
-        self._btn_select.setToolTip(
-            "Select OpenPype repository"
-        )
-        self._btn_select.setStyleSheet(
-            ("color: rgb(64, 64, 64);"
-             "background-color: rgb(72, 200, 150);"
-             "padding: 0.5em;")
-        )
-        self._btn_select.setMaximumSize(100, 140)
-        self._btn_select.clicked.connect(self._on_select_clicked)
-
-        input_layout.addWidget(self.user_input)
-        input_layout.addWidget(self._btn_select)
 
         # Mongo box | OK button
         # --------------------------------------------------------------------
@@ -411,7 +362,6 @@ class InstallDialog(QtWidgets.QDialog):
         # add all to main
         main.addWidget(self.main_label, 0)
         main.addWidget(self.openpype_path_label, 0)
-        main.addLayout(input_layout, 0)
         main.addWidget(self.mongo_label, 0)
         main.addWidget(self._mongo, 0)
 
@@ -424,30 +374,7 @@ class InstallDialog(QtWidgets.QDialog):
         self.setLayout(main)
 
         # if mongo url is ok, try to get openpype path from there
-        if self._mongo.validate_url() and len(self.path) == 0:
-            self.path = get_openpype_path_from_db(self.mongo_url)
-            self.user_input.setText(self.path)
-
-    def _on_select_clicked(self):
-        """Show directory dialog."""
-        options = QtWidgets.QFileDialog.Options()
-        options |= QtWidgets.QFileDialog.DontUseNativeDialog
-        options |= QtWidgets.QFileDialog.ShowDirsOnly
-
-        result = QtWidgets.QFileDialog.getExistingDirectory(
-            parent=self,
-            caption='Select path',
-            directory=os.getcwd(),
-            options=options)
-
-        if not result:
-            return
-
-        filename = QtCore.QDir.toNativeSeparators(result)
-
-        if os.path.isdir(filename):
-            self.path = filename
-            self.user_input.setText(filename)
+        self._mongo.validate_url()
 
     def _on_run_clicked(self):
         valid, reason = validate_mongo_connection(
@@ -482,9 +409,6 @@ class InstallDialog(QtWidgets.QDialog):
             self.done(3)
             return
 
-        if self.path and len(self.path) > 0:
-            valid, reason = validate_path_string(self.path)
-
         if not valid:
             self.update_console(f"!!! {reason}", True)
             return
@@ -495,7 +419,6 @@ class InstallDialog(QtWidgets.QDialog):
         self._install_thread.message.connect(self.update_console)
         self._install_thread.progress.connect(self._update_progress)
         self._install_thread.finished.connect(self._enable_buttons)
-        self._install_thread.set_path(self.path)
         self._install_thread.set_mongo(self._mongo.get_mongo_url())
         self._install_thread.start()
 
@@ -512,11 +435,6 @@ class InstallDialog(QtWidgets.QDialog):
     def _on_exit_clicked(self):
         self.reject()
 
-    def _path_changed(self, path: str) -> str:
-        """Set path."""
-        self.path = path
-        return path
-
     def update_console(self, msg: str, error: bool = False) -> None:
         """Display message in console.
 
@@ -532,7 +450,6 @@ class InstallDialog(QtWidgets.QDialog):
 
     def _disable_buttons(self):
         """Disable buttons so user interaction doesn't interfere."""
-        self._btn_select.setEnabled(False)
         self.run_button.setEnabled(False)
         self._exit_button.setEnabled(False)
         self.install_button.setEnabled(False)
@@ -540,7 +457,6 @@ class InstallDialog(QtWidgets.QDialog):
 
     def _enable_buttons(self):
         """Enable buttons after operation is complete."""
-        self._btn_select.setEnabled(True)
         self.run_button.setEnabled(True)
         self._exit_button.setEnabled(True)
         self.install_button.setEnabled(True)
@@ -634,36 +550,6 @@ class MongoValidator(QValidator):
             QValidator.State.Intermediate, "", mongo)
 
 
-class PathValidator(MongoValidator):
-    """Validate mongodb url for Qt widgets."""
-
-    def validate(self, path: str, pos: int) -> (QValidator.State, str, int):  # noqa
-        """Validate path to be accepted by Igniter.
-
-        Args:
-            path (str): path to OpenPype.
-            pos (int): current position.
-
-        Returns:
-            (QValidator.State.Acceptable, str, int):
-                Indicate input state with color and always return
-                Acceptable state as we need to be able to edit input further.
-
-        """
-        # allow empty path as that will use current version coming with
-        # OpenPype Igniter
-        if len(path) == 0:
-            return self._return_state(
-                QValidator.State.Acceptable, "Use version with Igniter", path)
-
-        if len(path) > 3:
-            valid, reason = validate_path_string(path)
-            if not valid:
-                return self._return_state(
-                    QValidator.State.Invalid, reason, path)
-            else:
-                return self._return_state(
-                    QValidator.State.Acceptable, reason, path)
 
 
 class CollapsibleWidget(QtWidgets.QWidget):
