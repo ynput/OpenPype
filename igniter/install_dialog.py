@@ -36,7 +36,6 @@ class MongoWidget(QtWidgets.QWidget):
     """Widget to input mongodb URL."""
 
     def __init__(self, parent=None):
-        self._btn_mongo = None
         super(MongoWidget, self).__init__(parent)
         mongo_layout = QtWidgets.QHBoxLayout()
         mongo_layout.setContentsMargins(0, 0, 0, 0)
