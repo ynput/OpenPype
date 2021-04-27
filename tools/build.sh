@@ -170,7 +170,7 @@ main () {
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # fix code signing issue
-    codesign --remote-signature "$openpype_root/build/OpenPype.app/Contents/MacOS/lib/Python"
+    codesign --remove-signature "$openpype_root/build/OpenPype.app/Contents/MacOS/lib/Python"
     if command -v create-dmg > /dev/null 2>&1; then
       create-dmg \
         --volname "OpenPype Installer" \
