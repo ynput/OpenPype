@@ -33,6 +33,110 @@ class FocusHandlingLineEdit(QtWidgets.QLineEdit):
         super().focusInEvent(event)
 
 
+class MongoWidget(QtWidgets.QWidget):
+    """Widget to input mongodb URL."""
+
+    def __init__(self, parent=None):
+        self._btn_mongo = None
+        super(MongoWidget, self).__init__(parent)
+        mongo_layout = QtWidgets.QHBoxLayout()
+        mongo_layout.setContentsMargins(0, 0, 0, 0)
+        self._mongo_input = FocusHandlingLineEdit()
+        self._mongo_input.setPlaceholderText("Mongo URL")
+        self._mongo_input.textChanged.connect(self._mongo_changed)
+        self._mongo_input.focusIn.connect(self._focus_in)
+        self._mongo_input.focusOut.connect(self._focus_out)
+        self._mongo_input.setValidator(
+            MongoValidator(self._mongo_input))
+        self._mongo_input.setStyleSheet(
+            ("color: rgb(233, 233, 233);"
+             "background-color: rgb(64, 64, 64);"
+             "padding: 0.5em;"
+             "border: 1px solid rgb(32, 32, 32);")
+        )
+
+        mongo_layout.addWidget(self._mongo_input)
+        self.setLayout(mongo_layout)
+
+    def _focus_out(self):
+        self.validate_url()
+
+    def _focus_in(self):
+        self._mongo_input.setStyleSheet(
+            """
+            background-color: rgb(32, 32, 19);
+            color: rgb(255, 190, 15);
+            padding: 0.5em;
+            border: 1px solid rgb(64, 64, 32);
+            """
+        )
+
+    def _mongo_changed(self, mongo: str):
+        self.parent().mongo_url = mongo
+
+    def get_mongo_url(self) -> str:
+        """Helper to get url from parent."""
+        return self.parent().mongo_url
+
+    def set_mongo_url(self, mongo: str):
+        """Helper to set url to  parent.
+
+        Args:
+            mongo (str): mongodb url string.
+
+        """
+        self._mongo_input.setText(mongo)
+
+    def set_valid(self):
+        """Set valid state on mongo url input."""
+        self._mongo_input.setStyleSheet(
+            """
+            background-color: rgb(19, 19, 19);
+            color: rgb(64, 230, 132);
+            padding: 0.5em;
+            border: 1px solid rgb(32, 64, 32);
+            """
+        )
+        self.parent().install_button.setEnabled(True)
+
+    def set_invalid(self):
+        """Set invalid state on mongo url input."""
+        self._mongo_input.setStyleSheet(
+            """
+            background-color: rgb(32, 19, 19);
+            color: rgb(255, 69, 0);
+            padding: 0.5em;
+            border: 1px solid rgb(64, 32, 32);
+            """
+        )
+        self.parent().install_button.setEnabled(False)
+
+    def set_read_only(self, state: bool):
+        """Set input read-only."""
+        self._mongo_input.setReadOnly(state)
+
+    def validate_url(self) -> bool:
+        """Validate if entered url is ok.
+
+        Returns:
+            True if url is valid monogo string.
+
+        """
+        if self.parent().mongo_url == "":
+            return False
+
+        is_valid, reason_str = validate_mongo_connection(
+            self.parent().mongo_url
+        )
+        if not is_valid:
+            self.set_invalid()
+            self.parent().update_console(f"!!! {reason_str}", True)
+            return False
+        else:
+            self.set_valid()
+        return True
+
+
 class InstallDialog(QtWidgets.QDialog):
     """Main Igniter dialog window."""
     _size_w = 400
@@ -174,109 +278,6 @@ class InstallDialog(QtWidgets.QDialog):
 
         self.mongo_label.setWordWrap(True)
         self.mongo_label.setStyleSheet("color: rgb(150, 150, 150);")
-
-        class MongoWidget(QtWidgets.QWidget):
-            """Widget to input mongodb URL."""
-
-            def __init__(self, parent=None):
-                self._btn_mongo = None
-                super(MongoWidget, self).__init__(parent)
-                mongo_layout = QtWidgets.QHBoxLayout()
-                mongo_layout.setContentsMargins(0, 0, 0, 0)
-                self._mongo_input = FocusHandlingLineEdit()
-                self._mongo_input.setPlaceholderText("Mongo URL")
-                self._mongo_input.textChanged.connect(self._mongo_changed)
-                self._mongo_input.focusIn.connect(self._focus_in)
-                self._mongo_input.focusOut.connect(self._focus_out)
-                self._mongo_input.setValidator(
-                    MongoValidator(self._mongo_input))
-                self._mongo_input.setStyleSheet(
-                    ("color: rgb(233, 233, 233);"
-                     "background-color: rgb(64, 64, 64);"
-                     "padding: 0.5em;"
-                     "border: 1px solid rgb(32, 32, 32);")
-                )
-
-                mongo_layout.addWidget(self._mongo_input)
-                self.setLayout(mongo_layout)
-
-            def _focus_out(self):
-                self.validate_url()
-
-            def _focus_in(self):
-                self._mongo_input.setStyleSheet(
-                    """
-                    background-color: rgb(32, 32, 19);
-                    color: rgb(255, 190, 15);
-                    padding: 0.5em;
-                    border: 1px solid rgb(64, 64, 32);
-                    """
-                )
-
-            def _mongo_changed(self, mongo: str):
-                self.parent().mongo_url = mongo
-
-            def get_mongo_url(self) -> str:
-                """Helper to get url from parent."""
-                return self.parent().mongo_url
-
-            def set_mongo_url(self, mongo: str):
-                """Helper to set url to  parent.
-
-                Args:
-                    mongo (str): mongodb url string.
-
-                """
-                self._mongo_input.setText(mongo)
-
-            def set_valid(self):
-                """Set valid state on mongo url input."""
-                self._mongo_input.setStyleSheet(
-                    """
-                    background-color: rgb(19, 19, 19);
-                    color: rgb(64, 230, 132);
-                    padding: 0.5em;
-                    border: 1px solid rgb(32, 64, 32);
-                    """
-                )
-                self.parent().install_button.setEnabled(True)
-
-            def set_invalid(self):
-                """Set invalid state on mongo url input."""
-                self._mongo_input.setStyleSheet(
-                    """
-                    background-color: rgb(32, 19, 19);
-                    color: rgb(255, 69, 0);
-                    padding: 0.5em;
-                    border: 1px solid rgb(64, 32, 32);
-                    """
-                )
-                self.parent().install_button.setEnabled(False)
-
-            def set_read_only(self, state: bool):
-                """Set input read-only."""
-                self._mongo_input.setReadOnly(state)
-
-            def validate_url(self) -> bool:
-                """Validate if entered url is ok.
-
-                Returns:
-                    True if url is valid monogo string.
-
-                """
-                if self.parent().mongo_url == "":
-                    return False
-
-                is_valid, reason_str = validate_mongo_connection(
-                    self.parent().mongo_url
-                )
-                if not is_valid:
-                    self.set_invalid()
-                    self.parent().update_console(f"!!! {reason_str}", True)
-                    return False
-                else:
-                    self.set_valid()
-                return True
 
         self._mongo = MongoWidget(self)
         if self.mongo_url:
