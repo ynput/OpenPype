@@ -54,9 +54,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance.data["publish"] = layer.visible
 
             if self.group_by_task_name:
-                task = avalon.api.Session["AVALON_TASK"]
-                sanitized_task_name = task[0].upper() + task[1:]
-                instance.data["subsetGroup"] = sanitized_task_name
+                task_name = avalon.api.Session["AVALON_TASK"]
+                instance.data["subsetGroup"] = task_name
 
             instance_names.append(layer_data["subset"])
 
