@@ -9,6 +9,7 @@ from .settings import get_project_settings
 from .lib import (
     Anatomy,
     filter_pyblish_plugins,
+    set_plugin_attributes_from_settings,
     change_timer_to_current_context
 )
 
@@ -58,38 +59,8 @@ def patched_discover(superclass):
     # run original discover and get plugins
     plugins = _original_discover(superclass)
 
-    # determine host application to use for finding presets
-    if avalon.registered_host() is None:
-        return plugins
-    host = avalon.registered_host().__name__.split(".")[-1]
+    set_plugin_attributes_from_settings(plugins, superclass)
 
-    # map plugin superclass to preset json. Currenly suppoted is load and
-    # create (avalon.api.Loader and avalon.api.Creator)
-    plugin_type = "undefined"
-    if superclass.__name__.split(".")[-1] == "Loader":
-        plugin_type = "load"
-    elif superclass.__name__.split(".")[-1] == "Creator":
-        plugin_type = "create"
-
-    print(">>> Finding presets for {}:{} ...".format(host, plugin_type))
-    try:
-        settings = (
-            get_project_settings(os.environ['AVALON_PROJECT'])
-            [host][plugin_type]
-        )
-    except KeyError:
-        print("*** no presets found.")
-    else:
-        for plugin in plugins:
-            if plugin.__name__ in settings:
-                print(">>> We have preset for {}".format(plugin.__name__))
-                for option, value in settings[plugin.__name__].items():
-                    if option == "enabled" and value is False:
-                        setattr(plugin, "active", False)
-                        print("  - is disabled by preset")
-                    else:
-                        setattr(plugin, option, value)
-                        print("  - setting `{}`: `{}`".format(option, value))
     return plugins
 
 
