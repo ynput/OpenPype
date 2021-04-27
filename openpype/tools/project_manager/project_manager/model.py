@@ -34,6 +34,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         "resolutionWidth",
         "resolutionHeight"
     ]
+    index_moved = QtCore.Signal(QtCore.QModelIndex)
 
     def __init__(self, parent=None):
         super(HierarchyModel, self).__init__(parent)
@@ -205,8 +206,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         self.endInsertRows()
 
-        self.rowsInserted.emit(parent_index, row, row)
-
         return self.index_from_item(row, 0, parent)
 
     def remove_index(self, index):
@@ -373,6 +372,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         self.endMoveRows()
 
+        self.index_moved.emit(index)
+
     def move_horizontal(self, index, direction):
         if not index.isValid():
             return
@@ -457,6 +458,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             dst_parent.move_to(item, destination_row)
 
         self.endMoveRows()
+
+        self.index_moved.emit(index)
 
     def child_removed(self, child):
         self._items_by_id.pop(child.id, None)
