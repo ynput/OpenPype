@@ -1,3 +1,4 @@
+import os
 import pyblish.api
 
 from avalon import photoshop
@@ -19,6 +20,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
     families_mapping = {
         "image": []
     }
+    # True will add all instances to same group in Loader
+    group_by_task_name = False
 
     def process(self, context):
         stub = photoshop.stub()
@@ -49,6 +52,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 layer_data["family"]
             ]
             instance.data["publish"] = layer.visible
+
+            if self.group_by_task_name:
+                task = os.getenv("AVALON_TASK", None)
+                sanitized_task_name = task[0].upper() + task[1:]
+                instance.data["subsetGroup"] = sanitized_task_name
+
             instance_names.append(layer_data["subset"])
 
             # Produce diagnostic message for any graphical
