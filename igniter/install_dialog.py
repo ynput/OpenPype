@@ -189,6 +189,9 @@ class InstallDialog(QtWidgets.QDialog):
 
         self._init_ui()
 
+        # Trigger mongo validation
+        self._mongo_widget.validate_url()
+
     def _init_ui(self):
         # basic visual style - dark background, light text
         self.setStyleSheet("""
@@ -363,8 +366,6 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(progress_bar, 0)
         main.addWidget(bottom_widget, 0)
 
-        # Trigger mongo validation
-        self._mongo.validate_url()
         run_button.clicked.connect(self._on_run_clicked)
         install_button.clicked.connect(self._on_ok_clicked)
         exit_button.clicked.connect(self._on_exit_clicked)
