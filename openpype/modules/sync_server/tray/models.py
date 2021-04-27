@@ -120,7 +120,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             self.query = self.get_query(load_records)
             representations = self.dbcon.aggregate(self.query)
 
-        self.add_page_records(self.local_site, self.remote_site,
+        self.add_page_records(self.active_site, self.remote_site,
                               representations)
         self.endResetModel()
         self.refresh_finished.emit()
@@ -158,7 +158,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                              self._rec_loaded,
                              self._rec_loaded + items_to_fetch - 1)
 
-        self.add_page_records(self.local_site, self.remote_site,
+        self.add_page_records(self.active_site, self.remote_site,
                               representations)
 
         self.endInsertRows()
@@ -283,7 +283,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         """
         self._project = project
         self.sync_server.set_sync_project_settings()
-        self.local_site = self.sync_server.get_active_site(self.project)
+        self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
         self.refresh()
 
@@ -410,7 +410,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site = self.sync_server.get_active_site(self.project)
+        self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
         self.sort = self.DEFAULT_SORT
@@ -427,6 +427,9 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
     def data(self, index, role):
         item = self._data[index.row()]
+
+        if role == lib.FullItemRole:
+            return item
 
         header_value = self._header[index.column()]
         if role == lib.ProviderRole:
@@ -585,7 +588,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                                 }},
                 'order_local': {
                     '$filter': {'input': '$files.sites', 'as': 'p',
-                                'cond': {'$eq': ['$$p.name', self.local_site]}
+                                'cond': {'$eq': ['$$p.name', self.active_site]}
                                 }}
             }},
             {'$addFields': {
@@ -714,7 +717,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         """
         base_match = {
             "type": "representation",
-            'files.sites.name': {'$all': [self.local_site,
+            'files.sites.name': {'$all': [self.active_site,
                                           self.remote_site]}
         }
         if not self._word_filter:
@@ -889,7 +892,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self.sync_server = sync_server
         # TODO think about admin mode
         # this is for regular user, always only single local and single remote
-        self.local_site = self.sync_server.get_active_site(self.project)
+        self.active_site = self.sync_server.get_active_site(self.project)
         self.remote_site = self.sync_server.get_remote_site(self.project)
 
         self.sort = self.DEFAULT_SORT
@@ -904,6 +907,9 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
 
     def data(self, index, role):
         item = self._data[index.row()]
+
+        if role == lib.FullItemRole:
+            return item
 
         header_value = self._header[index.column()]
         if role == lib.ProviderRole:
@@ -1042,7 +1048,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                                 }},
                 'order_local': {
                     '$filter': {'input': '$files.sites', 'as': 'p',
-                                'cond': {'$eq': ['$$p.name', self.local_site]}
+                                'cond': {'$eq': ['$$p.name', self.active_site]}
                                 }}
             }},
             {'$addFields': {
