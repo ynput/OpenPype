@@ -37,6 +37,12 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             if tag_data.get("id") != "pyblish.avalon.instance":
                 continue
 
+            # solve handles length
+            tag_data["handleStart"] = min(
+                tag_data["handleStart"], int(track_item.handleInLength()))
+            tag_data["handleEnd"] = min(
+                tag_data["handleEnd"], int(track_item.handleOutLength()))
+
             # add tag data to instance data
             data.update({
                 k: v for k, v in tag_data.items()
@@ -148,7 +154,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             "families": []
         })
 
-        context.create_instance(**data)
+        instance = context.create_instance(**data)
+        self.log.info("Creating instance: {}".format(instance))
+        self.log.debug(
+            "_ instance.data: {}".format(pformat(instance.data)))
 
     def get_otio_clip_instance_data(self, otio_timeline, track_item):
         """

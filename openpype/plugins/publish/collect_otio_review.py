@@ -88,6 +88,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
                 otio_review_clips.append(otio_gap)
 
         if otio_review_clips:
+            instance.data["label"] += " (review)"
             instance.data["families"] += ["review", "ftrack"]
             instance.data["otioReviewClips"] = otio_review_clips
             self.log.info(
