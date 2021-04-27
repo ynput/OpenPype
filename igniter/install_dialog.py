@@ -226,14 +226,15 @@ class InstallDialog(QtWidgets.QDialog):
         mongo_label.setWordWrap(True)
         mongo_label.setStyleSheet("color: rgb(150, 150, 150);")
 
-        self._mongo = MongoWidget(self)
+        mongo_widget = MongoWidget(self)
         if self.mongo_url:
-            self._mongo.set_mongo_url(self.mongo_url)
+            mongo_widget.set_mongo_url(self.mongo_url)
 
         # Bottom button bar
         # --------------------------------------------------------------------
         bottom_widget = QtWidgets.QWidget()
-        bottom_layout = QtWidgets.QHBoxLayout()
+        bottom_widget.setStyleSheet("background-color: rgb(32, 32, 32);")
+
         openpype_logo_label = QtWidgets.QLabel("openpype logo")
         # openpype_logo.scaled(
         #     openpype_logo_label.width(),
@@ -271,13 +272,11 @@ class InstallDialog(QtWidgets.QDialog):
         exit_button.setMinimumSize(64, 24)
         exit_button.setToolTip("Exit")
 
+        bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 10, 10, 0)
         bottom_layout.setAlignment(QtCore.Qt.AlignVCenter)
         bottom_layout.addWidget(openpype_logo_label, 0, QtCore.Qt.AlignVCenter)
         bottom_layout.addStretch(1)
-
-        bottom_widget.setLayout(bottom_layout)
-        bottom_widget.setStyleSheet("background-color: rgb(32, 32, 32);")
         bottom_layout.addWidget(install_button, 0, QtCore.Qt.AlignVCenter)
         bottom_layout.addWidget(run_button, 0, QtCore.Qt.AlignVCenter)
         bottom_layout.addWidget(exit_button, 0, QtCore.Qt.AlignVCenter)
@@ -356,7 +355,7 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(main_label, 0)
         main.addWidget(openpype_path_label, 0)
         main.addWidget(mongo_label, 0)
-        main.addWidget(self._mongo, 0)
+        main.addWidget(mongo_widget, 0)
 
         main.addWidget(status_label, 0)
         main.addWidget(status_box, 1)
@@ -374,6 +373,8 @@ class InstallDialog(QtWidgets.QDialog):
         self.openpype_path_label = openpype_path_label
         self.mongo_label = mongo_label
 
+        self._mongo_widget = mongo_widget
+
         self._status_label = status_label
         self._status_box = status_box
 
@@ -384,14 +385,14 @@ class InstallDialog(QtWidgets.QDialog):
 
     def _on_run_clicked(self):
         valid, reason = validate_mongo_connection(
-            self._mongo.get_mongo_url()
+            self._mongo_widget.get_mongo_url()
         )
         if not valid:
-            self._mongo.set_invalid()
+            self._mongo_widget.set_invalid()
             self.update_console(f"!!! {reason}", True)
             return
         else:
-            self._mongo.set_valid()
+            self._mongo_widget.set_valid()
 
         self.done(2)
 
@@ -402,14 +403,14 @@ class InstallDialog(QtWidgets.QDialog):
         working thread that will do actual job.
         """
         valid, reason = validate_mongo_connection(
-            self._mongo.get_mongo_url()
+            self._mongo_widget.get_mongo_url()
         )
         if not valid:
-            self._mongo.set_invalid()
+            self._mongo_widget.set_invalid()
             self.update_console(f"!!! {reason}", True)
             return
         else:
-            self._mongo.set_valid()
+            self._mongo_widget.set_valid()
 
         if self._openpype_run_ready:
             self.done(3)
@@ -425,7 +426,7 @@ class InstallDialog(QtWidgets.QDialog):
         self._install_thread.message.connect(self.update_console)
         self._install_thread.progress.connect(self._update_progress)
         self._install_thread.finished.connect(self._enable_buttons)
-        self._install_thread.set_mongo(self._mongo.get_mongo_url())
+        self._install_thread.set_mongo(self._mongo_widget.get_mongo_url())
         self._install_thread.start()
 
     def install_result_callback_handler(self, result: InstallResult):
