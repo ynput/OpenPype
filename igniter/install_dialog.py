@@ -295,6 +295,8 @@ class InstallDialog(QtWidgets.QDialog):
         bottom_widget = QtWidgets.QWidget(self)
         bottom_widget.setStyleSheet("background-color: rgb(32, 32, 32);")
 
+        btns_widget = QtWidgets.QWidget(bottom_widget)
+
         openpype_logo_label = QtWidgets.QLabel("openpype logo", bottom_widget)
         # openpype_logo.scaled(
         #     openpype_logo_label.width(),
@@ -302,10 +304,14 @@ class InstallDialog(QtWidgets.QDialog):
         openpype_logo_label.setPixmap(self._pixmap_openpype_logo)
         openpype_logo_label.setContentsMargins(10, 0, 0, 10)
 
+        run_button = ButtonWithOptions(
+            ["Run", "Run from code"],
+            "Run",
+            btns_widget
         )
 
         # install button - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        exit_button = QtWidgets.QPushButton("Exit", bottom_widget)
+        exit_button = QtWidgets.QPushButton("Exit", btns_widget)
         exit_button.setStyleSheet(
             ("color: rgb(64, 64, 64);"
              "background-color: rgb(128, 128, 128);"
@@ -314,12 +320,16 @@ class InstallDialog(QtWidgets.QDialog):
         exit_button.setMinimumSize(64, 24)
         exit_button.setToolTip("Exit")
 
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+        btns_layout.addWidget(run_button, 0)
+        btns_layout.addWidget(exit_button, 0)
+
         bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 10, 10, 0)
         bottom_layout.setAlignment(QtCore.Qt.AlignVCenter)
-        bottom_layout.addWidget(openpype_logo_label, 0, QtCore.Qt.AlignVCenter)
+        bottom_layout.addWidget(openpype_logo_label, 0)
         bottom_layout.addStretch(1)
-        bottom_layout.addWidget(exit_button, 0, QtCore.Qt.AlignVCenter)
+        bottom_layout.addWidget(btns_widget, 0)
 
         # Console label
         # --------------------------------------------------------------------
@@ -403,6 +413,7 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(progress_bar, 0)
         main.addWidget(bottom_widget, 0)
 
+        run_button.option_clicked.connect(self._on_run_btn_click)
         exit_button.clicked.connect(self._on_exit_clicked)
 
         self.main_label = main_label
@@ -414,6 +425,7 @@ class InstallDialog(QtWidgets.QDialog):
         self._status_label = status_label
         self._status_box = status_box
 
+        self.run_button = run_button
         self._exit_button = exit_button
         self._progress_bar = progress_bar
 
@@ -429,6 +441,14 @@ class InstallDialog(QtWidgets.QDialog):
             self._mongo_widget.set_valid()
 
         self.done(2)
+
+    def _on_run_btn_click(self, option):
+        if option == "Run":
+            self._on_ok_clicked()
+        elif option == "Run from code":
+            self._on_run_clicked()
+        else:
+            raise AssertionError("Unknown variant \"{}\"".format(option))
 
     def _on_ok_clicked(self):
         """Start install process.
