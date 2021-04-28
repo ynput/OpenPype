@@ -23,7 +23,11 @@ class ValidateMarksRepair(pyblish.api.Action):
 
 
 class ValidateMarks(pyblish.api.ContextPlugin):
-    """Validate mark in and out are enabled."""
+    """Validate mark in and out are enabled and it's duration.
+
+    Mark In/Out does not have to match frameStart and frameEnd but duration is
+    important.
+    """
 
     label = "Validate Mark In/Out"
     order = pyblish.api.ValidatorOrder
