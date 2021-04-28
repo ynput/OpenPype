@@ -355,7 +355,7 @@ class InstallDialog(QtWidgets.QDialog):
         self._status_label = status_label
         self._status_box = status_box
 
-        self.run_button = run_button
+        self._run_button = run_button
         self._exit_button = exit_button
         self._progress_bar = progress_bar
 
@@ -405,17 +405,23 @@ class InstallDialog(QtWidgets.QDialog):
             return
 
         self._disable_buttons()
-        self._install_thread = InstallThread(
-            self.install_result_callback_handler, self)
-        self._install_thread.message.connect(self.update_console)
-        self._install_thread.progress.connect(self._update_progress)
-        self._install_thread.finished.connect(self._enable_buttons)
-        self._install_thread.set_mongo(self._mongo_widget.get_mongo_url())
-        self._install_thread.start()
 
-    def install_result_callback_handler(self, result: InstallResult):
+        install_thread = InstallThread(self)
+        install_thread.message.connect(self.update_console)
+        install_thread.progress.connect(self._update_progress)
+        install_thread.finished.connect(self._installation_finished)
+        install_thread.set_mongo(self._mongo_widget.get_mongo_url())
+
+        self._install_thread = install_thread
+
+        install_thread.start()
+
+    def _installation_finished(self, status):
+        self._enable_buttons()
+        self.install_result_callback_handler(status)
+
+    def install_result_callback_handler(self, status):
         """Change button behaviour based on installation outcome."""
-        status = result.status
         if status >= 0:
             self._openpype_run_ready = True
 
@@ -441,11 +447,13 @@ class InstallDialog(QtWidgets.QDialog):
     def _disable_buttons(self):
         """Disable buttons so user interaction doesn't interfere."""
         self._exit_button.setEnabled(False)
+        self._run_button.setEnabled(False)
         self._controls_disabled = True
 
     def _enable_buttons(self):
         """Enable buttons after operation is complete."""
         self._exit_button.setEnabled(True)
+        self._run_button.setEnabled(True)
         self._controls_disabled = False
 
     def closeEvent(self, event):  # noqa
