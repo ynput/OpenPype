@@ -77,6 +77,11 @@ class ExtractSequence(pyblish.api.Extractor):
                 filtered_layers
             )
 
+        # Sequence of one frame
+        if not repre_files:
+            self.log.warning("Extractor did not create any output.")
+            return
+
         # Fill tags and new families
         tags = []
         if family_lowered in ("review", "renderlayer"):
