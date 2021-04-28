@@ -51,7 +51,10 @@ class ExtractSequence(pyblish.api.Extractor):
         frame_start = int(instance.data["frameStart"])
         frame_end = int(instance.data["frameEnd"])
 
-        filename_template = self._get_filename_template(mark_out)
+        filename_template = self._get_filename_template(
+            # Use the biggest number
+            max(mark_out, frame_end)
+        )
         ext = os.path.splitext(filename_template)[1].replace(".", "")
 
         self.log.debug("Using file template \"{}\"".format(filename_template))
