@@ -2,6 +2,7 @@
 """Show dialog for choosing central pype repository."""
 import os
 import sys
+import re
 
 from Qt import QtCore, QtGui, QtWidgets  # noqa
 from Qt.QtGui import QValidator  # noqa
@@ -87,77 +88,25 @@ class ButtonWithOptions(QtWidgets.QFrame):
         self.option_clicked.emit(self._default_value)
 
 
-class MongoWidget(QtWidgets.QWidget):
+class MongoUrlInput(QtWidgets.QLineEdit):
     """Widget to input mongodb URL."""
-
-    def __init__(self, parent=None):
-        super(MongoWidget, self).__init__(parent)
-
-        self._mongo_input = QtWidgets.QLineEdit(self)
-        self._mongo_input.setPlaceholderText("Mongo URL")
-        self._mongo_input.textChanged.connect(self._mongo_changed)
-        self._mongo_input.setValidator(
-            MongoValidator(self._mongo_input))
-
-        mongo_layout = QtWidgets.QHBoxLayout(self)
-        mongo_layout.setContentsMargins(0, 0, 0, 0)
-
-        mongo_layout.addWidget(self._mongo_input)
-
-    def _mongo_changed(self, mongo: str):
-        self.parent().mongo_url = mongo
-
-    def get_mongo_url(self) -> str:
-        """Helper to get url from parent."""
-        return self.parent().mongo_url
-
-    def set_mongo_url(self, mongo: str):
-        """Helper to set url to  parent.
-
-        Args:
-            mongo (str): mongodb url string.
-
-        """
-        self._mongo_input.setText(mongo)
 
     def set_valid(self):
         """Set valid state on mongo url input."""
         self.setProperty("state", "valid")
-        self.ensurePolished()
+        # self.ensurePolished()
+        self.style().polish(self)
 
     def set_invalid(self):
         """Set invalid state on mongo url input."""
         self.setProperty("state", "invalid")
-        self.ensurePolished()
-
-    def set_read_only(self, state: bool):
-        """Set input read-only."""
-        self._mongo_input.setReadOnly(state)
-
-    def validate_url(self) -> bool:
-        """Validate if entered url is ok.
-
-        Returns:
-            True if url is valid monogo string.
-
-        """
-        if self.parent().mongo_url == "":
-            return False
-
-        is_valid, reason_str = validate_mongo_connection(
-            self.parent().mongo_url
-        )
-        if not is_valid:
-            self.set_invalid()
-            self.parent().update_console(f"!!! {reason_str}", True)
-            return False
-        else:
-            self.set_valid()
-        return True
+        self.style().polish(self)
 
 
 class InstallDialog(QtWidgets.QDialog):
     """Main Igniter dialog window."""
+
+    mongo_url_regex = re.compile(r"(mongodb|mongodb+srv)://.+")
 
     def __init__(self, parent=None):
         super(InstallDialog, self).__init__(parent)
@@ -253,9 +202,13 @@ class InstallDialog(QtWidgets.QDialog):
         mongo_label.setWordWrap(True)
         mongo_label.setStyleSheet("color: rgb(150, 150, 150);")
 
-        mongo_widget = MongoWidget(self)
+        mongo_input = MongoUrlInput(self)
+        # mongo_input = QtWidgets.QLineEdit(self)
+        mongo_input.setPlaceholderText(
+            "Mongo URL < mongodb://192.168.1.1:27017 >"
+        )
         if self.mongo_url:
-            mongo_widget.set_mongo_url(self.mongo_url)
+            mongo_input.setText(self.mongo_url)
 
         # Bottom button bar
         # --------------------------------------------------------------------
@@ -322,7 +275,7 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(main_label, 0)
         main.addWidget(openpype_path_label, 0)
         main.addWidget(mongo_label, 0)
-        main.addWidget(mongo_widget, 0)
+        main.addWidget(mongo_input, 0)
 
         main.addWidget(status_label, 0)
         main.addWidget(status_box, 1)
@@ -332,12 +285,13 @@ class InstallDialog(QtWidgets.QDialog):
 
         run_button.option_clicked.connect(self._on_run_btn_click)
         exit_button.clicked.connect(self._on_exit_clicked)
+        mongo_input.textChanged.connect(self._on_mongo_url_change)
 
         self.main_label = main_label
         self.openpype_path_label = openpype_path_label
         self.mongo_label = mongo_label
 
-        self._mongo_widget = mongo_widget
+        self._mongo_input = mongo_input
 
         self._status_label = status_label
         self._status_box = status_box
@@ -358,15 +312,13 @@ class InstallDialog(QtWidgets.QDialog):
             raise AssertionError("Unknown variant \"{}\"".format(option))
 
     def _run_openpype_from_code(self):
-        valid, reason = validate_mongo_connection(
-            self._mongo_widget.get_mongo_url()
-        )
+        valid, reason = validate_mongo_connection(self.mongo_url)
         if not valid:
-            self._mongo_widget.set_invalid()
+            self._mongo_input.set_invalid()
             self.update_console(f"!!! {reason}", True)
             return
         else:
-            self._mongo_widget.set_valid()
+            self._mongo_input.set_valid()
 
         self.done(2)
 
@@ -376,15 +328,14 @@ class InstallDialog(QtWidgets.QDialog):
         This will once again validate entered path and mongo if ok, start
         working thread that will do actual job.
         """
-        valid, reason = validate_mongo_connection(
-            self._mongo_widget.get_mongo_url()
-        )
+
+        valid, reason = validate_mongo_connection(self.mongo_url)
         if not valid:
-            self._mongo_widget.set_invalid()
+            self._mongo_input.set_invalid()
             self.update_console(f"!!! {reason}", True)
             return
         else:
-            self._mongo_widget.set_valid()
+            self._mongo_input.set_valid()
 
         if self._openpype_run_ready:
             self.done(3)
@@ -400,7 +351,7 @@ class InstallDialog(QtWidgets.QDialog):
         install_thread.message.connect(self.update_console)
         install_thread.progress.connect(self._update_progress)
         install_thread.finished.connect(self._installation_finished)
-        install_thread.set_mongo(self._mongo_widget.get_mongo_url())
+        install_thread.set_mongo(self.mongo_url)
 
         self._install_thread = install_thread
 
@@ -418,6 +369,13 @@ class InstallDialog(QtWidgets.QDialog):
     def _on_exit_clicked(self):
         self.reject()
 
+    def _on_mongo_url_change(self, new_value):
+        self.mongo_url = new_value
+        if self.mongo_url_regex.match(new_value):
+            self._mongo_input.set_valid()
+        else:
+            self._mongo_input.set_invalid()
+
     def validate_url(self):
         """Validate if entered url is ok.
 
@@ -428,15 +386,13 @@ class InstallDialog(QtWidgets.QDialog):
         if self.mongo_url == "":
             return False
 
-        is_valid, reason_str = validate_mongo_connection(
-            self.mongo_url
-        )
+        is_valid, reason_str = validate_mongo_connection(self.mongo_url)
         if not is_valid:
-            self._mongo_widget.set_invalid()
+            self._mongo_input.set_invalid()
             self.update_console(f"!!! {reason_str}", True)
             return False
         else:
-            self._mongo_widget.set_valid()
+            self._mongo_input.set_valid()
         return True
 
     def update_console(self, msg: str, error: bool = False) -> None:
@@ -469,87 +425,6 @@ class InstallDialog(QtWidgets.QDialog):
         if self._controls_disabled:
             return event.ignore()
         return super(InstallDialog, self).closeEvent(event)
-
-
-class MongoValidator(QValidator):
-    """Validate mongodb url for Qt widgets."""
-
-    def __init__(self, parent=None, intermediate=False):
-        self.parent = parent
-        self.intermediate = intermediate
-        self._validate_lock = False
-        self.timer = QTimer()
-        self.timer.timeout.connect(self._unlock_validator)
-        super().__init__(parent)
-
-    def _unlock_validator(self):
-        self._validate_lock = False
-
-    def _return_state(
-            self, state: QValidator.State, reason: str, mongo: str):
-        """Set stylesheets and actions on parent based on state.
-
-        Warning:
-            This will always return `QValidator.State.Acceptable` as
-            anything different will stop input to `QLineEdit`
-
-        """
-
-        if state == QValidator.State.Invalid:
-            self.parent.setToolTip(reason)
-            self.parent.setStyleSheet(
-                """
-                background-color: rgb(32, 19, 19);
-                color: rgb(255, 69, 0);
-                padding: 0.5em;
-                border: 1px solid rgb(64, 32, 32);
-                """
-            )
-        elif state == QValidator.State.Intermediate and self.intermediate:
-            self.parent.setToolTip(reason)
-            self.parent.setStyleSheet(
-                """
-                background-color: rgb(32, 32, 19);
-                color: rgb(255, 190, 15);
-                padding: 0.5em;
-                border: 1px solid rgb(64, 64, 32);
-                """
-            )
-        else:
-            self.parent.setToolTip(reason)
-            self.parent.setStyleSheet(
-                """
-                background-color: rgb(19, 19, 19);
-                color: rgb(64, 230, 132);
-                padding: 0.5em;
-                border: 1px solid rgb(32, 64, 32);
-                """
-            )
-
-        return QValidator.State.Acceptable, mongo, len(mongo)
-
-    def validate(self, mongo: str, pos: int) -> (QValidator.State, str, int):    # noqa
-        """Validate entered mongodb connection string.
-
-        As url (it should start with `mongodb://` or
-        `mongodb+srv:// url schema.
-
-        Args:
-            mongo (str): connection string url.
-            pos (int): current position.
-
-        Returns:
-            (QValidator.State.Acceptable, str, int):
-                Indicate input state with color and always return
-                Acceptable state as we need to be able to edit input further.
-
-        """
-        if not mongo.startswith("mongodb"):
-            return self._return_state(
-                QValidator.State.Invalid, "need mongodb schema", mongo)
-
-        return self._return_state(
-            QValidator.State.Intermediate, "", mongo)
 
 
 
