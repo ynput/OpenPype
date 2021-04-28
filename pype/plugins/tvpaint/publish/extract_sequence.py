@@ -251,7 +251,24 @@ class ExtractSequence(pyblish.api.Extractor):
                 mark_in,
                 mark_out
             )
-            files_by_position[position] = files_by_frames
+            if files_by_frames:
+                files_by_position[position] = files_by_frames
+            else:
+                self.log.warning((
+                    "Skipped layer \"{}\". Probably out of Mark In/Out range."
+                ).format(layer["name"]))
+
+        if not files_by_position:
+            layer_names = set(layer["name"] for layer in layers)
+            joined_names = ", ".join(
+                ["\"{}\"".format(name) for name in layer_names]
+            )
+            self.log.warning(
+                "Layers {} do not have content in range {} - {}".format(
+                    joined_names, mark_in, mark_out
+                )
+            )
+            return [], None
 
         output_filepaths = self._composite_files(
             files_by_position,
