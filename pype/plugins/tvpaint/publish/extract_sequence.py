@@ -231,7 +231,7 @@ class ExtractSequence(pyblish.api.Extractor):
         # Sort layer positions in reverse order
         sorted_positions = list(reversed(sorted(layers_by_position.keys())))
         if not sorted_positions:
-            return
+            return [], None
 
         self.log.debug("Collecting pre/post behavior of individual layers.")
         behavior_by_layer_id = lib.get_layers_pre_post_behavior(layer_ids)
