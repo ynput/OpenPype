@@ -1,6 +1,5 @@
 import os
 import shutil
-import time
 import tempfile
 
 import pyblish.api
