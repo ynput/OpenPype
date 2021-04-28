@@ -66,8 +66,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         if instance.data["family"] == "review":
             repre_files, thumbnail_fullpath = self.render_review(
-                filename_template, output_dir,
-                mark_in, mark_out
+                filename_template, output_dir, mark_in, mark_out
             )
         else:
             # Render output
@@ -198,8 +197,7 @@ class ExtractSequence(pyblish.api.Extractor):
         return output, thumbnail_filepath
 
     def render(
-        self, filename_template, output_dir,
-        mark_in, mark_out, layers
+        self, filename_template, output_dir, mark_in, mark_out, layers
     ):
         """ Export images from TVPaint.
 
