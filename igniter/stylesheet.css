@@ -91,13 +91,21 @@ QProgressBar::chunk:horizontal {
     font-size: 0.5em;
     border: 1px solid rgb(48, 48, 48);
 }
+
 #ButtonWithOptions {
     border: 1px solid white;
     border-radius: 0.4em;
+    background-color: rgb(72, 200, 150);
+    color: rgb(64, 64, 64);
 }
 #ButtonWithOptions QPushButton{
     border: none;
+    background-color: transparent;
+    color: rgb(64, 64, 64);
+    font-weight: bold;
 }
 #ButtonWithOptions QToolButton{
     border: none;
+    background-color: transparent;
+    color: rgb(64, 64, 64);
 }
