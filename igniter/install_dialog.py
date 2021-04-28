@@ -317,8 +317,8 @@ class InstallDialog(QtWidgets.QDialog):
             self._mongo_input.set_invalid()
             self.update_console(f"!!! {reason}", True)
             return
-        else:
-            self._mongo_input.set_valid()
+
+        self._secure_registry.set_item("openPypeMongo", self.mongo_url)
 
         self.done(2)
 
