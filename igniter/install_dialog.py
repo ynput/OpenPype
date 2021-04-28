@@ -47,7 +47,7 @@ class ButtonWithOptions(QtWidgets.QFrame):
 
         options_btn = QtWidgets.QToolButton(self)
         options_btn.setArrowType(QtCore.Qt.DownArrow)
-        options_btn.setFixedWidth(10)
+        options_btn.setIconSize(QtCore.QSize(12, 12))
 
         options_menu = QtWidgets.QMenu(self)
         for option in options:
@@ -56,20 +56,25 @@ class ButtonWithOptions(QtWidgets.QFrame):
             options_menu.addAction(action)
 
         main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.setContentsMargins(5, 0, 5, 0)
-        main_layout.setSpacing(5)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(1)
 
-        main_layout.addWidget(main_btn, 1)
-        main_layout.addWidget(options_btn, 0)
+        main_layout.addWidget(main_btn, 1, QtCore.Qt.AlignVCenter)
+        main_layout.addWidget(options_btn, 0, QtCore.Qt.AlignVCenter)
 
         main_btn.clicked.connect(self._on_main_button)
         options_btn.clicked.connect(self._on_options_click)
         options_menu.triggered.connect(self._on_trigger)
 
+        self.main_btn = main_btn
         self.options_btn = options_btn
         self.options_menu = options_menu
 
         self._default_value = default
+
+    def resizeEvent(self, event):
+        super(ButtonWithOptions, self).resizeEvent(event)
+        self.options_btn.setFixedHeight(self.height())
 
     def _on_options_click(self):
         point = self.mapToGlobal(self.rect().bottomLeft())
