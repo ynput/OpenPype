@@ -309,6 +309,22 @@ class ExtractSequence(pyblish.api.Extractor):
         layer_id = layer["layer_id"]
         frame_start_index = layer["frame_start"]
         frame_end_index = layer["frame_end"]
+
+        pre_behavior = behavior["pre"]
+        post_behavior = behavior["post"]
+
+        # Check if layer is before mark in
+        if frame_end_index < mark_in_index:
+            # Skip layer if post behavior is "none"
+            if post_behavior == "none":
+                return {}
+
+        # Check if layer is after mark out
+        elif frame_start_index > mark_out_index:
+            # Skip layer if pre behavior is "none"
+            if pre_behavior == "none":
+                return {}
+
         exposure_frames = lib.get_exposure_frames(
             layer_id, frame_start_index, frame_end_index
         )
@@ -367,8 +383,6 @@ class ExtractSequence(pyblish.api.Extractor):
         self.log.debug("Filled frames {}".format(str(_debug_filled_frames)))
 
         # Fill frames by pre/post behavior of layer
-        pre_behavior = behavior["pre"]
-        post_behavior = behavior["post"]
         self.log.debug((
             "Completing image sequence of layer by pre/post behavior."
             " PRE: {} | POST: {}"
