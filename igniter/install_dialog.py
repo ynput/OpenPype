@@ -179,16 +179,12 @@ class InstallDialog(QtWidgets.QDialog):
         # --------------------------------------------------------------------
         main_label = QtWidgets.QLabel("Welcome to <b>OpenPype</b>", self)
         main_label.setWordWrap(True)
-        main_label.setStyleSheet("color: rgb(200, 200, 200);")
+        main_label.setObjectName("MainLabel")
 
         # Mongo box | OK button
         # --------------------------------------------------------------------
-
-        mongo_label = QtWidgets.QLabel(
-            """Enter URL for running MongoDB instance:"""
-        )
+        mongo_label = QtWidgets.QLabel("Enter your Mongo URL:")
         mongo_label.setWordWrap(True)
-        mongo_label.setStyleSheet("color: rgb(150, 150, 150);")
 
         mongo_input = MongoUrlInput(self)
         mongo_input.setPlaceholderText(
