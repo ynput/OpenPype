@@ -87,32 +87,15 @@ class ButtonWithOptions(QtWidgets.QFrame):
         self.option_clicked.emit(self._default_value)
 
 
-class FocusHandlingLineEdit(QtWidgets.QLineEdit):
-    """Handling focus in/out on QLineEdit."""
-    focusIn = QtCore.Signal()
-    focusOut = QtCore.Signal()
-
-    def focusOutEvent(self, event):  # noqa
-        """For emitting signal on focus out."""
-        self.focusOut.emit()
-        super().focusOutEvent(event)
-
-    def focusInEvent(self, event):  # noqa
-        """For emitting signal on focus in."""
-        self.focusIn.emit()
-        super().focusInEvent(event)
-
-
 class MongoWidget(QtWidgets.QWidget):
     """Widget to input mongodb URL."""
 
     def __init__(self, parent=None):
         super(MongoWidget, self).__init__(parent)
 
-        self._mongo_input = FocusHandlingLineEdit(self)
+        self._mongo_input = QtWidgets.QLineEdit(self)
         self._mongo_input.setPlaceholderText("Mongo URL")
         self._mongo_input.textChanged.connect(self._mongo_changed)
-        self._mongo_input.focusOut.connect(self._focus_out)
         self._mongo_input.setValidator(
             MongoValidator(self._mongo_input))
 
@@ -120,9 +103,6 @@ class MongoWidget(QtWidgets.QWidget):
         mongo_layout.setContentsMargins(0, 0, 0, 0)
 
         mongo_layout.addWidget(self._mongo_input)
-
-    def _focus_out(self):
-        self.validate_url()
 
     def _mongo_changed(self, mongo: str):
         self.parent().mongo_url = mongo
@@ -238,7 +218,7 @@ class InstallDialog(QtWidgets.QDialog):
         self.setStyleSheet(load_stylesheet())
 
         # Trigger mongo validation
-        self._mongo_widget.validate_url()
+        self.validate_url()
 
     def _init_ui(self):
         # basic visual style - dark background, light text
@@ -367,6 +347,9 @@ class InstallDialog(QtWidgets.QDialog):
         self._progress_bar = progress_bar
 
     def _on_run_btn_click(self, option):
+        if not self.validate_url():
+            return
+
         if option == "Run":
             self._run_openpype()
         elif option == "Run from code":
@@ -434,6 +417,27 @@ class InstallDialog(QtWidgets.QDialog):
 
     def _on_exit_clicked(self):
         self.reject()
+
+    def validate_url(self):
+        """Validate if entered url is ok.
+
+        Returns:
+            True if url is valid monogo string.
+
+        """
+        if self.mongo_url == "":
+            return False
+
+        is_valid, reason_str = validate_mongo_connection(
+            self.mongo_url
+        )
+        if not is_valid:
+            self._mongo_widget.set_invalid()
+            self.update_console(f"!!! {reason_str}", True)
+            return False
+        else:
+            self._mongo_widget.set_valid()
+        return True
 
     def update_console(self, msg: str, error: bool = False) -> None:
         """Display message in console.
