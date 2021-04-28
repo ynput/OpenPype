@@ -207,7 +207,6 @@ class InstallDialog(QtWidgets.QDialog):
         mongo_label.setStyleSheet("color: rgb(150, 150, 150);")
 
         mongo_input = MongoUrlInput(self)
-        # mongo_input = QtWidgets.QLineEdit(self)
         mongo_input.setPlaceholderText(
             "Mongo URL < mongodb://192.168.1.1:27017 >"
         )
@@ -222,7 +221,7 @@ class InstallDialog(QtWidgets.QDialog):
 
         openpype_logo_label = QtWidgets.QLabel("openpype logo", bottom_widget)
         openpype_logo_label.setPixmap(self._pixmap_openpype_logo)
-        openpype_logo_label.setContentsMargins(10, 0, 0, 10)
+        openpype_logo_label.setContentsMargins(5, 5, 5, 5)
 
         run_button = ButtonWithOptions(
             ["Run", "Run from code"],
@@ -240,12 +239,13 @@ class InstallDialog(QtWidgets.QDialog):
         exit_button.setToolTip("Exit")
 
         btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+        btns_layout.setContentsMargins(0, 0, 0, 0)
         btns_layout.addWidget(run_button, 0)
         btns_layout.addWidget(exit_button, 0)
 
         bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
-        bottom_layout.setContentsMargins(0, 10, 10, 0)
-        bottom_layout.setAlignment(QtCore.Qt.AlignVCenter)
+        bottom_layout.setContentsMargins(0, 0, 0, 0)
+        bottom_layout.setAlignment(QtCore.Qt.AlignHCenter)
         bottom_layout.addWidget(openpype_logo_label, 0)
         bottom_layout.addStretch(1)
         bottom_layout.addWidget(btns_widget, 0)
