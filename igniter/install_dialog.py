@@ -112,6 +112,8 @@ class InstallDialog(QtWidgets.QDialog):
 
     mongo_url_regex = re.compile(r"(mongodb|mongodb+srv)://.+")
 
+    _width = 300
+    _height = 200
     def __init__(self, parent=None):
         super(InstallDialog, self).__init__(parent)
 
@@ -164,6 +166,7 @@ class InstallDialog(QtWidgets.QDialog):
         self.error_console_style.setForeground(
             QtGui.QColor.fromRgb(184, 54, 19))
 
+        self.setMinimumSize(QtCore.QSize(self._width, self._height))
         self._init_ui()
 
         # Set stylesheet
