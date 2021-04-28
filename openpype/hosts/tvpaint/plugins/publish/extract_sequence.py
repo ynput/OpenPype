@@ -2,7 +2,6 @@ import os
 import shutil
 import time
 import tempfile
-import multiprocessing
 
 import pyblish.api
 from avalon.tvpaint import lib
@@ -606,11 +605,6 @@ class ExtractSequence(pyblish.api.Extractor):
                     filepath = position_data[frame_idx]
                     images_by_frame[frame_idx].append(filepath)
 
-        process_count = os.cpu_count()
-        if process_count > 1:
-            process_count -= 1
-
-        processes = {}
         output_filepaths_by_frame = {}
         missing_frame_paths = []
         random_frame_path = None
@@ -629,44 +623,14 @@ class ExtractSequence(pyblish.api.Extractor):
             if len(image_filepaths) == 1:
                 os.rename(image_filepaths[0], output_filepath)
 
-            # Prepare process for compositing of images
+            # Composite images
             else:
-                processes[frame_idx] = multiprocessing.Process(
-                    target=composite_images,
-                    args=(image_filepaths, output_filepath)
-                )
+                composite_images(image_filepaths, output_filepath)
 
             # Store path of random output image that will 100% exist after all
             #   multiprocessing as mockup for missing frames
             if random_frame_path is None:
                 random_frame_path = output_filepath
-
-        self.log.info(
-            "Running {} compositing processes - this may take a while.".format(
-                len(processes)
-            )
-        )
-        # Wait until all compositing processes are done
-        running_processes = {}
-        while True:
-            for idx in tuple(running_processes.keys()):
-                process = running_processes[idx]
-                if not process.is_alive():
-                    running_processes.pop(idx).join()
-
-            if processes and len(running_processes) != process_count:
-                indexes = list(processes.keys())
-                for _ in range(process_count - len(running_processes)):
-                    if not indexes:
-                        break
-                    idx = indexes.pop(0)
-                    running_processes[idx] = processes.pop(idx)
-                    running_processes[idx].start()
-
-            if not running_processes and not processes:
-                break
-
-            time.sleep(0.01)
 
         self.log.debug(
             "Creating transparent images for frames without render {}.".format(
