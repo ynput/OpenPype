@@ -8,7 +8,7 @@ from Qt import QtCore, QtGui, QtWidgets  # noqa
 from Qt.QtGui import QValidator  # noqa
 from Qt.QtCore import QTimer  # noqa
 
-from .install_thread import InstallThread, InstallResult
+from .install_thread import InstallThread
 from .tools import (
     validate_mongo_connection,
     get_openpype_path_from_db

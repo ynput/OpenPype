@@ -17,12 +17,6 @@ from .bootstrap_repos import (
 from .tools import validate_mongo_connection
 
 
-class InstallResult(QObject):
-    """Used to pass results back."""
-    def __init__(self, value):
-        self.status = value
-
-
 class InstallThread(QThread):
     """Install Worker thread.
 
