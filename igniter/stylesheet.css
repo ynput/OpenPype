@@ -26,6 +26,12 @@ QLineEdit[state="invalid"] {
     border: 1px solid rgb(64, 32, 32);
 }
 
+QLineEdit[state="warning"] {
+    background-color: rgb(32, 32, 19);
+    color: rgb(255, 190, 15);
+    border: 1px solid rgb(64, 64, 32);
+}
+
 QScrollBar:vertical {
     border: 1px solid rgb(61, 115, 97);
     background: #000;

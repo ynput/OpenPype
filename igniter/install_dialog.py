@@ -94,7 +94,11 @@ class MongoUrlInput(QtWidgets.QLineEdit):
     def set_valid(self):
         """Set valid state on mongo url input."""
         self.setProperty("state", "valid")
-        # self.ensurePolished()
+        self.style().polish(self)
+
+    def set_warning(self):
+        """Set invalid state on mongo url input."""
+        self.setProperty("state", "warning")
         self.style().polish(self)
 
     def set_invalid(self):
@@ -369,8 +373,14 @@ class InstallDialog(QtWidgets.QDialog):
         self.reject()
 
     def _on_mongo_url_change(self, new_value):
+        # Strip the value
+        new_value = new_value.strip()
+        # Store new mongo url to variable
         self.mongo_url = new_value
-        if self.mongo_url_regex.match(new_value):
+        # Change style of input
+        if not new_value:
+            self._mongo_input.set_warning()
+        elif self.mongo_url_regex.match(new_value):
             self._mongo_input.set_valid()
         else:
             self._mongo_input.set_invalid()
