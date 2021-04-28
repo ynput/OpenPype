@@ -24,6 +24,10 @@ def open_dialog():
     from Qt import QtWidgets
     from .install_dialog import InstallDialog
 
+    scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)
+    if scale_attr is not None:
+        QtWidgets.QApplication.setAttribute(scale_attr)
+
     app = QtWidgets.QApplication(sys.argv)
 
     d = InstallDialog()
