@@ -75,7 +75,7 @@ class ButtonWithOptions(QtWidgets.QFrame):
 
     def resizeEvent(self, event):
         super(ButtonWithOptions, self).resizeEvent(event)
-        self.options_btn.setFixedHeight(self.height())
+        self.options_btn.setFixedHeight(self.main_btn.height())
 
     def _on_options_click(self):
         point = self.mapToGlobal(self.rect().bottomLeft())
