@@ -83,7 +83,8 @@ class ExtractSequence(pyblish.api.Extractor):
             tags.append("review")
 
         # Sequence of one frame
-        if len(repre_files) == 1:
+        single_file = len(repre_files) == 1
+        if single_file:
             repre_files = repre_files[0]
 
         new_repre = {
@@ -91,10 +92,15 @@ class ExtractSequence(pyblish.api.Extractor):
             "ext": ext,
             "files": repre_files,
             "stagingDir": output_dir,
-            "frameStart": frame_start,
-            "frameEnd": frame_end,
             "tags": tags
         }
+
+        if not single_file:
+            frame_start = instance.data["frameStart"]
+            frame_end = instance.data["frameEnd"]
+            new_repre["frameStart"] = frame_start
+            new_repre["frameEnd"] = frame_end
+
         self.log.debug("Creating new representation: {}".format(new_repre))
 
         instance.data["representations"].append(new_repre)
