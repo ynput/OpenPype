@@ -25,7 +25,7 @@ class ValidateMarksRepair(pyblish.api.Action):
 class ValidateMarks(pyblish.api.ContextPlugin):
     """Validate mark in and out are enabled."""
 
-    label = "Validate Marks"
+    label = "Validate Mark In/Out"
     order = pyblish.api.ValidatorOrder
     optional = True
     actions = [ValidateMarksRepair]
