@@ -366,7 +366,15 @@ class InstallDialog(QtWidgets.QDialog):
         self._exit_button = exit_button
         self._progress_bar = progress_bar
 
-    def _on_run_clicked(self):
+    def _on_run_btn_click(self, option):
+        if option == "Run":
+            self._run_openpype()
+        elif option == "Run from code":
+            self._run_openpype_from_code()
+        else:
+            raise AssertionError("Unknown variant \"{}\"".format(option))
+
+    def _run_openpype_from_code(self):
         valid, reason = validate_mongo_connection(
             self._mongo_widget.get_mongo_url()
         )
@@ -379,15 +387,7 @@ class InstallDialog(QtWidgets.QDialog):
 
         self.done(2)
 
-    def _on_run_btn_click(self, option):
-        if option == "Run":
-            self._on_ok_clicked()
-        elif option == "Run from code":
-            self._on_run_clicked()
-        else:
-            raise AssertionError("Unknown variant \"{}\"".format(option))
-
-    def _on_ok_clicked(self):
+    def _run_openpype(self):
         """Start install process.
 
         This will once again validate entered path and mongo if ok, start
@@ -425,12 +425,9 @@ class InstallDialog(QtWidgets.QDialog):
 
     def _installation_finished(self, status):
         self._enable_buttons()
-        self.install_result_callback_handler(status)
-
-    def install_result_callback_handler(self, status):
-        """Change button behaviour based on installation outcome."""
         if status >= 0:
             self._openpype_run_ready = True
+            self.done(3)
 
     def _update_progress(self, progress: int):
         self._progress_bar.setValue(progress)
