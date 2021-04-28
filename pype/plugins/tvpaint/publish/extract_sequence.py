@@ -45,13 +45,10 @@ class ExtractSequence(pyblish.api.Extractor):
         )
 
         family_lowered = instance.data["family"].lower()
-        frame_start = instance.data["frameStart"]
-        frame_end = instance.data["frameEnd"]
-
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.data["sceneMarkOut"]
 
-        filename_template = self._get_filename_template(frame_end)
+        filename_template = self._get_filename_template(mark_out)
         ext = os.path.splitext(filename_template)[1].replace(".", "")
 
         self.log.debug("Using file template \"{}\"".format(filename_template))
@@ -70,14 +67,12 @@ class ExtractSequence(pyblish.api.Extractor):
         if instance.data["family"] == "review":
             repre_files, thumbnail_fullpath = self.render_review(
                 filename_template, output_dir,
-                frame_start, frame_end,
                 mark_in, mark_out
             )
         else:
             # Render output
             repre_files, thumbnail_fullpath = self.render(
                 filename_template, output_dir,
-                frame_start, frame_end,
                 mark_in, mark_out,
                 filtered_layers
             )
@@ -141,8 +136,7 @@ class ExtractSequence(pyblish.api.Extractor):
         return "{{frame:0>{}}}".format(frame_padding) + ".png"
 
     def render_review(
-        self, filename_template, output_dir,
-        frame_start, frame_end, mark_in, mark_out
+        self, filename_template, output_dir, mark_in, mark_out
     ):
         """ Export images from TVPaint using `tv_savesequence` command.
 
@@ -162,7 +156,7 @@ class ExtractSequence(pyblish.api.Extractor):
         self.log.debug("Preparing data for rendering.")
         first_frame_filepath = os.path.join(
             output_dir,
-            filename_template.format(frame=frame_start)
+            filename_template.format(frame=mark_in)
         )
 
         george_script_lines = [
@@ -178,7 +172,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         output = []
         first_frame_filepath = None
-        for frame in range(frame_start, frame_end + 1):
+        for frame in range(mark_in, mark_out + 1):
             filename = filename_template.format(frame=frame)
             output.append(filename)
             if first_frame_filepath is None:
@@ -194,7 +188,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
     def render(
         self, filename_template, output_dir,
-        frame_start, frame_end, mark_in, mark_out, layers
+        mark_in, mark_out, layers
     ):
         """ Export images from TVPaint.
 
