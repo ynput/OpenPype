@@ -84,6 +84,16 @@ QProgressBar::chunk:horizontal {
     background-color: rgb(72, 200, 150);
 }
 
+QMenu {
+    background-color: rgb(32, 32, 32);
+}
+QMenu::item {
+    background-color: transparent;
+}
+QMenu::item:selected {
+    background-color: rgba(72, 200, 150, 63);
+}
+
 #Console {
     background-color: rgb(32, 32, 32);
     color: rgb(72, 200, 150);
