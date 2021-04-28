@@ -289,14 +289,13 @@ class InstallDialog(QtWidgets.QDialog):
             "Run",
             btns_widget
         )
+        run_button.setMinimumSize(64, 24)
+        run_button.setToolTip("Run OpenPype")
 
         # install button - - - - - - - - - - - - - - - - - - - - - - - - - - -
         exit_button = QtWidgets.QPushButton("Exit", btns_widget)
-        exit_button.setStyleSheet(
-            ("color: rgb(64, 64, 64);"
-             "background-color: rgb(128, 128, 128);"
-             "padding: 0.5em;")
-        )
+        exit_button.setObjectName("ExitBtn")
+        exit_button.setFlat(True)
         exit_button.setMinimumSize(64, 24)
         exit_button.setToolTip("Exit")
 

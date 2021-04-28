@@ -86,6 +86,18 @@ QMenu::item:selected {
     border: 1px solid rgb(48, 48, 48);
 }
 
+#ExitBtn {
+    /* `border` must be set to background of flat button is painted .*/
+    border: none;
+    color: rgb(64, 64, 64);
+    background-color: rgb(128, 128, 128);
+    padding: 0.5em;
+}
+
+#ExitBtn:hover{
+    background-color: rgb(185, 185, 185);
+}
+
 #ButtonWithOptions QPushButton{
     border: none;
     background-color: rgb(72, 200, 150);
