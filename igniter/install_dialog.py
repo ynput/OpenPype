@@ -107,7 +107,6 @@ class MongoWidget(QtWidgets.QWidget):
         self._mongo_input = FocusHandlingLineEdit(self)
         self._mongo_input.setPlaceholderText("Mongo URL")
         self._mongo_input.textChanged.connect(self._mongo_changed)
-        self._mongo_input.focusIn.connect(self._focus_in)
         self._mongo_input.focusOut.connect(self._focus_out)
         self._mongo_input.setValidator(
             MongoValidator(self._mongo_input))
@@ -119,16 +118,6 @@ class MongoWidget(QtWidgets.QWidget):
 
     def _focus_out(self):
         self.validate_url()
-
-    def _focus_in(self):
-        self._mongo_input.setStyleSheet(
-            """
-            background-color: rgb(32, 32, 19);
-            color: rgb(255, 190, 15);
-            padding: 0.5em;
-            border: 1px solid rgb(64, 64, 32);
-            """
-        )
 
     def _mongo_changed(self, mongo: str):
         self.parent().mongo_url = mongo
