@@ -328,6 +328,9 @@ class InstallDialog(QtWidgets.QDialog):
         This will once again validate entered path and mongo if ok, start
         working thread that will do actual job.
         """
+        # Check if install thread is not already running
+        if self._install_thread and self._install_thread.isRunning():
+            return
 
         valid, reason = validate_mongo_connection(self.mongo_url)
         if not valid:
