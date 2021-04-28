@@ -88,6 +88,50 @@ class ButtonWithOptions(QtWidgets.QFrame):
         self.option_clicked.emit(self._default_value)
 
 
+class ConsoleWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(ConsoleWidget, self).__init__(parent)
+
+        # style for normal and error console text
+        default_console_style = QtGui.QTextCharFormat()
+        error_console_style = QtGui.QTextCharFormat()
+        default_console_style.setForeground(
+            QtGui.QColor.fromRgb(72, 200, 150)
+        )
+        error_console_style.setForeground(
+            QtGui.QColor.fromRgb(184, 54, 19)
+        )
+
+        label = QtWidgets.QLabel("Console:", self)
+
+        console_output = QtWidgets.QPlainTextEdit(self)
+        console_output.setMinimumSize(QtCore.QSize(300, 200))
+        console_output.setReadOnly(True)
+        console_output.setCurrentCharFormat(default_console_style)
+        console_output.setObjectName("Console")
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(label, 0)
+        main_layout.addWidget(console_output, 1)
+
+        self.default_console_style = default_console_style
+        self.error_console_style = error_console_style
+
+        self.console_output = console_output
+
+    def update_console(self, msg: str, error: bool = False) -> None:
+        if not error:
+            self.console_output.setCurrentCharFormat(
+                self.default_console_style
+            )
+        else:
+            self.console_output.setCurrentCharFormat(
+                self.error_console_style
+            )
+        self.console_output.appendPlainText(msg)
+
+
 class MongoUrlInput(QtWidgets.QLineEdit):
     """Widget to input mongodb URL."""
 
@@ -153,18 +197,6 @@ class InstallDialog(QtWidgets.QDialog):
         self._secure_registry = secure_registry
         self._controls_disabled = False
         self._install_thread = None
-
-        # style for normal console text
-        self.default_console_style = QtGui.QTextCharFormat()
-        # self.default_console_style.setFontPointSize(0.1)
-        self.default_console_style.setForeground(
-            QtGui.QColor.fromRgb(72, 200, 150))
-
-        # style for error console text
-        self.error_console_style = QtGui.QTextCharFormat()
-        # self.error_console_style.setFontPointSize(0.1)
-        self.error_console_style.setForeground(
-            QtGui.QColor.fromRgb(184, 54, 19))
 
         self.setMinimumSize(QtCore.QSize(self._width, self._height))
         self._init_ui()
@@ -233,18 +265,9 @@ class InstallDialog(QtWidgets.QDialog):
         bottom_layout.addStretch(1)
         bottom_layout.addWidget(btns_widget, 0)
 
-        # Console label
-        # --------------------------------------------------------------------
-        status_label = QtWidgets.QLabel("Console:", self)
-        status_label.setContentsMargins(0, 10, 0, 10)
-        status_label.setStyleSheet("color: rgb(61, 115, 97);")
-
         # Console
         # --------------------------------------------------------------------
-        status_box = QtWidgets.QPlainTextEdit(self)
-        status_box.setReadOnly(True)
-        status_box.setCurrentCharFormat(self.default_console_style)
-        status_box.setObjectName("Console")
+        console_widget = ConsoleWidget(self)
 
         # Progress bar
         # --------------------------------------------------------------------
@@ -259,23 +282,20 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(mongo_label, 0)
         main.addWidget(mongo_input, 0)
 
-        main.addWidget(status_label, 0)
-        main.addWidget(status_box, 1)
-
         main.addWidget(progress_bar, 0)
+        main.addWidget(console_widget, 1)
         main.addWidget(bottom_widget, 0)
 
         run_button.option_clicked.connect(self._on_run_btn_click)
         exit_button.clicked.connect(self._on_exit_clicked)
         mongo_input.textChanged.connect(self._on_mongo_url_change)
 
+        self._console_widget = console_widget
+
         self.main_label = main_label
         self.mongo_label = mongo_label
 
         self._mongo_input = mongo_input
-
-        self._status_label = status_label
-        self._status_box = status_box
 
         self._run_button = run_button
         self._exit_button = exit_button
@@ -323,6 +343,7 @@ class InstallDialog(QtWidgets.QDialog):
 
         self._disable_buttons()
 
+        self._update_progress(1)
         install_thread = InstallThread(self)
         install_thread.message.connect(self.update_console)
         install_thread.progress.connect(self._update_progress)
@@ -335,6 +356,7 @@ class InstallDialog(QtWidgets.QDialog):
 
     def _installation_finished(self, status):
         if status >= 0:
+            self._update_progress(100)
             self.done(3)
         else:
             self._enable_buttons()
@@ -384,11 +406,7 @@ class InstallDialog(QtWidgets.QDialog):
             msg (str): message.
             error (bool): if True, print it red.
         """
-        if not error:
-            self._status_box.setCurrentCharFormat(self.default_console_style)
-        else:
-            self._status_box.setCurrentCharFormat(self.error_console_style)
-        self._status_box.appendPlainText(msg)
+        self._console_widget.update_console(msg, error)
 
     def _disable_buttons(self):
         """Disable buttons so user interaction doesn't interfere."""
