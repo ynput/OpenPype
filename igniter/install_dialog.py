@@ -178,34 +178,47 @@ class MongoWidget(QtWidgets.QWidget):
 
 class InstallDialog(QtWidgets.QDialog):
     """Main Igniter dialog window."""
-    _controls_disabled = False
 
     def __init__(self, parent=None):
         super(InstallDialog, self).__init__(parent)
-        self.secure_registry = OpenPypeSecureRegistry("mongodb")
-
-        self.mongo_url = ""
-        try:
-            self.mongo_url = (
-                os.getenv("OPENPYPE_MONGO", "")
-                or self.secure_registry.get_item("openPypeMongo")
-            )
-        except ValueError:
-            pass
 
         self.setWindowTitle(
             f"OpenPype Igniter {__version__} - OpenPype installation"
         )
-        icon_path = os.path.join(
-            os.path.dirname(__file__), 'openpype_icon.png'
-        )
-        pixmap_openpype_logo = QtGui.QPixmap(icon_path)
-
-        self.setWindowIcon(QtGui.QIcon(pixmap_openpype_logo))
         self.setWindowFlags(
-            QtCore.Qt.WindowCloseButtonHint |
-            QtCore.Qt.WindowMinimizeButtonHint
+            QtCore.Qt.WindowCloseButtonHint
+            | QtCore.Qt.WindowMinimizeButtonHint
         )
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        roboto_font_path = os.path.join(current_dir, "RobotoMono-Regular.ttf")
+        icon_path = os.path.join(current_dir, "openpype_icon.png")
+
+        # Install roboto font
+        QtGui.QFontDatabase.addApplicationFont(roboto_font_path)
+
+        # Load logo
+        pixmap_openpype_logo = QtGui.QPixmap(icon_path)
+        # Set logo as icon of window
+        self.setWindowIcon(QtGui.QIcon(pixmap_openpype_logo))
+
+        secure_registry = OpenPypeSecureRegistry("mongodb")
+        mongo_url = ""
+        try:
+            mongo_url = (
+                os.getenv("OPENPYPE_MONGO", "")
+                or secure_registry.get_item("openPypeMongo")
+            )
+        except ValueError:
+            pass
+
+        self.mongo_url = mongo_url
+        self._pixmap_openpype_logo = pixmap_openpype_logo
+
+        self._secure_registry = secure_registry
+        self._openpype_run_ready = False
+        self._controls_disabled = False
+        self._install_thread = None
 
         # style for normal console text
         self.default_console_style = QtGui.QTextCharFormat()
@@ -219,19 +232,13 @@ class InstallDialog(QtWidgets.QDialog):
         self.error_console_style.setForeground(
             QtGui.QColor.fromRgb(184, 54, 19))
 
-        QtGui.QFontDatabase.addApplicationFont(
-            os.path.join(
-                os.path.dirname(__file__), 'RobotoMono-Regular.ttf')
-        )
-        self._openpype_run_ready = False
-
-        self._pixmap_openpype_logo = pixmap_openpype_logo
-
         self._init_ui()
+
+        # Set stylesheet
+        self.setStyleSheet(load_stylesheet())
 
         # Trigger mongo validation
         self._mongo_widget.validate_url()
-        self.setStyleSheet(load_stylesheet())
 
     def _init_ui(self):
         # basic visual style - dark background, light text
