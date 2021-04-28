@@ -149,7 +149,6 @@ class InstallDialog(QtWidgets.QDialog):
         self._pixmap_openpype_logo = pixmap_openpype_logo
 
         self._secure_registry = secure_registry
-        self._openpype_run_ready = False
         self._controls_disabled = False
         self._install_thread = None
 
@@ -337,16 +336,8 @@ class InstallDialog(QtWidgets.QDialog):
             self._mongo_input.set_invalid()
             self.update_console(f"!!! {reason}", True)
             return
-        else:
-            self._mongo_input.set_valid()
 
-        if self._openpype_run_ready:
-            self.done(3)
-            return
-
-        if not valid:
-            self.update_console(f"!!! {reason}", True)
-            return
+        self._mongo_input.set_valid()
 
         self._disable_buttons()
 
@@ -361,10 +352,10 @@ class InstallDialog(QtWidgets.QDialog):
         install_thread.start()
 
     def _installation_finished(self, status):
-        self._enable_buttons()
         if status >= 0:
-            self._openpype_run_ready = True
             self.done(3)
+        else:
+            self._enable_buttons()
 
     def _update_progress(self, progress: int):
         self._progress_bar.setValue(progress)
