@@ -164,8 +164,6 @@ class ExtractSequence(pyblish.api.Extractor):
             output_dir,
             filename_template.format(frame=frame_start)
         )
-        mark_in = frame_start - 1
-        mark_out = frame_end - 1
 
         george_script_lines = [
             "tv_SaveMode \"PNG\"",
@@ -233,9 +231,6 @@ class ExtractSequence(pyblish.api.Extractor):
         self.log.debug("Collecting pre/post behavior of individual layers.")
         behavior_by_layer_id = lib.get_layers_pre_post_behavior(layer_ids)
 
-        mark_in_index = frame_start - 1
-        mark_out_index = frame_end - 1
-
         tmp_filename_template = "pos_{pos}." + filename_template
 
         files_by_position = {}
@@ -248,15 +243,15 @@ class ExtractSequence(pyblish.api.Extractor):
                 tmp_filename_template,
                 output_dir,
                 behavior,
-                mark_in_index,
-                mark_out_index
+                mark_in,
+                mark_out
             )
             files_by_position[position] = files_by_frames
 
         output_filepaths = self._composite_files(
             files_by_position,
-            mark_in_index,
-            mark_out_index,
+            mark_in,
+            mark_out,
             filename_template,
             output_dir
         )
