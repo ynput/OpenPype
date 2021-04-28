@@ -2,6 +2,12 @@ import pyblish.api
 
 
 class CollectOutputFrameRange(pyblish.api.ContextPlugin):
+    """Collect frame start/end from context.
+
+    When instances are collected context does not contain `frameStart` and
+    `frameEnd` keys yet. They are collected in global plugin
+    `CollectAvalonEntities`.
+    """
     label = "Collect output frame range"
     order = pyblish.api.CollectorOrder
     hosts = ["tvpaint"]
