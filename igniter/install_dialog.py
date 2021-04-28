@@ -181,21 +181,6 @@ class InstallDialog(QtWidgets.QDialog):
         main_label.setWordWrap(True)
         main_label.setStyleSheet("color: rgb(200, 200, 200);")
 
-        # OpenPype path info
-        # --------------------------------------------------------------------
-
-        openpype_path_label = QtWidgets.QLabel(
-            """<p>
-            If you want to just try OpenPype without installing, hit the
-            middle button that states "run without installation".
-            </p>
-            """,
-            self
-        )
-
-        openpype_path_label.setWordWrap(True)
-        openpype_path_label.setStyleSheet("color: rgb(150, 150, 150);")
-
         # Mongo box | OK button
         # --------------------------------------------------------------------
 
@@ -272,7 +257,6 @@ class InstallDialog(QtWidgets.QDialog):
         # add all to main
         main = QtWidgets.QVBoxLayout(self)
         main.addWidget(main_label, 0)
-        main.addWidget(openpype_path_label, 0)
         main.addWidget(mongo_label, 0)
         main.addWidget(mongo_input, 0)
 
@@ -287,7 +271,6 @@ class InstallDialog(QtWidgets.QDialog):
         mongo_input.textChanged.connect(self._on_mongo_url_change)
 
         self.main_label = main_label
-        self.openpype_path_label = openpype_path_label
         self.mongo_label = mongo_label
 
         self._mongo_input = mongo_input
