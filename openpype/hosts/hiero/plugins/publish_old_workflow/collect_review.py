@@ -29,7 +29,7 @@ class CollectReview(api.InstancePlugin):
             Exception: description
 
         """
-        review_track = instance.data.get("review")
+        review_track = instance.data.get("reviewTrack")
         video_tracks = instance.context.data["videoTracks"]
         for track in video_tracks:
             if review_track not in track.name():

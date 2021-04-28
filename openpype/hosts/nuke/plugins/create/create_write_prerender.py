@@ -77,9 +77,13 @@ class CreateWritePrerender(plugin.PypeCreator):
         write_data = {
             "nodeclass": self.n_class,
             "families": [self.family],
-            "avalon": self.data,
-            "creator": self.__class__.__name__
+            "avalon": self.data
         }
+
+        # add creator data
+        creator_data = {"creator": self.__class__.__name__}
+        self.data.update(creator_data)
+        write_data.update(creator_data)
 
         if self.presets.get('fpath_template'):
             self.log.info("Adding template path from preset")

@@ -1,6 +1,8 @@
 import os
 import re
 import sys
+import six
+import platform
 from collections import OrderedDict
 
 
@@ -19,7 +21,6 @@ from openpype.api import (
     get_hierarchy,
     get_asset,
     get_current_project_settings,
-    config,
     ApplicationManager
 )
 
@@ -29,36 +30,34 @@ from .utils import set_context_favorites
 
 log = Logger().get_logger(__name__)
 
-self = sys.modules[__name__]
-self._project = None
-self.workfiles_launched = False
-self._node_tab_name = "{}".format(os.getenv("AVALON_LABEL") or "Avalon")
+opnl = sys.modules[__name__]
+opnl._project = None
+opnl.project_name = os.getenv("AVALON_PROJECT")
+opnl.workfiles_launched = False
+opnl._node_tab_name = "{}".format(os.getenv("AVALON_LABEL") or "Avalon")
 
 
-def get_node_imageio_setting(**kwarg):
+def get_created_node_imageio_setting(**kwarg):
     ''' Get preset data for dataflow (fileType, compression, bitDepth)
     '''
-    log.info(kwarg)
-    host = str(kwarg.get("host", "nuke"))
+    log.debug(kwarg)
     nodeclass = kwarg.get("nodeclass", None)
     creator = kwarg.get("creator", None)
-    project_name = os.getenv("AVALON_PROJECT")
 
-    assert any([host, nodeclass]), nuke.message(
+    assert any([creator, nodeclass]), nuke.message(
         "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
 
-    imageio_nodes = (get_anatomy_settings(project_name)
-                     ["imageio"]
-                     .get(host, None)
-                     ["nodes"]
-                     ["requiredNodes"]
-                     )
+    imageio = get_anatomy_settings(opnl.project_name)["imageio"]
+    imageio_nodes = imageio["nuke"]["nodes"]["requiredNodes"]
 
+    imageio_node = None
     for node in imageio_nodes:
         log.info(node)
-        if node["nukeNodeClass"] == nodeclass:
-            if creator in node["plugins"]:
-                imageio_node = node
+        if (node["nukeNodeClass"] != nodeclass) and (
+                creator not in node["plugins"]):
+            continue
+
+        imageio_node = node
 
     log.info("ImageIO node: {}".format(imageio_node))
     return imageio_node
@@ -67,12 +66,9 @@ def get_node_imageio_setting(**kwarg):
 def get_imageio_input_colorspace(filename):
     ''' Get input file colorspace based on regex in settings.
     '''
-    imageio_regex_inputs = (get_anatomy_settings(os.getenv("AVALON_PROJECT"))
-                            ["imageio"]
-                            ["nuke"]
-                            ["regexInputs"]
-                            ["inputs"]
-                            )
+    imageio_regex_inputs = (
+        get_anatomy_settings(opnl.project_name)
+        ["imageio"]["nuke"]["regexInputs"]["inputs"])
 
     preset_clrsp = None
     for regexInput in imageio_regex_inputs:
@@ -104,40 +100,39 @@ def check_inventory_versions():
     """
     # get all Loader nodes by avalon attribute metadata
     for each in nuke.allNodes():
-        if each.Class() == 'Read':
-            container = avalon.nuke.parse_container(each)
+        container = avalon.nuke.parse_container(each)
 
-            if container:
-                node = nuke.toNode(container["objectName"])
-                avalon_knob_data = avalon.nuke.read(
-                    node)
+        if container:
+            node = nuke.toNode(container["objectName"])
+            avalon_knob_data = avalon.nuke.read(
+                node)
 
-                # get representation from io
-                representation = io.find_one({
-                    "type": "representation",
-                    "_id": io.ObjectId(avalon_knob_data["representation"])
-                })
+            # get representation from io
+            representation = io.find_one({
+                "type": "representation",
+                "_id": io.ObjectId(avalon_knob_data["representation"])
+            })
 
-                # Get start frame from version data
-                version = io.find_one({
-                    "type": "version",
-                    "_id": representation["parent"]
-                })
+            # Get start frame from version data
+            version = io.find_one({
+                "type": "version",
+                "_id": representation["parent"]
+            })
 
-                # get all versions in list
-                versions = io.find({
-                    "type": "version",
-                    "parent": version["parent"]
-                }).distinct('name')
+            # get all versions in list
+            versions = io.find({
+                "type": "version",
+                "parent": version["parent"]
+            }).distinct('name')
 
-                max_version = max(versions)
+            max_version = max(versions)
 
-                # check the available version and do match
-                # change color of node if not max verion
-                if version.get("name") not in [max_version]:
-                    node["tile_color"].setValue(int("0xd84f20ff", 16))
-                else:
-                    node["tile_color"].setValue(int("0x4ecd25ff", 16))
+            # check the available version and do match
+            # change color of node if not max verion
+            if version.get("name") not in [max_version]:
+                node["tile_color"].setValue(int("0xd84f20ff", 16))
+            else:
+                node["tile_color"].setValue(int("0x4ecd25ff", 16))
 
 
 def writes_version_sync():
@@ -153,34 +148,33 @@ def writes_version_sync():
     except Exception:
         return
 
-    for each in nuke.allNodes():
-        if each.Class() == 'Write':
-            # check if the node is avalon tracked
-            if self._node_tab_name not in each.knobs():
+    for each in nuke.allNodes(filter="Write"):
+        # check if the node is avalon tracked
+        if opnl._node_tab_name not in each.knobs():
+            continue
+
+        avalon_knob_data = avalon.nuke.read(
+            each)
+
+        try:
+            if avalon_knob_data['families'] not in ["render"]:
+                log.debug(avalon_knob_data['families'])
                 continue
 
-            avalon_knob_data = avalon.nuke.read(
-                each)
+            node_file = each['file'].value()
 
-            try:
-                if avalon_knob_data['families'] not in ["render"]:
-                    log.debug(avalon_knob_data['families'])
-                    continue
+            node_version = "v" + get_version_from_path(node_file)
+            log.debug("node_version: {}".format(node_version))
 
-                node_file = each['file'].value()
-
-                node_version = "v" + get_version_from_path(node_file)
-                log.debug("node_version: {}".format(node_version))
-
-                node_new_file = node_file.replace(node_version, new_version)
-                each['file'].setValue(node_new_file)
-                if not os.path.isdir(os.path.dirname(node_new_file)):
-                    log.warning("Path does not exist! I am creating it.")
-                    os.makedirs(os.path.dirname(node_new_file))
-            except Exception as e:
-                log.warning(
-                    "Write node: `{}` has no version in path: {}".format(
-                        each.name(), e))
+            node_new_file = node_file.replace(node_version, new_version)
+            each['file'].setValue(node_new_file)
+            if not os.path.isdir(os.path.dirname(node_new_file)):
+                log.warning("Path does not exist! I am creating it.")
+                os.makedirs(os.path.dirname(node_new_file))
+        except Exception as e:
+            log.warning(
+                "Write node: `{}` has no version in path: {}".format(
+                    each.name(), e))
 
 
 def version_up_script():
@@ -201,24 +195,22 @@ def check_subsetname_exists(nodes, subset_name):
     Returns:
         bool: True of False
     """
-    result = next((True for n in nodes
-                   if subset_name in avalon.nuke.read(n).get("subset", "")), False)
-    return result
+    return next((True for n in nodes
+                 if subset_name in avalon.nuke.read(n).get("subset", "")),
+                False)
 
 
 def get_render_path(node):
     ''' Generate Render path from presets regarding avalon knob data
     '''
-    data = dict()
-    data['avalon'] = avalon.nuke.read(
-        node)
-
+    data = {'avalon': avalon.nuke.read(node)}
     data_preset = {
-        "class": data['avalon']['family'],
-        "preset": data['avalon']['families']
+        "nodeclass": data['avalon']['family'],
+        "families": [data['avalon']['families']],
+        "creator": data['avalon']['creator']
     }
 
-    nuke_imageio_writes = get_node_imageio_setting(**data_preset)
+    nuke_imageio_writes = get_created_node_imageio_setting(**data_preset)
 
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
     data.update({
@@ -324,7 +316,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         node (obj): group node with avalon data as Knobs
     '''
 
-    imageio_writes = get_node_imageio_setting(**data)
+    imageio_writes = get_created_node_imageio_setting(**data)
     app_manager = ApplicationManager()
     app_name = os.environ.get("AVALON_APP_NAME")
     if app_name:
@@ -367,8 +359,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     # adding dataflow template
     log.debug("imageio_writes: `{}`".format(imageio_writes))
     for knob in imageio_writes["knobs"]:
-        if knob["name"] not in ["_id", "_previous"]:
-            _data.update({knob["name"]: knob["value"]})
+        _data.update({knob["name"]: knob["value"]})
 
     _data = anlib.fix_data_for_node_create(_data)
 
@@ -506,7 +497,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     add_deadline_tab(GN)
 
     # open the our Tab as default
-    GN[self._node_tab_name].setFlag(0)
+    GN[opnl._node_tab_name].setFlag(0)
 
     # set tile color
     tile_color = _data.get("tile_color", "0xff0000ff")
@@ -629,7 +620,7 @@ class WorkfileSettings(object):
                  root_node=None,
                  nodes=None,
                  **kwargs):
-        self._project = kwargs.get(
+        opnl._project = kwargs.get(
             "project") or io.find_one({"type": "project"})
         self._asset = kwargs.get("asset_name") or api.Session["AVALON_ASSET"]
         self._asset_entity = get_asset(self._asset)
@@ -672,7 +663,7 @@ class WorkfileSettings(object):
         ]
 
         erased_viewers = []
-        for v in [n for n in nuke.allNodes(filter="Viewer")]:
+        for v in nuke.allNodes(filter="Viewer"):
             v['viewerProcess'].setValue(str(viewer_dict["viewerProcess"]))
             if str(viewer_dict["viewerProcess"]) \
                     not in v['viewerProcess'].value():
@@ -716,7 +707,7 @@ class WorkfileSettings(object):
             log.error(msg)
             nuke.message(msg)
 
-        log.debug(">> root_dict: {}".format(root_dict))
+        log.warning(">> root_dict: {}".format(root_dict))
 
         # first set OCIO
         if self._root_node["colorManagement"].value() \
@@ -738,41 +729,41 @@ class WorkfileSettings(object):
 
         # third set ocio custom path
         if root_dict.get("customOCIOConfigPath"):
-            self._root_node["customOCIOConfigPath"].setValue(
-                str(root_dict["customOCIOConfigPath"]).format(
-                    **os.environ
-                ).replace("\\", "/")
-            )
-            log.debug("nuke.root()['{}'] changed to: {}".format(
-                "customOCIOConfigPath", root_dict["customOCIOConfigPath"]))
-            root_dict.pop("customOCIOConfigPath")
+            unresolved_path = root_dict["customOCIOConfigPath"]
+            ocio_paths = unresolved_path[platform.system().lower()]
+
+            resolved_path = None
+            for ocio_p in ocio_paths:
+                resolved_path = str(ocio_p).format(**os.environ)
+                if not os.path.exists(resolved_path):
+                    continue
+
+            if resolved_path:
+                self._root_node["customOCIOConfigPath"].setValue(
+                    str(resolved_path).replace("\\", "/")
+                )
+                log.debug("nuke.root()['{}'] changed to: {}".format(
+                    "customOCIOConfigPath", resolved_path))
+                root_dict.pop("customOCIOConfigPath")
 
         # then set the rest
         for knob, value in root_dict.items():
+            # skip unfilled ocio config path
+            # it will be dict in value
+            if isinstance(value, dict):
+                continue
             if self._root_node[knob].value() not in value:
                 self._root_node[knob].setValue(str(value))
                 log.debug("nuke.root()['{}'] changed to: {}".format(
                     knob, value))
 
-    def set_writes_colorspace(self, write_dict):
+    def set_writes_colorspace(self):
         ''' Adds correct colorspace to write node dict
 
-        Arguments:
-            write_dict (dict): nuke write node as dictionary
-
         '''
-        # scene will have fixed colorspace following presets for the project
-        if not isinstance(write_dict, dict):
-            msg = "set_root_colorspace(): argument should be dictionary"
-            log.error(msg)
-            return
-
         from avalon.nuke import read
 
-        for node in nuke.allNodes():
-
-            if node.Class() in ["Viewer", "Dot"]:
-                continue
+        for node in nuke.allNodes(filter="Group"):
 
             # get data from avalon knob
             avalon_knob_data = read(node)
@@ -788,49 +779,63 @@ class WorkfileSettings(object):
             if avalon_knob_data.get("families"):
                 families.append(avalon_knob_data.get("families"))
 
-            # except disabled nodes but exclude backdrops in test
-            for fmly, knob in write_dict.items():
-                write = None
-                if (fmly in families):
-                    # Add all nodes in group instances.
-                    if node.Class() == "Group":
-                        node.begin()
-                        for x in nuke.allNodes():
-                            if x.Class() == "Write":
-                                write = x
-                        node.end()
-                    elif node.Class() == "Write":
-                        write = node
-                    else:
-                        log.warning("Wrong write node Class")
+            data_preset = {
+                "nodeclass": avalon_knob_data["family"],
+                "families": families,
+                "creator": avalon_knob_data['creator']
+            }
 
-                    write["colorspace"].setValue(str(knob["colorspace"]))
-                    log.info(
-                        "Setting `{0}` to `{1}`".format(
-                            write.name(),
-                            knob["colorspace"]))
+            nuke_imageio_writes = get_created_node_imageio_setting(
+                **data_preset)
 
-    def set_reads_colorspace(self, reads):
+            log.debug("nuke_imageio_writes: `{}`".format(nuke_imageio_writes))
+
+            if not nuke_imageio_writes:
+                return
+
+            write_node = None
+
+            # get into the group node
+            node.begin()
+            for x in nuke.allNodes():
+                if x.Class() == "Write":
+                    write_node = x
+            node.end()
+
+            if not write_node:
+                return
+
+            # write all knobs to node
+            for knob in nuke_imageio_writes["knobs"]:
+                value = knob["value"]
+                if isinstance(value, six.text_type):
+                    value = str(value)
+                if str(value).startswith("0x"):
+                    value = int(value, 16)
+
+                write_node[knob["name"]].setValue(value)
+
+
+    def set_reads_colorspace(self, read_clrs_inputs):
         """ Setting colorspace to Read nodes
 
         Looping trought all read nodes and tries to set colorspace based
         on regex rules in presets
         """
-        changes = dict()
+        changes = {}
         for n in nuke.allNodes():
             file = nuke.filename(n)
-            if not n.Class() == "Read":
+            if n.Class() != "Read":
                 continue
 
-            # load nuke presets for Read's colorspace
-            read_clrs_presets = config.get_init_presets()["colorspace"].get(
-                "nuke", {}).get("read", {})
-
             # check if any colorspace presets for read is mathing
-            preset_clrsp = next((read_clrs_presets[k]
-                                 for k in read_clrs_presets
-                                 if bool(re.search(k, file))),
-                                None)
+            preset_clrsp = None
+
+            for input in read_clrs_inputs:
+                if not bool(re.search(input["regex"], file)):
+                    continue
+                preset_clrsp = input["colorspace"]
+
             log.debug(preset_clrsp)
             if preset_clrsp is not None:
                 current = n["colorspace"].value()
@@ -864,13 +869,15 @@ class WorkfileSettings(object):
     def set_colorspace(self):
         ''' Setting colorpace following presets
         '''
-        nuke_colorspace = config.get_init_presets(
-        )["colorspace"].get("nuke", None)
+        # get imageio
+        imageio = get_anatomy_settings(opnl.project_name)["imageio"]
+        nuke_colorspace = imageio["nuke"]
 
         try:
-            self.set_root_colorspace(nuke_colorspace["root"])
+            self.set_root_colorspace(nuke_colorspace["workfile"])
         except AttributeError:
-            msg = "set_colorspace(): missing `root` settings in template"
+            msg = "set_colorspace(): missing `workfile` settings in template"
+            nuke.message(msg)
 
         try:
             self.set_viewers_colorspace(nuke_colorspace["viewer"])
@@ -880,15 +887,14 @@ class WorkfileSettings(object):
             log.error(msg)
 
         try:
-            self.set_writes_colorspace(nuke_colorspace["write"])
-        except AttributeError:
-            msg = "set_colorspace(): missing `write` settings in template"
-            nuke.message(msg)
-            log.error(msg)
+            self.set_writes_colorspace()
+        except AttributeError as _error:
+            nuke.message(_error)
+            log.error(_error)
 
-        reads = nuke_colorspace.get("read")
-        if reads:
-            self.set_reads_colorspace(reads)
+        read_clrs_inputs = nuke_colorspace["regexInputs"].get("inputs", [])
+        if read_clrs_inputs:
+            self.set_reads_colorspace(read_clrs_inputs)
 
         try:
             for key in nuke_colorspace:
@@ -1070,15 +1076,14 @@ class WorkfileSettings(object):
     def set_favorites(self):
         work_dir = os.getenv("AVALON_WORKDIR")
         asset = os.getenv("AVALON_ASSET")
-        project = os.getenv("AVALON_PROJECT")
         favorite_items = OrderedDict()
 
         # project
         # get project's root and split to parts
         projects_root = os.path.normpath(work_dir.split(
-            project)[0])
+            opnl.project_name)[0])
         # add project name
-        project_dir = os.path.join(projects_root, project) + "/"
+        project_dir = os.path.join(projects_root, opnl.project_name) + "/"
         # add to favorites
         favorite_items.update({"Project dir": project_dir.replace("\\", "/")})
 
@@ -1128,13 +1133,13 @@ def get_write_node_template_attr(node):
     data['avalon'] = avalon.nuke.read(
         node)
     data_preset = {
-        "class": data['avalon']['family'],
-        "families": data['avalon']['families'],
-        "preset": data['avalon']['families']  # omit < 2.0.0v
+        "nodeclass": data['avalon']['family'],
+        "families": [data['avalon']['families']],
+        "creator": data['avalon']['creator']
     }
 
     # get template data
-    nuke_imageio_writes = get_node_imageio_setting(**data_preset)
+    nuke_imageio_writes = get_created_node_imageio_setting(**data_preset)
 
     # collecting correct data
     correct_data = OrderedDict({
@@ -1230,8 +1235,7 @@ class ExporterReview:
         """
         anlib.reset_selection()
         ipn_orig = None
-        for v in [n for n in nuke.allNodes()
-                  if "Viewer" == n.Class()]:
+        for v in nuke.allNodes(filter="Viewer"):
             ip = v['input_process'].getValue()
             ipn = v['input_process_node'].getValue()
             if "VIEWER_INPUT" not in ipn and ip:
@@ -1644,8 +1648,8 @@ def launch_workfiles_app():
     if not open_at_start:
         return
 
-    if not self.workfiles_launched:
-        self.workfiles_launched = True
+    if not opnl.workfiles_launched:
+        opnl.workfiles_launched = True
         workfiles.show(os.environ["AVALON_WORKDIR"])
 
 

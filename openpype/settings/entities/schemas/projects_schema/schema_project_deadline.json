@@ -129,6 +129,11 @@
                             "label": "Department"
                         },
                         {
+                            "type": "boolean",
+                            "key": "use_gpu",
+                            "label": "Use GPU"
+                        },
+                        {
                             "type": "dict-modifiable",
                             "key": "limit_groups",
                             "label": "Limit Groups",

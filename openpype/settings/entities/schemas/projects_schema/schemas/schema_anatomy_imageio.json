@@ -119,6 +119,19 @@
             "label": "Nuke",
             "children": [
                 {
+                    "key": "viewer",
+                    "type": "dict",
+                    "label": "Viewer",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "viewerProcess",
+                            "label": "Viewer Process"
+                        }
+                    ]
+                },
+                {
                     "key": "workfile",
                     "type": "dict",
                     "label": "Workfile",
