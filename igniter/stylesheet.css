@@ -14,32 +14,16 @@ QLineEdit {
     border: 1px solid rgb(32, 32, 32);
 }
 
-QLineEdit:focus {
-    background-color: rgb(32, 32, 19);
-    color: rgb(255, 190, 15);
-    border: 1px solid rgb(64, 64, 32);
-}
-
 QLineEdit[state="valid"] {
     background-color: rgb(19, 19, 19);
     color: rgb(64, 230, 132);
     border: 1px solid rgb(32, 64, 32);
-}
-QLineEdit[state="valid"]:focus {
-    background-color: rgb(32, 32, 19);
-    color: rgb(255, 190, 15);
-    border: 1px solid rgb(64, 64, 32);
 }
 
 QLineEdit[state="invalid"] {
     background-color: rgb(19, 19, 19);
     color: rgb(64, 230, 132);
     border: 1px solid rgb(32, 64, 32);
-}
-QLineEdit[state="invalid"]:focus {
-    background-color: rgb(32, 32, 19);
-    color: rgb(255, 190, 15);
-    border: 1px solid rgb(64, 64, 32);
 }
 
 QScrollBar:vertical {
