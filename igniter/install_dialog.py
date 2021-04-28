@@ -217,9 +217,6 @@ class InstallDialog(QtWidgets.QDialog):
         btns_widget = QtWidgets.QWidget(bottom_widget)
 
         openpype_logo_label = QtWidgets.QLabel("openpype logo", bottom_widget)
-        # openpype_logo.scaled(
-        #     openpype_logo_label.width(),
-        #     openpype_logo_label.height(), QtCore.Qt.KeepAspectRatio)
         openpype_logo_label.setPixmap(self._pixmap_openpype_logo)
         openpype_logo_label.setContentsMargins(10, 0, 0, 10)
 
@@ -308,7 +305,7 @@ class InstallDialog(QtWidgets.QDialog):
         elif option == "Run from code":
             self._run_openpype_from_code()
         else:
-            raise AssertionError("Unknown variant \"{}\"".format(option))
+            raise AssertionError("BUG: Unknown variant \"{}\"".format(option))
 
     def _run_openpype_from_code(self):
         valid, reason = validate_mongo_connection(self.mongo_url)
