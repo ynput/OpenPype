@@ -213,7 +213,6 @@ class InstallDialog(QtWidgets.QDialog):
         # Bottom button bar
         # --------------------------------------------------------------------
         bottom_widget = QtWidgets.QWidget(self)
-        bottom_widget.setStyleSheet("background-color: rgb(32, 32, 32);")
 
         btns_widget = QtWidgets.QWidget(bottom_widget)
 
