@@ -119,22 +119,12 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
     parsed = urlparse(cnx)
     if parsed.scheme not in ["mongodb", "mongodb+srv"]:
         return False, "Not mongodb schema"
-    # we have mongo connection string. Let's try if we can connect.
-    try:
-        components = decompose_url(cnx)
-    except RuntimeError:
-        return False, f"Invalid port specified."
-
-    mongo_args = {
-        "host": compose_url(**components),
-        "serverSelectionTimeoutMS": 2000
-    }
-    port = components.get("port")
-    if port is not None:
-        mongo_args["port"] = int(port)
 
     try:
-        client = MongoClient(cnx)
+        client = MongoClient(
+            cnx,
+            serverSelectionTimeoutMS=2000
+        )
         client.server_info()
         client.close()
     except ServerSelectionTimeoutError as e:
