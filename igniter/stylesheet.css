@@ -140,3 +140,7 @@ QMenu::item:selected {
     background-color: rgba(72, 200, 150, 31);
     color: rgba(64, 64, 64, 63);
 }
+
+#Separator {
+    background-color: rgb(15, 15, 15);
+}
