@@ -151,12 +151,12 @@ class LoadSequence(api.Loader):
 
         read_name = self.name_expression.format(**name_data)
 
+        r = nuke.createNode(
+            "Read",
+            "name {}".format(read_name))
+
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
-            # TODO: it might be universal read to img/geo/camera
-            r = nuke.createNode(
-                "Read",
-                "name {}".format(read_name))
             r["file"].setValue(file)
 
             # Set colorspace defined in version data
