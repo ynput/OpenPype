@@ -48,6 +48,7 @@ class ButtonWithOptions(QtWidgets.QFrame):
             if default is None:
                 default = option
                 default_label = option_label
+                continue
             action = QtWidgets.QAction(option_label, options_menu)
             action.setData(option)
             options_menu.addAction(action)
@@ -69,6 +70,8 @@ class ButtonWithOptions(QtWidgets.QFrame):
         self.main_btn = main_btn
         self.options_btn = options_btn
         self.options_menu = options_menu
+
+        options_btn.setEnabled(not options_menu.isEmpty())
 
         self._default_value = default
 
