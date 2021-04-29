@@ -404,7 +404,7 @@ class SyncServerThread(threading.Thread):
                             exc_info=True)
             except Exception:
                 self.stop()
-                log.warning("Unhandled exception in sync loop, stopping server",
+                log.warning("Unhandled except. in sync loop, stopping server",
                             exc_info=True)
 
     def stop(self):

@@ -196,7 +196,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                 break
         # add default one
         self.sort['_id'] = 1
-        
+
         self.query = self.get_query()
         # import json
         # log.debug(json.dumps(self.query, indent=4).\
