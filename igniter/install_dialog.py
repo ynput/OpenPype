@@ -90,6 +90,25 @@ class ButtonWithOptions(QtWidgets.QFrame):
         self.option_clicked.emit(self._default_value)
 
 
+class NiceProgressBar(QtWidgets.QProgressBar):
+    def __init__(self, parent=None):
+        super(NiceProgressBar, self).__init__(parent)
+        self._real_value = 0
+
+    def setValue(self, value):
+        self._real_value = value
+        if value != 0 and value < 11:
+            value = 11
+
+        super(NiceProgressBar, self).setValue(value)
+
+    def value(self):
+        return self._real_value
+
+    def text(self):
+        return "{} %".format(self._real_value)
+
+
 class ConsoleWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(ConsoleWidget, self).__init__(parent)
@@ -237,6 +256,11 @@ class InstallDialog(QtWidgets.QDialog):
         # Trigger Mongo URL validation
         self._mongo_input.setText(self.mongo_url)
 
+        self._show_console()
+        for idx in range(20):
+            self.update_console("Line{}".format(idx))
+        self._update_progress(70)
+
     def _init_ui(self):
         # basic visual style - dark background, light text
 
@@ -281,8 +305,7 @@ class InstallDialog(QtWidgets.QDialog):
         progress_separator.setMinimumHeight(2)
         progress_separator.setObjectName("Separator")
 
-        progress_bar = QtWidgets.QProgressBar(self)
-        progress_bar.setValue(0)
+        progress_bar = NiceProgressBar(self)
         progress_bar.setAlignment(QtCore.Qt.AlignCenter)
         progress_bar.setTextVisible(False)
 
