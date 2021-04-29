@@ -747,18 +747,19 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "Family": filtering_criteria["families"].capitalize(),
                 "Task": filtering_criteria["tasks"].capitalize()
             }
-            filled_template = template.format(**fill_pairs)
+            try:
+                filled_template = template.format(**fill_pairs)
+            except KeyError:
+                keys = []
+                if fill_pairs:
+                    keys = fill_pairs.keys()
+
+                msg = "Subset grouping failed. " \
+                      "Only {} are expected in Settings".format(','.join(keys))
+                self.log.warning(msg)
 
         if instance.data.get("subsetGroup") or filled_template:
             subset_group = instance.data.get('subsetGroup') or filled_template
-
-            if '{' in subset_group:  # some unfilled keys
-                keys = []
-                if fill_pairs:
-                    keys = [item[0] for item in fill_pairs]
-                msg = "Subset grouping failed. " \
-                      "Only {} are expected in Settings".format(','.join(keys))
-                raise ValueError(msg)
 
             io.update_many({
                     'type': 'subset',
