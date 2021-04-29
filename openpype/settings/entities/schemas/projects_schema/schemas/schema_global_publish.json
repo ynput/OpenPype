@@ -426,6 +426,10 @@
                         "type": "dict",
                         "children": [
                             {
+                                "type": "label",
+                                "label": "Set all published instances as a part of specific group named according to 'Template'. <br>Implemented placeholders [{task},{Task},{family},{Family}]"
+                            },
+                            {
                                 "key": "families",
                                 "label": "Families",
                                 "type": "list",

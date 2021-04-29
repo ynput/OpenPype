@@ -113,9 +113,9 @@
             "subset_grouping_profiles": [
                 {
                     "families": [],
-                    "hosts": ["photoshop"],
+                    "hosts": [],
                     "tasks": [],
-                    "template": "{Task}"
+                    "template": ""
                 }
             ]
         },
