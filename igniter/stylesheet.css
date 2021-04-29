@@ -236,13 +236,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ExitBtn {
     /* `border` must be set to background of flat button is painted .*/
     border: none;
-    color: rgb(64, 64, 64);
-    background-color: rgb(128, 128, 128);
+    color: rgb(39, 39, 39);
+    background-color: #828a97;
     padding: 0.5em;
 }
 
 #ExitBtn:hover{
-    background-color: rgb(185, 185, 185);
+    background-color: #b2bece
 }
 #ExitBtn:disabled {
     background-color: rgba(185, 185, 185, 31);
@@ -253,13 +253,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-top-right-radius: 0px;
     border-bottom-right-radius: 0px;
     border: none;
-    background-color: rgb(72, 200, 150);
-    color: rgb(64, 64, 64);
+    background-color: rgb(84, 209, 178);
+    color: rgb(39, 39, 39);
     font-weight: bold;
     padding: 0.5em;
 }
 #ButtonWithOptions QPushButton:hover{
-    background-color: #2f9d73;
+    background-color: rgb(85, 224, 189)
 }
 #ButtonWithOptions QPushButton:disabled {
     background-color: rgba(72, 200, 150, 31);
@@ -272,11 +272,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-bottom-left-radius: 0px;
     border-top-right-radius: 3px;
     border-bottom-right-radius: 3px;
-    background-color: rgb(72, 200, 150);
-    color: rgb(64, 64, 64);
+    background-color: rgb(84, 209, 178);
+    color: rgb(39, 39, 39);
 }
 #ButtonWithOptions QToolButton:hover{
-    background-color: #2f9d73;
+    background-color: rgb(85, 224, 189)
 }
 #ButtonWithOptions QToolButton:disabled {
     background-color: rgba(72, 200, 150, 31);

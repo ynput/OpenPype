@@ -193,7 +193,7 @@ class InstallDialog(QtWidgets.QDialog):
 
     mongo_url_regex = re.compile(r"(mongodb|mongodb\+srv)://.+")
 
-    _width = 300
+    _width = 500
     _height = 200
     commands = collections.OrderedDict([
         ("run", "Run"),
