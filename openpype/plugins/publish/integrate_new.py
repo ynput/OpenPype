@@ -733,7 +733,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "families": instance.data["anatomyData"]["family"],
             "hosts": instance.data["anatomyData"]["app"],
             "tasks": instance.data["anatomyData"]["task"] or
-                     io.Session["AVALON_TASK"]
+                io.Session["AVALON_TASK"]
         }
         matching_profile = filter_profiles(profiles, filtering_criteria)
 
@@ -743,7 +743,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             template = matching_profile["template"]
             fill_pairs = {
                 "family": filtering_criteria["families"],
-                "task":  filtering_criteria["tasks"],
+                "task": filtering_criteria["tasks"],
                 "Family": filtering_criteria["families"].capitalize(),
                 "Task": filtering_criteria["tasks"].capitalize()
             }
@@ -762,10 +762,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             subset_group = instance.data.get('subsetGroup') or filled_template
 
             io.update_many({
-                    'type': 'subset',
-                    '_id': io.ObjectId(subset_id)
-                }, {'$set': {'data.subsetGroup': subset_group}}
-            )
+                'type': 'subset',
+                '_id': io.ObjectId(subset_id)
+            }, {'$set': {'data.subsetGroup': subset_group}})
 
     def create_version(self, subset, version_number, data=None):
         """ Copy given source to destination
