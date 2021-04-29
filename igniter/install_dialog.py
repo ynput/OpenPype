@@ -119,7 +119,22 @@ class ConsoleWidget(QtWidgets.QWidget):
         self.default_console_style = default_console_style
         self.error_console_style = error_console_style
 
+        self.label = label
         self.console_output = console_output
+
+        self.hide_console()
+
+    def hide_console(self):
+        self.label.setVisible(False)
+        self.console_output.setVisible(False)
+
+        self.updateGeometry()
+
+    def show_console(self):
+        self.label.setVisible(True)
+        self.console_output.setVisible(True)
+
+        self.updateGeometry()
 
     def update_console(self, msg: str, error: bool = False) -> None:
         if not error:
@@ -229,6 +244,18 @@ class InstallDialog(QtWidgets.QDialog):
         if self.mongo_url:
             mongo_input.setText(self.mongo_url)
 
+        mongo_messages_widget = QtWidgets.QWidget(self)
+        mongo_connection_msg = QtWidgets.QLabel(mongo_messages_widget)
+        mongo_url_msg = QtWidgets.QLabel(mongo_messages_widget)
+
+        mongo_url_msg.setVisible(False)
+        mongo_connection_msg.setVisible(False)
+
+        mongo_messages_layout = QtWidgets.QVBoxLayout(mongo_messages_widget)
+        mongo_messages_layout.setContentsMargins(0, 0, 0, 0)
+        mongo_messages_layout.addWidget(mongo_connection_msg)
+        mongo_messages_layout.addWidget(mongo_url_msg)
+
         # Bottom button bar
         # --------------------------------------------------------------------
         bottom_widget = QtWidgets.QWidget(self)
@@ -282,9 +309,12 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(main_label, 0)
         main.addWidget(mongo_label, 0)
         main.addWidget(mongo_input, 0)
+        main.addWidget(mongo_messages_widget, 0)
 
         main.addWidget(progress_bar, 0)
+
         main.addWidget(console_widget, 1)
+
         main.addWidget(bottom_widget, 0)
 
         run_button.option_clicked.connect(self._on_run_btn_click)
@@ -294,9 +324,12 @@ class InstallDialog(QtWidgets.QDialog):
         self._console_widget = console_widget
 
         self.main_label = main_label
-        self.mongo_label = mongo_label
 
+        self.mongo_label = mongo_label
         self._mongo_input = mongo_input
+
+        self._mongo_connection_msg = mongo_connection_msg
+        self._mongo_url_msg = mongo_url_msg
 
         self._run_button = run_button
         self._exit_button = exit_button
@@ -357,7 +390,7 @@ class InstallDialog(QtWidgets.QDialog):
             self._update_progress(100)
             self.done(3)
         else:
-            self._enable_buttons()
+            self._show_console()
 
     def _update_progress(self, progress: int):
         self._progress_bar.setValue(progress)
@@ -370,13 +403,21 @@ class InstallDialog(QtWidgets.QDialog):
         new_value = new_value.strip()
         # Store new mongo url to variable
         self.mongo_url = new_value
+
+        msg = None
         # Change style of input
         if not new_value:
             self._mongo_input.set_warning()
-        elif self.mongo_url_regex.match(new_value):
-            self._mongo_input.set_valid()
-        else:
+        elif not self.mongo_url_regex.match(new_value):
             self._mongo_input.set_invalid()
+            msg = (
+                "Invalid Mongo URL should start with"
+                " \"mongodb://\" or \"mongodb+srv://\""
+            )
+        else:
+            self._mongo_input.set_valid()
+
+        self.set_invalid_mongo_url(msg)
 
     def validate_url(self):
         """Validate if entered url is ok.
@@ -390,12 +431,30 @@ class InstallDialog(QtWidgets.QDialog):
 
         is_valid, reason_str = validate_mongo_connection(self.mongo_url)
         if not is_valid:
-            self._mongo_input.set_invalid()
+            self.set_invalid_mongo_connection(self.mongo_url)
+            self._mongo_input.set_warning()
             self.update_console(f"!!! {reason_str}", True)
             return False
 
+        self.set_invalid_mongo_connection(None)
         self._mongo_input.set_valid()
         return True
+
+    def set_invalid_mongo_url(self, reason):
+        if reason is None:
+            self._mongo_url_msg.setVisible(False)
+        else:
+            self._mongo_url_msg.setVisible(True)
+            self._mongo_url_msg.setText("- {}".format(reason))
+
+    def set_invalid_mongo_connection(self, mongo_url):
+        if mongo_url is None:
+            self._mongo_connection_msg.setVisible(False)
+        else:
+            self._mongo_connection_msg.setText(
+                "- Can't connect to: <b>{}</b>".format(mongo_url)
+            )
+            self._mongo_connection_msg.setVisible(True)
 
     def update_console(self, msg: str, error: bool = False) -> None:
         """Display message in console.
@@ -405,6 +464,10 @@ class InstallDialog(QtWidgets.QDialog):
             error (bool): if True, print it red.
         """
         self._console_widget.update_console(msg, error)
+
+    def _show_console(self):
+        self._console_widget.show_console()
+        self.updateGeometry()
 
     def _disable_buttons(self):
         """Disable buttons so user interaction doesn't interfere."""
