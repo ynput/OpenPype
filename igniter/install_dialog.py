@@ -407,7 +407,8 @@ class InstallDialog(QtWidgets.QDialog):
 
         install_thread.start()
 
-    def _installation_finished(self, status):
+    def _installation_finished(self):
+        status = self._install_thread.result()
         if status >= 0:
             self._update_progress(100)
             QtWidgets.QApplication.processEvents()

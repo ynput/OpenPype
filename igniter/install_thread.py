@@ -30,7 +30,6 @@ class InstallThread(QThread):
     """
     progress = Signal(int)
     message = Signal((str, bool))
-    finished = Signal(int)
 
     def __init__(self, parent=None,):
         self._mongo = None
@@ -47,7 +46,6 @@ class InstallThread(QThread):
         if self._result is not None:
             raise AssertionError("BUG: Result was set more than once!")
         self._result = value
-        self.finished.emit(value)
 
     def run(self):
         """Thread entry point.
@@ -162,6 +160,7 @@ class InstallThread(QThread):
 
             self.message.emit(f"Installed as {local_openpype}", False)
             self.progress.emit(100)
+            self._set_result(1)
             return
         else:
             # if we have mongo connection string, validate it, set it to
