@@ -401,6 +401,17 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return remote_site
 
+    def get_enabled_projects(self):
+        """Returns list of projects which have SyncServer enabled."""
+        enabled_projects = []
+        for project in self.connection.projects():
+            project_name = project["name"]
+            project_settings = self.get_sync_project_setting(project_name)
+            if project_settings:
+                enabled_projects.append(project_name)
+
+        return enabled_projects
+
     """ End of Public API """
 
     def get_local_file_path(self, collection, site_name, file_path):
@@ -413,7 +424,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         return local_file_path
 
     def _get_remote_sites_from_settings(self, sync_settings):
-        if not self.enabled or not sync_settings['enabled']:
+        if not self.enabled or not sync_settings.get('enabled'):
             return []
 
         remote_sites = [self.DEFAULT_SITE, self.LOCAL_SITE]
@@ -424,7 +435,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
     def _get_enabled_sites_from_settings(self, sync_settings):
         sites = [self.DEFAULT_SITE]
-        if self.enabled and sync_settings['enabled']:
+        if self.enabled and sync_settings.get('enabled'):
             sites.append(self.LOCAL_SITE)
 
         return sites
@@ -443,6 +454,11 @@ class SyncServerModule(PypeModule, ITrayModule):
         from .sync_server import SyncServerThread
 
         if not self.enabled:
+            return
+
+        enabled_projects = self.get_enabled_projects()
+        if not enabled_projects:
+            self.enabled = False
             return
 
         self.lock = threading.Lock()
