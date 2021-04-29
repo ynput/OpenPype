@@ -8,7 +8,7 @@ from concurrent.futures._base import CancelledError
 from .providers import lib
 from openpype.lib import PypeLogger
 
-from .utils import SyncStatus
+from .utils import SyncStatus, ResumableError
 
 
 log = PypeLogger().get_logger("SyncServer")
@@ -266,8 +266,8 @@ class SyncServerThread(threading.Thread):
         Returns:
 
         """
-        try:
-            while self.is_running and not self.module.is_paused():
+        while self.is_running and not self.module.is_paused():
+            try:
                 import time
                 start_time = None
                 self.module.set_sync_project_settings()  # clean cache
@@ -385,16 +385,22 @@ class SyncServerThread(threading.Thread):
                 duration = time.time() - start_time
                 log.debug("One loop took {:.2f}s".format(duration))
                 await asyncio.sleep(self.module.get_loop_delay(collection))
-        except ConnectionResetError:
-            log.warning("ConnectionResetError in sync loop, trying next loop",
-                        exc_info=True)
-        except CancelledError:
-            # just stopping server
-            pass
-        except Exception:
-            self.stop()
-            log.warning("Unhandled exception in sync loop, stopping server",
-                        exc_info=True)
+
+            except ConnectionResetError:
+                log.warning("ConnectionResetError in sync loop, "
+                            "trying next loop",
+                            exc_info=True)
+            except CancelledError:
+                # just stopping server
+                pass
+            except ResumableError:
+                log.warning("ResumableError in sync loop, "
+                            "trying next loop",
+                            exc_info=True)
+            except Exception:
+                self.stop()
+                log.warning("Unhandled exception in sync loop, stopping server",
+                            exc_info=True)
 
     def stop(self):
         """Sets is_running flag to false, 'check_shutdown' shuts server down"""
