@@ -21,7 +21,7 @@ def get_result(res: int):
 
 def open_dialog():
     """Show Igniter dialog."""
-    from Qt import QtWidgets
+    from Qt import QtWidgets, QtCore
     from .install_dialog import InstallDialog
 
     scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)
