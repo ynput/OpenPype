@@ -139,6 +139,8 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
         return False, f"Invalid port specified {parsed.port}"
     except InvalidURI as e:
         return False, str(e)
+    except Exception as exc:
+        return False, str(exc)
     else:
         return True, "Connection is successful"
 
