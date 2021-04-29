@@ -303,7 +303,17 @@ class InstallDialog(QtWidgets.QDialog):
         self._progress_bar = progress_bar
 
     def _on_run_btn_click(self, option):
+        # Disable buttons
+        self._disable_buttons()
+        # Set progress to any value
+        self._update_progress(1)
+        self._progress_bar.repaint()
+        # Process events to repaint changes
+        QtWidgets.QApplication.processEvents()
+
         if not self.validate_url():
+            self._enable_buttons()
+            self._update_progress(0)
             return
 
         if option == "Run":
@@ -313,13 +323,9 @@ class InstallDialog(QtWidgets.QDialog):
         else:
             raise AssertionError("BUG: Unknown variant \"{}\"".format(option))
 
-    def _run_openpype_from_code(self):
-        valid, reason = validate_mongo_connection(self.mongo_url)
-        if not valid:
-            self._mongo_input.set_invalid()
-            self.update_console(f"!!! {reason}", True)
-            return
+        self._enable_buttons()
 
+    def _run_openpype_from_code(self):
         self._secure_registry.set_item("openPypeMongo", self.mongo_url)
 
         self.done(2)
@@ -334,17 +340,8 @@ class InstallDialog(QtWidgets.QDialog):
         if self._install_thread and self._install_thread.isRunning():
             return
 
-        valid, reason = validate_mongo_connection(self.mongo_url)
-        if not valid:
-            self._mongo_input.set_invalid()
-            self.update_console(f"!!! {reason}", True)
-            return
-
         self._mongo_input.set_valid()
 
-        self._disable_buttons()
-
-        self._update_progress(1)
         install_thread = InstallThread(self)
         install_thread.message.connect(self.update_console)
         install_thread.progress.connect(self._update_progress)
@@ -396,8 +393,8 @@ class InstallDialog(QtWidgets.QDialog):
             self._mongo_input.set_invalid()
             self.update_console(f"!!! {reason_str}", True)
             return False
-        else:
-            self._mongo_input.set_valid()
+
+        self._mongo_input.set_valid()
         return True
 
     def update_console(self, msg: str, error: bool = False) -> None:
