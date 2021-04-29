@@ -196,7 +196,7 @@ class InstallDialog(QtWidgets.QDialog):
     _width = 500
     _height = 200
     commands = collections.OrderedDict([
-        ("run", "Run"),
+        ("run", "Start"),
         ("run_from_code", "Run from code")
     ])
 
@@ -204,7 +204,7 @@ class InstallDialog(QtWidgets.QDialog):
         super(InstallDialog, self).__init__(parent)
 
         self.setWindowTitle(
-            f"OpenPype Igniter {__version__} - OpenPype installation"
+            f"OpenPype Igniter {__version__}"
         )
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint
@@ -213,10 +213,14 @@ class InstallDialog(QtWidgets.QDialog):
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         roboto_font_path = os.path.join(current_dir, "RobotoMono-Regular.ttf")
+        poppins_font_path = os.path.join(current_dir, "Poppins")
         icon_path = os.path.join(current_dir, "openpype_icon.png")
 
         # Install roboto font
         QtGui.QFontDatabase.addApplicationFont(roboto_font_path)
+        for filename in os.listdir(poppins_font_path):
+            if os.path.splitext(filename)[1] == ".ttf":
+                QtGui.QFontDatabase.addApplicationFont(filename)
 
         # Load logo
         pixmap_openpype_logo = QtGui.QPixmap(icon_path)
@@ -262,7 +266,7 @@ class InstallDialog(QtWidgets.QDialog):
         # --------------------------------------------------------------------
         mongo_input = MongoUrlInput(self)
         mongo_input.setPlaceholderText(
-            "Mongo URL < mongodb://192.168.1.1:27017 >"
+            "Enter your database address < mongodb://192.168.1.1:27017 >"
         )
 
         mongo_messages_widget = QtWidgets.QWidget(self)
@@ -324,6 +328,7 @@ class InstallDialog(QtWidgets.QDialog):
 
         # add all to main
         main = QtWidgets.QVBoxLayout(self)
+        main.addSpacing(15)
         main.addWidget(main_label, 0)
         main.addSpacing(15)
         main.addWidget(mongo_input, 0)
