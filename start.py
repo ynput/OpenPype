@@ -289,6 +289,10 @@ def _process_arguments() -> tuple:
         if return_code not in [2, 3]:
             sys.exit(return_code)
 
+        idx = sys.argv.index("igniter")
+        sys.argv.pop(idx)
+        sys.argv.insert(idx, "tray")
+
     return use_version, use_staging
 
 
