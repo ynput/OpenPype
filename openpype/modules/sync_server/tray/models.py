@@ -170,6 +170,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
             Sort is happening on a DB side, model is reset, db queried
             again.
 
+            It remembers one last sort, adds it as secondary after new sort.
+
             Args:
                 index (int): column index
                 order (int): 0|
@@ -184,7 +186,17 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         else:
             order = -1
 
-        self.sort = {self.SORT_BY_COLUMN[index]: order, '_id': 1}
+        backup_sort = dict(self.sort)
+
+        self.sort = {self.SORT_BY_COLUMN[index]: order}  # reset
+        # add last one
+        for key, val in backup_sort.items():
+            if key != '_id':
+                self.sort[key] = val
+                break
+        # add default one
+        self.sort['_id'] = 1
+        
         self.query = self.get_query()
         # import json
         # log.debug(json.dumps(self.query, indent=4).\
