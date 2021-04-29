@@ -109,7 +109,15 @@
                         "prerender"
                     ]
                 }
-            }
+            },
+            "subset_grouping_profiles": [
+                {
+                    "families": [],
+                    "hosts": ["photoshop"],
+                    "tasks": [],
+                    "template": "{Task}"
+                }
+            ]
         },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,
