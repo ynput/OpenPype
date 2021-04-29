@@ -3,6 +3,7 @@
 import os
 import sys
 import re
+import collections
 
 from Qt import QtCore, QtGui, QtWidgets  # noqa
 from Qt.QtGui import QValidator  # noqa
@@ -182,6 +183,11 @@ class InstallDialog(QtWidgets.QDialog):
 
     _width = 300
     _height = 200
+    commands = collections.OrderedDict([
+        ("run", "Run"),
+        ("run_from_code", "Run from code")
+    ])
+
     def __init__(self, parent=None):
         super(InstallDialog, self).__init__(parent)
 
@@ -222,7 +228,7 @@ class InstallDialog(QtWidgets.QDialog):
         self._controls_disabled = False
         self._install_thread = None
 
-        self.setMinimumSize(QtCore.QSize(self._width, self._height))
+        self.resize(QtCore.QSize(self._width, self._height))
         self._init_ui()
 
         # Set stylesheet
