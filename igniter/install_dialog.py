@@ -316,7 +316,6 @@ class InstallDialog(QtWidgets.QDialog):
 
         openpype_logo_label = QtWidgets.QLabel("openpype logo", bottom_widget)
         openpype_logo_label.setPixmap(self._pixmap_openpype_logo)
-        openpype_logo_label.setContentsMargins(5, 5, 5, 5)
 
         run_button = ButtonWithOptions(
             ["Run", "Run from code"],
