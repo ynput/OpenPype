@@ -49,6 +49,54 @@ class ExtractSequence(pyblish.api.Extractor):
         frame_start = int(instance.data["frameStart"])
         frame_end = int(instance.data["frameEnd"])
 
+        # Handles are not stored per instance but on Context
+        handle_start = instance.context.data["handleStart"]
+        handle_end = instance.context.data["handleEnd"]
+
+        # --- Fallbacks ----------------------------------------------------
+        # This is required if validations of ranges are ignored.
+        # - all of this code won't change processing if range to render
+        #   match to range of expected output
+
+        # Prepare output frames
+        output_frame_start = frame_start - handle_start
+        output_frame_end = frame_end + handle_end
+
+        # Change output frame start to 0 if handles cause it's negative number
+        if output_frame_start < 0:
+            self.log.warning((
+                "Frame start with handles has negative value."
+                " Changed to \"0\". Frames start: {}, Handle Start: {}"
+            ).format(frame_start, handle_start))
+            output_frame_start = 0
+
+        # Check Marks range and output range
+        output_range = output_frame_end - output_frame_start
+        marks_range = mark_out - mark_in
+
+        # Lower Mark Out if mark range is bigger than output
+        # - do not rendered not used frames
+        if output_range < marks_range:
+            new_mark_out = mark_out - (marks_range - output_range)
+            self.log.warning((
+                "Lowering render range to {} frames. Changed Mark Out {} -> {}"
+            ).format(marks_range + 1, mark_out, new_mark_out))
+            # Assign new mark out to variable
+            mark_out = new_mark_out
+
+        # Lower output frame end so representation has right `frameEnd` value
+        elif output_range > marks_range:
+            new_output_frame_end = (
+                output_frame_end - (output_range - marks_range)
+            )
+            self.log.warning((
+                "Lowering representation range to {} frames."
+                " Changed frame end {} -> {}"
+            ).format(output_range + 1, mark_out, new_mark_out))
+            output_frame_end = new_output_frame_end
+
+        # -------------------------------------------------------------------
+
         filename_template = self._get_filename_template(
             # Use the biggest number
             max(mark_out, frame_end)
@@ -104,8 +152,8 @@ class ExtractSequence(pyblish.api.Extractor):
         }
 
         if not single_file:
-            new_repre["frameStart"] = frame_start
-            new_repre["frameEnd"] = frame_end
+            new_repre["frameStart"] = output_frame_start
+            new_repre["frameEnd"] = output_frame_end
 
         self.log.debug("Creating new representation: {}".format(new_repre))
 
