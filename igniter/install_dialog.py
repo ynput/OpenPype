@@ -254,18 +254,36 @@ class InstallDialog(QtWidgets.QDialog):
 
         mongo_messages_widget = QtWidgets.QWidget(self)
         mongo_connection_msg = QtWidgets.QLabel(mongo_messages_widget)
-        mongo_url_msg = QtWidgets.QLabel(mongo_messages_widget)
-
-        mongo_url_msg.setVisible(False)
         mongo_connection_msg.setVisible(False)
+        mongo_connection_msg.setTextInteractionFlags(
+            QtCore.Qt.TextSelectableByMouse
+        )
+
+        mongo_url_msg = QtWidgets.QLabel(mongo_messages_widget)
+        mongo_url_msg.setVisible(False)
+        mongo_url_msg.setTextInteractionFlags(
+            QtCore.Qt.TextSelectableByMouse
+        )
 
         mongo_messages_layout = QtWidgets.QVBoxLayout(mongo_messages_widget)
         mongo_messages_layout.setContentsMargins(0, 0, 0, 0)
-        mongo_messages_layout.addWidget(mongo_connection_msg)
         mongo_messages_layout.addWidget(mongo_url_msg)
+        mongo_messages_layout.addWidget(mongo_connection_msg)
+
+        # Progress bar
+        # --------------------------------------------------------------------
         progress_separator = QtWidgets.QWidget(self)
         progress_separator.setMinimumHeight(2)
         progress_separator.setObjectName("Separator")
+
+        progress_bar = QtWidgets.QProgressBar(self)
+        progress_bar.setValue(0)
+        progress_bar.setAlignment(QtCore.Qt.AlignCenter)
+        progress_bar.setTextVisible(False)
+
+        # Console
+        # --------------------------------------------------------------------
+        console_widget = ConsoleWidget(self)
 
         # Bottom button bar
         # --------------------------------------------------------------------
@@ -303,17 +321,6 @@ class InstallDialog(QtWidgets.QDialog):
         bottom_layout.addWidget(openpype_logo_label, 0)
         bottom_layout.addStretch(1)
         bottom_layout.addWidget(btns_widget, 0)
-
-        # Console
-        # --------------------------------------------------------------------
-        console_widget = ConsoleWidget(self)
-
-        # Progress bar
-        # --------------------------------------------------------------------
-        progress_bar = QtWidgets.QProgressBar(self)
-        progress_bar.setValue(0)
-        progress_bar.setAlignment(QtCore.Qt.AlignCenter)
-        progress_bar.setTextVisible(False)
 
         # add all to main
         main = QtWidgets.QVBoxLayout(self)
