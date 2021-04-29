@@ -266,7 +266,7 @@ class InstallDialog(QtWidgets.QDialog):
         # --------------------------------------------------------------------
         mongo_input = MongoUrlInput(self)
         mongo_input.setPlaceholderText(
-            "Enter your database address < mongodb://192.168.1.1:27017 >"
+            "Enter your database Address. Example: mongodb://192.168.1.10:2707"
         )
 
         mongo_messages_widget = QtWidgets.QWidget(self)
