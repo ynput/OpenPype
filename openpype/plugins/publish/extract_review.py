@@ -333,10 +333,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Get FFmpeg arguments from profile presets
         out_def_ffmpeg_args = output_def.get("ffmpeg_args") or {}
 
-        ffmpeg_input_args = out_def_ffmpeg_args.get("input") or []
-        ffmpeg_output_args = out_def_ffmpeg_args.get("output") or []
-        ffmpeg_video_filters = out_def_ffmpeg_args.get("video_filters") or []
-        ffmpeg_audio_filters = out_def_ffmpeg_args.get("audio_filters") or []
+        _ffmpeg_input_args = out_def_ffmpeg_args.get("input") or []
+        _ffmpeg_output_args = out_def_ffmpeg_args.get("output") or []
+        _ffmpeg_video_filters = out_def_ffmpeg_args.get("video_filters") or []
+        _ffmpeg_audio_filters = out_def_ffmpeg_args.get("audio_filters") or []
+
+        # Cleanup empty strings
+        ffmpeg_input_args = [
+            value for value in _ffmpeg_input_args if value.strip()
+        ]
+        ffmpeg_output_args = [
+            value for value in _ffmpeg_output_args if value.strip()
+        ]
+        ffmpeg_video_filters = [
+            value for value in _ffmpeg_video_filters if value.strip()
+        ]
+        ffmpeg_audio_filters = [
+            value for value in _ffmpeg_audio_filters if value.strip()
+        ]
 
         if isinstance(new_repre['files'], list):
             input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
