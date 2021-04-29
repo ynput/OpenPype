@@ -10,15 +10,6 @@ from .bootstrap_repos import BootstrapRepos
 from .version import __version__ as version
 
 
-RESULT = 0
-
-
-def get_result(res: int):
-    """Sets result returned from dialog."""
-    global RESULT
-    RESULT = res
-
-
 def open_dialog():
     """Show Igniter dialog."""
     from Qt import QtWidgets, QtCore
@@ -31,12 +22,10 @@ def open_dialog():
     app = QtWidgets.QApplication(sys.argv)
 
     d = InstallDialog()
-    d.finished.connect(get_result)
     d.open()
 
-    app.exec()
-
-    return RESULT
+    app.exec_()
+    return d.result()
 
 
 __all__ = [
