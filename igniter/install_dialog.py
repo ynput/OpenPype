@@ -256,11 +256,6 @@ class InstallDialog(QtWidgets.QDialog):
         # Trigger Mongo URL validation
         self._mongo_input.setText(self.mongo_url)
 
-        self._show_console()
-        for idx in range(20):
-            self.update_console("Line{}".format(idx))
-        self._update_progress(70)
-
     def _init_ui(self):
         # basic visual style - dark background, light text
 
