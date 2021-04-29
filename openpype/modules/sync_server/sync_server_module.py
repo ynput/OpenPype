@@ -401,6 +401,14 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return remote_site
 
+    def reset_timer(self):
+        """
+            Called when waiting for next loop should be skipped.
+
+            In case of user's involvement (reset site), start that right away.
+        """
+        self.sync_server_thread.reset_timer()
+
     """ End of Public API """
 
     def get_local_file_path(self, collection, site_name, file_path):

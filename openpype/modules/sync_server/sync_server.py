@@ -232,6 +232,7 @@ class SyncServerThread(threading.Thread):
         self.loop = None
         self.is_running = False
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
+        self.timer = None
 
     def run(self):
         self.is_running = True
@@ -384,7 +385,11 @@ class SyncServerThread(threading.Thread):
 
                 duration = time.time() - start_time
                 log.debug("One loop took {:.2f}s".format(duration))
-                await asyncio.sleep(self.module.get_loop_delay(collection))
+
+                delay = self.module.get_loop_delay(collection)
+                log.debug("Waiting for {} seconds to new loop".format(delay))
+                self.timer = asyncio.create_task(self.run_timer(delay))
+                await asyncio.gather(self.timer)
 
             except ConnectionResetError:
                 log.warning("ConnectionResetError in sync loop, "
@@ -422,6 +427,17 @@ class SyncServerThread(threading.Thread):
         self.executor.shutdown(wait=True)
         await asyncio.sleep(0.07)
         self.loop.stop()
+
+    async def run_timer(self, delay):
+        """Wait for 'delay' seconds to start next loop"""
+        await asyncio.sleep(delay)
+
+    def reset_timer(self):
+        """Called when waiting for next loop should be skipped"""
+        log.debug("Resetting timer")
+        if self.timer:
+            self.timer.cancel()
+            self.timer = None
 
     def _working_sites(self, collection):
         if self.module.is_project_paused(collection):
