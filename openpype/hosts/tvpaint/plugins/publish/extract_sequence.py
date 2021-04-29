@@ -109,7 +109,9 @@ class ExtractSequence(pyblish.api.Extractor):
         output_dir = instance.data.get("stagingDir")
         if not output_dir:
             # Create temp folder if staging dir is not set
-            output_dir = tempfile.mkdtemp().replace("\\", "/")
+            output_dir = (
+                tempfile.mkdtemp(prefix="tvpaint_render_")
+            ).replace("\\", "/")
             instance.data["stagingDir"] = output_dir
 
         self.log.debug(
