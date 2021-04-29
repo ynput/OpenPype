@@ -234,8 +234,8 @@ class InstallDialog(QtWidgets.QDialog):
         # Set stylesheet
         self.setStyleSheet(load_stylesheet())
 
-        # Trigger mongo validation
-        self.validate_url()
+        # Trigger Mongo URL validation
+        self._mongo_input.setText(self.mongo_url)
 
     def _init_ui(self):
         # basic visual style - dark background, light text
@@ -255,10 +255,9 @@ class InstallDialog(QtWidgets.QDialog):
         mongo_input.setPlaceholderText(
             "Mongo URL < mongodb://192.168.1.1:27017 >"
         )
-        if self.mongo_url:
-            mongo_input.setText(self.mongo_url)
 
         mongo_messages_widget = QtWidgets.QWidget(self)
+
         mongo_connection_msg = QtWidgets.QLabel(mongo_messages_widget)
         mongo_connection_msg.setVisible(False)
         mongo_connection_msg.setTextInteractionFlags(
@@ -366,6 +365,9 @@ class InstallDialog(QtWidgets.QDialog):
         # Set progress to any value
         self._update_progress(1)
         self._progress_bar.repaint()
+        # Add label to show that is connecting to mongo
+        self.set_invalid_mongo_connection(self.mongo_url, True)
+
         # Process events to repaint changes
         QtWidgets.QApplication.processEvents()
 
@@ -436,7 +438,7 @@ class InstallDialog(QtWidgets.QDialog):
         elif not self.mongo_url_regex.match(new_value):
             self._mongo_input.set_invalid()
             msg = (
-                "Invalid Mongo URL should start with"
+                "Mongo URL should start with"
                 " \"mongodb://\" or \"mongodb+srv://\""
             )
         else:
@@ -457,7 +459,7 @@ class InstallDialog(QtWidgets.QDialog):
         is_valid, reason_str = validate_mongo_connection(self.mongo_url)
         if not is_valid:
             self.set_invalid_mongo_connection(self.mongo_url)
-            self._mongo_input.set_warning()
+            self._mongo_input.set_invalid()
             self.update_console(f"!!! {reason_str}", True)
             return False
 
@@ -472,14 +474,18 @@ class InstallDialog(QtWidgets.QDialog):
             self._mongo_url_msg.setVisible(True)
             self._mongo_url_msg.setText("- {}".format(reason))
 
-    def set_invalid_mongo_connection(self, mongo_url):
+    def set_invalid_mongo_connection(self, mongo_url, connecting=False):
         if mongo_url is None:
             self._mongo_connection_msg.setVisible(False)
+            return
+
+        if connecting:
+            msg = "- Connecting to: <b>{}</b>".format(mongo_url)
         else:
-            self._mongo_connection_msg.setText(
-                "- Can't connect to: <b>{}</b>".format(mongo_url)
-            )
-            self._mongo_connection_msg.setVisible(True)
+            msg = "- Can't connect to: <b>{}</b>".format(mongo_url)
+
+        self._mongo_connection_msg.setText(msg)
+        self._mongo_connection_msg.setVisible(True)
 
     def update_console(self, msg: str, error: bool = False) -> None:
         """Display message in console.
