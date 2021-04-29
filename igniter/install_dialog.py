@@ -32,30 +32,28 @@ def load_stylesheet():
 class ButtonWithOptions(QtWidgets.QFrame):
     option_clicked = QtCore.Signal(str)
 
-    def __init__(self, options, default=None, parent=None):
+    def __init__(self, commands, parent=None):
         super(ButtonWithOptions, self).__init__(parent)
 
         self.setObjectName("ButtonWithOptions")
-
-        if default:
-            if default not in options:
-                default = None
-
-        if default is None:
-            default = options[0]
-
-        main_btn = QtWidgets.QPushButton(default, self)
-        main_btn.setFlat(True)
 
         options_btn = QtWidgets.QToolButton(self)
         options_btn.setArrowType(QtCore.Qt.DownArrow)
         options_btn.setIconSize(QtCore.QSize(12, 12))
 
+        default = None
+        default_label = None
         options_menu = QtWidgets.QMenu(self)
-        for option in options:
-            action = QtWidgets.QAction(option, options_menu)
+        for option, option_label in commands.items():
+            if default is None:
+                default = option
+                default_label = option_label
+            action = QtWidgets.QAction(option_label, options_menu)
             action.setData(option)
             options_menu.addAction(action)
+
+        main_btn = QtWidgets.QPushButton(default_label, self)
+        main_btn.setFlat(True)
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -318,8 +316,7 @@ class InstallDialog(QtWidgets.QDialog):
         openpype_logo_label.setPixmap(self._pixmap_openpype_logo)
 
         run_button = ButtonWithOptions(
-            ["Run", "Run from code"],
-            "Run",
+            self.commands,
             btns_widget
         )
         run_button.setMinimumSize(64, 24)
@@ -393,9 +390,9 @@ class InstallDialog(QtWidgets.QDialog):
             self._update_progress(0)
             return
 
-        if option == "Run":
+        if option == "run":
             self._run_openpype()
-        elif option == "Run from code":
+        elif option == "run_from_code":
             self._run_openpype_from_code()
         else:
             raise AssertionError("BUG: Unknown variant \"{}\"".format(option))
