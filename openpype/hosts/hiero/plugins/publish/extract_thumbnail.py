@@ -10,7 +10,6 @@ class ExtractThumnail(openpype.api.Extractor):
 
     label = "Extract Thumnail"
     order = pyblish.api.ExtractorOrder
-    # order = pyblish.api.CollectorOrder
     families = ["plate", "take"]
     hosts = ["hiero"]
 
@@ -31,7 +30,8 @@ class ExtractThumnail(openpype.api.Extractor):
         duration = track_item.sourceDuration()
         frame_start = track_item.sourceIn()
         self.log.debug(
-            "__ frame_start: `{}`, duration: `{}`".format(frame_start, duration))
+            "__ frame_start: `{}`, duration: `{}`".format(
+                frame_start, duration))
 
         # get thumbnail frame from the middle
         thumb_frame = int(frame_start + (duration / 2))
