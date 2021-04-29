@@ -108,6 +108,10 @@ QMenu::item:selected {
 #ExitBtn:hover{
     background-color: rgb(185, 185, 185);
 }
+#ExitBtn:disabled {
+    background-color: rgba(185, 185, 185, 31);
+    color: rgba(64, 64, 64, 63);
+}
 
 #ButtonWithOptions QPushButton{
     border: none;
@@ -119,6 +123,10 @@ QMenu::item:selected {
 #ButtonWithOptions QPushButton:hover{
     background-color: #2f9d73;
 }
+#ButtonWithOptions QPushButton:disabled {
+    background-color: rgba(72, 200, 150, 31);
+    color: rgba(64, 64, 64, 63);
+}
 
 #ButtonWithOptions QToolButton{
     border: none;
@@ -127,4 +135,8 @@ QMenu::item:selected {
 }
 #ButtonWithOptions QToolButton:hover{
     background-color: #2f9d73;
+}
+#ButtonWithOptions QToolButton:disabled {
+    background-color: rgba(72, 200, 150, 31);
+    color: rgba(64, 64, 64, 63);
 }
