@@ -124,10 +124,6 @@ class ConsoleWidget(QtWidgets.QWidget):
             QtGui.QColor.fromRgb(184, 54, 19)
         )
 
-        separator = QtWidgets.QWidget(self)
-        separator.setMinimumHeight(2)
-        separator.setObjectName("Separator")
-
         label = QtWidgets.QLabel("Console:", self)
 
         console_output = QtWidgets.QPlainTextEdit(self)
@@ -138,28 +134,24 @@ class ConsoleWidget(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.addWidget(separator, 0)
         main_layout.addWidget(label, 0)
         main_layout.addWidget(console_output, 1)
 
         self.default_console_style = default_console_style
         self.error_console_style = error_console_style
 
-        self.separator = separator
         self.label = label
         self.console_output = console_output
 
         self.hide_console()
 
     def hide_console(self):
-        self.separator.setVisible(False)
         self.label.setVisible(False)
         self.console_output.setVisible(False)
 
         self.updateGeometry()
 
     def show_console(self):
-        self.separator.setVisible(True)
         self.label.setVisible(True)
         self.console_output.setVisible(True)
 
@@ -297,10 +289,6 @@ class InstallDialog(QtWidgets.QDialog):
 
         # Progress bar
         # --------------------------------------------------------------------
-        progress_separator = QtWidgets.QWidget(self)
-        progress_separator.setMinimumHeight(2)
-        progress_separator.setObjectName("Separator")
-
         progress_bar = NiceProgressBar(self)
         progress_bar.setAlignment(QtCore.Qt.AlignCenter)
         progress_bar.setTextVisible(False)
@@ -351,7 +339,6 @@ class InstallDialog(QtWidgets.QDialog):
         main.addWidget(mongo_input, 0)
         main.addWidget(mongo_messages_widget, 0)
 
-        main.addWidget(progress_separator, 0)
         main.addWidget(progress_bar, 0)
 
         main.addWidget(console_widget, 1)
