@@ -7,7 +7,7 @@ from .abstract_provider import AbstractProvider
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from openpype.api import Logger
 from openpype.api import get_system_settings
-from ..utils import time_function
+from ..utils import time_function, ResumableError
 import time
 
 
@@ -63,7 +63,14 @@ class GDriveHandler(AbstractProvider):
             return
 
         self.service = self._get_gd_service()
-        self.root = self._prepare_root_info()
+        try:
+            self.root = self._prepare_root_info()
+        except errors.HttpError:
+            log.warning("HttpError in sync loop, "
+                        "trying next loop",
+                        exc_info=True)
+            raise ResumableError
+
         self._tree = tree
         self.active = True
 

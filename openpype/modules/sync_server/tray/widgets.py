@@ -316,6 +316,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
                                                   representation_id))
             except ValueError as exp:
                 self.message_generated.emit("Error {}".format(str(exp)))
+        self.sync_server.reset_timer()
 
     def _remove_site(self, selected_ids=None, site_name=None):
         """
@@ -343,6 +344,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
         self.model.refresh(
             load_records=self.model._rec_loaded)
+        self.sync_server.reset_timer()
 
     def _reset_site(self, selected_ids=None, site_name=None):
         """
@@ -368,6 +370,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
         self.model.refresh(
             load_records=self.model._rec_loaded)
+        self.sync_server.reset_timer()
 
     def _open_in_explorer(self, selected_ids=None, site_name=None):
         log.debug("Open in Explorer {}:{}".format(selected_ids, site_name))
