@@ -228,7 +228,7 @@ class ExtractSequence(pyblish.api.Extractor):
             repre_filepaths.append(new_filepath)
 
             if mark != frame:
-                old_filename = filename_template.format(frame=frame)
+                old_filename = filename_template.format(frame=mark)
                 old_filepath = os.path.join(output_dir, old_filename)
                 os.rename(old_filepath, new_filepath)
 
@@ -681,7 +681,7 @@ class ExtractSequence(pyblish.api.Extractor):
         random_frame_path = None
         for frame_idx in sorted(images_by_frame.keys()):
             image_filepaths = images_by_frame[frame_idx]
-            output_filename = filename_template.format(frame=frame_idx + 1)
+            output_filename = filename_template.format(frame=frame_idx)
             output_filepath = os.path.join(output_dir, output_filename)
             output_filepaths.append(output_filepath)
 
