@@ -325,11 +325,12 @@ class InstallDialog(QtWidgets.QDialog):
         # add all to main
         main = QtWidgets.QVBoxLayout(self)
         main.addWidget(main_label, 0)
-        main.addWidget(mongo_label, 0)
+        main.addSpacing(15)
         main.addWidget(mongo_input, 0)
         main.addWidget(mongo_messages_widget, 0)
 
         main.addWidget(progress_bar, 0)
+        main.addSpacing(15)
 
         main.addWidget(console_widget, 1)
 
