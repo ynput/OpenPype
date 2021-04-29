@@ -133,6 +133,12 @@ class ExtractSequence(pyblish.api.Extractor):
             self.log.warning("Extractor did not create any output.")
             return
 
+        repre_files = self._rename_output_files(
+            filename_template, output_dir,
+            mark_in, mark_out,
+            output_frame_start, output_frame_end
+        )
+
         # Fill tags and new families
         tags = []
         if family_lowered in ("review", "renderlayer"):
@@ -194,6 +200,44 @@ class ExtractSequence(pyblish.api.Extractor):
             frame_padding = frame_end_str_len
 
         return "{{frame:0>{}}}".format(frame_padding) + ".png"
+
+    def _rename_output_files(
+        self, filename_template, output_dir,
+        mark_in, mark_out, output_frame_start, output_frame_end
+    ):
+        # Use differnet ranges based on Mark In and output Frame Start values
+        # - this is to make sure that filename renaming won't affect files that
+        #   are not renamed yet
+        mark_start_is_less = bool(mark_in < output_frame_start)
+        if mark_start_is_less:
+            marks_range = range(mark_out, mark_in - 1, -1)
+            frames_range = range(output_frame_end, output_frame_start - 1, -1)
+        else:
+            # This is less possible situation as frame start will be in most
+            #   cases higher than Mark In.
+            marks_range = range(mark_in, mark_out + 1)
+            frames_range = range(output_frame_start, output_frame_end + 1)
+
+        repre_filepaths = []
+        for mark, frame in zip(marks_range, frames_range):
+            new_filename = filename_template.format(frame=frame)
+            new_filepath = os.path.join(output_dir, new_filename)
+
+            repre_filepaths.append(new_filepath)
+
+            if mark != frame:
+                old_filename = filename_template.format(frame=mark)
+                old_filepath = os.path.join(output_dir, old_filename)
+                os.rename(old_filepath, new_filepath)
+
+        # Reverse repre files order if output
+        if mark_start_is_less:
+            repre_filepaths = list(reversed(repre_filepaths))
+
+        return [
+            os.path.basename(path)
+            for path in repre_filepaths
+        ]
 
     def render_review(self, filename_template, output_dir, mark_in, mark_out):
         """ Export images from TVPaint using `tv_savesequence` command.
