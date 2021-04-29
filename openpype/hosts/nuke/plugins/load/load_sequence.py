@@ -145,7 +145,7 @@ class LoadSequence(api.Loader):
             "Read",
             "name {}".format(read_name))
 
-        # to evoid multiple undo steps for rest of process
+        # to avoid multiple undo steps for rest of process
         # we will switch off undo-ing
         with viewer_update_and_undo_stop():
             r["file"].setValue(file)
