@@ -1,10 +1,13 @@
+import os
 import pyblish.api
 import hiero.ui
 from openpype.hosts.hiero import api as phiero
 from avalon import api as avalon
 from pprint import pformat
 from openpype.hosts.hiero.otio import hiero_export
-
+from Qt.QtGui import QPixmap
+import tempfile
+import hiero.ui
 
 class PrecollectWorkfile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
@@ -23,12 +26,46 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
         # adding otio timeline to context
         otio_timeline = hiero_export.create_otio_timeline()
 
+        # get workfile thumnail paths
+        tmp_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
+        thumbnail_name = "workfile_thumbnail.png"
+        thumbnail_path = os.path.join(tmp_staging, thumbnail_name)
+
+        # search for all windows with name of actual sequence
+        _windows = [w for w in hiero.ui.windowManager().windows()
+                    if active_timeline.name() in w.windowTitle()]
+
+        # export window to thumb path
+        QPixmap.grabWidget(_windows[-1]).save(thumbnail_path, 'png')
+
+        # thumbnail
+        thumb_representation = {
+            'files': thumbnail_name,
+            'stagingDir': tmp_staging,
+            'name': "thumbnail",
+            'thumbnail': True,
+            'ext': "png"
+        }
+
+        # get workfile paths
+        curent_file = project.path()
+        staging_dir, base_name = os.path.split(curent_file)
+
+        # creating workfile representation
+        workfile_representation = {
+            'name': 'hrox',
+            'ext': 'hrox',
+            'files': base_name,
+            "stagingDir": staging_dir,
+        }
+
         instance_data = {
             "name": "{}_{}".format(asset, subset),
             "asset": asset,
             "subset": "{}{}".format(asset, subset.capitalize()),
             "item": project,
-            "family": "workfile"
+            "family": "workfile",
+            "representations": [workfile_representation, thumb_representation]
         }
 
         # create instance with workfile
@@ -38,7 +75,7 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
         context_data = {
             "activeProject": project,
             "otioTimeline": otio_timeline,
-            "currentFile": project.path(),
+            "currentFile": curent_file,
             "fps": fps,
         }
         context.data.update(context_data)
