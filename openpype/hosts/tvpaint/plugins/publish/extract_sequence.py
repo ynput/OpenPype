@@ -69,22 +69,19 @@ class ExtractSequence(pyblish.api.Extractor):
         )
 
         if instance.data["family"] == "review":
-            repre_files, thumbnail_fullpath = self.render_review(
-                filename_template, output_dir,
-                mark_in, mark_out,
-                frame_start, frame_end
+            output_filenames, thumbnail_fullpath = self.render_review(
+                filename_template, output_dir, mark_in, mark_out
             )
         else:
             # Render output
-            repre_files, thumbnail_fullpath = self.render(
+            output_filenames, thumbnail_fullpath = self.render(
                 filename_template, output_dir,
                 mark_in, mark_out,
-                frame_start, frame_end,
                 filtered_layers
             )
 
         # Sequence of one frame
-        if not repre_files:
+        if not output_filenames:
             self.log.warning("Extractor did not create any output.")
             return
 
@@ -150,10 +147,7 @@ class ExtractSequence(pyblish.api.Extractor):
 
         return "{{frame:0>{}}}".format(frame_padding) + ".png"
 
-    def render_review(
-        self, filename_template, output_dir, mark_in, mark_out,
-        frame_start, frame_end
-    ):
+    def render_review(self, filename_template, output_dir, mark_in, mark_out):
         """ Export images from TVPaint using `tv_savesequence` command.
 
         Args:
@@ -162,8 +156,8 @@ class ExtractSequence(pyblish.api.Extractor):
                 keyword argument `{frame}` or index argument (for same value).
                 Extension in template must match `save_mode`.
             output_dir (str): Directory where files will be stored.
-            first_frame (int): Starting frame from which export will begin.
-            last_frame (int): On which frame export will end.
+            mark_in (int): Starting frame index from which export will begin.
+            mark_out (int): On which frame index export will end.
 
         Retruns:
             tuple: With 2 items first is list of filenames second is path to
@@ -186,28 +180,22 @@ class ExtractSequence(pyblish.api.Extractor):
         ]
         lib.execute_george_through_file("\n".join(george_script_lines))
 
-        reversed_repre_filepaths = []
-        marks_range = range(mark_out, mark_in - 1, -1)
-        frames_range = range(frame_end, frame_start - 1, -1)
-        for mark, frame in zip(marks_range, frames_range):
-            new_filename = filename_template.format(frame=frame)
-            new_filepath = os.path.join(output_dir, new_filename)
-            reversed_repre_filepaths.append(new_filepath)
-
-            if mark != frame:
-                old_filename = filename_template.format(frame=mark)
-                old_filepath = os.path.join(output_dir, old_filename)
-                os.rename(old_filepath, new_filepath)
-
-        repre_filepaths = list(reversed(reversed_repre_filepaths))
-        repre_files = [
-            os.path.basename(path)
-            for path in repre_filepaths
-        ]
-
         first_frame_filepath = None
-        if repre_filepaths:
-            first_frame_filepath = repre_filepaths[0]
+        output_filenames = []
+        for frame in range(mark_in, mark_out + 1):
+            filename = filename_template.format(frame=frame)
+            output_filenames.append(filename)
+
+            filepath = os.path.join(output_dir, filename)
+            if not os.path.exists(filepath):
+                raise AssertionError(
+                    "Output was not rendered. File was not found {}".format(
+                        filepath
+                    )
+                )
+
+            if first_frame_filepath is None:
+                first_frame_filepath = filepath
 
         thumbnail_filepath = os.path.join(output_dir, "thumbnail.jpg")
         if first_frame_filepath and os.path.exists(first_frame_filepath):
@@ -215,12 +203,10 @@ class ExtractSequence(pyblish.api.Extractor):
             thumbnail_obj = Image.new("RGB", source_img.size, (255, 255, 255))
             thumbnail_obj.paste(source_img)
             thumbnail_obj.save(thumbnail_filepath)
-        return repre_files, thumbnail_filepath
 
-    def render(
-        self, filename_template, output_dir, mark_in, mark_out,
-        frame_start, frame_end, layers
-    ):
+        return output_filenames, thumbnail_filepath
+
+    def render(self, filename_template, output_dir, mark_in, mark_out, layers):
         """ Export images from TVPaint.
 
         Args:
@@ -229,8 +215,8 @@ class ExtractSequence(pyblish.api.Extractor):
                 keyword argument `{frame}` or index argument (for same value).
                 Extension in template must match `save_mode`.
             output_dir (str): Directory where files will be stored.
-            first_frame (int): Starting frame from which export will begin.
-            last_frame (int): On which frame export will end.
+            mark_in (int): Starting frame index from which export will begin.
+            mark_out (int): On which frame index export will end.
             layers (list): List of layers to be exported.
 
         Retruns:
@@ -290,7 +276,7 @@ class ExtractSequence(pyblish.api.Extractor):
             )
             return [], None
 
-        output_filepaths_by_frame = self._composite_files(
+        output_filepaths = self._composite_files(
             files_by_position,
             mark_in,
             mark_out,
@@ -299,27 +285,14 @@ class ExtractSequence(pyblish.api.Extractor):
         )
         self._cleanup_tmp_files(files_by_position)
 
-        reversed_repre_filepaths = []
-        marks_range = range(mark_out, mark_in - 1, -1)
-        frames_range = range(frame_end, frame_start - 1, -1)
-        for mark, frame in zip(marks_range, frames_range):
-            new_filename = filename_template.format(frame=frame)
-            new_filepath = os.path.join(output_dir, new_filename)
-            reversed_repre_filepaths.append(new_filepath)
-
-            if mark != frame:
-                old_filepath = output_filepaths_by_frame[mark]
-                os.rename(old_filepath, new_filepath)
-
-        repre_filepaths = list(reversed(reversed_repre_filepaths))
-        repre_files = [
-            os.path.basename(path)
-            for path in repre_filepaths
+        output_filenames = [
+            os.path.basename(filepath)
+            for filepath in output_filepaths
         ]
 
         thumbnail_src_filepath = None
-        if repre_filepaths:
-            thumbnail_src_filepath = repre_filepaths[0]
+        if output_filepaths:
+            thumbnail_src_filepath = output_filepaths[0]
 
         thumbnail_filepath = None
         if thumbnail_src_filepath and os.path.exists(thumbnail_src_filepath):
@@ -329,7 +302,7 @@ class ExtractSequence(pyblish.api.Extractor):
             thumbnail_obj.paste(source_img)
             thumbnail_obj.save(thumbnail_filepath)
 
-        return repre_files, thumbnail_filepath
+        return output_filenames, thumbnail_filepath
 
     def _render_layer(
         self,
@@ -604,14 +577,14 @@ class ExtractSequence(pyblish.api.Extractor):
                     filepath = position_data[frame_idx]
                     images_by_frame[frame_idx].append(filepath)
 
-        output_filepaths_by_frame = {}
+        output_filepaths = []
         missing_frame_paths = []
         random_frame_path = None
         for frame_idx in sorted(images_by_frame.keys()):
             image_filepaths = images_by_frame[frame_idx]
-            output_filename = filename_template.format(frame=frame_idx + 1)
+            output_filename = filename_template.format(frame=frame_idx)
             output_filepath = os.path.join(output_dir, output_filename)
-            output_filepaths_by_frame[frame_idx] = output_filepath
+            output_filepaths.append(output_filepath)
 
             # Store information about missing frame and skip
             if not image_filepaths:
@@ -647,7 +620,7 @@ class ExtractSequence(pyblish.api.Extractor):
                 transparent_filepath = filepath
             else:
                 self._copy_image(transparent_filepath, filepath)
-        return output_filepaths_by_frame
+        return output_filepaths
 
     def _cleanup_tmp_files(self, files_by_position):
         """Remove temporary files that were used for compositing."""
