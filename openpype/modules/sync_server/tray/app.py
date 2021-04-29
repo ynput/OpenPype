@@ -78,7 +78,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         layout.addWidget(footer)
 
         self.setLayout(body_layout)
-        self.setWindowTitle("Sync Server")
+        self.setWindowTitle("Sync Queue")
 
         self.projects.project_changed.connect(
             lambda: repres.table_view.model().set_project(
