@@ -14,7 +14,11 @@ from pathlib import Path
 import platform
 
 from pymongo import MongoClient
-from pymongo.errors import ServerSelectionTimeoutError, InvalidURI
+from pymongo.errors import (
+    ServerSelectionTimeoutError,
+    InvalidURI,
+    ConfigurationError
+)
 
 
 def decompose_url(url: str) -> Dict:
@@ -139,7 +143,7 @@ def validate_mongo_connection(cnx: str) -> (bool, str):
         return False, f"Invalid port specified {parsed.port}"
     except InvalidURI as e:
         return False, str(e)
-    except Exception as exc:
+    except ConfigurationError as exc:
         return False, str(exc)
     else:
         return True, "Connection is successful"
