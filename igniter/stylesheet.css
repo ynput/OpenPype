@@ -1,100 +1,236 @@
-* {
-    color: rgb(200, 200, 200);
-    background-color: rgb(23, 23, 23);
-    font-size: 8pt;
+*{
+    font-size: 9pt;
 }
 
-QLabel {
-    color: rgb(150, 150, 150);
+QWidget {
+    color: #bfccd6;
+    background-color: #282C34;
+    border-radius: 0px;
 }
 
-QLineEdit {
-    color: rgb(233, 233, 233);
-    background-color: rgb(64, 64, 64);
+QMenu {
+    border: 1px solid #555555;
+    background-color: #21252B;
+}
+
+QMenu::item {
+    padding: 5px 10px 5px 10px;
+    border-left: 5px solid #313131;
+}
+
+QMenu::item:selected {
+    border-left-color: #61839e;
+    background-color: #222d37;
+}
+
+QLineEdit, QPlainTextEdit {
+    border: 1px solid #464b54;
+    border-radius: 3px;
+    background-color: #21252B;
     padding: 0.5em;
-    border: 1px solid rgb(32, 32, 32);
 }
 
 QLineEdit[state="valid"] {
     background-color: rgb(19, 19, 19);
     color: rgb(64, 230, 132);
-    border: 1px solid rgb(32, 64, 32);
+    border-color: rgb(32, 64, 32);
 }
 
 QLineEdit[state="invalid"] {
     background-color: rgb(32, 19, 19);
     color: rgb(255, 69, 0);
-    border: 1px solid rgb(64, 32, 32);
+    border-color: rgb(64, 32, 32);
 }
 
 QLineEdit[state="warning"] {
     background-color: rgb(32, 32, 19);
     color: rgb(255, 190, 15);
-    border: 1px solid rgb(64, 64, 32);
+    border-color: rgb(64, 64, 32);
+}
+
+QLabel {
+    background: transparent;
+    color: #969b9e;
+}
+
+QLabel:hover {color: #b8c1c5;}
+
+QPushButton {
+    border: 1px solid #aaaaaa;
+    border-radius: 3px;
+    padding: 5px;
+}
+
+QPushButton:hover {
+    background-color: #333840;
+    border: 1px solid #fff;
+    color: #fff;
+}
+
+QTableView {
+    border: 1px solid #444;
+    gridline-color: #6c6c6c;
+    background-color: #201F1F;
+    alternate-background-color:#21252B;
+}
+
+QTableView::item:pressed, QListView::item:pressed, QTreeView::item:pressed  {
+    background: #78879b;
+    color: #FFFFFF;
+}
+
+QTableView::item:selected:active, QTreeView::item:selected:active, QListView::item:selected:active  {
+    background: #3d8ec9;
+}
+
+QProgressBar {
+    border: 1px solid grey;
+    border-radius: 10px;
+    color: #222222;
+    font-weight: bold;
+}
+QProgressBar:horizontal {
+    height: 20px;
+}
+
+QProgressBar::chunk {
+    border-radius: 10px;
+    background-color: qlineargradient(
+        x1: 0,
+        y1: 0.5,
+        x2: 1,
+        y2: 0.5,
+        stop: 0 rgb(72, 200, 150),
+        stop: 1 rgb(82, 172, 215)
+    );
+}
+
+
+QScrollBar:horizontal {
+    height: 15px;
+    margin: 3px 15px 3px 15px;
+    border: 1px transparent #21252B;
+    border-radius: 4px;
+    background-color: #21252B;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #4B5362;
+    min-width: 5px;
+    border-radius: 4px;
+}
+
+QScrollBar::add-line:horizontal {
+    margin: 0px 3px 0px 3px;
+    border-image: url(:/qss_icons/rc/right_arrow_disabled.png);
+    width: 10px;
+    height: 10px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:horizontal {
+    margin: 0px 3px 0px 3px;
+    border-image: url(:/qss_icons/rc/left_arrow_disabled.png);
+    height: 10px;
+    width: 10px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:horizontal:hover,QScrollBar::add-line:horizontal:on {
+    border-image: url(:/qss_icons/rc/right_arrow.png);
+    height: 10px;
+    width: 10px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:horizontal:hover, QScrollBar::sub-line:horizontal:on {
+    border-image: url(:/qss_icons/rc/left_arrow.png);
+    height: 10px;
+    width: 10px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::up-arrow:horizontal, QScrollBar::down-arrow:horizontal {
+    background: none;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
 }
 
 QScrollBar:vertical {
-    border: 1px solid rgb(61, 115, 97);
-    background: #000;
-    width:5px;
-    margin: 0px 0px 0px 0px;
+    background-color: #21252B;
+    width: 15px;
+    margin: 15px 3px 15px 3px;
+    border: 1px transparent #21252B;
+    border-radius: 4px;
 }
+
 QScrollBar::handle:vertical {
-    background: rgb(72, 200, 150);
-    min-height: 0px;
+    background-color: #4B5362;
+    min-height: 5px;
+    border-radius: 4px;
 }
-QScrollBar::sub-page:vertical {
-    background: rgb(31, 62, 50);
-}
-QScrollBar::add-page:vertical {
-    background: rgb(31, 62, 50);
-}
-QScrollBar::add-line:vertical {
-    background: rgb(72, 200, 150);
-    height: 0px;
-    subcontrol-position: bottom;
-    subcontrol-origin: margin;
-}
+
 QScrollBar::sub-line:vertical {
-    background: rgb(72, 200, 150);
-    height: 0 px;
+    margin: 3px 0px 3px 0px;
+    border-image: url(:/qss_icons/rc/up_arrow_disabled.png);
+    height: 10px;
+    width: 10px;
     subcontrol-position: top;
     subcontrol-origin: margin;
 }
-QProgressBar {
-    font-family: "Arial";
-    font-size: 7pt;
+
+QScrollBar::add-line:vertical {
+    margin: 3px 0px 3px 0px;
+    border-image: url(:/qss_icons/rc/down_arrow_disabled.png);
+    height: 10px;
+    width: 10px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
 }
 
-QProgressBar:horizontal {
-    height: 5px;
-    border: 1px solid rgb(31, 62, 50);
-    color: rgb(72, 200, 150);
-}
-QProgressBar::chunk:horizontal {
-    background-color: rgb(72, 200, 150);
+QScrollBar::sub-line:vertical:hover,QScrollBar::sub-line:vertical:on {
+
+    border-image: url(:/qss_icons/rc/up_arrow.png);
+    height: 10px;
+    width: 10px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
 }
 
-QMenu {
-    background-color: rgb(32, 32, 32);
+
+QScrollBar::add-line:vertical:hover, QScrollBar::add-line:vertical:on {
+    border-image: url(:/qss_icons/rc/down_arrow.png);
+    height: 10px;
+    width: 10px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
 }
-QMenu::item {
-    background-color: transparent;
+
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+    background: none;
 }
-QMenu::item:selected {
-    background-color: rgba(72, 200, 150, 63);
+
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
 }
 
 #MainLabel {
     color: rgb(200, 200, 200);
+    font-size: 10pt;
 }
 
 #Console {
-    background-color: rgb(32, 32, 32);
+    background-color: #21252B;
     color: rgb(72, 200, 150);
     font-family: "Roboto Mono";
     font-size: 8pt;
-    border: 1px solid rgb(48, 48, 48);
 }
 
 #ExitBtn {
@@ -114,6 +250,8 @@ QMenu::item:selected {
 }
 
 #ButtonWithOptions QPushButton{
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
     border: none;
     background-color: rgb(72, 200, 150);
     color: rgb(64, 64, 64);
@@ -130,6 +268,10 @@ QMenu::item:selected {
 
 #ButtonWithOptions QToolButton{
     border: none;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
     background-color: rgb(72, 200, 150);
     color: rgb(64, 64, 64);
 }
