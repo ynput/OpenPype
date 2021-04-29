@@ -1,5 +1,6 @@
 *{
-    font-size: 9pt;
+    font-size: 10pt;
+    font-family: "Poppins";
 }
 
 QWidget {
@@ -15,11 +16,11 @@ QMenu {
 
 QMenu::item {
     padding: 5px 10px 5px 10px;
-    border-left: 5px solid #313131;
+    border-left: 5px solid #313741;;
 }
 
 QMenu::item:selected {
-    border-left-color: #61839e;
+    border-left-color: rgb(84, 209, 178);
     background-color: #222d37;
 }
 
@@ -223,7 +224,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #MainLabel {
     color: rgb(200, 200, 200);
-    font-size: 10pt;
+    font-size: 12pt;
 }
 
 #Console {
@@ -239,6 +240,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     color: rgb(39, 39, 39);
     background-color: #828a97;
     padding: 0.5em;
+    font-weight: 400;
 }
 
 #ExitBtn:hover{
@@ -255,7 +257,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: none;
     background-color: rgb(84, 209, 178);
     color: rgb(39, 39, 39);
-    font-weight: bold;
+    font-weight: 400;
     padding: 0.5em;
 }
 #ButtonWithOptions QPushButton:hover{
