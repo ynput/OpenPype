@@ -155,7 +155,7 @@ class MongoUrlInput(QtWidgets.QLineEdit):
 class InstallDialog(QtWidgets.QDialog):
     """Main Igniter dialog window."""
 
-    mongo_url_regex = re.compile(r"(mongodb|mongodb+srv)://.+")
+    mongo_url_regex = re.compile(r"(mongodb|mongodb\+srv)://.+")
 
     _width = 300
     _height = 200
