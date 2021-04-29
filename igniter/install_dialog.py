@@ -415,12 +415,19 @@ class InstallDialog(QtWidgets.QDialog):
     def _installation_finished(self, status):
         if status >= 0:
             self._update_progress(100)
+            QtWidgets.QApplication.processEvents()
             self.done(3)
         else:
             self._show_console()
 
     def _update_progress(self, progress: int):
         self._progress_bar.setValue(progress)
+        text_visible = self._progress_bar.isTextVisible()
+        if progress == 0:
+            if text_visible:
+                self._progress_bar.setTextVisible(False)
+        elif not text_visible:
+            self._progress_bar.setTextVisible(True)
 
     def _on_exit_clicked(self):
         self.reject()
@@ -439,7 +446,7 @@ class InstallDialog(QtWidgets.QDialog):
             self._mongo_input.set_invalid()
             msg = (
                 "Mongo URL should start with"
-                " \"mongodb://\" or \"mongodb+srv://\""
+                " <b>\"mongodb://\"</b> or <b>\"mongodb+srv://\"</b>"
             )
         else:
             self._mongo_input.set_valid()
