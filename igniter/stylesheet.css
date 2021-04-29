@@ -43,12 +43,6 @@ QLineEdit[state="invalid"] {
     border-color: rgb(64, 32, 32);
 }
 
-QLineEdit[state="warning"] {
-    background-color: rgb(32, 32, 19);
-    color: rgb(255, 190, 15);
-    border-color: rgb(64, 64, 32);
-}
-
 QLabel {
     background: transparent;
     color: #969b9e;
@@ -283,8 +277,4 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ButtonWithOptions QToolButton:disabled {
     background-color: rgba(72, 200, 150, 31);
     color: rgba(64, 64, 64, 63);
-}
-
-#Separator {
-    background-color: rgb(15, 15, 15);
 }

@@ -177,9 +177,9 @@ class MongoUrlInput(QtWidgets.QLineEdit):
         self.setProperty("state", "valid")
         self.style().polish(self)
 
-    def set_warning(self):
+    def remove_state(self):
         """Set invalid state on mongo url input."""
-        self.setProperty("state", "warning")
+        self.setProperty("state", "")
         self.style().polish(self)
 
     def set_invalid(self):
@@ -191,7 +191,7 @@ class MongoUrlInput(QtWidgets.QLineEdit):
 class InstallDialog(QtWidgets.QDialog):
     """Main Igniter dialog window."""
 
-    mongo_url_regex = re.compile(r"(mongodb|mongodb\+srv)://.+")
+    mongo_url_regex = re.compile(r"^(mongodb|mongodb\+srv)://.*?")
 
     _width = 500
     _height = 200
@@ -437,7 +437,7 @@ class InstallDialog(QtWidgets.QDialog):
         msg = None
         # Change style of input
         if not new_value:
-            self._mongo_input.set_warning()
+            self._mongo_input.remove_state()
         elif not self.mongo_url_regex.match(new_value):
             self._mongo_input.set_invalid()
             msg = (
