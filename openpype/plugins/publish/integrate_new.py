@@ -16,6 +16,7 @@ from avalon.vendor import filelink
 import openpype.api
 from datetime import datetime
 # from pype.modules import ModulesManager
+from openpype.lib.profiles_filtering import filter_profiles
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -697,14 +698,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             subset = io.find_one({"_id": _id})
 
-        # add group if available
-        if instance.data.get("subsetGroup"):
-            io.update_many({
-                'type': 'subset',
-                '_id': io.ObjectId(subset["_id"])
-            }, {'$set': {'data.subsetGroup':
-                         instance.data.get('subsetGroup')}}
-            )
+        self._set_subset_group(instance, subset["_id"])
 
         # Update families on subset.
         families = [instance.data["family"]]
@@ -715,6 +709,62 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         )
 
         return subset
+
+    def _set_subset_group(self, instance, subset_id):
+        """
+            Mark subset as belonging to group in DB.
+
+            Uses Settings > Global > Publish plugins > IntegrateAssetNew
+
+            Args:
+                instance (dict): processed instance
+                subset_id (str): DB's subset _id
+
+        """
+        # add group if available
+        integrate_new_sett = (instance.context.data["project_settings"]
+                                                   ["global"]
+                                                   ["publish"]
+                                                   ["IntegrateAssetNew"])
+
+        profiles = integrate_new_sett["subset_grouping_profiles"]
+
+        filtering_criteria = {
+            "families": instance.data["anatomyData"]["family"],
+            "hosts": instance.data["anatomyData"]["app"],
+            "tasks": instance.data["anatomyData"]["task"] or
+                     io.Session["AVALON_TASK"]
+        }
+        matching_profile = filter_profiles(profiles, filtering_criteria)
+
+        filled_template = None
+        fill_pairs = None
+        if matching_profile:
+            template = matching_profile["template"]
+            fill_pairs = {
+                "family": filtering_criteria["families"],
+                "task":  filtering_criteria["tasks"],
+                "Family": filtering_criteria["families"].capitalize(),
+                "Task": filtering_criteria["tasks"].capitalize()
+            }
+            filled_template = template.format(**fill_pairs)
+
+        if instance.data.get("subsetGroup") or filled_template:
+            subset_group = instance.data.get('subsetGroup') or filled_template
+
+            if '{' in subset_group:  # some unfilled keys
+                keys = []
+                if fill_pairs:
+                    keys = [item[0] for item in fill_pairs]
+                msg = "Subset grouping failed. " \
+                      "Only {} are expected in Settings".format(','.join(keys))
+                raise ValueError(msg)
+
+            io.update_many({
+                    'type': 'subset',
+                    '_id': io.ObjectId(subset_id)
+                }, {'$set': {'data.subsetGroup': subset_group}}
+            )
 
     def create_version(self, subset, version_number, data=None):
         """ Copy given source to destination
