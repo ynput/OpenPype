@@ -78,7 +78,8 @@ class ButtonWithOptions(QtWidgets.QFrame):
         self.options_btn.setFixedHeight(self.main_btn.height())
 
     def _on_options_click(self):
-        point = self.mapToGlobal(self.rect().bottomLeft())
+        pos = self.main_btn.rect().bottomLeft()
+        point = self.main_btn.mapToGlobal(pos)
         self.options_menu.popup(point)
 
     def _on_trigger(self, action):
