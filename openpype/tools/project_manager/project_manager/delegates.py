@@ -9,7 +9,6 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
         self.decimals = decimals
 
     def createEditor(self, parent, option, index):
-        print(option.rect)
         if self.decimals > 0:
             editor = QtWidgets.QDoubleSpinBox(parent)
         else:
