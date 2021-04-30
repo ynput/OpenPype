@@ -789,13 +789,33 @@ class RootItem(BaseItem):
 class ProjectItem(BaseItem):
     columns = [
         "name",
-        "type"
+        "type",
+        "frameStart",
+        "frameEnd",
+        "fps",
+        "resolutionWidth",
+        "resolutionHeight"
     ]
 
-    def __init__(self, data=None):
+    def __init__(self, project_doc):
+
+        data = self.data_from_doc(project_doc)
         super(ProjectItem, self).__init__(data)
-        self._data["name"] = "project"
-        self._data["type"] = "project"
+
+    @classmethod
+    def data_from_doc(cls, project_doc):
+        data = {
+            "name": project_doc["name"],
+            "type": project_doc["type"]
+        }
+        doc_data = project_doc.get("data") or {}
+        for key in cls.columns:
+            if key in data:
+                continue
+
+            data[key] = doc_data.get(key)
+
+        return data
 
     def flags(self, *args, **kwargs):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
