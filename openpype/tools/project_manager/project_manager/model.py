@@ -898,14 +898,16 @@ class AssetItem(BaseItem):
     }
     query_projection = {
         "_id": 1,
+        "data.tasks": 1,
+        "data.visualParent": 1,
+
         "name": 1,
         "type": 1,
         "data.frameStart": 1,
         "data.frameEnd": 1,
         "data.fps": 1,
         "data.resolutionWidth": 1,
-        "data.resolutionHeight": 1,
-        "data.visualParent": 1
+        "data.resolutionHeight": 1
     }
 
     def __init__(self, asset_doc):
