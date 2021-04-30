@@ -57,6 +57,31 @@ class Window(QtWidgets.QWidget):
 
         self.resize(1200, 600)
 
+        self.refresh_projects()
+
+    def refresh_projects(self):
+        current_project = None
+        if self.project_combobox.count() > 0:
+            current_project = self.project_combobox.currentText()
+
+        self.project_model.refresh()
+
+        if self.project_combobox.count() == 0:
+            return self._set_project()
+
+        if current_project:
+            row = self.project_combobox.findText(current_project)
+            if row >= 0:
+                self._set_project(current_project)
+                index = self.project_combobox.model().index(row, 0)
+                self.project_combobox.setCurrentIndex(index)
+                return
+
+        self._set_project(self.project_combobox.currentText())
+
+    def _set_project(self, project_name=None):
+        self.hierarchy_model.set_project(project_name)
+
     def change_edit_mode(self, value=None):
         if value is None:
             value = self.checkbox.isChecked()
