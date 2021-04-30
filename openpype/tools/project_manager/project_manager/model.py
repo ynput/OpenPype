@@ -125,10 +125,13 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             if parent_id not in asset_docs_by_parent_id:
                 continue
 
+            new_items = []
             for asset_doc in asset_docs_by_parent_id[parent_id]:
                 new_item = AssetItem(asset_doc)
-                self.add_item(new_item, parent_item)
+                new_items.append(new_item)
                 appending_queue.put((asset_doc["_id"], new_item))
+
+            self.add_items(new_items, parent_item)
 
     def rowCount(self, parent=None):
         if parent is None or not parent.isValid():
@@ -257,27 +260,39 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         new_child = TaskItem(data)
         return self.add_item(new_child, parent)
 
-    def add_item(self, item, parent=None, row=None):
+    def add_items(self, items, parent=None, start_row=None):
         if parent is None:
             parent = self._root_item
 
-        if row is None:
-            row = parent.rowCount()
+        if start_row is None:
+            start_row = parent.rowCount()
+
+        end_row = start_row + len(items) - 1
 
         parent_index = self.index_from_item(parent.row(), 0, parent.parent())
-        self.beginInsertRows(parent_index, row, row)
+        self.beginInsertRows(parent_index, start_row, end_row)
 
-        if item.parent() is not parent:
-            item.set_parent(parent)
+        for idx, item in enumerate(items):
+            row = start_row + idx
+            if item.parent() is not parent:
+                item.set_parent(parent)
 
-        parent.add_child(item, row)
+            parent.add_child(item, row)
 
-        if item.id not in self._items_by_id:
-            self._items_by_id[item.id] = item
+            if item.id not in self._items_by_id:
+                self._items_by_id[item.id] = item
 
         self.endInsertRows()
 
-        return self.index_from_item(row, 0, parent)
+        indexes = []
+        for row in range(start_row, end_row + 1):
+            indexes.append(
+                self.index_from_item(row, 0, parent)
+            )
+        return indexes
+
+    def add_item(self, item, parent=None, row=None):
+        return self.add_items([item], parent, row)[0]
 
     def remove_index(self, index):
         if not index.isValid():
