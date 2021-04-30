@@ -160,7 +160,10 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             parent = item.parent()
             new_row = item.row() + 1
 
-        data = {"name": name}
+        data = {
+            "name": name,
+            "type": "asset"
+        }
         new_child = AssetItem(data)
         self._asset_items_by_name[name].append(new_child)
 
@@ -584,9 +587,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
 
 class BaseItem:
-    columns = ["name"]
+    columns = []
     # Use `set` for faster result
-    editable_columns = {"name"}
+    editable_columns = set()
 
     _name_icon = None
     _is_duplicated = False
@@ -748,9 +751,15 @@ class RootItem(BaseItem):
 
 
 class ProjectItem(BaseItem):
+    columns = [
+        "name",
+        "type"
+    ]
+
     def __init__(self, data=None):
         super(ProjectItem, self).__init__(data)
         self._data["name"] = "project"
+        self._data["type"] = "project"
 
     def flags(self, *args, **kwargs):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
