@@ -85,6 +85,8 @@ class SyncServerWindow(QtWidgets.QDialog):
                 self.projects.current_project))
 
         self.pause_btn.clicked.connect(self._pause)
+        self.pause_btn.setAutoDefault(False)
+        self.pause_btn.setDefault(False)
         repres.message_generated.connect(self._update_message)
 
     def _pause(self):
