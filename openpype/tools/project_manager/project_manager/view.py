@@ -23,14 +23,25 @@ class HierarchyView(QtWidgets.QTreeView):
         "frameEnd": NumberDef(1),
         "fps": NumberDef(1, decimals=2),
         "resolutionWidth": NumberDef(0),
-        "resolutionHeight": NumberDef(0)
+        "resolutionHeight": NumberDef(0),
+        "handleStart": NumberDef(0),
+        "handleEnd": NumberDef(0),
+        "clipIn": NumberDef(1),
+        "clipOut": NumberDef(1),
+        "pixelAspect": NumberDef(0, decimals=2),
+        # "tools_env": NumberDef(0)
     }
     persistent_columns = [
         "frameStart",
         "frameEnd",
         "fps",
         "resolutionWidth",
-        "resolutionHeight"
+        "resolutionHeight",
+        "handleStart",
+        "handleEnd",
+        "clipIn",
+        "clipOut",
+        "pixelAspect"
     ]
 
     def __init__(self, source_model, *args, **kwargs):
@@ -95,7 +106,9 @@ class HierarchyView(QtWidgets.QTreeView):
 
     def _deselect_editor(self, editor):
         if editor:
-            if isinstance(editor, QtWidgets.QSpinBox):
+            if isinstance(
+                editor, (QtWidgets.QSpinBox, QtWidgets.QDoubleSpinBox)
+            ):
                 line_edit = editor.findChild(QtWidgets.QLineEdit)
                 line_edit.deselect()
 

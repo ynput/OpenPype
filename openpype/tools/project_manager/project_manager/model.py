@@ -61,15 +61,30 @@ class HierarchySelectionModel(QtCore.QItemSelectionModel):
 
 
 class HierarchyModel(QtCore.QAbstractItemModel):
-    columns = [
-        "name",
-        "type",
-        "frameStart",
-        "frameEnd",
-        "fps",
-        "resolutionWidth",
-        "resolutionHeight"
+    _columns_def = [
+        ("name", "Name"),
+        ("type", "Type"),
+        ("fps", "FPS"),
+        ("frameStart", "Frame start"),
+        ("frameEnd", "Frame end"),
+        ("handleStart", "Handle start"),
+        ("handleEnd", "Handle end"),
+        ("resolutionWidth", "Width"),
+        ("resolutionHeight", "Height"),
+        ("clipIn", "Clip in"),
+        ("clipOut", "Clip out"),
+        ("pixelAspect", "Pixel aspect"),
+        ("tools_env", "Tools")
     ]
+    columns = [
+        item[0]
+        for item in _columns_def
+    ]
+    columns_len = len(columns)
+    column_labels = {
+        idx: item[1]
+        for idx, item in enumerate(_columns_def)
+    }
     index_moved = QtCore.Signal(QtCore.QModelIndex)
 
     def __init__(self, dbcon, parent=None):
@@ -169,7 +184,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return parent_item.rowCount()
 
     def columnCount(self, *args, **kwargs):
-        return len(self.columns)
+        return self.columns_len
 
     def data(self, index, role):
         if not index.isValid():
@@ -202,8 +217,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
     def headerData(self, section, orientation, role):
         if role == QtCore.Qt.DisplayRole:
-            if section < len(self.columns):
-                return self.columns[section]
+            if section < self.columnCount():
+                return self.column_labels[section]
 
         super(HierarchyModel, self).headerData(section, orientation, role)
 
@@ -252,7 +267,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         new_row = None
         if isinstance(item, (RootItem, ProjectItem)):
-            name = "eq"
+            name = "ep"
             parent = item
         else:
             name = source_index.data(QtCore.Qt.DisplayRole)
@@ -863,24 +878,37 @@ class RootItem(BaseItem):
 
 
 class ProjectItem(BaseItem):
-    columns = [
+    columns = {
         "name",
         "type",
         "frameStart",
         "frameEnd",
         "fps",
         "resolutionWidth",
-        "resolutionHeight"
-    ]
+        "resolutionHeight",
+        "handleStart",
+        "handleEnd",
+        "clipIn",
+        "clipOut",
+        "pixelAspect",
+        "tools_env",
+    }
     query_projection = {
         "_id": 1,
         "name": 1,
         "type": 1,
+
         "data.frameStart": 1,
         "data.frameEnd": 1,
         "data.fps": 1,
         "data.resolutionWidth": 1,
-        "data.resolutionHeight": 1
+        "data.resolutionHeight": 1,
+        "data.handleStart": 1,
+        "data.handleEnd": 1,
+        "data.clipIn": 1,
+        "data.clipOut": 1,
+        "data.pixelAspect": 1,
+        "data.tools_env": 1
     }
 
     def __init__(self, project_doc):
@@ -907,22 +935,34 @@ class ProjectItem(BaseItem):
 
 
 class AssetItem(BaseItem):
-    columns = [
+    columns = {
         "name",
         "type",
+        "fps",
         "frameStart",
         "frameEnd",
-        "fps",
         "resolutionWidth",
-        "resolutionHeight"
-    ]
+        "resolutionHeight",
+        "handleStart",
+        "handleEnd",
+        "clipIn",
+        "clipOut",
+        "pixelAspect",
+        "tools_env"
+    }
     editable_columns = {
         "name",
         "frameStart",
         "frameEnd",
         "fps",
         "resolutionWidth",
-        "resolutionHeight"
+        "resolutionHeight",
+        "handleStart",
+        "handleEnd",
+        "clipIn",
+        "clipOut",
+        "pixelAspect",
+        "tools_env"
     }
     query_projection = {
         "_id": 1,
@@ -935,7 +975,13 @@ class AssetItem(BaseItem):
         "data.frameEnd": 1,
         "data.fps": 1,
         "data.resolutionWidth": 1,
-        "data.resolutionHeight": 1
+        "data.resolutionHeight": 1,
+        "data.handleStart": 1,
+        "data.handleEnd": 1,
+        "data.clipIn": 1,
+        "data.clipOut": 1,
+        "data.pixelAspect": 1,
+        "data.tools_env": 1
     }
 
     def __init__(self, asset_doc):
@@ -965,10 +1011,10 @@ class AssetItem(BaseItem):
 
 
 class TaskItem(BaseItem):
-    columns = [
+    columns = {
         "name",
         "type"
-    ]
+    }
     editable_columns = {
         "name",
         "type"
