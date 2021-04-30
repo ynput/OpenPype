@@ -57,7 +57,13 @@ module.exports = {
                 "admin_settings",
                 "admin_settings_system",
                 "admin_settings_project_anatomy",
-                "admin_settings_project",
+                {
+                    type: "category",
+                    label: "Project Settings",
+                    items: [
+                        "project_settings/settings_project_global"
+                    ],
+                },
             ],
         },
         {
