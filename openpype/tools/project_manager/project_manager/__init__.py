@@ -3,6 +3,8 @@ from .constants import (
 )
 from .view import HierarchyView
 from .model import (
+    ProjectModel,
+
     HierarchyModel,
     HierarchySelectionModel,
     BaseItem,
@@ -17,6 +19,8 @@ __all__ = (
     "IDENTIFIER_ROLE",
 
     "HierarchyView",
+
+    "ProjectModel",
 
     "HierarchyModel",
     "HierarchySelectionModel",

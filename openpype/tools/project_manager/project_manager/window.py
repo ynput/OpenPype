@@ -1,6 +1,8 @@
 from Qt import QtWidgets, QtCore
 
 from . import (
+    ProjectModel,
+
     HierarchyModel,
     HierarchySelectionModel,
     HierarchyView
@@ -14,6 +16,12 @@ class Window(QtWidgets.QWidget):
         super(Window, self).__init__(parent)
 
         dbcon = AvalonMongoDB()
+
+        project_model = ProjectModel(dbcon)
+
+        project_combobox = QtWidgets.QComboBox()
+        project_combobox.setModel(project_model)
+        project_combobox.setRootModelIndex(QtCore.QModelIndex())
 
         hierarchy_model = HierarchyModel(dbcon)
 
@@ -32,6 +40,7 @@ class Window(QtWidgets.QWidget):
         # btn = QtWidgets.QPushButton("Refresh")
 
         main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addWidget(project_combobox)
         main_layout.addWidget(hierarchy_view)
         main_layout.addWidget(checkbox)
         # main_layout.addWidget(btn)
