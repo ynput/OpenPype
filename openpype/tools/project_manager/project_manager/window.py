@@ -50,11 +50,16 @@ class Window(QtWidgets.QWidget):
         checkbox = QtWidgets.QCheckBox(self)
 
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addWidget(project_combobox)
+        main_layout.addWidget(project_widget)
         main_layout.addWidget(hierarchy_view)
         main_layout.addWidget(checkbox)
 
+        refresh_projects_btn.clicked.connect(self._on_project_refresh)
         checkbox.toggled.connect(self._on_checkbox)
+        project_combobox.currentIndexChanged.connect(self._on_project_change)
+
+        self.project_model = project_model
+        self.project_combobox = project_combobox
 
         self.hierarchy_view = hierarchy_view
         self.hierarchy_model = hierarchy_model
@@ -66,6 +71,14 @@ class Window(QtWidgets.QWidget):
         self.resize(1200, 600)
 
         self.refresh_projects()
+
+    def _change_edit_mode(self, value=None):
+        if value is None:
+            value = self.checkbox.isChecked()
+        self.hierarchy_model.change_edit_mode(value)
+
+    def _set_project(self, project_name=None):
+        self.hierarchy_model.set_project(project_name)
 
     def refresh_projects(self):
         current_project = None
@@ -87,13 +100,11 @@ class Window(QtWidgets.QWidget):
 
         self._set_project(self.project_combobox.currentText())
 
-    def _set_project(self, project_name=None):
-        self.hierarchy_model.set_project(project_name)
+    def _on_project_change(self):
+        self._set_project(self.project_combobox.currentText())
 
-    def change_edit_mode(self, value=None):
-        if value is None:
-            value = self.checkbox.isChecked()
-        self.hierarchy_model.change_edit_mode(value)
+    def _on_project_refresh(self):
+        self.refresh_projects()
 
     def _on_checkbox(self, value):
-        self.change_edit_mode(value)
+        self._change_edit_mode(value)
