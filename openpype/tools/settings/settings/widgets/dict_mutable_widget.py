@@ -435,7 +435,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.wrapper_widget.label_widget.setText(label)
 
     def on_add_clicked(self):
-        widget = self.entity_widget.add_new_key(None, None, self)
+        widget = self.entity_widget.add_new_key(None, None)
         widget.key_input.setFocus(True)
 
     def on_edit_pressed(self):
@@ -634,7 +634,7 @@ class DictMutableKeysWidget(BaseWidget):
         # TODO implement
         pass
 
-    def add_new_key(self, key, label=None, after_widget=None):
+    def add_new_key(self, key, label=None):
         uuid_key = None
         entity_key = key
         if not key:
@@ -654,7 +654,7 @@ class DictMutableKeysWidget(BaseWidget):
 
         # Backup solution (for testing)
         if input_field is None:
-            input_field = self.add_widget_for_child(child_entity, after_widget)
+            input_field = self.add_widget_for_child(child_entity)
 
         if key:
             # Happens when created from collapsible key items where key
@@ -732,29 +732,16 @@ class DictMutableKeysWidget(BaseWidget):
             return
         self.entity.set_child_label(entity, label)
 
-    def add_widget_for_child(
-        self, child_entity, after_widget=None, first=False
-    ):
-        if first:
-            new_widget_index = 0
-        else:
-            new_widget_index = len(self.input_fields)
-
-        if self.input_fields and not first:
-            if not after_widget:
-                after_widget = self.input_fields[-1]
-
-            for idx in range(self.content_layout.count()):
-                item = self.content_layout.itemAt(idx)
-                if item.widget() is after_widget:
-                    new_widget_index = idx + 1
-                    break
-
+    def add_widget_for_child(self, child_entity):
         input_field = ModifiableDictItem(
             self.entity.collapsible_key, child_entity, self
         )
         self.input_fields.append(input_field)
+
+        new_widget_index = self.content_layout.count() - 1
+
         self.content_layout.insertWidget(new_widget_index, input_field)
+
         return input_field
 
     def remove_row(self, widget):
@@ -823,21 +810,15 @@ class DictMutableKeysWidget(BaseWidget):
 
         for key, child_entity in self.entity.items():
             found = False
-            previous_input = None
             for input_field in self.input_fields:
-                if input_field.entity is not child_entity:
-                    previous_input = input_field
-                else:
+                if input_field.entity is child_entity:
                     found = True
                     break
 
             if not found:
                 changed = True
-                args = [previous_input]
-                if previous_input is None:
-                    args.append(True)
 
-                _input_field = self.add_widget_for_child(child_entity, *args)
+                _input_field = self.add_widget_for_child(child_entity)
                 _input_field.origin_key = key
                 _input_field.set_key(key)
                 if self.entity.collapsible_key:
