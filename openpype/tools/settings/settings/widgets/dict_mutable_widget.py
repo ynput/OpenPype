@@ -359,6 +359,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def set_label(self, label):
         if self.key_label_input and label is not None:
             self.key_label_input.setText(label)
+        self.update_key_label()
 
     def set_as_required(self, key):
         self.key_input.setText(key)
@@ -866,9 +867,8 @@ class DictMutableKeysWidget(BaseWidget):
         if keys_order:
             last_required = keys_order[-1]
         for key in self.entity.keys():
-            if key in keys_order:
-                continue
-            keys_order.append(key)
+            if key not in keys_order:
+                keys_order.append(key)
 
         for key in keys_order:
             child_entity = self.entity[key]
