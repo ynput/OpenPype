@@ -246,8 +246,7 @@ class BootstrapRepos:
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.openpype_filter = [
-            "igniter", "openpype", "repos", "schema", "LICENSE",
-            "CHANGELOG.md"
+            "openpype", "repos", "schema", "LICENSE"
         ]
         self._message = message
 
@@ -424,18 +423,13 @@ class BootstrapRepos:
         """
         frozen_root = Path(sys.executable).parent
 
-        # from frozen code we need igniter, openpype, schema vendor
-        openpype_list = self._filter_dir(
-            frozen_root / "openpype", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "igniter", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "repos", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "schema", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "vendor", self.zip_filter)
-        openpype_list.append(frozen_root / "LICENSE")
+        openpype_list = []
+        for f in self.openpype_filter:
+            if (frozen_root / f).is_dir():
+                openpype_list += self._filter_dir(
+                    frozen_root / f, self.zip_filter)
+            else:
+                openpype_list.append(frozen_root / f)
 
         version = self.get_version(frozen_root)
 
@@ -478,9 +472,6 @@ class BootstrapRepos:
             openpype_path (Path): Path to OpenPype sources.
 
         """
-        openpype_list = []
-        openpype_inc = 0
-
         # get filtered list of file in Pype repository
         openpype_list = self._filter_dir(openpype_path, self.zip_filter)
         openpype_files = len(openpype_list)
@@ -576,7 +567,7 @@ class BootstrapRepos:
 
         """
         sys.path.insert(0, directory.as_posix())
-        directory = directory / "repos"
+        directory /= "repos"
         if not directory.exists() and not directory.is_dir():
             raise ValueError("directory is invalid")
 
@@ -682,7 +673,7 @@ class BootstrapRepos:
         openpype_path = None
         # try to get OpenPype path from mongo.
         if location.startswith("mongodb"):
-            pype_path = get_openpype_path_from_db(location)
+            openpype_path = get_openpype_path_from_db(location)
             if not openpype_path:
                 self._print("cannot find OPENPYPE_PATH in settings.")
                 return None
@@ -809,7 +800,7 @@ class BootstrapRepos:
         """Install OpenPype version to user data directory.
 
         Args:
-            oepnpype_version (OpenPypeVersion): OpenPype version to install.
+            openpype_version (OpenPypeVersion): OpenPype version to install.
             force (bool, optional): Force overwrite existing version.
 
         Returns:
