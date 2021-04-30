@@ -893,6 +893,25 @@ class AssetItem(BaseItem):
         "data.visualParent": 1
     }
 
+    def __init__(self, asset_doc):
+        data = self.data_from_doc(asset_doc)
+        super(AssetItem, self).__init__(data)
+
+    @classmethod
+    def data_from_doc(cls, asset_doc):
+        data = {
+            "name": asset_doc["name"],
+            "type": asset_doc["type"]
+        }
+        doc_data = asset_doc.get("data") or {}
+        for key in cls.columns:
+            if key in data:
+                continue
+
+            data[key] = doc_data.get(key)
+
+        return data
+
     @classmethod
     def name_icon(cls):
         if cls._name_icon is None:
