@@ -8,6 +8,8 @@ from .categories import (
 from .widgets import ShadowWidget
 from .. import style
 
+from openpype.api import get_system_settings
+
 
 class MainWidget(QtWidgets.QWidget):
     widget_width = 1000
@@ -15,6 +17,8 @@ class MainWidget(QtWidgets.QWidget):
 
     def __init__(self, user_role, parent=None):
         super(MainWidget, self).__init__(parent)
+
+        self._user_password = ""
         self._reset_on_show = True
 
         self.setObjectName("MainWidget")
@@ -84,7 +88,35 @@ class MainWidget(QtWidgets.QWidget):
         if self._reset_on_show:
             self.reset()
 
+    def _on_password_dialog(self, value):
+        print(value)
+        self._user_password = value
+        system_settings = get_system_settings()
+        password = system_settings["general"]["settings_password"]
+
+        if not self._user_password == password:
+            self.close()
+        else:
+            self.reset()
+
     def reset(self):
+        system_settings = get_system_settings()
+        password = system_settings["general"]["settings_password"]
+
+        validated = self._user_password == password
+
+        if not validated:
+            self._on_state_change()
+
+            system_settings = get_system_settings()
+            password = system_settings["general"]["settings_password"]
+
+            dialog = PasswordDialog(password, self)
+            dialog.setModal(True)
+            dialog.open()
+            dialog.finished.connect(self._on_password_dialog)
+            return
+
         for tab_widget in self.tab_widgets:
             tab_widget.reset()
 
