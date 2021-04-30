@@ -1,4 +1,5 @@
 import collections
+import copy
 from queue import Queue
 from uuid import uuid4
 
@@ -112,13 +113,19 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             {"type": "asset"},
             AssetItem.query_projection
         )
+        asset_docs_by_id = {
+            asset_doc["_id"]: asset_doc
+            for asset_doc in asset_docs
+        }
         asset_docs_by_parent_id = collections.defaultdict(list)
-        for asset_doc in asset_docs:
+        for asset_doc in asset_docs_by_id.values():
             parent_id = asset_doc["data"]["visualParent"]
             asset_docs_by_parent_id[parent_id].append(asset_doc)
 
         appending_queue = Queue()
         appending_queue.put((None, project_item))
+
+        asset_items_by_id = {}
 
         while not appending_queue.empty():
             parent_id, parent_item = appending_queue.get()
@@ -127,11 +134,32 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
             new_items = []
             for asset_doc in asset_docs_by_parent_id[parent_id]:
+                # Create new Item
                 new_item = AssetItem(asset_doc)
+                # Store item to be added under parent in bulk
                 new_items.append(new_item)
-                appending_queue.put((asset_doc["_id"], new_item))
+
+                # Store item by id for task processing
+                asset_id = asset_doc["_id"]
+                asset_items_by_id[asset_id] = new_item
+                # Add item to appending queue
+                appending_queue.put((asset_id, new_item))
 
             self.add_items(new_items, parent_item)
+
+        for asset_id, asset_item in asset_items_by_id.items():
+            asset_doc = asset_docs_by_id[asset_id]
+            asset_tasks = asset_doc["data"]["tasks"]
+            if not asset_tasks:
+                continue
+
+            task_items = []
+            for task_name, task_data in asset_tasks.items():
+                _task_data = copy.deepcopy(task_data)
+                _task_data["name"] = task_name
+                task_item = TaskItem(_task_data)
+                task_items.append(task_item)
+            self.add_items(task_items, asset_item)
 
     def rowCount(self, parent=None):
         if parent is None or not parent.isValid():
