@@ -1,12 +1,21 @@
-from avalon.maya import lib
-from avalon import api
-from openpype.api import get_project_settings
+# -*- coding: utf-8 -*-
+"""Loader for Vray Proxy files.
+
+If there are Alembics published along vray proxy (in the same version),
+loader will use them instead of native vray vrmesh format.
+
+"""
 import os
+
 import maya.cmds as cmds
+
+from avalon.maya import lib
+from avalon import api, io
+from openpype.api import get_project_settings
 
 
 class VRayProxyLoader(api.Loader):
-    """Load VRayMesh proxy"""
+    """Load VRayMesh proxy."""
 
     families = ["vrayproxy"]
     representations = ["vrmesh"]
@@ -16,8 +25,17 @@ class VRayProxyLoader(api.Loader):
     icon = "code-fork"
     color = "orange"
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name=None, namespace=None, options=None):
+        # type: (dict, str, str, dict) -> None
+        """Loader entry point.
 
+        Args:
+            context (dict): Loaded representation context.
+            name (str): Name of container.
+            namespace (str): Optional namespace name.
+            options (dict): Optional loader options.
+
+        """
         from avalon.maya.pipeline import containerise
         from openpype.hosts.maya.api.lib import namespaced
 
@@ -25,6 +43,9 @@ class VRayProxyLoader(api.Loader):
             family = context["representation"]["context"]["family"]
         except ValueError:
             family = "vrayproxy"
+
+        #  get all representations for this version
+        self.fname = self._get_abc(context["version"]["_id"]) or self.fname
 
         asset_name = context['asset']["name"]
         namespace = namespace or lib.unique_namespace(
@@ -39,8 +60,8 @@ class VRayProxyLoader(api.Loader):
         with lib.maintained_selection():
             cmds.namespace(addNamespace=namespace)
             with namespaced(namespace, new=False):
-                nodes, group_node = self.create_vray_proxy(name,
-                                               filename=self.fname)
+                nodes, group_node = self.create_vray_proxy(
+                    name, filename=self.fname)
 
         self[:] = nodes
         if not nodes:
@@ -63,7 +84,8 @@ class VRayProxyLoader(api.Loader):
             loader=self.__class__.__name__)
 
     def update(self, container, representation):
-
+        # type: (dict, dict) -> None
+        """Update container with specified representation."""
         node = container['objectName']
         assert cmds.objExists(node), "Missing container"
 
@@ -71,7 +93,8 @@ class VRayProxyLoader(api.Loader):
         vraymeshes = cmds.ls(members, type="VRayMesh")
         assert vraymeshes, "Cannot find VRayMesh in container"
 
-        filename = api.get_representation_path(representation)
+        #  get all representations for this version
+        filename = self._get_abc(representation["parent"]) or api.get_representation_path(representation)  # noqa: E501
 
         for vray_mesh in vraymeshes:
             cmds.setAttr("{}.fileName".format(vray_mesh),
@@ -84,7 +107,8 @@ class VRayProxyLoader(api.Loader):
                      type="string")
 
     def remove(self, container):
-
+        # type: (dict) -> None
+        """Remove loaded container."""
         # Delete container and its contents
         if cmds.objExists(container['objectName']):
             members = cmds.sets(container['objectName'], query=True) or []
@@ -101,18 +125,22 @@ class VRayProxyLoader(api.Loader):
                                  "still has members: %s", namespace)
 
     def switch(self, container, representation):
+        # type: (dict, dict) -> None
+        """Switch loaded representation."""
         self.update(container, representation)
 
     def create_vray_proxy(self, name, filename):
+        # type: (str, str) -> (list, str)
         """Re-create the structure created by VRay to support vrmeshes
 
         Args:
-            name(str): name of the asset
+            name (str): Name of the asset.
+            filename (str): File name of vrmesh.
 
         Returns:
             nodes(list)
-        """
 
+        """
         # Create nodes
         vray_mesh = cmds.createNode('VRayMesh', name="{}_VRMS".format(name))
         mesh_shape = cmds.createNode("mesh", name="{}_GEOShape".format(name))
@@ -159,3 +187,35 @@ class VRayProxyLoader(api.Loader):
         cmds.setAttr("{}.geomType".format(vray_mesh), 2)
 
         return nodes, group_node
+
+    def _get_abc(self, version_id):
+        # type: (str) -> str
+        """Get abc representation file path if present.
+
+        If here is published Alembic (abc) representation published along
+        vray proxy, get is file path.
+
+        Args:
+            version_id (str): Version hash id.
+
+        Returns:
+            str: Path to file.
+            None: If abc not found.
+
+        """
+        self.log.debug(
+            "Looking for abc in published representations of this version.")
+        abc_rep = io.find_one(
+            {
+                "type": "representation",
+                "parent": io.ObjectId(version_id),
+                "name": "abc"
+            })
+
+        if abc_rep:
+            self.log.debug("Found, we'll link alembic to vray proxy.")
+            file_name = api.get_representation_path(abc_rep)
+            self.log.debug("File: {}".format(self.fname))
+            return file_name
+
+        return None

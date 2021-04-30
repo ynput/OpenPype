@@ -8,6 +8,9 @@ from openpype.hosts.maya.api import lib
 
 from avalon import io, api
 
+
+import vray_proxies
+
 log = logging.getLogger(__name__)
 
 
@@ -132,6 +135,27 @@ def create_items_from_nodes(nodes):
     asset_view_items = []
 
     id_hashes = create_asset_id_hash(nodes)
+
+    print("*" * 40)
+    print(id_hashes)
+
+    # get ids from alembic
+    vray_proxy_nodes = cmds.ls(nodes, type="VRayMesh")
+    for vp in vray_proxy_nodes:
+        path = cmds.getAttr("{}.fileName".format(vp))
+        ids = vray_proxies.get_alembic_ids_cache(path)
+        parent_id = {}
+        for k, n in ids.items():
+            pid = k.split(":")[0]
+            if not parent_id.get(pid):
+                parent_id.update({pid: [vp]})
+
+        print("adding ids from alembic {}".format(path))
+        id_hashes.update(parent_id)
+
+    print("*" * 40)
+    print(id_hashes)
+
     if not id_hashes:
         return asset_view_items
 

@@ -93,6 +93,9 @@ class AssetOutliner(QtWidgets.QWidget):
             with lib.preserve_selection(self.view):
                 self.clear()
                 nodes = commands.get_all_asset_nodes()
+                print("_" * 40)
+                print(nodes)
+                print("_" * 40)
                 items = commands.create_items_from_nodes(nodes)
                 self.add_items(items)
 

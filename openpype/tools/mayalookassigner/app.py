@@ -15,6 +15,8 @@ import maya.api.OpenMaya as om
 
 from . import widgets
 from . import commands
+from . vray_proxies import vrayproxy_assign_look
+
 
 module = sys.modules[__name__]
 module.window = None
@@ -211,9 +213,21 @@ class App(QtWidgets.QWidget):
                                                        subset_name,
                                                        asset))
 
+            print(">>> get vray mesh nodes ...")
+            vray_proxies = set(cmds.ls(type="VRayMesh"))
+            print("-" * 40)
+            print(item["nodes"])
+            print(vray_proxies)
+            nodes = set(item["nodes"]).difference(vray_proxies)
+            print(nodes)
+
             # Assign look
-            assign_look_by_version(nodes=item["nodes"],
-                                   version_id=version["_id"])
+            if nodes:
+                assign_look_by_version([nodes], version_id=version["_id"])
+
+            if vray_proxies:
+                for vp in vray_proxies:
+                    vrayproxy_assign_look(vp, subset_name)
 
         end = time.time()
 
