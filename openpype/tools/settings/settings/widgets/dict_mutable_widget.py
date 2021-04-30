@@ -101,6 +101,10 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def _on_key_change(self):
         key = self.key_input.text()
         self.key_is_valid = KEY_REGEX.match(key)
+
+        if self.ignore_input_changes:
+            return
+
         self.is_duplicated = self.entity_widget.is_key_duplicated(key)
         key_input_state = ""
         # Collapsible key and empty key are not invalid
@@ -386,6 +390,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.set_edit_mode(False)
 
     def _on_key_label_change(self):
+        if self.ignore_input_changes:
+            return
+
         label = self.key_label_value()
         self.entity_widget.change_label(label, self)
         self.update_key_label()
@@ -393,6 +400,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def _on_key_change(self):
         key = self.key_value()
         self.key_is_valid = KEY_REGEX.match(key)
+
+        if self.ignore_input_changes:
+            return
+
         is_key_duplicated = self.entity_widget.validate_key_duplication(
             self.temp_key, key, self
         )
