@@ -81,10 +81,7 @@ class Window(QtWidgets.QWidget):
         if current_project:
             row = self.project_combobox.findText(current_project)
             if row >= 0:
-                self._set_project(current_project)
-                index = self.project_combobox.model().index(row, 0)
-                self.project_combobox.setCurrentIndex(index)
-                return
+                self.project_combobox.setCurrentIndex(row)
 
         self._set_project(self.project_combobox.currentText())
 
