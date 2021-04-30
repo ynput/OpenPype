@@ -4,6 +4,8 @@ from Qt import QtWidgets, QtCore
 class NumberDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = QtWidgets.QSpinBox(parent)
+        editor.setMaximum(999999)
+        editor.setMinimum(0)
         value = index.data(QtCore.Qt.DisplayRole)
         if value is not None:
             editor.setValue(value)
