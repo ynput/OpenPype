@@ -6,12 +6,16 @@ from . import (
     HierarchyView
 )
 
+from avalon.api import AvalonMongoDB
+
 
 class Window(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
 
-        model = HierarchyModel()
+        dbcon = AvalonMongoDB()
+
+        model = HierarchyModel(dbcon)
         view = HierarchyView(model, self)
         view.setModel(model)
         _selection_model = HierarchySelectionModel()

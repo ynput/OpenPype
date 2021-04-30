@@ -7,9 +7,7 @@ from .constants import (
     DUPLICATED_ROLE
 )
 
-from avalon.api import AvalonMongoDB
 from avalon.vendor import qtawesome
-
 from Qt import QtCore, QtGui
 
 
@@ -73,12 +71,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
     ]
     index_moved = QtCore.Signal(QtCore.QModelIndex)
 
-    def __init__(self, parent=None):
+    def __init__(self, dbcon, parent=None):
         super(HierarchyModel, self).__init__(parent)
         self._root_item = None
         self._items_by_id = {}
         self._asset_items_by_name = collections.defaultdict(list)
-        self.dbcon = AvalonMongoDB()
+        self.dbcon = dbcon
 
         self._hierarchy_mode = True
         self._reset_root_item()
