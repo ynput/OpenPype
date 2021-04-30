@@ -24,7 +24,6 @@ def main(user_role=None):
 
     widget = MainWidget(user_role)
     widget.show()
-    widget.reset()
 
     sys.exit(app.exec_())
 

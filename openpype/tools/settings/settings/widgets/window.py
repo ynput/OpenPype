@@ -14,6 +14,8 @@ class MainWidget(QtWidgets.QWidget):
 
     def __init__(self, user_role, parent=None):
         super(MainWidget, self).__init__(parent)
+        self._reset_on_show = True
+
         self.setObjectName("MainWidget")
         self.setWindowTitle("OpenPype Settings")
 
@@ -75,6 +77,14 @@ class MainWidget(QtWidgets.QWidget):
         if app:
             app.processEvents()
 
+    def showEvent(self, event):
+        super(MainWidget, self).showEvent(event)
+        if self._reset_on_show:
+            self.reset()
+
     def reset(self):
         for tab_widget in self.tab_widgets:
             tab_widget.reset()
+
+        if self._reset_on_show:
+            self._reset_on_show = False
