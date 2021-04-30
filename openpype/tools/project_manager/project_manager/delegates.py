@@ -2,10 +2,21 @@ from Qt import QtWidgets, QtCore
 
 
 class NumberDelegate(QtWidgets.QStyledItemDelegate):
+    def __init__(self, minimum, maximum, decimals, *args, **kwargs):
+        super(NumberDelegate, self).__init__(*args, **kwargs)
+        self.minimum = minimum
+        self.maximum = maximum
+        self.decimals = decimals
+
     def createEditor(self, parent, option, index):
-        editor = QtWidgets.QSpinBox(parent)
-        editor.setMaximum(999999)
-        editor.setMinimum(0)
+        print(option.rect)
+        if self.decimals > 0:
+            editor = QtWidgets.QDoubleSpinBox(parent)
+        else:
+            editor = QtWidgets.QSpinBox(parent)
+        editor.setMinimum(self.minimum)
+        editor.setMaximum(self.maximum)
+
         value = index.data(QtCore.Qt.DisplayRole)
         if value is not None:
             editor.setValue(value)

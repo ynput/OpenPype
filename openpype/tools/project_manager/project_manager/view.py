@@ -3,15 +3,27 @@ from Qt import QtWidgets, QtCore
 from .delegates import NumberDelegate, StringDelegate
 
 
+class StringDef:
+    def __init__(self, regex=None):
+        self.regex = regex
+
+
+class NumberDef:
+    def __init__(self, minimum=None, maximum=None, decimals=None):
+        self.minimum = 0 if minimum is None else minimum
+        self.maximum = 999999 if maximum is None else maximum
+        self.decimals = 0 if decimals is None else decimals
+
+
 class HierarchyView(QtWidgets.QTreeView):
     """A tree view that deselects on clicking on an empty area in the view"""
     column_delegate_defs = {
-        "name": StringDelegate,
-        "frameStart": NumberDelegate,
-        "frameEnd": NumberDelegate,
-        "fps": NumberDelegate,
-        "resolutionWidth": NumberDelegate,
-        "resolutionHeight": NumberDelegate
+        "name": StringDef(),
+        "frameStart": NumberDef(1),
+        "frameEnd": NumberDef(1),
+        "fps": NumberDef(1, decimals=2),
+        "resolutionWidth": NumberDef(0),
+        "resolutionHeight": NumberDef(0)
     }
     persistent_columns = [
         "frameStart",
@@ -32,8 +44,16 @@ class HierarchyView(QtWidgets.QTreeView):
 
         column_delegates = {}
         column_key_to_index = {}
-        for key, delegate_klass in self.column_delegate_defs.items():
-            delegate = delegate_klass()
+        for key, item_type in self.column_delegate_defs.items():
+            if isinstance(item_type, StringDef):
+                delegate = StringDelegate()
+            elif isinstance(item_type, NumberDef):
+                delegate = NumberDelegate(
+                    item_type.minimum,
+                    item_type.maximum,
+                    item_type.decimals
+                )
+
             column = self._source_model.columns.index(key)
             self.setItemDelegateForColumn(column, delegate)
             column_delegates[key] = delegate
