@@ -36,6 +36,7 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         super(ModifiableDictEmptyItem, self).__init__(parent)
         self.entity_widget = entity_widget
         self.collapsible_key = entity_widget.entity.collapsible_key
+        self.ignore_input_changes = entity_widget.ignore_input_changes
 
         self.is_duplicated = False
         self.key_is_valid = False
