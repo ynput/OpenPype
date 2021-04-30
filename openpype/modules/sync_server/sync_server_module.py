@@ -749,7 +749,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         return SyncStatus.DO_NOTHING
 
     def update_db(self, collection, new_file_id, file, representation,
-                  site, error=None, progress=None):
+                  site, error=None, progress=None, priority=None):
         """
             Update 'provider' portion of records in DB with success (file_id)
             or error (exception)
@@ -763,12 +763,16 @@ class SyncServerModule(PypeModule, ITrayModule):
             site (string): label ('gdrive', 'S3')
             error (string): exception message
             progress (float): 0-1 of progress of upload/download
+            priority (int): 0-100 set priority
 
         Returns:
             None
         """
         representation_id = representation.get("_id")
-        file_id = file.get("_id")
+        file_id = None
+        if file:
+            file_id = file.get("_id")
+
         query = {
             "_id": representation_id
         }
@@ -780,6 +784,8 @@ class SyncServerModule(PypeModule, ITrayModule):
             update["$unset"] = self._get_error_dict("", "", "")
         elif progress is not None:
             update["$set"] = self._get_progress_dict(progress)
+        elif priority is not None:
+            update["$set"] = self._get_priority_dict(priority, file_id)
         else:
             tries = self._get_tries_count(file, site)
             tries += 1
@@ -787,9 +793,10 @@ class SyncServerModule(PypeModule, ITrayModule):
             update["$set"] = self._get_error_dict(error, tries)
 
         arr_filter = [
-            {'s.name': site},
-            {'f._id': ObjectId(file_id)}
+            {'s.name': site}
         ]
+        if file_id:
+            arr_filter['f._id'] = ObjectId(file_id)
 
         self.connection.database[collection].update_one(
             query,
@@ -798,7 +805,7 @@ class SyncServerModule(PypeModule, ITrayModule):
             array_filters=arr_filter
         )
 
-        if progress is not None:
+        if progress is not None or priority is not None:
             return
 
         status = 'failed'
@@ -1191,6 +1198,21 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
         val = {"files.$[f].sites.$[s].progress": progress}
         return val
+
+    def _get_priority_dict(self, priority, file_id):
+        """
+            Provide priority metadata to be stored in Db.
+            Used during upload/download for GUI to show.
+        Args:
+            priority: (int) - priority for file(s)
+        Returns:
+            (dictionary)
+        """
+        if file_id:
+            str_key = "files.$[f].sites.$[s].priority"
+        else:
+            str_key = "files.$[].sites.$[s].priority"
+        return {str_key: priority}
 
     def _get_retries_arr(self, project_name):
         """
