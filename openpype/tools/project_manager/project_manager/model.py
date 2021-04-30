@@ -585,6 +585,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
 class BaseItem:
     columns = ["name"]
+    # Use `set` for faster result
+    editable_columns = {"name"}
+
     _name_icon = None
     _is_duplicated = False
 
@@ -727,7 +730,7 @@ class BaseItem:
 
     def flags(self, key):
         flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
-        if key in self.columns:
+        if key in self.editable_columns:
             flags |= QtCore.Qt.ItemIsEditable
         return flags
 
@@ -763,6 +766,14 @@ class AssetItem(BaseItem):
         "resolutionWidth",
         "resolutionHeight"
     ]
+    editable_columns = {
+        "name",
+        "frameStart",
+        "frameEnd",
+        "fps",
+        "resolutionWidth",
+        "resolutionHeight"
+    }
 
     @classmethod
     def name_icon(cls):
@@ -776,6 +787,11 @@ class TaskItem(BaseItem):
         "name",
         "type"
     ]
+    editable_columns = {
+        "name",
+        "type"
+    }
+
     @classmethod
     def name_icon(cls):
         if cls._name_icon is None:
