@@ -804,9 +804,18 @@ class ProjectItem(BaseItem):
         "resolutionWidth",
         "resolutionHeight"
     ]
+    query_projection = {
+        "_id": 1,
+        "name": 1,
+        "type": 1,
+        "data.frameStart": 1,
+        "data.frameEnd": 1,
+        "data.fps": 1,
+        "data.resolutionWidth": 1,
+        "data.resolutionHeight": 1
+    }
 
     def __init__(self, project_doc):
-
         data = self.data_from_doc(project_doc)
         super(ProjectItem, self).__init__(data)
 
@@ -846,6 +855,17 @@ class AssetItem(BaseItem):
         "fps",
         "resolutionWidth",
         "resolutionHeight"
+    }
+    query_projection = {
+        "_id": 1,
+        "name": 1,
+        "type": 1,
+        "data.frameStart": 1,
+        "data.frameEnd": 1,
+        "data.fps": 1,
+        "data.resolutionWidth": 1,
+        "data.resolutionHeight": 1,
+        "data.visualParent": 1
     }
 
     @classmethod
