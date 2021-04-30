@@ -6,6 +6,7 @@ from Qt import QtCore
 from Qt.QtCore import Qt
 
 from avalon.tools.delegates import pretty_timestamp
+from avalon.vendor import qtawesome
 
 from openpype.lib import PypeLogger
 
@@ -40,6 +41,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
 
     PAGE_SIZE = 20  # default page size to query for
     REFRESH_SEC = 5000  # in seconds, requery DB for new status
+
+    DEFAULT_PRIORITY = 50
 
     @property
     def dbcon(self):
@@ -79,6 +82,14 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                 return self.COLUMN_LABELS[section][0]  # return name
 
     def get_column(self, index):
+        """
+            Returns info about column
+
+            Args:
+                index (QModelIndex)
+            Returns:
+                (tuple): (COLUMN_NAME: COLUMN_LABEL)
+        """
         return self.COLUMN_LABELS[index]
 
     def get_header_index(self, value):
@@ -109,7 +120,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                     than single page of records)
         """
         if self.sync_server.is_paused() or \
-                self.sync_server.is_project_paused(self.project):
+                self.sync_server.is_project_paused(self.project) or \
+                self.is_editing:
             return
         self.refresh_started.emit()
         self.beginResetModel()
@@ -191,7 +203,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         self.sort = {self.SORT_BY_COLUMN[index]: order}  # reset
         # add last one
         for key, val in backup_sort.items():
-            if key != '_id':
+            if key != '_id' and key != self.SORT_BY_COLUMN[index]:
                 self.sort[key] = val
                 break
         # add default one
@@ -363,7 +375,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         "updated_dt_remote",  # remote created_dt
         "files_count",  # count of files
         "files_size",  # file size of all files
-        "context.asset",  # priority TODO
+        "priority",  # priority
         "status"  # status
     ]
 
@@ -373,6 +385,8 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         'asset': lib.RegexTextFilter('asset'),
         'representation': lib.MultiSelectFilter('representation')
     }
+
+    EDITABLE_COLUMNS = ["priority"]
 
     refresh_started = QtCore.Signal()
     refresh_finished = QtCore.Signal()
@@ -412,6 +426,9 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self._total_records = 0  # how many documents query actually found
         self._word_filter = None
         self._column_filtering = {}
+
+        self.edit_icon = qtawesome.icon("fa.edit", color="white")
+        self.is_editing = False
 
         self._word_filter = None
 
@@ -472,7 +489,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 return item.status == lib.STATUS[2] and \
                     item.remote_progress < 1
 
-        if role == Qt.DisplayRole:
+        if role in (Qt.DisplayRole, Qt.EditRole):
             # because of ImageDelegate
             if header_value in ['remote_site', 'local_site']:
                 return ""
@@ -549,7 +566,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 avg_progress_remote,
                 repre.get("files_count", 1),
                 lib.pretty_size(repre.get("files_size", 0)),
-                1,
+                repre.get("priority"),
                 lib.STATUS[repre.get("status", -1)],
                 files[0].get('path')
             )
@@ -668,6 +685,10 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                     '$cond': [{'$size': "$order_local.paused"},
                               1,
                               0]},
+                'priority': {
+                    '$cond': [{'$size': '$order_local.priority'},
+                              {'$first': '$order_local.priority'},
+                              self.DEFAULT_PRIORITY]},
             }},
             {'$group': {
                 '_id': '$_id',
@@ -690,7 +711,8 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 'failed_local_tries': {'$sum': '$failed_local_tries'},
                 'paused_remote': {'$sum': '$paused_remote'},
                 'paused_local': {'$sum': '$paused_local'},
-                'updated_dt_local': {'$max': "$updated_dt_local"}
+                'updated_dt_local': {'$max': "$updated_dt_local"},
+                'priority': {'$max': "$priority"},
             }},
             {"$project": self.projection}
         ]
@@ -772,6 +794,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
             'updated_dt_local': 1,
             'paused_remote': 1,
             'paused_local': 1,
+            'priority': 1,
             'status': {
                 '$switch': {
                     'branches': [
@@ -817,6 +840,27 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 }
             }
         }
+
+    def set_priority_data(self, index, value):
+        """
+            Sets 'priority' flag and value on active site for selected reprs.
+
+            Args:
+                index (QItemIndex): selected index from View
+                value (int): priority value
+
+            Updates DB
+        """
+        repre_id = self.data(index, Qt.UserRole)
+
+        representation = list(self.dbcon.find({"type": "representation",
+                                               "_id": repre_id}))
+        if representation:
+            self.sync_server.update_db(self.project, None, None,
+                                       representation.pop(), self.active_site,
+                                       priority=value)
+        self.is_editing = False
+        self.refresh(None, self._rec_loaded)
 
 
 class SyncRepresentationDetailModel(_SyncRepresentationModel):
@@ -900,6 +944,8 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self._id = _id
         self._initialized = False
         self._column_filtering = {}
+
+        self.is_editing = False
 
         self.sync_server = sync_server
         # TODO think about admin mode

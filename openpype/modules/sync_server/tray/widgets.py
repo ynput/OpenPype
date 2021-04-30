@@ -171,6 +171,13 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
         """
             Opens representation dialog with all files after doubleclick
         """
+        # priority editing
+        column_name = self.model.get_column(index.column())
+        if column_name[0] in self.model.EDITABLE_COLUMNS:
+            self.model.is_editing = True
+            self.table_view.openPersistentEditor(index)
+            return
+
         _id = self.model.data(index, Qt.UserRole)
         detail_window = SyncServerDetailWindow(
             self.sync_server, _id, self.model.project)
@@ -252,6 +259,11 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
             action_kwarg_map[action] = self._get_action_kwargs(active_site)
             actions_mapping[action] = self._remove_site
             menu.addAction(action)
+
+        action = QtWidgets.QAction("Change priority")
+        action_kwarg_map[action] = self._get_action_kwargs(active_site)
+        actions_mapping[action] = self._change_priority
+        menu.addAction(action)
 
         # # temp for testing only !!!
         # action = QtWidgets.QAction("Download")
@@ -397,6 +409,15 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
                     except OSError:
                         raise OSError('unsupported xdg-open call??')
 
+    def _change_priority(self, **kwargs):
+        """Open editor to change priority on first selected row"""
+        if self._selected_ids:
+            index = self.model.get_index(self._selected_ids[0])  # column = 0
+            column_no = self.model.get_header_index("priority") # real column
+            real_index = self.model.index(index.row(), column_no)
+            self.model.is_editing = True
+            self.table_view.openPersistentEditor(real_index)
+
     def _get_progress(self, item, site_name, opposite=False):
         """Returns progress value according to site (side)"""
         progress = {'local': item.local_progress,
@@ -470,6 +491,7 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
             -1, Qt.AscendingOrder)
         table_view.setAlternatingRowColors(True)
         table_view.verticalHeader().hide()
+        table_view.viewport().setAttribute(QtCore.Qt.WA_Hover, True)
 
         column = table_view.model().get_header_index("local_site")
         delegate = ImageDelegate(self)
@@ -478,6 +500,10 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         column = table_view.model().get_header_index("remote_site")
         delegate = ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
+
+        column = table_view.model().get_header_index("priority")
+        priority_delegate = lib.PriorityDelegate(self)
+        table_view.setItemDelegateForColumn(column, priority_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
