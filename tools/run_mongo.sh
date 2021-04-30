@@ -82,3 +82,4 @@ main () {
   echo -e "${BIGreen}>>>${RST} Detached to background."
 }
 
+main

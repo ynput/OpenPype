@@ -1,7 +1,6 @@
 import os
 
 from avalon import api, pipeline
-from avalon import unreal as avalon_unreal
 from avalon.unreal import lib
 from avalon.unreal import pipeline as unreal_pipeline
 import unreal

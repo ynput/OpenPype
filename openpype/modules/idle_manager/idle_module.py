@@ -1,3 +1,4 @@
+import platform
 import collections
 from abc import ABCMeta, abstractmethod
 
@@ -40,7 +41,12 @@ class IdleManager(PypeModule, ITrayService):
     name = "idle_manager"
 
     def initialize(self, module_settings):
-        self.enabled = True
+        enabled = True
+        # Ignore on MacOs
+        # - pynput need root permissions and enabled access for application
+        if platform.system().lower() == "darwin":
+            enabled = False
+        self.enabled = enabled
 
         self.time_callbacks = collections.defaultdict(list)
         self.idle_thread = None

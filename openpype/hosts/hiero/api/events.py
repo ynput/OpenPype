@@ -2,7 +2,12 @@ import os
 import hiero.core.events
 import avalon.api as avalon
 from openpype.api import Logger
-from .lib import sync_avalon_data_to_workfile, launch_workfiles_app
+from .lib import (
+    sync_avalon_data_to_workfile,
+    launch_workfiles_app,
+    selection_changed_timeline,
+    before_project_save
+)
 from .tags import add_tags_to_workfile
 from .menu import update_menu_task_label
 
@@ -78,7 +83,7 @@ def register_hiero_events():
         "Registering events for: kBeforeNewProjectCreated, "
         "kAfterNewProjectCreated, kBeforeProjectLoad, kAfterProjectLoad, "
         "kBeforeProjectSave, kAfterProjectSave, kBeforeProjectClose, "
-        "kAfterProjectClose, kShutdown, kStartup"
+        "kAfterProjectClose, kShutdown, kStartup, kSelectionChanged"
     )
 
     # hiero.core.events.registerInterest(
@@ -91,8 +96,8 @@ def register_hiero_events():
     hiero.core.events.registerInterest(
         "kAfterProjectLoad", afterProjectLoad)
 
-    # hiero.core.events.registerInterest(
-    #     "kBeforeProjectSave", beforeProjectSaved)
+    hiero.core.events.registerInterest(
+        "kBeforeProjectSave", before_project_save)
     # hiero.core.events.registerInterest(
     #     "kAfterProjectSave", afterProjectSaved)
     #
@@ -104,10 +109,16 @@ def register_hiero_events():
     # hiero.core.events.registerInterest("kShutdown", shutDown)
     # hiero.core.events.registerInterest("kStartup", startupCompleted)
 
-    # workfiles
-    hiero.core.events.registerEventType("kStartWorkfiles")
-    hiero.core.events.registerInterest("kStartWorkfiles", launch_workfiles_app)
+    hiero.core.events.registerInterest(
+        ("kSelectionChanged", "kTimeline"), selection_changed_timeline)
 
+    # workfiles
+    try:
+        hiero.core.events.registerEventType("kStartWorkfiles")
+        hiero.core.events.registerInterest(
+            "kStartWorkfiles", launch_workfiles_app)
+    except RuntimeError:
+        pass
 
 def register_events():
     """

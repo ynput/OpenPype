@@ -64,7 +64,6 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-
 # Node JS packages
 ##################
 node_modules

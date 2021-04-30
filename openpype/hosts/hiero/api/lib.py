@@ -9,7 +9,7 @@ import hiero
 import avalon.api as avalon
 import avalon.io
 from avalon.vendor.Qt import QtWidgets
-from openpype.api import (Logger, Anatomy, config)
+from openpype.api import (Logger, Anatomy, get_anatomy_settings)
 from . import tags
 import shutil
 from compiler.ast import flatten
@@ -30,9 +30,9 @@ self = sys.modules[__name__]
 self._has_been_setup = False
 self._has_menu = False
 self._registered_gui = None
-self.pype_tag_name = "Pype Data"
-self.default_sequence_name = "PypeSequence"
-self.default_bin_name = "PypeBin"
+self.pype_tag_name = "openpypeData"
+self.default_sequence_name = "openpypeSequence"
+self.default_bin_name = "openpypeBin"
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -150,15 +150,27 @@ def get_track_items(
 
     # get selected track items or all in active sequence
     if selected:
-        selected_items = list(hiero.selection)
-        for item in selected_items:
-            if track_name and track_name in item.parent().name():
-                # filter only items fitting input track name
-                track_items.append(item)
-            elif not track_name:
-                # or add all if no track_name was defined
-                track_items.append(item)
-    else:
+        try:
+            selected_items = list(hiero.selection)
+            for item in selected_items:
+                if track_name and track_name in item.parent().name():
+                    # filter only items fitting input track name
+                    track_items.append(item)
+                elif not track_name:
+                    # or add all if no track_name was defined
+                    track_items.append(item)
+        except AttributeError:
+            pass
+
+    # check if any collected track items are
+    # `core.Hiero.Python.TrackItem` instance
+    if track_items:
+        any_track_item = track_items[0]
+        if not isinstance(any_track_item, hiero.core.TrackItem):
+            selected_items = []
+
+    # collect all available active sequence track items
+    if not track_items:
         sequence = get_current_sequence(name=sequence_name)
         # get all available tracks from sequence
         tracks = list(sequence.audioTracks()) + list(sequence.videoTracks())
@@ -240,7 +252,7 @@ def set_track_item_pype_tag(track_item, data=None):
     # basic Tag's attribute
     tag_data = {
         "editable": "0",
-        "note": "Pype data holder",
+        "note": "OpenPype data container",
         "icon": "openpype_icon.png",
         "metadata": {k: v for k, v in data.items()}
     }
@@ -744,10 +756,13 @@ def _set_hrox_project_knobs(doc, **knobs):
     # set attributes to Project Tag
     proj_elem = doc.documentElement().firstChildElement("Project")
     for k, v in knobs.items():
-        proj_elem.setAttribute(k, v)
+        if isinstance(v, dict):
+            continue
+        proj_elem.setAttribute(str(k), v)
 
 
 def apply_colorspace_project():
+    project_name = os.getenv("AVALON_PROJECT")
     # get path the the active projects
     project = get_current_project(remove_untitled=True)
     current_file = project.path()
@@ -756,9 +771,9 @@ def apply_colorspace_project():
     project.close()
 
     # get presets for hiero
-    presets = config.get_init_presets()
-    colorspace = presets["colorspace"]
-    hiero_project_clrs = colorspace.get("hiero", {}).get("project", {})
+    imageio = get_anatomy_settings(
+        project_name)["imageio"].get("hiero", None)
+    presets = imageio.get("workfile")
 
     # save the workfile as subversion "comment:_colorspaceChange"
     split_current_file = os.path.splitext(current_file)
@@ -789,13 +804,13 @@ def apply_colorspace_project():
         os.remove(copy_current_file_tmp)
 
     # use the code from bellow for changing xml hrox Attributes
-    hiero_project_clrs.update({"name": os.path.basename(copy_current_file)})
+    presets.update({"name": os.path.basename(copy_current_file)})
 
     # read HROX in as QDomSocument
     doc = _read_doc_from_path(copy_current_file)
 
     # apply project colorspace properties
-    _set_hrox_project_knobs(doc, **hiero_project_clrs)
+    _set_hrox_project_knobs(doc, **presets)
 
     # write QDomSocument back as HROX
     _write_doc_to_path(doc, copy_current_file)
@@ -805,14 +820,17 @@ def apply_colorspace_project():
 
 
 def apply_colorspace_clips():
+    project_name = os.getenv("AVALON_PROJECT")
     project = get_current_project(remove_untitled=True)
     clips = project.clips()
 
     # get presets for hiero
-    presets = config.get_init_presets()
-    colorspace = presets["colorspace"]
-    hiero_clips_clrs = colorspace.get("hiero", {}).get("clips", {})
+    imageio = get_anatomy_settings(
+        project_name)["imageio"].get("hiero", None)
+    from pprint import pprint
 
+    presets = imageio.get("regexInputs", {}).get("inputs", {})
+    pprint(presets)
     for clip in clips:
         clip_media_source_path = clip.mediaSource().firstpath()
         clip_name = clip.name()
@@ -822,10 +840,11 @@ def apply_colorspace_clips():
             continue
 
         # check if any colorspace presets for read is mathing
-        preset_clrsp = next((hiero_clips_clrs[k]
-                             for k in hiero_clips_clrs
-                             if bool(re.search(k, clip_media_source_path))),
-                            None)
+        preset_clrsp = None
+        for k in presets:
+            if not bool(re.search(k["regex"], clip_media_source_path)):
+                continue
+            preset_clrsp = k["colorspace"]
 
         if preset_clrsp:
             log.debug("Changing clip.path: {}".format(clip_media_source_path))
@@ -893,3 +912,61 @@ def get_sequence_pattern_and_padding(file):
         return found, padding
     else:
         return None, None
+
+
+def sync_clip_name_to_data_asset(track_items_list):
+    # loop trough all selected clips
+    for track_item in track_items_list:
+        # ignore if parent track is locked or disabled
+        if track_item.parent().isLocked():
+            continue
+        if not track_item.parent().isEnabled():
+            continue
+        # ignore if the track item is disabled
+        if not track_item.isEnabled():
+            continue
+
+        # get name and data
+        ti_name = track_item.name()
+        data = get_track_item_pype_data(track_item)
+
+        # ignore if no data on the clip or not publish instance
+        if not data:
+            continue
+        if data.get("id") != "pyblish.avalon.instance":
+            continue
+
+        # fix data if wrong name
+        if data["asset"] != ti_name:
+            data["asset"] = ti_name
+            # remove the original tag
+            tag = get_track_item_pype_tag(track_item)
+            track_item.removeTag(tag)
+            # create new tag with updated data
+            set_track_item_pype_tag(track_item, data)
+            print("asset was changed in clip: {}".format(ti_name))
+
+
+def selection_changed_timeline(event):
+    """Callback on timeline to check if asset in data is the same as clip name.
+
+    Args:
+        event (hiero.core.Event): timeline event
+    """
+    timeline_editor = event.sender
+    selection = timeline_editor.selection()
+
+    # run checking function
+    sync_clip_name_to_data_asset(selection)
+
+
+def before_project_save(event):
+    track_items = get_track_items(
+        selected=False,
+        track_type="video",
+        check_enabled=True,
+        check_locked=True,
+        check_tagged=True)
+
+    # run checking function
+    sync_clip_name_to_data_asset(track_items)

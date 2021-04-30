@@ -376,7 +376,10 @@ class BoolEntity(InputEntity):
 
     def _item_initalization(self):
         self.valid_value_types = (bool, )
-        self.value_on_not_set = True
+        value_on_not_set = self.convert_to_valid_type(
+            self.schema_data.get("default", True)
+        )
+        self.value_on_not_set = value_on_not_set
 
 
 class TextEntity(InputEntity):

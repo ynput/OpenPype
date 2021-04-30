@@ -286,7 +286,7 @@ class BootstrapRepos:
         """Get version of local OpenPype."""
 
         version = {}
-        path = Path(os.path.dirname(__file__)).parent / "openpype" / "version.py"
+        path = Path(os.environ["OPENPYPE_ROOT"]) / "openpype" / "version.py"
         with open(path, "r") as fp:
             exec(fp.read(), version)
         return version["__version__"]

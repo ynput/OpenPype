@@ -16,7 +16,7 @@ module.exports = {
             collapsed: false,
             label: "Integrations",
             items: [
-                "artist_hosts_nukestudio",
+                "artist_hosts_hiero",
                 "artist_hosts_nuke",
                 "artist_hosts_maya",
                 "artist_hosts_blender",

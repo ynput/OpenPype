@@ -121,6 +121,10 @@ catch {
     Exit-WithCode 1
 }
 
+Write-Host ">>> " -NoNewLine -ForegroundColor green
+Write-Host "Making sure submodules are up-to-date ..."
+git submodule update --init --recursive
+
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building OpenPype [ " -NoNewline -ForegroundColor white
 Write-host $openpype_version  -NoNewline -ForegroundColor green

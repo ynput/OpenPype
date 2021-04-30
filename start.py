@@ -115,6 +115,7 @@ else:
         os.path.join(OPENPYPE_ROOT, "dependencies")
     )
     sys.path.append(frozen_libs)
+    sys.path.insert(0, OPENPYPE_ROOT)
     # add stuff from `<frozen>/dependencies` to PYTHONPATH.
     pythonpath = os.getenv("PYTHONPATH", "")
     paths = pythonpath.split(os.pathsep)
@@ -123,7 +124,10 @@ else:
 
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
-from igniter.tools import get_openpype_path_from_db  # noqa
+from igniter.tools import (
+    get_openpype_path_from_db,
+    validate_mongo_connection
+)  # noqa
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
@@ -285,6 +289,10 @@ def _process_arguments() -> tuple:
         if return_code not in [2, 3]:
             sys.exit(return_code)
 
+        idx = sys.argv.index("igniter")
+        sys.argv.pop(idx)
+        sys.argv.insert(idx, "tray")
+
     return use_version, use_staging
 
 
@@ -307,18 +315,30 @@ def _determine_mongodb() -> str:
         # try system keyring
         try:
             openpype_mongo = bootstrap.secure_registry.get_item(
+                "openPypeMongo"
+            )
+        except ValueError:
+            pass
+
+    if openpype_mongo:
+        result, msg = validate_mongo_connection(openpype_mongo)
+        if not result:
+            print(msg)
+            openpype_mongo = None
+
+    if not openpype_mongo:
+        print("*** No DB connection string specified.")
+        print("--- launching setup UI ...")
+
+        result = igniter.open_dialog()
+        if result == 0:
+            raise RuntimeError("MongoDB URL was not defined")
+
+        try:
+            openpype_mongo = bootstrap.secure_registry.get_item(
                 "openPypeMongo")
         except ValueError:
-            print("*** No DB connection string specified.")
-            print("--- launching setup UI ...")
-            import igniter
-            igniter.open_dialog()
-
-            try:
-                openpype_mongo = bootstrap.secure_registry.get_item(
-                    "openPypeMongo")
-            except ValueError:
-                raise RuntimeError("missing mongodb url")
+            raise RuntimeError("Missing MongoDB url")
 
     return openpype_mongo
 

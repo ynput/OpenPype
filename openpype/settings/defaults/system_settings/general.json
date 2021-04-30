@@ -2,15 +2,9 @@
     "studio_name": "Studio name",
     "studio_code": "stu",
     "environment": {
-        "FFMPEG_PATH": {
-            "windows": "{OPENPYPE_REPOS_ROOT}/vendor/bin/ffmpeg_exec/windows/bin",
-            "darwin": "{OPENPYPE_REPOS_ROOT}/vendor/bin/ffmpeg_exec/darwin/bin",
-            "linux": ":{OPENPYPE_REPOS_ROOT}/vendor/bin/ffmpeg_exec/linux"
-        },
         "OPENPYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
         "__environment_keys__": {
             "global": [
-                "FFMPEG_PATH",
                 "OPENPYPE_OCIO_CONFIG"
             ]
         }

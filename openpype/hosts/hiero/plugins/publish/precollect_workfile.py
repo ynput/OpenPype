@@ -1,52 +1,57 @@
 import os
 import pyblish.api
+import hiero.ui
 from openpype.hosts.hiero import api as phiero
 from avalon import api as avalon
+from pprint import pformat
+from openpype.hosts.hiero.otio import hiero_export
+from Qt.QtGui import QPixmap
+import tempfile
 
-
-class PreCollectWorkfile(pyblish.api.ContextPlugin):
+class PrecollectWorkfile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
-    label = "Pre-collect Workfile"
-    order = pyblish.api.CollectorOrder - 0.51
+    label = "Precollect Workfile"
+    order = pyblish.api.CollectorOrder - 0.6
 
     def process(self, context):
+
         asset = avalon.Session["AVALON_ASSET"]
         subset = "workfile"
-
         project = phiero.get_current_project()
-        active_sequence = phiero.get_current_sequence()
-        video_tracks = active_sequence.videoTracks()
-        audio_tracks = active_sequence.audioTracks()
-        current_file = project.path()
-        staging_dir = os.path.dirname(current_file)
-        base_name = os.path.basename(current_file)
+        active_timeline = hiero.ui.activeSequence()
+        fps = active_timeline.framerate().toFloat()
 
-        # get workfile's colorspace properties
-        _clrs = {}
-        _clrs["useOCIOEnvironmentOverride"] =  project.useOCIOEnvironmentOverride()  # noqa
-        _clrs["lutSetting16Bit"] = project.lutSetting16Bit()
-        _clrs["lutSetting8Bit"] = project.lutSetting8Bit()
-        _clrs["lutSettingFloat"] = project.lutSettingFloat()
-        _clrs["lutSettingLog"] = project.lutSettingLog()
-        _clrs["lutSettingViewer"] = project.lutSettingViewer()
-        _clrs["lutSettingWorkingSpace"] = project.lutSettingWorkingSpace()
-        _clrs["lutUseOCIOForExport"] = project.lutUseOCIOForExport()
-        _clrs["ocioConfigName"] = project.ocioConfigName()
-        _clrs["ocioConfigPath"] = project.ocioConfigPath()
+        # adding otio timeline to context
+        otio_timeline = hiero_export.create_otio_timeline()
 
-        # set main project attributes to context
-        context.data["activeProject"] = project
-        context.data["activeSequence"] = active_sequence
-        context.data["videoTracks"] = video_tracks
-        context.data["audioTracks"] = audio_tracks
-        context.data["currentFile"] = current_file
-        context.data["colorspace"] = _clrs
+        # get workfile thumnail paths
+        tmp_staging = tempfile.mkdtemp(prefix="pyblish_tmp_")
+        thumbnail_name = "workfile_thumbnail.png"
+        thumbnail_path = os.path.join(tmp_staging, thumbnail_name)
 
-        self.log.info("currentFile: {}".format(current_file))
+        # search for all windows with name of actual sequence
+        _windows = [w for w in hiero.ui.windowManager().windows()
+                    if active_timeline.name() in w.windowTitle()]
+
+        # export window to thumb path
+        QPixmap.grabWidget(_windows[-1]).save(thumbnail_path, 'png')
+
+        # thumbnail
+        thumb_representation = {
+            'files': thumbnail_name,
+            'stagingDir': tmp_staging,
+            'name': "thumbnail",
+            'thumbnail': True,
+            'ext': "png"
+        }
+
+        # get workfile paths
+        curent_file = project.path()
+        staging_dir, base_name = os.path.split(curent_file)
 
         # creating workfile representation
-        representation = {
+        workfile_representation = {
             'name': 'hrox',
             'ext': 'hrox',
             'files': base_name,
@@ -59,16 +64,21 @@ class PreCollectWorkfile(pyblish.api.ContextPlugin):
             "subset": "{}{}".format(asset, subset.capitalize()),
             "item": project,
             "family": "workfile",
-
-            # version data
-            "versionData": {
-                "colorspace": _clrs
-            },
-
-            # source attribute
-            "sourcePath": current_file,
-            "representations": [representation]
+            "representations": [workfile_representation, thumb_representation]
         }
 
+        # create instance with workfile
         instance = context.create_instance(**instance_data)
+
+        # update context with main project attributes
+        context_data = {
+            "activeProject": project,
+            "otioTimeline": otio_timeline,
+            "currentFile": curent_file,
+            "fps": fps,
+        }
+        context.data.update(context_data)
+
         self.log.info("Creating instance: {}".format(instance))
+        self.log.debug("__ instance.data: {}".format(pformat(instance.data)))
+        self.log.debug("__ context_data: {}".format(pformat(context_data)))
