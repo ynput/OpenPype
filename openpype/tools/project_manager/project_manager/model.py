@@ -73,6 +73,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
     def __init__(self, dbcon, parent=None):
         super(HierarchyModel, self).__init__(parent)
+        self._current_project = None
         self._root_item = None
         self._items_by_id = {}
         self._asset_items_by_name = collections.defaultdict(list)
@@ -91,11 +92,22 @@ class HierarchyModel(QtCore.QAbstractItemModel):
     def _reset_root_item(self):
         self._root_item = RootItem(self)
 
-    def set_project(self, project_doc):
+    def set_project(self, project_name):
+        if self._current_project == project_name:
+            return
+
         self.clear()
 
-        item = ProjectItem(project_doc)
-        self.add_item(item)
+        self._current_project = project_name
+        if not project_name:
+            return
+
+        project_doc = self.dbcon.database[project_name].find_one({
+            "type": "project"
+        })
+        if project_doc:
+            item = ProjectItem(project_doc)
+            self.add_item(item)
 
     def rowCount(self, parent=None):
         if parent is None or not parent.isValid():
