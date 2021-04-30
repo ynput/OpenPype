@@ -198,10 +198,12 @@ class HierarchyView(QtWidgets.QTreeView):
         self._source_model.move_horizontal(indexes, 1)
 
     def _on_left_ctrl_pressed(self):
-        self._source_model.move_vertical(self.currentIndex(), -1)
+        indexes = self.selectedIndexes()
+        self._source_model.move_vertical(indexes, -1)
 
     def _on_right_ctrl_pressed(self):
-        self._source_model.move_vertical(self.currentIndex(), 1)
+        indexes = self.selectedIndexes()
+        self._source_model.move_vertical(indexes, 1)
 
     def _on_enter_pressed(self):
         index = self.currentIndex()

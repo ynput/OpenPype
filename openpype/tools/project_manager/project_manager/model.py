@@ -284,7 +284,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 index = self.index_for_item(item)
                 self.setData(index, True, DUPLICATED_ROLE)
 
-    def move_vertical(self, index, direction):
+    def _move_vertical_single(self, index, direction):
         if not index.isValid():
             return
 
@@ -373,6 +373,73 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self.endMoveRows()
 
         self.index_moved.emit(index)
+
+    def move_vertical(self, indexes, direction):
+        if not indexes:
+            return
+
+        if isinstance(indexes, QtCore.QModelIndex):
+            indexes = [indexes]
+
+        if len(indexes) == 1:
+            self._move_vertical_single(indexes[0], direction)
+            return
+
+        items_by_id = {}
+        for index in indexes:
+            item_id = index.data(IDENTIFIER_ROLE)
+            item = self._items_by_id[item_id]
+            if isinstance(item, (RootItem, ProjectItem)):
+                continue
+
+            if (
+                direction == -1
+                and isinstance(item.parent(), (RootItem, ProjectItem))
+            ):
+                continue
+
+            items_by_id[item_id] = item
+
+        if not items_by_id:
+            return
+
+        parents_by_id = {}
+        items_ids_by_parent_id = collections.defaultdict(set)
+        skip_ids = set(items_by_id.keys())
+        for item_id, item in tuple(items_by_id.items()):
+            item_parent = item.parent()
+
+            parent_ids = set()
+            skip_item = False
+            parent = item_parent
+            while parent is not None:
+                if parent.id in skip_ids:
+                    skip_item = True
+                    skip_ids |= parent_ids
+                    break
+                parent_ids.add(parent.id)
+                parent = parent.parent()
+
+            if skip_item:
+                items_by_id.pop(item_id)
+            else:
+                parents_by_id[item_parent.id] = item_parent
+                items_ids_by_parent_id[item_parent.id].add(item_id)
+
+        if direction == 1:
+            for parent_id, parent in parents_by_id.items():
+                items_ids = items_ids_by_parent_id[parent_id]
+                if len(items_ids) == parent.rowCount():
+                    for item_id in items_ids:
+                        items_by_id.pop(item_id)
+
+        items = tuple(items_by_id.values())
+        if direction == -1:
+            items = reversed(items)
+
+        for item in items:
+            index = self.index_for_item(item)
+            self._move_vertical_single(index, direction)
 
     def _move_horizontal_single(self, index, direction):
         if not index.isValid():
