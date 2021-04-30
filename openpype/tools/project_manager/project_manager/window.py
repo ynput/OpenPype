@@ -17,11 +17,22 @@ class Window(QtWidgets.QWidget):
 
         dbcon = AvalonMongoDB()
 
+        # TOP Project selection
+        project_widget = QtWidgets.QWidget(self)
+
         project_model = ProjectModel(dbcon)
 
-        project_combobox = QtWidgets.QComboBox()
+        project_combobox = QtWidgets.QComboBox(project_widget)
         project_combobox.setModel(project_model)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
+
+        refresh_projects_btn = QtWidgets.QPushButton("Refresh", project_widget)
+
+        project_layout = QtWidgets.QHBoxLayout(project_widget)
+        project_layout.setContentsMargins(0, 0, 0, 0)
+        project_layout.addWidget(refresh_projects_btn, 0)
+        project_layout.addWidget(project_combobox, 0)
+        project_layout.addStretch(1)
 
         hierarchy_model = HierarchyModel(dbcon)
 
