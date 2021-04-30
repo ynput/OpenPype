@@ -631,10 +631,6 @@ class BaseItem:
         if role == DUPLICATED_ROLE:
             return self._is_duplicated
 
-        if role == QtCore.Qt.ForegroundRole:
-            if self._is_duplicated:
-                return QtGui.QColor(255, 0, 0)
-
         if role == QtCore.Qt.ToolTipRole:
             if self._is_duplicated:
                 return "Asset with name \"{}\" already exists.".format(
@@ -642,6 +638,11 @@ class BaseItem:
                 )
 
         if key not in self.columns:
+            return None
+
+        if role == QtCore.Qt.ForegroundRole:
+            if self._is_duplicated and key == "name":
+                return QtGui.QColor(255, 0, 0)
             return None
 
         if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
