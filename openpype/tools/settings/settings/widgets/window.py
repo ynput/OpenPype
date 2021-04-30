@@ -47,6 +47,7 @@ class MainWidget(QtWidgets.QWidget):
         self.setLayout(layout)
 
         self._shadow_widget = ShadowWidget("Working...", self)
+        self._shadow_widget.setVisible(False)
 
         for tab_widget in tab_widgets:
             tab_widget.saved.connect(self._on_tab_save)
