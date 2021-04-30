@@ -1,0 +1,33 @@
+[
+    {
+        "type": "list-strict",
+        "key": "{name}",
+        "label": "{label}",
+        "object_types": [
+            {
+                "label": "R",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 255
+            },
+            {
+                "label": "G",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 255
+            },
+            {
+                "label": "B",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 255
+            },
+            {
+                "label": "A",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 255
+            }
+        ]
+    }
+]

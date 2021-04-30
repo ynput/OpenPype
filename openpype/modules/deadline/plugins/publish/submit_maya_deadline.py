@@ -47,7 +47,7 @@ payload_skeleton_template = {
         "BatchName": None,  # Top-level group name
         "Name": None,  # Job name, as seen in Monitor
         "UserName": None,
-        "Plugin": "MayaPype",
+        "Plugin": "MayaBatch",
         "Frames": "{start}-{end}x{step}",
         "Comment": None,
         "Priority": 50,
@@ -396,7 +396,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             step=int(self._instance.data["byFrameStep"]))
 
         self.payload_skeleton["JobInfo"]["Plugin"] = self._instance.data.get(
-            "mayaRenderPlugin", "MayaPype")
+            "mayaRenderPlugin", "MayaBatch")
 
         self.payload_skeleton["JobInfo"]["BatchName"] = filename
         # Job name, as seen in Monitor
@@ -441,7 +441,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AVALON_ASSET",
             "AVALON_TASK",
             "AVALON_APP_NAME",
-            "OPENPYPE_USERNAME",
             "OPENPYPE_DEV",
             "OPENPYPE_LOG_NO_COLORS"
         ]

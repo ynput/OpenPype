@@ -25,6 +25,9 @@
         }
     },
     "nuke": {
+        "viewer": {
+            "viewerProcess": "sRGB"
+        },
         "workfile": {
             "colorManagement": "Nuke",
             "OCIO_config": "nuke-default",
@@ -102,7 +105,7 @@
                         },
                         {
                             "name": "tile_color",
-                            "value": "0xff0000ff"
+                            "value": "0xadab1dff"
                         },
                         {
                             "name": "channels",

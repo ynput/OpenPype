@@ -26,9 +26,9 @@ def install():
     menu.addCommand(
         name,
         workfiles.show,
-        index=(rm_item[0])
+        index=2
     )
-
+    menu.addSeparator(index=3)
     # replace reset resolution from avalon core to pype's
     name = "Reset Resolution"
     new_name = "Set Resolution"
@@ -63,16 +63,7 @@ def install():
     # add colorspace menu item
     name = "Set Colorspace"
     menu.addCommand(
-        name, lambda: WorkfileSettings().set_colorspace(),
-        index=(rm_item[0] + 2)
-    )
-    log.debug("Adding menu item: {}".format(name))
-
-    # add workfile builder menu item
-    name = "Build Workfile"
-    menu.addCommand(
-        name, lambda: BuildWorkfile().process(),
-        index=(rm_item[0] + 7)
+        name, lambda: WorkfileSettings().set_colorspace()
     )
     log.debug("Adding menu item: {}".format(name))
 
@@ -80,10 +71,19 @@ def install():
     name = "Apply All Settings"
     menu.addCommand(
         name,
-        lambda: WorkfileSettings().set_context_settings(),
-        index=(rm_item[0] + 3)
+        lambda: WorkfileSettings().set_context_settings()
     )
     log.debug("Adding menu item: {}".format(name))
+
+    menu.addSeparator()
+
+    # add workfile builder menu item
+    name = "Build Workfile"
+    menu.addCommand(
+        name, lambda: BuildWorkfile().process()
+    )
+    log.debug("Adding menu item: {}".format(name))
+
 
     # adding shortcuts
     add_shortcuts_from_presets()

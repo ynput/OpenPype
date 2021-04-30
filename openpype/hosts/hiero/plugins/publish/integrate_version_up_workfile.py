@@ -2,7 +2,7 @@ from pyblish import api
 import openpype.api as pype
 
 
-class VersionUpWorkfile(api.ContextPlugin):
+class IntegrateVersionUpWorkfile(api.ContextPlugin):
     """Save as new workfile version"""
 
     order = api.IntegratorOrder + 10.1

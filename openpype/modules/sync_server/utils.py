@@ -3,6 +3,11 @@ from openpype.api import Logger
 log = Logger().get_logger("SyncServer")
 
 
+class ResumableError(Exception):
+    """Error which could be temporary, skip current loop, try next time"""
+    pass
+
+
 class SyncStatus:
     DO_NOTHING = 0
     DO_UPLOAD = 1
