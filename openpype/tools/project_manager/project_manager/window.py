@@ -47,15 +47,12 @@ class Window(QtWidgets.QWidget):
         header.setSectionResizeMode(
             header.logicalIndex(0), QtWidgets.QHeaderView.Stretch
         )
-        checkbox = QtWidgets.QCheckBox(self)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(project_widget)
         main_layout.addWidget(hierarchy_view)
-        main_layout.addWidget(checkbox)
 
         refresh_projects_btn.clicked.connect(self._on_project_refresh)
-        checkbox.toggled.connect(self._on_checkbox)
         project_combobox.currentIndexChanged.connect(self._on_project_change)
 
         self.project_model = project_model
@@ -64,18 +61,9 @@ class Window(QtWidgets.QWidget):
         self.hierarchy_view = hierarchy_view
         self.hierarchy_model = hierarchy_model
 
-        self.checkbox = checkbox
-
-        self.change_edit_mode()
-
         self.resize(1200, 600)
 
         self.refresh_projects()
-
-    def _change_edit_mode(self, value=None):
-        if value is None:
-            value = self.checkbox.isChecked()
-        self.hierarchy_model.change_edit_mode(value)
 
     def _set_project(self, project_name=None):
         self.hierarchy_model.set_project(project_name)
@@ -105,6 +93,3 @@ class Window(QtWidgets.QWidget):
 
     def _on_project_refresh(self):
         self.refresh_projects()
-
-    def _on_checkbox(self, value):
-        self._change_edit_mode(value)

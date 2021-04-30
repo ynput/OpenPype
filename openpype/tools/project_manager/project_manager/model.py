@@ -79,11 +79,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self._asset_items_by_name = collections.defaultdict(list)
         self.dbcon = dbcon
 
-        self._hierarchy_mode = True
         self._reset_root_item()
-
-    def change_edit_mode(self, hiearchy_mode):
-        self._hierarchy_mode = hiearchy_mode
 
     @property
     def items_by_id(self):
