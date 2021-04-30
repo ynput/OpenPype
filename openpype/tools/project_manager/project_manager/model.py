@@ -98,12 +98,37 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if not project_name:
             return
 
-        project_doc = self.dbcon.database[project_name].find_one({
-            "type": "project"
-        })
-        if project_doc:
-            item = ProjectItem(project_doc)
-            self.add_item(item)
+        project_doc = self.dbcon.database[project_name].find_one(
+            {"type": "project"},
+            ProjectItem.query_projection
+        )
+        if not project_doc:
+            return
+
+        project_item = ProjectItem(project_doc)
+        self.add_item(project_item)
+
+        asset_docs = self.dbcon.database[project_name].find(
+            {"type": "asset"},
+            AssetItem.query_projection
+        )
+        asset_docs_by_parent_id = collections.defaultdict(list)
+        for asset_doc in asset_docs:
+            parent_id = asset_doc["data"]["visualParent"]
+            asset_docs_by_parent_id[parent_id].append(asset_doc)
+
+        appending_queue = Queue()
+        appending_queue.put((None, project_item))
+
+        while not appending_queue.empty():
+            parent_id, parent_item = appending_queue.get()
+            if parent_id not in asset_docs_by_parent_id:
+                continue
+
+            for asset_doc in asset_docs_by_parent_id[parent_id]:
+                new_item = AssetItem(asset_doc)
+                self.add_item(new_item, parent_item)
+                appending_queue.put((asset_doc["_id"], new_item))
 
     def rowCount(self, parent=None):
         if parent is None or not parent.isValid():
