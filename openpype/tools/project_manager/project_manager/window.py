@@ -48,20 +48,17 @@ class Window(QtWidgets.QWidget):
             header.logicalIndex(0), QtWidgets.QHeaderView.Stretch
         )
         checkbox = QtWidgets.QCheckBox(self)
-        # btn = QtWidgets.QPushButton("Refresh")
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(project_combobox)
         main_layout.addWidget(hierarchy_view)
         main_layout.addWidget(checkbox)
-        # main_layout.addWidget(btn)
-        # btn.clicked.connect(self._on_refresh)
 
         checkbox.toggled.connect(self._on_checkbox)
 
-        # self.btn = btn
         self.hierarchy_view = hierarchy_view
         self.hierarchy_model = hierarchy_model
+
         self.checkbox = checkbox
 
         self.change_edit_mode()
@@ -100,6 +97,3 @@ class Window(QtWidgets.QWidget):
 
     def _on_checkbox(self, value):
         self.change_edit_mode(value)
-
-    def _on_refresh(self):
-        self.model.clear()
