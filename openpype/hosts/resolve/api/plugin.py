@@ -379,6 +379,7 @@ class ClipLoader:
 
         # create mediaItem in active project bin
         # create clip media
+
         media_pool_item = lib.create_media_pool_item(
             self.data["path"], self.active_bin)
         clip_property = media_pool_item.GetClipProperty()

@@ -164,11 +164,15 @@ def create_media_pool_item(fpath: str,
     # try to search in bin if the clip does not exist
     existing_mpi = get_media_pool_item(fpath, root_bin)
 
+    print(">>>>> existing_mpi: {}".format(existing_mpi))
     if not existing_mpi:
-        media_pool_item = media_storage.AddItemsToMediaPool(fpath)
+        media_pool_item = media_storage.AddItemListToMediaPool(fpath)
         print(media_pool_item)
         # pop the returned dict on first item as resolve data object is such
-        return media_pool_item.pop(1.0)
+        if media_pool_item
+            return media_pool_item.pop()
+        else:
+            return False
     else:
         return existing_mpi
 
@@ -189,7 +193,8 @@ def get_media_pool_item(fpath, root: object = None) -> object:
     fname = os.path.basename(fpath)
 
     for _mpi in root.GetClipList():
-        _mpi_name = _mpi.GetClipProperty("File Name")["File Name"]
+        print(">>> _mpi: {}".format(_mpi.GetClipProperty("File Name")))
+        _mpi_name = _mpi.GetClipProperty("File Name")
         _mpi_name = get_reformated_path(_mpi_name, first=True)
         if fname in _mpi_name:
             return _mpi
