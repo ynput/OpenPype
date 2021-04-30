@@ -28,7 +28,7 @@ class HierarchyView(QtWidgets.QTreeView):
         main_delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(main_delegate)
         self.setAlternatingRowColors(True)
-        self.setSelectionMode(HierarchyView.ContiguousSelection)
+        self.setSelectionMode(HierarchyView.ExtendedSelection)
 
         column_delegates = {}
         column_key_to_index = {}
