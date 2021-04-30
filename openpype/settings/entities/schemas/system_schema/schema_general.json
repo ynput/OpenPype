@@ -33,6 +33,11 @@
             "label": "Versions Repository",
             "multiplatform": true,
             "multipath": true
+        },
+        {
+            "type": "text",
+            "key": "settings_password",
+            "label": "Settings password"
         }
     ]
 }
