@@ -48,24 +48,19 @@ def set_context_settings(asset):
     frame_start = asset["data"].get("frameStart")
     frame_end = asset["data"].get("frameEnd")
 
-    if frame_start and frame_end:
-        handles = asset["data"].get("handles") or 0
-        handle_start = asset["data"].get("handleStart")
-        if handle_start is None:
-            handle_start = handles
-
-        handle_end = asset["data"].get("handleEnd")
-        if handle_end is None:
-            handle_end = handles
-
-        frame_start -= int(handle_start)
-        frame_end += int(handle_end)
-
-        avalon.tvpaint.lib.execute_george(
-            "tv_markin {} set".format(frame_start - 1)
-        )
-        avalon.tvpaint.lib.execute_george(
-            "tv_markout {} set".format(frame_end - 1)
-        )
-    else:
+    if frame_start is None or frame_end is None:
         print("Frame range was not found!")
+        return
+
+    handles = asset["data"].get("handles") or 0
+    handle_start = asset["data"].get("handleStart")
+    handle_end = asset["data"].get("handleEnd")
+    if handle_start is None or handle_end is None:
+        handle_start = handle_end = handles
+
+    # Always start from 0 Mark In and set only Mark Out
+    mark_in = 0
+    mark_out = mark_in + (frame_end - frame_start) + handle_start + handle_end
+
+    avalon.tvpaint.lib.execute_george("tv_markin {} set".format(mark_in))
+    avalon.tvpaint.lib.execute_george("tv_markout {} set".format(mark_out))
