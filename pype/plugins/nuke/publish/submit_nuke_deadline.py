@@ -34,9 +34,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_group = ""
     deadline_department = ""
     deadline_limit_groups = {}
+    deadline_use_gpu = False
     env_allowed_keys = []
     env_search_replace_values = {}
-
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
@@ -208,6 +208,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 # Resolve relative references
                 "ProjectPath": script_path,
                 "AWSAssetFile0": render_path,
+
+                # using GPU by default
+                "UseGpu": self.deadline_use_gpu,
+
                 # Only the specific write node is rendered.
                 "WriteNode": exe_node_name
             },

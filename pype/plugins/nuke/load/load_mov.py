@@ -165,13 +165,12 @@ class LoadMov(api.Loader):
         }
 
         read_name = self.name_expression.format(**name_data)
-
+        read_node = nuke.createNode(
+            "Read",
+            "name {}".format(read_name)
+        )
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
-            read_node = nuke.createNode(
-                "Read",
-                "name {}".format(read_name)
-            )
             read_node["file"].setValue(file)
 
             self.loader_shift(read_node, first)
