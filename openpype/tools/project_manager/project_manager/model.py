@@ -13,6 +13,43 @@ from avalon.vendor import qtawesome
 from Qt import QtCore, QtGui
 
 
+class ProjectModel(QtGui.QStandardItemModel):
+    project_changed = QtCore.Signal()
+
+    def __init__(self, dbcon, *args, **kwargs):
+        self.dbcon = dbcon
+
+        self._project_names = set()
+
+        super(ProjectModel, self).__init__(*args, **kwargs)
+
+    def refresh(self):
+        self.dbcon.Session["AVALON_PROJECT"] = None
+
+        project_items = []
+        database = self.dbcon.database
+        project_names = set()
+        for project_name in database.collection_names():
+            # Each collection will have exactly one project document
+            project_doc = database[project_name].find_one(
+                {"type": "project"},
+                {"name": 1}
+            )
+            if not project_doc:
+                continue
+
+            project_name = project_doc.get("name")
+            if project_name:
+                project_names.add(project_name)
+                project_items.append(QtGui.QStandardItem(project_name))
+
+        self.clear()
+
+        self._project_names = project_names
+
+        self.invisibleRootItem().appendRows(project_items)
+
+
 class HierarchySelectionModel(QtCore.QItemSelectionModel):
     def setCurrentIndex(self, index, command):
         if index.column() > 0:
