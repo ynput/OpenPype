@@ -539,7 +539,7 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
-            child_obj = self.children_by_key.pop(key)
+            self.children_by_key.pop(key)
 
         # Create new children
         for _key, _value in new_value.items():
@@ -577,7 +577,7 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
-            child_obj = self.children_by_key.pop(key)
+            self.children_by_key.pop(key)
 
         # Create new children
         for _key, _value in new_value.items():
