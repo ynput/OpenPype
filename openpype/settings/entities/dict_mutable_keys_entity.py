@@ -541,11 +541,21 @@ class DictMutableKeysEntity(EndpointEntity):
         for key in tuple(self.children_by_key.keys()):
             self.children_by_key.pop(key)
 
+        metadata = self._get_metadata_for_state(OverrideState.DEFAULTS)
+        metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
+        children_label_by_id = {}
+
         # Create new children
         for _key, _value in new_value.items():
-            child_obj = self._add_key(_key)
-            child_obj.update_default_value(_value)
-            child_obj.set_override_state(self._override_state)
+            child_entity = self._add_key(_key)
+            child_entity.update_default_value(_value)
+            label = metadata_labels.get(_key)
+            if label:
+                children_label_by_id[child_entity.id] = label
+
+            child_entity.set_override_state(self._override_state)
+
+        self.children_label_by_id = children_label_by_id
 
         self._ignore_child_changes = False
 
@@ -579,13 +589,24 @@ class DictMutableKeysEntity(EndpointEntity):
         for key in tuple(self.children_by_key.keys()):
             self.children_by_key.pop(key)
 
+        metadata = self._get_metadata_for_state(OverrideState.STUDIO)
+        metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
+        children_label_by_id = {}
+
         # Create new children
         for _key, _value in new_value.items():
-            child_obj = self._add_key(_key)
-            child_obj.update_default_value(_value)
+            child_entity = self._add_key(_key)
+            child_entity.update_default_value(_value)
             if self._has_studio_override:
-                child_obj.update_studio_value(_value)
-            child_obj.set_override_state(self._override_state)
+                child_entity.update_studio_value(_value)
+
+            label = metadata_labels.get(_key)
+            if label:
+                children_label_by_id[child_entity.id] = label
+
+            child_entity.set_override_state(self._override_state)
+
+        self.children_label_by_id = children_label_by_id
 
         self._ignore_child_changes = False
 
