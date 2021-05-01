@@ -277,20 +277,23 @@ class DictMutableKeysEntity(EndpointEntity):
 
         self.on_change()
 
-    def _metadata_for_current_state(self):
+    def _get_metadata_for_state(self, state):
         if (
-            self._override_state is OverrideState.PROJECT
+            state is OverrideState.PROJECT
             and self._project_override_value is not NOT_SET
         ):
             return self._project_override_metadata
 
         if (
-            self._override_state >= OverrideState.STUDIO
+            state >= OverrideState.STUDIO
             and self._studio_override_value is not NOT_SET
         ):
             return self._studio_override_metadata
 
         return self._default_metadata
+
+    def _metadata_for_current_state(self):
+        return self._get_metadata_for_state(self._override_state)
 
     def set_override_state(self, state):
         # Trigger override state change of root if is not same
