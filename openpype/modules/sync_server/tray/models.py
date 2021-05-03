@@ -120,9 +120,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                     actually queried (scrolled a couple of times to list more
                     than single page of records)
         """
-        if self.sync_server.is_paused() or \
-                self.sync_server.is_project_paused(self.project) or \
-                self.is_editing:
+        if self.is_editing:
             return
         self.refresh_started.emit()
         self.beginResetModel()
