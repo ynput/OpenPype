@@ -1,7 +1,12 @@
 from Qt import QtWidgets, QtCore, QtGui
 
-from openpype.api import get_system_settings
 from .resources import get_resource
+
+from openpype.api import get_system_settings
+from openpype.settings.lib import (
+    get_local_settings,
+    save_local_settings
+)
 
 
 class PressHoverButton(QtWidgets.QPushButton):
@@ -35,7 +40,7 @@ class PasswordDialog(QtWidgets.QDialog):
     """Stupidly simple dialog to compare password from general settings."""
     finished = QtCore.Signal(bool)
 
-    def __init__(self, parent):
+    def __init__(self, parent=None, allow_remember=True):
         super(PasswordDialog, self).__init__(parent)
 
         self.setWindowTitle("Settings Password")
@@ -47,6 +52,7 @@ class PasswordDialog(QtWidgets.QDialog):
             system_settings["general"].get("admin_password")
         )
         self._final_result = None
+        self._allow_remember = allow_remember
 
         # Password input
         password_widget = QtWidgets.QWidget(self)
@@ -63,6 +69,7 @@ class PasswordDialog(QtWidgets.QDialog):
         show_password_btn.setStyleSheet((
             "border: none;padding:0.1em;"
         ))
+        show_password_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
 
         password_layout = QtWidgets.QHBoxLayout(password_widget)
         password_layout.setContentsMargins(0, 0, 0, 0)
@@ -75,11 +82,18 @@ class PasswordDialog(QtWidgets.QDialog):
         # Buttons
         buttons_widget = QtWidgets.QWidget(self)
 
+        remember_checkbox = QtWidgets.QCheckBox("Remember", buttons_widget)
+        remember_checkbox.setVisible(allow_remember)
+        remember_checkbox.setStyleSheet((
+            "spacing: 0.5em;"
+        ))
+
         ok_btn = QtWidgets.QPushButton("Ok", buttons_widget)
         cancel_btn = QtWidgets.QPushButton("Cancel", buttons_widget)
 
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
         buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.addWidget(remember_checkbox)
         buttons_layout.addStretch(1)
         buttons_layout.addWidget(ok_btn)
         buttons_layout.addWidget(cancel_btn)
@@ -97,7 +111,13 @@ class PasswordDialog(QtWidgets.QDialog):
         show_password_btn.change_state.connect(self._on_show_password)
 
         self.password_input = password_input
+        self.remember_checkbox = remember_checkbox
         self.message_label = message_label
+
+    def remember_password(self):
+        if not self._allow_remember:
+            return False
+        return self.remember_checkbox.isChecked()
 
     def result(self):
         if self._final_result is None:
@@ -116,10 +136,23 @@ class PasswordDialog(QtWidgets.QDialog):
 
     def _on_ok_click(self):
         input_value = self.password_input.text()
-        if input_value == self._expected_result:
-            self._final_result = input_value
-            self.close()
-        self.message_label.setText("Invalid password. Try it again...")
+        if input_value != self._expected_result:
+            self.message_label.setText("Invalid password. Try it again...")
+            self.password_input.setFocus()
+            return
+
+        if self.remember_password():
+            local_settings = get_local_settings()
+            if "general" not in local_settings:
+                local_settings["general"] = {}
+
+            if "is_admin" not in local_settings["general"]:
+                local_settings["general"]["is_admin"] = True
+
+            save_local_settings(local_settings)
+
+        self._final_result = input_value
+        self.close()
 
     def _on_show_password(self, show_password):
         if show_password:
