@@ -228,6 +228,14 @@ class MongoSettingsHandler(SettingsHandler):
         return self._attribute_keys
 
     def _extract_global_settings(self, data):
+        """Extract global settings data from system settings overrides.
+
+        This is now limited to "general" key in system settings which must be
+        set as group in schemas.
+
+        Returns:
+            dict: Global settings extracted from system settings data.
+        """
         output = {}
         if "general" not in data:
             return output
