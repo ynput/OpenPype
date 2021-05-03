@@ -42,7 +42,8 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
     PAGE_SIZE = 20  # default page size to query for
     REFRESH_SEC = 5000  # in seconds, requery DB for new status
 
-    DEFAULT_PRIORITY = 50
+    refresh_started = QtCore.Signal()
+    refresh_finished = QtCore.Signal()
 
     @property
     def dbcon(self):
@@ -688,7 +689,7 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 'priority': {
                     '$cond': [{'$size': '$order_local.priority'},
                               {'$first': '$order_local.priority'},
-                              self.DEFAULT_PRIORITY]},
+                              self.sync_server.DEFAULT_PRIORITY]},
             }},
             {'$group': {
                 '_id': '$_id',
@@ -860,7 +861,9 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                                        representation.pop(), self.active_site,
                                        priority=value)
         self.is_editing = False
-        self.refresh(None, self._rec_loaded)
+
+        # all other approaches messed up selection to 0th index
+        self.timer.setInterval(0)
 
 
 class SyncRepresentationDetailModel(_SyncRepresentationModel):
@@ -896,7 +899,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         "updated_dt_local",  # local created_dt
         "updated_dt_remote",  # remote created_dt
         "size",  # remote progress
-        "size",  # priority TODO
+        "priority",  # priority
         "status"  # status
     ]
 
@@ -905,8 +908,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         'file': lib.RegexTextFilter('file'),
     }
 
-    refresh_started = QtCore.Signal()
-    refresh_finished = QtCore.Signal()
+    EDITABLE_COLUMNS = ["priority"]
 
     @attr.s
     class SyncRepresentationDetail:
@@ -1072,7 +1074,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                     local_progress,
                     remote_progress,
                     lib.pretty_size(file.get('size', 0)),
-                    1,
+                    repre.get("priority"),
                     lib.STATUS[repre.get("status", -1)],
                     repre.get("tries"),
                     '\n'.join(errors),
@@ -1190,7 +1192,11 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                             "$order_remote.tries",
                             []
                         ]}
-                    ]}}
+                    ]}},
+                'priority': {
+                    '$cond': [{'$size': '$order_local.priority'},
+                              {'$first': '$order_local.priority'},
+                              self.sync_server.DEFAULT_PRIORITY]}
             }},
             {"$project": self.projection}
         ]
@@ -1256,6 +1262,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
             'failed_remote_error': 1,
             'failed_local_error': 1,
             'tries': 1,
+            'priority': 1,
             'status': {
                 '$switch': {
                     'branches': [
@@ -1307,3 +1314,34 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
             },
             'data.path': 1
         }
+
+    def set_priority_data(self, index, value):
+        """
+            Sets 'priority' flag and value on active site for selected reprs.
+
+            Args:
+                index (QItemIndex): selected index from View
+                value (int): priority value
+
+            Updates DB
+        """
+        file_id = self.data(index, Qt.UserRole)
+
+        updated_file = None
+        # conversion from cursor to list
+        representations = list(self.dbcon.find({"type": "representation",
+                                               "_id": self._id}))
+
+        representation = representations.pop()
+        for repre_file in representation["files"]:
+            if repre_file["_id"] == file_id:
+                updated_file = repre_file
+                break
+
+        if representation and updated_file:
+            self.sync_server.update_db(self.project, None, updated_file,
+                                       representation, self.active_site,
+                                       priority=value)
+        self.is_editing = False
+        # all other approaches messed up selection to 0th index
+        self.timer.setInterval(0)
