@@ -848,21 +848,27 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
 
     def set_priority_data(self, index, value):
         """
-            Sets 'priority' flag and value on active site for selected reprs.
+            Sets 'priority' flag and value on local site for selected reprs.
 
             Args:
                 index (QItemIndex): selected index from View
                 value (int): priority value
 
-            Updates DB
+            Updates DB.
+            Potentially should allow set priority to any site when user
+            management is implemented.
         """
+        if not self.can_edit:
+            return
+
         repre_id = self.data(index, Qt.UserRole)
 
         representation = list(self.dbcon.find({"type": "representation",
                                                "_id": repre_id}))
         if representation:
             self.sync_server.update_db(self.project, None, None,
-                                       representation.pop(), self.active_site,
+                                       representation.pop(),
+                                       get_local_site_id(),
                                        priority=value)
         self.is_editing = False
 
@@ -1321,7 +1327,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
 
     def set_priority_data(self, index, value):
         """
-            Sets 'priority' flag and value on active site for selected reprs.
+            Sets 'priority' flag and value on local site for selected reprs.
 
             Args:
                 index (QItemIndex): selected index from View
@@ -1329,6 +1335,9 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
 
             Updates DB
         """
+        if not self.can_edit:
+            return
+
         file_id = self.data(index, Qt.UserRole)
 
         updated_file = None
@@ -1344,7 +1353,7 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
 
         if representation and updated_file:
             self.sync_server.update_db(self.project, None, updated_file,
-                                       representation, self.active_site,
+                                       representation, get_local_site_id(),
                                        priority=value)
         self.is_editing = False
         # all other approaches messed up selection to 0th index
