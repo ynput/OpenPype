@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtGui
+from Qt import QtWidgets, QtGui, QtCore
 from .categories import (
     CategoryState,
     SystemWidget,
@@ -22,6 +22,7 @@ class MainWidget(QtWidgets.QWidget):
 
         self._user_passed = False
         self._reset_on_show = True
+
         self._password_dialog = None
 
         self.setObjectName("MainWidget")
@@ -91,7 +92,11 @@ class MainWidget(QtWidgets.QWidget):
         if self._reset_on_show:
             self.reset()
 
-    def _on_password_dialog(self, password_passed):
+    def _show_password_dialog(self):
+        if self._password_dialog:
+            self._password_dialog.open()
+
+    def _on_password_dialog_close(self, password_passed):
         # Store result for future settings reset
         self._user_passed = password_passed
         # Remove reference to password dialog
@@ -102,6 +107,9 @@ class MainWidget(QtWidgets.QWidget):
             self.close()
 
     def reset(self):
+        if self._password_dialog:
+            return
+
         if not self._user_passed:
             self._user_passed = not is_password_required()
 
@@ -109,14 +117,14 @@ class MainWidget(QtWidgets.QWidget):
 
         if not self._user_passed:
             # Avoid doubled dialog
-            if not self._password_dialog:
-                dialog = PasswordDialog(self)
-                dialog.setModal(True)
-                dialog.finished.connect(self._on_password_dialog)
+            dialog = PasswordDialog(self)
+            dialog.setModal(True)
+            dialog.finished.connect(self._on_password_dialog_close)
 
-                self._password_dialog = dialog
+            self._password_dialog = dialog
 
-                dialog.open()
+            QtCore.QTimer.singleShot(100, self._show_password_dialog)
+
             return
 
         if self._reset_on_show:
