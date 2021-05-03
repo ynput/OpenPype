@@ -121,6 +121,10 @@ catch {
     Exit-WithCode 1
 }
 
+Write-Host ">>> " -NoNewLine -ForegroundColor green
+Write-Host "Making sure submodules are up-to-date ..."
+git submodule update --init --recursive
+
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building OpenPype [ " -NoNewline -ForegroundColor white
 Write-host $openpype_version  -NoNewline -ForegroundColor green
@@ -157,11 +161,12 @@ Write-Host "Reading Poetry ... " -NoNewline
 if (-not (Test-Path -PathType Container -Path "$($env:USERPROFILE)\.poetry\bin")) {
     Write-Host "NOT FOUND" -ForegroundColor Yellow
     Install-Poetry
+    
     Write-Host "INSTALLED" -ForegroundColor Cyan
 } else {
     Write-Host "OK" -ForegroundColor Green
 }
-
+$env:PATH = "$($env:PATH);$($env:USERPROFILE)\.poetry\bin"
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
@@ -172,6 +177,7 @@ Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building OpenPype ..."
+
 $out = & poetry run python setup.py build 2>&1
 if ($LASTEXITCODE -ne 0)
 {

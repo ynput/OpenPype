@@ -14,17 +14,21 @@ else:
 from avalon.api import AvalonMongoDB
 
 import avalon
+
 from openpype.api import (
     Logger,
     Anatomy,
     get_anatomy_settings
 )
+from openpype.lib import ApplicationManager
+
+from .constants import CUST_ATTR_ID_KEY
+from .custom_attributes import get_openpype_attr
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from pymongo import UpdateOne
 import ftrack_api
-from openpype.lib import ApplicationManager
 
 log = Logger.get_logger(__name__)
 
@@ -35,23 +39,6 @@ EntitySchemas = {
     "asset": "openpype:asset-3.0",
     "config": "openpype:config-2.0"
 }
-
-# Group name of custom attributes
-CUST_ATTR_GROUP = "openpype"
-
-# name of Custom attribute that stores mongo_id from avalon db
-CUST_ATTR_ID_KEY = "avalon_mongo_id"
-CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
-
-
-def default_custom_attributes_definition():
-    json_file_path = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "custom_attributes.json"
-    )
-    with open(json_file_path, "r") as json_stream:
-        data = json.load(json_stream)
-    return data
 
 
 def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
@@ -89,39 +76,6 @@ def check_regex(name, entity_type, in_schema=None, schema_patterns=None):
 
 def join_query_keys(keys):
     return ",".join(["\"{}\"".format(key) for key in keys])
-
-
-def get_pype_attr(session, split_hierarchical=True, query_keys=None):
-    custom_attributes = []
-    hier_custom_attributes = []
-    if not query_keys:
-        query_keys = [
-            "id",
-            "entity_type",
-            "object_type_id",
-            "is_hierarchical",
-            "default"
-        ]
-    # TODO remove deprecated "pype" group from query
-    cust_attrs_query = (
-        "select {}"
-        " from CustomAttributeConfiguration"
-        # Kept `pype` for Backwards Compatiblity
-        " where group.name in (\"pype\", \"{}\")"
-    ).format(", ".join(query_keys), CUST_ATTR_GROUP)
-    all_avalon_attr = session.query(cust_attrs_query).all()
-    for cust_attr in all_avalon_attr:
-        if split_hierarchical and cust_attr["is_hierarchical"]:
-            hier_custom_attributes.append(cust_attr)
-            continue
-
-        custom_attributes.append(cust_attr)
-
-    if split_hierarchical:
-        # return tuple
-        return custom_attributes, hier_custom_attributes
-
-    return custom_attributes
 
 
 def get_python_type_for_custom_attribute(cust_attr, cust_attr_type_name=None):
@@ -891,10 +845,37 @@ class SyncEntitiesFactory:
 
             self.entities_dict[parent_id]["children"].remove(id)
 
+    def _query_custom_attributes(self, session, conf_ids, entity_ids):
+        output = []
+        # Prepare values to query
+        attributes_joined = join_query_keys(conf_ids)
+        attributes_len = len(conf_ids)
+        chunk_size = int(5000 / attributes_len)
+        for idx in range(0, len(entity_ids), chunk_size):
+            entity_ids_joined = join_query_keys(
+                entity_ids[idx:idx + chunk_size]
+            )
+
+            call_expr = [{
+                "action": "query",
+                "expression": (
+                    "select value, entity_id from ContextCustomAttributeValue "
+                    "where entity_id in ({}) and configuration_id in ({})"
+                ).format(entity_ids_joined, attributes_joined)
+            }]
+            if hasattr(session, "call"):
+                [result] = session.call(call_expr)
+            else:
+                [result] = session._call(call_expr)
+
+            for item in result["data"]:
+                output.append(item)
+        return output
+
     def set_cutom_attributes(self):
         self.log.debug("* Preparing custom attributes")
         # Get custom attributes and values
-        custom_attrs, hier_attrs = get_pype_attr(
+        custom_attrs, hier_attrs = get_openpype_attr(
             self.session, query_keys=self.cust_attr_query_keys
         )
         ent_types = self.session.query("select id, name from ObjectType").all()
@@ -1000,31 +981,13 @@ class SyncEntitiesFactory:
                     copy.deepcopy(prepared_avalon_attr_ca_id)
                 )
 
-        # TODO query custom attributes by entity_id
-        entity_ids_joined = ", ".join([
-            "\"{}\"".format(id) for id in sync_ids
-        ])
-        attributes_joined = ", ".join([
-            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
-        ])
-
-        cust_attr_query = (
-            "select value, configuration_id, entity_id"
-            " from ContextCustomAttributeValue"
-            " where entity_id in ({}) and configuration_id in ({})"
+        items = self._query_custom_attributes(
+            self.session,
+            list(attribute_key_by_id.keys()),
+            sync_ids
         )
-        call_expr = [{
-            "action": "query",
-            "expression": cust_attr_query.format(
-                entity_ids_joined, attributes_joined
-            )
-        }]
-        if hasattr(self.session, "call"):
-            [values] = self.session.call(call_expr)
-        else:
-            [values] = self.session._call(call_expr)
 
-        for item in values["data"]:
+        for item in items:
             entity_id = item["entity_id"]
             attr_id = item["configuration_id"]
             key = attribute_key_by_id[attr_id]
@@ -1106,28 +1069,14 @@ class SyncEntitiesFactory:
             for key, val in prepare_dict_avalon.items():
                 entity_dict["avalon_attrs"][key] = val
 
-        # Prepare values to query
-        entity_ids_joined = ", ".join([
-            "\"{}\"".format(id) for id in sync_ids
-        ])
-        attributes_joined = ", ".join([
-            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
-        ])
-        avalon_hier = []
-        call_expr = [{
-            "action": "query",
-            "expression": (
-                "select value, entity_id, configuration_id"
-                " from ContextCustomAttributeValue"
-                " where entity_id in ({}) and configuration_id in ({})"
-            ).format(entity_ids_joined, attributes_joined)
-        }]
-        if hasattr(self.session, "call"):
-            [values] = self.session.call(call_expr)
-        else:
-            [values] = self.session._call(call_expr)
+        items = self._query_custom_attributes(
+            self.session,
+            list(attribute_key_by_id.keys()),
+            sync_ids
+        )
 
-        for item in values["data"]:
+        avalon_hier = []
+        for item in items:
             value = item["value"]
             # WARNING It is not possible to propage enumerate hierachical
             # attributes with multiselection 100% right. Unseting all values
@@ -1256,19 +1205,21 @@ class SyncEntitiesFactory:
                     if not msg or not items:
                         continue
                     self.report_items["warning"][msg] = items
-                tasks = {}
-                for task_type in task_types:
-                    task_type_name = task_type["name"]
-                    # Set short name to empty string
-                    # QUESTION Maybe better would be to lower and remove spaces
-                    #   from task type name.
-                    tasks[task_type_name] = {
-                        "short_name": ""
-                    }
 
                 current_project_anatomy_data = get_anatomy_settings(
                     project_name, exclude_locals=True
                 )
+                anatomy_tasks = current_project_anatomy_data["tasks"]
+                tasks = {}
+                default_type_data = {
+                    "short_name": ""
+                }
+                for task_type in task_types:
+                    task_type_name = task_type["name"]
+                    tasks[task_type_name] = copy.deepcopy(
+                        anatomy_tasks.get(task_type_name)
+                        or default_type_data
+                    )
 
                 project_config = {
                     "tasks": tasks,
@@ -2511,7 +2462,7 @@ class SyncEntitiesFactory:
         if new_entity_id not in p_chilren:
             self.entities_dict[parent_id]["children"].append(new_entity_id)
 
-        cust_attr, _ = get_pype_attr(self.session)
+        cust_attr, _ = get_openpype_attr(self.session)
         for _attr in cust_attr:
             key = _attr["key"]
             if key not in av_entity["data"]:

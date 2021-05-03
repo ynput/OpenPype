@@ -68,50 +68,45 @@ def menu_install():
 
     menu.addSeparator()
 
-    workfiles_action = menu.addAction("Work Files...")
+    workfiles_action = menu.addAction("Work Files ...")
     workfiles_action.setIcon(QtGui.QIcon("icons:Position.png"))
     workfiles_action.triggered.connect(launch_workfiles_app)
 
-    default_tags_action = menu.addAction("Create Default Tags...")
+    default_tags_action = menu.addAction("Create Default Tags")
     default_tags_action.setIcon(QtGui.QIcon("icons:Position.png"))
     default_tags_action.triggered.connect(tags.add_tags_to_workfile)
 
     menu.addSeparator()
 
-    publish_action = menu.addAction("Publish...")
+    publish_action = menu.addAction("Publish ...")
     publish_action.setIcon(QtGui.QIcon("icons:Output.png"))
     publish_action.triggered.connect(
         lambda *args: publish(hiero.ui.mainWindow())
     )
 
-    creator_action = menu.addAction("Create...")
+    creator_action = menu.addAction("Create ...")
     creator_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
     creator_action.triggered.connect(creator.show)
 
-    loader_action = menu.addAction("Load...")
+    loader_action = menu.addAction("Load ...")
     loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
     loader_action.triggered.connect(cbloader.show)
 
-    sceneinventory_action = menu.addAction("Manage...")
+    sceneinventory_action = menu.addAction("Manage ...")
     sceneinventory_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
     sceneinventory_action.triggered.connect(sceneinventory.show)
     menu.addSeparator()
 
-    reload_action = menu.addAction("Reload pipeline...")
-    reload_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
-    reload_action.triggered.connect(reload_config)
+    if os.getenv("OPENPYPE_DEVELOP"):
+        reload_action = menu.addAction("Reload pipeline")
+        reload_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
+        reload_action.triggered.connect(reload_config)
 
     menu.addSeparator()
-    apply_colorspace_p_action = menu.addAction("Apply Colorspace Project...")
+    apply_colorspace_p_action = menu.addAction("Apply Colorspace Project")
     apply_colorspace_p_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
     apply_colorspace_p_action.triggered.connect(apply_colorspace_project)
 
-    apply_colorspace_c_action = menu.addAction("Apply Colorspace Clips...")
+    apply_colorspace_c_action = menu.addAction("Apply Colorspace Clips")
     apply_colorspace_c_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
     apply_colorspace_c_action.triggered.connect(apply_colorspace_clips)
-
-    self.context_label_action = context_label_action
-    self.workfile_actions = workfiles_action
-    self.default_tags_action = default_tags_action
-    self.publish_action = publish_action
-    self.reload_action = reload_action

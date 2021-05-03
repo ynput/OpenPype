@@ -17,12 +17,6 @@ from .bootstrap_repos import (
 from .tools import validate_mongo_connection
 
 
-class InstallResult(QObject):
-    """Used to pass results back."""
-    def __init__(self, value):
-        self.status = value
-
-
 class InstallThread(QThread):
     """Install Worker thread.
 
@@ -36,15 +30,22 @@ class InstallThread(QThread):
     """
     progress = Signal(int)
     message = Signal((str, bool))
-    finished = Signal(object)
 
-    def __init__(self, callback, parent=None,):
+    def __init__(self, parent=None,):
         self._mongo = None
         self._path = None
-        self.result_callback = callback
+        self._result = None
 
         QThread.__init__(self, parent)
-        self.finished.connect(callback)
+
+    def result(self):
+        """Result of finished installation."""
+        return self._result
+
+    def _set_result(self, value):
+        if self._result is not None:
+            raise AssertionError("BUG: Result was set more than once!")
+        self._result = value
 
     def run(self):
         """Thread entry point.
@@ -71,18 +72,18 @@ class InstallThread(QThread):
                 if not os.getenv("OPENPYPE_MONGO"):
                     # try to get it from settings registry
                     try:
-                        self._mongo = bs.registry.get_secure_item(
+                        self._mongo = bs.secure_registry.get_item(
                             "openPypeMongo")
                     except ValueError:
                         self.message.emit(
                             "!!! We need MongoDB URL to proceed.", True)
-                        self.finished.emit(InstallResult(-1))
+                        self._set_result(-1)
                         return
                 else:
                     self._mongo = os.getenv("OPENPYPE_MONGO")
             else:
                 self.message.emit("Saving mongo connection string ...", False)
-                bs.registry.set_secure_item("openPypeMongo", self._mongo)
+                bs.secure_registry.set_item("openPypeMongo", self._mongo)
 
             os.environ["OPENPYPE_MONGO"] = self._mongo
 
@@ -101,7 +102,7 @@ class InstallThread(QThread):
                     self.message.emit("Skipping OpenPype install ...", False)
                     if detected[-1].path.suffix.lower() == ".zip":
                         bs.extract_openpype(detected[-1])
-                    self.finished.emit(InstallResult(0))
+                    self._set_result(0)
                     return
 
                 if OpenPypeVersion(version=local_version).get_main_version() == detected[-1].get_main_version():  # noqa
@@ -110,7 +111,7 @@ class InstallThread(QThread):
                         f"currently running {local_version}"
                     ), False)
                     self.message.emit("Skipping OpenPype install ...", False)
-                    self.finished.emit(InstallResult(0))
+                    self._set_result(0)
                     return
 
                 self.message.emit((
@@ -126,13 +127,13 @@ class InstallThread(QThread):
                     if not openpype_version:
                         self.message.emit(
                             f"!!! Install failed - {openpype_version}", True)
-                        self.finished.emit(InstallResult(-1))
+                        self._set_result(-1)
                         return
                     self.message.emit(f"Using: {openpype_version}", False)
                     bs.install_version(openpype_version)
                     self.message.emit(f"Installed as {openpype_version}", False)
                     self.progress.emit(100)
-                    self.finished.emit(InstallResult(1))
+                    self._set_result(1)
                     return
                 else:
                     self.message.emit("None detected.", False)
@@ -144,7 +145,7 @@ class InstallThread(QThread):
             if not local_openpype:
                 self.message.emit(
                     f"!!! Install failed - {local_openpype}", True)
-                self.finished.emit(InstallResult(-1))
+                self._set_result(-1)
                 return
 
             try:
@@ -154,11 +155,12 @@ class InstallThread(QThread):
                     OpenPypeVersionIOError) as e:
                 self.message.emit(f"Installed failed: ", True)
                 self.message.emit(str(e), True)
-                self.finished.emit(InstallResult(-1))
+                self._set_result(-1)
                 return
 
             self.message.emit(f"Installed as {local_openpype}", False)
             self.progress.emit(100)
+            self._set_result(1)
             return
         else:
             # if we have mongo connection string, validate it, set it to
@@ -167,9 +169,9 @@ class InstallThread(QThread):
                 if not validate_mongo_connection(self._mongo):
                     self.message.emit(
                         f"!!! invalid mongo url {self._mongo}", True)
-                    self.finished.emit(InstallResult(-1))
+                    self._set_result(-1)
                     return
-                bs.registry.set_secure_item("openPypeMongo", self._mongo)
+                bs.secure_registry.set_item("openPypeMongo", self._mongo)
                 os.environ["OPENPYPE_MONGO"] = self._mongo
 
             self.message.emit(f"processing {self._path}", True)
@@ -177,11 +179,11 @@ class InstallThread(QThread):
 
             if not repo_file:
                 self.message.emit("!!! Cannot install", True)
-                self.finished.emit(InstallResult(-1))
+                self._set_result(-1)
                 return
 
         self.progress.emit(100)
-        self.finished.emit(InstallResult(1))
+        self._set_result(1)
         return
 
     def set_path(self, path: str) -> None:

@@ -29,13 +29,11 @@
                     "template_data": [
                         {
                             "app_variant_label": "20",
-                            "app_variant": "20",
-                            "app_name": "harmony"
+                            "app_variant": "20"
                         },
                         {
                             "app_variant_label": "17",
-                            "app_variant": "17",
-                            "app_name": "harmony"
+                            "app_variant": "17"
                         }
                     ]
                 }

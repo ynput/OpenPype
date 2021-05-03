@@ -343,7 +343,7 @@ class ListEntity(EndpointEntity):
         return output
 
     def _discard_changes(self, on_change_trigger):
-        if self._override_state is OverrideState.NOT_DEFINED:
+        if not self.can_discard_changes:
             return
 
         not_set = object()
@@ -405,7 +405,7 @@ class ListEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
-        if self._override_state is not OverrideState.STUDIO:
+        if not self.can_remove_from_studio_default:
             return
 
         value = self._default_value
@@ -433,10 +433,7 @@ class ListEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if self._override_state is not OverrideState.PROJECT:
-            return
-
-        if not self.has_project_override:
+        if not self.can_remove_from_project_override:
             return
 
         if self._has_studio_override:

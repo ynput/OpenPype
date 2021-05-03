@@ -146,35 +146,6 @@
                     "label": "Viewer LUT raw"
                 }
             ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
-            "key": "NukeSubmitDeadline",
-            "label": "NukeSubmitDeadline",
-            "is_group": true,
-            "children": [
-                {
-                    "type": "number",
-                    "key": "deadline_priority",
-                    "label": "deadline_priority"
-                },
-                {
-                    "type": "text",
-                    "key": "deadline_pool",
-                    "label": "deadline_pool"
-                },
-                {
-                    "type": "text",
-                    "key": "deadline_pool_secondary",
-                    "label": "deadline_pool_secondary"
-                },
-                {
-                    "type": "number",
-                    "key": "deadline_chunk_size",
-                    "label": "deadline_chunk_size"
-                }
-            ]
         }
     ]
 }

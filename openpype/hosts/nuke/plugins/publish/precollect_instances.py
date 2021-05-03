@@ -55,11 +55,6 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
             families_ak = avalon_knob_data.get("families", [])
             families = list()
 
-            if families_ak:
-                families.append(families_ak.lower())
-
-            families.append(family)
-
             # except disabled nodes but exclude backdrops in test
             if ("nukenodes" not in family) and (node["disable"].value()):
                 continue
@@ -80,31 +75,34 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
 
             # Add all nodes in group instances.
             if node.Class() == "Group":
-                # check if it is write node in family
-                if "write" in families:
+                # only alter families for render family
+                if "write" in families_ak.lower():
                     target = node["render"].value()
                     if target == "Use existing frames":
                         # Local rendering
                         self.log.info("flagged for no render")
-                        families.append("render")
                     elif target == "Local":
                         # Local rendering
                         self.log.info("flagged for local render")
-                        families.append("{}.local".format("render"))
+                        families.append("{}.local".format(family))
+                        family = families_ak.lower()
                     elif target == "On farm":
                         # Farm rendering
                         self.log.info("flagged for farm render")
                         instance.data["transfer"] = False
-                        families.append("{}.farm".format("render"))
-                    if "render" in families:
-                        families.remove("render")
-                        family = "write"
+                        families.append("{}.farm".format(family))
+                        family = families_ak.lower()
 
                 node.begin()
                 for i in nuke.allNodes():
                     instance.append(i)
                 node.end()
 
+            if not families and families_ak and family not in [
+                    "render", "prerender"]:
+                families.append(families_ak.lower())
+
+            self.log.debug("__ family: `{}`".format(family))
             self.log.debug("__ families: `{}`".format(families))
 
             # Get format
@@ -118,7 +116,9 @@ class PreCollectNukeInstances(pyblish.api.ContextPlugin):
                 anlib.add_publish_knob(node)
 
             # sync workfile version
-            if not next((f for f in families
+            _families_test = [family] + families
+            self.log.debug("__ _families_test: `{}`".format(_families_test))
+            if not next((f for f in _families_test
                          if "prerender" in f),
                         None) and self.sync_workfile_version:
                 # get version to instance for integration

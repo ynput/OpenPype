@@ -160,7 +160,7 @@ main () {
     echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
   fi
 
-  poetry install $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
+  poetry install --no-root $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
 
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
@@ -172,6 +172,7 @@ main () {
   poetry run python -m pip install --upgrade pip
   poetry run pip install --force-reinstall setuptools
   poetry run pip install --force-reinstall wheel
+  poetry run python -m pip install --force-reinstall pip
 }
 
 main -3

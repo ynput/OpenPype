@@ -22,7 +22,6 @@ class LauncherAction(PypeModule, ITrayAction):
         # Register actions
         if self.tray_initialized:
             from openpype.tools.launcher import actions
-            # actions.register_default_actions()
             actions.register_config_actions()
             actions_paths = self.manager.collect_plugin_paths()["actions"]
             actions.register_actions_from_paths(actions_paths)

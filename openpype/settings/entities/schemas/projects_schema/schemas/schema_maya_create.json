@@ -5,6 +5,31 @@
     "label": "Creator plugins",
     "children": [
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CreateLook",
+            "label": "Create Look",
+            "checkbox_key": "enabled",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "make_tx",
+                    "label": "Make tx files"
+                },
+                {
+                    "type": "list",
+                    "key": "defaults",
+                    "label": "Default Subsets",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
             "type": "schema_template",
             "name": "template_create_plugin",
             "template_data": [
@@ -27,10 +52,6 @@
                 {
                     "key": "CreateLayout",
                     "label": "Create Layout"
-                },
-                {
-                    "key": "CreateLook",
-                    "label": "Create Look"
                 },
                 {
                     "key": "CreateMayaScene",

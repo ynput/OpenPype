@@ -6,7 +6,9 @@
             "load": "ctrl+alt+l",
             "manage": "ctrl+alt+m",
             "build_workfile": "ctrl+alt+b"
-        }
+        },
+        "open_workfile_at_start": false,
+        "create_initial_workfile": true
     },
     "create": {
         "CreateWriteRender": {
@@ -84,12 +86,6 @@
         },
         "ExtractSlateFrame": {
             "viewer_lut_raw": false
-        },
-        "NukeSubmitDeadline": {
-            "deadline_priority": 50,
-            "deadline_pool": "",
-            "deadline_pool_secondary": "",
-            "deadline_chunk_size": 1
         }
     },
     "load": {

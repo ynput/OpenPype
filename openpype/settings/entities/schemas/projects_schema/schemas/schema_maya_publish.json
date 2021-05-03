@@ -283,34 +283,6 @@
                     "is_list": true
                 }
             ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
-            "key": "MayaSubmitDeadline",
-            "label": "Submit maya job to deadline",
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "enum",
-                    "key": "tile_assembler_plugin",
-                    "label": "Tile Assembler Plugin",
-                    "multiselection": false,
-                    "enum_items": [
-                        {
-                            "DraftTileAssembler": "Draft Tile Assembler"
-                        },
-                        {
-                            "oiio": "Open Image IO"
-                        }
-                    ]
-                }
-            ]
         }
     ]
 }

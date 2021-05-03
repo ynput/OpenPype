@@ -292,6 +292,9 @@ class UnrealLayoutLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
+    animation_creator_name = "CreateAnimation"
+    setdress_creator_name = "CreateSetDress"
+
     def _remove_objects(self, objects):
         for obj in list(objects):
             if obj.type == 'ARMATURE':
@@ -368,7 +371,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
             location.get('z')
         )
         obj.rotation_euler = (
-            rotation.get('x'),
+            rotation.get('x') + math.pi / 2,
             -rotation.get('y'),
             -rotation.get('z')
         )

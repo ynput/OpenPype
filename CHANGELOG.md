@@ -2,15 +2,27 @@
 
 ## 3.0.0 - Unreleased
 
-**Major Features:**
 ### Configuration
 - Studio Settings GUI: no more json configuration files
-- Local Settings GUI
 - OpenPype Modules can be turned on and off
-- Easy to add Applications
+- Easy to add Application versions
 - Per Project Environment and plugin management
 - Robust profile system for creating reviewables and burnins, with filtering based on Application, Task and data family
-Configurable publish plugins. Options to make any validator or extractor, optional or disabled.
+Configurable publish plugins. 
+- Options to make any validator or extractor, optional or disabled.
+- Color Management is now unified under anatomy settings.
+- Subset naming and gouping 
+- Too many individual configurable option to list in this changelog :)
+- All project attributes can now be set directly in OpenPype settings.
+- Studio Setting can be locked to prevent unwanted artist changes. 
+
+
+### Local Settings
+- Local Settings GUI where users can change certain option on individual basis
+    - Application executables
+    - Project roots
+    - Project site sync settings
+
 ### Build, Installation and Deployments
 - No requirements on artist machine
 - Fully distributed workflow possible
@@ -20,10 +32,73 @@ Configurable publish plugins. Options to make any validator or extractor, option
 - Easy Build system
 - Safe versioning system with staging and production options
 
-### Site Sync
+### Misc
+- System and diagnostic info tool in the tray
+- Launching application from Launcher indicates activity
+- All project roots are now named. Single root project are now achieved by having a single named root in the project anatomy.
+- Basic support for task types, on top of task names.
+- Timer now change automatically when the context is switched inside running application
+- 'Master" versions have been renamed to "Hero"
 
-to be continued...
+### Ftrack
+- Actions have customisable roles.
+- Settings on all actions are updated live and don't need openpype restart.
 
+### Editorial
+- Fully OTIO based editorial publishing.
+- Completely re-done Hiero publishing to be a lot simpler and faster.
+- Consistent conforming from Resolve, Hiero and Standalone Publisher *
+
+### Backend
+- OpenPype and Avalon now always share the same database (in 2.x is was possible to split them)
+- Major codebase refactoring to allow for better CI, versioning and control of individual integrations
+- OTIO is bundled with build
+- OIIO is bundled with build
+- FFMPEG is bundled with build
+- Rest API and host WebSocket servers have been unified into a single local webserver
+- Maya look assigner has been integrated into the main codebase
+- Publish GUI has been integrated into the main codebase
+- Studio and Project settings overrides are now stored in Mongo
+
+### Site Sync (beta)
+- Synchronisation of published files between workstations and central storage.
+- Ability to add arbitrary storage providers to the Site Sync system.
+- Default setup includes Disk and Google Drive providers as examples.
+- Access to availability information from Loader and Scene Manager.
+- Download / Upload queue with filtering, error and status reporting.
+- Site sync can be configured on a per-project basis
+- Bulk upload and download from the loader
+
+
+## [2.16.1](https://github.com/pypeclub/pype/tree/2.16.1) (2021-04-13)
+
+[Full Changelog](https://github.com/pypeclub/pype/compare/2.16.0...2.16.1)
+
+**Enhancements:**
+
+- Nuke: comp renders mix up [\#1301](https://github.com/pypeclub/pype/pull/1301)
+- Validate project settings [\#1297](https://github.com/pypeclub/pype/pull/1297)
+- After Effects: added SubsetManager [\#1234](https://github.com/pypeclub/pype/pull/1234)
+
+**Fixed bugs:**
+
+- Ftrack custom attributes in bulks [\#1312](https://github.com/pypeclub/pype/pull/1312)
+- Ftrack optional pypclub role [\#1303](https://github.com/pypeclub/pype/pull/1303)
+- AE remove orphaned instance from workfile - fix self.stub [\#1282](https://github.com/pypeclub/pype/pull/1282)
+- Avalon schema names [\#1242](https://github.com/pypeclub/pype/pull/1242)
+- Handle duplication of Task name [\#1226](https://github.com/pypeclub/pype/pull/1226)
+- Modified path of plugin loads for Harmony and TVPaint [\#1217](https://github.com/pypeclub/pype/pull/1217)
+- Regex checks in profiles filtering [\#1214](https://github.com/pypeclub/pype/pull/1214)
+- Bulk mov strict task [\#1204](https://github.com/pypeclub/pype/pull/1204)
+- Update custom ftrack session attributes [\#1202](https://github.com/pypeclub/pype/pull/1202)
+- Nuke: write node colorspace ignore `default\(\)` label [\#1199](https://github.com/pypeclub/pype/pull/1199)
+- Nuke: reverse search to make it more versatile [\#1178](https://github.com/pypeclub/pype/pull/1178)
+
+**Merged pull requests:**
+
+- Forward compatible ftrack group [\#1243](https://github.com/pypeclub/pype/pull/1243)
+- Error message in pyblish UI [\#1206](https://github.com/pypeclub/pype/pull/1206)
+- Nuke: deadline submission with search replaced env values from preset [\#1194](https://github.com/pypeclub/pype/pull/1194)
 
 ## [2.16.0](https://github.com/pypeclub/pype/tree/2.16.0) (2021-03-22)
 
@@ -241,19 +316,19 @@ to be continued...
 - Maya: Vray handling of default aov [\#748](https://github.com/pypeclub/pype/pull/748)
 - Maya: multiple renderable cameras in layer didn't work [\#744](https://github.com/pypeclub/pype/pull/744)
 - Ftrack integrate custom attributes fix [\#742](https://github.com/pypeclub/pype/pull/742)
-## [2.14.0](https://github.com/pypeclub/pype/tree/2.14.0) (2020-11-24)
+
+## [2.14.0](https://github.com/pypeclub/pype/tree/2.14.0) (2020-11-23)
 
 [Full Changelog](https://github.com/pypeclub/pype/compare/2.13.7...2.14.0)
 
 **Enhancements:**
 
+- Render publish plugins abstraction [\#687](https://github.com/pypeclub/pype/pull/687)
 - Shot asset build trigger status [\#736](https://github.com/pypeclub/pype/pull/736)
 - Maya: add camera rig publishing option [\#721](https://github.com/pypeclub/pype/pull/721)
 - Sort instances by label in pyblish gui  [\#719](https://github.com/pypeclub/pype/pull/719)
 - Synchronize ftrack hierarchical and shot attributes [\#716](https://github.com/pypeclub/pype/pull/716)
 - 686 standalonepublisher editorial from image sequences [\#699](https://github.com/pypeclub/pype/pull/699)
-- TV Paint: initial implementation of creators and local rendering [\#693](https://github.com/pypeclub/pype/pull/693)
-- Render publish plugins abstraction [\#687](https://github.com/pypeclub/pype/pull/687)
 - Ask user to select non-default camera from scene or create a new. [\#678](https://github.com/pypeclub/pype/pull/678)
 - TVPaint: image loader with options [\#675](https://github.com/pypeclub/pype/pull/675)
 - Maya: Camera name can be added to burnins. [\#674](https://github.com/pypeclub/pype/pull/674)
@@ -262,25 +337,33 @@ to be continued...
 
 **Fixed bugs:**
 
+- Bugfix Hiero Review / Plate representation publish [\#743](https://github.com/pypeclub/pype/pull/743)
+- Asset fetch second fix [\#726](https://github.com/pypeclub/pype/pull/726)
 - TVPaint extract review fix [\#740](https://github.com/pypeclub/pype/pull/740)
 - After Effects: Review were not being sent to ftrack [\#738](https://github.com/pypeclub/pype/pull/738)
-- Asset fetch second fix [\#726](https://github.com/pypeclub/pype/pull/726)
 - Maya: vray proxy was not loading [\#722](https://github.com/pypeclub/pype/pull/722)
 - Maya: Vray expected file fixes [\#682](https://github.com/pypeclub/pype/pull/682)
+- Missing audio on farm submission. [\#639](https://github.com/pypeclub/pype/pull/639)
 
 **Deprecated:**
 
 - Removed artist view from pyblish gui [\#717](https://github.com/pypeclub/pype/pull/717)
 - Maya: disable legacy override check for cameras [\#715](https://github.com/pypeclub/pype/pull/715)
 
+**Merged pull requests:**
+
+- Application manager [\#728](https://github.com/pypeclub/pype/pull/728)
+- Feature \#664 3.0 lib refactor [\#706](https://github.com/pypeclub/pype/pull/706)
+- Lib from illicit part 2 [\#700](https://github.com/pypeclub/pype/pull/700)
+- 3.0 lib refactor - path tools [\#697](https://github.com/pypeclub/pype/pull/697)
 
 ## [2.13.7](https://github.com/pypeclub/pype/tree/2.13.7) (2020-11-19)
 
 [Full Changelog](https://github.com/pypeclub/pype/compare/2.13.6...2.13.7)
 
-**Merged pull requests:**
+**Fixed bugs:**
 
-- fix\(SP\): getting fps from context instead of nonexistent entity  [\#729](https://github.com/pypeclub/pype/pull/729)
+- Standalone Publisher: getting fps from context instead of nonexistent entity  [\#729](https://github.com/pypeclub/pype/pull/729)
 
 # Changelog
 

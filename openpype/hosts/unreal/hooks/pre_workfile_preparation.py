@@ -23,8 +23,8 @@ class UnrealPrelaunchHook(PreLaunchHook):
     def execute(self):
         asset_name = self.data["asset_name"]
         task_name = self.data["task_name"]
-        workdir = self.env["AVALON_WORKDIR"]
-        engine_version = self.app_name.split("_")[-1]
+        workdir = self.launch_context.env["AVALON_WORKDIR"]
+        engine_version = self.app_name.split("/")[-1].replace("-", ".")
         unreal_project_name = f"{asset_name}_{task_name}"
 
         # Unreal is sensitive about project names longer then 20 chars
@@ -81,8 +81,8 @@ class UnrealPrelaunchHook(PreLaunchHook):
             # Set "AVALON_UNREAL_PLUGIN" to current process environment for
             # execution of `create_unreal_project`
             env_key = "AVALON_UNREAL_PLUGIN"
-            if self.env.get(env_key):
-                os.environ[env_key] = self.env[env_key]
+            if self.launch_context.env.get(env_key):
+                os.environ[env_key] = self.launch_context.env[env_key]
 
             unreal_lib.create_unreal_project(
                 unreal_project_name,

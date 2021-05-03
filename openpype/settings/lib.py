@@ -4,6 +4,9 @@ import functools
 import logging
 import platform
 import copy
+from .exceptions import (
+    SaveWarningExc
+)
 from .constants import (
     M_OVERRIDEN_KEY,
     M_ENVIRONMENT_KEY,
@@ -101,8 +104,14 @@ def save_studio_settings(data):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         data(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
     from openpype.modules import ModulesManager, ISettingsChangeListener
@@ -110,15 +119,25 @@ def save_studio_settings(data):
     old_data = get_system_settings()
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
     new_data = apply_overrides(default_values, copy.deepcopy(data))
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager(_system_settings=new_data)
+
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_system_settings_save(old_data, new_data, changes)
+            try:
+                module.on_system_settings_save(
+                    old_data, new_data, changes, new_data_with_metadata
+                )
+            except SaveWarningExc as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_studio_settings(data)
+    _SETTINGS_HANDLER.save_studio_settings(data)
+    if warnings:
+        raise SaveWarningExc(warnings)
 
 
 @require_handler
@@ -130,10 +149,16 @@ def save_project_settings(project_name, overrides):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         project_name (str): Project name for which overrides are passed.
             Default project's value is None.
         overrides(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
     from openpype.modules import ModulesManager, ISettingsChangeListener
@@ -151,17 +176,29 @@ def save_project_settings(project_name, overrides):
         old_data = get_default_project_settings(exclude_locals=True)
         new_data = apply_overrides(default_values, copy.deepcopy(overrides))
 
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager()
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_project_settings_save(
-                old_data, new_data, project_name, changes
-            )
+            try:
+                module.on_project_settings_save(
+                    old_data,
+                    new_data,
+                    project_name,
+                    changes,
+                    new_data_with_metadata
+                )
+            except SaveWarningExc as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
+    _SETTINGS_HANDLER.save_project_settings(project_name, overrides)
+
+    if warnings:
+        raise SaveWarningExc(warnings)
 
 
 @require_handler
@@ -173,10 +210,16 @@ def save_project_anatomy(project_name, anatomy_data):
 
     For saving of data cares registered Settings handler.
 
+    Warning messages are not logged as module raising them should log it within
+    it's logger.
+
     Args:
         project_name (str): Project name for which overrides are passed.
             Default project's value is None.
         overrides(dict): Overrides data with metadata defying studio overrides.
+
+    Raises:
+        SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
     from openpype.modules import ModulesManager, ISettingsChangeListener
@@ -194,17 +237,29 @@ def save_project_anatomy(project_name, anatomy_data):
         old_data = get_default_anatomy_settings(exclude_locals=True)
         new_data = apply_overrides(default_values, copy.deepcopy(anatomy_data))
 
+    new_data_with_metadata = copy.deepcopy(new_data)
     clear_metadata_from_settings(new_data)
 
     changes = calculate_changes(old_data, new_data)
     modules_manager = ModulesManager()
+    warnings = []
     for module in modules_manager.get_enabled_modules():
         if isinstance(module, ISettingsChangeListener):
-            module.on_project_anatomy_save(
-                old_data, new_data, changes, project_name
-            )
+            try:
+                module.on_project_anatomy_save(
+                    old_data,
+                    new_data,
+                    changes,
+                    project_name,
+                    new_data_with_metadata
+                )
+            except SaveWarningExc as exc:
+                warnings.extend(exc.warnings)
 
-    return _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+    _SETTINGS_HANDLER.save_project_anatomy(project_name, anatomy_data)
+
+    if warnings:
+        raise SaveWarningExc(warnings)
 
 
 @require_handler
@@ -489,7 +544,7 @@ def apply_local_settings_on_system_settings(system_settings, local_settings):
             # TODO This is temporary fix until launch arguments will be stored
             #   per platform and not per executable.
             # - local settings store only executable
-            new_executables = [[executable, ""]]
+            new_executables = [executable]
             new_executables.extend(platform_executables)
             variants[app_name]["executables"] = new_executables
 
@@ -645,13 +700,22 @@ def apply_local_settings_on_project_settings(
         sync_server_config["remote_site"] = remote_site
 
 
-def get_system_settings(clear_metadata=True):
+def get_system_settings(clear_metadata=True, exclude_locals=None):
     """System settings with applied studio overrides."""
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
     studio_values = get_studio_system_settings_overrides()
     result = apply_overrides(default_values, studio_values)
+
+    # Clear overrides metadata from settings
     if clear_metadata:
         clear_metadata_from_settings(result)
+
+    # Apply local settings
+    # Default behavior is based on `clear_metadata` value
+    if exclude_locals is None:
+        exclude_locals = not clear_metadata
+
+    if not exclude_locals:
         # TODO local settings may be required to apply for environments
         local_settings = get_local_settings()
         apply_local_settings_on_system_settings(result, local_settings)
@@ -659,40 +723,52 @@ def get_system_settings(clear_metadata=True):
     return result
 
 
-def get_default_project_settings(clear_metadata=True, exclude_locals=False):
+def get_default_project_settings(clear_metadata=True, exclude_locals=None):
     """Project settings with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
     studio_values = get_studio_project_settings_overrides()
     result = apply_overrides(default_values, studio_values)
+    # Clear overrides metadata from settings
     if clear_metadata:
         clear_metadata_from_settings(result)
-        if not exclude_locals:
-            local_settings = get_local_settings()
-            apply_local_settings_on_project_settings(
-                result, local_settings, None
-            )
+
+    # Apply local settings
+    if exclude_locals is None:
+        exclude_locals = not clear_metadata
+
+    if not exclude_locals:
+        local_settings = get_local_settings()
+        apply_local_settings_on_project_settings(
+            result, local_settings, None
+        )
     return result
 
 
-def get_default_anatomy_settings(clear_metadata=True, exclude_locals=False):
+def get_default_anatomy_settings(clear_metadata=True, exclude_locals=None):
     """Project anatomy data with applied studio's default project overrides."""
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     studio_values = get_studio_project_anatomy_overrides()
 
-    # TODO uncomment and remove hotfix result when overrides of anatomy
-    #   are stored correctly.
     result = apply_overrides(default_values, studio_values)
+    # Clear overrides metadata from settings
     if clear_metadata:
         clear_metadata_from_settings(result)
-        if not exclude_locals:
-            local_settings = get_local_settings()
-            apply_local_settings_on_anatomy_settings(
-                result, local_settings, None
-            )
+
+    # Apply local settings
+    if exclude_locals is None:
+        exclude_locals = not clear_metadata
+
+    if not exclude_locals:
+        local_settings = get_local_settings()
+        apply_local_settings_on_anatomy_settings(
+            result, local_settings, None
+        )
     return result
 
 
-def get_anatomy_settings(project_name, site_name=None, exclude_locals=False):
+def get_anatomy_settings(
+    project_name, site_name=None, clear_metadata=True, exclude_locals=None
+):
     """Project anatomy data with applied studio and project overrides."""
     if not project_name:
         raise ValueError(
@@ -709,7 +785,13 @@ def get_anatomy_settings(project_name, site_name=None, exclude_locals=False):
         for key, value in project_overrides.items():
             result[key] = value
 
-    clear_metadata_from_settings(result)
+    # Clear overrides metadata from settings
+    if clear_metadata:
+        clear_metadata_from_settings(result)
+
+    # Apply local settings
+    if exclude_locals is None:
+        exclude_locals = not clear_metadata
 
     if not exclude_locals:
         local_settings = get_local_settings()
@@ -719,7 +801,9 @@ def get_anatomy_settings(project_name, site_name=None, exclude_locals=False):
     return result
 
 
-def get_project_settings(project_name, exclude_locals=False):
+def get_project_settings(
+    project_name, clear_metadata=True, exclude_locals=None
+):
     """Project settings with applied studio and project overrides."""
     if not project_name:
         raise ValueError(
@@ -733,7 +817,14 @@ def get_project_settings(project_name, exclude_locals=False):
     )
 
     result = apply_overrides(studio_overrides, project_overrides)
-    clear_metadata_from_settings(result)
+
+    # Clear overrides metadata from settings
+    if clear_metadata:
+        clear_metadata_from_settings(result)
+
+    # Apply local settings
+    if exclude_locals is None:
+        exclude_locals = not clear_metadata
 
     if not exclude_locals:
         local_settings = get_local_settings()

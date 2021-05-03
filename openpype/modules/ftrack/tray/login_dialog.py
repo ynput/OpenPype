@@ -14,10 +14,12 @@ class CredentialsDialog(QtWidgets.QDialog):
     login_changed = QtCore.Signal()
     logout_signal = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, module, parent=None):
         super(CredentialsDialog, self).__init__(parent)
 
         self.setWindowTitle("OpenPype - Ftrack Login")
+
+        self._module = module
 
         self._login_server_thread = None
         self._is_logged = False
@@ -132,11 +134,11 @@ class CredentialsDialog(QtWidgets.QDialog):
 
     def fill_ftrack_url(self):
         url = os.getenv("FTRACK_SERVER")
-        if url == self.ftsite_input.text():
+        checked_url = self.check_url(url)
+        if checked_url == self.ftsite_input.text():
             return
 
-        checked_url = self.check_url(url)
-        self.ftsite_input.setText(checked_url or "")
+        self.ftsite_input.setText(checked_url or "< Not set >")
 
         enabled = bool(checked_url)
 
@@ -145,7 +147,15 @@ class CredentialsDialog(QtWidgets.QDialog):
 
         self.api_input.setEnabled(enabled)
         self.user_input.setEnabled(enabled)
-        self.ftsite_input.setEnabled(enabled)
+
+        if not url:
+            self.btn_advanced.hide()
+            self.btn_simple.hide()
+            self.btn_ftrack_login.hide()
+            self.btn_login.hide()
+            self.note_label.hide()
+            self.api_input.hide()
+            self.user_input.hide()
 
     def set_advanced_mode(self, is_advanced):
         self._in_advance_mode = is_advanced
@@ -268,7 +278,7 @@ class CredentialsDialog(QtWidgets.QDialog):
         verification = credentials.check_credentials(username, api_key)
         if verification:
             credentials.save_credentials(username, api_key, False)
-            credentials.set_env(username, api_key)
+            self._module.set_credentials_to_env(username, api_key)
             self.set_credentials(username, api_key)
             self.login_changed.emit()
         return verification
@@ -291,10 +301,9 @@ class CredentialsDialog(QtWidgets.QDialog):
             url = url.strip("/ ")
 
         if not url:
-            self.set_error((
-                "You need to specify a valid server URL, "
-                "for example https://server-name.ftrackapp.com"
-            ))
+            self.set_error(
+                "Ftrack URL is not defined in settings!"
+            )
             return
 
         if "http" not in url:

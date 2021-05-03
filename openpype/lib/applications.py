@@ -17,10 +17,15 @@ from openpype.settings import (
     get_project_settings,
     get_environments
 )
+from openpype.settings.constants import (
+    METADATA_KEYS,
+    M_DYNAMIC_KEY_LABEL
+)
 from . import (
     PypeLogger,
     Anatomy
 )
+from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
     get_workdir_with_workdir_data
@@ -72,7 +77,7 @@ class ApplictionExecutableNotFound(Exception):
             for executable in application.executables:
                 details += "\n- " + executable.executable_path
 
-        self.msg = msg.format(application.full_label, application.name)
+        self.msg = msg.format(application.full_label, application.full_name)
         self.details = details
 
         exc_mgs = str(self.msg)
@@ -123,7 +128,16 @@ class ApplicationGroup:
         self.host_name = host_name
 
         variants = data.get("variants") or {}
+        key_label_mapping = variants.pop(M_DYNAMIC_KEY_LABEL, {})
         for variant_name, variant_data in variants.items():
+            if variant_name in METADATA_KEYS:
+                continue
+
+            if "variant_label" not in variant_data:
+                variant_label = key_label_mapping.get(variant_name)
+                if variant_label:
+                    variant_data["variant_label"] = variant_label
+
             variants[variant_name] = Application(
                 variant_name, variant_data, self
             )
@@ -165,7 +179,8 @@ class Application:
         enabled = False
         if group.enabled:
             enabled = data.get("enabled", True)
-            self.enabled = enabled
+        self.enabled = enabled
+        self.use_python_2 = data["use_python_2"]
 
         self.label = data.get("variant_label") or name
         self.full_name = "/".join((group.name, name))
@@ -244,17 +259,35 @@ class Application:
         Returns:
             subprocess.Popen: Return executed process as Popen object.
         """
-        return self.manager.launch(self.name, *args, **kwargs)
+        return self.manager.launch(self.full_name, *args, **kwargs)
 
 
 class ApplicationManager:
-    def __init__(self):
-        self.log = PypeLogger().get_logger(self.__class__.__name__)
+    """Load applications and tools and store them by their full name.
+
+    Args:
+        system_settings (dict): Preloaded system settings. When passed manager
+            will always use these values. Gives ability to create manager
+            using different settings.
+    """
+    def __init__(self, system_settings=None):
+        self.log = PypeLogger.get_logger(self.__class__.__name__)
 
         self.app_groups = {}
         self.applications = {}
         self.tool_groups = {}
         self.tools = {}
+
+        self._system_settings = system_settings
+
+        self.refresh()
+
+    def set_system_settings(self, system_settings):
+        """Ability to change init system settings.
+
+        This will trigger refresh of manager.
+        """
+        self._system_settings = system_settings
 
         self.refresh()
 
@@ -265,22 +298,34 @@ class ApplicationManager:
         self.tool_groups.clear()
         self.tools.clear()
 
-        settings = get_system_settings()
+        if self._system_settings is not None:
+            settings = copy.deepcopy(self._system_settings)
+        else:
+            settings = get_system_settings(
+                clear_metadata=False, exclude_locals=False
+            )
 
         app_defs = settings["applications"]
         for group_name, variant_defs in app_defs.items():
+            if group_name in METADATA_KEYS:
+                continue
+
             group = ApplicationGroup(group_name, variant_defs, self)
             self.app_groups[group_name] = group
             for app in group:
-                # TODO This should be replaced with `full_name` in future
-                self.applications[app.name] = app
+                self.applications[app.full_name] = app
 
         tools_definitions = settings["tools"]["tool_groups"]
+        tool_label_mapping = tools_definitions.pop(M_DYNAMIC_KEY_LABEL, {})
         for tool_group_name, tool_group_data in tools_definitions.items():
-            if not tool_group_name:
+            if not tool_group_name or tool_group_name in METADATA_KEYS:
                 continue
+
+            tool_group_label = (
+                tool_label_mapping.get(tool_group_name) or tool_group_name
+            )
             group = EnvironmentToolGroup(
-                tool_group_name, tool_group_data, self
+                tool_group_name, tool_group_label, tool_group_data, self
             )
             self.tool_groups[tool_group_name] = group
             for tool in group:
@@ -336,16 +381,24 @@ class EnvironmentToolGroup:
         manager (ApplicationManager): Manager that creates the group.
     """
 
-    def __init__(self, name, data, manager):
+    def __init__(self, name, label, data, manager):
         self.name = name
+        self.label = label
         self._data = data
         self.manager = manager
         self._environment = data["environment"]
 
         variants = data.get("variants") or {}
+        label_by_key = variants.pop(M_DYNAMIC_KEY_LABEL, {})
         variants_by_name = {}
         for variant_name, variant_env in variants.items():
-            tool = EnvironmentTool(variant_name, variant_env, self)
+            if variant_name in METADATA_KEYS:
+                continue
+
+            variant_label = label_by_key.get(variant_name) or variant_name
+            tool = EnvironmentTool(
+                variant_name, variant_label, variant_env, self
+            )
             variants_by_name[variant_name] = tool
         self.variants = variants_by_name
 
@@ -372,8 +425,10 @@ class EnvironmentTool:
         group (str): Name of group which wraps tool.
     """
 
-    def __init__(self, name, environment, group):
+    def __init__(self, name, label, environment, group):
         self.name = name
+        self.variant_label = label
+        self.label = " ".join((group.label, label))
         self.group = group
         self._environment = environment
         self.full_name = "/".join((group.name, name))
@@ -502,7 +557,7 @@ class LaunchHook:
 
     @property
     def app_name(self):
-        return getattr(self.application, "name", None)
+        return getattr(self.application, "full_name", None)
 
     def validate(self):
         """Optional validation of launch hook on initialization.
@@ -804,10 +859,15 @@ class ApplicationLaunchContext:
         self.log.debug("All prelaunch hook executed. Starting new process.")
 
         # Prepare subprocess args
-        args = self.clear_launch_args(self.launch_args)
-        self.log.debug(
-            "Launching \"{}\" with args ({}): {}".format(
-                self.app_name, len(args), args
+        args_len_str = ""
+        if isinstance(self.launch_args, str):
+            args = self.launch_args
+        else:
+            args = self.clear_launch_args(self.launch_args)
+            args_len_str = " ({})".format(len(args))
+        self.log.info(
+            "Launching \"{}\" with args{}: {}".format(
+                self.app_name, args_len_str, args
             )
         )
         # Run process
@@ -853,7 +913,10 @@ class ApplicationLaunchContext:
         Return:
             list: Unpacked arguments.
         """
-        while True:
+        if isinstance(args, str):
+            return args
+        all_cleared = False
+        while not all_cleared:
             all_cleared = True
             new_args = []
             for arg in args:
@@ -865,8 +928,6 @@ class ApplicationLaunchContext:
                     new_args.append(arg)
             args = new_args
 
-            if all_cleared:
-                break
         return args
 
 
@@ -939,7 +1000,7 @@ def get_app_environments_for_context(
         "project_name": project_name,
         "asset_name": asset_name,
         "task_name": task_name,
-        "app_name": app_name,
+
         "app": app,
 
         "dbcon": dbcon,
@@ -1117,8 +1178,7 @@ def prepare_context_environments(data):
         "AVALON_ASSET": asset_doc["name"],
         "AVALON_TASK": task_name,
         "AVALON_APP": app.host_name,
-        # TODO this hould be `app.full_name` in future PRs
-        "AVALON_APP_NAME": app.name,
+        "AVALON_APP_NAME": app.full_name,
         "AVALON_WORKDIR": workdir
     }
     log.debug(
@@ -1187,7 +1247,7 @@ def _prepare_last_workfile(data, workdir):
         file_template = anatomy.templates["work"]["file"]
         workdir_data.update({
             "version": 1,
-            "user": os.environ.get("OPENPYPE_USERNAME") or getpass.getuser(),
+            "user": get_openpype_username(),
             "ext": extensions[0]
         })
 
