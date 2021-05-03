@@ -334,11 +334,13 @@ def _determine_mongodb() -> str:
         if result == 0:
             raise RuntimeError("MongoDB URL was not defined")
 
-        try:
-            openpype_mongo = bootstrap.secure_registry.get_item(
-                "openPypeMongo")
-        except ValueError:
-            raise RuntimeError("Missing MongoDB url")
+        openpype_mongo = os.getenv("OPENPYPE_MONGO")
+        if not openpype_mongo:
+            try:
+                openpype_mongo = bootstrap.secure_registry.get_item(
+                    "openPypeMongo")
+            except ValueError:
+                raise RuntimeError("Missing MongoDB url")
 
     return openpype_mongo
 
