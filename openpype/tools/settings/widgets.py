@@ -85,8 +85,8 @@ class PasswordDialog(QtWidgets.QDialog):
         super(PasswordDialog, self).keyPressEvent(event)
 
     def closeEvent(self, event):
-        self.finished.emit(self.result())
         super(PasswordDialog, self).closeEvent(event)
+        self.finished.emit(self.result())
 
     def _on_ok_click(self):
         input_value = self.password_input.text()
