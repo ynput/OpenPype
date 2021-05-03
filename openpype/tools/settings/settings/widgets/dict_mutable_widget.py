@@ -36,6 +36,7 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         super(ModifiableDictEmptyItem, self).__init__(parent)
         self.entity_widget = entity_widget
         self.collapsible_key = entity_widget.entity.collapsible_key
+        self.ignore_input_changes = entity_widget.ignore_input_changes
 
         self.is_duplicated = False
         self.key_is_valid = False
@@ -101,6 +102,10 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def _on_key_change(self):
         key = self.key_input.text()
         self.key_is_valid = KEY_REGEX.match(key)
+
+        if self.ignore_input_changes:
+            return
+
         self.is_duplicated = self.entity_widget.is_key_duplicated(key)
         key_input_state = ""
         # Collapsible key and empty key are not invalid
@@ -355,6 +360,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def set_label(self, label):
         if self.key_label_input and label is not None:
             self.key_label_input.setText(label)
+        self.update_key_label()
 
     def set_as_required(self, key):
         self.key_input.setText(key)
@@ -386,6 +392,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.set_edit_mode(False)
 
     def _on_key_label_change(self):
+        if self.ignore_input_changes:
+            return
+
         label = self.key_label_value()
         self.entity_widget.change_label(label, self)
         self.update_key_label()
@@ -393,6 +402,10 @@ class ModifiableDictItem(QtWidgets.QWidget):
     def _on_key_change(self):
         key = self.key_value()
         self.key_is_valid = KEY_REGEX.match(key)
+
+        if self.ignore_input_changes:
+            return
+
         is_key_duplicated = self.entity_widget.validate_key_duplication(
             self.temp_key, key, self
         )
@@ -422,7 +435,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.wrapper_widget.label_widget.setText(label)
 
     def on_add_clicked(self):
-        widget = self.entity_widget.add_new_key(None, None, self)
+        widget = self.entity_widget.add_new_key(None, None)
         widget.key_input.setFocus(True)
 
     def on_edit_pressed(self):
@@ -621,7 +634,7 @@ class DictMutableKeysWidget(BaseWidget):
         # TODO implement
         pass
 
-    def add_new_key(self, key, label=None, after_widget=None):
+    def add_new_key(self, key, label=None):
         uuid_key = None
         entity_key = key
         if not key:
@@ -641,7 +654,7 @@ class DictMutableKeysWidget(BaseWidget):
 
         # Backup solution (for testing)
         if input_field is None:
-            input_field = self.add_widget_for_child(child_entity, after_widget)
+            input_field = self.add_widget_for_child(child_entity)
 
         if key:
             # Happens when created from collapsible key items where key
@@ -719,29 +732,16 @@ class DictMutableKeysWidget(BaseWidget):
             return
         self.entity.set_child_label(entity, label)
 
-    def add_widget_for_child(
-        self, child_entity, after_widget=None, first=False
-    ):
-        if first:
-            new_widget_index = 0
-        else:
-            new_widget_index = len(self.input_fields)
-
-        if self.input_fields and not first:
-            if not after_widget:
-                after_widget = self.input_fields[-1]
-
-            for idx in range(self.content_layout.count()):
-                item = self.content_layout.itemAt(idx)
-                if item.widget() is after_widget:
-                    new_widget_index = idx + 1
-                    break
-
+    def add_widget_for_child(self, child_entity):
         input_field = ModifiableDictItem(
             self.entity.collapsible_key, child_entity, self
         )
         self.input_fields.append(input_field)
+
+        new_widget_index = self.content_layout.count() - 1
+
         self.content_layout.insertWidget(new_widget_index, input_field)
+
         return input_field
 
     def remove_row(self, widget):
@@ -810,21 +810,15 @@ class DictMutableKeysWidget(BaseWidget):
 
         for key, child_entity in self.entity.items():
             found = False
-            previous_input = None
             for input_field in self.input_fields:
-                if input_field.entity is not child_entity:
-                    previous_input = input_field
-                else:
+                if input_field.entity is child_entity:
                     found = True
                     break
 
             if not found:
                 changed = True
-                args = [previous_input]
-                if previous_input is None:
-                    args.append(True)
 
-                _input_field = self.add_widget_for_child(child_entity, *args)
+                _input_field = self.add_widget_for_child(child_entity)
                 _input_field.origin_key = key
                 _input_field.set_key(key)
                 if self.entity.collapsible_key:
@@ -855,9 +849,8 @@ class DictMutableKeysWidget(BaseWidget):
         if keys_order:
             last_required = keys_order[-1]
         for key in self.entity.keys():
-            if key in keys_order:
-                continue
-            keys_order.append(key)
+            if key not in keys_order:
+                keys_order.append(key)
 
         for key in keys_order:
             child_entity = self.entity[key]
