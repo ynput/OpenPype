@@ -1,4 +1,4 @@
-from Qt import QtCore, QtWidgets, QtGui
+from Qt import QtCore
 import attr
 import abc
 import six
@@ -164,4 +164,3 @@ def get_item_by_id(model, object_id):
     index = model.get_index(object_id)
     item = model.data(index, FullItemRole)
     return item
-
