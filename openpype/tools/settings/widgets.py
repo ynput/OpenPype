@@ -6,16 +6,20 @@ from openpype.api import get_system_settings
 
 class PasswordDialog(QtWidgets.QDialog):
     """Stupidly simple dialog to compare password from general settings."""
-    finished = QtCore.Signal(str)
+    finished = QtCore.Signal(bool)
 
-    def __init__(self, password, parent):
+    def __init__(self, parent):
         super(PasswordDialog, self).__init__(parent)
 
         self.setWindowTitle("Settings Password")
         self.resize(300, 120)
 
+        system_settings = get_system_settings()
+
+        self._expected_result = (
+            system_settings["general"].get("admin_password")
+        )
         self._result = ""
-        self._expected_result = password
 
         # Password input
         password_widget = QtWidgets.QWidget(self)
@@ -72,14 +76,24 @@ class PasswordDialog(QtWidgets.QDialog):
         self.password_input = password_input
         self.message_label = message_label
 
+    def result(self):
+        if not self._expected_result:
+            return True
+        return self._result == self._expected_result
+
     def keyPressEvent(self, event):
         if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
             self._on_ok_click()
             return event.accept()
         super(PasswordDialog, self).keyPressEvent(event)
 
+    def showEvent(self, event):
+        super(PasswordDialog, self).showEvent(event)
+        if self.result():
+            self.close()
+
     def closeEvent(self, event):
-        self.finished.emit(self._result)
+        self.finished.emit(self.result())
         super(PasswordDialog, self).closeEvent(event)
 
     def _on_text_change(self, text):
