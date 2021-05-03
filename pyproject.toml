@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.0.0-alpha1"
-description = "Multi-platform open-source pipeline built around the Avalon platform, expanding it with extra features and integrations."
+version = "3.0.0-beta2"
+description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
 homepage = "https://openpype.io"
@@ -18,6 +18,7 @@ acre = { git = "https://github.com/pypeclub/acre.git" }
 opentimelineio = { version = "0.14.0.dev1", source = "openpype" }
 appdirs = "^1.4.3"
 blessed = "^1.17" # openpype terminal formatting
+coolname = "*"
 clique = "1.5.*"
 Click = "^7"
 dnspython = "^2.1.0"
@@ -42,12 +43,13 @@ jinxed = [
     { version = "^1.0.1", markers = "sys_platform == 'linux'" }
 ]
 python3-xlib = { version="*", markers = "sys_platform == 'linux'"}
+enlighten = "^1.9.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"
 autopep8 = "^1.4"
 coverage = "*"
-cx_freeze = "^6.5"
+cx_freeze = "^6.6"
 jedi = "^0.13"
 Jinja2 = "^2.11"
 pycodestyle = "^2.5.0"
@@ -61,8 +63,8 @@ sphinx-rtd-theme = "*"
 sphinxcontrib-websupport = "*"
 sphinx-qt-documentation = "*"
 recommonmark = "*"
-tqdm = "*"
 wheel = "*"
+enlighten = "*"  # cool terminal progress bars
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pypeclub/openpype/issues"
@@ -75,3 +77,29 @@ url = "https://distribute.openpype.io/wheels/"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[openpype]
+
+[openpype.thirdparty.ffmpeg.windows]
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-windows.zip"
+hash = "dd51ba29d64ee238e7c4c3c7301b19754c3f0ee2e2a729c20a0e2789e72db925"
+
+[openpype.thirdparty.ffmpeg.linux]
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-linux.tgz"
+hash = "10b9beda57cfbb69b9ed0ce896c0c8d99227b26ca8b9f611040c4752e365cbe9"
+
+[openpype.thirdparty.ffmpeg.darwin]
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-macos.tgz"
+hash = "95f43568338c275f80dc0cab1e1836a2e2270f856f0e7b204440d881dd74fbdb"
+
+[openpype.thirdparty.oiio.windows]
+url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.0-windows.zip"
+hash = "fd2e00278e01e85dcee7b4a6969d1a16f13016ec16700fb0366dbb1b1f3c37ad"
+
+[openpype.thirdparty.oiio.linux]
+url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-linux.tgz"
+hash = "sha256:..."
+
+[openpype.thirdparty.oiio.darwin]
+url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"
+hash = "sha256:..."

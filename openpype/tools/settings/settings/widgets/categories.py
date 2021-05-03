@@ -27,7 +27,7 @@ from openpype.settings.entities import (
     SchemaError
 )
 
-from openpype.settings.lib import get_system_settings
+from openpype.settings import SaveWarningExc
 from .widgets import ProjectListWidget
 
 from . import lib
@@ -270,6 +270,22 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             #   so it is easier to just use new entity and recreate UI but
             #   would be nice to change this and add cleanup part so this is
             #   not required.
+            self.reset()
+
+        except SaveWarningExc as exc:
+            warnings = [
+                "<b>Settings were saved but few issues happened.</b>"
+            ]
+            for item in exc.warnings:
+                warnings.append(item.replace("\n", "<br>"))
+
+            msg = "<br><br>".join(warnings)
+
+            dialog = QtWidgets.QMessageBox(self)
+            dialog.setText(msg)
+            dialog.setIcon(QtWidgets.QMessageBox.Warning)
+            dialog.exec_()
+
             self.reset()
 
         except Exception as exc:

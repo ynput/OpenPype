@@ -6,9 +6,9 @@
         "host_name": "maya",
         "environment": {
             "PYTHONPATH": [
-                "{OPENPYPE_ROOT}/pype/hosts/maya/startup",
-                "{OPENPYPE_ROOT}/repos/avalon-core/setup/maya",
-                "{OPENPYPE_ROOT}/repos/maya-look-assigner",
+                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/maya/startup",
+                "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/maya",
+                "{OPENPYPE_REPOS_ROOT}/repos/maya-look-assigner",
                 "{PYTHONPATH}"
             ],
             "MAYA_DISABLE_CLIC_IPM": "Yes",
@@ -19,7 +19,28 @@
             "OPENPYPE_LOG_NO_COLORS": "Yes"
         },
         "variants": {
+            "2022": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Autodesk\\Maya2022\\bin\\maya.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/autodesk/maya2022/bin/maya"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {
+                    "MAYA_VERSION": "2022"
+                }
+            },
             "2020": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2020\\bin\\maya.exe"
@@ -39,6 +60,7 @@
                 }
             },
             "2019": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2019\\bin\\maya.exe"
@@ -58,6 +80,7 @@
                 }
             },
             "2018": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Autodesk\\Maya2018\\bin\\maya.exe"
@@ -75,6 +98,9 @@
                 "environment": {
                     "MAYA_VERSION": "2018"
                 }
+            },
+            "__dynamic_keys_labels__": {
+                "2022": "2022 (Testing Only)"
             }
         }
     },
@@ -85,8 +111,8 @@
         "host_name": "nuke",
         "environment": {
             "NUKE_PATH": [
-                "{OPENPYPE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
-                "{OPENPYPE_ROOT}/openpype/hosts/nuke/startup",
+                "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
+                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/nuke/startup",
                 "{OPENPYPE_STUDIO_PLUGINS}/nuke"
             ],
             "PATH": {
@@ -95,7 +121,26 @@
             "LOGLEVEL": "DEBUG"
         },
         "variants": {
+            "13-0": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.0v1\\Nuke13.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.0v1/Nuke13.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [],
+                    "darwin": [],
+                    "linux": []
+                },
+                "environment": {}
+            },
             "12-2": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -113,6 +158,7 @@
                 "environment": {}
             },
             "12-0": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -130,6 +176,7 @@
                 "environment": {}
             },
             "11-3": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -147,6 +194,7 @@
                 "environment": {}
             },
             "11-2": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
@@ -164,7 +212,9 @@
             "__dynamic_keys_labels__": {
                 "12-2": "12.2",
                 "12-0": "12.0",
-                "11-3": "11.3"
+                "11-3": "11.3",
+                "11-2": "11.2",
+                "13-0": "13.0 (Testing only)"
             }
         }
     },
@@ -175,8 +225,8 @@
         "host_name": "nuke",
         "environment": {
             "NUKE_PATH": [
-                "{OPENPYPE_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
-                "{OPENPYPE_ROOT}/openpype/hosts/nuke/startup",
+                "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
+                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/nuke/startup",
                 "{OPENPYPE_STUDIO_PLUGINS}/nuke"
             ],
             "PATH": {
@@ -185,7 +235,32 @@
             "LOGLEVEL": "DEBUG"
         },
         "variants": {
+            "13-0": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.0v1\\Nuke13.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.0v1/Nuke13.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--nukex"
+                    ],
+                    "darwin": [
+                        "--nukex"
+                    ],
+                    "linux": [
+                        "--nukex"
+                    ]
+                },
+                "environment": {}
+            },
             "12-2": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -209,6 +284,7 @@
                 "environment": {}
             },
             "12-0": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -232,6 +308,7 @@
                 "environment": {}
             },
             "11-3": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -255,6 +332,7 @@
                 "environment": {}
             },
             "11-2": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
@@ -279,7 +357,8 @@
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
-                "11-2": "11.2"
+                "11-2": "11.2",
+                "13-0": "13.0 (Testing only)"
             }
         }
     },
@@ -290,7 +369,7 @@
         "host_name": "hiero",
         "environment": {
             "HIERO_PLUGIN_PATH": [
-                "{OPENPYPE_ROOT}/openpype/hosts/hiero/startup"
+                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/hiero/startup"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
@@ -300,7 +379,32 @@
             "LOGLEVEL": "DEBUG"
         },
         "variants": {
+            "13-0": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.0v1\\Nuke13.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.0v1/Nuke13.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--studio"
+                    ],
+                    "darwin": [
+                        "--studio"
+                    ],
+                    "linux": [
+                        "--studio"
+                    ]
+                },
+                "environment": {}
+            },
             "12-2": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -324,6 +428,7 @@
                 "environment": {}
             },
             "12-0": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -347,6 +452,7 @@
                 "environment": {}
             },
             "11-3": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -370,6 +476,7 @@
                 "environment": {}
             },
             "11-2": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -392,7 +499,8 @@
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
-                "11-2": "11.2"
+                "11-2": "11.2",
+                "13-0": "13.0 (Testing only)"
             }
         }
     },
@@ -403,7 +511,7 @@
         "host_name": "hiero",
         "environment": {
             "HIERO_PLUGIN_PATH": [
-                "{OPENPYPE_ROOT}/openpype/hosts/hiero/startup"
+                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/hiero/startup"
             ],
             "PATH": {
                 "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
@@ -413,7 +521,32 @@
             "LOGLEVEL": "DEBUG"
         },
         "variants": {
+            "13-0": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Nuke13.0v1\\Nuke13.0.exe"
+                    ],
+                    "darwin": [],
+                    "linux": [
+                        "/usr/local/Nuke13.0v1/Nuke13.0"
+                    ]
+                },
+                "arguments": {
+                    "windows": [
+                        "--hiero"
+                    ],
+                    "darwin": [
+                        "--hiero"
+                    ],
+                    "linux": [
+                        "--hiero"
+                    ]
+                },
+                "environment": {}
+            },
             "12-2": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.2v3\\Nuke12.2.exe"
@@ -437,6 +570,7 @@
                 "environment": {}
             },
             "12-0": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke12.0v1\\Nuke12.0.exe"
@@ -460,6 +594,7 @@
                 "environment": {}
             },
             "11-3": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.3v1\\Nuke11.3.exe"
@@ -483,6 +618,7 @@
                 "environment": {}
             },
             "11-2": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Nuke11.2v2\\Nuke11.2.exe"
@@ -507,7 +643,8 @@
                 "12-2": "12.2",
                 "12-0": "12.0",
                 "11-3": "11.3",
-                "11-2": "11.2"
+                "11-2": "11.2",
+                "13-0": "13.0 (Testing only)"
             }
         }
     },
@@ -544,6 +681,7 @@
             "16": {
                 "enabled": true,
                 "variant_label": "16",
+                "use_python_2": false,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -559,6 +697,7 @@
             "9": {
                 "enabled": true,
                 "variant_label": "9",
+                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blackmagic Design\\Fusion 9\\Fusion.exe"
@@ -614,7 +753,7 @@
                 "{PYTHON36_RESOLVE}/Scripts",
                 "{PATH}"
             ],
-            "PRE_PYTHON_SCRIPT": "{OPENPYPE_ROOT}/openpype/resolve/preload_console.py",
+            "PRE_PYTHON_SCRIPT": "{OPENPYPE_REPOS_ROOT}/openpype/resolve/preload_console.py",
             "OPENPYPE_LOG_NO_COLORS": "True",
             "RESOLVE_DEV": "True"
         },
@@ -622,6 +761,7 @@
             "16": {
                 "enabled": true,
                 "variant_label": "16",
+                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:/Program Files/Blackmagic Design/DaVinci Resolve/Resolve.exe"
@@ -645,18 +785,19 @@
         "host_name": "houdini",
         "environment": {
             "HOUDINI_PATH": {
-                "darwin": "{OPENPYPE_ROOT}/openpype/hosts/houdini/startup:&",
-                "linux": "{OPENPYPE_ROOT}/openpype/hosts/houdini/startup:&",
-                "windows": "{OPENPYPE_ROOT}/openpype/hosts/houdini/startup;&"
+                "darwin": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
+                "linux": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
+                "windows": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup;&"
             },
             "HOUDINI_MENU_PATH": {
-                "darwin": "{OPENPYPE_ROOT}/openpype/hosts/houdini/startup:&",
-                "linux": "{OPENPYPE_ROOT}/openpype/hosts/houdini/startup:&",
-                "windows": "{OPENPYPE_ROOT}/openpype/hosts/houdini/startup;&"
+                "darwin": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
+                "linux": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
+                "windows": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup;&"
             }
         },
         "variants": {
             "18-5": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Side Effects Software\\Houdini 18.5.499\\bin\\houdini.exe"
@@ -672,6 +813,7 @@
                 "environment": {}
             },
             "18": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -685,6 +827,7 @@
                 "environment": {}
             },
             "17": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -710,15 +853,16 @@
         "icon": "{}/app_icons/blender.png",
         "host_name": "blender",
         "environment": {
-            "BLENDER_USER_SCRIPTS": "{OPENPYPE_ROOT}/repos/avalon-core/setup/blender",
+            "BLENDER_USER_SCRIPTS": "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/blender",
             "PYTHONPATH": [
-                "{OPENPYPE_ROOT}/repos/avalon-core/setup/blender",
+                "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/blender",
                 "{PYTHONPATH}"
             ],
-            "CREATE_NEW_CONSOLE": "yes"
+            "QT_PREFERRED_BINDING": "PySide2"
         },
         "variants": {
             "2-83": {
+                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe"
@@ -740,6 +884,7 @@
                 "environment": {}
             },
             "2-90": {
+                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe"
@@ -760,9 +905,32 @@
                 },
                 "environment": {}
             },
+            "2-91": {
+                "use_python_2": false,
+                "executables": {
+                    "windows": [
+                        "C:\\Program Files\\Blender Foundation\\Blender 2.91\\blender.exe"
+                    ],
+                    "darwin": [],
+                    "linux": []
+                },
+                "arguments": {
+                    "windows": [
+                        "--python-use-system-env"
+                    ],
+                    "darwin": [
+                        "--python-use-system-env"
+                    ],
+                    "linux": [
+                        "--python-use-system-env"
+                    ]
+                },
+                "environment": {}
+            },
             "__dynamic_keys_labels__": {
                 "2-83": "2.83",
-                "2-90": "2.90"
+                "2-90": "2.90",
+                "2-91": "2.91"
             }
         }
     },
@@ -773,12 +941,13 @@
         "host_name": "harmony",
         "environment": {
             "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1",
-            "LIB_OPENHARMONY_PATH": "{OPENPYPE_ROOT}/pype/vendor/OpenHarmony"
+            "LIB_OPENHARMONY_PATH": "{OPENPYPE_REPOS_ROOT}/pype/vendor/OpenHarmony"
         },
         "variants": {
             "20": {
                 "enabled": true,
                 "variant_label": "20",
+                "use_python_2": false,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -794,6 +963,7 @@
             "17": {
                 "enabled": true,
                 "variant_label": "17",
+                "use_python_2": false,
                 "executables": {
                     "windows": [],
                     "darwin": [
@@ -820,6 +990,7 @@
         },
         "variants": {
             "animation_11-64bits": {
+                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\TVPaint Developpement\\TVPaint Animation 11 (64bits)\\TVPaint Animation 11 (64bits).exe"
@@ -835,6 +1006,7 @@
                 "environment": {}
             },
             "animation_11-32bits": {
+                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files (x86)\\TVPaint Developpement\\TVPaint Animation 11 (32bits)\\TVPaint Animation 11 (32bits).exe"
@@ -870,6 +1042,7 @@
             "2020": {
                 "enabled": true,
                 "variant_label": "2020",
+                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe"
@@ -887,6 +1060,7 @@
             "2021": {
                 "enabled": true,
                 "variant_label": "2021",
+                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe"
@@ -918,6 +1092,7 @@
             "2020": {
                 "enabled": true,
                 "variant_label": "2020",
+                "use_python_2": false,
                 "executables": {
                     "windows": [
                         ""
@@ -935,6 +1110,7 @@
             "2021": {
                 "enabled": true,
                 "variant_label": "2021",
+                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe"
@@ -957,12 +1133,13 @@
         "icon": "app_icons/celaction.png",
         "host_name": "celaction",
         "environment": {
-            "CELACTION_TEMPLATE": "{OPENPYPE_ROOT}/openpype/hosts/celaction/celaction_template_scene.scn"
+            "CELACTION_TEMPLATE": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/celaction/celaction_template_scene.scn"
         },
         "variants": {
             "local": {
                 "enabled": true,
                 "variant_label": "Local",
+                "use_python_2": false,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -983,12 +1160,12 @@
         "icon": "{}/app_icons/ue4.png'",
         "host_name": "unreal",
         "environment": {
-            "AVALON_UNREAL_PLUGIN": "{OPENPYPE_ROOT}/repos/avalon-unreal-integration",
-            "OPENPYPE_LOG_NO_COLORS": "True",
-            "QT_PREFERRED_BINDING": "PySide"
+            "AVALON_UNREAL_PLUGIN": "{OPENPYPE_REPOS_ROOT}/repos/avalon-unreal-integration",
+            "OPENPYPE_LOG_NO_COLORS": "True"
         },
         "variants": {
-            "4-24": {
+            "4-26": {
+                "use_python_2": false,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1008,6 +1185,7 @@
         "environment": {},
         "variants": {
             "python_3-7": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1021,6 +1199,7 @@
                 "environment": {}
             },
             "python_2-7": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1034,6 +1213,7 @@
                 "environment": {}
             },
             "terminal": {
+                "use_python_2": true,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -1060,6 +1240,7 @@
         "environment": {},
         "variants": {
             "1-1": {
+                "use_python_2": false,
                 "executables": {
                     "windows": [],
                     "darwin": [],

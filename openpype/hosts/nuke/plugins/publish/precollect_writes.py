@@ -1,4 +1,5 @@
 import os
+import re
 import nuke
 import pyblish.api
 import openpype.api as pype
@@ -14,11 +15,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     hosts = ["nuke", "nukeassist"]
     families = ["write"]
 
-    # preset attributes
-    sync_workfile_version = True
-
     def process(self, instance):
-        families = instance.data["families"]
+        _families_test = [instance.data["family"]] + instance.data["families"]
 
         node = None
         for x in instance:
@@ -63,7 +61,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             int(last_frame)
         )
 
-        if [fm for fm in families
+        if [fm for fm in _families_test
                 if fm in ["render", "prerender"]]:
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
@@ -91,9 +89,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                             collected_frames_len))
                     # this will only run if slate frame is not already
                     # rendered from previews publishes
-                    if "slate" in instance.data["families"] \
+                    if "slate" in _families_test \
                             and (frame_length == collected_frames_len) \
-                            and ("prerender" not in instance.data["families"]):
+                            and ("prerender" not in _families_test):
                         frame_slate_str = "%0{}d".format(
                             len(str(last_frame))) % (first_frame - 1)
                         slate_frame = collected_frames[0].replace(
@@ -107,8 +105,17 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 self.log.debug("couldn't collect frames: {}".format(label))
 
         # Add version data to instance
+        colorspace = node["colorspace"].value()
+
+        # remove default part of the string
+        if "default (" in colorspace:
+            colorspace = re.sub(r"default.\(|\)", "", colorspace)
+            self.log.debug("colorspace: `{}`".format(colorspace))
+
         version_data = {
-            "colorspace": node["colorspace"].value(),
+            "families": [f.replace(".local", "").replace(".farm", "")
+                         for f in _families_test if "write" not in f],
+            "colorspace": colorspace
         }
 
         group_node = [x for x in instance if x.Class() == "Group"][0]
@@ -133,13 +140,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameStartHandle": first_frame,
             "frameEndHandle": last_frame,
             "outputType": output_type,
-            "families": families,
-            "colorspace": node["colorspace"].value(),
+            "colorspace": colorspace,
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority
         })
 
-        if "prerender" in families:
+        if "prerender" in _families_test:
             instance.data.update({
                 "family": "prerender",
                 "families": []
@@ -163,7 +169,5 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 "offset": 0,
                 "filename": api.get_representation_path(repre_doc)
             }]
-
-        self.log.debug("families: {}".format(families))
 
         self.log.debug("instance.data: {}".format(instance.data))

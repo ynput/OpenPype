@@ -15,7 +15,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
     label = "Collect Hierarchy"
     order = pyblish.api.CollectorOrder - 0.57
     families = ["shot"]
-    hosts = ["resolve"]
+    hosts = ["resolve", "hiero"]
 
     def process(self, context):
         temp_context = {}
@@ -40,7 +40,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
                 continue
 
             # exclude if not masterLayer True
-            if not instance.data.get("masterLayer"):
+            if not instance.data.get("heroTrack"):
                 continue
 
             # get asset build data if any available
@@ -50,7 +50,7 @@ class CollectHierarchy(pyblish.api.ContextPlugin):
 
             # suppose that all instances are Shots
             shot_data['entity_type'] = 'Shot'
-            shot_data['tasks'] = instance.data.get("tasks") or []
+            shot_data['tasks'] = instance.data.get("tasks") or {}
             shot_data["comments"] = instance.data.get("comments", [])
 
             shot_data['custom_attributes'] = {

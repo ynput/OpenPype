@@ -131,7 +131,9 @@ main () {
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
-  poetry run python3 "$openpype_root/start.py" generate-zip "$@"
+  PYTHONPATH="$openpype_root:$PYTHONPATH"
+  OPENPYPE_ROOT="$openpype_root"
+  poetry run python3 "$openpype_root/tools/create_zip.py" "$@"
 }
 
 main "$@"

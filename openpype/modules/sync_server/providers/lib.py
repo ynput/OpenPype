@@ -1,4 +1,3 @@
-from enum import Enum
 from .gdrive import GDriveHandler
 from .local_drive import LocalDriveHandler
 
@@ -25,7 +24,8 @@ class ProviderFactory:
         """
         self.providers[provider] = (creator, batch_limit)
 
-    def get_provider(self, provider, site_name, tree=None, presets=None):
+    def get_provider(self, provider, project_name, site_name,
+                     tree=None, presets=None):
         """
             Returns new instance of provider client for specific site.
             One provider could have multiple sites.
@@ -37,6 +37,7 @@ class ProviderFactory:
             provider (string):  'gdrive','S3'
             site_name (string): descriptor of site, different service accounts
                 must have different site name
+            project_name (string): different projects could have diff. sites
             tree (dictionary):  - folder paths to folder id structure
             presets (dictionary): config for provider and site (eg.
                 "credentials_url"..)
@@ -44,7 +45,8 @@ class ProviderFactory:
             (implementation of AbstractProvider)
         """
         creator_info = self._get_creator_info(provider)
-        site = creator_info[0](site_name, tree, presets)  # call init
+        # call init
+        site = creator_info[0](project_name, site_name, tree, presets)
 
         return site
 
@@ -90,4 +92,4 @@ factory = ProviderFactory()
 # 7 denotes number of files that could be synced in single loop - learned by
 # trial and error
 factory.register_provider('gdrive', GDriveHandler, 7)
-factory.register_provider('local_drive', LocalDriveHandler, 10)
+factory.register_provider('local_drive', LocalDriveHandler, 50)

@@ -86,12 +86,6 @@
         },
         "ExtractSlateFrame": {
             "viewer_lut_raw": false
-        },
-        "NukeSubmitDeadline": {
-            "deadline_priority": 50,
-            "deadline_pool": "",
-            "deadline_pool_secondary": "",
-            "deadline_chunk_size": 1
         }
     },
     "load": {

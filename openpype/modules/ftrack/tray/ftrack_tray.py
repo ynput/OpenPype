@@ -30,7 +30,7 @@ class FtrackTrayWrapper:
         self.bool_action_thread_running = False
         self.bool_timer_event = False
 
-        self.widget_login = login_dialog.CredentialsDialog()
+        self.widget_login = login_dialog.CredentialsDialog(module)
         self.widget_login.login_changed.connect(self.on_login_change)
         self.widget_login.logout_signal.connect(self.on_logout)
 
@@ -56,7 +56,7 @@ class FtrackTrayWrapper:
         validation = credentials.check_credentials(ft_user, ft_api_key)
         if validation:
             self.widget_login.set_credentials(ft_user, ft_api_key)
-            credentials.set_env(ft_user, ft_api_key)
+            self.module.set_credentials_to_env(ft_user, ft_api_key)
             log.info("Connected to Ftrack successfully")
             self.on_login_change()
 
@@ -289,12 +289,6 @@ class FtrackTrayWrapper:
 
         parent_menu.addMenu(tray_menu)
 
-    def tray_start(self):
-        self.validate()
-
-    def tray_exit(self):
-        self.stop_action_server()
-
     # Definition of visibility of each menu actions
     def set_menu_visibility(self):
         self.tray_server_menu.menuAction().setVisible(self.bool_logged)
@@ -337,7 +331,7 @@ class FtrackTrayWrapper:
 
     def changed_user(self):
         self.stop_action_server()
-        credentials.set_env()
+        self.module.set_credentials_to_env(None, None)
         self.validate()
 
     def start_timer_manager(self, data):

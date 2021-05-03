@@ -5,23 +5,50 @@ import clique
 
 
 @pyblish.api.log
-class RepairCollectionAction(pyblish.api.Action):
-    label = "Repair"
+class RepairActionBase(pyblish.api.Action):
     on = "failed"
     icon = "wrench"
 
+    @staticmethod
+    def get_instance(context, plugin):
+        # Get the errored instances
+        failed = []
+        for result in context.data["results"]:
+            if (result["error"] is not None and result["instance"] is not None
+               and result["instance"] not in failed):
+                failed.append(result["instance"])
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        return pyblish.api.instances_by_plugin(failed, plugin)
+
+    def repair_knob(self, instances, state):
+        for instance in instances:
+            files_remove = [os.path.join(instance.data["outputDir"], f)
+                            for r in instance.data.get("representations", [])
+                            for f in r.get("files", [])
+                            ]
+            self.log.info("Files to be removed: {}".format(files_remove))
+            for f in files_remove:
+                os.remove(f)
+                self.log.debug("removing file: {}".format(f))
+            instance[0]["render"].setValue(state)
+            self.log.info("Rendering toggled to `{}`".format(state))
+
+
+class RepairCollectionActionToLocal(RepairActionBase):
+    label = "Repair > rerender with `Local` machine"
+
     def process(self, context, plugin):
-        self.log.info(context[0][0])
-        files_remove = [os.path.join(context[0].data["outputDir"], f)
-                        for r in context[0].data.get("representations", [])
-                        for f in r.get("files", [])
-                        ]
-        self.log.info("Files to be removed: {}".format(files_remove))
-        for f in files_remove:
-            os.remove(f)
-            self.log.debug("removing file: {}".format(f))
-        context[0][0]["render"].setValue(True)
-        self.log.info("Rendering toggled ON")
+        instances = self.get_instance(context, plugin)
+        self.repair_knob(instances, "Local")
+
+
+class RepairCollectionActionToFarm(RepairActionBase):
+    label = "Repair > rerender `On farm` with remote machines"
+
+    def process(self, context, plugin):
+        instances = self.get_instance(context, plugin)
+        self.repair_knob(instances, "On farm")
 
 
 class ValidateRenderedFrames(pyblish.api.InstancePlugin):
@@ -32,26 +59,28 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
 
     label = "Validate rendered frame"
     hosts = ["nuke", "nukestudio"]
-    actions = [RepairCollectionAction]
+    actions = [RepairCollectionActionToLocal, RepairCollectionActionToFarm]
+
 
     def process(self, instance):
 
-        for repre in instance.data.get('representations'):
+        for repre in instance.data["representations"]:
 
-            if not repre.get('files'):
+            if not repre.get("files"):
                 msg = ("no frames were collected, "
                        "you need to render them")
                 self.log.error(msg)
                 raise ValidationException(msg)
 
             collections, remainder = clique.assemble(repre["files"])
-            self.log.info('collections: {}'.format(str(collections)))
-            self.log.info('remainder: {}'.format(str(remainder)))
+            self.log.info("collections: {}".format(str(collections)))
+            self.log.info("remainder: {}".format(str(remainder)))
 
             collection = collections[0]
 
             frame_length = int(
-                instance.data["frameEndHandle"] - instance.data["frameStartHandle"] + 1
+                instance.data["frameEndHandle"]
+                - instance.data["frameStartHandle"] + 1
             )
 
             if frame_length != 1:
@@ -65,15 +94,10 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                     self.log.error(msg)
                     raise ValidationException(msg)
 
-                # if len(remainder) != 0:
-                #     msg = "There are some extra files in folder"
-                #     self.log.error(msg)
-                #     raise ValidationException(msg)
-
             collected_frames_len = int(len(collection.indexes))
-            self.log.info('frame_length: {}'.format(frame_length))
+            self.log.info("frame_length: {}".format(frame_length))
             self.log.info(
-                'len(collection.indexes): {}'.format(collected_frames_len)
+                "len(collection.indexes): {}".format(collected_frames_len)
             )
 
             if ("slate" in instance.data["families"]) \
@@ -84,6 +108,6 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                 "{} missing frames. Use repair to render all frames"
             ).format(__name__)
 
-            instance.data['collection'] = collection
+            instance.data["collection"] = collection
 
             return

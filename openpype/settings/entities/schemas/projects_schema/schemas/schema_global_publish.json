@@ -203,6 +203,69 @@
                                             "default": 0,
                                             "minimum": 0,
                                             "maximum": 100000
+                                        },
+                                        {
+                                            "key": "letter_box",
+                                            "label": "Letter box",
+                                            "type": "dict",
+                                            "checkbox_key": "enabled",
+                                            "children": [
+                                                {
+                                                    "type": "boolean",
+                                                    "key": "enabled",
+                                                    "label": "Enabled",
+                                                    "default": false
+                                                },
+                                                {
+                                                    "key": "ratio",
+                                                    "label": "Ratio",
+                                                    "type": "number",
+                                                    "decimal": 4,
+                                                    "default": 0,
+                                                    "minimum": 0,
+                                                    "maximum": 10000
+                                                },
+                                                {
+                                                    "key": "state",
+                                                    "label": "Type",
+                                                    "type": "enum",
+                                                    "enum_items": [
+                                                        {
+                                                            "letterbox": "Letterbox"
+                                                        },
+                                                        {
+                                                            "pillar": "Pillar"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "type": "schema_template",
+                                                    "name": "template_rgba_color",
+                                                    "template_data": [
+                                                        {
+                                                            "label": "Fill Color",
+                                                            "name": "fill_color"
+                                                        }
+                                                    ]
+                                                },
+                                                {
+                                                    "key": "line_thickness",
+                                                    "label": "Line Thickness",
+                                                    "type": "number",
+                                                    "minimum": 0,
+                                                    "maximum": 1000
+                                                },
+                                                {
+                                                    "type": "schema_template",
+                                                    "name": "template_rgba_color",
+                                                    "template_data": [
+                                                        {
+                                                            "label": "Line Color",
+                                                            "name": "line_color"
+                                                        }
+                                                    ]
+                                                }
+                                            ]
                                         }
                                     ]
                                 }

@@ -143,7 +143,7 @@ if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
     Write-Host ">>> " -NoNewline -ForegroundColor green
     Write-Host "Installing virtual environment from lock."
 }
-& poetry install $poetry_verbosity
+& poetry install --no-root $poetry_verbosity
 if ($LASTEXITCODE -ne 0) {
     Write-Host "!!! " -ForegroundColor yellow -NoNewline
     Write-Host "Poetry command failed."

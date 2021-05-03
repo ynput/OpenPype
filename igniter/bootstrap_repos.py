@@ -14,7 +14,10 @@ from zipfile import ZipFile, BadZipFile
 from appdirs import user_data_dir
 from speedcopy import copyfile
 
-from .user_settings import OpenPypeSettingsRegistry
+from .user_settings import (
+    OpenPypeSecureRegistry,
+    OpenPypeSettingsRegistry
+)
 from .tools import get_openpype_path_from_db
 
 
@@ -220,7 +223,7 @@ class BootstrapRepos:
             otherwise `None`.
         registry (OpenPypeSettingsRegistry): OpenPype registry object.
         zip_filter (list): List of files to exclude from zip
-        openpype_filter (list): list of top level directories not to
+        openpype_filter (list): list of top level directories to
             include in zip in OpenPype repository.
 
     """
@@ -239,10 +242,11 @@ class BootstrapRepos:
         self._app = "openpype"
         self._log = log.getLogger(str(__class__))
         self.data_dir = Path(user_data_dir(self._app, self._vendor))
+        self.secure_registry = OpenPypeSecureRegistry("mongodb")
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
         self.openpype_filter = [
-            "build", "docs", "tests", "tools", "venv", "coverage"
+            "openpype", "repos", "schema", "LICENSE"
         ]
         self._message = message
 
@@ -281,7 +285,7 @@ class BootstrapRepos:
         """Get version of local OpenPype."""
 
         version = {}
-        path = Path(os.path.dirname(__file__)).parent / "openpype" / "version.py"
+        path = Path(os.environ["OPENPYPE_ROOT"]) / "openpype" / "version.py"
         with open(path, "r") as fp:
             exec(fp.read(), version)
         return version["__version__"]
@@ -419,18 +423,13 @@ class BootstrapRepos:
         """
         frozen_root = Path(sys.executable).parent
 
-        # from frozen code we need igniter, openpype, schema vendor
-        openpype_list = self._filter_dir(
-            frozen_root / "openpype", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "igniter", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "repos", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "schema", self.zip_filter)
-        openpype_list += self._filter_dir(
-            frozen_root / "vendor", self.zip_filter)
-        openpype_list.append(frozen_root / "LICENSE")
+        openpype_list = []
+        for f in self.openpype_filter:
+            if (frozen_root / f).is_dir():
+                openpype_list += self._filter_dir(
+                    frozen_root / f, self.zip_filter)
+            else:
+                openpype_list.append(frozen_root / f)
 
         version = self.get_version(frozen_root)
 
@@ -473,11 +472,16 @@ class BootstrapRepos:
             openpype_path (Path): Path to OpenPype sources.
 
         """
-        openpype_list = []
-        openpype_inc = 0
-
         # get filtered list of file in Pype repository
-        openpype_list = self._filter_dir(openpype_path, self.zip_filter)
+        # openpype_list = self._filter_dir(openpype_path, self.zip_filter)
+        openpype_list = []
+        for f in self.openpype_filter:
+            if (openpype_path / f).is_dir():
+                openpype_list += self._filter_dir(
+                    openpype_path / f, self.zip_filter)
+            else:
+                openpype_list.append(openpype_path / f)
+
         openpype_files = len(openpype_list)
 
         openpype_inc = 98.0 / float(openpype_files)
@@ -502,7 +506,7 @@ class BootstrapRepos:
                     except ValueError:
                         pass
 
-                if is_inside:
+                if not is_inside:
                     continue
 
                 processed_path = file
@@ -571,7 +575,7 @@ class BootstrapRepos:
 
         """
         sys.path.insert(0, directory.as_posix())
-        directory = directory / "repos"
+        directory /= "repos"
         if not directory.exists() and not directory.is_dir():
             raise ValueError("directory is invalid")
 
@@ -677,7 +681,7 @@ class BootstrapRepos:
         openpype_path = None
         # try to get OpenPype path from mongo.
         if location.startswith("mongodb"):
-            pype_path = get_openpype_path_from_db(location)
+            openpype_path = get_openpype_path_from_db(location)
             if not openpype_path:
                 self._print("cannot find OPENPYPE_PATH in settings.")
                 return None
@@ -804,7 +808,7 @@ class BootstrapRepos:
         """Install OpenPype version to user data directory.
 
         Args:
-            oepnpype_version (OpenPypeVersion): OpenPype version to install.
+            openpype_version (OpenPypeVersion): OpenPype version to install.
             force (bool, optional): Force overwrite existing version.
 
         Returns:

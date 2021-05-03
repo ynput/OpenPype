@@ -210,7 +210,7 @@ def validate_fps():
 
     if current_fps != fps:
 
-        from ...widgets import popup
+        from openpype.widgets import popup
 
         # Find main window
         parent = hou.ui.mainQtWindow()
@@ -219,8 +219,8 @@ def validate_fps():
         else:
             dialog = popup.Popup2(parent=parent)
             dialog.setModal(True)
-            dialog.setWindowTitle("Maya scene not in line with project")
-            dialog.setMessage("The FPS is out of sync, please fix")
+            dialog.setWindowTitle("Houdini scene not in line with project")
+            dialog.setMessage("The FPS is out of sync, please fix it")
 
             # Set new text for button (add optional argument for the popup?)
             toggle = dialog.widgets["toggle"]

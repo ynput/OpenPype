@@ -1,8 +1,18 @@
 import pytest
-from pype.lib import IniSettingRegistry
-from pype.lib import JSONSettingRegistry
+from pype.lib import (
+    IniSettingRegistry,
+    JSONSettingRegistry,
+    OpenPypeSecureRegistry
+)
 from uuid import uuid4
 import configparser
+
+
+@pytest.fixture
+def secure_registry(tmpdir):
+    name = "pypetest_{}".format(str(uuid4()))
+    r = OpenPypeSecureRegistry(name, tmpdir)
+    yield r
 
 
 @pytest.fixture
@@ -19,21 +29,21 @@ def ini_registry(tmpdir):
     yield r
 
 
-def test_keyring(json_registry):
-    json_registry.set_secure_item("item1", "foo")
-    json_registry.set_secure_item("item2", "bar")
-    result1 = json_registry.get_secure_item("item1")
-    result2 = json_registry.get_secure_item("item2")
+def test_keyring(secure_registry):
+    secure_registry.set_item("item1", "foo")
+    secure_registry.set_item("item2", "bar")
+    result1 = secure_registry.get_item("item1")
+    result2 = secure_registry.get_item("item2")
 
     assert result1 == "foo"
     assert result2 == "bar"
 
-    json_registry.delete_secure_item("item1")
-    json_registry.delete_secure_item("item2")
+    secure_registry.delete_item("item1")
+    secure_registry.delete_item("item2")
 
     with pytest.raises(ValueError):
-        json_registry.get_secure_item("item1")
-        json_registry.get_secure_item("item2")
+        secure_registry.get_item("item1")
+        secure_registry.get_item("item2")
 
 
 def test_ini_registry(ini_registry):
