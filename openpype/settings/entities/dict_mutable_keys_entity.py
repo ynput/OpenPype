@@ -519,6 +519,9 @@ class DictMutableKeysEntity(EndpointEntity):
         self.had_project_override = value is not NOT_SET
 
     def _discard_changes(self, on_change_trigger):
+        if not self.can_discard_changes:
+            return
+
         self.set_override_state(self._override_state)
         on_change_trigger.append(self.on_change)
 
@@ -527,6 +530,9 @@ class DictMutableKeysEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
+        if not self.can_remove_from_studio_default:
+            return
+
         value = self._default_value
         if value is NOT_SET:
             value = self.value_on_not_set
@@ -555,10 +561,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if self._override_state is not OverrideState.PROJECT:
-            return
-
-        if not self.has_project_override:
+        if not self.can_remove_from_project_override:
             return
 
         if self._has_studio_override:
