@@ -60,7 +60,7 @@ class LocalGeneralWidgets(QtWidgets.QWidget):
         if not is_password_required():
             return
 
-        dialog = PasswordDialog(self)
+        dialog = PasswordDialog(self, False)
         dialog.setModal(True)
         dialog.exec_()
         result = dialog.result()
