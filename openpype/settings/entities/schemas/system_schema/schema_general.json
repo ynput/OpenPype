@@ -36,8 +36,8 @@
         },
         {
             "type": "text",
-            "key": "settings_password",
-            "label": "Settings password"
+            "key": "admin_password",
+            "label": "Admin password"
         }
     ]
 }
