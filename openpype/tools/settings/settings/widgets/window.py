@@ -9,7 +9,10 @@ from .widgets import ShadowWidget
 from .. import style
 
 from openpype.api import get_system_settings
-from openpype.tools.settings import PasswordDialog
+from openpype.tools.settings import (
+    is_password_required,
+    PasswordDialog
+)
 
 
 class MainWidget(QtWidgets.QWidget):
@@ -102,10 +105,7 @@ class MainWidget(QtWidgets.QWidget):
 
     def reset(self):
         if not self._user_passed:
-            system_settings = get_system_settings()
-            password = system_settings["general"].get("admin_password")
-            if not password:
-                self._user_passed = True
+            self._user_passed = not is_password_required()
 
         self._on_state_change()
 
