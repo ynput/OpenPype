@@ -2,6 +2,7 @@ import os
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.api import get_system_settings
+from .resources import get_resource
 
 
 class PasswordDialog(QtWidgets.QDialog):
@@ -32,7 +33,7 @@ class PasswordDialog(QtWidgets.QDialog):
         current_dir = os.path.join(
             os.path.dirname(os.path.abspath(__file__))
         )
-        show_password_icon_path = os.path.join(current_dir, "eye.png")
+        show_password_icon_path = get_resource("images", "eye.png")
         show_password_icon = QtGui.QIcon(show_password_icon_path)
         show_password_btn = QtWidgets.QPushButton(password_widget)
         show_password_btn.setIcon(show_password_icon)
