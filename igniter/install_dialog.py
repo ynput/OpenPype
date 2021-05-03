@@ -390,7 +390,7 @@ class InstallDialog(QtWidgets.QDialog):
         try:
             self._secure_registry.set_item("openPypeMongo", self.mongo_url)
         except ValueError:
-            print("Couldn't save Mongo URL to credentials")
+            print("Couldn't save Mongo URL to keyring")
 
         self.done(2)
 
