@@ -1,4 +1,3 @@
-import os
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.api import get_system_settings

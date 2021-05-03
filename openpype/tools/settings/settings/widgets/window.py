@@ -1,5 +1,4 @@
-import os
-from Qt import QtWidgets, QtGui, QtCore
+from Qt import QtWidgets, QtGui
 from .categories import (
     CategoryState,
     SystemWidget,
@@ -8,7 +7,6 @@ from .categories import (
 from .widgets import ShadowWidget
 from .. import style
 
-from openpype.api import get_system_settings
 from openpype.tools.settings import (
     is_password_required,
     PasswordDialog
