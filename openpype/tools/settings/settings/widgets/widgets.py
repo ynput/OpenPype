@@ -661,8 +661,14 @@ class ProjectListWidget(QtWidgets.QWidget):
                 self.current_project = None
 
         if self.dbcon:
-            for project_name in self.dbcon.database.collection_names():
-                items.append(project_name)
+            database = self.dbcon.database
+            for project_name in database.collection_names():
+                project_doc = database[project_name].find_one(
+                    {"type": "project"},
+                    {"name": 1}
+                )
+                if project_doc:
+                    items.append(project_doc["name"])
         for item in items:
             model.appendRow(QtGui.QStandardItem(item))
 

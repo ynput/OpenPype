@@ -353,6 +353,20 @@ class DictImmutableKeysEntity(ItemEntity):
         for key in METADATA_KEYS:
             if key in value:
                 metadata[key] = value.pop(key)
+
+        old_metadata = metadata.get(M_OVERRIDEN_KEY)
+        if old_metadata:
+            old_metadata_set = set(old_metadata)
+            new_metadata = []
+            for key in self.non_gui_children.keys():
+                if key in old_metadata:
+                    new_metadata.append(key)
+                    old_metadata_set.remove(key)
+
+            for key in old_metadata_set:
+                new_metadata.append(key)
+            metadata[M_OVERRIDEN_KEY] = new_metadata
+
         return value, metadata
 
     def update_default_value(self, value):

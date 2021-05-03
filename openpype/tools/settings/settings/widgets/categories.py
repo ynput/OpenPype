@@ -318,8 +318,13 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             "`create_root_entity` method not implemented"
         )
 
+    def _on_reset_start(self):
+        return
+
     def reset(self):
         self.set_state(CategoryState.Working)
+
+        self._on_reset_start()
 
         self.input_fields = []
 
@@ -485,7 +490,6 @@ class ProjectWidget(SettingsCategoryWidget):
 
     def ui_tweaks(self):
         project_list_widget = ProjectListWidget(self)
-        project_list_widget.refresh()
 
         self.main_layout.insertWidget(0, project_list_widget, 0)
 
@@ -500,6 +504,9 @@ class ProjectWidget(SettingsCategoryWidget):
         """
         if self is saved_tab_widget:
             return
+
+    def _on_reset_start(self):
+        self.project_list_widget.refresh()
 
     def _on_reset_crash(self):
         self.project_list_widget.setEnabled(False)
