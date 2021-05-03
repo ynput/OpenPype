@@ -511,11 +511,27 @@ class MongoSettingsHandler(SettingsHandler):
     def get_studio_system_settings_overrides(self):
         """Studio overrides of system settings."""
         if self.system_settings_cache.is_outdated:
-            document = self.collection.find_one({
-                "type": SYSTEM_SETTINGS_KEY
+            system_settings_document = None
+            globals_document = None
+            docs = self.collection.find({
+                # Use `$or` as system settings may have more filters in future
+                "$or": [
+                    {"type": GLOBAL_SETTINGS_KEY},
+                    {"type": SYSTEM_SETTINGS_KEY},
+                ]
             })
+            for doc in docs:
+                doc_type = doc["type"]
+                if doc_type == GLOBAL_SETTINGS_KEY:
+                    globals_document = doc
+                elif doc_type == SYSTEM_SETTINGS_KEY:
+                    system_settings_document = doc
 
-            self.system_settings_cache.update_from_document(document)
+            merged_document = self._apply_global_settings(
+                system_settings_document, globals_document
+            )
+
+            self.system_settings_cache.update_from_document(merged_document)
         return self.system_settings_cache.data_copy()
 
     def _get_project_settings_overrides(self, project_name):
