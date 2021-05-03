@@ -23,6 +23,7 @@ from openpype.modules.sync_server.tray.models import (
 )
 
 from openpype.modules.sync_server.tray import lib
+from openpype.modules.sync_server.tray import delegates
 
 log = PypeLogger().get_logger("SyncServer")
 
@@ -145,10 +146,10 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
     def _selection_changed(self, _new_selected, _all_selected):
         idxs = self.selection_model.selectedRows()
-        self._selected_ids = []
+        self._selected_ids = set()
 
         for index in idxs:
-            self._selected_ids.append(self.model.data(index, Qt.UserRole))
+            self._selected_ids.add(self.model.data(index, Qt.UserRole))
 
     def _set_selection(self):
         """
@@ -156,14 +157,14 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
             Keep selection during model refresh.
         """
-        existing_ids = []
+        existing_ids = set()
         for selected_id in self._selected_ids:
             index = self.model.get_index(selected_id)
             if index and index.isValid():
                 mode = QtCore.QItemSelectionModel.Select | \
                     QtCore.QItemSelectionModel.Rows
                 self.selection_model.select(index, mode)
-                existing_ids.append(selected_id)
+                existing_ids.add(selected_id)
 
         self._selected_ids = existing_ids
 
@@ -196,7 +197,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
             return
 
         if is_multi:
-            index = self.model.get_index(self._selected_ids[0])
+            index = self.model.get_index(list(self._selected_ids)[0])
             item = self.model.data(index, lib.FullItemRole)
         else:
             item = self.model.data(point_index, lib.FullItemRole)
@@ -412,8 +413,9 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
     def _change_priority(self, **kwargs):
         """Open editor to change priority on first selected row"""
         if self._selected_ids:
-            index = self.model.get_index(self._selected_ids[0])  # column = 0
-            column_no = self.model.get_header_index("priority") # real column
+            # get_index returns dummy index with column equals to 0
+            index = self.model.get_index(list(self._selected_ids)[0])
+            column_no = self.model.get_header_index("priority")  # real column
             real_index = self.model.index(index.row(), column_no)
             self.model.is_editing = True
             self.table_view.openPersistentEditor(real_index)
@@ -462,7 +464,7 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
 
         self.sync_server = sync_server
 
-        self._selected_ids = []  # keep last selected _id
+        self._selected_ids = set()  # keep last selected _id
 
         txt_filter = QtWidgets.QLineEdit()
         txt_filter.setPlaceholderText("Quick filter representations..")
@@ -494,15 +496,15 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         table_view.viewport().setAttribute(QtCore.Qt.WA_Hover, True)
 
         column = table_view.model().get_header_index("local_site")
-        delegate = ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
 
         column = table_view.model().get_header_index("remote_site")
-        delegate = ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
 
         column = table_view.model().get_header_index("priority")
-        priority_delegate = lib.PriorityDelegate(self)
+        priority_delegate = delegates.PriorityDelegate(self)
         table_view.setItemDelegateForColumn(column, priority_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -624,7 +626,7 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
         self.sync_server = sync_server
 
         self.representation_id = _id
-        self._selected_ids = []
+        self._selected_ids = set()
 
         self.txt_filter = QtWidgets.QLineEdit()
         self.txt_filter.setPlaceholderText("Quick filter representation..")
@@ -654,12 +656,16 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
         table_view.verticalHeader().hide()
 
         column = model.get_header_index("local_site")
-        delegate = ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
 
         column = model.get_header_index("remote_site")
-        delegate = ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
+
+        column = table_view.model().get_header_index("priority")
+        priority_delegate = delegates.PriorityDelegate(self)
+        table_view.setItemDelegateForColumn(column, priority_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -684,11 +690,23 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
 
         self.txt_filter.textChanged.connect(lambda: model.set_word_filter(
             self.txt_filter.text()))
+        table_view.doubleClicked.connect(self._double_clicked)
         table_view.customContextMenuRequested.connect(self._on_context_menu)
 
         model.refresh_started.connect(self._save_scrollbar)
         model.refresh_finished.connect(self._set_scrollbar)
         model.modelReset.connect(self._set_selection)
+
+    def _double_clicked(self, index):
+        """
+            Opens representation dialog with all files after doubleclick
+        """
+        # priority editing
+        column_name = self.model.get_column(index.column())
+        if column_name[0] in self.model.EDITABLE_COLUMNS:
+            self.model.is_editing = True
+            self.table_view.openPersistentEditor(index)
+            return
 
     def _show_detail(self, selected_ids=None):
         """
@@ -802,72 +820,6 @@ class SyncRepresentationErrorWidget(QtWidgets.QWidget):
             text_area.setText("<h4>No errors located</h4>")
             text_area.setReadOnly(True)
             layout.addWidget(text_area)
-
-
-class ImageDelegate(QtWidgets.QStyledItemDelegate):
-    """
-        Prints icon of site and progress of synchronization
-    """
-
-    def __init__(self, parent=None):
-        super(ImageDelegate, self).__init__(parent)
-        self.icons = {}
-
-    def paint(self, painter, option, index):
-        super(ImageDelegate, self).paint(painter, option, index)
-        option = QtWidgets.QStyleOptionViewItem(option)
-        option.showDecorationSelected = True
-
-        provider = index.data(lib.ProviderRole)
-        value = index.data(lib.ProgressRole)
-        date_value = index.data(lib.DateRole)
-        is_failed = index.data(lib.FailedRole)
-
-        if not self.icons.get(provider):
-            resource_path = os.path.dirname(__file__)
-            resource_path = os.path.join(resource_path, "..",
-                                         "providers", "resources")
-            pix_url = "{}/{}.png".format(resource_path, provider)
-            pixmap = QtGui.QPixmap(pix_url)
-            self.icons[provider] = pixmap
-        else:
-            pixmap = self.icons[provider]
-
-        padding = 10
-        point = QtCore.QPoint(option.rect.x() + padding,
-                              option.rect.y() +
-                              (option.rect.height() - pixmap.height()) / 2)
-        painter.drawPixmap(point, pixmap)
-
-        overlay_rect = option.rect.translated(0, 0)
-        overlay_rect.setHeight(overlay_rect.height() * (1.0 - float(value)))
-        painter.fillRect(overlay_rect,
-                         QtGui.QBrush(QtGui.QColor(0, 0, 0, 100)))
-        text_rect = option.rect.translated(10, 0)
-        painter.drawText(text_rect,
-                         QtCore.Qt.AlignCenter,
-                         date_value)
-
-        if is_failed:
-            overlay_rect = option.rect.translated(0, 0)
-            painter.fillRect(overlay_rect,
-                             QtGui.QBrush(QtGui.QColor(255, 0, 0, 35)))
-
-
-class TransparentWidget(QtWidgets.QWidget):
-    """Used for header cell for resizing to work properly"""
-    clicked = QtCore.Signal(str)
-
-    def __init__(self, column_name, *args, **kwargs):
-        super(TransparentWidget, self).__init__(*args, **kwargs)
-        self.column_name = column_name
-        # self.setStyleSheet("background: red;")
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.clicked.emit(self.column_name)
-
-        super(TransparentWidget, self).mouseReleaseEvent(event)
 
 
 class HorizontalHeader(QtWidgets.QHeaderView):

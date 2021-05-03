@@ -1,11 +1,9 @@
 from Qt import QtCore, QtWidgets, QtGui
-from Qt.QtCore import Qt
 import attr
 import abc
 import six
 
 from openpype.lib import PypeLogger
-from avalon.vendor import qtawesome
 
 
 log = PypeLogger().get_logger("SyncServer")
@@ -167,55 +165,3 @@ def get_item_by_id(model, object_id):
     item = model.data(index, FullItemRole)
     return item
 
-
-class PriorityDelegate(QtWidgets.QStyledItemDelegate):
-
-    def paint(self, painter, option, index):
-        super(PriorityDelegate, self).paint(painter, option, index)
-
-        if option.widget.selectionModel().isSelected(index) or \
-                option.state & QtWidgets.QStyle.State_MouseOver:
-            edit_icon = qtawesome.icon("fa.edit", color="white")
-            state = QtGui.QIcon.On
-            mode = QtGui.QIcon.Selected
-
-            icon_side = 16
-            icon_rect = QtCore.QRect(
-                option.rect.left() + option.rect.width() - icon_side - 4,
-                option.rect.top() + ((option.rect.height() - icon_side) / 2),
-                icon_side,
-                icon_side
-            )
-
-            edit_icon.paint(
-                painter, icon_rect,
-                QtCore.Qt.AlignRight, mode, state
-            )
-
-    def createEditor(self, parent, option, index):
-        editor = PriorityLineEdit(
-            parent,
-            option.widget.selectionModel().selectedRows())
-        editor.setValidator(QtGui.QIntValidator(0, 1000, self))
-        editor.setFocus(True)
-        return editor
-
-    def setModelData(self, editor, model, index):
-        for index in editor.selected_idxs:
-            model.set_priority_data(index, editor.text())
-
-
-class PriorityLineEdit(QtWidgets.QLineEdit):
-    """Special LineEdit to consume Enter and store selected indexes"""
-    def __init__(self, parent=None, selected_idxs=None):
-        self.selected_idxs = selected_idxs
-        super(PriorityLineEdit, self).__init__(parent)
-
-    def keyPressEvent(self, event):
-        result = super(PriorityLineEdit, self).keyPressEvent(event)
-        if (
-            event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter)
-        ):
-            return event.accept()
-
-        return result
