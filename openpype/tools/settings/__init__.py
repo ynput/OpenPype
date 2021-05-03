@@ -1,5 +1,6 @@
 import sys
 from Qt import QtWidgets, QtGui
+from .widgets import PasswordDialog
 from .local_settings import LocalSettingsWindow
 from .settings import (
     style,
@@ -30,6 +31,7 @@ def main(user_role=None):
 
 __all__ = (
     "style",
+    "PasswordDialog",
     "MainWidget",
     "ProjectListWidget",
     "LocalSettingsWindow",
