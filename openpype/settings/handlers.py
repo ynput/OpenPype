@@ -12,7 +12,8 @@ from .constants import (
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY,
-    LOCAL_SETTING_KEY
+    LOCAL_SETTING_KEY,
+    M_OVERRIDEN_KEY
 )
 from .lib import load_json_file
 
@@ -167,6 +168,7 @@ class CacheValues:
 
 class MongoSettingsHandler(SettingsHandler):
     """Settings handler that use mongo for storing and loading of settings."""
+    global_general_keys = ("openpype_path", )
 
     def __init__(self):
         # Get mongo connection
@@ -227,9 +229,23 @@ class MongoSettingsHandler(SettingsHandler):
 
     def _prepare_global_settings(self, data):
         output = {}
-        # Add "openpype_path" key to global settings if is set
-        if "general" in data and "openpype_path" in data["general"]:
-            output["openpype_path"] = data["general"]["openpype_path"]
+        if "general" not in data:
+            return output
+
+        general_data = data["general"]
+
+        # Add predefined keys to global settings if are set
+        for key in self.global_general_keys:
+            if key not in general_data:
+                continue
+            # Pop key from values
+            output[key] = general_data.pop(key)
+            # Pop key from overriden metadata
+            if (
+                M_OVERRIDEN_KEY in general_data
+                and key in general_data[M_OVERRIDEN_KEY]
+            ):
+                general_data[M_OVERRIDEN_KEY].remove(key)
         return output
 
     def save_studio_settings(self, data):
