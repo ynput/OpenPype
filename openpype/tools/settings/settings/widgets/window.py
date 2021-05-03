@@ -21,6 +21,7 @@ class MainWidget(QtWidgets.QWidget):
 
         self._user_passed = False
         self._reset_on_show = True
+        self._password_dialog = None
 
         self.setObjectName("MainWidget")
         self.setWindowTitle("OpenPype Settings")
@@ -90,7 +91,10 @@ class MainWidget(QtWidgets.QWidget):
             self.reset()
 
     def _on_password_dialog(self, password_passed):
+        # Store result for future settings reset
         self._user_passed = password_passed
+        # Remove reference to password dialog
+        self._password_dialog = None
         if password_passed:
             self.reset()
         else:
@@ -103,16 +107,18 @@ class MainWidget(QtWidgets.QWidget):
             if not password:
                 self._user_passed = True
 
+        self._on_state_change()
+
         if not self._user_passed:
-            self._on_state_change()
+            # Avoid doubled dialog
+            if not self._password_dialog:
+                dialog = PasswordDialog(self)
+                dialog.setModal(True)
+                dialog.finished.connect(self._on_password_dialog)
 
-            system_settings = get_system_settings()
-            password = system_settings["general"]["admin_password"]
+                self._password_dialog = dialog
 
-            dialog = PasswordDialog(self)
-            dialog.setModal(True)
-            dialog.open()
-            dialog.finished.connect(self._on_password_dialog)
+                dialog.open()
             return
 
         if self._reset_on_show:
