@@ -277,20 +277,23 @@ class DictMutableKeysEntity(EndpointEntity):
 
         self.on_change()
 
-    def _metadata_for_current_state(self):
+    def _get_metadata_for_state(self, state):
         if (
-            self._override_state is OverrideState.PROJECT
+            state is OverrideState.PROJECT
             and self._project_override_value is not NOT_SET
         ):
             return self._project_override_metadata
 
         if (
-            self._override_state >= OverrideState.STUDIO
+            state >= OverrideState.STUDIO
             and self._studio_override_value is not NOT_SET
         ):
             return self._studio_override_metadata
 
         return self._default_metadata
+
+    def _metadata_for_current_state(self):
+        return self._get_metadata_for_state(self._override_state)
 
     def set_override_state(self, state):
         # Trigger override state change of root if is not same
@@ -542,13 +545,23 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
-            child_obj = self.children_by_key.pop(key)
+            self.children_by_key.pop(key)
+
+        metadata = self._get_metadata_for_state(OverrideState.DEFAULTS)
+        metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
+        children_label_by_id = {}
 
         # Create new children
         for _key, _value in new_value.items():
-            child_obj = self._add_key(_key)
-            child_obj.update_default_value(_value)
-            child_obj.set_override_state(self._override_state)
+            child_entity = self._add_key(_key)
+            child_entity.update_default_value(_value)
+            label = metadata_labels.get(_key)
+            if label:
+                children_label_by_id[child_entity.id] = label
+
+            child_entity.set_override_state(self._override_state)
+
+        self.children_label_by_id = children_label_by_id
 
         self._ignore_child_changes = False
 
@@ -577,15 +590,26 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
-            child_obj = self.children_by_key.pop(key)
+            self.children_by_key.pop(key)
+
+        metadata = self._get_metadata_for_state(OverrideState.STUDIO)
+        metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
+        children_label_by_id = {}
 
         # Create new children
         for _key, _value in new_value.items():
-            child_obj = self._add_key(_key)
-            child_obj.update_default_value(_value)
+            child_entity = self._add_key(_key)
+            child_entity.update_default_value(_value)
             if self._has_studio_override:
-                child_obj.update_studio_value(_value)
-            child_obj.set_override_state(self._override_state)
+                child_entity.update_studio_value(_value)
+
+            label = metadata_labels.get(_key)
+            if label:
+                children_label_by_id[child_entity.id] = label
+
+            child_entity.set_override_state(self._override_state)
+
+        self.children_label_by_id = children_label_by_id
 
         self._ignore_child_changes = False
 
