@@ -79,6 +79,13 @@ module.exports = {
         },
         {
             type: "category",
+            label: "Integrations",
+            items: [
+                "admin_hosts_blender"
+            ],
+        },
+        {
+            type: "category",
             label: "Releases",
             items: ["changelog", "update_notes"],
         },
