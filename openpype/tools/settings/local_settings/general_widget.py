@@ -41,7 +41,12 @@ class LocalGeneralWidgets(QtWidgets.QWidget):
         self.username_input.setText(username)
 
         if self.is_admin_input.isChecked() != is_admin:
-            self.is_admin_input.setChecked(is_admin)
+            # Use state as `stateChanged` is connected to callbacks
+            if is_admin:
+                state = QtCore.Qt.Checked
+            else:
+                state = QtCore.Qt.Unchecked
+            self.is_admin_input.setCheckState(state)
 
         self._loading_local_settings = False
 
@@ -60,6 +65,7 @@ class LocalGeneralWidgets(QtWidgets.QWidget):
         dialog.exec_()
         result = dialog.result()
         if self.is_admin_input.isChecked() != result:
+            # Use state as `stateChanged` is connected to callbacks
             if result:
                 state = QtCore.Qt.Checked
             else:
