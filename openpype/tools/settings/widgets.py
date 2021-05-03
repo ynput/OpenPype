@@ -30,9 +30,6 @@ class PasswordDialog(QtWidgets.QDialog):
         password_input = QtWidgets.QLineEdit(password_widget)
         password_input.setEchoMode(QtWidgets.QLineEdit.Password)
 
-        current_dir = os.path.join(
-            os.path.dirname(os.path.abspath(__file__))
-        )
         show_password_icon_path = get_resource("images", "eye.png")
         show_password_icon = QtGui.QIcon(show_password_icon_path)
         show_password_btn = QtWidgets.QPushButton(password_widget)
@@ -87,11 +84,6 @@ class PasswordDialog(QtWidgets.QDialog):
             self._on_ok_click()
             return event.accept()
         super(PasswordDialog, self).keyPressEvent(event)
-
-    def showEvent(self, event):
-        super(PasswordDialog, self).showEvent(event)
-        if self.result():
-            self.close()
 
     def closeEvent(self, event):
         self.finished.emit(self.result())
