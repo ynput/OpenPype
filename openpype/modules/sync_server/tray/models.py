@@ -9,6 +9,7 @@ from avalon.tools.delegates import pretty_timestamp
 from avalon.vendor import qtawesome
 
 from openpype.lib import PypeLogger
+from openpype.api import get_local_site_id
 
 from openpype.modules.sync_server.tray import lib
 
@@ -81,6 +82,11 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
         if role == lib.HeaderNameRole:
             if orientation == Qt.Horizontal:
                 return self.COLUMN_LABELS[section][0]  # return name
+
+    @property
+    def can_edit(self):
+        """Returns true if some site is user local site, eg. could edit"""
+        return get_local_site_id() in (self.active_site, self.remote_site)
 
     def get_column(self, index):
         """

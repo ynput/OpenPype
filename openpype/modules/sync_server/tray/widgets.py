@@ -98,13 +98,16 @@ class SyncProjectListWidget(ProjectListWidget):
         menu = QtWidgets.QMenu(self)
         actions_mapping = {}
 
-        if self.sync_server.is_project_paused(self.project_name):
-            action = QtWidgets.QAction("Unpause")
-            actions_mapping[action] = self._unpause
-        else:
-            action = QtWidgets.QAction("Pause")
-            actions_mapping[action] = self._pause
-        menu.addAction(action)
+        can_edit = self.model.can_edit
+
+        if can_edit:
+            if self.sync_server.is_project_paused(self.project_name):
+                action = QtWidgets.QAction("Unpause")
+                actions_mapping[action] = self._unpause
+            else:
+                action = QtWidgets.QAction("Pause")
+                actions_mapping[action] = self._pause
+            menu.addAction(action)
 
         if self.local_site == get_local_site_id():
             action = QtWidgets.QAction("Clear local project")
@@ -173,11 +176,12 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
             Opens representation dialog with all files after doubleclick
         """
         # priority editing
-        column_name = self.model.get_column(index.column())
-        if column_name[0] in self.model.EDITABLE_COLUMNS:
-            self.model.is_editing = True
-            self.table_view.openPersistentEditor(index)
-            return
+        if self.model.can_edit:
+            column_name = self.model.get_column(index.column())
+            if column_name[0] in self.model.EDITABLE_COLUMNS:
+                self.model.is_editing = True
+                self.table_view.openPersistentEditor(index)
+                return
 
         _id = self.model.data(index, Qt.UserRole)
         detail_window = SyncServerDetailWindow(
@@ -202,8 +206,10 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
         else:
             item = self.model.data(point_index, lib.FullItemRole)
 
+        can_edit = self.model.can_edit
         action_kwarg_map, actions_mapping, menu = self._prepare_menu(item,
-                                                                     is_multi)
+                                                                     is_multi,
+                                                                     can_edit)
 
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
@@ -214,7 +220,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
         self.model.refresh()
 
-    def _prepare_menu(self, item, is_multi):
+    def _prepare_menu(self, item, is_multi, can_edit):
         menu = QtWidgets.QMenu(self)
 
         actions_mapping = {}
@@ -243,28 +249,29 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
                         self._get_action_kwargs(site)
                     menu.addAction(action)
 
-        if remote_progress == 1.0 or is_multi:
+        if can_edit and (remote_progress == 1.0 or is_multi):
             action = QtWidgets.QAction("Re-sync Active site")
             action_kwarg_map[action] = self._get_action_kwargs(active_site)
             actions_mapping[action] = self._reset_site
             menu.addAction(action)
 
-        if local_progress == 1.0 or is_multi:
+        if can_edit and (local_progress == 1.0 or is_multi):
             action = QtWidgets.QAction("Re-sync Remote site")
             action_kwarg_map[action] = self._get_action_kwargs(remote_site)
             actions_mapping[action] = self._reset_site
             menu.addAction(action)
 
-        if active_site == get_local_site_id():
+        if can_edit and active_site == get_local_site_id():
             action = QtWidgets.QAction("Completely remove from local")
             action_kwarg_map[action] = self._get_action_kwargs(active_site)
             actions_mapping[action] = self._remove_site
             menu.addAction(action)
 
-        action = QtWidgets.QAction("Change priority")
-        action_kwarg_map[action] = self._get_action_kwargs(active_site)
-        actions_mapping[action] = self._change_priority
-        menu.addAction(action)
+        if can_edit:
+            action = QtWidgets.QAction("Change priority")
+            action_kwarg_map[action] = self._get_action_kwargs(active_site)
+            actions_mapping[action] = self._change_priority
+            menu.addAction(action)
 
         # # temp for testing only !!!
         # action = QtWidgets.QAction("Download")
@@ -503,9 +510,10 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
 
-        column = table_view.model().get_header_index("priority")
-        priority_delegate = delegates.PriorityDelegate(self)
-        table_view.setItemDelegateForColumn(column, priority_delegate)
+        if model.can_edit:
+            column = table_view.model().get_header_index("priority")
+            priority_delegate = delegates.PriorityDelegate(self)
+            table_view.setItemDelegateForColumn(column, priority_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -536,18 +544,19 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
 
-    def _prepare_menu(self, item, is_multi):
+    def _prepare_menu(self, item, is_multi, can_edit):
         action_kwarg_map, actions_mapping, menu = \
-            super()._prepare_menu(item, is_multi)
+            super()._prepare_menu(item, is_multi, can_edit)
 
-        if item.status in [lib.STATUS[0], lib.STATUS[1]] or is_multi:
+        if can_edit and (
+                item.status in [lib.STATUS[0], lib.STATUS[1]] or is_multi):
             action = QtWidgets.QAction("Pause in queue")
             actions_mapping[action] = self._pause
             # pause handles which site_name it will pause itself
             action_kwarg_map[action] = {"selected_ids": self._selected_ids}
             menu.addAction(action)
 
-        if item.status == lib.STATUS[3] or is_multi:
+        if can_edit and (item.status == lib.STATUS[3] or is_multi):
             action = QtWidgets.QAction("Unpause  in queue")
             actions_mapping[action] = self._unpause
             action_kwarg_map[action] = {"selected_ids": self._selected_ids}
@@ -663,9 +672,10 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
         delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
 
-        column = table_view.model().get_header_index("priority")
-        priority_delegate = delegates.PriorityDelegate(self)
-        table_view.setItemDelegateForColumn(column, priority_delegate)
+        if model.can_edit:
+            column = table_view.model().get_header_index("priority")
+            priority_delegate = delegates.PriorityDelegate(self)
+            table_view.setItemDelegateForColumn(column, priority_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -702,11 +712,12 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
             Opens representation dialog with all files after doubleclick
         """
         # priority editing
-        column_name = self.model.get_column(index.column())
-        if column_name[0] in self.model.EDITABLE_COLUMNS:
-            self.model.is_editing = True
-            self.table_view.openPersistentEditor(index)
-            return
+        if self.model.can_edit:
+            column_name = self.model.get_column(index.column())
+            if column_name[0] in self.model.EDITABLE_COLUMNS:
+                self.model.is_editing = True
+                self.table_view.openPersistentEditor(index)
+                return
 
     def _show_detail(self, selected_ids=None):
         """
@@ -716,10 +727,10 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
 
         detail_window.exec()
 
-    def _prepare_menu(self, item, is_multi):
+    def _prepare_menu(self, item, is_multi, can_edit):
         """Adds view (and model) dependent actions to default ones"""
         action_kwarg_map, actions_mapping, menu = \
-            super()._prepare_menu(item, is_multi)
+            super()._prepare_menu(item, is_multi, can_edit)
 
         if item.status == lib.STATUS[2] or is_multi:
             action = QtWidgets.QAction("Open error detail")
