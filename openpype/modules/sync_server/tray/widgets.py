@@ -95,7 +95,7 @@ class SyncProjectListWidget(ProjectListWidget):
 
         self.project_name = point_index.data(QtCore.Qt.DisplayRole)
 
-        menu = QtWidgets.QMenu()
+        menu = QtWidgets.QMenu(self)
         actions_mapping = {}
 
         if self.sync_server.is_project_paused(self.project_name):
@@ -215,7 +215,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
         self.model.refresh()
 
     def _prepare_menu(self, item, is_multi):
-        menu = QtWidgets.QMenu()
+        menu = QtWidgets.QMenu(self)
 
         actions_mapping = {}
         action_kwarg_map = {}
