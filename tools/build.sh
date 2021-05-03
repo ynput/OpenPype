@@ -124,7 +124,6 @@ install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
   command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
   curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
-  export PATH="$PATH:$HOME/.poetry/bin"
 }
 
 # Main
@@ -141,6 +140,12 @@ main () {
   version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);"
   openpype_version="$(python3 <<< ${version_command})"
 
+  # make sure Poetry is in PATH
+  if [[ -z $POETRY_HOME ]]; then
+    export POETRY_HOME="$openpype_root/.poetry"
+  fi
+  export PATH="$POETRY_HOME/bin:$PATH"
+
   echo -e "${BIYellow}---${RST} Cleaning build directory ..."
   rm -rf "$openpype_root/build" && mkdir "$openpype_root/build" > /dev/null
 
@@ -149,12 +154,12 @@ main () {
   clean_pyc
 
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
-  if [ -f "$HOME/.poetry/bin/poetry" ]; then
+  if [ -f "$POETRY_HOME/bin/poetry" ]; then
     echo -e "${BIGreen}OK${RST}"
-    export PATH="$PATH:$HOME/.poetry/bin"
   else
     echo -e "${BIYellow}NOT FOUND${RST}"
-    install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+    echo -e "${BIYellow}***${RST} We need to install Poetry and virtual env ..."
+    . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
   fi
 
   echo -e "${BIGreen}>>>${RST} Making sure submodules are up-to-date ..."
