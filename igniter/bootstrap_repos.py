@@ -473,7 +473,15 @@ class BootstrapRepos:
 
         """
         # get filtered list of file in Pype repository
-        openpype_list = self._filter_dir(openpype_path, self.zip_filter)
+        # openpype_list = self._filter_dir(openpype_path, self.zip_filter)
+        openpype_list = []
+        for f in self.openpype_filter:
+            if (openpype_path / f).is_dir():
+                openpype_list += self._filter_dir(
+                    openpype_path / f, self.zip_filter)
+            else:
+                openpype_list.append(openpype_path / f)
+
         openpype_files = len(openpype_list)
 
         openpype_inc = 98.0 / float(openpype_files)

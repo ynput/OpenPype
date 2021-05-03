@@ -119,26 +119,3 @@ class PypeCommands:
     def validate_jsons(self):
         pass
 
-    @staticmethod
-    def generate_zip(out_path: str):
-        """Generate zip file from current sources.
-
-        Args:
-            out_path (str): Path to generated zip file.
-
-        """
-        from igniter import bootstrap_repos
-
-        # create zip file
-        bs = bootstrap_repos.BootstrapRepos()
-        if out_path:
-            out_path = Path(out_path)
-            bs.data_dir = out_path.parent
-
-        print(f">>> Creating zip in {bs.data_dir} ...")
-        repo_file = bs.create_version_from_live_code()
-        if not repo_file:
-            print("!!! Error while creating zip file.")
-            exit(1)
-
-        print(f">>> Created {repo_file}")
