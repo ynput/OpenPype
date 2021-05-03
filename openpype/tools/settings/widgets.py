@@ -20,7 +20,7 @@ class PasswordDialog(QtWidgets.QDialog):
         self._expected_result = (
             system_settings["general"].get("admin_password")
         )
-        self._result = ""
+        self._final_result = None
 
         # Password input
         password_widget = QtWidgets.QWidget(self)
@@ -66,7 +66,6 @@ class PasswordDialog(QtWidgets.QDialog):
         layout.addStretch(1)
         layout.addWidget(buttons_widget, 0)
 
-        password_input.textChanged.connect(self._on_text_change)
         ok_btn.clicked.connect(self._on_ok_click)
         cancel_btn.clicked.connect(self._on_cancel_click)
         show_password_btn.clicked.connect(self._on_show_password)
@@ -75,9 +74,9 @@ class PasswordDialog(QtWidgets.QDialog):
         self.message_label = message_label
 
     def result(self):
-        if not self._expected_result:
-            return True
-        return self._result == self._expected_result
+        if self._final_result is None:
+            return False
+        return self._final_result == self._expected_result
 
     def keyPressEvent(self, event):
         if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
@@ -89,11 +88,10 @@ class PasswordDialog(QtWidgets.QDialog):
         self.finished.emit(self.result())
         super(PasswordDialog, self).closeEvent(event)
 
-    def _on_text_change(self, text):
-        self._result = text
-
     def _on_ok_click(self):
-        if self._result == self._expected_result:
+        input_value = self.password_input.text()
+        if input_value == self._expected_result:
+            self._final_result = input_value
             self.close()
         self.message_label.setText("Invalid password. Try it again...")
 
@@ -105,5 +103,4 @@ class PasswordDialog(QtWidgets.QDialog):
         self.password_input.setEchoMode(echo_mode)
 
     def _on_cancel_click(self):
-        self._result = ""
         self.close()
