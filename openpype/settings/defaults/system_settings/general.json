@@ -1,6 +1,7 @@
 {
     "studio_name": "Studio name",
     "studio_code": "stu",
+    "admin_password": "",
     "environment": {
         "OPENPYPE_OCIO_CONFIG": "{STUDIO_SOFT}/OpenColorIO-Configs",
         "__environment_keys__": {
@@ -13,6 +14,5 @@
         "windows": [],
         "darwin": [],
         "linux": []
-    },
-    "admin_password": ""
+    }
 }
