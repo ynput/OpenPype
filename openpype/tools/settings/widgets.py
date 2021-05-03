@@ -146,8 +146,7 @@ class PasswordDialog(QtWidgets.QDialog):
             if "general" not in local_settings:
                 local_settings["general"] = {}
 
-            if "is_admin" not in local_settings["general"]:
-                local_settings["general"]["is_admin"] = True
+            local_settings["general"]["is_admin"] = True
 
             save_local_settings(local_settings)
 
