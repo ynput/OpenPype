@@ -227,7 +227,7 @@ class MongoSettingsHandler(SettingsHandler):
             self._prepare_project_settings_keys()
         return self._attribute_keys
 
-    def _prepare_global_settings(self, data):
+    def _extract_global_settings(self, data):
         output = {}
         if "general" not in data:
             return output
@@ -330,23 +330,29 @@ class MongoSettingsHandler(SettingsHandler):
         Args:
             data(dict): Data of studio overrides with override metadata.
         """
-        # Store system settings
+        # Update cache
         self.system_settings_cache.update_data(data)
+
+        # Get copy of just updated cache
+        system_settings_data = self.system_settings_cache.data_copy()
+
+        # Extract global settings from system settings
+        global_settings = self._extract_global_settings(
+            system_settings_data
+        )
+
+        # Store system settings
         self.collection.replace_one(
             {
                 "type": SYSTEM_SETTINGS_KEY
             },
             {
                 "type": SYSTEM_SETTINGS_KEY,
-                "data": self.system_settings_cache.data
+                "data": system_settings_data
             },
             upsert=True
         )
 
-        # Get global settings from system settings
-        global_settings = self._prepare_global_settings(
-            self.system_settings_cache.data
-        )
         # Store global settings
         self.collection.replace_one(
             {
