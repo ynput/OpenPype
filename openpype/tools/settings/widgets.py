@@ -4,6 +4,33 @@ from openpype.api import get_system_settings
 from .resources import get_resource
 
 
+class PressHoverButton(QtWidgets.QPushButton):
+    _mouse_pressed = False
+    _mouse_hovered = False
+    change_state = QtCore.Signal(bool)
+
+    def mousePressEvent(self, event):
+        self._mouse_pressed = True
+        self._mouse_hovered = True
+        self.change_state.emit(self._mouse_hovered)
+        super(PressHoverButton, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self._mouse_pressed = False
+        self._mouse_hovered = False
+        self.change_state.emit(self._mouse_hovered)
+        super(PressHoverButton, self).mouseReleaseEvent(event)
+
+    def mouseMoveEvent(self, event):
+        mouse_pos = self.mapFromGlobal(QtGui.QCursor.pos())
+        under_mouse = self.rect().contains(mouse_pos)
+        if under_mouse != self._mouse_hovered:
+            self._mouse_hovered = under_mouse
+            self.change_state.emit(self._mouse_hovered)
+
+        super(PressHoverButton, self).mouseMoveEvent(event)
+
+
 class PasswordDialog(QtWidgets.QDialog):
     """Stupidly simple dialog to compare password from general settings."""
     finished = QtCore.Signal(bool)
@@ -31,7 +58,7 @@ class PasswordDialog(QtWidgets.QDialog):
 
         show_password_icon_path = get_resource("images", "eye.png")
         show_password_icon = QtGui.QIcon(show_password_icon_path)
-        show_password_btn = QtWidgets.QPushButton(password_widget)
+        show_password_btn = PressHoverButton(password_widget)
         show_password_btn.setIcon(show_password_icon)
         show_password_btn.setStyleSheet((
             "border: none;padding:0.1em;"
@@ -67,7 +94,7 @@ class PasswordDialog(QtWidgets.QDialog):
 
         ok_btn.clicked.connect(self._on_ok_click)
         cancel_btn.clicked.connect(self._on_cancel_click)
-        show_password_btn.clicked.connect(self._on_show_password)
+        show_password_btn.change_state.connect(self._on_show_password)
 
         self.password_input = password_input
         self.message_label = message_label
@@ -94,8 +121,8 @@ class PasswordDialog(QtWidgets.QDialog):
             self.close()
         self.message_label.setText("Invalid password. Try it again...")
 
-    def _on_show_password(self):
-        if self.password_input.echoMode() == QtWidgets.QLineEdit.Password:
+    def _on_show_password(self, show_password):
+        if show_password:
             echo_mode = QtWidgets.QLineEdit.Normal
         else:
             echo_mode = QtWidgets.QLineEdit.Password
