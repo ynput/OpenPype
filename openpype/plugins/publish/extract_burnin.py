@@ -248,7 +248,9 @@ class ExtractBurnin(openpype.api.Extractor):
                     "output": temp_data["full_output_path"],
                     "burnin_data": burnin_data,
                     "options": burnin_options,
-                    "values": burnin_values
+                    "values": burnin_values,
+                    "full_input_path": temp_data["full_input_paths"][0],
+                    "first_frame": temp_data["first_frame"]
                 }
 
                 self.log.debug(
