@@ -457,23 +457,14 @@ class BaseItemEntity(BaseEntity):
         pass
 
     @property
-    def can_discard_changes(self):
-        """Result defines if `discard_changes` will be processed.
-
-        Also can be used as validation before the method is called.
-        """
+    def _can_discard_changes(self):
+        """Defines if `discard_changes` will be processed."""
         return self.has_unsaved_changes
 
     @property
-    def can_add_to_studio_default(self):
-        """Result defines if `add_to_studio_default` will be processed.
-
-        Also can be used as validation before the method is called.
-        """
+    def _can_add_to_studio_default(self):
+        """Defines if `add_to_studio_default` will be processed."""
         if self._override_state is not OverrideState.STUDIO:
-            return False
-
-        if self.is_dynamic_item or self.is_in_dynamic_item:
             return False
 
         # Skip if entity is under group
@@ -487,15 +478,9 @@ class BaseItemEntity(BaseEntity):
         return True
 
     @property
-    def can_remove_from_studio_default(self):
-        """Result defines if `remove_from_studio_default` can be triggered.
-
-        This can be also used as validation before the method is called.
-        """
+    def _can_remove_from_studio_default(self):
+        """Defines if `remove_from_studio_default` can be processed."""
         if self._override_state is not OverrideState.STUDIO:
-            return False
-
-        if self.is_dynamic_item or self.is_in_dynamic_item:
             return False
 
         if not self.has_studio_override:
@@ -503,14 +488,8 @@ class BaseItemEntity(BaseEntity):
         return True
 
     @property
-    def can_add_to_project_override(self):
-        """Result defines if `add_to_project_override` can be triggered.
-
-        Also can be used as validation before the method is called.
-        """
-        if self.is_dynamic_item or self.is_in_dynamic_item:
-            return False
-
+    def _can_add_to_project_override(self):
+        """Defines if `add_to_project_override` can be processed."""
         # Show only when project overrides are set
         if self._override_state is not OverrideState.PROJECT:
             return False
@@ -525,14 +504,8 @@ class BaseItemEntity(BaseEntity):
         return True
 
     @property
-    def can_remove_from_project_override(self):
-        """Result defines if `remove_from_project_override` can be triggered.
-
-        This can be also used as validation before the method is called.
-        """
-        if self.is_dynamic_item or self.is_in_dynamic_item:
-            return False
-
+    def _can_remove_from_project_override(self):
+        """Defines if `remove_from_project_override` can be processed."""
         if self._override_state is not OverrideState.PROJECT:
             return False
 
