@@ -89,6 +89,22 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.pause_btn.setDefault(False)
         repres.message_generated.connect(self._update_message)
 
+        self.representationWidget = repres
+
+    def showEvent(self, event):
+        self.representationWidget.model.set_project(
+            self.projects.current_project)
+        self._set_running(True)
+        super().showEvent(event)
+
+    def closeEvent(self, event):
+        self._set_running(False)
+        super().closeEvent(event)
+
+    def _set_running(self, running):
+        self.representationWidget.model.is_running = running
+        self.representationWidget.model.timer.setInterval(0)
+
     def _pause(self):
         if self.sync_server.is_paused():
             self.sync_server.unpause_server()

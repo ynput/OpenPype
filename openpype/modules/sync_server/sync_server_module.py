@@ -473,6 +473,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         try:
             self.sync_server_thread = SyncServerThread(self)
+
             from .tray.app import SyncServerWindow
             self.widget = SyncServerWindow(self)
         except ValueError:
