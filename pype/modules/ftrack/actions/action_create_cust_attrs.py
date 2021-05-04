@@ -443,8 +443,19 @@ class CustomAttributes(BaseAction):
         tool_usages = self.presets.get("global", {}).get("tools") or {}
         tools_data = []
         for tool_name, usage in tool_usages.items():
-            if usage:
-                tools_data.append({tool_name: tool_name})
+            if not usage or not tool_name:
+                continue
+            # Forward compatibility with Pype 3
+            # - tools have group and variant joined with slash `/`
+            parts = tool_name.split("_")
+            if len(parts) == 1:
+                # This will cause incompatible tool name
+                new_name = parts[0]
+            else:
+                tool_group = parts.pop(0)
+                remainder = "_".join(parts)
+                new_name = "/".join([tool_group, remainder])
+            tools_data.append({new_name: new_name})
 
         # Make sure there is at least one item
         if not tools_data:
