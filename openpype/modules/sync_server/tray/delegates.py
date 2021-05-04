@@ -36,13 +36,16 @@ class PriorityDelegate(QtWidgets.QStyledItemDelegate):
         editor = PriorityLineEdit(
             parent,
             option.widget.selectionModel().selectedRows())
-        editor.setValidator(QtGui.QIntValidator(0, 1000, self))
         editor.setFocus(True)
         return editor
 
     def setModelData(self, editor, model, index):
         for index in editor.selected_idxs:
-            model.set_priority_data(index, editor.text())
+            try:
+                val = int(editor.text())
+            except ValueError:
+                val = model.sync_server.DEFAULT_PRIORITY
+            model.set_priority_data(index, val)
 
 
 class PriorityLineEdit(QtWidgets.QLineEdit):

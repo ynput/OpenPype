@@ -691,9 +691,15 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                               1,
                               0]},
                 'priority': {
-                    '$cond': [{'$size': '$order_local.priority'},
-                              {'$first': '$order_local.priority'},
-                              self.sync_server.DEFAULT_PRIORITY]},
+                    '$cond': [
+                        {'$size': '$order_local.priority'},
+                        {'$first': '$order_local.priority'},
+                        {'$cond': [
+                            {'$size': '$order_remote.priority'},
+                            {'$first': '$order_remote.priority'},
+                            self.sync_server.DEFAULT_PRIORITY]}
+                    ]
+                },
             }},
             {'$group': {
                 '_id': '$_id',
@@ -1204,9 +1210,15 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                         ]}
                     ]}},
                 'priority': {
-                    '$cond': [{'$size': '$order_local.priority'},
-                              {'$first': '$order_local.priority'},
-                              self.sync_server.DEFAULT_PRIORITY]}
+                    '$cond': [
+                        {'$size': '$order_local.priority'},
+                        {'$first': '$order_local.priority'},
+                        {'$cond': [
+                            {'$size': '$order_remote.priority'},
+                            {'$first': '$order_remote.priority'},
+                            self.sync_server.DEFAULT_PRIORITY]}
+                    ]
+                },
             }},
             {"$project": self.projection}
         ]

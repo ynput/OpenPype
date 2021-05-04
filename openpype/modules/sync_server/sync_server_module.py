@@ -717,9 +717,15 @@ class SyncServerModule(PypeModule, ITrayModule):
             }},
             {'$addFields': {
                 'priority': {
-                    '$cond': [{'$size': '$order_local.priority'},
-                              {'$first': '$order_local.priority'},
-                              self.DEFAULT_PRIORITY]}
+                    '$cond': [
+                        {'$size': '$order_local.priority'},
+                        {'$first': '$order_local.priority'},
+                        {'$cond': [
+                            {'$size': '$order_remote.priority'},
+                            {'$first': '$order_remote.priority'},
+                            self.DEFAULT_PRIORITY]}
+                    ]
+                },
             }},
             {'$group': {
                 '_id': '$_id',
