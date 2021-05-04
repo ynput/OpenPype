@@ -146,7 +146,8 @@ class VRayProxyLoader(api.Loader):
             name = os.path.splitext(os.path.basename(filename))[0]
 
         parent = cmds.createNode("transform", name=name)
-        proxy = cmds.createNode("VRayProxy", name=name + "Shape", parent=parent)
+        proxy = cmds.createNode(
+            "VRayProxy", name="{}Shape".format(name), parent=parent)
         cmds.setAttr(proxy + ".fileName", filename, type="string")
         cmds.connectAttr("time1.outTime", proxy + ".currentFrame")
 
@@ -182,4 +183,4 @@ class VRayProxyLoader(api.Loader):
             self.log.debug("File: {}".format(self.fname))
             return file_name
 
-        return None
+        return ""

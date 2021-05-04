@@ -192,7 +192,8 @@ def load_look(version_id):
         # Load file
         loaders = api.loaders_from_representation(api.discover(api.Loader),
                                                   representation_id)
-        loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
+        loader = next(
+            (i for i in loaders if i.__name__ == "LookLoader"), None)
         if loader is None:
             raise RuntimeError("Could not find LookLoader, this is a bug")
 
@@ -274,8 +275,12 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
 
         # Get only the node ids and paths related to this asset
         # And get the shader edits the look supplies
-        asset_nodes_by_id = {node_id: nodes_by_id[node_id] for node_id in node_ids}
-        edits = list(lib.iter_shader_edits(relationships, shadernodes, asset_nodes_by_id))
+        asset_nodes_by_id = {
+            node_id: nodes_by_id[node_id] for node_id in node_ids
+        }
+        edits = list(
+            lib.iter_shader_edits(
+                relationships, shadernodes, asset_nodes_by_id))
 
         # Create assignments
         assignments = {}
@@ -287,7 +292,8 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
                     print("Skipping non-shader: %s" % shader)
                     continue
 
-                inputs = cmds.listConnections(shader + ".surfaceShader", source=True)
+                inputs = cmds.listConnections(
+                    shader + ".surfaceShader", source=True)
                 if not inputs:
                     print("Shading engine missing material: %s" % shader)
 
@@ -295,11 +301,12 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
                 for i, node in enumerate(nodes):
                     if "." in node:
                         log.warning(
-                            "Converting face assignment to full object assignment. This conversion can be lossy: %s" % node)
+                            ("Converting face assignment to full object "
+                             "assignment. This conversion can be lossy: "
+                             "{}").format(node))
                         nodes[i] = node.split(".")[0]
 
                 material = inputs[0]
                 assignments[material] = nodes
 
         assign_vrayproxy_shaders(vrayproxy, assignments)
-

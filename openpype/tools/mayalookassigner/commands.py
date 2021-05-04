@@ -140,7 +140,7 @@ def create_items_from_nodes(nodes):
         path = cmds.getAttr("{}.fileName".format(vp))
         ids = vray_proxies.get_alembic_ids_cache(path)
         parent_id = {}
-        for k, n in ids.items():
+        for k, _ in ids.items():
             pid = k.split(":")[0]
             if not parent_id.get(pid):
                 parent_id.update({pid: [vp]})
