@@ -247,8 +247,7 @@
                                         "label": "Used in plugins",
                                         "object_type": {
                                             "type": "text",
-                                            "key": "pluginClass",
-                                            "label": "Plugin Class"
+                                            "key": "pluginClass"
                                         }
                                     },
                                     {
@@ -295,8 +294,7 @@
                                         "label": "Used in plugins",
                                         "object_type": {
                                             "type": "text",
-                                            "key": "pluginClass",
-                                            "label": "Plugin Class"
+                                            "key": "pluginClass"
                                         }
                                     },
                                     {

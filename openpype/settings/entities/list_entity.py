@@ -171,8 +171,18 @@ class ListEntity(EndpointEntity):
             )
             raise EntitySchemaError(self, reason)
 
-        for child_obj in self.children:
-            child_obj.schema_validations()
+        # Validate object type schema
+        child_validated = False
+        for child_entity in self.children:
+            child_entity.schema_validations()
+            child_validated = True
+            break
+
+        if not child_validated:
+            idx = 0
+            tmp_child = self._add_new_item(idx)
+            tmp_child.schema_validations()
+            self.children.pop(idx)
 
     def get_child_path(self, child_obj):
         result_idx = None
