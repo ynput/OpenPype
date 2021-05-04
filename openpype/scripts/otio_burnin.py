@@ -14,7 +14,7 @@ ffprobe_path = openpype.lib.get_ffmpeg_tool_path("ffprobe")
 
 
 FFMPEG = (
-    '"{}" -i "%(input)s" %(filters)s %(args)s%(output)s'
+    '"{}"%(input_args)s -i "%(input)s" %(filters)s %(args)s%(output)s'
 ).format(ffmpeg_path)
 
 FFPROBE = (
@@ -121,9 +121,17 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         'font_size': 42
     }
 
-    def __init__(self, source, streams=None, options_init=None):
+    def __init__(
+        self, source, streams=None, options_init=None, first_frame=None
+    ):
         if not streams:
             streams = _streams(source)
+
+        input_args = []
+        if first_frame:
+            input_args.append("-start_number {}".format(first_frame))
+
+        self.input_args = input_args
 
         super().__init__(source, streams)
 
@@ -289,7 +297,12 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if self.filter_string:
             filters = '-vf "{}"'.format(self.filter_string)
 
+        input_args = ""
+        if self.input_args:
+            input_args = " {}".format(" ".join(self.input_args))
+
         return (FFMPEG % {
+            'input_args': input_args,
             'input': self.source,
             'output': output,
             'args': '%s ' % args if args else '',
