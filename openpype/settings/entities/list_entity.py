@@ -59,8 +59,7 @@ class ListEntity(EndpointEntity):
         )
 
     def append(self, item):
-        child_obj = self._add_new_item()
-        child_obj.set_override_state(self._override_state)
+        child_obj = self.add_new_item(trigger_change=False)
         child_obj.set(item)
         self.on_change()
 
@@ -92,8 +91,7 @@ class ListEntity(EndpointEntity):
         raise ValueError("ListEntity.remove(x): x not in ListEntity")
 
     def insert(self, idx, item):
-        child_obj = self._add_new_item(idx)
-        child_obj.set_override_state(self._override_state)
+        child_obj = self.add_new_item(idx, trigger_change=False)
         child_obj.set(item)
         self.on_change()
 
@@ -105,10 +103,16 @@ class ListEntity(EndpointEntity):
             self.children.insert(idx, child_obj)
         return child_obj
 
-    def add_new_item(self, idx=None):
+    def add_new_item(self, idx=None, trigger_change=True):
         child_obj = self._add_new_item(idx)
         child_obj.set_override_state(self._override_state)
-        self.on_change()
+        if self._override_state is OverrideState.STUDIO:
+            child_obj.add_to_studio_default([])
+        elif self._override_state is OverrideState.PROJECT:
+            child_obj.add_to_project_default([])
+
+        if trigger_change:
+            self.on_change()
         return child_obj
 
     def swap_items(self, item_1, item_2):
