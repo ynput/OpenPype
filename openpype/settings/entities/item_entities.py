@@ -453,4 +453,5 @@ class ListStrictEntity(ItemEntity):
 
     def reset_callbacks(self):
         super(ListStrictEntity, self).reset_callbacks()
-        self.child_obj.reset_callbacks()
+        for child_obj in self.children:
+            child_obj.reset_callbacks()
