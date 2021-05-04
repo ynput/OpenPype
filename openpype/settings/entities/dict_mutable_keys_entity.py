@@ -251,8 +251,10 @@ class DictMutableKeysEntity(EndpointEntity):
             )
             raise EntitySchemaError(self, reason)
 
-        for child_obj in self.children_by_key.values():
-            child_obj.schema_validations()
+        key = "__tmp__"
+        tmp_child = self._add_key(key)
+        tmp_child.schema_validations()
+        self.children_by_key.pop(key)
 
     def get_child_path(self, child_obj):
         result_key = None
