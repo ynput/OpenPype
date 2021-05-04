@@ -3,6 +3,7 @@ import re
 import json
 import copy
 import tempfile
+import clique
 
 import openpype
 import openpype.api
@@ -269,7 +270,9 @@ class ExtractBurnin(openpype.api.Extractor):
                     "output": temp_data["full_output_path"],
                     "burnin_data": burnin_data,
                     "options": burnin_options,
-                    "values": burnin_values
+                    "values": burnin_values,
+                    "full_input_path": temp_data["full_input_paths"][0],
+                    "first_frame": temp_data["first_frame"]
                 }
 
                 self.log.debug(
@@ -483,32 +486,47 @@ class ExtractBurnin(openpype.api.Extractor):
             None: This is processing method.
         """
         # TODO we should find better way to know if input is sequence
-        is_sequence = (
-            "sequence" in new_repre["tags"]
-            and isinstance(new_repre["files"], (tuple, list))
-        )
+        input_filenames = new_repre["files"]
+        is_sequence = False
+        if isinstance(input_filenames, (tuple, list)):
+            if len(input_filenames) > 1:
+                is_sequence = True
+
+        # Sequence must have defined first frame
+        # - not used if input is not a sequence
+        first_frame = None
         if is_sequence:
-            input_filename = new_repre["sequence_file"]
-        else:
-            input_filename = new_repre["files"]
+            collections, _ = clique.assemble(input_filenames)
+            if not collections:
+                is_sequence = False
+            else:
+                input_filename = new_repre["sequence_file"]
+                collection = collections[0]
+                indexes = list(collection.indexes)
+                padding = len(str(max(indexes)))
+                head = collection.format("{head}")
+                tail = collection.format("{tail}")
+                output_filename = "{}%{:0>2}d{}{}".format(
+                    head, padding, filename_suffix, tail
+                )
+                repre_files = []
+                for idx in indexes:
+                    repre_files.append(output_filename % idx)
 
-        filepart_start, ext = os.path.splitext(input_filename)
-        dir_path, basename = os.path.split(filepart_start)
+                first_frame = min(indexes)
 
-        if is_sequence:
-            # NOTE modified to keep name when multiple dots are in name
-            basename_parts = basename.split(".")
-            frame_part = basename_parts.pop(-1)
+        if not is_sequence:
+            input_filename = input_filenames
+            if isinstance(input_filename, (tuple, list)):
+                input_filename = input_filename[0]
 
-            basename_start = ".".join(basename_parts) + filename_suffix
-            new_basename = ".".join((basename_start, frame_part))
-            output_filename = new_basename + ext
-
-        else:
+            filepart_start, ext = os.path.splitext(input_filename)
+            dir_path, basename = os.path.split(filepart_start)
             output_filename = basename + filename_suffix + ext
+            if dir_path:
+                output_filename = os.path.join(dir_path, output_filename)
 
-        if dir_path:
-            output_filename = os.path.join(dir_path, output_filename)
+            repre_files = output_filename
 
         stagingdir = new_repre["stagingDir"]
         full_input_path = os.path.join(
@@ -520,6 +538,9 @@ class ExtractBurnin(openpype.api.Extractor):
 
         temp_data["full_input_path"] = full_input_path
         temp_data["full_output_path"] = full_output_path
+        temp_data["first_frame"] = first_frame
+
+        new_repre["files"] = repre_files
 
         self.log.debug("full_input_path: {}".format(full_input_path))
         self.log.debug("full_output_path: {}".format(full_output_path))
@@ -527,17 +548,16 @@ class ExtractBurnin(openpype.api.Extractor):
         # Prepare full paths to input files and filenames for reprensetation
         full_input_paths = []
         if is_sequence:
-            repre_files = []
-            for frame_index in range(1, temp_data["duration"] + 1):
-                repre_files.append(output_filename % frame_index)
-                full_input_paths.append(full_input_path % frame_index)
+            for filename in input_filenames:
+                filepath = os.path.join(
+                    os.path.normpath(stagingdir), filename
+                ).replace("\\", "/")
+                full_input_paths.append(filepath)
 
         else:
             full_input_paths.append(full_input_path)
-            repre_files = output_filename
 
         temp_data["full_input_paths"] = full_input_paths
-        new_repre["files"] = repre_files
 
     def prepare_repre_data(self, instance, repre, burnin_data, temp_data):
         """Prepare data for representation.
