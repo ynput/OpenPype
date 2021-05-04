@@ -114,8 +114,30 @@ class ExtractBurnin(openpype.api.Extractor):
         # Prepare burnin options
         profile_options = copy.deepcopy(self.default_options)
         for key, value in (self.options or {}).items():
-            if value is not None:
-                profile_options[key] = value
+            if value is None:
+                continue
+
+            if key == "bg_color" and len(value) == 4:
+                bg_red, bg_green, bg_blue, bg_alpha = value
+                bg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
+                    bg_red, bg_green, bg_blue
+                )
+                bg_color_alpha = float(bg_alpha) / 255
+                profile_options["bg_opacity"] = bg_color_alpha
+                profile_options["bg_color"] = bg_color_hex
+                continue
+
+            elif key == "font_color" and len(value) == 4:
+                fg_red, fg_green, fg_blue, fg_alpha = value
+                fg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
+                    fg_red, fg_green, fg_blue
+                )
+                fg_color_alpha = float(fg_alpha) / 255
+                profile_options["opacity"] = fg_color_alpha
+                profile_options["font_color"] = fg_color_hex
+                continue
+
+            profile_options[key] = value
 
         # Prepare global burnin values from presets
         profile_burnins = {}
