@@ -1,5 +1,61 @@
 # Changelog
 
+
+## [2.17.1](https://github.com/pypeclub/openpype/tree/2.17.1) (2021-04-30)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.0...2.17.1)
+
+**Enhancements:**
+
+- TVPaint frame range definition [\#1424](https://github.com/pypeclub/OpenPype/pull/1424)
+- PS - group all published instances [\#1415](https://github.com/pypeclub/OpenPype/pull/1415)
+- Nuke: deadline submission with gpu [\#1414](https://github.com/pypeclub/OpenPype/pull/1414)
+- Add task name to context pop up. [\#1383](https://github.com/pypeclub/OpenPype/pull/1383)
+- AE add duration validation [\#1363](https://github.com/pypeclub/OpenPype/pull/1363)
+- Maya: Support for Redshift proxies [\#1360](https://github.com/pypeclub/OpenPype/pull/1360)
+
+**Fixed bugs:**
+
+- Nuke: fixing undo for loaded mov and sequence [\#1433](https://github.com/pypeclub/OpenPype/pull/1433)
+- AE - validation for duration was 1 frame shorter [\#1426](https://github.com/pypeclub/OpenPype/pull/1426)
+- Houdini menu filename [\#1417](https://github.com/pypeclub/OpenPype/pull/1417)
+- Maya: Vray - problem getting all file nodes for look publishing [\#1399](https://github.com/pypeclub/OpenPype/pull/1399)
+
+
+## [2.17.0](https://github.com/pypeclub/openpype/tree/2.17.0) (2021-04-20)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/3.0.0-beta2...2.17.0)
+
+**Enhancements:**
+
+- Forward compatible ftrack group [\#1243](https://github.com/pypeclub/OpenPype/pull/1243)
+- Maya: Make tx option configurable with presets [\#1328](https://github.com/pypeclub/OpenPype/pull/1328)
+- TVPaint asset name validation [\#1302](https://github.com/pypeclub/OpenPype/pull/1302)
+- TV Paint: Set initial project settings. [\#1299](https://github.com/pypeclub/OpenPype/pull/1299)
+- TV Paint: Validate mark in and out. [\#1298](https://github.com/pypeclub/OpenPype/pull/1298)
+- Validate project settings [\#1297](https://github.com/pypeclub/OpenPype/pull/1297)
+- After Effects: added SubsetManager [\#1234](https://github.com/pypeclub/OpenPype/pull/1234)
+- Show error message in pyblish UI [\#1206](https://github.com/pypeclub/OpenPype/pull/1206)
+
+**Fixed bugs:**
+
+- Hiero: fixing source frame from correct object [\#1362](https://github.com/pypeclub/OpenPype/pull/1362)
+- Nuke: fix colourspace, prerenders and nuke panes opening [\#1308](https://github.com/pypeclub/OpenPype/pull/1308)
+- AE remove orphaned instance from workfile - fix self.stub [\#1282](https://github.com/pypeclub/OpenPype/pull/1282)
+- Nuke: deadline submission with search replaced env values from preset [\#1194](https://github.com/pypeclub/OpenPype/pull/1194)
+- Ftrack custom attributes in bulks [\#1312](https://github.com/pypeclub/OpenPype/pull/1312)
+- Ftrack optional pypclub role [\#1303](https://github.com/pypeclub/OpenPype/pull/1303)
+- After Effects: remove orphaned instances [\#1275](https://github.com/pypeclub/OpenPype/pull/1275)
+- Avalon schema names [\#1242](https://github.com/pypeclub/OpenPype/pull/1242)
+- Handle duplication of Task name [\#1226](https://github.com/pypeclub/OpenPype/pull/1226)
+- Modified path of plugin loads for Harmony and TVPaint [\#1217](https://github.com/pypeclub/OpenPype/pull/1217)
+- Regex checks in profiles filtering [\#1214](https://github.com/pypeclub/OpenPype/pull/1214)
+- Bulk mov strict task [\#1204](https://github.com/pypeclub/OpenPype/pull/1204)
+- Update custom ftrack session attributes [\#1202](https://github.com/pypeclub/OpenPype/pull/1202)
+- Nuke: write node colorspace ignore `default\(\)` label [\#1199](https://github.com/pypeclub/OpenPype/pull/1199)
+- Nuke: reverse search to make it more versatile [\#1178](https://github.com/pypeclub/OpenPype/pull/1178)
+
+
 ## [2.16.1](https://github.com/pypeclub/pype/tree/2.16.1) (2021-04-13)
 
 [Full Changelog](https://github.com/pypeclub/pype/compare/2.16.0...2.16.1)
