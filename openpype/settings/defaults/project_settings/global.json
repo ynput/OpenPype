@@ -73,8 +73,18 @@
             "enabled": true,
             "options": {
                 "font_size": 42,
-                "opacity": 1.0,
-                "bg_opacity": 0.5,
+                "font_color": [
+                    255,
+                    255,
+                    255,
+                    255
+                ],
+                "bg_color": [
+                    0,
+                    0,
+                    0,
+                    127
+                ],
                 "x_offset": 5,
                 "y_offset": 5,
                 "bg_padding": 5
