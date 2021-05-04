@@ -2,7 +2,7 @@ import pyblish.api
 
 
 class CollectRemoveMarked(pyblish.api.ContextPlugin):
-    """Remvoe marked data
+    """Remove marked data
 
     Remove instances that have 'remove' in their instance.data
 
