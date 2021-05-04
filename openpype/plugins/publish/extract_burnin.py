@@ -517,8 +517,11 @@ class ExtractBurnin(openpype.api.Extractor):
         # Prepare full paths to input files and filenames for reprensetation
         full_input_paths = []
         if is_sequence:
-            for frame_index in range(1, temp_data["duration"] + 1):
-                full_input_paths.append(full_input_path % frame_index)
+            for filename in input_filenames:
+                filepath = os.path.join(
+                    os.path.normpath(stagingdir), filename
+                ).replace("\\", "/")
+                full_input_paths.append(filepath)
 
         else:
             full_input_paths.append(full_input_path)
