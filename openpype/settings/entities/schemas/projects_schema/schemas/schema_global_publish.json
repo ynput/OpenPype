@@ -427,7 +427,7 @@
                         "children": [
                             {
                                 "type": "label",
-                                "label": "Set all published instances as a part of specific group named according to 'Template'. <br>Implemented placeholders [{task},{Task},{family},{Family}]"
+                                "label": "Set all published instances as a part of specific group named according to 'Template'. <br>Implemented all variants of placeholders [{task},{family},{host},{subset},{renderlayer}]"
                             },
                             {
                                 "key": "families",

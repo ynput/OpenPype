@@ -12,11 +12,13 @@ import shutil
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import io
+from avalon.api import format_template_with_optional_keys
 from avalon.vendor import filelink
 import openpype.api
 from datetime import datetime
 # from pype.modules import ModulesManager
 from openpype.lib.profiles_filtering import filter_profiles
+from openpype.lib import prepare_template_data
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -730,7 +732,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         profiles = integrate_new_sett["subset_grouping_profiles"]
 
         filtering_criteria = {
-            "families": instance.data["anatomyData"]["family"],
+            "families": instance.data["family"],
             "hosts": instance.data["anatomyData"]["app"],
             "tasks": instance.data["anatomyData"]["task"] or
                 io.Session["AVALON_TASK"]
@@ -738,17 +740,20 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         matching_profile = filter_profiles(profiles, filtering_criteria)
 
         filled_template = None
-        fill_pairs = None
         if matching_profile:
             template = matching_profile["template"]
-            fill_pairs = {
-                "family": filtering_criteria["families"],
-                "task": filtering_criteria["tasks"],
-                "Family": filtering_criteria["families"].capitalize(),
-                "Task": filtering_criteria["tasks"].capitalize()
-            }
+            fill_pairs = (
+                ("family", filtering_criteria["families"]),
+                ("task", filtering_criteria["tasks"]),
+                ("host", filtering_criteria["hosts"]),
+                ("subset", instance.data["subset"]),
+                ("renderlayer", instance.data.get("renderlayer"))
+            )
+            fill_pairs = prepare_template_data(fill_pairs)
+
             try:
-                filled_template = template.format(**fill_pairs)
+                filled_template = \
+                    format_template_with_optional_keys(fill_pairs, template)
             except KeyError:
                 keys = []
                 if fill_pairs:

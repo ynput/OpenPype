@@ -73,6 +73,23 @@ def get_subset_name(
         ("family", family),
         ("task", task_name)
     )
+    return template.format(**prepare_template_data(fill_pairs))
+
+
+def prepare_template_data(fill_pairs):
+    """
+        Prepares formatted data for filling template.
+
+        It produces mutliple variants of keys (key, Key, KEY) to control
+        format of filled template.
+
+        Args:
+            fill_pairs (iterable) of tuples (key, value)
+        Returns:
+            (dict)
+            ('host', 'maya') > {'host':'maya', 'Host': 'Maya', 'HOST': 'MAYA'}
+
+    """
     fill_data = {}
     for key, value in fill_pairs:
         # Handle cases when value is `None` (standalone publisher)
@@ -94,7 +111,7 @@ def get_subset_name(
                 capitalized += value[1:]
         fill_data[key.capitalize()] = capitalized
 
-    return template.format(**fill_data)
+    return fill_data
 
 
 def filter_pyblish_plugins(plugins):
