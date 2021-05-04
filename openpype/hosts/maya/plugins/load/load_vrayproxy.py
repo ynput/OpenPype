@@ -15,7 +15,7 @@ from openpype.api import get_project_settings
 
 
 class VRayProxyLoader(api.Loader):
-    """Load VRayMesh proxy."""
+    """Load VRay Proxy with Alembic or VrayMesh."""
 
     families = ["vrayproxy"]
     representations = ["vrmesh"]
@@ -141,52 +141,16 @@ class VRayProxyLoader(api.Loader):
             nodes(list)
 
         """
-        # Create nodes
-        vray_mesh = cmds.createNode('VRayMesh', name="{}_VRMS".format(name))
-        mesh_shape = cmds.createNode("mesh", name="{}_GEOShape".format(name))
-        vray_mat = cmds.shadingNode("VRayMeshMaterial", asShader=True,
-                                    name="{}_VRMM".format(name))
-        vray_mat_sg = cmds.sets(name="{}_VRSG".format(name),
-                                empty=True,
-                                renderable=True,
-                                noSurfaceShader=True)
 
-        cmds.setAttr("{}.fileName".format(vray_mesh),
-                     filename,
-                     type="string")
+        if name is None:
+            name = os.path.splitext(os.path.basename(filename))[0]
 
-        # Create important connections
-        cmds.connectAttr("time1.outTime",
-                         "{0}.currentFrame".format(vray_mesh))
-        cmds.connectAttr("{}.fileName2".format(vray_mesh),
-                         "{}.fileName".format(vray_mat))
-        cmds.connectAttr("{}.instancing".format(vray_mesh),
-                         "{}.instancing".format(vray_mat))
-        cmds.connectAttr("{}.output".format(vray_mesh),
-                         "{}.inMesh".format(mesh_shape))
-        cmds.connectAttr("{}.overrideFileName".format(vray_mesh),
-                         "{}.overrideFileName".format(vray_mat))
-        cmds.connectAttr("{}.currentFrame".format(vray_mesh),
-                         "{}.currentFrame".format(vray_mat))
+        parent = cmds.createNode("transform", name=name)
+        proxy = cmds.createNode("VRayProxy", name=name + "Shape", parent=parent)
+        cmds.setAttr(proxy + ".fileName", filename, type="string")
+        cmds.connectAttr("time1.outTime", proxy + ".currentFrame")
 
-        # Set surface shader input
-        cmds.connectAttr("{}.outColor".format(vray_mat),
-                         "{}.surfaceShader".format(vray_mat_sg))
-
-        # Connect mesh to shader
-        cmds.sets([mesh_shape], addElement=vray_mat_sg)
-
-        group_node = cmds.group(empty=True, name="{}_GRP".format(name))
-        mesh_transform = cmds.listRelatives(mesh_shape,
-                                            parent=True, fullPath=True)
-        cmds.parent(mesh_transform, group_node)
-        nodes = [vray_mesh, mesh_shape, vray_mat, vray_mat_sg, group_node]
-
-        # Fix: Force refresh so the mesh shows correctly after creation
-        cmds.refresh()
-        cmds.setAttr("{}.geomType".format(vray_mesh), 2)
-
-        return nodes, group_node
+        return [parent, proxy], parent
 
     def _get_abc(self, version_id):
         # type: (str) -> str

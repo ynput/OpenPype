@@ -129,7 +129,7 @@ def assign_vrayproxy_shaders(vrayproxy, assignments):
     index = 0
     for material, paths in assignments.items():
         for path in paths:
-            plug = "{}.shaders[{}]".format(proxy, index)
+            plug = "{}.shaders[{}]".format(vrayproxy, index)
             cmds.setAttr(plug + ".shadersNames", path, type="string")
             cmds.connectAttr(material + ".outColor",
                              plug + ".shadersConnections", force=True)
@@ -274,16 +274,7 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
 
         # Get only the node ids and paths related to this asset
         # And get the shader edits the look supplies
-        asset_nodes_by_id = {node_id: vrayproxy for node_id in node_ids}
-        print("-" * 80)
-        print(node_ids)
-        print("+" * 80)
-        print(relationships)
-        print("+-" * 40)
-        print(shadernodes)
-        print("+-" * 40)
-        print(asset_nodes_by_id)
-        print("+" * 80)
+        asset_nodes_by_id = {node_id: nodes_by_id[node_id] for node_id in node_ids}
         edits = list(lib.iter_shader_edits(relationships, shadernodes, asset_nodes_by_id))
 
         # Create assignments
@@ -312,13 +303,3 @@ def vrayproxy_assign_look(vrayproxy, subset="lookDefault"):
 
         assign_vrayproxy_shaders(vrayproxy, assignments)
 
-
-# Example usage
-if __name__ == "__main__":
-
-    # Ensure V-Ray is loaded
-    cmds.loadPlugin("vrayformaya", quiet=True)
-
-    # Assign lookDefault to all V-Ray Proxies
-    for proxy in cmds.ls(sl=True, dag=True, type="VRayProxy"):
-        vrayproxy_assign_look(proxy, subset="lookDefault")

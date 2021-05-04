@@ -213,13 +213,9 @@ class App(QtWidgets.QWidget):
                                                        subset_name,
                                                        asset))
 
-            print(">>> get vray mesh nodes ...")
-            vray_proxies = set(cmds.ls(type="VRayMesh"))
-            print("-" * 40)
-            print(item["nodes"])
-            print(vray_proxies)
+            self.echo("Getting vray proxy nodes ...")
+            vray_proxies = set(cmds.ls(type="VRayProxy"))
             nodes = set(item["nodes"]).difference(vray_proxies)
-            print(nodes)
 
             # Assign look
             if nodes:

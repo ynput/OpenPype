@@ -1135,7 +1135,6 @@ def get_id(node):
     if node is None:
         return
 
-    print("><?>< {}".format(node))
     sel = om.MSelectionList()
     sel.add(node)
 

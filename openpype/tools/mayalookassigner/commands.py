@@ -68,9 +68,7 @@ def get_selected_nodes():
 
     selection = cmds.ls(selection=True, long=True)
     hierarchy = list_descendents(selection)
-    nodes = list(set(selection + hierarchy))
-
-    return nodes
+    return list(set(selection + hierarchy))
 
 
 def get_all_asset_nodes():
@@ -136,11 +134,8 @@ def create_items_from_nodes(nodes):
 
     id_hashes = create_asset_id_hash(nodes)
 
-    print("*" * 40)
-    print(id_hashes)
-
     # get ids from alembic
-    vray_proxy_nodes = cmds.ls(nodes, type="VRayMesh")
+    vray_proxy_nodes = cmds.ls(nodes, type="VRayProxy")
     for vp in vray_proxy_nodes:
         path = cmds.getAttr("{}.fileName".format(vp))
         ids = vray_proxies.get_alembic_ids_cache(path)
@@ -150,11 +145,8 @@ def create_items_from_nodes(nodes):
             if not parent_id.get(pid):
                 parent_id.update({pid: [vp]})
 
-        print("adding ids from alembic {}".format(path))
+        print("Adding ids from alembic {}".format(path))
         id_hashes.update(parent_id)
-
-    print("*" * 40)
-    print(id_hashes)
 
     if not id_hashes:
         return asset_view_items
@@ -196,7 +188,7 @@ def remove_unused_looks():
 
     host = api.registered_host()
 
-    unused = list()
+    unused = []
     for container in host.ls():
         if container['loader'] == "LookLoader":
             members = cmds.sets(container['objectName'], query=True)

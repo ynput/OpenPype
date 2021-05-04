@@ -93,9 +93,6 @@ class AssetOutliner(QtWidgets.QWidget):
             with lib.preserve_selection(self.view):
                 self.clear()
                 nodes = commands.get_all_asset_nodes()
-                print("_" * 40)
-                print(nodes)
-                print("_" * 40)
                 items = commands.create_items_from_nodes(nodes)
                 self.add_items(items)
 
@@ -125,7 +122,7 @@ class AssetOutliner(QtWidgets.QWidget):
 
         # Collect the asset item entries per asset
         # and collect the namespaces we'd like to apply
-        assets = dict()
+        assets = {}
         asset_namespaces = defaultdict(set)
         for item in items:
             asset_id = str(item["asset"]["_id"])
