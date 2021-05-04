@@ -2,14 +2,9 @@ import pyblish.api
 
 
 class CollectFtrackFamilies(pyblish.api.InstancePlugin):
-    """Collect model data
-
-    Ensures always only a single frame is extracted (current frame).
-
-    Note:
-        This is a workaround so that the `pype.model` family can use the
-        same pointcache extractor implementation as animation and pointcaches.
-        This always enforces the "current" frame to be published.
+    """Collect family for ftrack publishing
+  
+    Add ftrack family to those instance that should be published to ftrack
 
     """
 
@@ -23,6 +18,7 @@ class CollectFtrackFamilies(pyblish.api.InstancePlugin):
                 "rig",
                 "camera"
                 ]
+    hosts = ["maya"]
 
     def process(self, instance):
 
