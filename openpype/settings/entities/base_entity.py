@@ -517,6 +517,54 @@ class BaseItemEntity(BaseEntity):
             return False
         return True
 
+    @property
+    def can_trigger_discard_changes(self):
+        """Defines if can trigger `discard_changes`.
+
+        Also can be used as validation before the method is called.
+        """
+        return self._can_discard_changes
+
+    @property
+    def can_trigger_add_to_studio_default(self):
+        """Defines if can trigger `add_to_studio_default`.
+
+        Also can be used as validation before the method is called.
+        """
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+        return self._can_add_to_studio_default
+
+    @property
+    def can_trigger_remove_from_studio_default(self):
+        """Defines if can trigger `remove_from_studio_default`.
+
+        Also can be used as validation before the method is called.
+        """
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+        return self._can_remove_from_studio_default
+
+    @property
+    def can_trigger_add_to_project_override(self):
+        """Defines if can trigger `add_to_project_override`.
+
+        Also can be used as validation before the method is called.
+        """
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+        return self._can_add_to_project_override
+
+    @property
+    def can_trigger_remove_from_project_override(self):
+        """Defines if can trigger `remove_from_project_override`.
+
+        Also can be used as validation before the method is called.
+        """
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return False
+        return self._can_remove_from_project_override
+
     def discard_changes(self, on_change_trigger=None):
         """Discard changes on entity and it's children.
 
@@ -541,7 +589,7 @@ class BaseItemEntity(BaseEntity):
         """
         initialized = False
         if on_change_trigger is None:
-            if not self.can_discard_changes:
+            if not self.can_trigger_discard_changes:
                 return
 
             initialized = True
@@ -561,7 +609,7 @@ class BaseItemEntity(BaseEntity):
     def add_to_studio_default(self, on_change_trigger=None):
         initialized = False
         if on_change_trigger is None:
-            if not self.can_add_to_studio_default:
+            if not self.can_trigger_add_to_studio_default:
                 return
 
             initialized = True
@@ -598,7 +646,7 @@ class BaseItemEntity(BaseEntity):
         """
         initialized = False
         if on_change_trigger is None:
-            if not self.can_remove_from_studio_default:
+            if not self.can_trigger_remove_from_studio_default:
                 return
 
             initialized = True
@@ -622,7 +670,7 @@ class BaseItemEntity(BaseEntity):
     def add_to_project_override(self, on_change_trigger=None):
         initialized = False
         if on_change_trigger is None:
-            if not self.can_add_to_project_override:
+            if not self.can_trigger_add_to_project_override:
                 return
 
             initialized = True
@@ -662,7 +710,7 @@ class BaseItemEntity(BaseEntity):
 
         initialized = False
         if on_change_trigger is None:
-            if not self.can_remove_from_project_override:
+            if not self.can_trigger_remove_from_project_override:
                 return
             initialized = True
             on_change_trigger = []
