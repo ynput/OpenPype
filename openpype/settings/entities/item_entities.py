@@ -49,7 +49,7 @@ class PathEntity(ItemEntity):
         return self.child_obj.items()
 
     def _item_initalization(self):
-        if not self.group_item and not self.is_group:
+        if self.group_item is None and not self.is_group:
             self.is_group = True
 
         self.multiplatform = self.schema_data.get("multiplatform", False)
@@ -199,7 +199,7 @@ class ListStrictEntity(ItemEntity):
 
         # GUI attribute
         self.is_horizontal = self.schema_data.get("horizontal", True)
-        if not self.group_item and not self.is_group:
+        if self.group_item is None and not self.is_group:
             self.is_group = True
 
     def schema_validations(self):

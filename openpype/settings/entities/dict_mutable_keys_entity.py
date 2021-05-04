@@ -222,7 +222,7 @@ class DictMutableKeysEntity(EndpointEntity):
         if self.value_is_env_group:
             self.item_schema["env_group_key"] = ""
 
-        if not self.group_item:
+        if self.group_item is None:
             self.is_group = True
 
     def schema_validations(self):

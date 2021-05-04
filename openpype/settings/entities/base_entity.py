@@ -468,7 +468,7 @@ class BaseItemEntity(BaseEntity):
             return False
 
         # Skip if entity is under group
-        if self.group_item:
+        if self.group_item is not None:
             return False
 
         # Skip if is group and any children is already marked with studio
@@ -495,7 +495,7 @@ class BaseItemEntity(BaseEntity):
             return False
 
         # Do not show on items under group item
-        if self.group_item:
+        if self.group_item is not None:
             return False
 
         # Skip if already is marked to save project overrides
@@ -796,7 +796,8 @@ class ItemEntity(BaseItemEntity):
         # Group item reference
         if self.parent.is_group:
             self.group_item = self.parent
-        elif self.parent.group_item:
+
+        elif self.parent.group_item is not None:
             self.group_item = self.parent.group_item
 
         self.key = self.schema_data.get("key")

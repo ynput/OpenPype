@@ -148,7 +148,7 @@ class ListEntity(EndpointEntity):
             item_schema = {"type": item_schema}
         self.item_schema = item_schema
 
-        if not self.group_item:
+        if self.group_item is None:
             self.is_group = True
 
         # Value that was set on set_override_state
