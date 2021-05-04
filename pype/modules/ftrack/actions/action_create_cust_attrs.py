@@ -393,6 +393,13 @@ class CustomAttributes(BaseAction):
 
             loaded_data = toml.load(os.path.join(launchers_path, file))
 
+            new_app_name = app_name
+            name_parts = app_name.split("_")
+            if len(name_parts) > 1:
+                name_start = name_parts.pop(0)
+                name_end = "_".join(name_parts)
+                new_app_name = "/".join((name_start, name_end))
+
             ftrack_label = loaded_data.get("ftrack_label")
             if ftrack_label:
                 parts = app_name.split("_")
@@ -401,7 +408,7 @@ class CustomAttributes(BaseAction):
             else:
                 ftrack_label = loaded_data.get("label", app_name)
 
-            app_definitions.append({app_name: ftrack_label})
+            app_definitions.append({new_app_name: ftrack_label})
 
         if missing_app_names:
             self.log.warning(
