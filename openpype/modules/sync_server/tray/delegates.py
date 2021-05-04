@@ -1,6 +1,5 @@
 import os
 from Qt import QtCore, QtWidgets, QtGui
-from avalon.vendor import qtawesome
 
 from openpype.lib import PypeLogger
 from openpype.modules.sync_server.tray import lib
@@ -15,7 +14,10 @@ class PriorityDelegate(QtWidgets.QStyledItemDelegate):
 
         if option.widget.selectionModel().isSelected(index) or \
                 option.state & QtWidgets.QStyle.State_MouseOver:
-            edit_icon = qtawesome.icon("fa.edit", color="white")
+            edit_icon = index.data(lib.EditIconRole)
+            if not edit_icon:
+                return
+
             state = QtGui.QIcon.On
             mode = QtGui.QIcon.Selected
 

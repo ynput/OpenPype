@@ -65,6 +65,14 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
     def column_filtering(self):
         return self._column_filtering
 
+    @property
+    def is_running(self):
+        return self._is_running
+
+    @is_running.setter
+    def is_running(self, state):
+        self._is_running = state
+
     def rowCount(self, _index):
         return len(self._data)
 
@@ -126,7 +134,7 @@ class _SyncRepresentationModel(QtCore.QAbstractTableModel):
                     actually queried (scrolled a couple of times to list more
                     than single page of records)
         """
-        if self.is_editing:
+        if self.is_editing or not self.is_running:
             return
         self.refresh_started.emit()
         self.beginResetModel()
@@ -422,8 +430,8 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         status = attr.ib(default=None)
         path = attr.ib(default=None)
 
-    def __init__(self, sync_server, header, project=None):
-        super(SyncRepresentationSummaryModel, self).__init__()
+    def __init__(self, sync_server, header, project=None, parent=None):
+        super(SyncRepresentationSummaryModel, self).__init__(parent=parent)
         self._header = header
         self._data = []
         self._project = project
@@ -431,13 +439,13 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
         self._total_records = 0  # how many documents query actually found
         self._word_filter = None
         self._column_filtering = {}
+        self._is_running = False
 
         self.edit_icon = qtawesome.icon("fa.edit", color="white")
         self.is_editing = False
 
         self._word_filter = None
 
-        self._initialized = False
         if not self._project or self._project == lib.DUMMY_PROJECT:
             return
 
@@ -500,6 +508,11 @@ class SyncRepresentationSummaryModel(_SyncRepresentationModel):
                 return ""
 
             return attr.asdict(item)[self._header[index.column()]]
+
+        if role == lib.EditIconRole:
+            if self.can_edit and header_value in self.EDITABLE_COLUMNS:
+                return self.edit_icon
+
         if role == Qt.UserRole:
             return item._id
 
@@ -960,10 +973,11 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
         self._total_records = 0  # how many documents query actually found
         self._word_filter = None
         self._id = _id
-        self._initialized = False
         self._column_filtering = {}
+        self._is_running = False
 
         self.is_editing = False
+        self.edit_icon = qtawesome.icon("fa.edit", color="white")
 
         self.sync_server = sync_server
         # TODO think about admin mode
@@ -1016,11 +1030,17 @@ class SyncRepresentationDetailModel(_SyncRepresentationModel):
                 return item.status == lib.STATUS[2] and \
                     item.remote_progress < 1
 
-        if role == Qt.DisplayRole:
+        if role in (Qt.DisplayRole, Qt.EditRole):
             # because of ImageDelegate
             if header_value in ['remote_site', 'local_site']:
                 return ""
+
             return attr.asdict(item)[self._header[index.column()]]
+
+        if role == lib.EditIconRole:
+            if self.can_edit and header_value in self.EDITABLE_COLUMNS:
+                return self.edit_icon
+
         if role == Qt.UserRole:
             return item._id
 

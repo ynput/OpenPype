@@ -185,7 +185,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
         _id = self.model.data(index, Qt.UserRole)
         detail_window = SyncServerDetailWindow(
-            self.sync_server, _id, self.model.project)
+            self.sync_server, _id, self.model.project, parent=self)
         detail_window.exec()
         
     def _on_context_menu(self, point):
@@ -489,7 +489,8 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
 
-        model = SyncRepresentationSummaryModel(sync_server, headers, project)
+        model = SyncRepresentationSummaryModel(sync_server, headers, project,
+                                               parent=self)
         table_view.setModel(model)
         table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         table_view.setSelectionMode(
@@ -510,10 +511,9 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
 
-        if model.can_edit:
-            column = table_view.model().get_header_index("priority")
-            priority_delegate = delegates.PriorityDelegate(self)
-            table_view.setItemDelegateForColumn(column, priority_delegate)
+        column = table_view.model().get_header_index("priority")
+        priority_delegate = delegates.PriorityDelegate(self)
+        table_view.setItemDelegateForColumn(column, priority_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -653,6 +653,8 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
 
         model = SyncRepresentationDetailModel(sync_server, headers, _id,
                                               project)
+        model.is_running = True
+
         table_view.setModel(model)
         table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         table_view.setSelectionMode(
