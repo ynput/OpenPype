@@ -472,6 +472,9 @@ class DictImmutableKeysEntity(ItemEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.add_to_studio_default(on_change_trigger)
         self._ignore_child_changes = False
+
+        self._update_current_metadata()
+
         self.parent.on_child_change(self)
 
     def _remove_from_studio_default(self, on_change_trigger):
@@ -485,6 +488,9 @@ class DictImmutableKeysEntity(ItemEntity):
         for child_obj in self.non_gui_children.values():
             child_obj.add_to_project_override(_on_change_trigger)
         self._ignore_child_changes = False
+
+        self._update_current_metadata()
+
         self.parent.on_child_change(self)
 
     def _remove_from_project_override(self, on_change_trigger):
