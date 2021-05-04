@@ -3,6 +3,7 @@ import re
 import json
 import copy
 import tempfile
+import clique
 
 import openpype
 import openpype.api
@@ -473,7 +474,17 @@ class ExtractBurnin(openpype.api.Extractor):
                 is_sequence = False
             else:
                 input_filename = new_repre["sequence_file"]
+                collection = collections[0]
+                indexes = list(collection.indexes)
+                padding = len(str(max(indexes)))
+                head = collection.format("{head}")
+                tail = collection.format("{tail}")
+                output_filename = "{}%{:0>2}d{}{}".format(
+                    head, padding, filename_suffix, tail
+                )
                 repre_files = []
+                for idx in indexes:
+                    repre_files.append(output_filename % idx)
 
         if not is_sequence:
             input_filename = input_filenames
