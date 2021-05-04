@@ -127,6 +127,12 @@ class FtrackModule(
         self, old_value, new_value, changes, new_value_metadata
     ):
         """Implementation of ISettingsChangeListener interface."""
+        if not self.ftrack_url:
+            raise SaveWarningExc((
+                "Ftrack URL is not set."
+                " Can't propagate changes to Ftrack server."
+            ))
+
         try:
             session = self.create_ftrack_session()
         except Exception:
