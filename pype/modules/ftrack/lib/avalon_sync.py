@@ -192,23 +192,25 @@ def get_project_apps(in_app_list):
         "Unexpected error happend during preparation of application"
     )
     warnings = collections.defaultdict(list)
-    for app in in_app_list:
+    for app_name in in_app_list:
+        # Forwards ompatibility
+        toml_filename = app_name.replace("/", "_")
         try:
-            toml_path = avalon.lib.which_app(app)
+            toml_path = avalon.lib.which_app(toml_filename)
             if not toml_path:
-                log.warning(missing_toml_msg + ' "{}"'.format(app))
-                warnings[missing_toml_msg].append(app)
+                log.warning(missing_toml_msg + ' "{}"'.format(toml_filename))
+                warnings[missing_toml_msg].append(toml_filename)
                 continue
 
             apps.append({
-                "name": app,
+                "name": app_name,
                 "label": toml.load(toml_path)["label"]
             })
         except Exception:
-            warnings[error_msg].append(app)
+            warnings[error_msg].append(toml_filename)
             log.warning((
                 "Error has happened during preparing application \"{}\""
-            ).format(app), exc_info=True)
+            ).format(toml_filename), exc_info=True)
     return apps, warnings
 
 
