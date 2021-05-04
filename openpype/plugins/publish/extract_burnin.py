@@ -468,6 +468,9 @@ class ExtractBurnin(openpype.api.Extractor):
             if len(input_filenames) > 1:
                 is_sequence = True
 
+        # Sequence must have defined first frame
+        # - not used if input is not a sequence
+        first_frame = None
         if is_sequence:
             collections, _ = clique.assemble(input_filenames)
             if not collections:
@@ -485,6 +488,8 @@ class ExtractBurnin(openpype.api.Extractor):
                 repre_files = []
                 for idx in indexes:
                     repre_files.append(output_filename % idx)
+
+                first_frame = min(indexes)
 
         if not is_sequence:
             input_filename = input_filenames
@@ -509,6 +514,8 @@ class ExtractBurnin(openpype.api.Extractor):
 
         temp_data["full_input_path"] = full_input_path
         temp_data["full_output_path"] = full_output_path
+        temp_data["first_frame"] = first_frame
+
         new_repre["files"] = repre_files
 
         self.log.debug("full_input_path: {}".format(full_input_path))
