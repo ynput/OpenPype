@@ -34,8 +34,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance_data["name"] = name
             instance_data["label"] = "{} [{}-{}]".format(
                 name,
-                context.data["sceneFrameStart"],
-                context.data["sceneFrameEnd"]
+                context.data["sceneMarkIn"] + 1,
+                context.data["sceneMarkOut"] + 1
             )
 
             active = instance_data.get("active", True)
@@ -78,8 +78,13 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if instance is None:
                 continue
 
-            instance.data["frameStart"] = context.data["sceneFrameStart"]
-            instance.data["frameEnd"] = context.data["sceneFrameEnd"]
+            any_visible = False
+            for layer in instance.data["layers"]:
+                if layer["visible"]:
+                    any_visible = True
+                    break
+
+            instance.data["publish"] = any_visible
 
             self.log.debug("Created instance: {}\n{}".format(
                 instance, json.dumps(instance.data, indent=4)
@@ -108,7 +113,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
         group_id = instance_data["group_id"]
         group_layers = []
         for layer in layers_data:
-            if layer["group_id"] == group_id and layer["visible"]:
+            if layer["group_id"] == group_id:
                 group_layers.append(layer)
 
         if not group_layers:

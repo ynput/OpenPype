@@ -8,6 +8,13 @@
         "yetiRig": "ma"
     },
     "create": {
+        "CreateLook": {
+            "enabled": true,
+            "make_tx": true,
+            "defaults": [
+                "Main"
+            ]
+        },
         "CreateAnimation": {
             "enabled": true,
             "defaults": [
@@ -33,12 +40,6 @@
             ]
         },
         "CreateLayout": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateLook": {
             "enabled": true,
             "defaults": [
                 "Main"
@@ -381,10 +382,6 @@
             "optional": true,
             "active": true,
             "bake_attributes": []
-        },
-        "MayaSubmitDeadline": {
-            "enabled": true,
-            "tile_assembler_plugin": "DraftTileAssembler"
         }
     },
     "load": {

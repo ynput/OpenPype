@@ -251,6 +251,9 @@ class InputEntity(EndpointEntity):
         self._current_value = copy.deepcopy(value)
 
     def _discard_changes(self, on_change_trigger=None):
+        if not self._can_discard_changes:
+            return
+
         self._value_is_modified = False
         if self._override_state >= OverrideState.PROJECT:
             self._has_project_override = self.had_project_override
@@ -286,6 +289,9 @@ class InputEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
+        if not self._can_remove_from_studio_default:
+            return
+
         value = self._default_value
         if value is NOT_SET:
             value = self.value_on_not_set
@@ -301,10 +307,7 @@ class InputEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if self._override_state is not OverrideState.PROJECT:
-            return
-
-        if not self._has_project_override:
+        if not self._can_remove_from_project_override:
             return
 
         self._has_project_override = False
@@ -376,7 +379,10 @@ class BoolEntity(InputEntity):
 
     def _item_initalization(self):
         self.valid_value_types = (bool, )
-        self.value_on_not_set = True
+        value_on_not_set = self.convert_to_valid_type(
+            self.schema_data.get("default", True)
+        )
+        self.value_on_not_set = value_on_not_set
 
 
 class TextEntity(InputEntity):

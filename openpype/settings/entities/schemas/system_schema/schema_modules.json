@@ -82,7 +82,7 @@
         },  {
             "type": "dict",
             "key": "sync_server",
-            "label": "Sync Server",
+            "label": "Site Sync",
             "collapsible": true,
             "checkbox_key": "enabled",
             "children": [{
@@ -144,20 +144,6 @@
             "type": "dict",
             "key": "log_viewer",
             "label": "Logging",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "key": "user",
-            "label": "User setting",
             "collapsible": true,
             "checkbox_key": "enabled",
             "children": [

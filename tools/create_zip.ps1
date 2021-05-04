@@ -64,34 +64,15 @@ if (-not $openpype_version) {
 }
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Detecting host Python ... " -NoNewline
-if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
-    Write-Host "!!! Python not detected" -ForegroundColor red
-    Exit-WithCode 1
-}
-$version_command = @'
-import sys
-print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
-'@
-
-$p = & python -c $version_command
-$env:PYTHON_VERSION = $p
-$m = $p -match '(\d+)\.(\d+)'
-if(-not $m) {
-  Write-Host "!!! Cannot determine version" -ForegroundColor red
-  Exit-WithCode 1
-}
-# We are supporting python 3.6 and up
-if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
-  Write-Host "FAILED Version [ $p ] is old and unsupported" -ForegroundColor red
-  Exit-WithCode 1
-}
-Write-Host "OK [ $p ]" -ForegroundColor green
+Write-Host "Cleaning cache files ... " -NoNewline
+Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
+Get-ChildItem $openpype_root -Filter "*.pyo" -Force -Recurse | Remove-Item -Force
+Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
+Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Generating zip from current sources ..."
-Write-Host "... " -NoNewline -ForegroundColor Magenta
-Write-Host "arguments: " -NoNewline -ForegroundColor Gray
-Write-Host $ARGS -ForegroundColor White
-& poetry run python "$($openpype_root)\start.py" generate-zip $ARGS
+$env:PYTHONPATH="$($openpype_root);$($env:PYTHONPATH)"
+$env:OPENPYPE_ROOT="$($openpype_root)"
+& poetry run python "$($openpype_root)\tools\create_zip.py" $ARGS
 Set-Location -Path $current_dir

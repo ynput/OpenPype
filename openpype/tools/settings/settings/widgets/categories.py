@@ -27,7 +27,7 @@ from openpype.settings.entities import (
     SchemaError
 )
 
-from openpype.settings.lib import get_system_settings
+from openpype.settings import SaveWarningExc
 from .widgets import ProjectListWidget
 
 from . import lib
@@ -272,6 +272,22 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             #   not required.
             self.reset()
 
+        except SaveWarningExc as exc:
+            warnings = [
+                "<b>Settings were saved but few issues happened.</b>"
+            ]
+            for item in exc.warnings:
+                warnings.append(item.replace("\n", "<br>"))
+
+            msg = "<br><br>".join(warnings)
+
+            dialog = QtWidgets.QMessageBox(self)
+            dialog.setText(msg)
+            dialog.setIcon(QtWidgets.QMessageBox.Warning)
+            dialog.exec_()
+
+            self.reset()
+
         except Exception as exc:
             formatted_traceback = traceback.format_exception(*sys.exc_info())
             dialog = QtWidgets.QMessageBox(self)
@@ -302,8 +318,13 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             "`create_root_entity` method not implemented"
         )
 
+    def _on_reset_start(self):
+        return
+
     def reset(self):
         self.set_state(CategoryState.Working)
+
+        self._on_reset_start()
 
         self.input_fields = []
 
@@ -469,7 +490,6 @@ class ProjectWidget(SettingsCategoryWidget):
 
     def ui_tweaks(self):
         project_list_widget = ProjectListWidget(self)
-        project_list_widget.refresh()
 
         self.main_layout.insertWidget(0, project_list_widget, 0)
 
@@ -484,6 +504,9 @@ class ProjectWidget(SettingsCategoryWidget):
         """
         if self is saved_tab_widget:
             return
+
+    def _on_reset_start(self):
+        self.project_list_widget.refresh()
 
     def _on_reset_crash(self):
         self.project_list_widget.setEnabled(False)

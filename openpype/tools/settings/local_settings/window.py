@@ -80,7 +80,6 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
         general_widget = LocalGeneralWidgets(general_content)
         general_layout.addWidget(general_widget)
-        general_expand_widget.hide()
 
         self.main_layout.addWidget(general_expand_widget)
 
@@ -127,9 +126,9 @@ class LocalSettingsWidget(QtWidgets.QWidget):
         self.system_settings.reset()
         self.project_settings.reset()
 
-        # self.general_widget.update_local_settings(
-        #     value.get(LOCAL_GENERAL_KEY)
-        # )
+        self.general_widget.update_local_settings(
+            value.get(LOCAL_GENERAL_KEY)
+        )
         self.app_widget.update_local_settings(
             value.get(LOCAL_APPS_KEY)
         )
@@ -139,9 +138,9 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 
     def settings_value(self):
         output = {}
-        # general_value = self.general_widget.settings_value()
-        # if general_value:
-        #     output[LOCAL_GENERAL_KEY] = general_value
+        general_value = self.general_widget.settings_value()
+        if general_value:
+            output[LOCAL_GENERAL_KEY] = general_value
 
         app_value = self.app_widget.settings_value()
         if app_value:
@@ -156,6 +155,8 @@ class LocalSettingsWidget(QtWidgets.QWidget):
 class LocalSettingsWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(LocalSettingsWindow, self).__init__(parent)
+
+        self._reset_on_show = True
 
         self.resize(1000, 600)
 
@@ -194,9 +195,14 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         self.reset_btn = reset_btn
         self.save_btn = save_btn
 
-        self.reset()
+    def showEvent(self, event):
+        super(LocalSettingsWindow, self).showEvent(event)
+        if self._reset_on_show:
+            self.reset()
 
     def reset(self):
+        if self._reset_on_show:
+            self._reset_on_show = False
         value = get_local_settings()
         self.settings_widget.update_local_settings(value)
 

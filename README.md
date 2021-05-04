@@ -2,6 +2,10 @@
 OpenPype
 ====
 
+[![documentation](https://github.com/pypeclub/pype/actions/workflows/documentation.yml/badge.svg)](https://github.com/pypeclub/pype/actions/workflows/documentation.yml) ![GitHub Requirements](https://img.shields.io/requires/github/pypeclub/pype?labelColor=303846) ![GitHub VFX Platform](https://img.shields.io/badge/vfx%20platform-2021-lightgrey?labelColor=303846)
+
+
+
 Introduction
 ------------
 
@@ -61,7 +65,8 @@ git clone --recurse-submodules git@github.com:Pypeclub/OpenPype.git
 #### To build OpenPype:
 
 1) Run `.\tools\create_env.ps1` to create virtual environment in `.\venv`
-2) Run `.\tools\build.ps1` to build OpenPype executables in `.\build\`
+2) Run `.\tools\fetch_thirdparty_libs.ps1` to download third-party dependencies like ffmpeg and oiio. Those will be included in build.
+3) Run `.\tools\build.ps1` to build OpenPype executables in `.\build\`
 
 To create distributable OpenPype versions, run `./tools/create_zip.ps1` - that will
 create zip file with name `openpype-vx.x.x.zip` parsed from current OpenPype repository and
@@ -116,8 +121,8 @@ pyenv local 3.7.9
 #### To build OpenPype:
 
 1) Run `.\tools\create_env.sh` to create virtual environment in `.\venv`
-2) Run `.\tools\build.sh` to build OpenPype executables in `.\build\`
-
+2) Run `.\tools\fetch_thirdparty_libs.sh` to download third-party dependencies like ffmpeg and oiio. Those will be included in build.
+3) Run `.\tools\build.sh` to build OpenPype executables in `.\build\`
 
 ### Linux
 

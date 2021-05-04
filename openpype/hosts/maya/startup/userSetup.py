@@ -10,7 +10,6 @@ print("starting OpenPype usersetup")
 settings = get_project_settings(os.environ['AVALON_PROJECT'])
 shelf_preset = settings['maya'].get('project_shelf')
 
-
 if shelf_preset:
     project = os.environ["AVALON_PROJECT"]
 
@@ -23,7 +22,7 @@ if shelf_preset:
         print(import_string)
         exec(import_string)
 
-cmds.evalDeferred("mlib.shelf(name=shelf_preset['name'], iconPath=icon_path, preset=shelf_preset)")
+    cmds.evalDeferred("mlib.shelf(name=shelf_preset['name'], iconPath=icon_path, preset=shelf_preset)")
 
 
 print("finished OpenPype usersetup")

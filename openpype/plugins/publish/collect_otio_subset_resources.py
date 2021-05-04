@@ -19,7 +19,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
     label = "Collect OTIO Subset Resources"
     order = pyblish.api.CollectorOrder - 0.57
     families = ["clip"]
-    hosts = ["resolve"]
+    hosts = ["resolve", "hiero"]
 
     def process(self, instance):
         if not instance.data.get("representations"):
@@ -48,8 +48,8 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
             trimmed_media_range)
         a_frame_start, a_frame_end = openpype.lib.otio_range_to_frame_range(
             otio_avalable_range)
-        a_frame_start_h, a_frame_end_h = openpype.lib.otio_range_to_frame_range(
-            trimmed_media_range_h)
+        a_frame_start_h, a_frame_end_h = openpype.lib.\
+            otio_range_to_frame_range(trimmed_media_range_h)
 
         # fix frame_start and frame_end frame to be in range of media
         if a_frame_start_h < a_frame_start:
@@ -80,6 +80,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
         media_ref = otio_clip.media_reference
         metadata = media_ref.metadata
 
+        is_sequence = None
         # check in two way if it is sequence
         if hasattr(otio.schema, "ImageSequenceReference"):
             # for OpenTimelineIO 0.13 and newer
@@ -116,7 +117,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
                 # `ImageSequenceReference`
                 path = media_ref.target_url
                 collection_data = openpype.lib.make_sequence_collection(
-                    path, trimmed_media_range, metadata)
+                    path, trimmed_media_range_h, metadata)
                 self.staging_dir, collection = collection_data
 
                 self.log.debug(collection)
@@ -126,7 +127,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
             dirname, filename = os.path.split(media_ref.target_url)
             self.staging_dir = dirname
 
-            self.log.debug(path)
+            self.log.debug(filename)
             repre = self._create_representation(
                 frame_start, frame_end, file=filename)
 

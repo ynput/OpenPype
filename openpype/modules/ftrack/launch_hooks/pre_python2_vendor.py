@@ -8,10 +8,13 @@ class PrePython2Support(PreLaunchHook):
 
     Path to vendor modules is added to the beggining of PYTHONPATH.
     """
-    # There will be needed more granular filtering in future
-    app_groups = ["maya", "nuke", "nukex", "hiero", "nukestudio", "unreal"]
 
     def execute(self):
+        if not self.application.use_python_2:
+            return
+
+        self.log.info("Adding Ftrack Python 2 packages to PYTHONPATH.")
+
         # Prepare vendor dir path
         python_2_vendor = os.path.join(FTRACK_MODULE_DIR, "python2_vendor")
 
