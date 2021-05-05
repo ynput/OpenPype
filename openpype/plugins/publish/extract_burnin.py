@@ -3,18 +3,20 @@ import re
 import json
 import copy
 import tempfile
+import platform
+import shutil
+
 import clique
+import pyblish
 
 import openpype
 import openpype.api
-import pyblish
 from openpype.lib import (
     get_pype_execute_args,
     should_decompress,
     get_decompress_dir,
     decompress
 )
-import shutil
 
 
 class ExtractBurnin(openpype.api.Extractor):
