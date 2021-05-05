@@ -10,7 +10,8 @@
         "key": "executables",
         "label": "Executables",
         "multiplatform": true,
-        "multipath": true
+        "multipath": true,
+        "placeholder": "Executable path"
     },
     {
         "type":"separator"
