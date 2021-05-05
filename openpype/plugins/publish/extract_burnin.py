@@ -458,23 +458,15 @@ class ExtractBurnin(openpype.api.Extractor):
             list: Containg all burnin definitions matching entered tags.
         """
         filtered_burnins = {}
-        repre_tags_low = [tag.lower() for tag in tags]
+        repre_tags_low = set(tag.lower() for tag in tags)
         for filename_suffix, burnin_def in burnin_defs.items():
             valid = True
-            output_filters = burnin_def.get("filter")
-            if output_filters:
+            tag_filters = burnin_def["filter"]["tags"]
+            if tag_filters:
                 # Check tag filters
-                tag_filters = output_filters.get("tags")
-                if tag_filters:
-                    tag_filters_low = [tag.lower() for tag in tag_filters]
-                    valid = False
-                    for tag in repre_tags_low:
-                        if tag in tag_filters_low:
-                            valid = True
-                            break
+                tag_filters_low = set(tag.lower() for tag in tag_filters)
 
-                    if not valid:
-                        continue
+                valid = bool(repre_tags_low & tag_filters_low)
 
             if valid:
                 filtered_burnins[filename_suffix] = burnin_def
