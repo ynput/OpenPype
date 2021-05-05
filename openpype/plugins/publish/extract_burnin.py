@@ -111,7 +111,7 @@ class ExtractBurnin(openpype.api.Extractor):
             ).format(host_name, family, task_name, profile))
             return
 
-        profile_options = self._get_burnin_options()
+        burnin_options = self._get_burnin_options()
 
         # Prepare basic data for processing
         _burnin_data, _temp_data = self.prepare_basic_data(instance)
@@ -187,7 +187,8 @@ class ExtractBurnin(openpype.api.Extractor):
                     # able have multiple outputs in case of more burnin presets
                     # Join previous "outputName" with filename suffix
                     new_name = "_".join(
-                        [new_repre["outputName"], filename_suffix])
+                        [new_repre["outputName"], filename_suffix]
+                    )
                     new_repre["name"] = new_name
                     new_repre["outputName"] = new_name
 
