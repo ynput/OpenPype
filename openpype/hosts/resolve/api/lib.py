@@ -166,10 +166,16 @@ def create_media_pool_item(fpath: str,
 
     print(">>>>> existing_mpi: {}".format(existing_mpi))
     if not existing_mpi:
-        media_pool_item = media_storage.AddItemListToMediaPool(fpath)
-        print(media_pool_item)
+        print("___ fpath: {}".format(fpath))
+        dirname, file = os.path.split(fpath)
+        _name, ext = os.path.splitext(file)
+        print(dirname)
+        media_pool_items = media_storage.AddItemListToMediaPool(os.path.normpath(dirname))
+        print(media_pool_items)
         # pop the returned dict on first item as resolve data object is such
-        if media_pool_item:
+        if media_pool_items:
+            media_pool_item = [mpi for mpi in media_pool_items
+                               if ext in mpi.GetClipProperty("File Path")]
             return media_pool_item.pop()
         else:
             return False
@@ -220,8 +226,8 @@ def create_timeline_item(media_pool_item: object,
     # get all variables
     project = get_current_project()
     media_pool = project.GetMediaPool()
-    clip_property = media_pool_item.GetClipProperty()
-    clip_name = clip_property["File Name"]
+    _clip_property = media_pool_item.GetClipProperty
+    clip_name = _clip_property("File Name")
     timeline = timeline or get_current_timeline()
 
     # if timeline was used then switch it to current timeline
@@ -236,7 +242,6 @@ def create_timeline_item(media_pool_item: object,
             clip_data.update({"endFrame": source_end})
 
         print(clip_data)
-        print(clip_property)
         # add to timeline
         media_pool.AppendToTimeline([clip_data])
 
@@ -262,8 +267,8 @@ def get_timeline_item(media_pool_item: object,
     Returns:
         object: resolve.TimelineItem
     """
-    clip_property = media_pool_item.GetClipProperty()
-    clip_name = clip_property["File Name"]
+    _clip_property = media_pool_item.GetClipProperty
+    clip_name = _clip_property("File Name")
     output_timeline_item = None
     timeline = timeline or get_current_timeline()
 
@@ -272,8 +277,8 @@ def get_timeline_item(media_pool_item: object,
 
         for _ti_data in get_current_timeline_items():
             _ti_clip = _ti_data["clip"]["item"]
-            _ti_clip_property = _ti_clip.GetMediaPoolItem().GetClipProperty()
-            if clip_name in _ti_clip_property["File Name"]:
+            _ti_clip_property = _ti_clip.GetMediaPoolItem().GetClipProperty
+            if clip_name in _ti_clip_property("File Name"):
                 output_timeline_item = _ti_clip
 
     return output_timeline_item
@@ -546,15 +551,15 @@ def create_compound_clip(clip_data, name, folder):
     clip_attributes = get_clip_attributes(clip_item)
 
     mp_item = clip_item.GetMediaPoolItem()
-    mp_props = mp_item.GetClipProperty()
+    _mp_props = mp_item.GetClipProperty
 
-    mp_first_frame = int(mp_props["Start"])
-    mp_last_frame = int(mp_props["End"])
+    mp_first_frame = int(_mp_props("Start"))
+    mp_last_frame = int(_mp_props("End"))
 
     # initialize basic source timing for otio
     ci_l_offset = clip_item.GetLeftOffset()
     ci_duration = clip_item.GetDuration()
-    rate = float(mp_props["FPS"])
+    rate = float(_mp_props("FPS"))
 
     # source rational times
     mp_in_rc = opentime.RationalTime((ci_l_offset), rate)
@@ -611,7 +616,7 @@ def create_compound_clip(clip_data, name, folder):
     cct.SetMetadata(self.pype_tag_name, clip_attributes)
 
     # reset start timecode of the compound clip
-    cct.SetClipProperty("Start TC", mp_props["Start TC"])
+    cct.SetClipProperty("Start TC", _mp_props("Start TC"))
 
     # swap clips on timeline
     swap_clips(clip_item, cct, in_frame, out_frame)
@@ -637,8 +642,8 @@ def swap_clips(from_clip, to_clip, to_in_frame, to_out_frame):
         bool: True if successfully replaced
 
     """
-    clip_prop = to_clip.GetClipProperty()
-    to_clip_name = clip_prop["File Name"]
+    _clip_prop = to_clip.GetClipProperty
+    to_clip_name = _clip_prop("File Name")
     # add clip item as take to timeline
     take = from_clip.AddTake(
         to_clip,
