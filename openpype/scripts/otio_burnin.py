@@ -244,30 +244,25 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         timecode_text = options.get("timecode") or ""
         text_for_size += timecode_text
 
+        font_path = options.get("font")
+        if not font_path or not os.path.exists(font_path):
+            font_path = ffmpeg_burnins.FONT
+
+        options["font"] = font_path
+
         data.update(options)
-
-        os_system = platform.system().lower()
-        data_font = data.get("font")
-        if not data_font:
-            data_font = (
-                resources.get_liberation_font_path().replace("\\", "/")
-            )
-        elif isinstance(data_font, dict):
-            data_font = data_font[os_system]
-
-        if data_font:
-            data["font"] = data_font
-            options["font"] = data_font
-            if ffmpeg_burnins._is_windows():
-                data["font"] = (
-                    data_font
-                    .replace(os.sep, r'\\' + os.sep)
-                    .replace(':', r'\:')
-                )
-
         data.update(
             ffmpeg_burnins._drawtext(align, resolution, text_for_size, options)
         )
+
+        arg_font_path = font_path
+        if platform.system().lower() == "windows":
+            arg_font_path = (
+                arg_font_path
+                .replace(os.sep, r'\\' + os.sep)
+                .replace(':', r'\:')
+            )
+        data["font"] = arg_font_path
 
         self.filters['drawtext'].append(draw % data)
 
