@@ -8,6 +8,7 @@ import platform
 import shutil
 
 import clique
+import six
 import pyblish
 
 import openpype
@@ -319,8 +320,7 @@ class ExtractBurnin(openpype.api.Extractor):
             sys_name = platform.system().lower()
             font_filepath = font_filepath.get(sys_name)
 
-        str_type = type("")
-        if font_filepath and isinstance(font_filepath, str_type):
+        if font_filepath and isinstance(font_filepath, six.string_types):
             font_filepath = font_filepath.format(**os.environ)
             if not os.path.exists(font_filepath):
                 font_filepath = None
