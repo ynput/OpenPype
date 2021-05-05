@@ -99,6 +99,8 @@ import traceback
 import subprocess
 import site
 from pathlib import Path
+import platform
+
 
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
 # WARNING `OPENPYPE_ROOT` must be defined before igniter import
@@ -117,7 +119,7 @@ else:
     # WARNING: this can break stuff if custom certificates are used. In that
     # case they need to be merged to certificate bundle and SSL_CERT_FILE
     # should point to them.
-    if not os.getenv("SSL_CERT_FILE"):
+    if not os.getenv("SSL_CERT_FILE") and platform.system().lower() == "darwin":  # noqa: E501
         ssl_cert_file = Path(OPENPYPE_ROOT) / "dependencies" / "certifi" / "cacert.pem"  # noqa: E501
         os.environ["SSL_CERT_FILE"] = ssl_cert_file.as_posix()
 
