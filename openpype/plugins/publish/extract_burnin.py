@@ -49,12 +49,12 @@ class ExtractBurnin(openpype.api.Extractor):
     ]
     # Default options for burnins for cases that are not set in presets.
     default_options = {
-        "opacity": 1,
-        "x_offset": 5,
-        "y_offset": 5,
+        "font_size": 42,
+        "font_color": [255, 255, 255, 255],
+        "bg_color": [0, 0, 0, 127],
         "bg_padding": 5,
-        "bg_opacity": 0.5,
-        "font_size": 42
+        "x_offset": 5,
+        "y_offset": 5
     }
 
     # Preset attributes
