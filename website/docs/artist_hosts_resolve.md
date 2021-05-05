@@ -23,121 +23,154 @@ Before you will be able to start with OpenPype tools in Blackmagic DaVinci Resol
 -   [Publish](artist_tools.md#publisher)
 
 
+<div class="row markdown">
+
 ## Creating Instances from timeline items
+
 Before any clip can be published with [Publisher](artist_tools.md#publisher) timeline items has to be marked with OpenPype specific marker with metadata. This way it is converted to publishable instance.
 
 Lets do it step by step.
 
-### Color clips before Create
-Timeline video clips should be colored to `Chocolate` color for OpenPype to se it as selected for instance creation.
-
-
-## Publishing Shots
-
+</div>
 
 
 <div class="row markdown">
 
-With OpenPype, you can use Hiero/NKS as a starting point for creating a project's **shots** as *assets* from timeline clips with its *hierarchycal parents* like **episodes**, **sequences**, **folders**, and its child **tasks**. Most importantly it will create **versions** of plate *subsets*, with or without **reference video**. Publishig is naturally creating clip's **thumbnails** and assigns it to shot *asset*. Hiero is also publishing **audio** *subset* and various **soft-effects** either as retiming component as part of published plates or **color-tranformations**, that will be evailable later on for compositor artists to use either as *viewport input-process* or *loaded nodes* in graph editor.
+### Color clips before opening Create
+
+
+Timeline video clips should be colored to `Chocolate` color for OpenPype to se it as selected for instance creation.
+
+
+<div class="col col--6 markdown">
+
+![Create menu](assets/resolve_select_clips_timeline_chocolate.png)
+
+</div>
+</div>
+
+
+### Rename timeline track names
+
+<div class="row markdown">
+
+
+<div class="col col --6 markdown">
+
+To be able to work with dynamic subset name, which is based on track names it is recomended to rename those tracks to some logical names. Recomended names are as such `main`, `review`, `fg01` or `fg02`, also `bg`; or with nubers like `bg01`, atc. So for example clip is on track **element** and subset family is set to **plate** then the resulting subset name will be **plateElement**
+
+<br></br>
+</div>
+
+<div class="col col--6 markdown">
+
+![Create menu](assets/resolve_creator_subset_name.png)
+So the resulting *subset* metadata in created  **OpenPypeData** marker will by as such.
 <br></br><br></br>
+</div>
 
-### Preparing timeline for conversion to instances
-Because we don't support on-fly data conversion so in case of working with raw camera sources or some other formats which need to be converted for 2D/3D work. We suggest to convert those before and reconform the timeline. Before any clips in timeline could be converted to publishable instances we recomend following.
-1. Merge all tracks which supposed to be one and they are multipy only because of editor's style
-2. Rename tracks to follow basic structure > if only one layer then `main` in case of multiple layer (elements) for one shot then `main`, and other elements for example: `bg`, `greenscreen`, `fg01`, `fg02`, `display01`, etc. please avoid using [-/_.,%&*] or spaces. These names will be later used in *subset* name creation as `{family}{trackName}` so for example **plateMain** or **plateFg01**
-3. Define correct `Set Media Color Transform` at all clips as those will be also published to metadata and used for later loading with correct color transformation.
-4. Reviewable video material which you wish to be used as preview videos on any supported Projec manager platform (Ftrack) has to be added ideally to track named **review**. This can be offline edit used as reference video for 2D/3D artists. This video material can be edited to fit length of **main** timeline track or it cand be one long video clip under all clips in **main** track, because OpenPype will trim this to appropriate length with use of FFMPEG. Please be avare we only support MP4(h264) or JPG sequence at the moment.
+<div class="col col--6 markdown">
 
+![Create menu](assets/resolve_remame_track_names.png)
+Single track setup where we are using only `main` and  `review` track names.
+
+</div>
+<div class="col col--6 markdown">
+
+![Create menu](assets/resolve_create_vertical_rename_timeline.png)
+An example of used track names. The yellow frame is highlighting vertically alligned clips - which are going to be renamed and grouped togeter under one asset (shot) name, but the concept of vertical renaming will be explained later in [Vertical Synchronization of Subset Attributes](#vertical-synchronization-of-subset-attributes).
+
+</div>
+</div>
+
+
+### Open Create ...
+
+<div class="row markdown">
+<div class="col col--6 markdown">
+
+After all clips which are inteded to be converted to publishable instances are colored to `Chockolate` color then open OpenPype menu.
+
+</div>
+<div class="col col--6 markdown">
+
+![Create menu](assets/resolve_menu_openpype.png)
+
+</div>
+<div class="col col--6 markdown">
+
+After the menu widget is opend (it can take while so be patient please :).
+
+Hit `Create ...` and then set **Use selection** to active and select the family to **Create Publishable Clips**.
+
+The Subset name could stay as it is - it is not going to be used.
+
+</div>
+<div class="col col--6 markdown">
+
+![Create menu](assets/resolve_create_clips.png)
+
+</div>
+<div class="col col--6 markdown">
+
+In the new window *OpenPype publish attributes creator* set Rename clips to active if you wish to use different names of assets (shots) in pipeline then the original clip names conformed from EDL/XML.
+
+The sequencial renaming attributes can be defined by **Count sequence from** for starting of sequencial numbering. Then **Stepping number** will define gaps in sequences.
+
+As you can see in *Shot Template Keywords* section in `{shot}` key the renaming shot template name can be defined here and number of hashes will effect padding of the number in sequence.
+
+</div>
+<div class="col col--6 markdown">
+
+![Create menu](assets/resolve_create_renaming_clips.png)
+
+</div>
+<div class="col col--6 markdown">
+
+Notice the relationship of following sections. Keys from **Shot Template Keywords** sections will be used for formating of template strings in **Shot Hierarchy And Rename Settings** section.
+
+**Shot parent hierarchy** will be forming parents of the asset (shot) *the hidden root for this is project folder*. So for example of this template we will get resulging string `shots/sq01`
+
+**Clip name template** in context of clip sitting on track name `main` in second position `mainsq01sh020`. This is due track key is hosting `{_track_}` which is inheriting name form timeline track name. Other allowed namespases are:
+- `{_sequence_}`: timeline name
+- `{_clip_}`: clip name
+- `{_trackIndex_}`: position of track on timeline from bottom
+- `{_clipIndex_}`: clip positon on timeline from left
+
+</div>
+<div class="col col--6 markdown">
+
+![Create menu](assets/resolve_create_template_filling.png)
+
+</div>
+</div>
+
+### Vertical synchronization of subset attributes
+
+<div class="row markdown">
 <div class="col--6 markdown">
 
-![Create menu](assets/hiero_timelinePrep.png)
+In case you are only working with two track on timeline setup with `main` track which is going to be used as plates for compositors or other and `review` for publishing h264 mp4 clips with offlines and web preview. The **Enable vertical sync** can be deactivated.
 
-</div>
+The multiple tracks scenario - as it had been mentioned [here](#rename-timeline-track-names) - is recomanded to activate **Enable vertical sync** and define the hero (driving) track to *main*
 
-
-### Converting timeline clips to instances
-
-Every clip on timeline which is inteded to be published has to be converted to publishable instance.
-
-<div class="col col--6 markdown">
-
-In OpenPype it is done by tagging a clip with our own metadata. Select all clips you wish to convert and `menu > OpenPype > Create`.
-<br></br><br></br>
-
-</div>
-
-<div class="col col--6 markdown">
-
-![Create menu](assets/hiero_menuCreate.png)
-
-</div>
-
-<div class="col col--6 markdown">
-
-Then chose `Create Publishable Clip` in **Instance Creator** dialogue.
-<br></br>
-
-Then you can alter Subset name, but this will be changed dynamically and replaces with timeline's track name.
-<br></br>
-
-Keep **Use selection** on.
-<br></br>
-
-Hit **Create**
 <br></br>
 </div>
 
 <div class="col col--6 markdown">
 
-![Instance Creator](assets/hiero_instanceCreator.png)
+![Create menu](assets/resolve_create_single_track_rename_hero_track.png)
 
 </div>
 <div class="col col--6 markdown">
 
-Dialogue `Pype publish attributes creator` will open. Here you can define instance properties. If you wish to rename clips dynamically during creation then Keep  **Rename clips** ticked.
-<br></br>
-
-In case you wish to use *multiple elements of shots* workflow then keep **Enamble vertical sync** ticked on and define correct hero track which is holding main plates, this is usually the **main** track.
-</div>
-
-<div class="col col--6 markdown">
-
-![Create menu](assets/hiero_createUIRename.png)
-
-</div>
-<div class="col col--6 markdown">
-
-Subset name is created dynamically if `<track_name>` is selected on **Subset name**.
-<br></br>
-
-I case you wish to publish reviewable video as explained above then find the appropriate track from drop down menu **Use review track**. Usually named `review`
-<br></br>
-
-Hover above each input field for help.
-<br></br>
-
-Handles can be defined here to. In case you wish to have individual clip set differently we recomend to set here the default value and later change those in the created OpenPype tag's metadata under `handleStart` and `handleEnd` properties (look bellow for details)
-</div>
-
-<div class="col col--6 markdown">
-
-![Create menu](assets/hiero_createUIFrames.png)
-
-</div>
-<div class="col col--6 markdown">
-
-After you hit **Ok** tags are added to selected clips (except clips in **review** tracks).
-<br></br>
-
-If you wish to change any individual propertie of the shot then you are able to do it here. In this example we can change `handleStart` and `handleEnd` to some other values.
-</div>
-
-<div class="col col--6 markdown">
-
-![Create menu](assets/hiero_tagHandles.png)
+![Create menu](assets/resolve_create_vertical_rename_creator_ui.png)
 
 </div>
 </div>
+
+
+## Publishing Shots
 
 
 ## Installation of Python and PySide
@@ -155,7 +188,7 @@ BMDVR uses a hardcoded method to look for the python executable path. All of tho
 
 <TabItem value="win">
 
-`{LOCALAPPDATA}/Programs/Python/Python36`
+`%LOCALAPPDATA%\Programs\Python\Python36`
 
 </TabItem>
 <TabItem value="linux">
@@ -171,12 +204,9 @@ BMDVR uses a hardcoded method to look for the python executable path. All of tho
 </Tabs>
 
 
-### Installing PySide2 into python 3.6 for correct gui work:
+### Installing PySide2 into python 3.6 for correct gui work
 
-OpenPype is using own window widget inside Resolve, for that reason PySide2 has to be installed into the python 3.6 (as explained above). Follow this step-by-step:
-open terminal > windows menu > type cmd
-paste this to terminal > %LOCALAPPDATA%\Programs\Python\Python36\python.exe -m pip install PySide2
-after installation finished then all is done
+OpenPype is using own window widget inside Resolve, for that reason PySide2 has to be installed into the python 3.6 (as explained above).
 
 <Tabs
   groupId="platforms"
@@ -189,21 +219,49 @@ after installation finished then all is done
 
 <TabItem value="win">
 
-1. Open Windows menu and search for terminal: type cmd
-2. then paste this to the terminal `%LOCALAPPDATA%\Programs\Python\Python36\python.exe -m pip install PySide2`
+paste to any terminal of your choice
+
+```bash
+%LOCALAPPDATA%\Programs\Python\Python36\python.exe -m pip install PySide2
+```
 
 </TabItem>
 <TabItem value="linux">
 
-`/opt/Python/3.6/bin`
+paste to any terminal of your choice
+
+```bash
+/opt/Python/3.6/bin/python -m pip install PySide2
+```
 
 </TabItem>
 <TabItem value="mac">
 
-`~/Library/Python/3.6/bin`
+paste to any terminal of your choice
+
+```bash
+~/Library/Python/3.6/bin/python -m pip install PySide2
+```
 
 </TabItem>
 </Tabs>
 
-### Set Resolve's Fusion settings for Python 3.6 interpereter:
+<div class="row markdown">
+
+### Set Resolve's Fusion settings for Python 3.6 interpereter
+
+<div class="col col--6 markdown">
+
+
 As it is shown in bellow picture you have to go to Fusion Tab and then in Fusion menu find Fusion Settings. Go to Fusion/Script and find Default Python Version and swith to Python 3.6
+
+</div>
+
+<div class="col col--6 markdown">
+
+![Create menu](assets/resolve_fusion_tab.png)
+![Create menu](assets/resolve_fusion_menu.png)
+![Create menu](assets/resolve_fusion_script_settings.png)
+
+</div>
+</div>
