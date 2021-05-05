@@ -121,6 +121,8 @@ main () {
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
 
+  _inside_openpype_tool="1"
+
   # make sure Poetry is in PATH
   if [[ -z $POETRY_HOME ]]; then
     export POETRY_HOME="$openpype_root/.poetry"
@@ -139,7 +141,9 @@ main () {
   fi
 
   echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
-  poetry run python3 "$openpype_root/start.py" generate-zip "$@"
+  PYTHONPATH="$openpype_root:$PYTHONPATH"
+  OPENPYPE_ROOT="$openpype_root"
+  poetry run python3 "$openpype_root/tools/create_zip.py" "$@"
 }
 
 main "$@"

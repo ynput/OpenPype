@@ -59,8 +59,7 @@ class ListEntity(EndpointEntity):
         )
 
     def append(self, item):
-        child_obj = self._add_new_item()
-        child_obj.set_override_state(self._override_state)
+        child_obj = self.add_new_item(trigger_change=False)
         child_obj.set(item)
         self.on_change()
 
@@ -92,8 +91,7 @@ class ListEntity(EndpointEntity):
         raise ValueError("ListEntity.remove(x): x not in ListEntity")
 
     def insert(self, idx, item):
-        child_obj = self._add_new_item(idx)
-        child_obj.set_override_state(self._override_state)
+        child_obj = self.add_new_item(idx, trigger_change=False)
         child_obj.set(item)
         self.on_change()
 
@@ -105,10 +103,16 @@ class ListEntity(EndpointEntity):
             self.children.insert(idx, child_obj)
         return child_obj
 
-    def add_new_item(self, idx=None):
+    def add_new_item(self, idx=None, trigger_change=True):
         child_obj = self._add_new_item(idx)
         child_obj.set_override_state(self._override_state)
-        self.on_change()
+        if self._override_state is OverrideState.STUDIO:
+            child_obj.add_to_studio_default([])
+        elif self._override_state is OverrideState.PROJECT:
+            child_obj.add_to_project_default([])
+
+        if trigger_change:
+            self.on_change()
         return child_obj
 
     def swap_items(self, item_1, item_2):
@@ -144,7 +148,7 @@ class ListEntity(EndpointEntity):
             item_schema = {"type": item_schema}
         self.item_schema = item_schema
 
-        if not self.group_item:
+        if self.group_item is None:
             self.is_group = True
 
         # Value that was set on set_override_state
@@ -167,8 +171,18 @@ class ListEntity(EndpointEntity):
             )
             raise EntitySchemaError(self, reason)
 
-        for child_obj in self.children:
-            child_obj.schema_validations()
+        # Validate object type schema
+        child_validated = False
+        for child_entity in self.children:
+            child_entity.schema_validations()
+            child_validated = True
+            break
+
+        if not child_validated:
+            idx = 0
+            tmp_child = self._add_new_item(idx)
+            tmp_child.schema_validations()
+            self.children.pop(idx)
 
     def get_child_path(self, child_obj):
         result_idx = None
@@ -343,7 +357,7 @@ class ListEntity(EndpointEntity):
         return output
 
     def _discard_changes(self, on_change_trigger):
-        if not self.can_discard_changes:
+        if not self._can_discard_changes:
             return
 
         not_set = object()
@@ -405,7 +419,7 @@ class ListEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
-        if not self.can_remove_from_studio_default:
+        if not self._can_remove_from_studio_default:
             return
 
         value = self._default_value
@@ -433,7 +447,7 @@ class ListEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if not self.can_remove_from_project_override:
+        if not self._can_remove_from_project_override:
             return
 
         if self._has_studio_override:

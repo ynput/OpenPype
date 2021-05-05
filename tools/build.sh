@@ -140,6 +140,8 @@ main () {
   version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);"
   openpype_version="$(python3 <<< ${version_command})"
 
+  _inside_openpype_tool="1"
+
   # make sure Poetry is in PATH
   if [[ -z $POETRY_HOME ]]; then
     export POETRY_HOME="$openpype_root/.poetry"

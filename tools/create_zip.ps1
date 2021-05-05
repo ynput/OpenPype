@@ -38,6 +38,8 @@ $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $openpype_root = (Get-Item $script_dir).parent.FullName
 
+$env:_INSIDE_OPENPYPE_TOOL = "1"
+
 # make sure Poetry is in PATH
 if (-not (Test-Path 'env:POETRY_HOME')) {
     $env:POETRY_HOME = "$openpype_root\.poetry"
@@ -82,9 +84,15 @@ if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
 }
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
+Write-Host "Cleaning cache files ... " -NoNewline
+Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
+Get-ChildItem $openpype_root -Filter "*.pyo" -Force -Recurse | Remove-Item -Force
+Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
+Write-Host "OK" -ForegroundColor green
+
+Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Generating zip from current sources ..."
-Write-Host "... " -NoNewline -ForegroundColor Magenta
-Write-Host "arguments: " -NoNewline -ForegroundColor Gray
-Write-Host $ARGS -ForegroundColor White
-& poetry run python "$($openpype_root)\start.py" generate-zip $ARGS
+$env:PYTHONPATH="$($openpype_root);$($env:PYTHONPATH)"
+$env:OPENPYPE_ROOT="$($openpype_root)"
+& poetry run python "$($openpype_root)\tools\create_zip.py" $ARGS
 Set-Location -Path $current_dir

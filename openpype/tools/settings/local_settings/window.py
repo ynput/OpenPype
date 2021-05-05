@@ -156,6 +156,8 @@ class LocalSettingsWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(LocalSettingsWindow, self).__init__(parent)
 
+        self._reset_on_show = True
+
         self.resize(1000, 600)
 
         self.setWindowTitle("OpenPype Local settings")
@@ -193,9 +195,14 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         self.reset_btn = reset_btn
         self.save_btn = save_btn
 
-        self.reset()
+    def showEvent(self, event):
+        super(LocalSettingsWindow, self).showEvent(event)
+        if self._reset_on_show:
+            self.reset()
 
     def reset(self):
+        if self._reset_on_show:
+            self._reset_on_show = False
         value = get_local_settings()
         self.settings_widget.update_local_settings(value)
 

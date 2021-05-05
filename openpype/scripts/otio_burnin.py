@@ -14,7 +14,7 @@ ffprobe_path = openpype.lib.get_ffmpeg_tool_path("ffprobe")
 
 
 FFMPEG = (
-    '"{}" -i "%(input)s" %(filters)s %(args)s%(output)s'
+    '"{}"%(input_args)s -i "%(input)s" %(filters)s %(args)s%(output)s'
 ).format(ffmpeg_path)
 
 FFPROBE = (
@@ -121,9 +121,17 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         'font_size': 42
     }
 
-    def __init__(self, source, streams=None, options_init=None):
+    def __init__(
+        self, source, streams=None, options_init=None, first_frame=None
+    ):
         if not streams:
             streams = _streams(source)
+
+        input_args = []
+        if first_frame:
+            input_args.append("-start_number {}".format(first_frame))
+
+        self.input_args = input_args
 
         super().__init__(source, streams)
 
@@ -289,7 +297,12 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if self.filter_string:
             filters = '-vf "{}"'.format(self.filter_string)
 
+        input_args = ""
+        if self.input_args:
+            input_args = " {}".format(" ".join(self.input_args))
+
         return (FFMPEG % {
+            'input_args': input_args,
             'input': self.source,
             'output': output,
             'args': '%s ' % args if args else '',
@@ -370,7 +383,8 @@ def example(input_path, output_path):
 
 def burnins_from_data(
     input_path, output_path, data,
-    codec_data=None, options=None, burnin_values=None, overwrite=True
+    codec_data=None, options=None, burnin_values=None, overwrite=True,
+    full_input_path=None, first_frame=None
 ):
     """This method adds burnins to video/image file based on presets setting.
 
@@ -427,8 +441,11 @@ def burnins_from_data(
         "shot": "sh0010"
     }
     """
+    streams = None
+    if full_input_path:
+        streams = _streams(full_input_path)
 
-    burnin = ModifiedBurnins(input_path, options_init=options)
+    burnin = ModifiedBurnins(input_path, streams, options, first_frame)
 
     frame_start = data.get("frame_start")
     frame_end = data.get("frame_end")
@@ -591,6 +608,8 @@ if __name__ == "__main__":
         in_data["burnin_data"],
         codec_data=in_data.get("codec"),
         options=in_data.get("options"),
-        burnin_values=in_data.get("values")
+        burnin_values=in_data.get("values"),
+        full_input_path=in_data.get("full_input_path"),
+        first_frame=in_data.get("first_frame")
     )
     print("* Burnin script has finished")

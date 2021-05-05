@@ -32,7 +32,7 @@ class EndpointEntity(ItemEntity):
         super(EndpointEntity, self).__init__(*args, **kwargs)
 
         if (
-            not (self.group_item or self.is_group)
+            not (self.group_item is not None or self.is_group)
             and not (self.is_dynamic_item or self.is_in_dynamic_item)
         ):
             self.is_group = True
@@ -251,7 +251,7 @@ class InputEntity(EndpointEntity):
         self._current_value = copy.deepcopy(value)
 
     def _discard_changes(self, on_change_trigger=None):
-        if not self.can_discard_changes:
+        if not self._can_discard_changes:
             return
 
         self._value_is_modified = False
@@ -289,7 +289,7 @@ class InputEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
-        if not self.can_remove_from_studio_default:
+        if not self._can_remove_from_studio_default:
             return
 
         value = self._default_value
@@ -307,7 +307,7 @@ class InputEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if not self.can_remove_from_project_override:
+        if not self._can_remove_from_project_override:
             return
 
         self._has_project_override = False

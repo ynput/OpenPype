@@ -136,9 +136,11 @@ realpath () {
 
 main () {
   # Main
-  echo -e "${BGreen}"
-  art
-  echo -e "${RST}"
+  if [[ -z $_inside_openpype_tool ]]; then
+    echo -e "${BGreen}"
+    art
+    echo -e "${RST}"
+  fi
   detect_python || return 1
 
   # Directories

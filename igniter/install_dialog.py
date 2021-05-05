@@ -386,7 +386,11 @@ class InstallDialog(QtWidgets.QDialog):
         self._enable_buttons()
 
     def _run_openpype_from_code(self):
-        self._secure_registry.set_item("openPypeMongo", self.mongo_url)
+        os.environ["OPENPYPE_MONGO"] = self.mongo_url
+        try:
+            self._secure_registry.set_item("openPypeMongo", self.mongo_url)
+        except ValueError:
+            print("Couldn't save Mongo URL to keyring")
 
         self.done(2)
 

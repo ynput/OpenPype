@@ -88,6 +88,8 @@ main () {
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
 
+  _inside_openpype_tool="1"
+
   # make sure Poetry is in PATH
   if [[ -z $POETRY_HOME ]]; then
     export POETRY_HOME="$openpype_root/.poetry"

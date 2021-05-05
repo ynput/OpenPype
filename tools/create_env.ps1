@@ -102,8 +102,9 @@ $art = @"
                  https://openpype.io
 
 "@
-
-Write-Host $art -ForegroundColor DarkGreen
+if (-not (Test-Path 'env:_INSIDE_OPENPYPE_TOOL')) {
+    Write-Host $art -ForegroundColor DarkGreen
+}
 
 # Enable if PS 7.x is needed.
 # Show-PSWarning

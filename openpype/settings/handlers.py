@@ -12,7 +12,8 @@ from .constants import (
     SYSTEM_SETTINGS_KEY,
     PROJECT_SETTINGS_KEY,
     PROJECT_ANATOMY_KEY,
-    LOCAL_SETTING_KEY
+    LOCAL_SETTING_KEY,
+    M_OVERRIDEN_KEY
 )
 from .lib import load_json_file
 
@@ -167,6 +168,7 @@ class CacheValues:
 
 class MongoSettingsHandler(SettingsHandler):
     """Settings handler that use mongo for storing and loading of settings."""
+    global_general_keys = ("openpype_path", "admin_password")
 
     def __init__(self):
         # Get mongo connection
@@ -225,12 +227,105 @@ class MongoSettingsHandler(SettingsHandler):
             self._prepare_project_settings_keys()
         return self._attribute_keys
 
-    def _prepare_global_settings(self, data):
+    def _extract_global_settings(self, data):
+        """Extract global settings data from system settings overrides.
+
+        This is now limited to "general" key in system settings which must be
+        set as group in schemas.
+
+        Returns:
+            dict: Global settings extracted from system settings data.
+        """
         output = {}
-        # Add "openpype_path" key to global settings if is set
-        if "general" in data and "openpype_path" in data["general"]:
-            output["openpype_path"] = data["general"]["openpype_path"]
+        if "general" not in data:
+            return output
+
+        general_data = data["general"]
+
+        # Add predefined keys to global settings if are set
+        for key in self.global_general_keys:
+            if key not in general_data:
+                continue
+            # Pop key from values
+            output[key] = general_data.pop(key)
+            # Pop key from overriden metadata
+            if (
+                M_OVERRIDEN_KEY in general_data
+                and key in general_data[M_OVERRIDEN_KEY]
+            ):
+                general_data[M_OVERRIDEN_KEY].remove(key)
         return output
+
+    def _apply_global_settings(
+        self, system_settings_document, globals_document
+    ):
+        """Apply global settings data to system settings.
+
+        Applification is skipped if document with global settings is not
+        available or does not have set data in.
+
+        System settings document is "faked" like it exists if global document
+        has set values.
+
+        Args:
+            system_settings_document (dict): System settings document from
+                MongoDB.
+            globals_document (dict): Global settings document from MongoDB.
+
+        Returns:
+            Merged document which has applied global settings data.
+        """
+        # Skip if globals document is not available
+        if (
+            not globals_document
+            or "data" not in globals_document
+            or not globals_document["data"]
+        ):
+            return system_settings_document
+
+        globals_data = globals_document["data"]
+        # Check if data contain any key from predefined keys
+        any_key_found = False
+        if globals_data:
+            for key in self.global_general_keys:
+                if key in globals_data:
+                    any_key_found = True
+                    break
+
+        # Skip if any key from predefined key was not found in globals
+        if not any_key_found:
+            return system_settings_document
+
+        # "Fake" system settings document if document does not exist
+        # - global settings document may exist but system settings not yet
+        if not system_settings_document:
+            system_settings_document = {}
+
+        if "data" in system_settings_document:
+            system_settings_data = system_settings_document["data"]
+        else:
+            system_settings_data = {}
+            system_settings_document["data"] = system_settings_data
+
+        if "general" in system_settings_data:
+            system_general = system_settings_data["general"]
+        else:
+            system_general = {}
+            system_settings_data["general"] = system_general
+
+        overriden_keys = system_general.get(M_OVERRIDEN_KEY) or []
+        for key in self.global_general_keys:
+            if key not in globals_data:
+                continue
+
+            system_general[key] = globals_data[key]
+            if key not in overriden_keys:
+                overriden_keys.append(key)
+
+        if overriden_keys:
+            system_general[M_OVERRIDEN_KEY] = overriden_keys
+
+        return system_settings_document
 
     def save_studio_settings(self, data):
         """Save studio overrides of system settings.
@@ -243,23 +338,29 @@ class MongoSettingsHandler(SettingsHandler):
         Args:
             data(dict): Data of studio overrides with override metadata.
         """
-        # Store system settings
+        # Update cache
         self.system_settings_cache.update_data(data)
+
+        # Get copy of just updated cache
+        system_settings_data = self.system_settings_cache.data_copy()
+
+        # Extract global settings from system settings
+        global_settings = self._extract_global_settings(
+            system_settings_data
+        )
+
+        # Store system settings
         self.collection.replace_one(
             {
                 "type": SYSTEM_SETTINGS_KEY
             },
             {
                 "type": SYSTEM_SETTINGS_KEY,
-                "data": self.system_settings_cache.data
+                "data": system_settings_data
             },
             upsert=True
         )
 
-        # Get global settings from system settings
-        global_settings = self._prepare_global_settings(
-            self.system_settings_cache.data
-        )
         # Store global settings
         self.collection.replace_one(
             {
@@ -418,11 +519,27 @@ class MongoSettingsHandler(SettingsHandler):
     def get_studio_system_settings_overrides(self):
         """Studio overrides of system settings."""
         if self.system_settings_cache.is_outdated:
-            document = self.collection.find_one({
-                "type": SYSTEM_SETTINGS_KEY
+            system_settings_document = None
+            globals_document = None
+            docs = self.collection.find({
+                # Use `$or` as system settings may have more filters in future
+                "$or": [
+                    {"type": GLOBAL_SETTINGS_KEY},
+                    {"type": SYSTEM_SETTINGS_KEY},
+                ]
             })
+            for doc in docs:
+                doc_type = doc["type"]
+                if doc_type == GLOBAL_SETTINGS_KEY:
+                    globals_document = doc
+                elif doc_type == SYSTEM_SETTINGS_KEY:
+                    system_settings_document = doc
 
-            self.system_settings_cache.update_from_document(document)
+            merged_document = self._apply_global_settings(
+                system_settings_document, globals_document
+            )
+
+            self.system_settings_cache.update_from_document(merged_document)
         return self.system_settings_cache.data_copy()
 
     def _get_project_settings_overrides(self, project_name):
