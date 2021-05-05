@@ -104,7 +104,7 @@ class ExtractBurnin(openpype.api.Extractor):
             return
 
         # Pre-filter burnin definitions by instance families
-        burnin_defs = self.filter_burnins_by_families(profile, instance)
+        burnin_defs = self.filter_burnins_defs(profile, instance)
         if not burnin_defs:
             self.log.info((
                 "Skipped instance. Burnin definitions are not set for profile"
@@ -742,17 +742,16 @@ class ExtractBurnin(openpype.api.Extractor):
         final_profile.pop("__value__")
         return final_profile
 
-    def filter_burnins_by_families(self, profile, instance):
-        """Filter outputs that are not supported for instance families.
+    def filter_burnins_defs(self, profile, instance):
+        """Filter outputs by their values from settings.
 
-        Output definitions without families filter are marked as valid.
+        Output definitions with at least one value are marked as valid.
 
         Args:
             profile (dict): Profile from presets matching current context.
-            families (list): All families of current instance.
 
         Returns:
-            list: Containg all output definitions matching entered families.
+            list: Containg all valid output definitions.
         """
         filtered_burnin_defs = {}
 
@@ -760,21 +759,52 @@ class ExtractBurnin(openpype.api.Extractor):
         if not burnin_defs:
             return filtered_burnin_defs
 
-        # Prepare families
         families = self.families_from_instance(instance)
-        families = [family.lower() for family in families]
+        low_families = [family.lower() for family in families]
 
-        for filename_suffix, burnin_def in burnin_defs.items():
-            burnin_filter = burnin_def.get("filter")
-            # When filters not set then skip filtering process
-            if burnin_filter:
-                families_filters = burnin_filter.get("families")
-                if not self.families_filter_validation(
-                    families, families_filters
-                ):
-                    continue
+        for filename_suffix, orig_burnin_def in burnin_defs.items():
+            burnin_def = copy.deepcopy(orig_burnin_def)
+            def_filter = burnin_def.get("filter", None) or {}
+            for key in ("families", "tags"):
+                if key not in def_filter:
+                    def_filter[key] = []
 
-            filtered_burnin_defs[filename_suffix] = burnin_def
+            families_filters = def_filter["families"]
+            if not self.families_filter_validation(
+                low_families, families_filters
+            ):
+                self.log.debug((
+                    "Skipped burnin definition \"{}\". Family"
+                    " fiters ({}) does not match current instance families: {}"
+                ).format(
+                    filename_suffix, str(families_filters), str(families)
+                ))
+                continue
+
+            # Burnin values
+            burnin_values = {}
+            for key, value in tuple(burnin_def.items()):
+                key_low = key.lower()
+                if key_low in self.positions and value:
+                    burnin_values[key_low] = value
+
+            # Skip processing if burnin values are not set
+            if not burnin_values:
+                self.log.warning((
+                    "Burnin values for Burnin definition \"{}\""
+                    " are not filled. Definition will be skipped."
+                    " Origin value: {}"
+                ).format(filename_suffix, str(orig_burnin_def)))
+                continue
+
+            burnin_values["filter"] = def_filter
+
+            filtered_burnin_defs[filename_suffix] = burnin_values
+
+            self.log.debug((
+                "Burnin definition \"{}\" passed first filtering."
+            ).format(filename_suffix))
+
         return filtered_burnin_defs
 
     def families_filter_validation(self, families, output_families_filter):
