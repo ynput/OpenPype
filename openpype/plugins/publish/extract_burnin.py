@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 import json
 import copy
 import tempfile
@@ -124,11 +125,6 @@ class ExtractBurnin(openpype.api.Extractor):
         # [pype executable, *pype script, "run"]
         executable_args = get_pype_execute_args("run", scriptpath)
 
-        # Environments for script process
-        env = os.environ.copy()
-        # pop PYTHONPATH
-        env.pop("PYTHONPATH", None)
-
         for idx, repre in enumerate(tuple(instance.data["representations"])):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
             if not self.repres_is_valid(repre):
@@ -251,10 +247,16 @@ class ExtractBurnin(openpype.api.Extractor):
                 self.log.debug("Executing: {}".format(" ".join(args)))
 
                 # Run burnin script
-                openpype.api.run_subprocess(
-                    args, shell=True, logger=self.log, env=env
-                )
+                process_kwargs = {
+                    "logger": self.log,
+                    "env": {}
+                }
+                if platform.system().lower() == "windows":
+                    process_kwargs["creationflags"] = (
+                        subprocess.CREATE_NO_WINDOW
+                    )
 
+                openpype.api.run_subprocess(args, **process_kwargs)
                 # Remove the temporary json
                 os.remove(temporary_json_filepath)
 
