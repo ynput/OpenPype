@@ -51,35 +51,6 @@ BIWhite='\033[1;97m'      # White
 
 
 ##############################################################################
-# Detect required version of python
-# Globals:
-#   colors
-#   PYTHON
-# Arguments:
-#   None
-# Returns:
-#   None
-###############################################################################
-detect_python () {
-  echo -e "${BIGreen}>>>${RST} Using python \c"
-  local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
-  local python_version="$(python3 <<< ${version_command})"
-  oIFS="$IFS"
-  IFS=.
-  set -- $python_version
-  IFS="$oIFS"
-  if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
-    if [ "$2" -gt "7" ] ; then
-      echo -e "${BIWhite}[${RST} ${BIRed}$1.$2 ${BIWhite}]${RST} - ${BIRed}FAILED${RST} ${BIYellow}Version is new and unsupported, use${RST} ${BIPurple}3.7.x${RST}"; return 1;
-    else
-      echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
-    fi
-  else
-    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
-  fi
-}
-
-##############################################################################
 # Clean pyc files in specified directory
 # Globals:
 #   None
@@ -90,7 +61,7 @@ detect_python () {
 ###############################################################################
 clean_pyc () {
   local path
-  path=$oepnpype_root
+  path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
   find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
@@ -114,11 +85,28 @@ main () {
   echo -e "${BGreen}"
   art
   echo -e "${RST}"
-  detect_python || return 1
 
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+
+  _inside_openpype_tool="1"
+
+  # make sure Poetry is in PATH
+  if [[ -z $POETRY_HOME ]]; then
+    export POETRY_HOME="$openpype_root/.poetry"
+  fi
+  export PATH="$POETRY_HOME/bin:$PATH"
+
   pushd "$openpype_root" > /dev/null || return > /dev/null
+
+  echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
+  if [ -f "$POETRY_HOME/bin/poetry" ]; then
+    echo -e "${BIGreen}OK${RST}"
+  else
+    echo -e "${BIYellow}NOT FOUND${RST}"
+    echo -e "${BIYellow}***${RST} We need to install Poetry and virtual env ..."
+    . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+  fi
 
   echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
   poetry run python3 "$openpype_root/start.py" settings --dev

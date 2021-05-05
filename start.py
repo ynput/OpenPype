@@ -38,47 +38,47 @@ So, bootstrapping OpenPype looks like this::
 
 .. code-block:: bash
 
-+-------------------------------------------------------+
-| Determine MongoDB connection:                         |
-| Use `OPENPYPE_MONGO`, system keyring `openPypeMongo`  |
-+--------------------------|----------------------------+
-                   .--- Found? --.
+┌───────────────────────────────────────────────────────┐
+│ Determine MongoDB connection:                         │
+│ Use `OPENPYPE_MONGO`, system keyring `openPypeMongo`  │
+└──────────────────────────┬────────────────────────────┘
+                  ┌───- Found? -─┐
                  YES             NO
-                  |              |
-                  |       +------v--------------+
-                  |       | Fire up Igniter GUI |<---------+
-                  |       | and ask User        |          |
-                  |       +---------------------+          |
-                  |                                        |
-                  |                                        |
-+-----------------v------------------------------------+   |
-| Get location of OpenPype:                            |   |
-|   1) Test for `OPENPYPE_PATH` environment variable   |   |
-|   2) Test `openPypePath` in registry setting         |   |
-|   3) Test user data directory                        |   |
-| ...................................................  |   |
-| If running from frozen code:                         |   |
-|   - Use latest one found in user data dir            |   |
-| If running from live code:                           |   |
-|   - Use live code and install it to user data dir    |   |
-| * can be overridden with `--use-version` argument    |   |
-+-------------------------|----------------------------+   |
-             .-- Is OpenPype found? --.                    |
-             YES                     NO                    |
-              |                      |                     |
-              |      +---------------v-----------------+   |
-              |      | Look in `OPENPYPE_PATH`, find   |   |
-              |      | latest version and install it   |   |
-              |      | to user data dir.               |   |
-              |      +--------------|------------------+   |
-              |         .-- Is OpenPype found? --.         |
-              |         YES                     NO --------+
-              |          |
-              |<---------+
-              |
-+-------------v------------+
-|      Run OpenPype        |
-+--------------------------+
+                  │              │
+                  │       ┌──────┴──────────────┐
+                  │       │ Fire up Igniter GUI ├<-────────┐
+                  │       │ and ask User        │          │
+                  │       └─────────────────────┘          │
+                  │                                        │
+                  │                                        │
+┌─────────────────┴─────────────────────────────────────┐  │
+│ Get location of OpenPype:                             │  │
+│   1) Test for `OPENPYPE_PATH` environment variable    │  │
+│   2) Test `openPypePath` in registry setting          │  │
+│   3) Test user data directory                         │  │
+│ ····················································· │  │
+│ If running from frozen code:                          │  │
+│   - Use latest one found in user data dir             │  │
+│ If running from live code:                            │  │
+│   - Use live code and install it to user data dir     │  │
+│ * can be overridden with `--use-version` argument     │  │
+└──────────────────────────┬────────────────────────────┘  │
+              ┌─- Is OpenPype found? -─┐                   │
+             YES                       NO                  │
+              │                        │                   │
+              │      ┌─────────────────┴─────────────┐     │
+              │      │ Look in `OPENPYPE_PATH`, find │     │
+              │      │ latest version and install it │     │
+              │      │ to user data dir.             │     │
+              │      └──────────────┬────────────────┘     │
+              │         ┌─- Is OpenPype found? -─┐         │
+              │        YES                       NO -──────┘
+              │         │
+              ├<-───────┘
+              │
+┌─────────────┴────────────┐
+│      Run OpenPype        │
+└─────═══════════════──────┘
 
 
 Todo:
@@ -99,6 +99,8 @@ import traceback
 import subprocess
 import site
 from pathlib import Path
+import platform
+
 
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
 # WARNING `OPENPYPE_ROOT` must be defined before igniter import
@@ -109,6 +111,17 @@ if not getattr(sys, 'frozen', False):
     OPENPYPE_ROOT = os.path.dirname(os.path.abspath(__file__))
 else:
     OPENPYPE_ROOT = os.path.dirname(sys.executable)
+
+    # FIX #1469: Certificates from certifi are not available in some
+    # macos builds, so connection to ftrack/mongo will fail with
+    # unable to verify certificate issuer error. This will add certifi
+    # certificates so ssl can see them.
+    # WARNING: this can break stuff if custom certificates are used. In that
+    # case they need to be merged to certificate bundle and SSL_CERT_FILE
+    # should point to them.
+    if not os.getenv("SSL_CERT_FILE") and platform.system().lower() == "darwin":  # noqa: E501
+        ssl_cert_file = Path(OPENPYPE_ROOT) / "dependencies" / "certifi" / "cacert.pem"  # noqa: E501
+        os.environ["SSL_CERT_FILE"] = ssl_cert_file.as_posix()
 
     # add dependencies folder to sys.pat for frozen code
     frozen_libs = os.path.normpath(

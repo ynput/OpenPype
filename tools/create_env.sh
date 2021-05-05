@@ -136,19 +136,27 @@ realpath () {
 
 main () {
   # Main
-  echo -e "${BGreen}"
-  art
-  echo -e "${RST}"
+  if [[ -z $_inside_openpype_tool ]]; then
+    echo -e "${BGreen}"
+    art
+    echo -e "${RST}"
+  fi
   detect_python || return 1
 
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+  # make sure Poetry is in PATH
+  if [[ -z $POETRY_HOME ]]; then
+    export POETRY_HOME="$openpype_root/.poetry"
+  fi
+  export PATH="$POETRY_HOME/bin:$PATH"
+
+
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
-  if [ -f "$HOME/.poetry/bin/poetry" ]; then
+  if [ -f "$POETRY_HOME/bin/poetry" ]; then
     echo -e "${BIGreen}OK${RST}"
-    export PATH="$PATH:$HOME/.poetry/bin"
   else
     echo -e "${BIYellow}NOT FOUND${RST}"
     install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
