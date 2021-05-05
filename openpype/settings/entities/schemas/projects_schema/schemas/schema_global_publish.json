@@ -101,30 +101,8 @@
                                             "type": "text"
                                         },
                                         {
-                                            "key": "tags",
-                                            "label": "Tags",
-                                            "type": "enum",
-                                            "multiselection": true,
-                                            "enum_items": [
-                                                {
-                                                    "burnin": "Add burnins"
-                                                },
-                                                {
-                                                    "ftrackreview": "Add to Ftrack"
-                                                },
-                                                {
-                                                    "delete": "Delete output"
-                                                },
-                                                {
-                                                    "slate-frame": "Add slate frame"
-                                                },
-                                                {
-                                                    "no-handles": "Skip handle frames"
-                                                },
-                                                {
-                                                    "sequence": "Output as image sequence"
-                                                }
-                                            ]
+                                            "type": "schema",
+                                            "name": "schema_representation_tags"
                                         },
                                         {
                                             "key": "ffmpeg_args",
