@@ -60,7 +60,6 @@ class ExtractBurnin(openpype.api.Extractor):
     # Preset attributes
     profiles = None
     options = None
-    fields = None
 
     def process(self, instance):
         # ffmpeg doesn't support multipart exrs
