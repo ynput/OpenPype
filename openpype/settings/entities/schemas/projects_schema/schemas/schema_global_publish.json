@@ -385,6 +385,24 @@
                                             "key": "BOTTOM_RIGHT",
                                             "label": "BottomRight",
                                             "type": "text"
+                                        },
+                                        {
+                                            "key": "filter",
+                                            "label": "Additional filtering",
+                                            "type": "dict",
+                                            "highlight_content": true,
+                                            "children": [
+                                                {
+                                                    "key": "families",
+                                                    "label": "Families",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "schema",
+                                                    "name": "schema_representation_tags"
+                                                }
+                                            ]
                                         }
                                     ]
                                 }
