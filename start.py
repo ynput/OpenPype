@@ -289,6 +289,10 @@ def _process_arguments() -> tuple:
         if return_code not in [2, 3]:
             sys.exit(return_code)
 
+        idx = sys.argv.index("igniter")
+        sys.argv.pop(idx)
+        sys.argv.insert(idx, "tray")
+
     return use_version, use_staging
 
 
@@ -330,11 +334,13 @@ def _determine_mongodb() -> str:
         if result == 0:
             raise RuntimeError("MongoDB URL was not defined")
 
-        try:
-            openpype_mongo = bootstrap.secure_registry.get_item(
-                "openPypeMongo")
-        except ValueError:
-            raise RuntimeError("Missing MongoDB url")
+        openpype_mongo = os.getenv("OPENPYPE_MONGO")
+        if not openpype_mongo:
+            try:
+                openpype_mongo = bootstrap.secure_registry.get_item(
+                    "openPypeMongo")
+            except ValueError:
+                raise RuntimeError("Missing MongoDB url")
 
     return openpype_mongo
 

@@ -70,8 +70,6 @@ function Install-Poetry() {
     Write-Host ">>> " -NoNewline -ForegroundColor Green
     Write-Host "Installing Poetry ... "
     (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
-    # add it to PATH
-    $env:PATH = "$($env:PATH);$($env:USERPROFILE)\.poetry\bin"
 }
 
 $art = @"
@@ -92,6 +90,14 @@ Write-Host $art -ForegroundColor DarkGreen
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $openpype_root = (Get-Item $script_dir).parent.FullName
+
+$env:_INSIDE_OPENPYPE_TOOL = "1"
+
+# make sure Poetry is in PATH
+if (-not (Test-Path 'env:POETRY_HOME')) {
+    $env:POETRY_HOME = "$openpype_root\.poetry"
+}
+$env:PATH = "$($env:PATH);$($env:POETRY_HOME)\bin"
 
 Set-Location -Path $openpype_root
 
@@ -126,47 +132,20 @@ Write-Host "Making sure submodules are up-to-date ..."
 git submodule update --init --recursive
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Building OpenPype [ " -NoNewline -ForegroundColor white
+Write-Host "OpenPype [ " -NoNewline -ForegroundColor white
 Write-host $openpype_version  -NoNewline -ForegroundColor green
-Write-Host " ] ..." -ForegroundColor white
-
-Write-Host ">>> " -NoNewline -ForegroundColor green
-Write-Host "Detecting host Python ... " -NoNewline
-if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
-    Write-Host "!!! Python not detected" -ForegroundColor red
-    Exit-WithCode 1
-}
-$version_command = @"
-import sys
-print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
-"@
-
-$p = & python -c $version_command
-$env:PYTHON_VERSION = $p
-$m = $p -match '(\d+)\.(\d+)'
-if(-not $m) {
-  Write-Host "!!! Cannot determine version" -ForegroundColor red
-  Exit-WithCode 1
-}
-# We are supporting python 3.6 and up
-if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
-  Write-Host "FAILED Version [ $p ] is old and unsupported" -ForegroundColor red
-  Exit-WithCode 1
-}
-Write-Host "OK [ $p ]" -ForegroundColor green
-
+Write-Host " ]" -ForegroundColor white
 
 Write-Host ">>> " -NoNewline -ForegroundColor Green
 Write-Host "Reading Poetry ... " -NoNewline
-if (-not (Test-Path -PathType Container -Path "$($env:USERPROFILE)\.poetry\bin")) {
+if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
     Write-Host "NOT FOUND" -ForegroundColor Yellow
-    Install-Poetry
-    
-    Write-Host "INSTALLED" -ForegroundColor Cyan
+    Write-Host "*** " -NoNewline -ForegroundColor Yellow
+    Write-Host "We need to install Poetry create virtual env first ..."
+    & "$openpype_root\tools\create_env.ps1"
 } else {
     Write-Host "OK" -ForegroundColor Green
 }
-$env:PATH = "$($env:PATH);$($env:USERPROFILE)\.poetry\bin"
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
