@@ -10,7 +10,8 @@ LABEL org.opencontainers.image.source="https://github.com/pypeclub/pype"
 USER root
 
 RUN yum -y update \
-    && yum -y install epel-release centos-release-scl \
+	&& yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+    && yum -y install centos-release-scl \
     && yum -y install \
         bash \
         which \
@@ -29,12 +30,13 @@ RUN yum -y update \
         openssl-devel \
         tk-devel libffi-devel \
         qt5-qtbase-devel \
+        patchelf \
     && yum clean all
 
 RUN mkdir /opt/openpype
-RUN useradd -m pype
-RUN chown pype /opt/openpype
-USER pype
+# RUN useradd -m pype
+# RUN chown pype /opt/openpype
+# USER pype
 
 RUN curl https://pyenv.run | bash
 ENV PYTHON_CONFIGURE_OPTS --enable-shared
@@ -45,11 +47,11 @@ RUN echo 'export PATH="$HOME/.pyenv/bin:$PATH"'>> $HOME/.bashrc \
 RUN cat $HOME/.bashrc && source $HOME/.bashrc && pyenv install ${OPENPYPE_PYTHON_VERSION}
 
 COPY . /opt/openpype/
-USER root
-RUN chown -R pype /opt/openpype
+# USER root
+# RUN chown -R pype /opt/openpype
 RUN chmod +x /opt/openpype/tools/create_env.sh && chmod +x /opt/openpype/tools/build.sh
 
-USER pype
+# USER pype
 
 WORKDIR /opt/openpype
 
