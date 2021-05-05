@@ -172,19 +172,11 @@ class ExtractBurnin(openpype.api.Extractor):
                 elif "ftrackreview" in new_repre["tags"]:
                     new_repre["tags"].remove("ftrackreview")
 
-                burnin_values = copy.deepcopy(profile_burnins)
-
-                # Burnin values overrides
-                for key, value in burnin_def.items():
-                    key_low = key.lower()
-                    if key_low in self.positions:
-                        if value is not None:
-                            # Set or override value if is valid
-                            burnin_values[key_low] = value
-
-                        elif key_low in burnin_values:
-                            # Pop key if value is set to None (null in json)
-                            burnin_values.pop(key_low)
+                burnin_values = {}
+                for key in self.positions:
+                    value = burnin_def.get(key)
+                    if value:
+                        burnin_values[key] = value
 
                 # Remove "delete" tag from new representation
                 if "delete" in new_repre["tags"]:
