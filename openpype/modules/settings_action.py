@@ -80,16 +80,20 @@ class SettingsAction(PypeModule, ITrayAction):
 
         # Store if was visible
         was_visible = self.settings_window.isVisible()
+        was_minimized = self.settings_window.isMinimized()
 
         # Show settings gui
         self.settings_window.show()
+
+        if was_minimized:
+            self.settings_window.showNormal()
 
         # Pull window to the front.
         self.settings_window.raise_()
         self.settings_window.activateWindow()
 
         # Reset content if was not visible
-        if not was_visible:
+        if not was_visible and not was_minimized:
             self.settings_window.reset()
 
 

@@ -301,20 +301,24 @@
                             "minimum": 0
                         },
                         {
-                            "type": "number",
-                            "key": "opacity",
-                            "label": "Font opacity",
-                            "decimal": 2,
-                            "maximum": 1,
-                            "minimum": 0
+                            "type": "schema_template",
+                            "name": "template_rgba_color",
+                            "template_data": [
+                                {
+                                    "label": "Font Color",
+                                    "name": "font_color"
+                                }
+                            ]
                         },
                         {
-                            "type": "number",
-                            "key": "bg_opacity",
-                            "label": "Background opacity",
-                            "decimal": 2,
-                            "maximum": 1,
-                            "minimum": 0
+                            "type": "schema_template",
+                            "name": "template_rgba_color",
+                            "template_data": [
+                                {
+                                    "label": "Background Color",
+                                    "name": "bg_color"
+                                }
+                            ]
                         },
                         {
                             "type": "number",

@@ -168,7 +168,7 @@ class CacheValues:
 
 class MongoSettingsHandler(SettingsHandler):
     """Settings handler that use mongo for storing and loading of settings."""
-    global_general_keys = ("openpype_path", )
+    global_general_keys = ("openpype_path", "admin_password")
 
     def __init__(self):
         # Get mongo connection

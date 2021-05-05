@@ -222,7 +222,7 @@ class DictMutableKeysEntity(EndpointEntity):
         if self.value_is_env_group:
             self.item_schema["env_group_key"] = ""
 
-        if not self.group_item:
+        if self.group_item is None:
             self.is_group = True
 
     def schema_validations(self):
@@ -251,8 +251,18 @@ class DictMutableKeysEntity(EndpointEntity):
             )
             raise EntitySchemaError(self, reason)
 
-        for child_obj in self.children_by_key.values():
-            child_obj.schema_validations()
+        # Validate object type schema
+        child_validated = False
+        for child_entity in self.children_by_key.values():
+            child_entity.schema_validations()
+            child_validated = True
+            break
+
+        if not child_validated:
+            key = "__tmp__"
+            tmp_child = self._add_key(key)
+            tmp_child.schema_validations()
+            self.children_by_key.pop(key)
 
     def get_child_path(self, child_obj):
         result_key = None
@@ -522,7 +532,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.had_project_override = value is not NOT_SET
 
     def _discard_changes(self, on_change_trigger):
-        if not self.can_discard_changes:
+        if not self._can_discard_changes:
             return
 
         self.set_override_state(self._override_state)
@@ -533,7 +543,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
-        if not self.can_remove_from_studio_default:
+        if not self._can_remove_from_studio_default:
             return
 
         value = self._default_value
@@ -574,7 +584,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if not self.can_remove_from_project_override:
+        if not self._can_remove_from_project_override:
             return
 
         if self._has_studio_override:

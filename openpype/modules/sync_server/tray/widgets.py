@@ -23,6 +23,7 @@ from openpype.modules.sync_server.tray.models import (
 )
 
 from openpype.modules.sync_server.tray import lib
+from openpype.modules.sync_server.tray import delegates
 
 log = PypeLogger().get_logger("SyncServer")
 
@@ -94,16 +95,19 @@ class SyncProjectListWidget(ProjectListWidget):
 
         self.project_name = point_index.data(QtCore.Qt.DisplayRole)
 
-        menu = QtWidgets.QMenu()
+        menu = QtWidgets.QMenu(self)
         actions_mapping = {}
 
-        if self.sync_server.is_project_paused(self.project_name):
-            action = QtWidgets.QAction("Unpause")
-            actions_mapping[action] = self._unpause
-        else:
-            action = QtWidgets.QAction("Pause")
-            actions_mapping[action] = self._pause
-        menu.addAction(action)
+        can_edit = self.model.can_edit
+
+        if can_edit:
+            if self.sync_server.is_project_paused(self.project_name):
+                action = QtWidgets.QAction("Unpause")
+                actions_mapping[action] = self._unpause
+            else:
+                action = QtWidgets.QAction("Pause")
+                actions_mapping[action] = self._pause
+            menu.addAction(action)
 
         if self.local_site == get_local_site_id():
             action = QtWidgets.QAction("Clear local project")
@@ -145,10 +149,10 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
     def _selection_changed(self, _new_selected, _all_selected):
         idxs = self.selection_model.selectedRows()
-        self._selected_ids = []
+        self._selected_ids = set()
 
         for index in idxs:
-            self._selected_ids.append(self.model.data(index, Qt.UserRole))
+            self._selected_ids.add(self.model.data(index, Qt.UserRole))
 
     def _set_selection(self):
         """
@@ -156,14 +160,14 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
             Keep selection during model refresh.
         """
-        existing_ids = []
+        existing_ids = set()
         for selected_id in self._selected_ids:
             index = self.model.get_index(selected_id)
             if index and index.isValid():
                 mode = QtCore.QItemSelectionModel.Select | \
                     QtCore.QItemSelectionModel.Rows
                 self.selection_model.select(index, mode)
-                existing_ids.append(selected_id)
+                existing_ids.add(selected_id)
 
         self._selected_ids = existing_ids
 
@@ -171,9 +175,17 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
         """
             Opens representation dialog with all files after doubleclick
         """
+        # priority editing
+        if self.model.can_edit:
+            column_name = self.model.get_column(index.column())
+            if column_name[0] in self.model.EDITABLE_COLUMNS:
+                self.model.is_editing = True
+                self.table_view.openPersistentEditor(index)
+                return
+
         _id = self.model.data(index, Qt.UserRole)
         detail_window = SyncServerDetailWindow(
-            self.sync_server, _id, self.model.project)
+            self.sync_server, _id, self.model.project, parent=self)
         detail_window.exec()
         
     def _on_context_menu(self, point):
@@ -189,13 +201,15 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
             return
 
         if is_multi:
-            index = self.model.get_index(self._selected_ids[0])
+            index = self.model.get_index(list(self._selected_ids)[0])
             item = self.model.data(index, lib.FullItemRole)
         else:
             item = self.model.data(point_index, lib.FullItemRole)
 
+        can_edit = self.model.can_edit
         action_kwarg_map, actions_mapping, menu = self._prepare_menu(item,
-                                                                     is_multi)
+                                                                     is_multi,
+                                                                     can_edit)
 
         result = menu.exec_(QtGui.QCursor.pos())
         if result:
@@ -206,8 +220,8 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
         self.model.refresh()
 
-    def _prepare_menu(self, item, is_multi):
-        menu = QtWidgets.QMenu()
+    def _prepare_menu(self, item, is_multi, can_edit):
+        menu = QtWidgets.QMenu(self)
 
         actions_mapping = {}
         action_kwarg_map = {}
@@ -235,22 +249,28 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
                         self._get_action_kwargs(site)
                     menu.addAction(action)
 
-        if remote_progress == 1.0 or is_multi:
+        if can_edit and (remote_progress == 1.0 or is_multi):
             action = QtWidgets.QAction("Re-sync Active site")
             action_kwarg_map[action] = self._get_action_kwargs(active_site)
             actions_mapping[action] = self._reset_site
             menu.addAction(action)
 
-        if local_progress == 1.0 or is_multi:
+        if can_edit and (local_progress == 1.0 or is_multi):
             action = QtWidgets.QAction("Re-sync Remote site")
             action_kwarg_map[action] = self._get_action_kwargs(remote_site)
             actions_mapping[action] = self._reset_site
             menu.addAction(action)
 
-        if active_site == get_local_site_id():
+        if can_edit and active_site == get_local_site_id():
             action = QtWidgets.QAction("Completely remove from local")
             action_kwarg_map[action] = self._get_action_kwargs(active_site)
             actions_mapping[action] = self._remove_site
+            menu.addAction(action)
+
+        if can_edit:
+            action = QtWidgets.QAction("Change priority")
+            action_kwarg_map[action] = self._get_action_kwargs(active_site)
+            actions_mapping[action] = self._change_priority
             menu.addAction(action)
 
         # # temp for testing only !!!
@@ -397,6 +417,16 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
                     except OSError:
                         raise OSError('unsupported xdg-open call??')
 
+    def _change_priority(self, **kwargs):
+        """Open editor to change priority on first selected row"""
+        if self._selected_ids:
+            # get_index returns dummy index with column equals to 0
+            index = self.model.get_index(list(self._selected_ids)[0])
+            column_no = self.model.get_header_index("priority")  # real column
+            real_index = self.model.index(index.row(), column_no)
+            self.model.is_editing = True
+            self.table_view.openPersistentEditor(real_index)
+
     def _get_progress(self, item, site_name, opposite=False):
         """Returns progress value according to site (side)"""
         progress = {'local': item.local_progress,
@@ -441,7 +471,7 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
 
         self.sync_server = sync_server
 
-        self._selected_ids = []  # keep last selected _id
+        self._selected_ids = set()  # keep last selected _id
 
         txt_filter = QtWidgets.QLineEdit()
         txt_filter.setPlaceholderText("Quick filter representations..")
@@ -459,7 +489,8 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         table_view = QtWidgets.QTableView()
         headers = [item[0] for item in self.default_widths]
 
-        model = SyncRepresentationSummaryModel(sync_server, headers, project)
+        model = SyncRepresentationSummaryModel(sync_server, headers, project,
+                                               parent=self)
         table_view.setModel(model)
         table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         table_view.setSelectionMode(
@@ -470,14 +501,19 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
             -1, Qt.AscendingOrder)
         table_view.setAlternatingRowColors(True)
         table_view.verticalHeader().hide()
+        table_view.viewport().setAttribute(QtCore.Qt.WA_Hover, True)
 
         column = table_view.model().get_header_index("local_site")
-        delegate = ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
 
         column = table_view.model().get_header_index("remote_site")
-        delegate = ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
+
+        column = table_view.model().get_header_index("priority")
+        priority_delegate = delegates.PriorityDelegate(self)
+        table_view.setItemDelegateForColumn(column, priority_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -508,18 +544,19 @@ class SyncRepresentationSummaryWidget(_SyncRepresentationWidget):
         self.selection_model = self.table_view.selectionModel()
         self.selection_model.selectionChanged.connect(self._selection_changed)
 
-    def _prepare_menu(self, item, is_multi):
+    def _prepare_menu(self, item, is_multi, can_edit):
         action_kwarg_map, actions_mapping, menu = \
-            super()._prepare_menu(item, is_multi)
+            super()._prepare_menu(item, is_multi, can_edit)
 
-        if item.status in [lib.STATUS[0], lib.STATUS[1]] or is_multi:
+        if can_edit and (
+                item.status in [lib.STATUS[0], lib.STATUS[1]] or is_multi):
             action = QtWidgets.QAction("Pause in queue")
             actions_mapping[action] = self._pause
             # pause handles which site_name it will pause itself
             action_kwarg_map[action] = {"selected_ids": self._selected_ids}
             menu.addAction(action)
 
-        if item.status == lib.STATUS[3] or is_multi:
+        if can_edit and (item.status == lib.STATUS[3] or is_multi):
             action = QtWidgets.QAction("Unpause  in queue")
             actions_mapping[action] = self._unpause
             action_kwarg_map[action] = {"selected_ids": self._selected_ids}
@@ -598,7 +635,7 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
         self.sync_server = sync_server
 
         self.representation_id = _id
-        self._selected_ids = []
+        self._selected_ids = set()
 
         self.txt_filter = QtWidgets.QLineEdit()
         self.txt_filter.setPlaceholderText("Quick filter representation..")
@@ -616,6 +653,8 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
 
         model = SyncRepresentationDetailModel(sync_server, headers, _id,
                                               project)
+        model.is_running = True
+
         table_view.setModel(model)
         table_view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         table_view.setSelectionMode(
@@ -628,12 +667,17 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
         table_view.verticalHeader().hide()
 
         column = model.get_header_index("local_site")
-        delegate = ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
 
         column = model.get_header_index("remote_site")
-        delegate = ImageDelegate(self)
+        delegate = delegates.ImageDelegate(self)
         table_view.setItemDelegateForColumn(column, delegate)
+
+        if model.can_edit:
+            column = table_view.model().get_header_index("priority")
+            priority_delegate = delegates.PriorityDelegate(self)
+            table_view.setItemDelegateForColumn(column, priority_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -658,11 +702,24 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
 
         self.txt_filter.textChanged.connect(lambda: model.set_word_filter(
             self.txt_filter.text()))
+        table_view.doubleClicked.connect(self._double_clicked)
         table_view.customContextMenuRequested.connect(self._on_context_menu)
 
         model.refresh_started.connect(self._save_scrollbar)
         model.refresh_finished.connect(self._set_scrollbar)
         model.modelReset.connect(self._set_selection)
+
+    def _double_clicked(self, index):
+        """
+            Opens representation dialog with all files after doubleclick
+        """
+        # priority editing
+        if self.model.can_edit:
+            column_name = self.model.get_column(index.column())
+            if column_name[0] in self.model.EDITABLE_COLUMNS:
+                self.model.is_editing = True
+                self.table_view.openPersistentEditor(index)
+                return
 
     def _show_detail(self, selected_ids=None):
         """
@@ -672,10 +729,10 @@ class SyncRepresentationDetailWidget(_SyncRepresentationWidget):
 
         detail_window.exec()
 
-    def _prepare_menu(self, item, is_multi):
+    def _prepare_menu(self, item, is_multi, can_edit):
         """Adds view (and model) dependent actions to default ones"""
         action_kwarg_map, actions_mapping, menu = \
-            super()._prepare_menu(item, is_multi)
+            super()._prepare_menu(item, is_multi, can_edit)
 
         if item.status == lib.STATUS[2] or is_multi:
             action = QtWidgets.QAction("Open error detail")
@@ -776,72 +833,6 @@ class SyncRepresentationErrorWidget(QtWidgets.QWidget):
             text_area.setText("<h4>No errors located</h4>")
             text_area.setReadOnly(True)
             layout.addWidget(text_area)
-
-
-class ImageDelegate(QtWidgets.QStyledItemDelegate):
-    """
-        Prints icon of site and progress of synchronization
-    """
-
-    def __init__(self, parent=None):
-        super(ImageDelegate, self).__init__(parent)
-        self.icons = {}
-
-    def paint(self, painter, option, index):
-        super(ImageDelegate, self).paint(painter, option, index)
-        option = QtWidgets.QStyleOptionViewItem(option)
-        option.showDecorationSelected = True
-
-        provider = index.data(lib.ProviderRole)
-        value = index.data(lib.ProgressRole)
-        date_value = index.data(lib.DateRole)
-        is_failed = index.data(lib.FailedRole)
-
-        if not self.icons.get(provider):
-            resource_path = os.path.dirname(__file__)
-            resource_path = os.path.join(resource_path, "..",
-                                         "providers", "resources")
-            pix_url = "{}/{}.png".format(resource_path, provider)
-            pixmap = QtGui.QPixmap(pix_url)
-            self.icons[provider] = pixmap
-        else:
-            pixmap = self.icons[provider]
-
-        padding = 10
-        point = QtCore.QPoint(option.rect.x() + padding,
-                              option.rect.y() +
-                              (option.rect.height() - pixmap.height()) / 2)
-        painter.drawPixmap(point, pixmap)
-
-        overlay_rect = option.rect.translated(0, 0)
-        overlay_rect.setHeight(overlay_rect.height() * (1.0 - float(value)))
-        painter.fillRect(overlay_rect,
-                         QtGui.QBrush(QtGui.QColor(0, 0, 0, 100)))
-        text_rect = option.rect.translated(10, 0)
-        painter.drawText(text_rect,
-                         QtCore.Qt.AlignCenter,
-                         date_value)
-
-        if is_failed:
-            overlay_rect = option.rect.translated(0, 0)
-            painter.fillRect(overlay_rect,
-                             QtGui.QBrush(QtGui.QColor(255, 0, 0, 35)))
-
-
-class TransparentWidget(QtWidgets.QWidget):
-    """Used for header cell for resizing to work properly"""
-    clicked = QtCore.Signal(str)
-
-    def __init__(self, column_name, *args, **kwargs):
-        super(TransparentWidget, self).__init__(*args, **kwargs)
-        self.column_name = column_name
-        # self.setStyleSheet("background: red;")
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.clicked.emit(self.column_name)
-
-        super(TransparentWidget, self).mouseReleaseEvent(event)
 
 
 class HorizontalHeader(QtWidgets.QHeaderView):

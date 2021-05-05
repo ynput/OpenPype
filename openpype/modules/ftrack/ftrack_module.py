@@ -127,10 +127,28 @@ class FtrackModule(
         self, old_value, new_value, changes, new_value_metadata
     ):
         """Implementation of ISettingsChangeListener interface."""
+        if not self.ftrack_url:
+            raise SaveWarningExc((
+                "Ftrack URL is not set."
+                " Can't propagate changes to Ftrack server."
+            ))
+
+        ftrack_changes = changes.get("modules", {}).get("ftrack", {})
+        url_change_msg = None
+        if "ftrack_server" in ftrack_changes:
+            url_change_msg = (
+                "Ftrack URL was changed."
+                " This change may need to restart OpenPype to take affect."
+            )
+
         try:
             session = self.create_ftrack_session()
         except Exception:
             self.log.warning("Couldn't create ftrack session.", exc_info=True)
+
+            if url_change_msg:
+                raise SaveWarningExc(url_change_msg)
+
             raise SaveWarningExc((
                 "Saving of attributes to ftrack wasn't successful,"
                 " try running Create/Update Avalon Attributes in ftrack."
@@ -203,6 +221,9 @@ class FtrackModule(
                 "Couldn't find custom attribute/s ({}) to update."
                 " Try running Create/Update Avalon Attributes in ftrack."
             ).format(", ".join(missing_attributes)))
+
+        if url_change_msg:
+            raise SaveWarningExc(url_change_msg)
 
     def on_project_settings_save(self, *_args, **_kwargs):
         """Implementation of ISettingsChangeListener interface."""

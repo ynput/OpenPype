@@ -57,6 +57,7 @@ BIPurple='\033[1;95m'     # Purple
 BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
 
+
 ##############################################################################
 # Return absolute path
 # Globals:
@@ -72,9 +73,28 @@ realpath () {
 
 # Main
 main () {
+
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+
+  _inside_openpype_tool="1"
+
+  # make sure Poetry is in PATH
+  if [[ -z $POETRY_HOME ]]; then
+    export POETRY_HOME="$openpype_root/.poetry"
+  fi
+  export PATH="$POETRY_HOME/bin:$PATH"
+
   pushd "$openpype_root" > /dev/null || return > /dev/null
+
+  echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
+  if [ -f "$POETRY_HOME/bin/poetry" ]; then
+    echo -e "${BIGreen}OK${RST}"
+  else
+    echo -e "${BIYellow}NOT FOUND${RST}"
+    echo -e "${BIYellow}***${RST} We need to install Poetry and virtual env ..."
+    . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+  fi
 
   echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
   poetry run python3 "$openpype_root/start.py" settings --dev
