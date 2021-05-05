@@ -112,41 +112,7 @@ class ExtractBurnin(openpype.api.Extractor):
             ).format(host_name, family, task_name, profile))
             return
 
-        # Prepare burnin options
-        profile_options = copy.deepcopy(self.default_options)
-        for key, value in (self.options or {}).items():
-            if value is None:
-                continue
-
-            if key == "bg_color" and len(value) == 4:
-                bg_red, bg_green, bg_blue, bg_alpha = value
-                bg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
-                    bg_red, bg_green, bg_blue
-                )
-                bg_color_alpha = float(bg_alpha) / 255
-                profile_options["bg_opacity"] = bg_color_alpha
-                profile_options["bg_color"] = bg_color_hex
-                continue
-
-            elif key == "font_color" and len(value) == 4:
-                fg_red, fg_green, fg_blue, fg_alpha = value
-                fg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
-                    fg_red, fg_green, fg_blue
-                )
-                fg_color_alpha = float(fg_alpha) / 255
-                profile_options["opacity"] = fg_color_alpha
-                profile_options["font_color"] = fg_color_hex
-                continue
-
-            profile_options[key] = value
-
-        # Prepare global burnin values from presets
-        profile_burnins = {}
-        for key, value in (self.fields or {}).items():
-            key_low = key.lower()
-            if key_low in self.positions:
-                if value is not None:
-                    profile_burnins[key_low] = value
+        profile_options = self._get_burnin_options()
 
         # Prepare basic data for processing
         _burnin_data, _temp_data = self.prepare_basic_data(instance)
@@ -325,6 +291,61 @@ class ExtractBurnin(openpype.api.Extractor):
 
             if do_decompress and os.path.exists(decompressed_dir):
                 shutil.rmtree(decompressed_dir)
+
+    def _get_burnin_options(self):
+        # Prepare burnin options
+        burnin_options = copy.deepcopy(self.default_options)
+        if self.options:
+            for key, value in self.options.items():
+                if value is not None:
+                    burnin_options[key] = copy.deepcopy(value)
+
+        # Convert colors defined as list of numbers RGBA (0-255)
+        # BG Color
+        bg_color = burnin_options.get("bg_color")
+        if bg_color and isinstance(bg_color, list):
+            bg_red, bg_green, bg_blue, bg_alpha = bg_color
+            bg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
+                bg_red, bg_green, bg_blue
+            )
+            bg_color_alpha = float(bg_alpha) / 255
+            burnin_options["bg_opacity"] = bg_color_alpha
+            burnin_options["bg_color"] = bg_color_hex
+
+        # FG Color
+        font_color = burnin_options.get("font_color")
+        if font_color and isinstance(font_color, list):
+            fg_red, fg_green, fg_blue, fg_alpha = font_color
+            fg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
+                fg_red, fg_green, fg_blue
+            )
+            fg_color_alpha = float(fg_alpha) / 255
+            burnin_options["opacity"] = fg_color_alpha
+            burnin_options["font_color"] = fg_color_hex
+
+        # Define font filepath
+        # - font filepath may be defined in settings
+        font_filepath = burnin_options.get("font_filepath")
+        self.log.info(str(font_filepath))
+        if font_filepath and isinstance(font_filepath, dict):
+            sys_name = platform.system().lower()
+            font_filepath = font_filepath.get(sys_name)
+
+        self.log.info(str(font_filepath))
+        str_type = type("")
+        if font_filepath and isinstance(font_filepath, str_type):
+            font_filepath = font_filepath.format(**os.environ)
+            if not os.path.exists(font_filepath):
+                font_filepath = None
+
+        self.log.info(str(font_filepath))
+        # Use OpenPype default font
+        if not font_filepath:
+            font_filepath = openpype.api.resources.get_liberation_font_path()
+
+        burnin_options["font"] = font_filepath
+
+        return burnin_options
 
     def prepare_basic_data(self, instance):
         """Pick data from instance for processing and for burnin strings.
