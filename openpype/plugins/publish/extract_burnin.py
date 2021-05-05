@@ -173,14 +173,7 @@ class ExtractBurnin(openpype.api.Extractor):
                 elif "ftrackreview" in new_repre["tags"]:
                     new_repre["tags"].remove("ftrackreview")
 
-                burnin_options = copy.deepcopy(profile_options)
                 burnin_values = copy.deepcopy(profile_burnins)
-
-                # Options overrides
-                for key, value in (burnin_def.get("options") or {}).items():
-                    # Set or override value if is valid
-                    if value is not None:
-                        burnin_options[key] = value
 
                 # Burnin values overrides
                 for key, value in burnin_def.items():
@@ -235,7 +228,7 @@ class ExtractBurnin(openpype.api.Extractor):
                     "input": temp_data["full_input_path"],
                     "output": temp_data["full_output_path"],
                     "burnin_data": burnin_data,
-                    "options": burnin_options,
+                    "options": copy.deepcopy(burnin_options),
                     "values": burnin_values,
                     "full_input_path": temp_data["full_input_paths"][0],
                     "first_frame": temp_data["first_frame"]
