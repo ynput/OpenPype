@@ -334,6 +334,13 @@
                             "type": "number",
                             "key": "bg_padding",
                             "label": "Padding aroung text"
+                        },
+                        {
+                            "type": "path",
+                            "key": "font_filepath",
+                            "label": "Font file path",
+                            "multipath": false,
+                            "multiplatform": true
                         }
                     ]
                 },

@@ -87,7 +87,12 @@
                 ],
                 "x_offset": 5,
                 "y_offset": 5,
-                "bg_padding": 5
+                "bg_padding": 5,
+                "font_filepath": {
+                    "windows": "",
+                    "darwin": "",
+                    "linux": ""
+                }
             },
             "profiles": [
                 {
