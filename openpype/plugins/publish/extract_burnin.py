@@ -315,19 +315,16 @@ class ExtractBurnin(openpype.api.Extractor):
         # Define font filepath
         # - font filepath may be defined in settings
         font_filepath = burnin_options.get("font_filepath")
-        self.log.info(str(font_filepath))
         if font_filepath and isinstance(font_filepath, dict):
             sys_name = platform.system().lower()
             font_filepath = font_filepath.get(sys_name)
 
-        self.log.info(str(font_filepath))
         str_type = type("")
         if font_filepath and isinstance(font_filepath, str_type):
             font_filepath = font_filepath.format(**os.environ)
             if not os.path.exists(font_filepath):
                 font_filepath = None
 
-        self.log.info(str(font_filepath))
         # Use OpenPype default font
         if not font_filepath:
             font_filepath = openpype.api.resources.get_liberation_font_path()
