@@ -169,7 +169,7 @@ def create_media_pool_item(fpath: str,
         media_pool_item = media_storage.AddItemListToMediaPool(fpath)
         print(media_pool_item)
         # pop the returned dict on first item as resolve data object is such
-        if media_pool_item
+        if media_pool_item:
             return media_pool_item.pop()
         else:
             return False
