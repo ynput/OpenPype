@@ -127,11 +127,8 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if not streams:
             streams = _streams(source)
 
-        input_args = []
-        if first_frame:
-            input_args.append("-start_number {}".format(first_frame))
-
-        self.input_args = input_args
+        self.first_frame = first_frame
+        self.input_args = []
 
         super().__init__(source, streams)
 
@@ -291,6 +288,15 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         filters = ''
         if self.filter_string:
             filters = '-vf "{}"'.format(self.filter_string)
+
+        if self.first_frame is not None:
+            start_number_arg = "-start_number {}".format(self.first_frame)
+            self.input_args.append(start_number_arg)
+            if "start_number" not in args:
+                if not args:
+                    args = start_number_arg
+                else:
+                    args = " ".join((start_number_arg, args))
 
         input_args = ""
         if self.input_args:
