@@ -49,32 +49,6 @@ BIPurple='\033[1;95m'     # Purple
 BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
 
-
-##############################################################################
-# Detect required version of python
-# Globals:
-#   colors
-#   PYTHON
-# Arguments:
-#   None
-# Returns:
-#   None
-###############################################################################
-detect_python () {
-  echo -e "${BIGreen}>>>${RST} Using python \c"
-  local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
-  local python_version="$(python3 <<< ${version_command})"
-  oIFS="$IFS"
-  IFS=.
-  set -- $python_version
-  IFS="$oIFS"
-  if [ "$1" -ge "3" ] && [ "$2" -ge "6" ] ; then
-    echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
-  else
-    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}FAILED${RST} ${BIYellow} Version [${RST}${BICyan}$1.$2${RST}]${BIYellow} is old and unsupported${RST}"; return 1; }
-  fi
-}
-
 ##############################################################################
 # Clean pyc files in specified directory
 # Globals:
@@ -110,10 +84,27 @@ main () {
   echo -e "${BGreen}"
   art
   echo -e "${RST}"
-  detect_python || return 1
 
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+
+  _inside_openpype_tool="1"
+
+  # make sure Poetry is in PATH
+  if [[ -z $POETRY_HOME ]]; then
+    export POETRY_HOME="$openpype_root/.poetry"
+  fi
+  export PATH="$POETRY_HOME/bin:$PATH"
+
+  echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
+  if [ -f "$POETRY_HOME/bin/poetry" ]; then
+    echo -e "${BIGreen}OK${RST}"
+  else
+    echo -e "${BIYellow}NOT FOUND${RST}"
+    echo -e "${BIYellow}***${RST} We need to install Poetry and virtual env ..."
+    . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+  fi
+
   pushd "$openpype_root" || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Testing OpenPype ..."
