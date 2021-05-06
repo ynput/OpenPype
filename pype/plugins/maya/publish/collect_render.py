@@ -19,6 +19,7 @@ Optional:
 
 Provides:
     instance    -> label
+    instance    -> deadline_server
     instance    -> subset
     instance    -> attachTo
     instance    -> setMembers
@@ -64,6 +65,14 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     def process(self, context):
         """Entry point to collector."""
         render_instance = None
+
+        # load deadline servers from preset
+        deadline_servers = []
+        create_plugin_preset = context.data["presets"]["plugins"]["maya"].get("create")  # noqa: E501
+        if create_plugin_preset.get("CreateRender"):
+            deadline_servers = create_plugin_preset["CreateRender"].get(
+                "deadline_servers")
+
         for instance in context:
             if "rendering" in instance.data["families"]:
                 render_instance = instance
@@ -79,6 +88,16 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "layer collection."
             )
             return
+
+        if deadline_servers:
+
+            deadline_url = deadline_servers[
+                deadline_servers.keys()[
+                    int(render_instance.data.get("deadlineServers"))
+                ]
+            ]
+        else:
+            deadline_url = os.getenv("DEADLINE_REST_URL", "")
 
         render_globals = render_instance
         collected_render_layers = render_instance.data["setMembers"]
@@ -262,6 +281,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     "useReferencedAovs") or render_instance.data.get(
                         "vrayUseReferencedAovs") or False  # noqa: E501
             }
+            if deadline_url:
+                data["deadlineUrl"] = deadline_url
 
             if self.sync_workfile_version:
                 data["version"] = context.data["version"]
