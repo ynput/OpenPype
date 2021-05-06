@@ -33,11 +33,16 @@ def app_definitions_from_app_manager(app_manager):
 
 
 def tool_definitions_from_app_manager(app_manager):
-    tools_data = []
+    _tools_data = []
     for tool_name, tool in app_manager.tools.items():
-        tools_data.append({
-            tool_name: tool.label
-        })
+        _tools_data.append(
+            (tool_name, tool.label)
+        )
+
+    # Sort items by label
+    tools_data = []
+    for key, label in sorted(_tools_data, key=lambda item: item[1]):
+        tools_data.append({key: label})
 
     # Make sure there is at least one item
     if not tools_data:
