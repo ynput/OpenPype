@@ -7,7 +7,7 @@ from .constants import (
     IDENTIFIER_ROLE,
     DUPLICATED_ROLE
 )
-
+from pymongo import UpdateOne
 from avalon.vendor import qtawesome
 from Qt import QtCore, QtGui
 
@@ -718,7 +718,51 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self.endResetModel()
 
     def save(self):
-        print("Saving (They said)")
+        project_item = None
+        for _project_item in self._root_item.children():
+            project_item = _project_item
+
+        if not project_item:
+            return
+
+        project_name = project_item.name
+        project_col = self.dbcon.database[project_name]
+
+        to_process = Queue()
+        to_process.put(project_item)
+
+        update_list = []
+        while not to_process.empty():
+            parent = to_process.get()
+            insert_list = []
+            for item in parent.children():
+                if not isinstance(item, AssetItem):
+                    continue
+
+                to_process.put(item)
+
+                if item.asset_id is None:
+                    insert_list.append(item)
+                    continue
+
+                update_data = item.update_data()
+                if update_data:
+                    update_list.append(UpdateOne(
+                        {"_id": item.asset_id},
+                        update_data
+                    ))
+
+            if insert_list:
+                new_docs = []
+                for item in insert_list:
+                    new_docs.append(item.to_doc())
+
+                result = project_col.insert_many(new_docs)
+                for idx, mongo_id in enumerate(result.inserted_ids):
+                    insert_list[idx].mongo_id = mongo_id
+
+        if update_list:
+            project_col.bulk_write(update_list)
 
 
 class BaseItem:
