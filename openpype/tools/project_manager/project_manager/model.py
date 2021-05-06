@@ -266,15 +266,19 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         item = self.items_by_id[item_id]
 
         new_row = None
+        name = None
+        asset_data = {}
         if isinstance(item, (RootItem, ProjectItem)):
             name = "ep"
             parent = item
         else:
-            name = source_index.data(QtCore.Qt.DisplayRole)
             parent = item.parent()
             new_row = item.row() + 1
 
-        new_child = AssetItem()
+        if name:
+            asset_data["name"] = name
+
+        new_child = AssetItem(asset_data)
 
         result = self.add_item(new_child, parent, new_row)
 
@@ -1009,7 +1013,7 @@ class AssetItem(BaseItem):
         "data.tools_env": 1
     }
 
-    def __init__(self, asset_doc=None):
+    def __init__(self, asset_doc):
         if not asset_doc:
             asset_doc = {}
         self.mongo_id = asset_doc.get("_id")
