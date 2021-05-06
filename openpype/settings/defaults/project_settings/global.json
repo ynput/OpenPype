@@ -128,7 +128,15 @@
                         "prerender"
                     ]
                 }
-            }
+            },
+            "subset_grouping_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "tasks": [],
+                    "template": ""
+                }
+            ]
         },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,

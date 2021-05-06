@@ -112,6 +112,7 @@ from .profiles_filtering import filter_profiles
 from .plugin_tools import (
     TaskNotSetError,
     get_subset_name,
+    prepare_template_data,
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
     source_hash,
