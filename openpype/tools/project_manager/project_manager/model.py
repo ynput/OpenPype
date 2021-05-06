@@ -924,9 +924,22 @@ class ProjectItem(BaseItem):
     }
 
     def __init__(self, project_doc):
+        self._mongo_id = project_doc["_id"]
+
         data = self.data_from_doc(project_doc)
         super(ProjectItem, self).__init__(data)
 
+    @property
+    def project_id(self):
+        return self._mongo_id
+
+    @property
+    def asset_id(self):
+        return None
+
+    @property
+    def name(self):
+        return self._data["name"]
     @classmethod
     def data_from_doc(cls, project_doc):
         data = {
@@ -997,9 +1010,25 @@ class AssetItem(BaseItem):
     }
 
     def __init__(self, asset_doc):
+        self.mongo_id = asset_doc.get("_id")
+        self._project_id = None
+
         data = self.data_from_doc(asset_doc)
         super(AssetItem, self).__init__(data)
 
+    @property
+    def project_id(self):
+        if self._project_id is None:
+            self._project_id = self.parent().project_id
+        return self._project_id
+
+    @property
+    def asset_id(self):
+        return self.mongo_id
+
+    @property
+    def name(self):
+        return self._data["name"]
     @classmethod
     def data_from_doc(cls, asset_doc):
         data = {
