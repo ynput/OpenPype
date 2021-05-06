@@ -16,6 +16,3 @@ class CollectVrayProxy(pyblish.api.InstancePlugin):
         """Collector entry point."""
         if not instance.data.get('families'):
             instance.data["families"] = []
-        if "pointcache" not in instance.data["families"]:
-            instance.data["families"].append("pointcache")
-            self.log.debug("adding to pointcache family")
