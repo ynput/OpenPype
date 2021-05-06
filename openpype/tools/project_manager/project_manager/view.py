@@ -23,7 +23,7 @@ class TypeDef:
     pass
 
 
-class ProjectHelper:
+class ProjectDocCache:
     def __init__(self, dbcon):
         self.dbcon = dbcon
         self.project_doc = None
@@ -73,7 +73,7 @@ class HierarchyView(QtWidgets.QTreeView):
         super(HierarchyView, self).__init__(*args, **kwargs)
         self._source_model = source_model
 
-        project_helper = ProjectHelper(dbcon)
+        project_doc_cache = ProjectDocCache(dbcon)
 
         main_delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(main_delegate)
@@ -101,14 +101,17 @@ class HierarchyView(QtWidgets.QTreeView):
 
         source_model.index_moved.connect(self._on_rows_moved)
 
-        self._project_helper = project_helper
+        self._project_doc_cache = project_doc_cache
         self._delegate = main_delegate
         self._column_delegates = column_delegates
         self._column_key_to_index = column_key_to_index
 
     def set_project(self, project_name):
+        # Trigger helpers first
+        self._project_doc_cache.set_project(project_name)
+
+        # Trigger update of model after all data for delegates are filled
         self._source_model.set_project(project_name)
-        self._project_helper.set_project(project_name)
 
     def _on_rows_moved(self, index):
         parent_index = index.parent()
