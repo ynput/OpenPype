@@ -8,7 +8,7 @@ from .widgets import (
     IconButton,
     SpacerWidget
 )
-from .lib import (
+from openpype.tools.settings import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
 )

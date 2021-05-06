@@ -4,7 +4,7 @@ from .widgets import (
     Separator,
     ExpandingWidget
 )
-from .constants import CHILD_OFFSET
+from openpype.tools.settings import CHILD_OFFSET
 
 
 class AppVariantWidget(QtWidgets.QWidget):
