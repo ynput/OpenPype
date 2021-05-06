@@ -15,12 +15,17 @@ def default_custom_attributes_definition():
 
 
 def app_definitions_from_app_manager(app_manager):
-    app_definitions = []
+    _app_definitions = []
     for app_name, app in app_manager.applications.items():
         if app.enabled and app.is_host:
-            app_definitions.append({
-                app_name: app.full_label
-            })
+            _app_definitions.append(
+                (app_name, app.full_label)
+            )
+
+    # Sort items by label
+    app_definitions = []
+    for key, label in sorted(_app_definitions, key=lambda item: item[1]):
+        app_definitions.append({key: label})
 
     if not app_definitions:
         app_definitions.append({"empty": "< Empty >"})
