@@ -33,3 +33,20 @@ class StringDelegate(QtWidgets.QStyledItemDelegate):
         if value is not None:
             editor.setText(str(value))
         return editor
+
+
+class TypeDelegate(QtWidgets.QStyledItemDelegate):
+    def __init__(self, project_helper, *args, **kwargs):
+        self.project_helper = project_helper
+        super(TypeDelegate, self).__init__(*args, **kwargs)
+
+    def createEditor(self, parent, option, index):
+        editor = QtWidgets.QComboBox(parent)
+        task_type_defs = self.project_helper.project_doc["config"]["tasks"]
+        items = list(task_type_defs.keys())
+
+        value = index.data(QtCore.Qt.DisplayRole)
+
+        editor.addItems(items)
+
+        return editor
