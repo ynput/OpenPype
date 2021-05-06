@@ -164,23 +164,25 @@ def create_media_pool_item(fpath: str,
     # try to search in bin if the clip does not exist
     existing_mpi = get_media_pool_item(fpath, root_bin)
 
-    print(">>>>> existing_mpi: {}".format(existing_mpi))
-    if not existing_mpi:
-        print("___ fpath: {}".format(fpath))
-        dirname, file = os.path.split(fpath)
-        _name, ext = os.path.splitext(file)
-        print(dirname)
-        media_pool_items = media_storage.AddItemListToMediaPool(os.path.normpath(dirname))
-        print(media_pool_items)
-        # pop the returned dict on first item as resolve data object is such
-        if media_pool_items:
-            media_pool_item = [mpi for mpi in media_pool_items
-                               if ext in mpi.GetClipProperty("File Path")]
-            return media_pool_item.pop()
-        else:
-            return False
-    else:
+    if existing_mpi:
         return existing_mpi
+
+    dirname, file = os.path.split(fpath)
+    _name, ext = os.path.splitext(file)
+
+    # add all data in folder to mediapool
+    media_pool_items = media_storage.AddItemListToMediaPool(
+        os.path.normpath(dirname))
+
+    if not media_pool_items:
+        return False
+
+    # if any are added then look into them for the right extension
+    media_pool_item = [mpi for mpi in media_pool_items
+                       if ext in mpi.GetClipProperty("File Path")]
+
+    # return only first found
+    return media_pool_item.pop()
 
 
 def get_media_pool_item(fpath, root: object = None) -> object:
@@ -199,7 +201,6 @@ def get_media_pool_item(fpath, root: object = None) -> object:
     fname = os.path.basename(fpath)
 
     for _mpi in root.GetClipList():
-        print(">>> _mpi: {}".format(_mpi.GetClipProperty("File Name")))
         _mpi_name = _mpi.GetClipProperty("File Name")
         _mpi_name = get_reformated_path(_mpi_name, first=True)
         if fname in _mpi_name:
@@ -312,7 +313,7 @@ def get_current_timeline_items(
     selecting_color = selecting_color or "Chocolate"
     project = get_current_project()
     timeline = get_current_timeline()
-    selected_clips = list()
+    selected_clips = []
 
     # get all tracks count filtered by track type
     selected_track_count = timeline.GetTrackCount(track_type)
@@ -708,7 +709,7 @@ def get_clip_attributes(clip):
     """
     mp_item = clip.GetMediaPoolItem()
 
-    data = {
+    return {
         "clipIn": clip.GetStart(),
         "clipOut": clip.GetEnd(),
         "clipLeftOffset": clip.GetLeftOffset(),
@@ -718,7 +719,6 @@ def get_clip_attributes(clip):
         "sourceId": mp_item.GetMediaId(),
         "sourceProperties": mp_item.GetClipProperty()
     }
-    return data
 
 
 def set_project_manager_to_folder_name(folder_name):
@@ -850,12 +850,12 @@ def get_reformated_path(path, padded=False, first=False):
         get_reformated_path("plate.[0001-1008].exr") > plate.%04d.exr
 
     """
-    num_pattern = r"(\[\d+\-\d+\])"
-    padding_pattern = r"(\d+)(?=-)"
     first_frame_pattern = re.compile(r"\[(\d+)\-\d+\]")
 
     if "[" in path:
+        padding_pattern = r"(\d+)(?=-)"
         padding = len(re.findall(padding_pattern, path).pop())
+        num_pattern = r"(\[\d+\-\d+\])"
         if padded:
             path = re.sub(num_pattern, f"%0{padding}d", path)
         elif first:
