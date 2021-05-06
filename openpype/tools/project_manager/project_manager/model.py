@@ -720,6 +720,8 @@ class BaseItem:
     _name_icon = None
     _is_duplicated = False
 
+    _None = object()
+
     def __init__(self, data=None):
         self._id = uuid4()
         self._children = list()
@@ -750,18 +752,19 @@ class BaseItem:
         self._children.pop(idx)
         self._children.insert(row, item)
 
-    def data(self, key, role):
+    def _global_data(self, role):
         if role == IDENTIFIER_ROLE:
             return self._id
 
         if role == DUPLICATED_ROLE:
             return self._is_duplicated
 
-        if role == QtCore.Qt.ToolTipRole:
-            if self._is_duplicated:
-                return "Asset with name \"{}\" already exists.".format(
-                    self._data["name"]
-                )
+        return self._None
+
+    def data(self, key, role):
+        value = self._global_data(role)
+        if value is not self._None:
+            return value
 
         if key not in self.columns:
             return None
@@ -1009,6 +1012,13 @@ class AssetItem(BaseItem):
             cls._name_icon = qtawesome.icon("fa.folder", color="#333333")
         return cls._name_icon
 
+    def _global_data(self, role):
+        if role == QtCore.Qt.ToolTipRole and self._is_duplicated:
+            return "Asset with name \"{}\" already exists.".format(
+                self._data["name"]
+            )
+        return super(AssetItem, self)._global_data(role)
+
 
 class TaskItem(BaseItem):
     columns = {
@@ -1028,3 +1038,10 @@ class TaskItem(BaseItem):
 
     def add_child(self, item, row=None):
         raise AssertionError("BUG: Can't add children to Task")
+
+    def _global_data(self, role):
+        if role == QtCore.Qt.ToolTipRole and self._is_duplicated:
+            return "Duplicated Task name \"{}\".".format(
+                self._data["name"]
+            )
+        return super(TaskItem, self)._global_data(role)
