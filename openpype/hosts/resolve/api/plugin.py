@@ -783,6 +783,8 @@ class PublishClip:
         # add review track only to hero track
         if hero_track and self.review_layer:
             self.tag_data.update({"reviewTrack": self.review_layer})
+        else:
+            self.tag_data.update({"reviewTrack": None})
 
 
     def _solve_tag_hierarchy_data(self, hierarchy_formating_data):
@@ -819,7 +821,7 @@ class PublishClip:
 
     def _create_parents(self):
         """ Create parents and return it in list. """
-        self.parents = list()
+        self.parents = []
 
         patern = re.compile(self.parents_search_patern)
         par_split = [patern.findall(t).pop()
