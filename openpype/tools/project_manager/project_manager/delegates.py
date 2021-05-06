@@ -36,17 +36,17 @@ class StringDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class TypeDelegate(QtWidgets.QStyledItemDelegate):
-    def __init__(self, project_helper, *args, **kwargs):
-        self.project_helper = project_helper
+    def __init__(self, project_doc_cache, *args, **kwargs):
+        self._project_doc_cache = project_doc_cache
         super(TypeDelegate, self).__init__(*args, **kwargs)
 
     def createEditor(self, parent, option, index):
         editor = QtWidgets.QComboBox(parent)
-        task_type_defs = self.project_helper.project_doc["config"]["tasks"]
-        items = list(task_type_defs.keys())
+        if not self._project_doc_cache.project_doc:
+            return editor
 
-        value = index.data(QtCore.Qt.DisplayRole)
+        task_type_defs = self._project_doc_cache.project_doc["config"]["tasks"]
+        editor.addItems(list(task_type_defs.keys()))
 
-        editor.addItems(items)
 
         return editor
