@@ -1,6 +1,10 @@
 from Qt import QtWidgets, QtCore
 
-from .delegates import NumberDelegate, StringDelegate
+from .delegates import (
+    NumberDelegate,
+    StringDelegate,
+    TypeDelegate
+)
 
 
 class StringDef:
@@ -13,6 +17,10 @@ class NumberDef:
         self.minimum = 0 if minimum is None else minimum
         self.maximum = 999999 if maximum is None else maximum
         self.decimals = 0 if decimals is None else decimals
+
+
+class TypeDef:
+    pass
 
 
 class ProjectHelper:
@@ -35,6 +43,7 @@ class HierarchyView(QtWidgets.QTreeView):
     """A tree view that deselects on clicking on an empty area in the view"""
     column_delegate_defs = {
         "name": StringDef(),
+        "type": TypeDef(),
         "frameStart": NumberDef(1),
         "frameEnd": NumberDef(1),
         "fps": NumberDef(1, decimals=2),
@@ -82,6 +91,8 @@ class HierarchyView(QtWidgets.QTreeView):
                     item_type.maximum,
                     item_type.decimals
                 )
+            elif isinstance(item_type, TypeDef):
+                delegate = TypeDelegate(project_helper)
 
             column = self._source_model.columns.index(key)
             self.setItemDelegateForColumn(column, delegate)
