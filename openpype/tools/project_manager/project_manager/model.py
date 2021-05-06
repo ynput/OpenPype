@@ -274,11 +274,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             parent = item.parent()
             new_row = item.row() + 1
 
-        data = {
-            "name": name,
-            "type": "asset"
-        }
-        new_child = AssetItem(data)
+        new_child = AssetItem()
 
         result = self.add_item(new_child, parent, new_row)
 
@@ -1013,9 +1009,13 @@ class AssetItem(BaseItem):
         "data.tools_env": 1
     }
 
-    def __init__(self, asset_doc):
+    def __init__(self, asset_doc=None):
+        if not asset_doc:
+            asset_doc = {}
         self.mongo_id = asset_doc.get("_id")
         self._project_id = None
+
+        self._origin_asset_doc = copy.deepcopy(asset_doc)
 
         data = self.data_from_doc(asset_doc)
         super(AssetItem, self).__init__(data)
@@ -1106,9 +1106,14 @@ class AssetItem(BaseItem):
     @classmethod
     def data_from_doc(cls, asset_doc):
         data = {
-            "name": asset_doc["name"],
-            "type": asset_doc["type"]
+            "name": None,
+            "type": "asset"
         }
+        if asset_doc:
+            for key in data.keys():
+                if key in asset_doc:
+                    data[key] = asset_doc[key]
+
         doc_data = asset_doc.get("data") or {}
         for key in cls.columns:
             if key in data:
