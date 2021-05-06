@@ -279,7 +279,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             "type": "asset"
         }
         new_child = AssetItem(data)
-        self._asset_items_by_name[name].append(new_child)
 
         result = self.add_item(new_child, parent, new_row)
 
@@ -321,6 +320,10 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 item.set_parent(parent)
 
             parent.add_child(item, row)
+
+            if isinstance(item, AssetItem):
+                name = item.data("name", QtCore.Qt.DisplayRole)
+                self._asset_items_by_name[name].append(item)
 
             if item.id not in self._items_by_id:
                 self._items_by_id[item.id] = item
@@ -387,6 +390,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             return
 
         prev_name = asset_item.data("name", QtCore.Qt.DisplayRole)
+        if prev_name == new_name:
+            return
+
         self._asset_items_by_name[prev_name].remove(asset_item)
 
         self._validate_asset_duplicity(prev_name)
