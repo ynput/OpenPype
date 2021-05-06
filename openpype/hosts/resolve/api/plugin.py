@@ -422,7 +422,6 @@ class ClipLoader:
         media_pool_item = lib.create_media_pool_item(
             self.data["path"], self.active_bin)
         _clip_property = media_pool_item.GetClipProperty
-        clip_name = _clip_property("File Name")
 
         # get handles
         handle_start = self.data["versionData"].get("handleStart")
