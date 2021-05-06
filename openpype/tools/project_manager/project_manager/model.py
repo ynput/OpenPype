@@ -1058,6 +1058,42 @@ class AssetItem(BaseItem):
             doc_data[key] = value
 
         return doc
+
+    def update_data(self):
+        if not self.mongo_id:
+            return {}
+
+        document = self.to_doc()
+
+        changes = {}
+
+        for key, value in document.items():
+            if key in ("data", "_id"):
+                continue
+
+            if (
+                key in self._origin_asset_doc
+                and self._origin_asset_doc[key] == value
+            ):
+                continue
+
+            changes[key] = value
+
+        if "data" not in self._origin_asset_doc:
+            changes["data"] = document["data"]
+        else:
+            origin_data = self._origin_asset_doc["data"]
+
+            for key, value in document["data"].items():
+                if key in origin_data and origin_data[key] == value:
+                    continue
+                _key = "data.{}".format(key)
+                changes[_key] = value
+
+        if changes:
+            return {"$set": changes}
+        return {}
+
     @classmethod
     def data_from_doc(cls, asset_doc):
         data = {
