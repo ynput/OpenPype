@@ -420,9 +420,39 @@
             "is_group": true,
             "children": [
                 {
-                    "type": "raw-json",
+                    "type": "list",
                     "key": "template_name_profiles",
-                    "label": "template_name_profiles"
+                    "label": "Template name profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "label",
+                                "label": ""
+                            },
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "template_name",
+                                "label": "Template name"
+                            }
+                        ]
+                    }
                 },
                 {
                     "type": "list",

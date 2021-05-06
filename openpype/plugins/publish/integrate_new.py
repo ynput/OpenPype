@@ -297,7 +297,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         else:
             orig_transfers = list(instance.data['transfers'])
 
-        template_name = self.template_name_from_instance(instance)
+        task_name = io.Session.get("AVALON_TASK")
+        family = self.main_family_from_instance(instance)
+
+        key_values = {"families": family, "tasks": task_name}
+        profile = filter_profiles(self.template_name_profiles, key_values,
+                                  logger=self.log)
+        if profile:
+            template_name = profile["template_name"]
+        else:
+            # fallback
+            template_name = self.template_name_from_instance(instance)
 
         published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
