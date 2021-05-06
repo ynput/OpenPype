@@ -1083,3 +1083,10 @@ class TaskItem(BaseItem):
                 self._data["name"]
             )
         return super(TaskItem, self)._global_data(role)
+
+    def to_doc_data(self):
+        data = copy.deepcopy(self._data)
+        name = data.pop("name")
+        return {
+            name: data
+        }
