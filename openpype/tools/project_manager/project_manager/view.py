@@ -3,8 +3,11 @@ from Qt import QtWidgets, QtCore
 from .delegates import (
     NumberDelegate,
     StringDelegate,
-    TypeDelegate
+    TypeDelegate,
+    ToolsDelegate
 )
+
+from openpype.lib import ApplicationManager
 
 
 class StringDef:
@@ -20,6 +23,10 @@ class NumberDef:
 
 
 class TypeDef:
+    pass
+
+
+class ToolsDef:
     pass
 
 
@@ -39,6 +46,20 @@ class ProjectDocCache:
         )
 
 
+class ToolsCache:
+    def __init__(self):
+        self.tools_data = []
+
+    def refresh(self):
+        app_manager = ApplicationManager()
+        tools_data = []
+        for tool_name, tool in app_manager.tools.items():
+            tools_data.append(
+                (tool_name, tool.label)
+            )
+        self.tools_data = tools_data
+
+
 class HierarchyView(QtWidgets.QTreeView):
     """A tree view that deselects on clicking on an empty area in the view"""
     column_delegate_defs = {
@@ -54,7 +75,7 @@ class HierarchyView(QtWidgets.QTreeView):
         "clipIn": NumberDef(1),
         "clipOut": NumberDef(1),
         "pixelAspect": NumberDef(0, decimals=2),
-        # "tools_env": NumberDef(0)
+        "tools_env": ToolsDef()
     }
     persistent_columns = [
         "frameStart",
@@ -66,7 +87,8 @@ class HierarchyView(QtWidgets.QTreeView):
         "handleEnd",
         "clipIn",
         "clipOut",
-        "pixelAspect"
+        "pixelAspect",
+        "tools_env"
     ]
 
     def __init__(self, dbcon, source_model, *args, **kwargs):
@@ -74,6 +96,7 @@ class HierarchyView(QtWidgets.QTreeView):
         self._source_model = source_model
 
         project_doc_cache = ProjectDocCache(dbcon)
+        tools_cache = ToolsCache()
 
         main_delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(main_delegate)
@@ -85,14 +108,19 @@ class HierarchyView(QtWidgets.QTreeView):
         for key, item_type in self.column_delegate_defs.items():
             if isinstance(item_type, StringDef):
                 delegate = StringDelegate()
+
             elif isinstance(item_type, NumberDef):
                 delegate = NumberDelegate(
                     item_type.minimum,
                     item_type.maximum,
                     item_type.decimals
                 )
+
             elif isinstance(item_type, TypeDef):
-                delegate = TypeDelegate(project_helper)
+                delegate = TypeDelegate(project_doc_cache)
+
+            elif isinstance(item_type, ToolsDef):
+                delegate = ToolsDelegate(tools_cache)
 
             column = self._source_model.columns.index(key)
             self.setItemDelegateForColumn(column, delegate)
@@ -102,6 +130,8 @@ class HierarchyView(QtWidgets.QTreeView):
         source_model.index_moved.connect(self._on_rows_moved)
 
         self._project_doc_cache = project_doc_cache
+        self._tools_cache = tools_cache
+
         self._delegate = main_delegate
         self._column_delegates = column_delegates
         self._column_key_to_index = column_key_to_index
@@ -109,6 +139,7 @@ class HierarchyView(QtWidgets.QTreeView):
     def set_project(self, project_name):
         # Trigger helpers first
         self._project_doc_cache.set_project(project_name)
+        self._tools_cache.refresh()
 
         # Trigger update of model after all data for delegates are filled
         self._source_model.set_project(project_name)
