@@ -18,8 +18,6 @@ class TypeToKlass:
 NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
 METADATA_KEY = type("METADATA_KEY", (), {})()
 OVERRIDE_VERSION = 1
-CHILD_OFFSET = 15
-BTN_FIXED_SIZE = 20
 
 key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
