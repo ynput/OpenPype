@@ -997,6 +997,7 @@ class AssetItem(BaseItem):
         "_id": 1,
         "data.tasks": 1,
         "data.visualParent": 1,
+        "schema": 1,
 
         "name": 1,
         "type": 1,
