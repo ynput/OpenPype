@@ -36,7 +36,7 @@ class Window(QtWidgets.QWidget):
 
         hierarchy_model = HierarchyModel(dbcon)
 
-        hierarchy_view = HierarchyView(hierarchy_model, self)
+        hierarchy_view = HierarchyView(dbcon, hierarchy_model, self)
         hierarchy_view.setModel(hierarchy_model)
         _selection_model = HierarchySelectionModel()
         _selection_model.setModel(hierarchy_view.model())
@@ -66,7 +66,7 @@ class Window(QtWidgets.QWidget):
         self.refresh_projects()
 
     def _set_project(self, project_name=None):
-        self.hierarchy_model.set_project(project_name)
+        self.hierarchy_view.set_project(project_name)
 
     def refresh_projects(self):
         current_project = None

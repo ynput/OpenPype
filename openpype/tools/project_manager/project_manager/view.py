@@ -15,6 +15,22 @@ class NumberDef:
         self.decimals = 0 if decimals is None else decimals
 
 
+class ProjectHelper:
+    def __init__(self, dbcon):
+        self.dbcon = dbcon
+        self.project_doc = None
+
+    def set_project(self, project_name):
+        self.project_doc = None
+
+        if not project_name:
+            return
+
+        self.project_doc = self.dbcon.database[project_name].find_one(
+            {"type": "project"}
+        )
+
+
 class HierarchyView(QtWidgets.QTreeView):
     """A tree view that deselects on clicking on an empty area in the view"""
     column_delegate_defs = {
@@ -44,9 +60,11 @@ class HierarchyView(QtWidgets.QTreeView):
         "pixelAspect"
     ]
 
-    def __init__(self, source_model, *args, **kwargs):
+    def __init__(self, dbcon, source_model, *args, **kwargs):
         super(HierarchyView, self).__init__(*args, **kwargs)
         self._source_model = source_model
+
+        project_helper = ProjectHelper(dbcon)
 
         main_delegate = QtWidgets.QStyledItemDelegate()
         self.setItemDelegate(main_delegate)
@@ -72,9 +90,14 @@ class HierarchyView(QtWidgets.QTreeView):
 
         source_model.index_moved.connect(self._on_rows_moved)
 
+        self._project_helper = project_helper
         self._delegate = main_delegate
         self._column_delegates = column_delegates
         self._column_key_to_index = column_key_to_index
+
+    def set_project(self, project_name):
+        self._source_model.set_project(project_name)
+        self._project_helper.set_project(project_name)
 
     def _on_rows_moved(self, index):
         parent_index = index.parent()
