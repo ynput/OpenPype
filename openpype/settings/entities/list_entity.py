@@ -61,39 +61,36 @@ class ListEntity(EndpointEntity):
     def append(self, item):
         child_obj = self.add_new_item(trigger_change=False)
         child_obj.set(item)
-        self.on_change()
+        self.on_child_change(child_obj)
 
     def extend(self, items):
         for item in items:
             self.append(item)
 
     def clear(self):
-        self.children.clear()
-        self.on_change()
+        if not self.children:
+            return
+
+        first_item = self.children.pop(0)
+        while self.children:
+            self.children.pop(0)
+        self.on_child_change(first_item)
 
     def pop(self, idx):
         item = self.children.pop(idx)
-        self.on_change()
+        self.on_child_change(item)
         return item
 
     def remove(self, item):
-        for idx, child_obj in enumerate(self.children):
-            found = False
-            if isinstance(item, BaseEntity):
-                if child_obj is item:
-                    found = True
-            elif child_obj.value == item:
-                found = True
-
-            if found:
-                self.pop(idx)
-                return
-        raise ValueError("ListEntity.remove(x): x not in ListEntity")
+        try:
+            self.pop(self.index(item))
+        except ValueError:
+            raise ValueError("ListEntity.remove(x): x not in ListEntity")
 
     def insert(self, idx, item):
         child_obj = self.add_new_item(idx, trigger_change=False)
         child_obj.set(item)
-        self.on_change()
+        self.on_child_change(child_obj)
 
     def _add_new_item(self, idx=None):
         child_obj = self.create_schema_object(self.item_schema, self, True)
@@ -106,13 +103,9 @@ class ListEntity(EndpointEntity):
     def add_new_item(self, idx=None, trigger_change=True):
         child_obj = self._add_new_item(idx)
         child_obj.set_override_state(self._override_state)
-        if self._override_state is OverrideState.STUDIO:
-            child_obj.add_to_studio_default([])
-        elif self._override_state is OverrideState.PROJECT:
-            child_obj.add_to_project_default([])
 
         if trigger_change:
-            self.on_change()
+            self.on_child_change(child_obj)
         return child_obj
 
     def swap_items(self, item_1, item_2):
