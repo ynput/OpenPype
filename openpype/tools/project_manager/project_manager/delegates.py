@@ -18,7 +18,7 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
         editor.setMinimum(self.minimum)
         editor.setMaximum(self.maximum)
 
-        value = index.data(QtCore.Qt.DisplayRole)
+        value = index.data(QtCore.Qt.EditRole)
         if value is not None:
             editor.setValue(value)
         return editor
@@ -31,7 +31,7 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
 class StringDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = QtWidgets.QLineEdit(parent)
-        value = index.data(QtCore.Qt.DisplayRole)
+        value = index.data(QtCore.Qt.EditRole)
         if value is not None:
             editor.setText(str(value))
         return editor
@@ -67,3 +67,10 @@ class ToolsDelegate(QtWidgets.QStyledItemDelegate):
             editor.addItem(label, key)
 
         return editor
+
+    def setEditorData(self, editor, index):
+        value = index.data(QtCore.Qt.EditRole)
+        editor.set_value(value)
+
+    def setModelData(self, editor, model, index):
+        model.setData(index, editor.value(), QtCore.Qt.EditRole)
