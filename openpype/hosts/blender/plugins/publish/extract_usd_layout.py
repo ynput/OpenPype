@@ -1,5 +1,4 @@
 import os
-import json
 
 import bpy
 
@@ -32,7 +31,7 @@ class ExtractUsdLayout(openpype.api.Extractor):
         for collection in instance:
             collection_path = Sdf.Path(f"/{collection.name}")
             self.log.debug(f"collection_path: {collection_path}")
-            prim_ref = stage_ref.DefinePrim(collection_path)
+            stage_ref.DefinePrim(collection_path)
             for asset_collection in collection.children:
                 asset_path = Sdf.Path(
                     f"/{collection.name}/{asset_collection.name}")
@@ -56,10 +55,10 @@ class ExtractUsdLayout(openpype.api.Extractor):
                     projection={"_id": True})
                 blend_id = blend["_id"]
 
-                # A current limitation in the API makes impossible to 
+                # A current limitation in the API makes it impossible to
                 # list the references, so it cannot be parsed when loading.
                 # It can only be accessed with an Asset Resolver.
-                # For now, the representation is saved as a custom string
+                # For now, the representation is saved as a custom string.
                 #
                 # asset_ref.GetReferences().AddReference(str(blend_id))
                 asset_ref.CreateAttribute(
@@ -80,15 +79,15 @@ class ExtractUsdLayout(openpype.api.Extractor):
                 obj = asset_collection.objects[0]
 
                 geometry = UsdGeom.Xform.Define(stage_ref, asset_path)
-                geometry.AddTranslateOp().Set(value = (
+                geometry.AddTranslateOp().Set(value=(
                     obj.location.x,
                     obj.location.y,
                     obj.location.z))
-                geometry.AddRotateXYZOp().Set(value = (
+                geometry.AddRotateXYZOp().Set(value=(
                     obj.rotation_euler.x,
                     obj.rotation_euler.y,
                     obj.rotation_euler.z))
-                geometry.AddScaleOp().Set(value = (
+                geometry.AddScaleOp().Set(value=(
                     obj.scale.x,
                     obj.scale.y,
                     obj.scale.z))
