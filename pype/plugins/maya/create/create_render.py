@@ -4,7 +4,6 @@ import os
 import json
 import appdirs
 import requests
-from collections import OrderedDict
 
 import six
 
