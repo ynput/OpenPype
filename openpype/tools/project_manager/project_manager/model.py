@@ -1029,6 +1029,35 @@ class AssetItem(BaseItem):
     @property
     def name(self):
         return self._data["name"]
+
+    def to_doc(self):
+        tasks = {}
+        for item in self.children():
+            if isinstance(item, TaskItem):
+                tasks.update(item.to_doc_data())
+
+        doc_data = {
+            "parents": self.parent().asset_parents(),
+            "visualParent": self.parent().asset_id,
+            "tasks": tasks
+        }
+        schema_name = (
+            self._origin_asset_doc.get("schema") or "openpype:asset-3.0"
+        )
+
+        doc = {
+            "name": self._data["name"],
+            "type": self._data["type"],
+            "schema": schema_name,
+            "data": doc_data,
+            "parent": self.project_id
+        }
+        for key, value in self._data.items():
+            if key in doc:
+                continue
+            doc_data[key] = value
+
+        return doc
     @classmethod
     def data_from_doc(cls, asset_doc):
         data = {
