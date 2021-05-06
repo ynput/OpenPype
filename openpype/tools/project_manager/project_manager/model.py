@@ -717,6 +717,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self._reset_root_item()
         self.endResetModel()
 
+    def save(self):
+        print("Saving (They said)")
+
 
 class BaseItem:
     columns = []

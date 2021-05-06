@@ -38,6 +38,7 @@ class Window(QtWidgets.QWidget):
 
         hierarchy_view = HierarchyView(dbcon, hierarchy_model, self)
         hierarchy_view.setModel(hierarchy_model)
+
         _selection_model = HierarchySelectionModel()
         _selection_model.setModel(hierarchy_view.model())
         hierarchy_view.setSelectionModel(_selection_model)
@@ -47,13 +48,23 @@ class Window(QtWidgets.QWidget):
         header.setSectionResizeMode(
             header.logicalIndex(0), QtWidgets.QHeaderView.Stretch
         )
+        buttons_widget = QtWidgets.QWidget(self)
+
+        save_btn = QtWidgets.QPushButton("Save", buttons_widget)
+
+        buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
+        buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.addStretch(1)
+        buttons_layout.addWidget(save_btn)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.addWidget(project_widget)
         main_layout.addWidget(hierarchy_view)
+        main_layout.addWidget(buttons_widget)
 
         refresh_projects_btn.clicked.connect(self._on_project_refresh)
         project_combobox.currentIndexChanged.connect(self._on_project_change)
+        save_btn.clicked.connect(self._on_save_click)
 
         self.project_model = project_model
         self.project_combobox = project_combobox
@@ -90,3 +101,6 @@ class Window(QtWidgets.QWidget):
 
     def _on_project_refresh(self):
         self.refresh_projects()
+
+    def _on_save_click(self):
+        self.hierarchy_model.save()
