@@ -17,7 +17,8 @@ from openpype.lib import (
     get_pype_execute_args,
     should_decompress,
     get_decompress_dir,
-    decompress
+    decompress,
+    CREATE_NO_WINDOW
 )
 
 
@@ -253,9 +254,7 @@ class ExtractBurnin(openpype.api.Extractor):
                     "env": {}
                 }
                 if platform.system().lower() == "windows":
-                    process_kwargs["creationflags"] = (
-                        subprocess.CREATE_NO_WINDOW
-                    )
+                    process_kwargs["creationflags"] = CREATE_NO_WINDOW
 
                 openpype.api.run_subprocess(args, **process_kwargs)
                 # Remove the temporary json
