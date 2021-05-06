@@ -940,6 +940,10 @@ class ProjectItem(BaseItem):
     @property
     def name(self):
         return self._data["name"]
+
+    def child_parents(self):
+        return []
+
     @classmethod
     def data_from_doc(cls, project_doc):
         data = {
@@ -1030,6 +1034,11 @@ class AssetItem(BaseItem):
     def name(self):
         return self._data["name"]
 
+    def child_parents(self):
+        parents = self.parent().child_parents()
+        parents.append(self.name)
+        return parents
+
     def to_doc(self):
         tasks = {}
         for item in self.children():
@@ -1037,7 +1046,7 @@ class AssetItem(BaseItem):
                 tasks.update(item.to_doc_data())
 
         doc_data = {
-            "parents": self.parent().asset_parents(),
+            "parents": self.parent().child_parents(),
             "visualParent": self.parent().asset_id,
             "tasks": tasks
         }
