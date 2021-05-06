@@ -98,7 +98,7 @@ def get_asset_settings():
     handle_end = asset_data.get("handleEnd")
     resolution_width = asset_data.get("resolutionWidth")
     resolution_height = asset_data.get("resolutionHeight")
-    duration = frame_end + handle_end - max(frame_start - handle_start, 0)
+    duration = (frame_end - frame_start + 1) + handle_start + handle_end
     entity_type = asset_data.get("entityType")
 
     scene_data = {

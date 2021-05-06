@@ -49,18 +49,21 @@ class PathEntity(ItemEntity):
         return self.child_obj.items()
 
     def _item_initalization(self):
-        if not self.group_item and not self.is_group:
+        if self.group_item is None and not self.is_group:
             self.is_group = True
 
         self.multiplatform = self.schema_data.get("multiplatform", False)
         self.multipath = self.schema_data.get("multipath", False)
+
+        placeholder_text = self.schema_data.get("placeholder")
 
         # Create child object
         if not self.multiplatform and not self.multipath:
             valid_value_types = (STRING_TYPE, )
             item_schema = {
                 "type": "path-input",
-                "key": self.key
+                "key": self.key,
+                "placeholder": placeholder_text
             }
 
         elif not self.multiplatform:
@@ -68,7 +71,10 @@ class PathEntity(ItemEntity):
             item_schema = {
                 "type": "list",
                 "key": self.key,
-                "object_type": "path-input"
+                "object_type": {
+                    "type": "path-input",
+                    "placeholder": placeholder_text
+                }
             }
 
         else:
@@ -87,9 +93,13 @@ class PathEntity(ItemEntity):
                 }
                 if self.multipath:
                     child_item["type"] = "list"
-                    child_item["object_type"] = "path-input"
+                    child_item["object_type"] = {
+                        "type": "path-input",
+                        "placeholder": placeholder_text
+                    }
                 else:
                     child_item["type"] = "path-input"
+                    child_item["placeholder"] = placeholder_text
 
                 item_schema["children"].append(child_item)
 
@@ -199,7 +209,7 @@ class ListStrictEntity(ItemEntity):
 
         # GUI attribute
         self.is_horizontal = self.schema_data.get("horizontal", True)
-        if not self.group_item and not self.is_group:
+        if self.group_item is None and not self.is_group:
             self.is_group = True
 
     def schema_validations(self):
@@ -453,4 +463,5 @@ class ListStrictEntity(ItemEntity):
 
     def reset_callbacks(self):
         super(ListStrictEntity, self).reset_callbacks()
-        self.child_obj.reset_callbacks()
+        for child_obj in self.children:
+            child_obj.reset_callbacks()

@@ -379,9 +379,10 @@ class ClipLoader:
 
         # create mediaItem in active project bin
         # create clip media
+
         media_pool_item = lib.create_media_pool_item(
             self.data["path"], self.active_bin)
-        clip_property = media_pool_item.GetClipProperty()
+        _clip_property = media_pool_item.GetClipProperty
 
         # get handles
         handle_start = self.data["versionData"].get("handleStart")
@@ -391,10 +392,10 @@ class ClipLoader:
         if handle_end is None:
             handle_end = int(self.data["assetData"]["handleEnd"])
 
-        source_in = int(clip_property["Start"])
-        source_out = int(clip_property["End"])
+        source_in = int(_clip_property("Start"))
+        source_out = int(_clip_property("End"))
 
-        if clip_property["Type"] == "Video":
+        if _clip_property("Type") == "Video":
             source_in += handle_start
             source_out -= handle_end
 
@@ -420,8 +421,8 @@ class ClipLoader:
         # create clip media
         media_pool_item = lib.create_media_pool_item(
             self.data["path"], self.active_bin)
-        clip_property = media_pool_item.GetClipProperty()
-        clip_name = clip_property["File Name"]
+        _clip_property = media_pool_item.GetClipProperty
+        clip_name = _clip_property("File Name")
 
         # get handles
         handle_start = self.data["versionData"].get("handleStart")
@@ -431,8 +432,8 @@ class ClipLoader:
         if handle_end is None:
             handle_end = int(self.data["assetData"]["handleEnd"])
 
-        source_in = int(clip_property["Start"])
-        source_out = int(clip_property["End"])
+        source_in = int(_clip_property("Start"))
+        source_out = int(_clip_property("End"))
 
         resolve.swap_clips(
             timeline_item,

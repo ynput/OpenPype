@@ -71,7 +71,7 @@ class BaseWidget(QtWidgets.QWidget):
     def _discard_changes_action(self, menu, actions_mapping):
         # TODO use better condition as unsaved changes may be caused due to
         #   changes in schema.
-        if not self.entity.can_discard_changes:
+        if not self.entity.can_trigger_discard_changes:
             return
 
         def discard_changes():
@@ -86,7 +86,7 @@ class BaseWidget(QtWidgets.QWidget):
     def _add_to_studio_default(self, menu, actions_mapping):
         """Set values as studio overrides."""
         # Skip if not in studio overrides
-        if not self.entity.can_add_to_studio_default:
+        if not self.entity.can_trigger_add_to_studio_default:
             return
 
         action = QtWidgets.QAction("Add to studio default")
@@ -94,7 +94,7 @@ class BaseWidget(QtWidgets.QWidget):
         menu.addAction(action)
 
     def _remove_from_studio_default_action(self, menu, actions_mapping):
-        if not self.entity.can_remove_from_studio_default:
+        if not self.entity.can_trigger_remove_from_studio_default:
             return
 
         def remove_from_studio_default():
@@ -106,7 +106,7 @@ class BaseWidget(QtWidgets.QWidget):
         menu.addAction(action)
 
     def _add_to_project_override_action(self, menu, actions_mapping):
-        if not self.entity.can_add_to_project_override:
+        if not self.entity.can_trigger_add_to_project_override:
             return
 
         action = QtWidgets.QAction("Add to project project override")
@@ -114,7 +114,7 @@ class BaseWidget(QtWidgets.QWidget):
         menu.addAction(action)
 
     def _remove_from_project_override_action(self, menu, actions_mapping):
-        if not self.entity.can_remove_from_project_override:
+        if not self.entity.can_trigger_remove_from_project_override:
             return
 
         def remove_from_project_override():

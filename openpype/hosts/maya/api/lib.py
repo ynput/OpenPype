@@ -1870,7 +1870,7 @@ def set_context_settings():
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
-    api.Session["AVALON_FPS"] = fps
+    api.Session["AVALON_FPS"] = str(fps)
     set_scene_fps(fps)
 
     # Set project resolution

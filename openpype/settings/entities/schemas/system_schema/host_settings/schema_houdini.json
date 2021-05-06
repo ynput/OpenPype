@@ -28,7 +28,6 @@
             "object_type": {
                 "type": "dict",
                 "collapsible": true,
-                "checkbox_key": "enabled",
                 "children": [
                     {
                         "type": "schema_template",
