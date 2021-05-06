@@ -1061,6 +1061,9 @@ class AssetItem(BaseItem):
             "data": doc_data,
             "parent": self.project_id
         }
+        if self.mongo_id:
+            doc["_id"] = self.mongo_id
+
         for key, value in self._data.items():
             if key in doc:
                 continue
