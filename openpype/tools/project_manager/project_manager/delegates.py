@@ -1,5 +1,7 @@
 from Qt import QtWidgets, QtCore
 
+from .multiselection_combobox import MultiSelectionComboBox
+
 
 class NumberDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, minimum, maximum, decimals, *args, **kwargs):
@@ -48,5 +50,20 @@ class TypeDelegate(QtWidgets.QStyledItemDelegate):
         task_type_defs = self._project_doc_cache.project_doc["config"]["tasks"]
         editor.addItems(list(task_type_defs.keys()))
 
+        return editor
+
+
+class ToolsDelegate(QtWidgets.QStyledItemDelegate):
+    def __init__(self, tools_cache, *args, **kwargs):
+        self._tools_cache = tools_cache
+        super(ToolsDelegate, self).__init__(*args, **kwargs)
+
+    def createEditor(self, parent, option, index):
+        editor = MultiSelectionComboBox(parent)
+        if not self._tools_cache.tools_data:
+            return editor
+
+        for key, label in self._tools_cache.tools_data:
+            editor.addItem(label, key)
 
         return editor
