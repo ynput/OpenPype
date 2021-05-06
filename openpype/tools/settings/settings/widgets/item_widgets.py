@@ -631,7 +631,9 @@ class PathWidget(BaseWidget):
 class PathInputWidget(InputWidget):
     def _add_inputs_to_layout(self):
         self.input_field = QtWidgets.QLineEdit(self.content_widget)
-        self.input_field.setPlaceholderText("Executable path")
+        placeholder = self.entity.placeholder_text
+        if placeholder:
+            self.input_field.setPlaceholderText(placeholder)
 
         self.setFocusProxy(self.input_field)
         self.content_layout.addWidget(self.input_field)

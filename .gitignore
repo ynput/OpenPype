@@ -92,3 +92,8 @@ website/i18n/*
 website/debug.log
 
 website/.docusaurus
+
+# Poetry
+########
+
+.poetry/

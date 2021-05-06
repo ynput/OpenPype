@@ -1,19 +1,24 @@
 import os
 import re
+import subprocess
 import json
 import copy
 import tempfile
+import platform
+import shutil
+
+import clique
+import six
+import pyblish
 
 import openpype
 import openpype.api
-import pyblish
 from openpype.lib import (
     get_pype_execute_args,
     should_decompress,
     get_decompress_dir,
     decompress
 )
-import shutil
 
 
 class ExtractBurnin(openpype.api.Extractor):
@@ -48,18 +53,17 @@ class ExtractBurnin(openpype.api.Extractor):
     ]
     # Default options for burnins for cases that are not set in presets.
     default_options = {
-        "opacity": 1,
-        "x_offset": 5,
-        "y_offset": 5,
+        "font_size": 42,
+        "font_color": [255, 255, 255, 255],
+        "bg_color": [0, 0, 0, 127],
         "bg_padding": 5,
-        "bg_opacity": 0.5,
-        "font_size": 42
+        "x_offset": 5,
+        "y_offset": 5
     }
 
     # Preset attributes
     profiles = None
     options = None
-    fields = None
 
     def process(self, instance):
         # ffmpeg doesn't support multipart exrs
@@ -103,7 +107,7 @@ class ExtractBurnin(openpype.api.Extractor):
             return
 
         # Pre-filter burnin definitions by instance families
-        burnin_defs = self.filter_burnins_by_families(profile, instance)
+        burnin_defs = self.filter_burnins_defs(profile, instance)
         if not burnin_defs:
             self.log.info((
                 "Skipped instance. Burnin definitions are not set for profile"
@@ -111,19 +115,7 @@ class ExtractBurnin(openpype.api.Extractor):
             ).format(host_name, family, task_name, profile))
             return
 
-        # Prepare burnin options
-        profile_options = copy.deepcopy(self.default_options)
-        for key, value in (self.options or {}).items():
-            if value is not None:
-                profile_options[key] = value
-
-        # Prepare global burnin values from presets
-        profile_burnins = {}
-        for key, value in (self.fields or {}).items():
-            key_low = key.lower()
-            if key_low in self.positions:
-                if value is not None:
-                    profile_burnins[key_low] = value
+        burnin_options = self._get_burnin_options()
 
         # Prepare basic data for processing
         _burnin_data, _temp_data = self.prepare_basic_data(instance)
@@ -133,11 +125,6 @@ class ExtractBurnin(openpype.api.Extractor):
         # Executable args that will execute the script
         # [pype executable, *pype script, "run"]
         executable_args = get_pype_execute_args("run", scriptpath)
-
-        # Environments for script process
-        env = os.environ.copy()
-        # pop PYTHONPATH
-        env.pop("PYTHONPATH", None)
 
         for idx, repre in enumerate(tuple(instance.data["representations"])):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
@@ -184,26 +171,11 @@ class ExtractBurnin(openpype.api.Extractor):
                 elif "ftrackreview" in new_repre["tags"]:
                     new_repre["tags"].remove("ftrackreview")
 
-                burnin_options = copy.deepcopy(profile_options)
-                burnin_values = copy.deepcopy(profile_burnins)
-
-                # Options overrides
-                for key, value in (burnin_def.get("options") or {}).items():
-                    # Set or override value if is valid
-                    if value is not None:
-                        burnin_options[key] = value
-
-                # Burnin values overrides
-                for key, value in burnin_def.items():
-                    key_low = key.lower()
-                    if key_low in self.positions:
-                        if value is not None:
-                            # Set or override value if is valid
-                            burnin_values[key_low] = value
-
-                        elif key_low in burnin_values:
-                            # Pop key if value is set to None (null in json)
-                            burnin_values.pop(key_low)
+                burnin_values = {}
+                for key in self.positions:
+                    value = burnin_def.get(key)
+                    if value:
+                        burnin_values[key] = value
 
                 # Remove "delete" tag from new representation
                 if "delete" in new_repre["tags"]:
@@ -214,7 +186,8 @@ class ExtractBurnin(openpype.api.Extractor):
                     # able have multiple outputs in case of more burnin presets
                     # Join previous "outputName" with filename suffix
                     new_name = "_".join(
-                        [new_repre["outputName"], filename_suffix])
+                        [new_repre["outputName"], filename_suffix]
+                    )
                     new_repre["name"] = new_name
                     new_repre["outputName"] = new_name
 
@@ -246,8 +219,10 @@ class ExtractBurnin(openpype.api.Extractor):
                     "input": temp_data["full_input_path"],
                     "output": temp_data["full_output_path"],
                     "burnin_data": burnin_data,
-                    "options": burnin_options,
-                    "values": burnin_values
+                    "options": copy.deepcopy(burnin_options),
+                    "values": burnin_values,
+                    "full_input_path": temp_data["full_input_paths"][0],
+                    "first_frame": temp_data["first_frame"]
                 }
 
                 self.log.debug(
@@ -273,10 +248,16 @@ class ExtractBurnin(openpype.api.Extractor):
                 self.log.debug("Executing: {}".format(" ".join(args)))
 
                 # Run burnin script
-                openpype.api.run_subprocess(
-                    args, shell=True, logger=self.log, env=env
-                )
+                process_kwargs = {
+                    "logger": self.log,
+                    "env": {}
+                }
+                if platform.system().lower() == "windows":
+                    process_kwargs["creationflags"] = (
+                        subprocess.CREATE_NO_WINDOW
+                    )
 
+                openpype.api.run_subprocess(args, **process_kwargs)
                 # Remove the temporary json
                 os.remove(temporary_json_filepath)
 
@@ -300,6 +281,57 @@ class ExtractBurnin(openpype.api.Extractor):
 
             if do_decompress and os.path.exists(decompressed_dir):
                 shutil.rmtree(decompressed_dir)
+
+    def _get_burnin_options(self):
+        # Prepare burnin options
+        burnin_options = copy.deepcopy(self.default_options)
+        if self.options:
+            for key, value in self.options.items():
+                if value is not None:
+                    burnin_options[key] = copy.deepcopy(value)
+
+        # Convert colors defined as list of numbers RGBA (0-255)
+        # BG Color
+        bg_color = burnin_options.get("bg_color")
+        if bg_color and isinstance(bg_color, list):
+            bg_red, bg_green, bg_blue, bg_alpha = bg_color
+            bg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
+                bg_red, bg_green, bg_blue
+            )
+            bg_color_alpha = float(bg_alpha) / 255
+            burnin_options["bg_opacity"] = bg_color_alpha
+            burnin_options["bg_color"] = bg_color_hex
+
+        # FG Color
+        font_color = burnin_options.get("font_color")
+        if font_color and isinstance(font_color, list):
+            fg_red, fg_green, fg_blue, fg_alpha = font_color
+            fg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
+                fg_red, fg_green, fg_blue
+            )
+            fg_color_alpha = float(fg_alpha) / 255
+            burnin_options["opacity"] = fg_color_alpha
+            burnin_options["font_color"] = fg_color_hex
+
+        # Define font filepath
+        # - font filepath may be defined in settings
+        font_filepath = burnin_options.get("font_filepath")
+        if font_filepath and isinstance(font_filepath, dict):
+            sys_name = platform.system().lower()
+            font_filepath = font_filepath.get(sys_name)
+
+        if font_filepath and isinstance(font_filepath, six.string_types):
+            font_filepath = font_filepath.format(**os.environ)
+            if not os.path.exists(font_filepath):
+                font_filepath = None
+
+        # Use OpenPype default font
+        if not font_filepath:
+            font_filepath = openpype.api.resources.get_liberation_font_path()
+
+        burnin_options["font"] = font_filepath
+
+        return burnin_options
 
     def prepare_basic_data(self, instance):
         """Pick data from instance for processing and for burnin strings.
@@ -419,23 +451,15 @@ class ExtractBurnin(openpype.api.Extractor):
             list: Containg all burnin definitions matching entered tags.
         """
         filtered_burnins = {}
-        repre_tags_low = [tag.lower() for tag in tags]
+        repre_tags_low = set(tag.lower() for tag in tags)
         for filename_suffix, burnin_def in burnin_defs.items():
             valid = True
-            output_filters = burnin_def.get("filter")
-            if output_filters:
+            tag_filters = burnin_def["filter"]["tags"]
+            if tag_filters:
                 # Check tag filters
-                tag_filters = output_filters.get("tags")
-                if tag_filters:
-                    tag_filters_low = [tag.lower() for tag in tag_filters]
-                    valid = False
-                    for tag in repre_tags_low:
-                        if tag in tag_filters_low:
-                            valid = True
-                            break
+                tag_filters_low = set(tag.lower() for tag in tag_filters)
 
-                    if not valid:
-                        continue
+                valid = bool(repre_tags_low & tag_filters_low)
 
             if valid:
                 filtered_burnins[filename_suffix] = burnin_def
@@ -461,32 +485,47 @@ class ExtractBurnin(openpype.api.Extractor):
             None: This is processing method.
         """
         # TODO we should find better way to know if input is sequence
-        is_sequence = (
-            "sequence" in new_repre["tags"]
-            and isinstance(new_repre["files"], (tuple, list))
-        )
+        input_filenames = new_repre["files"]
+        is_sequence = False
+        if isinstance(input_filenames, (tuple, list)):
+            if len(input_filenames) > 1:
+                is_sequence = True
+
+        # Sequence must have defined first frame
+        # - not used if input is not a sequence
+        first_frame = None
         if is_sequence:
-            input_filename = new_repre["sequence_file"]
-        else:
-            input_filename = new_repre["files"]
+            collections, _ = clique.assemble(input_filenames)
+            if not collections:
+                is_sequence = False
+            else:
+                input_filename = new_repre["sequence_file"]
+                collection = collections[0]
+                indexes = list(collection.indexes)
+                padding = len(str(max(indexes)))
+                head = collection.format("{head}")
+                tail = collection.format("{tail}")
+                output_filename = "{}%{:0>2}d{}{}".format(
+                    head, padding, filename_suffix, tail
+                )
+                repre_files = []
+                for idx in indexes:
+                    repre_files.append(output_filename % idx)
 
-        filepart_start, ext = os.path.splitext(input_filename)
-        dir_path, basename = os.path.split(filepart_start)
+                first_frame = min(indexes)
 
-        if is_sequence:
-            # NOTE modified to keep name when multiple dots are in name
-            basename_parts = basename.split(".")
-            frame_part = basename_parts.pop(-1)
+        if not is_sequence:
+            input_filename = input_filenames
+            if isinstance(input_filename, (tuple, list)):
+                input_filename = input_filename[0]
 
-            basename_start = ".".join(basename_parts) + filename_suffix
-            new_basename = ".".join((basename_start, frame_part))
-            output_filename = new_basename + ext
-
-        else:
+            filepart_start, ext = os.path.splitext(input_filename)
+            dir_path, basename = os.path.split(filepart_start)
             output_filename = basename + filename_suffix + ext
+            if dir_path:
+                output_filename = os.path.join(dir_path, output_filename)
 
-        if dir_path:
-            output_filename = os.path.join(dir_path, output_filename)
+            repre_files = output_filename
 
         stagingdir = new_repre["stagingDir"]
         full_input_path = os.path.join(
@@ -498,6 +537,9 @@ class ExtractBurnin(openpype.api.Extractor):
 
         temp_data["full_input_path"] = full_input_path
         temp_data["full_output_path"] = full_output_path
+        temp_data["first_frame"] = first_frame
+
+        new_repre["files"] = repre_files
 
         self.log.debug("full_input_path: {}".format(full_input_path))
         self.log.debug("full_output_path: {}".format(full_output_path))
@@ -505,17 +547,16 @@ class ExtractBurnin(openpype.api.Extractor):
         # Prepare full paths to input files and filenames for reprensetation
         full_input_paths = []
         if is_sequence:
-            repre_files = []
-            for frame_index in range(1, temp_data["duration"] + 1):
-                repre_files.append(output_filename % frame_index)
-                full_input_paths.append(full_input_path % frame_index)
+            for filename in input_filenames:
+                filepath = os.path.join(
+                    os.path.normpath(stagingdir), filename
+                ).replace("\\", "/")
+                full_input_paths.append(filepath)
 
         else:
             full_input_paths.append(full_input_path)
-            repre_files = output_filename
 
         temp_data["full_input_paths"] = full_input_paths
-        new_repre["files"] = repre_files
 
     def prepare_repre_data(self, instance, repre, burnin_data, temp_data):
         """Prepare data for representation.
@@ -694,17 +735,16 @@ class ExtractBurnin(openpype.api.Extractor):
         final_profile.pop("__value__")
         return final_profile
 
-    def filter_burnins_by_families(self, profile, instance):
-        """Filter outputs that are not supported for instance families.
+    def filter_burnins_defs(self, profile, instance):
+        """Filter outputs by their values from settings.
 
-        Output definitions without families filter are marked as valid.
+        Output definitions with at least one value are marked as valid.
 
         Args:
             profile (dict): Profile from presets matching current context.
-            families (list): All families of current instance.
 
         Returns:
-            list: Containg all output definitions matching entered families.
+            list: Containg all valid output definitions.
         """
         filtered_burnin_defs = {}
 
@@ -712,21 +752,52 @@ class ExtractBurnin(openpype.api.Extractor):
         if not burnin_defs:
             return filtered_burnin_defs
 
-        # Prepare families
         families = self.families_from_instance(instance)
-        families = [family.lower() for family in families]
+        low_families = [family.lower() for family in families]
 
-        for filename_suffix, burnin_def in burnin_defs.items():
-            burnin_filter = burnin_def.get("filter")
-            # When filters not set then skip filtering process
-            if burnin_filter:
-                families_filters = burnin_filter.get("families")
-                if not self.families_filter_validation(
-                    families, families_filters
-                ):
-                    continue
+        for filename_suffix, orig_burnin_def in burnin_defs.items():
+            burnin_def = copy.deepcopy(orig_burnin_def)
+            def_filter = burnin_def.get("filter", None) or {}
+            for key in ("families", "tags"):
+                if key not in def_filter:
+                    def_filter[key] = []
 
-            filtered_burnin_defs[filename_suffix] = burnin_def
+            families_filters = def_filter["families"]
+            if not self.families_filter_validation(
+                low_families, families_filters
+            ):
+                self.log.debug((
+                    "Skipped burnin definition \"{}\". Family"
+                    " fiters ({}) does not match current instance families: {}"
+                ).format(
+                    filename_suffix, str(families_filters), str(families)
+                ))
+                continue
+
+            # Burnin values
+            burnin_values = {}
+            for key, value in tuple(burnin_def.items()):
+                key_low = key.lower()
+                if key_low in self.positions and value:
+                    burnin_values[key_low] = value
+
+            # Skip processing if burnin values are not set
+            if not burnin_values:
+                self.log.warning((
+                    "Burnin values for Burnin definition \"{}\""
+                    " are not filled. Definition will be skipped."
+                    " Origin value: {}"
+                ).format(filename_suffix, str(orig_burnin_def)))
+                continue
+
+            burnin_values["filter"] = def_filter
+
+            filtered_burnin_defs[filename_suffix] = burnin_values
+
+            self.log.debug((
+                "Burnin definition \"{}\" passed first filtering."
+            ).format(filename_suffix))
+
         return filtered_burnin_defs
 
     def families_filter_validation(self, families, output_families_filter):

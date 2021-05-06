@@ -32,7 +32,7 @@ class EndpointEntity(ItemEntity):
         super(EndpointEntity, self).__init__(*args, **kwargs)
 
         if (
-            not (self.group_item or self.is_group)
+            not (self.group_item is not None or self.is_group)
             and not (self.is_dynamic_item or self.is_in_dynamic_item)
         ):
             self.is_group = True
@@ -409,6 +409,9 @@ class PathInput(InputEntity):
     def _item_initalization(self):
         self.valid_value_types = (STRING_TYPE, )
         self.value_on_not_set = ""
+
+        # GUI attributes
+        self.placeholder_text = self.schema_data.get("placeholder")
 
 
 class RawJsonEntity(InputEntity):

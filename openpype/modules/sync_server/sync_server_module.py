@@ -413,11 +413,13 @@ class SyncServerModule(PypeModule, ITrayModule):
     def get_enabled_projects(self):
         """Returns list of projects which have SyncServer enabled."""
         enabled_projects = []
-        for project in self.connection.projects():
-            project_name = project["name"]
-            project_settings = self.get_sync_project_setting(project_name)
-            if project_settings:
-                enabled_projects.append(project_name)
+
+        if self.enabled:
+            for project in self.connection.projects():
+                project_name = project["name"]
+                project_settings = self.get_sync_project_setting(project_name)
+                if project_settings:
+                    enabled_projects.append(project_name)
 
         return enabled_projects
     """ End of Public API """
