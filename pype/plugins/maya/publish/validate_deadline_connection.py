@@ -19,6 +19,9 @@ class ValidateDeadlineConnection(pyblish.api.InstancePlugin):
 
         if instance.data.get("deadlineUrl"):
             DEADLINE_REST_URL = instance.data.get("deadlineUrl")
+            self.log.info(
+                "We have deadline URL on instance {}".format(
+                    DEADLINE_REST_URL))
         else:
             try:
                 DEADLINE_REST_URL = os.environ["DEADLINE_REST_URL"]

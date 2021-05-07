@@ -96,6 +96,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     int(render_instance.data.get("deadlineServers"))
                 ]
             ]
+            if deadline_url == "DEADLINE_REST_URL":
+                deadline_url = os.getenv("DEADLINE_REST_URL", "")
         else:
             deadline_url = os.getenv("DEADLINE_REST_URL", "")
 
