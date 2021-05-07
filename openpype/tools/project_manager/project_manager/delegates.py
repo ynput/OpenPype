@@ -20,7 +20,14 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
 
         value = index.data(QtCore.Qt.EditRole)
         if value is not None:
-            editor.setValue(value)
+            try:
+                if isinstance(value, str):
+                    value = float(value)
+                editor.setValue(value)
+
+            except Exception:
+                print("Couldn't set invalid value \"{}\"".format(str(value)))
+
         return editor
 
     # def updateEditorGeometry(self, editor, options, index):
