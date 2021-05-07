@@ -19,7 +19,6 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 "rig",
                 "camerarig"]
     representations = ["ma", "abc", "fbx", "mb"]
-    tool_names = ["loader"]
 
     label = "Reference"
     order = -10
