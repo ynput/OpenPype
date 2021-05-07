@@ -7,6 +7,7 @@ from openpype.settings.lib import (
     get_local_settings,
     save_local_settings
 )
+from openpype.tools.settings import CHILD_OFFSET
 from openpype.api import (
     SystemSettings,
     ProjectSettings
@@ -23,7 +24,6 @@ from .apps_widget import LocalApplicationsWidgets
 from .projects_widget import ProjectSettingsWidget
 
 from .constants import (
-    CHILD_OFFSET,
     LOCAL_GENERAL_KEY,
     LOCAL_PROJECTS_KEY,
     LOCAL_APPS_KEY

@@ -26,7 +26,8 @@ from .terminal import Terminal
 from .execute import (
     get_pype_execute_args,
     execute,
-    run_subprocess
+    run_subprocess,
+    CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
 from .mongo import (

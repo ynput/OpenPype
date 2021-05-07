@@ -69,6 +69,87 @@ def get_fps(str_value):
     return str(fps)
 
 
+def _prores_codec_args(ffprobe_data):
+    output = []
+
+    tags = ffprobe_data.get("tags") or {}
+    encoder = tags.get("encoder") or ""
+    if encoder.endswith("prores_ks"):
+        codec_name = "prores_ks"
+
+    elif encoder.endswith("prores_aw"):
+        codec_name = "prores_aw"
+
+    else:
+        codec_name = "prores"
+
+    output.extend(["-codec:v", codec_name])
+
+    pix_fmt = ffprobe_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    # Rest of arguments is prores_kw specific
+    if codec_name == "prores_ks":
+        codec_tag_to_profile_map = {
+            "apco": "proxy",
+            "apcs": "lt",
+            "apcn": "standard",
+            "apch": "hq",
+            "ap4h": "4444",
+            "ap4x": "4444xq"
+        }
+        codec_tag_str = ffprobe_data.get("codec_tag_string")
+        if codec_tag_str:
+            profile = codec_tag_to_profile_map.get(codec_tag_str)
+            if profile:
+                output.extend(["-profile:v", profile])
+
+    return output
+
+
+def _h264_codec_args(ffprobe_data):
+    output = []
+
+    output.extend(["-codec:v", "h264"])
+
+    pix_fmt = ffprobe_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    output.extend(["-intra"])
+    output.extend(["-g", "1"])
+
+    return output
+
+
+def get_codec_args(ffprobe_data):
+    codec_name = ffprobe_data.get("codec_name")
+    # Codec "prores"
+    if codec_name == "prores":
+        return _prores_codec_args(ffprobe_data)
+
+    # Codec "h264"
+    if codec_name == "h264":
+        return _h264_codec_args(ffprobe_data)
+
+    output = []
+    if codec_name:
+        output.extend(["-codec:v", codec_name])
+
+    bit_rate = ffprobe_data.get("bit_rate")
+    if bit_rate:
+        output.extend(["-b:v", bit_rate])
+
+    pix_fmt = ffprobe_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    output.extend(["-g", "1"])
+
+    return output
+
+
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
     '''
     This is modification of OTIO FFmpeg Burnin adapter.
@@ -558,38 +639,13 @@ def burnins_from_data(
     if codec_data:
         # Use codec definition from method arguments
         ffmpeg_args = codec_data
+        ffmpeg_args.append("-g 1")
 
     else:
         ffprobe_data = burnin._streams[0]
-        codec_name = ffprobe_data.get("codec_name")
-        if codec_name:
-            if codec_name == "prores":
-                tags = ffprobe_data.get("tags") or {}
-                encoder = tags.get("encoder") or ""
-                if encoder.endswith("prores_ks"):
-                    codec_name = "prores_ks"
-
-                elif encoder.endswith("prores_aw"):
-                    codec_name = "prores_aw"
-            ffmpeg_args.append("-codec:v {}".format(codec_name))
-
-        profile_name = ffprobe_data.get("profile")
-        if profile_name:
-            # lower profile name and repalce spaces with underscore
-            profile_name = profile_name.replace(" ", "_").lower()
-            ffmpeg_args.append("-profile:v {}".format(profile_name))
-
-        bit_rate = ffprobe_data.get("bit_rate")
-        if bit_rate:
-            ffmpeg_args.append("-b:v {}".format(bit_rate))
-
-        pix_fmt = ffprobe_data.get("pix_fmt")
-        if pix_fmt:
-            ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))
+        ffmpeg_args.extend(get_codec_args(ffprobe_data))
 
     # Use group one (same as `-intra` argument, which is deprecated)
-    ffmpeg_args.append("-g 1")
-
     ffmpeg_args_str = " ".join(ffmpeg_args)
     burnin.render(
         output_path, args=ffmpeg_args_str, overwrite=overwrite, **data
