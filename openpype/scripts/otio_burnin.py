@@ -145,6 +145,8 @@ def get_codec_args(ffprobe_data):
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])
 
+    output.extend(["-g", "1"])
+
     return output
 
 
@@ -637,14 +639,13 @@ def burnins_from_data(
     if codec_data:
         # Use codec definition from method arguments
         ffmpeg_args = codec_data
+        ffmpeg_args.append("-g 1")
 
     else:
         ffprobe_data = burnin._streams[0]
         ffmpeg_args.extend(get_codec_args(ffprobe_data))
 
     # Use group one (same as `-intra` argument, which is deprecated)
-    ffmpeg_args.append("-g 1")
-
     ffmpeg_args_str = " ".join(ffmpeg_args)
     burnin.render(
         output_path, args=ffmpeg_args_str, overwrite=overwrite, **data
