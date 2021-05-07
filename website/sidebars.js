@@ -22,6 +22,7 @@ module.exports = {
                 "artist_hosts_blender",
                 "artist_hosts_harmony",
                 "artist_hosts_aftereffects",
+                "artist_hosts_resolve",
                 "artist_hosts_photoshop",
                 "artist_hosts_tvpaint",
                 "artist_hosts_unreal",
