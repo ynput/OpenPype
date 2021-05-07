@@ -69,8 +69,51 @@ def get_fps(str_value):
     return str(fps)
 
 
+def _prores_codec_args(ffprobe_data):
+    output = []
+
+    tags = ffprobe_data.get("tags") or {}
+    encoder = tags.get("encoder") or ""
+    if encoder.endswith("prores_ks"):
+        codec_name = "prores_ks"
+
+    elif encoder.endswith("prores_aw"):
+        codec_name = "prores_aw"
+
+    else:
+        codec_name = "prores"
+
+    output.extend(["-codec:v", codec_name])
+
+    pix_fmt = ffprobe_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    # Rest of arguments is prores_kw specific
+    if codec_name == "prores_ks":
+        codec_tag_to_profile_map = {
+            "apco": "proxy",
+            "apcs": "lt",
+            "apcn": "standard",
+            "apch": "hq",
+            "ap4h": "4444",
+            "ap4x": "4444xq"
+        }
+        codec_tag_str = ffprobe_data.get("codec_tag_string")
+        if codec_tag_str:
+            profile = codec_tag_to_profile_map.get(codec_tag_str)
+            if profile:
+                output.extend(["-profile:v", profile])
+
+    return output
+
+
 def get_codec_args(ffprobe_data):
     codec_name = ffprobe_data.get("codec_name")
+    # Handle prores
+    if codec_name == "prores":
+        return _prores_codec_args(ffprobe_data)
+
     output = []
     if codec_name:
         output.extend(["-codec:v", codec_name])
