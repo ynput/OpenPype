@@ -69,6 +69,23 @@ def get_fps(str_value):
     return str(fps)
 
 
+def get_codec_args(ffprobe_data):
+    codec_name = ffprobe_data.get("codec_name")
+    output = []
+    if codec_name:
+        output.extend(["-codec:v", codec_name])
+
+    bit_rate = ffprobe_data.get("bit_rate")
+    if bit_rate:
+        output.extend(["-b:v", bit_rate])
+
+    pix_fmt = ffprobe_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    return output
+
+
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
     '''
     This is modification of OTIO FFmpeg Burnin adapter.
@@ -561,31 +578,7 @@ def burnins_from_data(
 
     else:
         ffprobe_data = burnin._streams[0]
-        codec_name = ffprobe_data.get("codec_name")
-        if codec_name:
-            if codec_name == "prores":
-                tags = ffprobe_data.get("tags") or {}
-                encoder = tags.get("encoder") or ""
-                if encoder.endswith("prores_ks"):
-                    codec_name = "prores_ks"
-
-                elif encoder.endswith("prores_aw"):
-                    codec_name = "prores_aw"
-            ffmpeg_args.append("-codec:v {}".format(codec_name))
-
-        profile_name = ffprobe_data.get("profile")
-        if profile_name:
-            # lower profile name and repalce spaces with underscore
-            profile_name = profile_name.replace(" ", "_").lower()
-            ffmpeg_args.append("-profile:v {}".format(profile_name))
-
-        bit_rate = ffprobe_data.get("bit_rate")
-        if bit_rate:
-            ffmpeg_args.append("-b:v {}".format(bit_rate))
-
-        pix_fmt = ffprobe_data.get("pix_fmt")
-        if pix_fmt:
-            ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))
+        ffmpeg_args.extend(get_codec_args(ffprobe_data))
 
     # Use group one (same as `-intra` argument, which is deprecated)
     ffmpeg_args.append("-g 1")
