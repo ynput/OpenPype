@@ -7,6 +7,7 @@ from openpype.settings.lib import (
     get_local_settings,
     save_local_settings
 )
+from openpype.tools.settings import CHILD_OFFSET
 from openpype.api import (
     SystemSettings,
     ProjectSettings
@@ -23,7 +24,6 @@ from .apps_widget import LocalApplicationsWidgets
 from .projects_widget import ProjectSettingsWidget
 
 from .constants import (
-    CHILD_OFFSET,
     LOCAL_GENERAL_KEY,
     LOCAL_PROJECTS_KEY,
     LOCAL_APPS_KEY
@@ -156,6 +156,8 @@ class LocalSettingsWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(LocalSettingsWindow, self).__init__(parent)
 
+        self._reset_on_show = True
+
         self.resize(1000, 600)
 
         self.setWindowTitle("OpenPype Local settings")
@@ -193,9 +195,14 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         self.reset_btn = reset_btn
         self.save_btn = save_btn
 
-        self.reset()
+    def showEvent(self, event):
+        super(LocalSettingsWindow, self).showEvent(event)
+        if self._reset_on_show:
+            self.reset()
 
     def reset(self):
+        if self._reset_on_show:
+            self._reset_on_show = False
         value = get_local_settings()
         self.settings_widget.update_local_settings(value)
 

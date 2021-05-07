@@ -14,4 +14,4 @@ class CollectCurrentUserPype(pyblish.api.ContextPlugin):
     def process(self, context):
         user = get_openpype_username()
         context.data["user"] = user
-        self.log.debug("Colected user \"{}\"".format(user))
+        self.log.debug("Collected user \"{}\"".format(user))

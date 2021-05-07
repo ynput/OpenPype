@@ -43,9 +43,10 @@ function Show-PSWarning() {
 function Install-Poetry() {
     Write-Host ">>> " -NoNewline -ForegroundColor Green
     Write-Host "Installing Poetry ... "
+    $env:POETRY_HOME="$openpype_root\.poetry"
     (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
     # add it to PATH
-    $env:PATH = "$($env:PATH);$($env:USERPROFILE)\.poetry\bin"
+    $env:PATH = "$($env:PATH);$openpype_root\.poetry\bin"
 }
 
 
@@ -84,6 +85,12 @@ $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $openpype_root = (Get-Item $script_dir).parent.FullName
 
+# make sure Poetry is in PATH
+if (-not (Test-Path 'env:POETRY_HOME')) {
+    $env:POETRY_HOME = "$openpype_root\.poetry"
+}
+$env:PATH = "$($env:PATH);$($env:POETRY_HOME)\bin"
+
 Set-Location -Path $openpype_root
 
 $art = @"
@@ -95,8 +102,9 @@ $art = @"
                  https://openpype.io
 
 "@
-
-Write-Host $art -ForegroundColor DarkGreen
+if (-not (Test-Path 'env:_INSIDE_OPENPYPE_TOOL')) {
+    Write-Host $art -ForegroundColor DarkGreen
+}
 
 # Enable if PS 7.x is needed.
 # Show-PSWarning
@@ -118,7 +126,7 @@ Test-Python
 
 Write-Host ">>> " -NoNewline -ForegroundColor Green
 Write-Host "Reading Poetry ... " -NoNewline
-if (-not (Test-Path -PathType Container -Path "$($env:USERPROFILE)\.poetry\bin")) {
+if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
     Write-Host "NOT FOUND" -ForegroundColor Yellow
     Install-Poetry
     Write-Host "INSTALLED" -ForegroundColor Cyan

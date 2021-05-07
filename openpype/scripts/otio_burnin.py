@@ -5,7 +5,6 @@ import subprocess
 import platform
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-from openpype.api import resources
 import openpype.lib
 
 
@@ -14,7 +13,7 @@ ffprobe_path = openpype.lib.get_ffmpeg_tool_path("ffprobe")
 
 
 FFMPEG = (
-    '"{}" -i "%(input)s" %(filters)s %(args)s%(output)s'
+    '"{}"%(input_args)s -i "%(input)s" %(filters)s %(args)s%(output)s'
 ).format(ffmpeg_path)
 
 FFPROBE = (
@@ -121,9 +120,14 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         'font_size': 42
     }
 
-    def __init__(self, source, streams=None, options_init=None):
+    def __init__(
+        self, source, streams=None, options_init=None, first_frame=None
+    ):
         if not streams:
             streams = _streams(source)
+
+        self.first_frame = first_frame
+        self.input_args = []
 
         super().__init__(source, streams)
 
@@ -236,30 +240,25 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         timecode_text = options.get("timecode") or ""
         text_for_size += timecode_text
 
+        font_path = options.get("font")
+        if not font_path or not os.path.exists(font_path):
+            font_path = ffmpeg_burnins.FONT
+
+        options["font"] = font_path
+
         data.update(options)
-
-        os_system = platform.system().lower()
-        data_font = data.get("font")
-        if not data_font:
-            data_font = (
-                resources.get_liberation_font_path().replace("\\", "/")
-            )
-        elif isinstance(data_font, dict):
-            data_font = data_font[os_system]
-
-        if data_font:
-            data["font"] = data_font
-            options["font"] = data_font
-            if ffmpeg_burnins._is_windows():
-                data["font"] = (
-                    data_font
-                    .replace(os.sep, r'\\' + os.sep)
-                    .replace(':', r'\:')
-                )
-
         data.update(
             ffmpeg_burnins._drawtext(align, resolution, text_for_size, options)
         )
+
+        arg_font_path = font_path
+        if platform.system().lower() == "windows":
+            arg_font_path = (
+                arg_font_path
+                .replace(os.sep, r'\\' + os.sep)
+                .replace(':', r'\:')
+            )
+        data["font"] = arg_font_path
 
         self.filters['drawtext'].append(draw % data)
 
@@ -289,7 +288,21 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if self.filter_string:
             filters = '-vf "{}"'.format(self.filter_string)
 
+        if self.first_frame is not None:
+            start_number_arg = "-start_number {}".format(self.first_frame)
+            self.input_args.append(start_number_arg)
+            if "start_number" not in args:
+                if not args:
+                    args = start_number_arg
+                else:
+                    args = " ".join((start_number_arg, args))
+
+        input_args = ""
+        if self.input_args:
+            input_args = " {}".format(" ".join(self.input_args))
+
         return (FFMPEG % {
+            'input_args': input_args,
             'input': self.source,
             'output': output,
             'args': '%s ' % args if args else '',
@@ -370,7 +383,8 @@ def example(input_path, output_path):
 
 def burnins_from_data(
     input_path, output_path, data,
-    codec_data=None, options=None, burnin_values=None, overwrite=True
+    codec_data=None, options=None, burnin_values=None, overwrite=True,
+    full_input_path=None, first_frame=None
 ):
     """This method adds burnins to video/image file based on presets setting.
 
@@ -427,8 +441,11 @@ def burnins_from_data(
         "shot": "sh0010"
     }
     """
+    streams = None
+    if full_input_path:
+        streams = _streams(full_input_path)
 
-    burnin = ModifiedBurnins(input_path, options_init=options)
+    burnin = ModifiedBurnins(input_path, streams, options, first_frame)
 
     frame_start = data.get("frame_start")
     frame_end = data.get("frame_end")
@@ -591,6 +608,8 @@ if __name__ == "__main__":
         in_data["burnin_data"],
         codec_data=in_data.get("codec"),
         options=in_data.get("options"),
-        burnin_values=in_data.get("values")
+        burnin_values=in_data.get("values"),
+        full_input_path=in_data.get("full_input_path"),
+        first_frame=in_data.get("first_frame")
     )
     print("* Burnin script has finished")

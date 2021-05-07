@@ -101,30 +101,8 @@
                                             "type": "text"
                                         },
                                         {
-                                            "key": "tags",
-                                            "label": "Tags",
-                                            "type": "enum",
-                                            "multiselection": true,
-                                            "enum_items": [
-                                                {
-                                                    "burnin": "Add burnins"
-                                                },
-                                                {
-                                                    "ftrackreview": "Add to Ftrack"
-                                                },
-                                                {
-                                                    "delete": "Delete output"
-                                                },
-                                                {
-                                                    "slate-frame": "Add slate frame"
-                                                },
-                                                {
-                                                    "no-handles": "Skip handle frames"
-                                                },
-                                                {
-                                                    "sequence": "Output as image sequence"
-                                                }
-                                            ]
+                                            "type": "schema",
+                                            "name": "schema_representation_tags"
                                         },
                                         {
                                             "key": "ffmpeg_args",
@@ -301,20 +279,24 @@
                             "minimum": 0
                         },
                         {
-                            "type": "number",
-                            "key": "opacity",
-                            "label": "Font opacity",
-                            "decimal": 2,
-                            "maximum": 1,
-                            "minimum": 0
+                            "type": "schema_template",
+                            "name": "template_rgba_color",
+                            "template_data": [
+                                {
+                                    "label": "Font Color",
+                                    "name": "font_color"
+                                }
+                            ]
                         },
                         {
-                            "type": "number",
-                            "key": "bg_opacity",
-                            "label": "Background opacity",
-                            "decimal": 2,
-                            "maximum": 1,
-                            "minimum": 0
+                            "type": "schema_template",
+                            "name": "template_rgba_color",
+                            "template_data": [
+                                {
+                                    "label": "Background Color",
+                                    "name": "bg_color"
+                                }
+                            ]
                         },
                         {
                             "type": "number",
@@ -330,6 +312,13 @@
                             "type": "number",
                             "key": "bg_padding",
                             "label": "Padding aroung text"
+                        },
+                        {
+                            "type": "path",
+                            "key": "font_filepath",
+                            "label": "Font file path",
+                            "multipath": false,
+                            "multiplatform": true
                         }
                     ]
                 },
@@ -396,6 +385,24 @@
                                             "key": "BOTTOM_RIGHT",
                                             "label": "BottomRight",
                                             "type": "text"
+                                        },
+                                        {
+                                            "key": "filter",
+                                            "label": "Additional filtering",
+                                            "type": "dict",
+                                            "highlight_content": true,
+                                            "children": [
+                                                {
+                                                    "key": "families",
+                                                    "label": "Families",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "schema",
+                                                    "name": "schema_representation_tags"
+                                                }
+                                            ]
                                         }
                                     ]
                                 }
@@ -416,6 +423,47 @@
                     "type": "raw-json",
                     "key": "template_name_profiles",
                     "label": "template_name_profiles"
+                },
+                {
+                    "type": "list",
+                    "key": "subset_grouping_profiles",
+                    "label": "Subset grouping profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "label",
+                                "label": "Set all published instances as a part of specific group named according to 'Template'. <br>Implemented all variants of placeholders [{task},{family},{host},{subset},{renderlayer}]"
+                            },
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "template",
+                                "label": "Template"
+                            }
+                        ]
+                    }
                 }
             ]
         },

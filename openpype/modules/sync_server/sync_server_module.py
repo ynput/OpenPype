@@ -83,6 +83,7 @@ class SyncServerModule(PypeModule, ITrayModule):
     DEFAULT_SITE = 'studio'
     LOCAL_SITE = 'local'
     LOG_PROGRESS_SEC = 5  # how often log progress to DB
+    DEFAULT_PRIORITY = 50  # higher is better, allowed range 1 - 1000
 
     name = "sync_server"
     label = "Sync Queue"
@@ -412,11 +413,13 @@ class SyncServerModule(PypeModule, ITrayModule):
     def get_enabled_projects(self):
         """Returns list of projects which have SyncServer enabled."""
         enabled_projects = []
-        for project in self.connection.projects():
-            project_name = project["name"]
-            project_settings = self.get_sync_project_setting(project_name)
-            if project_settings:
-                enabled_projects.append(project_name)
+
+        if self.enabled:
+            for project in self.connection.projects():
+                project_name = project["name"]
+                project_settings = self.get_sync_project_setting(project_name)
+                if project_settings:
+                    enabled_projects.append(project_name)
 
         return enabled_projects
     """ End of Public API """
@@ -472,6 +475,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         try:
             self.sync_server_thread = SyncServerThread(self)
+
             from .tray.app import SyncServerWindow
             self.widget = SyncServerWindow(self)
         except ValueError:
@@ -662,7 +666,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         self.connection.Session["AVALON_PROJECT"] = collection
         # retry_cnt - number of attempts to sync specific file before giving up
         retries_arr = self._get_retries_arr(collection)
-        query = {
+        match = {
             "type": "representation",
             "$or": [
                 {"$and": [
@@ -700,10 +704,47 @@ class SyncServerModule(PypeModule, ITrayModule):
                 ]}
             ]
         }
+
+        aggr = [
+            {"$match": match},
+            {'$unwind': '$files'},
+            {'$addFields': {
+                'order_remote': {
+                    '$filter': {'input': '$files.sites', 'as': 'p',
+                                'cond': {'$eq': ['$$p.name', remote_site]}
+                                }},
+                'order_local': {
+                    '$filter': {'input': '$files.sites', 'as': 'p',
+                                'cond': {'$eq': ['$$p.name', active_site]}
+                                }},
+            }},
+            {'$addFields': {
+                'priority': {
+                    '$cond': [
+                        {'$size': '$order_local.priority'},
+                        {'$first': '$order_local.priority'},
+                        {'$cond': [
+                            {'$size': '$order_remote.priority'},
+                            {'$first': '$order_remote.priority'},
+                            self.DEFAULT_PRIORITY]}
+                    ]
+                },
+            }},
+            {'$group': {
+                '_id': '$_id',
+                # pass through context - same for representation
+                'context': {'$addToSet': '$context'},
+                'data': {'$addToSet': '$data'},
+                # pass through files as a list
+                'files': {'$addToSet': '$files'},
+                'priority': {'$max': "$priority"},
+            }},
+            {"$sort": {'priority': -1, '_id': 1}},
+        ]
         log.debug("active_site:{} - remote_site:{}".format(active_site,
                                                            remote_site))
-        log.debug("query: {}".format(query))
-        representations = self.connection.find(query)
+        log.debug("query: {}".format(aggr))
+        representations = self.connection.aggregate(aggr)
 
         return representations
 
@@ -749,7 +790,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         return SyncStatus.DO_NOTHING
 
     def update_db(self, collection, new_file_id, file, representation,
-                  site, error=None, progress=None):
+                  site, error=None, progress=None, priority=None):
         """
             Update 'provider' portion of records in DB with success (file_id)
             or error (exception)
@@ -763,12 +804,16 @@ class SyncServerModule(PypeModule, ITrayModule):
             site (string): label ('gdrive', 'S3')
             error (string): exception message
             progress (float): 0-1 of progress of upload/download
+            priority (int): 0-100 set priority
 
         Returns:
             None
         """
         representation_id = representation.get("_id")
-        file_id = file.get("_id")
+        file_id = None
+        if file:
+            file_id = file.get("_id")
+
         query = {
             "_id": representation_id
         }
@@ -780,6 +825,8 @@ class SyncServerModule(PypeModule, ITrayModule):
             update["$unset"] = self._get_error_dict("", "", "")
         elif progress is not None:
             update["$set"] = self._get_progress_dict(progress)
+        elif priority is not None:
+            update["$set"] = self._get_priority_dict(priority, file_id)
         else:
             tries = self._get_tries_count(file, site)
             tries += 1
@@ -787,9 +834,10 @@ class SyncServerModule(PypeModule, ITrayModule):
             update["$set"] = self._get_error_dict(error, tries)
 
         arr_filter = [
-            {'s.name': site},
-            {'f._id': ObjectId(file_id)}
+            {'s.name': site}
         ]
+        if file_id:
+            arr_filter.append({'f._id': ObjectId(file_id)})
 
         self.connection.database[collection].update_one(
             query,
@@ -798,7 +846,7 @@ class SyncServerModule(PypeModule, ITrayModule):
             array_filters=arr_filter
         )
 
-        if progress is not None:
+        if progress is not None or priority is not None:
             return
 
         status = 'failed'
@@ -1191,6 +1239,21 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
         val = {"files.$[f].sites.$[s].progress": progress}
         return val
+
+    def _get_priority_dict(self, priority, file_id):
+        """
+            Provide priority metadata to be stored in Db.
+            Used during upload/download for GUI to show.
+        Args:
+            priority: (int) - priority for file(s)
+        Returns:
+            (dictionary)
+        """
+        if file_id:
+            str_key = "files.$[f].sites.$[s].priority"
+        else:
+            str_key = "files.$[].sites.$[s].priority"
+        return {str_key: int(priority)}
 
     def _get_retries_arr(self, project_name):
         """

@@ -21,10 +21,20 @@
         "LoadClip": {
             "enabled": true,
             "families": [
-                "render2d", "source", "plate", "render", "review"
+                "render2d",
+                "source",
+                "plate",
+                "render",
+                "review"
             ],
             "representations": [
-                "exr", "dpx", "jpg", "jpeg", "png", "h264", "mov"
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "h264",
+                "mov"
             ],
             "clip_name_template": "{asset}_{subset}_{representation}"
         }

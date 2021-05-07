@@ -10,29 +10,22 @@ from .bootstrap_repos import BootstrapRepos
 from .version import __version__ as version
 
 
-RESULT = 0
-
-
-def get_result(res: int):
-    """Sets result returned from dialog."""
-    global RESULT
-    RESULT = res
-
-
 def open_dialog():
     """Show Igniter dialog."""
-    from Qt import QtWidgets
+    from Qt import QtWidgets, QtCore
     from .install_dialog import InstallDialog
+
+    scale_attr = getattr(QtCore.Qt, "AA_EnableHighDpiScaling", None)
+    if scale_attr is not None:
+        QtWidgets.QApplication.setAttribute(scale_attr)
 
     app = QtWidgets.QApplication(sys.argv)
 
     d = InstallDialog()
-    d.finished.connect(get_result)
     d.open()
 
-    app.exec()
-
-    return RESULT
+    app.exec_()
+    return d.result()
 
 
 __all__ = [
