@@ -1,8 +1,8 @@
-import os
+# -*- coding: utf-8 -*-
+"""Maya validator for render settings."""
 import re
 
 from maya import cmds, mel
-import pymel.core as pm
 
 import pyblish.api
 import openpype.api
@@ -120,16 +120,24 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                           "doesn't have: '<renderlayer>' or "
                           "'<layer>' token".format(prefix))
 
-        if len(cameras) > 1:
-            if not re.search(cls.R_CAMERA_TOKEN, prefix):
-                invalid = True
-                cls.log.error("Wrong image prefix [ {} ] - "
-                              "doesn't have: '<camera>' token".format(prefix))
+        if len(cameras) > 1 and not re.search(cls.R_CAMERA_TOKEN, prefix):
+            invalid = True
+            cls.log.error("Wrong image prefix [ {} ] - "
+                          "doesn't have: '<camera>' token".format(prefix))
 
         # renderer specific checks
         if renderer == "vray":
-            # no vray checks implemented yet
-            pass
+            vray_settings = cmds.ls(type="VRaySettingsNode")
+            if not vray_settings:
+                node = cmds.createNode("VRaySettingsNode")
+            else:
+                node = vray_settings[0]
+
+            if cmds.getAttr(
+                    "{}.fileNameRenderElementSeparator".format(node)) != "_":
+                invalid = False
+                cls.log.error("AOV separator is not set correctly.")
+
         elif renderer == "redshift":
             if re.search(cls.R_AOV_TOKEN, prefix):
                 invalid = True
@@ -210,3 +218,16 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 cmds.setAttr("rmanGlobals.imageOutputDir",
                              cls.RendermanDirPrefix,
                              type="string")
+
+            if renderer == "vray":
+                vray_settings = cmds.ls(type="VRaySettingsNode")
+                if not vray_settings:
+                    node = cmds.createNode("VRaySettingsNode")
+                else:
+                    node = vray_settings[0]
+                    
+                cmds.setAttr(
+                    "{}.fileNameRenderElementSeparator".format(
+                        node),
+                    "_"
+                )
