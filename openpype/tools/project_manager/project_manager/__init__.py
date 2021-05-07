@@ -1,3 +1,23 @@
+__all__ = (
+    "IDENTIFIER_ROLE",
+
+    "HierarchyView",
+
+    "ProjectModel",
+
+    "HierarchyModel",
+    "HierarchySelectionModel",
+    "BaseItem",
+    "RootItem",
+    "ProjectItem",
+    "AssetItem",
+    "TaskItem",
+
+    "Window",
+    "main"
+)
+
+
 from .constants import (
     IDENTIFIER_ROLE
 )
@@ -15,20 +35,14 @@ from .model import (
 )
 from .window import Window
 
-__all__ = (
-    "IDENTIFIER_ROLE",
 
-    "HierarchyView",
+def main():
+    import sys
+    from Qt import QtWidgets
 
-    "ProjectModel",
+    app = QtWidgets.QApplication([])
 
-    "HierarchyModel",
-    "HierarchySelectionModel",
-    "BaseItem",
-    "RootItem",
-    "ProjectItem",
-    "AssetItem",
-    "TaskItem",
+    window = Window()
+    window.show()
 
-    "Window"
-)
+    sys.exit(app.exec_())

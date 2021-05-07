@@ -1,17 +1,4 @@
-import sys
-
-from project_manager import Window
-
-from Qt import QtWidgets
-
-
-def main():
-    app = QtWidgets.QApplication([])
-
-    window = Window()
-    window.show()
-
-    sys.exit(app.exec_())
+from project_manager import main
 
 
 if __name__ == "__main__":
