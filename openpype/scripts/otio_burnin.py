@@ -108,11 +108,30 @@ def _prores_codec_args(ffprobe_data):
     return output
 
 
+def _h264_codec_args(ffprobe_data):
+    output = []
+
+    output.extend(["-codec:v", "h264"])
+
+    pix_fmt = ffprobe_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    output.extend(["-intra"])
+    output.extend(["-g", "1"])
+
+    return output
+
+
 def get_codec_args(ffprobe_data):
     codec_name = ffprobe_data.get("codec_name")
-    # Handle prores
+    # Codec "prores"
     if codec_name == "prores":
         return _prores_codec_args(ffprobe_data)
+
+    # Codec "h264"
+    if codec_name == "h264":
+        return _h264_codec_args(ffprobe_data)
 
     output = []
     if codec_name:
