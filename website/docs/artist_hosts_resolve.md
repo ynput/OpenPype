@@ -172,6 +172,35 @@ The multiple tracks scenario - as it had been mentioned [here](#rename-timeline-
 
 ## Publishing Shots
 
+<div class="row markdown">
+<div class="col--6 markdown">
+
+Once all `Chocolate` colored clips has been colored to `Pink` color and in the middle of them had appeared marker it has been successfully converted publishing instances. Now we can start **Publisher** - button can be found on OpenPype menu.
+
+<br></br>
+</div>
+
+<div class="row markdown">
+<div class="col --6 markdown">
+
+![Create menu](assets/resolve_publish_instance_review_main.png)
+Notice that the main track clips and review had been merged into one instance. And since it is main `hero` clip it is also holding all new shot metadata. For that reason it also create secon instance for each with `shot` family. This instance will create all shot hierarchy and pass frame range attributes to shot (asset).
+
+</div>
+</div>
+
+<div class="row markdown">
+<div class="col --6 markdown">
+
+![Create menu](assets/resolve_publish_instance_other_plateSubsets.png)
+Also notice how the subset (instance) name is formed form a *track* name and *subset familly* from previouse steps.
+
+Aslo important to notice the asset name in *OpenPypeData* at marker - the name is the same for all **Vertically renamed** shots as they have been grouped to gether. Unfortunatelly BMDVR is not allowing to rename clips so the only way to know is to se it in marker's metadata.
+
+</div>
+</div>
+
+</div>
 
 ## Installation of Python and PySide
 ### Installing Resolve's own python 3.6 interpreter.
