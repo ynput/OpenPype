@@ -305,9 +305,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                   logger=self.log)
         if profile:
             template_name = profile["template_name"]
-        else:
-            # fallback
-            template_name = self.template_name_from_instance(instance)
 
         published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
@@ -862,68 +859,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if not family:
             family = instance.data["families"][0]
         return family
-
-    def template_name_from_instance(self, instance):
-        template_name = self.default_template_name
-        if not self.template_name_profiles:
-            self.log.debug((
-                "Template name profiles are not set."
-                " Using default \"{}\""
-            ).format(template_name))
-            return template_name
-
-        # Task name from session?
-        task_name = io.Session.get("AVALON_TASK")
-        family = self.main_family_from_instance(instance)
-
-        matching_profiles = {}
-        highest_value = -1
-        self.log.debug(
-            "Template name profiles:\n{}".format(self.template_name_profiles)
-        )
-        for name, filters in self.template_name_profiles.items():
-            value = 0
-            families = filters.get("families")
-            if families:
-                if family not in families:
-                    continue
-                value += 1
-
-            tasks = filters.get("tasks")
-            if tasks:
-                if task_name not in tasks:
-                    continue
-                value += 1
-
-            if value > highest_value:
-                matching_profiles = {}
-                highest_value = value
-
-            if value == highest_value:
-                matching_profiles[name] = filters
-
-        if len(matching_profiles) == 1:
-            template_name = tuple(matching_profiles.keys())[0]
-            self.log.debug(
-                "Using template name \"{}\".".format(template_name)
-            )
-
-        elif len(matching_profiles) > 1:
-            template_name = tuple(matching_profiles.keys())[0]
-            self.log.warning((
-                "More than one template profiles matched"
-                " Family \"{}\" and Task: \"{}\"."
-                " Using first template name in row \"{}\"."
-            ).format(family, task_name, template_name))
-
-        else:
-            self.log.debug((
-                "None of template profiles matched"
-                " Family \"{}\" and Task: \"{}\"."
-                " Using default template name \"{}\""
-            ).format(family, task_name, template_name))
-
-        return template_name
 
     def get_rootless_path(self, anatomy, path):
         """  Returns, if possible, path without absolute portion from host
