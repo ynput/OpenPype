@@ -74,6 +74,9 @@ class CreateImage(openpype.api.Creator):
 
         for group in groups:
             long_names = []
+            group.name = group.name.replace(stub.PUBLISH_ICON, ''). \
+                replace(stub.LOADED_ICON, '')
+
             if group.long_name:
                 for directory in group.long_name[::-1]:
                     name = directory.replace(stub.PUBLISH_ICON, '').\
