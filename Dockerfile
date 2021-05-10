@@ -43,7 +43,8 @@ ENV PYTHON_CONFIGURE_OPTS --enable-shared
 
 RUN echo 'export PATH="$HOME/.pyenv/bin:$PATH"'>> $HOME/.bashrc \
     && echo 'eval "$(pyenv init -)"' >> $HOME/.bashrc \
-    && echo 'eval "$(pyenv virtualenv-init -)"' >> $HOME/.bashrc
+    && echo 'eval "$(pyenv virtualenv-init -)"' >> $HOME/.bashrc \
+    && echo -e "eval \"$(pyenv init --path)\"\n$(cat $HOME/.profile)" > $HOME/.profile
 RUN cat $HOME/.bashrc && source $HOME/.bashrc && pyenv install ${OPENPYPE_PYTHON_VERSION}
 
 COPY . /opt/openpype/
