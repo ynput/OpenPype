@@ -922,6 +922,10 @@ class BaseItem:
     def id(self):
         return self._id
 
+    @property
+    def is_new(self):
+        return False
+
     def rowCount(self):
         return len(self._children)
 
@@ -1143,6 +1147,10 @@ class AssetItem(BaseItem):
         return self.mongo_id
 
     @property
+    def is_new(self):
+        return self.asset_id is None
+
+    @property
     def name(self):
         return self._data["name"]
 
@@ -1292,6 +1300,10 @@ class TaskItem(BaseItem):
         if data is None:
             data = {}
         super(TaskItem, self).__init__(data)
+
+    @property
+    def is_new(self):
+        return self._origin_data is None
 
     @classmethod
     def name_icon(cls):
