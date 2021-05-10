@@ -410,27 +410,38 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if not index.isValid():
             return
 
-        item_id = index.data(IDENTIFIER_ROLE)
-        item = self._items_by_id[item_id]
+        item = index.internalPointer()
+
         if isinstance(item, (RootItem, ProjectItem)):
             return
 
         parent = item.parent()
+
         all_descendants = collections.defaultdict(dict)
         all_descendants[parent.id][item.id] = item
 
-        row = item.row()
-        self.beginRemoveRows(self.index_for_item(parent), row, row)
+        def _fill_children(_all_descendants, cur_item, parent_item=None):
+            if parent_item is not None:
+                _all_descendants[parent_item.id][cur_item.id] = cur_item
 
-        todo_queue = Queue()
-        todo_queue.put(item)
-        while not todo_queue.empty():
-            _item = todo_queue.get()
-            for row in range(_item.rowCount()):
-                child_item = _item.child(row)
-                all_descendants[_item.id][child_item.id] = child_item
-                todo_queue.put(child_item)
+            if isinstance(cur_item, TaskItem):
+                task_removed = True
+                cur_item.setData(None, task_removed, REMOVED_ROLE)
+                return task_removed
 
+            remove_item = cur_item.data(None, HIERARCHY_CHANGE_ABLE_ROLE)
+            for row in range(cur_item.rowCount()):
+                child_item = cur_item.child(row)
+                if not _fill_children(_all_descendants, child_item, cur_item):
+                    remove_item = False
+
+            if remove_item:
+                cur_item.setData(None, True, REMOVED_ROLE)
+            return remove_item
+
+        _fill_children(all_descendants, item)
+
+        modified_children = []
         while all_descendants:
             for parent_id in tuple(all_descendants.keys()):
                 children = all_descendants[parent_id]
@@ -438,18 +449,63 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                     all_descendants.pop(parent_id)
                     continue
 
+                parent_children = {}
+                all_without_children = True
                 for child_id in tuple(children.keys()):
-                    child_item = children[child_id]
                     if child_id in all_descendants:
+                        all_without_children = False
+                        break
+                    parent_children[child_id] = children[child_id]
+
+                if not all_without_children:
+                    continue
+
+                parent_item = self._items_by_id[parent_id]
+                row_ranges = []
+                start_row = end_row = None
+                chilren_by_row = {}
+                for row in range(parent_item.rowCount()):
+                    child_item = parent_item.child(row)
+                    child_id = child_item.id
+                    if child_id not in children:
                         continue
 
-                    if isinstance(child_item, AssetItem):
-                        self._rename_asset(child_item, None)
-                    children.pop(child_id)
-                    child_item.set_parent(None)
-                    self._items_by_id.pop(child_id)
+                    chilren_by_row[row] = child_item
+                    children.pop(child_item.id)
 
-        self.endRemoveRows()
+                    remove_item = child_item.data(None, REMOVED_ROLE)
+                    if not remove_item or not child_item.is_new:
+                        modified_children.append(child_item)
+                        if end_row is not None:
+                            row_ranges.append((start_row, end_row))
+                        start_row = end_row = None
+                        continue
+
+                    end_row = row
+                    if start_row is None:
+                        start_row = row
+
+                if end_row is not None:
+                    row_ranges.append((start_row, end_row))
+
+                parent_index = None
+                for start, end in row_ranges:
+                    if parent_index is None:
+                        parent_index = self.index_for_item(parent_item)
+
+                    self.beginRemoveRows(parent_index, start, end)
+
+                    for idx in range(start, end + 1):
+                        child_item = chilren_by_row[idx]
+                        child_item.set_parent(None)
+                        self._items_by_id.pop(child_item.id)
+
+                    self.endRemoveRows()
+
+        for item in modified_children:
+            s_index = self.index_for_item(item)
+            e_index = self.index_for_item(item, column=self.columns_len - 1)
+            self.dataChanged.emit(s_index, e_index, [QtCore.Qt.BackgroundRole])
 
     def _rename_asset(self, asset_item, new_name):
         if not isinstance(asset_item, AssetItem):
