@@ -1317,6 +1317,7 @@ class TaskItem(BaseItem):
     }
 
     def __init__(self, data=None):
+        self._origin_data = copy.deepcopy(data)
         self._removed = False
         if data is None:
             data = {}
