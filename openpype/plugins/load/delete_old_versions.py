@@ -22,6 +22,7 @@ class DeleteOldVersions(api.SubsetLoader):
 
     representations = ["*"]
     families = ["*"]
+    tool_names = ["library_loader"]
 
     label = "Delete Old Versions"
     order = 35
@@ -436,6 +437,7 @@ class CalculateOldVersions(DeleteOldVersions):
     """Calculate file size of old versions"""
     label = "Calculate Old Versions"
     order = 30
+    tool_names = ["library_loader"]
 
     options = [
         qargparse.Integer(

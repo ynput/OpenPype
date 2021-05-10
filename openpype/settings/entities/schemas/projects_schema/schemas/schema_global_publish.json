@@ -16,6 +16,17 @@
                     "type": "boolean",
                     "key": "enabled",
                     "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
                 }
             ]
         },

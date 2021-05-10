@@ -1,7 +1,18 @@
 {
     "publish": {
         "IntegrateHeroVersion": {
-            "enabled": true
+            "enabled": true,
+            "optional": true,
+            "families": [
+                "model",
+                "rig",
+                "look",
+                "pointcache",
+                "animation",
+                "setdress",
+                "layout",
+                "mayaAscii"
+            ]
         },
         "ExtractJpegEXR": {
             "enabled": true,
