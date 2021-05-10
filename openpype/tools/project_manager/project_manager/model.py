@@ -1130,6 +1130,7 @@ class AssetItem(BaseItem):
         self.mongo_id = asset_doc.get("_id")
         self._project_id = None
         self._hierarchy_changes_enabled = True
+        self._removed = False
 
         self._origin_asset_doc = copy.deepcopy(asset_doc)
 
@@ -1256,6 +1257,9 @@ class AssetItem(BaseItem):
         if role == HIERARCHY_CHANGE_ABLE_ROLE:
             return self._hierarchy_changes_enabled
 
+        if role == REMOVED_ROLE:
+            return self._removed
+
         if role == QtCore.Qt.ToolTipRole and self._is_duplicated:
             return "Asset with name \"{}\" already exists.".format(
                 self._data["name"]
@@ -1263,6 +1267,10 @@ class AssetItem(BaseItem):
         return super(AssetItem, self)._global_data(role)
 
     def setData(self, key, value, role):
+        if role == REMOVED_ROLE:
+            self._removed = value
+            return True
+
         if role == HIERARCHY_CHANGE_ABLE_ROLE:
             if self._hierarchy_changes_enabled == value:
                 return False
@@ -1297,6 +1305,7 @@ class TaskItem(BaseItem):
     }
 
     def __init__(self, data=None):
+        self._removed = False
         if data is None:
             data = {}
         super(TaskItem, self).__init__(data)
@@ -1315,6 +1324,9 @@ class TaskItem(BaseItem):
         raise AssertionError("BUG: Can't add children to Task")
 
     def _global_data(self, role):
+        if role == REMOVED_ROLE:
+            return self._removed
+
         if role == QtCore.Qt.ToolTipRole and self._is_duplicated:
             return "Duplicated Task name \"{}\".".format(
                 self._data["name"]
@@ -1336,3 +1348,9 @@ class TaskItem(BaseItem):
         ):
             return self._data[key] or self._data["type"] or "< Select Type >"
         return super(TaskItem, self).data(key, role)
+
+    def setData(self, key, value, role):
+        if role == REMOVED_ROLE:
+            self._removed = value
+            return True
+        return super(TaskItem, self).setData(key, value, role)
