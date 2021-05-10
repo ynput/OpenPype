@@ -72,6 +72,52 @@
                 }
             ]
         },
+
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateRenderSettings",
+            "label": "ValidateRenderSettings",
+            "children": [
+                {
+                    "type": "dict-modifiable",
+                    "key": "arnold_render_attributes",
+                    "label": "Arnold Render Attributes",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "text"
+                    }
+                },
+                {
+                    "type": "dict-modifiable",
+                    "key": "vray_render_attributes",
+                    "label": "Vray Render Attributes",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "text"
+                    }
+                },
+                {
+                    "type": "dict-modifiable",
+                    "key": "redshift_render_attributes",
+                    "label": "Redshift Render Attributes",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "text"
+                    }
+                },
+                {
+                    "type": "dict-modifiable",
+                    "key": "renderman_render_attributes",
+                    "label": "Renderman Render Attributes",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "text"
+                    }
+                }
+            ]
+        },
+
         {
             "type": "collapsible-wrap",
             "label": "Model",
