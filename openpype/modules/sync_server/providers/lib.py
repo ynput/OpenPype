@@ -91,5 +91,5 @@ factory = ProviderFactory()
 # there is implementing 'GDriveHandler' class
 # 7 denotes number of files that could be synced in single loop - learned by
 # trial and error
-factory.register_provider('gdrive', GDriveHandler, 7)
-factory.register_provider('local_drive', LocalDriveHandler, 50)
+factory.register_provider(GDriveHandler.CODE, GDriveHandler, 7)
+factory.register_provider(LocalDriveHandler.CODE, LocalDriveHandler, 50)

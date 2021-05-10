@@ -7,6 +7,8 @@ log = Logger().get_logger("SyncServer")
 
 @six.add_metaclass(abc.ABCMeta)
 class AbstractProvider:
+    CODE = ''
+    LABEL = ''
 
     def __init__(self, project_name, site_name, tree=None, presets=None):
         self.presets = None
@@ -24,6 +26,38 @@ class AbstractProvider:
         Returns:
             (boolean)
         """
+
+    @abc.abstractmethod
+    def set_editable_properties(self):
+        """
+            Sets dictionary of editable properties with scopes.
+
+            Example:
+                { 'credentials_url': {'scopes': [utils.EditableScopes.SYSTEM],
+                                      'type': 'text'}}
+        """
+
+    @abc.abstractmethod
+    def get_editable_properties(self, scopes):
+        """
+            Returns filtered list of editable properties
+
+            Args:
+                scopes (list) of utils.EditableScopes (optional - filter on)
+
+            Returns:
+                (dict)
+        """
+        if not scopes:
+            return self._editable_properties
+
+        editable = {}
+        for scope in scopes:
+            for key, properties in self._editable_properties.items():
+                if scope in properties['scope']:
+                    editable[key] = properties
+
+        return editable
 
     @abc.abstractmethod
     def upload_file(self, source_path, path,

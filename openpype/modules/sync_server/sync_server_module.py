@@ -340,18 +340,6 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return self._get_enabled_sites_from_settings(sync_settings)
 
-    def get_configurable_items_for_site(self, project_name, site_name):
-        """
-            Returns list of items that should be configurable by User
-
-            Returns:
-                (list of dict)
-                [{key:"root", label:"root", value:"valueFromSettings"}]
-        """
-        # if project_name is None: ..for get_default_project_settings
-        # return handler.get_configurable_items()
-        pass
-
     def get_active_site(self, project_name):
         """
             Returns active (mine) site for 'project_name' from settings
@@ -401,6 +389,32 @@ class SyncServerModule(PypeModule, ITrayModule):
             return get_local_site_id()
 
         return remote_site
+
+    def get_configurable_items(self):
+        pass
+
+    def get_configurable_items_for_site(self, project_name, site_name):
+        """
+            Returns list of items that should be configurable by User
+
+            Returns:
+                (list of dict)
+                [{key:"root", label:"root", value:"valueFromSettings"}]
+        """
+        # sites = set(self.get_active_sites(project_name),
+        #             self.get_remote_sites(project_name))
+        # for site in sites:
+        #     if site_name
+
+    def _get_configurable_items_for_project(self, project_name):
+        from .providers import lib
+        sites = set(self.get_active_sites(project_name),
+                    self.get_remote_sites(project_name))
+        editable = {}
+        for site in sites:
+            provider_name = self.get_provider_for_site(project_name, site)
+
+
 
     def reset_timer(self):
         """

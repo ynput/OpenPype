@@ -7,21 +7,36 @@ import time
 from openpype.api import Logger, Anatomy
 from .abstract_provider import AbstractProvider
 
+from ..utils import EditableScopes
+
 log = Logger().get_logger("SyncServer")
 
 
 class LocalDriveHandler(AbstractProvider):
+    CODE = 'local_drive'
+    LABEL = 'Local drive'
+
     """ Handles required operations on mounted disks with OS """
     def __init__(self, project_name, site_name, tree=None, presets=None):
         self.presets = None
         self.active = False
         self.project_name = project_name
         self.site_name = site_name
+        self._editable_properties = {}
 
         self.active = self.is_active()
+        self.set_editable_properties()
 
     def is_active(self):
         return True
+
+    def set_editable_properties(self):
+        editable = {
+            'roots': {'scope': [EditableScopes.PROJECT,
+                                EditableScopes.LOCAL],
+                      'type': 'dict'}
+        }
+        self._editable_properties = editable
 
     def upload_file(self, source_path, target_path,
                     server, collection, file, representation, site,

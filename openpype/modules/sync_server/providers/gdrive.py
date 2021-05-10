@@ -7,7 +7,7 @@ from .abstract_provider import AbstractProvider
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 from openpype.api import Logger
 from openpype.api import get_system_settings
-from ..utils import time_function, ResumableError
+from ..utils import time_function, ResumableError, EditableScopes
 import time
 
 
@@ -42,15 +42,20 @@ class GDriveHandler(AbstractProvider):
             }
           }
     """
+    CODE = 'gdrive'
+    LABEL = 'Google Drive'
+
     FOLDER_STR = 'application/vnd.google-apps.folder'
     MY_DRIVE_STR = 'My Drive'  # name of root folder of regular Google drive
-    CHUNK_SIZE = 2097152  # must be divisible by 256!
+    CHUNK_SIZE = 2097152  # must be divisible by 256! used for upload chunks
 
     def __init__(self, project_name, site_name, tree=None, presets=None):
         self.presets = None
         self.active = False
         self.project_name = project_name
         self.site_name = site_name
+
+        self._editable_properties = {}
 
         self.presets = presets
         if not self.presets:
@@ -73,6 +78,7 @@ class GDriveHandler(AbstractProvider):
 
         self._tree = tree
         self.active = True
+        self.set_editable_properties()
 
     def is_active(self):
         """
@@ -81,6 +87,17 @@ class GDriveHandler(AbstractProvider):
             (boolean)
         """
         return self.active
+
+    def set_editable_properties(self):
+        editable = {
+            'credential_url': {'scope': [EditableScopes.PROJECT,
+                                         EditableScopes.LOCAL],
+                               'type': 'text'},
+
+            'roots': {'scope': [EditableScopes.PROJECT],
+                      'type': 'dict'}
+        }
+        self._editable_properties = editable
 
     def get_roots_config(self, anatomy=None):
         """
