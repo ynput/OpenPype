@@ -875,6 +875,9 @@ class BaseItem:
         if role == DUPLICATED_ROLE:
             return self._is_duplicated
 
+        if role == REMOVED_ROLE:
+            return False
+
         return self._None
 
     def data(self, key, role):
