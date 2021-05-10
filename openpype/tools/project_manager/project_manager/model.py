@@ -91,6 +91,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
     def __init__(self, dbcon, parent=None):
         super(HierarchyModel, self).__init__(parent)
+        # TODO Reset them on project change
         self._current_project = None
         self._root_item = None
         self._items_by_id = {}
@@ -275,7 +276,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             if section < self.columnCount():
                 return self.column_labels[section]
 
-        super(HierarchyModel, self).headerData(section, orientation, role)
+        return super(HierarchyModel, self).headerData(
+            section, orientation, role
+        )
 
     def flags(self, index):
         item = index.internalPointer()
@@ -283,7 +286,10 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         key = self.columns[column]
         return item.flags(key)
 
-    def parent(self, index):
+    def parent(self, index=None):
+        if not index.isValid():
+            return QtCore.QModelIndex()
+
         item = index.internalPointer()
         parent_item = item.parent()
 
