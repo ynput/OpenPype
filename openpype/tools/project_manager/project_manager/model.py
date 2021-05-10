@@ -497,6 +497,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                     for idx in range(start, end + 1):
                         child_item = chilren_by_row[idx]
+                        # Force name validation
+                        if isinstance(child_item, AssetItem):
+                            self._rename_asset(child_item, None)
                         child_item.set_parent(None)
                         self._items_by_id.pop(child_item.id)
 
