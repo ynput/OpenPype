@@ -194,7 +194,7 @@ def set_plugin_attributes_from_settings(
     # map plugin superclass to preset json. Currenly suppoted is load and
     # create (avalon.api.Loader and avalon.api.Creator)
     plugin_type = None
-    if superclass.__name__.split(".")[-1] == "Loader":
+    if superclass.__name__.split(".")[-1] in ("Loader", "SubsetLoader"):
         plugin_type = "load"
     elif superclass.__name__.split(".")[-1] == "Creator":
         plugin_type = "create"
