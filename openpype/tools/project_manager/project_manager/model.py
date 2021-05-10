@@ -5,7 +5,8 @@ from uuid import uuid4
 
 from .constants import (
     IDENTIFIER_ROLE,
-    DUPLICATED_ROLE
+    DUPLICATED_ROLE,
+    HIERARCHY_CHANGE_ABLE_ROLE
 )
 from pymongo import UpdateOne
 from avalon.vendor import qtawesome
