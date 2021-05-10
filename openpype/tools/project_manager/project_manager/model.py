@@ -844,12 +844,11 @@ class BaseItem:
             self._is_duplicated = value
             return True
 
-        if key not in self.columns:
-            return False
-
         if role == QtCore.Qt.EditRole:
-            self._data[key] = value
+            if key not in self.editable_columns:
+                return False
 
+            self._data[key] = value
             # must return true if successful
             return True
 
