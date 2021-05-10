@@ -253,8 +253,9 @@ class HierarchyView(QtWidgets.QTreeView):
         else:
             event.accept()
 
-    def _delete_item(self):
-        index = self.currentIndex()
+    def _delete_item(self, index=None):
+        if index is None:
+            index = self.currentIndex()
         self._source_model.remove_index(index)
 
     def _on_ctrl_shift_enter_pressed(self):
@@ -294,6 +295,8 @@ class HierarchyView(QtWidgets.QTreeView):
         QtWidgets.QApplication.processEvents()
 
         new_index = self._source_model.add_new_asset(index)
+        if new_index is None:
+            return
 
         # Change current index
         self.setCurrentIndex(new_index)
