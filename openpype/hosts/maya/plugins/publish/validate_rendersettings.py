@@ -60,6 +60,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'renderman': '<layer>_<aov>.<f4>.<ext>'
     }
 
+    redshift_AOV_prefix = "<BeautyPath>/<BeautyFile>_<RenderPass>"
+
     # WARNING: There is bug? in renderman, translating <scene> token
     # to something left behind mayas default image prefix. So instead
     # `SceneName_v01` it translates to:
@@ -138,15 +140,41 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 invalid = False
                 cls.log.error("AOV separator is not set correctly.")
 
-        elif renderer == "redshift":
+        if renderer == "redshift":
             if re.search(cls.R_AOV_TOKEN, prefix):
                 invalid = True
-                cls.log.error("Do not use AOV token [ {} ] - "
-                              "Redshift automatically append AOV name and "
-                              "it doesn't make much sense with "
-                              "Multipart EXR".format(prefix))
+                cls.log.error(("Do not use AOV token [ {} ] - "
+                               "Redshift is using image prefixes per AOV so "
+                               "it doesn't make much sense using it in global"
+                               "image prefix").format(prefix))
+            # get redshift AOVs
+            rs_aovs = cmds.ls(type="RedshiftAOV", referencedNodes=False)
+            for aov in rs_aovs:
+                aov_prefix = cmds.getAttr("{}.filePrefix".format(aov))
+                # check their image prefix
+                if aov_prefix != cls.redshift_AOV_prefix:
+                    cls.log.error(("AOV ({}) image prefix is not set "
+                                   "correctly {} != {}").format(
+                        cmds.getAttr("{}.name".format(aov)),
+                        cmds.getAttr("{}.filePrefix".format(aov)),
+                        aov_prefix
+                    ))
+                    invalid = True
+                # get aov format
+                aov_ext = cmds.getAttr(
+                    "{}.fileFormat".format(aov), asString=True)
 
-        elif renderer == "renderman":
+                default_ext = cmds.getAttr(
+                    "redshiftOptions.imageFormat", asString=True)
+
+                if default_ext != aov_ext:
+                    cls.log.error(("AOV file format is not the same "
+                                   "as the one set globally "
+                                   "{} != {}").format(default_ext,
+                                                      aov_ext))
+                    invalid = True
+
+        if renderer == "renderman":
             file_prefix = cmds.getAttr("rmanGlobals.imageFileFormat")
             dir_prefix = cmds.getAttr("rmanGlobals.imageOutputDir")
 
@@ -159,7 +187,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 cls.log.error("Wrong directory prefix [ {} ]".format(
                     dir_prefix))
 
-        else:
+        if renderer == "arnold":
             multipart = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
             if multipart:
                 if re.search(cls.R_AOV_TOKEN, prefix):
@@ -225,9 +253,22 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     node = cmds.createNode("VRaySettingsNode")
                 else:
                     node = vray_settings[0]
-                    
+
                 cmds.setAttr(
                     "{}.fileNameRenderElementSeparator".format(
                         node),
                     "_"
                 )
+
+            if renderer == "redshift":
+                # get redshift AOVs
+                rs_aovs = cmds.ls(type="RedshiftAOV", referencedNodes=False)
+                for aov in rs_aovs:
+                    # fix AOV prefixes
+                    cmds.setAttr(
+                        "{}.filePrefix".format(aov), cls.redshift_AOV_prefix)
+                    # fix AOV file format
+                    default_ext = cmds.getAttr(
+                        "redshiftOptions.imageFormat", asString=True)
+                    cmds.setAttr(
+                        "{}.fileFormat".format(aov), default_ext)

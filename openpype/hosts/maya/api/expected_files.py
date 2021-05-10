@@ -184,7 +184,7 @@ class AExpectedFiles:
             (str): sanitized camera name
 
         Example:
-            >>> sanizite_camera_name('test:camera_01')
+            >>> AExpectedFiles.sanizite_camera_name('test:camera_01')
             test_camera_01
 
         """
@@ -230,7 +230,7 @@ class AExpectedFiles:
         if self.layer.startswith("rs_"):
             layer_name = self.layer[3:]
 
-        scene_data = {
+        return {
             "frameStart": int(self.get_render_attribute("startFrame")),
             "frameEnd": int(self.get_render_attribute("endFrame")),
             "frameStep": int(self.get_render_attribute("byFrameStep")),
@@ -245,7 +245,6 @@ class AExpectedFiles:
             "filePrefix": file_prefix,
             "enabledAOVs": self.get_aovs(),
         }
-        return scene_data
 
     def _generate_single_file_sequence(
             self, layer_data, force_aov_name=None):
@@ -685,8 +684,6 @@ class ExpectedFilesRedshift(AExpectedFiles):
     """Expected files for Redshift renderer.
 
     Attributes:
-        ext_mapping (list): Mapping redshift extension dropdown values
-            to strings.
 
         unmerged_aovs (list): Name of aovs that are not merged into resulting
             exr and we need them specified in expectedFiles output.
@@ -694,8 +691,6 @@ class ExpectedFilesRedshift(AExpectedFiles):
     """
 
     unmerged_aovs = ["Cryptomatte"]
-
-    ext_mapping = ["iff", "exr", "tif", "png", "tga", "jpg"]
 
     def __init__(self, layer, render_instance):
         """Construtor."""
@@ -785,12 +780,10 @@ class ExpectedFilesRedshift(AExpectedFiles):
             # anyway.
             return enabled_aovs
 
-        default_ext = self.ext_mapping[
-            cmds.getAttr("redshiftOptions.imageFormat")
-        ]
+        default_ext = cmds.getAttr(
+            "redshiftOptions.imageFormat", asString=True)
         rs_aovs = cmds.ls(type="RedshiftAOV", referencedNodes=False)
 
-        # todo: find out how to detect multichannel exr for redshift
         for aov in rs_aovs:
             enabled = self.maya_is_true(cmds.getAttr("{}.enabled".format(aov)))
             for override in self.get_layer_overrides(
