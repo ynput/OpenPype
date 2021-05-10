@@ -366,6 +366,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if parent is None:
             parent = self._root_item
 
+        if parent.data(None, REMOVED_ROLE):
+            return []
+
         if start_row is None:
             start_row = parent.rowCount()
 
