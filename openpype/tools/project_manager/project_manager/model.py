@@ -804,7 +804,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                 to_process.put(item)
 
-                if item.asset_id is None:
+                if item.is_new:
                     insert_list.append(item)
                     continue
 
