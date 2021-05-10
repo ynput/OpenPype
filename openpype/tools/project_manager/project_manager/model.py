@@ -298,8 +298,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if not isinstance(parent, AssetItem):
             return None
 
-        data = {"name": "task"}
-        new_child = TaskItem(data)
+        new_child = TaskItem()
         return self.add_item(new_child, parent)
 
     def add_items(self, items, parent=None, start_row=None):
@@ -1199,6 +1198,11 @@ class TaskItem(BaseItem):
         "type"
     }
 
+    def __init__(self, data=None):
+        if data is None:
+            data = {}
+        super(TaskItem, self).__init__(data)
+
     @classmethod
     def name_icon(cls):
         if cls._name_icon is None:
@@ -1217,7 +1221,16 @@ class TaskItem(BaseItem):
 
     def to_doc_data(self):
         data = copy.deepcopy(self._data)
-        name = data.pop("name")
+        data.pop("name")
+        name = self.data("name", QtCore.Qt.DisplayRole)
         return {
             name: data
         }
+
+    def data(self, key, role):
+        if (
+            role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole)
+            and key == "name"
+        ):
+            return self._data[key] or self._data["type"] or "< Select Type >"
+        return super(TaskItem, self).data(key, role)
