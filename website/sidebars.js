@@ -83,7 +83,8 @@ module.exports = {
             type: "category",
             label: "Integrations",
             items: [
-                "admin_hosts_blender"
+                "admin_hosts_blender",
+                "admin_hosts_resolve"
             ],
         },
         {
