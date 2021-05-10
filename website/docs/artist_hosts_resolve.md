@@ -9,7 +9,7 @@ import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
 :::warning
-Before you will be able to start with OpenPype tools in Blackmagic DaVinci Resolve (BMDVR) installation of own Python 3.6 interpreter and PySide 2 has to be done. Follow [this](#installation-of-python-and-pyside) link for more information
+Before you are able to start with OpenPype tools in DaVinci Resolve, installation of its own Python 3.6 interpreter and PySide 2 has to be done. Go to [Installation of python and pyside](#installation-of-python-and-pyside) link for more information
 :::
 
 
@@ -25,9 +25,9 @@ Before you will be able to start with OpenPype tools in Blackmagic DaVinci Resol
 
 <div class="row markdown">
 
-## Creating Instances from timeline items
+## Creating Shots from timeline items
 
-Before any clip can be published with [Publisher](artist_tools.md#publisher) timeline items has to be marked with OpenPype specific marker with metadata. This way it is converted to publishable instance.
+Before a clip can be published with [Publisher](artist_tools.md#publisher) timeline item has to be marked with OpenPype metadata markers. This way it is converted to a publishable subset.
 
 Lets do it step by step.
 
@@ -36,10 +36,10 @@ Lets do it step by step.
 
 <div class="row markdown">
 
-### Color clips before opening Create
+### Color clips before opening Create menu
 
 
-Timeline video clips should be colored to `Chocolate` color for OpenPype to se it as selected for instance creation.
+Timeline video clips should be colored to `Chocolate` color for OpenPype to se it as selected for subset creation.
 
 
 <div class="col col--6 markdown">
@@ -57,7 +57,7 @@ Timeline video clips should be colored to `Chocolate` color for OpenPype to se i
 
 <div class="col col --6 markdown">
 
-To be able to work with dynamic subset name, which is based on track names it is recomended to rename those tracks to some logical names. Recomended names are as such `main`, `review`, `fg01` or `fg02`, also `bg`; or with nubers like `bg01`, atc. So for example clip is on track **element** and subset family is set to **plate** then the resulting subset name will be **plateElement**
+To be able to work with dynamic subset name, which is based on track names it is recommended to rename those tracks to what type of plates their clips represent. Commonly used ones are `main`, `review`, `fg01`, `fg02`, `bg`, `bg01`, etc. It is completely up to you but we recommend to always have at least `main` plate. For example if a clip is on track **element** and subset family is set to **plate** then the resulting subset name will be **plateElement**
 
 <br></br>
 </div>
@@ -65,31 +65,31 @@ To be able to work with dynamic subset name, which is based on track names it is
 <div class="col col--6 markdown">
 
 ![Create menu](assets/resolve_creator_subset_name.png)
-So the resulting *subset* metadata in created  **OpenPypeData** marker will by as such.
+The name of the resulting *subset* can be seen in the **OpenPypeData** marker.
 <br></br><br></br>
 </div>
 
 <div class="col col--6 markdown">
 
 ![Create menu](assets/resolve_remame_track_names.png)
-Single track setup where we are using only `main` and  `review` track names.
+Simple track setup where we are only using `main` and  `review` track names.
 
 </div>
 <div class="col col--6 markdown">
 
 ![Create menu](assets/resolve_create_vertical_rename_timeline.png)
-An example of used track names. The yellow frame is highlighting vertically alligned clips - which are going to be renamed and grouped togeter under one asset (shot) name, but the concept of vertical renaming will be explained later in [Vertical Synchronization of Subset Attributes](#vertical-synchronization-of-subset-attributes).
+An example of used track names. The yellow frame is highlighting vertically aligned clips - which are going to be renamed and grouped together under one asset (shot) name. The concept of vertical renaming will be explained later in [Vertical Synchronization of Subset Attributes](#vertical-synchronization-of-subset-attributes).
 
 </div>
 </div>
 
 
-### Open Create ...
+### Create menu...
 
 <div class="row markdown">
 <div class="col col--6 markdown">
 
-After all clips which are inteded to be converted to publishable instances are colored to `Chockolate` color then open OpenPype menu.
+After all clips which are intended to be converted to publishable instances are colored to `Chocolate` color, you can open OpenPype menu.
 
 </div>
 <div class="col col--6 markdown">
@@ -97,13 +97,17 @@ After all clips which are inteded to be converted to publishable instances are c
 ![Create menu](assets/resolve_menu_openpype.png)
 
 </div>
+
+</div>
+
+<div class="row markdown">
 <div class="col col--6 markdown">
 
-After the menu widget is opend (it can take while so be patient please :).
+After the menu widget is opened (it can take while so be patient please :).
 
-Hit `Create ...` and then set **Use selection** to active and select the family to **Create Publishable Clips**.
+Hit `Create ...` and then set **Use selection** to active and select the family to **Create Publishable Clips**. 
 
-The Subset name could stay as it is - it is not going to be used.
+The Subset name can stay as it is, it is not going to be used because each clip will generate it's own name.
 
 </div>
 <div class="col col--6 markdown">
@@ -111,13 +115,20 @@ The Subset name could stay as it is - it is not going to be used.
 ![Create menu](assets/resolve_create_clips.png)
 
 </div>
+</div>
+
+<div class="row markdown">
 <div class="col col--6 markdown">
 
-In the new window *OpenPype publish attributes creator* set Rename clips to active if you wish to use different names of assets (shots) in pipeline then the original clip names conformed from EDL/XML.
+The new windows that opens, let's you define various attributes for your future subsets and shots.
 
-The sequencial renaming attributes can be defined by **Count sequence from** for starting of sequencial numbering. Then **Stepping number** will define gaps in sequences.
+Set Rename clips to active if you wish to use different names of shots in pipeline then the original clip names conformed from EDL/XML.
 
-As you can see in *Shot Template Keywords* section in `{shot}` key the renaming shot template name can be defined here and number of hashes will effect padding of the number in sequence.
+**Count sequence from** - Start of the shot numbering if `#` is used in one of the keywords
+
+**Stepping number** - Sequential gaps in the numbering
+
+As you can see the in `{shot}` key within *Shot Template Keywords* section, you can use `#` symbol do define padding of the number in sequence and where it's going to be used.
 
 </div>
 <div class="col col--6 markdown">
@@ -125,9 +136,12 @@ As you can see in *Shot Template Keywords* section in `{shot}` key the renaming 
 ![Create menu](assets/resolve_create_renaming_clips.png)
 
 </div>
+</div>
+
+<div class="row markdown">
 <div class="col col--6 markdown">
 
-Notice the relationship of following sections. Keys from **Shot Template Keywords** sections will be used for formating of template strings in **Shot Hierarchy And Rename Settings** section.
+Notice the relationship of following sections. Keys from **Shot Template Keywords** sections will be used for formating of templates in **Shot Hierarchy And Rename Settings** section.
 
 **Shot parent hierarchy** will be forming parents of the asset (shot) *the hidden root for this is project folder*. So for example of this template we will get resulging string `shots/sq01`
 
@@ -147,21 +161,20 @@ Notice the relationship of following sections. Keys from **Shot Template Keyword
 
 ### Vertical synchronization of subset attributes
 
-<div class="row markdown">
-<div class="col--6 markdown">
+In case you are only working with two tracks on timeline where `main` track is going to be used as plates for compositors and `review` track holds mp4 clips for offlines and web preview. **Enable vertical sync** can be deactivated.
 
-In case you are only working with two track on timeline setup with `main` track which is going to be used as plates for compositors or other and `review` for publishing h264 mp4 clips with offlines and web preview. The **Enable vertical sync** can be deactivated.
-
-The multiple tracks scenario - as it had been mentioned [here](#rename-timeline-track-names) - is recomanded to activate **Enable vertical sync** and define the hero (driving) track to *main*
+In multiple tracks scenario - as mentioned [here](#rename-timeline-track-names) - it is recommended to activate **Enable vertical sync** and define the hero (driving) track to *main*. This will ensure that all of the clips on corresponding to the same shots will have the same publishing parameters.
 
 <br></br>
-</div>
+
+<div class="row markdown">
 
 <div class="col col--6 markdown">
 
 ![Create menu](assets/resolve_create_single_track_rename_hero_track.png)
 
 </div>
+
 <div class="col col--6 markdown">
 
 ![Create menu](assets/resolve_create_vertical_rename_creator_ui.png)
@@ -175,7 +188,7 @@ The multiple tracks scenario - as it had been mentioned [here](#rename-timeline-
 <div class="row markdown">
 <div class="col--6 markdown">
 
-Once all `Chocolate` colored clips has been colored to `Pink` color and in the middle of them had appeared marker it has been successfully converted publishing instances. Now we can start **Publisher** - button can be found on OpenPype menu.
+Once all `Chocolate` colored clips have gone through the [creator](#rcreate-menu), have been colored to `Pink` color and a marker has been created for each of them, it means they have been successfully converted to publishable clips. Now we can run **Publisher** - it's button can be found in the OpenPype menu.
 
 <br></br>
 </div>
@@ -193,9 +206,9 @@ Notice that the main track clips and review had been merged into one instance. A
 <div class="col --6 markdown">
 
 ![Create menu](assets/resolve_publish_instance_other_plateSubsets.png)
-Also notice how the subset (instance) name is formed form a *track* name and *subset familly* from previouse steps.
+Also notice how the subset name is formed form a *track* name and *subset family* from previous steps.
 
-Aslo important to notice the asset name in *OpenPypeData* at marker - the name is the same for all **Vertically renamed** shots as they have been grouped to gether. Unfortunatelly BMDVR is not allowing to rename clips so the only way to know is to se it in marker's metadata.
+Also important is to notice the asset name in *OpenPypeData* at marker - the name is the same for all **Vertically renamed** shots as they have been grouped together. Unfortunately Resolve is not allowing to rename the clips so the only way to know is to see it in marker's metadata.
 
 </div>
 </div>
@@ -204,7 +217,7 @@ Aslo important to notice the asset name in *OpenPypeData* at marker - the name i
 
 ## Installation of Python and PySide
 ### Installing Resolve's own python 3.6 interpreter.
-BMDVR uses a hardcoded method to look for the python executable path. All of tho following paths are defined automatically by Python msi installer. We are using Python 3.6.2.
+Resolve uses a hardcoded method to look for the python executable path. All of tho following paths are defined automatically by Python msi installer. We are using Python 3.6.2.
 
 <Tabs
   groupId="platforms"
