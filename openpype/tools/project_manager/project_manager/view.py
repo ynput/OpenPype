@@ -274,10 +274,14 @@ class HierarchyView(QtWidgets.QTreeView):
         self.setState(HierarchyView.NoState)
         QtWidgets.QApplication.processEvents()
 
+        # TODO change hardcoded column index to coded
+        task_type_index = self._source_model.index(
+            new_index.row(), 1, new_index.parent()
+        )
         # Change current index
-        self.setCurrentIndex(new_index)
+        self.setCurrentIndex(task_type_index)
         # Start editing
-        self.edit(new_index)
+        self.edit(task_type_index)
 
     def _on_shift_enter_pressed(self):
         index = self.currentIndex()
