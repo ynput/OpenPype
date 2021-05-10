@@ -257,11 +257,16 @@ class HierarchyView(QtWidgets.QTreeView):
         self._source_model.remove_index(index)
 
     def _on_ctrl_shift_enter_pressed(self):
-        index = self.currentIndex()
-        if not index.isValid():
+        self._add_task()
+
+    def _add_task(self, parent_index=None):
+        if parent_index is None:
+            parent_index = self.currentIndex()
+
+        if not parent_index.isValid():
             return
 
-        new_index = self._source_model.add_new_task(index)
+        new_index = self._source_model.add_new_task(parent_index)
         if new_index is None:
             return
 
