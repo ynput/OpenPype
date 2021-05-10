@@ -1266,6 +1266,12 @@ class AssetItem(BaseItem):
             )
         return super(AssetItem, self)._global_data(role)
 
+    def data(self, key, role):
+        if self._removed and role == QtCore.Qt.BackgroundRole:
+            return QtGui.QColor(255, 0, 0, 127)
+
+        return super(AssetItem, self).data(key, role)
+
     def setData(self, key, value, role):
         if role == REMOVED_ROLE:
             self._removed = value
@@ -1342,6 +1348,9 @@ class TaskItem(BaseItem):
         }
 
     def data(self, key, role):
+        if self._removed and role == QtCore.Qt.BackgroundRole:
+            return QtGui.QColor(255, 0, 0, 127)
+
         if (
             role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole)
             and key == "name"
