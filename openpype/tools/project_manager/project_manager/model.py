@@ -342,8 +342,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         new_child = AssetItem(asset_data)
 
         result = self.add_item(new_child, parent, new_row)
-
-        self._validate_asset_duplicity(name)
+        if result is not None:
+            self._validate_asset_duplicity(name)
 
         return result
 
@@ -398,7 +398,10 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return indexes
 
     def add_item(self, item, parent=None, row=None):
-        return self.add_items([item], parent, row)[0]
+        result = self.add_items([item], parent, row)
+        if result:
+            return result[0]
+        return None
 
     def remove_index(self, index):
         if not index.isValid():
