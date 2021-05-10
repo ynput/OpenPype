@@ -1332,8 +1332,11 @@ class AssetItem(BaseItem):
         return super(AssetItem, self)._global_data(role)
 
     def data(self, key, role):
-        if self._removed and role == QtCore.Qt.BackgroundRole:
-            return QtGui.QColor(255, 0, 0, 127)
+        if role == QtCore.Qt.BackgroundRole:
+            if self._removed:
+                return QtGui.QColor(255, 0, 0, 127)
+            elif self.is_new:
+                return QtGui.QColor(0, 255, 0, 127)
 
         return super(AssetItem, self).data(key, role)
 
@@ -1414,8 +1417,12 @@ class TaskItem(BaseItem):
         }
 
     def data(self, key, role):
-        if self._removed and role == QtCore.Qt.BackgroundRole:
-            return QtGui.QColor(255, 0, 0, 127)
+        if role == QtCore.Qt.BackgroundRole:
+            if self._removed:
+                return QtGui.QColor(255, 0, 0, 127)
+
+            elif self.is_new:
+                return QtGui.QColor(0, 255, 0, 127)
 
         if (
             role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole)
