@@ -78,6 +78,7 @@ class HierarchyView(QtWidgets.QTreeView):
         "tools_env": ToolsDef()
     }
     persistent_columns = [
+        "type",
         "frameStart",
         "frameEnd",
         "fps",
