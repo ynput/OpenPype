@@ -133,6 +133,36 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             asset_doc["_id"]: asset_doc
             for asset_doc in asset_docs
         }
+
+        # Prepare booleans if asset item can be modified (name or hierarchy)
+        # - the same must be applied to all it's parents
+        asset_ids = list(asset_docs_by_id.keys())
+        result = []
+        if asset_ids:
+            result = self.dbcon.database[project_name].aggregate([
+                {
+                    "$match": {
+                        "type": "subset",
+                        "parent": {"$in": asset_ids}
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$parent",
+                        "count": {"$sum": 1}
+                    }
+                }
+            ])
+
+        asset_modifiable = {
+            asset_id: True
+            for asset_id in asset_docs_by_id.keys()
+        }
+        for item in result:
+            asset_id = item["_id"]
+            count = item["count"]
+            asset_modifiable[asset_id] = count < 1
+
         asset_docs_by_parent_id = collections.defaultdict(list)
         for asset_doc in asset_docs_by_id.values():
             parent_id = asset_doc["data"]["visualParent"]
@@ -142,7 +172,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         appending_queue.put((None, project_item))
 
         asset_items_by_id = {}
-
+        non_modifiable_items = set()
         while not appending_queue.empty():
             parent_id, parent_item = appending_queue.get()
             if parent_id not in asset_docs_by_parent_id:
@@ -157,12 +187,35 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                 # Store item by id for task processing
                 asset_id = asset_doc["_id"]
+                if not asset_modifiable[asset_id]:
+                    non_modifiable_items.add(new_item.id)
+
                 asset_items_by_id[asset_id] = new_item
                 # Add item to appending queue
                 appending_queue.put((asset_id, new_item))
 
             self.add_items(new_items, parent_item)
 
+        # Handle Asset's that are not modifiable
+        # - pass the information to all it's parents
+        non_modifiable_queue = Queue()
+        for item_id in non_modifiable_items:
+            non_modifiable_queue.put(item_id)
+
+        while not non_modifiable_queue.empty():
+            item_id = non_modifiable_queue.get()
+            item = self._items_by_id[item_id]
+            item.setData(None, False, HIERARCHY_CHANGE_ABLE_ROLE)
+
+            parent = item.parent()
+            if (
+                isinstance(parent, AssetItem)
+                and parent.id not in non_modifiable_items
+            ):
+                non_modifiable_items.add(parent.id)
+                non_modifiable_queue.put(parent.id)
+
+        # Add task items
         for asset_id, asset_item in asset_items_by_id.items():
             asset_doc = asset_docs_by_id[asset_id]
             asset_tasks = asset_doc["data"]["tasks"]
