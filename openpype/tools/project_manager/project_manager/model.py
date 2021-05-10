@@ -1062,6 +1062,7 @@ class AssetItem(BaseItem):
             asset_doc = {}
         self.mongo_id = asset_doc.get("_id")
         self._project_id = None
+        self._hierarchy_changes_enabled = True
 
         self._origin_asset_doc = copy.deepcopy(asset_doc)
 
@@ -1181,11 +1182,37 @@ class AssetItem(BaseItem):
         return cls._name_icon
 
     def _global_data(self, role):
+        if role == HIERARCHY_CHANGE_ABLE_ROLE:
+            return self._hierarchy_changes_enabled
+
         if role == QtCore.Qt.ToolTipRole and self._is_duplicated:
             return "Asset with name \"{}\" already exists.".format(
                 self._data["name"]
             )
         return super(AssetItem, self)._global_data(role)
+
+    def setData(self, key, value, role):
+        if role == HIERARCHY_CHANGE_ABLE_ROLE:
+            if self._hierarchy_changes_enabled == value:
+                return False
+            self._hierarchy_changes_enabled = value
+            return True
+
+        if (
+            role == QtCore.Qt.EditRole
+            and key == "name"
+            and not self._hierarchy_changes_enabled
+        ):
+            return False
+        return super(AssetItem, self).setData(key, value, role)
+
+    def flags(self, key):
+        if key == "name":
+            flags = QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+            if self._hierarchy_changes_enabled:
+                flags |= QtCore.Qt.ItemIsEditable
+            return flags
+        return super(AssetItem, self).flags(key)
 
 
 class TaskItem(BaseItem):
