@@ -274,6 +274,9 @@ class SyncServerThread(threading.Thread):
                 self.module.set_sync_project_settings()  # clean cache
                 for collection, preset in self.module.sync_project_settings.\
                         items():
+                    if collection not in self.module.get_enabled_projects():
+                        continue
+
                     start_time = time.time()
                     local_site, remote_site = self._working_sites(collection)
                     if not all([local_site, remote_site]):
