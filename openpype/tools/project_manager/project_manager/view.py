@@ -289,7 +289,12 @@ class HierarchyView(QtWidgets.QTreeView):
         self.edit(task_type_index)
 
     def _on_shift_enter_pressed(self):
-        index = self.currentIndex()
+        self._add_asset()
+
+    def _add_asset(self, index=None):
+        if index is None:
+            index = self.currentIndex()
+
         if not index.isValid():
             return
 
