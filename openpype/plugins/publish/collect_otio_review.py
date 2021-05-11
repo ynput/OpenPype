@@ -4,7 +4,7 @@ Requires:
     context -> otioTimeline
 
 Optional:
-    otioClip.metadata -> masterLayer
+    instance -> reviewTrack
 
 Provides:
     instance -> otioReviewClips
@@ -26,12 +26,12 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # get basic variables
-        otio_review_clips = list()
+        otio_review_clips = []
         otio_timeline = instance.context.data["otioTimeline"]
         otio_clip = instance.data["otioClip"]
 
         # optionally get `reviewTrack`
-        review_track_name = otio_clip.metadata.get("reviewTrack")
+        review_track_name = instance.data.get("reviewTrack")
 
         # generate range in parent
         otio_tl_range = otio_clip.range_in_parent()

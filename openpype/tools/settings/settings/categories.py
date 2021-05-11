@@ -30,8 +30,6 @@ from openpype.settings.entities import (
 from openpype.settings import SaveWarningExc
 from .widgets import ProjectListWidget
 
-from . import lib
-
 from .base import GUIWidget
 from .list_item_widget import ListWidget
 from .list_strict_widget import ListStrictWidget

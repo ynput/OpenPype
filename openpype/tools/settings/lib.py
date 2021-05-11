@@ -1,3 +1,7 @@
+CHILD_OFFSET = 15
+BTN_FIXED_SIZE = 20
+
+
 def is_password_required():
     from openpype.settings import (
         get_system_settings,

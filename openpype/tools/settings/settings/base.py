@@ -1,5 +1,5 @@
 from Qt import QtWidgets, QtGui, QtCore
-from .lib import CHILD_OFFSET
+from openpype.tools.settings import CHILD_OFFSET
 from .widgets import ExpandingWidget
 
 

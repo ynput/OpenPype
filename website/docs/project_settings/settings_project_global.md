@@ -13,31 +13,44 @@ Project settings can have project specific values. Each new project is using stu
 Projects always use default project values unless they have [project override](../admin_settings#project-overrides) (orage colour). Any changes in default project may affect all existing projects.
 :::
 
+## Profile filters
+
+Many of the settings are using a concept of **Profile filters**
+
+You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a 
+profile with filters matching the current context the most, is used. 
+
+You can define profile without any filters and use it as **default**. 
+
+Only **one or none** profile will be returned per context.
+
+All context filters are lists which may contain strings or Regular expressions (RegEx).
+- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **`families`** - Main family of processed subset. `["plate", "model"]`
+- **`tasks`** - Currently processed task. `["modeling", "animation"]`
+
+:::important Filtering
+Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority that profile without filters.
+(Eg. order of when filter is added doesn't matter, only the precision of matching does.)
+:::
+
 ## Publish plugins
 
 Publish plugins used across all integrations.
 
+
 ### Extract Review
 Plugin responsible for automatic FFmpeg conversion to variety of formats.
 
-Extract review is using profile filtering to be able render different outputs for different situations.
+Extract review is using [profile filtering](#profile-filters) to be able render different outputs for different situations.
 
-**Profile filters**
-
-You can define multiple profiles for different contexts. Profile with filters matching the current context the most, is used. You can define profile without filters and use it as **default**. Only **one or none** profile will be processed per instance.
-
-All context filters are lists which may contain strings or Regular expressions (RegEx).
-- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
-- **`families`** - Main family of processed instance. `["plate", "model"]`
-
-:::important Filtering
-Filters are optional. In case when multiple profiles match current context, profile with higher number of matched filters has higher priority that profile without filters.
-:::
+Applicable context filters:
+ **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **`families`** - Main family of processed subset. `["plate", "model"]`
 
 ![global_extract_review_profiles](assets/global_extract_review_profiles.png)
 
 **Output Definitions**
-
 
 Profile may generate multiple outputs from a single input. Each output must define unique name and output extension (use the extension without a dot e.g. **mp4**). All other settings of output definition are optional.
 
@@ -67,3 +80,36 @@ Profile may generate multiple outputs from a single input. Each output must defi
 
     ![global_extract_review_letter_box_settings](assets/global_extract_review_letter_box_settings.png)
     ![global_extract_review_letter_box](assets/global_extract_review_letter_box.png)
+
+### IntegrateAssetNew
+
+Saves information for all published subsets into DB, published assets are available for other hosts, tools and tasks after.
+#### Template name profiles
+
+Allows to select [anatomy template](admin_settings_project_anatomy.md#templates) based on context of subset being published. 
+
+For example for `render` profile you might want to publish and store assets in different location (based on anatomy setting) then for `publish` profile.
+[Profile filtering](#profile-filters) is used to select between appropriate template for each context of published subsets.
+
+Applicable context filters:
+- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **`tasks`** - Current task. `["modeling", "animation"]`
+
+    ![global_integrate_new_template_name_profile](assets/global_integrate_new_template_name_profile.png)
+    
+(This image shows use case where `render` anatomy template is used for subsets of families ['review, 'render', 'prerender'], `publish` template is chosen for all other.)
+
+#### Subset grouping profiles
+
+Published subsets might be grouped together for cleaner and easier selection in **[Loader](artist_tools.md#subset-groups)**
+
+Group name is chosen with use of [profile filtering](#profile-filters)
+
+Applicable context filters:
+- **`families`** - Main family of processed subset. `["plate", "model"]`
+- **`hosts`** - Host from which publishing was triggered. `["maya", "nuke"]`
+- **`tasks`** - Current task. `["modeling", "animation"]`
+
+    ![global_integrate_new_template_name_profile](assets/global_integrate_new_subset_group.png)
+    
+(This image shows use case where only assets published from 'photoshop', for all families for all tasks should be marked as grouped with a capitalized name of Task where they are published from.)
