@@ -13,7 +13,19 @@ class NameTextEdit(QtWidgets.QLineEdit):
         self.textChanged.connect(self._on_text_change)
 
     def _on_text_change(self, text):
-        print(text)
+        if NAME_REGEX.match(text):
+            return
+
+        idx = self.cursorPosition()
+        before_text = text[0:idx]
+        after_text = text[idx:len(text)]
+        sub_regex = "[^{}]+".format(NAME_ALLOWED_SYMBOLS)
+        new_before_text = re.sub(sub_regex, "", before_text)
+        new_after_text = re.sub(sub_regex, "", after_text)
+        idx -= (len(before_text) - len(new_before_text))
+
+        self.setText(new_before_text + new_after_text)
+        self.setCursorPosition(idx)
 
 
 class FilterComboBox(QtWidgets.QComboBox):
