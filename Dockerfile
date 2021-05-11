@@ -53,6 +53,7 @@ RUN echo 'export PATH="$HOME/.pyenv/bin:$PATH"'>> $HOME/.bashrc \
 RUN source $HOME/.bashrc && pyenv install ${OPENPYPE_PYTHON_VERSION}
 
 COPY . /opt/openpype/
+RUN rm -rf /openpype/.poetry || echo "No Poetry installed yet."
 # USER root
 # RUN chown -R pype /opt/openpype
 RUN chmod +x /opt/openpype/tools/create_env.sh && chmod +x /opt/openpype/tools/build.sh
