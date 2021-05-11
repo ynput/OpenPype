@@ -1262,8 +1262,8 @@ class AssetItem(BaseItem):
         )
 
         doc = {
-            "name": self._data["name"],
-            "type": self._data["type"],
+            "name": self.data("name", QtCore.Qt.DisplayRole),
+            "type": self.data("type", QtCore.Qt.DisplayRole),
             "schema": schema_name,
             "data": doc_data,
             "parent": self.project_id
@@ -1271,10 +1271,11 @@ class AssetItem(BaseItem):
         if self.mongo_id:
             doc["_id"] = self.mongo_id
 
-        for key, value in self._data.items():
+        for key in self._data.keys():
             if key in doc:
                 continue
-            doc_data[key] = value
+            # Use `data` method to get inherited values
+            doc_data[key] = self.data(key, QtCore.Qt.DisplayRole)
 
         return doc
 
