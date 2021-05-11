@@ -280,7 +280,11 @@ class HierarchyView(QtWidgets.QTreeView):
             new_index.row(), 1, new_index.parent()
         )
         # Change current index
-        self.setCurrentIndex(task_type_index)
+        self.selectionModel().setCurrentIndex(
+            task_type_index,
+            QtCore.QItemSelectionModel.Clear
+            | QtCore.QItemSelectionModel.Select
+        )
         # Start editing
         self.edit(task_type_index)
 
@@ -298,7 +302,11 @@ class HierarchyView(QtWidgets.QTreeView):
             return
 
         # Change current index
-        self.setCurrentIndex(new_index)
+        self.selectionModel().setCurrentIndex(
+            new_index,
+            QtCore.QItemSelectionModel.Clear
+            | QtCore.QItemSelectionModel.Select
+        )
         # Start editing
         self.edit(new_index)
 
