@@ -1,5 +1,6 @@
 from Qt import QtWidgets, QtCore
 
+from .widgets import FilterComboBox
 from .multiselection_combobox import MultiSelectionComboBox
 
 
@@ -50,7 +51,7 @@ class TypeDelegate(QtWidgets.QStyledItemDelegate):
         super(TypeDelegate, self).__init__(*args, **kwargs)
 
     def createEditor(self, parent, option, index):
-        editor = QtWidgets.QComboBox(parent)
+        editor = FilterComboBox(parent)
         if not self._project_doc_cache.project_doc:
             return editor
 
@@ -58,6 +59,12 @@ class TypeDelegate(QtWidgets.QStyledItemDelegate):
         editor.addItems(list(task_type_defs.keys()))
 
         return editor
+
+    def setEditorData(self, editor, index):
+        value = index.data(QtCore.Qt.EditRole)
+        index = editor.findText(value)
+        if index >= 0:
+            editor.setCurrentIndex(index)
 
 
 class ToolsDelegate(QtWidgets.QStyledItemDelegate):
