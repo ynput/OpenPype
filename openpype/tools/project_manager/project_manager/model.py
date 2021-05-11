@@ -843,6 +843,15 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self.endResetModel()
 
     def save(self):
+        all_valid = True
+        for item in self._items_by_id.values():
+            if not item.is_valid:
+                all_valid = False
+                break
+
+        if not all_valid:
+            return
+
         project_item = None
         for _project_item in self._root_item.children():
             project_item = _project_item
@@ -918,6 +927,10 @@ class BaseItem:
     @classmethod
     def name_icon(cls):
         return cls._name_icon
+
+    @property
+    def is_valid(self):
+        return not self._is_duplicated
 
     def model(self):
         return self._parent.model
