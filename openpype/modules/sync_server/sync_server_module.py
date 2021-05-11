@@ -9,10 +9,12 @@ from .. import PypeModule, ITrayModule
 from openpype.api import (
     Anatomy,
     get_project_settings,
+    get_system_settings,
     get_local_site_id)
 from openpype.lib import PypeLogger
 
 from .providers.local_drive import LocalDriveHandler
+from .providers import lib
 
 from .utils import time_function, SyncStatus
 
@@ -390,31 +392,99 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return remote_site
 
-    def get_configurable_items(self):
-        pass
-
-    def get_configurable_items_for_site(self, project_name, site_name):
+    def get_configurable_items(self, scope=None):
         """
-            Returns list of items that should be configurable by User
+            Returns list of items that could be configurable for all projects.
+
+            Could be filtered by 'scope' argument (list)
+
+            Args:
+                scope (list of utils.EditableScope) (optional)
 
             Returns:
-                (list of dict)
-                [{key:"root", label:"root", value:"valueFromSettings"}]
+                (dict of dict)
+                {projectA: {
+                    siteA : {
+                        key:"root", label:"root", value:"valueFromSettings"
+                    }
+                }
         """
-        # sites = set(self.get_active_sites(project_name),
-        #             self.get_remote_sites(project_name))
-        # for site in sites:
-        #     if site_name
-
-    def _get_configurable_items_for_project(self, project_name):
-        from .providers import lib
-        sites = set(self.get_active_sites(project_name),
-                    self.get_remote_sites(project_name))
         editable = {}
-        for site in sites:
-            provider_name = self.get_provider_for_site(project_name, site)
+        for project in self.connection.projects():
+            project_name = project["name"]
+            items = self.get_configurable_items_for_project(project_name,
+                                                            scope)
+            editable.update(items)
 
+        return editable
 
+    def get_configurable_items_for_project(self, project_name, scope=None):
+        """
+            Returns list of items that could be configurable for specific
+            'project_name'
+
+            Args:
+                project_name (str)
+                scope (list of utils.EditableScope) (optional)
+
+            Returns:
+                (dict of dict)
+                {projectA: {
+                    siteA : {
+                        key:"root", label:"root", value:"valueFromSettings"
+                    }
+                }
+        """
+        sites = set(self.get_active_sites(project_name)) | \
+            set(self.get_remote_sites(project_name))
+        editable = {}
+        for site_name in sites:
+            items = self.get_configurable_items_for_site(project_name,
+                                                         site_name,
+                                                         scope)
+            editable.update(items)
+
+        return editable
+
+    def get_configurable_items_for_site(self, project_name, site_name,
+                                        scope=None):
+        """
+            Returns list of items that could be configurable.
+
+            Args:
+                project_name (str)
+                site_name (str)
+                scope (list of utils.EditableScope) (optional)
+
+            Returns:
+                (dict of dict)
+                {projectA: {
+                    siteA : {
+                        key:"root", label:"root", value:"valueFromSettings"
+                    }
+                }
+        """
+        provider_name = self.get_provider_for_site(site=site_name)
+        items = lib.factory.get_provider_configurable_items(provider_name,
+                                                            scope)
+
+        if not scope:
+            return {project_name: {site_name: items}}
+
+        editable = {}
+        sync_s = self.get_sync_project_setting(project_name, True)
+        for scope in set([scope]):
+            for key, properties in items.items():
+                if scope in properties['scope']:
+                    val = sync_s.get("sites", {}).get(site_name, {}).get(key)
+                    editable = {
+                        "key": key,
+                        "value": val,
+                        "label": properties.get("label"),
+                        "type": properties.get("type"),
+                    }
+
+        return {project_name: {site_name: editable}}
 
     def reset_timer(self):
         """
@@ -432,7 +502,7 @@ class SyncServerModule(PypeModule, ITrayModule):
             for project in self.connection.projects():
                 project_name = project["name"]
                 project_settings = self.get_sync_project_setting(project_name)
-                if project_settings:
+                if project_settings and project_settings.get("enabled"):
                     enabled_projects.append(project_name)
 
         return enabled_projects
@@ -584,55 +654,60 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return self._sync_project_settings
 
-    def set_sync_project_settings(self):
+    def set_sync_project_settings(self, exclude_locals=False):
         """
             Set sync_project_settings for all projects (caching)
-
+            Args:
+                exclude_locals (bool): ignore overrides from Local Settings
             For performance
         """
         sync_project_settings = {}
 
+        # sites are now configured system wide
+        sys_sett = get_system_settings()
+        sync_sett = sys_sett["modules"].get("sync_server")
+        system_sites = {}
+        for site, detail in sync_sett.get("sites", {}).items():
+            system_sites[site] = detail
+
         for collection in self.connection.database.collection_names(False):
             sync_settings = self._parse_sync_settings_from_settings(
-                get_project_settings(collection))
-            if sync_settings:
-                default_sites = self._get_default_site_configs()
-                sync_settings['sites'].update(default_sites)
-                sync_project_settings[collection] = sync_settings
+                get_project_settings(collection,
+                                     exclude_locals=exclude_locals))
+
+            default_sites = self._get_default_site_configs()
+            sync_settings['sites'].update(default_sites)
+            sync_settings['sites'].update(system_sites)
+            sync_project_settings[collection] = sync_settings
 
         if not sync_project_settings:
             log.info("No enabled and configured projects for sync.")
 
         self._sync_project_settings = sync_project_settings
 
-    def get_sync_project_setting(self, project_name):
+    def get_sync_project_setting(self, project_name, exclude_locals=False):
         """ Handles pulling sync_server's settings for enabled 'project_name'
 
             Args:
                 project_name (str): used in project settings
+                exclude_locals (bool): ignore overrides from Local Settings
             Returns:
                 (dict): settings dictionary for the enabled project,
                     empty if no settings or sync is disabled
         """
         # presets set already, do not call again and again
         # self.log.debug("project preset {}".format(self.presets))
-        if self.sync_project_settings and \
-                self.sync_project_settings.get(project_name):
-            return self.sync_project_settings.get(project_name)
+        if not self.sync_project_settings or \
+               not self.sync_project_settings.get(project_name):
+            self.set_sync_project_settings(project_name, exclude_locals)
 
-        settings = get_project_settings(project_name)
-        return self._parse_sync_settings_from_settings(settings)
+        return self.sync_project_settings.get(project_name)
 
     def _parse_sync_settings_from_settings(self, settings):
         """ settings from api.get_project_settings, TOOD rename """
         sync_settings = settings.get("global").get("sync_server")
-        if not sync_settings:
-            log.info("No project setting not syncing.")
-            return {}
-        if sync_settings.get("enabled"):
-            return sync_settings
 
-        return {}
+        return sync_settings
 
     def _get_default_site_configs(self):
         """
@@ -643,16 +718,29 @@ class SyncServerModule(PypeModule, ITrayModule):
                      get_local_site_id(): default_config}
         return all_sites
 
-    def get_provider_for_site(self, project_name, site):
+    def get_provider_for_site(self, project_name=None, site=None):
         """
-            Return provider name for site.
+            Return provider name for site (unique name across all projects.
         """
-        site_preset = self.get_sync_project_setting(project_name)["sites"].\
-            get(site)
-        if site_preset:
-            return site_preset["provider"]
+        sites = {self.DEFAULT_SITE: "local_drive",
+                 self.LOCAL_SITE: "local_drive",
+                 get_local_site_id(): "local_drive"}
 
-        return "NA"
+        if site in sites.keys():
+            return sites[site]
+
+        if project_name:  # backward compatibility
+            proj_settings = self.get_sync_project_setting(project_name)
+            provider = proj_settings.get("sites", {}).get(site, {}).\
+                get("provider")
+            return provider
+
+        sys_sett = get_system_settings()
+        sync_sett = sys_sett["modules"].get("sync_server")
+        for site, detail in sync_sett.get("sites", {}).items():
+            sites[site] = detail.get("provider")
+
+        return sites.get(site, 'N/A')
 
     @time_function
     def get_sync_representations(self, collection, active_site, remote_site):
@@ -1130,7 +1218,7 @@ class SyncServerModule(PypeModule, ITrayModule):
                              format(site_name))
             return
 
-        provider_name = self.get_provider_for_site(collection, site_name)
+        provider_name = self.get_provider_for_site(site=site_name)
 
         if provider_name == 'local_drive':
             query = {

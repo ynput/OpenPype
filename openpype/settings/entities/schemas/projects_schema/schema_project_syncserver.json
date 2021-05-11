@@ -51,11 +51,6 @@
             "children": [
             {
                 "type": "text",
-                "key": "provider",
-                "label": "Provider"
-            },
-            {
-                "type": "text",
                 "key": "credentials_url",
                 "label": "Credentials url"
             },

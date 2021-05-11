@@ -65,6 +65,17 @@ class ProviderFactory:
         info = self._get_creator_info(provider)
         return info[1]
 
+    def get_provider_configurable_items(self, provider):
+        """
+            Returns dict of modifiable properties for 'provider'.
+
+            Provider contains information which its properties and on what
+            level could be override
+        """
+        provider_info = self._get_creator_info(provider)
+
+        return provider_info[0].get_configurable_items()
+
     def _get_creator_info(self, provider):
         """
             Collect all necessary info for provider. Currently only creator

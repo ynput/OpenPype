@@ -25,18 +25,25 @@ class LocalDriveHandler(AbstractProvider):
         self._editable_properties = {}
 
         self.active = self.is_active()
-        self.set_editable_properties()
 
     def is_active(self):
         return True
 
-    def set_editable_properties(self):
+    @classmethod
+    def get_configurable_items(cls):
+        """
+            Returns filtered dict of editable properties
+
+            Returns:
+                (dict)
+        """
         editable = {
-            'roots': {'scope': [EditableScopes.PROJECT,
-                                EditableScopes.LOCAL],
-                      'type': 'dict'}
+            'root': {'scope': [EditableScopes.PROJECT,
+                               EditableScopes.LOCAL],
+                     'label': "Roots",
+                     'type': 'dict'}
         }
-        self._editable_properties = editable
+        return editable
 
     def upload_file(self, source_path, target_path,
                     server, collection, file, representation, site,

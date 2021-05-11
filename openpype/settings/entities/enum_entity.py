@@ -231,21 +231,17 @@ class ProvidersEnum(BaseEnumEntity):
         self.placeholder = None
 
     def _get_enum_values(self):
-        # from openpype.modules.sync_server.providers import lib as lib_providers
-        #
-        # providers = lib_providers.factory.providers
-        #
-        # valid_keys = set()
-        # enum_items = []
-        # for provider_code, provider_info in providers.items():
-        #     provider, _ = provider_info
-        #     enum_items.append({provider_code: provider.LABEL})
-        #     valid_keys.add(provider_code)
+        from openpype.modules.sync_server.providers import lib as lib_providers
+
+        providers = lib_providers.factory.providers
+
         valid_keys = set()
-        enum_items = []
-        if not valid_keys:
-            enum_items.append({'': 'N/A'})
-            valid_keys.add('')
+        valid_keys.add('')
+        enum_items = [{'': 'Choose Provider'}]
+        for provider_code, provider_info in providers.items():
+            provider, _ = provider_info
+            enum_items.append({provider_code: provider.LABEL})
+            valid_keys.add(provider_code)
 
         return enum_items, valid_keys
 
@@ -259,7 +255,3 @@ class ProvidersEnum(BaseEnumEntity):
             self._current_value = value_on_not_set
 
         self.value_on_not_set = value_on_not_set
-
-
-# class ActiveSiteEnum
-# class RemoteSiteEnum

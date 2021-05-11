@@ -1,21 +1,31 @@
 from __future__ import print_function
 import os.path
-from googleapiclient.discovery import build
-import google.oauth2.service_account as service_account
-from googleapiclient import errors
-from .abstract_provider import AbstractProvider
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+import time
+import sys
+from setuptools.extern import six
+
 from openpype.api import Logger
 from openpype.api import get_system_settings
+from .abstract_provider import AbstractProvider
 from ..utils import time_function, ResumableError, EditableScopes
-import time
 
+log = Logger().get_logger("SyncServer")
+
+try:
+    from googleapiclient.discovery import build
+    import google.oauth2.service_account as service_account
+    from googleapiclient import errors
+    from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+except (ImportError, SyntaxError):
+    if six.PY3:
+        six.reraise(*sys.exc_info())
+
+    # handle imports from Python 2 hosts - in those only basic methods are used
+    log.warning("Import failed, imported from Python 2, operations will fail.")
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file',
           'https://www.googleapis.com/auth/drive.readonly']  # for write|delete
-
-log = Logger().get_logger("SyncServer")
 
 
 class GDriveHandler(AbstractProvider):
@@ -54,8 +64,7 @@ class GDriveHandler(AbstractProvider):
         self.active = False
         self.project_name = project_name
         self.site_name = site_name
-
-        self._editable_properties = {}
+        self.service = None
 
         self.presets = presets
         if not self.presets:
@@ -63,7 +72,7 @@ class GDriveHandler(AbstractProvider):
                      format(site_name))
             return
 
-        if not os.path.exists(self.presets["credentials_url"]):
+        if not os.path.exists(self.presets.get("credentials_url", "")):
             log.info("Sync Server: No credentials for Gdrive provider! ")
             return
 
@@ -78,7 +87,6 @@ class GDriveHandler(AbstractProvider):
 
         self._tree = tree
         self.active = True
-        self.set_editable_properties()
 
     def is_active(self):
         """
@@ -86,18 +94,29 @@ class GDriveHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.active
+        return self.service is not None
 
-    def set_editable_properties(self):
+    @classmethod
+    def get_configurable_items(cls):
+        """
+            Returns filtered dict of editable properties.
+
+
+            Returns:
+                (dict)
+        """
         editable = {
+            # credentials could be override on Project or User level
             'credential_url': {'scope': [EditableScopes.PROJECT,
                                          EditableScopes.LOCAL],
+                               'label': "Credentials url",
                                'type': 'text'},
-
-            'roots': {'scope': [EditableScopes.PROJECT],
-                      'type': 'dict'}
+            # roots could be override only on Project leve, User cannot
+            'root': {'scope': [EditableScopes.PROJECT],
+                     'label': "Roots",
+                     'type': 'dict'}
         }
-        self._editable_properties = editable
+        return editable
 
     def get_roots_config(self, anatomy=None):
         """
