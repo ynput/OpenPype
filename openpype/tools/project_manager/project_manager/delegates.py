@@ -7,6 +7,65 @@ from .widgets import (
 from .multiselection_combobox import MultiSelectionComboBox
 
 
+class ResizeEditorDelegate(QtWidgets.QStyledItemDelegate):
+    @staticmethod
+    def _q_smart_min_size(editor):
+        min_size_hint = editor.minimumSizeHint()
+        size_policy = editor.sizePolicy()
+        width = 0
+        height = 0
+        if size_policy.horizontalPolicy() != QtWidgets.QSizePolicy.Ignored:
+            if (
+                size_policy.horizontalPolicy()
+                & QtWidgets.QSizePolicy.ShrinkFlag
+            ):
+                width = min_size_hint.width()
+            else:
+                width = max(
+                    editor.sizeHint().width(),
+                    min_size_hint.width()
+                )
+
+        if size_policy.verticalPolicy() != QtWidgets.QSizePolicy.Ignored:
+            if size_policy.verticalPolicy() & QtWidgets.QSizePolicy.ShrinkFlag:
+                height = min_size_hint.height()
+            else:
+                height = max(
+                    editor.sizeHint().height(),
+                    min_size_hint.height()
+                )
+
+        output = QtCore.QSize(width, height).boundedTo(editor.maximumSize())
+        min_size = editor.minimumSize()
+        if min_size.width() > 0:
+            output.setWidth(min_size.width())
+        if min_size.height() > 0:
+            output.setHeight(min_size.height())
+
+        return output.expandedTo(QtCore.QSize(0, 0))
+
+    def updateEditorGeometry(self, editor, option, index):
+        self.initStyleOption(option, index)
+
+        option.showDecorationSelected = editor.style().styleHint(
+            QtWidgets.QStyle.SH_ItemView_ShowDecorationSelected, None, editor
+        )
+
+        widget = option.widget
+
+        style = widget.style() if widget else QtWidgets.QApplication.style()
+        geo = style.subElementRect(
+            QtWidgets.QStyle.SE_ItemViewItemText, option, widget
+        )
+        delta = self._q_smart_min_size(editor).width() - geo.width()
+        if delta > 0:
+            if editor.layoutDirection() == QtCore.Qt.RightToLeft:
+                geo.adjust(-delta, 0, 0, 0)
+            else:
+                geo.adjust(0, 0, delta, 0)
+        editor.setGeometry(geo)
+
+
 class NumberDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, minimum, maximum, decimals, *args, **kwargs):
         super(NumberDelegate, self).__init__(*args, **kwargs)
@@ -33,10 +92,6 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
                 print("Couldn't set invalid value \"{}\"".format(str(value)))
 
         return editor
-
-    # def updateEditorGeometry(self, editor, options, index):
-    #     print(editor)
-    #     return super().updateEditorGeometry(editor, options, index)
 
 
 class NameDelegate(QtWidgets.QStyledItemDelegate):
