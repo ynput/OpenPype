@@ -1194,12 +1194,17 @@ class AssetItem(BaseItem):
             asset_doc = {}
         self.mongo_id = asset_doc.get("_id")
         self._project_id = None
+
+        # Item data
         self._hierarchy_changes_enabled = True
         self._removed = False
 
+        # Task children duplication variables
         self._task_items_by_name = collections.defaultdict(list)
         self._task_name_by_item_id = {}
+        self._duplicated_task_names = set()
 
+        # Copy of original document
         self._origin_asset_doc = copy.deepcopy(asset_doc)
 
         data = self.data_from_doc(asset_doc)
@@ -1377,6 +1382,7 @@ class AssetItem(BaseItem):
         self._task_name_by_item_id[item_id] = name
         self._task_items_by_name[name].append(item)
         if len(self._task_items_by_name[name]) > 1:
+            self._duplicated_task_names.add(name)
             for _item in self._task_items_by_name[name]:
                 _item.setData(None, True, DUPLICATED_ROLE)
 
@@ -1390,6 +1396,7 @@ class AssetItem(BaseItem):
             self._task_items_by_name.pop(name)
 
         elif len(self._task_items_by_name[name]) == 1:
+            self._duplicated_task_names.remove(name)
             for _item in self._task_items_by_name[name]:
                 _item.setData(None, False, DUPLICATED_ROLE)
 
@@ -1406,12 +1413,14 @@ class AssetItem(BaseItem):
             self._task_items_by_name.pop(prev_name)
 
         elif len(self._task_items_by_name[prev_name]) == 1:
+            self._duplicated_task_names.remove(prev_name)
             for _item in self._task_items_by_name[prev_name]:
                 _item.setData(None, False, DUPLICATED_ROLE)
 
         # Add to new name mapping
         self._task_items_by_name[new_name].append(item)
         if len(self._task_items_by_name[new_name]) > 1:
+            self._duplicated_task_names.add(new_name)
             for _item in self._task_items_by_name[new_name]:
                 _item.setData(None, True, DUPLICATED_ROLE)
         else:
