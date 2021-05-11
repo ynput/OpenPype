@@ -67,7 +67,16 @@ RUN cd /opt/openpype \
     && pyenv local ${OPENPYPE_PYTHON_VERSION}
 
 RUN source $HOME/.bashrc \
+    cd /opt/openpype \
     && ./tools/create_env.sh
 
 RUN source $HOME/.bashrc \
+    cd /opt/openpype \
+    && ./tools/fetch_thirdparty_libs.sh
+
+RUN source $HOME/.bashrc \
+    cd /opt/openpype \
     && bash ./tools/build.sh
+
+RUN cd /opt/openpype \
+    rm -rf ./vendor/bin

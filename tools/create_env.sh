@@ -108,7 +108,7 @@ detect_python () {
 install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
   command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
-  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
   export PATH="$PATH:$HOME/.poetry/bin"
 }
 
