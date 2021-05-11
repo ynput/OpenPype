@@ -206,10 +206,10 @@ def _get_configured_sites_from_setting(module, project_name, project_setting):
     all_sites = module._get_default_site_configs()
     all_sites.update(project_setting.get("sites"))
     for site_name, config in all_sites.items():
-        handler = initiated_handlers. \
-            get((config["provider"], site_name))
+        provider = module.get_provider_for_site(site=site_name)
+        handler = initiated_handlers.get((provider, site_name))
         if not handler:
-            handler = lib.factory.get_provider(config["provider"],
+            handler = lib.factory.get_provider(provider,
                                                project_name,
                                                site_name,
                                                presets=config)
@@ -454,8 +454,9 @@ class SyncServerThread(threading.Thread):
                                                           remote_site))
             return None, None
 
-        if not all([site_is_working(self.module, collection, local_site),
-                    site_is_working(self.module, collection, remote_site)]):
+        configured_sites = _get_configured_sites(self.module, collection)
+        if not all([local_site in configured_sites,
+                    remote_site in configured_sites]):
             log.debug("Some of the sites {} - {} is not ".format(local_site,
                                                                  remote_site) +
                       "working properly")
