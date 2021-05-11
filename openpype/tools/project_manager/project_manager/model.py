@@ -1511,7 +1511,10 @@ class TaskItem(BaseItem):
 
         result = super(TaskItem, self).setData(key, value, role)
 
-        if key == "name":
+        if (
+            key == "name"
+            or (key == "type" and self._data["name"] is None)
+        ):
             self.parent().on_task_name_change(self)
 
         return result
