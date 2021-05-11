@@ -1,6 +1,17 @@
 from Qt import QtWidgets, QtCore
 
 
+class RegexTextEdit(QtWidgets.QLineEdit):
+    def __init__(self, regex, *args, **kwargs):
+        super(RegexTextEdit, self).__init__(*args, **kwargs)
+        self._regex = regex
+
+        self.textChanged.connect(self._on_text_change)
+
+    def _on_text_change(self, text):
+        print(text)
+
+
 class FilterComboBox(QtWidgets.QComboBox):
     def __init__(self, parent=None):
         super(FilterComboBox, self).__init__(parent)

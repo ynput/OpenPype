@@ -108,7 +108,7 @@ class HierarchyView(QtWidgets.QTreeView):
         column_key_to_index = {}
         for key, item_type in self.column_delegate_defs.items():
             if isinstance(item_type, StringDef):
-                delegate = StringDelegate()
+                delegate = StringDelegate(item_type.regex)
 
             elif isinstance(item_type, NumberDef):
                 delegate = NumberDelegate(
