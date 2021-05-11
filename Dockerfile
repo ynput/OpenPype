@@ -47,10 +47,9 @@ RUN curl https://pyenv.run | bash
 ENV PYTHON_CONFIGURE_OPTS --enable-shared
 
 RUN echo 'export PATH="$HOME/.pyenv/bin:$PATH"'>> $HOME/.bashrc \
-    && echo "alias pyhon3='python'" >> $HOME/.bashrc \
     && echo 'eval "$(pyenv init -)"' >> $HOME/.bashrc \
     && echo 'eval "$(pyenv virtualenv-init -)"' >> $HOME/.bashrc \
-    && echo -e "eval \"$(pyenv init --path)\"\n$(cat $HOME/.profile)" > $HOME/.profile
+    && echo 'eval "$(pyenv init --path)"' >> $HOME/.bashrc
 RUN source $HOME/.bashrc && pyenv install ${OPENPYPE_PYTHON_VERSION}
 
 COPY . /opt/openpype/
@@ -67,18 +66,12 @@ RUN cd /opt/openpype \
     && pyenv local ${OPENPYPE_PYTHON_VERSION}
 
 RUN source $HOME/.bashrc \
-    cd /opt/openpype \
-    && pyenv local ${OPENPYPE_PYTHON_VERSION} \
     && ./tools/create_env.sh
 
 RUN source $HOME/.bashrc \
-    cd /opt/openpype \
-    && pyenv local ${OPENPYPE_PYTHON_VERSION} \
     && ./tools/fetch_thirdparty_libs.sh
 
 RUN source $HOME/.bashrc \
-    cd /opt/openpype \
-    && pyenv local ${OPENPYPE_PYTHON_VERSION} \
     && bash ./tools/build.sh
 
 RUN cd /opt/openpype \
