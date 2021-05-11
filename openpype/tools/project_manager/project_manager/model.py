@@ -1461,7 +1461,7 @@ class AssetItem(BaseItem):
         if isinstance(item, TaskItem):
             self._remove_task(item)
 
-        super(AssetItem).remove_child(item)
+        super(AssetItem, self).remove_child(item)
 
 
 class TaskItem(BaseItem):
