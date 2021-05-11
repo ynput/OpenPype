@@ -73,7 +73,7 @@ detect_python () {
   local version_command
   version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
   local python_version
-  python_version="$(python3 <<< ${version_command})"
+  python_version="$(python <<< ${version_command})"
   oIFS="$IFS"
   IFS=.
   set -- $python_version
@@ -85,7 +85,7 @@ detect_python () {
       echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
     fi
   else
-    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
+    command -v python >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
   fi
 }
 
@@ -131,7 +131,7 @@ realpath () {
 install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
   command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
-  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
+  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 }
 
 # Main
@@ -146,7 +146,7 @@ main () {
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
   version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);"
-  openpype_version="$(python3 <<< ${version_command})"
+  openpype_version="$(python <<< ${version_command})"
 
   _inside_openpype_tool="1"
 
@@ -177,11 +177,11 @@ main () {
 
   echo -e "${BIGreen}>>>${RST} Building ..."
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    poetry run python3 "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+    poetry run python "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
   elif [[ "$OSTYPE" == "darwin"* ]]; then
-    poetry run python3 "$openpype_root/setup.py" bdist_mac > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+    poetry run python "$openpype_root/setup.py" bdist_mac > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
   fi
-  poetry run python3 "$openpype_root/tools/build_dependencies.py"
+  poetry run python "$openpype_root/tools/build_dependencies.py"
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # fix code signing issue

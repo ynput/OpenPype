@@ -5,6 +5,7 @@
 RST='\033[0m'             # Text Reset
 BIGreen='\033[1;92m'      # Green
 BIYellow='\033[1;93m'     # Yellow
+BIRed='\033[1;91m'        # Red
 
 ##############################################################################
 # Return absolute path
@@ -32,14 +33,28 @@ main () {
 
   echo -e "${BIGreen}>>>${RST} Running docker build ..."
   docker build -t pypeclub/openpype:$openpype_version .
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Docker build failed."
+    return 1
+  fi
 
   echo -e "${BIGreen}>>>${RST} Copying build from container ..."
   echo -e "${BIYellow}---${RST} Creating container from pypeclub/openpype:$openpype_version ..."
   id="$(docker create -ti pypeclub/openpype:$openpype_version bash)"
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Cannot create just built container."
+    return 1
+  fi
   echo -e "${BIYellow}---${RST} Copying ..."
   docker cp "$id:/opt/openpype/build/exe.linux-x86_64-3.7" "$openpype_root/build"
+  if [ $? -ne 0 ] ; then
+    echo -e "${BIRed}!!!${RST} Copying failed."
+    return 1
+  fi
   echo -e "${BIGreen}>>>${RST} All done, you can delete container:"
   echo -e "${BIYellow}$id${RST}"
 }
 
-main
+return_code=0
+main || return_code=$?
+exit $return_code

@@ -9,8 +9,13 @@ LABEL org.opencontainers.image.source="https://github.com/pypeclub/pype"
 
 USER root
 
-RUN yum -y update \
-	&& yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+# update base
+RUN yum -y install deltarpm \
+    && yum -y update \
+    && yum clean all
+
+# add tools we need
+RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
     && yum -y install centos-release-scl \
     && yum -y install \
         bash \
@@ -42,10 +47,11 @@ RUN curl https://pyenv.run | bash
 ENV PYTHON_CONFIGURE_OPTS --enable-shared
 
 RUN echo 'export PATH="$HOME/.pyenv/bin:$PATH"'>> $HOME/.bashrc \
+    && echo "alias pyhon3='python'" >> $HOME/.bashrc \
     && echo 'eval "$(pyenv init -)"' >> $HOME/.bashrc \
     && echo 'eval "$(pyenv virtualenv-init -)"' >> $HOME/.bashrc \
     && echo -e "eval \"$(pyenv init --path)\"\n$(cat $HOME/.profile)" > $HOME/.profile
-RUN cat $HOME/.bashrc && source $HOME/.bashrc && pyenv install ${OPENPYPE_PYTHON_VERSION}
+RUN source $HOME/.bashrc && pyenv install ${OPENPYPE_PYTHON_VERSION}
 
 COPY . /opt/openpype/
 # USER root
