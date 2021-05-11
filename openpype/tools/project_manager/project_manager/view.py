@@ -76,7 +76,7 @@ class HierarchyView(QtWidgets.QTreeView):
         "pixelAspect": NumberDef(0, decimals=2),
         "tools_env": ToolsDef()
     }
-    persistent_columns = [
+    persistent_columns = {
         "type",
         "frameStart",
         "frameEnd",
@@ -89,7 +89,7 @@ class HierarchyView(QtWidgets.QTreeView):
         "clipOut",
         "pixelAspect",
         "tools_env"
-    ]
+    }
 
     def __init__(self, dbcon, source_model, *args, **kwargs):
         super(HierarchyView, self).__init__(*args, **kwargs)

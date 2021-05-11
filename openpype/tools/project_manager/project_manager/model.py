@@ -52,8 +52,12 @@ class ProjectModel(QtGui.QStandardItemModel):
 
 
 class HierarchySelectionModel(QtCore.QItemSelectionModel):
+    def __init__(self, multiselection_columns, *args, **kwargs):
+        super(HierarchySelectionModel, self).__init__(*args, **kwargs)
+        self.multiselection_columns = multiselection_columns
+
     def setCurrentIndex(self, index, command):
-        if index.column() > 0:
+        if index.column() in self.multiselection_columns:
             if (
                 command & QtCore.QItemSelectionModel.Clear
                 and command & QtCore.QItemSelectionModel.Select
@@ -78,6 +82,19 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         ("pixelAspect", "Pixel aspect"),
         ("tools_env", "Tools")
     ]
+    multiselection_columns = {
+        "frameStart",
+        "frameEnd",
+        "fps",
+        "resolutionWidth",
+        "resolutionHeight",
+        "handleStart",
+        "handleEnd",
+        "clipIn",
+        "clipOut",
+        "pixelAspect",
+        "tools_env"
+    }
     columns = [
         item[0]
         for item in _columns_def
@@ -87,10 +104,17 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         idx: item[1]
         for idx, item in enumerate(_columns_def)
     }
+
     index_moved = QtCore.Signal(QtCore.QModelIndex)
 
     def __init__(self, dbcon, parent=None):
         super(HierarchyModel, self).__init__(parent)
+
+        self.multiselection_column_indexes = {
+            self.columns.index(key)
+            for key in self.multiselection_columns
+        }
+
         # TODO Reset them on project change
         self._current_project = None
         self._root_item = None

@@ -39,7 +39,9 @@ class Window(QtWidgets.QWidget):
         hierarchy_view = HierarchyView(dbcon, hierarchy_model, self)
         hierarchy_view.setModel(hierarchy_model)
 
-        _selection_model = HierarchySelectionModel()
+        _selection_model = HierarchySelectionModel(
+            hierarchy_model.multiselection_column_indexes
+        )
         _selection_model.setModel(hierarchy_view.model())
         hierarchy_view.setSelectionModel(_selection_model)
 
