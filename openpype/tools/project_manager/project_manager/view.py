@@ -2,7 +2,7 @@ from Qt import QtWidgets, QtCore
 
 from .delegates import (
     NumberDelegate,
-    StringDelegate,
+    NameDelegate,
     TypeDelegate,
     ToolsDelegate
 )
@@ -10,9 +10,8 @@ from .delegates import (
 from openpype.lib import ApplicationManager
 
 
-class StringDef:
-    def __init__(self, regex=None):
-        self.regex = regex
+class NameDef:
+    pass
 
 
 class NumberDef:
@@ -63,7 +62,7 @@ class ToolsCache:
 class HierarchyView(QtWidgets.QTreeView):
     """A tree view that deselects on clicking on an empty area in the view"""
     column_delegate_defs = {
-        "name": StringDef(),
+        "name": NameDef(),
         "type": TypeDef(),
         "frameStart": NumberDef(1),
         "frameEnd": NumberDef(1),
@@ -107,8 +106,8 @@ class HierarchyView(QtWidgets.QTreeView):
         column_delegates = {}
         column_key_to_index = {}
         for key, item_type in self.column_delegate_defs.items():
-            if isinstance(item_type, StringDef):
-                delegate = StringDelegate(item_type.regex)
+            if isinstance(item_type, NameDef):
+                delegate = NameDelegate()
 
             elif isinstance(item_type, NumberDef):
                 delegate = NumberDelegate(

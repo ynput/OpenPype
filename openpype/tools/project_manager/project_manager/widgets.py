@@ -1,10 +1,14 @@
+import re
+from .constants import (
+    NAME_ALLOWED_SYMBOLS,
+    NAME_REGEX
+)
 from Qt import QtWidgets, QtCore
 
 
-class RegexTextEdit(QtWidgets.QLineEdit):
-    def __init__(self, regex, *args, **kwargs):
-        super(RegexTextEdit, self).__init__(*args, **kwargs)
-        self._regex = regex
+class NameTextEdit(QtWidgets.QLineEdit):
+    def __init__(self, *args, **kwargs):
+        super(NameTextEdit, self).__init__(*args, **kwargs)
 
         self.textChanged.connect(self._on_text_change)
 

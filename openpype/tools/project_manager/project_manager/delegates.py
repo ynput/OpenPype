@@ -1,7 +1,7 @@
 from Qt import QtWidgets, QtCore
 
 from .widgets import (
-    RegexTextEdit,
+    NameTextEdit,
     FilterComboBox
 )
 from .multiselection_combobox import MultiSelectionComboBox
@@ -39,16 +39,9 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
     #     return super().updateEditorGeometry(editor, options, index)
 
 
-class StringDelegate(QtWidgets.QStyledItemDelegate):
-    def __init__(self, regex, *args, **kwargs):
-        super(StringDelegate, self).__init__(*args, **kwargs)
-        self._regex = regex
-
+class NameDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
-        if self._regex:
-            editor = RegexTextEdit(self._regex, parent)
-        else:
-            editor = QtWidgets.QLineEdit(parent)
+        editor = NameTextEdit(parent)
         value = index.data(QtCore.Qt.EditRole)
         if value is not None:
             editor.setText(str(value))
