@@ -1221,6 +1221,9 @@ class AssetItem(BaseItem):
         self._origin_asset_doc = copy.deepcopy(asset_doc)
 
         data = self.data_from_doc(asset_doc)
+
+        self._origin_data = copy.deepcopy(data)
+
         super(AssetItem, self).__init__(data)
 
     @property
@@ -1475,10 +1478,11 @@ class TaskItem(BaseItem):
     }
 
     def __init__(self, data=None):
-        self._origin_data = copy.deepcopy(data)
         self._removed = False
         if data is None:
             data = {}
+        self._origin_data = copy.deepcopy(data)
+
         super(TaskItem, self).__init__(data)
 
     @property
