@@ -1197,6 +1197,9 @@ class AssetItem(BaseItem):
         self._hierarchy_changes_enabled = True
         self._removed = False
 
+        self._task_items_by_name = collections.defaultdict(list)
+        self._task_name_by_item_id = {}
+
         self._origin_asset_doc = copy.deepcopy(asset_doc)
 
         data = self.data_from_doc(asset_doc)
@@ -1367,6 +1370,76 @@ class AssetItem(BaseItem):
             return flags
         return super(AssetItem, self).flags(key)
 
+    def _add_task(self, item):
+        name = item.data("name", QtCore.Qt.DisplayRole).lower()
+        item_id = item.data(None, IDENTIFIER_ROLE)
+
+        self._task_name_by_item_id[item_id] = name
+        self._task_items_by_name[name].append(item)
+        if len(self._task_items_by_name[name]) > 1:
+            for _item in self._task_items_by_name[name]:
+                _item.setData(None, True, DUPLICATED_ROLE)
+
+    def _remove_task(self, item):
+        item_id = item.data(None, IDENTIFIER_ROLE)
+        name = self._task_name_by_item_id[item_id]
+
+        self._task_name_by_item_id.pop(item_id)
+        self._task_items_by_name[name].append(item)
+        if not self._task_items_by_name[name]:
+            self._task_items_by_name.pop(name)
+
+        elif len(self._task_items_by_name[name]) == 1:
+            for _item in self._task_items_by_name[name]:
+                _item.setData(None, False, DUPLICATED_ROLE)
+
+    def _rename_task(self, item):
+        new_name = item.data("name", QtCore.Qt.DisplayRole).lower()
+        item_id = item.data(None, IDENTIFIER_ROLE)
+        prev_name = self._task_name_by_item_id[item_id]
+        if new_name == prev_name:
+            return
+
+        # Remove from previous name mapping
+        self._task_items_by_name[prev_name].remove(item)
+        if not self._task_items_by_name[prev_name]:
+            self._task_items_by_name.pop(prev_name)
+
+        elif len(self._task_items_by_name[prev_name]) == 1:
+            for _item in self._task_items_by_name[prev_name]:
+                _item.setData(None, False, DUPLICATED_ROLE)
+
+        # Add to new name mapping
+        self._task_items_by_name[new_name].append(item)
+        if len(self._task_items_by_name[new_name]) > 1:
+            for _item in self._task_items_by_name[new_name]:
+                _item.setData(None, True, DUPLICATED_ROLE)
+        else:
+            item.setData(None, False, DUPLICATED_ROLE)
+
+        self._task_name_by_item_id[item_id] = new_name
+
+    def on_task_name_change(self, task_item):
+        self._rename_task(task_item)
+
+    def add_child(self, item, row=None):
+        if item in self._children:
+            return
+
+        super(AssetItem, self).add_child(item, row)
+
+        if isinstance(item, TaskItem):
+            self._add_task(item)
+
+    def remove_child(self, item):
+        if item not in self._children:
+            return
+
+        if isinstance(item, TaskItem):
+            self._remove_task(item)
+
+        super(AssetItem).remove_child(item)
+
 
 class TaskItem(BaseItem):
     columns = {
@@ -1435,4 +1508,10 @@ class TaskItem(BaseItem):
         if role == REMOVED_ROLE:
             self._removed = value
             return True
-        return super(TaskItem, self).setData(key, value, role)
+
+        result = super(TaskItem, self).setData(key, value, role)
+
+        if key == "name":
+            self.parent().on_task_name_change(self)
+
+        return result
