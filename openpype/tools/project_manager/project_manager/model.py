@@ -1479,15 +1479,16 @@ class TaskItem(BaseItem):
 
     def __init__(self, data=None):
         self._removed = False
+        self._is_new = data is None
         if data is None:
             data = {}
-        self._origin_data = copy.deepcopy(data)
 
+        self._origin_data = copy.deepcopy(data)
         super(TaskItem, self).__init__(data)
 
     @property
     def is_new(self):
-        return self._origin_data is None
+        return self._is_new
 
     @classmethod
     def name_icon(cls):
