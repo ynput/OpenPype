@@ -435,6 +435,25 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
     def remove_indexes(self, indexes):
         items_by_id = {}
+        processed_ids = set()
+        for index in indexes:
+            if not index.isValid():
+                continue
+
+            item_id = index.data(IDENTIFIER_ROLE)
+            # There may be indexes for multiple columns
+            if item_id not in processed_ids:
+                processed_ids.add(item_id)
+
+                item = self._items_by_id[item_id]
+                if isinstance(item, (TaskItem, AssetItem)):
+                    items_by_id[item_id] = item
+
+        if not items_by_id:
+            return
+
+        for item in items_by_id.values():
+            self._remove_item(item)
 
     def _remove_item(self, item):
         is_removed = item.data(None, REMOVED_ROLE)
