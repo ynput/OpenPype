@@ -4,6 +4,7 @@ import time
 import sys
 from setuptools.extern import six
 import platform
+from json.decoder import JSONDecodeError
 
 from openpype.api import Logger
 from openpype.api import get_system_settings
@@ -77,7 +78,9 @@ class GDriveHandler(AbstractProvider):
         cred_path = self.presets.get("credentials_url", {}).\
             get(platform.system().lower()) or ''
         if not os.path.exists(cred_path):
-            log.info("Sync Server: No credentials for Gdrive provider! ")
+            msg = "Sync Server: No credentials for gdrive provider " + \
+                  "for '{}' on path '{}'!".format(site_name, cred_path)
+            log.info(msg)
             return
 
         self.service = self._get_gd_service(cred_path)
@@ -584,11 +587,18 @@ class GDriveHandler(AbstractProvider):
         Returns:
             None
         """
-        creds = service_account.Credentials.from_service_account_file(
-            credentials_path,
-            scopes=SCOPES)
-        service = build('drive', 'v3',
-                        credentials=creds, cache_discovery=False)
+        service = None
+        try:
+            creds = service_account.Credentials.from_service_account_file(
+                credentials_path,
+                scopes=SCOPES)
+            service = build('drive', 'v3',
+                            credentials=creds, cache_discovery=False)
+        except Exception:
+            log.error("Connection failed, " +
+                      "check '{}' credentials file".format(credentials_path),
+                      exc_info=True)
+
         return service
 
     def _prepare_root_info(self):
