@@ -464,7 +464,7 @@ class SyncServerModule(PypeModule, ITrayModule):
                     ]
                 }
         """
-        sites = self.get_all_sites()
+        sites = self.get_all_sites(project_name)
         editable = {}
         for site_name in sites.keys():
             items = self.get_configurable_items_for_site(project_name,
@@ -510,7 +510,8 @@ class SyncServerModule(PypeModule, ITrayModule):
         else:
             sync_s = get_default_project_settings(exclude_locals=True)
             sync_s = sync_s["global"]["sync_server"]
-            sync_s["sites"].update(self._get_default_site_configs())
+            sync_s["sites"].update(
+                self._get_default_site_configs(self.enabled))
 
         editable = []
         if type(scope) is not list:
@@ -746,7 +747,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return sync_settings
 
-    def _get_default_site_configs(self):
+    def _get_default_site_configs(self, sync_enabled=True):
         """
             Returns skeleton settings for 'studio' and user's local site
         """
@@ -758,13 +759,17 @@ class SyncServerModule(PypeModule, ITrayModule):
             'provider': 'local_drive',
             "root": roots
         }
-        all_sites = {self.DEFAULT_SITE: studio_config,
-                     get_local_site_id(): {'provider': 'local_drive'}}
+        all_sites = {self.DEFAULT_SITE: studio_config}
+        if sync_enabled:
+            all_sites[get_local_site_id()] = {'provider': 'local_drive'}
         return all_sites
 
-    def get_all_sites(self):
+    def get_all_sites(self, project_name=None):
         """
             Returns (dict) with all sites configured system wide.
+
+            Args:
+                project_name (str)(optional): if present, check if not disabled
 
             Returns:
                 (dict): {'studio': {'provider':'local_drive'...},
@@ -772,11 +777,18 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
         sys_sett = get_system_settings()
         sync_sett = sys_sett["modules"].get("sync_server")
-        system_sites = {}
-        for site, detail in sync_sett.get("sites", {}).items():
-            system_sites[site] = detail
 
-        system_sites.update(self._get_default_site_configs())
+        project_enabled = True
+        if project_name:
+            project_enabled = project_name in self.get_enabled_projects()
+        sync_enabled = sync_sett["enabled"] and project_enabled
+
+        system_sites = {}
+        if sync_enabled:
+            for site, detail in sync_sett.get("sites", {}).items():
+                system_sites[site] = detail
+
+        system_sites.update(self._get_default_site_configs(sync_enabled))
 
         return system_sites
 
