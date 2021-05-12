@@ -449,8 +449,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 _all_descendants[parent_item.id][cur_item.id] = cur_item
 
             if isinstance(cur_item, TaskItem):
+                was_removed = cur_item.data(None, REMOVED_ROLE)
                 task_removed = True
-                cur_item.setData(None, task_removed, REMOVED_ROLE)
+                if not was_removed and parent_item is not None:
+                    task_removed = parent_item.data(None, REMOVED_ROLE)
+                if not was_removed:
+                    cur_item.setData(None, task_removed, REMOVED_ROLE)
                 return task_removed
 
             remove_item = cur_item.data(None, HIERARCHY_CHANGE_ABLE_ROLE)
