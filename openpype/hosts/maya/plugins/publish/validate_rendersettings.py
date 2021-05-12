@@ -219,8 +219,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(  # noqa: E501
                 "{}_render_attributes".format(renderer))
         )
-        from pprint import pprint
-        pprint(validation_settings)
+
         # go through definitions and test if such node.attribute exists.
         # if so, compare its value from the one required.
         for attr, value in OrderedDict(validation_settings).items():
