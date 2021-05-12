@@ -2,7 +2,7 @@ from Qt import QtWidgets, QtCore
 
 from .base import InputWidget
 from .widgets import ExpandingWidget
-from .lib import (
+from openpype.tools.settings import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
 )

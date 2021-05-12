@@ -137,6 +137,11 @@ def frames_to_secons(frames, framerate):
     return _ot.to_seconds(rt)
 
 
+def frames_to_timecode(frames, framerate):
+    rt = _ot.from_frames(frames, framerate)
+    return _ot.to_timecode(rt)
+
+
 def make_sequence_collection(path, otio_range, metadata):
     """
     Make collection from path otio range and otio metadata.

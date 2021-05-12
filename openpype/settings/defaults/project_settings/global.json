@@ -1,13 +1,24 @@
 {
     "publish": {
         "IntegrateHeroVersion": {
-            "enabled": true
+            "enabled": true,
+            "optional": true,
+            "families": [
+                "model",
+                "rig",
+                "look",
+                "pointcache",
+                "animation",
+                "setdress",
+                "layout",
+                "mayaAscii"
+            ]
         },
         "ExtractJpegEXR": {
             "enabled": true,
             "ffmpeg_args": {
                 "input": [
-                    "-gamma 2.2"
+                    "-apply_trc gamma22"
                 ],
                 "output": []
             }
@@ -116,19 +127,30 @@
             ]
         },
         "IntegrateAssetNew": {
-            "template_name_profiles": {
-                "publish": {
+            "template_name_profiles": [
+                {
                     "families": [],
-                    "tasks": []
+                    "tasks": [],
+                    "template_name": "publish"
                 },
-                "render": {
+                {
                     "families": [
                         "review",
                         "render",
                         "prerender"
-                    ]
+                    ],
+                    "tasks": [],
+                    "template_name": "render"
                 }
-            }
+            ],
+            "subset_grouping_profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "tasks": [],
+                    "template": ""
+                }
+            ]
         },
         "ProcessSubmittedJobOnFarm": {
             "enabled": true,

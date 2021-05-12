@@ -8,7 +8,7 @@ from .widgets import (
     IconButton,
     SpacerWidget
 )
-from .lib import (
+from openpype.tools.settings import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
 )
@@ -32,14 +32,15 @@ def create_remove_btn(parent):
 
 
 class ModifiableDictEmptyItem(QtWidgets.QWidget):
-    def __init__(self, entity_widget, parent):
+    def __init__(self, entity_widget, store_as_list, parent):
         super(ModifiableDictEmptyItem, self).__init__(parent)
         self.entity_widget = entity_widget
         self.collapsible_key = entity_widget.entity.collapsible_key
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
+        self.store_as_list = store_as_list
         self.is_duplicated = False
-        self.key_is_valid = False
+        self.key_is_valid = store_as_list
 
         if self.collapsible_key:
             self.create_collapsible_ui()
@@ -101,7 +102,8 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
 
     def _on_key_change(self):
         key = self.key_input.text()
-        self.key_is_valid = KEY_REGEX.match(key)
+        if not self.store_as_list:
+            self.key_is_valid = KEY_REGEX.match(key)
 
         if self.ignore_input_changes:
             return
@@ -161,8 +163,10 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
 
 
 class ModifiableDictItem(QtWidgets.QWidget):
-    def __init__(self, collapsible_key, entity, entity_widget):
+    def __init__(self, collapsible_key, store_as_list, entity, entity_widget):
         super(ModifiableDictItem, self).__init__(entity_widget.content_widget)
+
+        self.store_as_list = store_as_list
 
         self.collapsible_key = collapsible_key
         self.entity = entity
@@ -171,7 +175,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
         self.is_key_duplicated = False
-        self.key_is_valid = False
+        self.key_is_valid = store_as_list
         self.is_required = False
 
         self.origin_key = None
@@ -401,7 +405,8 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def _on_key_change(self):
         key = self.key_value()
-        self.key_is_valid = KEY_REGEX.match(key)
+        if not self.store_as_list:
+            self.key_is_valid = KEY_REGEX.match(key)
 
         if self.ignore_input_changes:
             return
@@ -607,7 +612,7 @@ class DictMutableKeysWidget(BaseWidget):
         self.add_required_keys()
 
         self.empty_row = ModifiableDictEmptyItem(
-            self, self.content_widget
+            self, self.entity.store_as_list, self.content_widget
         )
         self.content_layout.addWidget(self.empty_row)
 
@@ -734,7 +739,8 @@ class DictMutableKeysWidget(BaseWidget):
 
     def add_widget_for_child(self, child_entity):
         input_field = ModifiableDictItem(
-            self.entity.collapsible_key, child_entity, self
+            self.entity.collapsible_key, self.entity.store_as_list,
+            child_entity, self
         )
         self.input_fields.append(input_field)
 

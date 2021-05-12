@@ -97,8 +97,8 @@ url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.0-windows.zip"
 hash = "fd2e00278e01e85dcee7b4a6969d1a16f13016ec16700fb0366dbb1b1f3c37ad"
 
 [openpype.thirdparty.oiio.linux]
-url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-linux.tgz"
-hash = "sha256:..."
+url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.12-linux.tgz"
+hash = "de63a8bf7f6c45ff59ecafeba13123f710c2cbc1783ec9e0b938e980d4f5c37f"
 
 [openpype.thirdparty.oiio.darwin]
 url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"
