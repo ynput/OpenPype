@@ -10,7 +10,8 @@ from .delegates import (
 from openpype.lib import ApplicationManager
 from .constants import (
     REMOVED_ROLE,
-    IDENTIFIER_ROLE
+    IDENTIFIER_ROLE,
+    ITEM_TYPE_ROLE
 )
 
 
@@ -347,7 +348,8 @@ class HierarchyView(QtWidgets.QTreeView):
 
     def _on_context_menu(self, point):
         index = self.indexAt(point)
-        if index.column() != 0:
+        column = index.column()
+        if column != 0:
             return
 
         actions = []
@@ -358,11 +360,31 @@ class HierarchyView(QtWidgets.QTreeView):
 
         items_by_id = {}
         for index in indexes:
-            item_id = index.data(IDENTIFIER_ROLE)
-            if item_id in items_by_id:
+            if index.column() != column:
                 continue
+
+            item_id = index.data(IDENTIFIER_ROLE)
             items_by_id[item_id] = self._source_model.items_by_id[item_id]
 
+        item_ids = tuple(items_by_id.keys())
+        if len(item_ids) == 1:
+            item = items_by_id[item_ids[0]]
+            item_type = item.data(None, ITEM_TYPE_ROLE)
+            if item_type in ("asset", "project"):
+                add_asset_action = QtWidgets.QAction("Add Asset", context_menu)
+                add_asset_action.triggered.connect(
+                    lambda: self._add_asset()
+                )
+                actions.append(add_asset_action)
+
+            if item_type in ("asset", "task"):
+                add_task_action = QtWidgets.QAction("Add Task", context_menu)
+                add_task_action.triggered.connect(
+                    lambda: self._add_task()
+                )
+                actions.append(add_task_action)
+
+        # Remove delete tag on items
         removed_item_ids = []
         for item_id, item in items_by_id.items():
             if item.data(None, REMOVED_ROLE):
