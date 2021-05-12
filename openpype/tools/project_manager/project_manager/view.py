@@ -8,6 +8,10 @@ from .delegates import (
 )
 
 from openpype.lib import ApplicationManager
+from .constants import (
+    REMOVED_ROLE,
+    IDENTIFIER_ROLE
+)
 
 
 class NameDef:
@@ -349,6 +353,28 @@ class HierarchyView(QtWidgets.QTreeView):
         actions = []
 
         context_menu = QtWidgets.QMenu(self)
+
+        indexes = self.selectedIndexes()
+
+        items_by_id = {}
+        for index in indexes:
+            item_id = index.data(IDENTIFIER_ROLE)
+            if item_id in items_by_id:
+                continue
+            items_by_id[item_id] = self._source_model.items_by_id[item_id]
+
+        removed_item_ids = []
+        for item_id, item in items_by_id.items():
+            if item.data(None, REMOVED_ROLE):
+                removed_item_ids.append(item_id)
+
+        if removed_item_ids:
+            action = QtWidgets.QAction("Keep items", context_menu)
+            action.triggered.connect(
+                lambda: self._remove_delete_flag(removed_item_ids)
+            )
+            actions.append(action)
+
         if not actions:
             return
 
@@ -358,3 +384,5 @@ class HierarchyView(QtWidgets.QTreeView):
         global_point = self.viewport().mapToGlobal(point)
         context_menu.exec_(global_point)
 
+    def _remove_delete_flag(self, item_ids):
+        self._source_model.remove_delete_flag(item_ids)
