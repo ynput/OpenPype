@@ -868,7 +868,8 @@ class SyncServerModule(PypeModule, ITrayModule):
             proj_settings = self.get_sync_project_setting(project_name)
             provider = proj_settings.get("sites", {}).get(site, {}).\
                 get("provider")
-            return provider
+            if provider:
+                return provider
 
         sys_sett = get_system_settings()
         sync_sett = sys_sett["modules"].get("sync_server")
