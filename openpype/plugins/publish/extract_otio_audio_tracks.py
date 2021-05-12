@@ -16,9 +16,9 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
     asset length and add it to each marked instance data representation. This
     is influenced by instance data audio attribute """
 
-    order = pyblish.api.CollectorOrder - 0.571
+    order = pyblish.api.ExtractorOrder - 0.44
     label = "Extract OTIO Audio Tracks"
-    hosts = ["hiero"]
+    hosts = ["hiero", "resolve"]
 
     # FFmpeg tools paths
     ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
@@ -29,6 +29,13 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         Args:
             context (pyblish.Context): context of publisher
         """
+        # split the long audio file to peces devided by isntances
+        audio_instances = self.get_audio_instances(context)
+        self.log.debug("Audio instances: {}".format(len(audio_instances)))
+
+        if len(audio_instances) < 1:
+            self.log.info("No audio instances available")
+            return
 
         # get sequence
         otio_timeline = context.data["otioTimeline"]
@@ -59,56 +66,77 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         # remove empty
         os.remove(empty["mediaPath"])
 
-        # split the long audio file to peces devided by isntances
-        audio_instances = self.get_audio_instances(context)
-
         # cut instance framerange and add to representations
-        self.create_audio_representations(audio_temp_fpath, audio_instances)
+        self.add_audio_to_instances(audio_temp_fpath, audio_instances)
 
-    def create_audio_representations(self, audio_file, instances):
+        # remove full mixed audio file
+        os.remove(audio_temp_fpath)
+
+    def add_audio_to_instances(self, audio_file, instances):
+        created_files = []
         for inst in instances:
-            # create empty representation attr
-            if "representations" not in inst.data:
-                inst.data["representations"] = []
+            name = inst.data["asset"]
 
-            name = inst.data["name"]
+            recycling_file = [f for f in created_files if name in f]
 
             # frameranges
             timeline_in_h = inst.data["clipInH"]
             timeline_out_h = inst.data["clipOutH"]
             fps = inst.data["fps"]
 
-            # seconds
+            # create duration
             duration = (timeline_out_h - timeline_in_h) + 1
-            start_sec = float(timeline_in_h / fps)
-            duration_sec = float(duration / fps)
 
-            # temp audio file
-            audio_fpath = self.create_temp_file(name)
+            # ffmpeg generate new file only if doesnt exists already
+            if not recycling_file:
+                # convert to seconds
+                start_sec = float(timeline_in_h / fps)
+                duration_sec = float(duration / fps)
 
-            cmd = " ".join([
-                self.ffmpeg_path,
-                "-ss {}".format(start_sec),
-                "-t {}".format(duration_sec),
-                "-i {}".format(audio_file),
-                audio_fpath
-            ])
+                # temp audio file
+                audio_fpath = self.create_temp_file(name)
 
-            # run subprocess
-            self.log.debug("Executing: {}".format(cmd))
-            openpype.api.run_subprocess(
-                cmd, shell=True, logger=self.log
-            )
+                cmd = " ".join([
+                    self.ffmpeg_path,
+                    "-ss {}".format(start_sec),
+                    "-t {}".format(duration_sec),
+                    "-i {}".format(audio_file),
+                    audio_fpath
+                ])
 
-            # add to representations
-            inst.data["representations"].append({
-                "files": os.path.basename(audio_fpath),
-                "name": "wav",
-                "ext": "wav",
-                "stagingDir": os.path.dirname(audio_fpath),
-                "frameStart": 0,
-                "frameEnd": duration
-            })
+                # run subprocess
+                self.log.debug("Executing: {}".format(cmd))
+                openpype.api.run_subprocess(
+                    cmd, shell=True, logger=self.log
+                )
+            else:
+                audio_fpath = recycling_file.pop()
+
+            if "audio" in (inst.data["families"] + [inst.data["family"]]):
+                # create empty representation attr
+                if "representations" not in inst.data:
+                    inst.data["representations"] = []
+                # add to representations
+                inst.data["representations"].append({
+                    "files": os.path.basename(audio_fpath),
+                    "name": "wav",
+                    "ext": "wav",
+                    "stagingDir": os.path.dirname(audio_fpath),
+                    "frameStart": 0,
+                    "frameEnd": duration
+                })
+
+            elif "reviewAudio" in inst.data.keys():
+                audio_attr = inst.data.get("audio") or []
+                audio_attr.append({
+                    "filename": audio_fpath,
+                    "offset": 0
+                })
+                inst.data["audio"] = audio_attr
+
+            # add generated audio file to created files for recycling
+            if audio_fpath not in created_files:
+                created_files.append(audio_fpath)
 
     def get_audio_instances(self, context):
         """Return only instances which are having audio in families
@@ -121,7 +149,9 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         """
         return [
             _i for _i in context
-            if bool("audio" in _i.data.get("families", []))
+            if bool("audio" in (
+                _i.data.get("families", []) + [_i.data["family"]])
+                ) or _i.data.get("reviewAudio")
         ]
 
     def get_audio_track_items(self, otio_timeline):
