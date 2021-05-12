@@ -57,6 +57,15 @@ class FilterComboBox(QtWidgets.QComboBox):
         super(FilterComboBox, self).focusInEvent(event)
         self.lineEdit().selectAll()
 
+    def focusOutEvent(self, event):
+        idx = self.currentIndex()
+        if idx > -1:
+            index = self.model().index(idx, 0)
+            text = index.data(QtCore.Qt.DisplayRole)
+            if text != self.lineEdit().text():
+                self.lineEdit().setText(text)
+        super(FilterComboBox, self).focusOutEvent(event)
+
     def on_completer_activated(self, text):
         if text:
             index = self.findText(text)
