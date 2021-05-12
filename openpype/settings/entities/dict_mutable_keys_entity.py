@@ -398,11 +398,7 @@ class DictMutableKeysEntity(EndpointEntity):
             if not self.store_as_list and not KEY_REGEX.match(_key):
                 # Replace invalid characters with underscore
                 # - this is safety to not break already existing settings
-                _key = re.sub(
-                    r"[^{}]+".format(KEY_ALLOWED_SYMBOLS),
-                    "_",
-                    _key
-                )
+                new_key = self._convert_to_regex_valid_key(_key)
 
             child_entity = self._add_key(_key)
             child_entity.update_default_value(_value)
@@ -419,6 +415,13 @@ class DictMutableKeysEntity(EndpointEntity):
         self.children_label_by_id = children_label_by_id
 
         self.initial_value = self.settings_value()
+
+    def _convert_to_regex_valid_key(self, key):
+        return re.sub(
+            r"[^{}]+".format(KEY_ALLOWED_SYMBOLS),
+            "_",
+            key
+        )
 
     def children_key_by_id(self):
         return {
