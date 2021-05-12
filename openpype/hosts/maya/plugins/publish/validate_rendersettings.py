@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Maya validator for render settings."""
 import re
+from collections import OrderedDict
 
 from maya import cmds, mel
 
@@ -212,6 +213,44 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             invalid = True
             cls.log.error("Expecting padding of {} ( {} )".format(
                 cls.DEFAULT_PADDING, "0" * cls.DEFAULT_PADDING))
+
+        # load validation definitions from settings
+        validation_settings = (
+            instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(
+                "{}_render_attributes".format(renderer))
+        )
+        from pprint import pprint
+        pprint(validation_settings)
+        # go through definitions and test if such node.attribute exists.
+        # if so, compare its value from the one required.
+        for attr, value in OrderedDict(validation_settings).items():
+            # first get node of that type
+            cls.log.debug("{}: {}".format(attr, value))
+            node_type = attr.split(".")[0]
+            attribute_name = ".".join(attr.split(".")[1:])
+            nodes = cmds.ls(type=node_type)
+
+            if not isinstance(nodes, list):
+                cls.log.warning("No nodes of '{}' found.".format(node_type))
+                continue
+
+            for node in nodes:
+                try:
+                    render_value = cmds.getAttr(
+                        "{}.{}".format(node, attribute_name))
+                except RuntimeError as e:
+                    invalid = True
+                    cls.log.error(
+                        "Cannot get value of {}.{}".format(
+                            node, attribute_name))
+                else:
+                    if value != render_value:
+                        invalid = True
+                        cls.log.error(
+                            ("Invalid value {} set on {}.{}. "
+                             "Expecting {}").format(
+                                render_value, node, attribute_name, value)
+                        )
 
         return invalid
 
