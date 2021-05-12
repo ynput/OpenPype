@@ -659,6 +659,15 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if isinstance(item, (RootItem, ProjectItem)):
             return
 
+        if item.data(REMOVED_ROLE):
+            return
+
+        if (
+            isinstance(item, AssetItem)
+            and not item.data(HIERARCHY_CHANGE_ABLE_ROLE)
+        ):
+            return
+
         if abs(direction) != 1:
             return
 
@@ -811,6 +820,15 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         item_id = index.data(IDENTIFIER_ROLE)
         item = self._items_by_id[item_id]
         if isinstance(item, (RootItem, ProjectItem)):
+            return
+
+        if item.data(REMOVED_ROLE):
+            return
+
+        if (
+            isinstance(item, AssetItem)
+            and not item.data(HIERARCHY_CHANGE_ABLE_ROLE)
+        ):
             return
 
         if abs(direction) != 1:
