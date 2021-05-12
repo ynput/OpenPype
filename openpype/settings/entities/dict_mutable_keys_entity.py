@@ -605,7 +605,8 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Create new children
         for _key, _value in new_value.items():
-            child_entity = self._add_key(_key)
+            new_key = self._convert_to_regex_valid_key(_key)
+            child_entity = self._add_key(new_key)
             child_entity.update_default_value(_value)
             label = metadata_labels.get(_key)
             if label:
@@ -650,7 +651,8 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Create new children
         for _key, _value in new_value.items():
-            child_entity = self._add_key(_key)
+            new_key = self._convert_to_regex_valid_key(_key)
+            child_entity = self._add_key(new_key)
             child_entity.update_default_value(_value)
             if self._has_studio_override:
                 child_entity.update_studio_value(_value)
