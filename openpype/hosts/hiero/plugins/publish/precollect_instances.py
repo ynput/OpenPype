@@ -57,6 +57,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             families = [str(f) for f in tag_data["families"]]
             families.insert(0, str(family))
 
+            # add audio to families
+            if tag_data["audio"]:
+                families.append("audio")
+
             # form label
             label = asset
             if asset != clip_name:
