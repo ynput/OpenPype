@@ -102,7 +102,8 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
 
     def _on_key_change(self):
         key = self.key_input.text()
-        self.key_is_valid = KEY_REGEX.match(key)
+        if not self.store_as_list:
+            self.key_is_valid = KEY_REGEX.match(key)
 
         if self.ignore_input_changes:
             return
@@ -174,7 +175,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.ignore_input_changes = entity_widget.ignore_input_changes
 
         self.is_key_duplicated = False
-        self.key_is_valid = False
+        self.key_is_valid = store_as_list
         self.is_required = False
 
         self.origin_key = None
@@ -404,7 +405,8 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
     def _on_key_change(self):
         key = self.key_value()
-        self.key_is_valid = KEY_REGEX.match(key)
+        if not self.store_as_list:
+            self.key_is_valid = KEY_REGEX.match(key)
 
         if self.ignore_input_changes:
             return
