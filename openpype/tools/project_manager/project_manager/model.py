@@ -647,7 +647,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 index = self.index_for_item(item)
                 self.setData(index, True, DUPLICATED_ROLE)
 
-    def _move_vertical_single(self, index, direction):
+    def _move_horizontal_single(self, index, direction):
         if not index.isValid():
             return
 
@@ -737,7 +737,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         self.index_moved.emit(index)
 
-    def move_vertical(self, indexes, direction):
+    def move_horizontal(self, indexes, direction):
         if not indexes:
             return
 
@@ -745,7 +745,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             indexes = [indexes]
 
         if len(indexes) == 1:
-            self._move_vertical_single(indexes[0], direction)
+            self._move_horizontal_single(indexes[0], direction)
             return
 
         items_by_id = {}
@@ -802,9 +802,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         for item in items:
             index = self.index_for_item(item)
-            self._move_vertical_single(index, direction)
+            self._move_horizontal_single(index, direction)
 
-    def _move_horizontal_single(self, index, direction):
+    def _move_vertical_single(self, index, direction):
         if not index.isValid():
             return
 
@@ -891,7 +891,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         self.index_moved.emit(index)
 
-    def move_horizontal(self, indexes, direction):
+    def move_vertical(self, indexes, direction):
         if not indexes:
             return
 
@@ -899,7 +899,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             indexes = [indexes]
 
         if len(indexes) == 1:
-            self._move_horizontal_single(indexes[0], direction)
+            self._move_vertical_single(indexes[0], direction)
             return
 
         items_by_id = {}
@@ -929,7 +929,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         for item in items:
             index = self.index_for_item(item)
-            self._move_horizontal_single(index, direction)
+            self._move_vertical_single(index, direction)
 
     def child_removed(self, child):
         self._items_by_id.pop(child.id, None)
