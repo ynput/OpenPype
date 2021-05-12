@@ -383,6 +383,10 @@ class DictMutableKeysEntity(EndpointEntity):
 
         new_value = copy.deepcopy(value)
 
+        if using_values_from_state:
+            initial_value = copy.deepcopy(value)
+            initial_value.update(metadata)
+
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
             self.children_by_key.pop(key)
@@ -395,26 +399,44 @@ class DictMutableKeysEntity(EndpointEntity):
         children_label_by_id = {}
         metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
         for _key, _value in new_value.items():
-            if not self.store_as_list and not KEY_REGEX.match(_key):
+            label = metadata_labels.get(_key)
+            if self.store_as_list or KEY_REGEX.match(_key):
+                child_entity = self._add_key(_key)
+            else:
                 # Replace invalid characters with underscore
                 # - this is safety to not break already existing settings
                 new_key = self._convert_to_regex_valid_key(_key)
+                if not using_values_from_state:
+                    child_entity = self._add_key(new_key)
+                else:
+                    child_entity = self._add_key(
+                        _key, _ingore_key_validation=True
+                    )
+                    self.change_key(_key, new_key)
+                    _key = new_key
 
-            child_entity = self._add_key(_key)
+                if not label:
+                    label = metadata_labels.get(new_key)
+
             child_entity.update_default_value(_value)
             if using_project_overrides:
                 child_entity.update_project_value(_value)
             elif using_studio_overrides:
                 child_entity.update_studio_value(_value)
 
-            label = metadata_labels.get(_key)
             if label:
                 children_label_by_id[child_entity.id] = label
             child_entity.set_override_state(state)
 
         self.children_label_by_id = children_label_by_id
 
-        self.initial_value = self.settings_value()
+        _settings_value = self.settings_value()
+        if using_values_from_state:
+            if _settings_value is NOT_SET:
+                initial_value = NOT_SET
+        else:
+            initial_value = _settings_value
+        self.initial_value = initial_value
 
     def _convert_to_regex_valid_key(self, key):
         return re.sub(
