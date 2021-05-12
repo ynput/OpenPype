@@ -520,12 +520,29 @@ class SyncServerModule(PypeModule, ITrayModule):
         for key, properties in items.items():
             if scope is None or scope.intersection(set(properties["scope"])):
                 val = sync_s.get("sites", {}).get(site_name, {}).get(key)
-                editable.append({
+
+                children = []
+                if properties["type"] == "dict":
+                    if val:
+                        for val_key, val_val in val.items():
+                            child = {
+                                "type": "text",
+                                "key": val_key,
+                                "value": val_val
+                            }
+                            children.append(child)
+
+                item = {
                     "key": key,
-                    "value": val,
                     "label": properties["label"],
-                    "type": properties["type"],
-                })
+                    "type": properties["type"]
+                }
+                if properties["type"] == "dict":
+                    item["children"] = children
+                else:
+                    item["value"] = val
+
+                editable.append(item)
 
         return editable
 
