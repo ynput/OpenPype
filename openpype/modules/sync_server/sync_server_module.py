@@ -396,7 +396,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return remote_site
 
-    def get_configurable_items(self, scope=[EditableScopes.LOCAL]):
+    def get_configurable_items(self, scope=None):
         """
             Returns list of items that could be configurable for all projects.
 
@@ -434,8 +434,12 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return editable
 
+    def get_local_settings_schema_for_project(self, project_name):
+        """Wrapper for Local settings"""
+        return self.get_configurable_items(project_name, EditableScopes.LOCAL)
+
     def get_configurable_items_for_project(self, project_name=None,
-                                           scope=[EditableScopes.LOCAL]):
+                                           scope=None):
         """
             Returns list of items that could be configurable for specific
             'project_name'
@@ -470,9 +474,15 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return editable
 
+    def get_local_settings_schema_for_site(self, project_name, site_name):
+        """Wrapper for Local settings"""
+        return self.get_configurable_items(project_name,
+                                           site_name,
+                                           EditableScopes.LOCAL)
+
     def get_configurable_items_for_site(self, project_name=None,
                                         site_name=None,
-                                        scope=[EditableScopes.LOCAL]):
+                                        scope=None):
         """
             Returns list of items that could be configurable.
 
@@ -503,7 +513,9 @@ class SyncServerModule(PypeModule, ITrayModule):
             sync_s["sites"].update(self._get_default_site_configs())
 
         editable = []
-        scope = set([scope])
+        if type(scope) is not list:
+            scope = [scope]
+        scope = set(scope)
         for key, properties in items.items():
             if scope is None or scope.intersection(set(properties["scope"])):
                 val = sync_s.get("sites", {}).get(site_name, {}).get(key)
