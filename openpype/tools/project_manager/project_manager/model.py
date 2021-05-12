@@ -211,7 +211,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 continue
 
             new_items = []
-            for asset_doc in asset_docs_by_parent_id[parent_id]:
+            asset_docs = asset_docs_by_parent_id[parent_id]
+            for asset_doc in sorted(asset_docs, key=lambda item: item["name"]):
                 # Create new Item
                 new_item = AssetItem(asset_doc)
                 # Store item to be added under parent in bulk
@@ -255,8 +256,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 continue
 
             task_items = []
-            for task_name, task_data in asset_tasks.items():
-                _task_data = copy.deepcopy(task_data)
+            for task_name in sorted(asset_tasks.keys()):
+                _task_data = copy.deepcopy(asset_tasks[task_name])
                 _task_data["name"] = task_name
                 task_item = TaskItem(_task_data)
                 task_items.append(task_item)
