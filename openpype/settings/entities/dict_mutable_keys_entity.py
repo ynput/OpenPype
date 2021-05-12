@@ -1,6 +1,6 @@
 import re
 import copy
-
+import collections
 from .lib import (
     NOT_SET,
     OverrideState
@@ -98,7 +98,7 @@ class DictMutableKeysEntity(EndpointEntity):
         # TODO Check for value type if is Settings entity?
         child_obj = self.children_by_key.get(key)
         if not child_obj:
-            if not KEY_REGEX.match(key):
+            if not self.store_as_list and not KEY_REGEX.match(key):
                 raise InvalidKeySymbols(self.path, key)
 
             child_obj = self.add_key(key)
@@ -112,7 +112,7 @@ class DictMutableKeysEntity(EndpointEntity):
         if new_key == old_key:
             return
 
-        if not KEY_REGEX.match(new_key):
+        if not self.store_as_list and not KEY_REGEX.match(new_key):
             raise InvalidKeySymbols(self.path, new_key)
 
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
@@ -129,7 +129,7 @@ class DictMutableKeysEntity(EndpointEntity):
         if key in self.children_by_key:
             self.pop(key)
 
-        if not KEY_REGEX.match(key):
+        if not self.store_as_list and not KEY_REGEX.match(key):
             raise InvalidKeySymbols(self.path, key)
 
         if self.value_is_env_group:
@@ -370,7 +370,7 @@ class DictMutableKeysEntity(EndpointEntity):
         children_label_by_id = {}
         metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
         for _key, _value in new_value.items():
-            if not KEY_REGEX.match(_key):
+            if not self.store_as_list and not KEY_REGEX.match(_key):
                 # Replace invalid characters with underscore
                 # - this is safety to not break already existing settings
                 _key = re.sub(
