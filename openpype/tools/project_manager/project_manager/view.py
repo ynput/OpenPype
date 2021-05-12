@@ -252,10 +252,10 @@ class HierarchyView(QtWidgets.QTreeView):
         else:
             event.accept()
 
-    def _delete_item(self, index=None):
-        if index is None:
-            index = self.currentIndex()
-        self._source_model.remove_index(index)
+    def _delete_item(self, indexes=None):
+        if indexes is None:
+            indexes = self.selectedIndexes()
+        self._source_model.remove_indexes(indexes)
 
     def _on_ctrl_shift_enter_pressed(self):
         self._add_task()
