@@ -464,9 +464,18 @@ class SyncServerModule(PypeModule, ITrayModule):
                     ]
                 }
         """
+        allowed_sites = set()
         sites = self.get_all_sites(project_name)
+        if project_name:
+            # Local Settings can select only from allowed sites for project
+            allowed_sites.update(set(self.get_active_sites(project_name)))
+            allowed_sites.update(set(self.get_remote_sites(project_name)))
+
         editable = {}
         for site_name in sites.keys():
+            if allowed_sites and site_name not in allowed_sites:
+                continue
+
             items = self.get_configurable_items_for_site(project_name,
                                                          site_name,
                                                          scope)
