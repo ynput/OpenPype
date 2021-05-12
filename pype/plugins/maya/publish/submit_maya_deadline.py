@@ -273,6 +273,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.payload_skeleton = copy.deepcopy(payload_skeleton_template)
         self._deadline_url = os.environ.get(
             "DEADLINE_REST_URL", "http://localhost:8082")
+        if instance.data.get("deadlineUrl"):
+            self._deadline_url = instance.data.get("deadlineUrl")
         assert self._deadline_url, "Requires DEADLINE_REST_URL"
 
         context = instance.context
