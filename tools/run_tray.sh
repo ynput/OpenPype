@@ -1,19 +1,5 @@
 #!/usr/bin/env bash
-
 # Run OpenPype Tray
-
-
-art () {
-  cat <<-EOF
-
-▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
-▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
-▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
-            .---= [ by Pype Club ] =---.
-                 https://openpype.io
-
-EOF
-}
 
 # Colors for terminal
 
@@ -49,22 +35,6 @@ BIPurple='\033[1;95m'     # Purple
 BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
 
-##############################################################################
-# Clean pyc files in specified directory
-# Globals:
-#   None
-# Arguments:
-#   Optional path to clean
-# Returns:
-#   None
-###############################################################################
-clean_pyc () {
-  local path
-  path=$openpype_root
-  echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
-  find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
-  echo -e "${BIGreen}DONE${RST}"
-}
 
 ##############################################################################
 # Return absolute path
@@ -81,11 +51,6 @@ realpath () {
 
 # Main
 main () {
-  echo -e "${BGreen}"
-  art
-  echo -e "${RST}"
-  detect_python || return 1
-
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
 
