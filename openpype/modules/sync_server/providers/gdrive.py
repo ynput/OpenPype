@@ -3,6 +3,7 @@ import os.path
 import time
 import sys
 from setuptools.extern import six
+import platform
 
 from openpype.api import Logger
 from openpype.api import get_system_settings
@@ -65,6 +66,7 @@ class GDriveHandler(AbstractProvider):
         self.project_name = project_name
         self.site_name = site_name
         self.service = None
+        self.root = None
 
         self.presets = presets
         if not self.presets:
@@ -72,18 +74,13 @@ class GDriveHandler(AbstractProvider):
                      format(site_name))
             return
 
-        if not os.path.exists(self.presets.get("credentials_url", "")):
+        cred_path = self.presets.get("credentials_url", {}).\
+            get(platform.system().lower()) or ''
+        if not os.path.exists(cred_path):
             log.info("Sync Server: No credentials for Gdrive provider! ")
             return
 
-        self.service = self._get_gd_service()
-        try:
-            self.root = self._prepare_root_info()
-        except errors.HttpError:
-            log.warning("HttpError in sync loop, "
-                        "trying next loop",
-                        exc_info=True)
-            raise ResumableError
+        self.service = self._get_gd_service(cred_path)
 
         self._tree = tree
         self.active = True
@@ -575,7 +572,7 @@ class GDriveHandler(AbstractProvider):
             return
         return provider_presets
 
-    def _get_gd_service(self):
+    def _get_gd_service(self, credentials_path):
         """
             Authorize client with 'credentials.json', uses service account.
             Service account needs to have target folder shared with.
@@ -585,7 +582,7 @@ class GDriveHandler(AbstractProvider):
             None
         """
         creds = service_account.Credentials.from_service_account_file(
-            self.presets["credentials_url"],
+            credentials_path,
             scopes=SCOPES)
         service = build('drive', 'v3',
                         credentials=creds, cache_discovery=False)
@@ -600,39 +597,47 @@ class GDriveHandler(AbstractProvider):
 
         Returns:
             (dicts) of dicts where root folders are keys
+            throws ResumableError in case of errors.HttpError
         """
         roots = {}
         config_roots = self.get_roots_config()
-        for path in config_roots.values():
-            if self.MY_DRIVE_STR in path:
-                roots[self.MY_DRIVE_STR] = self.service.files()\
-                                               .get(fileId='root').execute()
-            else:
-                shared_drives = []
-                page_token = None
+        try:
+            for path in config_roots.values():
+                if self.MY_DRIVE_STR in path:
+                    roots[self.MY_DRIVE_STR] = self.service.files()\
+                                                   .get(fileId='root')\
+                                                   .execute()
+                else:
+                    shared_drives = []
+                    page_token = None
 
-                while True:
-                    response = self.service.drives().list(
-                        pageSize=100,
-                        pageToken=page_token).execute()
-                    shared_drives.extend(response.get('drives', []))
-                    page_token = response.get('nextPageToken', None)
-                    if page_token is None:
-                        break
+                    while True:
+                        response = self.service.drives().list(
+                            pageSize=100,
+                            pageToken=page_token).execute()
+                        shared_drives.extend(response.get('drives', []))
+                        page_token = response.get('nextPageToken', None)
+                        if page_token is None:
+                            break
 
-                folders = path.split('/')
-                if len(folders) < 2:
-                    raise ValueError("Wrong root folder definition {}".
-                                     format(path))
+                    folders = path.split('/')
+                    if len(folders) < 2:
+                        raise ValueError("Wrong root folder definition {}".
+                                         format(path))
 
-                for shared_drive in shared_drives:
-                    if folders[1] in shared_drive["name"]:
-                        roots[shared_drive["name"]] = {
-                            "name": shared_drive["name"],
-                            "id": shared_drive["id"]}
-        if self.MY_DRIVE_STR not in roots:  # add My Drive always
-            roots[self.MY_DRIVE_STR] = self.service.files() \
-                .get(fileId='root').execute()
+                    for shared_drive in shared_drives:
+                        if folders[1] in shared_drive["name"]:
+                            roots[shared_drive["name"]] = {
+                                "name": shared_drive["name"],
+                                "id": shared_drive["id"]}
+            if self.MY_DRIVE_STR not in roots:  # add My Drive always
+                roots[self.MY_DRIVE_STR] = self.service.files() \
+                    .get(fileId='root').execute()
+        except errors.HttpError:
+            log.warning("HttpError in sync loop, "
+                        "trying next loop",
+                        exc_info=True)
+            raise ResumableError
 
         return roots
 
@@ -653,6 +658,9 @@ class GDriveHandler(AbstractProvider):
             (dictionary) path as a key, folder id as a value
         """
         log.debug("build_tree len {}".format(len(folders)))
+        if not self.root:  # build only when necessary, could be expensive
+            self.root = self._prepare_root_info()
+
         root_ids = []
         default_root_id = None
         tree = {}
