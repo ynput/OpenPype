@@ -149,9 +149,11 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         """
         return [
             _i for _i in context
+            # filter only those with audio family
+            # and also with reviewAudio data key
             if bool("audio" in (
                 _i.data.get("families", []) + [_i.data["family"]])
-                ) or _i.data.get("reviewAudio")
+            ) or _i.data.get("reviewAudio")
         ]
 
     def get_audio_track_items(self, otio_timeline):
