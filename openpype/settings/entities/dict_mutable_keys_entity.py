@@ -94,6 +94,13 @@ class DictMutableKeysEntity(EndpointEntity):
         for key in prev_keys:
             self.pop(key)
 
+    def _convert_to_valid_type(self, value):
+        try:
+            return collections.OrderedDict(value)
+        except Exception:
+            pass
+        return super(DictMutableKeysEntity, self)._convert_to_valid_type(value)
+
     def set_key_value(self, key, value):
         # TODO Check for value type if is Settings entity?
         child_obj = self.children_by_key.get(key)
