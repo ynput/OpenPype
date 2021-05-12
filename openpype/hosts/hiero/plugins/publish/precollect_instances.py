@@ -24,7 +24,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
         for track_item in selected_timeline_items:
 
-            data = dict()
+            data = {}
             clip_name = track_item.name()
 
             # get openpype tag data
@@ -43,6 +43,11 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             tag_data["handleEnd"] = min(
                 tag_data["handleEnd"], int(track_item.handleOutLength()))
 
+            # add audio to families
+            with_audio = False
+            if tag_data.pop("audio"):
+                with_audio = True
+
             # add tag data to instance data
             data.update({
                 k: v for k, v in tag_data.items()
@@ -56,10 +61,6 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             family = tag_data["family"]
             families = [str(f) for f in tag_data["families"]]
             families.insert(0, str(family))
-
-            # add audio to families
-            if tag_data["audio"]:
-                families.append("audio")
 
             # form label
             label = asset
@@ -97,6 +98,17 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             self.log.info("Creating instance: {}".format(instance))
             self.log.debug(
                 "_ instance.data: {}".format(pformat(instance.data)))
+
+            if not with_audio:
+                return
+
+            # create audio subset instance
+            self.create_audio_instance(context, **data)
+
+            # add audioReview attribute to plate instance data
+            # if reviewTrack is on
+            if tag_data.get("reviewTrack") is not None:
+                instance.data["reviewAudio"] = True
 
     def get_resolution_to_data(self, data, context):
         assert data.get("otioClip"), "Missing `otioClip` data"
@@ -158,6 +170,46 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             "families": []
         })
 
+        instance = context.create_instance(**data)
+        self.log.info("Creating instance: {}".format(instance))
+        self.log.debug(
+            "_ instance.data: {}".format(pformat(instance.data)))
+
+    def create_audio_instance(self, context, **data):
+        master_layer = data.get("heroTrack")
+
+        if not master_layer:
+            return
+
+        asset = data.get("asset")
+        item = data.get("item")
+        clip_name = item.name()
+
+        asset = data["asset"]
+        subset = "audioMain"
+
+        # insert family into families
+        family = "audio"
+
+        # form label
+        label = asset
+        if asset != clip_name:
+            label += " ({}) ".format(clip_name)
+        label += " {}".format(subset)
+        label += " [{}]".format(family)
+
+        data.update({
+            "name": "{}_{}".format(asset, subset),
+            "label": label,
+            "subset": subset,
+            "asset": asset,
+            "family": family,
+            "families": ["clip"]
+        })
+        # remove review track attr if any
+        data.pop("reviewTrack")
+
+        # create instance
         instance = context.create_instance(**data)
         self.log.info("Creating instance: {}".format(instance))
         self.log.debug(
