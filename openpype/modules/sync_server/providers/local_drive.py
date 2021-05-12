@@ -38,8 +38,7 @@ class LocalDriveHandler(AbstractProvider):
                 (dict)
         """
         editable = {
-            'root': {'scope': [EditableScopes.PROJECT,
-                               EditableScopes.LOCAL],
+            'root': {'scope': [EditableScopes.LOCAL],
                      'label': "Roots",
                      'type': 'dict'}
         }
