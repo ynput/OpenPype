@@ -298,13 +298,14 @@ class SyncServerThread(threading.Thread):
                     processed_file_path = set()
 
                     site_preset = preset.get('sites')[remote_site]
-                    remote_provider = site_preset['provider']
+                    remote_provider = \
+                        self.module.get_provider_for_site(site=remote_site)
                     handler = lib.factory.get_provider(remote_provider,
                                                        collection,
                                                        remote_site,
                                                        presets=site_preset)
                     limit = lib.factory.get_provider_batch_limit(
-                        site_preset['provider'])
+                        remote_provider)
                     # first call to get_provider could be expensive, its
                     # building folder tree structure in memory
                     # call only if needed, eg. DO_UPLOAD or DO_DOWNLOAD
