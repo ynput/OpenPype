@@ -20,7 +20,7 @@ from openpype.settings.lib import (
 from .providers.local_drive import LocalDriveHandler
 from .providers import lib
 
-from .utils import time_function, SyncStatus
+from .utils import time_function, SyncStatus, EditableScopes
 
 
 log = PypeLogger().get_logger("SyncServer")
@@ -396,21 +396,28 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return remote_site
 
-    def get_configurable_items(self, scope=None):
+    def get_configurable_items(self, scope=[EditableScopes.LOCAL]):
         """
             Returns list of items that could be configurable for all projects.
 
             Could be filtered by 'scope' argument (list)
 
             Args:
-                scope (list of utils.EditableScope) (optional)
+                scope (list of utils.EditableScope)
 
             Returns:
-                (dict of dict)
-                {projectA: {
-                    siteA : {
-                        key:"root", label:"root", value:"valueFromSettings"
-                    }
+                (dict of list of dict)
+                {
+                    siteA : [
+                        {
+                            key:"root", label:"root",
+                            "value":"valueFromSettings", "type": "text"
+                        },
+                        {
+                            key:"credentials_url", label:"Credentials url",
+                            ...
+                        }
+                    ]
                 }
         """
         editable = {}
@@ -428,21 +435,26 @@ class SyncServerModule(PypeModule, ITrayModule):
         return editable
 
     def get_configurable_items_for_project(self, project_name=None,
-                                           scope=None):
+                                           scope=[EditableScopes.LOCAL]):
         """
             Returns list of items that could be configurable for specific
             'project_name'
 
             Args:
-                project_name (str)
-                scope (list of utils.EditableScope) (optional)
+                project_name (str) - None > default project,
+                scope (list of utils.EditableScope)
+                    (optional, None is all scopes, default is LOCAL)
 
             Returns:
-                (dict of dict)
-                {projectA: {
-                    siteA : {
-                        key:"root", label:"root", value:"valueFromSettings"
-                    }
+                (dict of list of dict)
+                {
+                    siteA : [
+                        {
+                            key:"root", label:"root",
+                            "value":"valueFromSettings", "type": "text"
+                        },
+                        studio: {...}
+                    ]
                 }
         """
         sites = self.get_all_sites()
@@ -451,36 +463,34 @@ class SyncServerModule(PypeModule, ITrayModule):
             items = self.get_configurable_items_for_site(project_name,
                                                          site_name,
                                                          scope)
-            editable.update(items)
+            editable[site_name] = items
 
         return editable
 
     def get_configurable_items_for_site(self, project_name=None,
                                         site_name=None,
-                                        scope=None):
+                                        scope=[EditableScopes.LOCAL]):
         """
             Returns list of items that could be configurable.
 
             Args:
-                project_name (str)
+                project_name (str) - None > default project
                 site_name (str)
-                scope (list of utils.EditableScope) (optional)
+                scope (list of utils.EditableScope)
+                    (optional, None is all scopes)
 
             Returns:
-                (dict of dict)
-                {projectA: {
-                    siteA : {
-                        key:"root", label:"root", value:"valueFromSettings"
-                    }
-                }
+                (list)
+                [
+                    {
+                        key:"root", label:"root",
+                        "value":"valueFromSettings", "type": "text"
+                    }, ...
+                ]
         """
         provider_name = self.get_provider_for_site(site=site_name)
         items = lib.factory.get_provider_configurable_items(provider_name)
 
-        if not scope:
-            return {site_name: items}
-
-        editable = []
         if project_name:
             sync_s = self.get_sync_project_setting(project_name,
                                                    exclude_locals=True)
@@ -488,18 +498,20 @@ class SyncServerModule(PypeModule, ITrayModule):
             sync_s = get_default_project_settings(exclude_locals=True)
             sync_s = sync_s["global"]["sync_server"]
             sync_s["sites"].update(self._get_default_site_configs())
-        for scope in set([scope]):
-            for key, properties in items.items():
-                if scope in properties['scope']:
-                    val = sync_s.get("sites", {}).get(site_name, {}).get(key)
-                    editable.append({
-                        "key": key,
-                        "value": val,
-                        "label": properties["label"],
-                        "type": properties["type"],
-                    })
 
-        return {site_name: editable}
+        editable = []
+        scope = set([scope])
+        for key, properties in items.items():
+            if scope is None or scope.intersection(set(properties["scope"])):
+                val = sync_s.get("sites", {}).get(site_name, {}).get(key)
+                editable.append({
+                    "key": key,
+                    "value": val,
+                    "label": properties["label"],
+                    "type": properties["type"],
+                })
+
+        return editable
 
     def reset_timer(self):
         """
