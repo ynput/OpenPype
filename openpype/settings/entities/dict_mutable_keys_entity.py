@@ -194,6 +194,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.children_by_key = {}
         self.children_label_by_id = {}
 
+        self.store_as_list = self.schema_data.get("store_as_list") or False
         self.value_is_env_group = (
             self.schema_data.get("value_is_env_group") or False
         )
