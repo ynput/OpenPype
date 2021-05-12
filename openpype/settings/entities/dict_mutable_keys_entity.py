@@ -410,6 +410,12 @@ class DictMutableKeysEntity(EndpointEntity):
 
     @property
     def value(self):
+        if self.store_as_list:
+            output = []
+            for key, child_entity in self.children_by_key.items():
+                output.append(key, child_entity.value)
+            return output
+
         output = {}
         for key, child_entity in self.children_by_key.items():
             output[key] = child_entity.value
@@ -489,6 +495,13 @@ class DictMutableKeysEntity(EndpointEntity):
         return False
 
     def _settings_value(self):
+        if self.store_as_list:
+            output = []
+            for key, child_entity in self.children_by_key.items():
+                child_value = child_entity.settings_value()
+                output.append([key, child_value])
+            return output
+
         output = {}
         for key, child_entity in self.children_by_key.items():
             child_value = child_entity.settings_value()
