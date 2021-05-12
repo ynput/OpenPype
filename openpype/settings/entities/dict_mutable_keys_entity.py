@@ -1,6 +1,5 @@
 import re
 import copy
-import collections
 from .lib import (
     NOT_SET,
     OverrideState
@@ -96,7 +95,7 @@ class DictMutableKeysEntity(EndpointEntity):
 
     def _convert_to_valid_type(self, value):
         try:
-            return collections.OrderedDict(value)
+            return dict(value)
         except Exception:
             pass
         return super(DictMutableKeysEntity, self)._convert_to_valid_type(value)
