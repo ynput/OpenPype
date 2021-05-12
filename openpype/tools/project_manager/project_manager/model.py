@@ -961,7 +961,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         to_process = Queue()
         to_process.put(project_item)
 
-        update_list = []
+        bulk_writes = []
         while not to_process.empty():
             parent = to_process.get()
             insert_list = []
@@ -973,14 +973,20 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                 if item.is_new:
                     insert_list.append(item)
-                    continue
 
-                update_data = item.update_data()
-                if update_data:
-                    update_list.append(UpdateOne(
+                elif item.data(None, REMOVED_ROLE):
+                    bulk_writes.append(UpdateOne(
                         {"_id": item.asset_id},
-                        update_data
+                        {"$set": {"type": "archived_asset"}}
                     ))
+
+                else:
+                    update_data = item.update_data()
+                    if update_data:
+                        bulk_writes.append(UpdateOne(
+                            {"_id": item.asset_id},
+                            update_data
+                        ))
 
             if insert_list:
                 new_docs = []
@@ -991,8 +997,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 for idx, mongo_id in enumerate(result.inserted_ids):
                     insert_list[idx].mongo_id = mongo_id
 
-        if update_list:
-            project_col.bulk_write(update_list)
+        if bulk_writes:
+            project_col.bulk_write(bulk_writes)
 
 
 class BaseItem:
@@ -1606,6 +1612,8 @@ class TaskItem(BaseItem):
         return super(TaskItem, self)._global_data(role)
 
     def to_doc_data(self):
+        if self._removed:
+            return {}
         data = copy.deepcopy(self._data)
         data.pop("name")
         name = self.data("name", QtCore.Qt.DisplayRole)
