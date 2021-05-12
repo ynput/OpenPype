@@ -295,9 +295,6 @@ class HierarchyView(QtWidgets.QTreeView):
         # Start editing
         self.edit(task_type_index)
 
-    def _on_shift_enter_pressed(self):
-        self._add_asset()
-
     def _add_asset(self, index=None):
         if index is None:
             index = self.currentIndex()
@@ -322,6 +319,9 @@ class HierarchyView(QtWidgets.QTreeView):
         # Start editing
         self.edit(new_index)
 
+    def _on_shift_enter_pressed(self):
+        self._add_asset()
+
     def _on_up_ctrl_pressed(self):
         indexes = self.selectedIndexes()
         self._source_model.move_horizontal(indexes, -1)
@@ -345,6 +345,9 @@ class HierarchyView(QtWidgets.QTreeView):
             and index.flags() & QtCore.Qt.ItemIsEditable
         ):
             self.edit(index)
+
+    def _remove_delete_flag(self, item_ids):
+        self._source_model.remove_delete_flag(item_ids)
 
     def _on_context_menu(self, point):
         index = self.indexAt(point)
@@ -405,6 +408,3 @@ class HierarchyView(QtWidgets.QTreeView):
 
         global_point = self.viewport().mapToGlobal(point)
         context_menu.exec_(global_point)
-
-    def _remove_delete_flag(self, item_ids):
-        self._source_model.remove_delete_flag(item_ids)
