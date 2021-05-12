@@ -411,11 +411,11 @@ class SyncServerModule(PypeModule, ITrayModule):
                     siteA : [
                         {
                             key:"root", label:"root",
-                            "value":"valueFromSettings", "type": "text"
+                            "value":"{'work': 'c:/projects'}", "type": "dict"
                         },
                         {
                             key:"credentials_url", label:"Credentials url",
-                            ...
+                            "value":"'c:/projects/cred.json'", "type": "text"
                         }
                     ]
                 }
@@ -451,9 +451,12 @@ class SyncServerModule(PypeModule, ITrayModule):
                     siteA : [
                         {
                             key:"root", label:"root",
-                            "value":"valueFromSettings", "type": "text"
+                            "value":"{'work': 'c:/projects'}", "type": "dict"
                         },
-                        studio: {...}
+                        {
+                            key:"credentials_url", label:"Credentials url",
+                            "value":"'c:/projects/cred.json'", "type": "text"
+                        }
                     ]
                 }
         """
@@ -484,7 +487,7 @@ class SyncServerModule(PypeModule, ITrayModule):
                 [
                     {
                         key:"root", label:"root",
-                        "value":"valueFromSettings", "type": "text"
+                        "value":"{'work': 'c:/projects'}", "type": "dict"
                     }, ...
                 ]
         """
