@@ -372,7 +372,7 @@ class HierarchyView(QtWidgets.QTreeView):
         item_ids = tuple(items_by_id.keys())
         if len(item_ids) == 1:
             item = items_by_id[item_ids[0]]
-            item_type = item.data(None, ITEM_TYPE_ROLE)
+            item_type = item.data(ITEM_TYPE_ROLE)
             if item_type in ("asset", "project"):
                 add_asset_action = QtWidgets.QAction("Add Asset", context_menu)
                 add_asset_action.triggered.connect(
@@ -390,7 +390,7 @@ class HierarchyView(QtWidgets.QTreeView):
         # Remove delete tag on items
         removed_item_ids = []
         for item_id, item in items_by_id.items():
-            if item.data(None, REMOVED_ROLE):
+            if item.data(REMOVED_ROLE):
                 removed_item_ids.append(item_id)
 
         if removed_item_ids:

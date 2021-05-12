@@ -238,7 +238,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         while not non_modifiable_queue.empty():
             item_id = non_modifiable_queue.get()
             item = self._items_by_id[item_id]
-            item.setData(None, False, HIERARCHY_CHANGE_ABLE_ROLE)
+            item.setData(False, HIERARCHY_CHANGE_ABLE_ROLE)
 
             parent = item.parent()
             if (
@@ -281,7 +281,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         key = self.columns[column]
 
         item = index.internalPointer()
-        return item.data(key, role)
+        return item.data(role, key)
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
         if not index.isValid():
@@ -296,7 +296,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         ):
             self._rename_asset(item, value)
 
-        result = item.setData(key, value, role)
+        result = item.setData(value, role, key)
         if result:
             self.dataChanged.emit(index, index, [role])
 
@@ -397,7 +397,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if parent is None:
             parent = self._root_item
 
-        if parent.data(None, REMOVED_ROLE):
+        if parent.data(REMOVED_ROLE):
             return []
 
         if start_row is None:
@@ -416,7 +416,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             parent.add_child(item, row)
 
             if isinstance(item, AssetItem):
-                name = item.data("name", QtCore.Qt.DisplayRole)
+                name = item.data(QtCore.Qt.DisplayRole, "name")
                 self._asset_items_by_name[name].append(item)
 
             if item.id not in self._items_by_id:
@@ -444,7 +444,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             if not isinstance(item, (AssetItem, TaskItem)):
                 continue
 
-            if item.data(None, REMOVED_ROLE):
+            if item.data(REMOVED_ROLE):
                 remove_tag_items_by_id[item_id] = item
 
         for item in tuple(remove_tag_items_by_id.values()):
@@ -456,7 +456,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 if parent.id in remove_tag_items_by_id:
                     continue
 
-                if parent.data(None, REMOVED_ROLE):
+                if parent.data(REMOVED_ROLE):
                     remove_tag_items_by_id[parent.id] = parent
 
                 parent = parent.parent()
@@ -474,7 +474,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             _children_recursion(item, remove_tag_items_by_id)
 
         for item in remove_tag_items_by_id.values():
-            item.setData(None, False, REMOVED_ROLE)
+            item.setData(False, REMOVED_ROLE)
 
     def remove_index(self, index):
         return self.remove_indexes([index])
@@ -502,7 +502,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             self._remove_item(item)
 
     def _remove_item(self, item):
-        is_removed = item.data(None, REMOVED_ROLE)
+        is_removed = item.data(REMOVED_ROLE)
         if is_removed:
             return
 
@@ -516,15 +516,15 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 _all_descendants[parent_item.id][cur_item.id] = cur_item
 
             if isinstance(cur_item, TaskItem):
-                was_removed = cur_item.data(None, REMOVED_ROLE)
+                was_removed = cur_item.data(REMOVED_ROLE)
                 task_removed = True
                 if not was_removed and parent_item is not None:
-                    task_removed = parent_item.data(None, REMOVED_ROLE)
+                    task_removed = parent_item.data(REMOVED_ROLE)
                 if not was_removed:
-                    cur_item.setData(None, task_removed, REMOVED_ROLE)
+                    cur_item.setData(task_removed, REMOVED_ROLE)
                 return task_removed
 
-            remove_item = cur_item.data(None, HIERARCHY_CHANGE_ABLE_ROLE)
+            remove_item = cur_item.data(HIERARCHY_CHANGE_ABLE_ROLE)
             task_children = []
             for row in range(cur_item.rowCount()):
                 child_item = cur_item.child(row)
@@ -536,7 +536,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                     remove_item = False
 
             if remove_item:
-                cur_item.setData(None, True, REMOVED_ROLE)
+                cur_item.setData(True, REMOVED_ROLE)
 
             for task_item in task_children:
                 _fill_children(_all_descendants, task_item, cur_item)
@@ -576,7 +576,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                     chilren_by_row[row] = child_item
                     children.pop(child_item.id)
 
-                    remove_item = child_item.data(None, REMOVED_ROLE)
+                    remove_item = child_item.data(REMOVED_ROLE)
                     if not remove_item or not child_item.is_new:
                         modified_children.append(child_item)
                         if end_row is not None:
@@ -617,7 +617,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if not isinstance(asset_item, AssetItem):
             return
 
-        prev_name = asset_item.data("name", QtCore.Qt.DisplayRole)
+        prev_name = asset_item.data(QtCore.Qt.DisplayRole, "name")
         if prev_name == new_name:
             return
 
@@ -981,7 +981,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 if item.is_new:
                     insert_list.append(item)
 
-                elif item.data(None, REMOVED_ROLE):
+                elif item.data(REMOVED_ROLE):
                     bulk_writes.append(UpdateOne(
                         {"_id": item.asset_id},
                         {"$set": {"type": "archived_asset"}}
@@ -1075,7 +1075,7 @@ class BaseItem:
         self._global_data[role] = value
         return True
 
-    def data(self, key, role):
+    def data(self, role, key=None):
         value = self._get_global_data(role)
         if value is not self._None:
             return value
@@ -1091,14 +1091,14 @@ class BaseItem:
         if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
             value = self._data[key]
             if value is None:
-                value = self.parent().data(key, role)
+                value = self.parent().data(role, key)
             return value
 
         if role == QtCore.Qt.DecorationRole and key == "name":
             return self.name_icon()
         return None
 
-    def setData(self, key, value, role):
+    def setData(self, value, role, key=None):
         if role == DUPLICATED_ROLE:
             if value == self._is_duplicated:
                 return False
@@ -1389,8 +1389,8 @@ class AssetItem(BaseItem):
         )
 
         doc = {
-            "name": self.data("name", QtCore.Qt.DisplayRole),
-            "type": self.data("type", QtCore.Qt.DisplayRole),
+            "name": self.data(QtCore.Qt.DisplayRole, "name"),
+            "type": self.data(QtCore.Qt.DisplayRole, "type"),
             "schema": schema_name,
             "data": doc_data,
             "parent": self.project_id
@@ -1402,7 +1402,7 @@ class AssetItem(BaseItem):
             if key in doc:
                 continue
             # Use `data` method to get inherited values
-            doc_data[key] = self.data(key, QtCore.Qt.DisplayRole)
+            doc_data[key] = self.data(QtCore.Qt.DisplayRole, key)
 
         return doc
 
@@ -1480,16 +1480,16 @@ class AssetItem(BaseItem):
             )
         return super(AssetItem, self)._get_global_data(role)
 
-    def data(self, key, role):
+    def data(self, role, key=None):
         if role == QtCore.Qt.BackgroundRole:
             if self._removed:
                 return QtGui.QColor(255, 0, 0, 127)
             elif self.is_new:
                 return QtGui.QColor(0, 255, 0, 127)
 
-        return super(AssetItem, self).data(key, role)
+        return super(AssetItem, self).data(role, key)
 
-    def setData(self, key, value, role):
+    def setData(self, value, role, key=None):
         if role == REMOVED_ROLE:
             self._removed = value
             return True
@@ -1506,7 +1506,7 @@ class AssetItem(BaseItem):
             and not self._hierarchy_changes_enabled
         ):
             return False
-        return super(AssetItem, self).setData(key, value, role)
+        return super(AssetItem, self).setData(value, role, key)
 
     def flags(self, key):
         if key == "name":
@@ -1517,18 +1517,18 @@ class AssetItem(BaseItem):
         return super(AssetItem, self).flags(key)
 
     def _add_task(self, item):
-        name = item.data("name", QtCore.Qt.DisplayRole).lower()
-        item_id = item.data(None, IDENTIFIER_ROLE)
+        name = item.data(QtCore.Qt.DisplayRole, "name").lower()
+        item_id = item.data(IDENTIFIER_ROLE)
 
         self._task_name_by_item_id[item_id] = name
         self._task_items_by_name[name].append(item)
         if len(self._task_items_by_name[name]) > 1:
             self._duplicated_task_names.add(name)
             for _item in self._task_items_by_name[name]:
-                _item.setData(None, True, DUPLICATED_ROLE)
+                _item.setData(True, DUPLICATED_ROLE)
 
     def _remove_task(self, item):
-        item_id = item.data(None, IDENTIFIER_ROLE)
+        item_id = item.data(IDENTIFIER_ROLE)
         name = self._task_name_by_item_id[item_id]
 
         self._task_name_by_item_id.pop(item_id)
@@ -1539,11 +1539,11 @@ class AssetItem(BaseItem):
         elif len(self._task_items_by_name[name]) == 1:
             self._duplicated_task_names.remove(name)
             for _item in self._task_items_by_name[name]:
-                _item.setData(None, False, DUPLICATED_ROLE)
+                _item.setData(False, DUPLICATED_ROLE)
 
     def _rename_task(self, item):
-        new_name = item.data("name", QtCore.Qt.DisplayRole).lower()
-        item_id = item.data(None, IDENTIFIER_ROLE)
+        new_name = item.data(QtCore.Qt.DisplayRole, "name").lower()
+        item_id = item.data(IDENTIFIER_ROLE)
         prev_name = self._task_name_by_item_id[item_id]
         if new_name == prev_name:
             return
@@ -1556,16 +1556,16 @@ class AssetItem(BaseItem):
         elif len(self._task_items_by_name[prev_name]) == 1:
             self._duplicated_task_names.remove(prev_name)
             for _item in self._task_items_by_name[prev_name]:
-                _item.setData(None, False, DUPLICATED_ROLE)
+                _item.setData(False, DUPLICATED_ROLE)
 
         # Add to new name mapping
         self._task_items_by_name[new_name].append(item)
         if len(self._task_items_by_name[new_name]) > 1:
             self._duplicated_task_names.add(new_name)
             for _item in self._task_items_by_name[new_name]:
-                _item.setData(None, True, DUPLICATED_ROLE)
+                _item.setData(True, DUPLICATED_ROLE)
         else:
-            item.setData(None, False, DUPLICATED_ROLE)
+            item.setData(False, DUPLICATED_ROLE)
 
         self._task_name_by_item_id[item_id] = new_name
 
@@ -1640,12 +1640,12 @@ class TaskItem(BaseItem):
             return {}
         data = copy.deepcopy(self._data)
         data.pop("name")
-        name = self.data("name", QtCore.Qt.DisplayRole)
+        name = self.data(QtCore.Qt.DisplayRole, "name")
         return {
             name: data
         }
 
-    def data(self, key, role):
+    def data(self, role, key=None):
         if role == QtCore.Qt.BackgroundRole:
             if self._removed:
                 return QtGui.QColor(255, 0, 0, 127)
@@ -1658,14 +1658,14 @@ class TaskItem(BaseItem):
             and key == "name"
         ):
             return self._data[key] or self._data["type"] or "< Select Type >"
-        return super(TaskItem, self).data(key, role)
+        return super(TaskItem, self).data(role, key)
 
-    def setData(self, key, value, role):
+    def setData(self, value, role, key=None):
         if role == REMOVED_ROLE:
             self._removed = value
             return True
 
-        result = super(TaskItem, self).setData(key, value, role)
+        result = super(TaskItem, self).setData(value, role, key)
 
         if (
             key == "name"
