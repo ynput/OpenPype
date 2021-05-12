@@ -2,6 +2,7 @@ import os
 from bson.objectid import ObjectId
 from datetime import datetime
 import threading
+import platform
 
 from avalon.api import AvalonMongoDB
 
@@ -12,6 +13,9 @@ from openpype.api import (
     get_system_settings,
     get_local_site_id)
 from openpype.lib import PypeLogger
+from openpype.settings.lib import (
+    get_default_project_settings,
+    get_default_anatomy_settings)
 
 from .providers.local_drive import LocalDriveHandler
 from .providers import lib
@@ -410,15 +414,21 @@ class SyncServerModule(PypeModule, ITrayModule):
                 }
         """
         editable = {}
-        for project in self.connection.projects():
-            project_name = project["name"]
+        applicable_projects = list(self.connection.projects())
+        applicable_projects.append(None)
+        for project in applicable_projects:
+            project_name = None
+            if project:
+                project_name = project["name"]
+
             items = self.get_configurable_items_for_project(project_name,
                                                             scope)
             editable.update(items)
 
         return editable
 
-    def get_configurable_items_for_project(self, project_name, scope=None):
+    def get_configurable_items_for_project(self, project_name=None,
+                                           scope=None):
         """
             Returns list of items that could be configurable for specific
             'project_name'
@@ -435,10 +445,9 @@ class SyncServerModule(PypeModule, ITrayModule):
                     }
                 }
         """
-        sites = set(self.get_active_sites(project_name)) | \
-            set(self.get_remote_sites(project_name))
+        sites = self.get_all_sites()
         editable = {}
-        for site_name in sites:
+        for site_name in sites.keys():
             items = self.get_configurable_items_for_site(project_name,
                                                          site_name,
                                                          scope)
@@ -446,7 +455,8 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return editable
 
-    def get_configurable_items_for_site(self, project_name, site_name,
+    def get_configurable_items_for_site(self, project_name=None,
+                                        site_name=None,
                                         scope=None):
         """
             Returns list of items that could be configurable.
@@ -465,26 +475,31 @@ class SyncServerModule(PypeModule, ITrayModule):
                 }
         """
         provider_name = self.get_provider_for_site(site=site_name)
-        items = lib.factory.get_provider_configurable_items(provider_name,
-                                                            scope)
+        items = lib.factory.get_provider_configurable_items(provider_name)
 
         if not scope:
-            return {project_name: {site_name: items}}
+            return {site_name: items}
 
-        editable = {}
-        sync_s = self.get_sync_project_setting(project_name, True)
+        editable = []
+        if project_name:
+            sync_s = self.get_sync_project_setting(project_name,
+                                                   exclude_locals=True)
+        else:
+            sync_s = get_default_project_settings(exclude_locals=True)
+            sync_s = sync_s["global"]["sync_server"]
+            sync_s["sites"].update(self._get_default_site_configs())
         for scope in set([scope]):
             for key, properties in items.items():
                 if scope in properties['scope']:
                     val = sync_s.get("sites", {}).get(site_name, {}).get(key)
-                    editable = {
+                    editable.append({
                         "key": key,
                         "value": val,
-                        "label": properties.get("label"),
-                        "type": properties.get("type"),
-                    }
+                        "label": properties["label"],
+                        "type": properties["type"],
+                    })
 
-        return {project_name: {site_name: editable}}
+        return {site_name: editable}
 
     def reset_timer(self):
         """
@@ -663,22 +678,17 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
         sync_project_settings = {}
 
-        # sites are now configured system wide
-        sys_sett = get_system_settings()
-        sync_sett = sys_sett["modules"].get("sync_server")
-        system_sites = {}
-        for site, detail in sync_sett.get("sites", {}).items():
-            system_sites[site] = detail
+        system_sites = self.get_all_sites()
 
         for collection in self.connection.database.collection_names(False):
-            sync_settings = self._parse_sync_settings_from_settings(
+            sites = dict(system_sites)  # get all configured sites
+            proj_settings = self._parse_sync_settings_from_settings(
                 get_project_settings(collection,
                                      exclude_locals=exclude_locals))
+            sites.update(proj_settings["sites"])  # apply project overrides
+            proj_settings["sites"] = sites
 
-            default_sites = self._get_default_site_configs()
-            sync_settings['sites'].update(default_sites)
-            sync_settings['sites'].update(system_sites)
-            sync_project_settings[collection] = sync_settings
+            sync_project_settings[collection] = proj_settings
 
         if not sync_project_settings:
             log.info("No enabled and configured projects for sync.")
@@ -699,7 +709,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         # self.log.debug("project preset {}".format(self.presets))
         if not self.sync_project_settings or \
                not self.sync_project_settings.get(project_name):
-            self.set_sync_project_settings(project_name, exclude_locals)
+            self.set_sync_project_settings(exclude_locals)
 
         return self.sync_project_settings.get(project_name)
 
@@ -713,10 +723,35 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
             Returns skeleton settings for 'studio' and user's local site
         """
-        default_config = {'provider': 'local_drive'}
-        all_sites = {self.DEFAULT_SITE: default_config,
-                     get_local_site_id(): default_config}
+        anatomy_sett = get_default_anatomy_settings()
+        roots = {}
+        for root, config in anatomy_sett["roots"].items():
+            roots[root] = config[platform.system().lower()]
+        studio_config = {
+            'provider': 'local_drive',
+            "root": roots
+        }
+        all_sites = {self.DEFAULT_SITE: studio_config,
+                     get_local_site_id(): {'provider': 'local_drive'}}
         return all_sites
+
+    def get_all_sites(self):
+        """
+            Returns (dict) with all sites configured system wide.
+
+            Returns:
+                (dict): {'studio': {'provider':'local_drive'...},
+                         'MY_LOCAL': {'provider':....}}
+        """
+        sys_sett = get_system_settings()
+        sync_sett = sys_sett["modules"].get("sync_server")
+        system_sites = {}
+        for site, detail in sync_sett.get("sites", {}).items():
+            system_sites[site] = detail
+
+        system_sites.update(self._get_default_site_configs())
+
+        return system_sites
 
     def get_provider_for_site(self, project_name=None, site=None):
         """

@@ -107,10 +107,10 @@ class GDriveHandler(AbstractProvider):
         """
         editable = {
             # credentials could be override on Project or User level
-            'credential_url': {'scope': [EditableScopes.PROJECT,
-                                         EditableScopes.LOCAL],
-                               'label': "Credentials url",
-                               'type': 'text'},
+            'credentials_url': {'scope': [EditableScopes.PROJECT,
+                                          EditableScopes.LOCAL],
+                                'label': "Credentials url",
+                                'type': 'text'},
             # roots could be override only on Project leve, User cannot
             'root': {'scope': [EditableScopes.PROJECT],
                      'label': "Roots",

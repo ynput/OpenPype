@@ -213,7 +213,7 @@ def _get_configured_sites_from_setting(module, project_name, project_setting):
                                                project_name,
                                                site_name,
                                                presets=config)
-            initiated_handlers[(config["provider"], site_name)] = \
+            initiated_handlers[(provider, site_name)] = \
                 handler
 
         if handler.is_active():
