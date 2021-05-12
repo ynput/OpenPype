@@ -216,7 +216,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         # load validation definitions from settings
         validation_settings = (
-            instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(
+            instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(  # noqa: E501
                 "{}_render_attributes".format(renderer))
         )
         from pprint import pprint
@@ -238,7 +238,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 try:
                     render_value = cmds.getAttr(
                         "{}.{}".format(node, attribute_name))
-                except RuntimeError as e:
+                except RuntimeError:
                     invalid = True
                     cls.log.error(
                         "Cannot get value of {}.{}".format(
