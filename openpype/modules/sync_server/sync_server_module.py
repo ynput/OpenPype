@@ -411,11 +411,19 @@ class SyncServerModule(PypeModule, ITrayModule):
                     siteA : [
                         {
                             key:"root", label:"root",
-                            "value":"{'work': 'c:/projects'}", "type": "dict"
+                            "value":"{'work': 'c:/projects'}",
+                            "type": "dict",
+                            "children":[
+                                { "key": "work",
+                                  "type": "text",
+                                  "value": "c:/projects"}
+                            ]
                         },
                         {
                             key:"credentials_url", label:"Credentials url",
-                            "value":"'c:/projects/cred.json'", "type": "text"
+                            "value":"'c:/projects/cred.json'", "type": "text",
+                            "namespace": "{project_setting}/global/sync_server/
+                                     sites"
                         }
                     ]
                 }
@@ -451,18 +459,25 @@ class SyncServerModule(PypeModule, ITrayModule):
 
             Returns:
                 (dict of list of dict)
-                {
-                    siteA : [
-                        {
-                            key:"root", label:"root",
-                            "value":"{'work': 'c:/projects'}", "type": "dict"
-                        },
-                        {
-                            key:"credentials_url", label:"Credentials url",
-                            "value":"'c:/projects/cred.json'", "type": "text"
-                        }
-                    ]
-                }
+            {
+                siteA : [
+                    {
+                        key:"root", label:"root",
+                        "type": "dict",
+                        "children":[
+                            { "key": "work",
+                              "type": "text",
+                              "value": "c:/projects"}
+                        ]
+                    },
+                    {
+                        key:"credentials_url", label:"Credentials url",
+                        "value":"'c:/projects/cred.json'", "type": "text",
+                        "namespace": "{project_setting}/global/sync_server/
+                                     sites"
+                    }
+                ]
+            }
         """
         allowed_sites = set()
         sites = self.get_all_sites(project_name)
@@ -505,8 +520,12 @@ class SyncServerModule(PypeModule, ITrayModule):
                 (list)
                 [
                     {
-                        key:"root", label:"root",
-                        "value":"{'work': 'c:/projects'}", "type": "dict"
+                        key:"root", label:"root", type:"dict",
+                        "children":[
+                            { "key": "work",
+                              "type": "text",
+                              "value": "c:/projects"}
+                        ]
                     }, ...
                 ]
         """
@@ -550,6 +569,9 @@ class SyncServerModule(PypeModule, ITrayModule):
                     item["children"] = children
                 else:
                     item["value"] = val
+
+                if properties.get("namespace"):
+                    item["namespace"] = properties.get("namespace")
 
                 editable.append(item)
 
