@@ -244,6 +244,10 @@ class DictMutableKeysEntity(EndpointEntity):
         if used_temp_label:
             self.label = None
 
+        if self.value_is_env_group and self.store_as_list:
+            reason = "Item can't store environments metadata to list output."
+            raise EntitySchemaError(self, reason)
+
         if not self.schema_data.get("object_type"):
             reason = (
                 "Modifiable dictionary must have specified `object_type`."
