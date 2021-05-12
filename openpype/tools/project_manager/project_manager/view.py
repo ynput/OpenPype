@@ -102,6 +102,7 @@ class HierarchyView(QtWidgets.QTreeView):
         self.setItemDelegate(main_delegate)
         self.setAlternatingRowColors(True)
         self.setSelectionMode(HierarchyView.ExtendedSelection)
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
         column_delegates = {}
         column_key_to_index = {}
@@ -128,6 +129,7 @@ class HierarchyView(QtWidgets.QTreeView):
             column_key_to_index[key] = column
 
         source_model.index_moved.connect(self._on_rows_moved)
+        self.customContextMenuRequested.connect(self._on_context_menu)
 
         self._project_doc_cache = project_doc_cache
         self._tools_cache = tools_cache
@@ -338,3 +340,21 @@ class HierarchyView(QtWidgets.QTreeView):
             and index.flags() & QtCore.Qt.ItemIsEditable
         ):
             self.edit(index)
+
+    def _on_context_menu(self, point):
+        index = self.indexAt(point)
+        if index.column() != 0:
+            return
+
+        actions = []
+
+        context_menu = QtWidgets.QMenu(self)
+        if not actions:
+            return
+
+        for action in actions:
+            context_menu.addAction(action)
+
+        global_point = self.viewport().mapToGlobal(point)
+        context_menu.exec_(global_point)
+
