@@ -51,6 +51,11 @@ main () {
     echo -e "${BIRed}!!!${RST} Copying failed."
     return 1
   fi
+
+  echo -e "${BIGreen}>>>${RST} Fixing user ownership ..."
+  username="$(logname)"
+  chown -R $username ./build
+
   echo -e "${BIGreen}>>>${RST} All done, you can delete container:"
   echo -e "${BIYellow}$id${RST}"
 }

@@ -73,7 +73,10 @@ RUN source $HOME/.bashrc \
     && ./tools/fetch_thirdparty_libs.sh
 
 RUN source $HOME/.bashrc \
-    && bash ./tools/build.sh
+    && bash ./tools/build.sh \
+    && cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.7/lib \
+    && cp /usr/lib64/libssl* ./build/exe.linux-x86_64-3.7/lib \
+    && cp /usr/lib64/libcrypto* ./build/exe.linux-x86_64-3.7/lib
 
 RUN cd /opt/openpype \
     rm -rf ./vendor/bin
