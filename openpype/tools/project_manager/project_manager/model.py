@@ -5,6 +5,7 @@ from uuid import uuid4
 
 from .constants import (
     IDENTIFIER_ROLE,
+    ITEM_TYPE_ROLE,
     DUPLICATED_ROLE,
     HIERARCHY_CHANGE_ABLE_ROLE,
     REMOVED_ROLE
@@ -1015,6 +1016,7 @@ class BaseItem:
 
     _name_icon = None
     _is_duplicated = False
+    item_type = "base"
 
     _None = object()
 
@@ -1027,6 +1029,7 @@ class BaseItem:
             key: None
             for key in self.columns
         }
+        self._global_data = {}
         self._source_data = data
         if data:
             for key, value in data.items():
@@ -1052,7 +1055,10 @@ class BaseItem:
         self._children.pop(idx)
         self._children.insert(row, item)
 
-    def _global_data(self, role):
+    def _get_global_data(self, role):
+        if role == ITEM_TYPE_ROLE:
+            return self.item_type
+
         if role == IDENTIFIER_ROLE:
             return self._id
 
@@ -1062,10 +1068,14 @@ class BaseItem:
         if role == REMOVED_ROLE:
             return False
 
-        return self._None
+        return self._global_data.get(role, self._None)
+
+    def _set_global_data(self, value, role):
+        self._global_data[role] = value
+        return True
 
     def data(self, key, role):
-        value = self._global_data(role)
+        value = self._get_global_data(role)
         if value is not self._None:
             return value
 
@@ -1096,14 +1106,12 @@ class BaseItem:
             return True
 
         if role == QtCore.Qt.EditRole:
-            if key not in self.editable_columns:
-                return False
+            if key in self.editable_columns:
+                self._data[key] = value
+                # must return true if successful
+                return True
 
-            self._data[key] = value
-            # must return true if successful
-            return True
-
-        return False
+        return self._set_global_data(value, role)
 
     @property
     def id(self):
@@ -1175,6 +1183,8 @@ class BaseItem:
 
 
 class RootItem(BaseItem):
+    item_type = "root"
+
     def __init__(self, model):
         super(RootItem, self).__init__()
         self._model = model
@@ -1187,6 +1197,8 @@ class RootItem(BaseItem):
 
 
 class ProjectItem(BaseItem):
+    item_type = "project"
+
     columns = {
         "name",
         "type",
@@ -1261,6 +1273,8 @@ class ProjectItem(BaseItem):
 
 
 class AssetItem(BaseItem):
+    item_type = "asset"
+
     columns = {
         "name",
         "type",
@@ -1452,7 +1466,7 @@ class AssetItem(BaseItem):
             cls._name_icon = qtawesome.icon("fa.folder", color="#333333")
         return cls._name_icon
 
-    def _global_data(self, role):
+    def _get_global_data(self, role):
         if role == HIERARCHY_CHANGE_ABLE_ROLE:
             return self._hierarchy_changes_enabled
 
@@ -1463,7 +1477,7 @@ class AssetItem(BaseItem):
             return "Asset with name \"{}\" already exists.".format(
                 self._data["name"]
             )
-        return super(AssetItem, self)._global_data(role)
+        return super(AssetItem, self)._get_global_data(role)
 
     def data(self, key, role):
         if role == QtCore.Qt.BackgroundRole:
@@ -1577,6 +1591,8 @@ class AssetItem(BaseItem):
 
 
 class TaskItem(BaseItem):
+    item_type = "task"
+
     columns = {
         "name",
         "type"
@@ -1608,7 +1624,7 @@ class TaskItem(BaseItem):
     def add_child(self, item, row=None):
         raise AssertionError("BUG: Can't add children to Task")
 
-    def _global_data(self, role):
+    def _get_global_data(self, role):
         if role == REMOVED_ROLE:
             return self._removed
 
@@ -1616,7 +1632,7 @@ class TaskItem(BaseItem):
             return "Duplicated Task name \"{}\".".format(
                 self._data["name"]
             )
-        return super(TaskItem, self)._global_data(role)
+        return super(TaskItem, self)._get_global_data(role)
 
     def to_doc_data(self):
         if self._removed:
