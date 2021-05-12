@@ -430,6 +430,33 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             return result[0]
         return None
 
+    def remove_delete_flag(self, item_ids):
+        remove_tag_items_by_id = {}
+        for item_id in item_ids:
+            item = self.items_by_id[item_id]
+            if not isinstance(item, (AssetItem, TaskItem)):
+                continue
+
+            if item.data(None, REMOVED_ROLE):
+                remove_tag_items_by_id[item_id] = item
+
+        for item in remove_tag_items_by_id.values():
+            parent = item.parent()
+            while True:
+                if not isinstance(parent, (AssetItem, TaskItem)):
+                    break
+
+                if parent.id in remove_tag_items_by_id:
+                    continue
+
+                if parent.data(None, REMOVED_ROLE):
+                    remove_tag_items_by_id[parent.id] = parent
+
+                parent = parent.parent()
+
+        for item in remove_tag_items_by_id.values():
+            item.setData(None, False, REMOVED_ROLE)
+
     def remove_index(self, index):
         return self.remove_indexes([index])
 
