@@ -485,6 +485,9 @@ class SyncServerModule(PypeModule, ITrayModule):
             # Local Settings can select only from allowed sites for project
             allowed_sites.update(set(self.get_active_sites(project_name)))
             allowed_sites.update(set(self.get_remote_sites(project_name)))
+            # Settings allow use of 'local' site, user's site is not 'local'
+            if 'local' in allowed_sites:
+                allowed_sites.add(get_local_site_id())
 
         editable = {}
         for site_name in sites.keys():
@@ -549,6 +552,22 @@ class SyncServerModule(PypeModule, ITrayModule):
             if scope is None or scope.intersection(set(properties["scope"])):
                 val = sync_s.get("sites", {}).get(site_name, {}).get(key)
 
+                item = {
+                    "key": key,
+                    "label": properties["label"],
+                    "type": properties["type"]
+                }
+
+                if properties.get("namespace"):
+                    item["namespace"] = properties.get("namespace")
+                    if "platform" in item["namespace"]:
+                        try:
+                            if val:
+                                val = val[platform.system().lower()]
+                        except KeyError:
+                            st = "{}'s field value {} should be".format(key, val)  # noqa: E501
+                            log.error(st + " multiplatform dict")
+
                 children = []
                 if properties["type"] == "dict":
                     if val:
@@ -560,18 +579,12 @@ class SyncServerModule(PypeModule, ITrayModule):
                             }
                             children.append(child)
 
-                item = {
-                    "key": key,
-                    "label": properties["label"],
-                    "type": properties["type"]
-                }
                 if properties["type"] == "dict":
                     item["children"] = children
                 else:
                     item["value"] = val
 
-                if properties.get("namespace"):
-                    item["namespace"] = properties.get("namespace")
+
 
                 editable.append(item)
 

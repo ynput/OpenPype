@@ -102,6 +102,8 @@ class GDriveHandler(AbstractProvider):
             Returns:
                 (dict)
         """
+        # {platform} tells that value is multiplatform and only specific OS
+        # should be returned
         editable = {
             # credentials could be override on Project or User level
             'credentials_url': {
@@ -109,7 +111,8 @@ class GDriveHandler(AbstractProvider):
                           EditableScopes.LOCAL],
                 'label': "Credentials url",
                 'type': 'text',
-                'namespace': '{project_setting}/global/sync_server/sites'},
+                'namespace': '{project_setting}/global/sync_server/sites/{site}/{platform}'  # noqa: E501
+            },
             # roots could be override only on Project leve, User cannot
             'root': {'scope': [EditableScopes.PROJECT],
                      'label': "Roots",
