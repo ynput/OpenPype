@@ -994,6 +994,15 @@ class SyncServerModule(PypeModule, ITrayModule):
             Always is comparing local record, eg. site with
             'name' == self.presets[PROJECT_NAME]['config']["active_site"]
 
+            This leads to trigger actual upload or download, there is
+            a use case 'studio' <> 'remote' where user should publish
+            to 'studio', see progress in Tray GUI, but do not do
+            physical upload/download
+            (as multiple user would be doing that).
+
+            Do physical U/D only when any of the sites is user's local, in that
+            case only user has the data and must U/D.
+
         Args:
             file (dictionary):  of file from representation in Mongo
             local_site (string):  - local side of compare (usually 'studio')
@@ -1003,8 +1012,12 @@ class SyncServerModule(PypeModule, ITrayModule):
             (string) - one of SyncStatus
         """
         sites = file.get("sites") or []
-        # if isinstance(sites, list):  # temporary, old format of 'sites'
-        #     return SyncStatus.DO_NOTHING
+
+        if get_local_site_id() not in (local_site, remote_site):
+            # don't do upload/download for studio sites
+            log.debug("No local site {} - {}".format(local_site, remote_site))
+            return SyncStatus.DO_NOTHING
+
         _, remote_rec = self._get_site_rec(sites, remote_site) or {}
         if remote_rec:  # sync remote target
             created_dt = remote_rec.get("created_dt")
