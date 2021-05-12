@@ -347,6 +347,7 @@ class DictMutableKeysEntity(EndpointEntity):
 
         using_project_overrides = False
         using_studio_overrides = False
+        using_default_values = False
         if (
             state is OverrideState.PROJECT
             and self.had_project_override
@@ -364,11 +365,21 @@ class DictMutableKeysEntity(EndpointEntity):
             metadata = self._studio_override_metadata
 
         else:
+            using_default_values = True
             value = self._default_value
             metadata = self._default_metadata
 
         if value is NOT_SET:
+            using_default_values = False
             value = self.value_on_not_set
+
+        using_values_from_state = False
+        if state is OverrideState.PROJECT:
+            using_values_from_state = using_project_overrides
+        elif state is OverrideState.STUDIO:
+            using_values_from_state = using_studio_overrides
+        elif state is OverrideState.DEFAULTS:
+            using_values_from_state = using_default_values
 
         new_value = copy.deepcopy(value)
 
