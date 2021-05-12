@@ -131,11 +131,15 @@ class DictMutableKeysEntity(EndpointEntity):
             self._has_project_override = True
         self.on_change()
 
-    def _add_key(self, key):
+    def _add_key(self, key, _ingore_key_validation=False):
         if key in self.children_by_key:
             self.pop(key)
 
-        if not self.store_as_list and not KEY_REGEX.match(key):
+        if (
+            not _ingore_key_validation
+            and not self.store_as_list
+            and not KEY_REGEX.match(key)
+        ):
             raise InvalidKeySymbols(self.path, key)
 
         if self.value_is_env_group:
