@@ -697,22 +697,31 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             item_row = item.row()
             dst_parent = None
             for row in reversed(range(item_row)):
-                if row == item_row:
-                    continue
                 _item = src_parent.child(row)
-                if not isinstance(_item, TaskItem):
+                if not isinstance(_item, AssetItem):
+                    continue
+
+                if _item.data(REMOVED_ROLE):
+                    continue
+
+                dst_parent = _item
+                break
+
+            _next_row = item_row + 1
+            if dst_parent is None and _next_row < src_row_count:
+                for row in range(_next_row, src_row_count):
+                    _item = src_parent.child(row)
+                    if not isinstance(_item, AssetItem):
+                        continue
+
+                    if _item.data(REMOVED_ROLE):
+                        continue
+
                     dst_parent = _item
                     break
 
             if dst_parent is None:
-                for row in range(item_row + 1, src_row_count + 2):
-                    _item = src_parent.child(row)
-                    if not isinstance(_item, TaskItem):
-                        dst_parent = _item
-                        break
-
-                if dst_parent is None:
-                    return
+                return
 
             dst_row = dst_parent.rowCount()
 
