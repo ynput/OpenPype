@@ -131,6 +131,11 @@ class HierarchyModel(QtCore.QAbstractItemModel):
     def _reset_root_item(self):
         self._root_item = RootItem(self)
 
+    def refresh_project(self):
+        project_name = self._current_project
+        self._current_project = None
+        self.set_project(project_name)
+
     def set_project(self, project_name):
         if self._current_project == project_name:
             return
@@ -999,6 +1004,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         if bulk_writes:
             project_col.bulk_write(bulk_writes)
+
+        self.refresh_project()
 
 
 class BaseItem:
