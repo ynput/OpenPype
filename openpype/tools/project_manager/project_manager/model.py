@@ -898,37 +898,31 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 if current_idxs == max_idxs:
                     return
 
-                def _update_parents(
-                    _current_idx, _parent_items, _current_idxs, top=True
-                ):
+                def _update_parents(_current_idx, top=True):
                     if _current_idx < 0:
                         return False
 
-                    if _current_idxs[_current_idx] == 0:
-                        if not _update_parents(
-                            _current_idx - 1, _parent_items, _current_idxs, False
-                        ):
+                    if current_idxs[_current_idx] == 0:
+                        if not _update_parents(_current_idx - 1, False):
                             return False
 
-                        parent = _parent_items[_current_idx]
+                        parent = parent_items[_current_idx]
                         row_count = 0
                         if parent is not None:
                             row_count = parent.rowCount()
-                        _current_idxs[_current_idx] = row_count
+                        current_idxs[_current_idx] = row_count
                         return True
                     if top:
                         return True
 
-                    _current_idxs[_current_idx] -= 1
-                    parent_item = _parent_items[_current_idx]
-                    new_item = parent_item.child(_current_idxs[_current_idx])
-                    _parent_items[_current_idx + 1] = new_item
+                    current_idxs[_current_idx] -= 1
+                    parent_item = parent_items[_current_idx]
+                    new_item = parent_item.child(current_idxs[_current_idx])
+                    parent_items[_current_idx + 1] = new_item
 
                     return True
 
-                updated = _update_parents(
-                    indexes_len - 1, parent_items, current_idxs
-                )
+                updated = _update_parents(indexes_len - 1)
                 if not updated:
                     return
 
