@@ -1,3 +1,4 @@
+import collections
 from queue import Queue
 
 from Qt import QtWidgets, QtCore, QtGui
@@ -399,13 +400,14 @@ class HierarchyView(QtWidgets.QTreeView):
         Args:
             indexes (list): List of QModelIndex that should be expanded.
         """
-
         process_queue = Queue()
         for index in indexes:
             if index.column() == 0:
                 process_queue.put(index)
 
         item_ids = set()
+        # Use deque as expanding not visible items as first is faster
+        indexes_deque = collections.deque()
         while not process_queue.empty():
             index = process_queue.get()
             item_id = index.data(IDENTIFIER_ROLE)
@@ -413,12 +415,15 @@ class HierarchyView(QtWidgets.QTreeView):
                 continue
             item_ids.add(item_id)
 
-            self.expand(index)
+            indexes_deque.append(index)
 
             for row in range(self._source_model.rowCount(index)):
                 process_queue.put(self._source_model.index(
                     row, 0, index
                 ))
+
+        while indexes_deque:
+            self.expand(indexes_deque.pop())
 
     def _collapse_items(self, indexes):
         """Collapse multiple items with all it's children.
@@ -439,11 +444,9 @@ class HierarchyView(QtWidgets.QTreeView):
                 continue
             item_ids.add(item_id)
 
-            item = self._source_model._items_by_id[item_id]
-            if self.isExpanded(index):
-                self.collapse(index)
+            self.collapse(index)
 
-            for row in range(item.rowCount()):
+            for row in range(self._source_model.rowCount(index)):
                 process_queue.put(self._source_model.index(
                     row, 0, index
                 ))
