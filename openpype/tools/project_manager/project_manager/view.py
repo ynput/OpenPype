@@ -488,7 +488,7 @@ class HierarchyView(QtWidgets.QTreeView):
         # Collapse/Expand action
         show_collapse_expand_action = False
         for item_id in item_ids:
-            item = items_by_id[item_ids[0]]
+            item = items_by_id[item_id]
             item_type = item.data(ITEM_TYPE_ROLE)
             if item_type != "task":
                 show_collapse_expand_action = True
