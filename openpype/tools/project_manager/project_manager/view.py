@@ -156,6 +156,13 @@ class HierarchyView(QtWidgets.QTreeView):
         # Trigger update of model after all data for delegates are filled
         self._source_model.set_project(project_name)
 
+        self.collapseAll()
+
+        project_item = self._source_model.project_item
+        if project_item:
+            index = self._source_model.index_for_item(project_item)
+            self.expand(index)
+
     def _on_rows_moved(self, index):
         parent_index = index.parent()
         if not self.isExpanded(parent_index):
