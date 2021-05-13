@@ -236,9 +236,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 # Add item to appending queue
                 appending_queue.put((asset_id, new_item))
 
-            if isinstance(parent_item, (ProjectItem, AssetItem)):
-                new_items.append(parent_item.add_asset_item)
-
             if new_items:
                 self.add_items(new_items, parent_item)
 
@@ -392,9 +389,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if result is not None:
             self._validate_asset_duplicity(name)
 
-        if not new_child.add_asset_item_visible:
-            self.add_item(new_child.add_asset_item, new_child)
-
         return result
 
     def add_new_task(self, parent_index):
@@ -421,9 +415,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         if start_row is None:
             start_row = parent.rowCount()
-
-        if parent.add_asset_item_visible and start_row == parent.rowCount():
-            start_row -= 1
 
         end_row = start_row + len(items) - 1
 
@@ -502,20 +493,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             if item.data(REMOVED_ROLE):
                 item.setData(False, REMOVED_ROLE)
 
-    def delete_add_asset_item(self, parent):
-        item = parent.add_asset_item
-        children = parent.children()
-        if item not in children:
-            return
-        parent_index = self.index_for_item(parent)
-        row = children.index(item)
-
-        self.beginRemoveRows(parent_index, row, row)
-
-        parent.remove_child(item)
-
-        self.endRemoveRows()
-
     def delete_index(self, index):
         return self.delete_indexes([index])
 
@@ -532,7 +509,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 processed_ids.add(item_id)
 
                 item = self._items_by_id[item_id]
-                if isinstance(item, (TaskItem, AssetItem, AddAssetItem)):
+                if isinstance(item, (TaskItem, AssetItem)):
                     items_by_id[item_id] = item
 
         if not items_by_id:
@@ -542,9 +519,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             self._remove_item(item)
 
     def _remove_item(self, item):
-        if isinstance(item, AddAssetItem):
-            return
-
         is_removed = item.data(REMOVED_ROLE)
         if is_removed:
             return
@@ -573,9 +547,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 child_item = cur_item.child(row)
                 if isinstance(child_item, TaskItem):
                     task_children.append(child_item)
-                    continue
-
-                elif isinstance(child_item, AddAssetItem):
                     continue
 
                 if not _fill_children(_all_descendants, child_item, cur_item):
@@ -769,8 +740,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 return
 
             dst_row = dst_parent.rowCount()
-            if dst_parent.add_asset_item_visible:
-                dst_row -= 1
 
         if src_parent is dst_parent:
             return
@@ -1027,8 +996,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                     dst_parent = child_item
                     destination_row = dst_parent.rowCount()
-                    if dst_parent.add_asset_item_visible:
-                        destination_row -= 1
                     break
 
                 if dst_parent is not None:
@@ -1261,7 +1228,6 @@ class BaseItem:
     _name_icon = None
     _is_duplicated = False
     item_type = "base"
-    add_asset_item_visible = False
 
     _None = object()
 
@@ -1480,8 +1446,6 @@ class ProjectItem(BaseItem):
     def __init__(self, project_doc):
         self._mongo_id = project_doc["_id"]
 
-        self.add_asset_item = AddAssetItem(self)
-
         data = self.data_from_doc(project_doc)
         super(ProjectItem, self).__init__(data)
 
@@ -1518,76 +1482,8 @@ class ProjectItem(BaseItem):
     def flags(self, *args, **kwargs):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
-    def add_child(self, item, row=None):
-        if not self.add_asset_item_visible and item is self.add_asset_item:
-            self.add_asset_item_visible = True
-
-        super(ProjectItem, self).add_child(item, row)
-
-    def remove_child(self, item):
-        if self.add_asset_item_visible and item is self.add_asset_item:
-            self.add_asset_item_visible = False
-
-        super(ProjectItem, self).remove_child(item)
 
 
-class AddAssetItem(BaseItem):
-    item_type = "add_asset"
-    columns = {"name"}
-    editable_columns = {"name"}
-
-    def __init__(self, parent):
-        super(AddAssetItem, self).__init__()
-        self._parent = parent
-
-    @classmethod
-    def name_icon(cls):
-        if cls._name_icon is None:
-            cls._name_icon = qtawesome.icon(
-                "fa.plus-circle",
-                color="#333333"
-            )
-        return cls._name_icon
-
-    def data(self, role, key=None):
-        if role == REMOVED_ROLE:
-            return True
-
-        if role == HIERARCHY_CHANGE_ABLE_ROLE:
-            return True
-
-        if key == "name":
-            if role == QtCore.Qt.DisplayRole:
-                return "Add Asset"
-            elif role == QtCore.Qt.EditRole:
-                return ""
-        return super(AddAssetItem, self).data(role, key)
-
-    def setData(self, value, role, key=None):
-        if key == "name":
-            if not value:
-                return False
-            index = self.model().index_for_item(self)
-            new_index = self.model().add_new_asset(index)
-            self.model().setData(new_index, value, QtCore.Qt.EditRole)
-            return True
-        return super(AddAssetItem, self).setData(value, role, key)
-
-    def flags(self, key):
-        if key != "name":
-            return QtCore.Qt.NoItemFlags
-
-        return (
-            QtCore.Qt.ItemIsEnabled
-            | QtCore.Qt.ItemIsSelectable
-            | QtCore.Qt.ItemIsEditable
-        )
-
-    def add_child(self, item, row=None):
-        raise AssertionError("BUG: Can't add children to AddAssetItem")
-
-    def remove_child(self, item):
-        raise AssertionError("BUG: Can't remove children from AddAssetItem")
 
 
 class AssetItem(BaseItem):
@@ -1648,9 +1544,6 @@ class AssetItem(BaseItem):
             asset_doc = {}
         self.mongo_id = asset_doc.get("_id")
         self._project_id = None
-
-        self.add_asset_item_visible = False
-        self.add_asset_item = AddAssetItem(self)
 
         # Item data
         self._hierarchy_changes_enabled = True
@@ -1812,11 +1705,6 @@ class AssetItem(BaseItem):
     def setData(self, value, role, key=None):
         if role == REMOVED_ROLE:
             self._removed = value
-            if not value and not self.add_asset_item_visible:
-                self.model().add_item(self.add_asset_item, self)
-            elif value and self.add_asset_item_visible:
-                self.model().delete_add_asset_item(self)
-
             return True
 
         if role == HIERARCHY_CHANGE_ABLE_ROLE:
@@ -1904,20 +1792,14 @@ class AssetItem(BaseItem):
 
         super(AssetItem, self).add_child(item, row)
 
-        if not self.add_asset_item_visible and item is self.add_asset_item:
-            self.add_asset_item_visible = True
-
-        elif isinstance(item, TaskItem):
+        if isinstance(item, TaskItem):
             self._add_task(item)
 
     def remove_child(self, item):
         if item not in self._children:
             return
 
-        if self.add_asset_item_visible and item is self.add_asset_item:
-            self.add_asset_item_visible = False
-
-        elif isinstance(item, TaskItem):
+        if isinstance(item, TaskItem):
             self._remove_task(item)
 
         super(AssetItem, self).remove_child(item)
