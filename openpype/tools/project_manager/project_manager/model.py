@@ -370,22 +370,20 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         item_id = source_index.data(IDENTIFIER_ROLE)
         item = self.items_by_id[item_id]
 
-        new_row = None
-        name = None
-        asset_data = {}
         if isinstance(item, (RootItem, ProjectItem)):
             name = "ep"
-            parent = item
+            new_row = None
         else:
-            parent = item.parent()
+            name = None
             new_row = item.row() + 1
 
+        asset_data = {}
         if name:
             asset_data["name"] = name
 
         new_child = AssetItem(asset_data)
 
-        result = self.add_item(new_child, parent, new_row)
+        result = self.add_item(new_child, item, new_row)
         if result is not None:
             self._validate_asset_duplicity(name)
 
