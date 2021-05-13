@@ -1252,7 +1252,7 @@ class BaseItem:
         return not self._is_duplicated
 
     def model(self):
-        return self._parent.model
+        return self._parent.model()
 
     def move_to(self, item, row):
         idx = self._children.index(item)
