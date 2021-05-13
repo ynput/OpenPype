@@ -1650,13 +1650,14 @@ class AssetItem(BaseItem):
             self._duplicated_task_names.add(name)
             for _item in self._task_items_by_name[name]:
                 _item.setData(True, DUPLICATED_ROLE)
+        elif item.data(DUPLICATED_ROLE):
+            item.setData(False, DUPLICATED_ROLE)
 
     def _remove_task(self, item):
         item_id = item.data(IDENTIFIER_ROLE)
-        name = self._task_name_by_item_id[item_id]
 
-        self._task_name_by_item_id.pop(item_id)
-        self._task_items_by_name[name].append(item)
+        name = self._task_name_by_item_id.pop(item_id)
+        self._task_items_by_name[name].remove(item)
         if not self._task_items_by_name[name]:
             self._task_items_by_name.pop(name)
 
