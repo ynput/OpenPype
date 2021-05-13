@@ -400,12 +400,12 @@ class HierarchyView(QtWidgets.QTreeView):
             indexes (list): List of QModelIndex that should be expanded.
         """
 
-        item_ids = set()
         process_queue = Queue()
         for index in indexes:
             if index.column() == 0:
                 process_queue.put(index)
 
+        item_ids = set()
         while not process_queue.empty():
             index = process_queue.get()
             item_id = index.data(IDENTIFIER_ROLE)
@@ -413,11 +413,9 @@ class HierarchyView(QtWidgets.QTreeView):
                 continue
             item_ids.add(item_id)
 
-            item = self._source_model._items_by_id[item_id]
-            if not self.isExpanded(index):
-                self.expand(index)
+            self.expand(index)
 
-            for row in range(item.rowCount()):
+            for row in range(self._source_model.rowCount(index)):
                 process_queue.put(self._source_model.index(
                     row, 0, index
                 ))
