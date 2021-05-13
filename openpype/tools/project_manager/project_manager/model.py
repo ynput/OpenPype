@@ -488,6 +488,20 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             if item.data(REMOVED_ROLE):
                 item.setData(False, REMOVED_ROLE)
 
+    def delete_add_asset_item(self, parent):
+        item = parent.add_asset_item
+        children = parent.children()
+        if item not in children:
+            return
+        parent_index = self.index_for_item(parent)
+        row = children.index(item)
+
+        self.beginRemoveRows(parent_index, row, row)
+
+        parent.remove_child(item)
+
+        self.endRemoveRows()
+
     def delete_index(self, index):
         return self.delete_indexes([index])
 
