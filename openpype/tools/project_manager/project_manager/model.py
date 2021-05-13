@@ -1,5 +1,6 @@
 import collections
 import copy
+import json
 from queue import Queue
 from uuid import uuid4
 
@@ -1135,6 +1136,75 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         self.refresh_project()
 
+    def copy_mime_data(self, indexes):
+        items = []
+        processed_ids = set()
+        for index in indexes:
+            if not index.isValid():
+                continue
+            item_id = index.data(IDENTIFIER_ROLE)
+            if item_id in processed_ids:
+                continue
+            processed_ids.add(item_id)
+            item = self._items_by_id[item_id]
+            items.append(item)
+
+        parent_item = None
+        for item in items:
+            if not isinstance(item, TaskItem):
+                raise ValueError("Can copy only tasks")
+
+            if parent_item is None:
+                parent_item = item.parent()
+            elif item.parent() is not parent_item:
+                raise ValueError("Can copy only tasks from same parent")
+
+        data = []
+        for task_item in items:
+            data.append(task_item.to_json_data())
+
+        encoded_data = QtCore.QByteArray()
+        stream = QtCore.QDataStream(encoded_data, QtCore.QIODevice.WriteOnly)
+        stream.writeQString(json.dumps(data))
+        mimedata = QtCore.QMimeData()
+        mimedata.setData("application/copy_task", encoded_data)
+        return mimedata
+
+    def paste_mime_data(self, index, mime_data):
+        if not index.isValid():
+            return
+
+        item_id = index.data(IDENTIFIER_ROLE)
+        item = self._items_by_id[item_id]
+        if not isinstance(item, (AssetItem, TaskItem)):
+            return
+
+        raw_data = mime_data.data("application/copy_task")
+        encoded_data = QtCore.QByteArray.fromRawData(raw_data)
+        stream = QtCore.QDataStream(encoded_data, QtCore.QIODevice.ReadOnly)
+        text = stream.readQString()
+        try:
+            data = json.loads(text)
+        except Exception:
+            data = []
+
+        if not data:
+            return
+
+        if isinstance(item, TaskItem):
+            parent = item.parent()
+        else:
+            parent = item
+
+        for task_item_data in data:
+            task_data = {}
+            for name, data in task_item_data.items():
+                task_data = data
+                task_data["name"] = name
+
+            task_item = TaskItem(task_data, True)
+            self.add_item(task_item, parent)
+
 
 class BaseItem:
     columns = []
@@ -1730,9 +1800,11 @@ class TaskItem(BaseItem):
         "type"
     }
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, is_new=None):
         self._removed = False
-        self._is_new = data is None
+        if is_new is None:
+            is_new = data is None
+        self._is_new = is_new
         if data is None:
             data = {}
 
@@ -1801,3 +1873,10 @@ class TaskItem(BaseItem):
             self.parent().on_task_name_change(self)
 
         return result
+
+    def to_json_data(self):
+        """Convert json data without parent reference.
+
+        Method used for mime data on copy/paste
+        """
+        return self.to_doc_data()

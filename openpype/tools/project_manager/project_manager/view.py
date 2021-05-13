@@ -242,6 +242,12 @@ class HierarchyView(QtWidgets.QTreeView):
         if event.key() == QtCore.Qt.Key_Delete:
             self._delete_items()
 
+        elif event.matches(QtGui.QKeySequence.Copy):
+            self._copy_items()
+
+        elif event.matches(QtGui.QKeySequence.Paste):
+            self._paste_items()
+
         elif event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
             mdfs = event.modifiers()
             if mdfs == (QtCore.Qt.ShiftModifier | QtCore.Qt.ControlModifier):
@@ -268,6 +274,18 @@ class HierarchyView(QtWidgets.QTreeView):
             super(HierarchyView, self).keyPressEvent(event)
         else:
             event.accept()
+
+    def _copy_items(self, indexes=None):
+        if indexes is None:
+            indexes = self.selectedIndexes()
+        mime_data = self._source_model.copy_mime_data(indexes)
+
+        QtWidgets.QApplication.clipboard().setMimeData(mime_data)
+
+    def _paste_items(self):
+        index = self.currentIndex()
+        mime_data = QtWidgets.QApplication.clipboard().mimeData()
+        self._source_model.paste_mime_data(index, mime_data)
 
     def _delete_items(self, indexes=None):
         if indexes is None:
