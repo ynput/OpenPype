@@ -1487,9 +1487,6 @@ class ProjectItem(BaseItem):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
 
-
-
-
 class AssetItem(BaseItem):
     item_type = "asset"
 

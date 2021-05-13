@@ -389,9 +389,16 @@ class HierarchyView(QtWidgets.QTreeView):
             self.edit(index)
 
     def _remove_delete_flag(self, item_ids):
+        """Remove deletion flag on items marked for deletion."""
         self._source_model.remove_delete_flag(item_ids)
 
     def _expand_items(self, indexes):
+        """Expand multiple items with all it's children.
+
+        Args:
+            indexes (list): List of QModelIndex that should be expanded.
+        """
+
         item_ids = set()
         process_queue = Queue()
         for index in indexes:
@@ -415,6 +422,11 @@ class HierarchyView(QtWidgets.QTreeView):
                 ))
 
     def _collapse_items(self, indexes):
+        """Collapse multiple items with all it's children.
+
+        Args:
+            indexes (list): List of QModelIndex that should be collapsed.
+        """
         item_ids = set()
         process_queue = Queue()
         for index in indexes:
@@ -442,6 +454,10 @@ class HierarchyView(QtWidgets.QTreeView):
         self._parent.show_message(message)
 
     def _on_context_menu(self, point):
+        """Context menu on right click.
+
+        Currently is menu shown only on "name" column.
+        """
         index = self.indexAt(point)
         column = index.column()
         if column != 0:

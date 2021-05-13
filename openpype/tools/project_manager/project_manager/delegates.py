@@ -78,6 +78,8 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
             editor = QtWidgets.QDoubleSpinBox(parent)
         else:
             editor = QtWidgets.QSpinBox(parent)
+
+        editor.setObjectName("NumberEditor")
         editor.setMinimum(self.minimum)
         editor.setMaximum(self.maximum)
 
@@ -97,6 +99,7 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
 class NameDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = NameTextEdit(parent)
+        editor.setObjectName("NameEditor")
         value = index.data(QtCore.Qt.EditRole)
         if value is not None:
             editor.setText(str(value))
@@ -110,6 +113,7 @@ class TypeDelegate(QtWidgets.QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
         editor = FilterComboBox(parent)
+        editor.setObjectName("TypeEditor")
         if not self._project_doc_cache.project_doc:
             return editor
 
@@ -132,6 +136,7 @@ class ToolsDelegate(QtWidgets.QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
         editor = MultiSelectionComboBox(parent)
+        editor.setObjectName("ToolEditor")
         if not self._tools_cache.tools_data:
             return editor
 
