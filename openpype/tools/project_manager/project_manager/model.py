@@ -504,7 +504,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 processed_ids.add(item_id)
 
                 item = self._items_by_id[item_id]
-                if isinstance(item, (TaskItem, AssetItem)):
+                if isinstance(item, (TaskItem, AssetItem, AddAssetItem)):
                     items_by_id[item_id] = item
 
         if not items_by_id:
@@ -514,6 +514,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             self._remove_item(item)
 
     def _remove_item(self, item):
+        if isinstance(item, AddAssetItem):
+            return
+
         is_removed = item.data(REMOVED_ROLE)
         if is_removed:
             return
@@ -542,6 +545,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 child_item = cur_item.child(row)
                 if isinstance(child_item, TaskItem):
                     task_children.append(child_item)
+                    continue
+
+                elif isinstance(child_item, AddAssetItem):
                     continue
 
                 if not _fill_children(_all_descendants, child_item, cur_item):
