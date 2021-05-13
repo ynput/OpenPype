@@ -680,7 +680,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         dst_row = None
         dst_parent = None
-        dst_parent_index = None
 
         if direction == -1:
             if isinstance(src_parent, (RootItem, ProjectItem)):
@@ -734,10 +733,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         ):
             return
 
-        if dst_parent_index is None:
-            dst_parent_index = self.index_from_item(
-                dst_parent.row(), 0, dst_parent.parent()
-            )
+        dst_parent_index = self.index_from_item(
+            dst_parent.row(), 0, dst_parent.parent()
+        )
 
         self.beginMoveRows(
             src_parent_index,
@@ -753,7 +751,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         self.endMoveRows()
 
-        self.index_moved.emit(index)
+        new_index = self.index(dst_row, index.column(), dst_parent_index)
+        self.index_moved.emit(new_index)
 
     def move_horizontal(self, indexes, direction):
         if not indexes:
