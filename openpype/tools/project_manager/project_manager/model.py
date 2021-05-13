@@ -1802,6 +1802,11 @@ class AssetItem(BaseItem):
     def setData(self, value, role, key=None):
         if role == REMOVED_ROLE:
             self._removed = value
+            if not value and not self.add_asset_item_visible:
+                self.model().add_item(self.add_asset_item, self)
+            elif value and self.add_asset_item_visible:
+                self.model().delete_add_asset_item(self)
+
             return True
 
         if role == HIERARCHY_CHANGE_ABLE_ROLE:
