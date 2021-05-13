@@ -441,43 +441,46 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return None
 
     def remove_delete_flag(self, item_ids, with_children=True):
-        remove_tag_items_by_id = {}
+        items_by_id = {}
         for item_id in item_ids:
-            item = self.items_by_id[item_id]
-            if not isinstance(item, (AssetItem, TaskItem)):
+            if item_id in items_by_id:
                 continue
 
-            if item.data(REMOVED_ROLE):
-                remove_tag_items_by_id[item_id] = item
+            item = self.items_by_id[item_id]
+            if isinstance(item, (AssetItem, TaskItem)):
+                items_by_id[item_id] = item
 
-        for item in tuple(remove_tag_items_by_id.values()):
+        for item in tuple(items_by_id.values()):
             parent = item.parent()
             while True:
                 if not isinstance(parent, (AssetItem, TaskItem)):
                     break
 
-                if parent.id in remove_tag_items_by_id:
-                    continue
-
-                if parent.data(REMOVED_ROLE):
-                    remove_tag_items_by_id[parent.id] = parent
+                if parent.id not in items_by_id:
+                    items_by_id[parent.id] = parent
 
                 parent = parent.parent()
 
             if not with_children:
                 continue
 
-            def _children_recursion(_item, store_obj):
-                if isinstance(_item, AssetItem):
-                    for row in range(_item.rowCount()):
-                        _child_item = _item.child(row)
-                        if _child_item.id not in store_obj:
-                            store_obj[_child_item.id] = _child_item
-                            _children_recursion(_child_item, store_obj)
-            _children_recursion(item, remove_tag_items_by_id)
+            def _children_recursion(_item):
+                if not isinstance(_item, AssetItem):
+                    return
 
-        for item in remove_tag_items_by_id.values():
-            item.setData(False, REMOVED_ROLE)
+                for row in range(_item.rowCount()):
+                    _child_item = _item.child(row)
+                    if _child_item.id in items_by_id:
+                        continue
+
+                    items_by_id[_child_item.id] = _child_item
+                    _children_recursion(_child_item)
+
+            _children_recursion(item)
+
+        for item in items_by_id.values():
+            if item.data(REMOVED_ROLE):
+                item.setData(False, REMOVED_ROLE)
 
     def remove_index(self, index):
         return self.remove_indexes([index])
