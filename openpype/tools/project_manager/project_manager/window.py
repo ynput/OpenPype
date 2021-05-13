@@ -52,10 +52,12 @@ class Window(QtWidgets.QWidget):
         )
         buttons_widget = QtWidgets.QWidget(self)
 
+        message_label = QtWidgets.QLabel(buttons_widget)
         save_btn = QtWidgets.QPushButton("Save", buttons_widget)
 
         buttons_layout = QtWidgets.QHBoxLayout(buttons_widget)
         buttons_layout.setContentsMargins(0, 0, 0, 0)
+        buttons_layout.addWidget(message_label)
         buttons_layout.addStretch(1)
         buttons_layout.addWidget(save_btn)
 
@@ -73,6 +75,8 @@ class Window(QtWidgets.QWidget):
 
         self.hierarchy_view = hierarchy_view
         self.hierarchy_model = hierarchy_model
+
+        self.message_label = message_label
 
         self.resize(1200, 600)
 
@@ -106,3 +110,7 @@ class Window(QtWidgets.QWidget):
 
     def _on_save_click(self):
         self.hierarchy_model.save()
+
+    def show_message(self, message):
+        # TODO add nicer message pop
+        self.message_label.setText(message)

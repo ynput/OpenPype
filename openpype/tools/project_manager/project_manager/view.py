@@ -98,9 +98,12 @@ class HierarchyView(QtWidgets.QTreeView):
         "tools_env"
     }
 
-    def __init__(self, dbcon, source_model, *args, **kwargs):
-        super(HierarchyView, self).__init__(*args, **kwargs)
+    def __init__(self, dbcon, source_model, parent):
+        super(HierarchyView, self).__init__(parent)
+        # Direct access to model
         self._source_model = source_model
+        # Access to parent because of `show_message` method
+        self._parent = parent
 
         project_doc_cache = ProjectDocCache(dbcon)
         tools_cache = ToolsCache()
@@ -276,11 +279,15 @@ class HierarchyView(QtWidgets.QTreeView):
             event.accept()
 
     def _copy_items(self, indexes=None):
-        if indexes is None:
-            indexes = self.selectedIndexes()
-        mime_data = self._source_model.copy_mime_data(indexes)
+        try:
+            if indexes is None:
+                indexes = self.selectedIndexes()
+            mime_data = self._source_model.copy_mime_data(indexes)
 
-        QtWidgets.QApplication.clipboard().setMimeData(mime_data)
+            QtWidgets.QApplication.clipboard().setMimeData(mime_data)
+            self._show_message("Tasks copied")
+        except ValueError as exc:
+            self._show_message(str(exc))
 
     def _paste_items(self):
         index = self.currentIndex()
@@ -422,6 +429,10 @@ class HierarchyView(QtWidgets.QTreeView):
                 process_queue.put(self._source_model.index(
                     row, 0, index
                 ))
+
+    def _show_message(self, message):
+        """Show message to user."""
+        self._parent.show_message(message)
 
     def _on_context_menu(self, point):
         index = self.indexAt(point)
