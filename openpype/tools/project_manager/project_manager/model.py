@@ -1707,15 +1707,6 @@ class AssetItem(BaseItem):
             )
         return super(AssetItem, self)._get_global_data(role)
 
-    def data(self, role, key=None):
-        if role == QtCore.Qt.BackgroundRole:
-            if self._removed:
-                return QtGui.QColor(255, 0, 0, 127)
-            elif self.is_new:
-                return QtGui.QColor(0, 255, 0, 127)
-
-        return super(AssetItem, self).data(role, key)
-
     def setData(self, value, role, key=None):
         if role == REMOVED_ROLE:
             self._removed = value
