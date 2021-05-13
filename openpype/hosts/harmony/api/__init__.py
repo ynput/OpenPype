@@ -64,35 +64,9 @@ def get_asset_settings():
         "handleStart": handle_start,
         "handleEnd": handle_end,
         "resolutionWidth": resolution_width,
-        "resolutionHeight": resolution_height
+        "resolutionHeight": resolution_height,
+        "entityType": entity_type
     }
-    settings = get_current_project_settings()
-
-    try:
-        skip_resolution_check = (settings["plugins"]
-                                         ["harmony"]
-                                         ["publish"]
-                                         ["ValidateSceneSettings"]
-                                         ["skip_resolution_check"])
-
-        skip_timelines_check = (settings["plugins"]
-                                        ["harmony"]
-                                        ["publish"]
-                                        ["ValidateSceneSettings"]
-                                        ["skip_timelines_check"])
-    except KeyError:
-        skip_resolution_check = []
-        skip_timelines_check = []
-
-    if (any(re.search(pattern, os.getenv('AVALON_TASK'))
-            for pattern in skip_resolution_check)):
-        scene_data.pop("resolutionWidth")
-        scene_data.pop("resolutionHeight")
-
-    if (any(re.search(pattern, entity_type)
-            for pattern in skip_timelines_check)):
-        scene_data.pop('frameStart', None)
-        scene_data.pop('frameEnd', None)
 
     return scene_data
 

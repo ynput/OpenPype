@@ -56,11 +56,24 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Plugin entry point."""
         expected_settings = openpype.hosts.harmony.api.get_asset_settings()
-        self.log.info(expected_settings)
+        self.log.info("scene settings from DB:".format(expected_settings))
 
         expected_settings = _update_frames(dict.copy(expected_settings))
         expected_settings["frameEndHandle"] = expected_settings["frameEnd"] +\
             expected_settings["handleEnd"]
+
+        if (any(re.search(pattern, os.getenv('AVALON_TASK'))
+                for pattern in self.skip_resolution_check)):
+            expected_settings.pop("resolutionWidth")
+            expected_settings.pop("resolutionHeight")
+
+        entity_type = expected_settings.get("entityType")
+        if (any(re.search(pattern, entity_type)
+                for pattern in self.skip_timelines_check)):
+            expected_settings.pop('frameStart', None)
+            expected_settings.pop('frameEnd', None)
+
+        expected_settings.pop("entityType")  # not useful after the check
 
         asset_name = instance.context.data['anatomyData']['asset']
         if any(re.search(pattern, asset_name)
@@ -74,7 +87,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             fps = float(
                 "{:.2f}".format(instance.context.data.get("frameRate")))
 
-        self.log.debug(expected_settings)
+        self.log.debug("filtered settings: {}".format(expected_settings))
 
         current_settings = {
             "fps": fps,
@@ -86,7 +99,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
             "resolutionWidth": instance.context.data.get("resolutionWidth"),
             "resolutionHeight": instance.context.data.get("resolutionHeight"),
         }
-        self.log.debug("curr:: {}".format(current_settings))
+        self.log.debug("current scene settings {}".format(current_settings))
 
         invalid_settings = []
         for key, value in expected_settings.items():
