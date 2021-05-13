@@ -13,7 +13,8 @@ from openpype.lib import ApplicationManager
 from .constants import (
     REMOVED_ROLE,
     IDENTIFIER_ROLE,
-    ITEM_TYPE_ROLE
+    ITEM_TYPE_ROLE,
+    HIERARCHY_CHANGE_ABLE_ROLE
 )
 
 
@@ -497,9 +498,23 @@ class HierarchyView(QtWidgets.QTreeView):
 
         # Remove delete tag on items
         removed_item_ids = []
+        show_delete_items = False
         for item_id, item in items_by_id.items():
             if item.data(REMOVED_ROLE):
                 removed_item_ids.append(item_id)
+            elif (
+                not show_delete_items
+                and item.data(ITEM_TYPE_ROLE) != "project"
+                and item.data(HIERARCHY_CHANGE_ABLE_ROLE)
+            ):
+                show_delete_items = True
+
+        if show_delete_items:
+            action = QtWidgets.QAction("Delete items", context_menu)
+            action.triggered.connect(
+                lambda: self._delete_items()
+            )
+            actions.append(action)
 
         if removed_item_ids:
             action = QtWidgets.QAction("Keep items", context_menu)
