@@ -30,7 +30,27 @@
                     "collapsible": true,
                     "key": "ValidateSceneSettings",
                     "label": "Validate Scene Settings",
+                    "checkbox_key": "enabled",
                     "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Validate if FrameStart, FrameEnd and Resolution match shot data"
+                        },
                         {
                             "type": "list",
                             "key": "frame_check_filter",
