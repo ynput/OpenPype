@@ -82,6 +82,7 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
         editor.setObjectName("NumberEditor")
         editor.setMinimum(self.minimum)
         editor.setMaximum(self.maximum)
+        editor.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
 
         value = index.data(QtCore.Qt.EditRole)
         if value is not None:
