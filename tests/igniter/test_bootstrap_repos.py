@@ -142,7 +142,8 @@ def test_search_string_for_openpype_version(printer):
     ]
     for ver_string in strings:
         printer(f"testing {ver_string[0]} should be {ver_string[1]}")
-        assert OpenPypeVersion.version_in_str(ver_string[0])[0] == ver_string[1]
+        assert OpenPypeVersion.version_in_str(ver_string[0])[0] == \
+            ver_string[1]
 
 
 @pytest.mark.slow
@@ -173,7 +174,7 @@ def test_install_live_repos(fix_bootstrap, printer, monkeypatch, pytestconfig):
     # test if openpype is imported from specific location in zip
     assert "openpype" in sys.modules.keys(), "OpenPype not imported"
     assert sys.modules["openpype"].__file__ == \
-           f"{openpype_version.path}{sep}openpype{sep}__init__.py"
+        f"{openpype_version.path}{sep}openpype{sep}__init__.py"
 
 
 def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
@@ -328,7 +329,8 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         )
     )
     assert result, "nothing found"
-    assert result[-1].path == expected_path, "not a latest version of OpenPype 3"
+    assert result[-1].path == expected_path, ("not a latest version of "
+                                              "OpenPype 3")
 
     monkeypatch.setenv("OPENPYPE_PATH", e_path.as_posix())
 
@@ -344,7 +346,8 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         )
     )
     assert result, "nothing found"
-    assert result[-1].path == expected_path, "not a latest version of OpenPype 1"
+    assert result[-1].path == expected_path, ("not a latest version of "
+                                              "OpenPype 1")
 
     monkeypatch.delenv("OPENPYPE_PATH", raising=False)
 
@@ -369,7 +372,8 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         )
     )
     assert result, "nothing found"
-    assert result[-1].path == expected_path, "not a latest version of OpenPype 2"
+    assert result[-1].path == expected_path, ("not a latest version of "
+                                              "OpenPype 2")
 
     result = fix_bootstrap.find_openpype(e_path, include_zips=True)
     assert result is not None, "no OpenPype version found"
@@ -380,7 +384,8 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
             test_versions_1[5].suffix
         )
     )
-    assert result[-1].path == expected_path, "not a latest version of OpenPype 1"
+    assert result[-1].path == expected_path, ("not a latest version of "
+                                              "OpenPype 1")
 
     result = fix_bootstrap.find_openpype(dir_path, include_zips=True)
     assert result is not None, "no OpenPype versions found"
@@ -391,4 +396,5 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
             test_versions_4[0].suffix
         )
     )
-    assert result[-1].path == expected_path, "not a latest version of OpenPype 4"
+    assert result[-1].path == expected_path, ("not a latest version of "
+                                              "OpenPype 4")
