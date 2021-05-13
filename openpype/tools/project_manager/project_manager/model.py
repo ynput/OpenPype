@@ -385,7 +385,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         result = self.add_item(new_child, item, new_row)
         if result is not None:
-            self._validate_asset_duplicity(name)
+            # WARNING Expecting result is index for column 0 ("name")
+            new_name = result.data(QtCore.Qt.DisplayRole)
+            self._validate_asset_duplicity(new_name)
 
         return result
 
