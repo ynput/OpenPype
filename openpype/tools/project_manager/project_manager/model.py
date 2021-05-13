@@ -11,6 +11,7 @@ from .constants import (
     HIERARCHY_CHANGE_ABLE_ROLE,
     REMOVED_ROLE
 )
+from .style import ResourceCache
 from pymongo import UpdateOne
 from avalon.vendor import qtawesome
 from Qt import QtCore, QtGui
@@ -1234,7 +1235,7 @@ class BaseItem:
     # Use `set` for faster result
     editable_columns = set()
 
-    _name_icon = None
+    _name_icons = None
     _is_duplicated = False
     item_type = "base"
 
@@ -1256,9 +1257,8 @@ class BaseItem:
                 if key in self.columns:
                     self._data[key] = value
 
-    @classmethod
-    def name_icon(cls):
-        return cls._name_icon
+    def name_icon(self):
+        return None
 
     @property
     def is_valid(self):
@@ -1680,11 +1680,19 @@ class AssetItem(BaseItem):
 
         return data
 
-    @classmethod
-    def name_icon(cls):
-        if cls._name_icon is None:
-            cls._name_icon = qtawesome.icon("fa.folder", color="#333333")
-        return cls._name_icon
+    def name_icon(self):
+        if self.__class__._name_icons is None:
+            self.__class__._name_icons = ResourceCache.get_icons()["asset"]
+
+        if self._removed:
+            icon_type = "removed"
+        elif self._is_duplicated:
+            icon_type = "duplicated"
+        elif self.is_new:
+            icon_type = "new"
+        else:
+            icon_type = "existing"
+        return self.__class__._name_icons[icon_type]
 
     def _get_global_data(self, role):
         if role == HIERARCHY_CHANGE_ABLE_ROLE:
@@ -1838,11 +1846,19 @@ class TaskItem(BaseItem):
     def is_new(self):
         return self._is_new
 
-    @classmethod
-    def name_icon(cls):
-        if cls._name_icon is None:
-            cls._name_icon = qtawesome.icon("fa.file-o", color="#333333")
-        return cls._name_icon
+    def name_icon(self):
+        if self.__class__._name_icons is None:
+            self.__class__._name_icons = ResourceCache.get_icons()["task"]
+
+        if self._removed:
+            icon_type = "removed"
+        elif self._is_duplicated:
+            icon_type = "duplicated"
+        elif self.is_new:
+            icon_type = "new"
+        else:
+            icon_type = "existing"
+        return self.__class__._name_icons[icon_type]
 
     def add_child(self, item, row=None):
         raise AssertionError("BUG: Can't add children to Task")
