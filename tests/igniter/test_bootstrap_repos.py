@@ -5,72 +5,75 @@ import sys
 from collections import namedtuple
 from pathlib import Path
 from zipfile import ZipFile
+from uuid import uuid4
 
 import appdirs
 import pytest
 
 from igniter.bootstrap_repos import BootstrapRepos
-from igniter.bootstrap_repos import PypeVersion
-from pype.lib import OpenPypeSettingsRegistry
+from igniter.bootstrap_repos import OpenPypeVersion
+from igniter.user_settings import OpenPypeSettingsRegistry
 
 
 @pytest.fixture
 def fix_bootstrap(tmp_path, pytestconfig):
+    """This will fix BoostrapRepos with temp paths."""
     bs = BootstrapRepos()
     bs.live_repo_dir = pytestconfig.rootpath / 'repos'
     bs.data_dir = tmp_path
     return bs
 
 
-def test_pype_version():
-    v1 = PypeVersion(1, 2, 3)
+def test_openpype_version():
+    """Test determination of OpenPype versions."""
+    v1 = OpenPypeVersion(1, 2, 3)
     assert str(v1) == "1.2.3"
 
-    v2 = PypeVersion(1, 2, 3, client="x")
+    v2 = OpenPypeVersion(1, 2, 3, client="x")
     assert str(v2) == "1.2.3-x"
     assert v1 < v2
 
-    v3 = PypeVersion(1, 2, 3, variant="staging")
+    v3 = OpenPypeVersion(1, 2, 3, variant="staging")
     assert str(v3) == "1.2.3-staging"
 
-    v4 = PypeVersion(1, 2, 3, variant="staging", client="client")
+    v4 = OpenPypeVersion(1, 2, 3, variant="staging", client="client")
     assert str(v4) == "1.2.3-client-staging"
     assert v3 < v4
     assert v1 < v4
 
-    v5 = PypeVersion(1, 2, 3, variant="foo", client="x")
+    v5 = OpenPypeVersion(1, 2, 3, variant="foo", client="x")
     assert str(v5) == "1.2.3-x"
     assert v4 < v5
 
-    v6 = PypeVersion(1, 2, 3, variant="foo")
+    v6 = OpenPypeVersion(1, 2, 3, variant="foo")
     assert str(v6) == "1.2.3"
 
-    v7 = PypeVersion(2, 0, 0)
+    v7 = OpenPypeVersion(2, 0, 0)
     assert v1 < v7
 
-    v8 = PypeVersion(0, 1, 5)
+    v8 = OpenPypeVersion(0, 1, 5)
     assert v8 < v7
 
-    v9 = PypeVersion(1, 2, 4)
+    v9 = OpenPypeVersion(1, 2, 4)
     assert v9 > v1
 
-    v10 = PypeVersion(1, 2, 2)
+    v10 = OpenPypeVersion(1, 2, 2)
     assert v10 < v1
 
-    v11 = PypeVersion(1, 2, 3, path=Path("/foo/bar"))
+    v11 = OpenPypeVersion(1, 2, 3, path=Path("/foo/bar"))
     assert v10 < v11
 
     assert v5 == v2
 
     sort_versions = [
-        PypeVersion(3, 2, 1),
-        PypeVersion(1, 2, 3),
-        PypeVersion(0, 0, 1),
-        PypeVersion(4, 8, 10),
-        PypeVersion(4, 8, 20),
-        PypeVersion(4, 8, 9),
-        PypeVersion(1, 2, 3, variant="staging"),
-        PypeVersion(1, 2, 3, client="client")
+        OpenPypeVersion(3, 2, 1),
+        OpenPypeVersion(1, 2, 3),
+        OpenPypeVersion(0, 0, 1),
+        OpenPypeVersion(4, 8, 10),
+        OpenPypeVersion(4, 8, 20),
+        OpenPypeVersion(4, 8, 9),
+        OpenPypeVersion(1, 2, 3, variant="staging"),
+        OpenPypeVersion(1, 2, 3, client="client")
     ]
     res = sorted(sort_versions)
 
@@ -88,25 +91,22 @@ def test_pype_version():
         "5.6.3",
         "5.6.3-staging"
     ]
-    res_versions = []
-    for v in str_versions:
-        res_versions.append(PypeVersion(version=v))
-
+    res_versions = [OpenPypeVersion(version=v) for v in str_versions]
     sorted_res_versions = sorted(res_versions)
 
     assert str(sorted_res_versions[0]) == str_versions[0]
     assert str(sorted_res_versions[-1]) == str_versions[5]
 
     with pytest.raises(ValueError):
-        _ = PypeVersion()
+        _ = OpenPypeVersion()
 
     with pytest.raises(ValueError):
-        _ = PypeVersion(major=1)
+        _ = OpenPypeVersion(major=1)
 
     with pytest.raises(ValueError):
-        _ = PypeVersion(version="booobaa")
+        _ = OpenPypeVersion(version="booobaa")
 
-    v11 = PypeVersion(version="4.6.7-client-staging")
+    v11 = OpenPypeVersion(version="4.6.7-client-staging")
     assert v11.major == 4
     assert v11.minor == 6
     assert v11.subversion == 7
@@ -115,15 +115,15 @@ def test_pype_version():
 
 
 def test_get_main_version():
-    ver = PypeVersion(1, 2, 3, variant="staging", client="foo")
+    ver = OpenPypeVersion(1, 2, 3, variant="staging", client="foo")
     assert ver.get_main_version() == "1.2.3"
 
 
 def test_get_version_path_from_list():
     versions = [
-        PypeVersion(1, 2, 3, path=Path('/foo/bar')),
-        PypeVersion(3, 4, 5, variant="staging", path=Path("/bar/baz")),
-        PypeVersion(6, 7, 8, client="x", path=Path("boo/goo"))
+        OpenPypeVersion(1, 2, 3, path=Path('/foo/bar')),
+        OpenPypeVersion(3, 4, 5, variant="staging", path=Path("/bar/baz")),
+        OpenPypeVersion(6, 7, 8, client="x", path=Path("boo/goo"))
     ]
     path = BootstrapRepos.get_version_path_from_list(
         "3.4.5-staging", versions)
@@ -131,7 +131,7 @@ def test_get_version_path_from_list():
     assert path == Path("/bar/baz")
 
 
-def test_search_string_for_pype_version(printer):
+def test_search_string_for_openpype_version(printer):
     strings = [
         ("3.0.1", True),
         ("foo-3.0", False),
@@ -142,106 +142,111 @@ def test_search_string_for_pype_version(printer):
     ]
     for ver_string in strings:
         printer(f"testing {ver_string[0]} should be {ver_string[1]}")
-        assert PypeVersion.version_in_str(ver_string[0])[0] == ver_string[1]
+        assert OpenPypeVersion.version_in_str(ver_string[0])[0] == ver_string[1]
 
 
 @pytest.mark.slow
-def test_install_live_repos(fix_bootstrap, printer):
-    pype_version = fix_bootstrap.create_version_from_live_code()
+def test_install_live_repos(fix_bootstrap, printer, monkeypatch, pytestconfig):
+    monkeypatch.setenv("OPENPYPE_ROOT", pytestconfig.rootpath.as_posix())
+    monkeypatch.setenv("OPENPYPE_DATABASE_NAME", str(uuid4()))
+    openpype_version = fix_bootstrap.create_version_from_live_code()
     sep = os.path.sep
     expected_paths = [
-        f"{pype_version.path}{sep}repos{sep}avalon-core",
-        f"{pype_version.path}{sep}repos{sep}avalon-unreal-integration",
-        f"{pype_version.path}"
+        f"{openpype_version.path}{sep}repos{sep}avalon-core",
+        f"{openpype_version.path}{sep}repos{sep}avalon-unreal-integration",
+        f"{openpype_version.path}"
     ]
     printer("testing zip creation")
-    assert os.path.exists(pype_version.path), "zip archive was not created"
-    fix_bootstrap.add_paths_from_archive(pype_version.path)
+    assert os.path.exists(openpype_version.path), "zip archive was not created"
+    fix_bootstrap.add_paths_from_archive(openpype_version.path)
     for ep in expected_paths:
         assert ep in sys.path, f"{ep} not set correctly"
 
-    printer("testing pype imported")
-    del sys.modules["pype"]
-    import pype  # noqa: F401
+    printer("testing openpype imported")
+    try:
+        del sys.modules["openpype"]
+    except KeyError:
+        # wasn't imported before
+        pass
+    import openpype  # noqa: F401
 
-    # test if pype is imported from specific location in zip
-    assert "pype" in sys.modules.keys(), "Pype not imported"
-    assert sys.modules["pype"].__file__ == \
-        f"{pype_version.path}{sep}pype{sep}__init__.py"
+    # test if openpype is imported from specific location in zip
+    assert "openpype" in sys.modules.keys(), "OpenPype not imported"
+    assert sys.modules["openpype"].__file__ == \
+           f"{openpype_version.path}{sep}openpype{sep}__init__.py"
 
 
-def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
-
-    test_pype = namedtuple("Pype", "prefix version suffix type valid")
+def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
+    test_openpype = namedtuple("OpenPype", "prefix version suffix type valid")
 
     test_versions_1 = [
-        test_pype(prefix="foo-v", version="5.5.1",
-                  suffix=".zip", type="zip", valid=False),
-        test_pype(prefix="bar-v", version="5.5.2-client",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="baz-v", version="5.5.3-client-strange",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="bum-v", version="5.5.4-staging",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="zum-v", version="5.5.5-client-staging",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="fam-v", version="5.6.3",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="foo-v", version="5.6.3-staging",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="fim-v", version="5.6.3",
-                  suffix=".zip", type="zip", valid=False),
-        test_pype(prefix="foo-v", version="5.6.4",
-                  suffix=".txt", type="txt", valid=False),
-        test_pype(prefix="foo-v", version="5.7.1",
-                  suffix="", type="dir", valid=False),
+        test_openpype(prefix="foo-v", version="5.5.1",
+                      suffix=".zip", type="zip", valid=False),
+        test_openpype(prefix="bar-v", version="5.5.2-client",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="baz-v", version="5.5.3-client-strange",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="bum-v", version="5.5.4-staging",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="zum-v", version="5.5.5-client-staging",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="fam-v", version="5.6.3",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="foo-v", version="5.6.3-staging",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="fim-v", version="5.6.3",
+                      suffix=".zip", type="zip", valid=False),
+        test_openpype(prefix="foo-v", version="5.6.4",
+                      suffix=".txt", type="txt", valid=False),
+        test_openpype(prefix="foo-v", version="5.7.1",
+                      suffix="", type="dir", valid=False),
     ]
 
     test_versions_2 = [
-        test_pype(prefix="foo-v", version="10.0.0",
-                  suffix=".txt", type="txt", valid=False),
-        test_pype(prefix="lom-v", version="7.2.6",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="bom-v", version="7.2.7-client",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="woo-v", version="7.2.8-client-strange",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="loo-v", version="7.2.10-client-staging",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="kok-v", version="7.0.1",
-                  suffix=".zip", type="zip", valid=True)
+        test_openpype(prefix="foo-v", version="10.0.0",
+                      suffix=".txt", type="txt", valid=False),
+        test_openpype(prefix="lom-v", version="7.2.6",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="bom-v", version="7.2.7-client",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="woo-v", version="7.2.8-client-strange",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="loo-v", version="7.2.10-client-staging",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="kok-v", version="7.0.1",
+                      suffix=".zip", type="zip", valid=True)
     ]
 
     test_versions_3 = [
-        test_pype(prefix="foo-v", version="3.0.0",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="goo-v", version="3.0.1",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="hoo-v", version="4.1.0",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="foo-v", version="4.1.2",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="foo-v", version="3.0.1-client",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="foo-v", version="3.0.1-client-strange",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="foo-v", version="3.0.1-staging",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="foo-v", version="3.0.1-client-staging",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="foo-v", version="3.2.0",
-                  suffix=".zip", type="zip", valid=True)
+        test_openpype(prefix="foo-v", version="3.0.0",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="goo-v", version="3.0.1",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="hoo-v", version="4.1.0",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="foo-v", version="4.1.2",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="foo-v", version="3.0.1-client",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="foo-v", version="3.0.1-client-strange",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="foo-v", version="3.0.1-staging",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="foo-v", version="3.0.1-client-staging",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="foo-v", version="3.2.0",
+                      suffix=".zip", type="zip", valid=True)
     ]
 
     test_versions_4 = [
-        test_pype(prefix="foo-v", version="10.0.0",
-                  suffix="", type="dir", valid=True),
-        test_pype(prefix="lom-v", version="11.2.6",
-                  suffix=".zip", type="dir", valid=False),
-        test_pype(prefix="bom-v", version="7.2.7-client",
-                  suffix=".zip", type="zip", valid=True),
-        test_pype(prefix="woo-v", version="7.2.8-client-strange",
-                  suffix=".zip", type="txt", valid=False)
+        test_openpype(prefix="foo-v", version="10.0.0",
+                      suffix="", type="dir", valid=True),
+        test_openpype(prefix="lom-v", version="11.2.6",
+                      suffix=".zip", type="dir", valid=False),
+        test_openpype(prefix="bom-v", version="7.2.7-client",
+                      suffix=".zip", type="zip", valid=True),
+        test_openpype(prefix="woo-v", version="7.2.8-client-strange",
+                      suffix=".zip", type="txt", valid=False)
     ]
 
     def _create_invalid_zip(path: Path):
@@ -251,7 +256,7 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     def _create_valid_zip(path: Path, version: str):
         with ZipFile(path, "w") as zf:
             zf.writestr(
-                "pype/version.py", f"__version__ = '{version}'\n\n")
+                "openpype/version.py", f"__version__ = '{version}'\n\n")
 
     def _create_invalid_dir(path: Path):
         path.mkdir(parents=True, exist_ok=True)
@@ -259,9 +264,9 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
             fp.write("invalid")
 
     def _create_valid_dir(path: Path, version: str):
-        pype_path = path / "pype"
-        version_path = pype_path / "version.py"
-        pype_path.mkdir(parents=True, exist_ok=True)
+        openpype_path = path / "openpype"
+        version_path = openpype_path / "version.py"
+        openpype_path.mkdir(parents=True, exist_ok=True)
         with open(version_path, "w") as fp:
             fp.write(f"__version__ = '{version}'\n\n")
 
@@ -283,15 +288,15 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
             with open(test_path, "w") as fp:
                 fp.write("foo")
 
-    # in PYPE_PATH
+    # in OPENPYPE_PATH
     e_path = tmp_path_factory.mktemp("environ")
 
     # create files and directories for test
     for test_file in test_versions_1:
         _build_test_item(e_path, test_file)
 
-    # in pypePath registry
-    p_path = tmp_path_factory.mktemp("pypePath")
+    # in openPypePath registry
+    p_path = tmp_path_factory.mktemp("openPypePath")
     for test_file in test_versions_2:
         _build_test_item(p_path, test_file)
 
@@ -310,10 +315,10 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     for test_file in test_versions_4:
         _build_test_item(dir_path, test_file)
 
-    printer("testing finding Pype in given path ...")
-    result = fix_bootstrap.find_pype(g_path, include_zips=True)
+    printer("testing finding OpenPype in given path ...")
+    result = fix_bootstrap.find_openpype(g_path, include_zips=True)
     # we should have results as file were created
-    assert result is not None, "no Pype version found"
+    assert result is not None, "no OpenPype version found"
     # latest item in `result` should be latest version found.
     expected_path = Path(
         g_path / "{}{}{}".format(
@@ -323,13 +328,13 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         )
     )
     assert result, "nothing found"
-    assert result[-1].path == expected_path, "not a latest version of Pype 3"
+    assert result[-1].path == expected_path, "not a latest version of OpenPype 3"
 
-    monkeypatch.setenv("PYPE_PATH", e_path.as_posix())
+    monkeypatch.setenv("OPENPYPE_PATH", e_path.as_posix())
 
-    result = fix_bootstrap.find_pype(include_zips=True)
+    result = fix_bootstrap.find_openpype(include_zips=True)
     # we should have results as file were created
-    assert result is not None, "no Pype version found"
+    assert result is not None, "no OpenPype version found"
     # latest item in `result` should be latest version found.
     expected_path = Path(
         e_path / "{}{}{}".format(
@@ -339,21 +344,22 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         )
     )
     assert result, "nothing found"
-    assert result[-1].path == expected_path, "not a latest version of Pype 1"
+    assert result[-1].path == expected_path, "not a latest version of OpenPype 1"
 
-    monkeypatch.delenv("PYPE_PATH", raising=False)
+    monkeypatch.delenv("OPENPYPE_PATH", raising=False)
 
     # mock appdirs user_data_dir
     def mock_user_data_dir(*args, **kwargs):
+        """Mock local app data dir."""
         return d_path.as_posix()
 
     monkeypatch.setattr(appdirs, "user_data_dir", mock_user_data_dir)
     fix_bootstrap.registry = OpenPypeSettingsRegistry()
-    fix_bootstrap.registry.set_item("pypePath", d_path.as_posix())
+    fix_bootstrap.registry.set_item("openPypePath", d_path.as_posix())
 
-    result = fix_bootstrap.find_pype(include_zips=True)
+    result = fix_bootstrap.find_openpype(include_zips=True)
     # we should have results as file were created
-    assert result is not None, "no Pype version found"
+    assert result is not None, "no OpenPype version found"
     # latest item in `result` should be latest version found.
     expected_path = Path(
         d_path / "{}{}{}".format(
@@ -363,10 +369,10 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
         )
     )
     assert result, "nothing found"
-    assert result[-1].path == expected_path, "not a latest version of Pype 2"
+    assert result[-1].path == expected_path, "not a latest version of OpenPype 2"
 
-    result = fix_bootstrap.find_pype(e_path, include_zips=True)
-    assert result is not None, "no Pype version found"
+    result = fix_bootstrap.find_openpype(e_path, include_zips=True)
+    assert result is not None, "no OpenPype version found"
     expected_path = Path(
         e_path / "{}{}{}".format(
             test_versions_1[5].prefix,
@@ -374,10 +380,10 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
             test_versions_1[5].suffix
         )
     )
-    assert result[-1].path == expected_path, "not a latest version of Pype 1"
+    assert result[-1].path == expected_path, "not a latest version of OpenPype 1"
 
-    result = fix_bootstrap.find_pype(dir_path, include_zips=True)
-    assert result is not None, "no Pype versions found"
+    result = fix_bootstrap.find_openpype(dir_path, include_zips=True)
+    assert result is not None, "no OpenPype versions found"
     expected_path = Path(
         dir_path / "{}{}{}".format(
             test_versions_4[0].prefix,
@@ -385,4 +391,4 @@ def test_find_pype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
             test_versions_4[0].suffix
         )
     )
-    assert result[-1].path == expected_path, "not a latest version of Pype 4"
+    assert result[-1].path == expected_path, "not a latest version of OpenPype 4"
