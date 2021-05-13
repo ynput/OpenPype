@@ -34,8 +34,8 @@ class Window(QtWidgets.QWidget):
 
         project_layout = QtWidgets.QHBoxLayout(project_widget)
         project_layout.setContentsMargins(0, 0, 0, 0)
-        project_layout.addWidget(refresh_projects_btn, 0)
         project_layout.addWidget(project_combobox, 0)
+        project_layout.addWidget(refresh_projects_btn, 0)
         project_layout.addStretch(1)
 
         hierarchy_model = HierarchyModel(dbcon)
