@@ -1472,6 +1472,65 @@ class ProjectItem(BaseItem):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
 
+class AddAssetItem(BaseItem):
+    item_type = "add_asset"
+    columns = {"name"}
+    editable_columns = {"name"}
+
+    def __init__(self, parent):
+        super(AddAssetItem, self).__init__()
+        self._parent = parent
+
+    @classmethod
+    def name_icon(cls):
+        if cls._name_icon is None:
+            cls._name_icon = qtawesome.icon(
+                "fa.plus-circle",
+                color="#333333"
+            )
+        return cls._name_icon
+
+    def data(self, role, key=None):
+        if role == REMOVED_ROLE:
+            return True
+
+        if role == HIERARCHY_CHANGE_ABLE_ROLE:
+            return True
+
+        if key == "name":
+            if role == QtCore.Qt.DisplayRole:
+                return "Add Asset"
+            elif role == QtCore.Qt.EditRole:
+                return ""
+        return super(AddAssetItem, self).data(role, key)
+
+    def setData(self, value, role, key=None):
+        if key == "name":
+            if not value:
+                return False
+            index = self.model().index_for_item(self)
+            new_index = self.model().add_new_asset(index)
+            self.model().setData(new_index, value, QtCore.Qt.EditRole)
+            return True
+        return super(AddAssetItem, self).setData(value, role, key)
+
+    def flags(self, key):
+        if key != "name":
+            return QtCore.Qt.NoItemFlags
+
+        return (
+            QtCore.Qt.ItemIsEnabled
+            | QtCore.Qt.ItemIsSelectable
+            | QtCore.Qt.ItemIsEditable
+        )
+
+    def add_child(self, item, row=None):
+        raise AssertionError("BUG: Can't add children to AddAssetItem")
+
+    def remove_child(self, item):
+        raise AssertionError("BUG: Can't remove children from AddAssetItem")
+
+
 class AssetItem(BaseItem):
     item_type = "asset"
 
