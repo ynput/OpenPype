@@ -1486,6 +1486,18 @@ class ProjectItem(BaseItem):
     def flags(self, *args, **kwargs):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
+    def add_child(self, item, row=None):
+        if not self.add_asset_item_visible and item is self.add_asset_item:
+            self.add_asset_item_visible = True
+
+        super(ProjectItem, self).add_child(item, row)
+
+    def remove_child(self, item):
+        if self.add_asset_item_visible and item is self.add_asset_item:
+            self.add_asset_item_visible = False
+
+        super(ProjectItem, self).remove_child(item)
+
 
 class AddAssetItem(BaseItem):
     item_type = "add_asset"
@@ -1855,14 +1867,20 @@ class AssetItem(BaseItem):
 
         super(AssetItem, self).add_child(item, row)
 
-        if isinstance(item, TaskItem):
+        if not self.add_asset_item_visible and item is self.add_asset_item:
+            self.add_asset_item_visible = True
+
+        elif isinstance(item, TaskItem):
             self._add_task(item)
 
     def remove_child(self, item):
         if item not in self._children:
             return
 
-        if isinstance(item, TaskItem):
+        if self.add_asset_item_visible and item is self.add_asset_item:
+            self.add_asset_item_visible = False
+
+        elif isinstance(item, TaskItem):
             self._remove_task(item)
 
         super(AssetItem, self).remove_child(item)
