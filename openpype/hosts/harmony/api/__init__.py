@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 import logging
+import re
 
 from openpype import lib
 from openpype.api import (get_current_project_settings)
@@ -68,19 +69,28 @@ def get_asset_settings():
     settings = get_current_project_settings()
 
     try:
-        skip_resolution_check = \
-            settings["harmony"]["general"]["skip_resolution_check"]
-        skip_timelines_check = \
-            settings["harmony"]["general"]["skip_timelines_check"]
+        skip_resolution_check = (settings["plugins"]
+                                         ["harmony"]
+                                         ["publish"]
+                                         ["ValidateSceneSettings"]
+                                         ["skip_resolution_check"])
+
+        skip_timelines_check = (settings["plugins"]
+                                        ["harmony"]
+                                        ["publish"]
+                                        ["ValidateSceneSettings"]
+                                        ["skip_timelines_check"])
     except KeyError:
         skip_resolution_check = []
         skip_timelines_check = []
 
-    if os.getenv('AVALON_TASK') in skip_resolution_check:
+    if (any(re.search(pattern, os.getenv('AVALON_TASK'))
+            for pattern in skip_resolution_check)):
         scene_data.pop("resolutionWidth")
         scene_data.pop("resolutionHeight")
 
-    if entity_type in skip_timelines_check:
+    if (any(re.search(pattern, entity_type)
+            for pattern in skip_timelines_check)):
         scene_data.pop('frameStart', None)
         scene_data.pop('frameEnd', None)
 

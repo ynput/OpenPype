@@ -2,6 +2,7 @@
 """Validate scene settings."""
 import os
 import json
+import re
 
 import pyblish.api
 
@@ -41,10 +42,16 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
     families = ["workfile"]
     hosts = ["harmony"]
     actions = [ValidateSceneSettingsRepair]
+    optional = True
 
-    frame_check_filter = ["_ch_", "_pr_", "_intd_", "_extd_"]
-    # used for skipping resolution validation for render tasks
-    render_check_filter = ["render", "Render"]
+    # skip frameEnd check if asset contains any of:
+    frame_check_filter = ["_ch_", "_pr_", "_intd_", "_extd_"]  # regex
+
+    # skip resolution check if Task name matches any of regex patterns
+    skip_resolution_check = ["render", "Render"]  # regex
+
+    # skip frameStart, frameEnd check if Task name matches any of regex patt.
+    skip_timelines_check = []  # regex
 
     def process(self, instance):
         """Plugin entry point."""
@@ -55,8 +62,9 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         expected_settings["frameEndHandle"] = expected_settings["frameEnd"] +\
             expected_settings["handleEnd"]
 
-        if any(string in instance.context.data['anatomyData']['asset']
-                for string in self.frame_check_filter):
+        asset_name = instance.context.data['anatomyData']['asset']
+        if any(re.search(pattern, asset_name)
+                for pattern in self.frame_check_filter):
             expected_settings.pop("frameEnd")
 
         # handle case where ftrack uses only two decimal places
@@ -65,12 +73,6 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
         if isinstance(instance.context.data.get("frameRate"), float):
             fps = float(
                 "{:.2f}".format(instance.context.data.get("frameRate")))
-
-        if any(string in instance.context.data['anatomyData']['task']
-               for string in self.render_check_filter):
-            self.log.debug("Render task detected, resolution check skipped")
-            expected_settings.pop("resolutionWidth")
-            expected_settings.pop("resolutionHeight")
 
         self.log.debug(expected_settings)
 
