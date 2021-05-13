@@ -7,7 +7,7 @@ from . import (
     HierarchySelectionModel,
     HierarchyView
 )
-from .style import load_stylesheet
+from .style import load_stylesheet, ResourceCache
 
 from avalon.api import AvalonMongoDB
 
@@ -27,7 +27,10 @@ class Window(QtWidgets.QWidget):
         project_combobox.setModel(project_model)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
 
-        refresh_projects_btn = QtWidgets.QPushButton("Refresh", project_widget)
+        refresh_projects_btn = QtWidgets.QPushButton(project_widget)
+        refresh_projects_btn.setIcon(ResourceCache.get_icon("refresh"))
+        refresh_projects_btn.setToolTip("Refresh projects")
+        refresh_projects_btn.setObjectName("RefreshBtn")
 
         project_layout = QtWidgets.QHBoxLayout(project_widget)
         project_layout.setContentsMargins(0, 0, 0, 0)

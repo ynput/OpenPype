@@ -3,3 +3,7 @@ QTreeView::item {
     padding-bottom: 3px;
     padding-right: 3px;
 }
+
+#RefreshBtn {
+    padding: 2px;
+}
