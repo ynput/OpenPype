@@ -7,14 +7,26 @@ sidebar_label: Build
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
+## Introduction
 
 To build Pype you currently need (on all platforms):
 
 - **[Python 3.7](https://www.python.org/downloads/)** as we are following [vfx platform](https://vfxplatform.com).
 - **[git](https://git-scm.com/downloads)**
 
-We use [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze the code and all dependencies.
+We use [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze the code and all dependencies and
+[Poetry](https://python-poetry.org/) for virtual environment management.
 
+This is outline of build steps. Most of them are done automatically via scripts:
+- Virtual environment is created using **Poetry** in `.venv`
+- Necessary third-party tools (like [ffmpeg](https://www.ffmpeg.org/), [OpenImageIO](https://github.com/OpenImageIO/oiio)
+  and [usd libraries](https://developer.nvidia.com/usd)) are downloaded to `./vendor/bin`
+- OpenPype code is frozen with **cx_freeze** to `./build`
+- Modules are moved from `lib` to `dependencies` to solve some Python 2 / Python 3 clashes
+- On Mac application bundle and dmg image will be created from built code.
+- On Windows, you can create executable installer with `./tools/build_win_installer.ps1`
+
+## Platform specific steps
 
 <Tabs
   groupId="platforms"
@@ -27,28 +39,31 @@ We use [CX_Freeze](https://cx-freeze.readthedocs.io/en/latest) to freeze the cod
 
 <TabItem value="win">
 
+### Windows
 More tools might be needed for installing some dependencies (for example for **OpenTimelineIO**) - mostly
 development tools like [CMake](https://cmake.org/) and [Visual Studio](https://visualstudio.microsoft.com/cs/downloads/)
 
-### Clone repository:
-```sh
+#### Clone repository:
+```powershell
 git clone --recurse-submodules git@github.com:pypeclub/pype.git
 ```
 
-### Run from source
+#### Run from source
 
 For development purposes it is possible to run OpenPype directly from the source. We provide a simple launcher script for this. 
 
 To start OpenPype from source you need to 
 
-1) Run `.\tools\create_env.ps1` to create virtual environment in `.\venv`
-2) Run `.\tools\run_tray.ps1` if you have all required dependencies on your machine you should be greeted with OpenPype igniter window and once you give it your Mongo URL, with OpenPype icon in the system tray.
+1. Run `.\tools\create_env.ps1` to create virtual environment in `.venv`
+2. Run `.\tools\fetch_thirdparty_libs.ps1` to get **ffmpeg**, **oiio** and other tools needed.
+3. Run `.\tools\run_tray.ps1` if you have all required dependencies on your machine you should be greeted with OpenPype igniter window and once you give it your Mongo URL, with OpenPype icon in the system tray.
 
+Step 1 and 2 needs to be run only once (or when something was changed).
 
-### To build OpenPype:
+#### To build OpenPype:
+1. Run `.\tools\fetch_thirdparty_libs.ps1` to get **ffmpeg**, **oiio** and other tools needed.
+2. `.\tools\build.ps1` to create virtual environment in `.venv`
 
-1) Run `.\tools\create_env.ps1` to create virtual environment in `.\venv`
-2) Run `.\tools\build.ps1` to build pype executables in `.\build\`
 
 To create distributable OpenPype versions, run `./tools/create_zip.ps1` - that will
 create zip file with name `pype-vx.x.x.zip` parsed from current pype repository and
@@ -61,27 +76,33 @@ without the need to re-build the whole package
 </TabItem>
 <TabItem value="linux">
 
+### Linux
+
 #### Docker
 You can use Docker to build OpenPype. Just run:
-```sh
-sudo ./tools/docker_build.sh
+```shell
+$ sudo ./tools/docker_build.sh
 ```
 and you should have built OpenPype in `build` directory. It is using **Centos 7**
 as a base image.
 
 You can pull the image:
 
-```sh
+```shell
 # replace 3.0.0 tag with version you want
-docker pull pypeclub/openpype:3.0.0
+$ docker pull pypeclub/openpype:3.0.0
 ```
 See https://hub.docker.com/r/pypeclub/openpype/tag for more.
 
+Beware that as Python is built against some libraries version in Centos 7 base image,
+those might not be available in linux version you are using. We try to handle those we
+found (libffi, libcrypto/ssl, etc.) but there might be more.
+
 #### Manual build
-To build OpenPype on Linux you wil need:
+
+To build OpenPype on Linux you will need:
 
 - **[curl](https://curl.se)** on systems that doesn't have one preinstalled.
-- Python header files installed (**python3-dev** on Ubuntu for example).
 - **bzip2**, **readline**, **sqlite3** and other libraries.
 
 Because some Linux distros come with newer Python version pre-installed, you might 
@@ -90,69 +111,73 @@ Your best bet is probably using [pyenv](https://github.com/pyenv/pyenv).
 
 You can use your package manager to install **git** and other packages to your build
 environment.
-Use curl for pyenv installation
 
+#### Common steps for all Distros
+
+Use pyenv to prepare Python version for Pype build
+
+```shell
+$ curl https://pyenv.run | bash
+
+# you can add those to ~/.bashrc
+$ export PATH="$HOME/.pyenv/bin:$PATH"
+$ eval "$(pyenv init -)"
+$ eval "$(pyenv virtualenv-init -)"
+
+# reload shell
+$ exec $SHELL
+
+# install Python 3.7.10
+# python will be downloaded and build so please make sure
+# you have all necessary requirements installed (see bellow).
+$ pyenv install -v 3.7.10
+
+# change path to pype 3
+$ cd /path/to/pype-3
+
+# set local python version
+$ pyenv local 3.7.9
+```
 :::note Install build requirements for **Ubuntu**
 
-```sh
+```shell
 sudo apt-get update; sudo apt-get install --no-install-recommends make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev git
 ```
 
 In case you run in error about `xcb` when running Pype,
 you'll need also additional libraries for Qt5:
 
-```sh
+```shell
 sudo apt install qt5-default
 ```
 :::
 
-:::note Install build requirements for **Centos**
+:::note Install build requirements for **Centos 7**
 
-```sh
-yum install gcc zlib-devel bzip2 bzip2-devel readline-devel sqlite sqlite-devel openssl-devel tk-devel libffi-devel git
+```shell
+$ sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+$ sudo yum install centos-release-scl
+$ sudo yum install bash which git devtoolset-7-gcc* \
+        make cmake curl wget gcc zlib-devel bzip2 \
+        bzip2-devel readline-devel sqlite sqlite-devel \
+        openssl-devel tk-devel libffi-devel qt5-qtbase-devel \
+        patchelf
 ```
-
-In case you run in error about `xcb` when running Pype,
-you'll need also additional libraries for Qt5:
-
-```sh
-sudo yum install qt5-qtbase-devel
-```
-
 :::
 
-For more information about setting your build environmet please refer to [pyenv suggested build environment](https://github.com/pyenv/pyenv/wiki#suggested-build-environment)
+:::note Install build requirements for other distros
 
-#### Common steps for all Distros
+Build process usually needs some reasonably recent versions of libraries and tools. You
+can follow what's needed for Ubuntu and change it for your package manager. Centos 7 steps
+have additional magic to overcame very old versions.
+:::
 
-Use pyenv to prepare Python version for Pype build
+For more information about setting your build environment please refer to [pyenv suggested build environment](https://github.com/pyenv/pyenv/wiki#suggested-build-environment).
 
-```sh
-curl https://pyenv.run | bash
-
-# you can add those to ~/.bashrc
-export PATH="$HOME/.pyenv/bin:$PATH"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-
-# reload shell
-exec $SHELL
-
-# install Python 3.7.9
-pyenv install -v 3.7.9
-
-# change path to pype 3
-cd /path/to/pype-3
-
-# set local python version
-pyenv local 3.7.9
-
-```
 
 #### To build Pype:
-
-1. Run `.\tools\create_env.sh` to create virtual environment in `.\venv`
-2. Run `.\tools\build.sh` to build pype executables in `.\build\`
+1. Run `./tools/fetch_thirdparty_libs.sh` to get **ffmpeg**, **oiio** and other tools needed.
+2. Run `./tools/build.sh` to build pype executables in `.\build\`
 
 </TabItem>
 <TabItem value="mac">
@@ -164,43 +189,43 @@ To build pype on MacOS you wil need:
 - **XCode Command Line Tools** (or some other build system)
 
 1) Install **Homebrew**:
-```sh
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```shell
+$ /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 2) Install **cmake**:
-```sh
-brew install cmake
+```shell
+$ brew install cmake
 ```
 
 3) Install [pyenv](https://github.com/pyenv/pyenv):
-```sh
-brew install pyenv
-echo 'eval "$(pypenv init -)"' >> ~/.zshrc
-pyenv init
-exec "$SHELL"
-PATH=$(pyenv root)/shims:$PATH
+```shell
+$ brew install pyenv
+$ echo 'eval "$(pypenv init -)"' >> ~/.zshrc
+$ pyenv init
+$ exec "$SHELL"
+$ PATH=$(pyenv root)/shims:$PATH
 ```
 
 4) Pull in required Python version 3.7.x
-```sh
+```shell
 # install Python build dependences
-brew install openssl readline sqlite3 xz zlib
+$ brew install openssl readline sqlite3 xz zlib
 
 # replace with up-to-date 3.7.x version
-pyenv install 3.7.9
+$ pyenv install 3.7.9
 ```
 
 5) Set local Python version
-```sh
+```shell
 # switch to Pype source directory
-pyenv local 3.7.9
+$ pyenv local 3.7.9
 ```
 
 #### To build Pype:
 
-1. Run `.\tools\create_env.sh` to create virtual environment in `.\venv`
-2. Run `.\tools\build.sh` to build Pype executables in `.\build\`
+1. Run `./tools/create_env.sh` to create virtual environment in `./venv`
+2. Run `./tools/build.sh` to build Pype executables in `./build/`
 
 </TabItem>
 </Tabs>
