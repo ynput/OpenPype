@@ -412,9 +412,13 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if start_row is None:
             start_row = parent.rowCount()
 
+        if parent.add_asset_item_visible and start_row == parent.rowCount():
+            start_row -= 1
+
         end_row = start_row + len(items) - 1
 
         parent_index = self.index_from_item(parent.row(), 0, parent.parent())
+
         self.beginInsertRows(parent_index, start_row, end_row)
 
         for idx, item in enumerate(items):
@@ -755,6 +759,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 return
 
             dst_row = dst_parent.rowCount()
+            if dst_parent.add_asset_item_visible:
+                dst_row -= 1
 
         if src_parent is dst_parent:
             return
@@ -1011,6 +1017,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                     dst_parent = child_item
                     destination_row = dst_parent.rowCount()
+                    if dst_parent.add_asset_item_visible:
+                        destination_row -= 1
                     break
 
                 if dst_parent is not None:
