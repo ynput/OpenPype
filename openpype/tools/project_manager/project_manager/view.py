@@ -1,4 +1,6 @@
-from Qt import QtWidgets, QtCore
+from queue import Queue
+
+from Qt import QtWidgets, QtCore, QtGui
 
 from .delegates import (
     NumberDelegate,
@@ -357,6 +359,52 @@ class HierarchyView(QtWidgets.QTreeView):
     def _remove_delete_flag(self, item_ids):
         self._source_model.remove_delete_flag(item_ids)
 
+    def _expand_items(self, indexes):
+        item_ids = set()
+        process_queue = Queue()
+        for index in indexes:
+            if index.column() == 0:
+                process_queue.put(index)
+
+        while not process_queue.empty():
+            index = process_queue.get()
+            item_id = index.data(IDENTIFIER_ROLE)
+            if item_id in item_ids:
+                continue
+            item_ids.add(item_id)
+
+            item = self._source_model._items_by_id[item_id]
+            if not self.isExpanded(index):
+                self.expand(index)
+
+            for row in range(item.rowCount()):
+                process_queue.put(self._source_model.index(
+                    row, 0, index
+                ))
+
+    def _collapse_items(self, indexes):
+        item_ids = set()
+        process_queue = Queue()
+        for index in indexes:
+            if index.column() == 0:
+                process_queue.put(index)
+
+        while not process_queue.empty():
+            index = process_queue.get()
+            item_id = index.data(IDENTIFIER_ROLE)
+            if item_id in item_ids:
+                continue
+            item_ids.add(item_id)
+
+            item = self._source_model._items_by_id[item_id]
+            if self.isExpanded(index):
+                self.collapse(index)
+
+            for row in range(item.rowCount()):
+                process_queue.put(self._source_model.index(
+                    row, 0, index
+                ))
+
     def _on_context_menu(self, point):
         index = self.indexAt(point)
         column = index.column()
@@ -407,6 +455,27 @@ class HierarchyView(QtWidgets.QTreeView):
                 lambda: self._remove_delete_flag(removed_item_ids)
             )
             actions.append(action)
+
+        # Collapse/Expand action
+        show_collapse_expand_action = False
+        for item_id in item_ids:
+            item = items_by_id[item_ids[0]]
+            item_type = item.data(ITEM_TYPE_ROLE)
+            if item_type != "task":
+                show_collapse_expand_action = True
+                break
+
+        if show_collapse_expand_action:
+            expand_action = QtWidgets.QAction("Expand all", context_menu)
+            collapse_action = QtWidgets.QAction("Collapse all", context_menu)
+            expand_action.triggered.connect(
+                lambda: self._expand_items(indexes)
+            )
+            collapse_action.triggered.connect(
+                lambda: self._collapse_items(indexes)
+            )
+            actions.append(expand_action)
+            actions.append(collapse_action)
 
         if not actions:
             return
