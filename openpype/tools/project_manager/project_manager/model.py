@@ -121,7 +121,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self._current_project = None
         self._root_item = None
         self._items_by_id = {}
-        self._asset_items_by_name = collections.defaultdict(list)
+        self._asset_items_by_name = collections.defaultdict(set)
         self.dbcon = dbcon
 
         self._reset_root_item()
@@ -431,7 +431,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
             if isinstance(item, AssetItem):
                 name = item.data(QtCore.Qt.DisplayRole, "name")
-                self._asset_items_by_name[name].append(item)
+                self._asset_items_by_name[name].add(item.id)
 
             if item.id not in self._items_by_id:
                 self._items_by_id[item.id] = item
@@ -638,13 +638,13 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if prev_name == new_name:
             return
 
-        self._asset_items_by_name[prev_name].remove(asset_item)
+        self._asset_items_by_name[prev_name].remove(asset_item.id)
 
         self._validate_asset_duplicity(prev_name)
 
         if new_name is None:
             return
-        self._asset_items_by_name[new_name].append(asset_item)
+        self._asset_items_by_name[new_name].add(asset_item.id)
 
         self._validate_asset_duplicity(new_name)
 
@@ -652,15 +652,19 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if name not in self._asset_items_by_name:
             return
 
-        items = self._asset_items_by_name[name]
-        if not items:
+        item_ids = self._asset_items_by_name[name]
+        if not item_ids:
             self._asset_items_by_name.pop(name)
 
-        elif len(items) == 1:
-            index = self.index_for_item(items[0])
+        elif len(item_ids) == 1:
+            for item_id in item_ids:
+                item = self._items_by_id[item_id]
+            index = self.index_for_item(item)
             self.setData(index, False, DUPLICATED_ROLE)
+
         else:
-            for item in items:
+            for item_id in item_ids:
+                item = self._items_by_id[item_id]
                 index = self.index_for_item(item)
                 self.setData(index, True, DUPLICATED_ROLE)
 
