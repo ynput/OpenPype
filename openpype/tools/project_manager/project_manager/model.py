@@ -313,6 +313,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
     def flags(self, index):
         item = index.internalPointer()
+        if item is None:
+            return QtCore.Qt.NoItemFlags
         column = index.column()
         key = self.columns[column]
         return item.flags(key)
