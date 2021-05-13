@@ -162,7 +162,15 @@ class HierarchyView(QtWidgets.QTreeView):
         column = current_index.column()
         row = current_index.row()
         skipped_index = None
-        if column > 0:
+        # Change column from "type" to "name"
+        if column == 1:
+            new_index = self._source_model.index(
+                current_index.row(),
+                0,
+                current_index.parent()
+            )
+            self.setCurrentIndex(new_index)
+        elif column > 0:
             indexes = []
             for index in self.selectedIndexes():
                 if index.column() == column:
