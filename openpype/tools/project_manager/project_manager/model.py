@@ -482,7 +482,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             if item.data(REMOVED_ROLE):
                 item.setData(False, REMOVED_ROLE)
 
-    def delete_indexe(self, index):
+    def delete_index(self, index):
         return self.delete_indexes([index])
 
     def delete_indexes(self, indexes):
