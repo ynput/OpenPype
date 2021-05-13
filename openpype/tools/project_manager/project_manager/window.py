@@ -7,6 +7,7 @@ from . import (
     HierarchySelectionModel,
     HierarchyView
 )
+from .style import load_stylesheet
 
 from avalon.api import AvalonMongoDB
 
@@ -87,6 +88,7 @@ class Window(QtWidgets.QWidget):
         self.message_label = message_label
 
         self.resize(1200, 600)
+        self.setStyleSheet(load_stylesheet())
 
         self.refresh_projects()
 
