@@ -1,0 +1,90 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "aftereffects",
+    "label": "AfterEffects",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ValidateSceneSettings",
+                    "label": "Validate Scene Settings",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Validate if FPS and Resolution match shot data"
+                        },
+                        {
+                            "type": "list",
+                            "key": "skip_resolution_check",
+                            "object_type": "text",
+                            "label": "Skip Resolution Check for Tasks"
+                        },
+                        {
+                            "type": "list",
+                            "key": "skip_timelines_check",
+                            "object_type": "text",
+                            "label": "Skip Timeline Check  for Tasks"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "AfterEffectsSubmitDeadline",
+                    "label": "AfterEffects Submit to Deadline",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "use_published",
+                            "label": "Use Published scene"
+                        },
+                        {
+                            "type": "number",
+                            "key": "priority",
+                            "label": "Priority"
+                        },
+                        {
+                            "type": "text",
+                            "key": "primary_pool",
+                            "label": "Primary Pool"
+                        },
+                        {
+                            "type": "text",
+                            "key": "secondary_pool",
+                            "label": "Secondary Pool"
+                        },
+                        {
+                            "type": "number",
+                            "key": "chunk_size",
+                            "label": "Frames Per Task"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
