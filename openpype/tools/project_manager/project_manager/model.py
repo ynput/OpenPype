@@ -30,6 +30,11 @@ class ProjectModel(QtGui.QStandardItemModel):
         self.dbcon.Session["AVALON_PROJECT"] = None
 
         project_items = []
+
+        none_project = QtGui.QStandardItem("< Select Project >")
+        none_project.setData(None)
+        project_items.append(none_project)
+
         database = self.dbcon.database
         project_names = set()
         for project_name in database.collection_names():
