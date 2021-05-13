@@ -1217,6 +1217,7 @@ class BaseItem:
     _name_icon = None
     _is_duplicated = False
     item_type = "base"
+    add_asset_item_visible = False
 
     _None = object()
 
@@ -1435,6 +1436,8 @@ class ProjectItem(BaseItem):
     def __init__(self, project_doc):
         self._mongo_id = project_doc["_id"]
 
+        self.add_asset_item = AddAssetItem(self)
+
         data = self.data_from_doc(project_doc)
         super(ProjectItem, self).__init__(data)
 
@@ -1589,6 +1592,9 @@ class AssetItem(BaseItem):
             asset_doc = {}
         self.mongo_id = asset_doc.get("_id")
         self._project_id = None
+
+        self.add_asset_item_visible = False
+        self.add_asset_item = AddAssetItem(self)
 
         # Item data
         self._hierarchy_changes_enabled = True
