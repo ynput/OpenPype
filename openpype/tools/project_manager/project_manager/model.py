@@ -844,10 +844,21 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             return
 
         src_parent = item.parent()
+        if not isinstance(src_parent, AssetItem):
+            return
+
         src_parent_index = self.index_from_item(
             src_parent.row(), 0, src_parent.parent()
         )
         source_row = item.row()
+
+        parent_items = []
+        parent = src_parent
+        while True:
+            parent = parent.parent()
+            parent_items.insert(0, parent)
+            if isinstance(parent, ProjectItem):
+                break
 
         dst_parent = None
         dst_parent_index = None
@@ -874,20 +885,71 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         # Up
         elif direction == -1:
-            if source_row > 0:
-                dst_parent_index = src_parent_index
-                dst_parent = src_parent
-                destination_row = source_row - 1
-            else:
-                parent_parent = src_parent.parent()
-                if not parent_parent:
+            current_idxs = []
+            for parent_item in parent_items:
+                if not isinstance(parent_item, ProjectItem):
+                    current_idxs.append(parent_item.row())
+            current_idxs.append(src_parent.row())
+
+            max_idxs = [0 for _ in current_idxs]
+            indexes_len = len(current_idxs)
+
+            while True:
+                if current_idxs == max_idxs:
                     return
 
-                previous_parent = parent_parent.child(src_parent.row() - 1)
-                if not previous_parent:
+                def _update_parents(
+                    _current_idx, _parent_items, _current_idxs, top=True
+                ):
+                    if _current_idx < 0:
+                        return False
+
+                    if _current_idxs[_current_idx] == 0:
+                        if not _update_parents(
+                            _current_idx - 1, _parent_items, _current_idxs, False
+                        ):
+                            return False
+
+                        parent = _parent_items[_current_idx]
+                        row_count = 0
+                        if parent is not None:
+                            row_count = parent.rowCount()
+                        _current_idxs[_current_idx] = row_count
+                        return True
+                    if top:
+                        return True
+
+                    _current_idxs[_current_idx] -= 1
+                    parent_item = _parent_items[_current_idx]
+                    new_item = parent_item.child(_current_idxs[_current_idx])
+                    _parent_items[_current_idx + 1] = new_item
+
+                    return True
+
+                updated = _update_parents(
+                    indexes_len - 1, parent_items, current_idxs
+                )
+                if not updated:
                     return
-                dst_parent = previous_parent
-                destination_row = previous_parent.rowCount()
+
+                parent_item = parent_items[-1]
+                row_count = current_idxs[-1]
+                current_idxs[-1] = 0
+                for row in reversed(range(row_count)):
+                    child_item = parent_item.child(row)
+                    if (
+                        child_item is src_parent
+                        or child_item.data(REMOVED_ROLE)
+                        or not isinstance(child_item, AssetItem)
+                    ):
+                        continue
+
+                    dst_parent = child_item
+                    destination_row = dst_parent.rowCount()
+                    break
+
+                if dst_parent is not None:
+                    break
 
         if dst_parent_index is None:
             dst_parent_index = self.index_from_item(
@@ -916,7 +978,10 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         self.endMoveRows()
 
-        self.index_moved.emit(index)
+        new_index = self.index(
+            _destination_row, index.column(), dst_parent_index
+        )
+        self.index_moved.emit(new_index)
 
     def move_vertical(self, indexes, direction):
         if not indexes:
