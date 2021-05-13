@@ -208,11 +208,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         non_modifiable_items = set()
         while not appending_queue.empty():
             parent_id, parent_item = appending_queue.get()
-            if parent_id not in asset_docs_by_parent_id:
-                continue
+            asset_docs = asset_docs_by_parent_id.get(parent_id) or []
 
             new_items = []
-            asset_docs = asset_docs_by_parent_id[parent_id]
             for asset_doc in sorted(asset_docs, key=lambda item: item["name"]):
                 # Create new Item
                 new_item = AssetItem(asset_doc)
@@ -228,7 +226,11 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 # Add item to appending queue
                 appending_queue.put((asset_id, new_item))
 
-            self.add_items(new_items, parent_item)
+            if isinstance(parent_item, (ProjectItem, AssetItem)):
+                new_items.append(parent_item.add_asset_item)
+
+            if new_items:
+                self.add_items(new_items, parent_item)
 
         # Handle Asset's that are not modifiable
         # - pass the information to all it's parents
@@ -262,6 +264,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 _task_data["name"] = task_name
                 task_item = TaskItem(_task_data)
                 task_items.append(task_item)
+
             self.add_items(task_items, asset_item)
 
     def rowCount(self, parent=None):
@@ -378,6 +381,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         result = self.add_item(new_child, parent, new_row)
         if result is not None:
             self._validate_asset_duplicity(name)
+
+        if not new_child.add_asset_item_visible:
+            self.add_item(new_child.add_asset_item, new_child)
 
         return result
 
