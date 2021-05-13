@@ -238,7 +238,7 @@ class HierarchyView(QtWidgets.QTreeView):
     def keyPressEvent(self, event):
         call_super = False
         if event.key() == QtCore.Qt.Key_Delete:
-            self._delete_item()
+            self._delete_items()
 
         elif event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
             mdfs = event.modifiers()
@@ -267,7 +267,7 @@ class HierarchyView(QtWidgets.QTreeView):
         else:
             event.accept()
 
-    def _delete_item(self, indexes=None):
+    def _delete_items(self, indexes=None):
         if indexes is None:
             indexes = self.selectedIndexes()
         self._source_model.remove_indexes(indexes)
