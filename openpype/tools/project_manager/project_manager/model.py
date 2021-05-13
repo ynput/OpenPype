@@ -861,27 +861,67 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 break
 
         dst_parent = None
-        dst_parent_index = None
-        destination_row = None
-        _destination_row = None
         # Down
         if direction == 1:
-            if source_row < src_parent.rowCount() - 1:
-                dst_parent_index = src_parent_index
-                dst_parent = src_parent
-                destination_row = source_row + 1
-                # This row is not row number after moving but before moving
-                _destination_row = destination_row + 1
-            else:
-                destination_row = 0
-                parent_parent = src_parent.parent()
-                if not parent_parent:
+            current_idxs = []
+            current_max_idxs = []
+            for parent_item in parent_items:
+                current_max_idxs.append(parent_item.rowCount())
+                if not isinstance(parent_item, ProjectItem):
+                    current_idxs.append(parent_item.row())
+            current_idxs.append(src_parent.row())
+            indexes_len = len(current_idxs)
+
+            while True:
+                def _update_parents(idx, top=True):
+                    if idx < 0:
+                        return False
+
+                    if current_max_idxs[idx] == current_idxs[idx]:
+                        if not _update_parents(idx - 1, False):
+                            return False
+
+                        parent = parent_items[idx]
+                        row_count = 0
+                        if parent is not None:
+                            row_count = parent.rowCount()
+                        current_max_idxs[idx] = row_count
+                        current_idxs[idx] = 0
+                        return True
+
+                    if top:
+                        return True
+
+                    current_idxs[idx] += 1
+                    parent_item = parent_items[idx]
+                    new_item = parent_item.child(current_idxs[idx])
+                    parent_items[idx + 1] = new_item
+
+                    return True
+
+                updated = _update_parents(indexes_len - 1)
+                if not updated:
                     return
 
-                new_parent = parent_parent.child(src_parent.row() + 1)
-                if not new_parent:
-                    return
-                dst_parent = new_parent
+                start = current_idxs[-1]
+                end = current_max_idxs[-1]
+                current_idxs[-1] = current_max_idxs[-1]
+                parent = parent_items[-1]
+                for row in range(start, end):
+                    child_item = parent.child(row)
+                    if (
+                        child_item is src_parent
+                        or child_item.data(REMOVED_ROLE)
+                        or not isinstance(child_item, AssetItem)
+                    ):
+                        continue
+
+                    dst_parent = child_item
+                    destination_row = 0
+                    break
+
+                if dst_parent is not None:
+                    break
 
         # Up
         elif direction == -1:
@@ -945,20 +985,19 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 if dst_parent is not None:
                     break
 
-        if dst_parent_index is None:
-            dst_parent_index = self.index_from_item(
-                dst_parent.row(), 0, dst_parent.parent()
-            )
+        if dst_parent is None:
+            return
 
-        if _destination_row is None:
-            _destination_row = destination_row
+        dst_parent_index = self.index_from_item(
+            dst_parent.row(), 0, dst_parent.parent()
+        )
 
         self.beginMoveRows(
             src_parent_index,
             source_row,
             source_row,
             dst_parent_index,
-            _destination_row
+            destination_row
         )
 
         if src_parent is dst_parent:
@@ -973,7 +1012,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self.endMoveRows()
 
         new_index = self.index(
-            _destination_row, index.column(), dst_parent_index
+            destination_row, index.column(), dst_parent_index
         )
         self.index_moved.emit(new_index)
 
