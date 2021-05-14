@@ -499,6 +499,10 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         for item in items_by_id.values():
             if item.data(REMOVED_ROLE):
                 item.setData(False, REMOVED_ROLE)
+                if isinstance(item, AssetItem):
+                    name = item.data(QtCore.Qt.EditRole, "name")
+                    self._asset_items_by_name[name].add(item.id)
+                    self._validate_asset_duplicity(name)
 
     def delete_index(self, index):
         return self.delete_indexes([index])
@@ -606,6 +610,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                         if end_row is not None:
                             row_ranges.append((start_row, end_row))
                         start_row = end_row = None
+                        if isinstance(child_item, AssetItem):
+                            self._rename_asset(child_item, None)
                         continue
 
                     end_row = row
