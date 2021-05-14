@@ -102,13 +102,22 @@ class ExtractPlayblast(pype.api.Extractor):
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
 
-        self.log.info("file list  {}".format(playblast))
+        self.log.debug("playblast path  {}".format(playblast))
 
-        collected_frames = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(collected_frames)
+        collected_files = os.listdir(stagingdir)
+        collections, remainder = clique.assemble(collected_files)
         input_path = os.path.join(
             stagingdir, collections[0].format('{head}{padding}{tail}'))
-        self.log.info("input {}".format(input_path))
+        
+        self.log.debug("filename {}".format(filename))
+        frame_collection = None
+        for collection in collections:
+            filebase = collection.format('{head}').rstrip(".")
+            self.log.debug("collection head {}".format(filebase))
+            if filebase in filename:
+                frame_collection = collection
+                self.log.info("we found collection of interest {}".format(str(frame_collection)))
+
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -123,7 +132,7 @@ class ExtractPlayblast(pype.api.Extractor):
         representation = {
             'name': 'png',
             'ext': 'png',
-            'files': collected_frames,
+            'files': list(frame_collection),
             "stagingDir": stagingdir,
             "frameStart": start,
             "frameEnd": end,
