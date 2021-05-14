@@ -48,12 +48,16 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         helper_btns_widget = QtWidgets.QWidget(top_part_widget)
 
         helper_label = QtWidgets.QLabel("Add:", helper_btns_widget)
-        add_asset_btn = QtWidgets.QPushButton(helper_btns_widget)
-        add_asset_btn.setIcon(ResourceCache.get_icon("asset", "default"))
-        add_asset_btn.setText("Asset")
-        add_task_btn = QtWidgets.QPushButton("Task", helper_btns_widget)
-        add_task_btn.setIcon(ResourceCache.get_icon("task", "default"))
-        add_task_btn.setText("Task")
+        add_asset_btn = QtWidgets.QPushButton(
+            ResourceCache.get_icon("asset", "default"),
+            "Asset",
+            helper_btns_widget
+        )
+        add_task_btn = QtWidgets.QPushButton(
+            ResourceCache.get_icon("task", "default"),
+            "Task",
+            helper_btns_widget
+        )
 
         helper_btns_layout = QtWidgets.QHBoxLayout(helper_btns_widget)
         helper_btns_layout.setContentsMargins(0, 0, 0, 0)
