@@ -1,10 +1,10 @@
 from .project_manager import (
-    Window,
+    ProjectManagerWindow,
     main
 )
 
 
 __all__ = (
-    "Window",
+    "ProjectManagerWindow",
     "main"
 )

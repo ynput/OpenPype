@@ -13,9 +13,9 @@ from openpype import resources
 from avalon.api import AvalonMongoDB
 
 
-class Window(QtWidgets.QWidget):
+class ProjectManagerWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        super(Window, self).__init__(parent)
+        super(ProjectManagerWindow, self).__init__(parent)
 
         self.setWindowTitle("OpenPype Project Manager")
         self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))

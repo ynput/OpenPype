@@ -13,7 +13,7 @@ __all__ = (
     "AssetItem",
     "TaskItem",
 
-    "Window",
+    "ProjectManagerWindow",
     "main"
 )
 
@@ -33,7 +33,7 @@ from .model import (
     AssetItem,
     TaskItem
 )
-from .window import Window
+from .window import ProjectManagerWindow
 
 
 def main():
@@ -42,7 +42,7 @@ def main():
 
     app = QtWidgets.QApplication([])
 
-    window = Window()
+    window = ProjectManagerWindow()
     window.show()
 
     sys.exit(app.exec_())
