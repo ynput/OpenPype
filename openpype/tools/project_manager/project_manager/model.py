@@ -9,7 +9,8 @@ from .constants import (
     ITEM_TYPE_ROLE,
     DUPLICATED_ROLE,
     HIERARCHY_CHANGE_ABLE_ROLE,
-    REMOVED_ROLE
+    REMOVED_ROLE,
+    EDITOR_OPENED_ROLE
 )
 from .style import ResourceCache
 from pymongo import UpdateOne, DeleteOne
@@ -1555,6 +1556,10 @@ class AssetItem(BaseItem):
             asset_doc = {}
         self.mongo_id = asset_doc.get("_id")
         self._project_id = None
+        self._edited_columns = {
+            column_name: False
+            for column_name in self.editable_columns
+        }
 
         # Item data
         self._hierarchy_changes_enabled = True
@@ -1723,7 +1728,24 @@ class AssetItem(BaseItem):
 
         return super(AssetItem, self)._get_global_data(role)
 
+    def data(self, role, key=None):
+        if role == EDITOR_OPENED_ROLE:
+            if key not in self._edited_columns:
+                return False
+            return self._edited_columns[key]
+
+        if role == QtCore.Qt.DisplayRole and self._edited_columns.get(key):
+            return ""
+
+        return super(AssetItem, self).data(role, key)
+
     def setData(self, value, role, key=None):
+        if role == EDITOR_OPENED_ROLE:
+            if key not in self._edited_columns:
+                return False
+            self._edited_columns[key] = value
+            return True
+
         if role == REMOVED_ROLE:
             self._removed = value
             return True
@@ -1846,6 +1868,10 @@ class TaskItem(BaseItem):
         if data is None:
             data = {}
 
+        self._edited_columns = {
+            column_name: False
+            for column_name in self.editable_columns
+        }
         self._origin_data = copy.deepcopy(data)
         super(TaskItem, self).__init__(data)
 
@@ -1907,6 +1933,14 @@ class TaskItem(BaseItem):
         }
 
     def data(self, role, key=None):
+        if role == EDITOR_OPENED_ROLE:
+            if key not in self._edited_columns:
+                return False
+            return self._edited_columns[key]
+
+        if role == QtCore.Qt.DisplayRole and self._edited_columns.get(key):
+            return ""
+
         if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
             if key == "type":
                 return self._data["type"]
@@ -1923,6 +1957,12 @@ class TaskItem(BaseItem):
         return super(TaskItem, self).data(role, key)
 
     def setData(self, value, role, key=None):
+        if role == EDITOR_OPENED_ROLE:
+            if key not in self._edited_columns:
+                return False
+            self._edited_columns[key] = value
+            return True
+
         if role == REMOVED_ROLE:
             self._removed = value
             return True
