@@ -1310,7 +1310,7 @@ class BaseItem:
 
         if role == QtCore.Qt.ForegroundRole:
             if key == "name" and not self.is_valid:
-                return QtGui.QColor(255, 0, 0)
+                return ResourceCache.colors["warning"]
             return None
 
         if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
