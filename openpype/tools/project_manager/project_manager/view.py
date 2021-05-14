@@ -86,6 +86,27 @@ class HierarchyView(QtWidgets.QTreeView):
         "pixelAspect": NumberDef(0, decimals=2),
         "tools_env": ToolsDef()
     }
+
+    columns_sizes = {
+        "default": {
+            "stretch": QtWidgets.QHeaderView.ResizeToContents
+        },
+        "name": {
+            "stretch": QtWidgets.QHeaderView.Stretch
+        },
+        "type": {
+            "stretch": QtWidgets.QHeaderView.Interactive,
+            "width": 100
+        },
+        "tools_env": {
+            "stretch": QtWidgets.QHeaderView.Interactive,
+            "width": 140
+        },
+        "pixelAspect": {
+            "stretch": QtWidgets.QHeaderView.Interactive,
+            "width": 80
+        }
+    }
     persistent_columns = {
         "type",
         "frameStart",
@@ -157,16 +178,21 @@ class HierarchyView(QtWidgets.QTreeView):
     def header_init(self):
         header = self.header()
         header.setStretchLastSection(False)
+
+        default_behavior = self.columns_sizes["default"]
+        widths_by_idx = {}
         for idx in range(header.count()):
+            key = self._source_model.columns[idx]
+            behavior = self.columns_sizes.get(key, default_behavior)
             logical_index = header.logicalIndex(idx)
-            if idx == 0:
-                header.setSectionResizeMode(
-                    logical_index, QtWidgets.QHeaderView.Stretch
-                )
-            else:
-                header.setSectionResizeMode(
-                    logical_index, QtWidgets.QHeaderView.ResizeToContents
-                )
+            stretch = behavior["stretch"]
+            header.setSectionResizeMode(logical_index, stretch)
+            width = behavior.get("width")
+            if width is not None:
+                widths_by_idx[idx] = width
+
+        for idx, width in widths_by_idx.items():
+            self.setColumnWidth(idx, width)
 
     def set_project(self, project_name):
         # Trigger helpers first
