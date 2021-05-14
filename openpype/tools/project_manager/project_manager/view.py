@@ -309,16 +309,46 @@ class HierarchyView(QtWidgets.QTreeView):
         self._source_model.delete_indexes(indexes)
 
     def _on_ctrl_shift_enter_pressed(self):
-        self._add_task()
+        self._add_task_and_edit()
 
-    def _add_task(self, parent_index=None):
+    def add_asset(self, parent_index=None):
         if parent_index is None:
             parent_index = self.currentIndex()
 
         if not parent_index.isValid():
             return
 
-        new_index = self._source_model.add_new_task(parent_index)
+        # Stop editing
+        self.setState(HierarchyView.NoState)
+        QtWidgets.QApplication.processEvents()
+
+        return self._source_model.add_new_asset(parent_index)
+
+    def add_task(self, parent_index=None):
+        if parent_index is None:
+            parent_index = self.currentIndex()
+
+        if not parent_index.isValid():
+            return
+
+        return self._source_model.add_new_task(parent_index)
+
+    def _add_asset_and_edit(self):
+        new_index = self.add_asset()
+        if new_index is None:
+            return
+
+        # Change current index
+        self.selectionModel().setCurrentIndex(
+            new_index,
+            QtCore.QItemSelectionModel.Clear
+            | QtCore.QItemSelectionModel.Select
+        )
+        # Start editing
+        self.edit(new_index)
+
+    def _add_task_and_edit(self):
+        new_index = self.add_task()
         if new_index is None:
             return
 
@@ -339,32 +369,8 @@ class HierarchyView(QtWidgets.QTreeView):
         # Start editing
         self.edit(task_type_index)
 
-    def _add_asset(self, index=None):
-        if index is None:
-            index = self.currentIndex()
-
-        if not index.isValid():
-            return
-
-        # Stop editing
-        self.setState(HierarchyView.NoState)
-        QtWidgets.QApplication.processEvents()
-
-        new_index = self._source_model.add_new_asset(index)
-        if new_index is None:
-            return
-
-        # Change current index
-        self.selectionModel().setCurrentIndex(
-            new_index,
-            QtCore.QItemSelectionModel.Clear
-            | QtCore.QItemSelectionModel.Select
-        )
-        # Start editing
-        self.edit(new_index)
-
     def _on_shift_enter_pressed(self):
-        self._add_asset()
+        self._add_asset_and_edit()
 
     def _on_up_ctrl_pressed(self):
         indexes = self.selectedIndexes()
@@ -486,14 +492,14 @@ class HierarchyView(QtWidgets.QTreeView):
             if item_type in ("asset", "project"):
                 add_asset_action = QtWidgets.QAction("Add Asset", context_menu)
                 add_asset_action.triggered.connect(
-                    lambda: self._add_asset()
+                    self._add_asset_and_edit
                 )
                 actions.append(add_asset_action)
 
             if item_type in ("asset", "task"):
                 add_task_action = QtWidgets.QAction("Add Task", context_menu)
                 add_task_action.triggered.connect(
-                    lambda: self._add_task()
+                    self._add_task_and_edit
                 )
                 actions.append(add_task_action)
 
