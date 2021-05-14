@@ -4,7 +4,6 @@ import time
 import sys
 from setuptools.extern import six
 import platform
-from json.decoder import JSONDecodeError
 
 from openpype.api import Logger
 from openpype.api import get_system_settings

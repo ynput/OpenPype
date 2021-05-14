@@ -3,6 +3,7 @@ from bson.objectid import ObjectId
 from datetime import datetime
 import threading
 import platform
+import copy
 
 from avalon.api import AvalonMongoDB
 
@@ -15,7 +16,8 @@ from openpype.api import (
 from openpype.lib import PypeLogger
 from openpype.settings.lib import (
     get_default_project_settings,
-    get_default_anatomy_settings)
+    get_default_anatomy_settings,
+    get_anatomy_settings)
 
 from .providers.local_drive import LocalDriveHandler
 from .providers import lib
@@ -396,9 +398,13 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return remote_site
 
+    def get_local_settings_schema(self):
+        """Wrapper for Local settings - all projects incl. Default"""
+        return self.get_configurable_items(EditableScopes.LOCAL)
+
     def get_configurable_items(self, scope=None):
         """
-            Returns list of items that could be configurable for all projects.
+            Returns list of sites that could be configurable for all projects.
 
             Could be filtered by 'scope' argument (list)
 
@@ -443,8 +449,9 @@ class SyncServerModule(PypeModule, ITrayModule):
         return editable
 
     def get_local_settings_schema_for_project(self, project_name):
-        """Wrapper for Local settings"""
-        return self.get_configurable_items(project_name, EditableScopes.LOCAL)
+        """Wrapper for Local settings - for specific 'project_name'"""
+        return self.get_configurable_items_for_project(project_name,
+                                                       EditableScopes.LOCAL)
 
     def get_configurable_items_for_project(self, project_name=None,
                                            scope=None):
@@ -480,7 +487,7 @@ class SyncServerModule(PypeModule, ITrayModule):
             }
         """
         allowed_sites = set()
-        sites = self.get_all_sites(project_name)
+        sites = self.get_all_site_configs(project_name)
         if project_name:
             # Local Settings can select only from allowed sites for project
             allowed_sites.update(set(self.get_active_sites(project_name)))
@@ -502,10 +509,10 @@ class SyncServerModule(PypeModule, ITrayModule):
         return editable
 
     def get_local_settings_schema_for_site(self, project_name, site_name):
-        """Wrapper for Local settings"""
-        return self.get_configurable_items(project_name,
-                                           site_name,
-                                           EditableScopes.LOCAL)
+        """Wrapper for Local settings - for particular 'site_name and proj."""
+        return self.get_configurable_items_for_site(project_name,
+                                                    site_name,
+                                                    EditableScopes.LOCAL)
 
     def get_configurable_items_for_site(self, project_name=None,
                                         site_name=None,
@@ -537,7 +544,8 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         if project_name:
             sync_s = self.get_sync_project_setting(project_name,
-                                                   exclude_locals=True)
+                                                   exclude_locals=True,
+                                                   cached=False)
         else:
             sync_s = get_default_project_settings(exclude_locals=True)
             sync_s = sync_s["global"]["sync_server"]
@@ -765,37 +773,49 @@ class SyncServerModule(PypeModule, ITrayModule):
                 exclude_locals (bool): ignore overrides from Local Settings
             For performance
         """
-        sync_project_settings = {}
-
-        system_sites = self.get_all_sites()
-
-        for collection in self.connection.database.collection_names(False):
-            sites = dict(system_sites)  # get all configured sites
-            proj_settings = self._parse_sync_settings_from_settings(
-                get_project_settings(collection,
-                                     exclude_locals=exclude_locals))
-            sites.update(proj_settings["sites"])  # apply project overrides
-            proj_settings["sites"] = sites
-
-            sync_project_settings[collection] = proj_settings
-
-        if not sync_project_settings:
-            log.info("No enabled and configured projects for sync.")
+        sync_project_settings = self._prepare_sync_project_settings(
+            exclude_locals)
 
         self._sync_project_settings = sync_project_settings
 
-    def get_sync_project_setting(self, project_name, exclude_locals=False):
+    def _prepare_sync_project_settings(self, exclude_locals):
+        sync_project_settings = {}
+        system_sites = self.get_all_site_configs()
+        for collection in self.connection.database.collection_names(False):
+            sites = copy.deepcopy(system_sites)  # get all configured sites
+            proj_settings = self._parse_sync_settings_from_settings(
+                get_project_settings(collection,
+                                     exclude_locals=exclude_locals))
+            sites.update(self._get_default_site_configs(
+                proj_settings["enabled"], collection))
+            sites.update(proj_settings['sites'])
+            proj_settings["sites"] = sites
+
+            sync_project_settings[collection] = proj_settings
+        if not sync_project_settings:
+            log.info("No enabled and configured projects for sync.")
+        return sync_project_settings
+
+    def get_sync_project_setting(self, project_name, exclude_locals=False,
+                                 cached=True):
         """ Handles pulling sync_server's settings for enabled 'project_name'
 
             Args:
                 project_name (str): used in project settings
                 exclude_locals (bool): ignore overrides from Local Settings
+                cached (bool): use pre-cached values, or return fresh ones
+                    cached values needed for single loop (with all overrides)
+                    fresh values needed for Local settings (without overrides)
             Returns:
                 (dict): settings dictionary for the enabled project,
                     empty if no settings or sync is disabled
         """
         # presets set already, do not call again and again
         # self.log.debug("project preset {}".format(self.presets))
+        if not cached:
+            return self._prepare_sync_project_settings(exclude_locals)\
+                [project_name]
+
         if not self.sync_project_settings or \
                not self.sync_project_settings.get(project_name):
             self.set_sync_project_settings(exclude_locals)
@@ -808,24 +828,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return sync_settings
 
-    def _get_default_site_configs(self, sync_enabled=True):
-        """
-            Returns skeleton settings for 'studio' and user's local site
-        """
-        anatomy_sett = get_default_anatomy_settings()
-        roots = {}
-        for root, config in anatomy_sett["roots"].items():
-            roots[root] = config[platform.system().lower()]
-        studio_config = {
-            'provider': 'local_drive',
-            "root": roots
-        }
-        all_sites = {self.DEFAULT_SITE: studio_config}
-        if sync_enabled:
-            all_sites[get_local_site_id()] = {'provider': 'local_drive'}
-        return all_sites
-
-    def get_all_sites(self, project_name=None):
+    def get_all_site_configs(self, project_name=None):
         """
             Returns (dict) with all sites configured system wide.
 
@@ -849,9 +852,34 @@ class SyncServerModule(PypeModule, ITrayModule):
             for site, detail in sync_sett.get("sites", {}).items():
                 system_sites[site] = detail
 
-        system_sites.update(self._get_default_site_configs(sync_enabled))
+        system_sites.update(self._get_default_site_configs(sync_enabled,
+                                                           project_name))
 
         return system_sites
+
+    def _get_default_site_configs(self, sync_enabled=True, project_name=None):
+        """
+            Returns settings for 'studio' and user's local site
+
+            Returns base values from setting, not overriden by Local Settings,
+            eg. value used to push TO LS not to get actual value for syncing.
+        """
+        if not project_name:
+            anatomy_sett = get_default_anatomy_settings(exclude_locals=True)
+        else:
+            anatomy_sett = get_anatomy_settings(project_name,
+                                                exclude_locals=True)
+        roots = {}
+        for root, config in anatomy_sett["roots"].items():
+            roots[root] = config[platform.system().lower()]
+        studio_config = {
+            'provider': 'local_drive',
+            "root": roots
+        }
+        all_sites = {self.DEFAULT_SITE: studio_config}
+        if sync_enabled:
+            all_sites[get_local_site_id()] = {'provider': 'local_drive'}
+        return all_sites
 
     def get_provider_for_site(self, project_name=None, site=None):
         """
