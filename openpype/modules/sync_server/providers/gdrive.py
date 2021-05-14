@@ -2,7 +2,7 @@ from __future__ import print_function
 import os.path
 import time
 import sys
-from setuptools.extern import six
+import six
 import platform
 
 from openpype.api import Logger
