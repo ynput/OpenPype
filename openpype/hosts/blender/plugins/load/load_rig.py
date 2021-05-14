@@ -107,6 +107,9 @@ class BlendRigLoader(plugin.AssetLoader):
 
             if action is not None:
                 local_obj.animation_data.action = action
+            elif local_obj.animation_data.action is not None:
+                plugin.prepare_data(
+                    local_obj.animation_data.action, collection_name)
 
             # Set link the drivers to the local object
             if local_obj.data.animation_data:
