@@ -1589,6 +1589,12 @@ class AssetItem(BaseItem):
         return self.asset_id is None
 
     @property
+    def is_valid(self):
+        if self._is_duplicated or not self._data["name"]:
+            return False
+        return True
+
+    @property
     def name(self):
         return self._data["name"]
 
@@ -1841,6 +1847,14 @@ class TaskItem(BaseItem):
     @property
     def is_new(self):
         return self._is_new
+
+    @property
+    def is_valid(self):
+        if self._is_duplicated or not self._data["type"]:
+            return False
+        if not self.data(QtCore.Qt.EditRole, "name"):
+            return False
+        return True
 
     def name_icon(self):
         if self.__class__._name_icons is None:
