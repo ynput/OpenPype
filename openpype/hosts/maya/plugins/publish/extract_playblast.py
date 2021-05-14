@@ -96,19 +96,26 @@ class ExtractPlayblast(openpype.api.Extractor):
             # Remove panel key since it's internal value to capture_gui
             preset.pop("panel", None)
 
-            
             self.log.info('using viewport preset: {}'.format(preset))
 
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
 
-        self.log.info("file list  {}".format(playblast))
+        self.log.debug("playblast path  {}".format(path))
 
-        collected_frames = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(collected_frames)
-        input_path = os.path.join(
-            stagingdir, collections[0].format('{head}{padding}{tail}'))
-        self.log.info("input {}".format(input_path))
+        collected_files = os.listdir(stagingdir)
+        collections, remainder = clique.assemble(collected_files)
+
+        self.log.debug("filename {}".format(filename))
+        frame_collection = None
+        for collection in collections:
+            filebase = collection.format('{head}').rstrip(".")
+            self.log.debug("collection head {}".format(filebase))
+            if filebase in filename:
+                frame_collection = collection
+                self.log.info(
+                    "we found collection of interest {}".format(
+                        str(frame_collection)))
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -119,12 +126,11 @@ class ExtractPlayblast(openpype.api.Extractor):
 
         # Add camera node name to representation data
         camera_node_name = pm.ls(camera)[0].getTransform().name()
-        
 
         representation = {
             'name': 'png',
             'ext': 'png',
-            'files': collected_frames,
+            'files': list(frame_collection),
             "stagingDir": stagingdir,
             "frameStart": start,
             "frameEnd": end,
