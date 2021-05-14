@@ -18,11 +18,13 @@ class Window(QtWidgets.QWidget):
 
         dbcon = AvalonMongoDB()
 
-        # TOP Project selection
-        project_widget = QtWidgets.QWidget(self)
+        # Top part of window
+        top_part_widget = QtWidgets.QWidget(self)
+
+        # Project selection
+        project_widget = QtWidgets.QWidget(top_part_widget)
 
         project_model = ProjectModel(dbcon)
-
         project_combobox = QtWidgets.QComboBox(project_widget)
         project_combobox.setModel(project_model)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
@@ -37,6 +39,30 @@ class Window(QtWidgets.QWidget):
         project_layout.addWidget(project_combobox, 0)
         project_layout.addWidget(refresh_projects_btn, 0)
         project_layout.addStretch(1)
+
+        # Helper buttons
+        helper_btns_widget = QtWidgets.QWidget(top_part_widget)
+
+        helper_label = QtWidgets.QLabel("Add:", helper_btns_widget)
+        add_asset_btn = QtWidgets.QPushButton(helper_btns_widget)
+        add_asset_btn.setIcon(ResourceCache.get_icon("asset", "existing"))
+        add_asset_btn.setText("Asset")
+        add_task_btn = QtWidgets.QPushButton("Task", helper_btns_widget)
+        add_task_btn.setIcon(ResourceCache.get_icon("task", "existing"))
+        add_task_btn.setText("Task")
+
+        helper_btns_layout = QtWidgets.QHBoxLayout(helper_btns_widget)
+        helper_btns_layout.setContentsMargins(0, 0, 0, 0)
+        helper_btns_layout.addWidget(helper_label)
+        helper_btns_layout.addWidget(add_asset_btn)
+        helper_btns_layout.addWidget(add_task_btn)
+        helper_btns_layout.addStretch(1)
+
+        # Add widgets to top widget layout
+        top_part_layout = QtWidgets.QVBoxLayout(top_part_widget)
+        top_part_layout.setContentsMargins(0, 0, 0, 0)
+        top_part_layout.addWidget(project_widget)
+        top_part_layout.addWidget(helper_btns_widget)
 
         hierarchy_model = HierarchyModel(dbcon)
 
@@ -74,13 +100,15 @@ class Window(QtWidgets.QWidget):
         buttons_layout.addWidget(save_btn)
 
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addWidget(project_widget)
+        main_layout.addWidget(top_part_widget)
         main_layout.addWidget(hierarchy_view)
         main_layout.addWidget(buttons_widget)
 
         refresh_projects_btn.clicked.connect(self._on_project_refresh)
         project_combobox.currentIndexChanged.connect(self._on_project_change)
         save_btn.clicked.connect(self._on_save_click)
+        add_asset_btn.clicked.connect(self._on_add_asset)
+        add_task_btn.clicked.connect(self._on_add_task)
 
         self.project_model = project_model
         self.project_combobox = project_combobox
@@ -123,6 +151,12 @@ class Window(QtWidgets.QWidget):
 
     def _on_save_click(self):
         self.hierarchy_model.save()
+
+    def _on_add_asset(self):
+        self.hierarchy_view.add_asset()
+
+    def _on_add_task(self):
+        self.hierarchy_view.add_task()
 
     def show_message(self, message):
         # TODO add nicer message pop
