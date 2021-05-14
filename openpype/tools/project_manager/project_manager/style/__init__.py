@@ -23,7 +23,7 @@ class ResourceCache:
         if cls.icons is None:
             cls.icons = {
                 "asset": {
-                    "existing": qtawesome.icon(
+                    "default": qtawesome.icon(
                         "fa.folder",
                         color=cls.colors["standard"]
                     ),
@@ -31,7 +31,7 @@ class ResourceCache:
                         "fa.folder",
                         color=cls.colors["new"]
                     ),
-                    "duplicated": qtawesome.icon(
+                    "invalid": qtawesome.icon(
                         "fa.exclamation-triangle",
                         color=cls.colors["warning"]
                     ),
@@ -41,7 +41,7 @@ class ResourceCache:
                     )
                 },
                 "task": {
-                    "existing": qtawesome.icon(
+                    "default": qtawesome.icon(
                         "fa.check-circle-o",
                         color=cls.colors["standard"]
                     ),
@@ -49,7 +49,7 @@ class ResourceCache:
                         "fa.check-circle",
                         color=cls.colors["new"]
                     ),
-                    "duplicated": qtawesome.icon(
+                    "invalid": qtawesome.icon(
                         "fa.exclamation-circle",
                         color=cls.colors["warning"]
                     ),

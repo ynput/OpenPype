@@ -1703,11 +1703,11 @@ class AssetItem(BaseItem):
         if self._removed:
             icon_type = "removed"
         elif not self.is_valid:
-            icon_type = "duplicated"
+            icon_type = "invalid"
         elif self.is_new:
             icon_type = "new"
         else:
-            icon_type = "existing"
+            icon_type = "default"
         return self.__class__._name_icons[icon_type]
 
     def _get_global_data(self, role):
@@ -1894,11 +1894,11 @@ class TaskItem(BaseItem):
         if self._removed:
             icon_type = "removed"
         elif not self.is_valid:
-            icon_type = "duplicated"
+            icon_type = "invalid"
         elif self.is_new:
             icon_type = "new"
         else:
-            icon_type = "existing"
+            icon_type = "default"
         return self.__class__._name_icons[icon_type]
 
     def add_child(self, item, row=None):
