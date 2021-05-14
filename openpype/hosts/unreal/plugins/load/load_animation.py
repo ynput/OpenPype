@@ -98,7 +98,7 @@ class AnimationFBXLoader(api.Loader):
         task.options.set_editor_property('override_full_name', True)
 
         task.options.anim_sequence_import_data.set_editor_property(
-            'animation_length', 
+            'animation_length',
             unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME
         )
         task.options.anim_sequence_import_data.set_editor_property(

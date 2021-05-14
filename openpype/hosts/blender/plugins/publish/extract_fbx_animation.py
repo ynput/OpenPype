@@ -135,12 +135,7 @@ class ExtractAnimationFBX(openpype.api.Extractor):
                 container = bpy.data.collections[container_name]
         if container:
             json_dict = {
-                # "representation": container.get("avalon").get(
-                #         "representation"
-                #     ),
-                "instance_name": container.get("avalon").get(
-                        "instance_name"
-                    )
+                "instance_name": container.get("avalon").get("instance_name")
             }
 
         with open(json_path, "w+") as file:
