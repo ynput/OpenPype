@@ -1,4 +1,5 @@
 import os
+import json
 
 import openpype.api
 
@@ -121,6 +122,30 @@ class ExtractAnimationFBX(openpype.api.Extractor):
                 pair[1].user_clear()
                 bpy.data.actions.remove(pair[1])
 
+        json_filename = f"{instance.name}.json"
+        json_path = os.path.join(stagingdir, json_filename)
+
+        json_dict = {}
+
+        collection = instance.data.get("name")
+        container = None
+        for obj in bpy.data.collections[collection].objects:
+            if obj.type == "ARMATURE":
+                container_name = obj.get("avalon").get("container_name")
+                container = bpy.data.collections[container_name]
+        if container:
+            json_dict = {
+                # "representation": container.get("avalon").get(
+                #         "representation"
+                #     ),
+                "instance_name": container.get("avalon").get(
+                        "instance_name"
+                    )
+            }
+
+        with open(json_path, "w+") as file:
+            json.dump(json_dict, fp=file, indent=2)
+
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
@@ -130,7 +155,15 @@ class ExtractAnimationFBX(openpype.api.Extractor):
             'files': fbx_filename,
             "stagingDir": stagingdir,
         }
+        json_representation = {
+            'name': 'json',
+            'ext': 'json',
+            'files': json_filename,
+            "stagingDir": stagingdir,
+        }
         instance.data["representations"].append(fbx_representation)
+        instance.data["representations"].append(json_representation)
+
 
         self.log.info("Extracted instance '{}' to: {}".format(
                       instance.name, fbx_representation))

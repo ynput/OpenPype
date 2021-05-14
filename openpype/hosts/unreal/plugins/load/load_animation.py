@@ -1,4 +1,5 @@
 import os
+import json
 
 from avalon import api, pipeline
 from avalon.unreal import lib
@@ -61,10 +62,16 @@ class AnimationFBXLoader(api.Loader):
         task = unreal.AssetImportTask()
         task.options = unreal.FbxImportUI()
 
-        # If there are no options, the process cannot be automated
-        if options:
+        libpath = self.fname.replace("fbx", "json")
+
+        with open(libpath, "r") as fp:
+            data = json.load(fp)
+
+        instance_name = data.get("instance_name")
+
+        if instance_name:
             automated = True
-            actor_name = 'PersistentLevel.' + options.get('instance_name')
+            actor_name = 'PersistentLevel.' + instance_name
             actor = unreal.EditorLevelLibrary.get_actor_reference(actor_name)
             skeleton = actor.skeletal_mesh_component.skeletal_mesh.skeleton
             task.options.set_editor_property('skeleton', skeleton)
@@ -81,16 +88,31 @@ class AnimationFBXLoader(api.Loader):
 
         # set import options here
         task.options.set_editor_property(
-            'automated_import_should_detect_type', True)
+            'automated_import_should_detect_type', False)
         task.options.set_editor_property(
-            'original_import_type', unreal.FBXImportType.FBXIT_ANIMATION)
+            'original_import_type', unreal.FBXImportType.FBXIT_SKELETAL_MESH)
+        task.options.set_editor_property(
+            'mesh_type_to_import', unreal.FBXImportType.FBXIT_ANIMATION)
         task.options.set_editor_property('import_mesh', False)
         task.options.set_editor_property('import_animations', True)
+        task.options.set_editor_property('override_full_name', True)
 
-        task.options.skeletal_mesh_import_data.set_editor_property(
-            'import_content_type',
-            unreal.FBXImportContentType.FBXICT_SKINNING_WEIGHTS
+        task.options.anim_sequence_import_data.set_editor_property(
+            'animation_length', 
+            unreal.FBXAnimationLengthImportType.FBXALIT_EXPORTED_TIME
         )
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_meshes_in_bone_hierarchy', False)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'use_default_sample_rate', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_custom_attribute', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'import_bone_tracks', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'remove_redundant_keys', True)
+        task.options.anim_sequence_import_data.set_editor_property(
+            'convert_scene', True)
 
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
 
