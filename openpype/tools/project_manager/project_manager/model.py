@@ -381,7 +381,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             new_row = None
         else:
             name = None
-            new_row = item.row() + 1
+            new_row = item.rowCount()
 
         asset_data = {}
         if name:
