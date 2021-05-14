@@ -12,7 +12,7 @@ from .constants import (
     REMOVED_ROLE
 )
 from .style import ResourceCache
-from pymongo import UpdateOne
+from pymongo import UpdateOne, DeleteOne
 from avalon.vendor import qtawesome
 from Qt import QtCore, QtGui
 
@@ -1133,10 +1133,15 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                     insert_list.append(item)
 
                 elif item.data(REMOVED_ROLE):
-                    bulk_writes.append(UpdateOne(
-                        {"_id": item.asset_id},
-                        {"$set": {"type": "archived_asset"}}
-                    ))
+                    if item.data(HIERARCHY_CHANGE_ABLE_ROLE):
+                        bulk_writes.append(DeleteOne(
+                            {"_id": item.asset_id}
+                        ))
+                    else:
+                        bulk_writes.append(UpdateOne(
+                            {"_id": item.asset_id},
+                            {"$set": {"type": "archived_asset"}}
+                        ))
 
                 else:
                     update_data = item.update_data()
