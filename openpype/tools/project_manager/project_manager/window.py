@@ -1,4 +1,4 @@
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 
 from . import (
     ProjectModel,
@@ -9,6 +9,7 @@ from . import (
 )
 from .style import load_stylesheet, ResourceCache
 
+from openpype import resources
 from avalon.api import AvalonMongoDB
 
 
@@ -16,13 +17,16 @@ class Window(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(Window, self).__init__(parent)
 
-        dbcon = AvalonMongoDB()
+        self.setWindowTitle("OpenPype Project Manager")
+        self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
 
         # Top part of window
         top_part_widget = QtWidgets.QWidget(self)
 
         # Project selection
         project_widget = QtWidgets.QWidget(top_part_widget)
+
+        dbcon = AvalonMongoDB()
 
         project_model = ProjectModel(dbcon)
         project_combobox = QtWidgets.QComboBox(project_widget)
