@@ -1927,13 +1927,21 @@ class TaskItem(BaseItem):
             self._removed = value
             return True
 
+        if (
+            role == QtCore.Qt.EditRole
+            and key == "name"
+            and not value
+        ):
+            value = None
+
         result = super(TaskItem, self).setData(value, role, key)
 
-        if (
-            key == "name"
-            or (key == "type" and self._data["name"] is None)
-        ):
-            self.parent().on_task_name_change(self)
+        if role == QtCore.Qt.EditRole:
+            if (
+                key == "name"
+                or (key == "type" and not self._data["name"])
+            ):
+                self.parent().on_task_name_change(self)
 
         return result
 
