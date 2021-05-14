@@ -382,10 +382,6 @@
             "optional": true,
             "active": true,
             "bake_attributes": []
-        },
-        "MayaSubmitDeadline": {
-            "enabled": true,
-            "tile_assembler_plugin": "DraftTileAssembler"
         }
     },
     "load": {

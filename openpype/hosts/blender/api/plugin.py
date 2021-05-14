@@ -9,7 +9,7 @@ from avalon import api
 import avalon.blender
 from openpype.api import PypeCreatorMixin
 
-VALID_EXTENSIONS = [".blend", ".json"]
+VALID_EXTENSIONS = [".blend", ".json", ".abc"]
 
 
 def asset_name(

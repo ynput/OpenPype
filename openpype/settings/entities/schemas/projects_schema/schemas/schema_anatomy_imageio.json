@@ -119,6 +119,19 @@
             "label": "Nuke",
             "children": [
                 {
+                    "key": "viewer",
+                    "type": "dict",
+                    "label": "Viewer",
+                    "collapsible": false,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "viewerProcess",
+                            "label": "Viewer Process"
+                        }
+                    ]
+                },
+                {
                     "key": "workfile",
                     "type": "dict",
                     "label": "Workfile",
@@ -234,8 +247,7 @@
                                         "label": "Used in plugins",
                                         "object_type": {
                                             "type": "text",
-                                            "key": "pluginClass",
-                                            "label": "Plugin Class"
+                                            "key": "pluginClass"
                                         }
                                     },
                                     {
@@ -282,8 +294,7 @@
                                         "label": "Used in plugins",
                                         "object_type": {
                                             "type": "text",
-                                            "key": "pluginClass",
-                                            "label": "Plugin Class"
+                                            "key": "pluginClass"
                                         }
                                     },
                                     {

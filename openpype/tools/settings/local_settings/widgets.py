@@ -1,5 +1,5 @@
 from Qt import QtWidgets, QtCore
-from openpype.tools.settings.settings.widgets.widgets import (
+from openpype.tools.settings.settings.widgets import (
     ExpandingWidget,
     SpacerWidget
 )

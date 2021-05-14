@@ -289,12 +289,6 @@ class FtrackTrayWrapper:
 
         parent_menu.addMenu(tray_menu)
 
-    def tray_start(self):
-        self.validate()
-
-    def tray_exit(self):
-        self.stop_action_server()
-
     # Definition of visibility of each menu actions
     def set_menu_visibility(self):
         self.tray_server_menu.menuAction().setVisible(self.bool_logged)

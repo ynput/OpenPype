@@ -691,3 +691,64 @@ under selected hierarchies and match them with shapes loaded with rig (published
 under `input_SET`). This mechanism uses *cbId* attribute on those shapes.
 If match is found shapes are connected using their `outMesh` and `outMesh`. Thus you can easily connect existing animation to loaded rig.
 :::
+
+## Using Redshift Proxies
+
+OpenPype supports working with Redshift Proxy files. You can create  Redshift Proxy from almost
+any hierarchy in Maya and it will be included there. Redshift can export animation
+proxy file per frame.
+
+### Creating Redshift Proxy
+
+To mark data to publish as Redshift Proxy, select them in Maya and - **OpenPype → Create ...** and
+then select **Redshift Proxy**. You can name your subset and hit **Create** button.
+
+You can enable animation in Attribute Editor:
+
+![Maya - Yeti Rig Setup](assets/maya-create_rs_proxy.jpg)
+
+### Publishing Redshift Proxies
+
+Once data are marked as Redshift Proxy instance, they can be published - **OpenPype → Publish ...**
+
+### Using Redshift Proxies
+
+Published proxy files can be loaded with OpenPype Loader. It will create mesh and attach Redshift Proxy
+parameters to it - Redshift will then represent proxy with bounding box.
+
+## Using VRay Proxies
+
+OpenPype support publishing, loading and using of VRay Proxy in look management. Their underlaying format
+can be either vrmesh or alembic.
+
+:::warning vrmesh or alembic and look management
+Be aware that **vrmesh** cannot be used with looks as it doesn't retain IDs necessary to map shaders to geometry.
+:::
+
+### Creating VRay Proxy
+
+To create VRay Proxy, select geometry you want and - **OpenPype → Create ...** select **VRay Proxy**. Name your
+subset as you want and press **Create** button.
+
+This will create `vrayproxy` set for your subset. You can set some options in Attribute editor, mainly if you want
+export animation instead of single frame.
+
+![Maya - VRay Proxy Creation](assets/maya-vray_proxy.jpg)
+
+### Publishing VRay Proxies
+
+VRay Proxy can be published - **OpenPype → Publish ...**. It will publish data as VRays `vrmesh` format and as
+Alembic file.
+
+## Using VRay Proxies
+
+You can load VRay Proxy using loader - **OpenPype → Loader ...**
+
+![Maya - VRay Proxy Creation](assets/maya-vray_proxy-loader.jpg)
+
+Select your subset and right-click. Select **Import VRay Proxy (vrmesh)** to import it.
+
+:::note
+Note that even if it states `vrmesh` in descriptions, if loader finds Alembic published along (default behavior) it will
+use abc file instead of vrmesh as it is more flexible and without it looks doesn't work.
+:::

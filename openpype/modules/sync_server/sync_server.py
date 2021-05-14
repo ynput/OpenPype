@@ -8,7 +8,7 @@ from concurrent.futures._base import CancelledError
 from .providers import lib
 from openpype.lib import PypeLogger
 
-from .utils import SyncStatus
+from .utils import SyncStatus, ResumableError
 
 
 log = PypeLogger().get_logger("SyncServer")
@@ -232,6 +232,7 @@ class SyncServerThread(threading.Thread):
         self.loop = None
         self.is_running = False
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
+        self.timer = None
 
     def run(self):
         self.is_running = True
@@ -266,8 +267,8 @@ class SyncServerThread(threading.Thread):
         Returns:
 
         """
-        try:
-            while self.is_running and not self.module.is_paused():
+        while self.is_running and not self.module.is_paused():
+            try:
                 import time
                 start_time = None
                 self.module.set_sync_project_settings()  # clean cache
@@ -384,17 +385,27 @@ class SyncServerThread(threading.Thread):
 
                 duration = time.time() - start_time
                 log.debug("One loop took {:.2f}s".format(duration))
-                await asyncio.sleep(self.module.get_loop_delay(collection))
-        except ConnectionResetError:
-            log.warning("ConnectionResetError in sync loop, trying next loop",
-                        exc_info=True)
-        except CancelledError:
-            # just stopping server
-            pass
-        except Exception:
-            self.stop()
-            log.warning("Unhandled exception in sync loop, stopping server",
-                        exc_info=True)
+
+                delay = self.module.get_loop_delay(collection)
+                log.debug("Waiting for {} seconds to new loop".format(delay))
+                self.timer = asyncio.create_task(self.run_timer(delay))
+                await asyncio.gather(self.timer)
+
+            except ConnectionResetError:
+                log.warning("ConnectionResetError in sync loop, "
+                            "trying next loop",
+                            exc_info=True)
+            except CancelledError:
+                # just stopping server
+                pass
+            except ResumableError:
+                log.warning("ResumableError in sync loop, "
+                            "trying next loop",
+                            exc_info=True)
+            except Exception:
+                self.stop()
+                log.warning("Unhandled except. in sync loop, stopping server",
+                            exc_info=True)
 
     def stop(self):
         """Sets is_running flag to false, 'check_shutdown' shuts server down"""
@@ -416,6 +427,17 @@ class SyncServerThread(threading.Thread):
         self.executor.shutdown(wait=True)
         await asyncio.sleep(0.07)
         self.loop.stop()
+
+    async def run_timer(self, delay):
+        """Wait for 'delay' seconds to start next loop"""
+        await asyncio.sleep(delay)
+
+    def reset_timer(self):
+        """Called when waiting for next loop should be skipped"""
+        log.debug("Resetting timer")
+        if self.timer:
+            self.timer.cancel()
+            self.timer = None
 
     def _working_sites(self, collection):
         if self.module.is_project_paused(collection):

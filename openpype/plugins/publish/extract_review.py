@@ -333,10 +333,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Get FFmpeg arguments from profile presets
         out_def_ffmpeg_args = output_def.get("ffmpeg_args") or {}
 
-        ffmpeg_input_args = out_def_ffmpeg_args.get("input") or []
-        ffmpeg_output_args = out_def_ffmpeg_args.get("output") or []
-        ffmpeg_video_filters = out_def_ffmpeg_args.get("video_filters") or []
-        ffmpeg_audio_filters = out_def_ffmpeg_args.get("audio_filters") or []
+        _ffmpeg_input_args = out_def_ffmpeg_args.get("input") or []
+        _ffmpeg_output_args = out_def_ffmpeg_args.get("output") or []
+        _ffmpeg_video_filters = out_def_ffmpeg_args.get("video_filters") or []
+        _ffmpeg_audio_filters = out_def_ffmpeg_args.get("audio_filters") or []
+
+        # Cleanup empty strings
+        ffmpeg_input_args = [
+            value for value in _ffmpeg_input_args if value.strip()
+        ]
+        ffmpeg_output_args = [
+            value for value in _ffmpeg_output_args if value.strip()
+        ]
+        ffmpeg_video_filters = [
+            value for value in _ffmpeg_video_filters if value.strip()
+        ]
+        ffmpeg_audio_filters = [
+            value for value in _ffmpeg_audio_filters if value.strip()
+        ]
 
         if isinstance(new_repre['files'], list):
             input_files_urls = [os.path.join(new_repre["stagingDir"], f) for f
@@ -704,6 +718,105 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return audio_in_args, audio_filters, audio_out_args
 
+    def get_letterbox_filters(
+        self,
+        letter_box_def,
+        input_res_ratio,
+        output_res_ratio,
+        pixel_aspect,
+        scale_factor_by_width,
+        scale_factor_by_height
+    ):
+        output = []
+
+        ratio = letter_box_def["ratio"]
+        state = letter_box_def["state"]
+        fill_color = letter_box_def["fill_color"]
+        f_red, f_green, f_blue, f_alpha = fill_color
+        fill_color_hex = "{0:0>2X}{1:0>2X}{2:0>2X}".format(
+            f_red, f_green, f_blue
+        )
+        fill_color_alpha = float(f_alpha) / 255
+
+        line_thickness = letter_box_def["line_thickness"]
+        line_color = letter_box_def["line_color"]
+        l_red, l_green, l_blue, l_alpha = line_color
+        line_color_hex = "{0:0>2X}{1:0>2X}{2:0>2X}".format(
+            l_red, l_green, l_blue
+        )
+        line_color_alpha = float(l_alpha) / 255
+
+        if input_res_ratio == output_res_ratio:
+            ratio /= pixel_aspect
+        elif input_res_ratio < output_res_ratio:
+            ratio /= scale_factor_by_width
+        else:
+            ratio /= scale_factor_by_height
+
+        if state == "letterbox":
+            if fill_color_alpha > 0:
+                top_box = (
+                    "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c={}@{}"
+                ).format(ratio, fill_color_hex, fill_color_alpha)
+
+                bottom_box = (
+                    "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
+                    ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c={1}@{2}"
+                ).format(ratio, fill_color_hex, fill_color_alpha)
+
+                output.extend([top_box, bottom_box])
+
+            if line_color_alpha > 0 and line_thickness > 0:
+                top_line = (
+                    "drawbox=0:round((ih-(iw*(1/{0})))/2)-{1}:iw:{1}:"
+                    "t=fill:c={2}@{3}"
+                ).format(
+                    ratio, line_thickness, line_color_hex, line_color_alpha
+                )
+                bottom_line = (
+                    "drawbox=0:ih-round((ih-(iw*(1/{})))/2)"
+                    ":iw:{}:t=fill:c={}@{}"
+                ).format(
+                    ratio, line_thickness, line_color_hex, line_color_alpha
+                )
+                output.extend([top_line, bottom_line])
+
+        elif state == "pillar":
+            if fill_color_alpha > 0:
+                left_box = (
+                    "drawbox=0:0:round((iw-(ih*{}))/2):ih:t=fill:c={}@{}"
+                ).format(ratio, fill_color_hex, fill_color_alpha)
+
+                right_box = (
+                    "drawbox=iw-round((iw-(ih*{0}))/2))"
+                    ":0:round((iw-(ih*{0}))/2):ih:t=fill:c={1}@{2}"
+                ).format(ratio, fill_color_hex, fill_color_alpha)
+
+                output.extend([left_box, right_box])
+
+            if line_color_alpha > 0 and line_thickness > 0:
+                left_line = (
+                    "drawbox=round((iw-(ih*{}))/2):0:{}:ih:t=fill:c={}@{}"
+                ).format(
+                    ratio, line_thickness, line_color_hex, line_color_alpha
+                )
+
+                right_line = (
+                    "drawbox=iw-round((iw-(ih*{}))/2))"
+                    ":0:{}:ih:t=fill:c={}@{}"
+                ).format(
+                    ratio, line_thickness, line_color_hex, line_color_alpha
+                )
+
+                output.extend([left_line, right_line])
+
+        else:
+            raise ValueError(
+                "Letterbox state \"{}\" is not recognized".format(state)
+            )
+
+        return output
+
     def rescaling_filters(self, temp_data, output_def, new_repre):
         """Prepare vieo filters based on tags in new representation.
 
@@ -715,7 +828,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
         filters = []
 
-        letter_box = output_def.get("letter_box")
+        letter_box_def = output_def["letter_box"]
+        letter_box_enabled = letter_box_def["enabled"]
 
         # Get instance data
         pixel_aspect = temp_data["pixel_aspect"]
@@ -795,7 +909,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if (
             output_width == input_width
             and output_height == input_height
-            and not letter_box
+            and not letter_box_enabled
             and pixel_aspect == 1
         ):
             self.log.debug(
@@ -834,29 +948,23 @@ class ExtractReview(pyblish.api.InstancePlugin):
         )
 
         # letter_box
-        if letter_box:
-            if input_res_ratio == output_res_ratio:
-                letter_box /= pixel_aspect
-            elif input_res_ratio < output_res_ratio:
-                letter_box /= scale_factor_by_width
-            else:
-                letter_box /= scale_factor_by_height
-
-            scale_filter = "scale={}x{}:flags=lanczos".format(
-                output_width, output_height
+        if letter_box_enabled:
+            filters.extend([
+                "scale={}x{}:flags=lanczos".format(
+                    output_width, output_height
+                ),
+                "setsar=1"
+            ])
+            filters.extend(
+                self.get_letterbox_filters(
+                    letter_box_def,
+                    input_res_ratio,
+                    output_res_ratio,
+                    pixel_aspect,
+                    scale_factor_by_width,
+                    scale_factor_by_height
+                )
             )
-
-            top_box = (
-                "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c=black"
-            ).format(letter_box)
-
-            bottom_box = (
-                "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
-                ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black"
-            ).format(letter_box)
-
-            # Add letter box filters
-            filters.extend([scale_filter, "setsar=1", top_box, bottom_box])
 
         # scaling none square pixels and 1920 width
         if (

@@ -4,7 +4,7 @@ Requires:
     context -> otioTimeline
 
 Optional:
-    otioClip.metadata -> masterLayer
+    instance -> reviewTrack
 
 Provides:
     instance -> otioReviewClips
@@ -22,16 +22,16 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
     label = "Collect OTIO Review"
     order = pyblish.api.CollectorOrder - 0.57
     families = ["clip"]
-    hosts = ["resolve"]
+    hosts = ["resolve", "hiero"]
 
     def process(self, instance):
         # get basic variables
-        otio_review_clips = list()
+        otio_review_clips = []
         otio_timeline = instance.context.data["otioTimeline"]
         otio_clip = instance.data["otioClip"]
 
         # optionally get `reviewTrack`
-        review_track_name = otio_clip.metadata.get("reviewTrack")
+        review_track_name = instance.data.get("reviewTrack")
 
         # generate range in parent
         otio_tl_range = otio_clip.range_in_parent()
@@ -88,6 +88,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
                 otio_review_clips.append(otio_gap)
 
         if otio_review_clips:
+            instance.data["label"] += " (review)"
             instance.data["families"] += ["review", "ftrack"]
             instance.data["otioReviewClips"] = otio_review_clips
             self.log.info(

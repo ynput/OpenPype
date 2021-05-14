@@ -12,7 +12,7 @@ class ExtractOTIOFile(openpype.api.Extractor):
     label = "Extract OTIO file"
     order = pyblish.api.ExtractorOrder - 0.45
     families = ["workfile"]
-    hosts = ["resolve"]
+    hosts = ["resolve", "hiero"]
 
     def process(self, instance):
         # create representation data

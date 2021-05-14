@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 from openpype.lib import PreLaunchHook
 
@@ -31,10 +32,46 @@ class InstallPySideToBlender(PreLaunchHook):
 
     def inner_execute(self):
         # Get blender's python directory
+        version_regex = re.compile(r"^2\.[0-9]{2}$")
+
         executable = self.launch_context.executable.executable_path
-        # Blender installation contain subfolder named with it's version where
-        # python binaries are stored.
-        version_subfolder = self.launch_context.app_name.split("_")[1]
+        if os.path.basename(executable).lower() != "blender.exe":
+            self.log.info((
+                "Executable does not lead to blender.exe file. Can't determine"
+                " blender's python to check/install PySide2."
+            ))
+            return
+
+        executable_dir = os.path.dirname(executable)
+        version_subfolders = []
+        for name in os.listdir(executable_dir):
+            fullpath = os.path.join(name, executable_dir)
+            if not os.path.isdir(fullpath):
+                continue
+
+            if not version_regex.match(name):
+                continue
+
+            version_subfolders.append(name)
+
+        if not version_subfolders:
+            self.log.info(
+                "Didn't find version subfolder next to Blender executable"
+            )
+            return
+
+        if len(version_subfolders) > 1:
+            self.log.info((
+                "Found more than one version subfolder next"
+                " to blender executable. {}"
+            ).format(", ".join([
+                '"./{}"'.format(name)
+                for name in version_subfolders
+            ])))
+            return
+
+        version_subfolder = version_subfolders[0]
+
         pythond_dir = os.path.join(
             os.path.dirname(executable),
             version_subfolder,
@@ -65,6 +102,7 @@ class InstallPySideToBlender(PreLaunchHook):
 
         # Check if PySide2 is installed and skip if yes
         if self.is_pyside_installed(python_executable):
+            self.log.debug("Blender has already installed PySide2.")
             return
 
         # Install PySide2 in blender's python

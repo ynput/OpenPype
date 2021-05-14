@@ -21,6 +21,7 @@
             "secondary_pool": "",
             "group": "",
             "department": "",
+            "use_gpu": true,
             "limit_groups": {}
         },
         "HarmonySubmitDeadline": {

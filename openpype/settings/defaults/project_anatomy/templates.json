@@ -11,7 +11,7 @@
         "path": "{@folder}/{@file}"
     },
     "render": {
-        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/render/{subset}/{@version}",
+        "folder": "{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}",
         "file": "{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}",
         "path": "{@folder}/{@file}"
     },

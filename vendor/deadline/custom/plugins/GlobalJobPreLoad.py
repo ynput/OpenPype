@@ -60,7 +60,7 @@ def inject_openpype_environment(deadlinePlugin):
         with open(export_url) as fp:
             contents = json.load(fp)
             for key, value in contents.items():
-                deadlinePlugin.SetEnvironmentVariable(key, value)
+                deadlinePlugin.SetProcessEnvironmentVariable(key, value)
 
         os.remove(export_url)
 
@@ -162,4 +162,3 @@ def __main__(deadlinePlugin):
         inject_openpype_environment(deadlinePlugin)
     else:
         pype(deadlinePlugin)  # backward compatibility with Pype2
-

@@ -1,4 +1,5 @@
 import os
+import json
 import collections
 from abc import ABCMeta, abstractmethod
 import six
@@ -8,10 +9,10 @@ from openpype.modules import (
     ITrayModule,
     IPluginPaths,
     ITimersManager,
-    IUserModule,
     ILaunchHookPaths,
     ISettingsChangeListener
 )
+from openpype.settings import SaveWarningExc
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -32,7 +33,6 @@ class FtrackModule(
     ITrayModule,
     IPluginPaths,
     ITimersManager,
-    IUserModule,
     ILaunchHookPaths,
     ISettingsChangeListener
 ):
@@ -42,7 +42,17 @@ class FtrackModule(
         ftrack_settings = settings[self.name]
 
         self.enabled = ftrack_settings["enabled"]
-        self.ftrack_url = ftrack_settings["ftrack_server"].strip("/ ")
+        # Add http schema
+        ftrack_url = ftrack_settings["ftrack_server"].strip("/ ")
+        if ftrack_url:
+            if "http" not in ftrack_url:
+                ftrack_url = "https://" + ftrack_url
+
+            # Check if "ftrack.app" is part os url
+            if "ftrackapp.com" not in ftrack_url:
+                ftrack_url = ftrack_url + ".ftrackapp.com"
+
+        self.ftrack_url = ftrack_url
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
         server_event_handlers_paths = [
@@ -113,15 +123,107 @@ class FtrackModule(
         if self.tray_module:
             self.tray_module.stop_timer_manager()
 
-    def on_pype_user_change(self, username):
-        """Implementation of IUserModule interface."""
-        if self.tray_module:
-            self.tray_module.changed_user()
-
-    def on_system_settings_save(self, *_args, **_kwargs):
+    def on_system_settings_save(
+        self, old_value, new_value, changes, new_value_metadata
+    ):
         """Implementation of ISettingsChangeListener interface."""
-        # Ignore
-        return
+        if not self.ftrack_url:
+            raise SaveWarningExc((
+                "Ftrack URL is not set."
+                " Can't propagate changes to Ftrack server."
+            ))
+
+        ftrack_changes = changes.get("modules", {}).get("ftrack", {})
+        url_change_msg = None
+        if "ftrack_server" in ftrack_changes:
+            url_change_msg = (
+                "Ftrack URL was changed."
+                " This change may need to restart OpenPype to take affect."
+            )
+
+        try:
+            session = self.create_ftrack_session()
+        except Exception:
+            self.log.warning("Couldn't create ftrack session.", exc_info=True)
+
+            if url_change_msg:
+                raise SaveWarningExc(url_change_msg)
+
+            raise SaveWarningExc((
+                "Saving of attributes to ftrack wasn't successful,"
+                " try running Create/Update Avalon Attributes in ftrack."
+            ))
+
+        from .lib import (
+            get_openpype_attr,
+            CUST_ATTR_APPLICATIONS,
+            CUST_ATTR_TOOLS,
+            app_definitions_from_app_manager,
+            tool_definitions_from_app_manager
+        )
+        from openpype.api import ApplicationManager
+        query_keys = [
+            "id",
+            "key",
+            "config"
+        ]
+        custom_attributes = get_openpype_attr(
+            session,
+            split_hierarchical=False,
+            query_keys=query_keys
+        )
+        app_attribute = None
+        tool_attribute = None
+        for custom_attribute in custom_attributes:
+            key = custom_attribute["key"]
+            if key == CUST_ATTR_APPLICATIONS:
+                app_attribute = custom_attribute
+            elif key == CUST_ATTR_TOOLS:
+                tool_attribute = custom_attribute
+
+        app_manager = ApplicationManager(new_value_metadata)
+        missing_attributes = []
+        if not app_attribute:
+            missing_attributes.append(CUST_ATTR_APPLICATIONS)
+        else:
+            config = json.loads(app_attribute["config"])
+            new_data = app_definitions_from_app_manager(app_manager)
+            prepared_data = []
+            for item in new_data:
+                for key, label in item.items():
+                    prepared_data.append({
+                        "menu": label,
+                        "value": key
+                    })
+
+            config["data"] = json.dumps(prepared_data)
+            app_attribute["config"] = json.dumps(config)
+
+        if not tool_attribute:
+            missing_attributes.append(CUST_ATTR_TOOLS)
+        else:
+            config = json.loads(tool_attribute["config"])
+            new_data = tool_definitions_from_app_manager(app_manager)
+            prepared_data = []
+            for item in new_data:
+                for key, label in item.items():
+                    prepared_data.append({
+                        "menu": label,
+                        "value": key
+                    })
+            config["data"] = json.dumps(prepared_data)
+            tool_attribute["config"] = json.dumps(config)
+
+        session.commit()
+
+        if missing_attributes:
+            raise SaveWarningExc((
+                "Couldn't find custom attribute/s ({}) to update."
+                " Try running Create/Update Avalon Attributes in ftrack."
+            ).format(", ".join(missing_attributes)))
+
+        if url_change_msg:
+            raise SaveWarningExc(url_change_msg)
 
     def on_project_settings_save(self, *_args, **_kwargs):
         """Implementation of ISettingsChangeListener interface."""
@@ -129,7 +231,7 @@ class FtrackModule(
         return
 
     def on_project_anatomy_save(
-        self, old_value, new_value, changes, project_name
+        self, old_value, new_value, changes, project_name, new_value_metadata
     ):
         """Implementation of ISettingsChangeListener interface."""
         if not project_name:
@@ -140,32 +242,49 @@ class FtrackModule(
             return
 
         import ftrack_api
-        from openpype.modules.ftrack.lib import avalon_sync
+        from openpype.modules.ftrack.lib import get_openpype_attr
 
-        session = self.create_ftrack_session()
+        try:
+            session = self.create_ftrack_session()
+        except Exception:
+            self.log.warning("Couldn't create ftrack session.", exc_info=True)
+            raise SaveWarningExc((
+                "Saving of attributes to ftrack wasn't successful,"
+                " try running Create/Update Avalon Attributes in ftrack."
+            ))
+
         project_entity = session.query(
             "Project where full_name is \"{}\"".format(project_name)
         ).first()
 
         if not project_entity:
-            self.log.warning((
-                "Ftrack project with names \"{}\" was not found."
-                " Skipping settings attributes change callback."
-            ))
-            return
+            msg = (
+                "Ftrack project with name \"{}\" was not found in Ftrack."
+                " Can't push attribute changes."
+            ).format(project_name)
+            self.log.warning(msg)
+            raise SaveWarningExc(msg)
 
         project_id = project_entity["id"]
 
-        cust_attr, hier_attr = avalon_sync.get_pype_attr(session)
+        cust_attr, hier_attr = get_openpype_attr(session)
         cust_attr_by_key = {attr["key"]: attr for attr in cust_attr}
         hier_attrs_by_key = {attr["key"]: attr for attr in hier_attr}
+
+        failed = {}
+        missing = {}
         for key, value in attributes_changes.items():
             configuration = hier_attrs_by_key.get(key)
             if not configuration:
                 configuration = cust_attr_by_key.get(key)
             if not configuration:
+                self.log.warning(
+                    "Custom attribute \"{}\" was not found.".format(key)
+                )
+                missing[key] = value
                 continue
 
+            # TODO add add permissions check
             # TODO add value validations
             # - value type and list items
             entity_key = collections.OrderedDict()
@@ -179,10 +298,45 @@ class FtrackModule(
                     "value",
                     ftrack_api.symbol.NOT_SET,
                     value
-
                 )
             )
-        session.commit()
+            try:
+                session.commit()
+                self.log.debug(
+                    "Changed project custom attribute \"{}\" to \"{}\"".format(
+                        key, value
+                    )
+                )
+            except Exception:
+                self.log.warning(
+                    "Failed to set \"{}\" to \"{}\"".format(key, value),
+                    exc_info=True
+                )
+                session.rollback()
+                failed[key] = value
+
+        if not failed and not missing:
+            return
+
+        error_msg = (
+            "Values were not updated on Ftrack which may cause issues."
+            " try running Create/Update Avalon Attributes in ftrack "
+            " and resave project settings."
+        )
+        if missing:
+            error_msg += "\nMissing Custom attributes on Ftrack: {}.".format(
+                ", ".join([
+                    '"{}"'.format(key)
+                    for key in missing.keys()
+                ])
+            )
+        if failed:
+            joined_failed = ", ".join([
+                '"{}": "{}"'.format(key, value)
+                for key, value in failed.items()
+            ])
+            error_msg += "\nFailed to set: {}".format(joined_failed)
+        raise SaveWarningExc(error_msg)
 
     def create_ftrack_session(self, **session_kwargs):
         import ftrack_api

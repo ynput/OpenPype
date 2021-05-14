@@ -135,12 +135,14 @@ class LoadMov(api.Loader):
 
         read_name = self.node_name_template.format(**name_data)
 
-        # Create the Loader with the filename path set
+        read_node = nuke.createNode(
+            "Read",
+            "name {}".format(read_name)
+        )
+
+        # to avoid multiple undo steps for rest of process
+        # we will switch off undo-ing
         with viewer_update_and_undo_stop():
-            read_node = nuke.createNode(
-                "Read",
-                "name {}".format(read_name)
-            )
             read_node["file"].setValue(file)
 
             read_node["origfirst"].setValue(first)

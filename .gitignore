@@ -64,7 +64,6 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
-
 # Node JS packages
 ##################
 node_modules
@@ -93,3 +92,8 @@ website/i18n/*
 website/debug.log
 
 website/.docusaurus
+
+# Poetry
+########
+
+.poetry/

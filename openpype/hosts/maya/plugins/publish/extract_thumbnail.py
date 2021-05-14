@@ -26,15 +26,11 @@ class ExtractThumbnail(openpype.api.Extractor):
     def process(self, instance):
         self.log.info("Extracting capture..")
 
-        start = cmds.currentTime(query=True)
-        end = cmds.currentTime(query=True)
-        self.log.info("start: {}, end: {}".format(start, end))
-
         camera = instance.data['review_camera']
 
         capture_preset = ""
         capture_preset = (
-            instance.context.data["project_settings"]['maya']['publish']['ExtractPlayblast']
+            instance.context.data["project_settings"]['maya']['publish']['ExtractPlayblast']['capture_preset']
         )
 
         try:
@@ -50,8 +46,8 @@ class ExtractThumbnail(openpype.api.Extractor):
         # preset['compression'] = "qt"
         preset['quality'] = 50
         preset['compression'] = "jpg"
-        preset['start_frame'] = start
-        preset['end_frame'] = end
+        preset['start_frame'] = instance.data["frameStart"]
+        preset['end_frame'] = instance.data["frameStart"]
         preset['camera_options'] = {
             "displayGateMask": False,
             "displayResolution": False,
