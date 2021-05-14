@@ -32,7 +32,7 @@ class ResourceCache:
                         color=cls.colors["new"]
                     ),
                     "duplicated": qtawesome.icon(
-                        "fa.folder",
+                        "fa.exclamation-triangle",
                         color=cls.colors["warning"]
                     ),
                     "removed": qtawesome.icon(
@@ -50,7 +50,7 @@ class ResourceCache:
                         color=cls.colors["new"]
                     ),
                     "duplicated": qtawesome.icon(
-                        "fa.check-circle",
+                        "fa.exclamation-circle",
                         color=cls.colors["warning"]
                     ),
                     "removed": qtawesome.icon(
