@@ -142,9 +142,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self._root_item = RootItem(self)
 
     def refresh_project(self):
-        project_name = self._current_project
-        self._current_project = None
-        self.set_project(project_name)
+        self.set_project(self._current_project, True)
 
     @property
     def project_item(self):
@@ -156,8 +154,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 break
         return output
 
-    def set_project(self, project_name):
-        if self._current_project == project_name:
+    def set_project(self, project_name, force=False):
+        if self._current_project == project_name and not force:
             return
 
         self.clear()
