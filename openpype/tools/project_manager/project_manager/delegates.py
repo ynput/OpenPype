@@ -115,6 +115,7 @@ class TypeDelegate(QtWidgets.QStyledItemDelegate):
     def createEditor(self, parent, option, index):
         editor = FilterComboBox(parent)
         editor.setObjectName("TypeEditor")
+        editor.style().polish(editor)
         if not self._project_doc_cache.project_doc:
             return editor
 
