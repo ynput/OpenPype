@@ -24,29 +24,30 @@ def fix_bootstrap(tmp_path, pytestconfig):
     return bs
 
 
-def test_openpype_version():
+def test_openpype_version(printer):
     """Test determination of OpenPype versions."""
     v1 = OpenPypeVersion(1, 2, 3)
     assert str(v1) == "1.2.3"
 
-    v2 = OpenPypeVersion(1, 2, 3, client="x")
+    v2 = OpenPypeVersion(1, 2, 3, prerelease="x")
     assert str(v2) == "1.2.3-x"
-    assert v1 < v2
+    assert v1 > v2
 
-    v3 = OpenPypeVersion(1, 2, 3, variant="staging")
-    assert str(v3) == "1.2.3-staging"
+    v3 = OpenPypeVersion(1, 2, 3, staging=True)
+    assert str(v3) == "1.2.3+staging"
 
-    v4 = OpenPypeVersion(1, 2, 3, variant="staging", client="client")
-    assert str(v4) == "1.2.3-client-staging"
-    assert v3 < v4
-    assert v1 < v4
+    v4 = OpenPypeVersion(1, 2, 3, staging="True", prerelease="rc.1")
+    assert str(v4) == "1.2.3-rc.1+staging"
+    assert v3 > v4
+    assert v1 > v4
+    assert v4 < OpenPypeVersion(1, 2, 3, prerelease="rc.1")
 
-    v5 = OpenPypeVersion(1, 2, 3, variant="foo", client="x")
-    assert str(v5) == "1.2.3-x"
+    v5 = OpenPypeVersion(1, 2, 3, build="foo", prerelease="x")
+    assert str(v5) == "1.2.3-x+foo"
     assert v4 < v5
 
-    v6 = OpenPypeVersion(1, 2, 3, variant="foo")
-    assert str(v6) == "1.2.3"
+    v6 = OpenPypeVersion(1, 2, 3, prerelease="foo")
+    assert str(v6) == "1.2.3-foo"
 
     v7 = OpenPypeVersion(2, 0, 0)
     assert v1 < v7
@@ -72,8 +73,8 @@ def test_openpype_version():
         OpenPypeVersion(4, 8, 10),
         OpenPypeVersion(4, 8, 20),
         OpenPypeVersion(4, 8, 9),
-        OpenPypeVersion(1, 2, 3, variant="staging"),
-        OpenPypeVersion(1, 2, 3, client="client")
+        OpenPypeVersion(1, 2, 3, staging=True),
+        OpenPypeVersion(1, 2, 3, build="foo")
     ]
     res = sorted(sort_versions)
 
@@ -84,12 +85,12 @@ def test_openpype_version():
 
     str_versions = [
         "5.5.1",
-        "5.5.2-client",
-        "5.5.3-client-strange",
-        "5.5.4-staging",
-        "5.5.5-staging-client",
+        "5.5.2-foo",
+        "5.5.3-foo+strange",
+        "5.5.4+staging",
+        "5.5.5+staging-client",
         "5.6.3",
-        "5.6.3-staging"
+        "5.6.3+staging"
     ]
     res_versions = [OpenPypeVersion(version=v) for v in str_versions]
     sorted_res_versions = sorted(res_versions)
@@ -97,36 +98,33 @@ def test_openpype_version():
     assert str(sorted_res_versions[0]) == str_versions[0]
     assert str(sorted_res_versions[-1]) == str_versions[5]
 
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         _ = OpenPypeVersion()
-
-    with pytest.raises(ValueError):
-        _ = OpenPypeVersion(major=1)
 
     with pytest.raises(ValueError):
         _ = OpenPypeVersion(version="booobaa")
 
-    v11 = OpenPypeVersion(version="4.6.7-client-staging")
+    v11 = OpenPypeVersion(version="4.6.7-foo+staging")
     assert v11.major == 4
     assert v11.minor == 6
-    assert v11.subversion == 7
-    assert v11.variant == "staging"
-    assert v11.client == "client"
+    assert v11.patch == 7
+    assert v11.staging is True
+    assert v11.prerelease == "foo"
 
 
 def test_get_main_version():
-    ver = OpenPypeVersion(1, 2, 3, variant="staging", client="foo")
+    ver = OpenPypeVersion(1, 2, 3, staging=True, prerelease="foo")
     assert ver.get_main_version() == "1.2.3"
 
 
 def test_get_version_path_from_list():
     versions = [
         OpenPypeVersion(1, 2, 3, path=Path('/foo/bar')),
-        OpenPypeVersion(3, 4, 5, variant="staging", path=Path("/bar/baz")),
-        OpenPypeVersion(6, 7, 8, client="x", path=Path("boo/goo"))
+        OpenPypeVersion(3, 4, 5, staging=True, path=Path("/bar/baz")),
+        OpenPypeVersion(6, 7, 8, prerelease="x", path=Path("boo/goo"))
     ]
     path = BootstrapRepos.get_version_path_from_list(
-        "3.4.5-staging", versions)
+        "3.4.5+staging", versions)
 
     assert path == Path("/bar/baz")
 
@@ -183,17 +181,17 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     test_versions_1 = [
         test_openpype(prefix="foo-v", version="5.5.1",
                       suffix=".zip", type="zip", valid=False),
-        test_openpype(prefix="bar-v", version="5.5.2-client",
+        test_openpype(prefix="bar-v", version="5.5.2-rc.1",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="baz-v", version="5.5.3-client-strange",
+        test_openpype(prefix="baz-v", version="5.5.3-foo-strange",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="bum-v", version="5.5.4-staging",
+        test_openpype(prefix="bum-v", version="5.5.4+staging",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="zum-v", version="5.5.5-client-staging",
+        test_openpype(prefix="zum-v", version="5.5.5-foo+staging",
                       suffix=".zip", type="zip", valid=True),
         test_openpype(prefix="fam-v", version="5.6.3",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="foo-v", version="5.6.3-staging",
+        test_openpype(prefix="foo-v", version="5.6.3+staging",
                       suffix=".zip", type="zip", valid=True),
         test_openpype(prefix="fim-v", version="5.6.3",
                       suffix=".zip", type="zip", valid=False),
@@ -208,11 +206,11 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
                       suffix=".txt", type="txt", valid=False),
         test_openpype(prefix="lom-v", version="7.2.6",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="bom-v", version="7.2.7-client",
+        test_openpype(prefix="bom-v", version="7.2.7-rc.3",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="woo-v", version="7.2.8-client-strange",
+        test_openpype(prefix="woo-v", version="7.2.8-foo-strange",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="loo-v", version="7.2.10-client-staging",
+        test_openpype(prefix="loo-v", version="7.2.10-foo+staging",
                       suffix=".zip", type="zip", valid=True),
         test_openpype(prefix="kok-v", version="7.0.1",
                       suffix=".zip", type="zip", valid=True)
@@ -227,13 +225,13 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
                       suffix=".zip", type="zip", valid=True),
         test_openpype(prefix="foo-v", version="4.1.2",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="foo-v", version="3.0.1-client",
+        test_openpype(prefix="foo-v", version="3.0.1-foo",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="foo-v", version="3.0.1-client-strange",
+        test_openpype(prefix="foo-v", version="3.0.1-foo-strange",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="foo-v", version="3.0.1-staging",
+        test_openpype(prefix="foo-v", version="3.0.1+staging",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="foo-v", version="3.0.1-client-staging",
+        test_openpype(prefix="foo-v", version="3.0.1-foo+staging",
                       suffix=".zip", type="zip", valid=True),
         test_openpype(prefix="foo-v", version="3.2.0",
                       suffix=".zip", type="zip", valid=True)
@@ -244,9 +242,9 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
                       suffix="", type="dir", valid=True),
         test_openpype(prefix="lom-v", version="11.2.6",
                       suffix=".zip", type="dir", valid=False),
-        test_openpype(prefix="bom-v", version="7.2.7-client",
+        test_openpype(prefix="bom-v", version="7.2.7-foo",
                       suffix=".zip", type="zip", valid=True),
-        test_openpype(prefix="woo-v", version="7.2.8-client-strange",
+        test_openpype(prefix="woo-v", version="7.2.8-foo-strange",
                       suffix=".zip", type="txt", valid=False)
     ]
 
