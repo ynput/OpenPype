@@ -75,19 +75,6 @@ class Window(QtWidgets.QWidget):
         _selection_model.setModel(hierarchy_view.model())
         hierarchy_view.setSelectionModel(_selection_model)
 
-        header = hierarchy_view.header()
-        header.setStretchLastSection(False)
-        for idx in range(header.count()):
-            logical_index = header.logicalIndex(idx)
-            if idx == 0:
-                header.setSectionResizeMode(
-                    logical_index, QtWidgets.QHeaderView.Stretch
-                )
-            else:
-                header.setSectionResizeMode(
-                    logical_index, QtWidgets.QHeaderView.ResizeToContents
-                )
-
         buttons_widget = QtWidgets.QWidget(self)
 
         message_label = QtWidgets.QLabel(buttons_widget)

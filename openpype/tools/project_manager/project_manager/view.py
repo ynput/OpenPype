@@ -145,6 +145,7 @@ class HierarchyView(QtWidgets.QTreeView):
 
         source_model.index_moved.connect(self._on_rows_moved)
         self.customContextMenuRequested.connect(self._on_context_menu)
+        self._source_model.project_changed.connect(self._on_project_reset)
 
         self._project_doc_cache = project_doc_cache
         self._tools_cache = tools_cache
@@ -153,6 +154,20 @@ class HierarchyView(QtWidgets.QTreeView):
         self._column_delegates = column_delegates
         self._column_key_to_index = column_key_to_index
 
+    def header_init(self):
+        header = self.header()
+        header.setStretchLastSection(False)
+        for idx in range(header.count()):
+            logical_index = header.logicalIndex(idx)
+            if idx == 0:
+                header.setSectionResizeMode(
+                    logical_index, QtWidgets.QHeaderView.Stretch
+                )
+            else:
+                header.setSectionResizeMode(
+                    logical_index, QtWidgets.QHeaderView.ResizeToContents
+                )
+
     def set_project(self, project_name):
         # Trigger helpers first
         self._project_doc_cache.set_project(project_name)
@@ -160,6 +175,9 @@ class HierarchyView(QtWidgets.QTreeView):
 
         # Trigger update of model after all data for delegates are filled
         self._source_model.set_project(project_name)
+
+    def _on_project_reset(self):
+        self.header_init()
 
         self.collapseAll()
 

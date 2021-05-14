@@ -115,6 +115,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
     }
 
     index_moved = QtCore.Signal(QtCore.QModelIndex)
+    project_changed = QtCore.Signal()
 
     def __init__(self, dbcon, parent=None):
         super(HierarchyModel, self).__init__(parent)
@@ -280,6 +281,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 task_items.append(task_item)
 
             self.add_items(task_items, asset_item)
+
+        self.project_changed.emit()
 
     def rowCount(self, parent=None):
         if parent is None or not parent.isValid():
