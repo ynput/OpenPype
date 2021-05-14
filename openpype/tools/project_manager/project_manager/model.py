@@ -566,6 +566,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
             if remove_item:
                 cur_item.setData(True, REMOVED_ROLE)
+                if isinstance(cur_item, AssetItem):
+                    self._rename_asset(cur_item, None)
 
             for task_item in task_children:
                 _fill_children(_all_descendants, task_item, cur_item)
@@ -611,8 +613,6 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                         if end_row is not None:
                             row_ranges.append((start_row, end_row))
                         start_row = end_row = None
-                        if isinstance(child_item, AssetItem):
-                            self._rename_asset(child_item, None)
                         continue
 
                     end_row = row
@@ -652,7 +652,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if prev_name == new_name:
             return
 
-        self._asset_items_by_name[prev_name].remove(asset_item.id)
+        if asset_item.id in self._asset_items_by_name[prev_name]:
+            self._asset_items_by_name[prev_name].remove(asset_item.id)
 
         self._validate_asset_duplicity(prev_name)
 
