@@ -547,7 +547,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                     cur_item.setData(task_removed, REMOVED_ROLE)
                 return task_removed
 
-            remove_item = cur_item.data(HIERARCHY_CHANGE_ABLE_ROLE)
+            remove_item = True
             task_children = []
             for row in range(cur_item.rowCount()):
                 child_item = cur_item.child(row)
