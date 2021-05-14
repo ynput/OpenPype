@@ -1907,18 +1907,19 @@ class TaskItem(BaseItem):
         }
 
     def data(self, role, key=None):
-        if role == QtCore.Qt.BackgroundRole:
-            if self._removed:
-                return QtGui.QColor(255, 0, 0, 127)
+        if role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole):
+            if key == "type":
+                return self._data["type"]
 
-            elif self.is_new:
-                return QtGui.QColor(0, 255, 0, 127)
+            if key == "name":
+                if not self._data["type"]:
+                    if role == QtCore.Qt.DisplayRole:
+                        return "< Select Type >"
+                    if role == QtCore.Qt.EditRole:
+                        return ""
+                else:
+                    return self._data[key] or self._data["type"]
 
-        if (
-            role in (QtCore.Qt.DisplayRole, QtCore.Qt.EditRole)
-            and key == "name"
-        ):
-            return self._data[key] or self._data["type"] or "< Select Type >"
         return super(TaskItem, self).data(role, key)
 
     def setData(self, value, role, key=None):
