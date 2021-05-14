@@ -1308,7 +1308,7 @@ class BaseItem:
             return None
 
         if role == QtCore.Qt.ForegroundRole:
-            if self._is_duplicated and key == "name":
+            if key == "name" and not self.is_valid:
                 return QtGui.QColor(255, 0, 0)
             return None
 
@@ -1697,7 +1697,7 @@ class AssetItem(BaseItem):
 
         if self._removed:
             icon_type = "removed"
-        elif self._is_duplicated:
+        elif not self.is_valid:
             icon_type = "duplicated"
         elif self.is_new:
             icon_type = "new"
@@ -1862,7 +1862,7 @@ class TaskItem(BaseItem):
 
         if self._removed:
             icon_type = "removed"
-        elif self._is_duplicated:
+        elif not self.is_valid:
             icon_type = "duplicated"
         elif self.is_new:
             icon_type = "new"
