@@ -6,8 +6,8 @@ from avalon.vendor import qtawesome
 class ResourceCache:
     colors = {
         "standard": "#333333",
-        "warning": "#ff0000",
-        "new": "#00ff00"
+        "new": "#2d9a4c",
+        "warning": "#c83232"
     }
     icons = None
 
