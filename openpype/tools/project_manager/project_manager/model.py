@@ -640,7 +640,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if not isinstance(asset_item, AssetItem):
             return
 
-        prev_name = asset_item.data(QtCore.Qt.DisplayRole, "name")
+        prev_name = asset_item.data(QtCore.Qt.EditRole, "name")
         if prev_name == new_name:
             return
 
@@ -1619,8 +1619,8 @@ class AssetItem(BaseItem):
         )
 
         doc = {
-            "name": self.data(QtCore.Qt.DisplayRole, "name"),
-            "type": self.data(QtCore.Qt.DisplayRole, "type"),
+            "name": self.data(QtCore.Qt.EditRole, "name"),
+            "type": self.data(QtCore.Qt.EditRole, "type"),
             "schema": schema_name,
             "data": doc_data,
             "parent": self.project_id
@@ -1632,7 +1632,7 @@ class AssetItem(BaseItem):
             if key in doc:
                 continue
             # Use `data` method to get inherited values
-            doc_data[key] = self.data(QtCore.Qt.DisplayRole, key)
+            doc_data[key] = self.data(QtCore.Qt.EditRole, key)
 
         return doc
 
@@ -1751,7 +1751,7 @@ class AssetItem(BaseItem):
         return super(AssetItem, self).flags(key)
 
     def _add_task(self, item):
-        name = item.data(QtCore.Qt.DisplayRole, "name").lower()
+        name = item.data(QtCore.Qt.EditRole, "name").lower()
         item_id = item.data(IDENTIFIER_ROLE)
 
         self._task_name_by_item_id[item_id] = name
@@ -1901,7 +1901,7 @@ class TaskItem(BaseItem):
             return {}
         data = copy.deepcopy(self._data)
         data.pop("name")
-        name = self.data(QtCore.Qt.DisplayRole, "name")
+        name = self.data(QtCore.Qt.EditRole, "name")
         return {
             name: data
         }
