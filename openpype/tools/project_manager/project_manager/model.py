@@ -1712,10 +1712,15 @@ class AssetItem(BaseItem):
         if role == REMOVED_ROLE:
             return self._removed
 
-        if role == QtCore.Qt.ToolTipRole and self._is_duplicated:
-            return "Asset with name \"{}\" already exists.".format(
-                self._data["name"]
-            )
+        if role == QtCore.Qt.ToolTipRole:
+            name = self.data(QtCore.Qt.EditRole, "name")
+            if not name:
+                return "Name is not set"
+
+            elif self._is_duplicated:
+                return "Duplicated asset name \"{}\"".format(name)
+            return None
+
         return super(AssetItem, self)._get_global_data(role)
 
     def setData(self, value, role, key=None):
@@ -1877,10 +1882,18 @@ class TaskItem(BaseItem):
         if role == REMOVED_ROLE:
             return self._removed
 
-        if role == QtCore.Qt.ToolTipRole and self._is_duplicated:
-            return "Duplicated Task name \"{}\".".format(
-                self._data["name"]
-            )
+        if role == QtCore.Qt.ToolTipRole:
+            if not self._data["type"]:
+                return "Type is not set"
+
+            name = self.data(QtCore.Qt.EditRole, "name")
+            if not name:
+                return "Name is not set"
+
+            elif self._is_duplicated:
+                return "Duplicated task name \"{}".format(name)
+            return None
+
         return super(TaskItem, self)._get_global_data(role)
 
     def to_doc_data(self):
