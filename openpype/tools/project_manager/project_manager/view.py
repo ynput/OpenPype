@@ -15,7 +15,8 @@ from .constants import (
     REMOVED_ROLE,
     IDENTIFIER_ROLE,
     ITEM_TYPE_ROLE,
-    HIERARCHY_CHANGE_ABLE_ROLE
+    HIERARCHY_CHANGE_ABLE_ROLE,
+    EDITOR_OPENED_ROLE
 )
 
 
@@ -104,6 +105,8 @@ class HierarchyView(QtWidgets.QTreeView):
         super(HierarchyView, self).__init__(parent)
         # Direct access to model
         self._source_model = source_model
+        self._editors_mapping = {}
+        self._persisten_editors = set()
         # Access to parent because of `show_message` method
         self._parent = parent
 
@@ -214,12 +217,41 @@ class HierarchyView(QtWidgets.QTreeView):
 
     def edit(self, index, *args, **kwargs):
         result = super(HierarchyView, self).edit(index, *args, **kwargs)
-        self._deselect_editor(self.indexWidget(index))
+        if result:
+            # Mark index to not return text for DisplayRole
+            editor = self.indexWidget(index)
+            if (
+                editor not in self._persisten_editors
+                and editor not in self._editors_mapping
+            ):
+                self._editors_mapping[editor] = index
+                self._source_model.setData(index, True, EDITOR_OPENED_ROLE)
+            # Deselect content of editor
+            # QUESTION not sure if we want do this all the time
+            self._deselect_editor(editor)
         return result
 
+    def closeEditor(self, editor, hint):
+        if (
+            editor not in self._persisten_editors
+            and editor in self._editors_mapping
+        ):
+            index = self._editors_mapping.pop(editor)
+            self._source_model.setData(index, False, EDITOR_OPENED_ROLE)
+        super(HierarchyView, self).closeEditor(editor, hint)
+
     def openPersistentEditor(self, index):
+        self._source_model.setData(index, True, EDITOR_OPENED_ROLE)
         super(HierarchyView, self).openPersistentEditor(index)
-        self._deselect_editor(self.indexWidget(index))
+        editor = self.indexWidget(index)
+        self._persisten_editors.add(editor)
+        self._deselect_editor(editor)
+
+    def closePersistentEditor(self, index):
+        self._source_model.setData(index, False, EDITOR_OPENED_ROLE)
+        editor = self.indexWidget(index)
+        self._persisten_editors.remove(editor)
+        super(HierarchyView, self).closePersistentEditor(index)
 
     def rowsInserted(self, parent_index, start, end):
         super(HierarchyView, self).rowsInserted(parent_index, start, end)
