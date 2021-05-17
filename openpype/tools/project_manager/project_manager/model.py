@@ -13,6 +13,8 @@ from .constants import (
     EDITOR_OPENED_ROLE
 )
 from .style import ResourceCache
+
+from openpype.lib import CURRENT_DOC_SCHEMAS
 from pymongo import UpdateOne, DeleteOne
 from avalon.vendor import qtawesome
 from Qt import QtCore, QtGui
@@ -1628,7 +1630,8 @@ class AssetItem(BaseItem):
             "tasks": tasks
         }
         schema_name = (
-            self._origin_asset_doc.get("schema") or "openpype:asset-3.0"
+            self._origin_asset_doc.get("schema")
+            or CURRENT_DOC_SCHEMAS["asset"]
         )
 
         doc = {
