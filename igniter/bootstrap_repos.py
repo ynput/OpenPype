@@ -622,7 +622,7 @@ class BootstrapRepos:
                  " not implemented yet."))
 
         dir_to_search = self.data_dir
-
+        user_versions = self.get_openpype_versions(self.data_dir, staging)
         # if we have openpype_path specified, search only there.
         if openpype_path:
             dir_to_search = openpype_path
@@ -642,6 +642,7 @@ class BootstrapRepos:
                     pass
 
         openpype_versions = self.get_openpype_versions(dir_to_search, staging)
+        openpype_versions += user_versions
 
         # remove zip file version if needed.
         if not include_zips:
@@ -754,12 +755,13 @@ class BootstrapRepos:
 
         destination = self.data_dir / version.path.stem
         if destination.exists():
+            assert destination.is_dir()
             try:
-                destination.unlink()
-            except OSError:
+                shutil.rmtree(destination)
+            except OSError as e:
                 msg = f"!!! Cannot remove already existing {destination}"
                 self._print(msg, LOG_ERROR, exc_info=True)
-                return None
+                raise e
 
         destination.mkdir(parents=True)
 

@@ -427,6 +427,13 @@ def _find_frozen_openpype(use_version: str = None,
             path=Path(os.environ["OPENPYPE_ROOT"]))
         if local_version not in openpype_versions:
             openpype_versions.append(local_version)
+        openpype_versions.sort()
+        # if latest is currently running, ditch whole list
+        # and run from current without installing it.
+        if local_version == openpype_versions[-1]:
+            os.environ["OPENPYPE_TRYOUT"] = "1"
+            openpype_versions = []
+
     else:
         print("!!! Warning: cannot determine current running version.")
 
@@ -502,7 +509,15 @@ def _find_frozen_openpype(use_version: str = None,
 
     if openpype_version.path.is_file():
         print(">>> Extracting zip file ...")
-        version_path = bootstrap.extract_openpype(openpype_version)
+        try:
+            version_path = bootstrap.extract_openpype(openpype_version)
+        except OSError as e:
+            print("!!! failed: {}".format(str(e)))
+            sys.exit(1)
+        else:
+            # cleanup zip after extraction
+            os.unlink(openpype_version.path)
+
         openpype_version.path = version_path
 
     _initialize_environment(openpype_version)
