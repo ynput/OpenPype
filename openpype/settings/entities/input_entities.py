@@ -410,6 +410,9 @@ class PathInput(InputEntity):
         self.valid_value_types = (STRING_TYPE, )
         self.value_on_not_set = ""
 
+        # GUI attributes
+        self.placeholder_text = self.schema_data.get("placeholder")
+
 
 class RawJsonEntity(InputEntity):
     schema_types = ["raw-json"]

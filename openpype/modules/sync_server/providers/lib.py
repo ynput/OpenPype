@@ -65,6 +65,17 @@ class ProviderFactory:
         info = self._get_creator_info(provider)
         return info[1]
 
+    def get_provider_configurable_items(self, provider):
+        """
+            Returns dict of modifiable properties for 'provider'.
+
+            Provider contains information which its properties and on what
+            level could be override
+        """
+        provider_info = self._get_creator_info(provider)
+
+        return provider_info[0].get_configurable_items()
+
     def _get_creator_info(self, provider):
         """
             Collect all necessary info for provider. Currently only creator
@@ -91,5 +102,5 @@ factory = ProviderFactory()
 # there is implementing 'GDriveHandler' class
 # 7 denotes number of files that could be synced in single loop - learned by
 # trial and error
-factory.register_provider('gdrive', GDriveHandler, 7)
-factory.register_provider('local_drive', LocalDriveHandler, 50)
+factory.register_provider(GDriveHandler.CODE, GDriveHandler, 7)
+factory.register_provider(LocalDriveHandler.CODE, LocalDriveHandler, 50)

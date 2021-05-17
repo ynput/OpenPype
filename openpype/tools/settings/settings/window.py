@@ -5,7 +5,7 @@ from .categories import (
     ProjectWidget
 )
 from .widgets import ShadowWidget
-from .. import style
+from . import style
 
 from openpype.tools.settings import (
     is_password_required,

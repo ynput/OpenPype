@@ -26,7 +26,8 @@ from .terminal import Terminal
 from .execute import (
     get_pype_execute_args,
     execute,
-    run_subprocess
+    run_subprocess,
+    CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
 from .mongo import (
@@ -112,6 +113,7 @@ from .profiles_filtering import filter_profiles
 from .plugin_tools import (
     TaskNotSetError,
     get_subset_name,
+    prepare_template_data,
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
     source_hash,
@@ -137,6 +139,7 @@ from .editorial import (
     trim_media_range,
     range_from_frames,
     frames_to_secons,
+    frames_to_timecode,
     make_sequence_collection
 )
 
@@ -244,5 +247,6 @@ __all__ = [
     "trim_media_range",
     "range_from_frames",
     "frames_to_secons",
+    "frames_to_timecode",
     "make_sequence_collection"
 ]

@@ -1,5 +1,7 @@
+# -*- coding: utf-8 -*-
+"""Test suite for User Settings."""
 import pytest
-from pype.lib import (
+from igniter.user_settings import (
     IniSettingRegistry,
     JSONSettingRegistry,
     OpenPypeSecureRegistry
@@ -9,9 +11,9 @@ import configparser
 
 
 @pytest.fixture
-def secure_registry(tmpdir):
+def secure_registry():
     name = "pypetest_{}".format(str(uuid4()))
-    r = OpenPypeSecureRegistry(name, tmpdir)
+    r = OpenPypeSecureRegistry(name)
     yield r
 
 

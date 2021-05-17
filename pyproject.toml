@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.0.0-rc2"
+version = "3.0.0-rc4"
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -36,6 +36,7 @@ pyqt5 = "^5.12.2" # ideally should be replaced with PySide2
 "Qt.py" = "^1.3.3"
 speedcopy = "^2.1"
 six = "^1.15"
+semver = "^2.13.0" # for version resolution
 wsrpc_aiohttp = "^3.1.1" # websocket server
 pywin32 = { version = "300", markers = "sys_platform == 'win32'" }
 jinxed = [
@@ -97,8 +98,8 @@ url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.0-windows.zip"
 hash = "fd2e00278e01e85dcee7b4a6969d1a16f13016ec16700fb0366dbb1b1f3c37ad"
 
 [openpype.thirdparty.oiio.linux]
-url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-linux.tgz"
-hash = "sha256:..."
+url = "https://distribute.openpype.io/thirdparty/oiio_tools-2.2.12-linux.tgz"
+hash = "de63a8bf7f6c45ff59ecafeba13123f710c2cbc1783ec9e0b938e980d4f5c37f"
 
 [openpype.thirdparty.oiio.darwin]
 url = "https://distribute.openpype.io/thirdparty/oiio-2.2.0-darwin.tgz"

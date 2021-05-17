@@ -7,6 +7,8 @@ log = Logger().get_logger("SyncServer")
 
 @six.add_metaclass(abc.ABCMeta)
 class AbstractProvider:
+    CODE = ''
+    LABEL = ''
 
     def __init__(self, project_name, site_name, tree=None, presets=None):
         self.presets = None
@@ -23,6 +25,17 @@ class AbstractProvider:
             Returns True if provider is activated, eg. has working credentials.
         Returns:
             (boolean)
+        """
+
+    @classmethod
+    @abc.abstractmethod
+    def get_configurable_items(cls):
+        """
+            Returns filtered dict of editable properties
+
+
+            Returns:
+                (dict)
         """
 
     @abc.abstractmethod
