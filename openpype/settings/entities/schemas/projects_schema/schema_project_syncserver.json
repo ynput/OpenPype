@@ -50,14 +50,10 @@
             "type": "dict",
             "children": [
             {
-                "type": "text",
-                "key": "provider",
-                "label": "Provider"
-            },
-            {
-                "type": "text",
+                "type": "path",
                 "key": "credentials_url",
-                "label": "Credentials url"
+                "label": "Credentials url",
+                "multiplatform": true
             },
             {
                 "type": "dict-modifiable",
