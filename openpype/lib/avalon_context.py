@@ -102,7 +102,7 @@ def create_project(
     try:
         # Validate created project document
         validate(project_doc)
-    except Exception as exc:
+    except Exception:
         # Remove project if is not valid
         database[project_name].delete_one({"type": "project"})
         raise

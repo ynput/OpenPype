@@ -5,6 +5,7 @@
 
 from PySide2 import QtCore
 
+
 qt_resource_data = b"\
 \x00\x00\x00\xa5\
 \x89\
@@ -34,6 +35,7 @@ HYs\x00\x00\x0b\x13\x00\x00\x0b\x13\x01\x00\x9a\x9c\x18\
 D\xaeB`\x82\
 "
 
+
 qt_resource_name = b"\
 \x00\x08\
 \x06\xc5\x8e\xa5\
@@ -55,6 +57,7 @@ qt_resource_name = b"\
 \x00s\x00a\x00b\x00l\x00e\x00d\x00.\x00p\x00n\x00g\
 "
 
+
 qt_resource_struct = b"\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
 \x00\x00\x00\x00\x00\x00\x00\x00\
@@ -68,8 +71,10 @@ qt_resource_struct = b"\
 \x00\x00\x01vA\x9d\xa25\
 "
 
+
 def qInitResources():
     QtCore.qRegisterResourceData(0x03, qt_resource_struct, qt_resource_name, qt_resource_data)
+
 
 def qCleanupResources():
     QtCore.qUnregisterResourceData(0x03, qt_resource_struct, qt_resource_name, qt_resource_data)

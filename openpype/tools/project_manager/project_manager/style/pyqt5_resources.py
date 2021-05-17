@@ -8,6 +8,7 @@
 
 from PyQt5 import QtCore
 
+
 qt_resource_data = b"\
 \x00\x00\x00\xa5\
 \x89\
@@ -37,6 +38,7 @@ qt_resource_data = b"\
 \x44\xae\x42\x60\x82\
 "
 
+
 qt_resource_name = b"\
 \x00\x08\
 \x06\xc5\x8e\xa5\
@@ -58,6 +60,7 @@ qt_resource_name = b"\
 \x00\x73\x00\x61\x00\x62\x00\x6c\x00\x65\x00\x64\x00\x2e\x00\x70\x00\x6e\x00\x67\
 "
 
+
 qt_resource_struct_v1 = b"\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x02\
@@ -65,6 +68,7 @@ qt_resource_struct_v1 = b"\
 \x00\x00\x00\x28\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\
 \x00\x00\x00\x52\x00\x00\x00\x00\x00\x01\x00\x00\x00\xa9\
 "
+
 
 qt_resource_struct_v2 = b"\
 \x00\x00\x00\x00\x00\x02\x00\x00\x00\x01\x00\x00\x00\x01\
@@ -79,6 +83,7 @@ qt_resource_struct_v2 = b"\
 \x00\x00\x01\x76\x41\x9d\xa2\x35\
 "
 
+
 qt_version = [int(v) for v in QtCore.qVersion().split('.')]
 if qt_version < [5, 8, 0]:
     rcc_version = 1
@@ -87,8 +92,10 @@ else:
     rcc_version = 2
     qt_resource_struct = qt_resource_struct_v2
 
+
 def qInitResources():
     QtCore.qRegisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)
+
 
 def qCleanupResources():
     QtCore.qUnregisterResourceData(rcc_version, qt_resource_struct, qt_resource_name, qt_resource_data)

@@ -79,7 +79,10 @@ class ResourceCache:
 
 
 def load_stylesheet():
-    from . import rc_resources
+    from . import qrc_resources
+
+    qrc_resources.qInitResources()
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
     style_path = os.path.join(current_dir, "style.css")
     with open(style_path, "r") as style_file:
