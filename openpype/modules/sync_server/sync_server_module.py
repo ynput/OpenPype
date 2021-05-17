@@ -573,6 +573,8 @@ class SyncServerModule(PypeModule, ITrayModule):
                             st = "{}'s field value {} should be".format(key, val)  # noqa: E501
                             log.error(st + " multiplatform dict")
 
+                    item["namespace"] = item["namespace"].replace('{site}',
+                                                                  site_name)
                 children = []
                 if properties["type"] == "dict":
                     if val:
