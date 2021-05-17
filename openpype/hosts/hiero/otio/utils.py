@@ -68,7 +68,11 @@ def get_rate(item):
         return None
 
     num, den = item.framerate().toRational()
-    rate = float(num) / float(den)
+
+    try:
+        rate = float(num) / float(den)
+    except ZeroDivisionError:
+        return None
 
     if rate.is_integer():
         return rate

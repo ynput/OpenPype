@@ -19,7 +19,6 @@
             "type": "dict-modifiable",
             "key": "variants",
             "collapsible_key": true,
-            "dynamic_label": false,
             "use_label_wrap": false,
             "object_type": {
                 "type": "dict",
