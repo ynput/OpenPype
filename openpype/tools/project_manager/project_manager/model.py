@@ -440,7 +440,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             parent.add_child(item, row)
 
             if isinstance(item, AssetItem):
-                name = item.data(QtCore.Qt.DisplayRole, "name")
+                name = item.data(QtCore.Qt.EditRole, "name")
                 self._asset_items_by_name[name].add(item.id)
 
             if item.id not in self._items_by_id:
@@ -1810,7 +1810,7 @@ class AssetItem(BaseItem):
                 _item.setData(False, DUPLICATED_ROLE)
 
     def _rename_task(self, item):
-        new_name = item.data(QtCore.Qt.DisplayRole, "name").lower()
+        new_name = item.data(QtCore.Qt.EditRole, "name").lower()
         item_id = item.data(IDENTIFIER_ROLE)
         prev_name = self._task_name_by_item_id[item_id]
         if new_name == prev_name:
