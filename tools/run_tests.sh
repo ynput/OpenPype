@@ -122,5 +122,4 @@ main () {
   PYTHONPATH=$original_pythonpath
 }
 
-
-
+main
