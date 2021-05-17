@@ -85,8 +85,9 @@ module.exports = {
             items: [
                 "admin_hosts_blender",
                 "admin_hosts_maya",
-                "admin_hosts_resolve"
-
+                "admin_hosts_resolve",
+                "admin_hosts_harmony",
+                "admin_hosts_aftereffects"
             ],
         },
         {

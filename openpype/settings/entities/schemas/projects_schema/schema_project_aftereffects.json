@@ -1,8 +1,8 @@
 {
     "type": "dict",
     "collapsible": true,
-    "key": "harmony",
-    "label": "Harmony",
+    "key": "aftereffects",
+    "label": "AfterEffects",
     "is_file": true,
     "children": [
         {
@@ -11,20 +11,6 @@
             "key": "publish",
             "label": "Publish plugins",
             "children": [
-                {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "CollectPalettes",
-                    "label": "Collect Palettes",
-                    "children": [
-                        {
-                            "type": "list",
-                            "key": "allowed_tasks",
-                            "label": "Allowed tasks",
-                            "object_type": "text"
-                        }
-                    ]
-                },
                 {
                     "type": "dict",
                     "collapsible": true,
@@ -49,13 +35,7 @@
                         },
                         {
                             "type": "label",
-                            "label": "Validate if FrameStart, FrameEnd and Resolution match shot data"
-                        },
-                        {
-                            "type": "list",
-                            "key": "frame_check_filter",
-                            "label": "Skip Frame check for Assets with",
-                            "object_type": "text"
+                            "label": "Validate if FPS and Resolution match shot data"
                         },
                         {
                             "type": "list",
@@ -74,8 +54,8 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "HarmonySubmitDeadline",
-                    "label": "Harmony Submit to Deadline",
+                    "key": "AfterEffectsSubmitDeadline",
+                    "label": "AfterEffects Submit to Deadline",
                     "children": [
                         {
                             "type": "boolean",

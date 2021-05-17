@@ -55,7 +55,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     profiles = None
 
     def process(self, instance):
-        self.log.debug(instance.data["representations"])
+        self.log.debug(str(instance.data["representations"]))
         # Skip review when requested.
         if not instance.data.get("review", True):
             return
