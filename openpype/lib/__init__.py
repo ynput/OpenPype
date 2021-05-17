@@ -58,6 +58,7 @@ from .python_module_tools import (
 )
 
 from .avalon_context import (
+    CURRENT_DOC_SCHEMAS,
     is_latest,
     any_outdated,
     get_asset,
@@ -162,6 +163,7 @@ __all__ = [
     "recursive_bases_from_class",
     "classes_from_module",
 
+    "CURRENT_DOC_SCHEMAS",
     "is_latest",
     "any_outdated",
     "get_asset",

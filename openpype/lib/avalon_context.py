@@ -17,6 +17,13 @@ avalon = None
 log = logging.getLogger("AvalonContext")
 
 
+CURRENT_DOC_SCHEMAS = {
+    "project": "openpype:project-3.0",
+    "asset": "openpype:asset-3.0",
+    "config": "openpype:config-2.0"
+}
+
+
 def with_avalon(func):
     @functools.wraps(func)
     def wrap_avalon(*args, **kwargs):
