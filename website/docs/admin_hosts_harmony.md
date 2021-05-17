@@ -24,21 +24,21 @@ Location: Settings > Project > Harmony
 
 Set regex pattern(s) only for task names when publishing of Palettes should occur.
 
-Use ".*" for publish Palettes for ALL tasks.
+Use ".*" to publish Palettes for ALL tasks.
 
 ### Validate Scene Settings
 
 #### Skip Frame check for Assets with
 
-Set regex pattern(s) to find in Asset name to skip checks of `frameEnd` value from DB.
+Set regex pattern(s) for filtering Asset name that should skip validation of `frameEnd` value from DB.
 
 #### Skip Resolution Check for Tasks
 
-Set regex pattern(s) to find in Task name to skip resolution check against values from DB.
+Set regex pattern(s) for filtering Asset name that should skip validation or `Resolution` value from DB.
 
 #### Skip Timeline Check for Tasks
 
-Set regex pattern(s) to find in Task name to skip `frameStart`, `frameEnd` check against values from DB.
+Set regex pattern(s) for filtering Task name that should skip validation `frameStart`, `frameEnd` check against values from DB.
 
 ### Harmony Submit to Deadline
 
