@@ -492,9 +492,6 @@ class SyncServerModule(PypeModule, ITrayModule):
             # Local Settings can select only from allowed sites for project
             allowed_sites.update(set(self.get_active_sites(project_name)))
             allowed_sites.update(set(self.get_remote_sites(project_name)))
-            # Settings allow use of 'local' site, user's site is not 'local'
-            if 'local' in allowed_sites:
-                allowed_sites.add(get_local_site_id())
 
         editable = {}
         for site_name in sites.keys():
@@ -878,7 +875,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         }
         all_sites = {self.DEFAULT_SITE: studio_config}
         if sync_enabled:
-            all_sites[get_local_site_id()] = {'provider': 'local_drive'}
+            all_sites['local'] = {'provider': 'local_drive'}
         return all_sites
 
     def get_provider_for_site(self, project_name=None, site=None):
