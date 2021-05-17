@@ -4,6 +4,7 @@ __all__ = (
     "HierarchyView",
 
     "ProjectModel",
+    "CreateProjectDialog",
 
     "HierarchyModel",
     "HierarchySelectionModel",
@@ -21,6 +22,7 @@ __all__ = (
 from .constants import (
     IDENTIFIER_ROLE
 )
+from .widgets import CreateProjectDialog
 from .view import HierarchyView
 from .model import (
     ProjectModel,
