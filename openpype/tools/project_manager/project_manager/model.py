@@ -216,7 +216,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
         asset_docs_by_parent_id = collections.defaultdict(list)
         for asset_doc in asset_docs_by_id.values():
-            parent_id = asset_doc["data"]["visualParent"]
+            parent_id = asset_doc["data"].get("visualParent")
             asset_docs_by_parent_id[parent_id].append(asset_doc)
 
         appending_queue = Queue()
