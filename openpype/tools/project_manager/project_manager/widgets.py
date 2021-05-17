@@ -197,6 +197,7 @@ class CreateProjectDialog(QtWidgets.QDialog):
 
         self._project_name_is_valid = is_valid
         self.project_name_label.setText(message)
+        self.project_name_label.setVisible(bool(message))
         self._enable_button()
 
     def _update_valid_project_code(self, value):
