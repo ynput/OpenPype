@@ -23,3 +23,10 @@ def qCleanupResources():
     if resources is not None:
         initialized = False
         resources.qCleanupResources()
+
+
+__all__ = (
+    "resources",
+    "qInitResources",
+    "qCleanupResources"
+)
