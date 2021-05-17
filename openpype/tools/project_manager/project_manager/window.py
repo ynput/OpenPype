@@ -5,7 +5,9 @@ from . import (
 
     HierarchyModel,
     HierarchySelectionModel,
-    HierarchyView
+    HierarchyView,
+
+    CreateProjectDialog
 )
 from .style import load_stylesheet, ResourceCache
 
@@ -38,10 +40,15 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         refresh_projects_btn.setToolTip("Refresh projects")
         refresh_projects_btn.setObjectName("RefreshBtn")
 
+        create_project_btn = QtWidgets.QPushButton(
+            "Create project...", project_widget
+        )
+
         project_layout = QtWidgets.QHBoxLayout(project_widget)
         project_layout.setContentsMargins(0, 0, 0, 0)
         project_layout.addWidget(project_combobox, 0)
         project_layout.addWidget(refresh_projects_btn, 0)
+        project_layout.addWidget(create_project_btn, 0)
         project_layout.addStretch(1)
 
         # Helper buttons
@@ -100,6 +107,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         main_layout.addWidget(buttons_widget)
 
         refresh_projects_btn.clicked.connect(self._on_project_refresh)
+        create_project_btn.clicked.connect(self._on_project_create)
         project_combobox.currentIndexChanged.connect(self._on_project_change)
         save_btn.clicked.connect(self._on_save_click)
         add_asset_btn.clicked.connect(self._on_add_asset)
@@ -121,18 +129,18 @@ class ProjectManagerWindow(QtWidgets.QWidget):
     def _set_project(self, project_name=None):
         self.hierarchy_view.set_project(project_name)
 
-    def refresh_projects(self):
-        current_project = None
-        if self.project_combobox.count() > 0:
-            current_project = self.project_combobox.currentText()
+    def refresh_projects(self, project_name=None):
+        if project_name is None:
+            if self.project_combobox.count() > 0:
+                project_name = self.project_combobox.currentText()
 
         self.project_model.refresh()
 
         if self.project_combobox.count() == 0:
             return self._set_project()
 
-        if current_project:
-            row = self.project_combobox.findText(current_project)
+        if project_name:
+            row = self.project_combobox.findText(project_name)
             if row >= 0:
                 self.project_combobox.setCurrentIndex(row)
 
@@ -156,3 +164,15 @@ class ProjectManagerWindow(QtWidgets.QWidget):
     def show_message(self, message):
         # TODO add nicer message pop
         self.message_label.setText(message)
+
+    def _on_project_create(self):
+        dialog = CreateProjectDialog(self)
+        dialog.exec_()
+        print(dialog.result())
+        if dialog.result() != 1:
+            return
+
+        project_name = dialog.project_name
+        print("Created project \"{}\"".format(project_name))
+        self.show_message("Created project \"{}\"".format(project_name))
+        self.refresh_projects(project_name)
