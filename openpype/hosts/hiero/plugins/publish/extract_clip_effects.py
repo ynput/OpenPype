@@ -52,10 +52,11 @@ class ExtractClipEffects(openpype.api.Extractor):
         instance.data["representations"] = list()
 
         transfer_data = [
-            "handleStart", "handleEnd", "sourceIn", "sourceOut",
-            "frameStart", "frameEnd", "sourceInH", "sourceOutH",
-            "clipIn", "clipOut", "clipInH", "clipOutH", "asset", "track",
-            "version"
+            "handleStart", "handleEnd",
+            "sourceStart", "sourceStartH", "sourceEnd", "sourceEndH",
+            "frameStart", "frameEnd",
+            "clipIn", "clipOut", "clipInH", "clipOutH",
+            "asset", "version"
         ]
 
         # pass data to version
