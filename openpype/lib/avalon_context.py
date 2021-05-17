@@ -22,6 +22,10 @@ CURRENT_DOC_SCHEMAS = {
     "asset": "openpype:asset-3.0",
     "config": "openpype:config-2.0"
 }
+PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
+PROJECT_NAME_REGEX = re.compile(
+    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
+)
 
 
 def with_avalon(func):
