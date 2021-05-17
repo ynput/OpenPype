@@ -168,11 +168,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
     def _on_project_create(self):
         dialog = CreateProjectDialog(self)
         dialog.exec_()
-        print(dialog.result())
         if dialog.result() != 1:
             return
 
         project_name = dialog.project_name
-        print("Created project \"{}\"".format(project_name))
         self.show_message("Created project \"{}\"".format(project_name))
         self.refresh_projects(project_name)
