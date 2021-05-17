@@ -1,6 +1,5 @@
 import re
 import copy
-
 from .lib import (
     NOT_SET,
     OverrideState
@@ -94,11 +93,18 @@ class DictMutableKeysEntity(EndpointEntity):
         for key in prev_keys:
             self.pop(key)
 
+    def _convert_to_valid_type(self, value):
+        try:
+            return dict(value)
+        except Exception:
+            pass
+        return super(DictMutableKeysEntity, self)._convert_to_valid_type(value)
+
     def set_key_value(self, key, value):
         # TODO Check for value type if is Settings entity?
         child_obj = self.children_by_key.get(key)
         if not child_obj:
-            if not KEY_REGEX.match(key):
+            if not self.store_as_list and not KEY_REGEX.match(key):
                 raise InvalidKeySymbols(self.path, key)
 
             child_obj = self.add_key(key)
@@ -112,7 +118,7 @@ class DictMutableKeysEntity(EndpointEntity):
         if new_key == old_key:
             return
 
-        if not KEY_REGEX.match(new_key):
+        if not self.store_as_list and not KEY_REGEX.match(new_key):
             raise InvalidKeySymbols(self.path, new_key)
 
         self.children_by_key[new_key] = self.children_by_key.pop(old_key)
@@ -125,11 +131,15 @@ class DictMutableKeysEntity(EndpointEntity):
             self._has_project_override = True
         self.on_change()
 
-    def _add_key(self, key):
+    def _add_key(self, key, _ingore_key_validation=False):
         if key in self.children_by_key:
             self.pop(key)
 
-        if not KEY_REGEX.match(key):
+        if (
+            not _ingore_key_validation
+            and not self.store_as_list
+            and not KEY_REGEX.match(key)
+        ):
             raise InvalidKeySymbols(self.path, key)
 
         if self.value_is_env_group:
@@ -194,6 +204,7 @@ class DictMutableKeysEntity(EndpointEntity):
         self.children_by_key = {}
         self.children_label_by_id = {}
 
+        self.store_as_list = self.schema_data.get("store_as_list") or False
         self.value_is_env_group = (
             self.schema_data.get("value_is_env_group") or False
         )
@@ -236,6 +247,10 @@ class DictMutableKeysEntity(EndpointEntity):
         super(DictMutableKeysEntity, self).schema_validations()
         if used_temp_label:
             self.label = None
+
+        if self.value_is_env_group and self.store_as_list:
+            reason = "Item can't store environments metadata to list output."
+            raise EntitySchemaError(self, reason)
 
         if not self.schema_data.get("object_type"):
             reason = (
@@ -332,6 +347,7 @@ class DictMutableKeysEntity(EndpointEntity):
 
         using_project_overrides = False
         using_studio_overrides = False
+        using_default_values = False
         if (
             state is OverrideState.PROJECT
             and self.had_project_override
@@ -349,13 +365,27 @@ class DictMutableKeysEntity(EndpointEntity):
             metadata = self._studio_override_metadata
 
         else:
+            using_default_values = True
             value = self._default_value
             metadata = self._default_metadata
 
         if value is NOT_SET:
+            using_default_values = False
             value = self.value_on_not_set
 
+        using_values_from_state = False
+        if state is OverrideState.PROJECT:
+            using_values_from_state = using_project_overrides
+        elif state is OverrideState.STUDIO:
+            using_values_from_state = using_studio_overrides
+        elif state is OverrideState.DEFAULTS:
+            using_values_from_state = using_default_values
+
         new_value = copy.deepcopy(value)
+
+        if using_values_from_state:
+            initial_value = copy.deepcopy(value)
+            initial_value.update(metadata)
 
         # Simulate `clear` method without triggering value change
         for key in tuple(self.children_by_key.keys()):
@@ -369,30 +399,62 @@ class DictMutableKeysEntity(EndpointEntity):
         children_label_by_id = {}
         metadata_labels = metadata.get(M_DYNAMIC_KEY_LABEL) or {}
         for _key, _value in new_value.items():
-            if not KEY_REGEX.match(_key):
+            label = metadata_labels.get(_key)
+            if self.store_as_list or KEY_REGEX.match(_key):
+                child_entity = self._add_key(_key)
+            else:
                 # Replace invalid characters with underscore
                 # - this is safety to not break already existing settings
-                _key = re.sub(
-                    r"[^{}]+".format(KEY_ALLOWED_SYMBOLS),
-                    "_",
-                    _key
-                )
+                new_key = self._convert_to_regex_valid_key(_key)
+                if not using_values_from_state:
+                    child_entity = self._add_key(new_key)
+                else:
+                    child_entity = self._add_key(
+                        _key, _ingore_key_validation=True
+                    )
+                    self.change_key(_key, new_key)
+                    _key = new_key
 
-            child_entity = self._add_key(_key)
+                if not label:
+                    label = metadata_labels.get(new_key)
+
             child_entity.update_default_value(_value)
             if using_project_overrides:
                 child_entity.update_project_value(_value)
             elif using_studio_overrides:
                 child_entity.update_studio_value(_value)
 
-            label = metadata_labels.get(_key)
             if label:
                 children_label_by_id[child_entity.id] = label
             child_entity.set_override_state(state)
 
         self.children_label_by_id = children_label_by_id
 
-        self.initial_value = self.settings_value()
+        _settings_value = self.settings_value()
+        if using_values_from_state:
+            if _settings_value is NOT_SET:
+                initial_value = NOT_SET
+
+            elif self.store_as_list:
+                new_initial_value = []
+                for key, value in _settings_value:
+                    if key in initial_value:
+                        new_initial_value.append(key, initial_value.pop(key))
+
+                for key, value in initial_value.items():
+                    new_initial_value.append(key, value)
+                initial_value = new_initial_value
+        else:
+            initial_value = _settings_value
+
+        self.initial_value = initial_value
+
+    def _convert_to_regex_valid_key(self, key):
+        return re.sub(
+            r"[^{}]+".format(KEY_ALLOWED_SYMBOLS),
+            "_",
+            key
+        )
 
     def children_key_by_id(self):
         return {
@@ -402,6 +464,12 @@ class DictMutableKeysEntity(EndpointEntity):
 
     @property
     def value(self):
+        if self.store_as_list:
+            output = []
+            for key, child_entity in self.children_by_key.items():
+                output.append(key, child_entity.value)
+            return output
+
         output = {}
         for key, child_entity in self.children_by_key.items():
             output[key] = child_entity.value
@@ -481,6 +549,13 @@ class DictMutableKeysEntity(EndpointEntity):
         return False
 
     def _settings_value(self):
+        if self.store_as_list:
+            output = []
+            for key, child_entity in self.children_by_key.items():
+                child_value = child_entity.settings_value()
+                output.append([key, child_value])
+            return output
+
         output = {}
         for key, child_entity in self.children_by_key.items():
             child_value = child_entity.settings_value()
@@ -563,7 +638,8 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Create new children
         for _key, _value in new_value.items():
-            child_entity = self._add_key(_key)
+            new_key = self._convert_to_regex_valid_key(_key)
+            child_entity = self._add_key(new_key)
             child_entity.update_default_value(_value)
             label = metadata_labels.get(_key)
             if label:
@@ -608,7 +684,8 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # Create new children
         for _key, _value in new_value.items():
-            child_entity = self._add_key(_key)
+            new_key = self._convert_to_regex_valid_key(_key)
+            child_entity = self._add_key(new_key)
             child_entity.update_default_value(_value)
             if self._has_studio_override:
                 child_entity.update_studio_value(_value)

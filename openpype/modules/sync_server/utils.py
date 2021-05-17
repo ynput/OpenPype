@@ -33,3 +33,9 @@ def time_function(method):
         return result
 
     return timed
+
+
+class EditableScopes:
+    SYSTEM = 0
+    PROJECT = 1
+    LOCAL = 2

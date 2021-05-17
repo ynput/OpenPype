@@ -22,6 +22,7 @@ module.exports = {
                 "artist_hosts_blender",
                 "artist_hosts_harmony",
                 "artist_hosts_aftereffects",
+                "artist_hosts_resolve",
                 "artist_hosts_photoshop",
                 "artist_hosts_tvpaint",
                 "artist_hosts_unreal",
@@ -82,7 +83,11 @@ module.exports = {
             type: "category",
             label: "Integrations",
             items: [
-                "admin_hosts_blender"
+                "admin_hosts_blender",
+                "admin_hosts_maya",
+                "admin_hosts_resolve",
+                "admin_hosts_harmony",
+                "admin_hosts_aftereffects"
             ],
         },
         {

@@ -22,6 +22,10 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
     hosts = ["resolve", "hiero"]
 
     def process(self, instance):
+
+        if "audio" in instance.data["family"]:
+            return
+
         if not instance.data.get("representations"):
             instance.data["representations"] = list()
         version_data = dict()

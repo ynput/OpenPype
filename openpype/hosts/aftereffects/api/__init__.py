@@ -112,38 +112,4 @@ def get_asset_settings():
         "duration": duration
     }
 
-    try:
-        # temporary, in pype3 replace with api.get_current_project_settings
-        skip_resolution_check = (
-            api.get_current_project_settings()
-            ["plugins"]
-            ["aftereffects"]
-            ["publish"]
-            ["ValidateSceneSettings"]
-            ["skip_resolution_check"]
-        )
-        skip_timelines_check = (
-            api.get_current_project_settings()
-            ["plugins"]
-            ["aftereffects"]
-            ["publish"]
-            ["ValidateSceneSettings"]
-            ["skip_timelines_check"]
-        )
-    except KeyError:
-        skip_resolution_check = ['*']
-        skip_timelines_check = ['*']
-
-    if os.getenv('AVALON_TASK') in skip_resolution_check or \
-            '*' in skip_timelines_check:
-        scene_data.pop("resolutionWidth")
-        scene_data.pop("resolutionHeight")
-
-    if entity_type in skip_timelines_check or '*' in skip_timelines_check:
-        scene_data.pop('fps', None)
-        scene_data.pop('frameStart', None)
-        scene_data.pop('frameEnd', None)
-        scene_data.pop('handleStart', None)
-        scene_data.pop('handleEnd', None)
-
     return scene_data

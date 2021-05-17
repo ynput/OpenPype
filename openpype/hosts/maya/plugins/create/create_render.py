@@ -12,7 +12,7 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
-from openpype.api import get_system_settings
+from openpype.api import (get_system_settings, get_asset)
 
 
 class CreateRender(plugin.Creator):
@@ -104,7 +104,7 @@ class CreateRender(plugin.Creator):
                 # namespace is not empty, so we leave it untouched
                 pass
 
-            while(cmds.namespace(exists=namespace_name)):
+            while cmds.namespace(exists=namespace_name):
                 namespace_name = "_{}{}".format(str(instance), index)
                 index += 1
 
@@ -125,7 +125,7 @@ class CreateRender(plugin.Creator):
                 cmds.sets(sets, forceElement=instance)
 
             # if no render layers are present, create default one with
-            # asterix selector
+            # asterisk selector
             if not layers:
                 render_layer = self._rs.createRenderLayer('Main')
                 collection = render_layer.createCollection("defaultCollection")
@@ -137,9 +137,7 @@ class CreateRender(plugin.Creator):
             if renderer.startswith('renderman'):
                 renderer = 'renderman'
 
-            cmds.setAttr(self._image_prefix_nodes[renderer],
-                         self._image_prefixes[renderer],
-                         type="string")
+            self._set_default_renderer_settings(renderer)
 
     def _create_render_settings(self):
         # get pools
@@ -318,3 +316,86 @@ class CreateRender(plugin.Creator):
                 False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True
             )  # noqa
         return requests.get(*args, **kwargs)
+
+    def _set_default_renderer_settings(self, renderer):
+        """Set basic settings based on renderer.
+
+        Args:
+            renderer (str): Renderer name.
+
+        """
+        cmds.setAttr(self._image_prefix_nodes[renderer],
+                     self._image_prefixes[renderer],
+                     type="string")
+
+        asset = get_asset()
+
+        if renderer == "arnold":
+            # set format to exr
+            cmds.setAttr(
+                "defaultArnoldDriver.ai_translator", "exr", type="string")
+            # enable animation
+            cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
+            cmds.setAttr("defaultRenderGlobals.animation", 1)
+            cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
+            cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
+
+            # resolution
+            cmds.setAttr(
+                "defaultResolution.width",
+                asset["data"].get("resolutionWidth"))
+            cmds.setAttr(
+                "defaultResolution.height",
+                asset["data"].get("resolutionHeight"))
+
+        if renderer == "vray":
+            vray_settings = cmds.ls(type="VRaySettingsNode")
+            if not vray_settings:
+                node = cmds.createNode("VRaySettingsNode")
+            else:
+                node = vray_settings[0]
+
+            # set underscore as element separator instead of default `.`
+            cmds.setAttr(
+                "{}.fileNameRenderElementSeparator".format(
+                    node),
+                "_"
+            )
+            # set format to exr
+            cmds.setAttr(
+                "{}.imageFormatStr".format(node), 5)
+
+            # animType
+            cmds.setAttr(
+                "{}.animType".format(node), 1)
+
+            # resolution
+            cmds.setAttr(
+                "{}.width".format(node),
+                asset["data"].get("resolutionWidth"))
+            cmds.setAttr(
+                "{}.height".format(node),
+                asset["data"].get("resolutionHeight"))
+
+        if renderer == "redshift":
+            redshift_settings = cmds.ls(type="RedshiftOptions")
+            if not redshift_settings:
+                node = cmds.createNode("RedshiftOptions")
+            else:
+                node = redshift_settings[0]
+
+            # set exr
+            cmds.setAttr("{}.imageFormat".format(node), 1)
+            # resolution
+            cmds.setAttr(
+                "defaultResolution.width",
+                asset["data"].get("resolutionWidth"))
+            cmds.setAttr(
+                "defaultResolution.height",
+                asset["data"].get("resolutionHeight"))
+
+            # enable animation
+            cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
+            cmds.setAttr("defaultRenderGlobals.animation", 1)
+            cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
+            cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)

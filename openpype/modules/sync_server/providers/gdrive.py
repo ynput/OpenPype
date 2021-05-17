@@ -1,21 +1,32 @@
 from __future__ import print_function
 import os.path
-from googleapiclient.discovery import build
-import google.oauth2.service_account as service_account
-from googleapiclient import errors
-from .abstract_provider import AbstractProvider
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+import time
+import sys
+import six
+import platform
+
 from openpype.api import Logger
 from openpype.api import get_system_settings
-from ..utils import time_function, ResumableError
-import time
+from .abstract_provider import AbstractProvider
+from ..utils import time_function, ResumableError, EditableScopes
 
+log = Logger().get_logger("SyncServer")
+
+try:
+    from googleapiclient.discovery import build
+    import google.oauth2.service_account as service_account
+    from googleapiclient import errors
+    from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+except (ImportError, SyntaxError):
+    if six.PY3:
+        six.reraise(*sys.exc_info())
+
+    # handle imports from Python 2 hosts - in those only basic methods are used
+    log.warning("Import failed, imported from Python 2, operations will fail.")
 
 SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly',
           'https://www.googleapis.com/auth/drive.file',
           'https://www.googleapis.com/auth/drive.readonly']  # for write|delete
-
-log = Logger().get_logger("SyncServer")
 
 
 class GDriveHandler(AbstractProvider):
@@ -42,15 +53,20 @@ class GDriveHandler(AbstractProvider):
             }
           }
     """
+    CODE = 'gdrive'
+    LABEL = 'Google Drive'
+
     FOLDER_STR = 'application/vnd.google-apps.folder'
     MY_DRIVE_STR = 'My Drive'  # name of root folder of regular Google drive
-    CHUNK_SIZE = 2097152  # must be divisible by 256!
+    CHUNK_SIZE = 2097152  # must be divisible by 256! used for upload chunks
 
     def __init__(self, project_name, site_name, tree=None, presets=None):
         self.presets = None
         self.active = False
         self.project_name = project_name
         self.site_name = site_name
+        self.service = None
+        self.root = None
 
         self.presets = presets
         if not self.presets:
@@ -58,18 +74,15 @@ class GDriveHandler(AbstractProvider):
                      format(site_name))
             return
 
-        if not os.path.exists(self.presets["credentials_url"]):
-            log.info("Sync Server: No credentials for Gdrive provider! ")
+        cred_path = self.presets.get("credentials_url", {}).\
+            get(platform.system().lower()) or ''
+        if not os.path.exists(cred_path):
+            msg = "Sync Server: No credentials for gdrive provider " + \
+                  "for '{}' on path '{}'!".format(site_name, cred_path)
+            log.info(msg)
             return
 
-        self.service = self._get_gd_service()
-        try:
-            self.root = self._prepare_root_info()
-        except errors.HttpError:
-            log.warning("HttpError in sync loop, "
-                        "trying next loop",
-                        exc_info=True)
-            raise ResumableError
+        self.service = self._get_gd_service(cred_path)
 
         self._tree = tree
         self.active = True
@@ -80,7 +93,34 @@ class GDriveHandler(AbstractProvider):
         Returns:
             (boolean)
         """
-        return self.active
+        return self.service is not None
+
+    @classmethod
+    def get_configurable_items(cls):
+        """
+            Returns filtered dict of editable properties.
+
+
+            Returns:
+                (dict)
+        """
+        # {platform} tells that value is multiplatform and only specific OS
+        # should be returned
+        editable = {
+            # credentials could be override on Project or User level
+            'credentials_url': {
+                'scope': [EditableScopes.PROJECT,
+                          EditableScopes.LOCAL],
+                'label': "Credentials url",
+                'type': 'text',
+                'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'  # noqa: E501
+            },
+            # roots could be override only on Project leve, User cannot
+            'root': {'scope': [EditableScopes.PROJECT],
+                     'label': "Roots",
+                     'type': 'dict'}
+        }
+        return editable
 
     def get_roots_config(self, anatomy=None):
         """
@@ -537,7 +577,7 @@ class GDriveHandler(AbstractProvider):
             return
         return provider_presets
 
-    def _get_gd_service(self):
+    def _get_gd_service(self, credentials_path):
         """
             Authorize client with 'credentials.json', uses service account.
             Service account needs to have target folder shared with.
@@ -546,11 +586,18 @@ class GDriveHandler(AbstractProvider):
         Returns:
             None
         """
-        creds = service_account.Credentials.from_service_account_file(
-            self.presets["credentials_url"],
-            scopes=SCOPES)
-        service = build('drive', 'v3',
-                        credentials=creds, cache_discovery=False)
+        service = None
+        try:
+            creds = service_account.Credentials.from_service_account_file(
+                credentials_path,
+                scopes=SCOPES)
+            service = build('drive', 'v3',
+                            credentials=creds, cache_discovery=False)
+        except Exception:
+            log.error("Connection failed, " +
+                      "check '{}' credentials file".format(credentials_path),
+                      exc_info=True)
+
         return service
 
     def _prepare_root_info(self):
@@ -562,39 +609,47 @@ class GDriveHandler(AbstractProvider):
 
         Returns:
             (dicts) of dicts where root folders are keys
+            throws ResumableError in case of errors.HttpError
         """
         roots = {}
         config_roots = self.get_roots_config()
-        for path in config_roots.values():
-            if self.MY_DRIVE_STR in path:
-                roots[self.MY_DRIVE_STR] = self.service.files()\
-                                               .get(fileId='root').execute()
-            else:
-                shared_drives = []
-                page_token = None
+        try:
+            for path in config_roots.values():
+                if self.MY_DRIVE_STR in path:
+                    roots[self.MY_DRIVE_STR] = self.service.files()\
+                                                   .get(fileId='root')\
+                                                   .execute()
+                else:
+                    shared_drives = []
+                    page_token = None
 
-                while True:
-                    response = self.service.drives().list(
-                        pageSize=100,
-                        pageToken=page_token).execute()
-                    shared_drives.extend(response.get('drives', []))
-                    page_token = response.get('nextPageToken', None)
-                    if page_token is None:
-                        break
+                    while True:
+                        response = self.service.drives().list(
+                            pageSize=100,
+                            pageToken=page_token).execute()
+                        shared_drives.extend(response.get('drives', []))
+                        page_token = response.get('nextPageToken', None)
+                        if page_token is None:
+                            break
 
-                folders = path.split('/')
-                if len(folders) < 2:
-                    raise ValueError("Wrong root folder definition {}".
-                                     format(path))
+                    folders = path.split('/')
+                    if len(folders) < 2:
+                        raise ValueError("Wrong root folder definition {}".
+                                         format(path))
 
-                for shared_drive in shared_drives:
-                    if folders[1] in shared_drive["name"]:
-                        roots[shared_drive["name"]] = {
-                            "name": shared_drive["name"],
-                            "id": shared_drive["id"]}
-        if self.MY_DRIVE_STR not in roots:  # add My Drive always
-            roots[self.MY_DRIVE_STR] = self.service.files() \
-                .get(fileId='root').execute()
+                    for shared_drive in shared_drives:
+                        if folders[1] in shared_drive["name"]:
+                            roots[shared_drive["name"]] = {
+                                "name": shared_drive["name"],
+                                "id": shared_drive["id"]}
+            if self.MY_DRIVE_STR not in roots:  # add My Drive always
+                roots[self.MY_DRIVE_STR] = self.service.files() \
+                    .get(fileId='root').execute()
+        except errors.HttpError:
+            log.warning("HttpError in sync loop, "
+                        "trying next loop",
+                        exc_info=True)
+            raise ResumableError
 
         return roots
 
@@ -615,6 +670,9 @@ class GDriveHandler(AbstractProvider):
             (dictionary) path as a key, folder id as a value
         """
         log.debug("build_tree len {}".format(len(folders)))
+        if not self.root:  # build only when necessary, could be expensive
+            self.root = self._prepare_root_info()
+
         root_ids = []
         default_root_id = None
         tree = {}

@@ -373,21 +373,16 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
 
     prev_node = None
     with GN:
-        connections = list()
         if input:
+            input_name = str(input.name()).replace(" ", "")
             # if connected input node was defined
-            connections.append({
-                "node": input,
-                "inputName": input.name()})
             prev_node = nuke.createNode(
-                "Input", "name {}".format(input.name()))
-            prev_node.hideControlPanel()
+                "Input", "name {}".format(input_name))
         else:
             # generic input node connected to nothing
             prev_node = nuke.createNode(
                 "Input", "name {}".format("rgba"))
-            prev_node.hideControlPanel()
-
+        prev_node.hideControlPanel()
         # creating pre-write nodes `prenodes`
         if prenodes:
             for name, klass, properties, set_output_to in prenodes:
@@ -416,18 +411,12 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
                             input_node = nuke.createNode(
                                 "Input", "name {}".format(node_name))
                             input_node.hideControlPanel()
-                            connections.append({
-                                "node": nuke.toNode(node_name),
-                                "inputName": node_name})
                             now_node.setInput(1, input_node)
 
                     elif isinstance(set_output_to, str):
                         input_node = nuke.createNode(
                             "Input", "name {}".format(node_name))
                         input_node.hideControlPanel()
-                        connections.append({
-                            "node": nuke.toNode(set_output_to),
-                            "inputName": set_output_to})
                         now_node.setInput(0, input_node)
 
                 else:

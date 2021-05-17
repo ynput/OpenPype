@@ -143,6 +143,7 @@ from .editorial import (
     trim_media_range,
     range_from_frames,
     frames_to_secons,
+    frames_to_timecode,
     make_sequence_collection
 )
 
@@ -254,5 +255,6 @@ __all__ = [
     "trim_media_range",
     "range_from_frames",
     "frames_to_secons",
+    "frames_to_timecode",
     "make_sequence_collection"
 ]

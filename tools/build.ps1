@@ -74,11 +74,19 @@ function Install-Poetry() {
 
 $art = @"
 
-▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
-▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
-▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
-            .---= [ by Pype Club ] =---.
-                 https://openpype.io
+             . .   ..     .    ..
+        _oOOP3OPP3Op_. .
+     .PPpo~·   ··   ~2p.  ··  ····  ·  ·
+    ·Ppo · .pPO3Op.· · O:· · · ·
+   .3Pp · oP3'· 'P33· · 4 ··   ·  ·   · ·· ·  ·  ·
+  ·~OP    3PO·  .Op3    : · ··  _____  _____  _____
+  ·P3O  · oP3oP3O3P' · · ·   · /    /·/    /·/    /
+   O3:·   O3p~ ·       ·:· · ·/____/·/____/ /____/
+   'P ·   3p3·  oP3~· ·.P:· ·  · ··  ·   · ·· ·  ·  ·
+  · ':  · Po'  ·Opo'· .3O· .  o[ by Pype Club ]]]==- - - ·  ·
+    · '_ ..  ·    . _OP3··  ·  ·https://openpype.io·· ·
+         ~P3·OPPPO3OP~ · ··  ·
+           ·  ' '· ·  ·· · · · ··  ·
 
 "@
 
@@ -156,6 +164,7 @@ Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building OpenPype ..."
+$startTime = (Get-Date).Millisecond
 
 $out = & poetry run python setup.py build 2>&1
 if ($LASTEXITCODE -ne 0)
@@ -174,7 +183,8 @@ Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "restoring current directory"
 Set-Location -Path $current_dir
 
+$endTime = (Get-Date).Millisecond
 Write-Host "*** " -NoNewline -ForegroundColor Cyan
-Write-Host "All done. You will find OpenPype and build log in " -NoNewLine
+Write-Host "All done in $($endTime - $startTime) secs. You will find OpenPype and build log in " -NoNewLine
 Write-Host "'.\build'" -NoNewline -ForegroundColor Green
 Write-Host " directory."
