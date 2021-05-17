@@ -69,11 +69,24 @@ class ResourceCache:
     def get_color(cls, color_name):
         return cls.colors[color_name]
 
+    @classmethod
+    def style_fill_data(cls):
+        output = {}
+        for color_name, color_value in cls.colors.items():
+            key = "color:{}".format(color_name)
+            output[key] = color_value
+        return output
+
 
 def load_stylesheet():
-    style_path = os.path.join(os.path.dirname(__file__), "style.css")
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    style_path = os.path.join(current_dir, "style.css")
     with open(style_path, "r") as style_file:
         stylesheet = style_file.read()
+
+    for key, value in ResourceCache.style_fill_data().items():
+        replacement_key = "{" + key + "}"
+        stylesheet = stylesheet.replace(replacement_key, value)
     return stylesheet
 
 
