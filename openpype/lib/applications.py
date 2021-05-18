@@ -3,7 +3,6 @@ import re
 import copy
 import json
 import platform
-import getpass
 import collections
 import inspect
 import subprocess
@@ -362,7 +361,6 @@ class ApplicationManager:
         context = ApplicationLaunchContext(
             app, executable, **data
         )
-        # TODO pass context through launch hooks
         return context.launch()
 
 
@@ -626,7 +624,7 @@ class ApplicationLaunchContext:
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
-        self.log = PypeLogger().get_logger(logger_name)
+        self.log = PypeLogger.get_logger(logger_name)
 
         self.executable = executable
 
