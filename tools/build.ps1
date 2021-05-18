@@ -164,7 +164,7 @@ Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building OpenPype ..."
-$startTime = (Get-Date).Millisecond
+$startTime = [int][double]::Parse((Get-Date -UFormat %s))
 
 $out = & poetry run python setup.py build 2>&1
 if ($LASTEXITCODE -ne 0)
@@ -183,7 +183,7 @@ Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "restoring current directory"
 Set-Location -Path $current_dir
 
-$endTime = (Get-Date).Millisecond
+$endTime = [int][double]::Parse((Get-Date -UFormat %s))
 Write-Host "*** " -NoNewline -ForegroundColor Cyan
 Write-Host "All done in $($endTime - $startTime) secs. You will find OpenPype and build log in " -NoNewLine
 Write-Host "'.\build'" -NoNewline -ForegroundColor Green
