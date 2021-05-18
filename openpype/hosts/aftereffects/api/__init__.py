@@ -5,7 +5,7 @@ import logging
 from avalon import io
 from avalon import api as avalon
 from avalon.vendor import Qt
-from openpype import lib
+from openpype import lib, api
 import pyblish.api as pyblish
 import openpype.hosts.aftereffects
 
@@ -81,3 +81,35 @@ def uninstall():
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle layer visibility on instance toggles."""
     instance[0].Visible = new_value
+
+
+def get_asset_settings():
+    """Get settings on current asset from database.
+
+    Returns:
+        dict: Scene data.
+
+    """
+    asset_data = lib.get_asset()["data"]
+    fps = asset_data.get("fps")
+    frame_start = asset_data.get("frameStart")
+    frame_end = asset_data.get("frameEnd")
+    handle_start = asset_data.get("handleStart")
+    handle_end = asset_data.get("handleEnd")
+    resolution_width = asset_data.get("resolutionWidth")
+    resolution_height = asset_data.get("resolutionHeight")
+    duration = (frame_end - frame_start + 1) + handle_start + handle_end
+    entity_type = asset_data.get("entityType")
+
+    scene_data = {
+        "fps": fps,
+        "frameStart": frame_start,
+        "frameEnd": frame_end,
+        "handleStart": handle_start,
+        "handleEnd": handle_end,
+        "resolutionWidth": resolution_width,
+        "resolutionHeight": resolution_height,
+        "duration": duration
+    }
+
+    return scene_data

@@ -16,13 +16,15 @@ module.exports = {
             collapsed: false,
             label: "Integrations",
             items: [
-                "artist_hosts_nukestudio",
+                "artist_hosts_hiero",
                 "artist_hosts_nuke",
                 "artist_hosts_maya",
                 "artist_hosts_blender",
                 "artist_hosts_harmony",
                 "artist_hosts_aftereffects",
+                "artist_hosts_resolve",
                 "artist_hosts_photoshop",
+                "artist_hosts_tvpaint",
                 "artist_hosts_unreal",
                 {
                     type: "category",
@@ -57,7 +59,13 @@ module.exports = {
                 "admin_settings",
                 "admin_settings_system",
                 "admin_settings_project_anatomy",
-                "admin_settings_project",
+                {
+                    type: "category",
+                    label: "Project Settings",
+                    items: [
+                        "project_settings/settings_project_global"
+                    ],
+                },
             ],
         },
         {
@@ -69,6 +77,17 @@ module.exports = {
                 "module_deadline",
                 "module_muster",
                 "module_clockify"
+            ],
+        },
+        {
+            type: "category",
+            label: "Integrations",
+            items: [
+                "admin_hosts_blender",
+                "admin_hosts_maya",
+                "admin_hosts_resolve",
+                "admin_hosts_harmony",
+                "admin_hosts_aftereffects"
             ],
         },
         {

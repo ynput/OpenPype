@@ -8,11 +8,19 @@
 art () {
   cat <<-EOF
 
-▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
-▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
-▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
-            .---= [ by Pype Club ] =---.
-                 https://openpype.io
+             . .   ..     .    ..
+        _oOOP3OPP3Op_. .
+     .PPpo~·   ··   ~2p.  ··  ····  ·  ·
+    ·Ppo · .pPO3Op.· · O:· · · ·
+   .3Pp · oP3'· 'P33· · 4 ··   ·  ·   · ·· ·  ·  ·
+  ·~OP    3PO·  .Op3    : · ··  _____  _____  _____
+  ·P3O  · oP3oP3O3P' · · ·   · /    /·/    /·/    /
+   O3:·   O3p~ ·       ·:· · ·/____/·/____/ /____/
+   'P ·   3p3·  oP3~· ·.P:· ·  · ··  ·   · ·· ·  ·  ·
+  · ':  · Po'  ·Opo'· .3O· .  o[ by Pype Club ]]]==- - - ·  ·
+    · '_ ..  ·    . _OP3··  ·  ·https://openpype.io·· ·
+         ~P3·OPPPO3OP~ · ··  ·
+           ·  ' '· ·  ·· · · · ··  ·
 
 EOF
 }
@@ -120,10 +128,30 @@ main () {
 
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+
+  _inside_openpype_tool="1"
+
+  # make sure Poetry is in PATH
+  if [[ -z $POETRY_HOME ]]; then
+    export POETRY_HOME="$openpype_root/.poetry"
+  fi
+  export PATH="$POETRY_HOME/bin:$PATH"
+
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
+  echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
+  if [ -f "$POETRY_HOME/bin/poetry" ]; then
+    echo -e "${BIGreen}OK${RST}"
+  else
+    echo -e "${BIYellow}NOT FOUND${RST}"
+    echo -e "${BIYellow}***${RST} We need to install Poetry and virtual env ..."
+    . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+  fi
+
   echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
-  poetry run python3 "$openpype_root/start.py" generate-zip "$@"
+  PYTHONPATH="$openpype_root:$PYTHONPATH"
+  OPENPYPE_ROOT="$openpype_root"
+  poetry run python3 "$openpype_root/tools/create_zip.py" "$@"
 }
 
 main "$@"

@@ -37,8 +37,16 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 continue
 
             media_pool_item = timeline_item.GetMediaPoolItem()
-            clip_property = media_pool_item.GetClipProperty()
-            self.log.debug(f"clip_property: {clip_property}")
+            source_duration = int(media_pool_item.GetClipProperty("Frames"))
+
+            # solve handles length
+            handle_start = min(
+                tag_data["handleStart"], int(timeline_item.GetLeftOffset()))
+            handle_end = min(
+                tag_data["handleEnd"], int(
+                    source_duration - timeline_item.GetRightOffset()))
+
+            self.log.debug("Handles: <{}, {}>".format(handle_start, handle_end))
 
             # add tag data to instance data
             data.update({
@@ -60,7 +68,9 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "item": timeline_item,
                 "families": families,
                 "publish": resolve.get_publish_attribute(timeline_item),
-                "fps": context.data["fps"]
+                "fps": context.data["fps"],
+                "handleStart": handle_start,
+                "handleEnd": handle_end
             })
 
             # otio clip data

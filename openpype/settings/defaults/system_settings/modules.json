@@ -135,7 +135,8 @@
         "workspace_name": ""
     },
     "sync_server": {
-        "enabled": false
+        "enabled": false,
+        "sites": {}
     },
     "deadline": {
         "enabled": true,
@@ -159,9 +160,6 @@
         }
     },
     "log_viewer": {
-        "enabled": true
-    },
-    "user": {
         "enabled": true
     },
     "standalonepublish_tool": {

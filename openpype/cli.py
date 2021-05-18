@@ -224,17 +224,6 @@ def launch(app, project, asset, task,
     PypeCommands().run_application(app, project, asset, task, tools, arguments)
 
 
-@main.command()
-@click.option("-p", "--path", help="Path to zip file", default=None)
-def generate_zip(path):
-    """Generate Pype zip from current sources.
-
-    If PATH is not provided, it will create zip file in user data dir.
-
-    """
-    PypeCommands().generate_zip(path)
-
-
 @main.command(
     context_settings=dict(
         ignore_unknown_options=True,

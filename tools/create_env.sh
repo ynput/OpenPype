@@ -7,11 +7,19 @@
 art () {
   cat <<-EOF
 
-▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
-▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
-▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
-            .---= [ by Pype Club ] =---.
-                 https://openpype.io
+             . .   ..     .    ..
+        _oOOP3OPP3Op_. .
+     .PPpo~·   ··   ~2p.  ··  ····  ·  ·
+    ·Ppo · .pPO3Op.· · O:· · · ·
+   .3Pp · oP3'· 'P33· · 4 ··   ·  ·   · ·· ·  ·  ·
+  ·~OP    3PO·  .Op3    : · ··  _____  _____  _____
+  ·P3O  · oP3oP3O3P' · · ·   · /    /·/    /·/    /
+   O3:·   O3p~ ·       ·:· · ·/____/·/____/ /____/
+   'P ·   3p3·  oP3~· ·.P:· ·  · ··  ·   · ·· ·  ·  ·
+  · ':  · Po'  ·Opo'· .3O· .  o[ by Pype Club ]]]==- - - ·  ·
+    · '_ ..  ·    . _OP3··  ·  ·https://openpype.io·· ·
+         ~P3·OPPPO3OP~ · ··  ·
+           ·  ' '· ·  ·· · · · ··  ·
 
 EOF
 }
@@ -81,7 +89,7 @@ done
 detect_python () {
   echo -e "${BIGreen}>>>${RST} Using python \c"
   local version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
-  local python_version="$(python3 <<< ${version_command})"
+  local python_version="$(python <<< ${version_command})"
   oIFS="$IFS"
   IFS=.
   set -- $python_version
@@ -93,15 +101,16 @@ detect_python () {
       echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
     fi
   else
-    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
+    command -v python >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
   fi
 }
 
 install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
+  export POETRY_HOME="$openpype_root/.poetry"
   command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
-  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
-  export PATH="$PATH:$HOME/.poetry/bin"
+  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+  export PATH="$PATH:$POETRY_HOME/bin"
 }
 
 ##############################################################################
@@ -136,19 +145,27 @@ realpath () {
 
 main () {
   # Main
-  echo -e "${BGreen}"
-  art
-  echo -e "${RST}"
+  if [[ -z $_inside_openpype_tool ]]; then
+    echo -e "${BGreen}"
+    art
+    echo -e "${RST}"
+  fi
   detect_python || return 1
 
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+  # make sure Poetry is in PATH
+  if [[ -z $POETRY_HOME ]]; then
+    export POETRY_HOME="$openpype_root/.poetry"
+  fi
+  export PATH="$POETRY_HOME/bin:$PATH"
+
+
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
-  if [ -f "$HOME/.poetry/bin/poetry" ]; then
+  if [ -f "$POETRY_HOME/bin/poetry" ]; then
     echo -e "${BIGreen}OK${RST}"
-    export PATH="$PATH:$HOME/.poetry/bin"
   else
     echo -e "${BIYellow}NOT FOUND${RST}"
     install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
@@ -160,7 +177,7 @@ main () {
     echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
   fi
 
-  poetry install $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
+  poetry install --no-root $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
 
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
@@ -169,7 +186,7 @@ main () {
   # cx_freeze will crash on missing __pychache__ on these but
   # reinstalling them solves the problem.
   echo -e "${BIGreen}>>>${RST} Fixing pycache bug ..."
-  poetry run python -m pip install --upgrade pip
+  poetry run python -m pip install --force-reinstall pip
   poetry run pip install --force-reinstall setuptools
   poetry run pip install --force-reinstall wheel
   poetry run python -m pip install --force-reinstall pip

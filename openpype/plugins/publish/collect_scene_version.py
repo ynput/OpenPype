@@ -19,7 +19,7 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         if "unreal" in pyblish.api.registered_hosts():
             return
 
-        assert context.data.get('currentFile'), "Cannot get curren file"
+        assert context.data.get('currentFile'), "Cannot get current file"
         filename = os.path.basename(context.data.get('currentFile'))
 
         if '<shell>' in filename:

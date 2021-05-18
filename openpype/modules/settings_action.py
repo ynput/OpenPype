@@ -16,18 +16,20 @@ class ISettingsChangeListener:
     }
     """
     @abstractmethod
-    def on_system_settings_save(self, old_value, new_value, changes):
+    def on_system_settings_save(
+        self, old_value, new_value, changes, new_value_metadata
+    ):
         pass
 
     @abstractmethod
     def on_project_settings_save(
-        self, old_value, new_value, changes, project_name
+        self, old_value, new_value, changes, project_name, new_value_metadata
     ):
         pass
 
     @abstractmethod
     def on_project_anatomy_save(
-        self, old_value, new_value, changes, project_name
+        self, old_value, new_value, changes, project_name, new_value_metadata
     ):
         pass
 
@@ -78,16 +80,20 @@ class SettingsAction(PypeModule, ITrayAction):
 
         # Store if was visible
         was_visible = self.settings_window.isVisible()
+        was_minimized = self.settings_window.isMinimized()
 
         # Show settings gui
         self.settings_window.show()
+
+        if was_minimized:
+            self.settings_window.showNormal()
 
         # Pull window to the front.
         self.settings_window.raise_()
         self.settings_window.activateWindow()
 
         # Reset content if was not visible
-        if not was_visible:
+        if not was_visible and not was_minimized:
             self.settings_window.reset()
 
 

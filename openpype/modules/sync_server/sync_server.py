@@ -8,7 +8,7 @@ from concurrent.futures._base import CancelledError
 from .providers import lib
 from openpype.lib import PypeLogger
 
-from .utils import SyncStatus
+from .utils import SyncStatus, ResumableError
 
 
 log = PypeLogger().get_logger("SyncServer")
@@ -206,14 +206,14 @@ def _get_configured_sites_from_setting(module, project_name, project_setting):
     all_sites = module._get_default_site_configs()
     all_sites.update(project_setting.get("sites"))
     for site_name, config in all_sites.items():
-        handler = initiated_handlers. \
-            get((config["provider"], site_name))
+        provider = module.get_provider_for_site(site=site_name)
+        handler = initiated_handlers.get((provider, site_name))
         if not handler:
-            handler = lib.factory.get_provider(config["provider"],
+            handler = lib.factory.get_provider(provider,
                                                project_name,
                                                site_name,
                                                presets=config)
-            initiated_handlers[(config["provider"], site_name)] = \
+            initiated_handlers[(provider, site_name)] = \
                 handler
 
         if handler.is_active():
@@ -232,6 +232,7 @@ class SyncServerThread(threading.Thread):
         self.loop = None
         self.is_running = False
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
+        self.timer = None
 
     def run(self):
         self.is_running = True
@@ -266,13 +267,16 @@ class SyncServerThread(threading.Thread):
         Returns:
 
         """
-        try:
-            while self.is_running and not self.module.is_paused():
+        while self.is_running and not self.module.is_paused():
+            try:
                 import time
                 start_time = None
                 self.module.set_sync_project_settings()  # clean cache
                 for collection, preset in self.module.sync_project_settings.\
                         items():
+                    if collection not in self.module.get_enabled_projects():
+                        continue
+
                     start_time = time.time()
                     local_site, remote_site = self._working_sites(collection)
                     if not all([local_site, remote_site]):
@@ -294,13 +298,14 @@ class SyncServerThread(threading.Thread):
                     processed_file_path = set()
 
                     site_preset = preset.get('sites')[remote_site]
-                    remote_provider = site_preset['provider']
+                    remote_provider = \
+                        self.module.get_provider_for_site(site=remote_site)
                     handler = lib.factory.get_provider(remote_provider,
                                                        collection,
                                                        remote_site,
                                                        presets=site_preset)
                     limit = lib.factory.get_provider_batch_limit(
-                        site_preset['provider'])
+                        remote_provider)
                     # first call to get_provider could be expensive, its
                     # building folder tree structure in memory
                     # call only if needed, eg. DO_UPLOAD or DO_DOWNLOAD
@@ -384,17 +389,27 @@ class SyncServerThread(threading.Thread):
 
                 duration = time.time() - start_time
                 log.debug("One loop took {:.2f}s".format(duration))
-                await asyncio.sleep(self.module.get_loop_delay(collection))
-        except ConnectionResetError:
-            log.warning("ConnectionResetError in sync loop, trying next loop",
-                        exc_info=True)
-        except CancelledError:
-            # just stopping server
-            pass
-        except Exception:
-            self.stop()
-            log.warning("Unhandled exception in sync loop, stopping server",
-                        exc_info=True)
+
+                delay = self.module.get_loop_delay(collection)
+                log.debug("Waiting for {} seconds to new loop".format(delay))
+                self.timer = asyncio.create_task(self.run_timer(delay))
+                await asyncio.gather(self.timer)
+
+            except ConnectionResetError:
+                log.warning("ConnectionResetError in sync loop, "
+                            "trying next loop",
+                            exc_info=True)
+            except CancelledError:
+                # just stopping server
+                pass
+            except ResumableError:
+                log.warning("ResumableError in sync loop, "
+                            "trying next loop",
+                            exc_info=True)
+            except Exception:
+                self.stop()
+                log.warning("Unhandled except. in sync loop, stopping server",
+                            exc_info=True)
 
     def stop(self):
         """Sets is_running flag to false, 'check_shutdown' shuts server down"""
@@ -417,6 +432,17 @@ class SyncServerThread(threading.Thread):
         await asyncio.sleep(0.07)
         self.loop.stop()
 
+    async def run_timer(self, delay):
+        """Wait for 'delay' seconds to start next loop"""
+        await asyncio.sleep(delay)
+
+    def reset_timer(self):
+        """Called when waiting for next loop should be skipped"""
+        log.debug("Resetting timer")
+        if self.timer:
+            self.timer.cancel()
+            self.timer = None
+
     def _working_sites(self, collection):
         if self.module.is_project_paused(collection):
             log.debug("Both sites same, skipping")
@@ -429,8 +455,9 @@ class SyncServerThread(threading.Thread):
                                                           remote_site))
             return None, None
 
-        if not all([site_is_working(self.module, collection, local_site),
-                    site_is_working(self.module, collection, remote_site)]):
+        configured_sites = _get_configured_sites(self.module, collection)
+        if not all([local_site in configured_sites,
+                    remote_site in configured_sites]):
             log.debug("Some of the sites {} - {} is not ".format(local_site,
                                                                  remote_site) +
                       "working properly")

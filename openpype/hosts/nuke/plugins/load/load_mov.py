@@ -1,46 +1,10 @@
 import nuke
-import contextlib
-
+from avalon.vendor import qargparse
 from avalon import api, io
 from openpype.api import get_current_project_settings
 from openpype.hosts.nuke.api.lib import (
     get_imageio_input_colorspace
 )
-
-
-@contextlib.contextmanager
-def preserve_trim(node):
-    """Preserve the relative trim of the Loader tool.
-
-    This tries to preserve the loader's trim (trim in and trim out) after
-    the context by reapplying the "amount" it trims on the clip's length at
-    start and end.
-
-    """
-    # working script frame range
-    script_start = nuke.root()["first_frame"].value()
-
-    start_at_frame = None
-    offset_frame = None
-    if node['frame_mode'].value() == "start at":
-        start_at_frame = node['frame'].value()
-    if node['frame_mode'].value() == "offset":
-        offset_frame = node['frame'].value()
-
-    try:
-        yield
-    finally:
-        if start_at_frame:
-            node['frame_mode'].setValue("start at")
-            node['frame'].setValue(str(script_start))
-            print("start frame of Read was set to"
-                  "{}".format(script_start))
-
-        if offset_frame:
-            node['frame_mode'].setValue("offset")
-            node['frame'].setValue(str((script_start + offset_frame)))
-            print("start frame of Read was set to"
-                  "{}".format(script_start))
 
 
 def add_review_presets_config():
@@ -79,13 +43,29 @@ class LoadMov(api.Loader):
 
     script_start = nuke.root()["first_frame"].value()
 
+    # options gui
+    defaults = {
+        "start_at_workfile": True
+    }
+
+    options = [
+        qargparse.Boolean(
+            "start_at_workfile",
+            help="Load at workfile start frame",
+            default=True
+        )
+    ]
+
     node_name_template = "{class_name}_{ext}"
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name, namespace, options):
         from avalon.nuke import (
             containerise,
             viewer_update_and_undo_stop
         )
+
+        start_at_workfile = options.get(
+            "start_at_workfile", self.defaults["start_at_workfile"])
 
         version = context['version']
         version_data = version.get("data", {})
@@ -135,22 +115,28 @@ class LoadMov(api.Loader):
 
         read_name = self.node_name_template.format(**name_data)
 
-        # Create the Loader with the filename path set
+        read_node = nuke.createNode(
+            "Read",
+            "name {}".format(read_name)
+        )
+
+        # to avoid multiple undo steps for rest of process
+        # we will switch off undo-ing
         with viewer_update_and_undo_stop():
-            read_node = nuke.createNode(
-                "Read",
-                "name {}".format(read_name)
-            )
             read_node["file"].setValue(file)
 
             read_node["origfirst"].setValue(first)
             read_node["first"].setValue(first)
             read_node["origlast"].setValue(last)
             read_node["last"].setValue(last)
-
-            # start at script start
             read_node['frame_mode'].setValue("start at")
-            read_node['frame'].setValue(str(self.script_start))
+
+            if start_at_workfile:
+                # start at workfile start
+                read_node['frame'].setValue(str(self.script_start))
+            else:
+                # start at version frame start
+                read_node['frame'].setValue(str(orig_first - handle_start))
 
             if colorspace:
                 read_node["colorspace"].setValue(str(colorspace))
@@ -264,29 +250,29 @@ class LoadMov(api.Loader):
         # create handles offset (only to last, because of mov)
         last += handle_start + handle_end
 
-        # Update the loader's path whilst preserving some values
-        with preserve_trim(read_node):
-            read_node["file"].setValue(file)
-            self.log.info("__ node['file']: {}".format(
-                read_node["file"].value()))
+        read_node["file"].setValue(file)
 
-            # Set the global in to the start frame of the sequence
-            read_node["origfirst"].setValue(first)
-            read_node["first"].setValue(first)
-            read_node["origlast"].setValue(last)
-            read_node["last"].setValue(last)
+        # Set the global in to the start frame of the sequence
+        read_node["origfirst"].setValue(first)
+        read_node["first"].setValue(first)
+        read_node["origlast"].setValue(last)
+        read_node["last"].setValue(last)
+        read_node['frame_mode'].setValue("start at")
 
-            # start at script start
-            read_node['frame_mode'].setValue("start at")
+        if int(self.script_start) == int(read_node['frame'].value()):
+            # start at workfile start
             read_node['frame'].setValue(str(self.script_start))
+        else:
+            # start at version frame start
+            read_node['frame'].setValue(str(orig_first - handle_start))
 
-            if colorspace:
-                read_node["colorspace"].setValue(str(colorspace))
+        if colorspace:
+            read_node["colorspace"].setValue(str(colorspace))
 
-            preset_clrsp = get_imageio_input_colorspace(file)
+        preset_clrsp = get_imageio_input_colorspace(file)
 
-            if preset_clrsp is not None:
-                read_node["colorspace"].setValue(preset_clrsp)
+        if preset_clrsp is not None:
+            read_node["colorspace"].setValue(preset_clrsp)
 
         updated_dict = {}
         updated_dict.update({
@@ -319,8 +305,8 @@ class LoadMov(api.Loader):
 
         from avalon.nuke import viewer_update_and_undo_stop
 
-        node = nuke.toNode(container['objectName'])
-        assert node.Class() == "Read", "Must be Read"
+        read_node = nuke.toNode(container['objectName'])
+        assert read_node.Class() == "Read", "Must be Read"
 
         with viewer_update_and_undo_stop():
-            nuke.delete(node)
+            nuke.delete(read_node)

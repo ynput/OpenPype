@@ -26,7 +26,8 @@ from .terminal import Terminal
 from .execute import (
     get_pype_execute_args,
     execute,
-    run_subprocess
+    run_subprocess,
+    CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
 from .mongo import (
@@ -79,6 +80,16 @@ from .avalon_context import (
     change_timer_to_current_context
 )
 
+from .local_settings import (
+    IniSettingRegistry,
+    JSONSettingRegistry,
+    OpenPypeSecureRegistry,
+    OpenPypeSettingsRegistry,
+    get_local_site_id,
+    change_openpype_mongo_url,
+    get_openpype_username
+)
+
 from .applications import (
     ApplicationLaunchFailed,
     ApplictionExecutableNotFound,
@@ -102,7 +113,9 @@ from .profiles_filtering import filter_profiles
 from .plugin_tools import (
     TaskNotSetError,
     get_subset_name,
+    prepare_template_data,
     filter_pyblish_plugins,
+    set_plugin_attributes_from_settings,
     source_hash,
     get_unique_layer_name,
     get_background_layers,
@@ -110,15 +123,6 @@ from .plugin_tools import (
     decompress,
     get_decompress_dir,
     should_decompress
-)
-
-from .local_settings import (
-    IniSettingRegistry,
-    JSONSettingRegistry,
-    OpenPypeSecureRegistry,
-    OpenPypeSettingsRegistry,
-    get_local_site_id,
-    change_openpype_mongo_url
 )
 
 from .path_tools import (
@@ -135,6 +139,7 @@ from .editorial import (
     trim_media_range,
     range_from_frames,
     frames_to_secons,
+    frames_to_timecode,
     make_sequence_collection
 )
 
@@ -179,6 +184,14 @@ __all__ = [
 
     "change_timer_to_current_context",
 
+    "IniSettingRegistry",
+    "JSONSettingRegistry",
+    "OpenPypeSecureRegistry",
+    "OpenPypeSettingsRegistry",
+    "get_local_site_id",
+    "change_openpype_mongo_url",
+    "get_openpype_username",
+
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",
     "ApplicationNotFound",
@@ -198,6 +211,7 @@ __all__ = [
     "TaskNotSetError",
     "get_subset_name",
     "filter_pyblish_plugins",
+    "set_plugin_attributes_from_settings",
     "source_hash",
     "get_unique_layer_name",
     "get_background_layers",
@@ -224,13 +238,6 @@ __all__ = [
     "validate_mongo_connection",
     "OpenPypeMongoConnection",
 
-    "IniSettingRegistry",
-    "JSONSettingRegistry",
-    "OpenPypeSecureRegistry",
-    "OpenPypeSettingsRegistry",
-    "get_local_site_id",
-    "change_openpype_mongo_url",
-
     "timeit",
 
     "is_overlapping_otio_ranges",
@@ -240,5 +247,6 @@ __all__ = [
     "trim_media_range",
     "range_from_frames",
     "frames_to_secons",
+    "frames_to_timecode",
     "make_sequence_collection"
 ]

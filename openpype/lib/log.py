@@ -123,6 +123,8 @@ class PypeFormatter(logging.Formatter):
 
         if record.exc_info is not None:
             line_len = len(str(record.exc_info[1]))
+            if line_len > 30:
+                line_len = 30
             out = "{}\n{}\n{}\n{}\n{}".format(
                 out,
                 line_len * "=",

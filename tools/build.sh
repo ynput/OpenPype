@@ -6,11 +6,19 @@
 art () {
   cat <<-EOF
 
-▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
-▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
-▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
-            .---= [ by Pype Club ] =---.
-                 https://openpype.io
+             . .   ..     .    ..
+        _oOOP3OPP3Op_. .
+     .PPpo~·   ··   ~2p.  ··  ····  ·  ·
+    ·Ppo · .pPO3Op.· · O:· · · ·
+   .3Pp · oP3'· 'P33· · 4 ··   ·  ·   · ·· ·  ·  ·
+  ·~OP    3PO·  .Op3    : · ··  _____  _____  _____
+  ·P3O  · oP3oP3O3P' · · ·   · /    /·/    /·/    /
+   O3:·   O3p~ ·       ·:· · ·/____/·/____/ /____/
+   'P ·   3p3·  oP3~· ·.P:· ·  · ··  ·   · ·· ·  ·  ·
+  · ':  · Po'  ·Opo'· .3O· .  o[ by Pype Club ]]]==- - - ·  ·
+    · '_ ..  ·    . _OP3··  ·  ·https://openpype.io·· ·
+         ~P3·OPPPO3OP~ · ··  ·
+           ·  ' '· ·  ·· · · · ··  ·
 
 EOF
 }
@@ -65,7 +73,7 @@ detect_python () {
   local version_command
   version_command="import sys;print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))"
   local python_version
-  python_version="$(python3 <<< ${version_command})"
+  python_version="$(python <<< ${version_command})"
   oIFS="$IFS"
   IFS=.
   set -- $python_version
@@ -77,7 +85,7 @@ detect_python () {
       echo -e "${BIWhite}[${RST} ${BIGreen}$1.$2${RST} ${BIWhite}]${RST}"
     fi
   else
-    command -v python3 >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
+    command -v python >/dev/null 2>&1 || { echo -e "${BIRed}$1.$2$ - ${BIRed}FAILED${RST} ${BIYellow}Version is old and unsupported${RST}"; return 1; }
   fi
 }
 
@@ -123,8 +131,7 @@ realpath () {
 install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
   command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
-  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python3 -
-  export PATH="$PATH:$HOME/.poetry/bin"
+  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
 }
 
 # Main
@@ -139,7 +146,15 @@ main () {
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
   version_command="import os;exec(open(os.path.join('$openpype_root', 'openpype', 'version.py')).read());print(__version__);"
-  openpype_version="$(python3 <<< ${version_command})"
+  openpype_version="$(python <<< ${version_command})"
+
+  _inside_openpype_tool="1"
+
+  # make sure Poetry is in PATH
+  if [[ -z $POETRY_HOME ]]; then
+    export POETRY_HOME="$openpype_root/.poetry"
+  fi
+  export PATH="$POETRY_HOME/bin:$PATH"
 
   echo -e "${BIYellow}---${RST} Cleaning build directory ..."
   rm -rf "$openpype_root/build" && mkdir "$openpype_root/build" > /dev/null
@@ -149,17 +164,40 @@ main () {
   clean_pyc
 
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
-  if [ -f "$HOME/.poetry/bin/poetry" ]; then
+  if [ -f "$POETRY_HOME/bin/poetry" ]; then
     echo -e "${BIGreen}OK${RST}"
-    export PATH="$PATH:$HOME/.poetry/bin"
   else
     echo -e "${BIYellow}NOT FOUND${RST}"
-    install_poetry || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
+    echo -e "${BIYellow}***${RST} We need to install Poetry and virtual env ..."
+    . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
   fi
 
+  echo -e "${BIGreen}>>>${RST} Making sure submodules are up-to-date ..."
+  git submodule update --init --recursive
+
   echo -e "${BIGreen}>>>${RST} Building ..."
-  poetry run python3 "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
-  poetry run python3 "$openpype_root/tools/build_dependencies.py"
+  if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    poetry run python "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+  elif [[ "$OSTYPE" == "darwin"* ]]; then
+    poetry run python "$openpype_root/setup.py" bdist_mac > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+  fi
+  poetry run python "$openpype_root/tools/build_dependencies.py"
+
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    # fix code signing issue
+    codesign --remove-signature "$openpype_root/build/OpenPype.app/Contents/MacOS/lib/Python"
+    if command -v create-dmg > /dev/null 2>&1; then
+      create-dmg \
+        --volname "OpenPype Installer" \
+        --window-pos 200 120 \
+        --window-size 600 300 \
+        --app-drop-link 100 50 \
+        "$openpype_root/build/OpenPype-Installer.dmg" \
+        "$openpype_root/build/OpenPype.app"
+    else
+      echo -e "${BIYellow}!!!${RST} ${BIWhite}create-dmg${RST} command is not available."
+    fi
+  fi
 
   echo -e "${BICyan}>>>${RST} All done. You will find OpenPype and build log in \c"
   echo -e "${BIWhite}$openpype_root/build${RST} directory."

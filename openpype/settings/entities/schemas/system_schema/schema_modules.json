@@ -85,11 +85,32 @@
             "label": "Site Sync",
             "collapsible": true,
             "checkbox_key": "enabled",
-            "children": [{
-                  "type": "boolean",
-                  "key": "enabled",
-                  "label": "Enabled"
-            }]
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "dict-modifiable",
+                    "collapsible": true,
+                    "key": "sites",
+                    "label": "Sites",
+                    "collapsible_key": false,
+                    "is_file": true,
+                    "object_type":
+                    {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "providers-enum",
+                                "key": "provider",
+                                "label": "Provider"
+                            }
+                        ]
+                    }
+                }
+            ]
         },{
             "type": "dict",
             "key": "deadline",
@@ -144,20 +165,6 @@
             "type": "dict",
             "key": "log_viewer",
             "label": "Logging",
-            "collapsible": true,
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "key": "user",
-            "label": "User setting",
             "collapsible": true,
             "checkbox_key": "enabled",
             "children": [

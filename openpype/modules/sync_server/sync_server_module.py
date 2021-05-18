@@ -2,6 +2,8 @@ import os
 from bson.objectid import ObjectId
 from datetime import datetime
 import threading
+import platform
+import copy
 
 from avalon.api import AvalonMongoDB
 
@@ -9,12 +11,18 @@ from .. import PypeModule, ITrayModule
 from openpype.api import (
     Anatomy,
     get_project_settings,
+    get_system_settings,
     get_local_site_id)
 from openpype.lib import PypeLogger
+from openpype.settings.lib import (
+    get_default_project_settings,
+    get_default_anatomy_settings,
+    get_anatomy_settings)
 
 from .providers.local_drive import LocalDriveHandler
+from .providers import lib
 
-from .utils import time_function, SyncStatus
+from .utils import time_function, SyncStatus, EditableScopes
 
 
 log = PypeLogger().get_logger("SyncServer")
@@ -83,6 +91,7 @@ class SyncServerModule(PypeModule, ITrayModule):
     DEFAULT_SITE = 'studio'
     LOCAL_SITE = 'local'
     LOG_PROGRESS_SEC = 5  # how often log progress to DB
+    DEFAULT_PRIORITY = 50  # higher is better, allowed range 1 - 1000
 
     name = "sync_server"
     label = "Sync Queue"
@@ -339,18 +348,6 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return self._get_enabled_sites_from_settings(sync_settings)
 
-    def get_configurable_items_for_site(self, project_name, site_name):
-        """
-            Returns list of items that should be configurable by User
-
-            Returns:
-                (list of dict)
-                [{key:"root", label:"root", value:"valueFromSettings"}]
-        """
-        # if project_name is None: ..for get_default_project_settings
-        # return handler.get_configurable_items()
-        pass
-
     def get_active_site(self, project_name):
         """
             Returns active (mine) site for 'project_name' from settings
@@ -401,6 +398,225 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return remote_site
 
+    def get_local_settings_schema(self):
+        """Wrapper for Local settings - all projects incl. Default"""
+        return self.get_configurable_items(EditableScopes.LOCAL)
+
+    def get_configurable_items(self, scope=None):
+        """
+            Returns list of sites that could be configurable for all projects.
+
+            Could be filtered by 'scope' argument (list)
+
+            Args:
+                scope (list of utils.EditableScope)
+
+            Returns:
+                (dict of list of dict)
+                {
+                    siteA : [
+                        {
+                            key:"root", label:"root",
+                            "value":"{'work': 'c:/projects'}",
+                            "type": "dict",
+                            "children":[
+                                { "key": "work",
+                                  "type": "text",
+                                  "value": "c:/projects"}
+                            ]
+                        },
+                        {
+                            key:"credentials_url", label:"Credentials url",
+                            "value":"'c:/projects/cred.json'", "type": "text",
+                            "namespace": "{project_setting}/global/sync_server/
+                                     sites"
+                        }
+                    ]
+                }
+        """
+        editable = {}
+        applicable_projects = list(self.connection.projects())
+        applicable_projects.append(None)
+        for project in applicable_projects:
+            project_name = None
+            if project:
+                project_name = project["name"]
+
+            items = self.get_configurable_items_for_project(project_name,
+                                                            scope)
+            editable.update(items)
+
+        return editable
+
+    def get_local_settings_schema_for_project(self, project_name):
+        """Wrapper for Local settings - for specific 'project_name'"""
+        return self.get_configurable_items_for_project(project_name,
+                                                       EditableScopes.LOCAL)
+
+    def get_configurable_items_for_project(self, project_name=None,
+                                           scope=None):
+        """
+            Returns list of items that could be configurable for specific
+            'project_name'
+
+            Args:
+                project_name (str) - None > default project,
+                scope (list of utils.EditableScope)
+                    (optional, None is all scopes, default is LOCAL)
+
+            Returns:
+                (dict of list of dict)
+            {
+                siteA : [
+                    {
+                        key:"root", label:"root",
+                        "type": "dict",
+                        "children":[
+                            { "key": "work",
+                              "type": "text",
+                              "value": "c:/projects"}
+                        ]
+                    },
+                    {
+                        key:"credentials_url", label:"Credentials url",
+                        "value":"'c:/projects/cred.json'", "type": "text",
+                        "namespace": "{project_setting}/global/sync_server/
+                                     sites"
+                    }
+                ]
+            }
+        """
+        allowed_sites = set()
+        sites = self.get_all_site_configs(project_name)
+        if project_name:
+            # Local Settings can select only from allowed sites for project
+            allowed_sites.update(set(self.get_active_sites(project_name)))
+            allowed_sites.update(set(self.get_remote_sites(project_name)))
+
+        editable = {}
+        for site_name in sites.keys():
+            if allowed_sites and site_name not in allowed_sites:
+                continue
+
+            items = self.get_configurable_items_for_site(project_name,
+                                                         site_name,
+                                                         scope)
+            editable[site_name] = items
+
+        return editable
+
+    def get_local_settings_schema_for_site(self, project_name, site_name):
+        """Wrapper for Local settings - for particular 'site_name and proj."""
+        return self.get_configurable_items_for_site(project_name,
+                                                    site_name,
+                                                    EditableScopes.LOCAL)
+
+    def get_configurable_items_for_site(self, project_name=None,
+                                        site_name=None,
+                                        scope=None):
+        """
+            Returns list of items that could be configurable.
+
+            Args:
+                project_name (str) - None > default project
+                site_name (str)
+                scope (list of utils.EditableScope)
+                    (optional, None is all scopes)
+
+            Returns:
+                (list)
+                [
+                    {
+                        key:"root", label:"root", type:"dict",
+                        "children":[
+                            { "key": "work",
+                              "type": "text",
+                              "value": "c:/projects"}
+                        ]
+                    }, ...
+                ]
+        """
+        provider_name = self.get_provider_for_site(site=site_name)
+        items = lib.factory.get_provider_configurable_items(provider_name)
+
+        if project_name:
+            sync_s = self.get_sync_project_setting(project_name,
+                                                   exclude_locals=True,
+                                                   cached=False)
+        else:
+            sync_s = get_default_project_settings(exclude_locals=True)
+            sync_s = sync_s["global"]["sync_server"]
+            sync_s["sites"].update(
+                self._get_default_site_configs(self.enabled))
+
+        editable = []
+        if type(scope) is not list:
+            scope = [scope]
+        scope = set(scope)
+        for key, properties in items.items():
+            if scope is None or scope.intersection(set(properties["scope"])):
+                val = sync_s.get("sites", {}).get(site_name, {}).get(key)
+
+                item = {
+                    "key": key,
+                    "label": properties["label"],
+                    "type": properties["type"]
+                }
+
+                if properties.get("namespace"):
+                    item["namespace"] = properties.get("namespace")
+                    if "platform" in item["namespace"]:
+                        try:
+                            if val:
+                                val = val[platform.system().lower()]
+                        except KeyError:
+                            st = "{}'s field value {} should be".format(key, val)  # noqa: E501
+                            log.error(st + " multiplatform dict")
+
+                    item["namespace"] = item["namespace"].replace('{site}',
+                                                                  site_name)
+                children = []
+                if properties["type"] == "dict":
+                    if val:
+                        for val_key, val_val in val.items():
+                            child = {
+                                "type": "text",
+                                "key": val_key,
+                                "value": val_val
+                            }
+                            children.append(child)
+
+                if properties["type"] == "dict":
+                    item["children"] = children
+                else:
+                    item["value"] = val
+
+
+
+                editable.append(item)
+
+        return editable
+
+    def reset_timer(self):
+        """
+            Called when waiting for next loop should be skipped.
+
+            In case of user's involvement (reset site), start that right away.
+        """
+        self.sync_server_thread.reset_timer()
+
+    def get_enabled_projects(self):
+        """Returns list of projects which have SyncServer enabled."""
+        enabled_projects = []
+
+        if self.enabled:
+            for project in self.connection.projects():
+                project_name = project["name"]
+                project_settings = self.get_sync_project_setting(project_name)
+                if project_settings and project_settings.get("enabled"):
+                    enabled_projects.append(project_name)
+
+        return enabled_projects
     """ End of Public API """
 
     def get_local_file_path(self, collection, site_name, file_path):
@@ -413,7 +629,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         return local_file_path
 
     def _get_remote_sites_from_settings(self, sync_settings):
-        if not self.enabled or not sync_settings['enabled']:
+        if not self.enabled or not sync_settings.get('enabled'):
             return []
 
         remote_sites = [self.DEFAULT_SITE, self.LOCAL_SITE]
@@ -424,7 +640,7 @@ class SyncServerModule(PypeModule, ITrayModule):
 
     def _get_enabled_sites_from_settings(self, sync_settings):
         sites = [self.DEFAULT_SITE]
-        if self.enabled and sync_settings['enabled']:
+        if self.enabled and sync_settings.get('enabled'):
             sites.append(self.LOCAL_SITE)
 
         return sites
@@ -445,10 +661,16 @@ class SyncServerModule(PypeModule, ITrayModule):
         if not self.enabled:
             return
 
+        enabled_projects = self.get_enabled_projects()
+        if not enabled_projects:
+            self.enabled = False
+            return
+
         self.lock = threading.Lock()
 
         try:
             self.sync_server_thread = SyncServerThread(self)
+
             from .tray.app import SyncServerWindow
             self.widget = SyncServerWindow(self)
         except ValueError:
@@ -543,75 +765,145 @@ class SyncServerModule(PypeModule, ITrayModule):
 
         return self._sync_project_settings
 
-    def set_sync_project_settings(self):
+    def set_sync_project_settings(self, exclude_locals=False):
         """
             Set sync_project_settings for all projects (caching)
-
+            Args:
+                exclude_locals (bool): ignore overrides from Local Settings
             For performance
         """
-        sync_project_settings = {}
-
-        for collection in self.connection.database.collection_names(False):
-            sync_settings = self._parse_sync_settings_from_settings(
-                get_project_settings(collection))
-            if sync_settings:
-                default_sites = self._get_default_site_configs()
-                sync_settings['sites'].update(default_sites)
-                sync_project_settings[collection] = sync_settings
-
-        if not sync_project_settings:
-            log.info("No enabled and configured projects for sync.")
+        sync_project_settings = self._prepare_sync_project_settings(
+            exclude_locals)
 
         self._sync_project_settings = sync_project_settings
 
-    def get_sync_project_setting(self, project_name):
+    def _prepare_sync_project_settings(self, exclude_locals):
+        sync_project_settings = {}
+        system_sites = self.get_all_site_configs()
+        for collection in self.connection.database.collection_names(False):
+            sites = copy.deepcopy(system_sites)  # get all configured sites
+            proj_settings = self._parse_sync_settings_from_settings(
+                get_project_settings(collection,
+                                     exclude_locals=exclude_locals))
+            sites.update(self._get_default_site_configs(
+                proj_settings["enabled"], collection))
+            sites.update(proj_settings['sites'])
+            proj_settings["sites"] = sites
+
+            sync_project_settings[collection] = proj_settings
+        if not sync_project_settings:
+            log.info("No enabled and configured projects for sync.")
+        return sync_project_settings
+
+    def get_sync_project_setting(self, project_name, exclude_locals=False,
+                                 cached=True):
         """ Handles pulling sync_server's settings for enabled 'project_name'
 
             Args:
                 project_name (str): used in project settings
+                exclude_locals (bool): ignore overrides from Local Settings
+                cached (bool): use pre-cached values, or return fresh ones
+                    cached values needed for single loop (with all overrides)
+                    fresh values needed for Local settings (without overrides)
             Returns:
                 (dict): settings dictionary for the enabled project,
                     empty if no settings or sync is disabled
         """
         # presets set already, do not call again and again
         # self.log.debug("project preset {}".format(self.presets))
-        if self.sync_project_settings and \
-                self.sync_project_settings.get(project_name):
-            return self.sync_project_settings.get(project_name)
+        if not cached:
+            return self._prepare_sync_project_settings(exclude_locals)\
+                [project_name]
 
-        settings = get_project_settings(project_name)
-        return self._parse_sync_settings_from_settings(settings)
+        if not self.sync_project_settings or \
+               not self.sync_project_settings.get(project_name):
+            self.set_sync_project_settings(exclude_locals)
+
+        return self.sync_project_settings.get(project_name)
 
     def _parse_sync_settings_from_settings(self, settings):
         """ settings from api.get_project_settings, TOOD rename """
         sync_settings = settings.get("global").get("sync_server")
-        if not sync_settings:
-            log.info("No project setting not syncing.")
-            return {}
-        if sync_settings.get("enabled"):
-            return sync_settings
 
-        return {}
+        return sync_settings
 
-    def _get_default_site_configs(self):
+    def get_all_site_configs(self, project_name=None):
         """
-            Returns skeleton settings for 'studio' and user's local site
+            Returns (dict) with all sites configured system wide.
+
+            Args:
+                project_name (str)(optional): if present, check if not disabled
+
+            Returns:
+                (dict): {'studio': {'provider':'local_drive'...},
+                         'MY_LOCAL': {'provider':....}}
         """
-        default_config = {'provider': 'local_drive'}
-        all_sites = {self.DEFAULT_SITE: default_config,
-                     get_local_site_id(): default_config}
+        sys_sett = get_system_settings()
+        sync_sett = sys_sett["modules"].get("sync_server")
+
+        project_enabled = True
+        if project_name:
+            project_enabled = project_name in self.get_enabled_projects()
+        sync_enabled = sync_sett["enabled"] and project_enabled
+
+        system_sites = {}
+        if sync_enabled:
+            for site, detail in sync_sett.get("sites", {}).items():
+                system_sites[site] = detail
+
+        system_sites.update(self._get_default_site_configs(sync_enabled,
+                                                           project_name))
+
+        return system_sites
+
+    def _get_default_site_configs(self, sync_enabled=True, project_name=None):
+        """
+            Returns settings for 'studio' and user's local site
+
+            Returns base values from setting, not overriden by Local Settings,
+            eg. value used to push TO LS not to get actual value for syncing.
+        """
+        if not project_name:
+            anatomy_sett = get_default_anatomy_settings(exclude_locals=True)
+        else:
+            anatomy_sett = get_anatomy_settings(project_name,
+                                                exclude_locals=True)
+        roots = {}
+        for root, config in anatomy_sett["roots"].items():
+            roots[root] = config[platform.system().lower()]
+        studio_config = {
+            'provider': 'local_drive',
+            "root": roots
+        }
+        all_sites = {self.DEFAULT_SITE: studio_config}
+        if sync_enabled:
+            all_sites['local'] = {'provider': 'local_drive'}
         return all_sites
 
-    def get_provider_for_site(self, project_name, site):
+    def get_provider_for_site(self, project_name=None, site=None):
         """
-            Return provider name for site.
+            Return provider name for site (unique name across all projects.
         """
-        site_preset = self.get_sync_project_setting(project_name)["sites"].\
-            get(site)
-        if site_preset:
-            return site_preset["provider"]
+        sites = {self.DEFAULT_SITE: "local_drive",
+                 self.LOCAL_SITE: "local_drive",
+                 get_local_site_id(): "local_drive"}
 
-        return "NA"
+        if site in sites.keys():
+            return sites[site]
+
+        if project_name:  # backward compatibility
+            proj_settings = self.get_sync_project_setting(project_name)
+            provider = proj_settings.get("sites", {}).get(site, {}).\
+                get("provider")
+            if provider:
+                return provider
+
+        sys_sett = get_system_settings()
+        sync_sett = sys_sett["modules"].get("sync_server")
+        for site, detail in sync_sett.get("sites", {}).items():
+            sites[site] = detail.get("provider")
+
+        return sites.get(site, 'N/A')
 
     @time_function
     def get_sync_representations(self, collection, active_site, remote_site):
@@ -639,7 +931,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         self.connection.Session["AVALON_PROJECT"] = collection
         # retry_cnt - number of attempts to sync specific file before giving up
         retries_arr = self._get_retries_arr(collection)
-        query = {
+        match = {
             "type": "representation",
             "$or": [
                 {"$and": [
@@ -677,10 +969,47 @@ class SyncServerModule(PypeModule, ITrayModule):
                 ]}
             ]
         }
+
+        aggr = [
+            {"$match": match},
+            {'$unwind': '$files'},
+            {'$addFields': {
+                'order_remote': {
+                    '$filter': {'input': '$files.sites', 'as': 'p',
+                                'cond': {'$eq': ['$$p.name', remote_site]}
+                                }},
+                'order_local': {
+                    '$filter': {'input': '$files.sites', 'as': 'p',
+                                'cond': {'$eq': ['$$p.name', active_site]}
+                                }},
+            }},
+            {'$addFields': {
+                'priority': {
+                    '$cond': [
+                        {'$size': '$order_local.priority'},
+                        {'$first': '$order_local.priority'},
+                        {'$cond': [
+                            {'$size': '$order_remote.priority'},
+                            {'$first': '$order_remote.priority'},
+                            self.DEFAULT_PRIORITY]}
+                    ]
+                },
+            }},
+            {'$group': {
+                '_id': '$_id',
+                # pass through context - same for representation
+                'context': {'$addToSet': '$context'},
+                'data': {'$addToSet': '$data'},
+                # pass through files as a list
+                'files': {'$addToSet': '$files'},
+                'priority': {'$max': "$priority"},
+            }},
+            {"$sort": {'priority': -1, '_id': 1}},
+        ]
         log.debug("active_site:{} - remote_site:{}".format(active_site,
                                                            remote_site))
-        log.debug("query: {}".format(query))
-        representations = self.connection.find(query)
+        log.debug("query: {}".format(aggr))
+        representations = self.connection.aggregate(aggr)
 
         return representations
 
@@ -693,6 +1022,15 @@ class SyncServerModule(PypeModule, ITrayModule):
             Always is comparing local record, eg. site with
             'name' == self.presets[PROJECT_NAME]['config']["active_site"]
 
+            This leads to trigger actual upload or download, there is
+            a use case 'studio' <> 'remote' where user should publish
+            to 'studio', see progress in Tray GUI, but do not do
+            physical upload/download
+            (as multiple user would be doing that).
+
+            Do physical U/D only when any of the sites is user's local, in that
+            case only user has the data and must U/D.
+
         Args:
             file (dictionary):  of file from representation in Mongo
             local_site (string):  - local side of compare (usually 'studio')
@@ -702,8 +1040,12 @@ class SyncServerModule(PypeModule, ITrayModule):
             (string) - one of SyncStatus
         """
         sites = file.get("sites") or []
-        # if isinstance(sites, list):  # temporary, old format of 'sites'
-        #     return SyncStatus.DO_NOTHING
+
+        if get_local_site_id() not in (local_site, remote_site):
+            # don't do upload/download for studio sites
+            log.debug("No local site {} - {}".format(local_site, remote_site))
+            return SyncStatus.DO_NOTHING
+
         _, remote_rec = self._get_site_rec(sites, remote_site) or {}
         if remote_rec:  # sync remote target
             created_dt = remote_rec.get("created_dt")
@@ -726,7 +1068,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         return SyncStatus.DO_NOTHING
 
     def update_db(self, collection, new_file_id, file, representation,
-                  site, error=None, progress=None):
+                  site, error=None, progress=None, priority=None):
         """
             Update 'provider' portion of records in DB with success (file_id)
             or error (exception)
@@ -740,12 +1082,16 @@ class SyncServerModule(PypeModule, ITrayModule):
             site (string): label ('gdrive', 'S3')
             error (string): exception message
             progress (float): 0-1 of progress of upload/download
+            priority (int): 0-100 set priority
 
         Returns:
             None
         """
         representation_id = representation.get("_id")
-        file_id = file.get("_id")
+        file_id = None
+        if file:
+            file_id = file.get("_id")
+
         query = {
             "_id": representation_id
         }
@@ -757,6 +1103,8 @@ class SyncServerModule(PypeModule, ITrayModule):
             update["$unset"] = self._get_error_dict("", "", "")
         elif progress is not None:
             update["$set"] = self._get_progress_dict(progress)
+        elif priority is not None:
+            update["$set"] = self._get_priority_dict(priority, file_id)
         else:
             tries = self._get_tries_count(file, site)
             tries += 1
@@ -764,9 +1112,10 @@ class SyncServerModule(PypeModule, ITrayModule):
             update["$set"] = self._get_error_dict(error, tries)
 
         arr_filter = [
-            {'s.name': site},
-            {'f._id': ObjectId(file_id)}
+            {'s.name': site}
         ]
+        if file_id:
+            arr_filter.append({'f._id': ObjectId(file_id)})
 
         self.connection.database[collection].update_one(
             query,
@@ -775,7 +1124,7 @@ class SyncServerModule(PypeModule, ITrayModule):
             array_filters=arr_filter
         )
 
-        if progress is not None:
+        if progress is not None or priority is not None:
             return
 
         status = 'failed'
@@ -1045,7 +1394,7 @@ class SyncServerModule(PypeModule, ITrayModule):
                              format(site_name))
             return
 
-        provider_name = self.get_provider_for_site(collection, site_name)
+        provider_name = self.get_provider_for_site(site=site_name)
 
         if provider_name == 'local_drive':
             query = {
@@ -1168,6 +1517,21 @@ class SyncServerModule(PypeModule, ITrayModule):
         """
         val = {"files.$[f].sites.$[s].progress": progress}
         return val
+
+    def _get_priority_dict(self, priority, file_id):
+        """
+            Provide priority metadata to be stored in Db.
+            Used during upload/download for GUI to show.
+        Args:
+            priority: (int) - priority for file(s)
+        Returns:
+            (dictionary)
+        """
+        if file_id:
+            str_key = "files.$[f].sites.$[s].priority"
+        else:
+            str_key = "files.$[].sites.$[s].priority"
+        return {str_key: int(priority)}
 
     def _get_retries_arr(self, project_name):
         """

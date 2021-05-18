@@ -11,14 +11,14 @@ class ExtractABC(openpype.api.Extractor):
 
     label = "Extract ABC"
     hosts = ["blender"]
-    families = ["model"]
+    families = ["model", "pointcache"]
     optional = True
 
     def process(self, instance):
         # Define extract output file path
 
         stagingdir = self.staging_dir(instance)
-        filename = f"{instance.name}.fbx"
+        filename = f"{instance.name}.abc"
         filepath = os.path.join(stagingdir, filename)
 
         context = bpy.context
@@ -52,6 +52,8 @@ class ExtractABC(openpype.api.Extractor):
 
         old_scale = scene.unit_settings.scale_length
 
+        bpy.ops.object.select_all(action='DESELECT')
+
         selected = list()
 
         for obj in instance:
@@ -67,14 +69,11 @@ class ExtractABC(openpype.api.Extractor):
         # We set the scale of the scene for the export
         scene.unit_settings.scale_length = 0.01
 
-        self.log.info(new_context)
-
         # We export the abc
         bpy.ops.wm.alembic_export(
             new_context,
             filepath=filepath,
-            start=1,
-            end=1
+            selected=True
         )
 
         view_layer.active_layer_collection = old_active_layer_collection

@@ -1,5 +1,11 @@
 import sys
 from Qt import QtWidgets, QtGui
+from .lib import (
+    is_password_required,
+    BTN_FIXED_SIZE,
+    CHILD_OFFSET
+)
+from .widgets import PasswordDialog
 from .local_settings import LocalSettingsWindow
 from .settings import (
     style,
@@ -24,13 +30,18 @@ def main(user_role=None):
 
     widget = MainWidget(user_role)
     widget.show()
-    widget.reset()
 
     sys.exit(app.exec_())
 
 
 __all__ = (
+    "is_password_required",
+    "BTN_FIXED_SIZE",
+    "CHILD_OFFSET",
+
     "style",
+
+    "PasswordDialog",
     "MainWidget",
     "ProjectListWidget",
     "LocalSettingsWindow",

@@ -38,47 +38,47 @@ So, bootstrapping OpenPype looks like this::
 
 .. code-block:: bash
 
-+-------------------------------------------------------+
-| Determine MongoDB connection:                         |
-| Use `OPENPYPE_MONGO`, system keyring `openPypeMongo`  |
-+--------------------------|----------------------------+
-                   .--- Found? --.
+┌───────────────────────────────────────────────────────┐
+│ Determine MongoDB connection:                         │
+│ Use `OPENPYPE_MONGO`, system keyring `openPypeMongo`  │
+└──────────────────────────┬────────────────────────────┘
+                  ┌───- Found? -─┐
                  YES             NO
-                  |              |
-                  |       +------v--------------+
-                  |       | Fire up Igniter GUI |<---------+
-                  |       | and ask User        |          |
-                  |       +---------------------+          |
-                  |                                        |
-                  |                                        |
-+-----------------v------------------------------------+   |
-| Get location of OpenPype:                            |   |
-|   1) Test for `OPENPYPE_PATH` environment variable   |   |
-|   2) Test `openPypePath` in registry setting         |   |
-|   3) Test user data directory                        |   |
-| ...................................................  |   |
-| If running from frozen code:                         |   |
-|   - Use latest one found in user data dir            |   |
-| If running from live code:                           |   |
-|   - Use live code and install it to user data dir    |   |
-| * can be overridden with `--use-version` argument    |   |
-+-------------------------|----------------------------+   |
-             .-- Is OpenPype found? --.                    |
-             YES                     NO                    |
-              |                      |                     |
-              |      +---------------v-----------------+   |
-              |      | Look in `OPENPYPE_PATH`, find   |   |
-              |      | latest version and install it   |   |
-              |      | to user data dir.               |   |
-              |      +--------------|------------------+   |
-              |         .-- Is OpenPype found? --.         |
-              |         YES                     NO --------+
-              |          |
-              |<---------+
-              |
-+-------------v------------+
-|      Run OpenPype        |
-+--------------------------+
+                  │              │
+                  │       ┌──────┴──────────────┐
+                  │       │ Fire up Igniter GUI ├<-────────┐
+                  │       │ and ask User        │          │
+                  │       └─────────────────────┘          │
+                  │                                        │
+                  │                                        │
+┌─────────────────┴─────────────────────────────────────┐  │
+│ Get location of OpenPype:                             │  │
+│   1) Test for `OPENPYPE_PATH` environment variable    │  │
+│   2) Test `openPypePath` in registry setting          │  │
+│   3) Test user data directory                         │  │
+│ ····················································· │  │
+│ If running from frozen code:                          │  │
+│   - Use latest one found in user data dir             │  │
+│ If running from live code:                            │  │
+│   - Use live code and install it to user data dir     │  │
+│ * can be overridden with `--use-version` argument     │  │
+└──────────────────────────┬────────────────────────────┘  │
+              ┌─- Is OpenPype found? -─┐                   │
+             YES                       NO                  │
+              │                        │                   │
+              │      ┌─────────────────┴─────────────┐     │
+              │      │ Look in `OPENPYPE_PATH`, find │     │
+              │      │ latest version and install it │     │
+              │      │ to user data dir.             │     │
+              │      └──────────────┬────────────────┘     │
+              │         ┌─- Is OpenPype found? -─┐         │
+              │        YES                       NO -──────┘
+              │         │
+              ├<-───────┘
+              │
+┌─────────────┴────────────┐
+│      Run OpenPype        │
+└─────═══════════════──────┘
 
 
 Todo:
@@ -99,6 +99,8 @@ import traceback
 import subprocess
 import site
 from pathlib import Path
+import platform
+
 
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
 # WARNING `OPENPYPE_ROOT` must be defined before igniter import
@@ -110,11 +112,23 @@ if not getattr(sys, 'frozen', False):
 else:
     OPENPYPE_ROOT = os.path.dirname(sys.executable)
 
+    # FIX #1469: Certificates from certifi are not available in some
+    # macos builds, so connection to ftrack/mongo will fail with
+    # unable to verify certificate issuer error. This will add certifi
+    # certificates so ssl can see them.
+    # WARNING: this can break stuff if custom certificates are used. In that
+    # case they need to be merged to certificate bundle and SSL_CERT_FILE
+    # should point to them.
+    if not os.getenv("SSL_CERT_FILE") and platform.system().lower() == "darwin":  # noqa: E501
+        ssl_cert_file = Path(OPENPYPE_ROOT) / "dependencies" / "certifi" / "cacert.pem"  # noqa: E501
+        os.environ["SSL_CERT_FILE"] = ssl_cert_file.as_posix()
+
     # add dependencies folder to sys.pat for frozen code
     frozen_libs = os.path.normpath(
         os.path.join(OPENPYPE_ROOT, "dependencies")
     )
     sys.path.append(frozen_libs)
+    sys.path.insert(0, OPENPYPE_ROOT)
     # add stuff from `<frozen>/dependencies` to PYTHONPATH.
     pythonpath = os.getenv("PYTHONPATH", "")
     paths = pythonpath.split(os.pathsep)
@@ -123,7 +137,10 @@ else:
 
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
-from igniter.tools import get_openpype_path_from_db  # noqa
+from igniter.tools import (
+    get_openpype_path_from_db,
+    validate_mongo_connection
+)  # noqa
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
 
 bootstrap = BootstrapRepos()
@@ -285,6 +302,10 @@ def _process_arguments() -> tuple:
         if return_code not in [2, 3]:
             sys.exit(return_code)
 
+        idx = sys.argv.index("igniter")
+        sys.argv.pop(idx)
+        sys.argv.insert(idx, "tray")
+
     return use_version, use_staging
 
 
@@ -307,25 +328,39 @@ def _determine_mongodb() -> str:
         # try system keyring
         try:
             openpype_mongo = bootstrap.secure_registry.get_item(
-                "openPypeMongo")
+                "openPypeMongo"
+            )
         except ValueError:
-            print("*** No DB connection string specified.")
-            print("--- launching setup UI ...")
-            import igniter
-            igniter.open_dialog()
+            pass
 
+    if openpype_mongo:
+        result, msg = validate_mongo_connection(openpype_mongo)
+        if not result:
+            print(msg)
+            openpype_mongo = None
+
+    if not openpype_mongo:
+        print("*** No DB connection string specified.")
+        print("--- launching setup UI ...")
+
+        result = igniter.open_dialog()
+        if result == 0:
+            raise RuntimeError("MongoDB URL was not defined")
+
+        openpype_mongo = os.getenv("OPENPYPE_MONGO")
+        if not openpype_mongo:
             try:
                 openpype_mongo = bootstrap.secure_registry.get_item(
                     "openPypeMongo")
             except ValueError:
-                raise RuntimeError("missing mongodb url")
+                raise RuntimeError("Missing MongoDB url")
 
     return openpype_mongo
 
 
 def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
     version_path = openpype_version.path
-    os.environ["OPENPYPE_VERSION"] = openpype_version.version
+    os.environ["OPENPYPE_VERSION"] = str(openpype_version)
     # set OPENPYPE_REPOS_ROOT to point to currently used OpenPype version.
     os.environ["OPENPYPE_REPOS_ROOT"] = os.path.normpath(
         version_path.as_posix()
@@ -382,6 +417,26 @@ def _find_frozen_openpype(use_version: str = None,
     openpype_version = None
     openpype_versions = bootstrap.find_openpype(include_zips=True,
                                                 staging=use_staging)
+    # get local frozen version and add it to detected version so if it is
+    # newer it will be used instead.
+    local_version_str = bootstrap.get_version(
+        Path(os.environ["OPENPYPE_ROOT"]))
+    if local_version_str:
+        local_version = OpenPypeVersion(
+            version=local_version_str,
+            path=Path(os.environ["OPENPYPE_ROOT"]))
+        if local_version not in openpype_versions:
+            openpype_versions.append(local_version)
+        openpype_versions.sort()
+        # if latest is currently running, ditch whole list
+        # and run from current without installing it.
+        if local_version == openpype_versions[-1]:
+            os.environ["OPENPYPE_TRYOUT"] = "1"
+            openpype_versions = []
+
+    else:
+        print("!!! Warning: cannot determine current running version.")
+
     if not os.getenv("OPENPYPE_TRYOUT"):
         try:
             # use latest one found (last in the list is latest)
@@ -429,12 +484,9 @@ def _find_frozen_openpype(use_version: str = None,
         use_version, openpype_versions)
 
     if not version_path:
-        if use_version is not None:
-            if not openpype_version:
-                ...
-            else:
-                print(("!!! Specified version was not found, using "
-                       "latest available"))
+        if use_version is not None and openpype_version:
+            print(("!!! Specified version was not found, using "
+                   "latest available"))
         # specified version was not found so use latest detected.
         version_path = openpype_version.path
         print(f">>> Using version [ {openpype_version} ]")
@@ -457,7 +509,15 @@ def _find_frozen_openpype(use_version: str = None,
 
     if openpype_version.path.is_file():
         print(">>> Extracting zip file ...")
-        version_path = bootstrap.extract_openpype(openpype_version)
+        try:
+            version_path = bootstrap.extract_openpype(openpype_version)
+        except OSError as e:
+            print("!!! failed: {}".format(str(e)))
+            sys.exit(1)
+        else:
+            # cleanup zip after extraction
+            os.unlink(openpype_version.path)
+
         openpype_version.path = version_path
 
     _initialize_environment(openpype_version)

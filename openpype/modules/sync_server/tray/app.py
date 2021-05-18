@@ -7,7 +7,7 @@ from openpype import resources
 
 from openpype.modules.sync_server.tray.widgets import (
     SyncProjectListWidget,
-    SyncRepresentationWidget
+    SyncRepresentationSummaryWidget
 )
 
 log = PypeLogger().get_logger("SyncServer")
@@ -47,7 +47,7 @@ class SyncServerWindow(QtWidgets.QDialog):
         left_column_layout.addWidget(self.pause_btn)
         left_column.setLayout(left_column_layout)
 
-        repres = SyncRepresentationWidget(
+        repres = SyncRepresentationSummaryWidget(
             sync_server,
             project=self.projects.current_project,
             parent=self)
@@ -78,14 +78,32 @@ class SyncServerWindow(QtWidgets.QDialog):
         layout.addWidget(footer)
 
         self.setLayout(body_layout)
-        self.setWindowTitle("Sync Server")
+        self.setWindowTitle("Sync Queue")
 
         self.projects.project_changed.connect(
             lambda: repres.table_view.model().set_project(
                 self.projects.current_project))
 
         self.pause_btn.clicked.connect(self._pause)
+        self.pause_btn.setAutoDefault(False)
+        self.pause_btn.setDefault(False)
         repres.message_generated.connect(self._update_message)
+
+        self.representationWidget = repres
+
+    def showEvent(self, event):
+        self.representationWidget.model.set_project(
+            self.projects.current_project)
+        self._set_running(True)
+        super().showEvent(event)
+
+    def closeEvent(self, event):
+        self._set_running(False)
+        super().closeEvent(event)
+
+    def _set_running(self, running):
+        self.representationWidget.model.is_running = running
+        self.representationWidget.model.timer.setInterval(0)
 
     def _pause(self):
         if self.sync_server.is_paused():
