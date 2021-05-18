@@ -40,6 +40,8 @@ class FilterComboBox(QtWidgets.QComboBox):
     def __init__(self, parent=None):
         super(FilterComboBox, self).__init__(parent)
 
+        self._last_value = None
+
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setEditable(True)
 
@@ -63,6 +65,7 @@ class FilterComboBox(QtWidgets.QComboBox):
 
     def focusInEvent(self, event):
         super(FilterComboBox, self).focusInEvent(event)
+        self._last_value = self.lineEdit().text()
         self.lineEdit().selectAll()
 
     def value_cleanup(self):
@@ -74,6 +77,8 @@ class FilterComboBox(QtWidgets.QComboBox):
                 index = self._completer.completionModel().index(0, 0)
                 text = index.data(QtCore.Qt.DisplayRole)
                 idx = self.findText(text)
+            elif self._last_value is not None:
+                idx = self.findText(self._last_value)
 
         if idx < 0:
             idx = 0
