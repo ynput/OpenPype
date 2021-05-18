@@ -890,8 +890,7 @@
         "icon": "{}/app_icons/harmony.png",
         "host_name": "harmony",
         "environment": {
-            "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1",
-            "LIB_OPENHARMONY_PATH": "{OPENPYPE_REPOS_ROOT}/pype/vendor/OpenHarmony"
+            "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1"
         },
         "variants": {
             "20": {
@@ -935,9 +934,7 @@
         "label": "TVPaint",
         "icon": "{}/app_icons/tvpaint.png",
         "host_name": "tvpaint",
-        "environment": {
-            "OPENPYPE_LOG_NO_COLORS": "True"
-        },
+        "environment": {},
         "variants": {
             "animation_11-64bits": {
                 "use_python_2": false,
@@ -984,8 +981,6 @@
         "host_name": "photoshop",
         "environment": {
             "AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH": "1",
-            "OPENPYPE_LOG_NO_COLORS": "Yes",
-            "WEBSOCKET_URL": "ws://localhost:8099/ws/",
             "WORKFILES_SAVE_AS": "Yes"
         },
         "variants": {
@@ -1034,8 +1029,6 @@
         "host_name": "aftereffects",
         "environment": {
             "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH": "1",
-            "OPENPYPE_LOG_NO_COLORS": "Yes",
-            "WEBSOCKET_URL": "ws://localhost:8097/ws/",
             "WORKFILES_SAVE_AS": "Yes"
         },
         "variants": {
@@ -1109,10 +1102,7 @@
         "label": "Unreal Editor",
         "icon": "{}/app_icons/ue4.png'",
         "host_name": "unreal",
-        "environment": {
-            "AVALON_UNREAL_PLUGIN": "{OPENPYPE_REPOS_ROOT}/repos/avalon-unreal-integration",
-            "OPENPYPE_LOG_NO_COLORS": "True"
-        },
+        "environment": {},
         "variants": {
             "4-26": {
                 "use_python_2": false,
