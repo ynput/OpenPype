@@ -97,15 +97,7 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "NUKE_PATH": [
-                "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
-                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/nuke/startup",
-                "{OPENPYPE_STUDIO_PLUGINS}/nuke"
-            ],
-            "PATH": {
-                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
-            },
-            "LOGLEVEL": "DEBUG"
+            "NUKE_PATH": "{OPENPYPE_STUDIO_PLUGINS}/nuke"
         },
         "variants": {
             "13-0": {
