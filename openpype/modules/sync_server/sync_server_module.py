@@ -501,6 +501,8 @@ class SyncServerModule(PypeModule, ITrayModule):
             items = self.get_configurable_items_for_site(project_name,
                                                          site_name,
                                                          scope)
+            # Local Settings need 'local' instead of real value
+            site_name = site_name.replace(get_local_site_id(), 'local')
             editable[site_name] = items
 
         return editable
@@ -590,8 +592,6 @@ class SyncServerModule(PypeModule, ITrayModule):
                     item["children"] = children
                 else:
                     item["value"] = val
-
-
 
                 editable.append(item)
 
@@ -877,7 +877,7 @@ class SyncServerModule(PypeModule, ITrayModule):
         }
         all_sites = {self.DEFAULT_SITE: studio_config}
         if sync_enabled:
-            all_sites['local'] = {'provider': 'local_drive'}
+            all_sites[get_local_site_id()] = {'provider': 'local_drive'}
         return all_sites
 
     def get_provider_for_site(self, project_name=None, site=None):
