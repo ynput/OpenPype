@@ -58,7 +58,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     to_height = 1080
 
     def process(self, instance):
-        self.log.debug(instance.data["representations"])
+        self.log.debug(str(instance.data["representations"]))
         # Skip review when requested.
         if not instance.data.get("review", True):
             return
