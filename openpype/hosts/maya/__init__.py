@@ -4,15 +4,21 @@ import os
 def add_implementation_envs(env):
     # Add requirements to PYTHONPATH
     pype_root = os.environ["OPENPYPE_REPOS_ROOT"]
-    new_python_path = os.pathsep.join([
+    new_python_paths = [
         os.path.join(pype_root, "openpype", "hosts", "maya", "startup"),
         os.path.join(pype_root, "repos", "avalon-core", "setup", "maya"),
         os.path.join(pype_root, "tools", "mayalookassigner")
-    ])
-    old_python_path = env.get("PYTHONPATH")
-    if old_python_path:
-        new_python_path = os.pathsep.join([new_python_path, old_python_path])
-    env["PYTHONPATH"] = new_python_path
+    ]
+    old_python_path = env.get("PYTHONPATH") or ""
+    for path in old_python_path.split(os.pathsep):
+        if not path or not os.path.exists(path):
+            continue
+
+        norm_path = os.path.normpath(path)
+        if norm_path not in new_python_paths:
+            new_python_paths.append(norm_path)
+
+    env["PYTHONPATH"] = os.pathsep.join(new_python_paths)
 
     # Set default values if are not already set via settings
     defaults = {
@@ -24,6 +30,5 @@ def add_implementation_envs(env):
         "OPENPYPE_LOG_NO_COLORS": "Yes"
     }
     for key, value in defaults.items():
-        if env.get(key):
-            continue
-        env[key] = value
+        if not env.get(key):
+            env[key] = value
