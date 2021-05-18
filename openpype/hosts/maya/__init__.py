@@ -22,11 +22,6 @@ def add_implementation_envs(env, _app):
 
     # Set default values if are not already set via settings
     defaults = {
-        "MAYA_DISABLE_CLIC_IPM": "Yes",
-        "MAYA_DISABLE_CIP": "Yes",
-        "MAYA_DISABLE_CER": "Yes",
-        "PYMEL_SKIP_MEL_INIT": "Yes",
-        "LC_ALL": "C",
         "OPENPYPE_LOG_NO_COLORS": "Yes"
     }
     for key, value in defaults.items():
