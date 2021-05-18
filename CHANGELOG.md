@@ -1,29 +1,64 @@
 # Changelog
 
+## [2.17.4](https://github.com/pypeclub/openpype/tree/2.17.4) (2021-05-18)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.3...2.17.4)
+
+**Enhancements:**
+
+- TVPaint: Increment workfile version on successfull publish. [\#1489](https://github.com/pypeclub/OpenPype/pull/1489)
+- Maya: Use of multiple deadline servers [\#1483](https://github.com/pypeclub/OpenPype/pull/1483)
+
+**Fixed bugs:**
+
+-  Maya: wrong collection of playblasted frames [\#1517](https://github.com/pypeclub/OpenPype/pull/1517)
+- Existing subsets hints in creator [\#1502](https://github.com/pypeclub/OpenPype/pull/1502)
+- nuke: space in node name breaking process [\#1494](https://github.com/pypeclub/OpenPype/pull/1494)
+
+## [2.17.3](https://github.com/pypeclub/openpype/tree/2.17.3) (2021-05-06)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.3...2.17.3)
+
+**Fixed bugs:**
+
+- Nuke: workfile version synced to db version always  [\#1479](https://github.com/pypeclub/OpenPype/pull/1479)
+
+## [2.17.2](https://github.com/pypeclub/openpype/tree/2.17.2) (2021-05-04)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.1...2.17.2)
+
+**Enhancements:**
+
+- Forward/Backward compatible apps and tools with OpenPype 3 [\#1463](https://github.com/pypeclub/OpenPype/pull/1463)
+
 ## [2.17.1](https://github.com/pypeclub/openpype/tree/2.17.1) (2021-04-30)
 
 [Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.0...2.17.1)
 
 **Enhancements:**
 
+- Faster settings UI loading [\#1442](https://github.com/pypeclub/OpenPype/pull/1442)
+- Nuke: deadline submission with gpu [\#1414](https://github.com/pypeclub/OpenPype/pull/1414)
 - TVPaint frame range definition [\#1424](https://github.com/pypeclub/OpenPype/pull/1424)
 - PS - group all published instances [\#1415](https://github.com/pypeclub/OpenPype/pull/1415)
-- Nuke: deadline submission with gpu [\#1414](https://github.com/pypeclub/OpenPype/pull/1414)
 - Add task name to context pop up. [\#1383](https://github.com/pypeclub/OpenPype/pull/1383)
+- Enhance review letterbox feature. [\#1371](https://github.com/pypeclub/OpenPype/pull/1371)
 - AE add duration validation [\#1363](https://github.com/pypeclub/OpenPype/pull/1363)
-- Maya: Support for Redshift proxies [\#1360](https://github.com/pypeclub/OpenPype/pull/1360)
 
 **Fixed bugs:**
 
+- Houdini menu filename [\#1417](https://github.com/pypeclub/OpenPype/pull/1417)
 - Nuke: fixing undo for loaded mov and sequence [\#1433](https://github.com/pypeclub/OpenPype/pull/1433)
 - AE - validation for duration was 1 frame shorter [\#1426](https://github.com/pypeclub/OpenPype/pull/1426)
-- Houdini menu filename [\#1417](https://github.com/pypeclub/OpenPype/pull/1417)
-- Maya: Vray - problem getting all file nodes for look publishing [\#1399](https://github.com/pypeclub/OpenPype/pull/1399)
 
+**Merged pull requests:**
+
+- Maya: Vray - problem getting all file nodes for look publishing [\#1399](https://github.com/pypeclub/OpenPype/pull/1399)
+- Maya: Support for Redshift proxies [\#1360](https://github.com/pypeclub/OpenPype/pull/1360)
 
 ## [2.17.0](https://github.com/pypeclub/openpype/tree/2.17.0) (2021-04-20)
 
-[Full Changelog](https://github.com/pypeclub/openpype/compare/3.0.0-beta2...2.17.0)
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-beta.2...2.17.0)
 
 **Enhancements:**
 
@@ -49,10 +84,8 @@
 - Handle duplication of Task name [\#1226](https://github.com/pypeclub/OpenPype/pull/1226)
 - Modified path of plugin loads for Harmony and TVPaint [\#1217](https://github.com/pypeclub/OpenPype/pull/1217)
 - Regex checks in profiles filtering [\#1214](https://github.com/pypeclub/OpenPype/pull/1214)
-- Bulk mov strict task [\#1204](https://github.com/pypeclub/OpenPype/pull/1204)
 - Update custom ftrack session attributes [\#1202](https://github.com/pypeclub/OpenPype/pull/1202)
 - Nuke: write node colorspace ignore `default\(\)` label [\#1199](https://github.com/pypeclub/OpenPype/pull/1199)
-- Nuke: reverse search to make it more versatile [\#1178](https://github.com/pypeclub/OpenPype/pull/1178)
 
 
 
