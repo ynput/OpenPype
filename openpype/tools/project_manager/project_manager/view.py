@@ -409,8 +409,8 @@ class HierarchyView(QtWidgets.QTreeView):
 
         return self._source_model.add_new_task(parent_index)
 
-    def _add_asset_and_edit(self):
-        new_index = self.add_asset()
+    def _add_asset_and_edit(self, parent_index=None):
+        new_index = self.add_asset(parent_index)
         if new_index is None:
             return
 
@@ -446,7 +446,13 @@ class HierarchyView(QtWidgets.QTreeView):
         self.edit(task_type_index)
 
     def _on_shift_enter_pressed(self):
-        self._add_asset_and_edit()
+        parent_index = self.currentIndex()
+        if not parent_index.isValid():
+            return
+
+        if parent_index.data(ITEM_TYPE_ROLE) == "asset":
+            parent_index = parent_index.parent()
+        self._add_asset_and_edit(parent_index)
 
     def _on_up_ctrl_pressed(self):
         indexes = self.selectedIndexes()
