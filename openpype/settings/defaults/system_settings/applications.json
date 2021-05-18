@@ -740,18 +740,7 @@
         "label": "Houdini",
         "icon": "{}/app_icons/houdini.png",
         "host_name": "houdini",
-        "environment": {
-            "HOUDINI_PATH": {
-                "darwin": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
-                "linux": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
-                "windows": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup;&"
-            },
-            "HOUDINI_MENU_PATH": {
-                "darwin": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
-                "linux": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
-                "windows": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup;&"
-            }
-        },
+        "environment": {},
         "variants": {
             "18-5": {
                 "use_python_2": true,
