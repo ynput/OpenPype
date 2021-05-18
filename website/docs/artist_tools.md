@@ -142,6 +142,22 @@ You can set group of selected subsets with shortcut `Ctrl + G`.
 You'll set the group in Avalon database so your changes will take effect for all users.
 :::
 
+### Site Sync support
+
+If **Site Sync** is enabled additional widget is shown in right bottom corner.
+It contains list of all representations of selected version(s). It also shows availability of representation files
+on particular site (*active* - mine, *remote* - theirs). 
+
+![site_sync_support](assets/site_sync_loader.png)
+
+On this picture you see that representation files are available only on remote site (could be GDrive or other). 
+If artist wants to work with the file(s) they need to be downloaded first. That could be done by right mouse click on
+particular representation (or multiselect all) and select *Download*.
+
+This will mark representation to be download which will happen in the background if OpenPype Tray is running.
+
+For more details of progress, state or possible error details artist should open **[Sync Queue](#Sync-Queue)** item in Tray app.
+
 Work in progress...
 
 ## Library Loader
@@ -412,3 +428,35 @@ It might also happen that user deletes underlying host item(for example layer in
 This could result in phantom issues during publishing. Use Subset Manager to purge workfile from abandoned items.
 
 Please check behaviour in host of your choice.
+
+## Sync Queue
+
+### Details
+
+If **Site Sync** is configured for a project, each asset is marked to be synchronized to a remote site during publishing.
+Each artist's OpenPype Tray application handles synchronization in background, it looks for all representation which 
+are marked with the site of the user (unique site name per artist) and remote site.
+
+Artists then can see progress of synchronization via **Sync Queue** link in the Tray application.
+
+Artists can see all synced representation in this dialog with helpful information such as when representation was created, when it was synched,
+status of synchronization (OK or Fail) etc.
+
+### Usage
+
+With this app artists can modify synchronized representation, for example mark failed representation for re-sync etc.
+
+![Sync Queue](assets/site_sync_sync_queue.png)
+
+Actions accessible by context menu on single (or multiple representations):
+- *Open in Explorer* - if site is locally accessible, open folder with it with OS based explorer
+- *Re-sync Active Site* - mark artist own side for re-download (repre must be accessible on remote side)
+- *Re-sync Remote Site* - mark representation for re-upload
+- *Completely remove from local* - removes tag of synchronization to artist's local site, removes files from disk (available only for personal sites)
+- *Change priority* - mark representations with higher priority for faster synchronization run
+
+Double click on any of the representation open Detail dialog with information about all files for particular representation.
+In this dialog error details could be accessed in the context menu.
+
+Artists can also Pause whole server or specific project for synchronization. In that state no download/upload is being run.
+This might be helpful if the artist is not interested in a particular project for a while or wants to save bandwidth data limit for a bit.
