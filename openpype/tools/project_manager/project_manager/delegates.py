@@ -130,6 +130,10 @@ class TypeDelegate(QtWidgets.QStyledItemDelegate):
         if index >= 0:
             editor.setCurrentIndex(index)
 
+    def setModelData(self, editor, model, index):
+        editor.value_cleanup()
+        super(TypeDelegate, self).setModelData(editor, model, index)
+
 
 class ToolsDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, tools_cache, *args, **kwargs):

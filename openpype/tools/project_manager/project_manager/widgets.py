@@ -65,19 +65,30 @@ class FilterComboBox(QtWidgets.QComboBox):
         super(FilterComboBox, self).focusInEvent(event)
         self.lineEdit().selectAll()
 
-    def focusOutEvent(self, event):
-        idx = self.currentIndex()
-        if idx > -1:
-            index = self.model().index(idx, 0)
-            text = index.data(QtCore.Qt.DisplayRole)
-            if text != self.lineEdit().text():
-                self.lineEdit().setText(text)
-        super(FilterComboBox, self).focusOutEvent(event)
+    def value_cleanup(self):
+        text = self.lineEdit().text()
+        idx = self.findText(text)
+        if idx < 0:
+            count = self._completer.completionModel().rowCount()
+            if count > 0:
+                index = self._completer.completionModel().index(0, 0)
+                text = index.data(QtCore.Qt.DisplayRole)
+                idx = self.findText(text)
+
+        if idx < 0:
+            idx = 0
+        self.setCurrentIndex(idx)
 
     def on_completer_activated(self, text):
         if text:
             index = self.findText(text)
             self.setCurrentIndex(index)
+
+    def keyPressEvent(self, event):
+        if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
+            self.value_cleanup()
+
+        super(FilterComboBox, self).keyPressEvent(event)
 
     def setModel(self, model):
         super(FilterComboBox, self).setModel(model)
