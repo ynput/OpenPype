@@ -217,7 +217,7 @@ class App(QtWidgets.QWidget):
             if cmds.pluginInfo('vrayformaya', query=True, loaded=True):
                 self.echo("Getting vray proxy nodes ...")
                 vray_proxies = set(cmds.ls(type="VRayProxy"))
-                nodes = [set(item["nodes"]).difference(vray_proxies)]
+                nodes = list(set(item["nodes"]).difference(vray_proxies))
                 if vray_proxies:
                     for vp in vray_proxies:
                         vrayproxy_assign_look(vp, subset_name)
