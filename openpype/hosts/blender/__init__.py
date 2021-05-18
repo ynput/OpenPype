@@ -1,7 +1,7 @@
 import os
 
 
-def add_implementation_envs(env):
+def add_implementation_envs(env, _app):
     """Modify environments to contain all required for implementation."""
     # Prepare path to implementation script
     implementation_user_script_path = os.path.join(

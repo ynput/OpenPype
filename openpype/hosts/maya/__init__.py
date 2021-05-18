@@ -1,7 +1,7 @@
 import os
 
 
-def add_implementation_envs(env):
+def add_implementation_envs(env, _app):
     # Add requirements to PYTHONPATH
     pype_root = os.environ["OPENPYPE_REPOS_ROOT"]
     new_python_paths = [

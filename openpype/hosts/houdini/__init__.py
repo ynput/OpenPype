@@ -1,7 +1,7 @@
 import os
 
 
-def add_implementation_envs(env):
+def add_implementation_envs(env, _app):
     # Add requirements to HOUDINI_PATH and HOUDINI_MENU_PATH
     pype_root = os.environ["OPENPYPE_REPOS_ROOT"]
 

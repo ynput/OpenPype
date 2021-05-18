@@ -1,7 +1,7 @@
 import os
 
 
-def add_implementation_envs(env):
+def add_implementation_envs(env, _app):
     """Modify environments to contain all required for implementation."""
     openharmony_path = os.path.join(
         os.environ["OPENPYPE_REPOS_ROOT"], "pype", "vendor", "OpenHarmony"

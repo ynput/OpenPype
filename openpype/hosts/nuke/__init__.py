@@ -2,7 +2,7 @@ import os
 import platform
 
 
-def add_implementation_envs(env):
+def add_implementation_envs(env, _app):
     # Add requirements to NUKE_PATH
     pype_root = os.environ["OPENPYPE_REPOS_ROOT"]
     new_nuke_paths = [

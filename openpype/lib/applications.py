@@ -1090,7 +1090,7 @@ def prepare_host_environments(data, implementation_envs=True):
     loaded_env = _merge_env(acre.compute(env_values), data["env"])
 
     final_env = None
-    #
+    # Add host specific environments
     if app.host_name and implementation_envs:
         module = __import__("openpype.hosts", fromlist=[app.host_name])
         host_module = getattr(module, app.host_name, None)
@@ -1101,7 +1101,7 @@ def prepare_host_environments(data, implementation_envs=True):
             )
         if add_implementation_envs:
             # Function may only modify passed dict without returning value
-            final_env = add_implementation_envs(loaded_env)
+            final_env = add_implementation_envs(loaded_env, app)
 
     if final_env is None:
         final_env = loaded_env
