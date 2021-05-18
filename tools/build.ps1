@@ -14,6 +14,12 @@ PS> .\build.ps1
 
 #>
 
+$arguments=$ARGS
+$disable_submodule_update=""
+if($arguments -eq "--no-submodule-update") {
+    $disable_submodule_update=$true
+}
+
 function Start-Progress {
     param([ScriptBlock]$code)
     $scroll = "/-\|/-\|"
@@ -134,10 +140,14 @@ catch {
     Write-Host $_.Exception.Message
     Exit-WithCode 1
 }
-
-Write-Host ">>> " -NoNewLine -ForegroundColor green
-Write-Host "Making sure submodules are up-to-date ..."
-git submodule update --init --recursive
+if (-not $disable_submodule_update) {
+    Write-Host ">>> " -NoNewLine -ForegroundColor green
+    Write-Host "Making sure submodules are up-to-date ..."
+    git submodule update --init --recursive
+} else {
+     Write-Host "*** " -NoNewLine -ForegroundColor yellow
+    Write-Host "Not updating submodules ..."
+}
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "OpenPype [ " -NoNewline -ForegroundColor white
