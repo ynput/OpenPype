@@ -339,15 +339,8 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "hiero",
         "environment": {
-            "HIERO_PLUGIN_PATH": [
-                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/hiero/startup"
-            ],
-            "PATH": {
-                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
-            },
             "WORKFILES_STARTUP": "0",
-            "TAG_ASSETBUILD_STARTUP": "0",
-            "LOGLEVEL": "DEBUG"
+            "TAG_ASSETBUILD_STARTUP": "0"
         },
         "variants": {
             "13-0": {
@@ -481,15 +474,8 @@
         "icon": "{}/app_icons/hiero.png",
         "host_name": "hiero",
         "environment": {
-            "HIERO_PLUGIN_PATH": [
-                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/hiero/startup"
-            ],
-            "PATH": {
-                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
-            },
             "WORKFILES_STARTUP": "0",
-            "TAG_ASSETBUILD_STARTUP": "0",
-            "LOGLEVEL": "DEBUG"
+            "TAG_ASSETBUILD_STARTUP": "0"
         },
         "variants": {
             "13-0": {
