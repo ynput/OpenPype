@@ -57,6 +57,12 @@
                             },
                             "width": 0,
                             "height": 0,
+                            "bg_color": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
                             "letter_box": {
                                 "enabled": false,
                                 "ratio": 0.0,
