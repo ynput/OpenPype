@@ -1,13 +1,13 @@
 <#
 .SYNOPSIS
-  Helper script OpenPype Tray.
+  Helper script to run Project Manager.
 
 .DESCRIPTION
 
 
 .EXAMPLE
 
-PS> .\run_tray.ps1
+PS> .\run_project_manager.ps1
 
 #>
 $current_dir = Get-Location
