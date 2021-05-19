@@ -46,13 +46,14 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         subset = family + task.capitalize()
         # Create instance
         instance = context.create_instance(subset)
+        families = [family, "ftrack"]
 
         # creating instance data
         instance.data.update({
-            "subset": subset,
+            "subset": "{} {}".format(subset, families),
             "label": scene_file,
             "family": family,
-            "families": [family, "ftrack"],
+            "families": families,
             "representations": list()
         })
 
@@ -77,12 +78,13 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         instance = context.create_instance(name=subset)
         # getting instance state
         instance.data["publish"] = True
+        families = [family]
 
         # add assetEntity data into instance
         instance.data.update({
-            "label": "{} - farm".format(subset),
+            "label": "{} {}".format(subset, families),
             "family": family,
-            "families": [family],
+            "families": families,
             "subset": subset
         })
 
