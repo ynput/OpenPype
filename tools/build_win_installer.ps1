@@ -5,7 +5,6 @@
 .DESCRIPTION
   This script will use already built OpenPype (in `build` directory) and
   create Windows installer from it using Inno Setup (https://jrsoftware.org/)
- #>
 
 .EXAMPLE
 
