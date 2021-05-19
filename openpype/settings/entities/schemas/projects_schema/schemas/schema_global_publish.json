@@ -194,6 +194,20 @@
                                             "maximum": 100000
                                         },
                                         {
+                                            "type": "label",
+                                            "label": "Background color is used only when input have transparency and Alpha is higher than 0."
+                                        },
+                                        {
+                                            "type": "schema_template",
+                                            "name": "template_rgba_color",
+                                            "template_data": [
+                                                {
+                                                    "label": "Background color",
+                                                    "name": "bg_color"
+                                                }
+                                            ]
+                                        },
+                                        {
                                             "key": "letter_box",
                                             "label": "Letter box",
                                             "type": "dict",
