@@ -5,13 +5,13 @@ from collections import OrderedDict
 from openpype.hosts.nuke.api import lib
 
 
-class LoadLutsInputProcess(api.Loader):
+class LoadEffectsInputProcess(api.Loader):
     """Loading colorspace soft effect exported from nukestudio"""
 
-    representations = ["lutJson"]
-    families = ["lut"]
+    representations = ["effectJson"]
+    families = ["effect"]
 
-    label = "Load Luts - Input Process"
+    label = "Load Effects - Input Process"
     order = 0
     icon = "eye"
     color = style.colors.alert
@@ -67,15 +67,15 @@ class LoadLutsInputProcess(api.Loader):
                       for key, value in json.load(f).iteritems()}
 
         # get correct order of nodes by positions on track and subtrack
-        nodes_order = self.reorder_nodes(json_f["effects"])
+        nodes_order = self.reorder_nodes(json_f)
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        GN = nuke.createNode("Group")
-
-        GN["name"].setValue(object_name)
+        GN = nuke.createNode(
+            "Group",
+            "name {}_1".format(object_name))
 
         # adding content to the group node
         with GN:
@@ -190,7 +190,7 @@ class LoadLutsInputProcess(api.Loader):
                       for key, value in json.load(f).iteritems()}
 
         # get correct order of nodes by positions on track and subtrack
-        nodes_order = self.reorder_nodes(json_f["effects"])
+        nodes_order = self.reorder_nodes(json_f)
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
@@ -304,8 +304,10 @@ class LoadLutsInputProcess(api.Loader):
 
     def reorder_nodes(self, data):
         new_order = OrderedDict()
-        trackNums = [v["trackIndex"] for k, v in data.items()]
-        subTrackNums = [v["subTrackIndex"] for k, v in data.items()]
+        trackNums = [v["trackIndex"] for k, v in data.items()
+                     if isinstance(v, dict)]
+        subTrackNums = [v["subTrackIndex"] for k, v in data.items()
+                        if isinstance(v, dict)]
 
         for trackIndex in range(
                 min(trackNums), max(trackNums) + 1):
@@ -318,6 +320,7 @@ class LoadLutsInputProcess(api.Loader):
 
     def get_item(self, data, trackIndex, subTrackIndex):
         return {key: val for key, val in data.items()
+                if isinstance(val, dict)
                 if subTrackIndex == val["subTrackIndex"]
                 if trackIndex == val["trackIndex"]}
 
