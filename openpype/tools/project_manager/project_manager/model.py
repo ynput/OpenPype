@@ -1843,6 +1843,32 @@ class AssetItem(BaseItem):
     def on_task_name_change(self, task_item):
         self._rename_task(task_item)
 
+    def on_task_remove_state_change(self, task_item):
+        is_removed = task_item.data(REMOVED_ROLE)
+        item_id = task_item.data(IDENTIFIER_ROLE)
+        if is_removed:
+            name = self._task_name_by_item_id.pop(item_id)
+            self._task_items_by_name[name].remove(task_item)
+
+        else:
+            name = task_item.data(QtCore.Qt.EditRole, "name").lower()
+            self._task_name_by_item_id[item_id] = name
+            self._task_items_by_name[name].append(task_item)
+
+        # Remove from previous name mapping
+        if not self._task_items_by_name[name]:
+            self._task_items_by_name.pop(name)
+
+        elif len(self._task_items_by_name[name]) == 1:
+            if name in self._duplicated_task_names:
+                self._duplicated_task_names.remove(name)
+            task_item.setData(False, DUPLICATED_ROLE)
+
+        else:
+            self._duplicated_task_names.add(name)
+            for _item in self._task_items_by_name[name]:
+                _item.setData(True, DUPLICATED_ROLE)
+
     def add_child(self, item, row=None):
         if item in self._children:
             return
