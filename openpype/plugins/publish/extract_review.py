@@ -508,7 +508,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 ]
                 # Prepend bg color change before all video filters
                 # NOTE at the time of creation it is required as video filters
-                #   from settings may affect color of BG (e.g. to grey)
+                #   from settings may affect color of BG
+                #   e.g. `eq` can remove alpha from input
                 for arg in reversed(color_args):
                     ffmpeg_video_filters.insert(0, arg)
 
