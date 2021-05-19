@@ -2004,7 +2004,10 @@ class TaskItem(BaseItem):
             return True
 
         if role == REMOVED_ROLE:
+            if value == self._removed:
+                return False
             self._removed = value
+            self.parent().on_task_remove_state_change(self)
             return True
 
         if (
