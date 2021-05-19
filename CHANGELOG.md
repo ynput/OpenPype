@@ -1,33 +1,68 @@
 # Changelog
 
+## [2.18.0](https://github.com/pypeclub/openpype/tree/2.18.0) (2021-05-18)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.3...2.18.0)
+
+**Enhancements:**
+
+- Use SubsetLoader and multiple contexts for delete_old_versions [\#1484](ttps://github.com/pypeclub/OpenPype/pull/1484))
+- TVPaint: Increment workfile version on successfull publish. [\#1489](https://github.com/pypeclub/OpenPype/pull/1489)
+- Maya: Use of multiple deadline servers [\#1483](https://github.com/pypeclub/OpenPype/pull/1483)
+
+**Fixed bugs:**
+
+- Use instance frame start instead of timeline. [\#1486](https://github.com/pypeclub/OpenPype/pull/1486)
+- Maya: Redshift - set proper start frame on proxy [\#1480](https://github.com/pypeclub/OpenPype/pull/1480)
+- Maya: wrong collection of playblasted frames [\#1517](https://github.com/pypeclub/OpenPype/pull/1517)
+- Existing subsets hints in creator [\#1502](https://github.com/pypeclub/OpenPype/pull/1502)
+
+## [2.17.3](https://github.com/pypeclub/openpype/tree/2.17.3) (2021-05-06)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.3...2.17.3)
+
+**Fixed bugs:**
+
+- Nuke: workfile version synced to db version always  [\#1479](https://github.com/pypeclub/OpenPype/pull/1479)
+
+## [2.17.2](https://github.com/pypeclub/openpype/tree/2.17.2) (2021-05-04)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.1...2.17.2)
+
+**Enhancements:**
+
+- Forward/Backward compatible apps and tools with OpenPype 3 [\#1463](https://github.com/pypeclub/OpenPype/pull/1463)
+
 ## [2.17.1](https://github.com/pypeclub/openpype/tree/2.17.1) (2021-04-30)
 
 [Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.0...2.17.1)
 
 **Enhancements:**
 
+- Nuke: deadline submission with gpu [\#1414](https://github.com/pypeclub/OpenPype/pull/1414)
 - TVPaint frame range definition [\#1424](https://github.com/pypeclub/OpenPype/pull/1424)
 - PS - group all published instances [\#1415](https://github.com/pypeclub/OpenPype/pull/1415)
-- Nuke: deadline submission with gpu [\#1414](https://github.com/pypeclub/OpenPype/pull/1414)
 - Add task name to context pop up. [\#1383](https://github.com/pypeclub/OpenPype/pull/1383)
-- AE add duration validation [\#1363](https://github.com/pypeclub/OpenPype/pull/1363)
-- Maya: Support for Redshift proxies [\#1360](https://github.com/pypeclub/OpenPype/pull/1360)
+- Enhance review letterbox feature. [\#1371](https://github.com/pypeclub/OpenPype/pull/1371)
 
 **Fixed bugs:**
 
-- Nuke: fixing undo for loaded mov and sequence [\#1433](https://github.com/pypeclub/OpenPype/pull/1433)
-- AE - validation for duration was 1 frame shorter [\#1426](https://github.com/pypeclub/OpenPype/pull/1426)
 - Houdini menu filename [\#1417](https://github.com/pypeclub/OpenPype/pull/1417)
-- Maya: Vray - problem getting all file nodes for look publishing [\#1399](https://github.com/pypeclub/OpenPype/pull/1399)
+- AE - validation for duration was 1 frame shorter [\#1426](https://github.com/pypeclub/OpenPype/pull/1426)
 
+**Merged pull requests:**
+
+- Maya: Vray - problem getting all file nodes for look publishing [\#1399](https://github.com/pypeclub/OpenPype/pull/1399)
+- Maya: Support for Redshift proxies [\#1360](https://github.com/pypeclub/OpenPype/pull/1360)
 
 ## [2.17.0](https://github.com/pypeclub/openpype/tree/2.17.0) (2021-04-20)
 
-[Full Changelog](https://github.com/pypeclub/openpype/compare/3.0.0-beta2...2.17.0)
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-beta.2...2.17.0)
 
 **Enhancements:**
 
 - Forward compatible ftrack group [\#1243](https://github.com/pypeclub/OpenPype/pull/1243)
+- Settings in mongo as dict [\#1221](https://github.com/pypeclub/OpenPype/pull/1221)
 - Maya: Make tx option configurable with presets [\#1328](https://github.com/pypeclub/OpenPype/pull/1328)
 - TVPaint asset name validation [\#1302](https://github.com/pypeclub/OpenPype/pull/1302)
 - TV Paint: Set initial project settings. [\#1299](https://github.com/pypeclub/OpenPype/pull/1299)

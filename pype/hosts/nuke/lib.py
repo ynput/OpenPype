@@ -313,14 +313,11 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
 
     prev_node = None
     with GN:
-        connections = list()
         if input:
             # if connected input node was defined
-            connections.append({
-                "node": input,
-                "inputName": input.name()})
+            input_name = str(input.name()).replace(" ", "")
             prev_node = nuke.createNode(
-                "Input", "name {}".format(input.name()))
+                "Input", "name {}".format(input_name))
             prev_node.hideControlPanel()
 
         else:
@@ -357,18 +354,12 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
                             input_node = nuke.createNode(
                                 "Input", "name {}".format(node_name))
                             input_node.hideControlPanel()
-                            connections.append({
-                                "node": nuke.toNode(node_name),
-                                "inputName": node_name})
                             now_node.setInput(1, input_node)
 
                     elif isinstance(set_output_to, str):
                         input_node = nuke.createNode(
                             "Input", "name {}".format(node_name))
                         input_node.hideControlPanel()
-                        connections.append({
-                            "node": nuke.toNode(set_output_to),
-                            "inputName": set_output_to})
                         now_node.setInput(0, input_node)
 
                 else:
