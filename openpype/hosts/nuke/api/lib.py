@@ -53,8 +53,6 @@ def get_created_node_imageio_setting(**kwarg):
     imageio_node = None
     for node in imageio_nodes:
         log.info(node)
-        if (node["nukeNodeClass"] != nodeclass) and (
-                creator not in node["plugins"]):
         if (nodeclass in node["nukeNodeClass"]) and (
                 creator in node["plugins"]):
             imageio_node = node
