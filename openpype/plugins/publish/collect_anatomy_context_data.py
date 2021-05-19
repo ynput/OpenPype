@@ -76,6 +76,7 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
                 app = app_manager.applications.get(app_name)
                 if app:
                     host_name = app.host_name
+                    os.environ["AVALON_APP"] = host_name
         context_data["app"] = host_name
 
         datetime_data = context.data.get("datetimeData") or {}
