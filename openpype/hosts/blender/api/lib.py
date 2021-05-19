@@ -91,3 +91,15 @@ def load_scripts(paths):
                     "Warning, unregistered class: %s(%s)" %
                     (subcls.__name__, cls.__name__)
                 )
+
+
+def append_user_scripts():
+    user_scripts = os.environ.get("OPENPYPE_BLENDER_USER_SCRIPTS")
+    if not user_scripts:
+        return
+
+    try:
+        load_scripts(user_scripts.split(os.pathsep))
+    except Exception:
+        print("Couldn't load user scripts \"{}\"".format(user_scripts))
+        traceback.print_exc()
