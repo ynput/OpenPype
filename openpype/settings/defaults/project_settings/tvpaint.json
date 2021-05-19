@@ -22,26 +22,14 @@
                 "stretch": true,
                 "timestretch": true,
                 "preload": true
-            },
-            "families": [
-                "render",
-                "image",
-                "background",
-                "plate"
-            ]
+            }
         },
         "ImportImage": {
             "defaults": {
                 "stretch": true,
                 "timestretch": true,
                 "preload": true
-            },
-            "families": [
-                "render",
-                "image",
-                "background",
-                "plate"
-            ]
+            }
         }
     },
     "filters": {}

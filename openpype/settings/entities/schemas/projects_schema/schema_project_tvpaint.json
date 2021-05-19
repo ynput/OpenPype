@@ -79,12 +79,6 @@
                                     "label": "Preload"
                                 }
                             ]
-                        },
-                        {
-                            "type": "list",
-                            "key": "families",
-                            "label": "Families",
-                            "object_type": "text"
                         }
                     ]
                 },
@@ -114,12 +108,6 @@
                                     "label": "Preload"
                                 }
                             ]
-                        },
-                        {
-                            "type": "list",
-                            "key": "families",
-                            "label": "Families",
-                            "object_type": "text"
                         }
                     ]
                 }
