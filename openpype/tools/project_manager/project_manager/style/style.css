@@ -1,0 +1,21 @@
+QTreeView::item {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-right: 3px;
+}
+
+
+QTreeView::item:selected, QTreeView::item:selected:!active {
+    background: rgba(0, 122, 204, 127);
+    color: black;
+}
+
+#RefreshBtn {
+    padding: 2px;
+}
+
+#TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
+    background: transparent;
+    border: 1px solid #005c99;
+    border-radius: 0.3em;
+}

@@ -135,7 +135,8 @@
         "workspace_name": ""
     },
     "sync_server": {
-        "enabled": false
+        "enabled": false,
+        "sites": {}
     },
     "deadline": {
         "enabled": true,

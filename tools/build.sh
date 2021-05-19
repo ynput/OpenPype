@@ -57,6 +57,26 @@ BIPurple='\033[1;95m'     # Purple
 BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
 
+args=$@
+disable_submodule_update = 0
+while :; do
+  case $1 in
+    --no-submodule-update)
+      disable_submodule_update=1
+      ;;
+    --)
+      shift
+      break
+      ;;
+    *)
+      break
+  esac
+
+  shift
+done
+
+
+
 
 ##############################################################################
 # Detect required version of python
@@ -172,9 +192,12 @@ main () {
     . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
   fi
 
+if [ "$disable_submodule_update" == 1 ]; then
   echo -e "${BIGreen}>>>${RST} Making sure submodules are up-to-date ..."
   git submodule update --init --recursive
-
+  else
+     echo -e "${BIYellow}***${RST} Not updating submodules ..."
+  fi
   echo -e "${BIGreen}>>>${RST} Building ..."
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
     poetry run python "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }

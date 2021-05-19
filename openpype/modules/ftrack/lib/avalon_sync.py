@@ -34,7 +34,7 @@ log = Logger.get_logger(__name__)
 
 
 # Current schemas for avalon types
-EntitySchemas = {
+CURRENT_DOC_SCHEMAS = {
     "project": "openpype:project-3.0",
     "asset": "openpype:asset-3.0",
     "config": "openpype:config-2.0"
@@ -1862,7 +1862,7 @@ class SyncEntitiesFactory:
 
         item["_id"] = new_id
         item["parent"] = self.avalon_project_id
-        item["schema"] = EntitySchemas["asset"]
+        item["schema"] = CURRENT_DOC_SCHEMAS["asset"]
         item["data"]["visualParent"] = avalon_parent
 
         new_id_str = str(new_id)
@@ -2003,8 +2003,8 @@ class SyncEntitiesFactory:
 
         project_item["_id"] = new_id
         project_item["parent"] = None
-        project_item["schema"] = EntitySchemas["project"]
-        project_item["config"]["schema"] = EntitySchemas["config"]
+        project_item["schema"] = CURRENT_DOC_SCHEMAS["project"]
+        project_item["config"]["schema"] = CURRENT_DOC_SCHEMAS["config"]
 
         self.ftrack_avalon_mapper[self.ft_project_id] = new_id
         self.avalon_ftrack_mapper[new_id] = self.ft_project_id

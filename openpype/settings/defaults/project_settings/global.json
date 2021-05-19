@@ -267,13 +267,6 @@
             "remote_site": "studio"
         },
         "sites": {
-            "gdrive": {
-                "provider": "gdrive",
-                "credentials_url": "",
-                "root": {
-                    "work": ""
-                }
-            }
         }
     },
     "project_plugins": {

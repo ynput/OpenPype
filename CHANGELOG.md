@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.18.0](https://github.com/pypeclub/openpype/tree/2.18.0) (2021-05-18)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.3...2.18.0)
+
+**Enhancements:**
+
+- Use SubsetLoader and multiple contexts for delete_old_versions [\#1484](ttps://github.com/pypeclub/OpenPype/pull/1484))
+- TVPaint: Increment workfile version on successfull publish. [\#1489](https://github.com/pypeclub/OpenPype/pull/1489)
+- Maya: Use of multiple deadline servers [\#1483](https://github.com/pypeclub/OpenPype/pull/1483)
+
+**Fixed bugs:**
+
+- Use instance frame start instead of timeline. [\#1486](https://github.com/pypeclub/OpenPype/pull/1486)
+- Maya: Redshift - set proper start frame on proxy [\#1480](https://github.com/pypeclub/OpenPype/pull/1480)
+- Maya: wrong collection of playblasted frames [\#1517](https://github.com/pypeclub/OpenPype/pull/1517)
+- Existing subsets hints in creator [\#1502](https://github.com/pypeclub/OpenPype/pull/1502)
+
+## [2.17.3](https://github.com/pypeclub/openpype/tree/2.17.3) (2021-05-06)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.3...2.17.3)
+
+**Fixed bugs:**
+
+- Nuke: workfile version synced to db version always  [\#1479](https://github.com/pypeclub/OpenPype/pull/1479)
+
+## [2.17.2](https://github.com/pypeclub/openpype/tree/2.17.2) (2021-05-04)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.1...2.17.2)
+
+**Enhancements:**
+
+- Forward/Backward compatible apps and tools with OpenPype 3 [\#1463](https://github.com/pypeclub/OpenPype/pull/1463)
 
 ## [2.17.1](https://github.com/pypeclub/openpype/tree/2.17.1) (2021-04-30)
 
@@ -7,28 +39,30 @@
 
 **Enhancements:**
 
+- Nuke: deadline submission with gpu [\#1414](https://github.com/pypeclub/OpenPype/pull/1414)
 - TVPaint frame range definition [\#1424](https://github.com/pypeclub/OpenPype/pull/1424)
 - PS - group all published instances [\#1415](https://github.com/pypeclub/OpenPype/pull/1415)
-- Nuke: deadline submission with gpu [\#1414](https://github.com/pypeclub/OpenPype/pull/1414)
 - Add task name to context pop up. [\#1383](https://github.com/pypeclub/OpenPype/pull/1383)
-- AE add duration validation [\#1363](https://github.com/pypeclub/OpenPype/pull/1363)
-- Maya: Support for Redshift proxies [\#1360](https://github.com/pypeclub/OpenPype/pull/1360)
+- Enhance review letterbox feature. [\#1371](https://github.com/pypeclub/OpenPype/pull/1371)
 
 **Fixed bugs:**
 
-- Nuke: fixing undo for loaded mov and sequence [\#1433](https://github.com/pypeclub/OpenPype/pull/1433)
-- AE - validation for duration was 1 frame shorter [\#1426](https://github.com/pypeclub/OpenPype/pull/1426)
 - Houdini menu filename [\#1417](https://github.com/pypeclub/OpenPype/pull/1417)
-- Maya: Vray - problem getting all file nodes for look publishing [\#1399](https://github.com/pypeclub/OpenPype/pull/1399)
+- AE - validation for duration was 1 frame shorter [\#1426](https://github.com/pypeclub/OpenPype/pull/1426)
 
+**Merged pull requests:**
+
+- Maya: Vray - problem getting all file nodes for look publishing [\#1399](https://github.com/pypeclub/OpenPype/pull/1399)
+- Maya: Support for Redshift proxies [\#1360](https://github.com/pypeclub/OpenPype/pull/1360)
 
 ## [2.17.0](https://github.com/pypeclub/openpype/tree/2.17.0) (2021-04-20)
 
-[Full Changelog](https://github.com/pypeclub/openpype/compare/3.0.0-beta2...2.17.0)
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-beta.2...2.17.0)
 
 **Enhancements:**
 
 - Forward compatible ftrack group [\#1243](https://github.com/pypeclub/OpenPype/pull/1243)
+- Settings in mongo as dict [\#1221](https://github.com/pypeclub/OpenPype/pull/1221)
 - Maya: Make tx option configurable with presets [\#1328](https://github.com/pypeclub/OpenPype/pull/1328)
 - TVPaint asset name validation [\#1302](https://github.com/pypeclub/OpenPype/pull/1302)
 - TV Paint: Set initial project settings. [\#1299](https://github.com/pypeclub/OpenPype/pull/1299)
@@ -56,35 +90,6 @@
 - Nuke: reverse search to make it more versatile [\#1178](https://github.com/pypeclub/OpenPype/pull/1178)
 
 
-## [2.16.1](https://github.com/pypeclub/pype/tree/2.16.1) (2021-04-13)
-
-[Full Changelog](https://github.com/pypeclub/pype/compare/2.16.0...2.16.1)
-
-**Enhancements:**
-
-- Nuke: comp renders mix up [\#1301](https://github.com/pypeclub/pype/pull/1301)
-- Validate project settings [\#1297](https://github.com/pypeclub/pype/pull/1297)
-- After Effects: added SubsetManager [\#1234](https://github.com/pypeclub/pype/pull/1234)
-
-**Fixed bugs:**
-
-- Ftrack custom attributes in bulks [\#1312](https://github.com/pypeclub/pype/pull/1312)
-- Ftrack optional pypclub role [\#1303](https://github.com/pypeclub/pype/pull/1303)
-- AE remove orphaned instance from workfile - fix self.stub [\#1282](https://github.com/pypeclub/pype/pull/1282)
-- Avalon schema names [\#1242](https://github.com/pypeclub/pype/pull/1242)
-- Handle duplication of Task name [\#1226](https://github.com/pypeclub/pype/pull/1226)
-- Modified path of plugin loads for Harmony and TVPaint [\#1217](https://github.com/pypeclub/pype/pull/1217)
-- Regex checks in profiles filtering [\#1214](https://github.com/pypeclub/pype/pull/1214)
-- Bulk mov strict task [\#1204](https://github.com/pypeclub/pype/pull/1204)
-- Update custom ftrack session attributes [\#1202](https://github.com/pypeclub/pype/pull/1202)
-- Nuke: write node colorspace ignore `default\(\)` label [\#1199](https://github.com/pypeclub/pype/pull/1199)
-- Nuke: reverse search to make it more versatile [\#1178](https://github.com/pypeclub/pype/pull/1178)
-
-**Merged pull requests:**
-
-- Forward compatible ftrack group [\#1243](https://github.com/pypeclub/pype/pull/1243)
-- Error message in pyblish UI [\#1206](https://github.com/pypeclub/pype/pull/1206)
-- Nuke: deadline submission with search replaced env values from preset [\#1194](https://github.com/pypeclub/pype/pull/1194)
 
 ## [2.16.0](https://github.com/pypeclub/pype/tree/2.16.0) (2021-03-22)
 
@@ -1140,6 +1145,9 @@ A large cleanup release. Most of the change are under the hood.
 - work directory was sometimes not being created correctly
 - major pype.lib cleanup. Removing of unused functions, merging those that were doing the same and general house cleaning.
 - _(avalon)_ subsets in maya 2019 weren't behaving correctly in the outliner
+
+
+\* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*
 
 
 \* *This Changelog was automatically generated by [github_changelog_generator](https://github.com/github-changelog-generator/github-changelog-generator)*

@@ -5,18 +5,11 @@
         "icon": "{}/app_icons/maya.png",
         "host_name": "maya",
         "environment": {
-            "PYTHONPATH": [
-                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/maya/startup",
-                "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/maya",
-                "{OPENPYPE_REPOS_ROOT}/repos/maya-look-assigner",
-                "{PYTHONPATH}"
-            ],
             "MAYA_DISABLE_CLIC_IPM": "Yes",
             "MAYA_DISABLE_CIP": "Yes",
             "MAYA_DISABLE_CER": "Yes",
             "PYMEL_SKIP_MEL_INIT": "Yes",
-            "LC_ALL": "C",
-            "OPENPYPE_LOG_NO_COLORS": "Yes"
+            "LC_ALL": "C"
         },
         "variants": {
             "2022": {
@@ -110,15 +103,7 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "NUKE_PATH": [
-                "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
-                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/nuke/startup",
-                "{OPENPYPE_STUDIO_PLUGINS}/nuke"
-            ],
-            "PATH": {
-                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
-            },
-            "LOGLEVEL": "DEBUG"
+            "NUKE_PATH": "{OPENPYPE_STUDIO_PLUGINS}/nuke"
         },
         "variants": {
             "13-0": {
@@ -224,15 +209,7 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "nuke",
         "environment": {
-            "NUKE_PATH": [
-                "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/nuke/nuke_path",
-                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/nuke/startup",
-                "{OPENPYPE_STUDIO_PLUGINS}/nuke"
-            ],
-            "PATH": {
-                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
-            },
-            "LOGLEVEL": "DEBUG"
+            "NUKE_PATH": "{OPENPYPE_STUDIO_PLUGINS}/nuke"
         },
         "variants": {
             "13-0": {
@@ -368,15 +345,8 @@
         "icon": "{}/app_icons/nuke.png",
         "host_name": "hiero",
         "environment": {
-            "HIERO_PLUGIN_PATH": [
-                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/hiero/startup"
-            ],
-            "PATH": {
-                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
-            },
             "WORKFILES_STARTUP": "0",
-            "TAG_ASSETBUILD_STARTUP": "0",
-            "LOGLEVEL": "DEBUG"
+            "TAG_ASSETBUILD_STARTUP": "0"
         },
         "variants": {
             "13-0": {
@@ -510,15 +480,8 @@
         "icon": "{}/app_icons/hiero.png",
         "host_name": "hiero",
         "environment": {
-            "HIERO_PLUGIN_PATH": [
-                "{OPENPYPE_REPOS_ROOT}/openpype/hosts/hiero/startup"
-            ],
-            "PATH": {
-                "windows": "C:/Program Files (x86)/QuickTime/QTSystem/;{PATH}"
-            },
             "WORKFILES_STARTUP": "0",
-            "TAG_ASSETBUILD_STARTUP": "0",
-            "LOGLEVEL": "DEBUG"
+            "TAG_ASSETBUILD_STARTUP": "0"
         },
         "variants": {
             "13-0": {
@@ -783,18 +746,7 @@
         "label": "Houdini",
         "icon": "{}/app_icons/houdini.png",
         "host_name": "houdini",
-        "environment": {
-            "HOUDINI_PATH": {
-                "darwin": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
-                "linux": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
-                "windows": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup;&"
-            },
-            "HOUDINI_MENU_PATH": {
-                "darwin": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
-                "linux": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup:&",
-                "windows": "{OPENPYPE_REPOS_ROOT}/openpype/hosts/houdini/startup;&"
-            }
-        },
+        "environment": {},
         "variants": {
             "18-5": {
                 "use_python_2": true,
@@ -852,14 +804,7 @@
         "label": "Blender",
         "icon": "{}/app_icons/blender.png",
         "host_name": "blender",
-        "environment": {
-            "BLENDER_USER_SCRIPTS": "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/blender",
-            "PYTHONPATH": [
-                "{OPENPYPE_REPOS_ROOT}/repos/avalon-core/setup/blender",
-                "{PYTHONPATH}"
-            ],
-            "QT_PREFERRED_BINDING": "PySide2"
-        },
+        "environment": {},
         "variants": {
             "2-83": {
                 "use_python_2": false,
@@ -940,8 +885,7 @@
         "icon": "{}/app_icons/harmony.png",
         "host_name": "harmony",
         "environment": {
-            "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1",
-            "LIB_OPENHARMONY_PATH": "{OPENPYPE_REPOS_ROOT}/pype/vendor/OpenHarmony"
+            "AVALON_HARMONY_WORKFILES_ON_LAUNCH": "1"
         },
         "variants": {
             "20": {
@@ -985,9 +929,7 @@
         "label": "TVPaint",
         "icon": "{}/app_icons/tvpaint.png",
         "host_name": "tvpaint",
-        "environment": {
-            "OPENPYPE_LOG_NO_COLORS": "True"
-        },
+        "environment": {},
         "variants": {
             "animation_11-64bits": {
                 "use_python_2": false,
@@ -1034,8 +976,6 @@
         "host_name": "photoshop",
         "environment": {
             "AVALON_PHOTOSHOP_WORKFILES_ON_LAUNCH": "1",
-            "OPENPYPE_LOG_NO_COLORS": "Yes",
-            "WEBSOCKET_URL": "ws://localhost:8099/ws/",
             "WORKFILES_SAVE_AS": "Yes"
         },
         "variants": {
@@ -1084,8 +1024,6 @@
         "host_name": "aftereffects",
         "environment": {
             "AVALON_AFTEREFFECTS_WORKFILES_ON_LAUNCH": "1",
-            "OPENPYPE_LOG_NO_COLORS": "Yes",
-            "WEBSOCKET_URL": "ws://localhost:8097/ws/",
             "WORKFILES_SAVE_AS": "Yes"
         },
         "variants": {
@@ -1159,10 +1097,7 @@
         "label": "Unreal Editor",
         "icon": "{}/app_icons/ue4.png'",
         "host_name": "unreal",
-        "environment": {
-            "AVALON_UNREAL_PLUGIN": "{OPENPYPE_REPOS_ROOT}/repos/avalon-unreal-integration",
-            "OPENPYPE_LOG_NO_COLORS": "True"
-        },
+        "environment": {},
         "variants": {
             "4-26": {
                 "use_python_2": false,

@@ -110,6 +110,12 @@ class PypeCommands:
         with open(output_json_path, "w") as file_stream:
             json.dump(env, file_stream, indent=4)
 
+    @staticmethod
+    def launch_project_manager():
+        from openpype.tools import project_manager
+
+        project_manager.main()
+
     def texture_copy(self, project, asset, path):
         pass
 

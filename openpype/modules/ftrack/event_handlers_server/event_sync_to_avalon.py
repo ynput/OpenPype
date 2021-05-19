@@ -26,9 +26,7 @@ from openpype.modules.ftrack.lib import (
 
     BaseEvent
 )
-from openpype.modules.ftrack.lib.avalon_sync import (
-    EntitySchemas
-)
+from openpype.lib import CURRENT_DOC_SCHEMAS
 
 
 class SyncToAvalonEvent(BaseEvent):
@@ -1128,7 +1126,7 @@ class SyncToAvalonEvent(BaseEvent):
             "_id": mongo_id,
             "name": name,
             "type": "asset",
-            "schema": EntitySchemas["asset"],
+            "schema": CURRENT_DOC_SCHEMAS["asset"],
             "parent": proj["_id"],
             "data": {
                 "ftrackId": ftrack_ent["id"],

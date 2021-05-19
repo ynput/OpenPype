@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Validate scene settings."""
 import os
+import re
 
 import pyblish.api
 
@@ -56,13 +57,26 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
     hosts = ["aftereffects"]
     optional = True
 
-    skip_timelines_check = ["*"]  # * >> skip for all
-    skip_resolution_check = ["*"]
+    skip_timelines_check = [".*"]  # * >> skip for all
+    skip_resolution_check = [".*"]
 
     def process(self, instance):
         """Plugin entry point."""
         expected_settings = api.get_asset_settings()
-        self.log.info("expected_settings::{}".format(expected_settings))
+        self.log.info("config from DB::{}".format(expected_settings))
+
+        if any(re.search(pattern, os.getenv('AVALON_TASK'))
+                for pattern in self.skip_resolution_check):
+            expected_settings.pop("resolutionWidth")
+            expected_settings.pop("resolutionHeight")
+
+        if any(re.search(pattern, os.getenv('AVALON_TASK'))
+                for pattern in self.skip_timelines_check):
+            expected_settings.pop('fps', None)
+            expected_settings.pop('frameStart', None)
+            expected_settings.pop('frameEnd', None)
+            expected_settings.pop('handleStart', None)
+            expected_settings.pop('handleEnd', None)
 
         # handle case where ftrack uses only two decimal places
         # 23.976023976023978 vs. 23.98
@@ -75,6 +89,8 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
 
         duration = instance.data.get("frameEndHandle") - \
             instance.data.get("frameStartHandle") + 1
+
+        self.log.debug("filtered config::{}".format(expected_settings))
 
         current_settings = {
             "fps": fps,

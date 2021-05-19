@@ -367,13 +367,13 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         # Y axis mirrored
         obj.location = (
             location.get('x'),
-            -location.get('y'),
+            location.get('y'),
             location.get('z')
         )
         obj.rotation_euler = (
-            rotation.get('x') + math.pi / 2,
-            -rotation.get('y'),
-            -rotation.get('z')
+            rotation.get('x'),
+            rotation.get('y'),
+            rotation.get('z')
         )
         obj.scale = (
             scale.get('x'),

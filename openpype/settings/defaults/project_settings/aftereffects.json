@@ -1,0 +1,18 @@
+{
+    "publish": {
+        "ValidateSceneSettings": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "skip_resolution_check": [".*"],
+            "skip_timelines_check": [".*"]
+        },
+        "AfterEffectsSubmitDeadline": {
+            "use_published": true,
+            "priority": 50,
+            "primary_pool": "",
+            "secondary_pool": "",
+            "chunk_size": 1000000
+        }
+    }
+}
