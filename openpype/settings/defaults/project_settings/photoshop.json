@@ -1,0 +1,17 @@
+{
+    "create": {
+        "CreateImage": {
+            "defaults": [
+                "Main"
+            ]
+        }
+    },
+    "publish": {
+        "ExtractImage": {
+            "formats": [
+                "png",
+                "jpg"
+            ]
+        }
+    }
+}
