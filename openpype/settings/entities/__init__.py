@@ -97,7 +97,7 @@ from .input_entities import (
     PathInput,
     RawJsonEntity
 )
-
+from .color_entity import ColorEntity
 from .enum_entity import (
     BaseEnumEntity,
     EnumEntity,
@@ -147,6 +147,8 @@ __all__ = (
     "TextEntity",
     "PathInput",
     "RawJsonEntity",
+
+    "ColorEntity",
 
     "BaseEnumEntity",
     "EnumEntity",
