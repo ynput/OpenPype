@@ -1810,6 +1810,9 @@ class AssetItem(BaseItem):
                 _item.setData(False, DUPLICATED_ROLE)
 
     def _rename_task(self, item):
+        if item.data(REMOVED_ROLE):
+            return
+
         new_name = item.data(QtCore.Qt.EditRole, "name").lower()
         item_id = item.data(IDENTIFIER_ROLE)
         prev_name = self._task_name_by_item_id[item_id]
