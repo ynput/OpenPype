@@ -182,9 +182,10 @@ For more information about setting your build environment please refer to [pyenv
 </TabItem>
 <TabItem value="mac">
 
+### MacOS
 To build pype on MacOS you wil need:
 
-- **[Homebrew](https://brew.sh)**, Easy way of installing everything necessary is to use.
+- **[Homebrew](https://brew.sh)** - easy way of installing everything necessary.
 - **[CMake](https://cmake.org/)** to build some external OpenPype dependencies.
 - **XCode Command Line Tools** (or some other build system)
 
@@ -229,3 +230,79 @@ $ pyenv local 3.7.9
 
 </TabItem>
 </Tabs>
+
+## Script tools
+
+(replace extension with the one for your system - `ps1` for windows, `sh` for linux/macos)
+
+### build
+
+This will build OpenPype to `build` directory. If virtual environment is not created yet, it will
+install [Poetry](https://python-poetry.org/) and using it download and install necessary
+packages needed for build. It is recommended that you run [fetch_thirdparty_libs](#fetch-thirdparty-libs)
+to download FFMpeg, OpenImageIO and others that are needed by OpenPype and are copied during the build.
+
+#### Arguments
+`--no-submodule-update` - to disable updating submodules. This allows to make custom-builds for testing
+feature changes in submodules.
+
+### build_win_installer
+
+This will take already existing build in `build` directory and create executable installer using
+[Inno Setup](https://jrsoftware.org/isinfo.php) and definitions in `./inno_setup.iss`. You need OpenPype
+build using [build script](#build), Inno Setup installed and in PATH before running this script.
+
+:::note
+Windows only
+:::
+
+### create_env
+
+Script to create virtual environment for build and running OpenPype from sources. It is using
+[Poetry](https://python-poetry.org/). All dependencies are defined in `pyproject.toml`, resolved by
+Poetry into `poetry.lock` file and then installed. Running this script without Poetry will download
+it, install it to `.poetry` and then install virtual environment from `poetry.lock` file. If you want
+to update packages version, just run `poetry update` or delete lock file.
+
+#### Arguments
+`--verbose` - to increase verbosity of Poetry. This can be useful for debugging package conflicts.
+
+### create_zip
+
+Script to create packaged OpenPype version from current sources. This will strip developer stuff and
+package it into zip that can be used for [auto-updates for studio wide distributions](admin_distribute#automatic-updates), etc.
+
+### docker_build.sh
+
+Script to build OpenPype on [Docker](https://www.docker.com/) enabled systems - usually Linux and Windows
+with [Docker Desktop](https://docs.docker.com/docker-for-windows/install/)
+and [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/about) (WSL) installed.
+
+It must be run with administrative privileges - `sudo ./docker_build.sh`.
+
+It will use Centos 7 base image to build OpenPype. You'll see your build in `./build` folder.
+
+### fetch_thirdparty_libs
+
+This script will download necessary tools for OpenPype defined in `pyproject.toml` like FFMpeg,
+OpenImageIO and USD libraries and put them to `./vendor/bin`. Those are then included in build.
+Running it will overwrite everything on their respective paths.
+
+### make_docs
+
+Script will run [sphinx](https://www.sphinx-doc.org/) to build api documentation in html. You
+should see it then under `./docs/build/html`.
+
+### run_documentation
+
+This will start up [Docusaurus](https://docusaurus.io/) to display OpenPype user documentation.
+Useful for offline browsing or editing documentation itself. You will need [Node.js](https://nodejs.org/)
+and [Yarn](https://yarnpkg.com/) to run this script. After executing it, you'll see new
+browser window with current OpenPype documentation.
+
+### run_mongo
+
+Helper script to run local mongoDB server for development and testing. You will need
+[mongoDB server](https://www.mongodb.com/try/download/community) installed in standard location
+or in PATH (standard location works only on Windows). It will start by default on port `2707` and
+it will put its db files to `../mongo_db_data` relative to OpenPype sources.
