@@ -228,14 +228,9 @@
                                                     ]
                                                 },
                                                 {
-                                                    "type": "schema_template",
-                                                    "name": "template_rgba_color",
-                                                    "template_data": [
-                                                        {
-                                                            "label": "Fill Color",
-                                                            "name": "fill_color"
-                                                        }
-                                                    ]
+                                                    "type": "color",
+                                                    "label": "Fill Color",
+                                                    "key": "fill_color"
                                                 },
                                                 {
                                                     "key": "line_thickness",
@@ -245,14 +240,9 @@
                                                     "maximum": 1000
                                                 },
                                                 {
-                                                    "type": "schema_template",
-                                                    "name": "template_rgba_color",
-                                                    "template_data": [
-                                                        {
-                                                            "label": "Line Color",
-                                                            "name": "line_color"
-                                                        }
-                                                    ]
+                                                    "type": "color",
+                                                    "label": "Line Color",
+                                                    "key": "line_color"
                                                 }
                                             ]
                                         }
