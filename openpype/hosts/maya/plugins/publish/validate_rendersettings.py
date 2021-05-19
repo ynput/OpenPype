@@ -1,8 +1,9 @@
-import os
+# -*- coding: utf-8 -*-
+"""Maya validator for render settings."""
 import re
+from collections import OrderedDict
 
 from maya import cmds, mel
-import pymel.core as pm
 
 import pyblish.api
 import openpype.api
@@ -59,6 +60,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'vray': 'maya/<Scene>/<Layer>/<Layer>',
         'renderman': '<layer>_<aov>.<f4>.<ext>'
     }
+
+    redshift_AOV_prefix = "<BeautyPath>/<BeautyFile>_<RenderPass>"
 
     # WARNING: There is bug? in renderman, translating <scene> token
     # to something left behind mayas default image prefix. So instead
@@ -120,25 +123,59 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                           "doesn't have: '<renderlayer>' or "
                           "'<layer>' token".format(prefix))
 
-        if len(cameras) > 1:
-            if not re.search(cls.R_CAMERA_TOKEN, prefix):
-                invalid = True
-                cls.log.error("Wrong image prefix [ {} ] - "
-                              "doesn't have: '<camera>' token".format(prefix))
+        if len(cameras) > 1 and not re.search(cls.R_CAMERA_TOKEN, prefix):
+            invalid = True
+            cls.log.error("Wrong image prefix [ {} ] - "
+                          "doesn't have: '<camera>' token".format(prefix))
 
         # renderer specific checks
         if renderer == "vray":
-            # no vray checks implemented yet
-            pass
-        elif renderer == "redshift":
+            vray_settings = cmds.ls(type="VRaySettingsNode")
+            if not vray_settings:
+                node = cmds.createNode("VRaySettingsNode")
+            else:
+                node = vray_settings[0]
+
+            if cmds.getAttr(
+                    "{}.fileNameRenderElementSeparator".format(node)) != "_":
+                invalid = False
+                cls.log.error("AOV separator is not set correctly.")
+
+        if renderer == "redshift":
             if re.search(cls.R_AOV_TOKEN, prefix):
                 invalid = True
-                cls.log.error("Do not use AOV token [ {} ] - "
-                              "Redshift automatically append AOV name and "
-                              "it doesn't make much sense with "
-                              "Multipart EXR".format(prefix))
+                cls.log.error(("Do not use AOV token [ {} ] - "
+                               "Redshift is using image prefixes per AOV so "
+                               "it doesn't make much sense using it in global"
+                               "image prefix").format(prefix))
+            # get redshift AOVs
+            rs_aovs = cmds.ls(type="RedshiftAOV", referencedNodes=False)
+            for aov in rs_aovs:
+                aov_prefix = cmds.getAttr("{}.filePrefix".format(aov))
+                # check their image prefix
+                if aov_prefix != cls.redshift_AOV_prefix:
+                    cls.log.error(("AOV ({}) image prefix is not set "
+                                   "correctly {} != {}").format(
+                        cmds.getAttr("{}.name".format(aov)),
+                        cmds.getAttr("{}.filePrefix".format(aov)),
+                        aov_prefix
+                    ))
+                    invalid = True
+                # get aov format
+                aov_ext = cmds.getAttr(
+                    "{}.fileFormat".format(aov), asString=True)
 
-        elif renderer == "renderman":
+                default_ext = cmds.getAttr(
+                    "redshiftOptions.imageFormat", asString=True)
+
+                if default_ext != aov_ext:
+                    cls.log.error(("AOV file format is not the same "
+                                   "as the one set globally "
+                                   "{} != {}").format(default_ext,
+                                                      aov_ext))
+                    invalid = True
+
+        if renderer == "renderman":
             file_prefix = cmds.getAttr("rmanGlobals.imageFileFormat")
             dir_prefix = cmds.getAttr("rmanGlobals.imageOutputDir")
 
@@ -151,7 +188,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 cls.log.error("Wrong directory prefix [ {} ]".format(
                     dir_prefix))
 
-        else:
+        if renderer == "arnold":
             multipart = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
             if multipart:
                 if re.search(cls.R_AOV_TOKEN, prefix):
@@ -176,6 +213,43 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             invalid = True
             cls.log.error("Expecting padding of {} ( {} )".format(
                 cls.DEFAULT_PADDING, "0" * cls.DEFAULT_PADDING))
+
+        # load validation definitions from settings
+        validation_settings = (
+            instance.context.data["project_settings"]["maya"]["publish"]["ValidateRenderSettings"].get(  # noqa: E501
+                "{}_render_attributes".format(renderer))
+        )
+
+        # go through definitions and test if such node.attribute exists.
+        # if so, compare its value from the one required.
+        for attr, value in OrderedDict(validation_settings).items():
+            # first get node of that type
+            cls.log.debug("{}: {}".format(attr, value))
+            node_type = attr.split(".")[0]
+            attribute_name = ".".join(attr.split(".")[1:])
+            nodes = cmds.ls(type=node_type)
+
+            if not isinstance(nodes, list):
+                cls.log.warning("No nodes of '{}' found.".format(node_type))
+                continue
+
+            for node in nodes:
+                try:
+                    render_value = cmds.getAttr(
+                        "{}.{}".format(node, attribute_name))
+                except RuntimeError:
+                    invalid = True
+                    cls.log.error(
+                        "Cannot get value of {}.{}".format(
+                            node, attribute_name))
+                else:
+                    if value != render_value:
+                        invalid = True
+                        cls.log.error(
+                            ("Invalid value {} set on {}.{}. "
+                             "Expecting {}").format(
+                                render_value, node, attribute_name, value)
+                        )
 
         return invalid
 
@@ -210,3 +284,29 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 cmds.setAttr("rmanGlobals.imageOutputDir",
                              cls.RendermanDirPrefix,
                              type="string")
+
+            if renderer == "vray":
+                vray_settings = cmds.ls(type="VRaySettingsNode")
+                if not vray_settings:
+                    node = cmds.createNode("VRaySettingsNode")
+                else:
+                    node = vray_settings[0]
+
+                cmds.setAttr(
+                    "{}.fileNameRenderElementSeparator".format(
+                        node),
+                    "_"
+                )
+
+            if renderer == "redshift":
+                # get redshift AOVs
+                rs_aovs = cmds.ls(type="RedshiftAOV", referencedNodes=False)
+                for aov in rs_aovs:
+                    # fix AOV prefixes
+                    cmds.setAttr(
+                        "{}.filePrefix".format(aov), cls.redshift_AOV_prefix)
+                    # fix AOV file format
+                    default_ext = cmds.getAttr(
+                        "redshiftOptions.imageFormat", asString=True)
+                    cmds.setAttr(
+                        "{}.fileFormat".format(aov), default_ext)

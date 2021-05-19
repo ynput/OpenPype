@@ -78,14 +78,14 @@ class ExtractLayout(openpype.api.Extractor):
 
                 json_element["transform"] = {
                     "translation": {
-                        "x": transform.translation.x,
+                        "x": -transform.translation.x,
                         "y": transform.translation.y,
                         "z": transform.translation.z
                     },
                     "rotation": {
-                        "x": math.radians(transform.rotation.euler().x),
+                        "x": math.radians(transform.rotation.euler().x + 90.0),
                         "y": math.radians(transform.rotation.euler().y),
-                        "z": math.radians(transform.rotation.euler().z),
+                        "z": math.radians(180.0 - transform.rotation.euler().z)
                     },
                     "scale": {
                         "x": transform.scale3d.x,
