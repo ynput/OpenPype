@@ -98,7 +98,7 @@ executables = [
 setup(
     name="OpenPype",
     version=__version__,
-    description="Ultimate pipeline",
+    description="OpenPype",
     cmdclass={"build_sphinx": BuildDoc},
     options={
         "build_exe": build_exe_options,
