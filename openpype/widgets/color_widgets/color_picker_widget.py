@@ -1,3 +1,4 @@
+import os
 from Qt import QtWidgets, QtCore, QtGui
 
 from .color_triangle import QtColorTriangle
@@ -32,9 +33,13 @@ class ColorPickerWidget(QtWidgets.QWidget):
         color_view.setMaximumHeight(50)
 
         # Color pick button
-        btn_pick_color = QtWidgets.QPushButton(
-            "Pick a color", bottom_utils_widget
+        btn_pick_color = QtWidgets.QPushButton(bottom_utils_widget)
+        icon_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "eyedropper.png"
         )
+        btn_pick_color.setIcon(QtGui.QIcon(icon_path))
+        btn_pick_color.setToolTip("Pick a color")
 
         # Color inputs widget
         color_inputs = ColorInputsWidget(self)
