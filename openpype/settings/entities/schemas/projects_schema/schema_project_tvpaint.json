@@ -47,6 +47,72 @@
             ]
         },
         {
+            "type": "dict",
+            "collapsible": true,
+            "key": "load",
+            "label": "Loader plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "LoadImage",
+                    "label": "Load Image",
+                    "children": [
+                        {
+                            "key": "defaults",
+                            "type": "dict",
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "stretch",
+                                    "label": "Stretch"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "timestretch",
+                                    "label": "TimeStretch"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "preload",
+                                    "label": "Preload"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ImportImage",
+                    "label": "Import Image",
+                    "children": [
+                        {
+                            "key": "defaults",
+                            "type": "dict",
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "stretch",
+                                    "label": "Stretch"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "timestretch",
+                                    "label": "TimeStretch"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "preload",
+                                    "label": "Preload"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "type": "schema",
             "name": "schema_publish_gui_filter"
         }
