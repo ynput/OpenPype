@@ -1797,7 +1797,11 @@ class AssetItem(BaseItem):
             item.setData(False, DUPLICATED_ROLE)
 
     def _remove_task(self, item):
+        # This method is probably obsolete with changed logic and added
+        #   `on_task_remove_state_change` method.
         item_id = item.data(IDENTIFIER_ROLE)
+        if item_id not in self._task_name_by_item_id:
+            return
 
         name = self._task_name_by_item_id.pop(item_id)
         self._task_items_by_name[name].remove(item)
