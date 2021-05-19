@@ -25,11 +25,11 @@ QSlider::handle:horizontal:hover {
 }"""
 
 
-class AlphaInputs(QtWidgets.QGroupBox):
+class AlphaInputs(QtWidgets.QWidget):
     alpha_changed = QtCore.Signal(int)
 
     def __init__(self, parent=None):
-        super(AlphaInputs, self).__init__("Alpha", parent)
+        super(AlphaInputs, self).__init__(parent)
 
         self._block_changes = False
         self.alpha_value = None
@@ -47,11 +47,13 @@ class AlphaInputs(QtWidgets.QGroupBox):
         inputs_layout.setContentsMargins(0, 0, 0, 0)
 
         percent_input = QtWidgets.QDoubleSpinBox(self)
+        percent_input.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
         percent_input.setMinimum(0)
         percent_input.setMaximum(100)
         percent_input.setDecimals(2)
 
         int_input = QtWidgets.QSpinBox(self)
+        int_input.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
         int_input.setMinimum(0)
         int_input.setMaximum(255)
 
@@ -61,6 +63,7 @@ class AlphaInputs(QtWidgets.QGroupBox):
         inputs_layout.addWidget(QtWidgets.QLabel("%"))
 
         layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(QtWidgets.QLabel("Alpha", self))
         layout.addWidget(alpha_slider)
         layout.addWidget(inputs_widget)
 
@@ -119,11 +122,11 @@ class AlphaInputs(QtWidgets.QGroupBox):
         self._block_changes = False
 
 
-class RGBInputs(QtWidgets.QGroupBox):
+class RGBInputs(QtWidgets.QWidget):
     value_changed = QtCore.Signal()
 
     def __init__(self, color, parent=None):
-        super(RGBInputs, self).__init__("RGB", parent)
+        super(RGBInputs, self).__init__(parent)
 
         self._block_changes = False
 
@@ -132,6 +135,10 @@ class RGBInputs(QtWidgets.QGroupBox):
         input_red = QtWidgets.QSpinBox(self)
         input_green = QtWidgets.QSpinBox(self)
         input_blue = QtWidgets.QSpinBox(self)
+
+        input_red.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        input_green.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        input_blue.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
 
         input_red.setMinimum(0)
         input_green.setMinimum(0)
@@ -142,9 +149,10 @@ class RGBInputs(QtWidgets.QGroupBox):
         input_blue.setMaximum(255)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(input_red)
-        layout.addWidget(input_green)
-        layout.addWidget(input_blue)
+        layout.addWidget(QtWidgets.QLabel("RGB", self), 0)
+        layout.addWidget(input_red, 1)
+        layout.addWidget(input_green, 1)
+        layout.addWidget(input_blue, 1)
 
         input_red.valueChanged.connect(self._on_red_change)
         input_green.valueChanged.connect(self._on_green_change)
@@ -192,11 +200,11 @@ class RGBInputs(QtWidgets.QGroupBox):
         self._block_changes = False
 
 
-class CMYKInputs(QtWidgets.QGroupBox):
+class CMYKInputs(QtWidgets.QWidget):
     value_changed = QtCore.Signal()
 
     def __init__(self, color, parent=None):
-        super(CMYKInputs, self).__init__("CMYK", parent)
+        super(CMYKInputs, self).__init__(parent)
 
         self.color = color
 
@@ -206,6 +214,11 @@ class CMYKInputs(QtWidgets.QGroupBox):
         input_magenta = QtWidgets.QSpinBox(self)
         input_yellow = QtWidgets.QSpinBox(self)
         input_black = QtWidgets.QSpinBox(self)
+
+        input_cyan.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        input_magenta.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        input_yellow.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        input_black.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
 
         input_cyan.setMinimum(0)
         input_magenta.setMinimum(0)
@@ -218,10 +231,11 @@ class CMYKInputs(QtWidgets.QGroupBox):
         input_black.setMaximum(255)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(input_cyan)
-        layout.addWidget(input_magenta)
-        layout.addWidget(input_yellow)
-        layout.addWidget(input_black)
+        layout.addWidget(QtWidgets.QLabel("CMYK", self))
+        layout.addWidget(input_cyan, 1)
+        layout.addWidget(input_magenta, 1)
+        layout.addWidget(input_yellow, 1)
+        layout.addWidget(input_black, 1)
 
         input_cyan.valueChanged.connect(self._on_change)
         input_magenta.valueChanged.connect(self._on_change)
@@ -272,18 +286,19 @@ class CMYKInputs(QtWidgets.QGroupBox):
         self._block_changes = False
 
 
-class HEXInputs(QtWidgets.QGroupBox):
+class HEXInputs(QtWidgets.QWidget):
     hex_regex = re.compile("^#(([0-9a-fA-F]{2}){3}|([0-9a-fA-F]){3})$")
     value_changed = QtCore.Signal()
 
     def __init__(self, color, parent=None):
-        super(HEXInputs, self).__init__("HEX", parent)
+        super(HEXInputs, self).__init__(parent)
         self.color = color
 
-        input_field = QtWidgets.QLineEdit()
+        input_field = QtWidgets.QLineEdit(self)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(input_field)
+        layout.addWidget(QtWidgets.QLabel("HEX", self), 0)
+        layout.addWidget(input_field, 1)
 
         input_field.textChanged.connect(self._on_change)
 
@@ -316,11 +331,11 @@ class HEXInputs(QtWidgets.QGroupBox):
         self._block_changes = False
 
 
-class HSVInputs(QtWidgets.QGroupBox):
+class HSVInputs(QtWidgets.QWidget):
     value_changed = QtCore.Signal()
 
     def __init__(self, color, parent=None):
-        super(HSVInputs, self).__init__("HSV", parent)
+        super(HSVInputs, self).__init__(parent)
 
         self._block_changes = False
 
@@ -329,6 +344,10 @@ class HSVInputs(QtWidgets.QGroupBox):
         input_hue = QtWidgets.QSpinBox(self)
         input_sat = QtWidgets.QSpinBox(self)
         input_val = QtWidgets.QSpinBox(self)
+
+        input_hue.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        input_sat.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        input_val.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
 
         input_hue.setMinimum(0)
         input_sat.setMinimum(0)
@@ -339,9 +358,10 @@ class HSVInputs(QtWidgets.QGroupBox):
         input_val.setMaximum(255)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(input_hue)
-        layout.addWidget(input_sat)
-        layout.addWidget(input_val)
+        layout.addWidget(QtWidgets.QLabel("HSV", self), 0)
+        layout.addWidget(input_hue, 1)
+        layout.addWidget(input_sat, 1)
+        layout.addWidget(input_val, 1)
 
         input_hue.valueChanged.connect(self._on_change)
         input_sat.valueChanged.connect(self._on_change)
@@ -385,11 +405,11 @@ class HSVInputs(QtWidgets.QGroupBox):
         self._block_changes = False
 
 
-class HSLInputs(QtWidgets.QGroupBox):
+class HSLInputs(QtWidgets.QWidget):
     value_changed = QtCore.Signal()
 
     def __init__(self, color, parent=None):
-        super(HSLInputs, self).__init__("HSL", parent)
+        super(HSLInputs, self).__init__(parent)
 
         self._block_changes = False
 
@@ -398,6 +418,10 @@ class HSLInputs(QtWidgets.QGroupBox):
         input_hue = QtWidgets.QSpinBox(self)
         input_sat = QtWidgets.QSpinBox(self)
         input_light = QtWidgets.QSpinBox(self)
+
+        input_hue.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        input_sat.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
+        input_light.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
 
         input_hue.setMinimum(0)
         input_sat.setMinimum(0)
@@ -408,9 +432,10 @@ class HSLInputs(QtWidgets.QGroupBox):
         input_light.setMaximum(255)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(input_hue)
-        layout.addWidget(input_sat)
-        layout.addWidget(input_light)
+        layout.addWidget(QtWidgets.QLabel("HSL", self), 0)
+        layout.addWidget(input_hue, 1)
+        layout.addWidget(input_sat, 1)
+        layout.addWidget(input_light, 1)
 
         input_hue.valueChanged.connect(self._on_change)
         input_sat.valueChanged.connect(self._on_change)
