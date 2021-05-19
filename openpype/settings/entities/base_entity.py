@@ -846,6 +846,13 @@ class ItemEntity(BaseItemEntity):
             )
             raise EntitySchemaError(self, reason)
 
+        if self.is_file and self.file_item is not None:
+            reason = (
+                "Entity has set `is_file` to true but"
+                " it's parent is already marked as file item."
+            )
+            raise EntitySchemaError(self, reason)
+
         super(ItemEntity, self).schema_validations()
 
     def create_schema_object(self, *args, **kwargs):
