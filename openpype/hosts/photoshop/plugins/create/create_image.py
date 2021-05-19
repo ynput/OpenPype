@@ -9,6 +9,7 @@ class CreateImage(openpype.api.Creator):
     name = "imageDefault"
     label = "Image"
     family = "image"
+    defaults = ["Main"]
 
     def process(self):
         groups = []
@@ -82,8 +83,7 @@ class CreateImage(openpype.api.Creator):
                 replace(stub.LOADED_ICON, '')
 
             if useSelection:
-                clean_subset_name = self.data["subset"].replace("Default", '')
-                subset_name = clean_subset_name + group.name
+                subset_name = self.data["subset"] + group.name
             else:
                 # use value provided by user from Creator
                 subset_name = self.data["subset"]
