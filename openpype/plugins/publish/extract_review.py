@@ -470,6 +470,33 @@ class ExtractReview(pyblish.api.InstancePlugin):
         lut_filters = self.lut_filters(new_repre, instance, ffmpeg_input_args)
         ffmpeg_video_filters.extend(lut_filters)
 
+        bg_alpha = 0
+        bg_color = output_def.get("bg_color")
+        if bg_color:
+            bg_red, bg_green, bg_blue, bg_alpha = bg_color
+
+        if bg_alpha > 0:
+            if not temp_data["input_allow_bg"]:
+                self.log.info((
+                    "Output definition has defined BG color input was"
+                    " resolved as does not support adding BG."
+                ))
+            else:
+                bg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
+                    bg_red, bg_green, bg_blue
+                )
+                bg_color_alpha = float(bg_alpha) / 255
+                bg_color_str = "{}@{}".format(bg_color_hex, bg_color_alpha)
+
+                self.log.info("Applying BG color {}".format(bg_color_str))
+                ffmpeg_video_filters.extend([
+                    "split=2[bg][fg]",
+                    "[bg]drawbox=c={}:replace=1:t=fill[bg]".format(
+                        bg_color_str
+                    ),
+                    "[bg][fg]overlay=format=auto"
+                ])
+
         # Add argument to override output file
         ffmpeg_output_args.append("-y")
 
