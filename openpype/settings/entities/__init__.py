@@ -57,6 +57,7 @@ from .exceptions import (
     SchemaError,
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
+    BaseInvalidValueType,
     InvalidValueType,
     InvalidKeySymbols,
     SchemaMissingFileInfo,
@@ -115,6 +116,7 @@ from .anatomy_entities import AnatomyEntity
 __all__ = (
     "DefaultsNotDefined",
     "StudioDefaultsNotDefined",
+    "BaseInvalidValueType",
     "InvalidValueType",
     "InvalidKeySymbols",
     "SchemaMissingFileInfo",

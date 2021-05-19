@@ -9,6 +9,7 @@ from .lib import (
 )
 
 from .exceptions import (
+    BaseInvalidValueType,
     InvalidValueType,
     SchemeGroupHierarchyBug,
     EntitySchemaError
@@ -377,7 +378,7 @@ class BaseItemEntity(BaseEntity):
 
         try:
             new_value = self.convert_to_valid_type(value)
-        except InvalidValueType:
+        except BaseInvalidValueType:
             new_value = NOT_SET
 
         if new_value is not NOT_SET:
