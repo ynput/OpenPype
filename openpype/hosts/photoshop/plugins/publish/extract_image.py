@@ -35,21 +35,16 @@ class ExtractImage(openpype.api.Extractor):
                     if layer.visible and layer.id not in extract_ids:
                         stub.set_visible(layer.id, False)
 
-                save_options = []
-                if "png" in self.formats:
-                    save_options.append('png')
-                if "jpg" in self.formats:
-                    save_options.append('jpg')
-
                 file_basename = os.path.splitext(
                     stub.get_active_document_name()
                 )[0]
-                for extension in save_options:
+                for extension in self.formats:
                     _filename = "{}.{}".format(file_basename, extension)
                     files[extension] = _filename
 
                     full_filename = os.path.join(staging_dir, _filename)
                     stub.saveAs(full_filename, extension, True)
+                    self.log.info(f"Extracted: {extension}")
 
         representations = []
         for extension, filename in files.items():
