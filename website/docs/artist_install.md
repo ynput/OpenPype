@@ -16,6 +16,7 @@ OpenPype comes in packages for Windows (10 or Server), Mac OS X (Mojave or highe
 To install OpenPype you will need administrator permissions.
 :::
 
+:::note pick your platform
 <Tabs 
     defaultValue='win'
     values={[
@@ -60,6 +61,7 @@ After the installation, you can find OpenPype among the other Applications.
 
 </TabItem>
 </Tabs>
+:::
 
 ## Run OpenPype
 
