@@ -97,7 +97,6 @@
                     "key": "sites",
                     "label": "Sites",
                     "collapsible_key": false,
-                    "is_file": true,
                     "object_type":
                     {
                         "type": "dict",
@@ -156,8 +155,7 @@
                     },
                     "is_group": true,
                     "key": "templates_mapping",
-                    "label": "Templates mapping",
-                    "is_file": true
+                    "label": "Templates mapping"
                 }
             ]
         },

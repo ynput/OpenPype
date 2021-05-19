@@ -4,7 +4,6 @@
     "label": "Site Sync (beta testing)",
     "collapsible": true,
     "checkbox_key": "enabled",
-    "is_file": true,
     "children": [
     {
         "type": "boolean",
@@ -44,7 +43,6 @@
         "key": "sites",
         "label": "Sites",
         "collapsible_key": false,
-        "is_file": true,
         "object_type":
         {
             "type": "dict",
