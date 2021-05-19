@@ -268,7 +268,6 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                     parent_range, timeline_range, strict=False):
                 return True
 
-
     def get_otio_clip_instance_data(self, track_item):
         """
         Return otio objects for timeline, track and clip
