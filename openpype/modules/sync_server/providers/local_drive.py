@@ -170,7 +170,10 @@ class LocalDriveHandler(AbstractProvider):
                                  site=site,
                                  progress=status_val
                                  )
-            target_file_size = os.path.getsize(target_path)
+            try:
+                target_file_size = os.path.getsize(target_path)
+            except FileNotFoundError:
+                pass
             time.sleep(0.5)
 
     def _normalize_site_name(self, site_name):
