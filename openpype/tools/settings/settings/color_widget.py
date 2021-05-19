@@ -141,14 +141,15 @@ class ColorDialog(QtWidgets.QDialog):
         picker_widget = ColorPickerWidget(color, self)
 
         footer_widget = QtWidgets.QWidget(self)
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
 
         ok_btn = QtWidgets.QPushButton("Ok", footer_widget)
         cancel_btn = QtWidgets.QPushButton("Cancel", footer_widget)
 
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addStretch(1)
         footer_layout.addWidget(ok_btn)
         footer_layout.addWidget(cancel_btn)
-        footer_layout.addWidget(QtWidgets.QWidget(self), 1)
 
         layout = QtWidgets.QVBoxLayout(self)
 
