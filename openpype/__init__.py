@@ -67,6 +67,15 @@ def patched_discover(superclass):
 @import_wrapper
 def install():
     """Install Pype to Avalon."""
+    from pyblish.lib import MessageHandler
+
+    def modified_emit(obj, record):
+        """Method replacing `emit` in Pyblish's MessageHandler."""
+        record.msg = record.getMessage()
+        obj.records.append(record)
+
+    MessageHandler.emit = modified_emit
+
     log.info("Registering global plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
     pyblish.register_discovery_filter(filter_pyblish_plugins)

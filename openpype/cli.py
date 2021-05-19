@@ -224,6 +224,11 @@ def launch(app, project, asset, task,
     PypeCommands().run_application(app, project, asset, task, tools, arguments)
 
 
+@main.command(context_settings={"ignore_unknown_options": True})
+def projectmanager():
+    PypeCommands().launch_project_manager()
+
+
 @main.command(
     context_settings=dict(
         ignore_unknown_options=True,

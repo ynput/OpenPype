@@ -14,13 +14,7 @@
                     "type": "dict",
                     "key": "sync_to_avalon",
                     "label": "Sync to avalon",
-                    "checkbox_key": "enabled",
                     "children": [
-                        {
-                            "type": "boolean",
-                            "key": "enabled",
-                            "label": "Enabled"
-                        },
                         {
                             "type": "label",
                             "label": "Allow name and hierarchy change only if following statuses are on all children tasks"

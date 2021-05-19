@@ -236,7 +236,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
 
         for site, progress in {active_site: local_progress,
                                remote_site: remote_progress}.items():
-            provider = self.sync_server.get_provider_for_site(project, site)
+            provider = self.sync_server.get_provider_for_site(site=site)
             if provider == 'local_drive':
                 if 'studio' in site:
                     txt = " studio version"

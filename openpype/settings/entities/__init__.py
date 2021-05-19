@@ -101,7 +101,8 @@ from .enum_entity import (
     BaseEnumEntity,
     EnumEntity,
     AppsEnumEntity,
-    ToolsEnumEntity
+    ToolsEnumEntity,
+    ProvidersEnum
 )
 
 from .list_entity import ListEntity
@@ -149,6 +150,7 @@ __all__ = (
     "EnumEntity",
     "AppsEnumEntity",
     "ToolsEnumEntity",
+    "ProvidersEnum",
 
     "ListEntity",
 
