@@ -9,6 +9,7 @@ class CreateImage(openpype.api.Creator):
     name = "imageDefault"
     label = "Image"
     family = "image"
+    defaults = ["Main"]
 
     def process(self):
         groups = []
@@ -16,7 +17,9 @@ class CreateImage(openpype.api.Creator):
         create_group = False
 
         stub = photoshop.stub()
+        useSelection = False
         if (self.options or {}).get("useSelection"):
+            useSelection = True
             multiple_instances = False
             selection = stub.get_selected_layers()
             self.log.info("selection {}".format(selection))
@@ -61,7 +64,9 @@ class CreateImage(openpype.api.Creator):
                 # No selection creates an empty group.
                 create_group = True
         else:
-            create_group = True
+            stub.select_layers(stub.get_layers())
+            group = stub.group_selected_layers(self.name)
+            groups.append(group)
 
         if create_group:
             group = stub.create_group(self.name)
@@ -77,13 +82,19 @@ class CreateImage(openpype.api.Creator):
             group.name = group.name.replace(stub.PUBLISH_ICON, ''). \
                 replace(stub.LOADED_ICON, '')
 
+            if useSelection:
+                subset_name = self.data["subset"] + group.name
+            else:
+                # use value provided by user from Creator
+                subset_name = self.data["subset"]
+
             if group.long_name:
                 for directory in group.long_name[::-1]:
                     name = directory.replace(stub.PUBLISH_ICON, '').\
                                       replace(stub.LOADED_ICON, '')
                     long_names.append(name)
 
-            self.data.update({"subset": "image" + group.name})
+            self.data.update({"subset": subset_name})
             self.data.update({"uuid": str(group.id)})
             self.data.update({"long_name": "_".join(long_names)})
             stub.imprint(group, self.data)

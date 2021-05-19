@@ -84,6 +84,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_photoshop"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_harmony"
                 },
                 {
