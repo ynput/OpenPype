@@ -8,6 +8,7 @@ from .exceptions import (
 
 class ColorEntity(InputEntity):
     schema_types = ["color"]
+
     def _item_initalization(self):
         self.valid_value_types = (list, )
         self.value_on_not_set = [0, 0, 0, 255]
