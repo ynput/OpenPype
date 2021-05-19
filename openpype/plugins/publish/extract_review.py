@@ -499,13 +499,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 bg_color_str = "{}@{}".format(bg_color_hex, bg_color_alpha)
 
                 self.log.info("Applying BG color {}".format(bg_color_str))
-                ffmpeg_video_filters.extend([
+                color_args = [
                     "split=2[bg][fg]",
                     "[bg]drawbox=c={}:replace=1:t=fill[bg]".format(
                         bg_color_str
                     ),
                     "[bg][fg]overlay=format=auto"
-                ])
+                ]
+                # Prepend bg color change before all video filters
+                # NOTE at the time of creation it is required as video filters
+                #   from settings may affect color of BG (e.g. to grey)
+                for arg in reversed(color_args):
+                    ffmpeg_video_filters.insert(0, arg)
 
         # Add argument to override output file
         ffmpeg_output_args.append("-y")
