@@ -21,31 +21,23 @@ class ColorPickerWidget(QtWidgets.QWidget):
         super(ColorPickerWidget, self).__init__(parent)
 
         top_part = QtWidgets.QWidget(self)
-        left_side = QtWidgets.QWidget(top_part)
 
         # Color triangle
-        color_triangle = QtColorTriangle(left_side)
+        color_triangle = QtColorTriangle(self)
 
-        alpha_slider_proxy = QtWidgets.QWidget(left_side)
+        alpha_slider_proxy = QtWidgets.QWidget(self)
         alpha_slider = AlphaSlider(QtCore.Qt.Horizontal, alpha_slider_proxy)
 
         alpha_slider_layout = QtWidgets.QHBoxLayout(alpha_slider_proxy)
         alpha_slider_layout.setContentsMargins(5, 5, 5, 5)
         alpha_slider_layout.addWidget(alpha_slider, 1)
 
-        left_layout = QtWidgets.QVBoxLayout(left_side)
-        left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.addWidget(color_triangle, 1)
-        left_layout.addWidget(alpha_slider_proxy, 0)
-
-        right_side = QtWidgets.QWidget(top_part)
-
         # Eye picked widget
         pick_widget = PickScreenColorWidget()
         pick_widget.setMaximumHeight(50)
 
         # Color pick button
-        btn_pick_color = QtWidgets.QPushButton(right_side)
+        btn_pick_color = QtWidgets.QPushButton(self)
         icon_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             "eyedropper.png"
@@ -54,44 +46,52 @@ class ColorPickerWidget(QtWidgets.QWidget):
         btn_pick_color.setToolTip("Pick a color")
 
         # Color preview
-        color_view = ColorViewer(right_side)
+        color_view = ColorViewer(self)
         color_view.setMaximumHeight(50)
 
-        row = 0
-        right_layout = QtWidgets.QGridLayout(right_side)
-        right_layout.setContentsMargins(0, 0, 0, 0)
-        right_layout.addWidget(btn_pick_color, row, 0)
-        right_layout.addWidget(color_view, row, 1)
+        alpha_inputs = AlphaInputs(self)
 
         color_inputs_color = QtGui.QColor()
         col_inputs_by_label = [
-            ("HEX", HEXInputs(color_inputs_color, right_side)),
-            ("RGB", RGBInputs(color_inputs_color, right_side)),
-            ("HSL", HSLInputs(color_inputs_color, right_side)),
-            ("HSV", HSVInputs(color_inputs_color, right_side))
+            ("HEX", HEXInputs(color_inputs_color, self)),
+            ("RGB", RGBInputs(color_inputs_color, self)),
+            ("HSL", HSLInputs(color_inputs_color, self)),
+            ("HSV", HSVInputs(color_inputs_color, self))
         ]
+
+        layout = QtWidgets.QGridLayout(self)
+        empty_col = 1
+        label_col = empty_col + 1
+        input_col = label_col + 1
+        empty_widget = QtWidgets.QWidget(self)
+        empty_widget.setFixedWidth(10)
+        layout.addWidget(empty_widget, 0, empty_col)
+
+        row = 0
+        layout.addWidget(btn_pick_color, row, label_col)
+        layout.addWidget(color_view, row, input_col)
+        row += 1
+
         color_input_fields = []
         for label, input_field in col_inputs_by_label:
-            row += 1
-            right_layout.addWidget(QtWidgets.QLabel(label, right_side), row, 0)
-            right_layout.addWidget(input_field, row, 1)
+            layout.addWidget(QtWidgets.QLabel(label, self), row, label_col)
+            layout.addWidget(input_field, row, input_col)
             input_field.value_changed.connect(
                 self._on_color_input_value_change
             )
             color_input_fields.append(input_field)
+            row += 1
 
+        layout.addWidget(color_triangle, 0, 0, row + 1, 1)
+        layout.setRowStretch(row, 1)
         row += 1
-        alpha_inputs = AlphaInputs(right_side)
-        right_layout.addWidget(QtWidgets.QLabel("Alpha", right_side), row, 0)
-        right_layout.addWidget(alpha_inputs, row, 1)
 
+        layout.addWidget(alpha_slider_proxy, row, 0)
+
+        layout.addWidget(QtWidgets.QLabel("Alpha", self), row, label_col)
+        layout.addWidget(alpha_inputs, row, input_col)
         row += 1
-        right_layout.setRowStretch(row, 1)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setSpacing(20)
-        layout.addWidget(left_side, 1)
-        layout.addWidget(right_side, 0)
+        layout.setRowStretch(row, 1)
 
         color_view.set_color(color_triangle.cur_color)
 
