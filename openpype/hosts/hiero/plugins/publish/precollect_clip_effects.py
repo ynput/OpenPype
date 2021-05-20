@@ -6,7 +6,7 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
     """Collect soft effects instances."""
 
     order = pyblish.api.CollectorOrder - 0.579
-    label = "Pre-collect Clip Effects Instances"
+    label = "Precollect Clip Effects Instances"
     families = ["clip"]
 
     def process(self, instance):
@@ -34,19 +34,36 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
         if clip_effect_items:
             tracks_effect_items[track_index] = clip_effect_items
 
+        retime_effect = None
+
         # process all effects and devide them to instance
         for _track_index, sub_track_items in tracks_effect_items.items():
             # skip if track index is the same as review track index
             if review and review_track_index == _track_index:
                 continue
             for sitem in sub_track_items:
+                effect = None
+                # make sure this subtrack item is relative of track item
+                if ((track_item not in sitem.linkedItems())
+                        and (len(sitem.linkedItems()) > 0)):
+                    continue
+
                 if not (track_index <= _track_index):
                     continue
 
-                effect = self.add_effect(_track_index, sitem)
+                if "TimeWarp" in sitem.name():
+                    retime_effect = True
+                else:
+                    effect = self.add_effect(_track_index, sitem)
 
                 if effect:
                     effects.update(effect)
+
+        # switch retime feature
+        if retime_effect:
+            instance.data["families"] += ["retime"]
+            instance.data["label"] = instance.data[
+                "label"].replace("]", ", retime]")
 
         # skip any without effects
         if not effects:
@@ -162,7 +179,7 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
                 # grab animation including handles
                 knob_anim = [node[knob].getValueAt(i)
                              for i in range(
-                             self.clip_in_h, self.clip_in_h + 1)]
+                             self.clip_in_h, self.clip_out_h + 1)]
 
                 node_serialized[knob] = knob_anim
             else:
