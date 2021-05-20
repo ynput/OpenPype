@@ -674,12 +674,26 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             self._remove_item(item)
 
     def _remove_item(self, item):
+        """Remove item from model or mark item for deletion.
+
+        Deleted items are using definition of QAbstractItemModel which call
+        `beginRemoveRows` and `endRemoveRows` to trigger proper view and proxy
+        model callbacks.
+
+        Item is not just removed but is checked if can be removed from model or
+        just mark it for deletion for save.
+
+        First of all will find all related children and based on their
+        attributes define if can be removed.
+        """
+        # Skip if item is already marked for deletion
         is_removed = item.data(REMOVED_ROLE)
         if is_removed:
             return
 
         parent = item.parent()
 
+        # Find all descendants and store them by parent id
         all_descendants = collections.defaultdict(dict)
         all_descendants[parent.id][item.id] = item
 
@@ -712,6 +726,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 if isinstance(cur_item, AssetItem):
                     self._rename_asset(cur_item, None)
 
+            # Process tasks as last because their logic is based on parent
+            # - tasks may be processed before parent check all asset children
             for task_item in task_children:
                 _fill_children(_all_descendants, task_item, cur_item)
             return remove_item
@@ -737,21 +753,29 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 if not all_without_children:
                     continue
 
-                parent_item = self._items_by_id[parent_id]
+                # Row ranges of items to remove
+                # - store tuples of row "start", "end" (can be the same)
                 row_ranges = []
+                # Predefine start, end variables
                 start_row = end_row = None
                 chilren_by_row = {}
+                parent_item = self._items_by_id[parent_id]
                 for row in range(parent_item.rowCount()):
                     child_item = parent_item.child(row)
                     child_id = child_item.id
+                    # Not sure if this can happend
+                    # TODO validate this line it seems dangerous as start/end
+                    #   row is not changed
                     if child_id not in children:
                         continue
 
                     chilren_by_row[row] = child_item
                     children.pop(child_item.id)
 
-                    remove_item = child_item.data(REMOVED_ROLE)
-                    if not remove_item or not child_item.is_new:
+                    removed_mark = child_item.data(REMOVED_ROLE)
+                    if not removed_mark or not child_item.is_new:
+                        # Skip row sequence store child for later processing
+                        #   and store current start/end row range
                         modified_children.append(child_item)
                         if end_row is not None:
                             row_ranges.append((start_row, end_row))
@@ -765,11 +789,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 if end_row is not None:
                     row_ranges.append((start_row, end_row))
 
-                parent_index = None
-                for start, end in row_ranges:
-                    if parent_index is None:
-                        parent_index = self.index_for_item(parent_item)
+                if not row_ranges:
+                    continue
 
+                # Remove items from model
+                parent_index = self.index_for_item(parent_item)
+                for start, end in row_ranges:
                     self.beginRemoveRows(parent_index, start, end)
 
                     for idx in range(start, end + 1):
@@ -782,6 +807,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                     self.endRemoveRows()
 
+        # Trigger data change to repaint items
+        # - `BackgroundRole` is random role without any specific reason
         for item in modified_children:
             s_index = self.index_for_item(item)
             e_index = self.index_for_item(item, column=self.columns_len - 1)
