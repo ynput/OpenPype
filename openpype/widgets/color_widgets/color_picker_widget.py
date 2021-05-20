@@ -82,6 +82,9 @@ class ColorPickerWidget(QtWidgets.QWidget):
         right_layout.addWidget(QtWidgets.QLabel("Alpha", right_side), row, 0)
         right_layout.addWidget(alpha_inputs, row, 1)
 
+        row += 1
+        right_layout.setRowStretch(row, 1)
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.setSpacing(5)
         layout.addWidget(left_side, 1)
