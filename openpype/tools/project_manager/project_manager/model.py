@@ -476,7 +476,12 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return QtCore.QModelIndex()
 
     def add_new_asset(self, source_index):
-        """Method to create new asset item in hierarchy."""
+        """Create new asset item in hierarchy.
+
+        Args:
+            source_index(QModelIndex): Parent under which new asset will be
+                added.
+        """
         item_id = source_index.data(IDENTIFIER_ROLE)
         item = self.items_by_id[item_id]
 
@@ -504,6 +509,13 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return result
 
     def add_new_task(self, parent_index):
+        """Create new TaskItem under passed parent index or it's parent.
+
+        Args:
+            parent_index(QModelIndex): Index of parent AssetItem under which
+                will be task added. If index represents TaskItem it's parent is
+                used as parent.
+        """
         item_id = parent_index.data(IDENTIFIER_ROLE)
         item = self.items_by_id[item_id]
 
@@ -519,6 +531,18 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return self.add_item(new_child, parent)
 
     def add_items(self, items, parent=None, start_row=None):
+        """Add new items with definition of QAbstractItemModel.
+
+        Trigger `beginInsertRows` and `endInsertRows` to trigger proper
+        callbacks in view or proxy model.
+
+        Args:
+            items(list[BaseItem]): List of item that will be inserted in model.
+            parent(RootItem, ProjectItem, AssetItem): Parent of items under
+                which will be items added. Root item is used if not passed.
+            start_row(int): Define to which row will be items added. Next
+                available row of parent is used if not passed.
+        """
         if parent is None:
             parent = self._root_item
 
@@ -558,12 +582,25 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return indexes
 
     def add_item(self, item, parent=None, row=None):
+        """Add single item into model."""
         result = self.add_items([item], parent, row)
         if result:
             return result[0]
         return None
 
     def remove_delete_flag(self, item_ids, with_children=True):
+        """Remove deletion flag on items with matching ids.
+
+        Flag is also removed on all parents of passed children as it wouldn't
+        make sence to not to do so.
+
+        Children of passed item ids are by default also unset for deletion.
+
+        Args:
+            list(uuid4): Ids of model items where remove flag should be unset.
+            with_children(bool): Unset remove flag also on all children of
+                passed items.
+        """
         items_by_id = {}
         for item_id in item_ids:
             if item_id in items_by_id:
@@ -610,9 +647,11 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                     self._validate_asset_duplicity(name)
 
     def delete_index(self, index):
+        """Delete item of the index from model."""
         return self.delete_indexes([index])
 
     def delete_indexes(self, indexes):
+        """Delete items from model."""
         items_by_id = {}
         processed_ids = set()
         for index in indexes:
@@ -1156,12 +1195,32 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         self.index_moved.emit(new_index)
 
     def move_vertical(self, indexes, direction):
+        """Move item vertically in model to matching parent if possible.
+
+        If passed indexes contain items that has parent<->child relation at any
+        hierarchy level only the top parent is actually moved.
+
+        Example (items marked with star are passed in `indexes`):
+        - shots*
+            - ep01
+                - ep01_sh0010*
+                - ep01_sh0020*
+        In this case only `shots` item will be moved vertically and
+        both "ep01_sh0010" "ep01_sh0020" will stay as children of "ep01".
+
+        Args:
+            indexes(list[QModelIndex]): Indexes that should be moved
+                vertically.
+            direction(int): Which way will be moved -1 or 1 to determine.
+        """
         if not indexes:
             return
 
+        # Convert single index to list of indexes
         if isinstance(indexes, QtCore.QModelIndex):
             indexes = [indexes]
 
+        # Just process single index
         if len(indexes) == 1:
             self._move_vertical_single(indexes[0], direction)
             return
@@ -1196,6 +1255,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             self._move_vertical_single(index, direction)
 
     def child_removed(self, child):
+        """Callback for removed child."""
         self._items_by_id.pop(child.id, None)
 
     def column_name(self, column):
@@ -1205,11 +1265,19 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return None
 
     def clear(self):
+        """Reset model."""
         self.beginResetModel()
         self._reset_root_item()
         self.endResetModel()
 
     def save(self):
+        """Save all changes from current project manager session.
+
+        Will create new asset documents, update existing and asset documents
+        marked for deletion are removed from mongo if has published content or
+        their type is changed to `archived_asset` to not loose their data.
+        """
+        # Check if all items are valid before save
         all_valid = True
         for item in self._items_by_id.values():
             if not item.is_valid:
@@ -1219,6 +1287,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if not all_valid:
             return
 
+        # Check project item and do not save without it
         project_item = None
         for _project_item in self._root_item.children():
             project_item = _project_item
@@ -1229,6 +1298,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         project_name = project_item.name
         project_col = self.dbcon.database[project_name]
 
+        # Process asset items per one hierarchical level.
+        # - new assets are inserted per one parent
+        # - update and delete data are stored and processed at once at the end
         to_process = Queue()
         to_process.put(project_item)
 
@@ -1349,6 +1421,14 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
 
 class BaseItem:
+    """Base item for HierarchyModel.
+
+    Is not meant to be used as real item but as superclass for all items used
+    in HierarchyModel.
+
+    TODO cleanup some attributes and methods related only to AssetItem and
+    TaskItem.
+    """
     columns = []
     # Use `set` for faster result
     editable_columns = set()
@@ -1376,6 +1456,10 @@ class BaseItem:
                     self._data[key] = value
 
     def name_icon(self):
+        """Icon shown next to name.
+
+        Item must imlpement this method to change it.
+        """
         return None
 
     @property
@@ -1394,6 +1478,7 @@ class BaseItem:
         self._children.insert(row, item)
 
     def _get_global_data(self, role):
+        """Global data getter without column specification."""
         if role == ITEM_TYPE_ROLE:
             return self.item_type
 
@@ -1521,6 +1606,7 @@ class BaseItem:
 
 
 class RootItem(BaseItem):
+    """Invisible root item used as base item for model."""
     item_type = "root"
 
     def __init__(self, model):
@@ -1535,6 +1621,10 @@ class RootItem(BaseItem):
 
 
 class ProjectItem(BaseItem):
+    """Item representing project document in Mongo.
+
+    Item is used only to read it's data. It is not possible to modify them.
+    """
     item_type = "project"
 
     columns = {
@@ -1578,21 +1668,32 @@ class ProjectItem(BaseItem):
 
     @property
     def project_id(self):
+        """Project Mongo ID."""
         return self._mongo_id
 
     @property
     def asset_id(self):
+        """Should not be implemented.
+
+        TODO Remove this method from ProjectItem.
+        """
         return None
 
     @property
     def name(self):
+        """Project name"""
         return self._data["name"]
 
     def child_parents(self):
+        """Used by children AssetItems for filling `data.parents` key."""
         return []
 
     @classmethod
     def data_from_doc(cls, project_doc):
+        """Convert document data into item data.
+
+        Project data are used as default value for it's children.
+        """
         data = {
             "name": project_doc["name"],
             "type": project_doc["type"]
@@ -1607,10 +1708,17 @@ class ProjectItem(BaseItem):
         return data
 
     def flags(self, *args, **kwargs):
+        """Project is enabled and selectable."""
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
 
 class AssetItem(BaseItem):
+    """Item represent asset document.
+
+    Item have ability to set all required and optional data for OpenPype
+    workflow. Some of them are not modifiable in specific cases e.g. when asset
+    has published content it is not possible to change it's name or parent.
+    """
     item_type = "asset"
 
     columns = {
@@ -1693,34 +1801,57 @@ class AssetItem(BaseItem):
 
     @property
     def project_id(self):
+        """Access to project "parent" id which is always set."""
         if self._project_id is None:
             self._project_id = self.parent().project_id
         return self._project_id
 
     @property
     def asset_id(self):
+        """Property access to mongo id."""
         return self.mongo_id
 
     @property
     def is_new(self):
+        """Item was created during current project manager session."""
         return self.asset_id is None
 
     @property
     def is_valid(self):
+        """Item is invalid for saving."""
         if self._is_duplicated or not self._data["name"]:
             return False
         return True
 
     @property
     def name(self):
+        """Asset name.
+
+        Returns:
+            str: If name is set.
+            None: If name is not yet set in that case is AssetItem marked as
+                invalid.
+        """
         return self._data["name"]
 
     def child_parents(self):
+        """Chilren AssetItem can use this method to get it's parent names.
+
+        This is used for `data.parents` key on document.
+        """
         parents = self.parent().child_parents()
         parents.append(self.name)
         return parents
 
     def to_doc(self):
+        """Convert item to Mongo document matching asset schema.
+
+        Method does no validate if item is valid or children are valid.
+
+        Returns:
+            dict: Document with all related data about asset item also
+                contains task children.
+        """
         tasks = {}
         for item in self.children():
             if isinstance(item, TaskItem):
@@ -1755,6 +1886,22 @@ class AssetItem(BaseItem):
         return doc
 
     def update_data(self):
+        """Changes dictionary ready for Mongo's update.
+
+        Method should be used on save. There is not other usage of this method.
+
+        # Example
+        ```python
+        {
+            "$set": {
+                "name": "new_name"
+            }
+        }
+        ```
+
+        Returns:
+            dict: May be empty if item was not changed.
+        """
         if not self.mongo_id:
             return {}
 
@@ -1791,6 +1938,8 @@ class AssetItem(BaseItem):
 
     @classmethod
     def data_from_doc(cls, asset_doc):
+        """Convert asset document from Mongo to item data."""
+        # Minimum required data for cases that it is new AssetItem withoud doc
         data = {
             "name": None,
             "type": "asset"
@@ -1810,6 +1959,7 @@ class AssetItem(BaseItem):
         return data
 
     def name_icon(self):
+        """Icon shown next to name."""
         if self.__class__._name_icons is None:
             self.__class__._name_icons = ResourceCache.get_icons()["asset"]
 
@@ -1824,6 +1974,7 @@ class AssetItem(BaseItem):
         return self.__class__._name_icons[icon_type]
 
     def _get_global_data(self, role):
+        """Global data getter without column specification."""
         if role == HIERARCHY_CHANGE_ABLE_ROLE:
             return self._hierarchy_changes_enabled
 
@@ -1853,6 +2004,8 @@ class AssetItem(BaseItem):
         return super(AssetItem, self).data(role, key)
 
     def setData(self, value, role, key=None):
+        # Store information that column has opened editor
+        # - DisplayRole for the column will return empty string
         if role == EDITOR_OPENED_ROLE:
             if key not in self._edited_columns:
                 return False
@@ -1863,12 +2016,15 @@ class AssetItem(BaseItem):
             self._removed = value
             return True
 
+        # This can be set only on project load (or save)
         if role == HIERARCHY_CHANGE_ABLE_ROLE:
             if self._hierarchy_changes_enabled == value:
                 return False
             self._hierarchy_changes_enabled = value
             return True
 
+        # Do not allow to change name if item is marked to not be able do any
+        #   hierarchical changes.
         if (
             role == QtCore.Qt.EditRole
             and key == "name"
@@ -1916,6 +2072,8 @@ class AssetItem(BaseItem):
                 _item.setData(False, DUPLICATED_ROLE)
 
     def _rename_task(self, item):
+        # Skip processing if item is marked for removing
+        # - item is not in any of attributes below
         if item.data(REMOVED_ROLE):
             return
 
@@ -1947,9 +2105,22 @@ class AssetItem(BaseItem):
         self._task_name_by_item_id[item_id] = new_name
 
     def on_task_name_change(self, task_item):
+        """Method called from TaskItem children on name change.
+
+        Helps to handle duplicated task name validations.
+        """
+
         self._rename_task(task_item)
 
     def on_task_remove_state_change(self, task_item):
+        """Method called from children TaskItem to handle name duplications.
+
+        Method is called when TaskItem children is marked for deletion or
+        deletion was reversed.
+
+        Name is removed/added to task item mapping attribute and removed/added
+        to `_task_items_by_name` used for determination of duplicated tasks.
+        """
         is_removed = task_item.data(REMOVED_ROLE)
         item_id = task_item.data(IDENTIFIER_ROLE)
         if is_removed:
@@ -1976,18 +2147,35 @@ class AssetItem(BaseItem):
                 _item.setData(True, DUPLICATED_ROLE)
 
     def add_child(self, item, row=None):
+        """Add new children.
+
+        Args:
+            item(AssetItem, TaskItem): New added item.
+            row(int): Optionally can be passed on which row (index) should be
+                children added.
+        """
         if item in self._children:
             return
 
         super(AssetItem, self).add_child(item, row)
 
+        # Call inner method for checking task name duplications
         if isinstance(item, TaskItem):
             self._add_task(item)
 
     def remove_child(self, item):
+        """Remove one of children from AssetItem children.
+
+        Skipped if item is not children of item.
+
+        Args:
+            item(AssetItem, TaskItem): Child item.
+        """
         if item not in self._children:
             return
 
+        # Call inner method to remove task from registered task name
+        #   validations.
         if isinstance(item, TaskItem):
             self._remove_task(item)
 
@@ -1995,6 +2183,16 @@ class AssetItem(BaseItem):
 
 
 class TaskItem(BaseItem):
+    """Item representing Task item on Asset document.
+
+    Always should be AssetItem children and never should have any other
+    childrens.
+
+    It's name value should be validated with it's parent which only knows if
+    has same name as other sibling under same parent.
+    """
+
+    # String representation of item
     item_type = "task"
 
     columns = {
@@ -2023,10 +2221,12 @@ class TaskItem(BaseItem):
 
     @property
     def is_new(self):
+        """Task was created during current project manager session."""
         return self._is_new
 
     @property
     def is_valid(self):
+        """Task valid for saving."""
         if self._is_duplicated or not self._data["type"]:
             return False
         if not self.data(QtCore.Qt.EditRole, "name"):
@@ -2034,6 +2234,7 @@ class TaskItem(BaseItem):
         return True
 
     def name_icon(self):
+        """Icon shown next to name."""
         if self.__class__._name_icons is None:
             self.__class__._name_icons = ResourceCache.get_icons()["task"]
 
@@ -2048,9 +2249,11 @@ class TaskItem(BaseItem):
         return self.__class__._name_icons[icon_type]
 
     def add_child(self, item, row=None):
+        """Reimplement `add_child` to avoid adding items under task."""
         raise AssertionError("BUG: Can't add children to Task")
 
     def _get_global_data(self, role):
+        """Global data getter without column specification."""
         if role == REMOVED_ROLE:
             return self._removed
 
@@ -2069,6 +2272,12 @@ class TaskItem(BaseItem):
         return super(TaskItem, self)._get_global_data(role)
 
     def to_doc_data(self):
+        """Data for Asset document.
+
+        Returns:
+            dict: May be empty if task is marked as removed or with single key
+                dict with name as key and task data as value.
+        """
         if self._removed:
             return {}
         data = copy.deepcopy(self._data)
@@ -2084,6 +2293,7 @@ class TaskItem(BaseItem):
                 return False
             return self._edited_columns[key]
 
+        # Return empty string if column is edited
         if role == QtCore.Qt.DisplayRole and self._edited_columns.get(key):
             return ""
 
@@ -2091,6 +2301,7 @@ class TaskItem(BaseItem):
             if key == "type":
                 return self._data["type"]
 
+            # Always require task type filled
             if key == "name":
                 if not self._data["type"]:
                     if role == QtCore.Qt.DisplayRole:
@@ -2103,6 +2314,8 @@ class TaskItem(BaseItem):
         return super(TaskItem, self).data(role, key)
 
     def setData(self, value, role, key=None):
+        # Store information that item on a column is edited
+        #   - DisplayRole will return empty string in that case
         if role == EDITOR_OPENED_ROLE:
             if key not in self._edited_columns:
                 return False
@@ -2110,12 +2323,14 @@ class TaskItem(BaseItem):
             return True
 
         if role == REMOVED_ROLE:
+            # Skip value change if is same as already set value
             if value == self._removed:
                 return False
             self._removed = value
             self.parent().on_task_remove_state_change(self)
             return True
 
+        # Convert empty string to None on EditRole
         if (
             role == QtCore.Qt.EditRole
             and key == "name"
@@ -2126,6 +2341,7 @@ class TaskItem(BaseItem):
         result = super(TaskItem, self).setData(value, role, key)
 
         if role == QtCore.Qt.EditRole:
+            # Trigger task name change of parent AssetItem
             if (
                 key == "name"
                 or (key == "type" and not self._data["name"])
