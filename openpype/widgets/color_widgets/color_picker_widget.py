@@ -28,7 +28,12 @@ class ColorPickerWidget(QtWidgets.QWidget):
         # Color triangle
         color_triangle = QtColorTriangle(left_side)
 
-        alpha_slider = AlphaSlider(QtCore.Qt.Horizontal, left_side)
+        alpha_slider_proxy = QtWidgets.QWidget(left_side)
+        alpha_slider = AlphaSlider(QtCore.Qt.Horizontal, alpha_slider_proxy)
+
+        alpha_slider_layout = QtWidgets.QHBoxLayout(alpha_slider_proxy)
+        alpha_slider_layout.setContentsMargins(5, 5, 5, 5)
+        alpha_slider_layout.addWidget(alpha_slider, 1)
 
         left_layout = QtWidgets.QVBoxLayout(left_side)
         left_layout.setContentsMargins(0, 0, 0, 0)
