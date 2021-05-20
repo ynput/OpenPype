@@ -2,7 +2,10 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from .item_widgets import InputWidget
 
-from openpype.widgets.color_widgets import ColorPickerWidget
+from openpype.widgets.color_widgets import (
+    ColorPickerWidget,
+    draw_checkerboard_tile
+)
 
 
 class ColorWidget(InputWidget):
@@ -77,29 +80,7 @@ class ColorViewer(QtWidgets.QWidget):
 
     def checkerboard(self):
         if not self._checkerboard:
-            checkboard_piece_size = 10
-            color_1 = QtGui.QColor(188, 188, 188)
-            color_2 = QtGui.QColor(90, 90, 90)
-
-            pix = QtGui.QPixmap(
-                checkboard_piece_size * 2,
-                checkboard_piece_size * 2
-            )
-            pix_painter = QtGui.QPainter(pix)
-
-            rect = QtCore.QRect(
-                0, 0, checkboard_piece_size, checkboard_piece_size
-            )
-            pix_painter.fillRect(rect, color_1)
-            rect.moveTo(checkboard_piece_size, checkboard_piece_size)
-            pix_painter.fillRect(rect, color_1)
-            rect.moveTo(checkboard_piece_size, 0)
-            pix_painter.fillRect(rect, color_2)
-            rect.moveTo(0, checkboard_piece_size)
-            pix_painter.fillRect(rect, color_2)
-            pix_painter.end()
-            self._checkerboard = pix
-
+            self._checkerboard = draw_checkerboard_tile()
         return self._checkerboard
 
     def color(self):
