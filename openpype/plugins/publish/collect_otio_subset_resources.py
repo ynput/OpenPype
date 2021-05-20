@@ -27,8 +27,10 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
             return
 
         if not instance.data.get("representations"):
-            instance.data["representations"] = list()
-        version_data = dict()
+            instance.data["representations"] = []
+
+        if not instance.data.get("versionData"):
+            instance.data["versionData"] = {}
 
         # get basic variables
         otio_clip = instance.data["otioClip"]
@@ -68,13 +70,17 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
 
         # add to version data start and end range data
         # for loader plugins to be correctly displayed and loaded
-        version_data.update({
-            "frameStart": frame_start,
-            "frameEnd": frame_end,
-            "handleStart": diff_start,
-            "handleEnd": diff_end,
+        instance.data["versionData"].update({
             "fps": otio_avalable_range.start_time.rate
         })
+
+        if not instance.data["versionData"].get("retime"):
+            instance.data["versionData"].update({
+                "frameStart": frame_start,
+                "frameEnd": frame_end,
+                "handleStart": diff_start,
+                "handleEnd": diff_end,
+            })
 
         # change frame_start and frame_end values
         # for representation to be correctly renumbered in integrate_new
@@ -136,11 +142,12 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
                 frame_start, frame_end, file=filename)
 
         if repre:
-            instance.data["versionData"] = version_data
-            self.log.debug(">>>>>>>> version data {}".format(version_data))
             # add representation to instance data
             instance.data["representations"].append(repre)
             self.log.debug(">>>>>>>> {}".format(repre))
+
+        import pprint
+        self.log.debug(pprint.pformat(instance.data))
 
     def _create_representation(self, start, end, **kwargs):
         """
