@@ -188,6 +188,8 @@ To build pype on MacOS you wil need:
 - **[Homebrew](https://brew.sh)** - easy way of installing everything necessary.
 - **[CMake](https://cmake.org/)** to build some external OpenPype dependencies.
 - **XCode Command Line Tools** (or some other build system)
+- **[create-dmg](https://formulae.brew.sh/formula/create-dmg)** to create dmg image from application
+bundle.
 
 1) Install **Homebrew**:
 ```shell
@@ -223,23 +225,70 @@ $ pyenv install 3.7.9
 $ pyenv local 3.7.9
 ```
 
+6) Install `create-dmg`
+```shell
+$ brew install create-dmg
+```
+
 #### To build Pype:
 
 1. Run `./tools/create_env.sh` to create virtual environment in `./venv`
-2. Run `./tools/build.sh` to build Pype executables in `./build/`
+2. Run `./tools/build.sh` to build OpenPype Application bundle in `./build/`
+
+####
 
 </TabItem>
 </Tabs>
 
-## Script tools
+## Adding dependencies
+### Python modules
+If you are extending OpenPype and you need some new modules not included, you can add them
+to `pyproject.toml` to `[tool.poetry.dependencies]` section.
 
+```toml title="/pyproject.toml"
+[tool.poetry.dependencies]
+python = "3.7.*"
+aiohttp = "^3.7"
+aiohttp_json_rpc = "*" # TVPaint server
+acre = { git = "https://github.com/pypeclub/acre.git" }
+opentimelineio = { version = "0.14.0.dev1", source = "openpype" }
+#...
+```
+It is useful to add comment to it so others can see why this was added and where it is used.
+As you can see you can add git repositories or custom wheels (those must be
+added to `[[tool.poetry.source]]` section).
+
+To add something only for specific platform, you can use markers like:
+```toml title="Install pywin32 only on Windows"
+pywin32 = { version = "300", markers = "sys_platform == 'win32'" }
+```
+
+For more information see [Poetry documentation](https://python-poetry.org/docs/dependency-specification/).
+
+### Binary dependencies
+To add some binary tool or something that doesn't fit standard Python distribution methods, you
+can use [fetch_thirdparty_libs](#fetch_thirdparty_libs) script. It will take things defined in
+`pyproject.toml` under `[openpype]` section like this:
+
+```toml title="/pyproject.toml"
+[openpype]
+
+[openpype.thirdparty.ffmpeg.windows]
+url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-windows.zip"
+hash = "dd51ba29d64ee238e7c4c3c7301b19754c3f0ee2e2a729c20a0e2789e72db925"
+# ...
+```
+This defines FFMpeg for Windows. It will be downloaded from specified url, its checksum will
+be validated (it's sha256) and it will be extracted to `/vendor/bin/ffmpeg/windows` (partly taken
+from its section name).
+
+## Script tools
 (replace extension with the one for your system - `ps1` for windows, `sh` for linux/macos)
 
 ### build
-
 This will build OpenPype to `build` directory. If virtual environment is not created yet, it will
 install [Poetry](https://python-poetry.org/) and using it download and install necessary
-packages needed for build. It is recommended that you run [fetch_thirdparty_libs](#fetch-thirdparty-libs)
+packages needed for build. It is recommended that you run [fetch_thirdparty_libs](#fetch_thirdparty_libs)
 to download FFMpeg, OpenImageIO and others that are needed by OpenPype and are copied during the build.
 
 #### Arguments
@@ -247,7 +296,6 @@ to download FFMpeg, OpenImageIO and others that are needed by OpenPype and are c
 feature changes in submodules.
 
 ### build_win_installer
-
 This will take already existing build in `build` directory and create executable installer using
 [Inno Setup](https://jrsoftware.org/isinfo.php) and definitions in `./inno_setup.iss`. You need OpenPype
 build using [build script](#build), Inno Setup installed and in PATH before running this script.
@@ -257,7 +305,6 @@ Windows only
 :::
 
 ### create_env
-
 Script to create virtual environment for build and running OpenPype from sources. It is using
 [Poetry](https://python-poetry.org/). All dependencies are defined in `pyproject.toml`, resolved by
 Poetry into `poetry.lock` file and then installed. Running this script without Poetry will download
@@ -268,41 +315,78 @@ to update packages version, just run `poetry update` or delete lock file.
 `--verbose` - to increase verbosity of Poetry. This can be useful for debugging package conflicts.
 
 ### create_zip
-
 Script to create packaged OpenPype version from current sources. This will strip developer stuff and
 package it into zip that can be used for [auto-updates for studio wide distributions](admin_distribute#automatic-updates), etc.
+Same as:
+```shell
+poetry run python ./tools/create_zip.py
+```
 
 ### docker_build.sh
-
 Script to build OpenPype on [Docker](https://www.docker.com/) enabled systems - usually Linux and Windows
 with [Docker Desktop](https://docs.docker.com/docker-for-windows/install/)
 and [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/about) (WSL) installed.
 
 It must be run with administrative privileges - `sudo ./docker_build.sh`.
 
-It will use Centos 7 base image to build OpenPype. You'll see your build in `./build` folder.
+It will use **Centos 7** base image to build OpenPype. You'll see your build in `./build` folder.
 
 ### fetch_thirdparty_libs
-
 This script will download necessary tools for OpenPype defined in `pyproject.toml` like FFMpeg,
 OpenImageIO and USD libraries and put them to `./vendor/bin`. Those are then included in build.
 Running it will overwrite everything on their respective paths.
+Same as:
+```shell
+poetry run python ./tools/fetch_thirdparty_libs.py
+```
 
 ### make_docs
-
 Script will run [sphinx](https://www.sphinx-doc.org/) to build api documentation in html. You
 should see it then under `./docs/build/html`.
 
 ### run_documentation
-
 This will start up [Docusaurus](https://docusaurus.io/) to display OpenPype user documentation.
 Useful for offline browsing or editing documentation itself. You will need [Node.js](https://nodejs.org/)
 and [Yarn](https://yarnpkg.com/) to run this script. After executing it, you'll see new
 browser window with current OpenPype documentation.
+Same as:
+```shell
+./website/yarn start
+```
 
 ### run_mongo
-
 Helper script to run local mongoDB server for development and testing. You will need
 [mongoDB server](https://www.mongodb.com/try/download/community) installed in standard location
 or in PATH (standard location works only on Windows). It will start by default on port `2707` and
 it will put its db files to `../mongo_db_data` relative to OpenPype sources.
+
+### run_project_manager
+Helper script to start OpenPype Project Manager tool.
+Same as:
+```shell
+poetry run python start.py projectmanager
+```
+
+### run_settings
+Helper script to open OpenPype Settings UI.
+Same as:
+```shell
+poetry run python start.py settings --dev
+```
+
+### run_tests
+Runs OpenPype test suite.
+
+### run_tray
+Helper script to run OpenPype Tray.
+Same as:
+```shell
+poetry run python start.py tray
+```
+
+### update_submodules
+Helper script to update OpenPype git submodules.
+Same as:
+```shell
+git submodule update --recursive --remote
+```
