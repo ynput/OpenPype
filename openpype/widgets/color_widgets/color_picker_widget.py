@@ -5,14 +5,12 @@ from .color_triangle import QtColorTriangle
 from .color_view import ColorViewer
 from .color_screen_pick import PickScreenColorWidget
 from .color_inputs import (
-    ColorInputsWidget,
     AlphaSlider,
     AlphaInputs,
     HEXInputs,
     RGBInputs,
     HSLInputs,
-    HSVInputs,
-    CMYKInputs
+    HSVInputs
 )
 
 
