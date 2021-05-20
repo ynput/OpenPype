@@ -1,6 +1,34 @@
 from Qt import QtWidgets, QtCore, QtGui
 
 
+def draw_checkerboard_tile(piece_size=None, color_1=None, color_2=None):
+    if piece_size is None:
+        piece_size = 7
+
+    if color_1 is None:
+        color_1 = QtGui.QColor(188, 188, 188)
+
+    if color_2 is None:
+        color_2 = QtGui.QColor(90, 90, 90)
+
+    pix = QtGui.QPixmap(piece_size * 2, piece_size * 2)
+    pix_painter = QtGui.QPainter(pix)
+
+    rect = QtCore.QRect(
+        0, 0, piece_size, piece_size
+    )
+    pix_painter.fillRect(rect, color_1)
+    rect.moveTo(piece_size, piece_size)
+    pix_painter.fillRect(rect, color_1)
+    rect.moveTo(piece_size, 0)
+    pix_painter.fillRect(rect, color_2)
+    rect.moveTo(0, piece_size)
+    pix_painter.fillRect(rect, color_2)
+    pix_painter.end()
+
+    return pix
+
+
 class ColorViewer(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(ColorViewer, self).__init__(parent)
@@ -14,29 +42,7 @@ class ColorViewer(QtWidgets.QWidget):
 
     def checkerboard(self):
         if not self._checkerboard:
-            checkboard_piece_size = 10
-            color_1 = QtGui.QColor(188, 188, 188)
-            color_2 = QtGui.QColor(90, 90, 90)
-
-            pix = QtGui.QPixmap(
-                checkboard_piece_size * 2,
-                checkboard_piece_size * 2
-            )
-            pix_painter = QtGui.QPainter(pix)
-
-            rect = QtCore.QRect(
-                0, 0, checkboard_piece_size, checkboard_piece_size
-            )
-            pix_painter.fillRect(rect, color_1)
-            rect.moveTo(checkboard_piece_size, checkboard_piece_size)
-            pix_painter.fillRect(rect, color_1)
-            rect.moveTo(checkboard_piece_size, 0)
-            pix_painter.fillRect(rect, color_2)
-            rect.moveTo(0, checkboard_piece_size)
-            pix_painter.fillRect(rect, color_2)
-            pix_painter.end()
-            self._checkerboard = pix
-
+            self._checkerboard = draw_checkerboard_tile()
         return self._checkerboard
 
     def color(self):
