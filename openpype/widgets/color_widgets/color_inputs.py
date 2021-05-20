@@ -47,7 +47,7 @@ class AlphaSlider(QtWidgets.QSlider):
     def checkerboard(self):
         if self._checkerboard is None:
             self._checkerboard = draw_checkerboard_tile(
-                3, QtGui.QColor(255, 255, 255), QtGui.QColor(27, 27, 27)
+                3, QtGui.QColor(173, 173, 173), QtGui.QColor(27, 27, 27)
             )
         return self._checkerboard
 
