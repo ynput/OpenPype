@@ -30,7 +30,7 @@ class Delivery(api.SubsetLoader):
     families = ["*"]
     # tool_names = ["library_loader"]
 
-    label = "Delivery Versions"
+    label = "Deliver Versions"
     order = 35
     icon = "upload"
     color = "#d8d8d8"
