@@ -68,18 +68,6 @@ class AlphaInputs(QtWidgets.QWidget):
         self._block_changes = False
         self.alpha_value = None
 
-        # Opacity slider
-        alpha_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal, self)
-        alpha_slider.setSingleStep(1)
-        alpha_slider.setMinimum(0)
-        alpha_slider.setMaximum(255)
-        alpha_slider.setStyleSheet(slide_style)
-        alpha_slider.setValue(255)
-
-        inputs_widget = QtWidgets.QWidget(self)
-        inputs_layout = QtWidgets.QHBoxLayout(inputs_widget)
-        inputs_layout.setContentsMargins(0, 0, 0, 0)
-
         percent_input = QtWidgets.QDoubleSpinBox(self)
         percent_input.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
         percent_input.setMinimum(0)
@@ -91,21 +79,16 @@ class AlphaInputs(QtWidgets.QWidget):
         int_input.setMinimum(0)
         int_input.setMaximum(255)
 
-        inputs_layout.addWidget(int_input)
-        inputs_layout.addWidget(QtWidgets.QLabel("0-255"))
-        inputs_layout.addWidget(percent_input)
-        inputs_layout.addWidget(QtWidgets.QLabel("%"))
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(int_input)
+        layout.addWidget(QtWidgets.QLabel("0-255"))
+        layout.addWidget(percent_input)
+        layout.addWidget(QtWidgets.QLabel("%"))
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(QtWidgets.QLabel("Alpha", self))
-        layout.addWidget(alpha_slider)
-        layout.addWidget(inputs_widget)
-
-        alpha_slider.valueChanged.connect(self._on_slider_change)
         percent_input.valueChanged.connect(self._on_percent_change)
         int_input.valueChanged.connect(self._on_int_change)
 
-        self.alpha_slider = alpha_slider
         self.percent_input = percent_input
         self.int_input = int_input
 
@@ -116,13 +99,6 @@ class AlphaInputs(QtWidgets.QWidget):
             return
         self.alpha_value = alpha
 
-        self.update_alpha()
-
-    def _on_slider_change(self):
-        if self._block_changes:
-            return
-        self.alpha_value = self.alpha_slider.value()
-        self.alpha_changed.emit(self.alpha_value)
         self.update_alpha()
 
     def _on_percent_change(self):
@@ -142,10 +118,6 @@ class AlphaInputs(QtWidgets.QWidget):
 
     def update_alpha(self):
         self._block_changes = True
-
-        if self.alpha_slider.value() != self.alpha_value:
-            self.alpha_slider.setValue(self.alpha_value)
-
         if self.int_input.value() != self.alpha_value:
             self.int_input.setValue(self.alpha_value)
 
