@@ -141,8 +141,17 @@ class ColorDialog(QtWidgets.QDialog):
         cancel_btn.clicked.connect(self.on_cancel_clicked)
 
         self.picker_widget = picker_widget
+        self.ok_btn = ok_btn
+        self.cancel_btn = cancel_btn
 
         self._result = None
+
+    def showEvent(self, event):
+        super(ColorDialog, self).showEvent(event)
+
+        btns_width = max(self.ok_btn.width(), self.cancel_btn.width())
+        self.ok_btn.setFixedWidth(btns_width)
+        self.cancel_btn.setFixedWidth(btns_width)
 
     def on_ok_clicked(self):
         self._result = self.picker_widget.color()
