@@ -97,7 +97,6 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         template_label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
 
         root_line_edit = QtWidgets.QLineEdit()
-        root_line_edit.setText("c:/PETR_TEST")  # TEMP
 
         repre_checkboxes_layout = QtWidgets.QFormLayout()
         repre_checkboxes_layout.setContentsMargins(10, 5, 5, 20)
@@ -120,6 +119,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         input_layout.addRow("Representations", repre_checkboxes_layout)
 
         btn_delivery = QtWidgets.QPushButton("Deliver")
+        btn_delivery.setEnabled(bool(dropdown.currentText()))
 
         progress_bar = QtWidgets.QProgressBar(self)
         progress_bar.setMinimum = 0
@@ -289,6 +289,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         name = self.dropdown.currentText()
         template_value = self.templates.get(name)
         if template_value:
+            self.btn_delivery.setEnabled(True)
             self.template_label.setText(template_value)
 
     def _update_progress(self, uploaded):
