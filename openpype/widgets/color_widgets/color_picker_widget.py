@@ -37,8 +37,8 @@ class ColorPickerWidget(QtWidgets.QWidget):
 
         left_layout = QtWidgets.QVBoxLayout(left_side)
         left_layout.setContentsMargins(0, 0, 0, 0)
-        left_layout.addWidget(color_triangle)
-        left_layout.addWidget(alpha_slider)
+        left_layout.addWidget(color_triangle, 1)
+        left_layout.addWidget(alpha_slider_proxy, 0)
 
         right_side = QtWidgets.QWidget(top_part)
 
