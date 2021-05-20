@@ -1,18 +1,21 @@
 import os
 import copy
 import json
-import shutil
 import collections
 
-import clique
 from bson.objectid import ObjectId
-
-from avalon import pipeline
-from avalon.vendor import filelink
 
 from openpype.api import Anatomy, config
 from openpype.modules.ftrack.lib import BaseAction, statics_icon
 from openpype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
+from openpype.lib.delivery import (
+    path_from_represenation,
+    get_format_dict,
+    check_destination_path,
+    process_single_file,
+    process_sequence,
+    report
+)
 from avalon.api import AvalonMongoDB
 
 
@@ -450,18 +453,7 @@ class Delivery(BaseAction):
 
         anatomy = Anatomy(project_name)
 
-        format_dict = {}
-        if location_path:
-            location_path = location_path.replace("\\", "/")
-            root_names = anatomy.root_names_from_templates(
-                anatomy.templates["delivery"]
-            )
-            if root_names is None:
-                format_dict["root"] = location_path
-            else:
-                format_dict["root"] = {}
-                for name in root_names:
-                    format_dict["root"][name] = location_path
+        format_dict = get_format_dict(anatomy, location_path)
 
         datetime_data = config.get_datetime_data()
         for repre in repres_to_deliver:
@@ -471,41 +463,14 @@ class Delivery(BaseAction):
                 debug_msg += " with published path {}.".format(source_path)
             self.log.debug(debug_msg)
 
-            # Get destination repre path
             anatomy_data = copy.deepcopy(repre["context"])
-            anatomy_data.update(datetime_data)
-            anatomy_filled = anatomy.format_all(anatomy_data)
-            test_path = anatomy_filled["delivery"][anatomy_name]
+            repre_report_items = check_destination_path(anatomy,
+                                                        anatomy_data,
+                                                        datetime_data,
+                                                        anatomy_name)
 
-            if not test_path.solved:
-                msg = (
-                    "Missing keys in Representation's context"
-                    " for anatomy template \"{}\"."
-                ).format(anatomy_name)
-
-                if test_path.missing_keys:
-                    keys = ", ".join(test_path.missing_keys)
-                    sub_msg = (
-                        "Representation: {}<br>- Missing keys: \"{}\"<br>"
-                    ).format(str(repre["_id"]), keys)
-
-                if test_path.invalid_types:
-                    items = []
-                    for key, value in test_path.invalid_types.items():
-                        items.append("\"{}\" {}".format(key, str(value)))
-
-                    keys = ", ".join(items)
-                    sub_msg = (
-                        "Representation: {}<br>"
-                        "- Invalid value DataType: \"{}\"<br>"
-                    ).format(str(repre["_id"]), keys)
-
-                report_items[msg].append(sub_msg)
-                self.log.warning(
-                    "{} Representation: \"{}\" Filled: <{}>".format(
-                        msg, str(repre["_id"]), str(test_path)
-                    )
-                )
+            if repre_report_items:
+                report_items.update(repre_report_items)
                 continue
 
             # Get source repre path
@@ -514,187 +479,25 @@ class Delivery(BaseAction):
             if frame:
                 repre["context"]["frame"] = len(str(frame)) * "#"
 
-            repre_path = self.path_from_represenation(repre, anatomy)
+            repre_path = path_from_represenation(repre, anatomy)
             # TODO add backup solution where root of path from component
-            # is repalced with root
+            # is replaced with root
             args = (
                 repre_path,
+                repre,
                 anatomy,
                 anatomy_name,
                 anatomy_data,
                 format_dict,
-                report_items
+                report_items,
+                self.log
             )
             if not frame:
-                self.process_single_file(*args)
+                process_single_file(*args)
             else:
-                self.process_sequence(*args)
+                process_sequence(*args)
 
-        return self.report(report_items)
-
-    def process_single_file(
-        self, repre_path, anatomy, anatomy_name, anatomy_data, format_dict,
-        report_items
-    ):
-        anatomy_filled = anatomy.format(anatomy_data)
-        if format_dict:
-            template_result = anatomy_filled["delivery"][anatomy_name]
-            delivery_path = template_result.rootless.format(**format_dict)
-        else:
-            delivery_path = anatomy_filled["delivery"][anatomy_name]
-
-        delivery_folder = os.path.dirname(delivery_path)
-        if not os.path.exists(delivery_folder):
-            os.makedirs(delivery_folder)
-
-        self.copy_file(repre_path, delivery_path)
-
-    def process_sequence(
-        self, repre_path, anatomy, anatomy_name, anatomy_data, format_dict,
-        report_items
-    ):
-        dir_path, file_name = os.path.split(str(repre_path))
-
-        base_name, ext = os.path.splitext(file_name)
-        file_name_items = None
-        if "#" in base_name:
-            file_name_items = [part for part in base_name.split("#") if part]
-
-        elif "%" in base_name:
-            file_name_items = base_name.split("%")
-
-        if not file_name_items:
-            msg = "Source file was not found"
-            report_items[msg].append(repre_path)
-            self.log.warning("{} <{}>".format(msg, repre_path))
-            return
-
-        src_collections, remainder = clique.assemble(os.listdir(dir_path))
-        src_collection = None
-        for col in src_collections:
-            if col.tail != ext:
-                continue
-
-            # skip if collection don't have same basename
-            if not col.head.startswith(file_name_items[0]):
-                continue
-
-            src_collection = col
-            break
-
-        if src_collection is None:
-            # TODO log error!
-            msg = "Source collection of files was not found"
-            report_items[msg].append(repre_path)
-            self.log.warning("{} <{}>".format(msg, repre_path))
-            return
-
-        frame_indicator = "@####@"
-
-        anatomy_data["frame"] = frame_indicator
-        anatomy_filled = anatomy.format(anatomy_data)
-
-        if format_dict:
-            template_result = anatomy_filled["delivery"][anatomy_name]
-            delivery_path = template_result.rootless.format(**format_dict)
-        else:
-            delivery_path = anatomy_filled["delivery"][anatomy_name]
-
-        delivery_folder = os.path.dirname(delivery_path)
-        dst_head, dst_tail = delivery_path.split(frame_indicator)
-        dst_padding = src_collection.padding
-        dst_collection = clique.Collection(
-            head=dst_head,
-            tail=dst_tail,
-            padding=dst_padding
-        )
-
-        if not os.path.exists(delivery_folder):
-            os.makedirs(delivery_folder)
-
-        src_head = src_collection.head
-        src_tail = src_collection.tail
-        for index in src_collection.indexes:
-            src_padding = src_collection.format("{padding}") % index
-            src_file_name = "{}{}{}".format(src_head, src_padding, src_tail)
-            src = os.path.normpath(
-                os.path.join(dir_path, src_file_name)
-            )
-
-            dst_padding = dst_collection.format("{padding}") % index
-            dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
-
-            self.copy_file(src, dst)
-
-    def path_from_represenation(self, representation, anatomy):
-        try:
-            template = representation["data"]["template"]
-
-        except KeyError:
-            return None
-
-        try:
-            context = representation["context"]
-            context["root"] = anatomy.roots
-            path = pipeline.format_template_with_optional_keys(
-                context, template
-            )
-
-        except KeyError:
-            # Template references unavailable data
-            return None
-
-        return os.path.normpath(path)
-
-    def copy_file(self, src_path, dst_path):
-        if os.path.exists(dst_path):
-            return
-        try:
-            filelink.create(
-                src_path,
-                dst_path,
-                filelink.HARDLINK
-            )
-        except OSError:
-            shutil.copyfile(src_path, dst_path)
-
-    def report(self, report_items):
-        items = []
-        title = "Delivery report"
-        for msg, _items in report_items.items():
-            if not _items:
-                continue
-
-            if items:
-                items.append({"type": "label", "value": "---"})
-
-            items.append({
-                "type": "label",
-                "value": "# {}".format(msg)
-            })
-            if not isinstance(_items, (list, tuple)):
-                _items = [_items]
-            __items = []
-            for item in _items:
-                __items.append(str(item))
-
-            items.append({
-                "type": "label",
-                "value": '<p>{}</p>'.format("<br>".join(__items))
-            })
-
-        if not items:
-            return {
-                "success": True,
-                "message": "Delivery Finished"
-            }
-
-        return {
-            "items": items,
-            "title": title,
-            "success": False,
-            "message": "Delivery Finished"
-        }
+        return report(report_items)
 
 
 def register(session):
