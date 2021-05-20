@@ -142,6 +142,8 @@ class PrecollectRetime(api.InstancePlugin):
             "timewarps": time_warp_nodes,
             "frameStart": frame_start,
             "frameEnd": frame_end,
+            "handleStart": source_handle_start,
+            "handleEnd": source_out_h - source_out
         })
         self.log.debug("sourceIn: {}".format(instance.data["sourceIn"]))
         self.log.debug("sourceOut: {}".format(instance.data["sourceOut"]))

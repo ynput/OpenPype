@@ -102,6 +102,9 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "families": families,
                 "publish": tag_data["publish"],
                 "fps": context.data["fps"],
+                "versionData": {
+                    "colorspace": track_item.sourceMediaColourTransform(),
+                },
 
                 # clip's effect
                 "clipEffectItems": subtracks,
