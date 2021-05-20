@@ -42,7 +42,7 @@ class ColorViewer(QtWidgets.QWidget):
 
     def checkerboard(self):
         if not self._checkerboard:
-            self._checkerboard = draw_checkerboard_tile()
+            self._checkerboard = draw_checkerboard_tile(4)
         return self._checkerboard
 
     def color(self):
@@ -70,15 +70,14 @@ class ColorViewer(QtWidgets.QWidget):
         self.update()
 
     def paintEvent(self, event):
-        rect = event.rect()
-
-        # Paint everything to pixmap as it has transparency
-        pix = QtGui.QPixmap(rect.width(), rect.height())
-        pix_painter = QtGui.QPainter(pix)
-        pix_painter.drawTiledPixmap(rect, self.checkerboard())
-        pix_painter.fillRect(rect, self.actual_color)
-        pix_painter.end()
+        clip_rect = event.rect()
+        rect = clip_rect.adjusted(0, 0, -1, -1)
 
         painter = QtGui.QPainter(self)
-        painter.drawPixmap(rect, pix)
+        painter.setClipRect(clip_rect)
+        painter.drawTiledPixmap(rect, self.checkerboard())
+        painter.setBrush(self.actual_color)
+        pen = QtGui.QPen(QtGui.QColor(255, 255, 255, 67))
+        painter.setPen(pen)
+        painter.drawRect(rect)
         painter.end()
