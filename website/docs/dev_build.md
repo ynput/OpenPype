@@ -26,6 +26,11 @@ This is outline of build steps. Most of them are done automatically via scripts:
 - On Mac application bundle and dmg image will be created from built code.
 - On Windows, you can create executable installer with `./tools/build_win_installer.ps1`
 
+### Clone OpenPype repository:
+```powershell
+git clone --recurse-submodules https://github.com/pypeclub/OpenPype.git
+```
+
 ## Platform specific steps
 
 <Tabs
@@ -43,11 +48,6 @@ This is outline of build steps. Most of them are done automatically via scripts:
 More tools might be needed for installing some dependencies (for example for **OpenTimelineIO**) - mostly
 development tools like [CMake](https://cmake.org/) and [Visual Studio](https://visualstudio.microsoft.com/cs/downloads/)
 
-#### Clone repository:
-```powershell
-git clone --recurse-submodules git@github.com:pypeclub/pype.git
-```
-
 #### Run from source
 
 For development purposes it is possible to run OpenPype directly from the source. We provide a simple launcher script for this. 
@@ -61,13 +61,14 @@ To start OpenPype from source you need to
 Step 1 and 2 needs to be run only once (or when something was changed).
 
 #### To build OpenPype:
-1. Run `.\tools\fetch_thirdparty_libs.ps1` to get **ffmpeg**, **oiio** and other tools needed.
-2. `.\tools\build.ps1` to create virtual environment in `.venv`
+1. Run `.\tools\create_env.ps1` to create virtual environment in `.venv`
+2. Run `.\tools\fetch_thirdparty_libs.ps1` to get **ffmpeg**, **oiio** and other tools needed.
+3. `.\tools\build.ps1` to build OpenPype to `.\build`
 
 
-To create distributable OpenPype versions, run `./tools/create_zip.ps1` - that will
+To create distributable OpenPype versions, run `.\tools\create_zip.ps1` - that will
 create zip file with name `pype-vx.x.x.zip` parsed from current pype repository and
-copy it to user data dir. You can specify `--path /path/to/zip` to force it into a different 
+copy it to user data dir. You can specify `--path \path\to\zip` to force it into a different 
 location. This can be used to prepare new version releases for artists in the studio environment
 without the need to re-build the whole package
 
@@ -176,8 +177,9 @@ For more information about setting your build environment please refer to [pyenv
 
 
 #### To build Pype:
-1. Run `./tools/fetch_thirdparty_libs.sh` to get **ffmpeg**, **oiio** and other tools needed.
-2. Run `./tools/build.sh` to build pype executables in `.\build\`
+1. Run `./tools/create_env.sh` to create virtual environment in `./venv`
+2. Run `./tools/fetch_thirdparty_libs.sh` to get **ffmpeg**, **oiio** and other tools needed.
+3. Run `./tools/build.sh` to build pype executables in `.\build\`
 
 </TabItem>
 <TabItem value="mac">
@@ -233,7 +235,8 @@ $ brew install create-dmg
 #### To build Pype:
 
 1. Run `./tools/create_env.sh` to create virtual environment in `./venv`.
-2. Run `./tools/build.sh` to build OpenPype Application bundle in `./build/`.
+2. Run `./tools/fetch_thirdparty_libs.sh` to get **ffmpeg**, **oiio** and other tools needed.
+3. Run `./tools/build.sh` to build OpenPype Application bundle in `./build/`.
 
 </TabItem>
 </Tabs>
