@@ -3,6 +3,7 @@ import traceback
 import importlib
 
 import bpy
+import addon_utils
 
 
 def load_scripts(paths):
@@ -73,6 +74,23 @@ def load_scripts(paths):
                     continue
                 for mod in bpy.utils.modules_from_path(path, loaded_modules):
                     test_register(mod)
+
+    addons_paths = []
+    for base_path in paths:
+        addons_path = os.path.join(base_path, "addons")
+        if os.path.exists(addons_path):
+            addons_paths.append(addons_path)
+
+    if addons_paths:
+        # Fake addons
+        origin_paths = addon_utils.paths
+
+        def new_paths():
+            paths = origin_paths() + addons_paths
+            return paths
+
+        addon_utils.paths = new_paths
+        addon_utils.modules_refresh()
 
     # load template (if set)
     if any(bpy.utils.app_template_paths()):
