@@ -183,7 +183,7 @@ class RGBInputs(QtWidgets.QWidget):
         input_blue.setMaximum(255)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(QtWidgets.QLabel("RGB", self), 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(input_red, 1)
         layout.addWidget(input_green, 1)
         layout.addWidget(input_blue, 1)
@@ -265,7 +265,7 @@ class CMYKInputs(QtWidgets.QWidget):
         input_black.setMaximum(255)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(QtWidgets.QLabel("CMYK", self))
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(input_cyan, 1)
         layout.addWidget(input_magenta, 1)
         layout.addWidget(input_yellow, 1)
@@ -331,7 +331,7 @@ class HEXInputs(QtWidgets.QWidget):
         input_field = QtWidgets.QLineEdit(self)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(QtWidgets.QLabel("HEX", self), 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(input_field, 1)
 
         input_field.textChanged.connect(self._on_change)
@@ -392,7 +392,7 @@ class HSVInputs(QtWidgets.QWidget):
         input_val.setMaximum(255)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(QtWidgets.QLabel("HSV", self), 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(input_hue, 1)
         layout.addWidget(input_sat, 1)
         layout.addWidget(input_val, 1)
@@ -466,7 +466,7 @@ class HSLInputs(QtWidgets.QWidget):
         input_light.setMaximum(255)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(QtWidgets.QLabel("HSL", self), 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(input_hue, 1)
         layout.addWidget(input_sat, 1)
         layout.addWidget(input_light, 1)
