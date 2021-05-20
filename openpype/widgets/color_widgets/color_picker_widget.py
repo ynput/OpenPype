@@ -91,7 +91,7 @@ class ColorPickerWidget(QtWidgets.QWidget):
         right_layout.setRowStretch(row, 1)
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setSpacing(5)
+        layout.setSpacing(20)
         layout.addWidget(left_side, 1)
         layout.addWidget(right_side, 0)
 
