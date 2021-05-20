@@ -352,7 +352,8 @@ and [Yarn](https://yarnpkg.com/) to run this script. After executing it, you'll 
 browser window with current OpenPype documentation.
 Same as:
 ```shell
-./website/yarn start
+cd ./website
+yarn start
 ```
 
 ### run_mongo
