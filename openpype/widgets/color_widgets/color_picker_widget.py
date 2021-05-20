@@ -107,14 +107,21 @@ class ColorPickerWidget(QtWidgets.QWidget):
         self.alpha_inputs = alpha_inputs
         self.btn_pick_color = btn_pick_color
 
+        self._minimum_size_set = False
+
         if color:
             self.set_color(color)
             self.alpha_changed(color.alpha())
 
     def showEvent(self, event):
         super(ColorPickerWidget, self).showEvent(event)
-        triangle_width = int(self.height() / 5 * 4)
-        self.color_triangle.setMinimumWidth(triangle_width)
+        if self._minimum_size_set:
+            return
+
+        triangle_size = max(int(self.width() / 5 * 3), 180)
+        self.color_triangle.setMinimumWidth(triangle_size)
+        self.color_triangle.setMinimumHeight(triangle_size)
+        self._minimum_size_set = True
 
     def color(self):
         return self.color_view.color()
