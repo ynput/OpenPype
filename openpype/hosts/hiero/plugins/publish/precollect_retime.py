@@ -3,18 +3,21 @@ import hiero
 import math
 
 
-class CollectCalculateRetime(api.InstancePlugin):
+class PrecollectRetime(api.InstancePlugin):
     """Calculate Retiming of selected track items."""
 
-    order = api.CollectorOrder + 0.02
-    label = "Collect Calculate Retiming"
+    order = api.CollectorOrder - 0.578
+    label = "Precollect Retime"
     hosts = ["hiero"]
     families = ['retime']
 
     def process(self, instance):
-        margin_in = instance.data["retimeMarginIn"]
-        margin_out = instance.data["retimeMarginOut"]
-        self.log.debug("margin_in: '{0}', margin_out: '{1}'".format(margin_in, margin_out))
+
+        if not instance.data.get("versionData"):
+            instance.data["versionData"] = {}
+
+        margin_in = 1
+        margin_out = 1
 
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
@@ -27,16 +30,19 @@ class CollectCalculateRetime(api.InstancePlugin):
         source_in = int(track_item.sourceIn())
         source_out = int(track_item.sourceOut())
         speed = track_item.playbackSpeed()
-        self.log.debug("_BEFORE: \n timeline_in: `{0}`,\n timeline_out: `{1}`,\
-        \n source_in: `{2}`,\n source_out: `{3}`,\n speed: `{4}`,\n handle_start: `{5}`,\n handle_end: `{6}`".format(
-            timeline_in,
-            timeline_out,
-            source_in,
-            source_out,
-            speed,
-            handle_start,
-            handle_end
-        ))
+
+        self.log.debug((
+            "_BEFORE: \n timeline_in: `{0}`,\n timeline_out: `{1}`, \n "
+            "source_in: `{2}`,\n source_out: `{3}`,\n speed: `{4}`,\n "
+            "handle_start: `{5}`,\n handle_end: `{6}`").format(
+                timeline_in,
+                timeline_out,
+                source_in,
+                source_out,
+                speed,
+                handle_start,
+                handle_end
+            ))
 
         # loop withing subtrack items
         source_in_change = 0
@@ -46,8 +52,7 @@ class CollectCalculateRetime(api.InstancePlugin):
                     and "TimeWarp" in s_track_item.node().Class():
 
                 # adding timewarp attribute to instance
-                if not instance.data.get("timeWarpNodes", None):
-                    instance.data["timeWarpNodes"] = list()
+                time_warp_nodes = []
 
                 # ignore item if not enabled
                 if s_track_item.isEnabled():
@@ -56,8 +61,10 @@ class CollectCalculateRetime(api.InstancePlugin):
                     look_up = node["lookup"].value()
                     animated = node["lookup"].isAnimated()
                     if animated:
-                        look_up = [((node["lookup"].getValueAt(i)) - i)
-                                   for i in range((timeline_in - handle_start), (timeline_out + handle_end) + 1)
+                        look_up = [
+                            ((node["lookup"].getValueAt(i)) - i)
+                              for i in range(
+                                  (timeline_in - handle_start), (timeline_out + handle_end) + 1)
                                    ]
                         # calculate differnce
                         diff_in = (node["lookup"].getValueAt(
@@ -88,34 +95,54 @@ class CollectCalculateRetime(api.InstancePlugin):
                         self.log.debug(
                             ("diff_in, diff_out", diff_in, diff_out))
                         self.log.debug(
-                            ("source_in_change, source_out_change", source_in_change, source_out_change))
+                            ("source_in_change, source_out_change",
+                             source_in_change, source_out_change))
 
-                instance.data["timeWarpNodes"].append({"Class": "TimeWarp",
-                                                       "name": name,
-                                                       "lookup": look_up})
+                time_warp_nodes.append({
+                    "Class": "TimeWarp",
+                    "name": name,
+                    "lookup": look_up
+                })
 
         self.log.debug((source_in_change, source_out_change))
         # recalculate handles by the speed
         handle_start *= speed
         handle_end *= speed
-        self.log.debug("speed: handle_start: '{0}', handle_end: '{1}'".format(handle_start, handle_end))
+        self.log.debug("speed: handle_start: '{0}', handle_end: '{1}'".format(
+            handle_start, handle_end))
 
         source_in += int(source_in_change)
         source_out += int(source_out_change * speed)
         handle_start += (margin_in)
         handle_end += (margin_out)
-        self.log.debug("margin: handle_start: '{0}', handle_end: '{1}'".format(handle_start, handle_end))
+        self.log.debug(
+            "margin: handle_start: '{0}', handle_end: '{1}'".format(
+                handle_start, handle_end))
+
+        source_in_h = int(source_in - math.ceil(
+            (handle_start * 1000) / 1000.0))
+        source_out_h = int(source_out + math.ceil(
+            (handle_end * 1000) / 1000.0))
 
         # add all data to Instance
         instance.data["sourceIn"] = source_in
         instance.data["sourceOut"] = source_out
-        instance.data["sourceInH"] = int(source_in - math.ceil(
-            (handle_start * 1000) / 1000.0))
-        instance.data["sourceOutH"] = int(source_out + math.ceil(
-            (handle_end * 1000) / 1000.0))
+        instance.data["sourceInH"] = source_in_h
+        instance.data["sourceOutH"] = source_out_h
         instance.data["speed"] = speed
 
-        self.log.debug("timeWarpNodes: {}".format(instance.data["timeWarpNodes"]))
+        source_handle_start = source_in_h - source_in
+        frame_start = instance.data["frameStart"] + source_handle_start
+        duration = source_out_h - source_in_h
+        frame_end = frame_start + duration
+
+        instance.data["versionData"].update({
+            "retime": True,
+            "speed": speed,
+            "timewarps": time_warp_nodes,
+            "frameStart": frame_start,
+            "frameEnd": frame_end,
+        })
         self.log.debug("sourceIn: {}".format(instance.data["sourceIn"]))
         self.log.debug("sourceOut: {}".format(instance.data["sourceOut"]))
         self.log.debug("speed: {}".format(instance.data["speed"]))
