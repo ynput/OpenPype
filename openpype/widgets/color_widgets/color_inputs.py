@@ -25,6 +25,40 @@ QSlider::handle:horizontal:hover {
 }"""
 
 
+class AlphaSlider(QtWidgets.QSlider):
+    def __init__(self, *args, **kwargs):
+        super(AlphaSlider, self).__init__(*args, **kwargs)
+        self._mouse_clicked = False
+        self.setSingleStep(1)
+        self.setMinimum(0)
+        self.setMaximum(255)
+        self.setValue(255)
+
+        self.setStyleSheet(slide_style)
+
+    def mousePressEvent(self, event):
+        self._mouse_clicked = True
+        if event.button() == QtCore.Qt.LeftButton:
+            self._set_value_to_pos(event.pos().x())
+            return event.accept()
+        return super(AlphaSlider, self).mousePressEvent(event)
+
+    def _set_value_to_pos(self, pos_x):
+        value = (
+            self.maximum() - self.minimum()
+        ) * pos_x / self.width() + self.minimum()
+        self.setValue(value)
+
+    def mouseMoveEvent(self, event):
+        if self._mouse_clicked:
+            self._set_value_to_pos(event.pos().x())
+        super(AlphaSlider, self).mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self._mouse_clicked = True
+        super(AlphaSlider, self).mouseReleaseEvent(event)
+
+
 class AlphaInputs(QtWidgets.QWidget):
     alpha_changed = QtCore.Signal(int)
 
