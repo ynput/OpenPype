@@ -28,7 +28,7 @@ class Delivery(api.SubsetLoader):
 
     representations = ["*"]
     families = ["*"]
-    # tool_names = ["library_loader"]
+    tool_names = ["library_loader"]
 
     label = "Deliver Versions"
     order = 35
@@ -173,11 +173,6 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 continue
 
             repre_path = path_from_represenation(repre, anatomy)
-            if not os.path.exists(repre_path):
-                msg = "{} doesn't exist for {}".format(repre_path,
-                                                       repre["_id"])
-                report_items["Source file was not found"].append(msg)
-                continue
 
             anatomy_data = copy.deepcopy(repre["context"])
             new_report_items = check_destination_path(str(repre["_id"]),

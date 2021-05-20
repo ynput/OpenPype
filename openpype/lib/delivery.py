@@ -125,7 +125,7 @@ def check_destination_path(repre_id,
 
 
 def process_single_file(
-    src_path, _repre, anatomy, template_name, anatomy_data, format_dict,
+    src_path, repre, anatomy, template_name, anatomy_data, format_dict,
     report_items, log
 ):
     """Copy single file to calculated path based on template
@@ -143,12 +143,21 @@ def process_single_file(
         Returns:
             (collections.defaultdict , int)
     """
+    if not os.path.exists(src_path):
+        msg = "{} doesn't exist for {}".format(src_path,
+                                               repre["_id"])
+        report_items["Source file was not found"].append(msg)
+        return report_items, 0
+
     anatomy_filled = anatomy.format(anatomy_data)
     if format_dict:
         template_result = anatomy_filled["delivery"][template_name]
         delivery_path = template_result.rootless.format(**format_dict)
     else:
         delivery_path = anatomy_filled["delivery"][template_name]
+
+    # context.representation could be .psd
+    delivery_path = delivery_path.replace("..", ".")
 
     delivery_folder = os.path.dirname(delivery_path)
     if not os.path.exists(delivery_folder):
@@ -186,6 +195,12 @@ def process_sequence(
         Returns:
             (collections.defaultdict , int)
     """
+    if not os.path.exists(src_path):
+        msg = "{} doesn't exist for {}".format(src_path,
+                                               repre["_id"])
+        report_items["Source file was not found"].append(msg)
+        return report_items, 0
+
     dir_path, file_name = os.path.split(str(src_path))
 
     context = repre["context"]
@@ -198,6 +213,8 @@ def process_sequence(
         return report_items, 0
 
     ext = "." + ext
+    # context.representation could be .psd
+    ext = ext.replace("..", ".")
 
     src_collections, remainder = clique.assemble(os.listdir(dir_path))
     src_collection = None
