@@ -275,7 +275,7 @@ class LoadSequence(api.Loader):
         with viewer_update_and_undo_stop():
             nuke.delete(read_node)
 
-    def make_retimes(self, speed, time_warp_nodes):
+    def make_retimes(self, read_node, speed, time_warp_nodes):
         ''' Create all retime and timewarping nodes with coppied animation '''
         if speed != 1:
             rtn = nuke.createNode(

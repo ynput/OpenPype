@@ -41,7 +41,7 @@ class LoadMov(api.Loader):
     icon = "code-fork"
     color = "orange"
 
-    script_start = nuke.root()["first_frame"].value()
+    first_frame = nuke.root()["first_frame"].value()
 
     # options gui
     defaults = {
@@ -71,15 +71,15 @@ class LoadMov(api.Loader):
         version_data = version.get("data", {})
         repr_id = context["representation"]["_id"]
 
+        self.handle_start = version_data.get("handleStart", 0)
+        self.handle_end = version_data.get("handleEnd", 0)
+
         orig_first = version_data.get("frameStart")
         orig_last = version_data.get("frameEnd")
         diff = orig_first - 1
 
         first = orig_first - diff
         last = orig_last - diff
-
-        handle_start = version_data.get("handleStart", 0)
-        handle_end = version_data.get("handleEnd", 0)
 
         colorspace = version_data.get("colorspace")
         repr_cont = context["representation"]["context"]
@@ -89,7 +89,7 @@ class LoadMov(api.Loader):
 
         context["representation"]["_id"]
         # create handles offset (only to last, because of mov)
-        last += handle_start + handle_end
+        last += self.handle_start + self.handle_end
 
         # Fallback to asset name when namespace is None
         if namespace is None:
@@ -133,10 +133,10 @@ class LoadMov(api.Loader):
 
             if start_at_workfile:
                 # start at workfile start
-                read_node['frame'].setValue(str(self.script_start))
+                read_node['frame'].setValue(str(self.first_frame))
             else:
                 # start at version frame start
-                read_node['frame'].setValue(str(orig_first - handle_start))
+                read_node['frame'].setValue(str(orig_first - self.handle_start))
 
             if colorspace:
                 read_node["colorspace"].setValue(str(colorspace))
@@ -166,6 +166,11 @@ class LoadMov(api.Loader):
             data_imprint.update({"objectName": read_name})
 
             read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
+
+            if version_data.get("retime", None):
+                speed = version_data.get("speed", 1)
+                time_warp_nodes = version_data.get("timewarps", [])
+                self.make_retimes(read_node, speed, time_warp_nodes)
 
             return containerise(
                 read_node,
@@ -229,9 +234,8 @@ class LoadMov(api.Loader):
         # set first to 1
         first = orig_first - diff
         last = orig_last - diff
-        handles = version_data.get("handles", 0)
-        handle_start = version_data.get("handleStart", 0)
-        handle_end = version_data.get("handleEnd", 0)
+        self.handle_start = version_data.get("handleStart", 0)
+        self.handle_end = version_data.get("handleEnd", 0)
         colorspace = version_data.get("colorspace")
 
         if first is None:
@@ -242,13 +246,8 @@ class LoadMov(api.Loader):
                     read_node['name'].value(), representation))
             first = 0
 
-        # fix handle start and end if none are available
-        if not handle_start and not handle_end:
-            handle_start = handles
-            handle_end = handles
-
         # create handles offset (only to last, because of mov)
-        last += handle_start + handle_end
+        last += self.handle_start + self.handle_end
 
         read_node["file"].setValue(file)
 
@@ -259,12 +258,12 @@ class LoadMov(api.Loader):
         read_node["last"].setValue(last)
         read_node['frame_mode'].setValue("start at")
 
-        if int(self.script_start) == int(read_node['frame'].value()):
+        if int(self.first_frame) == int(read_node['frame'].value()):
             # start at workfile start
-            read_node['frame'].setValue(str(self.script_start))
+            read_node['frame'].setValue(str(self.first_frame))
         else:
             # start at version frame start
-            read_node['frame'].setValue(str(orig_first - handle_start))
+            read_node['frame'].setValue(str(orig_first - self.handle_start))
 
         if colorspace:
             read_node["colorspace"].setValue(str(colorspace))
@@ -282,8 +281,8 @@ class LoadMov(api.Loader):
             "version": str(version.get("name")),
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
-            "handleStart": str(handle_start),
-            "handleEnd": str(handle_end),
+            "handleStart": str(self.handle_start),
+            "handleEnd": str(self.handle_end),
             "fps": str(version_data.get("fps")),
             "author": version_data.get("author"),
             "outputDir": version_data.get("outputDir")
@@ -294,6 +293,11 @@ class LoadMov(api.Loader):
             read_node["tile_color"].setValue(int("0xd84f20ff", 16))
         else:
             read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
+
+        if version_data.get("retime", None):
+            speed = version_data.get("speed", 1)
+            time_warp_nodes = version_data.get("timewarps", [])
+            self.make_retimes(read_node, speed, time_warp_nodes)
 
         # Update the imprinted representation
         update_container(
@@ -310,3 +314,31 @@ class LoadMov(api.Loader):
 
         with viewer_update_and_undo_stop():
             nuke.delete(read_node)
+
+    def make_retimes(self, read_node, speed, time_warp_nodes):
+        ''' Create all retime and timewarping nodes with coppied animation '''
+        if speed != 1:
+            rtn = nuke.createNode(
+                "Retime",
+                "speed {}".format(speed))
+            rtn["before"].setValue("continue")
+            rtn["after"].setValue("continue")
+            rtn["input.first_lock"].setValue(True)
+            rtn["input.first"].setValue(
+                self.handle_start + self.first_frame
+            )
+
+        if time_warp_nodes != []:
+            for timewarp in time_warp_nodes:
+                twn = nuke.createNode(timewarp["Class"],
+                                      "name {}".format(timewarp["name"]))
+                if isinstance(timewarp["lookup"], list):
+                    # if array for animation
+                    twn["lookup"].setAnimated()
+                    for i, value in enumerate(timewarp["lookup"]):
+                        twn["lookup"].setValueAt(
+                            (self.first_frame + i) + value,
+                            (self.first_frame + i))
+                else:
+                    # if static value `int`
+                    twn["lookup"].setValue(timewarp["lookup"])
