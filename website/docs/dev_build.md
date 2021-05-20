@@ -232,10 +232,8 @@ $ brew install create-dmg
 
 #### To build Pype:
 
-1. Run `./tools/create_env.sh` to create virtual environment in `./venv`
-2. Run `./tools/build.sh` to build OpenPype Application bundle in `./build/`
-
-####
+1. Run `./tools/create_env.sh` to create virtual environment in `./venv`.
+2. Run `./tools/build.sh` to build OpenPype Application bundle in `./build/`.
 
 </TabItem>
 </Tabs>
