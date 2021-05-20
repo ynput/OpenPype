@@ -20,8 +20,6 @@ class ColorPickerWidget(QtWidgets.QWidget):
     def __init__(self, color=None, parent=None):
         super(ColorPickerWidget, self).__init__(parent)
 
-        top_part = QtWidgets.QWidget(self)
-
         # Color triangle
         color_triangle = QtColorTriangle(self)
 
