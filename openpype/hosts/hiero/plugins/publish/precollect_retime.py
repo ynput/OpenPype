@@ -42,7 +42,7 @@ class PrecollectRetime(api.InstancePlugin):
                 speed,
                 handle_start,
                 handle_end
-            ))
+        ))
 
         # loop withing subtrack items
         source_in_change = 0
@@ -63,9 +63,10 @@ class PrecollectRetime(api.InstancePlugin):
                     if animated:
                         look_up = [
                             ((node["lookup"].getValueAt(i)) - i)
-                              for i in range(
-                                  (timeline_in - handle_start), (timeline_out + handle_end) + 1)
-                                   ]
+                            for i in range(
+                                (timeline_in - handle_start),
+                                (timeline_out + handle_end) + 1)
+                        ]
                         # calculate differnce
                         diff_in = (node["lookup"].getValueAt(
                             timeline_in)) - timeline_in

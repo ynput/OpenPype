@@ -136,7 +136,8 @@ class LoadMov(api.Loader):
                 read_node['frame'].setValue(str(self.first_frame))
             else:
                 # start at version frame start
-                read_node['frame'].setValue(str(orig_first - self.handle_start))
+                read_node['frame'].setValue(
+                    str(orig_first - self.handle_start))
 
             if colorspace:
                 read_node["colorspace"].setValue(str(colorspace))
