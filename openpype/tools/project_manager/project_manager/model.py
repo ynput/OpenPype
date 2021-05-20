@@ -21,7 +21,11 @@ from Qt import QtCore, QtGui
 
 
 class ProjectModel(QtGui.QStandardItemModel):
-    project_changed = QtCore.Signal()
+    """Load possible projects to modify from MongoDB.
+
+    Mongo collection must contain project document with "type" "project" and
+    matching "name" value with name of collection.
+    """
 
     def __init__(self, dbcon, *args, **kwargs):
         self.dbcon = dbcon
@@ -31,6 +35,7 @@ class ProjectModel(QtGui.QStandardItemModel):
         super(ProjectModel, self).__init__(*args, **kwargs)
 
     def refresh(self):
+        """Reload projects."""
         self.dbcon.Session["AVALON_PROJECT"] = None
 
         project_items = []
@@ -63,6 +68,12 @@ class ProjectModel(QtGui.QStandardItemModel):
 
 
 class HierarchySelectionModel(QtCore.QItemSelectionModel):
+    """Selection model with defined allowed multiselection columns.
+
+    This model allows to select multiple rows and enter one of their
+    editors to edit value of all selected rows.
+    """
+
     def __init__(self, multiselection_columns, *args, **kwargs):
         super(HierarchySelectionModel, self).__init__(*args, **kwargs)
         self.multiselection_columns = multiselection_columns
@@ -78,6 +89,21 @@ class HierarchySelectionModel(QtCore.QItemSelectionModel):
 
 
 class HierarchyModel(QtCore.QAbstractItemModel):
+    """Main model for hierarchy modification and value changes.
+
+    Main part of ProjectManager.
+
+    Model should be able to load existing entities, create new, handle their
+    validations like name duplication and validate if is possible to save it's
+    data.
+
+    Args:
+        dbcon (AvalonMongoDB): Connection to MongoDB with set AVALON_PROJECT in
+            it's Session to current project.
+    """
+
+    # Definition of all possible columns with their labels in default order
+    # - order is important as column names are used as keys for column indexes
     _columns_def = [
         ("name", "Name"),
         ("type", "Type"),
@@ -93,6 +119,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         ("pixelAspect", "Pixel aspect"),
         ("tools_env", "Tools")
     ]
+    # Columns allowing multiselection in edit mode
+    # - gives ability to set all of keys below on multiple items at once
     multiselection_columns = {
         "frameStart",
         "frameEnd",
@@ -141,13 +169,19 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return self._items_by_id
 
     def _reset_root_item(self):
+        """Removes all previous content related to model."""
         self._root_item = RootItem(self)
 
     def refresh_project(self):
+        """Reload project data and discard unsaved changes."""
         self.set_project(self._current_project, True)
 
     @property
     def project_item(self):
+        """Access to current project item.
+
+        Model can have 0-1 ProjectItems at once.
+        """
         output = None
         for row in range(self._root_item.rowCount()):
             item = self._root_item.child(row)
@@ -157,25 +191,41 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return output
 
     def set_project(self, project_name, force=False):
+        """Change project and discard unsaved changes.
+
+        Args:
+            project_name(str): New project name. Or None if just clearing
+                content.
+            force(bool): Force to change project even if project name is same
+                as current project.
+        """
         if self._current_project == project_name and not force:
             return
 
+        # Clear all current content
         self.clear()
 
         self._current_project = project_name
+
+        # Skip if project is None
         if not project_name:
             return
 
+        # Find project'd document
         project_doc = self.dbcon.database[project_name].find_one(
             {"type": "project"},
             ProjectItem.query_projection
         )
+        # Skip if project document does not exist
+        # - this shouldn't happen using only UI elements
         if not project_doc:
             return
 
+        # Create project item
         project_item = ProjectItem(project_doc)
         self.add_item(project_item)
 
+        # Query all assets of the project
         asset_docs = self.dbcon.database[project_name].find(
             {"type": "asset"},
             AssetItem.query_projection
@@ -185,7 +235,8 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             for asset_doc in asset_docs
         }
 
-        # Prepare booleans if asset item can be modified (name or hierarchy)
+        # Check if asset have published content and prepare booleans
+        #   if asset item can be modified (name and hierarchy change)
         # - the same must be applied to all it's parents
         asset_ids = list(asset_docs_by_id.keys())
         result = []
@@ -214,6 +265,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             count = item["count"]
             asset_modifiable[asset_id] = count < 1
 
+        # Store assets by their visual parent to be able create their hierarchy
         asset_docs_by_parent_id = collections.defaultdict(list)
         for asset_doc in asset_docs_by_id.values():
             parent_id = asset_doc["data"].get("visualParent")
@@ -282,9 +334,11 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
             self.add_items(task_items, asset_item)
 
+        # Emit that project was successfully changed
         self.project_changed.emit()
 
     def rowCount(self, parent=None):
+        """Number of rows for passed parent."""
         if parent is None or not parent.isValid():
             parent_item = self._root_item
         else:
@@ -292,9 +346,15 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return parent_item.rowCount()
 
     def columnCount(self, *args, **kwargs):
+        """Number of columns is static for this model."""
         return self.columns_len
 
     def data(self, index, role):
+        """Access data for passed index and it's role.
+
+        Model is using principles implemented in BaseItem so converts passed
+        index column into key and ask item to return value for passed role.
+        """
         if not index.isValid():
             return None
 
@@ -305,18 +365,24 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return item.data(role, key)
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
+        """Store data to passed index under role.
+
+        Pass values to corresponding item and behave by it's result.
+        """
         if not index.isValid():
             return False
 
         item = index.internalPointer()
         column = index.column()
         key = self.columns[column]
+        # Capture asset name changes for duplcated asset names validation.
         if (
             key == "name"
             and role in (QtCore.Qt.EditRole, QtCore.Qt.DisplayRole)
         ):
             self._rename_asset(item, value)
 
+        # Pass values to item and by result emi dataChanged signal or not
         result = item.setData(value, role, key)
         if result:
             self.dataChanged.emit(index, index, [role])
@@ -324,6 +390,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return result
 
     def headerData(self, section, orientation, role):
+        """Header labels."""
         if role == QtCore.Qt.DisplayRole:
             if section < self.columnCount():
                 return self.column_labels[section]
@@ -333,6 +400,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         )
 
     def flags(self, index):
+        """Index flags are defined by corresponding item."""
         item = index.internalPointer()
         if item is None:
             return QtCore.Qt.NoItemFlags
@@ -341,6 +409,11 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return item.flags(key)
 
     def parent(self, index=None):
+        """Parent for passed index as QModelIndex.
+
+        Args:
+            index(QModelIndex): Parent index. Root item is used if not passed.
+        """
         if not index.isValid():
             return QtCore.QModelIndex()
 
@@ -354,7 +427,13 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return self.createIndex(parent_item.row(), 0, parent_item)
 
     def index(self, row, column, parent=None):
-        """Return index for row/column under parent"""
+        """Return index for row/column under parent.
+
+        Args:
+            row(int): Row number.
+            column(int): Column number.
+            parent(QModelIndex): Parent index. Root item is used if not passed.
+        """
         parent_item = None
         if parent is not None and parent.isValid():
             parent_item = parent.internalPointer()
@@ -362,11 +441,31 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return self.index_from_item(row, column, parent_item)
 
     def index_for_item(self, item, column=0):
+        """Index for passet item.
+
+        This is for cases that index operations are required on specific item.
+
+        Args:
+            item(BaseItem): Item from model that will be converted to
+                corresponding QModelIndex.
+            column(int): Which column will be part of returned index. By
+                default is used column 0.
+        """
         return self.index_from_item(
             item.row(), column, item.parent()
         )
 
     def index_from_item(self, row, column, parent=None):
+        """Index for passed row, column and parent item.
+
+        Same implementation as `index` method but "parent" is one of
+        BaseItem objects instead of QModelIndex.
+
+        Args:
+            row(int): Row number.
+            column(int): Column number.
+            parent(BaseItem): Parent item. Root item is used if not passed.
+        """
         if parent is None:
             parent = self._root_item
 
@@ -377,15 +476,18 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return QtCore.QModelIndex()
 
     def add_new_asset(self, source_index):
+        """Method to create new asset item in hierarchy."""
         item_id = source_index.data(IDENTIFIER_ROLE)
         item = self.items_by_id[item_id]
 
         if isinstance(item, (RootItem, ProjectItem)):
             name = "ep"
             new_row = None
-        else:
+        elif isinstance(item, AssetItem):
             name = None
             new_row = item.rowCount()
+        else:
+            return
 
         asset_data = {}
         if name:
