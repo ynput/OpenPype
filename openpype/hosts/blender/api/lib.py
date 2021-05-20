@@ -78,8 +78,12 @@ def load_scripts(paths):
     addons_paths = []
     for base_path in paths:
         addons_path = os.path.join(base_path, "addons")
-        if os.path.exists(addons_path):
-            addons_paths.append(addons_path)
+        if not os.path.exists(addons_path):
+            continue
+        addons_paths.append(addons_path)
+        addons_module_path = os.path.join(addons_path, "modules")
+        if os.path.exists(addons_module_path):
+            bpy.utils._sys_path_ensure_prepend(addons_module_path)
 
     if addons_paths:
         # Fake addons
