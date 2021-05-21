@@ -1,5 +1,4 @@
 import collections
-import os
 import copy
 
 from avalon import api, style

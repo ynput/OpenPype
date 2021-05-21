@@ -177,12 +177,12 @@ Library loader is extended [loader](#loader) which allows to load published subs
 </div>
 </div>
 
-### Delivery loader ###
+### Delivery Action ###
 
 Library Loader contains functionality to export any selected asset, subsets and their version to configurable folder.
 Delivery follows structure based on defined template, this template must be configured first by Admin in the Settings.
 
-![delivery_loader](assets/tools/tools_delivery_loader.png) 
+![delivery_action](assets/tools/tools_delivery_loader.png) 
 
 * Usage
 - Select all required subsets for export (you can change theirs versions by double clicking on 'Version' value)
