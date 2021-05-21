@@ -46,6 +46,7 @@ import json
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
+from maya.app.renderSetup.model.collection import RenderSettingsCollection
 
 import pyblish.api
 
@@ -115,6 +116,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
         self.maya_layers = maya_render_layers
 
+        # Switch to defaultRenderLayer
+        self._rs.switchToLayerUsingLegacyName("defaultRenderLayer")
+
         for layer in collected_render_layers:
             try:
                 if layer.startswith("LAYER_"):
@@ -172,6 +176,19 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             renderer = cmds.getAttr(
                 "defaultRenderGlobals.currentRenderer"
             ).lower()
+
+            # Find any overrides to the current renderer on the layer.
+            collections = maya_render_layers[expected_layer_name].getChildren()
+            for collection in collections:
+                if isinstance(collection, RenderSettingsCollection):
+                    for override in collection.getChildren():
+                        attribute_name = override.attributeName()
+                        if attribute_name != "currentRenderer":
+                            continue
+
+                        renderer = override.getAttrValue()
+                continue
+
             # handle various renderman names
             if renderer.startswith("renderman"):
                 renderer = "renderman"

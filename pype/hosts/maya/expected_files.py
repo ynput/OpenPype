@@ -76,6 +76,7 @@ RENDERER_NAMES = {
     "arnold": "Arnold",
     "renderman": "Renderman",
     "redshift": "Redshift",
+    "mayahardware2": "Maya Hardware"
 }
 
 # not sure about the renderman image prefix
@@ -85,6 +86,7 @@ IMAGE_PREFIXES = {
     "arnold": "defaultRenderGlobals.imageFilePrefix",
     "renderman": "rmanGlobals.imageFileFormat",
     "redshift": "defaultRenderGlobals.imageFilePrefix",
+    "mayahardware2": "defaultRenderGlobals.imageFilePrefix"
 }
 
 
@@ -135,6 +137,9 @@ class ExpectedFiles:
                 layer, self._render_instance))
         if renderer.lower() == "renderman":
             return self._get_files(ExpectedFilesRenderman(
+                layer, self._render_instance))
+        if renderer.lower() == "mayahardware2":
+            return self._get_files(ExpectedFilesMayaHardware(
                 layer, self._render_instance))
 
         raise UnsupportedRendererException(
@@ -906,6 +911,31 @@ class ExpectedFilesMentalray(AExpectedFiles):
         """
         super(ExpectedFilesMentalray, self).__init__(layer, render_instance)
         raise UnimplementedRendererException("Mentalray not implemented")
+
+    def get_aovs(self):
+        """Get all AOVs.
+
+        See Also:
+            :func:`AExpectedFiles.get_aovs()`
+
+        """
+        return []
+
+
+class ExpectedFilesMayaHardware(AExpectedFiles):
+    """Expected files for Maya Hardware renderer.
+
+    Attributes:
+        aiDriverExtension (dict): Arnold AOV driver extension mapping.
+            Is there a better way?
+        renderer (str): name of renderer.
+
+    """
+
+    def __init__(self, layer, render_instance):
+        """Constructor."""
+        super(ExpectedFilesMayaHardware, self).__init__(layer, render_instance)
+        self.renderer = "mayahardware2"
 
     def get_aovs(self):
         """Get all AOVs.
