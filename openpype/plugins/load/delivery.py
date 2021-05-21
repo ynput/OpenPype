@@ -249,10 +249,14 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         size_selected = 0
         for repre in self._representations:
             if repre["name"] in selected_repres:
-                for repre_file in repre.get("files", []):
-
+                files = repre.get("files", [])
+                if not files:  # for repre without files, cannot divide by 0
                     files_selected += 1
-                    size_selected += repre_file["size"]
+                    size_selected += 0
+                else:
+                    for repre_file in files:
+                        files_selected += 1
+                        size_selected += repre_file["size"]
 
         return files_selected, size_selected
 
