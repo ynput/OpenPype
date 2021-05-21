@@ -23,18 +23,32 @@ def add_implementation_envs(env, _app):
     env["PYTHONPATH"] = os.pathsep.join(python_path_parts)
 
     # Modify Blender user scripts path
+    previous_user_scripts = set()
+    # Implementation path is added to set for easier paths check inside loops
+    # - will be removed at the end
+    previous_user_scripts.add(implementation_user_script_path)
+
+    openpype_blender_user_scripts = (
+        env.get("OPENPYPE_BLENDER_USER_SCRIPTS") or ""
+    )
+    for path in openpype_blender_user_scripts.split(os.pathsep):
+        if path and os.path.exists(path):
+            previous_user_scripts.add(os.path.normpath(path))
+
     blender_user_scripts = env.get("BLENDER_USER_SCRIPTS") or ""
-    previous_user_scripts = []
     for path in blender_user_scripts.split(os.pathsep):
         if path and os.path.exists(path):
-            path = os.path.normpath(path)
-            if path != implementation_user_script_path:
-                previous_user_scripts.append(path)
+            previous_user_scripts.add(os.path.normpath(path))
 
+    # Remove implementation path from user script paths as is set to
+    #   `BLENDER_USER_SCRIPTS`
+    previous_user_scripts.remove(implementation_user_script_path)
+    env["BLENDER_USER_SCRIPTS"] = implementation_user_script_path
+
+    # Set custom user scripts env
     env["OPENPYPE_BLENDER_USER_SCRIPTS"] = os.pathsep.join(
         previous_user_scripts
     )
-    env["BLENDER_USER_SCRIPTS"] = implementation_user_script_path
 
     # Define Qt binding if not defined
     if not env.get("QT_PREFERRED_BINDING"):
