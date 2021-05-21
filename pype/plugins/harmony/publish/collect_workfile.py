@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """Collect current workfile from Harmony."""
-import pyblish.api
 import os
+
+import pyblish.api
+from pype import lib
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
@@ -15,9 +17,14 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         """Plugin entry point."""
         family = "workfile"
         task = os.getenv("AVALON_TASK", None)
-        sanitized_task_name = task[0].upper() + task[1:]
         basename = os.path.basename(context.data["currentFile"])
-        subset = "{}{}".format(family, sanitized_task_name)
+        subset = lib.get_subset_name(
+            "workfile",
+            "",
+            task,
+            context.data["assetEntity"]["_id"],
+            host_name="harmony"
+        )
 
         # Create instance
         instance = context.create_instance(subset)
