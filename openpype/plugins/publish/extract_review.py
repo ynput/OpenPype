@@ -3,6 +3,9 @@ import re
 import copy
 import json
 
+from abc import ABCMeta, abstractmethod
+import six
+
 import clique
 
 import pyblish.api
@@ -1393,3 +1396,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
         vf_back = "-vf " + ",".join(vf_fixed)
 
         return vf_back
+
+
+@six.add_metaclass(ABCMeta)
+class _OverscanValue:
+    def __repr__(self):
+        return "<{}> {}".format(self.__class__.__name__, str(self))
+
+    @abstractmethod
+    def copy(self):
+        """Create a copy of object."""
+        pass
+
+    @abstractmethod
+    def size_for(self, value):
+        """Calculate new value for passed value."""
+        pass
