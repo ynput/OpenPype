@@ -15,20 +15,22 @@ class StudioDefaultsNotDefined(Exception):
         super(StudioDefaultsNotDefined, self).__init__(msg)
 
 
-class InvalidValueType(Exception):
-    msg_template = "{}"
+class BaseInvalidValueType(Exception):
+    def __init__(self, reason, path):
+        msg = "Path \"{}\". {}".format(path, reason)
+        self.msg = msg
+        super(BaseInvalidValueType, self).__init__(msg)
 
+
+class InvalidValueType(BaseInvalidValueType):
     def __init__(self, valid_types, invalid_type, path):
-        msg = "Path \"{}\". ".format(path)
-
         joined_types = ", ".join(
             [str(valid_type) for valid_type in valid_types]
         )
-        msg += "Got invalid type \"{}\". Expected: {}".format(
+        msg = "Got invalid type \"{}\". Expected: {}".format(
             invalid_type, joined_types
         )
-        self.msg = msg
-        super(InvalidValueType, self).__init__(msg)
+        super(InvalidValueType, self).__init__(msg, path)
 
 
 class RequiredKeyModified(KeyError):
