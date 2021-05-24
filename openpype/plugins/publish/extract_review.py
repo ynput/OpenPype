@@ -1627,15 +1627,15 @@ class OverscanCrop:
             return
 
         # Replace "px" (and spaces before) with single space
-        string_value = re.sub("([ ]+)?px", " ", string_value)
-        string_value = re.sub("([ ]+)%", "%", string_value)
+        string_value = re.sub(r"([ ]+)?px", " ", string_value)
+        string_value = re.sub(r"([ ]+)%", "%", string_value)
         # Make sure +/- sign at the beggining of string is next to number
-        string_value = re.sub("^([\+\-])[ ]+", "\g<1>", string_value)
+        string_value = re.sub(r"^([\+\-])[ ]+", "\g<1>", string_value)
         # Make sure +/- sign in the middle has zero spaces before number under
         #   which belongs
         string_value = re.sub(
-            "[ ]([\+\-])[ ]+([0-9])",
-            " \g<1>\g<2>",
+            r"[ ]([\+\-])[ ]+([0-9])",
+            r" \g<1>\g<2>",
             string_value
         )
         string_parts = [
