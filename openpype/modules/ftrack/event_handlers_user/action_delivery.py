@@ -13,8 +13,7 @@ from openpype.lib.delivery import (
     get_format_dict,
     check_destination_path,
     process_single_file,
-    process_sequence,
-    report
+    process_sequence
 )
 from avalon.api import AvalonMongoDB
 
@@ -498,7 +497,46 @@ class Delivery(BaseAction):
             else:
                 process_sequence(*args)
 
-        return report(report_items)
+        return self.report(report_items)
+
+    def report(self, report_items):
+        """Returns dict with final status of delivery (succes, fail etc.)."""
+        items = []
+        title = "Delivery report"
+        for msg, _items in report_items.items():
+            if not _items:
+                continue
+
+            if items:
+                items.append({"type": "label", "value": "---"})
+
+            items.append({
+                "type": "label",
+                "value": "# {}".format(msg)
+            })
+            if not isinstance(_items, (list, tuple)):
+                _items = [_items]
+            __items = []
+            for item in _items:
+                __items.append(str(item))
+
+            items.append({
+                "type": "label",
+                "value": '<p>{}</p>'.format("<br>".join(__items))
+            })
+
+        if not items:
+            return {
+                "success": True,
+                "message": "Delivery Finished"
+            }
+
+        return {
+            "items": items,
+            "title": title,
+            "success": False,
+            "message": "Delivery Finished"
+        }
 
 
 def register(session):

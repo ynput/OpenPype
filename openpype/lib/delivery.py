@@ -1,7 +1,5 @@
 """Functions useful for delivery action or loader"""
 import os
-from avalon import pipeline
-from avalon.vendor import filelink
 import shutil
 import clique
 import collections
@@ -17,6 +15,8 @@ def sizeof_fmt(num, suffix='B'):
 
 
 def path_from_represenation(representation, anatomy):
+    from avalon import pipeline  # safer importing
+
     try:
         template = representation["data"]["template"]
 
@@ -39,6 +39,8 @@ def path_from_represenation(representation, anatomy):
 
 def copy_file(src_path, dst_path):
     """Hardlink file if possible(to save space), copy if not"""
+    from avalon.vendor import filelink  # safer importing
+
     if os.path.exists(dst_path):
         return
     try:
@@ -271,43 +273,3 @@ def process_sequence(
         uploaded += 1
 
     return report_items, uploaded
-
-
-def report(report_items):
-    """Returns dict with final status of delivery (succes, fail etc.)."""
-    items = []
-    title = "Delivery report"
-    for msg, _items in report_items.items():
-        if not _items:
-            continue
-
-        if items:
-            items.append({"type": "label", "value": "---"})
-
-        items.append({
-            "type": "label",
-            "value": "# {}".format(msg)
-        })
-        if not isinstance(_items, (list, tuple)):
-            _items = [_items]
-        __items = []
-        for item in _items:
-            __items.append(str(item))
-
-        items.append({
-            "type": "label",
-            "value": '<p>{}</p>'.format("<br>".join(__items))
-        })
-
-    if not items:
-        return {
-            "success": True,
-            "message": "Delivery Finished"
-        }
-
-    return {
-        "items": items,
-        "title": title,
-        "success": False,
-        "message": "Delivery Finished"
-    }

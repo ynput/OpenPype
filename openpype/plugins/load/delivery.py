@@ -1,12 +1,13 @@
 import collections
 import copy
 
+from Qt import QtWidgets, QtCore, QtGui
+
 from avalon import api, style
-from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
 from avalon.api import AvalonMongoDB
+
 from openpype.api import Anatomy, config
 from openpype import resources
-from openpype.api import get_anatomy_settings
 
 from openpype.lib.delivery import (
     sizeof_fmt,
@@ -14,8 +15,7 @@ from openpype.lib.delivery import (
     get_format_dict,
     check_destination_path,
     process_single_file,
-    process_sequence,
-    report
+    process_sequence
 )
 
 
@@ -53,19 +53,18 @@ class Delivery(api.SubsetLoader):
 
 class DeliveryOptionsDialog(QtWidgets.QDialog):
     """Dialog to select template where to deliver selected representations."""
-    SIZE_W = 950
-    SIZE_H = 350
 
     def __init__(self, contexts, log=None, parent=None):
         super(DeliveryOptionsDialog, self).__init__(parent=parent)
 
-        self.project = contexts[0]["project"]["name"]
+        project = contexts[0]["project"]["name"]
+        self.anatomy = Anatomy(project)
         self._representations = None
         self.log = log
         self.currently_uploaded = 0
 
         self.dbcon = AvalonMongoDB()
-        self.dbcon.Session["AVALON_PROJECT"] = self.project
+        self.dbcon.Session["AVALON_PROJECT"] = project
         self.dbcon.install()
 
         self._set_representations(contexts)
@@ -79,15 +78,9 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
             QtCore.Qt.WindowMinimizeButtonHint
         )
         self.setStyleSheet(style.load_stylesheet())
-        self.setMinimumSize(QtCore.QSize(self.SIZE_W, self.SIZE_H))
-
-        layout = QtWidgets.QVBoxLayout()
-
-        input_layout = QtWidgets.QFormLayout()
-        input_layout.setContentsMargins(10, 15, 5, 5)
 
         dropdown = QtWidgets.QComboBox()
-        self.templates = self._get_templates(self.project)
+        self.templates = self._get_templates(self.anatomy)
         for name, _ in self.templates.items():
             dropdown.addItem(name)
 
@@ -98,18 +91,22 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         root_line_edit = QtWidgets.QLineEdit()
 
         repre_checkboxes_layout = QtWidgets.QFormLayout()
-        repre_checkboxes_layout.setContentsMargins(10, 5, 5, 20)
+        repre_checkboxes_layout.setContentsMargins(10, 5, 5, 10)
 
         self._representation_checkboxes = {}
         for repre in self._get_representation_names():
             checkbox = QtWidgets.QCheckBox()
-            checkbox.setChecked(True)
+            checkbox.setChecked(False)
             self._representation_checkboxes[repre] = checkbox
 
             checkbox.stateChanged.connect(self._update_selected_label)
             repre_checkboxes_layout.addRow(repre, checkbox)
 
         selected_label = QtWidgets.QLabel()
+
+        input_widget = QtWidgets.QWidget(self)
+        input_layout = QtWidgets.QFormLayout(input_widget)
+        input_layout.setContentsMargins(10, 15, 5, 5)
 
         input_layout.addRow("Selected representations", selected_label)
         input_layout.addRow("Delivery template", dropdown)
@@ -123,19 +120,20 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         progress_bar = QtWidgets.QProgressBar(self)
         progress_bar.setMinimum = 0
         progress_bar.setMaximum = 100
-        progress_bar.hide()
+        progress_bar.setVisible(False)
 
         text_area = QtWidgets.QTextEdit()
         text_area.setReadOnly(True)
-        text_area.hide()
+        text_area.setVisible(False)
         text_area.setMinimumHeight(100)
 
-        layout.addLayout(input_layout)
+        layout = QtWidgets.QVBoxLayout(self)
+
+        layout.addWidget(input_widget)
+        layout.addStretch(1)
         layout.addWidget(btn_delivery)
         layout.addWidget(progress_bar)
         layout.addWidget(text_area)
-
-        self.setLayout(layout)
 
         self.selected_label = selected_label
         self.template_label = template_label
@@ -156,26 +154,26 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
     def deliver(self):
         """Main method to loop through all selected representations"""
-        self.progress_bar.show()
+        self.progress_bar.setVisible(True)
         self.btn_delivery.setEnabled(False)
-        # self.resize(self.width(), self.height() + 50)
+        QtWidgets.QApplication.processEvents()
 
         report_items = collections.defaultdict(list)
 
         selected_repres = self._get_selected_repres()
-        anatomy = Anatomy(self.project)
+
         datetime_data = config.get_datetime_data()
         template_name = self.dropdown.currentText()
-        format_dict = get_format_dict(anatomy, self.root_line_edit.text())
+        format_dict = get_format_dict(self.anatomy, self.root_line_edit.text())
         for repre in self._representations:
             if repre["name"] not in selected_repres:
                 continue
 
-            repre_path = path_from_represenation(repre, anatomy)
+            repre_path = path_from_represenation(repre, self.anatomy)
 
             anatomy_data = copy.deepcopy(repre["context"])
             new_report_items = check_destination_path(str(repre["_id"]),
-                                                      anatomy,
+                                                      self.anatomy,
                                                       anatomy_data,
                                                       datetime_data,
                                                       template_name)
@@ -187,7 +185,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
             args = [
                 repre_path,
                 repre,
-                anatomy,
+                self.anatomy,
                 template_name,
                 anatomy_data,
                 format_dict,
@@ -197,7 +195,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
 
             if repre.get("files"):
                 for repre_file in repre["files"]:
-                    src_path = anatomy.fill_root(repre_file["path"])
+                    src_path = self.anatomy.fill_root(repre_file["path"])
                     args[0] = src_path
                     new_report_items, uploaded = process_single_file(*args)
                     report_items.update(new_report_items)
@@ -214,21 +212,20 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
                 report_items.update(new_report_items)
                 self._update_progress(uploaded)
 
-        self.text_area.setText(self._format_report(report(report_items),
-                                                   report_items))
-        self.text_area.show()
-
-        self.resize(self.width(), self.height() + 125)
+        self.text_area.setText(self._format_report(report_items))
+        self.text_area.setVisible(True)
 
     def _get_representation_names(self):
         """Get set of representation names for checkbox filtering."""
         return set([repre["name"] for repre in self._representations])
 
-    def _get_templates(self, project_name):
+    def _get_templates(self, anatomy):
         """Adds list of delivery templates from Anatomy to dropdown."""
-        settings = get_anatomy_settings(project_name)
         templates = {}
-        for template_name, value in settings["templates"]["delivery"].items():
+        for template_name, value in anatomy.templates["delivery"].items():
+            if not isinstance(value, str) or not value.startswith('{root'):
+                continue
+
             templates[template_name] = value
 
         return templates
@@ -297,9 +294,14 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         ratio = self.currently_uploaded / self.files_selected
         self.progress_bar.setValue(ratio * self.progress_bar.maximum())
 
-    def _format_report(self, result, report_items):
+    def _format_report(self, report_items):
         """Format final result and error details as html."""
-        txt = "<h2>{}</h2>".format(result["message"])
+        msg = "Delivery finished"
+        if not report_items:
+            msg += " successfully"
+        else:
+            msg += " with errors"
+        txt = "<h2>{}</h2>".format(msg)
         for header, data in report_items.items():
             txt += "<h3>{}</h3>".format(header)
             for item in data:
