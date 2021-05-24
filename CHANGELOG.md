@@ -1,19 +1,21 @@
 # Changelog
 
-## [2.17.4](https://github.com/pypeclub/openpype/tree/2.17.4) (2021-05-18)
+## [2.18.0](https://github.com/pypeclub/openpype/tree/2.18.0) (2021-05-18)
 
-[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.3...2.17.4)
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.3...2.18.0)
 
 **Enhancements:**
 
+- Use SubsetLoader and multiple contexts for delete_old_versions [\#1484](ttps://github.com/pypeclub/OpenPype/pull/1484))
 - TVPaint: Increment workfile version on successfull publish. [\#1489](https://github.com/pypeclub/OpenPype/pull/1489)
 - Maya: Use of multiple deadline servers [\#1483](https://github.com/pypeclub/OpenPype/pull/1483)
 
 **Fixed bugs:**
 
--  Maya: wrong collection of playblasted frames [\#1517](https://github.com/pypeclub/OpenPype/pull/1517)
+- Use instance frame start instead of timeline. [\#1486](https://github.com/pypeclub/OpenPype/pull/1486)
+- Maya: Redshift - set proper start frame on proxy [\#1480](https://github.com/pypeclub/OpenPype/pull/1480)
+- Maya: wrong collection of playblasted frames [\#1517](https://github.com/pypeclub/OpenPype/pull/1517)
 - Existing subsets hints in creator [\#1502](https://github.com/pypeclub/OpenPype/pull/1502)
-- nuke: space in node name breaking process [\#1494](https://github.com/pypeclub/OpenPype/pull/1494)
 
 ## [2.17.3](https://github.com/pypeclub/openpype/tree/2.17.3) (2021-05-06)
 
@@ -37,18 +39,15 @@
 
 **Enhancements:**
 
-- Faster settings UI loading [\#1442](https://github.com/pypeclub/OpenPype/pull/1442)
 - Nuke: deadline submission with gpu [\#1414](https://github.com/pypeclub/OpenPype/pull/1414)
 - TVPaint frame range definition [\#1424](https://github.com/pypeclub/OpenPype/pull/1424)
 - PS - group all published instances [\#1415](https://github.com/pypeclub/OpenPype/pull/1415)
 - Add task name to context pop up. [\#1383](https://github.com/pypeclub/OpenPype/pull/1383)
 - Enhance review letterbox feature. [\#1371](https://github.com/pypeclub/OpenPype/pull/1371)
-- AE add duration validation [\#1363](https://github.com/pypeclub/OpenPype/pull/1363)
 
 **Fixed bugs:**
 
 - Houdini menu filename [\#1417](https://github.com/pypeclub/OpenPype/pull/1417)
-- Nuke: fixing undo for loaded mov and sequence [\#1433](https://github.com/pypeclub/OpenPype/pull/1433)
 - AE - validation for duration was 1 frame shorter [\#1426](https://github.com/pypeclub/OpenPype/pull/1426)
 
 **Merged pull requests:**
@@ -63,6 +62,7 @@
 **Enhancements:**
 
 - Forward compatible ftrack group [\#1243](https://github.com/pypeclub/OpenPype/pull/1243)
+- Settings in mongo as dict [\#1221](https://github.com/pypeclub/OpenPype/pull/1221)
 - Maya: Make tx option configurable with presets [\#1328](https://github.com/pypeclub/OpenPype/pull/1328)
 - TVPaint asset name validation [\#1302](https://github.com/pypeclub/OpenPype/pull/1302)
 - TV Paint: Set initial project settings. [\#1299](https://github.com/pypeclub/OpenPype/pull/1299)
@@ -84,8 +84,10 @@
 - Handle duplication of Task name [\#1226](https://github.com/pypeclub/OpenPype/pull/1226)
 - Modified path of plugin loads for Harmony and TVPaint [\#1217](https://github.com/pypeclub/OpenPype/pull/1217)
 - Regex checks in profiles filtering [\#1214](https://github.com/pypeclub/OpenPype/pull/1214)
+- Bulk mov strict task [\#1204](https://github.com/pypeclub/OpenPype/pull/1204)
 - Update custom ftrack session attributes [\#1202](https://github.com/pypeclub/OpenPype/pull/1202)
 - Nuke: write node colorspace ignore `default\(\)` label [\#1199](https://github.com/pypeclub/OpenPype/pull/1199)
+- Nuke: reverse search to make it more versatile [\#1178](https://github.com/pypeclub/OpenPype/pull/1178)
 
 
 
