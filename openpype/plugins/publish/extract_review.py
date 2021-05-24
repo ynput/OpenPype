@@ -831,12 +831,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
         filters = []
 
-        letter_box_def = output_def["letter_box"]
-        letter_box_enabled = letter_box_def["enabled"]
-
-        # Get instance data
-        pixel_aspect = temp_data["pixel_aspect"]
-
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
         input_data = ffprobe_streams(
@@ -844,6 +838,23 @@ class ExtractReview(pyblish.api.InstancePlugin):
         )[0]
         input_width = int(input_data["width"])
         input_height = int(input_data["height"])
+
+        # Convert overscan value video filters
+        overscan_crop = output_def.get("overscan_crop")
+        overscan = OverscanCrop(input_width, input_height, overscan_crop)
+        overscan_crop_filters = overscan.video_filters()
+        # Add overscan filters to filters if are any and modify input
+        #   resolution by it's values
+        if overscan_crop_filters:
+            filters.extend(overscan_crop_filters)
+            input_width = overscan.width()
+            input_height = overscan.height()
+
+        letter_box_def = output_def["letter_box"]
+        letter_box_enabled = letter_box_def["enabled"]
+
+        # Get instance data
+        pixel_aspect = temp_data["pixel_aspect"]
 
         # Make sure input width and height is not an odd number
         input_width_is_odd = bool(input_width % 2 != 0)
