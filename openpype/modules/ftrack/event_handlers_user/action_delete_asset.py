@@ -11,22 +11,27 @@ from avalon.api import AvalonMongoDB
 class DeleteAssetSubset(BaseAction):
     '''Edit meta data action.'''
 
-    #: Action identifier.
+    # Action identifier.
     identifier = "delete.asset.subset"
-    #: Action label.
+    # Action label.
     label = "Delete Asset/Subsets"
-    #: Action description.
+    # Action description.
     description = "Removes from Avalon with all childs and asset from Ftrack"
     icon = statics_icon("ftrack", "action_icons", "DeleteAsset.svg")
 
     settings_key = "delete_asset_subset"
-    #: Db connection
-    dbcon = AvalonMongoDB()
+    # Db connection
+    dbcon = None
 
     splitter = {"type": "label", "value": "---"}
     action_data_by_id = {}
     asset_prefix = "asset:"
     subset_prefix = "subset:"
+
+    def __init__(self, *args, **kwargs):
+        self.dbcon = AvalonMongoDB()
+
+        super(DeleteAssetSubset, self).__init__(*args, **kwargs)
 
     def discover(self, session, entities, event):
         """ Validation """
