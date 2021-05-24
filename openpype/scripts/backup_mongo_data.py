@@ -25,6 +25,8 @@ def backup(mongo_uri, mongo_db_name, collections, export_dir):
     # create cmd
     if "|" in collections:
         _collections = [c for c in collections.split("|")]
+    elif isinstance(collections, list):
+        _collections = collections
     else:
         _collections = [collections]
 
