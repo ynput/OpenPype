@@ -101,12 +101,9 @@ class ExtractPlayblast(pype.api.Extractor):
 
             path = capture.capture(**preset)
 
-
         collected_files = os.listdir(stagingdir)
         collections, remainder = clique.assemble(collected_files)
-        input_path = os.path.join(
-            stagingdir, collections[0].format('{head}{padding}{tail}'))
-        
+
         self.log.debug("filename {}".format(filename))
         frame_collection = None
         for collection in collections:
@@ -114,8 +111,11 @@ class ExtractPlayblast(pype.api.Extractor):
             self.log.debug("collection head {}".format(filebase))
             if filebase in filename:
                 frame_collection = collection
-                self.log.info("we found collection of interest {}".format(str(frame_collection)))
-
+                self.log.info(
+                    "We found collection of interest {}".format(
+                        str(frame_collection)
+                    )
+                )
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -140,8 +140,6 @@ class ExtractPlayblast(pype.api.Extractor):
             'camera_name': camera_node_name
         }
         instance.data["representations"].append(representation)
-
-        return filepath
 
 
 @contextlib.contextmanager
