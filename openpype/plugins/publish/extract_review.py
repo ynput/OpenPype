@@ -1497,3 +1497,179 @@ class PercentValueRelativeSource(_OverscanValue):
         if self._value == 0:
             return value
         return int((value * 100) / (100 + self._value))
+
+
+class OverscanCrop:
+    """Helper class to read overscan string and calculate output resolution.
+
+    It is possible to enter single value for both width and heigh or two values
+    for width and height. Overscan string may have a few variants. Each variant
+    define output size for input size.
+
+    ### Example
+    For input size: 2200px
+
+    | String   | Output | Description                                     |
+    |----------|--------|-------------------------------------------------|
+    | ""       | 2200px | Empty string does nothing.                      |
+    | "10%"    | 220px  | Explicit percent size.                          |
+    | "-10%"   | 1980px | Relative percent size (decrease).               |
+    | "+10%"   | 2420px | Relative percent size (increase).               |
+    | "-10%+"  | 2000px | Relative percent size to output size.           |
+    | "300px"  | 300px  | Explicit output size cropped or expanded.       |
+    | "-300px" | 1900px | Relative pixel size (decrease).                 |
+    | "+300px" | 2500px | Relative pixel size (increase).                 |
+    | "300"    | 300px  | Value without "%" and "px" is used as has "px". |
+
+    Value without sign (+/-) in is always explicit and value with sign is
+    relative. Output size for "0px" and "+0px" are not the same. Value "0px" is
+    invalid value because output would have 0pixels.
+
+    All values that cause output resolution smaller than 1 pixel are invalid.
+
+    Value "-10%+" is a special case which says that input's resolution is
+    bigger by 10% than expected output.
+
+    It is possible to combine these variants to define different output for
+    width and height.
+
+    Resolution: 2000px 1000px
+
+    | String        | Output        |
+    |---------------|---------------|
+    | "100px 120px" | 2100px 1120px |
+    | "-10% -200px" | 1800px 800px  |
+    """
+
+    item_regex = re.compile(r"([\+\-])?([0-9]+)(.+)?")
+    relative_source_regex = re.compile(r"%([\+\-])")
+
+    def __init__(self, input_width, input_height, string_value):
+        # Make sure that is not None
+        string_value = string_value or ""
+
+        self.input_width = input_width
+        self.input_height = input_height
+
+        width, height = self._convert_string_to_values(string_value)
+        self._width_value = width
+        self._height_value = height
+
+        self._string_value = string_value
+
+    def __str__(self):
+        return "{}".format(self._string_value)
+
+    def __repr__(self):
+        return "<{}>".format(self.__class__.__name__)
+
+    def width(self):
+        """Calculated width."""
+        return self._width_value.size_for(self.input_width)
+
+    def height(self):
+        """Calculated height."""
+        return self._height_value.size_for(self.input_height)
+
+    def video_filters(self):
+        """FFmpeg video filters to achieve expected result.
+
+        Filter may be empty, use "crop" filter, "pad" filter or combination of
+        "crop" and "pad".
+
+        Returns:
+            list: FFmpeg video filters.
+        """
+        # crop=width:height:x:y - explicit start x, y position
+        # crop=width:height     - x, y are related to center by width/height
+        # pad=width:heigth:x:y  - explicit start x, y position
+        # pad=width:heigth      - x, y are set to 0 by default
+
+        width = self.width()
+        height = self.height()
+
+        output = []
+        if self.input_width == width and self.input_height == height:
+            pass
+
+        elif width <= self.input_width and height <= self.input_height:
+            output.append("crop={}:{}".format(width, height))
+
+        elif width >= self.input_width and height >= self.input_height:
+            output.append(
+                "pad={}:{}:(iw-ow)/2:(ih-oh)/2".format(width, height)
+            )
+
+        elif width > self.input_width and height < self.input_height:
+            output.append("crop=iw:{}".format(height))
+            output.append("pad={}:ih:(iw-ow)/2:(ih-oh)/2".format(width))
+
+        elif width < self.input_width and height > self.input_height:
+            output.append("crop={}:ih".format(width))
+            output.append("pad=iw:{}:(iw-ow)/2:(ih-oh)/2".format(height))
+
+        return output
+
+    def _convert_string_to_values(self, orig_string_value):
+        string_value = orig_string_value.strip().lower()
+        if not string_value:
+            return
+
+        # Replace "px" (and spaces before) with single space
+        string_value = re.sub("([ ]+)?px", " ", string_value)
+        string_value = re.sub("([ ]+)%", "%", string_value)
+        # Make sure +/- sign at the beggining of string is next to number
+        string_value = re.sub("^([\+\-])[ ]+", "\g<1>", string_value)
+        # Make sure +/- sign in the middle has zero spaces before number under
+        #   which belongs
+        string_value = re.sub(
+            "[ ]([\+\-])[ ]+([0-9])",
+            " \g<1>\g<2>",
+            string_value
+        )
+        string_parts = [
+            part
+            for part in string_value.split(" ")
+            if part
+        ]
+
+        error_msg = "Invalid string for rescaling \"{}\"".format(
+            orig_string_value
+        )
+        if 1 > len(string_parts) > 2:
+            raise ValueError(error_msg)
+
+        output = []
+        for item in string_parts:
+            groups = self.item_regex.findall(item)
+            if not groups:
+                raise ValueError(error_msg)
+
+            relative_sign, value, ending = groups[0]
+            if not relative_sign:
+                if not ending:
+                    output.append(PixValueExplicit(value))
+                else:
+                    output.append(PercentValueExplicit(value))
+            else:
+                source_sign_group = self.relative_source_regex.findall(ending)
+                if not ending:
+                    output.append(PixValueRelative(int(relative_sign + value)))
+
+                elif source_sign_group:
+                    source_sign = source_sign_group[0]
+                    output.append(PercentValueRelativeSource(
+                        float(relative_sign + value), source_sign
+                    ))
+                else:
+                    output.append(
+                        PercentValueRelative(float(relative_sign + value))
+                    )
+
+        if len(output) == 1:
+            width = output.pop(0)
+            height = width.copy()
+        else:
+            width, height = output
+
+        return width, height
