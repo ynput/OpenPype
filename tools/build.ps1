@@ -12,7 +12,21 @@
 
 PS> .\build.ps1
 
+.EXAMPLE
+
+To build without automatical submodule update:
+PS> .\build.ps1 --no-submodule-update
+
+.LINK
+https://openpype.io/docs
+
 #>
+
+$arguments=$ARGS
+$disable_submodule_update=""
+if($arguments -eq "--no-submodule-update") {
+    $disable_submodule_update=$true
+}
 
 function Start-Progress {
     param([ScriptBlock]$code)
@@ -76,17 +90,17 @@ $art = @"
 
              . .   ..     .    ..
         _oOOP3OPP3Op_. .
-     .PPpo~·   ··   ~2p.  ··  ····  ·  ·
-    ·Ppo · .pPO3Op.· · O:· · · ·
-   .3Pp · oP3'· 'P33· · 4 ··   ·  ·   · ·· ·  ·  ·
-  ·~OP    3PO·  .Op3    : · ··  _____  _____  _____
-  ·P3O  · oP3oP3O3P' · · ·   · /    /·/    /·/    /
-   O3:·   O3p~ ·       ·:· · ·/____/·/____/ /____/
-   'P ·   3p3·  oP3~· ·.P:· ·  · ··  ·   · ·· ·  ·  ·
-  · ':  · Po'  ·Opo'· .3O· .  o[ by Pype Club ]]]==- - - ·  ·
-    · '_ ..  ·    . _OP3··  ·  ·https://openpype.io·· ·
-         ~P3·OPPPO3OP~ · ··  ·
-           ·  ' '· ·  ·· · · · ··  ·
+     .PPpo~.   ..   ~2p.  ..  ....  .  .
+    .Ppo . .pPO3Op.. . O:. . . .
+   .3Pp . oP3'. 'P33. . 4 ..   .  .   . .. .  .  .
+  .~OP    3PO.  .Op3    : . ..  _____  _____  _____
+  .P3O  . oP3oP3O3P' . . .   . /    /./    /./    /
+   O3:.   O3p~ .       .:. . ./____/./____/ /____/
+   'P .   3p3.  oP3~. ..P:. .  . ..  .   . .. .  .  .
+  . ':  . Po'  .Opo'. .3O. .  o[ by Pype Club ]]]==- - - .  .
+    . '_ ..  .    . _OP3..  .  .https://openpype.io.. .
+         ~P3.OPPPO3OP~ . ..  .
+           .  ' '. .  .. . . . ..  .
 
 "@
 
@@ -134,10 +148,14 @@ catch {
     Write-Host $_.Exception.Message
     Exit-WithCode 1
 }
-
-Write-Host ">>> " -NoNewLine -ForegroundColor green
-Write-Host "Making sure submodules are up-to-date ..."
-git submodule update --init --recursive
+if (-not $disable_submodule_update) {
+    Write-Host ">>> " -NoNewLine -ForegroundColor green
+    Write-Host "Making sure submodules are up-to-date ..."
+    git submodule update --init --recursive
+} else {
+     Write-Host "*** " -NoNewLine -ForegroundColor yellow
+    Write-Host "Not updating submodules ..."
+}
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "OpenPype [ " -NoNewline -ForegroundColor white
@@ -164,7 +182,7 @@ Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building OpenPype ..."
-$startTime = (Get-Date).Millisecond
+$startTime = [int][double]::Parse((Get-Date -UFormat %s))
 
 $out = & poetry run python setup.py build 2>&1
 if ($LASTEXITCODE -ne 0)
@@ -183,7 +201,7 @@ Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "restoring current directory"
 Set-Location -Path $current_dir
 
-$endTime = (Get-Date).Millisecond
+$endTime = [int][double]::Parse((Get-Date -UFormat %s))
 Write-Host "*** " -NoNewline -ForegroundColor Cyan
 Write-Host "All done in $($endTime - $startTime) secs. You will find OpenPype and build log in " -NoNewLine
 Write-Host "'.\build'" -NoNewline -ForegroundColor Green

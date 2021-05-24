@@ -26,10 +26,12 @@ import platform
 from pathlib import Path
 import shutil
 import blessed
+import enlighten
 import time
 
 
 term = blessed.Terminal()
+manager = enlighten.get_manager()
 
 
 def _print(msg: str, type: int = 0) -> None:
@@ -50,6 +52,24 @@ def _print(msg: str, type: int = 0) -> None:
         header = term.darkolivegreen3("--- ")
 
     print("{}{}".format(header, msg))
+
+
+def count_folders(path: Path) -> int:
+    """Recursively count items inside given Path.
+
+    Args:
+        path (Path): Path to count.
+
+    Returns:
+        int: number of items.
+
+    """
+    cnt = 0
+    for child in path.iterdir():
+        if child.is_dir():
+            cnt += 1
+            cnt += count_folders(child)
+    return cnt
 
 
 _print("Starting dependency cleanup ...")
@@ -96,30 +116,55 @@ deps_dir = build_dir / "dependencies"
 
 # copy all files
 _print("Copying dependencies ...")
-shutil.copytree(site_pkg.as_posix(), deps_dir.as_posix())
 
+total_files = count_folders(site_pkg)
+progress_bar = enlighten.Counter(
+    total=total_files, desc="Processing Dependencies",
+    units="%", color="green")
+
+
+def _progress(_base, _names):
+    progress_bar.update()
+    return []
+
+
+shutil.copytree(site_pkg.as_posix(),
+                deps_dir.as_posix(),
+                ignore=_progress)
+progress_bar.close()
 # iterate over frozen libs and create list to delete
 libs_dir = build_dir / "lib"
 
 to_delete = []
-_print("Finding duplicates ...")
+# _print("Finding duplicates ...")
 deps_items = list(deps_dir.iterdir())
+item_count = len(list(libs_dir.iterdir()))
+find_progress_bar = enlighten.Counter(
+    total=item_count, desc="Finding duplicates", units="%", color="yellow")
+
 for d in libs_dir.iterdir():
     if (deps_dir / d.name) in deps_items:
         to_delete.append(d)
-        _print(f"found {d}", 3)
+        # _print(f"found {d}", 3)
+    find_progress_bar.update()
 
+find_progress_bar.close()
 # add openpype and igniter in libs too
 to_delete.append(libs_dir / "openpype")
 to_delete.append(libs_dir / "igniter")
 
 # delete duplicates
-_print(f"Deleting {len(to_delete)} duplicates ...")
+# _print(f"Deleting {len(to_delete)} duplicates ...")
+delete_progress_bar = enlighten.Counter(
+    total=len(to_delete), desc="Deleting duplicates", units="%", color="red")
 for d in to_delete:
     if d.is_dir():
         shutil.rmtree(d)
     else:
         d.unlink()
+    delete_progress_bar.update()
+
+delete_progress_bar.close()
 
 end_time = time.time_ns()
 total_time = (end_time - start_time) / 1000000000

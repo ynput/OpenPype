@@ -9,6 +9,7 @@ module.exports = {
                 "artist_concepts",
                 "artist_publish",
                 "artist_tools",
+                "artist_install"
             ],
         },
         {
