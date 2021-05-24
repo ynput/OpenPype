@@ -451,7 +451,14 @@ class DeleteAssetSubset(BaseAction):
         if len(assets_to_delete) > 0:
             map_av_ftrack_id = spec_data["without_ftrack_id"]
             # Prepare data when deleting whole avalon asset
-            avalon_assets = self.dbcon.find({"type": "asset"})
+            avalon_assets = self.dbcon.find(
+                {"type": "asset"},
+                {
+                    "_id": 1,
+                    "data.visualParent": 1,
+                    "data.ftrackId": 1
+                }
+            )
             avalon_assets_by_parent = collections.defaultdict(list)
             for asset in avalon_assets:
                 asset_id = asset["_id"]
