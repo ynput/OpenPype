@@ -57,6 +57,7 @@
                             },
                             "width": 0,
                             "height": 0,
+                            "overscan_crop": "",
                             "letter_box": {
                                 "enabled": false,
                                 "ratio": 0.0,

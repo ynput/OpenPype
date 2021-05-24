@@ -194,6 +194,15 @@
                                             "maximum": 100000
                                         },
                                         {
+                                            "type": "label",
+                                            "label": "Crop input overscan. See the documentation for more information."
+                                        },
+                                        {
+                                            "type": "text",
+                                            "key": "overscan_crop",
+                                            "label": "Overscan crop"
+                                        },
+                                        {
                                             "key": "letter_box",
                                             "label": "Letter box",
                                             "type": "dict",
