@@ -464,7 +464,8 @@ class Delivery(BaseAction):
             self.log.debug(debug_msg)
 
             anatomy_data = copy.deepcopy(repre["context"])
-            repre_report_items = check_destination_path(anatomy,
+            repre_report_items = check_destination_path(repre["_id"],
+                                                        anatomy,
                                                         anatomy_data,
                                                         datetime_data,
                                                         anatomy_name)
