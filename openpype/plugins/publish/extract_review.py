@@ -1412,3 +1412,88 @@ class _OverscanValue:
     def size_for(self, value):
         """Calculate new value for passed value."""
         pass
+
+
+class PixValueExplicit(_OverscanValue):
+    def __init__(self, value):
+        self._value = int(value)
+
+    def __str__(self):
+        return "{}px".format(self._value)
+
+    def copy(self):
+        return PixValueExplicit(self._value)
+
+    def size_for(self, value):
+        return self._value
+
+
+class PercentValueExplicit(_OverscanValue):
+    def __init__(self, value):
+        self._value = float(value)
+
+    def __str__(self):
+        return "{}%".format(abs(self._value))
+
+    def copy(self):
+        return PercentValueExplicit(self._value)
+
+    def size_for(self, value):
+        return int((value / 100) * self._value)
+
+
+class PixValueRelative(_OverscanValue):
+    def __init__(self, value):
+        self._value = int(value)
+
+    def __str__(self):
+        sign = "-" if self._value < 0 else "+"
+        return "{}{}px".format(sign, abs(self._value))
+
+    def copy(self):
+        return PixValueRelative(self._value)
+
+    def size_for(self, value):
+        return value + self._value
+
+
+class PercentValueRelative(_OverscanValue):
+    def __init__(self, value):
+        self._value = float(value)
+
+    def __str__(self):
+        return "{}%".format(self._value)
+
+    def copy(self):
+        return PercentValueRelative(self._value)
+
+    def size_for(self, value):
+        if self._value == 0:
+            return value
+
+        offset = int((value / 100) * self._value)
+
+        return value + offset
+
+
+class PercentValueRelativeSource(_OverscanValue):
+    def __init__(self, value, source_sign):
+        self._value = float(value)
+        if source_sign not in ("-", "+"):
+            raise ValueError(
+                "Invalid sign value \"{}\" expected \"-\" or \"+\"".format(
+                    source_sign
+                )
+            )
+        self._source_sign = source_sign
+
+    def __str__(self):
+        return "{}%{}".format(self._value, self._source_sign)
+
+    def copy(self):
+        return PercentValueRelativeSource(self._value, self._source_sign)
+
+    def size_for(self, value):
+        if self._value == 0:
+            return value
+        return int((value * 100) / (100 + self._value))
