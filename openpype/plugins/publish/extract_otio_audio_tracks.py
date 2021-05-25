@@ -40,11 +40,14 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         # get sequence
         otio_timeline = context.data["otioTimeline"]
 
-        # temp file
-        audio_temp_fpath = self.create_temp_file("audio")
-
         # get all audio inputs from otio timeline
         audio_inputs = self.get_audio_track_items(otio_timeline)
+
+        if not audio_inputs:
+            return
+
+        # temp file
+        audio_temp_fpath = self.create_temp_file("audio")
 
         # create empty audio with longest duration
         empty = self.create_empty(audio_inputs)
