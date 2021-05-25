@@ -14,5 +14,14 @@ class LaunchWithTerminal(PreLaunchHook):
     platforms = ["darwin"]
 
     def execute(self):
-        if self.launch_context.executable.endswith(".app"):
+        executable = self.launch_context.executable
+        # Skip executables not starting with ".app"
+        if not executable.endswith(".app"):
+            return
+
+        # Check if first argument match executable path
+        # - Few applications are not executed directly but through OpenPype
+        #   process (Photoshop, AfterEffects, Harmony, ...). These should not
+        #   use `open -an`.
+        if self.launch_context.launch_args[0] == executable:
             self.launch_context.launch_args.insert(0, ["open", "-an"])
