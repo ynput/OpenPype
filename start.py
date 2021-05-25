@@ -283,7 +283,8 @@ def _process_arguments() -> tuple:
             print("    --use-version=3.0.0")
             sys.exit(1)
 
-        m = re.search(r"--use-version=(?P<version>\d+\.\d+\.\d*.+?)", arg)
+        m = re.search(
+            r"--use-version=(?P<version>\d+\.\d+\.\d+(?:\S*)?)", arg)
         if m and m.group('version'):
             use_version = m.group('version')
             sys.argv.remove(arg)
@@ -415,6 +416,7 @@ def _find_frozen_openpype(use_version: str = None,
             (if requested).
 
     """
+    version_path = None
     openpype_version = None
     openpype_versions = bootstrap.find_openpype(include_zips=True,
                                                 staging=use_staging)
@@ -481,17 +483,24 @@ def _find_frozen_openpype(use_version: str = None,
         return version_path
 
     # get path of version specified in `--use-version`
-    version_path = BootstrapRepos.get_version_path_from_list(
-        use_version, openpype_versions)
-
-    if not version_path:
-        if use_version is not None and openpype_version:
-            print(("!!! Specified version was not found, using "
-                   "latest available"))
-        # specified version was not found so use latest detected.
-        version_path = openpype_version.path
-        print(f">>> Using version [ {openpype_version} ]")
-        print(f"    From {version_path}")
+    local_version = bootstrap.get_version(OPENPYPE_ROOT)
+    if use_version and use_version != local_version:
+        openpype_versions = bootstrap.find_openpype(include_zips=True)
+        v: OpenPypeVersion
+        for v in openpype_versions:
+            if str(v) == use_version:
+                openpype_version = v
+                version_path = openpype_version.path
+        if not openpype_version:
+            print(f"!!! requested version {use_version} was not found.")
+            if openpype_versions:
+                print("  - found: ")
+                for v in openpype_versions:
+                    print(f"     - {v}")
+                print(f"     - {local_version}")
+            else:
+                print(f"    - local version {local_version}")
+            sys.exit(1)
 
     # test if latest detected is installed (in user data dir)
     is_inside = False
@@ -522,7 +531,7 @@ def _find_frozen_openpype(use_version: str = None,
         openpype_version.path = version_path
 
     _initialize_environment(openpype_version)
-    return version_path
+    return openpype_version.path
 
 
 def _bootstrap_from_code(use_version):
@@ -537,36 +546,53 @@ def _bootstrap_from_code(use_version):
     """
     # run through repos and add them to `sys.path` and `PYTHONPATH`
     # set root
+    _openpype_root = OPENPYPE_ROOT
     if getattr(sys, 'frozen', False):
-        local_version = bootstrap.get_version(Path(OPENPYPE_ROOT))
+        local_version = bootstrap.get_version(Path(_openpype_root))
         print(f"  - running version: {local_version}")
         assert local_version
     else:
         # get current version of OpenPype
         local_version = bootstrap.get_local_live_version()
 
-    os.environ["OPENPYPE_VERSION"] = local_version
     if use_version and use_version != local_version:
+        version_to_use = None
         openpype_versions = bootstrap.find_openpype(include_zips=True)
-        version_path = BootstrapRepos.get_version_path_from_list(
-            use_version, openpype_versions)
-        if version_path:
+        v: OpenPypeVersion
+        for v in openpype_versions:
+            if str(v) == use_version:
+                version_to_use = v
+        if version_to_use:
             # use specified
-            bootstrap.add_paths_from_directory(version_path)
+            if version_to_use.path.is_file():
+                version_to_use.path = bootstrap.extract_openpype(
+                    version_to_use)
+            bootstrap.add_paths_from_directory(version_to_use.path)
             os.environ["OPENPYPE_VERSION"] = use_version
+            version_path = version_to_use.path
+            os.environ["OPENPYPE_REPOS_ROOT"] = (version_path / "openpype").as_posix()  # noqa: E501
+            _openpype_root = version_to_use.path.as_posix()
+        else:
+            print(f"!!! requested version {use_version} was not found.")
+            if openpype_versions:
+                print("  - found: ")
+                for v in openpype_versions:
+                    print(f"     - {v}")
+                print(f"     - {local_version}")
+            else:
+                print(f"    - local version {local_version}")
+            sys.exit(1)
     else:
-        version_path = OPENPYPE_ROOT
+        os.environ["OPENPYPE_VERSION"] = local_version
+        version_path = Path(_openpype_root)
+        os.environ["OPENPYPE_REPOS_ROOT"] = _openpype_root
 
-    repos = os.listdir(os.path.join(OPENPYPE_ROOT, "repos"))
-    repos = [os.path.join(OPENPYPE_ROOT, "repos", repo) for repo in repos]
+    repos = os.listdir(os.path.join(_openpype_root, "repos"))
+    repos = [os.path.join(_openpype_root, "repos", repo) for repo in repos]
     # add self to python paths
-    repos.insert(0, OPENPYPE_ROOT)
+    repos.insert(0, _openpype_root)
     for repo in repos:
         sys.path.insert(0, repo)
-
-    # Set OPENPYPE_REPOS_ROOT to code root
-    os.environ["OPENPYPE_REPOS_ROOT"] = OPENPYPE_ROOT
-
     # add venv 'site-packages' to PYTHONPATH
     python_path = os.getenv("PYTHONPATH", "")
     split_paths = python_path.split(os.pathsep)
@@ -581,11 +607,11 @@ def _bootstrap_from_code(use_version):
         # point to same hierarchy from code and from frozen OpenPype
         additional_paths = [
             # add OpenPype tools
-            os.path.join(OPENPYPE_ROOT, "openpype", "tools"),
+            os.path.join(_openpype_root, "openpype", "tools"),
             # add common OpenPype vendor
             # (common for multiple Python interpreter versions)
             os.path.join(
-                OPENPYPE_ROOT,
+                _openpype_root,
                 "openpype",
                 "vendor",
                 "python",
@@ -598,7 +624,7 @@ def _bootstrap_from_code(use_version):
 
     os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
-    return Path(version_path)
+    return version_path
 
 
 def boot():
