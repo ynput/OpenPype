@@ -175,6 +175,15 @@
                                         },
                                         {
                                             "type": "label",
+                                            "label": "Crop input overscan. See the documentation for more information."
+                                        },
+                                        {
+                                            "type": "text",
+                                            "key": "overscan_crop",
+                                            "label": "Overscan crop"
+                                        },
+                                        {
+                                            "type": "label",
                                             "label": "Width and Height must be both set to higher value than 0 else source resolution is used."
                                         },
                                         {
@@ -192,15 +201,6 @@
                                             "default": 0,
                                             "minimum": 0,
                                             "maximum": 100000
-                                        },
-                                        {
-                                            "type": "label",
-                                            "label": "Crop input overscan. See the documentation for more information."
-                                        },
-                                        {
-                                            "type": "text",
-                                            "key": "overscan_crop",
-                                            "label": "Overscan crop"
                                         },
                                         {
                                             "key": "letter_box",
