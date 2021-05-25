@@ -43,6 +43,7 @@ import os
 from abc import ABCMeta, abstractmethod
 
 import six
+import attr
 
 import openpype.hosts.maya.api.lib as lib
 
@@ -86,6 +87,22 @@ IMAGE_PREFIXES = {
     "renderman": "rmanGlobals.imageFileFormat",
     "redshift": "defaultRenderGlobals.imageFilePrefix",
 }
+
+
+@attr.s
+class LayerMetadata:
+    """Data class for Render Layer metadata."""
+    frameStart = attr.ib()
+    frameEnd = attr.ib()
+    frameStep = attr.ib(default=1)
+    padding = attr.ib(default=4)
+    cameras = attr.ib()
+    sceneName = attr.ib()
+    layerName = attr.ib()
+    renderer = attr.ib()
+    defaultExt = attr.ib()
+    filePrefix = attr.ib()
+    enabledAOVs = attr.ib()
 
 
 class ExpectedFiles:
@@ -230,21 +247,21 @@ class AExpectedFiles:
         if self.layer.startswith("rs_"):
             layer_name = self.layer[3:]
 
-        return {
-            "frameStart": int(self.get_render_attribute("startFrame")),
-            "frameEnd": int(self.get_render_attribute("endFrame")),
-            "frameStep": int(self.get_render_attribute("byFrameStep")),
-            "padding": int(self.get_render_attribute("extensionPadding")),
+        return LayerMetadata(
+            frameStart=int(self.get_render_attribute("startFrame")),
+            frameEnd=int(self.get_render_attribute("endFrame")),
+            frameStep=int(self.get_render_attribute("byFrameStep")),
+            padding=int(self.get_render_attribute("extensionPadding")),
             # if we have <camera> token in prefix path we'll expect output for
             # every renderable camera in layer.
-            "cameras": self.get_renderable_cameras(),
-            "sceneName": scene_name,
-            "layerName": layer_name,
-            "renderer": self.renderer,
-            "defaultExt": cmds.getAttr("defaultRenderGlobals.imfPluginKey"),
-            "filePrefix": file_prefix,
-            "enabledAOVs": self.get_aovs(),
-        }
+            cameras=self.get_renderable_cameras(),
+            sceneName=scene_name,
+            layerName=layer_name,
+            renderer=self.renderer,
+            defaultExt=cmds.getAttr("defaultRenderGlobals.imfPluginKey"),
+            filePrefix=file_prefix,
+            enabledAOVs=self.get_aovs()
+        )
 
     def _generate_single_file_sequence(
             self, layer_data, force_aov_name=None):
@@ -340,7 +357,7 @@ class AExpectedFiles:
         layer_data = self._get_layer_data()
 
         expected_files = []
-        if layer_data.get("enabledAOVs"):
+        if layer_data.enabledAOVs:
             expected_files = self._generate_aov_file_sequences(layer_data)
         else:
             expected_files = self._generate_single_file_sequence(layer_data)
@@ -543,13 +560,14 @@ class ExpectedFilesVray(AExpectedFiles):
         return prefix
 
     def _get_layer_data(self):
+        # type: () -> LayerMetadata
         """Override to get vray specific extension."""
         layer_data = super(ExpectedFilesVray, self)._get_layer_data()
         default_ext = cmds.getAttr("vraySettings.imageFormatStr")
         if default_ext in ["exr (multichannel)", "exr (deep)"]:
             default_ext = "exr"
-        layer_data["defaultExt"] = default_ext
-        layer_data["padding"] = cmds.getAttr("vraySettings.fileNamePadding")
+        layer_data.defaultExt = default_ext
+        layer_data.padding = cmds.getAttr("vraySettings.fileNamePadding")
         return layer_data
 
     def get_files(self):
@@ -565,7 +583,7 @@ class ExpectedFilesVray(AExpectedFiles):
         layer_data = self._get_layer_data()
         # remove 'beauty' from filenames as vray doesn't output it
         update = {}
-        if layer_data.get("enabledAOVs"):
+        if layer_data.enabledAOVs:
             for aov, seqs in expected_files[0].items():
                 if aov.startswith("beauty"):
                     new_list = []
@@ -725,7 +743,7 @@ class ExpectedFilesRedshift(AExpectedFiles):
         # Redshift doesn't merge Cryptomatte AOV to final exr. We need to check
         # for such condition and add it to list of expected files.
 
-        for aov in layer_data.get("enabledAOVs"):
+        for aov in layer_data.enabledAOVs:
             if aov[0].lower() == "cryptomatte":
                 aov_name = aov[0]
                 expected_files.append(
