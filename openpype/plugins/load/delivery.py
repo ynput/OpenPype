@@ -1,4 +1,4 @@
-import collections
+from collections import defaultdict
 import copy
 
 from Qt import QtWidgets, QtCore, QtGui
@@ -15,7 +15,8 @@ from openpype.lib.delivery import (
     get_format_dict,
     check_destination_path,
     process_single_file,
-    process_sequence
+    process_sequence,
+    collect_frames
 )
 
 
@@ -158,7 +159,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
         self.btn_delivery.setEnabled(False)
         QtWidgets.QApplication.processEvents()
 
-        report_items = collections.defaultdict(list)
+        report_items = defaultdict(list)
 
         selected_repres = self._get_selected_repres()
 
@@ -194,9 +195,16 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
             ]
 
             if repre.get("files"):
+                src_paths = []
                 for repre_file in repre["files"]:
                     src_path = self.anatomy.fill_root(repre_file["path"])
+                    src_paths.append(src_path)
+                sources_and_frames = collect_frames(src_paths)
+
+                for src_path, frame in sources_and_frames.items():
                     args[0] = src_path
+                    if frame:
+                        anatomy_data["frame"] = frame
                     new_report_items, uploaded = process_single_file(*args)
                     report_items.update(new_report_items)
                     self._update_progress(uploaded)

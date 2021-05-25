@@ -4,6 +4,35 @@ import shutil
 import clique
 import collections
 
+def collect_frames(files):
+    """
+        Returns dict of source path and its frame, if from sequence
+
+        Uses clique as most precise solution
+
+        Args:
+            files(list): list of source paths
+        Returns:
+            (dict): {'/asset/subset_v001.0001.png': '0001', ....}
+    """
+    collections, remainder = clique.assemble(files)
+
+    sources_and_frames = {}
+    if collections:
+        for collection in collections:
+            src_head = collection.head
+            src_tail = collection.tail
+
+            for index in collection.indexes:
+                src_frame = collection.format("{padding}") % index
+                src_file_name = "{}{}{}".format(src_head, src_frame,
+                                                src_tail)
+                sources_and_frames[src_file_name] = src_frame
+    else:
+        sources_and_frames[remainder.pop()] = None
+
+    return sources_and_frames
+
 
 def sizeof_fmt(num, suffix='B'):
     """Returns formatted string with size in appropriate unit"""
@@ -166,7 +195,6 @@ def process_single_file(
         os.makedirs(delivery_folder)
 
     log.debug("Copying single: {} -> {}".format(src_path, delivery_path))
-    print("Copying single: {} -> {}".format(src_path, delivery_path))
     copy_file(src_path, delivery_path)
 
     return report_items, 1
