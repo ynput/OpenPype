@@ -15,7 +15,7 @@ class LaunchWithTerminal(PreLaunchHook):
     platforms = ["darwin"]
 
     def execute(self):
-        executable = self.launch_context.executable
+        executable = str(self.launch_context.executable)
         # Skip executables not ending with ".app" or that are not folder
         if not executable.endswith(".app") or not os.path.isdir(executable):
             return
