@@ -1,3 +1,4 @@
+import os
 from openpype.lib import PreLaunchHook
 
 
@@ -15,8 +16,8 @@ class LaunchWithTerminal(PreLaunchHook):
 
     def execute(self):
         executable = self.launch_context.executable
-        # Skip executables not starting with ".app"
-        if not executable.endswith(".app"):
+        # Skip executables not ending with ".app" or that are not folder
+        if not executable.endswith(".app") or not os.path.isdir(executable):
             return
 
         # Check if first argument match executable path
