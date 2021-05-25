@@ -5,6 +5,37 @@
     "label": "Workfile Build Settings",
     "children": [
         {
+            "type": "dict",
+            "collapsible": false,
+            "key": "pre_hooks",
+            "label": "Pre Launch Hooks",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "create_first_version",
+                    "label": "Create First Version",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "path",
+                            "key": "template_path",
+                            "label": "Path to template",
+                            "multiplatform": true,
+                            "multipath": true
+                        }
+                    ]
+                }
+
+            ]
+        },
+        {
             "type": "list",
             "key": "profiles",
             "label": "Profiles",
