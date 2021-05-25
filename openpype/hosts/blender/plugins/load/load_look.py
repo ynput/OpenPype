@@ -1,15 +1,12 @@
 """Load a model asset in Blender."""
 
-import logging
-from pathlib import Path
-from pprint import pformat
 from typing import Dict, List, Optional
 
 import os
 import json
 import bpy
 
-from avalon import api, blender
+from avalon import blender
 import openpype.hosts.blender.api.plugin as plugin
 
 
@@ -131,4 +128,3 @@ class BlendLookLoader(plugin.AssetLoader):
         nodes.append(container)
         self[:] = nodes
         return nodes
-

@@ -5,7 +5,6 @@ import unreal
 from unreal import MaterialEditingLibrary as mat_lib
 
 import openpype.api
-from avalon import io
 
 
 class ExtractLook(openpype.api.Extractor):
@@ -67,7 +66,7 @@ class ExtractLook(openpype.api.Extractor):
                 json_element['tga_filename'] = tga_filename
 
                 transfers.append((
-                    f"{stagingdir}/{tga_filename}", 
+                    f"{stagingdir}/{tga_filename}",
                     f"{resources_dir}/{tga_filename}"))
 
             fbx_filename = f"{instance.name}_{name}.fbx"
@@ -94,7 +93,7 @@ class ExtractLook(openpype.api.Extractor):
             json_element['fbx_filename'] = fbx_filename
 
             transfers.append((
-                f"{stagingdir}/{fbx_filename}", 
+                f"{stagingdir}/{fbx_filename}",
                 f"{resources_dir}/{fbx_filename}"))
 
             json_data.append(json_element)
