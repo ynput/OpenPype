@@ -39,7 +39,7 @@ class BlendLookLoader(plugin.AssetLoader):
         path = os.path.dirname(libpath)
         materials_path = f"{path}/resources"
 
-        active_obj = bpy.context.view_layer.objects.active
+        selected = [o for o in bpy.context.scene.objects if o.select_get()]
 
         materials = []
 
@@ -63,12 +63,13 @@ class BlendLookLoader(plugin.AssetLoader):
 
             materials.append(material)
 
-            for child in self.get_all_children(active_obj):
-                mesh_name = child.name.split(':')[0]
-                if mesh_name == material.name:
-                    child.data.materials.clear()
-                    child.data.materials.append(material)
-                    break
+            for obj in selected:
+                for child in self.get_all_children(obj):
+                    mesh_name = child.name.split(':')[0]
+                    if mesh_name == material.name:
+                        child.data.materials.clear()
+                        child.data.materials.append(material)
+                        break
 
             bpy.data.objects.remove(mesh)
 
