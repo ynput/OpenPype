@@ -547,10 +547,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
         all_args.append("\"{}\"".format(self.ffmpeg_path))
         all_args.extend(input_args)
         if video_filters:
-            all_args.append("-filter:v {}".format(",".join(video_filters)))
+            all_args.append("-filter:v")
+            all_args.append("\"{}\"".format(",".join(video_filters)))
 
         if audio_filters:
-            all_args.append("-filter:a {}".format(",".join(audio_filters)))
+            all_args.append("-filter:a")
+            all_args.append("\"{}\"".format(",".join(audio_filters)))
 
         all_args.extend(output_args)
 
