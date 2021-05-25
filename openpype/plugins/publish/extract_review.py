@@ -1507,7 +1507,7 @@ class PercentValueRelativeSource(_OverscanValue):
     def size_for(self, value):
         if self._value == 0:
             return value
-        return int((value * 100) / (100 + self._value))
+        return int((value * 100) / (100 - self._value))
 
 
 class OverscanCrop:
