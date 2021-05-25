@@ -28,7 +28,7 @@ class BlendLookLoader(plugin.AssetLoader):
     color = "orange"
 
     def get_all_children(self, obj):
-        children = obj.children
+        children = list(obj.children)
 
         for child in children:
             children.extend(child.children)
@@ -47,7 +47,7 @@ class BlendLookLoader(plugin.AssetLoader):
         materials = []
 
         for entry in data:
-            file = entry.get('filename')
+            file = entry.get('fbx_filename')
             if file is None:
                 continue
 
@@ -55,6 +55,14 @@ class BlendLookLoader(plugin.AssetLoader):
 
             mesh = [o for o in bpy.context.scene.objects if o.select_get()][0]
             material = mesh.data.materials[0]
+
+            texture_file = entry.get('tga_filename')
+            if texture_file:
+                node_tree = material.node_tree
+                pbsdf = node_tree.nodes['Principled BSDF']
+                base_color = pbsdf.inputs[0]
+                tex_node = base_color.links[0].from_node
+                tex_node.image.filepath = f"{materials_path}/{texture_file}"
 
             materials.append(material)
 

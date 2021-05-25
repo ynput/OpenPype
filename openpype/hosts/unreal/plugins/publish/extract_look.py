@@ -2,6 +2,7 @@ import json
 import os
 
 import unreal
+from unreal import MaterialEditingLibrary as mat_lib
 
 import openpype.api
 from avalon import io
@@ -32,6 +33,43 @@ class ExtractLook(openpype.api.Extractor):
 
             name = asset.get_editor_property('asset_name')
 
+            json_element = {'material': str(name)}
+
+            material_obj = object.get_editor_property('static_materials')[0]
+            material = material_obj.material_interface
+
+            base_color = mat_lib.get_material_property_input_node(
+                material, unreal.MaterialProperty.MP_BASE_COLOR)
+
+            base_color_name = base_color.get_editor_property('parameter_name')
+
+            texture = mat_lib.get_material_default_texture_parameter_value(
+                material, base_color_name)
+
+            if texture:
+                # Export Texture
+                tga_filename = f"{instance.name}_{name}_texture.tga"
+
+                tga_exporter = unreal.TextureExporterTGA()
+
+                tga_export_task = unreal.AssetExportTask()
+
+                tga_export_task.set_editor_property('exporter', tga_exporter)
+                tga_export_task.set_editor_property('automated', True)
+                tga_export_task.set_editor_property('object', texture)
+                tga_export_task.set_editor_property(
+                    'filename', f"{stagingdir}/{tga_filename}")
+                tga_export_task.set_editor_property('prompt', False)
+                tga_export_task.set_editor_property('selected', False)
+
+                unreal.Exporter.run_asset_export_task(tga_export_task)
+
+                json_element['tga_filename'] = tga_filename
+
+                transfers.append((
+                    f"{stagingdir}/{tga_filename}", 
+                    f"{resources_dir}/{tga_filename}"))
+
             fbx_filename = f"{instance.name}_{name}.fbx"
 
             fbx_exporter = unreal.StaticMeshExporterFBX()
@@ -53,14 +91,12 @@ class ExtractLook(openpype.api.Extractor):
 
             unreal.Exporter.run_asset_export_task(task)
 
+            json_element['fbx_filename'] = fbx_filename
+
             transfers.append((
                 f"{stagingdir}/{fbx_filename}", 
                 f"{resources_dir}/{fbx_filename}"))
 
-            json_element = {
-                'material': str(name),
-                'filename': fbx_filename
-            }
             json_data.append(json_element)
 
         json_filename = f"{instance.name}.json"
