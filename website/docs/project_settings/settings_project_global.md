@@ -77,7 +77,7 @@ Profile may generate multiple outputs from a single input. Each output must defi
     - All values that cause output resolution smaller than 1 pixel are invalid.
 
     - Value without sign (+/-) in is always explicit and value with sign is
-    relative. Output size for values "0px" and "+0px" are not the same "+0px" will keep size unchanged and value "0px" is invalid value because output would have 0 pixels.
+    relative. Output size for values "200px" and "+200px" are not the same "+200px" will add 200 pixels to source and "200px" will keep only 200px from source. Value of "0", "0px" or "0%" are automatically converted to "+0px" as 0px is invalid ouput.
 
     - Cropped value is related to center. It is better to avoid odd numbers if
     possible.
@@ -90,8 +90,8 @@ Profile may generate multiple outputs from a single input. Each output must defi
     | `50%`    | 1100px | Crop 25% of input width on left and right side. |
     | `300px`  | 300px | Keep 300px in center of input and crop rest on left adn right. |
     | `300`    | 300px | Values without units are used as pixels (`px`). |
-    | `0px`   | 0px | Invalid value. |
     | `+0px`   | 2200px | Keep resolution unchanged. |
+    | `0px`   | 2200px | Same as `+0px`. |
     | `+300px` | 2500px | Add black pillars of 150px width on left and right side. |
     | `-300px` | 1900px | Crop 150px on left and right side |
     | `+10%`   | 2420px | Add black pillars of 5% size of input on left and right side. |

@@ -1537,8 +1537,8 @@ class OverscanCrop:
     | "300"    | 300px  | Value without "%" and "px" is used as has "px". |
 
     Value without sign (+/-) in is always explicit and value with sign is
-    relative. Output size for "0px" and "+0px" are not the same. Value "0px" is
-    invalid value because output would have 0pixels.
+    relative. Output size for "200px" and "+200px" are not the same.
+    Values "0", "0px" or "0%" are ignored.
 
     All values that cause output resolution smaller than 1 pixel are invalid.
 
