@@ -48,6 +48,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
     video_exts = ["mov", "mp4"]
     supported_exts = image_exts + video_exts
 
+    alpha_exts = ["exr", "png", "dpx"]
+
     # FFmpeg tools paths
     ffmpeg_path = get_ffmpeg_tool_path("ffmpeg")
 
@@ -296,6 +298,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ):
             with_audio = False
 
+        input_is_sequence = self.input_is_sequence(repre)
+        input_allow_bg = False
+        if input_is_sequence and repre["files"]:
+            ext = os.path.splitext(repre["files"][0])[1].replace(".", "")
+            if ext in self.alpha_exts:
+                input_allow_bg = True
+
         return {
             "fps": float(instance.data["fps"]),
             "frame_start": frame_start,
@@ -310,7 +319,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "resolution_width": instance.data.get("resolutionWidth"),
             "resolution_height": instance.data.get("resolutionHeight"),
             "origin_repre": repre,
-            "input_is_sequence": self.input_is_sequence(repre),
+            "input_is_sequence": input_is_sequence,
+            "input_allow_bg": input_allow_bg,
             "with_audio": with_audio,
             "without_handles": without_handles,
             "handles_are_set": handles_are_set
@@ -469,6 +479,39 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         lut_filters = self.lut_filters(new_repre, instance, ffmpeg_input_args)
         ffmpeg_video_filters.extend(lut_filters)
+
+        bg_alpha = 0
+        bg_color = output_def.get("bg_color")
+        if bg_color:
+            bg_red, bg_green, bg_blue, bg_alpha = bg_color
+
+        if bg_alpha > 0:
+            if not temp_data["input_allow_bg"]:
+                self.log.info((
+                    "Output definition has defined BG color input was"
+                    " resolved as does not support adding BG."
+                ))
+            else:
+                bg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
+                    bg_red, bg_green, bg_blue
+                )
+                bg_color_alpha = float(bg_alpha) / 255
+                bg_color_str = "{}@{}".format(bg_color_hex, bg_color_alpha)
+
+                self.log.info("Applying BG color {}".format(bg_color_str))
+                color_args = [
+                    "split=2[bg][fg]",
+                    "[bg]drawbox=c={}:replace=1:t=fill[bg]".format(
+                        bg_color_str
+                    ),
+                    "[bg][fg]overlay=format=auto"
+                ]
+                # Prepend bg color change before all video filters
+                # NOTE at the time of creation it is required as video filters
+                #   from settings may affect color of BG
+                #   e.g. `eq` can remove alpha from input
+                for arg in reversed(color_args):
+                    ffmpeg_video_filters.insert(0, arg)
 
         # Add argument to override output file
         ffmpeg_output_args.append("-y")
