@@ -7,6 +7,36 @@ import clique
 import collections
 
 
+def collect_frames(files):
+    """
+        Returns dict of source path and its frame, if from sequence
+
+        Uses clique as most precise solution
+
+        Args:
+            files(list): list of source paths
+        Returns:
+            (dict): {'/asset/subset_v001.0001.png': '0001', ....}
+    """
+    collections, remainder = clique.assemble(files)
+
+    sources_and_frames = {}
+    if collections:
+        for collection in collections:
+            src_head = collection.head
+            src_tail = collection.tail
+
+            for index in collection.indexes:
+                src_frame = collection.format("{padding}") % index
+                src_file_name = "{}{}{}".format(src_head, src_frame,
+                                                src_tail)
+                sources_and_frames[src_file_name] = src_frame
+    else:
+        sources_and_frames[remainder.pop()] = None
+
+    return sources_and_frames
+
+
 def sizeof_fmt(num, suffix='B'):
     """Returns formatted string with size in appropriate unit"""
     for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
@@ -270,43 +300,3 @@ def process_sequence(
         uploaded += 1
 
     return report_items, uploaded
-
-
-def report(report_items):
-    """Returns dict with final status of delivery (succes, fail etc.)."""
-    items = []
-    title = "Delivery report"
-    for msg, _items in report_items.items():
-        if not _items:
-            continue
-
-        if items:
-            items.append({"type": "label", "value": "---"})
-
-        items.append({
-            "type": "label",
-            "value": "# {}".format(msg)
-        })
-        if not isinstance(_items, (list, tuple)):
-            _items = [_items]
-        __items = []
-        for item in _items:
-            __items.append(str(item))
-
-        items.append({
-            "type": "label",
-            "value": '<p>{}</p>'.format("<br>".join(__items))
-        })
-
-    if not items:
-        return {
-            "success": True,
-            "message": "Delivery Finished"
-        }
-
-    return {
-        "items": items,
-        "title": title,
-        "success": False,
-        "message": "Delivery Finished"
-    }
