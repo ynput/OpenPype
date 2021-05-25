@@ -1436,6 +1436,8 @@ class PixValueExplicit(_OverscanValue):
         return PixValueExplicit(self._value)
 
     def size_for(self, value):
+        if self._value == 0:
+            return value
         return self._value
 
 
@@ -1450,6 +1452,8 @@ class PercentValueExplicit(_OverscanValue):
         return PercentValueExplicit(self._value)
 
     def size_for(self, value):
+        if self._value == 0:
+            return value
         return int((value / 100) * self._value)
 
 
