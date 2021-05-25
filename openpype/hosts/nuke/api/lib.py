@@ -53,11 +53,10 @@ def get_created_node_imageio_setting(**kwarg):
     imageio_node = None
     for node in imageio_nodes:
         log.info(node)
-        if (node["nukeNodeClass"] != nodeclass) and (
-                creator not in node["plugins"]):
-            continue
-
-        imageio_node = node
+        if (nodeclass in node["nukeNodeClass"]) and (
+                creator in node["plugins"]):
+            imageio_node = node
+            break
 
     log.info("ImageIO node: {}".format(imageio_node))
     return imageio_node
@@ -340,9 +339,9 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         nuke.message(msg)
 
     # build file path to workfiles
-    fpath = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
+    fdir = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
     fpath = data["fpath_template"].format(
-        work=fpath, version=data["version"], subset=data["subset"],
+        work=fdir, version=data["version"], subset=data["subset"],
         frame=data["frame"],
         ext=representation
     )
