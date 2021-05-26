@@ -27,5 +27,8 @@ class LaunchWithTerminal(PreLaunchHook):
         if self.launch_context.launch_args[0] != executable:
             return
 
+        # Tell `open` to pass arguments if there are any
+        if len(self.launch_context.launch_args) > 1:
+            self.launch_context.launch_args.insert(1, "--args")
         # Prepend open arguments
         self.launch_context.launch_args.insert(0, ["open", "-a"])
