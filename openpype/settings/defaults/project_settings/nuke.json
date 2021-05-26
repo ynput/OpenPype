@@ -147,8 +147,18 @@
             "node_name_template": "{class_name}_{ext}"
         }
     },
-    "workfile_build": {
-        "profiles": [
+    "workfile_options": {
+        "create_first_version": {
+            "enabled": false,
+            "use_buildin_template": false,
+            "custom_template_paths": {
+                "windows": "",
+                "darwin": "",
+                "linux": ""
+            },
+            "builder_on": false
+        },
+        "builder_profiles": [
             {
                 "tasks": [
                     "compositing"
@@ -162,10 +172,12 @@
                         ],
                         "repre_names": [
                             "exr",
-                            "dpx"
+                            "dpx",
+                            "mov"
                         ],
                         "loaders": [
-                            "LoadSequence"
+                            "LoadSequence",
+                            "LoadMov"
                         ]
                     }
                 ],

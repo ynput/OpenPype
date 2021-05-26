@@ -104,7 +104,7 @@
         },
         {
             "type": "schema",
-            "name": "schema_workfile_build"
+            "name": "schema_workfile_options"
         },
         {
             "type": "schema",
