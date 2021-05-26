@@ -266,6 +266,14 @@ class BaseItemEntity(BaseEntity):
                 self, "Dynamic entity has set `is_group` to true."
             )
 
+        if (
+            self._require_restart
+            and (self.is_dynamic_item or self.is_in_dynamic_item)
+        ):
+            raise EntitySchemaError(
+                self, "Dynamic entity can't require restart."
+            )
+
     @abstractmethod
     def set_override_state(self, state):
         """Set override state and trigger it on children.
