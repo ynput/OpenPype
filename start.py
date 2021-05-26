@@ -494,7 +494,7 @@ def _find_frozen_openpype(use_version: str = None,
             print(f"!!! requested version {use_version} was not found.")
             if openpype_versions:
                 print("  - found: ")
-                for v in openpype_versions:
+                for v in sorted(openpype_versions):
                     print(f"     - {v}: {v.path}")
 
             print(f"     - local version {local_version}")
@@ -575,7 +575,7 @@ def _bootstrap_from_code(use_version):
             print(f"!!! requested version {use_version} was not found.")
             if openpype_versions:
                 print("  - found: ")
-                for v in openpype_versions:
+                for v in sorted(openpype_versions):
                     print(f"     - {v}: {v.path}")
 
             print(f"     - local version {local_version}")
