@@ -496,10 +496,9 @@ def _find_frozen_openpype(use_version: str = None,
             if openpype_versions:
                 print("  - found: ")
                 for v in openpype_versions:
-                    print(f"     - {v}")
-                print(f"     - {local_version}")
-            else:
-                print(f"    - local version {local_version}")
+                    print(f"     - {v}: {v.path}")
+
+            print(f"     - local version {local_version}")
             sys.exit(1)
 
     # test if latest detected is installed (in user data dir)
@@ -577,10 +576,9 @@ def _bootstrap_from_code(use_version):
             if openpype_versions:
                 print("  - found: ")
                 for v in openpype_versions:
-                    print(f"     - {v}")
-                print(f"     - {local_version}")
-            else:
-                print(f"    - local version {local_version}")
+                    print(f"     - {v}: {v.path}")
+
+            print(f"     - local version {local_version}")
             sys.exit(1)
     else:
         os.environ["OPENPYPE_VERSION"] = local_version
