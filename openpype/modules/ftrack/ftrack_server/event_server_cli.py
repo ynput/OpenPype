@@ -423,7 +423,6 @@ def run_event_server(
     ftrack_user,
     ftrack_api_key,
     no_stored_credentials,
-    store_credentials,
     legacy,
     clockify_api_key,
     clockify_workspace
@@ -447,9 +446,6 @@ def run_event_server(
     if not validate_credentials(ftrack_url, username, api_key):
         print('Exiting! < Please enter valid credentials >')
         return 1
-
-    if store_credentials:
-        credentials.save_credentials(username, api_key, ftrack_url)
 
     # Set Ftrack environments
     os.environ["FTRACK_SERVER"] = ftrack_url
