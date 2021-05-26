@@ -81,7 +81,7 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
       Write-Host "FAILED Version [ $p ] is old and unsupported" -ForegroundColor red
       Set-Location -Path $current_dir
       Exit-WithCode 1
-    } elseif (($matches[1] = 3) -or ($matches[2] -gt 7)) {
+    } elseif (($matches[1] -eq 3) -and ($matches[2] -gt 7)) {
         Write-Host "WARNING Version [ $p ] is unsupported, use at your own risk." -ForegroundColor yellow
         Write-Host "*** " -NoNewline -ForegroundColor yellow
         Write-Host "OpenPype supports only Python 3.7" -ForegroundColor white
