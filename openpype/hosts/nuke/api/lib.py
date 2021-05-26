@@ -16,6 +16,7 @@ from avalon.nuke import (
 from openpype.api import (
     Logger,
     Anatomy,
+    BuildWorkfile,
     get_version_from_path,
     get_anatomy_settings,
     get_hierarchy,
@@ -1641,23 +1642,61 @@ def launch_workfiles_app():
         workfiles.show(os.environ["AVALON_WORKDIR"])
 
 
-def open_last_workfile():
-    # get state from settings
-    open_last_version = get_current_project_settings()["nuke"].get(
-        "general", {}).get("create_initial_workfile")
+def process_workfile_options():
+    from openpype.lib import env_value_to_bool
 
-    log.info("Opening last workfile...")
+    # get state from settings
+    workfile_options = get_current_project_settings()["nuke"].get(
+        "workfile_options", {})
+
+    # get all imortant settings
+    openlv_on = env_value_to_bool(
+        env_key="AVALON_OPEN_LAST_WORKFILE",
+        default=None)
+
+    createfv_on = workfile_options.get(
+        "create_first_version", {}).get("enabled")
+    createfv_template_paths = workfile_options.get(
+        "create_first_version", {}).get("custom_template_paths")
+    createfv_builder = workfile_options.get(
+        "create_first_version", {}).get("builder_on")
+
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
 
-    if not os.path.exists(last_workfile_path):
-        # return if none is defined
-        if not open_last_version:
-            return
+    # generate first version in file not existing and feature is enabled
+    if createfv_on and not os.path.exists(last_workfile_path):
+        # get custom template path if any
+        custom_template_path = createfv_template_paths[
+            platform.system().lower()]
 
+        # if custom template is defined
+        if custom_template_path:
+            log.info("Adding nodes from `{}`...".format(
+                custom_template_path
+            ))
+            # import nodes into current script
+            nuke.nodePaste(custom_template_path)
+
+        # if builder at start is defined
+        if createfv_builder:
+            log.info("Building nodes from presets...")
+            # build nodes by defined presets
+            BuildWorkfile().process()
+
+        log.info("Saving script as version `{}`...".format(
+            last_workfile_path
+        ))
+        # safe file as version
         save_file(last_workfile_path)
-    else:
-        # to avoid looping of the callback, remove it!
-        nuke.removeOnCreate(open_last_workfile, nodeClass="Root")
+        return
 
-        # open workfile
-        open_file(last_workfile_path)
+    # skip opening of last version if it is not enabled
+    if not openlv_on or not os.path.exists(last_workfile_path):
+        return
+
+    # to avoid looping of the callback, remove it!
+    nuke.removeOnCreate(process_workfile_options, nodeClass="Root")
+
+    log.info("Opening last workfile...")
+    # open workfile
+    open_file(last_workfile_path)
