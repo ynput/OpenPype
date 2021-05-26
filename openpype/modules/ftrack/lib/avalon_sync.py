@@ -34,7 +34,7 @@ log = Logger.get_logger(__name__)
 
 
 # Current schemas for avalon types
-EntitySchemas = {
+CURRENT_DOC_SCHEMAS = {
     "project": "openpype:project-3.0",
     "asset": "openpype:asset-3.0",
     "config": "openpype:config-2.0"
@@ -1237,12 +1237,8 @@ class SyncEntitiesFactory:
 
             ent_path_items = [ent["name"] for ent in entity["link"]]
             parents = ent_path_items[1:len(ent_path_items) - 1:]
-            hierarchy = ""
-            if len(parents) > 0:
-                hierarchy = os.path.sep.join(parents)
 
             data["parents"] = parents
-            data["hierarchy"] = hierarchy
             data["tasks"] = self.entities_dict[id].pop("tasks", {})
             self.entities_dict[id]["final_entity"]["data"] = data
             self.entities_dict[id]["final_entity"]["type"] = "asset"
@@ -1862,7 +1858,7 @@ class SyncEntitiesFactory:
 
         item["_id"] = new_id
         item["parent"] = self.avalon_project_id
-        item["schema"] = EntitySchemas["asset"]
+        item["schema"] = CURRENT_DOC_SCHEMAS["asset"]
         item["data"]["visualParent"] = avalon_parent
 
         new_id_str = str(new_id)
@@ -2003,8 +1999,8 @@ class SyncEntitiesFactory:
 
         project_item["_id"] = new_id
         project_item["parent"] = None
-        project_item["schema"] = EntitySchemas["project"]
-        project_item["config"]["schema"] = EntitySchemas["config"]
+        project_item["schema"] = CURRENT_DOC_SCHEMAS["project"]
+        project_item["config"]["schema"] = CURRENT_DOC_SCHEMAS["config"]
 
         self.ftrack_avalon_mapper[self.ft_project_id] = new_id
         self.avalon_ftrack_mapper[new_id] = self.ft_project_id
@@ -2169,8 +2165,6 @@ class SyncEntitiesFactory:
             hierarchy = "/".join(parents)
             self.entities_dict[ftrack_id][
                 "final_entity"]["data"]["parents"] = parents
-            self.entities_dict[ftrack_id][
-                "final_entity"]["data"]["hierarchy"] = hierarchy
 
             _parents.append(self.entities_dict[ftrack_id]["name"])
             for child_id in self.entities_dict[ftrack_id]["children"]:
@@ -2181,7 +2175,6 @@ class SyncEntitiesFactory:
                 if "data" not in self.updates[mongo_id]:
                     self.updates[mongo_id]["data"] = {}
                 self.updates[mongo_id]["data"]["parents"] = parents
-                self.updates[mongo_id]["data"]["hierarchy"] = hierarchy
 
     def prepare_project_changes(self):
         ftrack_ent_dict = self.entities_dict[self.ft_project_id]

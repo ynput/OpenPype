@@ -158,7 +158,7 @@ def translate_provider_for_icon(sync_server, project, site):
     """
     if site == sync_server.DEFAULT_SITE:
         return sync_server.DEFAULT_SITE
-    return sync_server.get_provider_for_site(project, site)
+    return sync_server.get_provider_for_site(site=site)
 
 
 def get_item_by_id(model, object_id):

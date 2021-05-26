@@ -1,7 +1,6 @@
 {
     "events": {
         "sync_to_avalon": {
-            "enabled": true,
             "statuses_name_change": [
                 "ready",
                 "not ready"

@@ -135,6 +135,12 @@
             "enabled": false,
             "attributes": {}
         },
+        "ValidateRenderSettings": {
+            "arnold_render_attributes": [],
+            "vray_render_attributes": [],
+            "redshift_render_attributes": [],
+            "renderman_render_attributes": []
+        },
         "ValidateModelName": {
             "enabled": false,
             "material_file": {

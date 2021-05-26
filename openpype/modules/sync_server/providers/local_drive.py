@@ -7,21 +7,42 @@ import time
 from openpype.api import Logger, Anatomy
 from .abstract_provider import AbstractProvider
 
+from ..utils import EditableScopes
+
 log = Logger().get_logger("SyncServer")
 
 
 class LocalDriveHandler(AbstractProvider):
+    CODE = 'local_drive'
+    LABEL = 'Local drive'
+
     """ Handles required operations on mounted disks with OS """
     def __init__(self, project_name, site_name, tree=None, presets=None):
         self.presets = None
         self.active = False
         self.project_name = project_name
         self.site_name = site_name
+        self._editable_properties = {}
 
         self.active = self.is_active()
 
     def is_active(self):
         return True
+
+    @classmethod
+    def get_configurable_items(cls):
+        """
+            Returns filtered dict of editable properties
+
+            Returns:
+                (dict)
+        """
+        editable = {
+            'root': {'scope': [EditableScopes.LOCAL],
+                     'label': "Roots",
+                     'type': 'dict'}
+        }
+        return editable
 
     def upload_file(self, source_path, target_path,
                     server, collection, file, representation, site,
@@ -149,7 +170,10 @@ class LocalDriveHandler(AbstractProvider):
                                  site=site,
                                  progress=status_val
                                  )
-            target_file_size = os.path.getsize(target_path)
+            try:
+                target_file_size = os.path.getsize(target_path)
+            except FileNotFoundError:
+                pass
             time.sleep(0.5)
 
     def _normalize_site_name(self, site_name):

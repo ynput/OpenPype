@@ -4,6 +4,8 @@ import traceback
 
 import bpy
 
+from .lib import append_user_scripts
+
 from avalon import api as avalon
 from pyblish import api as pyblish
 
@@ -29,7 +31,7 @@ def install():
     pyblish.register_plugin_path(str(PUBLISH_PATH))
     avalon.register_plugin_path(avalon.Loader, str(LOAD_PATH))
     avalon.register_plugin_path(avalon.Creator, str(CREATE_PATH))
-
+    append_user_scripts()
     avalon.on("new", on_new)
     avalon.on("open", on_open)
 

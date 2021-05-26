@@ -3,7 +3,6 @@ import re
 import copy
 import json
 import platform
-import getpass
 import collections
 import inspect
 import subprocess
@@ -362,7 +361,6 @@ class ApplicationManager:
         context = ApplicationLaunchContext(
             app, executable, **data
         )
-        # TODO pass context through launch hooks
         return context.launch()
 
 
@@ -442,7 +440,20 @@ class EnvironmentTool:
 
 
 class ApplicationExecutable:
+    """Representation of executable loaded from settings."""
+
     def __init__(self, executable):
+        # On MacOS check if exists path to executable when ends with `.app`
+        # - it is common that path will lead to "/Applications/Blender" but
+        #   real path is "/Applications/Blender.app"
+        if (
+            platform.system().lower() == "darwin"
+            and not os.path.exists(executable)
+        ):
+            _executable = executable + ".app"
+            if os.path.exists(_executable):
+                executable = _executable
+
         self.executable_path = executable
 
     def __str__(self):
@@ -626,7 +637,7 @@ class ApplicationLaunchContext:
 
         # Logger
         logger_name = "{}-{}".format(self.__class__.__name__, self.app_name)
-        self.log = PypeLogger().get_logger(logger_name)
+        self.log = PypeLogger.get_logger(logger_name)
 
         self.executable = executable
 
@@ -1033,7 +1044,7 @@ def _merge_env(env, current_env):
     return result
 
 
-def prepare_host_environments(data):
+def prepare_host_environments(data, implementation_envs=True):
     """Modify launch environments based on launched app and context.
 
     Args:
@@ -1089,7 +1100,24 @@ def prepare_host_environments(data):
         # Merge dictionaries
         env_values = _merge_env(tool_env, env_values)
 
-    final_env = _merge_env(acre.compute(env_values), data["env"])
+    loaded_env = _merge_env(acre.compute(env_values), data["env"])
+
+    final_env = None
+    # Add host specific environments
+    if app.host_name and implementation_envs:
+        module = __import__("openpype.hosts", fromlist=[app.host_name])
+        host_module = getattr(module, app.host_name, None)
+        add_implementation_envs = None
+        if host_module:
+            add_implementation_envs = getattr(
+                host_module, "add_implementation_envs", None
+            )
+        if add_implementation_envs:
+            # Function may only modify passed dict without returning value
+            final_env = add_implementation_envs(loaded_env, app)
+
+    if final_env is None:
+        final_env = loaded_env
 
     # Update env
     data["env"].update(final_env)
@@ -1162,16 +1190,22 @@ def prepare_context_environments(data):
 
     try:
         workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
-        if not os.path.exists(workdir):
-            log.debug(
-                "Creating workdir folder: \"{}\"".format(workdir)
-            )
-            os.makedirs(workdir)
 
     except Exception as exc:
         raise ApplicationLaunchFailed(
             "Error in anatomy.format: {}".format(str(exc))
         )
+
+    if not os.path.exists(workdir):
+        log.debug(
+            "Creating workdir folder: \"{}\"".format(workdir)
+        )
+        try:
+            os.makedirs(workdir)
+        except Exception as exc:
+            raise ApplicationLaunchFailed(
+                "Couldn't create workdir because: {}".format(str(exc))
+            )
 
     context_env = {
         "AVALON_PROJECT": project_doc["name"],

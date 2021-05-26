@@ -434,8 +434,19 @@ class DictMutableKeysEntity(EndpointEntity):
         if using_values_from_state:
             if _settings_value is NOT_SET:
                 initial_value = NOT_SET
+
+            elif self.store_as_list:
+                new_initial_value = []
+                for key, value in _settings_value:
+                    if key in initial_value:
+                        new_initial_value.append(key, initial_value.pop(key))
+
+                for key, value in initial_value.items():
+                    new_initial_value.append(key, value)
+                initial_value = new_initial_value
         else:
             initial_value = _settings_value
+
         self.initial_value = initial_value
 
     def _convert_to_regex_valid_key(self, key):

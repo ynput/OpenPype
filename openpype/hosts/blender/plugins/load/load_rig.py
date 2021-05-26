@@ -107,6 +107,9 @@ class BlendRigLoader(plugin.AssetLoader):
 
             if action is not None:
                 local_obj.animation_data.action = action
+            elif local_obj.animation_data.action is not None:
+                plugin.prepare_data(
+                    local_obj.animation_data.action, collection_name)
 
             # Set link the drivers to the local object
             if local_obj.data.animation_data:
@@ -155,18 +158,20 @@ class BlendRigLoader(plugin.AssetLoader):
             self.__class__.__name__,
         )
 
-        container_metadata = container.get(
-            blender.pipeline.AVALON_PROPERTY)
+        metadata = container.get(blender.pipeline.AVALON_PROPERTY)
 
-        container_metadata["libpath"] = libpath
-        container_metadata["lib_container"] = lib_container
+        metadata["libpath"] = libpath
+        metadata["lib_container"] = lib_container
 
         obj_container = self._process(
             libpath, lib_container, collection_name, None, None)
 
-        container_metadata["obj_container"] = obj_container
+        metadata["obj_container"] = obj_container
         # Save the list of objects in the metadata container
-        container_metadata["objects"] = obj_container.all_objects
+        metadata["objects"] = obj_container.all_objects
+
+        metadata["parent"] = str(context["representation"]["parent"])
+        metadata["family"] = context["representation"]["context"]["family"]
 
         nodes = list(container.objects)
         nodes.append(container)

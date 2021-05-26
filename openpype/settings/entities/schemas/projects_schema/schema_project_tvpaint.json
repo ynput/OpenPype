@@ -10,7 +10,6 @@
             "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
-            "is_file": true,
             "children": [
                 {
                     "type": "schema_template",
@@ -42,6 +41,72 @@
                             "key": "ValidateAssetName",
                             "label": "ValidateAssetName",
                             "docstring": "Validate if shot on instances metadata is same as workfiles shot"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "load",
+            "label": "Loader plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "LoadImage",
+                    "label": "Load Image",
+                    "children": [
+                        {
+                            "key": "defaults",
+                            "type": "dict",
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "stretch",
+                                    "label": "Stretch"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "timestretch",
+                                    "label": "TimeStretch"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "preload",
+                                    "label": "Preload"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ImportImage",
+                    "label": "Import Image",
+                    "children": [
+                        {
+                            "key": "defaults",
+                            "type": "dict",
+                            "children": [
+                                {
+                                    "type": "boolean",
+                                    "key": "stretch",
+                                    "label": "Stretch"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "timestretch",
+                                    "label": "TimeStretch"
+                                },
+                                {
+                                    "type": "boolean",
+                                    "key": "preload",
+                                    "label": "Preload"
+                                }
+                            ]
                         }
                     ]
                 }

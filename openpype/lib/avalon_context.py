@@ -17,6 +17,99 @@ avalon = None
 log = logging.getLogger("AvalonContext")
 
 
+CURRENT_DOC_SCHEMAS = {
+    "project": "openpype:project-3.0",
+    "asset": "openpype:asset-3.0",
+    "config": "openpype:config-2.0"
+}
+PROJECT_NAME_ALLOWED_SYMBOLS = "a-zA-Z0-9_"
+PROJECT_NAME_REGEX = re.compile(
+    "^[{}]+$".format(PROJECT_NAME_ALLOWED_SYMBOLS)
+)
+
+
+def create_project(
+    project_name, project_code, library_project=False, dbcon=None
+):
+    """Create project using OpenPype settings.
+
+    This project creation function is not validating project document on
+    creation. It is because project document is created blindly with only
+    minimum required information about project which is it's name, code, type
+    and schema.
+
+    Entered project name must be unique and project must not exist yet.
+
+    Args:
+        project_name(str): New project name. Should be unique.
+        project_code(str): Project's code should be unique too.
+        library_project(bool): Project is library project.
+        dbcon(AvalonMongoDB): Object of connection to MongoDB.
+
+    Raises:
+        ValueError: When project name already exists in MongoDB.
+
+    Returns:
+        dict: Created project document.
+    """
+
+    from openpype.settings import ProjectSettings, SaveWarningExc
+    from avalon.api import AvalonMongoDB
+    from avalon.schema import validate
+
+    if dbcon is None:
+        dbcon = AvalonMongoDB()
+
+    if not PROJECT_NAME_REGEX.match(project_name):
+        raise ValueError((
+            "Project name \"{}\" contain invalid characters"
+        ).format(project_name))
+
+    database = dbcon.database
+    project_doc = database[project_name].find_one(
+        {"type": "project"},
+        {"name": 1}
+    )
+    if project_doc:
+        raise ValueError("Project with name \"{}\" already exists".format(
+            project_name
+        ))
+
+    project_doc = {
+        "type": "project",
+        "name": project_name,
+        "data": {
+            "code": project_code,
+            "library_project": library_project
+        },
+        "schema": CURRENT_DOC_SCHEMAS["project"]
+    }
+    # Insert document with basic data
+    database[project_name].insert_one(project_doc)
+    # Load ProjectSettings for the project and save it to store all attributes
+    #   and Anatomy
+    try:
+        project_settings_entity = ProjectSettings(project_name)
+        project_settings_entity.save()
+    except SaveWarningExc as exc:
+        print(str(exc))
+    except Exception:
+        database[project_name].delete_one({"type": "project"})
+        raise
+
+    project_doc = database[project_name].find_one({"type": "project"})
+
+    try:
+        # Validate created project document
+        validate(project_doc)
+    except Exception:
+        # Remove project if is not valid
+        database[project_name].delete_one({"type": "project"})
+        raise
+
+    return project_doc
+
+
 def with_avalon(func):
     @functools.wraps(func)
     def wrap_avalon(*args, **kwargs):

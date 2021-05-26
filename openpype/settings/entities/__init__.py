@@ -57,6 +57,7 @@ from .exceptions import (
     SchemaError,
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
+    BaseInvalidValueType,
     InvalidValueType,
     InvalidKeySymbols,
     SchemaMissingFileInfo,
@@ -96,12 +97,13 @@ from .input_entities import (
     PathInput,
     RawJsonEntity
 )
-
+from .color_entity import ColorEntity
 from .enum_entity import (
     BaseEnumEntity,
     EnumEntity,
     AppsEnumEntity,
-    ToolsEnumEntity
+    ToolsEnumEntity,
+    ProvidersEnum
 )
 
 from .list_entity import ListEntity
@@ -114,6 +116,7 @@ from .anatomy_entities import AnatomyEntity
 __all__ = (
     "DefaultsNotDefined",
     "StudioDefaultsNotDefined",
+    "BaseInvalidValueType",
     "InvalidValueType",
     "InvalidKeySymbols",
     "SchemaMissingFileInfo",
@@ -145,10 +148,13 @@ __all__ = (
     "PathInput",
     "RawJsonEntity",
 
+    "ColorEntity",
+
     "BaseEnumEntity",
     "EnumEntity",
     "AppsEnumEntity",
     "ToolsEnumEntity",
+    "ProvidersEnum",
 
     "ListEntity",
 

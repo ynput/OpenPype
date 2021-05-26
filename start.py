@@ -360,7 +360,7 @@ def _determine_mongodb() -> str:
 
 def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
     version_path = openpype_version.path
-    os.environ["OPENPYPE_VERSION"] = openpype_version.version
+    os.environ["OPENPYPE_VERSION"] = str(openpype_version)
     # set OPENPYPE_REPOS_ROOT to point to currently used OpenPype version.
     os.environ["OPENPYPE_REPOS_ROOT"] = os.path.normpath(
         version_path.as_posix()
@@ -417,6 +417,26 @@ def _find_frozen_openpype(use_version: str = None,
     openpype_version = None
     openpype_versions = bootstrap.find_openpype(include_zips=True,
                                                 staging=use_staging)
+    # get local frozen version and add it to detected version so if it is
+    # newer it will be used instead.
+    local_version_str = bootstrap.get_version(
+        Path(os.environ["OPENPYPE_ROOT"]))
+    if local_version_str:
+        local_version = OpenPypeVersion(
+            version=local_version_str,
+            path=Path(os.environ["OPENPYPE_ROOT"]))
+        if local_version not in openpype_versions:
+            openpype_versions.append(local_version)
+        openpype_versions.sort()
+        # if latest is currently running, ditch whole list
+        # and run from current without installing it.
+        if local_version == openpype_versions[-1]:
+            os.environ["OPENPYPE_TRYOUT"] = "1"
+            openpype_versions = []
+
+    else:
+        print("!!! Warning: cannot determine current running version.")
+
     if not os.getenv("OPENPYPE_TRYOUT"):
         try:
             # use latest one found (last in the list is latest)
@@ -464,12 +484,9 @@ def _find_frozen_openpype(use_version: str = None,
         use_version, openpype_versions)
 
     if not version_path:
-        if use_version is not None:
-            if not openpype_version:
-                ...
-            else:
-                print(("!!! Specified version was not found, using "
-                       "latest available"))
+        if use_version is not None and openpype_version:
+            print(("!!! Specified version was not found, using "
+                   "latest available"))
         # specified version was not found so use latest detected.
         version_path = openpype_version.path
         print(f">>> Using version [ {openpype_version} ]")
@@ -492,7 +509,15 @@ def _find_frozen_openpype(use_version: str = None,
 
     if openpype_version.path.is_file():
         print(">>> Extracting zip file ...")
-        version_path = bootstrap.extract_openpype(openpype_version)
+        try:
+            version_path = bootstrap.extract_openpype(openpype_version)
+        except OSError as e:
+            print("!!! failed: {}".format(str(e)))
+            sys.exit(1)
+        else:
+            # cleanup zip after extraction
+            os.unlink(openpype_version.path)
+
         openpype_version.path = version_path
 
     _initialize_environment(openpype_version)

@@ -420,6 +420,18 @@
 }
 ```
 
+### color
+- preimplemented entity to store and load color values
+- entity store and expect list of 4 integers in range 0-255
+    - integers represents rgba [Red, Green, Blue, Alpha]
+
+```
+{
+    "type": "color",
+    "key": "bg_color",
+    "label": "Background Color"
+}
+```
 
 ## Noninteractive widgets
 - have nothing to do with data
