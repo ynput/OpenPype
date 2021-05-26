@@ -17,6 +17,8 @@ class NonPythonHostHook(PreLaunchHook):
     """
     app_groups = ["harmony", "photoshop", "aftereffects"]
 
+    order = 20
+
     def execute(self):
         # Pop executable
         executable_path = self.launch_context.launch_args.pop(0)

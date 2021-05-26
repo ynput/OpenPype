@@ -1,6 +1,7 @@
 import os
 import subprocess
 from openpype.lib import PreLaunchHook
+from openpype.lib.applications import ApplicationLaunchContext
 
 
 class LaunchWithWindowsShell(PreLaunchHook):
@@ -11,12 +12,15 @@ class LaunchWithWindowsShell(PreLaunchHook):
     instead.
     """
 
-    # Should be as last hook becuase must change launch arguments to string
+    # Should be as last hook because must change launch arguments to string
     order = 1000
-    app_groups = ["nuke", "nukex", "hiero", "nukestudio"]
+    app_groups = ["nuke", "nukex", "hiero", "nukestudio",
+                  "photoshop", "aftereffects", "harmony"]
     platforms = ["windows"]
 
     def execute(self):
+        launch_args = self.launch_context.clear_launch_args(
+            self.launch_context.launch_args)
         new_args = [
             # Get comspec which is cmd.exe in most cases.
             os.environ.get("COMSPEC", "cmd.exe"),
@@ -24,7 +28,7 @@ class LaunchWithWindowsShell(PreLaunchHook):
             "/c",
             # Convert arguments to command line arguments (as string)
             "\"{}\"".format(
-                subprocess.list2cmdline(self.launch_context.launch_args)
+                subprocess.list2cmdline(launch_args)
             )
         ]
         # Convert list to string
