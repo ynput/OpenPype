@@ -60,8 +60,6 @@ def tray(debug=False):
               help="Ftrack api user")
 @click.option("--ftrack-api-key", envvar="FTRACK_API_KEY",
               help="Ftrack api key")
-@click.option("--no-stored-credentials", is_flag=True,
-              help="don't use stored credentials")
 @click.option("--legacy", is_flag=True,
               help="run event server without mongo storing")
 @click.option("--clockify-api-key", envvar="CLOCKIFY_API_KEY",
@@ -72,7 +70,6 @@ def eventserver(debug,
                 ftrack_url,
                 ftrack_user,
                 ftrack_api_key,
-                no_stored_credentials,
                 legacy,
                 clockify_api_key,
                 clockify_workspace):
@@ -88,7 +85,6 @@ def eventserver(debug,
         ftrack_url,
         ftrack_user,
         ftrack_api_key,
-        no_stored_credentials,
         legacy,
         clockify_api_key,
         clockify_workspace

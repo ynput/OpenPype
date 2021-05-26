@@ -422,15 +422,18 @@ def run_event_server(
     ftrack_url,
     ftrack_user,
     ftrack_api_key,
-    no_stored_credentials,
     legacy,
     clockify_api_key,
     clockify_workspace
 ):
-    if not no_stored_credentials:
+    if not ftrack_user or not ftrack_api_key:
+        print((
+            "Ftrack user/api key were not passed."
+            " Trying to use credentials from user keyring."
+        ))
         cred = credentials.get_credentials(ftrack_url)
-        ftrack_user = cred.get('username')
-        ftrack_api_key = cred.get('api_key')
+        ftrack_user = cred.get("username")
+        ftrack_api_key = cred.get("api_key")
 
     if clockify_workspace and clockify_api_key:
         os.environ["CLOCKIFY_WORKSPACE"] = clockify_workspace
