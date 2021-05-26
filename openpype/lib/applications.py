@@ -440,7 +440,20 @@ class EnvironmentTool:
 
 
 class ApplicationExecutable:
+    """Representation of executable loaded from settings."""
+
     def __init__(self, executable):
+        # On MacOS check if exists path to executable when ends with `.app`
+        # - it is common that path will lead to "/Applications/Blender" but
+        #   real path is "/Applications/Blender.app"
+        if (
+            platform.system().lower() == "darwin"
+            and not os.path.exists(executable)
+        ):
+            _executable = executable + ".app"
+            if os.path.exists(_executable):
+                executable = _executable
+
         self.executable_path = executable
 
     def __str__(self):
