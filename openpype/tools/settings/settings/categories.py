@@ -181,9 +181,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         if self.user_role == "developer":
             self._add_developer_ui(footer_layout)
 
-        save_btn = QtWidgets.QPushButton("Save")
-        spacer_widget = QtWidgets.QWidget()
-        footer_layout.addWidget(spacer_widget, 1)
+        save_btn = QtWidgets.QPushButton("Save", footer_widget)
+        require_restart_label = QtWidgets.QLabel(footer_widget)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(require_restart_label, 0)
         footer_layout.addWidget(save_btn, 0)
 
         configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
@@ -201,6 +202,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         save_btn.clicked.connect(self._save)
 
         self.save_btn = save_btn
+        self.require_restart_label = require_restart_label
         self.scroll_widget = scroll_widget
         self.content_layout = content_layout
         self.content_widget = content_widget
@@ -319,6 +321,15 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def _on_reset_start(self):
         return
 
+    def _on_require_restart_change(self):
+        value = ""
+        if self.entity.require_restart:
+            value = (
+                "Your changes require restart of"
+                " all running OpenPype processes to take affect."
+            )
+        self.require_restart_label.setText(value)
+
     def reset(self):
         self.set_state(CategoryState.Working)
 
@@ -335,6 +346,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         dialog = None
         try:
             self._create_root_entity()
+            self.entity.add_require_restart_change_callback(
+                self._on_require_restart_change
+            )
 
             self.add_children_gui()
 
