@@ -99,11 +99,11 @@ class PrecollectRetime(api.InstancePlugin):
                             ("source_in_change, source_out_change",
                              source_in_change, source_out_change))
 
-                time_warp_nodes.append({
-                    "Class": "TimeWarp",
-                    "name": name,
-                    "lookup": look_up
-                })
+                    time_warp_nodes.append({
+                        "Class": "TimeWarp",
+                        "name": name,
+                        "lookup": look_up
+                    })
 
         self.log.debug((source_in_change, source_out_change))
         # recalculate handles by the speed
@@ -146,6 +146,7 @@ class PrecollectRetime(api.InstancePlugin):
             "handleStart": source_handle_start,
             "handleEnd": source_out_h - source_out
         })
+        self.log.debug("versionData: {}".format(instance.data["versionData"]))
         self.log.debug("sourceIn: {}".format(instance.data["sourceIn"]))
         self.log.debug("sourceOut: {}".format(instance.data["sourceOut"]))
         self.log.debug("speed: {}".format(instance.data["speed"]))
