@@ -1190,16 +1190,22 @@ def prepare_context_environments(data):
 
     try:
         workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
-        if not os.path.exists(workdir):
-            log.debug(
-                "Creating workdir folder: \"{}\"".format(workdir)
-            )
-            os.makedirs(workdir)
 
     except Exception as exc:
         raise ApplicationLaunchFailed(
             "Error in anatomy.format: {}".format(str(exc))
         )
+
+    if not os.path.exists(workdir):
+        log.debug(
+            "Creating workdir folder: \"{}\"".format(workdir)
+        )
+        try:
+            os.makedirs(workdir)
+        except Exception as exc:
+            raise ApplicationLaunchFailed(
+                "Couldn't create workdir because: {}".format(str(exc))
+            )
 
     context_env = {
         "AVALON_PROJECT": project_doc["name"],
