@@ -1,12 +1,14 @@
 """Load a model asset in Blender."""
 
+from pathlib import Path
+from pprint import pformat
 from typing import Dict, List, Optional
 
 import os
 import json
 import bpy
 
-from avalon import blender
+from avalon import api, blender
 import openpype.hosts.blender.api.plugin as plugin
 
 
@@ -32,14 +34,12 @@ class BlendLookLoader(plugin.AssetLoader):
 
         return children
 
-    def _process(self, libpath):
+    def _process(self, libpath, objects):
         with open(libpath, "r") as fp:
             data = json.load(fp)
 
         path = os.path.dirname(libpath)
         materials_path = f"{path}/resources"
-
-        selected = [o for o in bpy.context.scene.objects if o.select_get()]
 
         materials = []
 
@@ -63,7 +63,7 @@ class BlendLookLoader(plugin.AssetLoader):
 
             materials.append(material)
 
-            for obj in selected:
+            for obj in objects:
                 for child in self.get_all_children(obj):
                     mesh_name = child.name.split(':')[0]
                     if mesh_name == material.name:
@@ -73,7 +73,7 @@ class BlendLookLoader(plugin.AssetLoader):
 
             bpy.data.objects.remove(mesh)
 
-        return materials
+        return materials, objects
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -117,10 +117,13 @@ class BlendLookLoader(plugin.AssetLoader):
         metadata["libpath"] = libpath
         metadata["lib_container"] = lib_container
 
-        materials = self._process(libpath)
+        selected = [o for o in bpy.context.scene.objects if o.select_get()]
+
+        materials, objects = self._process(libpath, selected)
 
         # Save the list of imported materials in the metadata container
-        metadata["objects"] = materials
+        metadata["objects"] = objects
+        metadata["materials"] = materials
 
         metadata["parent"] = str(context["representation"]["parent"])
         metadata["family"] = context["representation"]["context"]["family"]
@@ -129,3 +132,81 @@ class BlendLookLoader(plugin.AssetLoader):
         nodes.append(container)
         self[:] = nodes
         return nodes
+
+    def update(self, container: Dict, representation: Dict):
+        collection = bpy.data.collections.get(container["objectName"])
+        libpath = Path(api.get_representation_path(representation))
+        extension = libpath.suffix.lower()
+
+        self.log.info(
+            "Container: %s\nRepresentation: %s",
+            pformat(container, indent=2),
+            pformat(representation, indent=2),
+        )
+
+        assert collection, (
+            f"The asset is not loaded: {container['objectName']}"
+        )
+        assert not (collection.children), (
+            "Nested collections are not supported."
+        )
+        assert libpath, (
+            "No existing library file found for {container['objectName']}"
+        )
+        assert libpath.is_file(), (
+            f"The file doesn't exist: {libpath}"
+        )
+        assert extension in plugin.VALID_EXTENSIONS, (
+            f"Unsupported file: {libpath}"
+        )
+
+        collection_metadata = collection.get(blender.pipeline.AVALON_PROPERTY)
+        collection_libpath = collection_metadata["libpath"]
+
+        normalized_collection_libpath = (
+            str(Path(bpy.path.abspath(collection_libpath)).resolve())
+        )
+        normalized_libpath = (
+            str(Path(bpy.path.abspath(str(libpath))).resolve())
+        )
+        self.log.debug(
+            "normalized_collection_libpath:\n  %s\nnormalized_libpath:\n  %s",
+            normalized_collection_libpath,
+            normalized_libpath,
+        )
+        if normalized_collection_libpath == normalized_libpath:
+            self.log.info("Library already loaded, not updating...")
+            return
+
+        for obj in collection_metadata['objects']:
+            for child in self.get_all_children(obj):
+                child.data.materials.clear()
+
+        for material in collection_metadata['materials']:
+            bpy.data.materials.remove(material)
+
+        materials, objects = self._process(
+            libpath, collection_metadata['objects'])
+
+        collection_metadata["objects"] = objects
+        collection_metadata["materials"] = materials
+        collection_metadata["libpath"] = str(libpath)
+        collection_metadata["representation"] = str(representation["_id"])
+
+    def remove(self, container: Dict) -> bool:
+        collection = bpy.data.collections.get(container["objectName"])
+        if not collection:
+            return False
+
+        collection_metadata = collection.get(blender.pipeline.AVALON_PROPERTY)
+
+        for obj in collection_metadata['objects']:
+            for child in self.get_all_children(obj):
+                child.data.materials.clear()
+
+        for material in collection_metadata['materials']:
+            bpy.data.materials.remove(material)
+
+        bpy.data.collections.remove(collection)
+
+        return True
