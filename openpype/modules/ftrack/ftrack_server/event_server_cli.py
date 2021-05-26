@@ -429,8 +429,8 @@ def run_event_server(
 ):
     if not no_stored_credentials:
         cred = credentials.get_credentials(ftrack_url)
-        username = cred.get('username')
-        api_key = cred.get('api_key')
+        ftrack_user = cred.get('username')
+        ftrack_api_key = cred.get('api_key')
 
     if clockify_workspace and clockify_api_key:
         os.environ["CLOCKIFY_WORKSPACE"] = clockify_workspace
@@ -443,14 +443,14 @@ def run_event_server(
         return 1
 
     # Validate entered credentials
-    if not validate_credentials(ftrack_url, username, api_key):
+    if not validate_credentials(ftrack_url, ftrack_user, ftrack_api_key):
         print('Exiting! < Please enter valid credentials >')
         return 1
 
     # Set Ftrack environments
     os.environ["FTRACK_SERVER"] = ftrack_url
-    os.environ["FTRACK_API_USER"] = username
-    os.environ["FTRACK_API_KEY"] = api_key
+    os.environ["FTRACK_API_USER"] = ftrack_user
+    os.environ["FTRACK_API_KEY"] = ftrack_api_key
 
     if legacy:
         return legacy_server(ftrack_url)
