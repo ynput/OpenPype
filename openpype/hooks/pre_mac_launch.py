@@ -6,9 +6,9 @@ class LaunchWithTerminal(PreLaunchHook):
     """Mac specific pre arguments for application.
 
     Mac applications should be launched using "open" argument which is internal
-    callbacks to open executable. We also add argument "-an" to create new
-    process. This is used only for executables ending with ".app". It is
-    expected that these executables lead to app packages.
+    callbacks to open executable. We also add argument "-a" to tell it's
+    application open. This is used only for executables ending with ".app". It
+    is expected that these executables lead to app packages.
     """
     order = 1000
 
