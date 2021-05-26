@@ -198,7 +198,8 @@ def create_otio_markers(otio_item, item):
 def create_otio_clip(track_item):
     clip = track_item.source()
     source_in = track_item.sourceIn()
-    duration = track_item.sourceDuration()
+    speed = track_item.playbackSpeed()
+    duration = int(track_item.sourceDuration() / speed)
     fps = utils.get_rate(track_item) or self.project_fps
     name = track_item.name()
 
