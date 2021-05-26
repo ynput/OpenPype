@@ -756,11 +756,22 @@ class BuildWorkfile:
         host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
         presets = get_project_settings(avalon.io.Session["AVALON_PROJECT"])
         # Get presets for host
-        build_presets = (
-            presets.get(host_name, {})
-            .get("workfile_build")
-            .get("profiles")
-        )
+        # for backward compatibility this has to have exception
+        # if the concept will be agreed then this needs to be
+        # refactored without exception
+        if "nuke" in host_name:
+            build_presets = (
+                presets.get(host_name, {})
+                .get("workfile_options")
+                .get("builder_profiles")
+            )
+        else:
+            build_presets = (
+                presets.get(host_name, {})
+                .get("workfile_build")
+                .get("profiles")
+            )
+
         if not build_presets:
             return
 
