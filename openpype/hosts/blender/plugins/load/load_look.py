@@ -34,7 +34,7 @@ class BlendLookLoader(plugin.AssetLoader):
 
         return children
 
-    def _process(self, libpath, objects):
+    def _process(self, libpath, container_name, objects):
         with open(libpath, "r") as fp:
             data = json.load(fp)
 
@@ -52,6 +52,7 @@ class BlendLookLoader(plugin.AssetLoader):
 
             mesh = [o for o in bpy.context.scene.objects if o.select_get()][0]
             material = mesh.data.materials[0]
+            material.name = f"{material.name}:{container_name}"
 
             texture_file = entry.get('tga_filename')
             if texture_file:
@@ -66,7 +67,7 @@ class BlendLookLoader(plugin.AssetLoader):
             for obj in objects:
                 for child in self.get_all_children(obj):
                     mesh_name = child.name.split(':')[0]
-                    if mesh_name == material.name:
+                    if mesh_name == material.name.split(':')[0]:
                         child.data.materials.clear()
                         child.data.materials.append(material)
                         break
@@ -119,7 +120,7 @@ class BlendLookLoader(plugin.AssetLoader):
 
         selected = [o for o in bpy.context.scene.objects if o.select_get()]
 
-        materials, objects = self._process(libpath, selected)
+        materials, objects = self._process(libpath, container_name, selected)
 
         # Save the list of imported materials in the metadata container
         metadata["objects"] = objects
@@ -185,8 +186,13 @@ class BlendLookLoader(plugin.AssetLoader):
         for material in collection_metadata['materials']:
             bpy.data.materials.remove(material)
 
+        namespace = collection_metadata['namespace']
+        name = collection_metadata['name']
+
+        container_name = f"{namespace}_{name}"
+
         materials, objects = self._process(
-            libpath, collection_metadata['objects'])
+            libpath, container_name, collection_metadata['objects'])
 
         collection_metadata["objects"] = objects
         collection_metadata["materials"] = materials
