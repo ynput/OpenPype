@@ -68,6 +68,12 @@ class EndpointEntity(ItemEntity):
     def on_change(self):
         for callback in self.on_change_callbacks:
             callback()
+
+        if self.require_restart:
+            if self.has_unsaved_changes:
+                self.root_item.add_item_require_restart(self)
+            else:
+                self.root_item.remove_item_require_restart(self)
         self.parent.on_child_change(self)
 
     def update_default_value(self, value):
