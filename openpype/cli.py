@@ -60,9 +60,6 @@ def tray(debug=False):
               help="Ftrack api user")
 @click.option("--ftrack-api-key", envvar="FTRACK_API_KEY",
               help="Ftrack api key")
-@click.option("--ftrack-events-path",
-              envvar="FTRACK_EVENTS_PATH",
-              help=("path to ftrack event handlers"))
 @click.option("--no-stored-credentials", is_flag=True,
               help="don't use stored credentials")
 @click.option("--store-credentials", is_flag=True,
@@ -77,7 +74,6 @@ def eventserver(debug,
                 ftrack_url,
                 ftrack_user,
                 ftrack_api_key,
-                ftrack_events_path,
                 no_stored_credentials,
                 store_credentials,
                 legacy,
@@ -99,7 +95,6 @@ def eventserver(debug,
         ftrack_url,
         ftrack_user,
         ftrack_api_key,
-        ftrack_events_path,
         no_stored_credentials,
         store_credentials,
         legacy,

@@ -422,7 +422,6 @@ def run_event_server(
     ftrack_url,
     ftrack_user,
     ftrack_api_key,
-    ftrack_events_path,
     no_stored_credentials,
     store_credentials,
     legacy,
@@ -456,11 +455,6 @@ def run_event_server(
     os.environ["FTRACK_SERVER"] = ftrack_url
     os.environ["FTRACK_API_USER"] = username
     os.environ["FTRACK_API_KEY"] = api_key
-    # TODO This won't work probably
-    if ftrack_events_path:
-        if isinstance(ftrack_events_path, (list, tuple)):
-            ftrack_events_path = os.pathsep.join(ftrack_events_path)
-        os.environ["FTRACK_EVENTS_PATH"] = ftrack_events_path
 
     if legacy:
         return legacy_server(ftrack_url)
