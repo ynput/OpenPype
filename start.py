@@ -487,10 +487,9 @@ def _find_frozen_openpype(use_version: str = None,
     if use_version and use_version != local_version:
         openpype_versions = bootstrap.find_openpype(include_zips=True)
         v: OpenPypeVersion
-        for v in openpype_versions:
-            if str(v) == use_version:
-                openpype_version = v
-                version_path = openpype_version.path
+        found = [v for v in openpype_versions if str(v) == use_version]
+        if found:
+            openpype_version = sorted(found)[-1]
         if not openpype_version:
             print(f"!!! requested version {use_version} was not found.")
             if openpype_versions:
@@ -558,9 +557,10 @@ def _bootstrap_from_code(use_version):
         version_to_use = None
         openpype_versions = bootstrap.find_openpype(include_zips=True)
         v: OpenPypeVersion
-        for v in openpype_versions:
-            if str(v) == use_version:
-                version_to_use = v
+        found = [v for v in openpype_versions if str(v) == use_version]
+        if found:
+            version_to_use = sorted(found)[-1]
+
         if version_to_use:
             # use specified
             if version_to_use.path.is_file():
