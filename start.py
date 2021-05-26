@@ -436,7 +436,6 @@ def _find_frozen_openpype(use_version: str = None,
         if local_version == openpype_versions[-1]:
             os.environ["OPENPYPE_TRYOUT"] = "1"
             openpype_versions = []
-
     else:
         print("!!! Warning: cannot determine current running version.")
 
@@ -485,7 +484,10 @@ def _find_frozen_openpype(use_version: str = None,
     # get path of version specified in `--use-version`
     local_version = bootstrap.get_version(OPENPYPE_ROOT)
     if use_version and use_version != local_version:
-        openpype_versions = bootstrap.find_openpype(include_zips=True)
+        # force the one user has selected
+        openpype_version = None
+        openpype_versions = bootstrap.find_openpype(include_zips=True,
+                                                    staging=use_staging)
         v: OpenPypeVersion
         found = [v for v in openpype_versions if str(v) == use_version]
         if found:
