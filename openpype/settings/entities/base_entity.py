@@ -110,6 +110,8 @@ class BaseItemEntity(BaseEntity):
         self.file_item = None
         # Reference to `RootEntity`
         self.root_item = None
+        # Change of value requires restart of OpenPype
+        self._require_restart = False
 
         # Entity is in hierarchy of dynamically created entity
         self.is_in_dynamic_item = False
@@ -169,6 +171,10 @@ class BaseItemEntity(BaseEntity):
         elif not isinstance(roles, list):
             roles = [roles]
         self.roles = roles
+
+    @property
+    def require_restart(self):
+        return self._require_restart
 
     @property
     def has_studio_override(self):
@@ -786,6 +792,12 @@ class ItemEntity(BaseItemEntity):
 
         # Root item reference
         self.root_item = self.parent.root_item
+
+        # Item require restart on value change
+        require_restart = self.schema_data.get("require_restart")
+        if require_restart is None:
+            require_restart = self.parent.require_restart
+        self._require_restart = require_restart
 
         # File item reference
         if self.parent.is_file:
