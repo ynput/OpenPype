@@ -23,6 +23,9 @@ class LaunchWithTerminal(PreLaunchHook):
         # Check if first argument match executable path
         # - Few applications are not executed directly but through OpenPype
         #   process (Photoshop, AfterEffects, Harmony, ...). These should not
-        #   use `open -an`.
-        if self.launch_context.launch_args[0] == executable:
-            self.launch_context.launch_args.insert(0, ["open", "-an"])
+        #   use `open`.
+        if self.launch_context.launch_args[0] != executable:
+            return
+
+        # Prepend open arguments
+        self.launch_context.launch_args.insert(0, ["open", "-a"])
