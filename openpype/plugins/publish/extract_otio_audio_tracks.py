@@ -56,14 +56,14 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         audio_inputs.insert(0, empty)
 
         # create cmd
-        cmd = self.ffmpeg_path + " "
+        cmd = '"{}"'.format(self.ffmpeg_path) + " "
         cmd += self.create_cmd(audio_inputs)
-        cmd += audio_temp_fpath
+        cmd += "\"{}\"".format(audio_temp_fpath)
 
         # run subprocess
         self.log.debug("Executing: {}".format(cmd))
         openpype.api.run_subprocess(
-            cmd, shell=True, logger=self.log
+            cmd, logger=self.log
         )
 
         # remove empty
@@ -100,17 +100,17 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
                 audio_fpath = self.create_temp_file(name)
 
                 cmd = " ".join([
-                    self.ffmpeg_path,
+                    '"{}"'.format(self.ffmpeg_path),
                     "-ss {}".format(start_sec),
                     "-t {}".format(duration_sec),
-                    "-i {}".format(audio_file),
+                    "-i \"{}\"".format(audio_file),
                     audio_fpath
                 ])
 
                 # run subprocess
                 self.log.debug("Executing: {}".format(cmd))
                 openpype.api.run_subprocess(
-                    cmd, shell=True, logger=self.log
+                    cmd, logger=self.log
                 )
             else:
                 audio_fpath = recycling_file.pop()
@@ -221,11 +221,11 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
 
         # create empty cmd
         cmd = " ".join([
-            self.ffmpeg_path,
+            '"{}"'.format(self.ffmpeg_path),
             "-f lavfi",
             "-i anullsrc=channel_layout=stereo:sample_rate=48000",
             "-t {}".format(max_duration_sec),
-            empty_fpath
+            "\"{}\"".format(empty_fpath)
         ])
 
         # generate empty with ffmpeg
@@ -233,7 +233,7 @@ class ExtractOtioAudioTracks(pyblish.api.ContextPlugin):
         self.log.debug("Executing: {}".format(cmd))
 
         openpype.api.run_subprocess(
-            cmd, shell=True, logger=self.log
+            cmd, logger=self.log
         )
 
         # return dict with output

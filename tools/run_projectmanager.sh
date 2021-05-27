@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Run tests for OpenPype
-# This will use virtual environment and pytest to run test for OpenPype.
+# Run OpenPype Settings GUI
+
 
 art () {
   cat <<-EOF
@@ -57,22 +57,6 @@ BIPurple='\033[1;95m'     # Purple
 BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
 
-##############################################################################
-# Clean pyc files in specified directory
-# Globals:
-#   None
-# Arguments:
-#   Optional path to clean
-# Returns:
-#   None
-###############################################################################
-clean_pyc () {
-  local path
-  path=$openpype_root
-  echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
-  find "$path" -path ./build -prune -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
-  echo -e "${BIGreen}DONE${RST}"
-}
 
 ##############################################################################
 # Return absolute path
@@ -89,9 +73,6 @@ realpath () {
 
 # Main
 main () {
-  echo -e "${BGreen}"
-  art
-  echo -e "${RST}"
 
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
@@ -104,6 +85,8 @@ main () {
   fi
   export PATH="$POETRY_HOME/bin:$PATH"
 
+  pushd "$openpype_root" > /dev/null || return > /dev/null
+
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
   if [ -f "$POETRY_HOME/bin/poetry" ]; then
     echo -e "${BIGreen}OK${RST}"
@@ -113,13 +96,8 @@ main () {
     . "$openpype_root/tools/create_env.sh" || { echo -e "${BIRed}!!!${RST} Poetry installation failed"; return; }
   fi
 
-  pushd "$openpype_root" || return > /dev/null
-
-  echo -e "${BIGreen}>>>${RST} Testing OpenPype ..."
-  original_pythonpath=$PYTHONPATH
-  export PYTHONPATH="$openpype_root:$PYTHONPATH"
-  poetry run pytest -x --capture=sys --print -W ignore::DeprecationWarning "$openpype_root/tests"
-  PYTHONPATH=$original_pythonpath
+  echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
+  poetry run python "$openpype_root/start.py" projectmanager
 }
 
 main

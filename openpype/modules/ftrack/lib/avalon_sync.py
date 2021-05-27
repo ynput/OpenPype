@@ -1237,12 +1237,8 @@ class SyncEntitiesFactory:
 
             ent_path_items = [ent["name"] for ent in entity["link"]]
             parents = ent_path_items[1:len(ent_path_items) - 1:]
-            hierarchy = ""
-            if len(parents) > 0:
-                hierarchy = os.path.sep.join(parents)
 
             data["parents"] = parents
-            data["hierarchy"] = hierarchy
             data["tasks"] = self.entities_dict[id].pop("tasks", {})
             self.entities_dict[id]["final_entity"]["data"] = data
             self.entities_dict[id]["final_entity"]["type"] = "asset"
@@ -2169,8 +2165,6 @@ class SyncEntitiesFactory:
             hierarchy = "/".join(parents)
             self.entities_dict[ftrack_id][
                 "final_entity"]["data"]["parents"] = parents
-            self.entities_dict[ftrack_id][
-                "final_entity"]["data"]["hierarchy"] = hierarchy
 
             _parents.append(self.entities_dict[ftrack_id]["name"])
             for child_id in self.entities_dict[ftrack_id]["children"]:
@@ -2181,7 +2175,6 @@ class SyncEntitiesFactory:
                 if "data" not in self.updates[mongo_id]:
                     self.updates[mongo_id]["data"] = {}
                 self.updates[mongo_id]["data"]["parents"] = parents
-                self.updates[mongo_id]["data"]["hierarchy"] = hierarchy
 
     def prepare_project_changes(self):
         ftrack_ent_dict = self.entities_dict[self.ft_project_id]

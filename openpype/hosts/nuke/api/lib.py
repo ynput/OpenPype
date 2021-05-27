@@ -1059,7 +1059,7 @@ class WorkfileSettings(object):
         # replace reset resolution from avalon core to pype's
         self.reset_frame_range_handles()
         # add colorspace menu item
-        # self.set_colorspace()
+        self.set_colorspace()
 
     def set_favorites(self):
         work_dir = os.getenv("AVALON_WORKDIR")
