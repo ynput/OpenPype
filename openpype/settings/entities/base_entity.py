@@ -174,7 +174,7 @@ class BaseItemEntity(BaseEntity):
 
     @property
     def require_restart(self):
-        return self._require_restart
+        return False
 
     @property
     def has_studio_override(self):
