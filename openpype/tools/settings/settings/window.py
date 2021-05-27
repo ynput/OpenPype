@@ -4,7 +4,7 @@ from .categories import (
     SystemWidget,
     ProjectWidget
 )
-from .widgets import ShadowWidget
+from .widgets import ShadowWidget, RestartDialog
 from . import style
 
 from openpype.tools.settings import (
@@ -139,4 +139,7 @@ class MainWidget(QtWidgets.QWidget):
             tab_widget.reset()
 
     def _on_restart_required(self):
-        pass
+        dialog = RestartDialog(self)
+        result = dialog.exec_()
+        if result == 1:
+            self.trigger_restart.emit()
