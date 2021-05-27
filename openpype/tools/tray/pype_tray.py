@@ -93,6 +93,9 @@ class TrayManager:
         self.tray_widget.menu.addAction(version_action)
         self.tray_widget.menu.addSeparator()
 
+    def exit(self):
+        self.tray_widget.exit()
+
     def on_exit(self):
         self.modules_manager.on_exit()
 
