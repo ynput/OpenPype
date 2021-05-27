@@ -4,8 +4,12 @@
             "enabled": true,
             "optional": true,
             "active": true,
-            "skip_resolution_check": [".*"],
-            "skip_timelines_check": [".*"]
+            "skip_resolution_check": [
+                ".*"
+            ],
+            "skip_timelines_check": [
+                ".*"
+            ]
         },
         "AfterEffectsSubmitDeadline": {
             "use_published": true,
@@ -13,6 +17,14 @@
             "primary_pool": "",
             "secondary_pool": "",
             "chunk_size": 1000000
+        }
+    },
+    "workfile_builder": {
+        "create_first_version": false,
+        "template_path": {
+            "windows": "",
+            "darwin": "",
+            "linux": ""
         }
     }
 }
