@@ -26,14 +26,14 @@
                 {
                     "type": "path",
                     "key": "custom_template_paths",
-                    "label": "Custom Template Path",
+                    "label": "Custom template path",
                     "multiplatform": true,
                     "multipath": false
                 },
                 {
                     "type": "boolean",
                     "key": "builder_on",
-                    "label": "Use Builder Profiles At Start",
+                    "label": "Use Builder profiles at start",
                     "default": false
                 }
             ]
@@ -92,6 +92,9 @@
                                         }
                                     ]
                                 }
+                            },
+                            {
+                                "type": "separator"
                             },
                             {
                                 "key": "linked_assets",
