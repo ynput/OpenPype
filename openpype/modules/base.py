@@ -680,6 +680,10 @@ class TrayModulesManager(ModulesManager):
                 output.append(module)
         return output
 
+    def restart_tray(self):
+        if self.tray_manager:
+            self.tray_manager.restart()
+
     def tray_init(self):
         report = {}
         time_start = time.time()
