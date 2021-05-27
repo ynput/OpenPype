@@ -99,10 +99,33 @@ import traceback
 import subprocess
 import site
 from pathlib import Path
-import platform
 
-import blessed
-import certifi
+
+# OPENPYPE_ROOT is variable pointing to build (or code) directory
+# WARNING `OPENPYPE_ROOT` must be defined before igniter import
+# - igniter changes cwd which cause that filepath of this script won't lead
+#   to right directory
+if not getattr(sys, 'frozen', False):
+    # Code root defined by `start.py` directory
+    OPENPYPE_ROOT = os.path.dirname(os.path.abspath(__file__))
+else:
+    OPENPYPE_ROOT = os.path.dirname(sys.executable)
+
+    # add dependencies folder to sys.pat for frozen code
+    frozen_libs = os.path.normpath(
+        os.path.join(OPENPYPE_ROOT, "dependencies")
+    )
+    sys.path.append(frozen_libs)
+    sys.path.insert(0, OPENPYPE_ROOT)
+    # add stuff from `<frozen>/dependencies` to PYTHONPATH.
+    pythonpath = os.getenv("PYTHONPATH", "")
+    paths = pythonpath.split(os.pathsep)
+    paths.append(frozen_libs)
+    os.environ["PYTHONPATH"] = os.pathsep.join(paths)
+
+
+import blessed  # noqa: E402
+import certifi  # noqa: E402
 
 
 term = blessed.Terminal()
@@ -134,28 +157,6 @@ else:
     ssl_cert_file = certifi.where()
     os.environ["SSL_CERT_FILE"] = ssl_cert_file
 
-
-# OPENPYPE_ROOT is variable pointing to build (or code) directory
-# WARNING `OPENPYPE_ROOT` must be defined before igniter import
-# - igniter changes cwd which cause that filepath of this script won't lead
-#   to right directory
-if not getattr(sys, 'frozen', False):
-    # Code root defined by `start.py` directory
-    OPENPYPE_ROOT = os.path.dirname(os.path.abspath(__file__))
-else:
-    OPENPYPE_ROOT = os.path.dirname(sys.executable)
-
-    # add dependencies folder to sys.pat for frozen code
-    frozen_libs = os.path.normpath(
-        os.path.join(OPENPYPE_ROOT, "dependencies")
-    )
-    sys.path.append(frozen_libs)
-    sys.path.insert(0, OPENPYPE_ROOT)
-    # add stuff from `<frozen>/dependencies` to PYTHONPATH.
-    pythonpath = os.getenv("PYTHONPATH", "")
-    paths = pythonpath.split(os.pathsep)
-    paths.append(frozen_libs)
-    os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
