@@ -1,5 +1,3 @@
-import json
-
 import pyblish.api
 from avalon.tvpaint import save_file
 
@@ -11,7 +9,7 @@ class ValidateWorkfileMetadataRepair(pyblish.api.Action):
     icon = "wrench"
     on = "failed"
 
-    def process(self, context, plugin):
+    def process(self, context, _plugin):
         """Save current workfile which should trigger storing of metadata."""
         current_file = context.data["currentFile"]
         # Save file should trigger
