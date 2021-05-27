@@ -70,11 +70,15 @@ class EndpointEntity(ItemEntity):
             callback()
 
         if self.require_restart:
-            if self.has_unsaved_changes:
+            if self.require_restart:
                 self.root_item.add_item_require_restart(self)
             else:
                 self.root_item.remove_item_require_restart(self)
         self.parent.on_child_change(self)
+
+    @property
+    def require_restart(self):
+        return self.has_unsaved_changes
 
     def update_default_value(self, value):
         value = self._check_update_value(value, "default")
@@ -120,6 +124,10 @@ class InputEntity(EndpointEntity):
     def value(self):
         """Entity's value without metadata."""
         return self._current_value
+
+    @property
+    def require_restart(self):
+        return self._value_is_modified
 
     def _settings_value(self):
         return copy.deepcopy(self.value)
