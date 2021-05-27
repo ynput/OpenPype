@@ -4,17 +4,18 @@ import json
 from collections import OrderedDict
 
 
-class LoadLuts(api.Loader):
+class LoadEffects(api.Loader):
     """Loading colorspace soft effect exported from nukestudio"""
 
-    representations = ["lutJson"]
-    families = ["lut"]
+    representations = ["effectJson"]
+    families = ["effect"]
 
-    label = "Load Luts - nodes"
+    label = "Load Effects - nodes"
     order = 0
     icon = "cc"
     color = style.colors.light
     ignore_attr = ["useLifetime"]
+
 
     def load(self, context, name, namespace, data):
         """
@@ -66,15 +67,15 @@ class LoadLuts(api.Loader):
                       for key, value in json.load(f).iteritems()}
 
         # get correct order of nodes by positions on track and subtrack
-        nodes_order = self.reorder_nodes(json_f["effects"])
+        nodes_order = self.reorder_nodes(json_f)
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
         nuke.endGroup()
 
-        GN = nuke.createNode("Group")
-
-        GN["name"].setValue(object_name)
+        GN = nuke.createNode(
+            "Group",
+            "name {}_1".format(object_name))
 
         # adding content to the group node
         with GN:
@@ -186,7 +187,7 @@ class LoadLuts(api.Loader):
                       for key, value in json.load(f).iteritems()}
 
         # get correct order of nodes by positions on track and subtrack
-        nodes_order = self.reorder_nodes(json_f["effects"])
+        nodes_order = self.reorder_nodes(json_f)
 
         # adding nodes to node graph
         # just in case we are in group lets jump out of it
@@ -266,7 +267,11 @@ class LoadLuts(api.Loader):
             None: if nothing found
         """
         search_name = "{0}_{1}".format(asset, subset)
-        node = [n for n in nuke.allNodes() if search_name in n["name"].value()]
+
+        node = [
+            n for n in nuke.allNodes(filter="Read")
+            if search_name in n["file"].value()
+        ]
         if len(node) > 0:
             rn = node[0]
         else:
@@ -286,8 +291,10 @@ class LoadLuts(api.Loader):
 
     def reorder_nodes(self, data):
         new_order = OrderedDict()
-        trackNums = [v["trackIndex"] for k, v in data.items()]
-        subTrackNums = [v["subTrackIndex"] for k, v in data.items()]
+        trackNums = [v["trackIndex"] for k, v in data.items()
+                     if isinstance(v, dict)]
+        subTrackNums = [v["subTrackIndex"] for k, v in data.items()
+                        if isinstance(v, dict)]
 
         for trackIndex in range(
                 min(trackNums), max(trackNums) + 1):
@@ -300,6 +307,7 @@ class LoadLuts(api.Loader):
 
     def get_item(self, data, trackIndex, subTrackIndex):
         return {key: val for key, val in data.items()
+                if isinstance(val, dict)
                 if subTrackIndex == val["subTrackIndex"]
                 if trackIndex == val["trackIndex"]}
 

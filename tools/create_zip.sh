@@ -90,23 +90,6 @@ detect_python () {
 }
 
 ##############################################################################
-# Clean pyc files in specified directory
-# Globals:
-#   None
-# Arguments:
-#   Optional path to clean
-# Returns:
-#   None
-###############################################################################
-clean_pyc () {
-  local path
-  path=$openpype_root
-  echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
-  find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
-  echo -e "${BIGreen}DONE${RST}"
-}
-
-##############################################################################
 # Return absolute path
 # Globals:
 #   None
