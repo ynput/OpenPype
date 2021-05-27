@@ -49,7 +49,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'rmanGlobals.imageFileFormat',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayaHardware2': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     ImagePrefixTokens = {
@@ -57,7 +58,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
         'vray': 'maya/<Scene>/<Layer>/<Layer>',
-        'renderman': '<layer>_<aov>.<f4>.<ext>'
+        'renderman': '<layer>_<aov>.<f4>.<ext>',
+        'mayaHardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'
     }
 
     # WARNING: There is bug? in renderman, translating <scene> token
@@ -150,6 +152,14 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 invalid = True
                 cls.log.error("Wrong directory prefix [ {} ]".format(
                     dir_prefix))
+
+        elif renderer == "mayaHardware2":
+            if re.search(cls.R_AOV_TOKEN, prefix):
+                invalid = True
+                cls.log.error(
+                    "Do not use AOV token [ {} ] - Maya Hardware does not "
+                    "support AOVs.".format(prefix)
+                )
 
         else:
             multipart = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
