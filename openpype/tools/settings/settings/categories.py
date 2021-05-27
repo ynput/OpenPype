@@ -184,8 +184,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         save_btn = QtWidgets.QPushButton("Save", footer_widget)
         require_restart_label = QtWidgets.QLabel(footer_widget)
-        footer_layout.addStretch(1)
-        footer_layout.addWidget(require_restart_label, 0)
+        require_restart_label.setAlignment(QtCore.Qt.AlignCenter)
+        footer_layout.addWidget(require_restart_label, 1)
         footer_layout.addWidget(save_btn, 0)
 
         configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
