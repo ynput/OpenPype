@@ -34,17 +34,17 @@ $art = @"
 
              . .   ..     .    ..
         _oOOP3OPP3Op_. .
-     .PPpo~·   ··   ~2p.  ··  ····  ·  ·
-    ·Ppo · .pPO3Op.· · O:· · · ·
-   .3Pp · oP3'· 'P33· · 4 ··   ·  ·   · ·· ·  ·  ·
-  ·~OP    3PO·  .Op3    : · ··  _____  _____  _____
-  ·P3O  · oP3oP3O3P' · · ·   · /    /·/    /·/    /
-   O3:·   O3p~ ·       ·:· · ·/____/·/____/ /____/
-   'P ·   3p3·  oP3~· ·.P:· ·  · ··  ·   · ·· ·  ·  ·
-  · ':  · Po'  ·Opo'· .3O· .  o[ by Pype Club ]]]==- - - ·  ·
-    · '_ ..  ·    . _OP3··  ·  ·https://openpype.io·· ·
-         ~P3·OPPPO3OP~ · ··  ·
-           ·  ' '· ·  ·· · · · ··  ·
+     .PPpo~.   ..   ~2p.  ..  ....  .  .
+    .Ppo . .pPO3Op.. . O:. . . .
+   .3Pp . oP3'. 'P33. . 4 ..   .  .   . .. .  .  .
+  .~OP    3PO.  .Op3    : . ..  _____  _____  _____
+  .P3O  . oP3oP3O3P' . . .   . /    /./    /./    /
+   O3:.   O3p~ .       .:. . ./____/./____/ /____/
+   'P .   3p3.  oP3~. ..P:. .  . ..  .   . .. .  .  .
+  . ':  . Po'  .Opo'. .3O. .  o[ by Pype Club ]]]==- - - .  .
+    . '_ ..  .    . _OP3..  .  .https://openpype.io.. .
+         ~P3.OPPPO3OP~ . ..  .
+           .  ' '. .  .. . . . ..  .
 
 "@
 
@@ -94,8 +94,8 @@ if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
-Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
-Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
+Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force
+Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force -Recurse
 Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green

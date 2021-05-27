@@ -5,7 +5,7 @@ import pyblish.api
 class PreCollectClipEffects(pyblish.api.InstancePlugin):
     """Collect soft effects instances."""
 
-    order = pyblish.api.CollectorOrder - 0.508
+    order = pyblish.api.CollectorOrder - 0.579
     label = "Pre-collect Clip Effects Instances"
     families = ["clip"]
 
@@ -24,7 +24,8 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
         self.clip_in_h = self.clip_in - self.handle_start
         self.clip_out_h = self.clip_out + self.handle_end
 
-        track = instance.data["trackItem"]
+        track_item = instance.data["item"]
+        track = track_item.parent()
         track_index = track.trackIndex()
         tracks_effect_items = instance.context.data.get("tracksEffectItems")
         clip_effect_items = instance.data.get("clipEffectItems")
@@ -112,7 +113,12 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
         node = sitem.node()
         node_serialized = self.node_serialisation(node)
         node_name = sitem.name()
-        node_class = re.sub(r"\d+", "", node_name)
+
+        if "_" in node_name:
+            node_class = re.sub(r"(?:_)[_0-9]+", "", node_name)  # more numbers
+        else:
+            node_class = re.sub(r"\d+", "", node_name)  # one number
+
         # collect timelineIn/Out
         effect_t_in = int(sitem.timelineIn())
         effect_t_out = int(sitem.timelineOut())
@@ -121,6 +127,7 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
             return
 
         self.log.debug("node_name: `{}`".format(node_name))
+        self.log.debug("node_class: `{}`".format(node_class))
 
         return {node_name: {
             "class": node_class,

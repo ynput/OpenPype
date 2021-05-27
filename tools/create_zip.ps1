@@ -4,13 +4,18 @@
 
 .DESCRIPTION
   This script will detect Python installation and run OpenPype to create
-  zip. It needs mongodb running. I will create zip from current source code
-  version and copy it top `%LOCALAPPDATA%/pypeclub/pype` if `--path` or `-p`
+  zip. It will create zip from current source code
+  version and copy it top `%LOCALAPPDATA%/pypeclub/openpype` if `--path` or `-p`
   argument is not used.
 
 .EXAMPLE
 
 PS> .\create_zip.ps1
+
+.EXAMPLE
+
+To put generated zip to C:\OpenPype directory:
+PS> .\create_zip.ps1 --path C:\OpenPype
 
 #>
 
@@ -52,17 +57,17 @@ $art = @"
 
              . .   ..     .    ..
         _oOOP3OPP3Op_. .
-     .PPpo~·   ··   ~2p.  ··  ····  ·  ·
-    ·Ppo · .pPO3Op.· · O:· · · ·
-   .3Pp · oP3'· 'P33· · 4 ··   ·  ·   · ·· ·  ·  ·
-  ·~OP    3PO·  .Op3    : · ··  _____  _____  _____
-  ·P3O  · oP3oP3O3P' · · ·   · /    /·/    /·/    /
-   O3:·   O3p~ ·       ·:· · ·/____/·/____/ /____/
-   'P ·   3p3·  oP3~· ·.P:· ·  · ··  ·   · ·· ·  ·  ·
-  · ':  · Po'  ·Opo'· .3O· .  o[ by Pype Club ]]]==- - - ·  ·
-    · '_ ..  ·    . _OP3··  ·  ·https://openpype.io·· ·
-         ~P3·OPPPO3OP~ · ··  ·
-           ·  ' '· ·  ·· · · · ··  ·
+     .PPpo~.   ..   ~2p.  ..  ....  .  .
+    .Ppo . .pPO3Op.. . O:. . . .
+   .3Pp . oP3'. 'P33. . 4 ..   .  .   . .. .  .  .
+  .~OP    3PO.  .Op3    : . ..  _____  _____  _____
+  .P3O  . oP3oP3O3P' . . .   . /    /./    /./    /
+   O3:.   O3p~ .       .:. . ./____/./____/ /____/
+   'P .   3p3.  oP3~. ..P:. .  . ..  .   . .. .  .  .
+  . ':  . Po'  .Opo'. .3O. .  o[ by Pype Club ]]]==- - - .  .
+    . '_ ..  .    . _OP3..  .  .https://openpype.io.. .
+         ~P3.OPPPO3OP~ . ..  .
+           .  ' '. .  .. . . . ..  .
 
 "@
 
@@ -93,9 +98,9 @@ if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Cleaning cache files ... " -NoNewline
-Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Remove-Item -Force
-Get-ChildItem $openpype_root -Filter "*.pyo" -Force -Recurse | Remove-Item -Force
-Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse | Remove-Item -Force -Recurse
+Get-ChildItem $openpype_root -Filter "*.pyc" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force
+Get-ChildItem $openpype_root -Filter "*.pyo" -Force -Recurse | Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force
+Get-ChildItem $openpype_root -Filter "__pycache__" -Force -Recurse|  Where-Object { $_.FullName -inotmatch 'build' } | Remove-Item -Force -Recurse
 Write-Host "OK" -ForegroundColor green
 
 Write-Host ">>> " -NoNewline -ForegroundColor green

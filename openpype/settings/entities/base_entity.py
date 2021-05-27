@@ -9,6 +9,7 @@ from .lib import (
 )
 
 from .exceptions import (
+    BaseInvalidValueType,
     InvalidValueType,
     SchemeGroupHierarchyBug,
     EntitySchemaError
@@ -377,7 +378,7 @@ class BaseItemEntity(BaseEntity):
 
         try:
             new_value = self.convert_to_valid_type(value)
-        except InvalidValueType:
+        except BaseInvalidValueType:
             new_value = NOT_SET
 
         if new_value is not NOT_SET:
@@ -843,6 +844,13 @@ class ItemEntity(BaseItemEntity):
             reason = (
                 "Entity has set `use_label_wrap` to true but"
                 " does not have set `label`."
+            )
+            raise EntitySchemaError(self, reason)
+
+        if self.is_file and self.file_item is not None:
+            reason = (
+                "Entity has set `is_file` to true but"
+                " it's parent is already marked as file item."
             )
             raise EntitySchemaError(self, reason)
 

@@ -11,6 +11,11 @@
 
 PS> .\create_env.ps1
 
+.EXAMPLE
+
+Print verbose information from Poetry:
+PS> .\create_env.ps1 --verbose
+
 #>
 
 $arguments=$ARGS
@@ -71,15 +76,19 @@ print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
       Set-Location -Path $current_dir
       Exit-WithCode 1
     }
-    # We are supporting python 3.6 and up
-    if(($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
+    # We are supporting python 3.7 only
+    if (($matches[1] -lt 3) -or ($matches[2] -lt 7)) {
       Write-Host "FAILED Version [ $p ] is old and unsupported" -ForegroundColor red
       Set-Location -Path $current_dir
       Exit-WithCode 1
+    } elseif (($matches[1] -eq 3) -and ($matches[2] -gt 7)) {
+        Write-Host "WARNING Version [ $p ] is unsupported, use at your own risk." -ForegroundColor yellow
+        Write-Host "*** " -NoNewline -ForegroundColor yellow
+        Write-Host "OpenPype supports only Python 3.7" -ForegroundColor white
+    } else {
+        Write-Host "OK [ $p ]" -ForegroundColor green
     }
-    Write-Host "OK [ $p ]" -ForegroundColor green
 }
-
 
 $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
@@ -98,17 +107,17 @@ $art = @"
 
              . .   ..     .    ..
         _oOOP3OPP3Op_. .
-     .PPpo~·   ··   ~2p.  ··  ····  ·  ·
-    ·Ppo · .pPO3Op.· · O:· · · ·
-   .3Pp · oP3'· 'P33· · 4 ··   ·  ·   · ·· ·  ·  ·
-  ·~OP    3PO·  .Op3    : · ··  _____  _____  _____
-  ·P3O  · oP3oP3O3P' · · ·   · /    /·/    /·/    /
-   O3:·   O3p~ ·       ·:· · ·/____/·/____/ /____/
-   'P ·   3p3·  oP3~· ·.P:· ·  · ··  ·   · ·· ·  ·  ·
-  · ':  · Po'  ·Opo'· .3O· .  o[ by Pype Club ]]]==- - - ·  ·
-    · '_ ..  ·    . _OP3··  ·  ·https://openpype.io·· ·
-         ~P3·OPPPO3OP~ · ··  ·
-           ·  ' '· ·  ·· · · · ··  ·
+     .PPpo~.   ..   ~2p.  ..  ....  .  .
+    .Ppo . .pPO3Op.. . O:. . . .
+   .3Pp . oP3'. 'P33. . 4 ..   .  .   . .. .  .  .
+  .~OP    3PO.  .Op3    : . ..  _____  _____  _____
+  .P3O  . oP3oP3O3P' . . .   . /    /./    /./    /
+   O3:.   O3p~ .       .:. . ./____/./____/ /____/
+   'P .   3p3.  oP3~. ..P:. .  . ..  .   . .. .  .  .
+  . ':  . Po'  .Opo'. .3O. .  o[ by Pype Club ]]]==- - - .  .
+    . '_ ..  .    . _OP3..  .  .https://openpype.io.. .
+         ~P3.OPPPO3OP~ . ..  .
+           .  ' '. .  .. . . . ..  .
 
 
 "@

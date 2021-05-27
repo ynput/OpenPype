@@ -21,6 +21,7 @@ from openpype.settings.entities import (
     TextEntity,
     PathInput,
     RawJsonEntity,
+    ColorEntity,
 
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
@@ -44,7 +45,7 @@ from .item_widgets import (
     PathWidget,
     PathInputWidget
 )
-
+from .color_widget import ColorWidget
 from avalon.vendor import qtawesome
 
 
@@ -112,6 +113,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         elif isinstance(entity, RawJsonEntity):
             return RawJsonWidget(*args)
+
+        elif isinstance(entity, ColorEntity):
+            return ColorWidget(*args)
 
         elif isinstance(entity, BaseEnumEntity):
             return EnumeratorWidget(*args)
