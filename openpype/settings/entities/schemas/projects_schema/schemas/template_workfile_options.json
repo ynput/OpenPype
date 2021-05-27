@@ -1,50 +1,36 @@
-{
+[{
     "type": "dict",
     "collapsible": true,
-    "key": "workfile_options",
-    "label": "Workfile Options",
+    "key": "workfile_builder",
+    "label": "Workfile Builder",
     "children": [
         {
-            "type": "dict",
-            "collapsible": true,
+            "type": "boolean",
             "key": "create_first_version",
-            "label": "Create first version",
-            "checkbox_key": "enabled",
-            "children": [
-                {
-                    "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled",
-                    "default": false
-                },
-                {
-                    "type": "boolean",
-                    "key": "use_buildin_template",
-                    "label": "Use buildin template (if available)",
-                    "default": false
-                },
-                {
-                    "type": "path",
-                    "key": "custom_template_paths",
-                    "label": "Custom template path",
-                    "multiplatform": true,
-                    "multipath": false
-                },
-                {
-                    "type": "boolean",
-                    "key": "builder_on",
-                    "label": "Use Builder profiles at start",
-                    "default": false
-                }
-            ]
+            "label": "Create first workfile",
+            "default": false
+        },
+
+        {
+            "type": "path",
+            "key": "template_path",
+            "label": "First workfile Template",
+            "multiplatform": true,
+            "multipath": false
+        },
+        {
+            "type": "boolean",
+            "key": "builder_on_start",
+            "label": "Run Builder Profiles on first launch",
+            "default": false
         },
         {
             "type": "collapsible-wrap",
-            "label": "Builder Profiles",
+            "label": "Profiles",
             "children": [
                 {
                     "type": "list",
-                    "key": "builder_profiles",
+                    "key": "profiles",
                     "label": "Profiles",
                     "object_type": {
                         "type": "dict",
@@ -138,3 +124,4 @@
         }
     ]
 }
+]

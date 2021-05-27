@@ -6,9 +6,7 @@
             "load": "ctrl+alt+l",
             "manage": "ctrl+alt+m",
             "build_workfile": "ctrl+alt+b"
-        },
-        "open_workfile_at_start": false,
-        "create_initial_workfile": true
+        }
     },
     "create": {
         "CreateWriteRender": {
@@ -147,43 +145,15 @@
             "node_name_template": "{class_name}_{ext}"
         }
     },
-    "workfile_options": {
-        "create_first_version": {
-            "enabled": false,
-            "use_buildin_template": false,
-            "custom_template_paths": {
-                "windows": "",
-                "darwin": "",
-                "linux": ""
-            },
-            "builder_on": false
+    "workfile_builder": {
+        "create_first_version": false,
+        "template_path": {
+            "windows": "",
+            "darwin": "",
+            "linux": ""
         },
-        "builder_profiles": [
-            {
-                "tasks": [
-                    "compositing"
-                ],
-                "current_context": [
-                    {
-                        "subset_name_filters": [],
-                        "families": [
-                            "render",
-                            "plate"
-                        ],
-                        "repre_names": [
-                            "exr",
-                            "dpx",
-                            "mov"
-                        ],
-                        "loaders": [
-                            "LoadSequence",
-                            "LoadMov"
-                        ]
-                    }
-                ],
-                "linked_assets": []
-            }
-        ]
+        "builder_on_start": false,
+        "profiles": []
     },
     "filters": {}
 }

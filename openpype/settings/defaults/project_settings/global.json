@@ -272,8 +272,7 @@
             "active_site": "studio",
             "remote_site": "studio"
         },
-        "sites": {
-        }
+        "sites": {}
     },
     "project_plugins": {
         "windows": [],
