@@ -139,6 +139,12 @@ class MainWidget(QtWidgets.QWidget):
             tab_widget.reset()
 
     def _on_restart_required(self):
+        # Don't show dialog if there are not registered slots for
+        #   `trigger_restart` signal.
+        # - For example when settings are runnin as standalone tool
+        if self.receivers(self.trigger_restart) < 1:
+            return
+
         dialog = RestartDialog(self)
         result = dialog.exec_()
         if result == 1:
