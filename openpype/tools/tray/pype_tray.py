@@ -1,11 +1,13 @@
 import os
 import sys
 import atexit
+import subprocess
 
 import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
 from openpype.api import Logger, resources
+from openpype.lib import get_pype_execute_args
 from openpype.modules import TrayModulesManager, ITrayService
 from openpype.settings.lib import get_system_settings
 import openpype.version
@@ -92,6 +94,31 @@ class TrayManager:
         version_action.triggered.connect(self._on_version_action)
         self.tray_widget.menu.addAction(version_action)
         self.tray_widget.menu.addSeparator()
+
+    def restart(self):
+        """Restart Tray tool.
+
+        First creates new process with same argument and close current tray.
+        """
+        args = get_pype_execute_args()
+        # Create a copy of sys.argv
+        additional_args = list(sys.argv)
+        # Check last argument from `get_pype_execute_args`
+        # - when running from code it is the same as first from sys.argv
+        if args[-1] == additional_args[0]:
+            additional_args.pop(0)
+        args.extend(additional_args)
+
+        kwargs = {}
+        if platform.system().lower() == "windows":
+            flags = (
+                subprocess.CREATE_NEW_PROCESS_GROUP
+                | subprocess.DETACHED_PROCESS
+            )
+            kwargs["creationflags"] = flags
+
+        subprocess.Popen(args, **kwargs)
+        self.exit()
 
     def exit(self):
         self.tray_widget.exit()
