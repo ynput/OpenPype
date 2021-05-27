@@ -70,7 +70,7 @@ clean_pyc () {
   local path
   path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
-  find "$path" -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
+  find "$path" -path ./build -prune -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
 }
 
