@@ -4,7 +4,7 @@ from .categories import (
     SystemWidget,
     ProjectWidget
 )
-from .widgets import ShadowWidget
+from .widgets import ShadowWidget, RestartDialog
 from . import style
 
 from openpype.tools.settings import (
@@ -14,6 +14,8 @@ from openpype.tools.settings import (
 
 
 class MainWidget(QtWidgets.QWidget):
+    trigger_restart = QtCore.Signal()
+
     widget_width = 1000
     widget_height = 600
 
@@ -60,6 +62,9 @@ class MainWidget(QtWidgets.QWidget):
         for tab_widget in tab_widgets:
             tab_widget.saved.connect(self._on_tab_save)
             tab_widget.state_changed.connect(self._on_state_change)
+            tab_widget.restart_required_trigger.connect(
+                self._on_restart_required
+            )
 
         self.tab_widgets = tab_widgets
 
@@ -132,3 +137,15 @@ class MainWidget(QtWidgets.QWidget):
 
         for tab_widget in self.tab_widgets:
             tab_widget.reset()
+
+    def _on_restart_required(self):
+        # Don't show dialog if there are not registered slots for
+        #   `trigger_restart` signal.
+        # - For example when settings are runnin as standalone tool
+        if self.receivers(self.trigger_restart) < 1:
+            return
+
+        dialog = RestartDialog(self)
+        result = dialog.exec_()
+        if result == 1:
+            self.trigger_restart.emit()

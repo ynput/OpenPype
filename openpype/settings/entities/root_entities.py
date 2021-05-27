@@ -55,6 +55,8 @@ class RootEntity(BaseItemEntity):
 
     def __init__(self, schema_data, reset):
         super(RootEntity, self).__init__(schema_data)
+        self._require_restart_callbacks = []
+        self._item_ids_require_restart = set()
         self._item_initalization()
         if reset:
             self.reset()
@@ -63,6 +65,31 @@ class RootEntity(BaseItemEntity):
     def override_state(self):
         """Current OverrideState."""
         return self._override_state
+
+    @property
+    def require_restart(self):
+        return bool(self._item_ids_require_restart)
+
+    def add_require_restart_change_callback(self, callback):
+        self._require_restart_callbacks.append(callback)
+
+    def _on_require_restart_change(self):
+        for callback in self._require_restart_callbacks:
+            callback()
+
+    def add_item_require_restart(self, item):
+        was_empty = len(self._item_ids_require_restart) == 0
+        self._item_ids_require_restart.add(item.id)
+        if was_empty:
+            self._on_require_restart_change()
+
+    def remove_item_require_restart(self, item):
+        if item.id not in self._item_ids_require_restart:
+            return
+
+        self._item_ids_require_restart.remove(item.id)
+        if not self._item_ids_require_restart:
+            self._on_require_restart_change()
 
     @abstractmethod
     def reset(self):
