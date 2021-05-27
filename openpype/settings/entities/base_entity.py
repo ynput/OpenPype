@@ -803,7 +803,10 @@ class ItemEntity(BaseItemEntity):
 
         # Item require restart on value change
         require_restart = self.schema_data.get("require_restart")
-        if require_restart is None:
+        if (
+            require_restart is None
+            and not (self.is_dynamic_item or self.is_in_dynamic_item)
+        ):
             require_restart = self.parent.require_restart
         self._require_restart = require_restart
 
