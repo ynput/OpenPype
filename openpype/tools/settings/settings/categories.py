@@ -464,6 +464,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         if require_restart:
             self.restart_required_trigger.emit()
+        self.require_restart_label.setText("")
 
     def _on_refresh(self):
         self.reset()
