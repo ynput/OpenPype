@@ -98,7 +98,7 @@
                             },
                             {
                                 "key": "linked_assets",
-                                "label": "<b>Linked Assets</b>",
+                                "label": "<b>Linked Assets/Shots</b>",
                                 "type": "list",
                                 "highlight_content": true,
                                 "object_type": {
