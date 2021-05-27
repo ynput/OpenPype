@@ -14,6 +14,8 @@ from openpype.tools.settings import (
 
 
 class MainWidget(QtWidgets.QWidget):
+    trigger_restart = QtCore.Signal()
+
     widget_width = 1000
     widget_height = 600
 
