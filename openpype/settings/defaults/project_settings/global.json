@@ -37,11 +37,11 @@
                                 "ftrackreview"
                             ],
                             "ffmpeg_args": {
-                                "video_filters": [
-                                    "eq=gamma=2.2"
-                                ],
+                                "video_filters": [],
                                 "audio_filters": [],
-                                "input": [],
+                                "input": [
+                                    "-apply_trc gamma22"
+                                ],
                                 "output": [
                                     "-pix_fmt yuv420p",
                                     "-crf 18",
@@ -57,6 +57,12 @@
                             },
                             "width": 0,
                             "height": 0,
+                            "bg_color": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
                             "letter_box": {
                                 "enabled": false,
                                 "ratio": 0.0,
