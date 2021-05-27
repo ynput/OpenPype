@@ -1,0 +1,13 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "blender",
+    "label": "Blender",
+    "is_file": true,
+    "children": [
+        {
+            "type": "schema_template",
+            "name": "template_workfile_builder_simple"
+        }
+    ]
+}

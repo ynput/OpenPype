@@ -113,6 +113,10 @@
             ]
         },
         {
+            "type": "schema_template",
+            "name": "template_workfile_builder_simple"
+        },
+        {
             "type": "schema",
             "name": "schema_publish_gui_filter"
         }
