@@ -60,6 +60,9 @@ class MainWidget(QtWidgets.QWidget):
         for tab_widget in tab_widgets:
             tab_widget.saved.connect(self._on_tab_save)
             tab_widget.state_changed.connect(self._on_state_change)
+            tab_widget.restart_required_trigger.connect(
+                self._on_restart_required
+            )
 
         self.tab_widgets = tab_widgets
 
@@ -132,3 +135,6 @@ class MainWidget(QtWidgets.QWidget):
 
         for tab_widget in self.tab_widgets:
             tab_widget.reset()
+
+    def _on_restart_required(self):
+        pass
