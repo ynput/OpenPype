@@ -839,6 +839,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         input_width = int(input_data["width"])
         input_height = int(input_data["height"])
 
+        # NOTE Setting only one of `width` or `heigth` is not allowed
+        # - settings value can't have None but has value of 0
+        output_width = output_def.get("width") or None
+        output_height = output_def.get("height") or None
+
         # Convert overscan value video filters
         overscan_crop = output_def.get("overscan_crop")
         overscan = OverscanCrop(input_width, input_height, overscan_crop)
@@ -849,6 +854,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             filters.extend(overscan_crop_filters)
             input_width = overscan.width()
             input_height = overscan.height()
+            # Use output resolution as inputs after cropping to skip usage of
+            #   instance data resolution
+            if output_width is None or output_height is None:
+                output_width = input_width
+                output_height = input_height
 
         letter_box_def = output_def["letter_box"]
         letter_box_enabled = letter_box_def["enabled"]
@@ -880,10 +890,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("input_width: `{}`".format(input_width))
         self.log.debug("input_height: `{}`".format(input_height))
 
-        # NOTE Setting only one of `width` or `heigth` is not allowed
-        # - settings value can't have None but has value of 0
-        output_width = output_def.get("width") or None
-        output_height = output_def.get("height") or None
         # Use instance resolution if output definition has not set it.
         if output_width is None or output_height is None:
             output_width = temp_data["resolution_width"]
