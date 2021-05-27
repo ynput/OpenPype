@@ -102,6 +102,7 @@ from pathlib import Path
 import platform
 
 import blessed
+import certifi
 
 
 term = blessed.Terminal()
@@ -124,6 +125,16 @@ def _print(message: str):
         print("{}{}".format(term.tan("  . "), message[4:]))
 
 
+# if SSL_CERT_FILE is not set prior to OpenPype launch, we set it to point
+# to certifi bundle to make sure we have reasonably new CA certificates.
+if os.getenv("SSL_CERT_FILE") and \
+        os.getenv("SSL_CERT_FILE") != certifi.where():
+    _print("--- your system is set to use custom CA certificate bundle.")
+else:
+    ssl_cert_file = certifi.where()
+    os.environ["SSL_CERT_FILE"] = ssl_cert_file
+
+
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
 # WARNING `OPENPYPE_ROOT` must be defined before igniter import
 # - igniter changes cwd which cause that filepath of this script won't lead
@@ -133,12 +144,6 @@ if not getattr(sys, 'frozen', False):
     OPENPYPE_ROOT = os.path.dirname(os.path.abspath(__file__))
 else:
     OPENPYPE_ROOT = os.path.dirname(sys.executable)
-
-    if os.getenv("SSL_CERT_FILE"):
-        _print("--- your system is set to use custom CA certificate bundle.")
-    if not os.getenv("SSL_CERT_FILE") and platform.system().lower() == "darwin":  # noqa: E501
-        ssl_cert_file = Path(OPENPYPE_ROOT) / "dependencies" / "certifi" / "cacert.pem"  # noqa: E501
-        os.environ["SSL_CERT_FILE"] = ssl_cert_file.as_posix()
 
     # add dependencies folder to sys.pat for frozen code
     frozen_libs = os.path.normpath(
