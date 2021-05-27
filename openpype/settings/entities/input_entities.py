@@ -69,7 +69,7 @@ class EndpointEntity(ItemEntity):
         for callback in self.on_change_callbacks:
             callback()
 
-        if self.require_restart:
+        if self.require_restart_on_change:
             if self.require_restart:
                 self.root_item.add_item_require_restart(self)
             else:

@@ -111,7 +111,7 @@ class BaseItemEntity(BaseEntity):
         # Reference to `RootEntity`
         self.root_item = None
         # Change of value requires restart of OpenPype
-        self._require_restart = False
+        self._require_restart_on_change = False
 
         # Entity is in hierarchy of dynamically created entity
         self.is_in_dynamic_item = False
@@ -171,6 +171,10 @@ class BaseItemEntity(BaseEntity):
         elif not isinstance(roles, list):
             roles = [roles]
         self.roles = roles
+
+    @property
+    def require_restart_on_change(self):
+        return self._require_restart_on_change
 
     @property
     def require_restart(self):
@@ -267,7 +271,7 @@ class BaseItemEntity(BaseEntity):
             )
 
         if (
-            self._require_restart
+            self.require_restart_on_change
             and (self.is_dynamic_item or self.is_in_dynamic_item)
         ):
             raise EntitySchemaError(
@@ -802,13 +806,13 @@ class ItemEntity(BaseItemEntity):
         self.root_item = self.parent.root_item
 
         # Item require restart on value change
-        require_restart = self.schema_data.get("require_restart")
+        require_restart_on_change = self.schema_data.get("require_restart")
         if (
-            require_restart is None
+            require_restart_on_change is None
             and not (self.is_dynamic_item or self.is_in_dynamic_item)
         ):
-            require_restart = self.parent.require_restart
-        self._require_restart = require_restart
+            require_restart_on_change = self.parent.require_restart_on_change
+        self._require_restart_on_change = require_restart_on_change
 
         # File item reference
         if self.parent.is_file:
