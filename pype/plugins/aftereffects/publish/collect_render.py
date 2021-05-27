@@ -12,6 +12,7 @@ class AERenderInstance(RenderInstance):
     # extend generic, composition name is needed
     comp_name = attr.ib(default=None)
     comp_id = attr.ib(default=None)
+    fps = attr.ib(default=None)
 
 
 class CollectAERender(abstract_collect_render.AbstractCollectRender):
@@ -23,6 +24,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
     padding_width = 6
     rendered_extension = 'png'
 
+    stub = aftereffects.stub()
+
     def get_instances(self, context):
         instances = []
 
@@ -31,9 +34,9 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         asset_entity = context.data["assetEntity"]
         project_entity = context.data["projectEntity"]
 
-        compositions = aftereffects.stub().get_items(True)
+        compositions = self.stub.get_items(True)
         compositions_by_id = {item.id: item for item in compositions}
-        for inst in aftereffects.stub().get_metadata():
+        for inst in self.stub.get_metadata():
             schema = inst.get('schema')
             # loaded asset container skip it
             if schema and 'container' in schema:
@@ -43,12 +46,21 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                 raise ValueError("Couldn't find id, unable to publish. " +
                                  "Please recreate instance.")
             item_id = inst["members"][0]
-            work_area_info = aftereffects.stub().get_work_area(int(item_id))
+
+            work_area_info = self.stub.get_work_area(int(item_id))
+
+            if not work_area_info:
+                self.log.warning("Orphaned instance, deleting metadata")
+                self.stub.remove_instance(int(item_id))
+                continue
+
             frameStart = work_area_info.workAreaStart
 
             frameEnd = round(work_area_info.workAreaStart +
                              float(work_area_info.workAreaDuration) *
                              float(work_area_info.frameRate)) - 1
+            fps = work_area_info.frameRate
+            # TODO add resolution when supported by extension
 
             if inst["family"] == "render" and inst["active"]:
                 instance = AERenderInstance(
@@ -78,7 +90,8 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
                     frameStart=frameStart,
                     frameEnd=frameEnd,
                     frameStep=1,
-                    toBeRenderedOn='deadline'
+                    toBeRenderedOn='deadline',
+                    fps=fps
                 )
 
                 comp = compositions_by_id.get(int(item_id))
@@ -113,7 +126,7 @@ class CollectAERender(abstract_collect_render.AbstractCollectRender):
         end = render_instance.frameEnd
 
         # pull file name from Render Queue Output module
-        render_q = aftereffects.stub().get_render_info()
+        render_q = self.stub.get_render_info()
         if not render_q:
             raise ValueError("No file extension set in Render Queue")
         _, ext = os.path.splitext(os.path.basename(render_q.file_name))

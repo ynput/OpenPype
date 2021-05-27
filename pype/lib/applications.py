@@ -228,7 +228,7 @@ class ApplicationAction(avalon.api.Action):
         project_name = session["AVALON_PROJECT"]
         asset_name = session["AVALON_ASSET"]
         task_name = session["AVALON_TASK"]
-        launch_application(
+        _ = launch_application(
             project_name, asset_name, task_name, self.name
         )
 

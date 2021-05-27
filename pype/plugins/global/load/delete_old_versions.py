@@ -14,7 +14,10 @@ import avalon.pipeline
 from pype.api import Anatomy
 
 
-class DeleteOldVersions(api.Loader):
+class DeleteOldVersions(api.SubsetLoader):
+
+    is_multiple_contexts_compatible = True
+    sequence_splitter = "__sequence_splitter__"
 
     representations = ["*"]
     families = ["*"]
@@ -123,7 +126,8 @@ class DeleteOldVersions(api.Loader):
                         os.remove(file_path)
                         self.log.debug("Removed file: {}".format(file_path))
 
-                    remainders.remove(file_path_base)
+                    if file_path_base in remainders:
+                        remainders.remove(file_path_base)
                     continue
 
                 seq_path_base = os.path.split(seq_path)[1]
@@ -258,9 +262,11 @@ class DeleteOldVersions(api.Loader):
         )
 
         if not version_ids:
-            msg = "Skipping processing. Nothing to delete."
+            msg = "Skipping processing. Nothing to delete on {}/{}".format(
+                asset["name"], subset["name"]
+            )
             self.log.info(msg)
-            self.message(msg)
+            print(msg)
             return
 
         repres = list(self.dbcon.find({
@@ -396,25 +402,33 @@ class DeleteOldVersions(api.Loader):
             self.log.error(msg)
             self.message(msg)
 
-        msg = "Total size of files: " + self.sizeof_fmt(size)
-        self.log.info(msg)
-        self.message(msg)
+        return size
 
-    def load(self, context, name=None, namespace=None, options=None):
+    def load(self, contexts, name=None, namespace=None, options=None):
         try:
-            versions_to_keep = 2
-            remove_publish_folder = False
-            if options:
-                versions_to_keep = options.get(
-                    "versions_to_keep", versions_to_keep
-                )
-                remove_publish_folder = options.get(
-                    "remove_publish_folder", remove_publish_folder
-                )
+            size = 0
+            for count, context in enumerate(contexts):
+                versions_to_keep = 2
+                remove_publish_folder = False
+                if options:
+                    versions_to_keep = options.get(
+                        "versions_to_keep", versions_to_keep
+                    )
+                    remove_publish_folder = options.get(
+                        "remove_publish_folder", remove_publish_folder
+                    )
 
-            data = self.get_data(context, versions_to_keep)
+                data = self.get_data(context, versions_to_keep)
 
-            self.main(data, remove_publish_folder)
+                if not data:
+                    continue
+
+                size += self.main(data, remove_publish_folder)
+                print("Progressing {}/{}".format(count + 1, len(contexts)))
+
+            msg = "Total size of files: " + self.sizeof_fmt(size)
+            self.log.info(msg)
+            self.message(msg)
 
         except Exception:
             self.log.error("Failed to delete versions.", exc_info=True)
@@ -445,6 +459,4 @@ class CalculateOldVersions(DeleteOldVersions):
                 data["dir_paths"], data["file_paths_by_dir"], delete=False
             )
 
-        msg = "Total size of files: " + self.sizeof_fmt(size)
-        self.log.info(msg)
-        self.message(msg)
+        return size

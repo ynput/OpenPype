@@ -45,6 +45,7 @@ class CollectClips(api.ContextPlugin):
 
                 asset = item.name()
                 track = item.parent()
+                clip = item.source()
                 source = item.source().mediaSource()
                 source_path = source.firstpath()
                 clip_in = int(item.timelineIn())
@@ -84,7 +85,7 @@ class CollectClips(api.ContextPlugin):
                     **locals())
 
                 if not source.singleFile():
-                    self.log.info("Single file")
+                    self.log.info("Sequence files.")
                     is_sequence = True
                     source_path = file_info.filename()
 
@@ -130,10 +131,9 @@ class CollectClips(api.ContextPlugin):
                     "isSequence": is_sequence,
                     "track": track.name(),
                     "trackIndex": track_index,
-                    "sourceFirst": source_first_frame,
                     "effects": effects,
-                    "sourceIn": int(item.sourceIn()),
-                    "sourceOut": int(item.sourceOut()),
+                    "sourceIn": int(clip.sourceIn()),
+                    "sourceOut": int(clip.sourceOut()),
                     "mediaDuration": int(source.duration()),
                     "clipIn": clip_in,
                     "clipOut": clip_out,
@@ -153,10 +153,24 @@ class CollectClips(api.ContextPlugin):
                 self.log.info("Created instance.data: {}".format(instance.data))
                 self.log.debug(">> effects: {}".format(instance.data["effects"]))
 
+                # Collect clip range. Only extending the range.
+                shared_asset = context.data["assetsShared"].get(asset, {})
+
+                shared_clip_in = shared_asset.get("_clipIn", clip_in)
+                if shared_clip_in > clip_in:
+                    shared_clip_in = clip_in
+
+                shared_clip_out = shared_asset.get("_clipOut", clip_out)
+                if shared_clip_out < clip_out:
+                    shared_clip_out = clip_out
+
                 context.data["assetsShared"][asset] = {
-                    "_clipIn": clip_in,
-                    "_clipOut": clip_out
+                    "_clipIn": shared_clip_in,
+                    "_clipOut": shared_clip_out
                 }
+                self.log.debug(
+                    "Clip range: {}-{}".format(shared_clip_in, shared_clip_out)
+                )
 
             # from now we are collecting only subtrackitems on
             # track with no video items

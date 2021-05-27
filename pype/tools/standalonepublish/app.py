@@ -62,6 +62,8 @@ class Window(QtWidgets.QDialog):
 
         # signals
         widget_assets.selection_changed.connect(self.on_asset_changed)
+        widget_assets.task_changed.connect(self._on_task_change)
+        widget_assets.project_changed.connect(self.on_project_change)
         widget_family.stateChanged.connect(self.set_valid_family)
 
         self.widget_assets = widget_assets
@@ -116,6 +118,9 @@ class Window(QtWidgets.QDialog):
             parents.append(parent['name'])
         return parents
 
+    def on_project_change(self, project_name):
+        self.widget_family.refresh()
+
     def on_asset_changed(self):
         '''Callback on asset selection changed
 
@@ -134,6 +139,9 @@ class Window(QtWidgets.QDialog):
             self.valid_parent = False
             self.widget_family.change_asset(None)
         self.widget_family.on_data_changed()
+
+    def _on_task_change(self):
+        self.widget_family.on_task_change()
 
     def keyPressEvent(self, event):
         ''' Handling Ctrl+V KeyPress event

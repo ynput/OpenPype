@@ -124,10 +124,16 @@ class CollectFarmRender(pype.lib.abstract_collect_render.
             # TODO: handle pixel aspect and frame step
             # TODO: set Deadline stuff (pools, priority, etc. by presets)
             # because of using 'renderFarm' as a family, replace 'Farm' with
-            # capitalized task name
-            subset_name = node.split("/")[1].replace(
+            # capitalized task name - issue of avalon-core Creator app
+            subset_name = node.split("/")[1]
+            task_name = context.data["anatomyData"]["task"].capitalize()
+            replace_str = ""
+            if task_name.lower() not in subset_name.lower():
+                replace_str = task_name
+            subset_name = subset_name.replace(
                 'Farm',
-                context.data["anatomyData"]["task"].capitalize())
+                replace_str)
+
             render_instance = HarmonyRenderInstance(
                 version=version,
                 time=api.time(),

@@ -19,6 +19,7 @@ Optional:
 
 Provides:
     instance    -> label
+    instance    -> deadline_server
     instance    -> subset
     instance    -> attachTo
     instance    -> setMembers
@@ -45,6 +46,7 @@ import json
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
+from maya.app.renderSetup.model.collection import RenderSettingsCollection
 
 import pyblish.api
 
@@ -64,6 +66,14 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     def process(self, context):
         """Entry point to collector."""
         render_instance = None
+
+        # load deadline servers from preset
+        deadline_servers = []
+        create_plugin_preset = context.data["presets"]["plugins"]["maya"].get("create")  # noqa: E501
+        if create_plugin_preset.get("CreateRender"):
+            deadline_servers = create_plugin_preset["CreateRender"].get(
+                "deadline_servers")
+
         for instance in context:
             if "rendering" in instance.data["families"]:
                 render_instance = instance
@@ -80,6 +90,18 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             )
             return
 
+        if deadline_servers:
+
+            deadline_url = deadline_servers[
+                deadline_servers.keys()[
+                    int(render_instance.data.get("deadlineServers"))
+                ]
+            ]
+            if deadline_url == "DEADLINE_REST_URL":
+                deadline_url = os.getenv("DEADLINE_REST_URL", "")
+        else:
+            deadline_url = os.getenv("DEADLINE_REST_URL", "")
+
         render_globals = render_instance
         collected_render_layers = render_instance.data["setMembers"]
         filepath = context.data["currentFile"].replace("\\", "/")
@@ -93,6 +115,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         }
 
         self.maya_layers = maya_render_layers
+
+        # Switch to defaultRenderLayer
+        self._rs.switchToLayerUsingLegacyName("defaultRenderLayer")
 
         for layer in collected_render_layers:
             try:
@@ -151,6 +176,19 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             renderer = cmds.getAttr(
                 "defaultRenderGlobals.currentRenderer"
             ).lower()
+
+            # Find any overrides to the current renderer on the layer.
+            collections = maya_render_layers[expected_layer_name].getChildren()
+            for collection in collections:
+                if isinstance(collection, RenderSettingsCollection):
+                    for override in collection.getChildren():
+                        attribute_name = override.attributeName()
+                        if attribute_name != "currentRenderer":
+                            continue
+
+                        renderer = override.getAttrValue()
+                continue
+
             # handle various renderman names
             if renderer.startswith("renderman"):
                 renderer = "renderman"
@@ -262,6 +300,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     "useReferencedAovs") or render_instance.data.get(
                         "vrayUseReferencedAovs") or False  # noqa: E501
             }
+            if deadline_url:
+                data["deadlineUrl"] = deadline_url
 
             if self.sync_workfile_version:
                 data["version"] = context.data["version"]

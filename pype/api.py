@@ -20,6 +20,9 @@ from pypeapp.lib.mongo import (
 from . import resources
 
 from .plugin import (
+    PypeCreatorMixin,
+    Creator,
+
     Extractor,
 
     ValidatePipelineOrder,
@@ -67,6 +70,8 @@ __all__ = [
     "resources",
 
     # plugin classes
+    "PypeCreatorMixin",
+    "Creator",
     "Extractor",
     # ordering
     "ValidatePipelineOrder",

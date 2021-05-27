@@ -8,11 +8,13 @@ import requests
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
-from pype.hosts.maya import lib
-import avalon.maya
+from pype.hosts.maya import (
+    lib,
+    plugin
+)
 
 
-class CreateVRayScene(avalon.maya.Creator):
+class CreateVRayScene(plugin.Creator):
     """Create Vray Scene."""
 
     label = "VRay Scene"

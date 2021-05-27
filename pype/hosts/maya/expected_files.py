@@ -58,7 +58,8 @@ R_LAYER_TOKEN = re.compile(
 )
 R_AOV_TOKEN = re.compile(r".*%a.*|.*<aov>.*|.*<renderpass>.*", re.IGNORECASE)
 R_SUBSTITUTE_AOV_TOKEN = re.compile(r"%a|<aov>|<renderpass>", re.IGNORECASE)
-R_REMOVE_AOV_TOKEN = re.compile(r"_%a|_<aov>|_<renderpass>", re.IGNORECASE)
+R_REMOVE_AOV_TOKEN = re.compile(
+    r"_%a|\.%a|_<aov>|\.<aov>|_<renderpass>|\.<renderpass>", re.IGNORECASE)
 # to remove unused renderman tokens
 R_CLEAN_FRAME_TOKEN = re.compile(r"\.?<f\d>\.?", re.IGNORECASE)
 R_CLEAN_EXT_TOKEN = re.compile(r"\.?<ext>\.?", re.IGNORECASE)
@@ -75,6 +76,7 @@ RENDERER_NAMES = {
     "arnold": "Arnold",
     "renderman": "Renderman",
     "redshift": "Redshift",
+    "mayahardware2": "Maya Hardware"
 }
 
 # not sure about the renderman image prefix
@@ -84,6 +86,7 @@ IMAGE_PREFIXES = {
     "arnold": "defaultRenderGlobals.imageFilePrefix",
     "renderman": "rmanGlobals.imageFileFormat",
     "redshift": "defaultRenderGlobals.imageFilePrefix",
+    "mayahardware2": "defaultRenderGlobals.imageFilePrefix"
 }
 
 
@@ -134,6 +137,9 @@ class ExpectedFiles:
                 layer, self._render_instance))
         if renderer.lower() == "renderman":
             return self._get_files(ExpectedFilesRenderman(
+                layer, self._render_instance))
+        if renderer.lower() == "mayahardware2":
+            return self._get_files(ExpectedFilesMayaHardware(
                 layer, self._render_instance))
 
         raise UnsupportedRendererException(
@@ -246,7 +252,8 @@ class AExpectedFiles:
         }
         return scene_data
 
-    def _generate_single_file_sequence(self, layer_data):
+    def _generate_single_file_sequence(
+            self, layer_data, force_aov_name=None):
         expected_files = []
         for cam in layer_data["cameras"]:
             file_prefix = layer_data["filePrefix"]
@@ -256,7 +263,9 @@ class AExpectedFiles:
                 (R_SUBSTITUTE_CAMERA_TOKEN, self.sanitize_camera_name(cam)),
                 # this is required to remove unfilled aov token, for example
                 # in Redshift
-                (R_REMOVE_AOV_TOKEN, ""),
+                (R_REMOVE_AOV_TOKEN, "") if not force_aov_name \
+                else (R_SUBSTITUTE_AOV_TOKEN, force_aov_name),
+
                 (R_CLEAN_FRAME_TOKEN, ""),
                 (R_CLEAN_EXT_TOKEN, ""),
             )
@@ -709,7 +718,7 @@ class ExpectedFilesRedshift(AExpectedFiles):
 
         """
         prefix = super(ExpectedFilesRedshift, self).get_renderer_prefix()
-        prefix = "{}_<aov>".format(prefix)
+        prefix = "{}.<aov>".format(prefix)
         return prefix
 
     def get_files(self):
@@ -726,10 +735,6 @@ class ExpectedFilesRedshift(AExpectedFiles):
         # as redshift output beauty without 'beauty' in filename.
 
         layer_data = self._get_layer_data()
-        if layer_data.get("enabledAOVs"):
-            expected_files[0][u"beauty"] = self._generate_single_file_sequence(
-                layer_data
-            )
 
         # Redshift doesn't merge Cryptomatte AOV to final exr. We need to check
         # for such condition and add it to list of expected files.
@@ -739,6 +744,26 @@ class ExpectedFilesRedshift(AExpectedFiles):
                 aov_name = aov[0]
                 expected_files.append(
                     {aov_name: self._generate_single_file_sequence(layer_data)}
+                )
+
+        if layer_data.get("enabledAOVs"):
+            # because if Beauty is added manually, it will be rendered as
+            # 'Beauty_other' in file name and "standard" beauty will have
+            # 'Beauty' in its name. When disabled, standard output will be
+            # without `Beauty`.
+            if expected_files[0].get(u"Beauty"):
+                expected_files[0][u"Beauty_other"] = expected_files[0].pop(
+                    u"Beauty")
+                new_list = []
+                for seq in expected_files[0][u"Beauty_other"]:
+                    new_list.append(seq.replace(".Beauty", ".Beauty_other"))
+                expected_files[0][u"Beauty_other"] = new_list
+                expected_files[0][u"Beauty"] = self._generate_single_file_sequence(  # noqa: E501
+                    layer_data, force_aov_name="Beauty"
+                )
+            else:
+                expected_files[0][u"Beauty"] = self._generate_single_file_sequence(  # noqa: E501
+                    layer_data
                 )
 
         return expected_files
@@ -886,6 +911,31 @@ class ExpectedFilesMentalray(AExpectedFiles):
         """
         super(ExpectedFilesMentalray, self).__init__(layer, render_instance)
         raise UnimplementedRendererException("Mentalray not implemented")
+
+    def get_aovs(self):
+        """Get all AOVs.
+
+        See Also:
+            :func:`AExpectedFiles.get_aovs()`
+
+        """
+        return []
+
+
+class ExpectedFilesMayaHardware(AExpectedFiles):
+    """Expected files for Maya Hardware renderer.
+
+    Attributes:
+        aiDriverExtension (dict): Arnold AOV driver extension mapping.
+            Is there a better way?
+        renderer (str): name of renderer.
+
+    """
+
+    def __init__(self, layer, render_instance):
+        """Constructor."""
+        super(ExpectedFilesMayaHardware, self).__init__(layer, render_instance)
+        self.renderer = "mayahardware2"
 
     def get_aovs(self):
         """Get all AOVs.

@@ -1,4 +1,5 @@
 import os
+import re
 
 import pyblish.api
 import pype.api
@@ -17,7 +18,11 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     families = ["imagesequence", "render", "render2d", "source"]
     enabled = False
 
+    alpha_exts = ["exr", "png", "dpx"]
+    color_regex = re.compile(r"^#[a-fA-F0-9]{6}$")
+
     # presetable attribute
+    use_bg_color = True
     ffmpeg_args = None
 
     def process(self, instance):
@@ -91,16 +96,20 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             # use same input args like with mov
             jpeg_items.extend(ffmpeg_args.get("input") or [])
             # input file
-            jpeg_items.append("-i {}".format(full_input_path))
+            jpeg_items.append("-i \"{}\"".format(full_input_path))
             # output arguments from presets
-            jpeg_items.extend(ffmpeg_args.get("output") or [])
+            output_args = self._prepare_output_args(
+                ffmpeg_args.get("output"), full_input_path, instance
+            )
+            if output_args:
+                jpeg_items.extend(output_args)
 
             # If its a movie file, we just want one frame.
             if repre["ext"] == "mov":
                 jpeg_items.append("-vframes 1")
 
             # output file
-            jpeg_items.append(full_output_path)
+            jpeg_items.append("\"{}\"".format(full_output_path))
 
             subprocess_jpeg = " ".join(jpeg_items)
 
@@ -135,3 +144,45 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 shutil.rmtree(decompressed_dir)
 
         instance.data["representations"] = representations_new
+
+    def _prepare_output_args(self, output_args, full_input_path, instance):
+        output_args = output_args or []
+        ext = os.path.splitext(full_input_path)[1].replace(".", "")
+        bg_color = (
+            instance.context.data["presets"]
+            .get("tools", {})
+            .get("extract_colors", {})
+            .get("bg_color")
+        )
+        if (
+            not bg_color
+            or ext not in self.alpha_exts
+            or not self.use_bg_color
+        ):
+            return output_args
+
+        if not self.color_regex.match(bg_color):
+            self.log.warning((
+                "Background color set in presets \"{}\" has invalid format."
+            ).format(bg_color))
+            return output_args
+
+        video_args_dentifiers = ["-vf", "-filter:v"]
+        video_filters = []
+        for idx, arg in reversed(tuple(enumerate(output_args))):
+            for identifier in video_args_dentifiers:
+                if identifier in arg:
+                    output_args.pop(idx)
+                    arg = arg.replace(identifier, "").strip()
+                    video_filters.append(arg)
+
+        video_filters.extend([
+            "split=2[bg][fg]",
+            "[bg]drawbox=c={}:replace=1:t=fill[bg]".format(bg_color),
+            "[bg][fg]overlay=format=auto"
+        ])
+
+        output_args.append(
+            "-filter:v {}".format(",".join(video_filters))
+        )
+        return output_args

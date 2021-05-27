@@ -26,7 +26,7 @@ class AfterEffectsPrelaunch(pype.lib.PypeHook):
 
         # adding compulsory environment var for opening file
         # used in .bat launcher
-        env["PYPE_AE_WORKFILE_PATH"] = workfile_path.replace('\\', '/')
+        env["PYPE_AE_WORKFILE_PATH"] = workfile_path.replace('\\', '\\\\')
 
         return True
 

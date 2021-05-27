@@ -5,14 +5,18 @@ import json
 import appdirs
 import requests
 
+import six
+
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
-from pype.hosts.maya import lib
-import avalon.maya
+from pype.hosts.maya import (
+    lib,
+    plugin
+)
 
 
-class CreateRender(avalon.maya.Creator):
+class CreateRender(plugin.Creator):
     """Create *render* instance.
 
     Render instances are not actually published, they hold options for
@@ -66,7 +70,8 @@ class CreateRender(avalon.maya.Creator):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'defaultRenderGlobals.imageFilePrefix',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     _image_prefixes = {
@@ -74,8 +79,11 @@ class CreateRender(avalon.maya.Creator):
         'vray': 'maya/<scene>/<Layer>/<Layer>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
         'renderman': 'maya/<Scene>/<layer>/<layer>_<aov>',
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>'
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
+        'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'
     }
+
+    deadline_servers = {}
 
     def __init__(self, *args, **kwargs):
         """Constructor."""
@@ -91,10 +99,10 @@ class CreateRender(avalon.maya.Creator):
         use_selection = self.options.get("useSelection")
         with lib.undo_chunk():
             self._create_render_settings()
-            instance = super(CreateRender, self).process()
+            self.instance = super(CreateRender, self).process()
             # create namespace with instance
             index = 1
-            namespace_name = "_{}".format(str(instance))
+            namespace_name = "_{}".format(str(self.instance))
             try:
                 cmds.namespace(rm=namespace_name)
             except RuntimeError:
@@ -102,12 +110,19 @@ class CreateRender(avalon.maya.Creator):
                 pass
 
             while(cmds.namespace(exists=namespace_name)):
-                namespace_name = "_{}{}".format(str(instance), index)
+                namespace_name = "_{}{}".format(str(self.instance), index)
                 index += 1
 
             namespace = cmds.namespace(add=namespace_name)
 
-            cmds.setAttr("{}.machineList".format(instance), lock=True)
+            # add Deadline server selection list
+            cmds.scriptJob(
+                attributeChange=[
+                    "{}.deadlineServers".format(self.instance),
+                    self._deadline_webservice_changed
+                ])
+
+            cmds.setAttr("{}.machineList".format(self.instance), lock=True)
             self._rs = renderSetup.instance()
             layers = self._rs.getRenderLayers()
             if use_selection:
@@ -119,7 +134,7 @@ class CreateRender(avalon.maya.Creator):
                     render_set = cmds.sets(
                         n="{}:{}".format(namespace, layer.name()))
                     sets.append(render_set)
-                cmds.sets(sets, forceElement=instance)
+                cmds.sets(sets, forceElement=self.instance)
 
             # if no render layers are present, create default one with
             # asterix selector
@@ -137,12 +152,63 @@ class CreateRender(avalon.maya.Creator):
             cmds.setAttr(self._image_prefix_nodes[renderer],
                          self._image_prefixes[renderer],
                          type="string")
+        return self.instance
+
+    def _deadline_webservice_changed(self):
+        """Refresh Deadline served dependent options."""
+        # get selected server
+        webservice = self.deadline_servers[
+            self.server_aliases[
+                cmds.getAttr("{}.deadlineServers".format(self.instance))
+            ]
+        ]
+        pools = self._get_deadline_pools(webservice)
+        cmds.deleteAttr("{}.primaryPool".format(self.instance))
+        cmds.deleteAttr("{}.secondaryPool".format(self.instance))
+        cmds.addAttr(self.instance, longName="primaryPool",
+                     attributeType="enum",
+                     enumName=":".join(pools))
+        cmds.addAttr(self.instance, longName="secondaryPool",
+                     attributeType="enum",
+                     enumName=":".join(["-"] + pools))
+
+        # cmds.setAttr("{}.secondaryPool".format(self.instance), ["-"] + pools)
 
     def _create_render_settings(self):
         # get pools
         pools = []
+        deadline_url = os.getenv("DEADLINE_REST_URL")
+        if self.deadline_servers:
+            for key, server in self.deadline_servers.items():
+                if server == "DEADLINE_REST_URL":
+                    self.deadline_servers[key] = deadline_url
 
-        deadline_url = os.environ.get("DEADLINE_REST_URL", None)
+            self.server_aliases = self.deadline_servers.keys()
+            deadline_url = self.deadline_servers[self.server_aliases[0]]
+            print("deadline servers: {}".format(self.deadline_servers))
+            self.data["deadlineServers"] = self.server_aliases
+        else:
+            self.data["deadlineServers"] = [deadline_url]
+
+        self.data["suspendPublishJob"] = False
+        self.data["review"] = True
+        self.data["extendFrames"] = False
+        self.data["overrideExistingFrame"] = True
+        # self.data["useLegacyRenderLayers"] = True
+        self.data["priority"] = 50
+        self.data["framesPerTask"] = 1
+        self.data["whitelist"] = False
+        self.data["machineList"] = ""
+        self.data["useMayaBatch"] = False
+        self.data["tileRendering"] = False
+        self.data["tilesX"] = 2
+        self.data["tilesY"] = 2
+        self.data["convertToScanline"] = False
+        self.data["useReferencedAovs"] = False
+        # Disable for now as this feature is not working yet
+        # self.data["assScene"] = False
+
+        self.options = {"useSelection": False}  # Force no content
         muster_url = os.environ.get("MUSTER_REST_URL", None)
         if deadline_url and muster_url:
             self.log.error(
@@ -153,21 +219,11 @@ class CreateRender(avalon.maya.Creator):
         if deadline_url is None:
             self.log.warning("Deadline REST API url not found.")
         else:
-            argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
-            try:
-                response = self._requests_get(argument)
-            except requests.exceptions.ConnectionError as e:
-                msg = 'Cannot connect to deadline web service'
-                self.log.error(msg)
-                raise RuntimeError('{} - {}'.format(msg, e))
-            if not response.ok:
-                self.log.warning("No pools retrieved")
-            else:
-                pools = response.json()
-                self.data["primaryPool"] = pools
-                # We add a string "-" to allow the user to not
-                # set any secondary pools
-                self.data["secondaryPool"] = ["-"] + pools
+            pools = self._get_deadline_pools(deadline_url)
+            self.data["primaryPool"] = pools
+            # We add a string "-" to allow the user to not
+            # set any secondary pools
+            self.data["secondaryPool"] = ["-"] + pools
 
         if muster_url is None:
             self.log.warning("Muster REST API URL not found.")
@@ -191,26 +247,6 @@ class CreateRender(avalon.maya.Creator):
                 pool_names.append(pool["name"])
 
             self.data["primaryPool"] = pool_names
-
-        self.data["suspendPublishJob"] = False
-        self.data["review"] = True
-        self.data["extendFrames"] = False
-        self.data["overrideExistingFrame"] = True
-        # self.data["useLegacyRenderLayers"] = True
-        self.data["priority"] = 50
-        self.data["framesPerTask"] = 1
-        self.data["whitelist"] = False
-        self.data["machineList"] = ""
-        self.data["useMayaBatch"] = False
-        self.data["tileRendering"] = False
-        self.data["tilesX"] = 2
-        self.data["tilesY"] = 2
-        self.data["convertToScanline"] = False
-        self.data["useReferencedAovs"] = False
-        # Disable for now as this feature is not working yet
-        # self.data["assScene"] = False
-
-        self.options = {"useSelection": False}  # Force no content
 
     def _load_credentials(self):
         """Load Muster credentials.
@@ -265,6 +301,33 @@ class CreateRender(avalon.maya.Creator):
             raise Exception("Invalid response from Muster server")
 
         return pools
+
+    def _get_deadline_pools(self, webservice):
+        # type: (str) -> list
+        """Get pools from Deadline.
+
+        Args:
+            webservice (str): Server url.
+
+        Returns:
+            list: Pools.
+
+        Throws:
+            RuntimeError: If deadline webservice is unreachable.
+
+        """
+        argument = "{}/api/pools?NamesOnly=true".format(webservice)
+        try:
+            response = self._requests_get(argument)
+        except requests.exceptions.ConnectionError as exc:
+            msg = 'Cannot connect to deadline web service'
+            self.log.error(msg)
+            six.reraise(exc, RuntimeError('{} - {}'.format(msg, exc)))
+        if not response.ok:
+            self.log.warning("No pools retrieved")
+            return []
+
+        return response.json()
 
     def _show_login(self):
         # authentication token expired so we need to login to Muster

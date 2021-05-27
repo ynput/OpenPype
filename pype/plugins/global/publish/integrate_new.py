@@ -92,7 +92,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "harmony.palette",
                 "editorial",
                 "background",
-                "camerarig"
+                "camerarig",
+                "redshiftproxy"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -334,6 +335,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             sequence_repre = isinstance(files, list)
             repre_context = None
+
+            ext = repre["ext"]
+            if ext.startswith("."):
+                self.log.warning((
+                    "Implementaion warning: <\"{}\">"
+                    " Representation's extension stored under \"ext\" key "
+                    " started with dot (\"{}\")."
+                ).format(repre["name"], ext))
+                ext = ext[1:]
+            repre["ext"] = ext
+
             if sequence_repre:
                 self.log.debug(
                     "files: {}".format(files))
@@ -799,7 +811,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         matching_profiles = {}
         highest_value = -1
-        self.log.info(self.template_name_profiles)
+        self.log.debug(
+            "Template name profiles:\n{}".format(self.template_name_profiles)
+        )
         for name, filters in self.template_name_profiles.items():
             value = 0
             families = filters.get("families")

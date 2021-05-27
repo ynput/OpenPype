@@ -313,24 +313,25 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
 
     prev_node = None
     with GN:
-        connections = list()
         if input:
             # if connected input node was defined
-            connections.append({
-                "node": input,
-                "inputName": input.name()})
+            input_name = str(input.name()).replace(" ", "")
             prev_node = nuke.createNode(
-                "Input", "name {}".format(input.name()))
+                "Input", "name {}".format(input_name))
+            prev_node.hideControlPanel()
+
         else:
             # generic input node connected to nothing
             prev_node = nuke.createNode(
                 "Input", "name {}".format("rgba"))
+            prev_node.hideControlPanel()
 
         # creating pre-write nodes `prenodes`
         if prenodes:
             for name, klass, properties, set_output_to in prenodes:
                 # create node
                 now_node = nuke.createNode(klass, "name {}".format(name))
+                now_node.hideControlPanel()
 
                 # add data to knob
                 for k, v in properties:
@@ -352,17 +353,15 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
                         for i, node_name in enumerate(set_output_to):
                             input_node = nuke.createNode(
                                 "Input", "name {}".format(node_name))
-                            connections.append({
-                                "node": nuke.toNode(node_name),
-                                "inputName": node_name})
+                            input_node.hideControlPanel()
                             now_node.setInput(1, input_node)
+
                     elif isinstance(set_output_to, str):
                         input_node = nuke.createNode(
                             "Input", "name {}".format(node_name))
-                        connections.append({
-                            "node": nuke.toNode(set_output_to),
-                            "inputName": set_output_to})
+                        input_node.hideControlPanel()
                         now_node.setInput(0, input_node)
+
                 else:
                     now_node.setInput(0, prev_node)
 
@@ -374,6 +373,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
             "inside_{}".format(name),
             **_data
         )
+        write_node.hideControlPanel()
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -382,6 +382,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         prev_node = now_node
 
         now_node = nuke.createNode("Output", "name Output1")
+        now_node.hideControlPanel()
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -417,6 +418,9 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
 
     # Deadline tab.
     add_deadline_tab(GN)
+
+    # open the AvalonTab as default
+    GN["AvalonTab"].setFlag(0)
 
     # set tile color
     tile_color = _data.get("tile_color", "0xff0000ff")
@@ -582,8 +586,7 @@ class WorkfileSettings(object):
         ]
 
         erased_viewers = []
-        for v in [n for n in self._nodes
-                  if "Viewer" in n.Class()]:
+        for v in [n for n in nuke.allNodes(filter="Viewer")]:
             v['viewerProcess'].setValue(str(viewer_dict["viewerProcess"]))
             if str(viewer_dict["viewerProcess"]) \
                     not in v['viewerProcess'].value():
