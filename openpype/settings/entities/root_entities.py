@@ -84,6 +84,9 @@ class RootEntity(BaseItemEntity):
             self._on_require_restart_change()
 
     def remove_item_require_restart(self, item):
+        if item.id not in self._item_ids_require_restart:
+            return
+
         self._item_ids_require_restart.remove(item.id)
         if not self._item_ids_require_restart:
             self._on_require_restart_change()
