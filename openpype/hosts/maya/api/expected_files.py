@@ -94,8 +94,6 @@ class LayerMetadata:
     """Data class for Render Layer metadata."""
     frameStart = attr.ib()
     frameEnd = attr.ib()
-    frameStep = attr.ib(default=1)
-    padding = attr.ib(default=4)
     cameras = attr.ib()
     sceneName = attr.ib()
     layerName = attr.ib()
@@ -103,6 +101,8 @@ class LayerMetadata:
     defaultExt = attr.ib()
     filePrefix = attr.ib()
     enabledAOVs = attr.ib()
+    frameStep = attr.ib(default=1)
+    padding = attr.ib(default=4)
 
 
 class ExpectedFiles:
@@ -671,13 +671,14 @@ class ExpectedFilesVray(AExpectedFiles):
         vray_name = None
         vray_explicit_name = None
         vray_file_name = None
-        for attr in cmds.listAttr(node):
-            if attr.startswith("vray_filename"):
-                vray_file_name = cmds.getAttr("{}.{}".format(node, attr))
-            elif attr.startswith("vray_name"):
-                vray_name = cmds.getAttr("{}.{}".format(node, attr))
-            elif attr.startswith("vray_explicit_name"):
-                vray_explicit_name = cmds.getAttr("{}.{}".format(node, attr))
+        for node_attr in cmds.listAttr(node):
+            if node_attr.startswith("vray_filename"):
+                vray_file_name = cmds.getAttr("{}.{}".format(node, node_attr))
+            elif node_attr.startswith("vray_name"):
+                vray_name = cmds.getAttr("{}.{}".format(node, node_attr))
+            elif node_attr.startswith("vray_explicit_name"):
+                vray_explicit_name = cmds.getAttr(
+                    "{}.{}".format(node, node_attr))
 
             if vray_file_name is not None and vray_file_name != "":
                 final_name = vray_file_name
