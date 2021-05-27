@@ -1605,9 +1605,16 @@ class OverscanCrop:
 
         output = []
         if self.input_width == width and self.input_height == height:
-            pass
+            return output
 
-        elif width <= self.input_width and height <= self.input_height:
+        # Make sure resolution has odd numbers
+        if width % 2 == 1:
+            width -= 1
+
+        if height % 2 == 1:
+            height -= 1
+
+        if width <= self.input_width and height <= self.input_height:
             output.append("crop={}:{}".format(width, height))
 
         elif width >= self.input_width and height >= self.input_height:
