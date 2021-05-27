@@ -18,6 +18,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             json.dumps(workfile_instances, indent=4)
         ))
 
+        self.add_workfile_instance(context)
+
         # Backwards compatibility for workfiles that already have review
         #   instance in metadata.
         review_instance_exist = False
