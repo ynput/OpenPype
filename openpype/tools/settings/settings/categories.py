@@ -72,6 +72,7 @@ class IgnoreInputChangesObj:
 class SettingsCategoryWidget(QtWidgets.QWidget):
     state_changed = QtCore.Signal()
     saved = QtCore.Signal(QtWidgets.QWidget)
+    restart_required_trigger = QtCore.Signal()
 
     def __init__(self, user_role, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
@@ -443,6 +444,15 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         return
 
     def _save(self):
+        # Don't trigger restart if defaults are modified
+        if (
+            self.modify_defaults_checkbox
+            and self.modify_defaults_checkbox.isChecked()
+        ):
+            require_restart = False
+        else:
+            require_restart = self.entity.require_restart
+
         self.set_state(CategoryState.Working)
 
         if self.items_are_valid():
@@ -451,6 +461,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.set_state(CategoryState.Idle)
 
         self.saved.emit(self)
+
+        if require_restart:
+            self.restart_required_trigger.emit()
 
     def _on_refresh(self):
         self.reset()
