@@ -1,5 +1,6 @@
 import os
 import sys
+import atexit
 
 import platform
 from avalon import style
@@ -116,6 +117,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         super(SystemTrayIcon, self).__init__(icon, parent)
 
+        self._exited = False
+
         # Store parent - QtWidgets.QMainWindow()
         self.parent = parent
 
@@ -134,6 +137,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         # Add menu to Context of SystemTrayIcon
         self.setContextMenu(self.menu)
 
+        atexit.register(self.exit)
+
     def on_systray_activated(self, reason):
         # show contextMenu if left click
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
@@ -145,6 +150,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         - Icon won't stay in tray after exit.
         """
+        if self._exited:
+            return
+        self._exited = True
+
         self.hide()
         self.tray_man.on_exit()
         QtCore.QCoreApplication.exit()
