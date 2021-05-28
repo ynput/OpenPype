@@ -5,7 +5,10 @@ from openpype import resources
 from avalon.vendor import qtawesome
 
 
-def load_stylesheet():
+_STYLESHEET_CACHE = None
+
+
+def _load_stylesheet():
     from . import qrc_resources
 
     qrc_resources.qInitResources()
@@ -37,6 +40,13 @@ def load_stylesheet():
         replacement_key = "{" + key + "}"
         stylesheet = stylesheet.replace(replacement_key, value)
     return stylesheet
+
+
+def load_stylesheet():
+    global _STYLESHEET_CACHE
+    if _STYLESHEET_CACHE is None:
+        _STYLESHEET_CACHE = _load_stylesheet()
+    return _STYLESHEET_CACHE
 
 
 def app_icon_path():
