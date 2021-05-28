@@ -90,6 +90,12 @@ QMenu::item {
     padding: 5px 10px 5px 5px;
     border-left: 3px solid {color:bg-view};
 }
+
+QMenu::item:selected {
+    border-left-color: {color:active_1};
+    background: {color:bg-view-selection};
+}
+
 QMenu::right-arrow {
     min-width: 10px;
 }
@@ -98,11 +104,6 @@ QMenu::separator {
     background: black;
     height: 2px;
     margin-right: 5px;
-}
-
-QMenu::item:selected {
-    border-left-color: {color:active_1};
-    background: {color:bg-view-selection};
 }
 
 /* Combobox */
