@@ -50,86 +50,20 @@
                                 "label": "<b>Display Options</b>"
                             },
                             {
-                                "type": "list-strict",
-                                "key": "background",
-                                "label": "Background Color:    ",
-                                "object_types": [
+                                "type": "schema_template",
+                                "name": "template_color",
+                                "template_data": [
                                     {
-                                        "label": "Red",
-                                        "type": "number",
-                                        "minimum": 0,
-                                        "maximum": 1,
-                                        "decimal": 3
+                                        "name": "background",
+                                        "label": "Background Color:    "
                                     },
                                     {
-                                        "label": "Green",
-                                        "type": "number",
-                                        "minimum": 0,
-                                        "maximum": 1,
-                                        "decimal": 3
+                                        "name": "backgroundBottom",
+                                        "label": "Background Bottom:    "
                                     },
                                     {
-                                        "label": "Blue",
-                                        "type": "number",
-                                        "minimum": 0,
-                                        "maximum": 1,
-                                        "decimal": 3
-                                    }
-                                ]
-                            },
-                            {
-                                "type": "list-strict",
-                                "key": "backgroundBottom",
-                                "label": "Background Bottom:    ",
-                                "object_types": [
-                                    {
-                                        "label": "Red",
-                                        "type": "number",
-                                        "minimum": 0,
-                                        "maximum": 1,
-                                        "decimal": 3
-                                    },
-                                    {
-                                        "label": "Green",
-                                        "type": "number",
-                                        "minimum": 0,
-                                        "maximum": 1,
-                                        "decimal": 3
-                                    },
-                                    {
-                                        "label": "Blue",
-                                        "type": "number",
-                                        "minimum": 0,
-                                        "maximum": 1,
-                                        "decimal": 3
-                                    }
-                                ]
-                            },
-                            {
-                                "type": "list-strict",
-                                "key": "backgroundTop",
-                                "label": "Background Top:    ",
-                                "object_types": [
-                                    {
-                                        "label": "Red",
-                                        "type": "number",
-                                        "minimum": 0,
-                                        "maximum": 1,
-                                        "decimal": 3
-                                    },
-                                    {
-                                        "label": "Green",
-                                        "type": "number",
-                                        "minimum": 0,
-                                        "maximum": 1,
-                                        "decimal": 3
-                                    },
-                                    {
-                                        "label": "Blue",
-                                        "type": "number",
-                                        "minimum": 0,
-                                        "maximum": 1,
-                                        "decimal": 3
+                                        "name": "backgroundTop",
+                                        "label": "Background Top:    "
                                     }
                                 ]
                             },
