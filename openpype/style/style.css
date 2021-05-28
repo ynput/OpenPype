@@ -278,13 +278,19 @@ QHeaderView {
 QHeaderView::section  {
     background: {color:bg-inputs};
     padding: 4px;
-    border: none;
+    border-left: 1px solid {color:bg-view};
+    border-right: 1px solid {color:bg-view};
     border-radius: 0px;
     text-align: center;
     color: {color:font};
     font-weight: bold;
 }
-
+QHeaderView::section:first {
+    border-left: none;
+}
+QHeaderView::section:last {
+    border-right: none;
+}
 /* Views QListView QTreeView QTableView */
 QAbstractItemView {
     border: 1px solid {color:border};
