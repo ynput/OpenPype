@@ -46,24 +46,42 @@ def _pop_metadata_item(template):
 
 
 def _fill_schema_template_data(
-    template, template_data, required_keys=None, missing_keys=None
+    template, template_data, skip_paths, required_keys=None, missing_keys=None
 ):
     first = False
     if required_keys is None:
         first = True
+
+        # Cleanup skip paths (skip empty values)
+        skip_paths = [path for path in skip_paths if path]
+
         required_keys = set()
         missing_keys = set()
 
         # Copy template data as content may change
         template = copy.deepcopy(template)
 
+        # Get metadata item from template
         metadata_item = _pop_metadata_item(template)
 
+        # Check for default values for template data
         default_values = metadata_item.get(DEFAULT_VALUES_KEY) or {}
 
         for key, value in default_values.items():
             if key not in template_data:
                 template_data[key] = value
+
+    # Store paths by first part if path
+    # - None value says that whole key should be skipped
+    skip_paths_by_first_key = {}
+    for path in skip_paths:
+        parts = path.split("/")
+        key = parts.pop(0)
+        if key not in skip_paths_by_first_key:
+            skip_paths_by_first_key[key] = []
+
+        value = "/".join(parts)
+        skip_paths_by_first_key[key].append(value or None)
 
     if not template:
         output = template
@@ -71,15 +89,27 @@ def _fill_schema_template_data(
     elif isinstance(template, list):
         output = []
         for item in template:
-            output.append(_fill_schema_template_data(
-                item, template_data, required_keys, missing_keys
-            ))
+            # Get skip paths for children item
+            _skip_paths = []
+            if skip_paths_by_first_key and isinstance(item, dict):
+                # Check if this item should be skipped
+                key = item.get("key")
+                if key and key in skip_paths_by_first_key:
+                    _skip_paths = skip_paths_by_first_key[key]
+                    # Skip whole item if None is in skip paths value
+                    if None in _skip_paths:
+                        continue
+
+            output_item = _fill_schema_template_data(
+                item, template_data, _skip_paths, required_keys, missing_keys
+            )
+            output.append(output_item)
 
     elif isinstance(template, dict):
         output = {}
         for key, value in template.items():
             output[key] = _fill_schema_template_data(
-                value, template_data, required_keys, missing_keys
+                value, template_data, skip_paths, required_keys, missing_keys
             )
 
     elif isinstance(template, STRING_TYPE):
@@ -136,7 +166,7 @@ def _fill_schema_template(child_data, schema_collection, schema_templates):
     for single_template_data in template_data:
         try:
             filled_child = _fill_schema_template_data(
-                template, single_template_data
+                template, single_template_data, skip_paths
             )
 
         except SchemaTemplateMissingKeys as exc:
