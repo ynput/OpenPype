@@ -133,7 +133,7 @@ QComboBox QAbstractItemView::item {
 }
 
 QComboBox QAbstractItemView::item:selected {
-    border-left-color: {color:active_1};/*rgb(84, 209, 178);*/
+    border-left-color: {color:active_1};
     background: {color:bg-view-selection};
     color: {color:font};
 }
