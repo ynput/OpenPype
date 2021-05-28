@@ -10,7 +10,8 @@ from openpype import resources
 
 from Qt import QtWidgets, QtGui, QtCore
 
-class TrayApp(QtWidgets.QSystemTrayIcon):
+
+class ConsoleTrayIcon(QtWidgets.QSystemTrayIcon):
     """Application showing console for non python hosts instead of cmd"""
     callback_queue = None
 
@@ -51,18 +52,18 @@ class TrayApp(QtWidgets.QSystemTrayIcon):
             '<span style="font-weight: bold;color:#EE5C42"> ERROR </span>'
     }
 
-    def __init__(self, host, parent=None):
-        super(TrayApp, self).__init__(parent)
+    def __init__(self, host, launch_method, subprocess_args, is_host_connected,
+                 parent=None):
+        super(ConsoleTrayIcon, self).__init__(parent)
         self.host = host
 
         self.initialized = False
         self.websocket_server = None
-        self.timer = None
-        self.subprocess_args = None
         self.initializing = False
         self.tray = False
-        self.launch_method = None
-        self.timer = None
+        self.launch_method = launch_method
+        self.subprocess_args = subprocess_args
+        self.is_host_connected = is_host_connected
 
         self.original_stdout_write = None
         self.original_stderr_write = None
@@ -78,7 +79,7 @@ class TrayApp(QtWidgets.QSystemTrayIcon):
 
         self.timer = timer
 
-        self.redirect_stds()
+        self.catch_std_outputs()
 
         menu = QtWidgets.QMenu()
         menu.setStyleSheet(style.load_stylesheet())
@@ -112,27 +113,33 @@ class TrayApp(QtWidgets.QSystemTrayIcon):
         self.dialog.append_text(self.new_text)
         if not self.initialized:
             if self.initializing:
-                return
-            TrayApp.callback_queue = queue.Queue()
+                host_connected = self.is_host_connected()
+                if host_connected is None:  # keep trying
+                    return
+                elif not host_connected:
+                    print("{} process is not alive. Exiting".format(self.host))
+                    ConsoleTrayIcon.websocket_server.stop()
+                    sys.exit(1)
+                elif host_connected:
+                    self.initialized = True
+                    self.initializing = False
+                    self.change_status("ready")
+
+                    return
+
+            ConsoleTrayIcon.callback_queue = queue.Queue()
             self.initializing = True
 
             self.launch_method(*self.subprocess_args)
-            self.initialized = True
-            self.initializing = False
-            self.change_status("ready")
-        elif TrayApp.callback_queue:
+        elif ConsoleTrayIcon.process.poll() is not None:
+            # Wait on Photoshop to close before closing the websocket serv
+            self.exit()
+        elif ConsoleTrayIcon.callback_queue:
             try:
-                callback = TrayApp.callback_queue.get(block=False)
+                callback = ConsoleTrayIcon.callback_queue.get(block=False)
                 callback()
             except queue.Empty:
                 pass
-        else:
-            if self.process.poll() is not None:
-                # Wait on Photoshop to close before closing the websocket serv.
-                self.process.wait()
-                self.websocket_server.stop()
-                self.timer.stop()
-                self.change_status("error")
 
     @classmethod
     def execute_in_main_thread(cls, func_to_call_from_main_thread):
@@ -149,36 +156,44 @@ class TrayApp(QtWidgets.QSystemTrayIcon):
             self.open_console()
 
     @classmethod
-    def restart_server(self):
-        if TrayApp.websocket_server:
-            TrayApp.websocket_server.stop_server(restart=True)
+    def restart_server(cls):
+        if ConsoleTrayIcon.websocket_server:
+            ConsoleTrayIcon.websocket_server.stop_server(restart=True)
 
     def open_console(self):
         self.dialog.show()
+        self.dialog.raise_()
+        self.dialog.activateWindow()
 
     def exit(self):
         """ Exit whole application.
 
         - Icon won't stay in tray after exit.
         """
-        TrayApp.process.kill()
+        self.dialog.append_text("Exiting!")
+        if ConsoleTrayIcon.websocket_server:
+            ConsoleTrayIcon.websocket_server.stop()
+        ConsoleTrayIcon.process.kill()
+        ConsoleTrayIcon.process.wait()
+        if self.timer:
+            self.timer.stop()
+        self.dialog.hide()
         self.hide()
         QtCore.QCoreApplication.exit()
 
-    def redirect_stds(self):
+    def catch_std_outputs(self):
         """Redirects standard out and error to own functions"""
-        if sys.stdout:
+        if not sys.stdout:
+            self.dialog.append_text("Cannot read from stdout!")
+        else:
             self.original_stdout_write = sys.stdout.write
-        else:
-            sys.stdout = StringIO()
+            sys.stdout.write = self.my_stdout_write
 
-        if sys.stderr:
+        if not sys.stderr:
+            self.dialog.append_text("Cannot read from stderr!")
+        else:
             self.original_stderr_write = sys.stderr.write
-        else:
-            sys.stderr = StringIO()
-
-        sys.stdout.write = self.my_stdout_write
-        sys.stderr.write = self.my_stderr_write
+            sys.stderr.write = self.my_stderr_write
 
     def my_stdout_write(self, text):
         """Appends outputted text to queue, keep writing to original stdout"""
@@ -202,7 +217,7 @@ class TrayApp(QtWidgets.QSystemTrayIcon):
 
         return status_texts
 
-    def _select_icons(self, host_name):
+    def _select_icons(self, _host_name):
         """Use different icons per state and host_name"""
         # use host_name
         icons = {
@@ -218,7 +233,6 @@ class TrayApp(QtWidgets.QSystemTrayIcon):
         }
 
         return icons
-
 
     @staticmethod
     def _multiple_replace(text, adict):
@@ -242,7 +256,8 @@ class TrayApp(QtWidgets.QSystemTrayIcon):
 
     @staticmethod
     def color(message):
-        message = TrayApp._multiple_replace(message, TrayApp.sdict)
+        message = ConsoleTrayIcon._multiple_replace(message,
+                                                    ConsoleTrayIcon.sdict)
 
         return message
 
@@ -292,6 +307,8 @@ class ConsoleDialog(QtWidgets.QDialog):
         self.resize(self.WIDTH, self.HEIGHT)
 
     def append_text(self, new_text):
+        if isinstance(new_text, str):
+            new_text = collections.deque(new_text)
         while new_text:
             self.plain_text.appendHtml(
-                TrayApp.color(new_text.popleft().strip()))
+                ConsoleTrayIcon.color(new_text.popleft()))
