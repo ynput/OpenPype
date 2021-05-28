@@ -1643,31 +1643,33 @@ def launch_workfiles_app():
 
 
 def process_workfile_options():
-    from openpype.lib import env_value_to_bool
+    from openpype.lib import (
+        env_value_to_bool,
+        get_custom_workfile_template
+    )
 
     # get state from settings
-    workfile_options = get_current_project_settings()["nuke"].get(
-        "workfile_options", {})
+    workfile_builder = get_current_project_settings()["nuke"].get(
+        "workfile_builder", {})
 
     # get all imortant settings
     openlv_on = env_value_to_bool(
         env_key="AVALON_OPEN_LAST_WORKFILE",
         default=None)
 
-    createfv_on = workfile_options.get(
-        "create_first_version", {}).get("enabled")
-    createfv_template_paths = workfile_options.get(
-        "create_first_version", {}).get("custom_template_paths")
-    createfv_builder = workfile_options.get(
-        "create_first_version", {}).get("builder_on")
+    # get settings
+    createfv_on = workfile_builder.get("create_first_version") or None
+    custom_templates = workfile_builder.get("custom_templates") or None
+    builder_on = workfile_builder.get("builder_on_start") or None
 
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
 
     # generate first version in file not existing and feature is enabled
     if createfv_on and not os.path.exists(last_workfile_path):
         # get custom template path if any
-        custom_template_path = createfv_template_paths[
-            platform.system().lower()]
+        custom_template_path = get_custom_workfile_template(
+            custom_templates
+        )
 
         # if custom template is defined
         if custom_template_path:
@@ -1678,7 +1680,7 @@ def process_workfile_options():
             nuke.nodePaste(custom_template_path)
 
         # if builder at start is defined
-        if createfv_builder:
+        if builder_on:
             log.info("Building nodes from presets...")
             # build nodes by defined presets
             BuildWorkfile().process()
