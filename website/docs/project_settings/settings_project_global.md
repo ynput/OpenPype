@@ -69,6 +69,49 @@ Profile may generate multiple outputs from a single input. Each output must defi
     - it is possible to rescale output to specified resolution and keep aspect ratio.
     - If value is set to 0, source resolution will be used.
 
+- **`Overscan crop`**
+    - Crop input resolution before rescaling.
+
+    - Value is text may have a few variants. Each variant define output size for input size.
+
+    - All values that cause output resolution smaller than 1 pixel are invalid.
+
+    - Value without sign (+/-) in is always explicit and value with sign is
+    relative. Output size for values "200px" and "+200px" are not the same "+200px" will add 200 pixels to source and "200px" will keep only 200px from source. Value of "0", "0px" or "0%" are automatically converted to "+0px" as 0px is invalid ouput.
+
+    - Cropped value is related to center. It is better to avoid odd numbers if
+    possible.
+
+    **Example outputs for input size: 2200px**
+
+    | String | Output | Description |
+    |---|---|---|
+    | ` `      | 2200px | Empty string keep resolution unchanged. |
+    | `50%`    | 1100px | Crop 25% of input width on left and right side. |
+    | `300px`  | 300px | Keep 300px in center of input and crop rest on left adn right. |
+    | `300`    | 300px | Values without units are used as pixels (`px`). |
+    | `+0px`   | 2200px | Keep resolution unchanged. |
+    | `0px`   | 2200px | Same as `+0px`. |
+    | `+300px` | 2500px | Add black pillars of 150px width on left and right side. |
+    | `-300px` | 1900px | Crop 150px on left and right side |
+    | `+10%`   | 2420px | Add black pillars of 5% size of input on left and right side. |
+    | `-10%`   | 1980px | Crop 5% of input size by on left and right side. |
+    | `-10%+`  | 2000px | Input width is 110% of output width. |
+
+    **Value "-10%+" is a special case which says that input's resolution is
+    bigger by 10% than expected output.**
+
+    - It is possible to enter single value for both width and height or
+    combination of two variants for width and height separated with space.
+
+    **Example for resolution: 2000px 1000px**
+
+    | String        | Output        |
+    |---------------|---------------|
+    | "100px 120px" | 2100px 1120px |
+    | "-10% -200px" | 1800px 800px  |
+    | "-10% -0px" | 1800px 1000px  |
+
 - **`Letter Box`**
     - **Enabled** - Enable letter boxes
     - **Ratio** - Ratio of letter boxes
