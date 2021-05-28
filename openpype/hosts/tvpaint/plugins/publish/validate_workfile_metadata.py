@@ -24,6 +24,8 @@ class ValidateWorkfileMetadata(pyblish.api.ContextPlugin):
 
     families = ["workfile"]
 
+    actions = [ValidateWorkfileMetadataRepair]
+
     required_keys = {"project", "asset", "task"}
 
     def process(self, context):
