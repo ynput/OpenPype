@@ -3,7 +3,7 @@
         "font": "#bfccd6",
         "font-hover": "#eff3f5",
         "font-disabled": "#737c85",
-        "font-view-selection": "black",
+        "font-view-selection": "#bfccd6",
         "font-view-hover": "#ffffff",
 
         "bg": "#282C34",
