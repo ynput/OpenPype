@@ -422,17 +422,18 @@ def run_event_server(
     ftrack_url,
     ftrack_user,
     ftrack_api_key,
-    ftrack_events_path,
-    no_stored_credentials,
-    store_credentials,
     legacy,
     clockify_api_key,
     clockify_workspace
 ):
-    if not no_stored_credentials:
+    if not ftrack_user or not ftrack_api_key:
+        print((
+            "Ftrack user/api key were not passed."
+            " Trying to use credentials from user keyring."
+        ))
         cred = credentials.get_credentials(ftrack_url)
-        username = cred.get('username')
-        api_key = cred.get('api_key')
+        ftrack_user = cred.get("username")
+        ftrack_api_key = cred.get("api_key")
 
     if clockify_workspace and clockify_api_key:
         os.environ["CLOCKIFY_WORKSPACE"] = clockify_workspace
@@ -445,209 +446,16 @@ def run_event_server(
         return 1
 
     # Validate entered credentials
-    if not validate_credentials(ftrack_url, username, api_key):
+    if not validate_credentials(ftrack_url, ftrack_user, ftrack_api_key):
         print('Exiting! < Please enter valid credentials >')
         return 1
 
-    if store_credentials:
-        credentials.save_credentials(username, api_key, ftrack_url)
-
     # Set Ftrack environments
     os.environ["FTRACK_SERVER"] = ftrack_url
-    os.environ["FTRACK_API_USER"] = username
-    os.environ["FTRACK_API_KEY"] = api_key
-    # TODO This won't work probably
-    if ftrack_events_path:
-        if isinstance(ftrack_events_path, (list, tuple)):
-            ftrack_events_path = os.pathsep.join(ftrack_events_path)
-        os.environ["FTRACK_EVENTS_PATH"] = ftrack_events_path
+    os.environ["FTRACK_API_USER"] = ftrack_user
+    os.environ["FTRACK_API_KEY"] = ftrack_api_key
 
     if legacy:
         return legacy_server(ftrack_url)
 
     return main_loop(ftrack_url)
-
-
-def main(argv):
-    '''
-    There are 4 values neccessary for event server:
-    1.) Ftrack url - "studio.ftrackapp.com"
-    2.) Username - "my.username"
-    3.) API key - "apikey-long11223344-6665588-5565"
-    4.) Path/s to events - "X:/path/to/folder/with/events"
-
-    All these values can be entered with arguments or environment variables.
-    - arguments:
-        "-ftrackurl {url}"
-        "-ftrackuser {username}"
-        "-ftrackapikey {api key}"
-        "-ftrackeventpaths {path to events}"
-    - environment variables:
-        FTRACK_SERVER
-        FTRACK_API_USER
-        FTRACK_API_KEY
-        FTRACK_EVENTS_PATH
-
-    Credentials (Username & API key):
-    - Credentials can be stored for auto load on next start
-    - To *Store/Update* these values add argument "-storecred"
-        - They will be stored to appsdir file when login is successful
-    - To *Update/Override* values with enviromnet variables is also needed to:
-        - *don't enter argument for that value*
-        - add argument "-noloadcred" (currently stored credentials won't be loaded)
-
-    Order of getting values:
-        1.) Arguments are always used when entered.
-            - entered values through args have most priority! (in each case)
-        2.) Credentials are tried to load from appsdir file.
-            - skipped when credentials were entered through args or credentials
-                are not stored yet
-            - can be skipped with "-noloadcred" argument
-        3.) Environment variables are last source of values.
-            - will try to get not yet set values from environments
-
-    Best practice:
-    - set environment variables FTRACK_SERVER & FTRACK_EVENTS_PATH
-    - launch event_server_cli with args:
-    ~/event_server_cli.py -ftrackuser "{username}" -ftrackapikey "{API key}" -storecred
-    - next time launch event_server_cli.py only with set environment variables
-        FTRACK_SERVER & FTRACK_EVENTS_PATH
-    '''
-    parser = argparse.ArgumentParser(description='Ftrack event server')
-    parser.add_argument(
-        "-ftrackurl", type=str, metavar='FTRACKURL',
-        help=(
-            "URL to ftrack server where events should handle"
-            " (default from environment: $FTRACK_SERVER)"
-        )
-    )
-    parser.add_argument(
-        "-ftrackuser", type=str,
-        help=(
-            "Username should be the username of the user in ftrack"
-            " to record operations against."
-            " (default from environment: $FTRACK_API_USER)"
-        )
-    )
-    parser.add_argument(
-        "-ftrackapikey", type=str,
-        help=(
-            "Should be the API key to use for authentication"
-            " (default from environment: $FTRACK_API_KEY)"
-        )
-    )
-    parser.add_argument(
-        "-ftrackeventpaths", nargs='+',
-        help=(
-            "List of paths where events are stored."
-            " (default from environment: $FTRACK_EVENTS_PATH)"
-        )
-    )
-    parser.add_argument(
-        '-storecred',
-        help=(
-            "Entered credentials will be also stored"
-            " to apps dir for future usage"
-        ),
-        action="store_true"
-    )
-    parser.add_argument(
-        '-noloadcred',
-        help="Load creadentials from apps dir",
-        action="store_true"
-    )
-    parser.add_argument(
-        '-legacy',
-        help="Load creadentials from apps dir",
-        action="store_true"
-    )
-    parser.add_argument(
-        "-clockifyapikey", type=str,
-        help=(
-            "Enter API key for Clockify actions."
-            " (default from environment: $CLOCKIFY_API_KEY)"
-        )
-    )
-    parser.add_argument(
-        "-clockifyworkspace", type=str,
-        help=(
-            "Enter workspace for Clockify."
-            " (default from module presets or "
-            "environment: $CLOCKIFY_WORKSPACE)"
-        )
-    )
-    ftrack_url = os.environ.get("FTRACK_SERVER")
-    username = os.environ.get("FTRACK_API_USER")
-    api_key = os.environ.get("FTRACK_API_KEY")
-
-    kwargs, args = parser.parse_known_args(argv)
-
-    if kwargs.ftrackurl:
-        ftrack_url = kwargs.ftrackurl
-
-    # Load Ftrack url from settings if not set
-    if not ftrack_url:
-        ftrack_url = get_ftrack_url_from_settings()
-
-    event_paths = None
-    if kwargs.ftrackeventpaths:
-        event_paths = kwargs.ftrackeventpaths
-
-    if not kwargs.noloadcred:
-        cred = credentials.get_credentials(ftrack_url)
-        username = cred.get('username')
-        api_key = cred.get('api_key')
-
-    if kwargs.ftrackuser:
-        username = kwargs.ftrackuser
-
-    if kwargs.ftrackapikey:
-        api_key = kwargs.ftrackapikey
-
-    if kwargs.clockifyworkspace:
-        os.environ["CLOCKIFY_WORKSPACE"] = kwargs.clockifyworkspace
-
-    if kwargs.clockifyapikey:
-        os.environ["CLOCKIFY_API_KEY"] = kwargs.clockifyapikey
-
-    legacy = kwargs.legacy
-
-    # Check url regex and accessibility
-    ftrack_url = check_ftrack_url(ftrack_url)
-    if not ftrack_url:
-        print('Exiting! < Please enter Ftrack server url >')
-        return 1
-
-    # Validate entered credentials
-    if not validate_credentials(ftrack_url, username, api_key):
-        print('Exiting! < Please enter valid credentials >')
-        return 1
-
-    if kwargs.storecred:
-        credentials.save_credentials(username, api_key, ftrack_url)
-
-    # Set Ftrack environments
-    os.environ["FTRACK_SERVER"] = ftrack_url
-    os.environ["FTRACK_API_USER"] = username
-    os.environ["FTRACK_API_KEY"] = api_key
-    if event_paths:
-        if isinstance(event_paths, (list, tuple)):
-            event_paths = os.pathsep.join(event_paths)
-        os.environ["FTRACK_EVENTS_PATH"] = event_paths
-
-    if legacy:
-        return legacy_server(ftrack_url)
-
-    return main_loop(ftrack_url)
-
-
-if __name__ == "__main__":
-    # Register interupt signal
-    def signal_handler(sig, frame):
-        print("You pressed Ctrl+C. Process ended.")
-        sys.exit(0)
-
-    signal.signal(signal.SIGINT, signal_handler)
-    signal.signal(signal.SIGTERM, signal_handler)
-
-    sys.exit(main(sys.argv))

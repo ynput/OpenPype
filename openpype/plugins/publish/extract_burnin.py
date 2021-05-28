@@ -44,6 +44,7 @@ class ExtractBurnin(openpype.api.Extractor):
         "harmony",
         "fusion",
         "aftereffects",
+        "tvpaint"
         # "resolve"
     ]
     optional = True
