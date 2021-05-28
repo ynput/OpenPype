@@ -44,6 +44,8 @@ class FilterComboBox(QtWidgets.QComboBox):
 
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
         self.setEditable(True)
+        combobox_delegate = QtWidgets.QStyledItemDelegate(self)
+        self.setItemDelegate(combobox_delegate)
 
         filter_proxy_model = QtCore.QSortFilterProxyModel(self)
         filter_proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
