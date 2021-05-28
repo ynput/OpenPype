@@ -9,6 +9,7 @@ from openpype.lib import (
     PROJECT_NAME_ALLOWED_SYMBOLS,
     PROJECT_NAME_REGEX
 )
+from .style import load_stylesheet
 from avalon.api import AvalonMongoDB
 
 from Qt import QtWidgets, QtCore
@@ -56,6 +57,12 @@ class FilterComboBox(QtWidgets.QComboBox):
             QtWidgets.QCompleter.UnfilteredPopupCompletion
         )
         self.setCompleter(completer)
+
+        completer_view = completer.popup()
+        completer_view.setObjectName("CompleterView")
+        delegate = QtWidgets.QStyledItemDelegate(completer_view)
+        completer_view.setItemDelegate(delegate)
+        completer_view.setStyleSheet(load_stylesheet())
 
         self.lineEdit().textEdited.connect(
             filter_proxy_model.setFilterFixedString
