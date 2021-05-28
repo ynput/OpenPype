@@ -256,10 +256,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             "publish": True,
             "family": "workfile",
             "families": ["workfile"],
-            "frameStart": context.data["frameStart"],
-            "frameEnd": context.data["frameEnd"],
-            "handleStart": context.data["handleStart"],
-            "handleEnd": context.data["handleEnd"],
             "representations": [{
                 "name": ext.lstrip("."),
                 "ext": ext.lstrip("."),
