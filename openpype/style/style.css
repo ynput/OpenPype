@@ -9,7 +9,7 @@ Enabled vs Disabled logic in most of stylesheets
    Enabled - color motive of borders and bg color
        - combobox, slider, views, buttons, checkbox, radiobox, inputs
 
-- QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox
+- QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox
     Enabled - bg has lighter or darked color
     Disabled - bg has same color as background
 
@@ -29,20 +29,20 @@ QWidget:disabled {
 }
 
 /* Inputs */
-QSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
+QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
     border: 1px solid {color:border};
     border-radius: 0.3em;
     background: {color:bg-inputs};
     padding: 0.1em;
 }
 
-QSpinBox:disabled, QLineEdit:disabled, QPlainTextEdit:disabled, QTextEdit:disabled {
+QAbstractSpinBox:disabled, QLineEdit:disabled, QPlainTextEdit:disabled, QTextEdit:disabled {
     background: {color:bg-inputs-disabled};
 }
-QSpinBox:hover, QLineEdit:hover, QPlainTextEdit:hover, QTextEdit:hover{
+QAbstractSpinBox:hover, QLineEdit:hover, QPlainTextEdit:hover, QTextEdit:hover{
     border-color: {color:border-hover};
 }
-QSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
+QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
     border-color: {color:border-focus};
 }
 
