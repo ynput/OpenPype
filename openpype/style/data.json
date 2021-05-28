@@ -1,0 +1,27 @@
+{
+    "color": {
+        "font": "#bfccd6",
+        "font-hover": "#eff3f5",
+        "font-disabled": "#737c85",
+        "font-view-selection": "black",
+
+        "bg": "#282C34",
+        "bg-inputs": "#21252B",
+        "bg-buttons": "#313741",
+        "bg-inputs-disabled": "#282C34",
+        "bg-buttons-disabled": "#4e5565",
+
+        "bg-view": "#313741",
+        "bg-view-alternate": "#282C34",
+        "bg-view-disabled": "#4e5565",
+        "bg-view-alternate-disabled": "#282C34",
+        "bg-view-selection": "rgba(77, 120, 204, 127)",
+
+        "border": "#464b54",
+        "border-hover": "#5d636f",
+        "border-focus": "#52acd7",
+
+        "active_1": "#48c896",
+        "active_2": "#52acd7"
+    }
+}

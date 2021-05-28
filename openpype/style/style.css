@@ -1,0 +1,437 @@
+/*
+Enabled vs Disabled logic in most of stylesheets
+
+- global font color
+    Enabled - should be same globalle except placeholders
+    Disabled - font color is greyed out
+
+- global active/hover
+   Enabled - color motive of borders and bg color
+       - combobox, slider, views, buttons, checkbox, radiobox, inputs
+
+- QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox
+    Enabled - bg has lighter or darked color
+    Disabled - bg has same color as background
+
+- QComboBox, QPushButton, QToolButton
+    Enabled - slightly lighter color
+    Disabled - even lighter color
+*/
+
+QWidget {
+    color: {color:font};
+    background: {color:bg};
+    border-radius: 0px;
+}
+
+QWidget:disabled {
+    color: {color:font-disabled};
+}
+
+/* Inputs */
+QSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
+    border: 1px solid {color:border};
+    border-radius: 0.3em;
+    background: {color:bg-inputs};
+    padding: 0.1em;
+}
+
+QSpinBox:disabled, QLineEdit:disabled, QPlainTextEdit:disabled, QTextEdit:disabled {
+    background: {color:bg-inputs-disabled};
+}
+QSpinBox:hover, QLineEdit:hover, QPlainTextEdit:hover, QTextEdit:hover{
+    border-color: {color:border-hover};
+}
+QSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
+    border-color: {color:border-focus};
+}
+
+/* Buttons */
+QPushButton {
+    text-align:center center;
+    border: 1px solid {color:border};
+    border-radius: 0.2em;
+    padding: 3px;
+    background: {color:bg-buttons};
+}
+
+QPushButton:hover {
+    background: #333840;
+    border-color: {color:border-hover};
+    color: {color:font-hover};
+}
+QPushButton:pressed {
+    border-color: {color:border-focus};
+}
+QPushButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
+QToolButton {
+    border: 1px solid #aaaaaa;
+    border-radius: 0.2em;
+    background: {color:bg-buttons};
+}
+QToolButton:hover {
+    background: #333840;
+    border-color: {color:border-hover};
+}
+QToolButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
+/* QMenu */
+QMenu {
+    border: 1px solid #555555;
+    background: {color:bg-inputs};
+}
+
+QMenu::item {
+    padding: 5px 10px 5px 5px;
+    border-left: 3px solid {color:bg-view};
+}
+QMenu::right-arrow {
+    min-width: 10px;
+}
+QMenu::separator {
+    border-left: 3px solid {color:bg-view};
+    background: black;
+    height: 2px;
+    margin-right: 5px;
+}
+
+QMenu::item:selected {
+    border-left-color: {color:active_1};
+    background: {color:bg-view-selection};
+}
+
+/* Combobox */
+QComboBox {
+    border: 1px solid {color:border};
+    border-radius: 3px;
+    padding: 1px 18px 1px 3px;
+    background: {color:bg-buttons};
+}
+QComboBox:hover {
+    border-color: {color:border-hover};
+}
+QComboBox:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
+/* QComboBox must have explicitly set Styled delegate! */
+QComboBox QAbstractItemView {
+    border: 1px solid {color:border};
+	background: {color:bg-inputs};
+    outline: none;
+}
+
+QComboBox QAbstractItemView::item {
+    padding: 2px 4px 2px 4px;
+    border-left: 3px solid {color:bg-view};
+}
+
+QComboBox QAbstractItemView::item:selected {
+    border-left-color: {color:active_1};/*rgb(84, 209, 178);*/
+    background: {color:bg-view-selection};
+    color: {color:font};
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 15px;
+    border-style: none;
+    border-left-style: solid;
+    border-left-color: {color:border};
+    border-left-width: 1px;
+}
+QComboBox::down-arrow, QComboBox::down-arrow:on, QComboBox::down-arrow:hover, QComboBox::down-arrow:focus
+{
+    image: url(:/openpype/images/combobox_arrow.png);
+}
+
+/* SLider */
+QSlider::groove {
+    border: 1px solid #464b54;
+    border-radius: 0.3em;
+    background: {color:bg-inputs};
+}
+QSlider::groove:horizontal {
+    height: 8px;
+}
+
+QSlider::groove:vertical {
+    width: 8px;
+}
+
+QSlider::groove:hover {
+    border-color: {color:border-hover};
+}
+QSlider::groove:disabled {
+    background: {color:bg-inputs-disabled};
+}
+QSlider::groove:focus {
+    border-color: {color:border-focus};
+}
+QSlider::handle {
+    background: qlineargradient(
+        x1: 0, y1: 0.5,
+        x2: 1, y2: 0.5,
+        stop: 0 {color:active_1},
+        stop: 1 {color:active_2}
+    );
+    border: 1px solid #5c5c5c;
+    width: 10px;
+    height: 10px;
+
+    border-radius: 5px;
+}
+QSlider::handle:horizontal {
+    margin: -2px 0;
+}
+QSlider::handle:vertical {
+    margin: 0 -2px;
+}
+
+QSlider::handle:disabled {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:1, y2:1,
+        stop:0 {color:bg-buttons},
+        stop:1 {color:bg-buttons-disabled}
+    );
+}
+
+/* Tab widget*/
+QTabWidget::pane {
+    border-top-style: none;
+}
+
+/* move to the right to not mess with borders of widget underneath */
+QTabWidget::tab-bar {
+    left: 2px;
+}
+
+QTabBar::tab {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px;
+
+}
+
+QTabBar::tab:selected {
+    background: qradialgradient(
+        cx:0.5, cy:1, radius: 1,
+        fx:0.5, fy:1,
+        stop:0.3 {color:bg}, stop:1 {color:bg-buttons}
+    )
+    /* background: qradialgradient(
+        cx:0.5, cy:0.5, radius: 2,
+        fx:0.5, fy:1,
+        stop:0.3 {color:bg}, stop:1 white
+    ) */
+    /* background: qlineargradient(
+        x1: 0, y1: 0, x2: 0, y2: 1,
+        stop: 0 {color:bg-inputs}, stop: 1.0 {color:bg}
+    ); */
+}
+
+QTabBar::tab:!selected {
+    /* Make it smaller*/
+    margin-top: 3px;
+    background: qradialgradient(
+        cx:0.5, cy:1, radius: 1,
+        fx:0.5, fy:1,
+        stop:0 {color:bg}, stop:1 {color:bg-inputs}
+    )
+}
+
+QTabBar::tab:!selected:hover {
+    background: qradialgradient(
+        cx:0.5, cy:1, radius: 1,
+        fx:0.5, fy:1,
+        stop:0.3 {color:bg-buttons}, stop:1 {color:bg}
+    )
+}
+
+QTabBar::tab:first:selected {
+    margin-left: 0;
+}
+
+QTabBar::tab:last:selected {
+    margin-right: 0;
+}
+
+QTabBar::tab:only-one {
+    margin: 0;
+}
+
+QHeaderView {
+    border: none;
+    border-radius: 2px;
+    margin: 0px;
+    padding: 0px;
+}
+
+QHeaderView::section  {
+    background: {color:bg-inputs};
+    padding: 4px;
+    border: none;
+    border-radius: 0px;
+    text-align: center;
+    color: {color:font};
+    font-weight: bold;
+}
+
+/* Views QListView QTreeView QTableView */
+QAbstractItemView {
+    border: 1px solid {color:border};
+    border-radius: 0.2em;
+    background: {color:bg-view};
+    alternate-background-color: {color:bg-view-alternate};
+}
+
+QAbstractItemView:disabled{
+    background: {color:bg-view-disabled};
+    alternate-background-color: {color:bg-view-alternate-disabled};
+}
+
+QAbstractItemView::item {}
+
+QAbstractItemView::item:selected {
+    background: {color:bg-view-selection};
+    color: {color:font-view-selection};
+}
+
+/* Same as selected but give ability to easy change it */
+QAbstractItemView::item:selected:!active {
+    background: {color:bg-view-selection};
+    color: {color:font-view-selection};
+}
+
+/* Progress bar */
+QProgressBar {
+    border: 1px solid {color:border};
+    font-weight: bold;
+    text-align: center;
+}
+
+QProgressBar:horizontal {
+    height: 20px;
+}
+QProgressBar:vertical {
+    width: 20px;
+}
+
+QProgressBar::chunk {
+    background: qlineargradient(
+        x1: 0, y1: 0.5,
+        x2: 1, y2: 0.5,
+        stop: 0 {color:active_1},
+        stop: 1 {color:active_2}
+    );
+}
+
+/* Scroll bars */
+QScrollBar:horizontal {
+    height: 15px;
+    margin: 3px 3px 3px 6px;
+    border: 1px transparent {color:bg-inputs};
+    border-radius: 4px;
+    background: {color:bg-inputs};
+}
+
+QScrollBar::handle:horizontal {
+    background: #4B5362;
+    min-width: 5px;
+    border-radius: 4px;
+}
+
+QScrollBar::add-line:horizontal {
+    margin: 0px 3px 0px 3px;
+    width: 0px;
+    height: 0px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:horizontal {
+    margin: 0px 3px 0px 3px;
+    height: 0px;
+    width: 0px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:horizontal:hover,QScrollBar::add-line:horizontal:on {
+    height: 0px;
+    width: 0px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:horizontal:hover, QScrollBar::sub-line:horizontal:on {
+    height: 0px;
+    width: 0px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::up-arrow:horizontal, QScrollBar::down-arrow:horizontal {
+    background: none;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+QScrollBar:vertical {
+    background: {color:bg-inputs};
+    width: 15px;
+    margin: 6px 3px 3px 3px;
+    border: 1px transparent {color:bg-inputs};
+    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical {
+    background: #4B5362;
+    min-height: 5px;
+    border-radius: 4px;
+}
+
+QScrollBar::sub-line:vertical {
+    margin: 3px 0px 3px 0px;
+    height: 0px;
+    width: 0px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:vertical {
+    margin: 3px 0px 3px 0px;
+    height: 0px;
+    width: 0px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:vertical:hover,QScrollBar::sub-line:vertical:on {
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+
+
+QScrollBar::add-line:vertical:hover, QScrollBar::add-line:vertical:on {
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+    background: none;
+}
+
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
