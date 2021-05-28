@@ -51,7 +51,7 @@ QPushButton {
     text-align:center center;
     border: 1px solid {color:border};
     border-radius: 0.2em;
-    padding: 3px;
+    padding: 3px 5px 3px 5px;
     background: {color:bg-buttons};
 }
 
@@ -434,4 +434,8 @@ QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
 
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
+}
+
+#IconBtn {
+    padding: 2px 3px 1px 3px;
 }
