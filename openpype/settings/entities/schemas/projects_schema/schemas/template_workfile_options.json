@@ -10,13 +10,36 @@
             "label": "Create first workfile",
             "default": false
         },
-
         {
-            "type": "path",
-            "key": "template_path",
-            "label": "First workfile Template",
-            "multiplatform": true,
-            "multipath": false
+            "type": "list",
+            "key": "custom_templates",
+            "label": "Custom templates",
+            "is_group": true,
+            "use_label_wrap": true,
+            "object_type": {
+                "type": "dict",
+                "children": [
+                    {
+                        "type": "task-types-enum",
+                        "key": "task_types",
+                        "label": "Task types"
+                    },
+                    {
+                        "type": "splitter"
+                    },
+                    {
+                        "type": "label",
+                        "label": "Absolute path to workfile template or OpenPype Anatomy text is accepted."
+                    },
+                    {
+                        "type": "path",
+                        "key": "path",
+                        "label": "Path",
+                        "multiplatform": true,
+                        "multipath": false
+                    }
+                ]
+            }
         },
         {
             "type": "boolean",
