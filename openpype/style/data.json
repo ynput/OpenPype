@@ -4,6 +4,7 @@
         "font-hover": "#eff3f5",
         "font-disabled": "#737c85",
         "font-view-selection": "black",
+        "font-view-hover": "#ffffff",
 
         "bg": "#282C34",
         "bg-inputs": "#21252B",

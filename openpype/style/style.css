@@ -323,6 +323,14 @@ QAbstractItemView::item:selected:!active {
     color: {color:font-view-selection};
 }
 
+QAbstractItemView::item:!selected:hover {
+    color: {color:font-view-hover};
+}
+
+QAbstractItemView::item:selected:hover {
+    color: {color:font-view-hover};
+}
+
 /* Progress bar */
 QProgressBar {
     border: 1px solid {color:border};
