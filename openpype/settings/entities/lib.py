@@ -128,6 +128,10 @@ def _fill_schema_template(child_data, schema_collection, schema_templates):
     if isinstance(template_data, dict):
         template_data = [template_data]
 
+    skip_paths = child_data.get("skip_paths") or []
+    if isinstance(skip_paths, STRING_TYPE):
+        skip_paths = [skip_paths]
+
     output = []
     for single_template_data in template_data:
         try:
