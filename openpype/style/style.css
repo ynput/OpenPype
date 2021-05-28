@@ -87,8 +87,11 @@ QMenu {
 }
 
 QMenu::item {
-    padding: 5px 10px 5px 5px;
+    padding: 8px 15px 8px 10px;
     border-left: 3px solid {color:bg-view};
+}
+QMenu::icon {
+    padding-left: 7px;
 }
 
 QMenu::item:selected {
