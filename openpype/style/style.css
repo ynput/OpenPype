@@ -313,6 +313,10 @@ QAbstractItemView::item:selected {
     color: {color:font-view-selection};
 }
 
+QAbstractItemView::item:selected:active {
+    color: {color:font};
+}
+
 /* Same as selected but give ability to easy change it */
 QAbstractItemView::item:selected:!active {
     background: {color:bg-view-selection};
