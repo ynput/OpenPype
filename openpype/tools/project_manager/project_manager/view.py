@@ -124,6 +124,9 @@ class HierarchyView(QtWidgets.QTreeView):
 
     def __init__(self, dbcon, source_model, parent):
         super(HierarchyView, self).__init__(parent)
+
+        self.setObjectName("HierarchyView")
+
         # Direct access to model
         self._source_model = source_model
         self._editors_mapping = {}
