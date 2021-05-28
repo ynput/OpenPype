@@ -9,7 +9,7 @@ from openpype.lib import (
     PROJECT_NAME_ALLOWED_SYMBOLS,
     PROJECT_NAME_REGEX
 )
-from .style import load_stylesheet
+from openpype.style import load_stylesheet
 from avalon.api import AvalonMongoDB
 
 from Qt import QtWidgets, QtCore

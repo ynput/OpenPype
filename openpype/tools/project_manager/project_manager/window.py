@@ -9,7 +9,8 @@ from . import (
 
     CreateProjectDialog
 )
-from .style import load_stylesheet, ResourceCache
+from openpype.style import load_stylesheet
+from .style import ResourceCache
 
 from openpype import resources
 from avalon.api import AvalonMongoDB
