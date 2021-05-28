@@ -15,59 +15,59 @@
                     "name": "template_color",
                     "template_data": [
                         {
-                            "label": "Model",
+                            "label": "Model:",
                             "name": "model"
                         },
                         {
-                            "label": "Rig",
+                            "label": "Rig:",
                             "name": "rig"
                         },
                         {
-                            "label": "Pointcache",
+                            "label": "Pointcache:",
                             "name": "pointcache"
                         },
                         {
-                            "label": "Animation",
+                            "label": "Animation:",
                             "name": "animation"
                         },
                         {
-                            "label": "Arnold Standin",
+                            "label": "Arnold Standin:",
                             "name": "ass"
                         },
                         {
-                            "label": "Camera",
+                            "label": "Camera:",
                             "name": "camera"
                         },
                         {
-                            "label": "FBX",
+                            "label": "FBX:",
                             "name": "fbx"
                         },
                         {
-                            "label": "Maya Scene",
+                            "label": "Maya Scene:",
                             "name": "mayaAscii"
                         },
                         {
-                            "label": "Set Dress",
+                            "label": "Set Dress:",
                             "name": "setdress"
                         },
                         {
-                            "label": "Layout",
+                            "label": "Layout:",
                             "name": "layout"
                         },
                         {
-                            "label": "VDB Cache",
+                            "label": "VDB Cache:",
                             "name": "vdbcache"
                         },
                         {
-                            "label": "Vray Proxy",
+                            "label": "Vray Proxy:",
                             "name": "vrayproxy"
                         },
                         {
-                            "label": "Yeti Cache",
+                            "label": "Yeti Cache:",
                             "name": "yeticache"
                         },
                         {
-                            "label": "Yeti Rig",
+                            "label": "Yeti Rig:",
                             "name": "yetiRig"
                         }
                     ]
