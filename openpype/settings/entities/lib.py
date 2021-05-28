@@ -189,7 +189,7 @@ def _fill_inner_schemas(schema_data, schema_collection, schema_templates):
                     schema_templates
                 )
 
-            elif child_type == "schema_template":
+            elif child_type in ("template", "schema_template"):
                 for filled_child in _fill_schema_template(
                     child, schema_collection, schema_templates
                 ):
