@@ -440,3 +440,32 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #IconBtn {
     padding: 2px 3px 1px 3px;
 }
+
+/* Project Manager stylesheets */
+#HierarchyView::item {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-right: 3px;
+}
+
+#TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
+    background: transparent;
+    border-radius: 0.3em;
+}
+
+#CompleterView {
+    border: 1px solid {color:border};
+    background: {color:bg-inputs};
+    outline: none;
+}
+
+#CompleterView::item {
+    padding: 2px 4px 2px 4px;
+    border-left: 3px solid {color:bg-view};
+}
+
+#CompleterView::item:hover {
+    border-left-color: {color:active_1};
+    background: {color:bg-view-selection};
+    color: {color:font};
+}
