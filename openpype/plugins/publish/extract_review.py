@@ -1686,7 +1686,7 @@ class OverscanCrop:
     def _convert_string_to_values(self, orig_string_value):
         string_value = orig_string_value.strip().lower()
         if not string_value:
-            return
+            return [None, None]
 
         # Replace "px" (and spaces before) with single space
         string_value = re.sub(r"([ ]+)?px", " ", string_value)
