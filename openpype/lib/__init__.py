@@ -109,7 +109,8 @@ from .applications import (
     get_app_environments_for_context,
     apply_project_environments_value,
 
-    compile_list_of_regexes
+    compile_list_of_regexes,
+    get_custom_workfile_template
 )
 
 from .profiles_filtering import filter_profiles
@@ -213,6 +214,7 @@ __all__ = [
     "apply_project_environments_value",
 
     "compile_list_of_regexes",
+    "get_custom_workfile_template",
 
     "filter_profiles",
 
