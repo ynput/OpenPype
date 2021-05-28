@@ -304,7 +304,9 @@ QAbstractItemView:disabled{
     alternate-background-color: {color:bg-view-alternate-disabled};
 }
 
-QAbstractItemView::item {}
+QAbstractItemView::item {
+
+}
 
 QAbstractItemView::item:selected {
     background: {color:bg-view-selection};
@@ -444,7 +446,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #IconBtn {
-    padding: 2px 3px 1px 3px;
+    padding: 1px 3px 2px 3px;
 }
 
 /* Project Manager stylesheets */

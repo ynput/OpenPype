@@ -68,6 +68,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             "Task",
             helper_btns_widget
         )
+        add_asset_btn.setObjectName("IconBtn")
+        add_task_btn.setObjectName("IconBtn")
 
         helper_btns_layout = QtWidgets.QHBoxLayout(helper_btns_widget)
         helper_btns_layout.setContentsMargins(0, 0, 0, 0)
