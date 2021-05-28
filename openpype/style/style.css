@@ -18,6 +18,11 @@ Enabled vs Disabled logic in most of stylesheets
     Disabled - even lighter color
 */
 
+* {
+    font-size: 8pt;
+    font-family: "Poppins";
+}
+
 QWidget {
     color: {color:font};
     background: {color:bg};
