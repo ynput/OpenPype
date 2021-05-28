@@ -109,7 +109,7 @@ QMenu::item:selected {
 QComboBox {
     border: 1px solid {color:border};
     border-radius: 3px;
-    padding: 1px 18px 1px 3px;
+    padding: 1px 3px 1px 3px;
     background: {color:bg-buttons};
 }
 QComboBox:hover {

@@ -34,6 +34,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         project_combobox = QtWidgets.QComboBox(project_widget)
         project_combobox.setModel(project_model)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
+        style_delegate = QtWidgets.QStyledItemDelegate()
+        project_combobox.setItemDelegate(style_delegate)
 
         refresh_projects_btn = QtWidgets.QPushButton(project_widget)
         refresh_projects_btn.setIcon(ResourceCache.get_icon("refresh"))
