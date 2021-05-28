@@ -1,6 +1,0 @@
-<RCC>
-    <qresource prefix="/openpype">
-        <file>images/combobox_arrow.png</file>
-        <file>images/combobox_arrow_disabled.png</file>
-    </qresource>
-</RCC>
