@@ -17,7 +17,32 @@ WRAPPER_TYPES = ["form", "collapsible-wrap"]
 NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
 OVERRIDE_VERSION = 1
 
+DEFAULT_VALUES_KEY = "__default_values__"
+TEMPLATE_METADATA_KEYS = (
+    DEFAULT_VALUES_KEY,
+)
+
 template_key_pattern = re.compile(r"(\{.*?[^{0]*\})")
+
+
+def _pop_metadata_item(template):
+    found_idx = None
+    for idx, item in enumerate(template):
+        if not isinstance(item, dict):
+            continue
+
+        for key in TEMPLATE_METADATA_KEYS:
+            if key in item:
+                found_idx = idx
+                break
+
+        if found_idx is not None:
+            break
+
+    metadata_item = {}
+    if found_idx is not None:
+        metadata_item = template.pop(found_idx)
+    return metadata_item
 
 
 def _fill_schema_template_data(
@@ -29,14 +54,12 @@ def _fill_schema_template_data(
         required_keys = set()
         missing_keys = set()
 
-        _template = []
-        default_values = {}
-        for item in template:
-            if isinstance(item, dict) and "__default_values__" in item:
-                default_values = item["__default_values__"]
-            else:
-                _template.append(item)
-        template = _template
+        # Copy template data as content may change
+        template = copy.deepcopy(template)
+
+        metadata_item = _pop_metadata_item(template)
+
+        default_values = metadata_item.get(DEFAULT_VALUES_KEY) or {}
 
         for key, value in default_values.items():
             if key not in template_data:
