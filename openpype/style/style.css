@@ -489,3 +489,20 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:bg-view-selection};
     color: {color:font};
 }
+
+/* Launcher specific stylesheets */
+#IconView[mode="icon"] {
+    font-size: 8pt;
+    border: 0px;
+    padding: 0px;
+    margin: 0px;
+}
+
+#IconView[mode="icon"]::item  {
+    margin-top: 6px;
+    border: 0px;
+}
+
+#IconView[mode="icon"]::icon {
+    top: 3px;
+}
