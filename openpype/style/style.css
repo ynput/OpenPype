@@ -91,12 +91,13 @@ QMenu {
     background: {color:bg-inputs};
 }
 
-QMenu::item {
-    padding: 8px 15px 8px 10px;
-    border-left: 3px solid {color:bg-view};
-}
 QMenu::icon {
     padding-left: 7px;
+}
+
+QMenu::item {
+    padding: 6px 25px 6px 10px;
+    border-left: 3px solid {color:bg-view};
 }
 
 QMenu::item:selected {
