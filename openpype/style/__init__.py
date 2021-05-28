@@ -2,7 +2,6 @@ import os
 import json
 import collections
 from openpype import resources
-from avalon.vendor import qtawesome
 
 
 _STYLESHEET_CACHE = None
