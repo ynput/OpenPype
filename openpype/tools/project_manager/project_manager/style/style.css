@@ -10,7 +10,7 @@ QTreeView::item:selected, QTreeView::item:selected:!active {
     color: black;
 }
 
-#RefreshBtn {
+#IconBtn {
     padding: 2px;
 }
 

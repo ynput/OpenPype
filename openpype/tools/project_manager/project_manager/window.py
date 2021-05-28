@@ -40,7 +40,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         refresh_projects_btn = QtWidgets.QPushButton(project_widget)
         refresh_projects_btn.setIcon(ResourceCache.get_icon("refresh"))
         refresh_projects_btn.setToolTip("Refresh projects")
-        refresh_projects_btn.setObjectName("RefreshBtn")
+        refresh_projects_btn.setObjectName("IconBtn")
 
         create_project_btn = QtWidgets.QPushButton(
             "Create project...", project_widget
