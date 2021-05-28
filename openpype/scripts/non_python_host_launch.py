@@ -83,7 +83,7 @@ def main(argv):
     if host_name == "photoshop":
         from avalon.photoshop.lib import main
     elif host_name == "aftereffects":
-        from avalon.aftereffects.lib import launch
+        from avalon.aftereffects.lib import main
     elif host_name == "harmony":
         from avalon.harmony.lib import launch
     else:
