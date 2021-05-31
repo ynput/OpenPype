@@ -28,12 +28,14 @@ class ExtractThumbnail(pype.api.Extractor):
 
         camera = instance.data['review_camera']
 
-        capture_preset = instance.context.data.get('presets', {}).get('maya', {}).get('capture')
+        capture_preset = instance.context.data.get(
+            'presets', {}).get('maya', {}).get('capture')
 
         try:
             preset = lib.load_capture_preset(data=capture_preset)
         except Exception as exc:
-            self.log.error('Error loading capture presets: {}'.format(str(exc)))
+            self.log.error(
+                'Error loading capture presets: {}'.format(str(exc)))
             preset = {}
         self.log.info('Using viewport preset: {}'.format(preset))
 
