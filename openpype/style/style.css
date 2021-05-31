@@ -468,9 +468,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
 
-#IconBtn {
-    padding: 1px 3px 2px 3px;
-}
+#IconBtn {}
 
 /* Project Manager stylesheets */
 #HierarchyView::item {
