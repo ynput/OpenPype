@@ -341,6 +341,28 @@ QAbstractItemView::item:selected:hover {
     color: {color:font-view-hover};
 }
 
+QAbstractItemView::branch:open:has-children:!has-siblings,
+QAbstractItemView::branch:open:has-children:has-siblings {
+    border-image: none;
+    image: url(:/openpype/images/branch_open.png);
+}
+QAbstractItemView::branch:open:has-children:!has-siblings:hover,
+QAbstractItemView::branch:open:has-children:has-siblings:hover {
+    border-image: none;
+    image: url(:/openpype/images//branch_open_on.png);
+}
+
+QAbstractItemView::branch:has-children:!has-siblings:closed,
+QAbstractItemView::branch:closed:has-children:has-siblings {
+    border-image: none;
+    image: url(:/openpype/images//branch_closed.png);
+}
+QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
+QAbstractItemView::branch:closed:has-children:has-siblings:hover {
+    border-image: none;
+    image: url(:/openpype/images//branch_closed_on.png);
+}
+
 /* Progress bar */
 QProgressBar {
     border: 1px solid {color:border};
