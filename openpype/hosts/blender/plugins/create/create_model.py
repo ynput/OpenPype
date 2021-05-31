@@ -20,14 +20,14 @@ class CreateModel(plugin.Creator):
         # Get Instance Containter or create it if it does not exist
         instances = bpy.data.collections.get(AVALON_INSTANCES)
         if not instances:
-            instances = bpy.data.collections.new(name = AVALON_INSTANCES)
+            instances = bpy.data.collections.new(name=AVALON_INSTANCES)
             bpy.context.scene.collection.children.link(instances)
 
         # Create instance object
         asset = self.data["asset"]
         subset = self.data["subset"]
         name = plugin.asset_name(asset, subset)
-        asset_group = bpy.data.objects.new(name=name, object_data = None)
+        asset_group = bpy.data.objects.new(name=name, object_data=None)
         instances.objects.link(asset_group)
         self.data['task'] = api.Session.get('AVALON_TASK')
         lib.imprint(asset_group, self.data)
@@ -40,7 +40,7 @@ class CreateModel(plugin.Creator):
                 obj.select_set(True)
             selected.append(asset_group)
             context = plugin.create_blender_context(
-                active = asset_group, selected = selected)
+                active=asset_group, selected=selected)
             bpy.ops.object.parent_set(context, keep_transform=True)
 
         return asset_group
