@@ -657,7 +657,9 @@ class Delivery(BaseAction):
 
     def copy_file(self, src_path, dst_path):
         if os.path.exists(dst_path):
-            self.log.warning("Delivery file '{}' already exists".format(dst_path))
+            self.log.warning(
+                "Delivery file '{}' already exists".format(dst_path)
+            )
             return
         try:
             filelink.create(
