@@ -43,7 +43,7 @@ def sizeof_fmt(num, suffix='B'):
     return "%.1f%s%s" % (num, 'Yi', suffix)
 
 
-def path_from_represenation(representation, anatomy):
+def path_from_representation(representation, anatomy):
     from avalon import pipeline  # safer importing
 
     try:
@@ -126,18 +126,22 @@ def check_destination_path(repre_id,
     anatomy_filled = anatomy.format_all(anatomy_data)
     dest_path = anatomy_filled["delivery"][template_name]
     report_items = collections.defaultdict(list)
-    sub_msg = None
+
     if not dest_path.solved:
         msg = (
             "Missing keys in Representation's context"
             " for anatomy template \"{}\"."
         ).format(template_name)
 
+        sub_msg = (
+            "Representation: {}<br>"
+        ).format(repre_id)
+
         if dest_path.missing_keys:
             keys = ", ".join(dest_path.missing_keys)
-            sub_msg = (
-                "Representation: {}<br>- Missing keys: \"{}\"<br>"
-            ).format(repre_id, keys)
+            sub_msg += (
+                "- Missing keys: \"{}\"<br>"
+            ).format(keys)
 
         if dest_path.invalid_types:
             items = []
@@ -145,10 +149,9 @@ def check_destination_path(repre_id,
                 items.append("\"{}\" {}".format(key, str(value)))
 
             keys = ", ".join(items)
-            sub_msg = (
-                "Representation: {}<br>"
+            sub_msg += (
                 "- Invalid value DataType: \"{}\"<br>"
-            ).format(repre_id, keys)
+            ).format(keys)
 
         report_items[msg].append(sub_msg)
 
