@@ -4,8 +4,8 @@ import pyblish.api
 from avalon import io
 
 
-class CollectInstances(pyblish.api.ContextPlugin):
-    label = "Collect Workfile instance"
+class CollectWorkfile(pyblish.api.ContextPlugin):
+    label = "Collect Workfile"
     order = pyblish.api.CollectorOrder - 1
     hosts = ["tvpaint"]
 
