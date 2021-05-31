@@ -53,9 +53,9 @@ class VRaySceneLoader(api.Loader):
         if c is not None:
             cmds.setAttr("{0}.useOutlinerColor".format(group_node), 1)
             cmds.setAttr("{0}.outlinerColor".format(group_node),
-                (float(c[0])/256),
-                (float(c[1])/256),
-                (float(c[2])/256)
+                (float(c[0])/255),
+                (float(c[1])/255),
+                (float(c[2])/255)
             )
 
         return containerise(

@@ -62,9 +62,9 @@ class LoadVDBtoRedShift(api.Loader):
         if c is not None:
             cmds.setAttr(root + ".useOutlinerColor", 1)
             cmds.setAttr(root + ".outlinerColor",
-                (float(c[0])/256),
-                (float(c[1])/256),
-                (float(c[2])/256)
+                (float(c[0])/255),
+                (float(c[1])/255),
+                (float(c[2])/255)
             )
 
         # Create VR

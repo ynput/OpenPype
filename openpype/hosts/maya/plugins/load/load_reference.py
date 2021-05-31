@@ -86,9 +86,9 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
             if c is not None:
                 groupNode.useOutlinerColor.set(1)
                 groupNode.outlinerColor.set(
-                    (float(c[0])/256),
-                    (float(c[1])/256),
-                    (float(c[2])/256)
+                    (float(c[0])/255),
+                    (float(c[1])/255),
+                    (float(c[2])/255)
                 )
 
             self[:] = newNodes
