@@ -66,7 +66,10 @@ class YetiCacheLoader(api.Loader):
         if c is not None:
             cmds.setAttr(group_name + ".useOutlinerColor", 1)
             cmds.setAttr(group_name + ".outlinerColor",
-                         c[0], c[1], c[2])
+                (float(c[0])/256),
+                (float(c[1])/256),
+                (float(c[2])/256)
+            )
 
         nodes.append(group_node)
 

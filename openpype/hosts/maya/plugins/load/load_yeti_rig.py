@@ -84,7 +84,10 @@ class YetiRigLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
         if c is not None:
             cmds.setAttr(groupName + ".useOutlinerColor", 1)
             cmds.setAttr(groupName + ".outlinerColor",
-                         c[0], c[1], c[2])
+                (float(c[0])/256),
+                (float(c[1])/256),
+                (float(c[2])/256)
+            )
         self[:] = nodes
 
         return nodes

@@ -11,66 +11,74 @@
             "label": "Loaded Subsets Outliner Colors",
             "children": [
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Model:",
-                            "name": "model"
-                        },
-                        {
-                            "label": "Rig:",
-                            "name": "rig"
-                        },
-                        {
-                            "label": "Pointcache:",
-                            "name": "pointcache"
-                        },
-                        {
-                            "label": "Animation:",
-                            "name": "animation"
-                        },
-                        {
-                            "label": "Arnold Standin:",
-                            "name": "ass"
-                        },
-                        {
-                            "label": "Camera:",
-                            "name": "camera"
-                        },
-                        {
-                            "label": "FBX:",
-                            "name": "fbx"
-                        },
-                        {
-                            "label": "Maya Scene:",
-                            "name": "mayaAscii"
-                        },
-                        {
-                            "label": "Set Dress:",
-                            "name": "setdress"
-                        },
-                        {
-                            "label": "Layout:",
-                            "name": "layout"
-                        },
-                        {
-                            "label": "VDB Cache:",
-                            "name": "vdbcache"
-                        },
-                        {
-                            "label": "Vray Proxy:",
-                            "name": "vrayproxy"
-                        },
-                        {
-                            "label": "Yeti Cache:",
-                            "name": "yeticache"
-                        },
-                        {
-                            "label": "Yeti Rig:",
-                            "name": "yetiRig"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Model:",
+                    "key": "model"
+                },
+                {
+                    "type": "color",
+                    "label": "Rig:",
+                    "key": "rig"
+                },
+                {
+                    "type": "color",
+                    "label": "Pointcache:",
+                    "key": "pointcache"
+                },
+                {
+                    "type": "color",
+                    "label": "Animation:",
+                    "key": "animation"
+                },
+                {
+                    "type": "color",
+                    "label": "Arnold Standin:",
+                    "key": "ass"
+                },
+                {
+                    "type": "color",
+                    "label": "Camera:",
+                    "key": "camera"
+                },
+                {
+                    "type": "color",
+                    "label": "FBX:",
+                    "key": "fbx"
+                },
+                {
+                    "type": "color",
+                    "label": "Maya Scene:",
+                    "key": "mayaAscii"
+                },
+                {
+                    "type": "color",
+                    "label": "Set Dress:",
+                    "key": "setdress"
+                },
+                {
+                    "type": "color",
+                    "label": "Layout:",
+                    "key": "layout"
+                },
+                {
+                    "type": "color",
+                    "label": "VDB Cache:",
+                    "key": "vdbcache"
+                },
+                {
+                    "type": "color",
+                    "label": "Vray Proxy:",
+                    "key": "vrayproxy"
+                },
+                {
+                    "type": "color",
+                    "label": "Yeti Cache:",
+                    "key": "yeticache"
+                },
+                {
+                    "type": "color",
+                    "label": "Yeti Rig:",
+                    "key": "yetiRig"
                 }
             ]
         }
