@@ -5,8 +5,8 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api
-import avalon.blender
+from avalon import api, blender
+from avalon.blender.pipeline import AVALON_CONTAINERS
 from openpype.api import PypeCreatorMixin
 
 VALID_EXTENSIONS = [".blend", ".json", ".abc"]
@@ -27,25 +27,17 @@ def get_unique_number(
     asset: str, subset: str
 ) -> str:
     """Return a unique number based on the asset name."""
-    avalon_containers = [
-        c for c in bpy.data.collections
-        if c.name == 'AVALON_CONTAINERS'
-    ]
-    containers = []
-    # First, add the children of avalon containers
-    for c in avalon_containers:
-        containers.extend(c.children)
-    # then keep looping to include all the children
-    for c in containers:
-        containers.extend(c.children)
-    container_names = [
-        c.name for c in containers
-    ]
+    avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
+    if not avalon_container:
+        return "01"
+    asset_groups = avalon_container.objects
+
+    container_names = [c.name for c in asset_groups]
     count = 1
-    name = f"{asset}_{count:0>2}_{subset}_CON"
+    name = f"{asset}_{count:0>2}_{subset}"
     while name in container_names:
         count += 1
-        name = f"{asset}_{count:0>2}_{subset}_CON"
+        name = f"{asset}_{count:0>2}_{subset}"
     return f"{count:0>2}"
 
 
@@ -102,7 +94,7 @@ def get_local_collection_with_name(name):
     return None
 
 
-class Creator(PypeCreatorMixin, avalon.blender.Creator):
+class Creator(PypeCreatorMixin, blender.Creator):
     pass
 
 
