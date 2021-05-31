@@ -20,7 +20,8 @@ Enabled vs Disabled logic in most of stylesheets
 
 * {
     font-size: 9pt;
-    font-family: "Poppins";
+    font-family: "Montserrat";
+    font-weight: 450;
 }
 
 QWidget {

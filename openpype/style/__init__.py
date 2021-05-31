@@ -63,12 +63,12 @@ def _load_font():
         _FONT_IDS = []
         fonts_dirpath = os.path.join(current_dir, "fonts")
         font_dirs = []
-        font_dirs.append(os.path.join(fonts_dirpath, "Poppins"))
+        font_dirs.append(os.path.join(fonts_dirpath, "Montserrat"))
 
         loaded_fonts = []
         for font_dir in font_dirs:
             for filename in os.listdir(font_dir):
-                if os.path.splitext(filename)[1] != ".ttf":
+                if os.path.splitext(filename)[1] not in [".ttf"]:
                     continue
                 full_path = os.path.join(font_dir, filename)
                 font_id = QtGui.QFontDatabase.addApplicationFont(full_path)
