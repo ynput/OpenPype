@@ -2132,9 +2132,10 @@ def load_capture_preset(path=None, data=None):
 
     if data:
         preset = data
-    else:
-        path = path
+    elif path:
         preset = capture_gui.lib.load_json(path)
+    else:
+        return {}
     print(preset)
 
     options = dict()
@@ -2147,11 +2148,7 @@ def load_capture_preset(path=None, data=None):
     # GENERIC
     id = 'Generic'
     for key in preset[id]:
-        if key.startswith('isolate'):
-            pass
-            # options['isolate'] = preset[id][key]
-        else:
-            options[str(key)] = preset[id][key]
+        options[str(key)] = preset[id][key]
 
     # RESOLUTION
     id = 'Resolution'
@@ -2161,9 +2158,9 @@ def load_capture_preset(path=None, data=None):
     # DISPLAY OPTIONS
     id = 'Display Options'
     disp_options = {}
-    for key in preset['Display Options']:
+    for key in preset[id]:
         if key.startswith('background'):
-            disp_options[key] = preset['Display Options'][key]
+            disp_options[key] = preset[id][key]
         else:
             disp_options['displayGradient'] = True
 
@@ -2231,16 +2228,6 @@ def load_capture_preset(path=None, data=None):
     # use active sound track
     scene = capture.parse_active_scene()
     options['sound'] = scene['sound']
-    cam_options = dict()
-    cam_options['overscan'] = 1.0
-    cam_options['displayFieldChart'] = False
-    cam_options['displayFilmGate'] = False
-    cam_options['displayFilmOrigin'] = False
-    cam_options['displayFilmPivot'] = False
-    cam_options['displayGateMask'] = False
-    cam_options['displayResolution'] = False
-    cam_options['displaySafeAction'] = False
-    cam_options['displaySafeTitle'] = False
 
     # options['display_options'] = temp_options
 
