@@ -62,7 +62,10 @@ class LoadVDBtoRedShift(api.Loader):
         if c is not None:
             cmds.setAttr(root + ".useOutlinerColor", 1)
             cmds.setAttr(root + ".outlinerColor",
-                         c[0], c[1], c[2])
+                (float(c[0])/256),
+                (float(c[1])/256),
+                (float(c[2])/256)
+            )
 
         # Create VR
         volume_node = cmds.createNode("RedshiftVolumeShape",
