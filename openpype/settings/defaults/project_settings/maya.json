@@ -293,19 +293,22 @@
                 },
                 "Display Options": {
                     "background": [
-                        0.7,
-                        0.7,
-                        0.7
+                        125,
+                        125,
+                        125,
+                        255
                     ],
                     "backgroundBottom": [
-                        0.7,
-                        0.7,
-                        0.7
+                        125,
+                        125,
+                        125,
+                        255
                     ],
                     "backgroundTop": [
-                        0.7,
-                        0.7,
-                        0.7
+                        125,
+                        125,
+                        125,
+                        255
                     ],
                     "override_display": true
                 },

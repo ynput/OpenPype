@@ -48,23 +48,21 @@
                             "type": "label",
                             "label": "<b>Display Options</b>"
                         },
+
                         {
-                            "type": "schema_template",
-                            "name": "template_color",
-                            "template_data": [
-                                {
-                                    "name": "background",
-                                    "label": "Background Color:    "
-                                },
-                                {
-                                    "name": "backgroundBottom",
-                                    "label": "Background Bottom:    "
-                                },
-                                {
-                                    "name": "backgroundTop",
-                                    "label": "Background Top:    "
-                                }
-                            ]
+                            "type": "color",
+                            "key": "background",
+                            "label": "Background Color:    "
+                        },
+                        {
+                            "type": "color",
+                            "key": "backgroundBottom",
+                            "label": "Background Bottom:    "
+                        },
+                        {
+                            "type": "color",
+                            "key": "backgroundTop",
+                            "label": "Background Top:    "
                         },
                         {
                             "type": "boolean",
