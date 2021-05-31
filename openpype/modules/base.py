@@ -139,6 +139,25 @@ class ITrayModule:
         """
         pass
 
+    def execute_in_main_thread(self, callback):
+        """ Pushes callback to the queue or process 'callback' on a main thread
+
+            Some callbacks need to be processed on main thread (menu actions
+            must be added on main thread or they won't get triggered etc.)
+        """
+        # called without initialized tray, still main thread needed
+        if not self.tray_initialized:
+            try:
+                callback = self._main_thread_callbacks.popleft()
+                callback()
+            except:
+                self.log.warning(
+                    "Failed to execute {} in main thread".format(callback),
+                    exc_info=True)
+
+            return
+        self.manager.tray_manager.execute_in_main_thread(callback)
+
     def show_tray_message(self, title, message, icon=None, msecs=None):
         """Show tray message.
 

@@ -1,3 +1,4 @@
+import collections
 import os
 import sys
 
@@ -20,7 +21,6 @@ class TrayManager:
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
-
         self.pype_info_widget = None
 
         self.log = Logger.get_logger(self.__class__.__name__)
@@ -30,6 +30,28 @@ class TrayManager:
         self.modules_manager = TrayModulesManager()
 
         self.errors = []
+
+        self.main_thread_timer = None
+        self._main_thread_callbacks = collections.deque()
+        self._execution_in_progress = None
+
+    def execute_in_main_thread(self, callback):
+        self._main_thread_callbacks.append(callback)
+
+    def _main_thread_execution(self):
+        if self._execution_in_progress:
+            return
+        self._execution_in_progress = True
+        while self._main_thread_callbacks:
+            try:
+                callback = self._main_thread_callbacks.popleft()
+                callback()
+            except:
+                self.log.warning(
+                    "Failed to execute {} in main thread".format(callback),
+                    exc_info=True)
+
+        self._execution_in_progress = False
 
     def initialize_modules(self):
         """Add modules to tray."""
@@ -55,6 +77,14 @@ class TrayManager:
 
         # Print time report
         self.modules_manager.print_report()
+
+        # create timer loop to check callback functions
+        main_thread_timer = QtCore.QTimer()
+        main_thread_timer.setInterval(300)
+        main_thread_timer.timeout.connect(self._main_thread_execution)
+        main_thread_timer.start()
+
+        self.main_thread_timer = main_thread_timer
 
     def show_tray_message(self, title, message, icon=None, msecs=None):
         """Show tray message.
