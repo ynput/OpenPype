@@ -231,12 +231,13 @@ class TaskTypeEnumEntity(BaseEnumEntity):
         self.placeholder = None
 
     def _get_enum_values(self):
-        from ..lib import get_default_anatomy_settings
-        anatomy_settings = get_default_anatomy_settings()
+        anatomy_entity = self.get_entity_from_path(
+            "project_settings/project_anatomy"
+        )
 
         valid_keys = set()
         enum_items = []
-        for task_type, _task_attr in anatomy_settings["tasks"].items():
+        for task_type in anatomy_entity["tasks"].keys():
             enum_items.append({task_type: task_type})
             valid_keys.add(task_type)
 
