@@ -481,6 +481,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
     background: transparent;
+    border-color: {color:font};
     border-radius: 0.3em;
 }
 
