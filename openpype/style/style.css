@@ -74,9 +74,10 @@ QPushButton:disabled {
 }
 
 QToolButton {
-    border: 1px solid #aaaaaa;
+    border: none;
+    background: transparent;
     border-radius: 0.2em;
-    background: {color:bg-buttons};
+    padding: 2px;
 }
 
 QToolButton:hover {
