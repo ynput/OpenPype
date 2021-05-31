@@ -2,6 +2,7 @@ import os
 import re
 import copy
 import json
+import shutil
 
 from abc import ABCMeta, abstractmethod
 import six
@@ -17,6 +18,7 @@ from openpype.lib import (
     get_decompress_dir,
     decompress
 )
+import tempfile
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -622,6 +624,51 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         if temp_data["input_is_sequence"]:
             collections = clique.assemble(repre["files"])[0]
+
+            if not collections[0].is_contiguous():
+                # there are holes in sequence, lets get them
+                holes = collections[0].holes()
+                new_files = {}
+                last_existing_file = None
+                for idx in holes.indexes:
+                    # get previous existing file
+                    test_file = os.path.join(
+                        staging_dir, "{}{:0" + holes.padding + "d}{}".format(
+                            holes.head, idx - 1, holes.tail))
+                    if os.path.isfile(test_file):
+                        new_files[idx] = test_file
+                        last_existing_file = test_file
+                    else:
+                        if not last_existing_file:
+                            # previous file is not found (sequence has a hole
+                            # at the beginning. Use first available frame
+                            # there is.
+                            try:
+                                last_existing_file = list(collections[0])[0]
+                            except IndexError:
+                                # empty collection?
+                                raise AssertionError(
+                                    "Invalid sequence collected")
+                        new_files[idx] = last_existing_file
+                # so now new files are dict with missing frame as a key and
+                # existing file as a value.
+                files_to_clean = []
+                if new_files:
+                    for frame, file in new_files.items():
+                        self.log.info(
+                            "Filling gap {} with {}".format(frame, file))
+
+                        hole = os.path.join(
+                            staging_dir,
+                            "{}{:0" + holes.padding + "d}{}".format(
+                                holes.head, frame, holes.tail))
+                        shutil.copy2(file, hole)
+                        files_to_clean.append(hole)
+                        
+                # 1) copy existing files to temp
+                # 2) process holes with existing frames
+                # 3) create new complete collection
+                # 4) put it into ffmpeg
 
             full_input_path = os.path.join(
                 staging_dir,
