@@ -78,10 +78,12 @@ QToolButton {
     border-radius: 0.2em;
     background: {color:bg-buttons};
 }
+
 QToolButton:hover {
     background: #333840;
     border-color: {color:border-hover};
 }
+
 QToolButton:disabled {
     background: {color:bg-buttons-disabled};
 }
@@ -345,22 +347,26 @@ QAbstractItemView::branch:open:has-children:!has-siblings,
 QAbstractItemView::branch:open:has-children:has-siblings {
     border-image: none;
     image: url(:/openpype/images/branch_open.png);
+    background: {color:bg-view};
 }
 QAbstractItemView::branch:open:has-children:!has-siblings:hover,
 QAbstractItemView::branch:open:has-children:has-siblings:hover {
     border-image: none;
     image: url(:/openpype/images//branch_open_on.png);
+    background: {color:bg-view};
 }
 
 QAbstractItemView::branch:has-children:!has-siblings:closed,
 QAbstractItemView::branch:closed:has-children:has-siblings {
     border-image: none;
     image: url(:/openpype/images//branch_closed.png);
+    background: {color:bg-view};
 }
 QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
 QAbstractItemView::branch:closed:has-children:has-siblings:hover {
     border-image: none;
     image: url(:/openpype/images//branch_closed_on.png);
+    background: {color:bg-view};
 }
 
 /* Progress bar */
