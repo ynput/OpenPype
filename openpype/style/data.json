@@ -12,6 +12,10 @@
         "bg-inputs-disabled": "#282C34",
         "bg-buttons-disabled": "#4e5565",
 
+        "bg-menu-separator": "rgba(75, 83, 98, 127)",
+
+        "bg-scroll-handle": "#4B5362",
+
         "bg-view": "#313741",
         "bg-view-alternate": "#282C34",
         "bg-view-disabled": "#4e5565",

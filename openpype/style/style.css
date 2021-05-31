@@ -110,7 +110,7 @@ QMenu::right-arrow {
 }
 QMenu::separator {
     border-left: 3px solid {color:bg-view};
-    background: black;
+    background: {color:bg-menu-separator};
     height: 2px;
     margin-right: 5px;
 }
@@ -364,18 +364,33 @@ QProgressBar::chunk {
 }
 
 /* Scroll bars */
+QScrollBar {
+    background: {color:bg-inputs};
+    border-radius: 4px;
+    border: 1px transparent {color:bg-inputs};
+}
+
 QScrollBar:horizontal {
     height: 15px;
     margin: 3px 3px 3px 6px;
-    border: 1px transparent {color:bg-inputs};
+}
+
+QScrollBar:vertical {
+    width: 15px;
+    margin: 6px 3px 3px 3px;
+}
+
+QScrollBar::handle {
+    background: {color:bg-scroll-handle};
     border-radius: 4px;
-    background: {color:bg-inputs};
 }
 
 QScrollBar::handle:horizontal {
-    background: #4B5362;
     min-width: 5px;
-    border-radius: 4px;
+}
+
+QScrollBar::handle:vertical {
+    min-height: 5px;
 }
 
 QScrollBar::add-line:horizontal {
@@ -414,20 +429,6 @@ QScrollBar::up-arrow:horizontal, QScrollBar::down-arrow:horizontal {
 
 QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
     background: none;
-}
-
-QScrollBar:vertical {
-    background: {color:bg-inputs};
-    width: 15px;
-    margin: 6px 3px 3px 3px;
-    border: 1px transparent {color:bg-inputs};
-    border-radius: 4px;
-}
-
-QScrollBar::handle:vertical {
-    background: #4B5362;
-    min-height: 5px;
-    border-radius: 4px;
 }
 
 QScrollBar::sub-line:vertical {
