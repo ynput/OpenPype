@@ -52,6 +52,11 @@ def _fill_schema_template_data(
     if required_keys is None:
         first = True
 
+        if "skip_paths" in template_data:
+            skip_paths = template_data["skip_paths"]
+            if not isinstance(skip_paths, list):
+                skip_paths = [skip_paths]
+
         # Cleanup skip paths (skip empty values)
         skip_paths = [path for path in skip_paths if path]
 
