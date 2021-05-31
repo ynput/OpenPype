@@ -1463,7 +1463,7 @@ def _get_basic_context_data_for_anatomy(env=None):
     }
 
 
-def get_custom_workfile_template(custom_templates: list):
+def get_custom_workfile_template(custom_templates):
     anatomy = Anatomy()
 
     # get project, asset, task anatomy context data
