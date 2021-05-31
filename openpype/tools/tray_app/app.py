@@ -1,19 +1,21 @@
 import sys
 import re
-import platform
 import collections
 import queue
-from io import StringIO
+import websocket
+import json
 
 from avalon import style
-from openpype import resources
+from openpype.modules.webserver import host_console_listener
 
 from Qt import QtWidgets, QtGui, QtCore
 
 
-class ConsoleTrayIcon(QtWidgets.QSystemTrayIcon):
+class ConsoleTrayApp():
     """Application showing console for non python hosts instead of cmd"""
     callback_queue = None
+    process = None
+    webserver_client = None
 
     sdict = {
         r">>> ":
@@ -54,7 +56,6 @@ class ConsoleTrayIcon(QtWidgets.QSystemTrayIcon):
 
     def __init__(self, host, launch_method, subprocess_args, is_host_connected,
                  parent=None):
-        super(ConsoleTrayIcon, self).__init__(parent)
         self.host = host
 
         self.initialized = False
@@ -64,13 +65,11 @@ class ConsoleTrayIcon(QtWidgets.QSystemTrayIcon):
         self.launch_method = launch_method
         self.subprocess_args = subprocess_args
         self.is_host_connected = is_host_connected
+        self.tray_reconnect = True
 
         self.original_stdout_write = None
         self.original_stderr_write = None
         self.new_text = collections.deque()
-
-        self.icons = self._select_icons(self.host)
-        self.status_texts = self._prepare_status_texts(self.host)
 
         timer = QtCore.QTimer()
         timer.timeout.connect(self.on_timer)
@@ -81,62 +80,113 @@ class ConsoleTrayIcon(QtWidgets.QSystemTrayIcon):
 
         self.catch_std_outputs()
 
-        menu = QtWidgets.QMenu()
-        menu.setStyleSheet(style.load_stylesheet())
-        # not working yet
-        #
-        # restart_server_action = QtWidgets.QAction("Restart communication",
-        #                                           self)
-        # restart_server_action.triggered.connect(self.restart_server)
-        # menu.addAction(restart_server_action)
+    def _connect(self):
+        """ Connect to Tray webserver to pass console output. """
+        ws = websocket.WebSocket()
+        ws.connect("ws://localhost:8079/ws/host_listener")
+        ConsoleTrayApp.webserver_client = ws
 
-        # Add Exit action to menu
-        exit_action = QtWidgets.QAction("Exit", self)
-        exit_action.triggered.connect(self.exit)
-        menu.addAction(exit_action)
+        payload = {
+            "host": self.host,
+            "action": host_console_listener.MsgAction.CONNECTING,
+            "text": "Integration with {}".format(str.capitalize(self.host))
+        }
+        self.tray_reconnect = False
+        self._send(payload)
 
-        self.menu = menu
+    def _connected(self):
+        """ Send to Tray console that host is ready - icon change. """
+        print("Host {} connected".format(self.host))
+        if not ConsoleTrayApp.webserver_client:
+            return
 
-        self.dialog = ConsoleDialog(self.new_text)
+        payload = {
+            "host": self.host,
+            "action": host_console_listener.MsgAction.INITIALIZED,
+            "text": "Integration with {}".format(str.capitalize(self.host))
+        }
+        self.tray_reconnect = False
+        self._send(payload)
 
-        # Catch activate event for left click if not on MacOS
-        #   - MacOS has this ability by design so menu would be doubled
-        if platform.system().lower() != "darwin":
-            self.activated.connect(self.on_systray_activated)
+    def _close(self):
+        """ Send to Tray that host is closing - remove from Services. """
+        print("Host {} closing".format(self.host))
+        if not ConsoleTrayApp.webserver_client:
+            return
 
-        self.change_status("initializing")
-        self.setContextMenu(self.menu)
-        self.show()
+        payload = {
+            "host": self.host,
+            "action": host_console_listener.MsgAction.CLOSE,
+            "text": "Integration with {}".format(str.capitalize(self.host))
+        }
+
+        self._send(payload)
+        self.tray_reconnect = False
+        ConsoleTrayApp.webserver_client.close()
+
+    def _send_text(self, new_text):
+        """ Send console content. """
+        if not ConsoleTrayApp.webserver_client:
+            return
+
+        if isinstance(new_text, str):
+            new_text = collections.deque(new_text.split("\n"))
+
+        payload = {
+            "host": self.host,
+            "action": host_console_listener.MsgAction.ADD,
+            "text": "\n".join(new_text)
+        }
+
+        self._send(payload)
+
+    def _send(self, payload):
+        """ Worker method to send to existing websocket connection. """
+        if not ConsoleTrayApp.webserver_client:
+            return
+
+        try:
+            ConsoleTrayApp.webserver_client.send(json.dumps(payload))
+        except ConnectionResetError:  # Tray closed
+            ConsoleTrayApp.webserver_client = None
+            self.tray_reconnect = True
 
     def on_timer(self):
         """Called periodically to initialize and run function on main thread"""
-        self.dialog.append_text(self.new_text)
+        if self.tray_reconnect:
+            self._connect()  # reconnect
+
+        if ConsoleTrayApp.webserver_client and self.new_text:
+            self._send_text(self.new_text)
+            self.new_text = collections.deque()
+
         if not self.initialized:
             if self.initializing:
                 host_connected = self.is_host_connected()
                 if host_connected is None:  # keep trying
                     return
                 elif not host_connected:
-                    print("{} process is not alive. Exiting".format(self.host))
-                    ConsoleTrayIcon.websocket_server.stop()
+                    text = "{} process is not alive. Exiting".format(self.host)
+                    print(text)
+                    self._send_text([text])
+                    ConsoleTrayApp.websocket_server.stop()
                     sys.exit(1)
                 elif host_connected:
                     self.initialized = True
                     self.initializing = False
-                    self.change_status("ready")
+                    self._connected()
 
                     return
 
-            ConsoleTrayIcon.callback_queue = queue.Queue()
+            ConsoleTrayApp.callback_queue = queue.Queue()
             self.initializing = True
 
             self.launch_method(*self.subprocess_args)
-        elif ConsoleTrayIcon.process.poll() is not None:
-            # Wait on Photoshop to close before closing the websocket serv
+        elif ConsoleTrayApp.process.poll() is not None:
             self.exit()
-        elif ConsoleTrayIcon.callback_queue:
+        elif ConsoleTrayApp.callback_queue:
             try:
-                callback = ConsoleTrayIcon.callback_queue.get(block=False)
+                callback = ConsoleTrayApp.callback_queue.get(block=False)
                 callback()
             except queue.Empty:
                 pass
@@ -148,37 +198,21 @@ class ConsoleTrayIcon(QtWidgets.QSystemTrayIcon):
             cls.callback_queue = queue.Queue()
         cls.callback_queue.put(func_to_call_from_main_thread)
 
-    def on_systray_activated(self, reason):
-        if reason == QtWidgets.QSystemTrayIcon.Context:
-            position = QtGui.QCursor().pos()
-            self.menu.popup(position)
-        else:
-            self.open_console()
-
     @classmethod
     def restart_server(cls):
-        if ConsoleTrayIcon.websocket_server:
-            ConsoleTrayIcon.websocket_server.stop_server(restart=True)
+        if ConsoleTrayApp.websocket_server:
+            ConsoleTrayApp.websocket_server.stop_server(restart=True)
 
-    def open_console(self):
-        self.dialog.show()
-        self.dialog.raise_()
-        self.dialog.activateWindow()
-
+    # obsolete
     def exit(self):
-        """ Exit whole application.
-
-        - Icon won't stay in tray after exit.
-        """
-        self.dialog.append_text("Exiting!")
-        if ConsoleTrayIcon.websocket_server:
-            ConsoleTrayIcon.websocket_server.stop()
-        ConsoleTrayIcon.process.kill()
-        ConsoleTrayIcon.process.wait()
+        """ Exit whole application. """
+        self._close()
+        if ConsoleTrayApp.websocket_server:
+            ConsoleTrayApp.websocket_server.stop()
+        ConsoleTrayApp.process.kill()
+        ConsoleTrayApp.process.wait()
         if self.timer:
             self.timer.stop()
-        self.dialog.hide()
-        self.hide()
         QtCore.QCoreApplication.exit()
 
     def catch_std_outputs(self):
@@ -207,33 +241,6 @@ class ConsoleTrayIcon(QtWidgets.QSystemTrayIcon):
             self.original_stderr_write(text)
         self.new_text.append(text)
 
-    def _prepare_status_texts(self, host_name):
-        """Status text used as a tooltip"""
-        status_texts = {
-            'initializing': "Starting communication with {}".format(host_name),
-            'ready': "Communicating with {}".format(host_name),
-            'error': "Error!"
-        }
-
-        return status_texts
-
-    def _select_icons(self, _host_name):
-        """Use different icons per state and host_name"""
-        # use host_name
-        icons = {
-            'initializing': QtGui.QIcon(
-                resources.get_resource("icons", "circle_orange.png")
-            ),
-            'ready': QtGui.QIcon(
-                resources.get_resource("icons", "circle_green.png")
-            ),
-            'error': QtGui.QIcon(
-                resources.get_resource("icons", "circle_red.png")
-            )
-        }
-
-        return icons
-
     @staticmethod
     def _multiple_replace(text, adict):
         """Replace multiple tokens defined in dict.
@@ -256,29 +263,11 @@ class ConsoleTrayIcon(QtWidgets.QSystemTrayIcon):
 
     @staticmethod
     def color(message):
-        message = ConsoleTrayIcon._multiple_replace(message,
-                                                    ConsoleTrayIcon.sdict)
+        """ Color message with html tags. """
+        message = ConsoleTrayApp._multiple_replace(message,
+                                                   ConsoleTrayApp.sdict)
 
         return message
-
-    def change_status(self, status):
-        """Updates tooltip and icon with new status"""
-        self._change_tooltip(status)
-        self._change_icon(status)
-
-    def _change_tooltip(self, status):
-        status = self.status_texts.get(status)
-        if not status:
-            raise ValueError("Unknown state")
-
-        self.setToolTip(status)
-
-    def _change_icon(self, state):
-        icon = self.icons.get(state)
-        if not icon:
-            raise ValueError("Unknown state")
-
-        self.setIcon(icon)
 
 
 class ConsoleDialog(QtWidgets.QDialog):
@@ -308,7 +297,7 @@ class ConsoleDialog(QtWidgets.QDialog):
 
     def append_text(self, new_text):
         if isinstance(new_text, str):
-            new_text = collections.deque(new_text)
+            new_text = collections.deque(new_text.split("\n"))
         while new_text:
             self.plain_text.appendHtml(
-                ConsoleTrayIcon.color(new_text.popleft()))
+                ConsoleTrayApp.color(new_text.popleft()))
