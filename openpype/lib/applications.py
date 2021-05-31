@@ -1433,9 +1433,9 @@ def _get_basic_context_data_for_anatomy(env=None):
 
     # get relevant task type from asset doc
     task_type = None
-    for task_t, task_n in asset_doc["data"]["tasks"].items():
+    for task_n, task_t in asset_doc["data"]["tasks"].items():
         if task_name == task_n:
-            task_type = task_t
+            task_type = task_t["type"]
             break
 
     assert task_type, (
@@ -1469,7 +1469,7 @@ def get_custom_workfile_template(custom_templates):
     # get project, asset, task anatomy context data
     anatomy_context_data = _get_basic_context_data_for_anatomy()
     # add root dict
-    anatomy_context_data.update(anatomy.roots())
+    anatomy_context_data.update({"root": anatomy.roots})
 
     # get task type for the task in context
     test_task_type = anatomy_context_data["task"]["type"]
