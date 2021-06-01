@@ -1,9 +1,12 @@
+import os
 import sys
 import re
 import collections
 import queue
 import websocket
 import json
+import itertools
+from datetime import datetime
 
 from avalon import style
 from openpype.modules.webserver import host_console_listener
@@ -11,11 +14,16 @@ from openpype.modules.webserver import host_console_listener
 from Qt import QtWidgets, QtGui, QtCore
 
 
-class ConsoleTrayApp():
-    """Application showing console for non python hosts instead of cmd"""
+class ConsoleTrayApp:
+    """
+    Application showing console in Services tray for non python hosts
+    instead of cmd window.
+    """
     callback_queue = None
     process = None
     webserver_client = None
+
+    MAX_LINES = 10000
 
     sdict = {
         r">>> ":
@@ -79,15 +87,25 @@ class ConsoleTrayApp():
         self.timer = timer
 
         self.catch_std_outputs()
+        date_str = datetime.now().strftime("%d%m%Y%H%M%S")
+        self.host_id = "{}_{}".format(self.host, date_str)
 
     def _connect(self):
         """ Connect to Tray webserver to pass console output. """
         ws = websocket.WebSocket()
-        ws.connect("ws://localhost:8079/ws/host_listener")
+        webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+
+        if not webserver_url:
+            print("Unknown webserver url, cannot connect to pass log")
+            self.tray_reconnect = False
+            return
+
+        webserver_url = webserver_url.replace("http", "ws")
+        ws.connect("{}/ws/host_listener".format(webserver_url))
         ConsoleTrayApp.webserver_client = ws
 
         payload = {
-            "host": self.host,
+            "host":  self.host_id,
             "action": host_console_listener.MsgAction.CONNECTING,
             "text": "Integration with {}".format(str.capitalize(self.host))
         }
@@ -101,7 +119,7 @@ class ConsoleTrayApp():
             return
 
         payload = {
-            "host": self.host,
+            "host":  self.host_id,
             "action": host_console_listener.MsgAction.INITIALIZED,
             "text": "Integration with {}".format(str.capitalize(self.host))
         }
@@ -115,7 +133,7 @@ class ConsoleTrayApp():
             return
 
         payload = {
-            "host": self.host,
+            "host":  self.host_id,
             "action": host_console_listener.MsgAction.CLOSE,
             "text": "Integration with {}".format(str.capitalize(self.host))
         }
@@ -133,7 +151,7 @@ class ConsoleTrayApp():
             new_text = collections.deque(new_text.split("\n"))
 
         payload = {
-            "host": self.host,
+            "host":  self.host_id,
             "action": host_console_listener.MsgAction.ADD,
             "text": "\n".join(new_text)
         }
@@ -159,6 +177,11 @@ class ConsoleTrayApp():
         if ConsoleTrayApp.webserver_client and self.new_text:
             self._send_text(self.new_text)
             self.new_text = collections.deque()
+
+        if self.new_text:  # no webserver_client, text keeps stashing
+            start = max(len(self.new_text) - self.MAX_LINES, 0)
+            self.new_text = itertools.islice(self.new_text,
+                                             start, self.MAX_LINES)
 
         if not self.initialized:
             if self.initializing:
@@ -274,6 +297,7 @@ class ConsoleDialog(QtWidgets.QDialog):
     """Qt dialog to show stdout instead of unwieldy cmd window"""
     WIDTH = 720
     HEIGHT = 450
+    MAX_LINES = 10000
 
     def __init__(self, text, parent=None):
         super(ConsoleDialog, self).__init__(parent)
@@ -282,6 +306,8 @@ class ConsoleDialog(QtWidgets.QDialog):
         plain_text = QtWidgets.QPlainTextEdit(self)
         plain_text.setReadOnly(True)
         plain_text.resize(self.WIDTH, self.HEIGHT)
+        plain_text.maximumBlockCount = self.MAX_LINES
+
         while text:
             plain_text.appendPlainText(text.popleft().strip())
 
@@ -299,5 +325,7 @@ class ConsoleDialog(QtWidgets.QDialog):
         if isinstance(new_text, str):
             new_text = collections.deque(new_text.split("\n"))
         while new_text:
-            self.plain_text.appendHtml(
-                ConsoleTrayApp.color(new_text.popleft()))
+            text = new_text.popleft()
+            if text:
+                self.plain_text.appendHtml(
+                    ConsoleTrayApp.color(text))
