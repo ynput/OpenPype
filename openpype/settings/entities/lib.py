@@ -114,7 +114,8 @@ def _fill_schema_template_data(
             output_item = _fill_schema_template_data(
                 item, template_data, _skip_paths, required_keys, missing_keys
             )
-            output.append(output_item)
+            if output_item:
+                output.append(output_item)
 
     elif isinstance(template, dict):
         output = {}
