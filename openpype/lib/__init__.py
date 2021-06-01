@@ -85,9 +85,8 @@ from .avalon_context import (
 
     change_timer_to_current_context,
 
-    get_workfile_template_by_context,
-    get_workfile_template_by_string_context,
-    get_workfile_templates
+    get_custom_workfile_template_by_context,
+    get_custom_workfile_template
 )
 
 from .local_settings import (
@@ -115,8 +114,7 @@ from .applications import (
     get_app_environments_for_context,
     apply_project_environments_value,
 
-    compile_list_of_regexes,
-    get_custom_workfile_template
+    compile_list_of_regexes
 )
 
 from .profiles_filtering import filter_profiles
@@ -199,9 +197,8 @@ __all__ = [
 
     "change_timer_to_current_context",
 
-    "get_workfile_template_by_context",
-    "get_workfile_template_by_string_context",
-    "get_workfile_templates",
+    "get_custom_workfile_template_by_context",
+    "get_custom_workfile_template",
 
     "IniSettingRegistry",
     "JSONSettingRegistry",

@@ -1329,7 +1329,7 @@ def _get_task_context_data_for_anatomy(
     }
 
 
-def get_workfile_template_by_context(
+def get_custom_workfile_template_by_context(
     template_profiles, project_doc, asset_doc, task_name, anatomy=None
 ):
     """Filter and fill workfile template profiles by passed context.
@@ -1381,7 +1381,7 @@ def get_workfile_template_by_context(
     return None
 
 
-def get_workfile_template_by_string_context(
+def get_custom_workfile_templates_by_string_context(
     template_profiles, project_name, asset_name, task_name,
     dbcon=None, anatomy=None
 ):
@@ -1389,7 +1389,7 @@ def get_workfile_template_by_string_context(
 
     Passed context are string representations of project, asset and task.
     Function will query documents of project and asset to be able use
-    `get_workfile_template_by_context` for rest of logic.
+    `get_custom_workfile_template_by_context` for rest of logic.
 
     Args:
         template_profiles(list): Loaded workfile template profiles.
@@ -1436,12 +1436,12 @@ def get_workfile_template_by_string_context(
         }
     )
 
-    return get_workfile_template_by_context(
+    return get_custom_workfile_template_by_context(
         template_profiles, project_doc, asset_doc, task_name, anatomy
     )
 
 
-def get_workfile_templates(template_profiles):
+def get_custom_workfile_templates(template_profiles):
     """Filter and fill workfile template profiles by current context.
 
     Current context is defined by `avalon.api.Session`. That's why this
@@ -1457,102 +1457,10 @@ def get_workfile_templates(template_profiles):
     # Use `avalon.io` as Mongo connection
     from avalon import io
 
-    return get_workfile_template_by_string_context(
+    return get_custom_workfile_templates_by_string_context(
         template_profiles,
         io.Session["AVALON_PROJECT"],
         io.Session["AVALON_ASSET"],
         io.Session["AVALON_TASK"],
         io
     )
-
-
-def _get_basic_context_data_for_anatomy(env=None):
-    """ Prepare Task context for anatomy data.
-    Args:
-        env (dict): Initial environment variables. `os.environ` is used when
-            not passed.
-
-    Returns:
-        dict: With Anatomy context data.
-    """
-    from ..settings.lib import get_default_anatomy_settings
-    from avalon.api import AvalonMongoDB
-    env = env or dict(os.environ)
-
-    default_anatomy_tasks = get_default_anatomy_settings()["tasks"]
-    project_name = env["AVALON_PROJECT"]
-    asset_name = env["AVALON_ASSET"]
-    task_name = env["AVALON_TASK"]
-
-    # Avalon database connection
-    dbcon = AvalonMongoDB()
-    dbcon.Session["AVALON_PROJECT"] = project_name
-    dbcon.install()
-
-    # Project document
-    project_doc = dbcon.find_one({"type": "project"})
-    asset_doc = dbcon.find_one({
-        "type": "asset",
-        "name": asset_name
-    })
-
-    # Discard avalon connection
-    dbcon.uninstall()
-
-    # get relevant task type from asset doc
-    task_type = None
-    for task_n, task_t in asset_doc["data"]["tasks"].items():
-        if task_name == task_n:
-            task_type = task_t["type"]
-            break
-
-    assert task_type, (
-        "Task type cannot be found in on asset `{}` "
-        "with given task name `{}`").format(asset_name, task_name)
-
-    # get short name for task type defined in default anatomy settings
-    default_anatomy_task = default_anatomy_tasks[task_type]
-    assert default_anatomy_task, (
-        "Something went wrong. Default anatomy tasks are not holding"
-        "requested task type: `{}`".format(task_type)
-    )
-
-    return {
-        "project": {
-            "name": project_doc["name"],
-            "code": project_doc["data"].get("code")
-        },
-        "asset": asset_name,
-        "task": {
-            "name": task_name,
-            "type": task_type,
-            "sort_name": default_anatomy_task["short_name"]
-        }
-    }
-
-
-def get_custom_workfile_template(custom_templates):
-    anatomy = Anatomy()
-
-    # get project, asset, task anatomy context data
-    anatomy_context_data = _get_basic_context_data_for_anatomy()
-    # add root dict
-    anatomy_context_data.update({"root": anatomy.roots})
-
-    # get task type for the task in context
-    test_task_type = anatomy_context_data["task"]["type"]
-
-    # get path from matching profile
-    path = None
-    for templ in custom_templates:
-        for task_t in templ["task_types"]:
-            if task_t.lower() != test_task_type.lower():
-                continue
-            path = templ["path"][platform.system().lower()]
-
-    # when path is available try to format it in case
-    # there are some anatomy template strings
-    if path:
-        return path.format(**anatomy_context_data)
-
-    return False
