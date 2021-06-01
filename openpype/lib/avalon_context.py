@@ -3,6 +3,7 @@ import os
 import json
 import re
 import copy
+import platform
 import logging
 import collections
 import functools
@@ -1270,6 +1271,62 @@ def change_timer_to_current_context():
     }
 
     requests.post(rest_api_url, json=data)
+
+
+def _get_task_context_data_for_anatomy(
+    project_doc, asset_doc, task_name, anatomy=None
+):
+    """Prepare Task context for anatomy data.
+
+    WARNING: this data structure is currently used only in workfile templates.
+        Key "task" is currently in rest of pipeline used as string with task
+        name.
+
+    Args:
+        project_doc (dict): Project document with available "name" and
+            "data.code" keys.
+        asset_doc (dict): Asset document from MongoDB.
+        task_name (str): Name of context task.
+        anatomy (Anatomy): Optionally Anatomy for passed project name can be
+            passed as Anatomy creation may be slow.
+
+    Returns:
+        dict: With Anatomy context data.
+    """
+
+    if anatomy is None:
+        anatomy = Anatomy(project_doc["name"])
+
+    asset_name = asset_doc["name"]
+    project_task_types = anatomy["tasks"]
+
+    # get relevant task type from asset doc
+    task_type = asset_doc["data"]["tasks"].get(task_name)
+
+    assert task_type, (
+        "Task type cannot be found in on asset `{}` "
+        "with given task name `{}`"
+    ).format(asset_name, task_name)
+
+    # get short name for task type defined in default anatomy settings
+    task_type_data = project_task_types.get(task_type)
+    assert task_type_data, (
+        "Something went wrong. Default anatomy tasks are not holding"
+        "requested task type: `{}`".format(task_type)
+    )
+
+    return {
+        "project": {
+            "name": project_doc["name"],
+            "code": project_doc["data"].get("code")
+        },
+        "asset": asset_name,
+        "task": {
+            "name": task_name,
+            "type": task_type,
+            "short": task_type_data["short_name"]
+        }
+    }
 
 
 def _get_basic_context_data_for_anatomy(env=None):
