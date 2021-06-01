@@ -147,13 +147,32 @@
     },
     "workfile_builder": {
         "create_first_version": false,
-        "template_path": {
-            "windows": "",
-            "darwin": "",
-            "linux": ""
-        },
+        "custom_templates": [],
         "builder_on_start": false,
-        "profiles": []
+        "profiles": [
+            {
+                "tasks": [],
+                "current_context": [
+                    {
+                        "subset_name_filters": [],
+                        "families": [
+                            "render",
+                            "plate"
+                        ],
+                        "repre_names": [
+                            "exr",
+                            "dpx",
+                            "mov"
+                        ],
+                        "loaders": [
+                            "LoadSequence",
+                            "LoadMov"
+                        ]
+                    }
+                ],
+                "linked_assets": []
+            }
+        ]
     },
     "filters": {}
 }
