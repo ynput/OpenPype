@@ -17,30 +17,76 @@ WRAPPER_TYPES = ["form", "collapsible-wrap"]
 NOT_SET = type("NOT_SET", (), {"__bool__": lambda obj: False})()
 OVERRIDE_VERSION = 1
 
+DEFAULT_VALUES_KEY = "__default_values__"
+TEMPLATE_METADATA_KEYS = (
+    DEFAULT_VALUES_KEY,
+)
+
 template_key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
 
+def _pop_metadata_item(template):
+    found_idx = None
+    for idx, item in enumerate(template):
+        if not isinstance(item, dict):
+            continue
+
+        for key in TEMPLATE_METADATA_KEYS:
+            if key in item:
+                found_idx = idx
+                break
+
+        if found_idx is not None:
+            break
+
+    metadata_item = {}
+    if found_idx is not None:
+        metadata_item = template.pop(found_idx)
+    return metadata_item
+
+
 def _fill_schema_template_data(
-    template, template_data, required_keys=None, missing_keys=None
+    template, template_data, skip_paths, required_keys=None, missing_keys=None
 ):
     first = False
     if required_keys is None:
         first = True
+
+        if "skip_paths" in template_data:
+            skip_paths = template_data["skip_paths"]
+            if not isinstance(skip_paths, list):
+                skip_paths = [skip_paths]
+
+        # Cleanup skip paths (skip empty values)
+        skip_paths = [path for path in skip_paths if path]
+
         required_keys = set()
         missing_keys = set()
 
-        _template = []
-        default_values = {}
-        for item in template:
-            if isinstance(item, dict) and "__default_values__" in item:
-                default_values = item["__default_values__"]
-            else:
-                _template.append(item)
-        template = _template
+        # Copy template data as content may change
+        template = copy.deepcopy(template)
+
+        # Get metadata item from template
+        metadata_item = _pop_metadata_item(template)
+
+        # Check for default values for template data
+        default_values = metadata_item.get(DEFAULT_VALUES_KEY) or {}
 
         for key, value in default_values.items():
             if key not in template_data:
                 template_data[key] = value
+
+    # Store paths by first part if path
+    # - None value says that whole key should be skipped
+    skip_paths_by_first_key = {}
+    for path in skip_paths:
+        parts = path.split("/")
+        key = parts.pop(0)
+        if key not in skip_paths_by_first_key:
+            skip_paths_by_first_key[key] = []
+
+        value = "/".join(parts)
+        skip_paths_by_first_key[key].append(value or None)
 
     if not template:
         output = template
@@ -48,19 +94,32 @@ def _fill_schema_template_data(
     elif isinstance(template, list):
         output = []
         for item in template:
-            output.append(_fill_schema_template_data(
-                item, template_data, required_keys, missing_keys
-            ))
+            # Get skip paths for children item
+            _skip_paths = []
+            if skip_paths_by_first_key and isinstance(item, dict):
+                # Check if this item should be skipped
+                key = item.get("key")
+                if key and key in skip_paths_by_first_key:
+                    _skip_paths = skip_paths_by_first_key[key]
+                    # Skip whole item if None is in skip paths value
+                    if None in _skip_paths:
+                        continue
+
+            output_item = _fill_schema_template_data(
+                item, template_data, _skip_paths, required_keys, missing_keys
+            )
+            output.append(output_item)
 
     elif isinstance(template, dict):
         output = {}
         for key, value in template.items():
             output[key] = _fill_schema_template_data(
-                value, template_data, required_keys, missing_keys
+                value, template_data, skip_paths, required_keys, missing_keys
             )
 
     elif isinstance(template, STRING_TYPE):
         # TODO find much better way how to handle filling template data
+        template = template.replace("{{", "__dbcb__").replace("}}", "__decb__")
         for replacement_string in template_key_pattern.findall(template):
             key = str(replacement_string[1:-1])
             required_keys.add(key)
@@ -76,7 +135,8 @@ def _fill_schema_template_data(
             else:
                 # Only replace the key in string
                 template = template.replace(replacement_string, value)
-        output = template
+
+        output = template.replace("__dbcb__", "{").replace("__decb__", "}")
 
     else:
         output = template
@@ -105,11 +165,15 @@ def _fill_schema_template(child_data, schema_collection, schema_templates):
     if isinstance(template_data, dict):
         template_data = [template_data]
 
+    skip_paths = child_data.get("skip_paths") or []
+    if isinstance(skip_paths, STRING_TYPE):
+        skip_paths = [skip_paths]
+
     output = []
     for single_template_data in template_data:
         try:
             filled_child = _fill_schema_template_data(
-                template, single_template_data
+                template, single_template_data, skip_paths
             )
 
         except SchemaTemplateMissingKeys as exc:
@@ -166,7 +230,7 @@ def _fill_inner_schemas(schema_data, schema_collection, schema_templates):
                     schema_templates
                 )
 
-            elif child_type == "schema_template":
+            elif child_type in ("template", "schema_template"):
                 for filled_child in _fill_schema_template(
                     child, schema_collection, schema_templates
                 ):
