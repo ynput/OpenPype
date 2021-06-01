@@ -2126,14 +2126,11 @@ def bake_to_world_space(nodes,
     return world_space_nodes
 
 
-def load_capture_preset(path=None, data=None):
-    import capture_gui
+def load_capture_preset(data=None):
     import capture
 
     if data:
         preset = data
-    elif path:
-        preset = capture_gui.lib.load_json(path)
     else:
         return {}
     print(preset)

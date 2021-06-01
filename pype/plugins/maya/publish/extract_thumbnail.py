@@ -89,9 +89,6 @@ class ExtractThumbnail(pype.api.Extractor):
             # playblast and viewer
             preset['viewer'] = False
 
-            # Remove panel key since it's internal value to capture_gui
-            preset.pop("panel", None)
-
             path = capture.capture(**preset)
             playblast = self._fix_playblast_output_path(path)
 
