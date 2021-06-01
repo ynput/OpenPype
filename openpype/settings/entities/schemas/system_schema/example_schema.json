@@ -5,6 +5,11 @@
     "is_file": true,
     "children": [
         {
+            "key": "color",
+            "label": "Color input",
+            "type": "color"
+        },
+        {
             "type": "dict",
             "key": "schema_template_exaples",
             "label": "Schema template examples",

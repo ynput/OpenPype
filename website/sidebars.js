@@ -9,6 +9,7 @@ module.exports = {
                 "artist_concepts",
                 "artist_publish",
                 "artist_tools",
+                "artist_install"
             ],
         },
         {
@@ -22,7 +23,9 @@ module.exports = {
                 "artist_hosts_blender",
                 "artist_hosts_harmony",
                 "artist_hosts_aftereffects",
+                "artist_hosts_resolve",
                 "artist_hosts_photoshop",
+                "artist_hosts_tvpaint",
                 "artist_hosts_unreal",
                 {
                     type: "category",
@@ -61,7 +64,8 @@ module.exports = {
                     type: "category",
                     label: "Project Settings",
                     items: [
-                        "project_settings/settings_project_global"
+                        "project_settings/settings_project_global",
+                        "project_settings/settings_project_nuke"
                     ],
                 },
             ],
@@ -81,7 +85,11 @@ module.exports = {
             type: "category",
             label: "Integrations",
             items: [
-                "admin_hosts_blender"
+                "admin_hosts_blender",
+                "admin_hosts_maya",
+                "admin_hosts_resolve",
+                "admin_hosts_harmony",
+                "admin_hosts_aftereffects"
             ],
         },
         {

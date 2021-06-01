@@ -81,11 +81,11 @@ def main(argv):
 
     host_name = os.environ["AVALON_APP"].lower()
     if host_name == "photoshop":
-        from avalon.photoshop.lib import launch
+        from avalon.photoshop.lib import main
     elif host_name == "aftereffects":
-        from avalon.aftereffects.lib import launch
+        from avalon.aftereffects.lib import main
     elif host_name == "harmony":
-        from avalon.harmony.lib import launch
+        from avalon.harmony.lib import main
     else:
         title = "Unknown host name"
         message = (
@@ -97,7 +97,7 @@ def main(argv):
 
     if launch_args:
         # Launch host implementation
-        launch(*launch_args)
+        main(*launch_args)
     else:
         # Show message box
         on_invalid_args(after_script_idx is None)

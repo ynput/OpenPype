@@ -80,6 +80,18 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_blender"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_aftereffects"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_photoshop"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_harmony"
                 },
                 {

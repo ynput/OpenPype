@@ -60,13 +60,6 @@ def tray(debug=False):
               help="Ftrack api user")
 @click.option("--ftrack-api-key", envvar="FTRACK_API_KEY",
               help="Ftrack api key")
-@click.option("--ftrack-events-path",
-              envvar="FTRACK_EVENTS_PATH",
-              help=("path to ftrack event handlers"))
-@click.option("--no-stored-credentials", is_flag=True,
-              help="don't use stored credentials")
-@click.option("--store-credentials", is_flag=True,
-              help="store provided credentials")
 @click.option("--legacy", is_flag=True,
               help="run event server without mongo storing")
 @click.option("--clockify-api-key", envvar="CLOCKIFY_API_KEY",
@@ -77,9 +70,6 @@ def eventserver(debug,
                 ftrack_url,
                 ftrack_user,
                 ftrack_api_key,
-                ftrack_events_path,
-                no_stored_credentials,
-                store_credentials,
                 legacy,
                 clockify_api_key,
                 clockify_workspace):
@@ -87,10 +77,6 @@ def eventserver(debug,
 
     This should be ideally used by system service (such us systemd or upstart
     on linux and window service).
-
-    You have to set either proper environment variables to provide URL and
-    credentials or use option to specify them. If you use --store_credentials
-    provided credentials will be stored for later use.
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = "3"
@@ -99,9 +85,6 @@ def eventserver(debug,
         ftrack_url,
         ftrack_user,
         ftrack_api_key,
-        ftrack_events_path,
-        no_stored_credentials,
-        store_credentials,
         legacy,
         clockify_api_key,
         clockify_workspace
@@ -224,15 +207,9 @@ def launch(app, project, asset, task,
     PypeCommands().run_application(app, project, asset, task, tools, arguments)
 
 
-@main.command()
-@click.option("-p", "--path", help="Path to zip file", default=None)
-def generate_zip(path):
-    """Generate Pype zip from current sources.
-
-    If PATH is not provided, it will create zip file in user data dir.
-
-    """
-    PypeCommands().generate_zip(path)
+@main.command(context_settings={"ignore_unknown_options": True})
+def projectmanager():
+    PypeCommands().launch_project_manager()
 
 
 @main.command(

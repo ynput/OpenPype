@@ -1,13 +1,17 @@
 {
-    "general": {
-        "skip_resolution_check": [],
-        "skip_timelines_check": []
-    },
     "publish": {
         "CollectPalettes": {
             "allowed_tasks": [
-                "."
+                ".*"
             ]
+        },
+        "ValidateSceneSettings": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "frame_check_filter": [],
+            "skip_resolution_check": [],
+            "skip_timelines_check": []
         },
         "HarmonySubmitDeadline": {
             "use_published": false,

@@ -1,0 +1,65 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "photoshop",
+    "label": "Photoshop",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "create",
+            "label": "Creator plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CreateImage",
+                    "label": "Create Image",
+                    "children": [
+                        {
+                            "type": "list",
+                            "key": "defaults",
+                            "label": "Default Subsets",
+                            "object_type": "text"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractImage",
+                    "label": "Extract Image",
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "Currently only jpg and png are supported"
+                        },
+                        {
+                            "type": "list",
+                            "key": "formats",
+                            "label": "Extract Formats",
+                            "object_type": "text"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_workfile_options",
+            "skip_paths": [
+                "workfile_builder/builder_on_start",
+                "workfile_builder/profiles"
+            ]
+        }
+    ]
+}

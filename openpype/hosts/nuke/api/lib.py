@@ -16,6 +16,7 @@ from avalon.nuke import (
 from openpype.api import (
     Logger,
     Anatomy,
+    BuildWorkfile,
     get_version_from_path,
     get_anatomy_settings,
     get_hierarchy,
@@ -53,11 +54,10 @@ def get_created_node_imageio_setting(**kwarg):
     imageio_node = None
     for node in imageio_nodes:
         log.info(node)
-        if (node["nukeNodeClass"] != nodeclass) and (
-                creator not in node["plugins"]):
-            continue
-
-        imageio_node = node
+        if (nodeclass in node["nukeNodeClass"]) and (
+                creator in node["plugins"]):
+            imageio_node = node
+            break
 
     log.info("ImageIO node: {}".format(imageio_node))
     return imageio_node
@@ -340,9 +340,9 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         nuke.message(msg)
 
     # build file path to workfiles
-    fpath = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
+    fdir = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
     fpath = data["fpath_template"].format(
-        work=fpath, version=data["version"], subset=data["subset"],
+        work=fdir, version=data["version"], subset=data["subset"],
         frame=data["frame"],
         ext=representation
     )
@@ -373,21 +373,16 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
 
     prev_node = None
     with GN:
-        connections = list()
         if input:
+            input_name = str(input.name()).replace(" ", "")
             # if connected input node was defined
-            connections.append({
-                "node": input,
-                "inputName": input.name()})
             prev_node = nuke.createNode(
-                "Input", "name {}".format(input.name()))
-            prev_node.hideControlPanel()
+                "Input", "name {}".format(input_name))
         else:
             # generic input node connected to nothing
             prev_node = nuke.createNode(
                 "Input", "name {}".format("rgba"))
-            prev_node.hideControlPanel()
-
+        prev_node.hideControlPanel()
         # creating pre-write nodes `prenodes`
         if prenodes:
             for name, klass, properties, set_output_to in prenodes:
@@ -416,18 +411,12 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
                             input_node = nuke.createNode(
                                 "Input", "name {}".format(node_name))
                             input_node.hideControlPanel()
-                            connections.append({
-                                "node": nuke.toNode(node_name),
-                                "inputName": node_name})
                             now_node.setInput(1, input_node)
 
                     elif isinstance(set_output_to, str):
                         input_node = nuke.createNode(
                             "Input", "name {}".format(node_name))
                         input_node.hideControlPanel()
-                        connections.append({
-                            "node": nuke.toNode(set_output_to),
-                            "inputName": set_output_to})
                         now_node.setInput(0, input_node)
 
                 else:
@@ -1071,7 +1060,7 @@ class WorkfileSettings(object):
         # replace reset resolution from avalon core to pype's
         self.reset_frame_range_handles()
         # add colorspace menu item
-        # self.set_colorspace()
+        self.set_colorspace()
 
     def set_favorites(self):
         work_dir = os.getenv("AVALON_WORKDIR")
@@ -1653,23 +1642,69 @@ def launch_workfiles_app():
         workfiles.show(os.environ["AVALON_WORKDIR"])
 
 
-def open_last_workfile():
-    # get state from settings
-    open_last_version = get_current_project_settings()["nuke"].get(
-        "general", {}).get("create_initial_workfile")
+def process_workfile_builder():
+    from openpype.lib import (
+        env_value_to_bool,
+        get_custom_workfile_template
+    )
 
-    log.info("Opening last workfile...")
+    # get state from settings
+    workfile_builder = get_current_project_settings()["nuke"].get(
+        "workfile_builder", {})
+
+    # get all imortant settings
+    openlv_on = env_value_to_bool(
+        env_key="AVALON_OPEN_LAST_WORKFILE",
+        default=None)
+
+    # get settings
+    createfv_on = workfile_builder.get("create_first_version") or None
+    custom_templates = workfile_builder.get("custom_templates") or None
+    builder_on = workfile_builder.get("builder_on_start") or None
+
     last_workfile_path = os.environ.get("AVALON_LAST_WORKFILE")
 
-    if not os.path.exists(last_workfile_path):
-        # return if none is defined
-        if not open_last_version:
-            return
+    # generate first version in file not existing and feature is enabled
+    if createfv_on and not os.path.exists(last_workfile_path):
+        # get custom template path if any
+        custom_template_path = get_custom_workfile_template(
+            custom_templates
+        )
 
+        # if custom template is defined
+        if custom_template_path:
+            log.info("Adding nodes from `{}`...".format(
+                custom_template_path
+            ))
+            try:
+                # import nodes into current script
+                nuke.nodePaste(custom_template_path)
+            except RuntimeError:
+                raise RuntimeError((
+                    "Template defined for project: {} is not working. "
+                    "Talk to your manager for an advise").format(
+                        custom_template_path))
+
+        # if builder at start is defined
+        if builder_on:
+            log.info("Building nodes from presets...")
+            # build nodes by defined presets
+            BuildWorkfile().process()
+
+        log.info("Saving script as version `{}`...".format(
+            last_workfile_path
+        ))
+        # safe file as version
         save_file(last_workfile_path)
-    else:
-        # to avoid looping of the callback, remove it!
-        nuke.removeOnCreate(open_last_workfile, nodeClass="Root")
+        return
 
-        # open workfile
-        open_file(last_workfile_path)
+    # skip opening of last version if it is not enabled
+    if not openlv_on or not os.path.exists(last_workfile_path):
+        return
+
+    # to avoid looping of the callback, remove it!
+    nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
+
+    log.info("Opening last workfile...")
+    # open workfile
+    open_file(last_workfile_path)

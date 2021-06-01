@@ -6,6 +6,9 @@ from .log import PypeLogger as Logger
 
 log = logging.getLogger(__name__)
 
+# MSDN process creation flag (Windows only)
+CREATE_NO_WINDOW = 0x08000000
+
 
 def execute(args,
             silent=False,

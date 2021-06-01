@@ -383,10 +383,12 @@ class InstallDialog(QtWidgets.QDialog):
         else:
             raise AssertionError("BUG: Unknown variant \"{}\"".format(option))
 
-        self._enable_buttons()
-
     def _run_openpype_from_code(self):
-        self._secure_registry.set_item("openPypeMongo", self.mongo_url)
+        os.environ["OPENPYPE_MONGO"] = self.mongo_url
+        try:
+            self._secure_registry.set_item("openPypeMongo", self.mongo_url)
+        except ValueError:
+            print("Couldn't save Mongo URL to keyring")
 
         self.done(2)
 
@@ -419,6 +421,7 @@ class InstallDialog(QtWidgets.QDialog):
             QtWidgets.QApplication.processEvents()
             self.done(3)
         else:
+            self._enable_buttons()
             self._show_console()
 
     def _update_progress(self, progress: int):

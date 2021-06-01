@@ -110,6 +110,12 @@ class PypeCommands:
         with open(output_json_path, "w") as file_stream:
             json.dump(env, file_stream, indent=4)
 
+    @staticmethod
+    def launch_project_manager():
+        from openpype.tools import project_manager
+
+        project_manager.main()
+
     def texture_copy(self, project, asset, path):
         pass
 
@@ -119,26 +125,3 @@ class PypeCommands:
     def validate_jsons(self):
         pass
 
-    @staticmethod
-    def generate_zip(out_path: str):
-        """Generate zip file from current sources.
-
-        Args:
-            out_path (str): Path to generated zip file.
-
-        """
-        from igniter import bootstrap_repos
-
-        # create zip file
-        bs = bootstrap_repos.BootstrapRepos()
-        if out_path:
-            out_path = Path(out_path)
-            bs.data_dir = out_path.parent
-
-        print(f">>> Creating zip in {bs.data_dir} ...")
-        repo_file = bs.create_version_from_live_code()
-        if not repo_file:
-            print("!!! Error while creating zip file.")
-            exit(1)
-
-        print(f">>> Created {repo_file}")

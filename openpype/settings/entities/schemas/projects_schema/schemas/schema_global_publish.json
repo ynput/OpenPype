@@ -16,6 +16,17 @@
                     "type": "boolean",
                     "key": "enabled",
                     "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
                 }
             ]
         },
@@ -101,30 +112,8 @@
                                             "type": "text"
                                         },
                                         {
-                                            "key": "tags",
-                                            "label": "Tags",
-                                            "type": "enum",
-                                            "multiselection": true,
-                                            "enum_items": [
-                                                {
-                                                    "burnin": "Add burnins"
-                                                },
-                                                {
-                                                    "ftrackreview": "Add to Ftrack"
-                                                },
-                                                {
-                                                    "delete": "Delete output"
-                                                },
-                                                {
-                                                    "slate-frame": "Add slate frame"
-                                                },
-                                                {
-                                                    "no-handles": "Skip handle frames"
-                                                },
-                                                {
-                                                    "sequence": "Output as image sequence"
-                                                }
-                                            ]
+                                            "type": "schema",
+                                            "name": "schema_representation_tags"
                                         },
                                         {
                                             "key": "ffmpeg_args",
@@ -186,6 +175,15 @@
                                         },
                                         {
                                             "type": "label",
+                                            "label": "Crop input overscan. See the documentation for more information."
+                                        },
+                                        {
+                                            "type": "text",
+                                            "key": "overscan_crop",
+                                            "label": "Overscan crop"
+                                        },
+                                        {
+                                            "type": "label",
                                             "label": "Width and Height must be both set to higher value than 0 else source resolution is used."
                                         },
                                         {
@@ -203,6 +201,15 @@
                                             "default": 0,
                                             "minimum": 0,
                                             "maximum": 100000
+                                        },
+                                        {
+                                            "type": "label",
+                                            "label": "Background color is used only when input have transparency and Alpha is higher than 0."
+                                        },
+                                        {
+                                            "type": "color",
+                                            "label": "Background color",
+                                            "key": "bg_color"
                                         },
                                         {
                                             "key": "letter_box",
@@ -239,14 +246,9 @@
                                                     ]
                                                 },
                                                 {
-                                                    "type": "schema_template",
-                                                    "name": "template_rgba_color",
-                                                    "template_data": [
-                                                        {
-                                                            "label": "Fill Color",
-                                                            "name": "fill_color"
-                                                        }
-                                                    ]
+                                                    "type": "color",
+                                                    "label": "Fill Color",
+                                                    "key": "fill_color"
                                                 },
                                                 {
                                                     "key": "line_thickness",
@@ -256,14 +258,9 @@
                                                     "maximum": 1000
                                                 },
                                                 {
-                                                    "type": "schema_template",
-                                                    "name": "template_rgba_color",
-                                                    "template_data": [
-                                                        {
-                                                            "label": "Line Color",
-                                                            "name": "line_color"
-                                                        }
-                                                    ]
+                                                    "type": "color",
+                                                    "label": "Line Color",
+                                                    "key": "line_color"
                                                 }
                                             ]
                                         }
@@ -301,20 +298,14 @@
                             "minimum": 0
                         },
                         {
-                            "type": "number",
-                            "key": "opacity",
-                            "label": "Font opacity",
-                            "decimal": 2,
-                            "maximum": 1,
-                            "minimum": 0
+                            "type": "color",
+                            "key": "font_color",
+                            "label": "Font Color"
                         },
                         {
-                            "type": "number",
-                            "key": "bg_opacity",
-                            "label": "Background opacity",
-                            "decimal": 2,
-                            "maximum": 1,
-                            "minimum": 0
+                            "type": "color",
+                            "key": "bg_color",
+                            "label": "Background Color"
                         },
                         {
                             "type": "number",
@@ -330,6 +321,13 @@
                             "type": "number",
                             "key": "bg_padding",
                             "label": "Padding aroung text"
+                        },
+                        {
+                            "type": "path",
+                            "key": "font_filepath",
+                            "label": "Font file path",
+                            "multipath": false,
+                            "multiplatform": true
                         }
                     ]
                 },
@@ -396,6 +394,24 @@
                                             "key": "BOTTOM_RIGHT",
                                             "label": "BottomRight",
                                             "type": "text"
+                                        },
+                                        {
+                                            "key": "filter",
+                                            "label": "Additional filtering",
+                                            "type": "dict",
+                                            "highlight_content": true,
+                                            "children": [
+                                                {
+                                                    "key": "families",
+                                                    "label": "Families",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "schema",
+                                                    "name": "schema_representation_tags"
+                                                }
+                                            ]
                                         }
                                     ]
                                 }
@@ -413,9 +429,80 @@
             "is_group": true,
             "children": [
                 {
-                    "type": "raw-json",
+                    "type": "list",
                     "key": "template_name_profiles",
-                    "label": "template_name_profiles"
+                    "label": "Template name profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "label",
+                                "label": ""
+                            },
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "template_name",
+                                "label": "Template name"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "list",
+                    "key": "subset_grouping_profiles",
+                    "label": "Subset grouping profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "label",
+                                "label": "Set all published instances as a part of specific group named according to 'Template'. <br>Implemented all variants of placeholders [{task},{family},{host},{subset},{renderlayer}]"
+                            },
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "separator"
+                            },
+                            {
+                                "type": "text",
+                                "key": "template",
+                                "label": "Template"
+                            }
+                        ]
+                    }
                 }
             ]
         },

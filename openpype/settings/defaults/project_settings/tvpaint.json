@@ -16,5 +16,25 @@
             "active": true
         }
     },
+    "load": {
+        "LoadImage": {
+            "defaults": {
+                "stretch": true,
+                "timestretch": true,
+                "preload": true
+            }
+        },
+        "ImportImage": {
+            "defaults": {
+                "stretch": true,
+                "timestretch": true,
+                "preload": true
+            }
+        }
+    },
+    "workfile_builder": {
+        "create_first_version": false,
+        "custom_templates": []
+    },
     "filters": {}
 }

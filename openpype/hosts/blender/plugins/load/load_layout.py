@@ -25,9 +25,6 @@ class BlendLayoutLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    animation_creator_name = "CreateAnimation"
-    setdress_creator_name = "CreateSetDress"
-
     def _remove(self, objects, obj_container):
         for obj in list(objects):
             if obj.type == 'ARMATURE':
@@ -293,7 +290,6 @@ class UnrealLayoutLoader(plugin.AssetLoader):
     color = "orange"
 
     animation_creator_name = "CreateAnimation"
-    setdress_creator_name = "CreateSetDress"
 
     def _remove_objects(self, objects):
         for obj in list(objects):
@@ -367,13 +363,13 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         # Y axis mirrored
         obj.location = (
             location.get('x'),
-            -location.get('y'),
+            location.get('y'),
             location.get('z')
         )
         obj.rotation_euler = (
-            rotation.get('x') + math.pi / 2,
-            -rotation.get('y'),
-            -rotation.get('z')
+            rotation.get('x'),
+            rotation.get('y'),
+            rotation.get('z')
         )
         obj.scale = (
             scale.get('x'),
@@ -383,7 +379,7 @@ class UnrealLayoutLoader(plugin.AssetLoader):
 
     def _process(
         self, libpath, layout_container, container_name, representation,
-        actions, parent
+        actions, parent_collection
     ):
         with open(libpath, "r") as fp:
             data = json.load(fp)
@@ -391,6 +387,11 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         scene = bpy.context.scene
         layout_collection = bpy.data.collections.new(container_name)
         scene.collection.children.link(layout_collection)
+
+        parent = parent_collection
+
+        if parent is None:
+            parent = scene.collection
 
         all_loaders = api.discover(api.Loader)
 
@@ -516,23 +517,9 @@ class UnrealLayoutLoader(plugin.AssetLoader):
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
 
-        # Create a setdress subset to contain all the animation for all
-        # the rigs in the layout
-        creator_plugin = get_creator_by_name(self.setdress_creator_name)
-        if not creator_plugin:
-            raise ValueError("Creator plugin \"{}\" was not found.".format(
-                self.setdress_creator_name
-            ))
-        parent = api.create(
-            creator_plugin,
-            name="animation",
-            asset=api.Session["AVALON_ASSET"],
-            options={"useSelection": True},
-            data={"dependencies": str(context["representation"]["_id"])})
-
         layout_collection = self._process(
             libpath, layout_container, container_name,
-            str(context["representation"]["_id"]), None, parent)
+            str(context["representation"]["_id"]), None, None)
 
         container_metadata["obj_container"] = layout_collection
 

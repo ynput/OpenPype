@@ -217,3 +217,76 @@ class ToolsEnumEntity(BaseEnumEntity):
             if key in self.valid_keys:
                 new_value.append(key)
         self._current_value = new_value
+
+
+class TaskTypeEnumEntity(BaseEnumEntity):
+    schema_types = ["task-types-enum"]
+
+    def _item_initalization(self):
+        self.multiselection = True
+        self.value_on_not_set = []
+        self.enum_items = []
+        self.valid_keys = set()
+        self.valid_value_types = (list, )
+        self.placeholder = None
+
+    def _get_enum_values(self):
+        anatomy_entity = self.get_entity_from_path(
+            "project_settings/project_anatomy"
+        )
+
+        valid_keys = set()
+        enum_items = []
+        for task_type in anatomy_entity["tasks"].keys():
+            enum_items.append({task_type: task_type})
+            valid_keys.add(task_type)
+
+        return enum_items, valid_keys
+
+    def set_override_state(self, *args, **kwargs):
+        super(TaskTypeEnumEntity, self).set_override_state(*args, **kwargs)
+
+        self.enum_items, self.valid_keys = self._get_enum_values()
+        new_value = []
+        for key in self._current_value:
+            if key in self.valid_keys:
+                new_value.append(key)
+        self._current_value = new_value
+
+
+class ProvidersEnum(BaseEnumEntity):
+    schema_types = ["providers-enum"]
+
+    def _item_initalization(self):
+        self.multiselection = False
+        self.value_on_not_set = ""
+        self.enum_items = []
+        self.valid_keys = set()
+        self.valid_value_types = (str, )
+        self.placeholder = None
+
+    def _get_enum_values(self):
+        from openpype.modules.sync_server.providers import lib as lib_providers
+
+        providers = lib_providers.factory.providers
+
+        valid_keys = set()
+        valid_keys.add('')
+        enum_items = [{'': 'Choose Provider'}]
+        for provider_code, provider_info in providers.items():
+            provider, _ = provider_info
+            enum_items.append({provider_code: provider.LABEL})
+            valid_keys.add(provider_code)
+
+        return enum_items, valid_keys
+
+    def set_override_state(self, *args, **kwargs):
+        super(ProvidersEnum, self).set_override_state(*args, **kwargs)
+
+        self.enum_items, self.valid_keys = self._get_enum_values()
+
+        value_on_not_set = list(self.valid_keys)[0]
+        if self._current_value is NOT_SET:
+            self._current_value = value_on_not_set
+
+        self.value_on_not_set = value_on_not_set

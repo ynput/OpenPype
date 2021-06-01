@@ -1,16 +1,14 @@
 <#
 .SYNOPSIS
-  Helper script to build OpenPype.
+  Helper script to build OpenPype Installer.
 
 .DESCRIPTION
-  This script will detect Python installation, and build OpenPype to `build`
-  directory using existing virtual environment created by Poetry (or
-  by running `/tools/create_venv.ps1`). It will then shuffle dependencies in
-  build folder to optimize for different Python versions (2/3) in Python host.
+  This script will use already built OpenPype (in `build` directory) and
+  create Windows installer from it using Inno Setup (https://jrsoftware.org/)
 
 .EXAMPLE
 
-PS> .\build.ps1
+PS> .\build_win_installer.ps1
 
 #>
 
@@ -76,11 +74,19 @@ function Install-Poetry() {
 
 $art = @"
 
-▒█▀▀▀█ █▀▀█ █▀▀ █▀▀▄ ▒█▀▀█ █░░█ █▀▀█ █▀▀ ▀█▀ ▀█▀ ▀█▀
-▒█░░▒█ █░░█ █▀▀ █░░█ ▒█▄▄█ █▄▄█ █░░█ █▀▀ ▒█░ ▒█░ ▒█░
-▒█▄▄▄█ █▀▀▀ ▀▀▀ ▀░░▀ ▒█░░░ ▄▄▄█ █▀▀▀ ▀▀▀ ▄█▄ ▄█▄ ▄█▄
-            .---= [ by Pype Club ] =---.
-                 https://openpype.io
+             . .   ..     .    ..
+        _oOOP3OPP3Op_. .
+     .PPpo~.   ..   ~2p.  ..  ....  .  .
+    .Ppo . .pPO3Op.. . O:. . . .
+   .3Pp . oP3'. 'P33. . 4 ..   .  .   . .. .  .  .
+  .~OP    3PO.  .Op3    : . ..  _____  _____  _____
+  .P3O  . oP3oP3O3P' . . .   . /    /./    /./    /
+   O3:.   O3p~ .       .:. . ./____/./____/ /____/
+   'P .   3p3.  oP3~. ..P:. .  . ..  .   . .. .  .  .
+  . ':  . Po'  .Opo'. .3O. .  o[ by Pype Club ]]]==- - - .  .
+    . '_ ..  .    . _OP3..  .  .https://openpype.io.. .
+         ~P3.OPPPO3OP~ . ..  .
+           .  ' '. .  .. . . . ..  .
 
 "@
 

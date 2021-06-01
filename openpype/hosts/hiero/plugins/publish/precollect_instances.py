@@ -2,6 +2,9 @@ import pyblish
 import openpype
 from openpype.hosts.hiero import api as phiero
 from openpype.hosts.hiero.otio import hiero_export
+import hiero
+
+from compiler.ast import flatten
 
 # # developer reload modules
 from pprint import pformat
@@ -14,18 +17,40 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
     label = "Precollect Instances"
     hosts = ["hiero"]
 
+    audio_track_items = []
+
     def process(self, context):
-        otio_timeline = context.data["otioTimeline"]
+        self.otio_timeline = context.data["otioTimeline"]
+
         selected_timeline_items = phiero.get_track_items(
-            selected=True, check_enabled=True, check_tagged=True)
+            selected=True, check_tagged=True, check_enabled=True)
+
+        # only return enabled track items
+        if not selected_timeline_items:
+            selected_timeline_items = phiero.get_track_items(
+                check_enabled=True, check_tagged=True)
+
         self.log.info(
             "Processing enabled track items: {}".format(
                 selected_timeline_items))
 
+        # add all tracks subtreck effect items to context
+        all_tracks = hiero.ui.activeSequence().videoTracks()
+        tracks_effect_items = self.collect_sub_track_items(all_tracks)
+        context.data["tracksEffectItems"] = tracks_effect_items
+
+        # process all sellected timeline track items
         for track_item in selected_timeline_items:
 
-            data = dict()
+            data = {}
             clip_name = track_item.name()
+            source_clip = track_item.source()
+
+            # get clips subtracks and anotations
+            annotations = self.clip_annotations(source_clip)
+            subtracks = self.clip_subtrack(track_item)
+            self.log.debug("Annotations: {}".format(annotations))
+            self.log.debug(">> Subtracks: {}".format(subtracks))
 
             # get openpype tag data
             tag_data = phiero.get_track_item_pype_data(track_item)
@@ -42,6 +67,11 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 tag_data["handleStart"], int(track_item.handleInLength()))
             tag_data["handleEnd"] = min(
                 tag_data["handleEnd"], int(track_item.handleOutLength()))
+
+            # add audio to families
+            with_audio = False
+            if tag_data.pop("audio"):
+                with_audio = True
 
             # add tag data to instance data
             data.update({
@@ -71,12 +101,15 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "item": track_item,
                 "families": families,
                 "publish": tag_data["publish"],
-                "fps": context.data["fps"]
+                "fps": context.data["fps"],
+
+                # clip's effect
+                "clipEffectItems": subtracks,
+                "clipAnnotations": annotations
             })
 
             # otio clip data
-            otio_data = self.get_otio_clip_instance_data(
-                otio_timeline, track_item) or {}
+            otio_data = self.get_otio_clip_instance_data(track_item) or {}
             self.log.debug("__ otio_data: {}".format(pformat(otio_data)))
             data.update(otio_data)
             self.log.debug("__ data: {}".format(pformat(data)))
@@ -93,6 +126,17 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             self.log.info("Creating instance: {}".format(instance))
             self.log.debug(
                 "_ instance.data: {}".format(pformat(instance.data)))
+
+            if not with_audio:
+                return
+
+            # create audio subset instance
+            self.create_audio_instance(context, **data)
+
+            # add audioReview attribute to plate instance data
+            # if reviewTrack is on
+            if tag_data.get("reviewTrack") is not None:
+                instance.data["reviewAudio"] = True
 
     def get_resolution_to_data(self, data, context):
         assert data.get("otioClip"), "Missing `otioClip` data"
@@ -159,7 +203,72 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         self.log.debug(
             "_ instance.data: {}".format(pformat(instance.data)))
 
-    def get_otio_clip_instance_data(self, otio_timeline, track_item):
+    def create_audio_instance(self, context, **data):
+        master_layer = data.get("heroTrack")
+
+        if not master_layer:
+            return
+
+        asset = data.get("asset")
+        item = data.get("item")
+        clip_name = item.name()
+
+        # test if any audio clips
+        if not self.test_any_audio(item):
+            return
+
+        asset = data["asset"]
+        subset = "audioMain"
+
+        # insert family into families
+        family = "audio"
+
+        # form label
+        label = asset
+        if asset != clip_name:
+            label += " ({}) ".format(clip_name)
+        label += " {}".format(subset)
+        label += " [{}]".format(family)
+
+        data.update({
+            "name": "{}_{}".format(asset, subset),
+            "label": label,
+            "subset": subset,
+            "asset": asset,
+            "family": family,
+            "families": ["clip"]
+        })
+        # remove review track attr if any
+        data.pop("reviewTrack")
+
+        # create instance
+        instance = context.create_instance(**data)
+        self.log.info("Creating instance: {}".format(instance))
+        self.log.debug(
+            "_ instance.data: {}".format(pformat(instance.data)))
+
+    def test_any_audio(self, track_item):
+        # collect all audio tracks to class variable
+        if not self.audio_track_items:
+            for otio_clip in self.otio_timeline.each_clip():
+                if otio_clip.parent().kind != "Audio":
+                    continue
+                self.audio_track_items.append(otio_clip)
+
+        # get track item timeline range
+        timeline_range = self.create_otio_time_range_from_timeline_item_data(
+            track_item)
+
+        # loop trough audio track items and search for overlaping clip
+        for otio_audio in self.audio_track_items:
+            parent_range = otio_audio.range_in_parent()
+
+            # if any overaling clip found then return True
+            if openpype.lib.is_overlapping_otio_ranges(
+                    parent_range, timeline_range, strict=False):
+                return True
+
+    def get_otio_clip_instance_data(self, track_item):
         """
         Return otio objects for timeline, track and clip
 
@@ -175,7 +284,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         ti_track_name = track_item.parent().name()
         timeline_range = self.create_otio_time_range_from_timeline_item_data(
             track_item)
-        for otio_clip in otio_timeline.each_clip():
+        for otio_clip in self.otio_timeline.each_clip():
             track_name = otio_clip.parent().name
             parent_range = otio_clip.range_in_parent()
             if ti_track_name not in track_name:
@@ -202,3 +311,76 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
         return hiero_export.create_otio_time_range(
             frame_start, frame_duration, fps)
+
+    @staticmethod
+    def collect_sub_track_items(tracks):
+        """
+        Returns dictionary with track index as key and list of subtracks
+        """
+        # collect all subtrack items
+        sub_track_items = {}
+        for track in tracks:
+            items = track.items()
+
+            # skip if no clips on track > need track with effect only
+            if items:
+                continue
+
+            # skip all disabled tracks
+            if not track.isEnabled():
+                continue
+
+            track_index = track.trackIndex()
+            _sub_track_items = flatten(track.subTrackItems())
+
+            # continue only if any subtrack items are collected
+            if len(_sub_track_items) < 1:
+                continue
+
+            enabled_sti = []
+            # loop all found subtrack items and check if they are enabled
+            for _sti in _sub_track_items:
+                # checking if not enabled
+                if not _sti.isEnabled():
+                    continue
+                if isinstance(_sti, hiero.core.Annotation):
+                    continue
+                # collect the subtrack item
+                enabled_sti.append(_sti)
+
+            # continue only if any subtrack items are collected
+            if len(enabled_sti) < 1:
+                continue
+
+            # add collection of subtrackitems to dict
+            sub_track_items[track_index] = enabled_sti
+
+        return sub_track_items
+
+    @staticmethod
+    def clip_annotations(clip):
+        """
+        Returns list of Clip's hiero.core.Annotation
+        """
+        annotations = []
+        subTrackItems = flatten(clip.subTrackItems())
+        annotations += [item for item in subTrackItems if isinstance(
+            item, hiero.core.Annotation)]
+        return annotations
+
+    @staticmethod
+    def clip_subtrack(clip):
+        """
+        Returns list of Clip's hiero.core.SubTrackItem
+        """
+        subtracks = []
+        subTrackItems = flatten(clip.parent().subTrackItems())
+        for item in subTrackItems:
+            # avoid all anotation
+            if isinstance(item, hiero.core.Annotation):
+                continue
+            # # avoid all not anaibled
+            if not item.isEnabled():
+                continue
+            subtracks.append(item)
+        return subtracks

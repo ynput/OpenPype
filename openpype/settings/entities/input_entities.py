@@ -32,7 +32,7 @@ class EndpointEntity(ItemEntity):
         super(EndpointEntity, self).__init__(*args, **kwargs)
 
         if (
-            not (self.group_item or self.is_group)
+            not (self.group_item is not None or self.is_group)
             and not (self.is_dynamic_item or self.is_in_dynamic_item)
         ):
             self.is_group = True
@@ -68,7 +68,17 @@ class EndpointEntity(ItemEntity):
     def on_change(self):
         for callback in self.on_change_callbacks:
             callback()
+
+        if self.require_restart_on_change:
+            if self.require_restart:
+                self.root_item.add_item_require_restart(self)
+            else:
+                self.root_item.remove_item_require_restart(self)
         self.parent.on_child_change(self)
+
+    @property
+    def require_restart(self):
+        return self.has_unsaved_changes
 
     def update_default_value(self, value):
         value = self._check_update_value(value, "default")
@@ -114,6 +124,10 @@ class InputEntity(EndpointEntity):
     def value(self):
         """Entity's value without metadata."""
         return self._current_value
+
+    @property
+    def require_restart(self):
+        return self._value_is_modified
 
     def _settings_value(self):
         return copy.deepcopy(self.value)
@@ -251,7 +265,7 @@ class InputEntity(EndpointEntity):
         self._current_value = copy.deepcopy(value)
 
     def _discard_changes(self, on_change_trigger=None):
-        if not self.can_discard_changes:
+        if not self._can_discard_changes:
             return
 
         self._value_is_modified = False
@@ -289,7 +303,7 @@ class InputEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_studio_default(self, on_change_trigger):
-        if not self.can_remove_from_studio_default:
+        if not self._can_remove_from_studio_default:
             return
 
         value = self._default_value
@@ -307,7 +321,7 @@ class InputEntity(EndpointEntity):
         self.on_change()
 
     def _remove_from_project_override(self, on_change_trigger):
-        if not self.can_remove_from_project_override:
+        if not self._can_remove_from_project_override:
             return
 
         self._has_project_override = False
@@ -409,6 +423,9 @@ class PathInput(InputEntity):
     def _item_initalization(self):
         self.valid_value_types = (STRING_TYPE, )
         self.value_on_not_set = ""
+
+        # GUI attributes
+        self.placeholder_text = self.schema_data.get("placeholder")
 
 
 class RawJsonEntity(InputEntity):

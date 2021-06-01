@@ -26,7 +26,8 @@ from .terminal import Terminal
 from .execute import (
     get_pype_execute_args,
     execute,
-    run_subprocess
+    run_subprocess,
+    CREATE_NO_WINDOW
 )
 from .log import PypeLogger, timeit
 from .mongo import (
@@ -57,6 +58,10 @@ from .python_module_tools import (
 )
 
 from .avalon_context import (
+    CURRENT_DOC_SCHEMAS,
+    PROJECT_NAME_ALLOWED_SYMBOLS,
+    PROJECT_NAME_REGEX,
+    create_project,
     is_latest,
     any_outdated,
     get_asset,
@@ -76,7 +81,13 @@ from .avalon_context import (
 
     get_creator_by_name,
 
-    change_timer_to_current_context
+    get_custom_workfile_template,
+
+    change_timer_to_current_context,
+
+    get_custom_workfile_template_by_context,
+    get_custom_workfile_template_by_string_context,
+    get_custom_workfile_template
 )
 
 from .local_settings import (
@@ -112,6 +123,7 @@ from .profiles_filtering import filter_profiles
 from .plugin_tools import (
     TaskNotSetError,
     get_subset_name,
+    prepare_template_data,
     filter_pyblish_plugins,
     set_plugin_attributes_from_settings,
     source_hash,
@@ -137,6 +149,7 @@ from .editorial import (
     trim_media_range,
     range_from_frames,
     frames_to_secons,
+    frames_to_timecode,
     make_sequence_collection
 )
 
@@ -160,6 +173,10 @@ __all__ = [
     "recursive_bases_from_class",
     "classes_from_module",
 
+    "CURRENT_DOC_SCHEMAS",
+    "PROJECT_NAME_ALLOWED_SYMBOLS",
+    "PROJECT_NAME_REGEX",
+    "create_project",
     "is_latest",
     "any_outdated",
     "get_asset",
@@ -180,6 +197,10 @@ __all__ = [
     "get_creator_by_name",
 
     "change_timer_to_current_context",
+
+    "get_custom_workfile_template_by_context",
+    "get_custom_workfile_template_by_string_context",
+    "get_custom_workfile_template",
 
     "IniSettingRegistry",
     "JSONSettingRegistry",
@@ -244,5 +265,6 @@ __all__ = [
     "trim_media_range",
     "range_from_frames",
     "frames_to_secons",
+    "frames_to_timecode",
     "make_sequence_collection"
 ]

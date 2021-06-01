@@ -2,7 +2,7 @@
     {
         "type": "list-strict",
         "key": "{name}",
-        "label": "{label}:",
+        "label": "{label}",
         "object_types": [
             {
                 "label": "Red",

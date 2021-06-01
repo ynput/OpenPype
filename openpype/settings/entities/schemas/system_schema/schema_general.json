@@ -19,10 +19,23 @@
             "type": "splitter"
         },
         {
+            "type": "label",
+            "label": "This is <b>NOT a securely stored password!</b>. It only acts as a simple barrier to stop users from accessing studio wide settings."
+        },
+        {
+            "type": "text",
+            "key": "admin_password",
+            "label": "Admin password"
+        },
+        {
+            "type": "splitter"
+        },
+        {
             "key": "environment",
             "label": "Environment",
             "type": "raw-json",
-            "env_group_key": "global"
+            "env_group_key": "global",
+            "require_restart": true
         },
         {
             "type": "splitter"
@@ -32,7 +45,8 @@
             "key": "openpype_path",
             "label": "Versions Repository",
             "multiplatform": true,
-            "multipath": true
+            "multipath": true,
+            "require_restart": true
         }
     ]
 }

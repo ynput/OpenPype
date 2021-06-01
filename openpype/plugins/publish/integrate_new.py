@@ -12,10 +12,13 @@ import shutil
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import io
+from avalon.api import format_template_with_optional_keys
 from avalon.vendor import filelink
 import openpype.api
 from datetime import datetime
 # from pype.modules import ModulesManager
+from openpype.lib.profiles_filtering import filter_profiles
+from openpype.lib import prepare_template_data
 
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
@@ -75,7 +78,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
-                "lut",
                 "audio",
                 "yetiRig",
                 "yeticache",
@@ -94,7 +96,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "editorial",
                 "background",
                 "camerarig",
-                "redshiftproxy"
+                "redshiftproxy",
+                "effect"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -294,7 +297,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         else:
             orig_transfers = list(instance.data['transfers'])
 
-        template_name = self.template_name_from_instance(instance)
+        task_name = io.Session.get("AVALON_TASK")
+        family = self.main_family_from_instance(instance)
+
+        key_values = {"families": family, "tasks": task_name}
+        profile = filter_profiles(self.template_name_profiles, key_values,
+                                  logger=self.log)
+        if profile:
+            template_name = profile["template_name"]
 
         published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
@@ -697,14 +707,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             subset = io.find_one({"_id": _id})
 
-        # add group if available
-        if instance.data.get("subsetGroup"):
-            io.update_many({
-                'type': 'subset',
-                '_id': io.ObjectId(subset["_id"])
-            }, {'$set': {'data.subsetGroup':
-                         instance.data.get('subsetGroup')}}
-            )
+        self._set_subset_group(instance, subset["_id"])
 
         # Update families on subset.
         families = [instance.data["family"]]
@@ -715,6 +718,65 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         )
 
         return subset
+
+    def _set_subset_group(self, instance, subset_id):
+        """
+            Mark subset as belonging to group in DB.
+
+            Uses Settings > Global > Publish plugins > IntegrateAssetNew
+
+            Args:
+                instance (dict): processed instance
+                subset_id (str): DB's subset _id
+
+        """
+        # add group if available
+        integrate_new_sett = (instance.context.data["project_settings"]
+                                                   ["global"]
+                                                   ["publish"]
+                                                   ["IntegrateAssetNew"])
+
+        profiles = integrate_new_sett["subset_grouping_profiles"]
+
+        filtering_criteria = {
+            "families": instance.data["family"],
+            "hosts": instance.data["anatomyData"]["app"],
+            "tasks": instance.data["anatomyData"]["task"] or
+                io.Session["AVALON_TASK"]
+        }
+        matching_profile = filter_profiles(profiles, filtering_criteria)
+
+        filled_template = None
+        if matching_profile:
+            template = matching_profile["template"]
+            fill_pairs = (
+                ("family", filtering_criteria["families"]),
+                ("task", filtering_criteria["tasks"]),
+                ("host", filtering_criteria["hosts"]),
+                ("subset", instance.data["subset"]),
+                ("renderlayer", instance.data.get("renderlayer"))
+            )
+            fill_pairs = prepare_template_data(fill_pairs)
+
+            try:
+                filled_template = \
+                    format_template_with_optional_keys(fill_pairs, template)
+            except KeyError:
+                keys = []
+                if fill_pairs:
+                    keys = fill_pairs.keys()
+
+                msg = "Subset grouping failed. " \
+                      "Only {} are expected in Settings".format(','.join(keys))
+                self.log.warning(msg)
+
+        if instance.data.get("subsetGroup") or filled_template:
+            subset_group = instance.data.get('subsetGroup') or filled_template
+
+            io.update_many({
+                'type': 'subset',
+                '_id': io.ObjectId(subset_id)
+            }, {'$set': {'data.subsetGroup': subset_group}})
 
     def create_version(self, subset, version_number, data=None):
         """ Copy given source to destination
@@ -797,68 +859,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if not family:
             family = instance.data["families"][0]
         return family
-
-    def template_name_from_instance(self, instance):
-        template_name = self.default_template_name
-        if not self.template_name_profiles:
-            self.log.debug((
-                "Template name profiles are not set."
-                " Using default \"{}\""
-            ).format(template_name))
-            return template_name
-
-        # Task name from session?
-        task_name = io.Session.get("AVALON_TASK")
-        family = self.main_family_from_instance(instance)
-
-        matching_profiles = {}
-        highest_value = -1
-        self.log.debug(
-            "Template name profiles:\n{}".format(self.template_name_profiles)
-        )
-        for name, filters in self.template_name_profiles.items():
-            value = 0
-            families = filters.get("families")
-            if families:
-                if family not in families:
-                    continue
-                value += 1
-
-            tasks = filters.get("tasks")
-            if tasks:
-                if task_name not in tasks:
-                    continue
-                value += 1
-
-            if value > highest_value:
-                matching_profiles = {}
-                highest_value = value
-
-            if value == highest_value:
-                matching_profiles[name] = filters
-
-        if len(matching_profiles) == 1:
-            template_name = tuple(matching_profiles.keys())[0]
-            self.log.debug(
-                "Using template name \"{}\".".format(template_name)
-            )
-
-        elif len(matching_profiles) > 1:
-            template_name = tuple(matching_profiles.keys())[0]
-            self.log.warning((
-                "More than one template profiles matched"
-                " Family \"{}\" and Task: \"{}\"."
-                " Using first template name in row \"{}\"."
-            ).format(family, task_name, template_name))
-
-        else:
-            self.log.debug((
-                "None of template profiles matched"
-                " Family \"{}\" and Task: \"{}\"."
-                " Using default template name \"{}\""
-            ).format(family, task_name, template_name))
-
-        return template_name
 
     def get_rootless_path(self, anatomy, path):
         """  Returns, if possible, path without absolute portion from host

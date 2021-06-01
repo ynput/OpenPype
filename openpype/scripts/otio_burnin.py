@@ -5,7 +5,6 @@ import subprocess
 import platform
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-from openpype.api import resources
 import openpype.lib
 
 
@@ -14,7 +13,7 @@ ffprobe_path = openpype.lib.get_ffmpeg_tool_path("ffprobe")
 
 
 FFMPEG = (
-    '"{}" -i "%(input)s" %(filters)s %(args)s%(output)s'
+    '"{}"%(input_args)s -i "%(input)s" %(filters)s %(args)s%(output)s'
 ).format(ffmpeg_path)
 
 FFPROBE = (
@@ -70,6 +69,87 @@ def get_fps(str_value):
     return str(fps)
 
 
+def _prores_codec_args(ffprobe_data):
+    output = []
+
+    tags = ffprobe_data.get("tags") or {}
+    encoder = tags.get("encoder") or ""
+    if encoder.endswith("prores_ks"):
+        codec_name = "prores_ks"
+
+    elif encoder.endswith("prores_aw"):
+        codec_name = "prores_aw"
+
+    else:
+        codec_name = "prores"
+
+    output.extend(["-codec:v", codec_name])
+
+    pix_fmt = ffprobe_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    # Rest of arguments is prores_kw specific
+    if codec_name == "prores_ks":
+        codec_tag_to_profile_map = {
+            "apco": "proxy",
+            "apcs": "lt",
+            "apcn": "standard",
+            "apch": "hq",
+            "ap4h": "4444",
+            "ap4x": "4444xq"
+        }
+        codec_tag_str = ffprobe_data.get("codec_tag_string")
+        if codec_tag_str:
+            profile = codec_tag_to_profile_map.get(codec_tag_str)
+            if profile:
+                output.extend(["-profile:v", profile])
+
+    return output
+
+
+def _h264_codec_args(ffprobe_data):
+    output = []
+
+    output.extend(["-codec:v", "h264"])
+
+    pix_fmt = ffprobe_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    output.extend(["-intra"])
+    output.extend(["-g", "1"])
+
+    return output
+
+
+def get_codec_args(ffprobe_data):
+    codec_name = ffprobe_data.get("codec_name")
+    # Codec "prores"
+    if codec_name == "prores":
+        return _prores_codec_args(ffprobe_data)
+
+    # Codec "h264"
+    if codec_name == "h264":
+        return _h264_codec_args(ffprobe_data)
+
+    output = []
+    if codec_name:
+        output.extend(["-codec:v", codec_name])
+
+    bit_rate = ffprobe_data.get("bit_rate")
+    if bit_rate:
+        output.extend(["-b:v", bit_rate])
+
+    pix_fmt = ffprobe_data.get("pix_fmt")
+    if pix_fmt:
+        output.extend(["-pix_fmt", pix_fmt])
+
+    output.extend(["-g", "1"])
+
+    return output
+
+
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
     '''
     This is modification of OTIO FFmpeg Burnin adapter.
@@ -121,9 +201,14 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         'font_size': 42
     }
 
-    def __init__(self, source, streams=None, options_init=None):
+    def __init__(
+        self, source, streams=None, options_init=None, first_frame=None
+    ):
         if not streams:
             streams = _streams(source)
+
+        self.first_frame = first_frame
+        self.input_args = []
 
         super().__init__(source, streams)
 
@@ -236,30 +321,25 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         timecode_text = options.get("timecode") or ""
         text_for_size += timecode_text
 
+        font_path = options.get("font")
+        if not font_path or not os.path.exists(font_path):
+            font_path = ffmpeg_burnins.FONT
+
+        options["font"] = font_path
+
         data.update(options)
-
-        os_system = platform.system().lower()
-        data_font = data.get("font")
-        if not data_font:
-            data_font = (
-                resources.get_liberation_font_path().replace("\\", "/")
-            )
-        elif isinstance(data_font, dict):
-            data_font = data_font[os_system]
-
-        if data_font:
-            data["font"] = data_font
-            options["font"] = data_font
-            if ffmpeg_burnins._is_windows():
-                data["font"] = (
-                    data_font
-                    .replace(os.sep, r'\\' + os.sep)
-                    .replace(':', r'\:')
-                )
-
         data.update(
             ffmpeg_burnins._drawtext(align, resolution, text_for_size, options)
         )
+
+        arg_font_path = font_path
+        if platform.system().lower() == "windows":
+            arg_font_path = (
+                arg_font_path
+                .replace(os.sep, r'\\' + os.sep)
+                .replace(':', r'\:')
+            )
+        data["font"] = arg_font_path
 
         self.filters['drawtext'].append(draw % data)
 
@@ -289,7 +369,21 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if self.filter_string:
             filters = '-vf "{}"'.format(self.filter_string)
 
+        if self.first_frame is not None:
+            start_number_arg = "-start_number {}".format(self.first_frame)
+            self.input_args.append(start_number_arg)
+            if "start_number" not in args:
+                if not args:
+                    args = start_number_arg
+                else:
+                    args = " ".join((start_number_arg, args))
+
+        input_args = ""
+        if self.input_args:
+            input_args = " {}".format(" ".join(self.input_args))
+
         return (FFMPEG % {
+            'input_args': input_args,
             'input': self.source,
             'output': output,
             'args': '%s ' % args if args else '',
@@ -370,7 +464,8 @@ def example(input_path, output_path):
 
 def burnins_from_data(
     input_path, output_path, data,
-    codec_data=None, options=None, burnin_values=None, overwrite=True
+    codec_data=None, options=None, burnin_values=None, overwrite=True,
+    full_input_path=None, first_frame=None
 ):
     """This method adds burnins to video/image file based on presets setting.
 
@@ -427,8 +522,11 @@ def burnins_from_data(
         "shot": "sh0010"
     }
     """
+    streams = None
+    if full_input_path:
+        streams = _streams(full_input_path)
 
-    burnin = ModifiedBurnins(input_path, options_init=options)
+    burnin = ModifiedBurnins(input_path, streams, options, first_frame)
 
     frame_start = data.get("frame_start")
     frame_end = data.get("frame_end")
@@ -541,38 +639,13 @@ def burnins_from_data(
     if codec_data:
         # Use codec definition from method arguments
         ffmpeg_args = codec_data
+        ffmpeg_args.append("-g 1")
 
     else:
         ffprobe_data = burnin._streams[0]
-        codec_name = ffprobe_data.get("codec_name")
-        if codec_name:
-            if codec_name == "prores":
-                tags = ffprobe_data.get("tags") or {}
-                encoder = tags.get("encoder") or ""
-                if encoder.endswith("prores_ks"):
-                    codec_name = "prores_ks"
-
-                elif encoder.endswith("prores_aw"):
-                    codec_name = "prores_aw"
-            ffmpeg_args.append("-codec:v {}".format(codec_name))
-
-        profile_name = ffprobe_data.get("profile")
-        if profile_name:
-            # lower profile name and repalce spaces with underscore
-            profile_name = profile_name.replace(" ", "_").lower()
-            ffmpeg_args.append("-profile:v {}".format(profile_name))
-
-        bit_rate = ffprobe_data.get("bit_rate")
-        if bit_rate:
-            ffmpeg_args.append("-b:v {}".format(bit_rate))
-
-        pix_fmt = ffprobe_data.get("pix_fmt")
-        if pix_fmt:
-            ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))
+        ffmpeg_args.extend(get_codec_args(ffprobe_data))
 
     # Use group one (same as `-intra` argument, which is deprecated)
-    ffmpeg_args.append("-g 1")
-
     ffmpeg_args_str = " ".join(ffmpeg_args)
     burnin.render(
         output_path, args=ffmpeg_args_str, overwrite=overwrite, **data
@@ -591,6 +664,8 @@ if __name__ == "__main__":
         in_data["burnin_data"],
         codec_data=in_data.get("codec"),
         options=in_data.get("options"),
-        burnin_values=in_data.get("values")
+        burnin_values=in_data.get("values"),
+        full_input_path=in_data.get("full_input_path"),
+        first_frame=in_data.get("first_frame")
     )
     print("* Burnin script has finished")

@@ -531,7 +531,10 @@ OpenPype supports creating review video for almost any type of data you want to 
 What we call review video is actually _playblast_ or _capture_ (depending on terminology
 you are familiar with) made from pre-defined camera in scene. This is very useful
 in cases where you want to add turntable preview of your model for example. But it can
-be used to generate preview for animation, simulations, and so on.
+be used to generate preview for animation, simulations, and so on. You can either
+publish review as separate subset version, or you can attach generated video to subset you
+are publishing - for example attach video of turntable rotation to published model as in
+following example.
 
 ### Setting scene for review extraction
 
@@ -570,9 +573,13 @@ on this set to control review video generation:
 * `Step` - number of steps
 * `Fps` - framerate
 
+Next step is to move your model set to review set so it will be connected to each other.
+
 This is my scene:
 
 ![Maya - Review model setup](assets/maya-model_review_setup.jpg)
+
+You see that `modelMain` in under `reviewMain` with `reviewCamera`.
 
 _* note that I had to fix UVs and normals on Stanford dragon model as it wouldn't pass
 model validators_
@@ -588,6 +595,8 @@ version. All parts of this process - like what burnins, what type of video file,
 settings for Maya playblast - can be customized by your TDs. For more information
 about customizing review process refer to [admin section](admin_presets_plugins).
 
+If you don't move `modelMain` into `reviewMain`, review will be generated but it will
+be published as separate entity.
 
 ## Working with Yeti in OpenPype
 
@@ -715,3 +724,40 @@ Once data are marked as Redshift Proxy instance, they can be published - **OpenP
 
 Published proxy files can be loaded with OpenPype Loader. It will create mesh and attach Redshift Proxy
 parameters to it - Redshift will then represent proxy with bounding box.
+
+## Using VRay Proxies
+
+OpenPype support publishing, loading and using of VRay Proxy in look management. Their underlaying format
+can be either vrmesh or alembic.
+
+:::warning vrmesh or alembic and look management
+Be aware that **vrmesh** cannot be used with looks as it doesn't retain IDs necessary to map shaders to geometry.
+:::
+
+### Creating VRay Proxy
+
+To create VRay Proxy, select geometry you want and - **OpenPype → Create ...** select **VRay Proxy**. Name your
+subset as you want and press **Create** button.
+
+This will create `vrayproxy` set for your subset. You can set some options in Attribute editor, mainly if you want
+export animation instead of single frame.
+
+![Maya - VRay Proxy Creation](assets/maya-vray_proxy.jpg)
+
+### Publishing VRay Proxies
+
+VRay Proxy can be published - **OpenPype → Publish ...**. It will publish data as VRays `vrmesh` format and as
+Alembic file.
+
+## Using VRay Proxies
+
+You can load VRay Proxy using loader - **OpenPype → Loader ...**
+
+![Maya - VRay Proxy Creation](assets/maya-vray_proxy-loader.jpg)
+
+Select your subset and right-click. Select **Import VRay Proxy (vrmesh)** to import it.
+
+:::note
+Note that even if it states `vrmesh` in descriptions, if loader finds Alembic published along (default behavior) it will
+use abc file instead of vrmesh as it is more flexible and without it looks doesn't work.
+:::

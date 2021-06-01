@@ -1,0 +1,21 @@
+{
+    "create": {
+        "CreateImage": {
+            "defaults": [
+                "Main"
+            ]
+        }
+    },
+    "publish": {
+        "ExtractImage": {
+            "formats": [
+                "png",
+                "jpg"
+            ]
+        }
+    },
+    "workfile_builder": {
+        "create_first_version": false,
+        "custom_templates": []
+    }
+}

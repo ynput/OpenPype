@@ -8,26 +8,6 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "general",
-            "label": "General",
-            "children": [
-                {
-                    "type": "list",
-                    "key": "skip_resolution_check",
-                    "object_type": "text",
-                    "label": "Skip Resolution Check for Tasks"
-                },
-                {
-                    "type": "list",
-                    "key": "skip_timelines_check",
-                    "object_type": "text",
-                    "label": "Skip Timeliene Check  for Tasks"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
             "key": "publish",
             "label": "Publish plugins",
             "children": [
@@ -48,6 +28,52 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "ValidateSceneSettings",
+                    "label": "Validate Scene Settings",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Validate if FrameStart, FrameEnd and Resolution match shot data"
+                        },
+                        {
+                            "type": "list",
+                            "key": "frame_check_filter",
+                            "label": "Skip Frame check for Assets with",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "list",
+                            "key": "skip_resolution_check",
+                            "object_type": "text",
+                            "label": "Skip Resolution Check for Tasks"
+                        },
+                        {
+                            "type": "list",
+                            "key": "skip_timelines_check",
+                            "object_type": "text",
+                            "label": "Skip Timeline Check  for Tasks"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "HarmonySubmitDeadline",
                     "label": "Harmony Submit to Deadline",
                     "children": [
@@ -59,7 +85,7 @@
                         {
                             "type": "number",
                             "key": "priority",
-                            "label": "priority"
+                            "label": "Priority"
                         },
                         {
                             "type": "text",
@@ -74,7 +100,7 @@
                         {
                             "type": "number",
                             "key": "chunk_size",
-                            "label": "Chunk Size"
+                            "label": "Frames Per Task"
                         }
                     ]
                 }
