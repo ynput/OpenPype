@@ -96,7 +96,13 @@ def _fill_schema_template_data(
         for item in template:
             # Get skip paths for children item
             _skip_paths = []
-            if skip_paths_by_first_key and isinstance(item, dict):
+            if not isinstance(item, dict):
+                pass
+
+            elif item.get("type") in WRAPPER_TYPES:
+                _skip_paths = copy.deepcopy(skip_paths)
+
+            elif skip_paths_by_first_key:
                 # Check if this item should be skipped
                 key = item.get("key")
                 if key and key in skip_paths_by_first_key:
