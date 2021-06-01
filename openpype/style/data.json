@@ -1,0 +1,52 @@
+{
+    "palette": {
+        "grey-base": "#2C313A",
+        "grey-light": "#373D48",
+        "grey-lighter": "#434a56",
+        "grey-lightest": "#4E5565",
+        "grey-input": "#353A45",
+        "grey-dark": "#21252B",
+
+        "text-darker": "#99A3B2",
+        "text-base": "#D3D8DE",
+        "text-lighter": "#F0F2F5",
+
+        "blue-base": "hsl(200, 60%, 60%)",
+        "blue-light": "hsl(200, 80%, 80%)",
+
+        "green-base": "hsl(155, 55%, 55%)",
+        "green-light": "hsl(155, 80%, 80%)"
+    },
+    "color": {
+
+        "font": "#D3D8DE",
+        "font-hover": "#F0F2F5",
+        "font-disabled": "#99A3B2",
+        "font-view-selection": "#ffffff",
+        "font-view-hover": "#F0F2F5",
+
+        "bg": "#2C313A",
+        "bg-inputs": "#21252B",
+        "bg-buttons": "#434a56",
+        "bg-button-hover": "hsla(220, 14%, 70%, .3)",
+        "bg-inputs-disabled": "#2C313A",
+        "bg-buttons-disabled": "#434a56",
+
+        "bg-menu-separator": "rgba(75, 83, 98, 127)",
+
+        "bg-scroll-handle": "#4B5362",
+
+        "bg-view": "#21252B",
+        "bg-view-header": "#373D48",
+        "bg-view-hover": "hsla(220, 14%, 70%, .3)",
+        "bg-view-alternate": "rgb(36, 42, 50)",
+        "bg-view-disabled": "#434a56",
+        "bg-view-alternate-disabled": "#2C313A",
+        "bg-view-selection": "hsla(200, 60%, 60%, .4)",
+        "bg-view-selection-hover": "hsla(200, 60%, 60%, .8)",
+
+        "border": "#373D48",
+        "border-hover": "hsla(220, 14%, 70%, .3)",
+        "border-focus": "hsl(200, 60%, 60%)"
+    }
+}

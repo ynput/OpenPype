@@ -124,6 +124,9 @@ class HierarchyView(QtWidgets.QTreeView):
 
     def __init__(self, dbcon, source_model, parent):
         super(HierarchyView, self).__init__(parent)
+
+        self.setObjectName("HierarchyView")
+
         # Direct access to model
         self._source_model = source_model
         self._editors_mapping = {}
@@ -409,6 +412,9 @@ class HierarchyView(QtWidgets.QTreeView):
 
         return self._source_model.add_new_task(parent_index)
 
+    def _add_asset_action(self):
+        self._add_asset_and_edit()
+
     def _add_asset_and_edit(self, parent_index=None):
         new_index = self.add_asset(parent_index)
         if new_index is None:
@@ -422,6 +428,9 @@ class HierarchyView(QtWidgets.QTreeView):
         )
         # Start editing
         self.edit(new_index)
+
+    def _add_task_action(self):
+        self._add_task_and_edit()
 
     def _add_task_and_edit(self):
         new_index = self.add_task()
@@ -574,14 +583,14 @@ class HierarchyView(QtWidgets.QTreeView):
             if item_type in ("asset", "project"):
                 add_asset_action = QtWidgets.QAction("Add Asset", context_menu)
                 add_asset_action.triggered.connect(
-                    self._add_asset_and_edit
+                    self._add_asset_action
                 )
                 actions.append(add_asset_action)
 
             if item_type in ("asset", "task"):
                 add_task_action = QtWidgets.QAction("Add Task", context_menu)
                 add_task_action.triggered.connect(
-                    self._add_task_and_edit
+                    self._add_task_action
                 )
                 actions.append(add_task_action)
 
