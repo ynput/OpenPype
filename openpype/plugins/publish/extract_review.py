@@ -2,7 +2,6 @@ import os
 import re
 import copy
 import json
-import shutil
 
 from abc import ABCMeta, abstractmethod
 import six
@@ -18,7 +17,7 @@ from openpype.lib import (
     get_decompress_dir,
     decompress
 )
-import tempfile
+import speedcopy
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -700,7 +699,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     staging_dir,
                     ("{}{:0" + str(col.padding) + "d}{}").format(
                         col.head, frame, col.tail))
-                shutil.copy2(file, hole)
+                speedcopy.copyfile(file, hole)
                 files_to_clean.append(hole)
 
         return files_to_clean
