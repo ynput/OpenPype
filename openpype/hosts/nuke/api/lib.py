@@ -1642,7 +1642,7 @@ def launch_workfiles_app():
         workfiles.show(os.environ["AVALON_WORKDIR"])
 
 
-def process_workfile_options():
+def process_workfile_builder():
     from openpype.lib import (
         env_value_to_bool,
         get_custom_workfile_template
@@ -1697,7 +1697,7 @@ def process_workfile_options():
         return
 
     # to avoid looping of the callback, remove it!
-    nuke.removeOnCreate(process_workfile_options, nodeClass="Root")
+    nuke.removeOnCreate(process_workfile_builder, nodeClass="Root")
 
     log.info("Opening last workfile...")
     # open workfile
