@@ -397,15 +397,10 @@ class Delivery(BaseAction):
 
         try:
             self.db_con.install()
-            result = self.real_launch(session, entities, event)
-            if result["success"]:
-                job["status"] = "done"
-            else:
-                job["status"] = "failed"
+            report = self.real_launch(session, entities, event)
 
         except Exception as exc:
-            job["status"] = "failed"
-            result = {
+            report = {
                 "success": False,
                 "title": "Delivery failed",
                 "items": [{
@@ -425,7 +420,23 @@ class Delivery(BaseAction):
             session.commit()
             self.db_con.uninstall()
 
-        return result
+        if report["success"]:
+            job["status"] = "done"
+
+        else:
+            job["status"] = "failed"
+
+            self.show_interface(
+                items=report["items"],
+                title=report["title"],
+                event=event
+            )
+            return {
+                "success": False,
+                "message": "Errors during delivery process. See report."
+            }
+
+        return report
 
     def real_launch(self, session, entities, event):
         self.log.info("Delivery action just started.")
@@ -516,7 +527,7 @@ class Delivery(BaseAction):
     def report(self, report_items):
         """Returns dict with final status of delivery (succes, fail etc.)."""
         items = []
-        title = "Delivery report"
+
         for msg, _items in report_items.items():
             if not _items:
                 continue
@@ -547,9 +558,8 @@ class Delivery(BaseAction):
 
         return {
             "items": items,
-            "title": title,
-            "success": False,
-            "message": "Delivery Finished"
+            "title": "Delivery report",
+            "success": False
         }
 
 
