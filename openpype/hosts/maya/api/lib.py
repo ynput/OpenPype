@@ -2124,7 +2124,7 @@ def bake_to_world_space(nodes,
     return world_space_nodes
 
 
-def load_capture_preset(path=None, data=None):
+def load_capture_preset(data=None):
     import capture
 
     preset = data
