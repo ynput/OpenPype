@@ -193,6 +193,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 )
 
                 temp_data = self.prepare_temp_data(instance, repre, output_def)
+                files_to_clean = []
+                self.log.info("Is sequence: {}".format(temp_data["input_is_sequence"]))
+                if temp_data["input_is_sequence"]:
+                    self.log.info("Filling gaps in sequence.")
+                    files_to_clean = self.fill_sequence_gaps(
+                        temp_data["origin_repre"]["files"],
+                        new_repre["stagingDir"],
+                        temp_data["frame_start"],
+                        temp_data["frame_end"])
 
                 try:  # temporary until oiiotool is supported cross platform
                     ffmpeg_args = self._ffmpeg_arguments(
@@ -203,7 +212,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         self.log.debug("Unsupported compression on input " +
                                        "files. Skipping!!!")
                         return
-                    raise
+                    raise NotImplementedError
 
                 subprcs_cmd = " ".join(ffmpeg_args)
 
@@ -213,6 +222,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 openpype.api.run_subprocess(
                     subprcs_cmd, shell=True, logger=self.log
                 )
+
+                # delete files added to fill gaps
+                if files_to_clean:
+                    for f in files_to_clean:
+                        os.unlink(f)
 
                 output_name = output_def["filename_suffix"]
                 if temp_data["without_handles"]:
@@ -606,6 +620,91 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return all_args
 
+    def fill_sequence_gaps(self, files, staging_dir, start_frame, end_frame):
+        # type: (list, str, int, int) -> list
+        """Fill missing files in sequence by duplicating existing ones.
+
+        This will take nearest frame file and copy it with so as to fill
+        gaps in sequence. Last existing file there is is used to for the
+        hole ahead.
+
+        Args:
+            files (list): List of representation files.
+            staging_dir (str): Path to staging directory.
+            start_frame (int): Sequence start (no matter what files are there)
+            end_frame (int): Sequence end (no matter what files are there)
+
+        Returns:
+            list of added files. Those should be cleaned after work
+                is done.
+
+        Raises:
+            AssertionError: if more then one collection is obtained.
+
+        """
+        from pprint import pprint
+
+        collections = clique.assemble(files)[0]
+        assert len(collections) == 1, "Multiple collections found."
+        col = collections[0]
+        # do nothing if sequence is complete
+        if list(col.indexes)[0] == start_frame and \
+                list(col.indexes)[-1] == end_frame and \
+                col.is_contiguous():
+            return []
+
+        holes = col.holes()
+
+        # generate ideal sequence
+        complete_col = clique.assemble(
+            [("{}{:0" + str(col.padding) + "d}{}").format(
+                col.head, f, col.tail
+            ) for f in range(start_frame, end_frame)]
+        )[0][0]  # type: clique.Collection
+
+        new_files = {}
+        last_existing_file = None
+
+        for idx in holes.indexes:
+            # get previous existing file
+            test_file = os.path.normpath(os.path.join(
+                staging_dir,
+                ("{}{:0" + str(complete_col.padding) + "d}{}").format(
+                    complete_col.head, idx - 1, complete_col.tail)))
+            if os.path.isfile(test_file):
+                new_files[idx] = test_file
+                last_existing_file = test_file
+            else:
+                if not last_existing_file:
+                    # previous file is not found (sequence has a hole
+                    # at the beginning. Use first available frame
+                    # there is.
+                    try:
+                        last_existing_file = list(col)[0]
+                    except IndexError:
+                        # empty collection?
+                        raise AssertionError(
+                            "Invalid sequence collected")
+                new_files[idx] = os.path.normpath(
+                    os.path.join(staging_dir, last_existing_file))
+
+        files_to_clean = []
+        if new_files:
+            # so now new files are dict with missing frame as a key and
+            # existing file as a value.
+            for frame, file in new_files.items():
+                self.log.info(
+                    "Filling gap {} with {}".format(frame, file))
+
+                hole = os.path.join(
+                    staging_dir,
+                    ("{}{:0" + str(col.padding) + "d}{}").format(
+                        col.head, frame, col.tail))
+                shutil.copy2(file, hole)
+                files_to_clean.append(hole)
+
+        return files_to_clean
+
     def input_output_paths(self, new_repre, output_def, temp_data):
         """Deduce input nad output file paths based on entered data.
 
@@ -624,52 +723,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         if temp_data["input_is_sequence"]:
             collections = clique.assemble(repre["files"])[0]
-
-            if not collections[0].is_contiguous():
-                # there are holes in sequence, lets get them
-                holes = collections[0].holes()
-                new_files = {}
-                last_existing_file = None
-                for idx in holes.indexes:
-                    # get previous existing file
-                    test_file = os.path.join(
-                        staging_dir, "{}{:0" + holes.padding + "d}{}".format(
-                            holes.head, idx - 1, holes.tail))
-                    if os.path.isfile(test_file):
-                        new_files[idx] = test_file
-                        last_existing_file = test_file
-                    else:
-                        if not last_existing_file:
-                            # previous file is not found (sequence has a hole
-                            # at the beginning. Use first available frame
-                            # there is.
-                            try:
-                                last_existing_file = list(collections[0])[0]
-                            except IndexError:
-                                # empty collection?
-                                raise AssertionError(
-                                    "Invalid sequence collected")
-                        new_files[idx] = last_existing_file
-                # so now new files are dict with missing frame as a key and
-                # existing file as a value.
-                files_to_clean = []
-                if new_files:
-                    for frame, file in new_files.items():
-                        self.log.info(
-                            "Filling gap {} with {}".format(frame, file))
-
-                        hole = os.path.join(
-                            staging_dir,
-                            "{}{:0" + holes.padding + "d}{}".format(
-                                holes.head, frame, holes.tail))
-                        shutil.copy2(file, hole)
-                        files_to_clean.append(hole)
-                        
-                # 1) copy existing files to temp
-                # 2) process holes with existing frames
-                # 3) create new complete collection
-                # 4) put it into ffmpeg
-
             full_input_path = os.path.join(
                 staging_dir,
                 collections[0].format("{head}{padding}{tail}")
