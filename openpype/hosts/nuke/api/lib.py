@@ -1676,8 +1676,14 @@ def process_workfile_builder():
             log.info("Adding nodes from `{}`...".format(
                 custom_template_path
             ))
-            # import nodes into current script
-            nuke.nodePaste(custom_template_path)
+            try:
+                # import nodes into current script
+                nuke.nodePaste(custom_template_path)
+            except RuntimeError:
+                raise RuntimeError((
+                    "Template defined for project: {} is not working. "
+                    "Talk to your manager for an advise").format(
+                        custom_template_path))
 
         # if builder at start is defined
         if builder_on:
