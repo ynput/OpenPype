@@ -423,7 +423,7 @@ class Delivery(BaseAction):
             )
             return {
                 "success": False,
-                "message": "Delivery finished with errors. Read report messages."
+                "message": "Errors during delivery process. See report."
             }
 
         return report
