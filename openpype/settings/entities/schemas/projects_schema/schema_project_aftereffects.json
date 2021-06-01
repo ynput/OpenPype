@@ -88,7 +88,11 @@
         },
         {
             "type": "schema_template",
-            "name": "template_workfile_builder_simple"
+            "name": "template_workfile_options",
+            "skip_paths": [
+                "workfile_builder/builder_on_start",
+                "workfile_builder/profiles"
+            ]
         }
     ]
 }

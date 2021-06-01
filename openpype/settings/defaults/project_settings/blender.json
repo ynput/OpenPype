@@ -1,10 +1,6 @@
 {
     "workfile_builder": {
         "create_first_version": false,
-        "template_path": {
-            "windows": "",
-            "darwin": "",
-            "linux": ""
-        }
+        "custom_templates": []
     }
 }
