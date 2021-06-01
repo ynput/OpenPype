@@ -755,22 +755,22 @@ class BuildWorkfile:
         """
         host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
         presets = get_project_settings(avalon.io.Session["AVALON_PROJECT"])
-        # Get presets for host
-        # for backward compatibility this has to have exception
-        # if the concept will be agreed then this needs to be
-        # refactored without exception
-        build_presets = (
-            presets.get(host_name, {})
-            .get("workfile_build" or "workfile_builder")
-            .get("profiles")
-        )
 
-        if not build_presets:
+        # Get presets for host
+        wb_settings = presets.get(host_name, {}).get("workfile_builder")
+
+        if not wb_settings:
+            # backward compatibility
+            wb_settings = presets.get(host_name, {}).get("workfile_build")
+
+        builder_presets = wb_settings.get("profiles")
+
+        if not builder_presets:
             return
 
         task_name_low = task_name.lower()
         per_task_preset = None
-        for preset in build_presets:
+        for preset in builder_presets:
             preset_tasks = preset.get("tasks") or []
             preset_tasks_low = [task.lower() for task in preset_tasks]
             if task_name_low in preset_tasks_low:
