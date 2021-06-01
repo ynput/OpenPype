@@ -388,8 +388,13 @@ class Delivery(BaseAction):
         try:
             self.db_con.install()
             report = self.real_launch(session, entities, event)
+            if report["success"]:
+                job["status"] = "done"
+            else:
+                job["status"] = "failed"
 
         except Exception as exc:
+            job["status"] = "failed"
             report = {
                 "success": False,
                 "title": "Delivery failed",
@@ -410,12 +415,7 @@ class Delivery(BaseAction):
             session.commit()
             self.db_con.uninstall()
 
-        if report["success"]:
-            job["status"] = "done"
-
-        else:
-            job["status"] = "failed"
-
+        if not report["success"]:
             self.show_interface(
                 items=report["items"],
                 title=report["title"],
