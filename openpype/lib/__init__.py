@@ -81,6 +81,8 @@ from .avalon_context import (
 
     get_creator_by_name,
 
+    get_custom_workfile_template,
+
     change_timer_to_current_context
 )
 
