@@ -9,7 +9,7 @@ from openpype.api import Anatomy, config
 from openpype.modules.ftrack.lib import BaseAction, statics_icon
 from openpype.modules.ftrack.lib.avalon_sync import CUST_ATTR_ID_KEY
 from openpype.lib.delivery import (
-    path_from_represenation,
+    path_from_representation,
     get_format_dict,
     check_destination_path,
     process_single_file,
@@ -74,7 +74,7 @@ class Delivery(BaseAction):
             "value": project_name
         })
 
-        # Prpeare anatomy data
+        # Prepare anatomy data
         anatomy = Anatomy(project_name)
         new_anatomies = []
         first = None
@@ -368,12 +368,18 @@ class Delivery(BaseAction):
 
     def launch(self, session, entities, event):
         if "values" not in event["data"]:
-            return
+            return {
+                "success": True,
+                "message": "Nothing to do"
+            }
 
         values = event["data"]["values"]
         skipped = values.pop("__skipped__")
         if skipped:
-            return None
+            return {
+                "success": False,
+                "message": "Action skipped"
+            }
 
         user_id = event["source"]["user"]["id"]
         user_entity = session.query(
@@ -391,27 +397,45 @@ class Delivery(BaseAction):
 
         try:
             self.db_con.install()
-            self.real_launch(session, entities, event)
-            job["status"] = "done"
+            report = self.real_launch(session, entities, event)
 
-        except Exception:
+        except Exception as exc:
+            report = {
+                "success": False,
+                "title": "Delivery failed",
+                "items": [{
+                    "type": "label",
+                    "value": (
+                        "Error during delivery action process:<br>{}"
+                        "<br><br>Check logs for more information."
+                    ).format(str(exc))
+                }]
+            }
             self.log.warning(
                 "Failed during processing delivery action.",
                 exc_info=True
             )
 
         finally:
-            if job["status"] != "done":
+            if report["success"]:
+                job["status"] = "done"
+            else:
                 job["status"] = "failed"
             session.commit()
             self.db_con.uninstall()
 
-        if job["status"] == "failed":
+        if not report["success"]:
+            self.show_interface(
+                items=report["items"],
+                title=report["title"],
+                event=event
+            )
             return {
                 "success": False,
-                "message": "Delivery failed. Check logs for more information."
+                "message": "Errors during delivery process. See report."
             }
-        return True
+
+        return report
 
     def real_launch(self, session, entities, event):
         self.log.info("Delivery action just started.")
@@ -431,7 +455,7 @@ class Delivery(BaseAction):
         if not repre_names:
             return {
                 "success": True,
-                "message": "Not selected components to deliver."
+                "message": "No selected components to deliver."
             }
 
         location_path = location_path.strip()
@@ -479,7 +503,7 @@ class Delivery(BaseAction):
             if frame:
                 repre["context"]["frame"] = len(str(frame)) * "#"
 
-            repre_path = path_from_represenation(repre, anatomy)
+            repre_path = path_from_representation(repre, anatomy)
             # TODO add backup solution where root of path from component
             # is replaced with root
             args = (
@@ -502,7 +526,7 @@ class Delivery(BaseAction):
     def report(self, report_items):
         """Returns dict with final status of delivery (succes, fail etc.)."""
         items = []
-        title = "Delivery report"
+
         for msg, _items in report_items.items():
             if not _items:
                 continue
@@ -533,9 +557,8 @@ class Delivery(BaseAction):
 
         return {
             "items": items,
-            "title": title,
-            "success": False,
-            "message": "Delivery Finished"
+            "title": "Delivery report",
+            "success": False
         }
 
 

@@ -76,27 +76,33 @@ def _fill_schema_template_data(
             if key not in template_data:
                 template_data[key] = value
 
-    # Store paths by first part if path
-    # - None value says that whole key should be skipped
-    skip_paths_by_first_key = {}
-    for path in skip_paths:
-        parts = path.split("/")
-        key = parts.pop(0)
-        if key not in skip_paths_by_first_key:
-            skip_paths_by_first_key[key] = []
-
-        value = "/".join(parts)
-        skip_paths_by_first_key[key].append(value or None)
-
     if not template:
         output = template
 
     elif isinstance(template, list):
+        # Store paths by first part if path
+        # - None value says that whole key should be skipped
+        skip_paths_by_first_key = {}
+        for path in skip_paths:
+            parts = path.split("/")
+            key = parts.pop(0)
+            if key not in skip_paths_by_first_key:
+                skip_paths_by_first_key[key] = []
+
+            value = "/".join(parts)
+            skip_paths_by_first_key[key].append(value or None)
+
         output = []
         for item in template:
             # Get skip paths for children item
             _skip_paths = []
-            if skip_paths_by_first_key and isinstance(item, dict):
+            if not isinstance(item, dict):
+                pass
+
+            elif item.get("type") in WRAPPER_TYPES:
+                _skip_paths = copy.deepcopy(skip_paths)
+
+            elif skip_paths_by_first_key:
                 # Check if this item should be skipped
                 key = item.get("key")
                 if key and key in skip_paths_by_first_key:
@@ -108,7 +114,8 @@ def _fill_schema_template_data(
             output_item = _fill_schema_template_data(
                 item, template_data, _skip_paths, required_keys, missing_keys
             )
-            output.append(output_item)
+            if output_item:
+                output.append(output_item)
 
     elif isinstance(template, dict):
         output = {}
@@ -116,6 +123,8 @@ def _fill_schema_template_data(
             output[key] = _fill_schema_template_data(
                 value, template_data, skip_paths, required_keys, missing_keys
             )
+        if output.get("type") in WRAPPER_TYPES and not output.get("children"):
+            return {}
 
     elif isinstance(template, STRING_TYPE):
         # TODO find much better way how to handle filling template data
