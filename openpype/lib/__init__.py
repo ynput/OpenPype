@@ -223,7 +223,6 @@ __all__ = [
     "apply_project_environments_value",
 
     "compile_list_of_regexes",
-    "get_custom_workfile_template",
 
     "filter_profiles",
 
