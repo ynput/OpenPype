@@ -3,9 +3,9 @@ from aiohttp import web
 import json
 import logging
 from concurrent.futures import CancelledError
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets
 
-from openpype.modules import TrayModulesManager, ITrayService
+from openpype.modules import ITrayService
 from openpype.tools.tray_app.app import ConsoleDialog
 
 log = logging.getLogger(__name__)
@@ -102,11 +102,9 @@ class HostListener:
                             lambda: self._host_is_connecting(host_name, text))
                     elif action == MsgAction.CLOSE:
                         # clean close
-                        crashed = False
                         self._close(host_name)
                         await ws.close()
                     elif action == MsgAction.INITIALIZED:
-                        initialized = True
                         self.module.execute_in_main_thread(
                             # must be queued as _host_is_connecting might not
                             # be triggered/finished yet
@@ -123,10 +121,10 @@ class HostListener:
         except CancelledError:  # recoverable
             pass
         except Exception as exc:
-            error_msg = str(exc)
             log.warning("Exception during communication", exc_info=True)
             if widget:
-                widget.append_text(text)
+                error_msg = str(exc)
+                widget.append_text(error_msg)
 
         return ws
 

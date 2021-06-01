@@ -11,7 +11,7 @@ from datetime import datetime
 from avalon import style
 from openpype.modules.webserver import host_console_listener
 
-from Qt import QtWidgets, QtGui, QtCore
+from Qt import QtWidgets, QtCore
 
 
 class ConsoleTrayApp:
@@ -105,7 +105,7 @@ class ConsoleTrayApp:
         ConsoleTrayApp.webserver_client = ws
 
         payload = {
-            "host":  self.host_id,
+            "host": self.host_id,
             "action": host_console_listener.MsgAction.CONNECTING,
             "text": "Integration with {}".format(str.capitalize(self.host))
         }
@@ -119,7 +119,7 @@ class ConsoleTrayApp:
             return
 
         payload = {
-            "host":  self.host_id,
+            "host": self.host_id,
             "action": host_console_listener.MsgAction.INITIALIZED,
             "text": "Integration with {}".format(str.capitalize(self.host))
         }
@@ -133,7 +133,7 @@ class ConsoleTrayApp:
             return
 
         payload = {
-            "host":  self.host_id,
+            "host": self.host_id,
             "action": host_console_listener.MsgAction.CLOSE,
             "text": "Integration with {}".format(str.capitalize(self.host))
         }
@@ -151,7 +151,7 @@ class ConsoleTrayApp:
             new_text = collections.deque(new_text.split("\n"))
 
         payload = {
-            "host":  self.host_id,
+            "host": self.host_id,
             "action": host_console_listener.MsgAction.ADD,
             "text": "\n".join(new_text)
         }

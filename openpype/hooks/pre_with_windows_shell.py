@@ -1,7 +1,6 @@
 import os
 import subprocess
 from openpype.lib import PreLaunchHook
-from openpype.lib.applications import ApplicationLaunchContext
 
 
 class LaunchWithWindowsShell(PreLaunchHook):
