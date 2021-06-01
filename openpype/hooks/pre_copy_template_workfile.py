@@ -56,7 +56,7 @@ class CopyTemplateWorkfile(PreLaunchHook):
         task_name = self.data["task_name"]
 
         project_settings = get_project_settings(project_name)
-        host_settings = project_settings[self.application.group.name]
+        host_settings = project_settings[self.application.host_name]
 
         workfile_builder_settings = host_settings.get("workfile_builder")
         if not workfile_builder_settings:
