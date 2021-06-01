@@ -85,6 +85,10 @@
                     ]
                 }
             ]
+        },
+        {
+            "type": "schema_template",
+            "name": "template_workfile_builder_simple"
         }
     ]
 }

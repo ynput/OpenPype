@@ -18,5 +18,13 @@
             "secondary_pool": "",
             "chunk_size": 1000000
         }
+    },
+    "workfile_builder": {
+        "create_first_version": false,
+        "template_path": {
+            "windows": "",
+            "darwin": "",
+            "linux": ""
+        }
     }
 }
