@@ -123,6 +123,8 @@ def _fill_schema_template_data(
             output[key] = _fill_schema_template_data(
                 value, template_data, skip_paths, required_keys, missing_keys
             )
+        if output.get("type") in WRAPPER_TYPES and not output.get("children"):
+            return {}
 
     elif isinstance(template, STRING_TYPE):
         # TODO find much better way how to handle filling template data
