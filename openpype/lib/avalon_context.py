@@ -1381,6 +1381,66 @@ def get_workfile_template_by_context(
     return None
 
 
+def get_workfile_template_by_string_context(
+    template_profiles, project_name, asset_name, task_name,
+    dbcon=None, anatomy=None
+):
+    """Filter and fill workfile template profiles by passed context.
+
+    Passed context are string representations of project, asset and task.
+    Function will query documents of project and asset to be able use
+    `get_workfile_template_by_context` for rest of logic.
+
+    Args:
+        template_profiles(list): Loaded workfile template profiles.
+        project_name(str): Project name.
+        asset_name(str): Asset name.
+        task_name(str): Task name.
+        dbcon(AvalonMongoDB): Optional avalon implementation of mongo
+            connection with context Session.
+        anatomy(Anatomy): Optionally prepared anatomy object for passed
+            project.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. (Existence of formatted path is not validated.)
+    """
+
+    if dbcon is None:
+        from avalon.api import AvalonMongoDB
+
+        dbcon = AvalonMongoDB()
+
+    dbcon.install()
+
+    if dbcon.Session["AVALON_PROJECT"] != project_name:
+        dbcon.Session["AVALON_PROJECT"] = project_name
+
+    project_doc = dbcon.find_one(
+        {"type": "project"},
+        # All we need is "name" and "data.code" keys
+        {
+            "name": 1,
+            "data.code": 1
+        }
+    )
+    asset_doc = dbcon.find_one(
+        {
+            "type": "asset",
+            "name": asset_name
+        },
+        # All we need is "name" and "data.tasks" keys
+        {
+            "name": 1,
+            "data.tasks": 1
+        }
+    )
+
+    return get_workfile_template_by_context(
+        template_profiles, project_doc, asset_doc, task_name, anatomy
+    )
+
+
 def _get_basic_context_data_for_anatomy(env=None):
     """ Prepare Task context for anatomy data.
     Args:
