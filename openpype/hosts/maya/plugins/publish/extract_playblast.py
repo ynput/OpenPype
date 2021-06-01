@@ -45,11 +45,7 @@ class ExtractPlayblast(openpype.api.Extractor):
         # get cameras
         camera = instance.data['review_camera']
 
-        try:
-            preset = lib.load_capture_preset(data=self.capture_preset)
-        except KeyError as ke:
-            self.log.error('Error loading capture presets: {}'.format(str(ke)))
-            preset = {}
+        preset = lib.load_capture_preset(data=self.capture_preset)
 
 
         preset['camera'] = camera
