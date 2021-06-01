@@ -3,71 +3,94 @@
 ## 3.0.0 - Unreleased
 
 ### Configuration
-- Studio Settings GUI: no more json configuration files
-- OpenPype Modules can be turned on and off
-- Easy to add Application versions
-- Per Project Environment and plugin management
-- Robust profile system for creating reviewables and burnins, with filtering based on Application, Task and data family
-Configurable publish plugins. 
+- Studio Settings GUI: no more json configuration files.
+- OpenPype Modules can be turned on and off.
+- Easy to add Application versions.
+- Per Project Environment and plugin management.
+- Robust profile system for creating reviewables and burnins, with filtering based on Application, Task and data family.
+- Configurable publish plugins. 
 - Options to make any validator or extractor, optional or disabled.
 - Color Management is now unified under anatomy settings.
-- Subset naming and gouping 
-- Too many individual configurable option to list in this changelog :)
+- Subset naming and grouping is fully configurable.
 - All project attributes can now be set directly in OpenPype settings.
 - Studio Setting can be locked to prevent unwanted artist changes. 
-
+- You can now add per project and per task type templates for workfile initialization in most hosts.
+- Too many other individual configurable option to list in this changelog :)
 
 ### Local Settings
-- Local Settings GUI where users can change certain option on individual basis
-    - Application executables
-    - Project roots
-    - Project site sync settings
+- Local Settings GUI where users can change certain option on individual basis.
+    - Application executables.
+    - Project roots.
+    - Project site sync settings.
 
 ### Build, Installation and Deployments
-- No requirements on artist machine
-- Fully distributed workflow possible
-- Self-contained installation
-- Available on all three major platforms
-- Automatic artist installation updates
-- Easy Build system
-- Safe versioning system with staging and production options
+- No requirements on artist machine.
+- Fully distributed workflow possible.
+- Self-contained installation.
+- Available on all three major platforms.
+- Automatic artist OpenPype updates.
+- Studio OpenPype repository for updates distribution.
+- Robust Build system.
+- Safe studio update versioning with staging and production options.
+- MacOS build generates .app and .dmg installer.
+- Windows build with installer creation script.
 
 ### Misc
-- System and diagnostic info tool in the tray
-- Launching application from Launcher indicates activity
+- System and diagnostic info tool in the tray.
+- Launching application from Launcher indicates activity.
 - All project roots are now named. Single root project are now achieved by having a single named root in the project anatomy.
+- Every project root is cast into environment variable as well, so it can be used in DCC instead of absolute path (depends on DCC support for env vars).
 - Basic support for task types, on top of task names.
-- Timer now change automatically when the context is switched inside running application
-- 'Master" versions have been renamed to "Hero"
+- Timer now change automatically when the context is switched inside running application.
+- 'Master" versions have been renamed to "Hero".
+- Extract Burnins now supports file sequences and color settings.
+- Extract Review support overscan cropping, better letterboxes and background colour fill.
+- Delivery tool for copying and renaming any published assets in bulk.
+- Harmony, Photoshop and After Effects now connect directly with OpenPype tray instead of spawning their own terminal.
+
+### Project Manager GUI
+- Create Projects.
+- Create Shots and Assets.
+- Create Tasks and assign task types.
+- Fill required asset attributes.
+- Validations for duplicated or unsupported names.
+- Archive Assets.
+- Move Asset within hierarchy.
+
+### Site Sync (beta)
+- Synchronization of published files between workstations and central storage.
+- Ability to add arbitrary storage providers to the Site Sync system.
+- Default setup includes Disk and Google Drive providers as examples.
+- Access to availability information from Loader and Scene Manager.
+- Sync queue GUI with filtering, error and status reporting.
+- Site sync can be configured on a per-project basis.
+- Bulk upload and download from the loader.
 
 ### Ftrack
 - Actions have customisable roles.
 - Settings on all actions are updated live and don't need openpype restart.
+- Ftrack module can now be turned off completely.
+- It is enough to specify ftrack server name and the URL will be formed correctly. So instead of mystudio.ftrackapp.com, it's possible to use simply: "mystudio".
 
 ### Editorial
 - Fully OTIO based editorial publishing.
 - Completely re-done Hiero publishing to be a lot simpler and faster.
-- Consistent conforming from Resolve, Hiero and Standalone Publisher *
+- Consistent conforming from Resolve, Hiero and Standalone Publisher.
 
 ### Backend
-- OpenPype and Avalon now always share the same database (in 2.x is was possible to split them)
-- Major codebase refactoring to allow for better CI, versioning and control of individual integrations
-- OTIO is bundled with build
-- OIIO is bundled with build
-- FFMPEG is bundled with build
-- Rest API and host WebSocket servers have been unified into a single local webserver
-- Maya look assigner has been integrated into the main codebase
-- Publish GUI has been integrated into the main codebase
-- Studio and Project settings overrides are now stored in Mongo
+- OpenPype and Avalon now always share the same database (in 2.x is was possible to split them).
+- Major codebase refactoring to allow for better CI, versioning and control of individual integrations.
+- OTIO is bundled with build.
+- OIIO is bundled with build.
+- FFMPEG is bundled with build.
+- Rest API and host WebSocket servers have been unified into a single local webserver.
+- Maya look assigner has been integrated into the main codebase.
+- Publish GUI has been integrated into the main codebase.
+- Studio and Project settings overrides are now stored in Mongo.
+- Too many other backend fixes and tweaks to list :), you can see full changelog on github for those.
+- OpenPype uses Poetry to manage it's virtual environment when running from code.
+- all applications can be marked as python 2 or 3 compatible to make the switch a bit easier.
 
-### Site Sync (beta)
-- Synchronisation of published files between workstations and central storage.
-- Ability to add arbitrary storage providers to the Site Sync system.
-- Default setup includes Disk and Google Drive providers as examples.
-- Access to availability information from Loader and Scene Manager.
-- Download / Upload queue with filtering, error and status reporting.
-- Site sync can be configured on a per-project basis
-- Bulk upload and download from the loader
 
 
 ## [2.18.0](https://github.com/pypeclub/openpype/tree/2.18.0) (2021-05-18)
