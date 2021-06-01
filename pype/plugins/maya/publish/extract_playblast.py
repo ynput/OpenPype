@@ -43,13 +43,16 @@ class ExtractPlayblast(pype.api.Extractor):
 
         # get cameras
         camera = instance.data['review_camera']
-        capture_preset = instance.context.data['presets']['maya']['capture']
+        capture_preset = instance.context.data.get(
+            'presets', {}).get('maya', {}).get('capture')
 
         try:
             preset = lib.load_capture_preset(data=capture_preset)
-        except Exception:
+        except Exception as exc:
+            self.log.error(
+                'Error loading capture presets: {}'.format(str(exc)))
             preset = {}
-        self.log.info('using viewport preset: {}'.format(preset))
+        self.log.info('Using viewport preset: {}'.format(preset))
 
         preset['camera'] = camera
         preset['format'] = "image"
@@ -78,7 +81,7 @@ class ExtractPlayblast(pype.api.Extractor):
 
         # Isolate view is requested by having objects in the set besides a
         # camera.
-        if instance.data.get("isolate"):
+        if preset.pop("isolate_view", False) or instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
         # Show/Hide image planes on request.
@@ -95,9 +98,6 @@ class ExtractPlayblast(pype.api.Extractor):
             # viewer opening call to allow a signal to trigger between
             # playblast and viewer
             preset['viewer'] = False
-
-            # Remove panel key since it's internal value to capture_gui
-            preset.pop("panel", None)
 
             path = capture.capture(**preset)
 
