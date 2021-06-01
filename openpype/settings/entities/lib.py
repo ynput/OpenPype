@@ -76,22 +76,22 @@ def _fill_schema_template_data(
             if key not in template_data:
                 template_data[key] = value
 
-    # Store paths by first part if path
-    # - None value says that whole key should be skipped
-    skip_paths_by_first_key = {}
-    for path in skip_paths:
-        parts = path.split("/")
-        key = parts.pop(0)
-        if key not in skip_paths_by_first_key:
-            skip_paths_by_first_key[key] = []
-
-        value = "/".join(parts)
-        skip_paths_by_first_key[key].append(value or None)
-
     if not template:
         output = template
 
     elif isinstance(template, list):
+        # Store paths by first part if path
+        # - None value says that whole key should be skipped
+        skip_paths_by_first_key = {}
+        for path in skip_paths:
+            parts = path.split("/")
+            key = parts.pop(0)
+            if key not in skip_paths_by_first_key:
+                skip_paths_by_first_key[key] = []
+
+            value = "/".join(parts)
+            skip_paths_by_first_key[key].append(value or None)
+
         output = []
         for item in template:
             # Get skip paths for children item
