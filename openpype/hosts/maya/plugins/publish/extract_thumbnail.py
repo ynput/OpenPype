@@ -12,10 +12,10 @@ import pymel.core as pm
 
 
 class ExtractThumbnail(openpype.api.Extractor):
-    """Extract a Camera as Alembic.
+    """Extract viewport thumbnail.
 
-    The cameras gets baked to world space by default. Only when the instance's
-    `bakeToWorldSpace` is set to False it will include its full hierarchy.
+    Takes review camera and creates a thumbnail based on viewport
+    capture.
 
     """
 
@@ -35,9 +35,10 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         try:
             preset = lib.load_capture_preset(data=capture_preset)
-        except:
+        except KeyError as ke:
+            self.log.error('Error loading capture presets: {}'.format(str(ke)))
             preset = {}
-        self.log.info('using viewport preset: {}'.format(capture_preset))
+        self.log.info('Using viewport preset: {}'.format(preset))
 
         # preset["off_screen"] =  False
 
@@ -78,7 +79,7 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         # Isolate view is requested by having objects in the set besides a
         # camera.
-        if instance.data.get("isolate"):
+        if preset.pop("isolate_view", False) or instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
         with maintained_time():

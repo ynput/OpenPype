@@ -45,7 +45,11 @@ class ExtractPlayblast(openpype.api.Extractor):
         # get cameras
         camera = instance.data['review_camera']
 
-        preset = lib.load_capture_preset(data=self.capture_preset)
+        try:
+            preset = lib.load_capture_preset(data=self.capture_preset)
+        except KeyError as ke:
+            self.log.error('Error loading capture presets: {}'.format(str(ke)))
+            preset = {}
 
 
         preset['camera'] = camera
@@ -75,7 +79,7 @@ class ExtractPlayblast(openpype.api.Extractor):
 
         # Isolate view is requested by having objects in the set besides a
         # camera.
-        if instance.data.get("isolate"):
+        if preset.pop("isolate_view", False) or instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
         # Show/Hide image planes on request.
