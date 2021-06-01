@@ -1381,7 +1381,7 @@ def get_custom_workfile_template_by_context(
     return None
 
 
-def get_custom_workfile_templates_by_string_context(
+def get_custom_workfile_template_by_string_context(
     template_profiles, project_name, asset_name, task_name,
     dbcon=None, anatomy=None
 ):
@@ -1441,7 +1441,7 @@ def get_custom_workfile_templates_by_string_context(
     )
 
 
-def get_custom_workfile_templates(template_profiles):
+def get_custom_workfile_template(template_profiles):
     """Filter and fill workfile template profiles by current context.
 
     Current context is defined by `avalon.api.Session`. That's why this
@@ -1457,7 +1457,7 @@ def get_custom_workfile_templates(template_profiles):
     # Use `avalon.io` as Mongo connection
     from avalon import io
 
-    return get_custom_workfile_templates_by_string_context(
+    return get_custom_workfile_template_by_string_context(
         template_profiles,
         io.Session["AVALON_PROJECT"],
         io.Session["AVALON_ASSET"],
