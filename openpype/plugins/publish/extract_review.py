@@ -191,9 +191,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "New representation tags: `{}`".format(new_repre["tags"])
                 )
 
-                temp_data = self.prepare_temp_data(instance, repre, output_def)
+                temp_data = self.prepare_temp_data(
+                    instance, repre, output_def)
                 files_to_clean = []
-                self.log.info("Is sequence: {}".format(temp_data["input_is_sequence"]))
                 if temp_data["input_is_sequence"]:
                     self.log.info("Filling gaps in sequence.")
                     files_to_clean = self.fill_sequence_gaps(
@@ -641,8 +641,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
             AssertionError: if more then one collection is obtained.
 
         """
-        from pprint import pprint
-
         collections = clique.assemble(files)[0]
         assert len(collections) == 1, "Multiple collections found."
         col = collections[0]

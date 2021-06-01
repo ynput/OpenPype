@@ -433,18 +433,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             app = os.environ.get("AVALON_APP", "")
 
             preview = False
-            self.log.info("ffffff")
-            self.log.info(app)
             if app in self.aov_filter.keys():
-                self.log.info("in")
                 for aov_pattern in self.aov_filter[app]:
-                    self.log.info(aov_pattern)
-                    self.log.info(aov)
-                    if re.match(aov_pattern,
-                                aov
-                                ):
+                    if re.match(aov_pattern, aov):
                         preview = True
-                        self.log.info("{}:{}:{}".format(aov, app, instance_data))
                         break
 
             new_instance = copy(instance_data)
@@ -511,23 +503,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         bake_render_path = instance.get("bakeRenderPath", [])
 
         # create representation for every collected sequence
-        self.log.debug("-------")
         for collection in collections:
-            self.log.debug(collection)
             ext = collection.tail.lstrip(".")
             preview = False
             # if filtered aov name is found in filename, toggle it for
             # preview video rendering
             for app in self.aov_filter.keys():
-                self.log.debug(app)
                 if os.environ.get("AVALON_APP", "") == app:
                     for aov in self.aov_filter[app]:
-                        self.log.debug(aov)
                         if re.match(
                             aov,
                             list(collection)[0]
                         ):
-                            self.log.info("{}:{}:{}".format(aov, app, instance))
                             preview = True
                             break
 
