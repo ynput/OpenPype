@@ -508,6 +508,8 @@ class PathWidget(BaseWidget):
             self.content_layout = QtWidgets.QGridLayout(self)
             self.content_layout.setContentsMargins(0, 0, 0, 0)
             self.content_layout.setSpacing(5)
+            # Add stretch to second column
+            self.content_layout.setColumnStretch(1, 1)
             self.body_widget = None
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)

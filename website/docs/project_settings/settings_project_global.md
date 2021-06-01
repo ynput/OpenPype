@@ -17,10 +17,10 @@ Projects always use default project values unless they have [project override](.
 
 Many of the settings are using a concept of **Profile filters**
 
-You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a 
-profile with filters matching the current context the most, is used. 
+You can define multiple profiles to choose from for different contexts. Each filter is evaluated and a
+profile with filters matching the current context the most, is used.
 
-You can define profile without any filters and use it as **default**. 
+You can define profile without any filters and use it as **default**.
 
 Only **one or none** profile will be returned per context.
 
@@ -129,7 +129,7 @@ Profile may generate multiple outputs from a single input. Each output must defi
 Saves information for all published subsets into DB, published assets are available for other hosts, tools and tasks after.
 #### Template name profiles
 
-Allows to select [anatomy template](admin_settings_project_anatomy.md#templates) based on context of subset being published. 
+Allows to select [anatomy template](admin_settings_project_anatomy.md#templates) based on context of subset being published.
 
 For example for `render` profile you might want to publish and store assets in different location (based on anatomy setting) then for `publish` profile.
 [Profile filtering](#profile-filters) is used to select between appropriate template for each context of published subsets.
@@ -139,7 +139,7 @@ Applicable context filters:
 - **`tasks`** - Current task. `["modeling", "animation"]`
 
     ![global_integrate_new_template_name_profile](assets/global_integrate_new_template_name_profile.png)
-    
+
 (This image shows use case where `render` anatomy template is used for subsets of families ['review, 'render', 'prerender'], `publish` template is chosen for all other.)
 
 #### Subset grouping profiles
@@ -154,5 +154,16 @@ Applicable context filters:
 - **`tasks`** - Current task. `["modeling", "animation"]`
 
     ![global_integrate_new_template_name_profile](assets/global_integrate_new_subset_group.png)
-    
+
 (This image shows use case where only assets published from 'photoshop', for all families for all tasks should be marked as grouped with a capitalized name of Task where they are published from.)
+
+## Tools
+Settings for OpenPype tools.
+
+## Workfiles
+All settings related to Workfile tool.
+
+### Open last workfile at launch
+This feature allows you to define a rule for each task/host or toggle the feature globally to all tasks as they are visible in the picture.
+
+![global_tools_workfile_open_last_version](assets/global_tools_workfile_open_last_version.png)

@@ -6,9 +6,7 @@
             "load": "ctrl+alt+l",
             "manage": "ctrl+alt+m",
             "build_workfile": "ctrl+alt+b"
-        },
-        "open_workfile_at_start": false,
-        "create_initial_workfile": true
+        }
     },
     "create": {
         "CreateWriteRender": {
@@ -147,12 +145,13 @@
             "node_name_template": "{class_name}_{ext}"
         }
     },
-    "workfile_build": {
+    "workfile_builder": {
+        "create_first_version": false,
+        "custom_templates": [],
+        "builder_on_start": false,
         "profiles": [
             {
-                "tasks": [
-                    "compositing"
-                ],
+                "tasks": [],
                 "current_context": [
                     {
                         "subset_name_filters": [],
@@ -162,10 +161,12 @@
                         ],
                         "repre_names": [
                             "exr",
-                            "dpx"
+                            "dpx",
+                            "mov"
                         ],
                         "loaders": [
-                            "LoadSequence"
+                            "LoadSequence",
+                            "LoadMov"
                         ]
                     }
                 ],

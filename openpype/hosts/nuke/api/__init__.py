@@ -80,7 +80,7 @@ def install():
     # Set context settings.
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
     nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
-    nuke.addOnCreate(lib.open_last_workfile, nodeClass="Root")
+    nuke.addOnCreate(lib.process_workfile_builder, nodeClass="Root")
     nuke.addOnCreate(lib.launch_workfiles_app, nodeClass="Root")
     menu.install()
 

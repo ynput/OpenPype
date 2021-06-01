@@ -32,5 +32,9 @@
             }
         }
     },
+    "workfile_builder": {
+        "create_first_version": false,
+        "custom_templates": []
+    },
     "filters": {}
 }
