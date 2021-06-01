@@ -1441,6 +1441,31 @@ def get_workfile_template_by_string_context(
     )
 
 
+def get_workfile_templates(template_profiles):
+    """Filter and fill workfile template profiles by current context.
+
+    Current context is defined by `avalon.api.Session`. That's why this
+    function should be used only inside host where context is set and stable.
+
+    Args:
+        template_profiles(list): Template profiles from settings.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. (Existence of formatted path is not validated.)
+    """
+    # Use `avalon.io` as Mongo connection
+    from avalon import io
+
+    return get_workfile_template_by_string_context(
+        template_profiles,
+        io.Session["AVALON_PROJECT"],
+        io.Session["AVALON_ASSET"],
+        io.Session["AVALON_TASK"],
+        io
+    )
+
+
 def _get_basic_context_data_for_anatomy(env=None):
     """ Prepare Task context for anatomy data.
     Args:
