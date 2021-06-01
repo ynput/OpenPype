@@ -11,7 +11,7 @@ from openpype import resources
 
 from openpype.lib.delivery import (
     sizeof_fmt,
-    path_from_represenation,
+    path_from_representation,
     get_format_dict,
     check_destination_path,
     process_single_file,
@@ -170,7 +170,7 @@ class DeliveryOptionsDialog(QtWidgets.QDialog):
             if repre["name"] not in selected_repres:
                 continue
 
-            repre_path = path_from_represenation(repre, self.anatomy)
+            repre_path = path_from_representation(repre, self.anatomy)
 
             anatomy_data = copy.deepcopy(repre["context"])
             new_report_items = check_destination_path(str(repre["_id"]),
