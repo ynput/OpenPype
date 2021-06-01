@@ -49,9 +49,6 @@ class ExtractPlayblast(openpype.api.Extractor):
 
 
         preset['camera'] = camera
-        preset['format'] = "image"
-        preset['quality'] = 95
-        preset['compression'] = "png"
         preset['start_frame'] = start
         preset['end_frame'] = end
         camera_option = preset.get("camera_option", {})

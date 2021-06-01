@@ -1101,9 +1101,6 @@ class SyncToAvalonEvent(BaseEvent):
         # Parents, Hierarchy
         ent_path_items = [ent["name"] for ent in ftrack_ent["link"]]
         parents = ent_path_items[1:len(ent_path_items)-1:]
-        hierarchy = ""
-        if len(parents) > 0:
-            hierarchy = os.path.sep.join(parents)
 
         # TODO logging
         self.log.debug(
@@ -1132,7 +1129,6 @@ class SyncToAvalonEvent(BaseEvent):
                 "ftrackId": ftrack_ent["id"],
                 "entityType": ftrack_ent.entity_type,
                 "parents": parents,
-                "hierarchy": hierarchy,
                 "tasks": {},
                 "visualParent": vis_par
             }
@@ -1975,14 +1971,9 @@ class SyncToAvalonEvent(BaseEvent):
             if cur_par == parents:
                 continue
 
-            hierarchy = ""
-            if len(parents) > 0:
-                hierarchy = os.path.sep.join(parents)
-
             if "data" not in self.updates[mongo_id]:
                 self.updates[mongo_id]["data"] = {}
             self.updates[mongo_id]["data"]["parents"] = parents
-            self.updates[mongo_id]["data"]["hierarchy"] = hierarchy
 
         # Skip custom attributes if didn't change
         if not hier_cust_attrs_ids:

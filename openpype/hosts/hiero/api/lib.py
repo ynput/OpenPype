@@ -214,7 +214,9 @@ def get_track_items(
             # add all if no track_type is defined
             return_list.append(track_item)
 
-    return return_list
+    # return output list but make sure all items are TrackItems
+    return [_i for _i in return_list
+            if type(_i) == hiero.core.TrackItem]
 
 
 def get_track_item_pype_tag(track_item):
