@@ -759,18 +759,11 @@ class BuildWorkfile:
         # for backward compatibility this has to have exception
         # if the concept will be agreed then this needs to be
         # refactored without exception
-        if "nuke" in host_name:
-            build_presets = (
-                presets.get(host_name, {})
-                .get("workfile_options")
-                .get("builder_profiles")
-            )
-        else:
-            build_presets = (
-                presets.get(host_name, {})
-                .get("workfile_build")
-                .get("profiles")
-            )
+        build_presets = (
+            presets.get(host_name, {})
+            .get("workfile_build" or "workfile_builder")
+            .get("profiles")
+        )
 
         if not build_presets:
             return
