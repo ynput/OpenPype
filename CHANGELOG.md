@@ -1,6 +1,5 @@
 # Changelog
 
-<<<<<<< HEAD
 ## 3.0.0 - Unreleased
 
 ### Configuration
@@ -71,10 +70,7 @@ Configurable publish plugins.
 - Bulk upload and download from the loader
 
 
-## [2.16.1](https://github.com/pypeclub/pype/tree/2.16.1) (2021-04-13)
-=======
 ## [2.18.0](https://github.com/pypeclub/openpype/tree/2.18.0) (2021-05-18)
->>>>>>> develop
 
 [Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.3...2.18.0)
 
