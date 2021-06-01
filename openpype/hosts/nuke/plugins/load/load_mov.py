@@ -326,7 +326,7 @@ class LoadMov(api.Loader):
             rtn["after"].setValue("continue")
             rtn["input.first_lock"].setValue(True)
             rtn["input.first"].setValue(
-                self.handle_start + self.first_frame
+                self.first_frame
             )
 
         if time_warp_nodes != []:
