@@ -1,3 +1,4 @@
+import os
 import json
 import copy
 import pyblish.api
@@ -109,7 +110,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         return {
             "family": "review",
-            "asset": context.data["workfile_context"]["asset"],
+            "asset": context.data["asset"],
             # Dummy subset name
             "subset": "reviewMain"
         }
