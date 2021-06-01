@@ -93,9 +93,6 @@ class ExtractPlayblast(openpype.api.Extractor):
             # playblast and viewer
             preset['viewer'] = False
 
-            # Remove panel key since it's internal value to capture_gui
-            preset.pop("panel", None)
-
             self.log.info('using viewport preset: {}'.format(preset))
 
             path = capture.capture(**preset)
