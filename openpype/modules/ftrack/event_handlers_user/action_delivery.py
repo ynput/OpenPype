@@ -417,15 +417,14 @@ class Delivery(BaseAction):
             )
 
         finally:
+            if report["success"]:
+                job["status"] = "done"
+            else:
+                job["status"] = "failed"
             session.commit()
             self.db_con.uninstall()
 
-        if report["success"]:
-            job["status"] = "done"
-
-        else:
-            job["status"] = "failed"
-
+        if not report["success"]:
             self.show_interface(
                 items=report["items"],
                 title=report["title"],
