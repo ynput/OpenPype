@@ -42,10 +42,6 @@ class ExtractThumbnail(openpype.api.Extractor):
         # preset["off_screen"] =  False
 
         preset['camera'] = camera
-        preset['format'] = "image"
-        # preset['compression'] = "qt"
-        preset['quality'] = 50
-        preset['compression'] = "jpg"
         preset['start_frame'] = instance.data["frameStart"]
         preset['end_frame'] = instance.data["frameStart"]
         preset['camera_options'] = {
