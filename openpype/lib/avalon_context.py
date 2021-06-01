@@ -1329,6 +1329,58 @@ def _get_task_context_data_for_anatomy(
     }
 
 
+def get_workfile_template_by_context(
+    template_profiles, project_doc, asset_doc, task_name, anatomy=None
+):
+    """Filter and fill workfile template profiles by passed context.
+
+    It is expected that passed argument are already queried documents of
+    project and asset as parents of processing task name.
+
+    Existence of formatted path is not validated.
+
+    Args:
+        template_profiles(list): Template profiles from settings.
+        project_doc(dict): Project document from MongoDB.
+        asset_doc(dict): Asset document from MongoDB.
+        task_name(str): Name of task for which templates are filtered.
+        anatomy(Anatomy): Optionally passed anatomy object for passed project
+            name.
+
+    Returns:
+        str: Path to template or None if none of profiles match current
+            context. (Existence of formatted path is not validated.)
+    """
+
+    from openpype.lib import filter_profiles
+
+    if anatomy is None:
+        anatomy = Anatomy(project_doc["name"])
+
+    # get project, asset, task anatomy context data
+    anatomy_context_data = _get_task_context_data_for_anatomy(
+        project_doc, asset_doc, task_name, anatomy
+    )
+    # add root dict
+    anatomy_context_data["root"] = anatomy.roots
+
+    # get task type for the task in context
+    current_task_type = anatomy_context_data["task"]["type"]
+
+    # get path from matching profile
+    matching_item = filter_profiles(
+        template_profiles,
+        {"task_type": current_task_type}
+    )
+    # when path is available try to format it in case
+    # there are some anatomy template strings
+    if matching_item:
+        template = matching_item["path"][platform.system().lower()]
+        return template.format(**anatomy_context_data)
+
+    return None
+
+
 def _get_basic_context_data_for_anatomy(env=None):
     """ Prepare Task context for anatomy data.
     Args:
