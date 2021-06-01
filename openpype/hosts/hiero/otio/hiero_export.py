@@ -62,6 +62,74 @@ def _get_metadata(item):
     return {}
 
 
+def create_time_effects(otio_clip, track_item):
+    # get all subtrack items
+    subTrackItems = flatten(track_item.parent().subTrackItems())
+    speed = track_item.playbackSpeed()
+
+    otio_effect = None
+    # retime on track item
+    if speed != 1.:
+        # make effect
+        otio_effect = otio.schema.LinearTimeWarp()
+        otio_effect.name = "Speed"
+        otio_effect.time_scalar = speed
+        otio_effect.metadata = {}
+
+    # freeze frame effect
+    if speed == 0.:
+        otio_effect = otio.schema.FreezeFrame()
+        otio_effect.name = "FreezeFrame"
+        otio_effect.metadata = {}
+
+    if otio_effect:
+        # add otio effect to clip effects
+        otio_clip.effects.append(otio_effect)
+
+    # loop trought and get all Timewarps
+    for effect in subTrackItems:
+        # avoid all effect which are not TimeWarp and disabled
+        if "TimeWarp" not in effect.name():
+            continue
+
+        if not effect.isEnabled():
+            continue
+
+        node = effect.node()
+        name = node["name"].value()
+
+        # solve effect class as effect name
+        _name = effect.name()
+        if "_" in _name:
+            effect_name = re.sub(r"(?:_)[_0-9]+", "", _name)  # more numbers
+        else:
+            effect_name = re.sub(r"\d+", "", _name)  # one number
+
+        metadata = {}
+        # add knob to metadata
+        for knob in ["lookup", "length"]:
+            value = node[knob].value()
+            animated = node[knob].isAnimated()
+            if animated:
+                value = [
+                    ((node[knob].getValueAt(i)) - i)
+                    for i in range(
+                        track_item.timelineIn(), track_item.timelineOut() + 1)
+                ]
+
+            metadata[knob] = value
+
+
+        # make effect
+        otio_effect = otio.schema.TimeEffect()
+        otio_effect.name = name
+        otio_effect.effect_name = effect_name
+        otio_effect.metadata = metadata
+
+        # add otio effect to clip effects
+        otio_clip.effects.append(otio_effect)
+
+
 def create_otio_reference(clip):
     metadata = _get_metadata(clip)
     media_source = clip.mediaSource()
@@ -220,6 +288,9 @@ def create_otio_clip(track_item):
     if self.include_tags:
         create_otio_markers(otio_clip, track_item)
         create_otio_markers(otio_clip, track_item.source())
+
+    # Add effects to clips
+    create_time_effects(otio_clip, track_item)
 
     return otio_clip
 
