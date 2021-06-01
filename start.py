@@ -129,24 +129,28 @@ import blessed  # noqa: E402
 import certifi  # noqa: E402
 
 
-term = blessed.Terminal()
+if sys.__stdout__:
+    term = blessed.Terminal()
 
 
-def _print(message: str):
-    if message.startswith("!!! "):
-        print("{}{}".format(term.orangered2("!!! "), message[4:]))
-    if message.startswith(">>> "):
-        print("{}{}".format(term.aquamarine3(">>> "), message[4:]))
-    if message.startswith("--- "):
-        print("{}{}".format(term.darkolivegreen3("--- "), message[4:]))
-    if message.startswith("    "):
-        print("{}{}".format(term.darkseagreen3("    "), message[4:]))
-    if message.startswith("*** "):
-        print("{}{}".format(term.gold("*** "), message[4:]))
-    if message.startswith("  - "):
-        print("{}{}".format(term.wheat("  - "), message[4:]))
-    if message.startswith("  . "):
-        print("{}{}".format(term.tan("  . "), message[4:]))
+    def _print(message: str):
+        if message.startswith("!!! "):
+            print("{}{}".format(term.orangered2("!!! "), message[4:]))
+        if message.startswith(">>> "):
+            print("{}{}".format(term.aquamarine3(">>> "), message[4:]))
+        if message.startswith("--- "):
+            print("{}{}".format(term.darkolivegreen3("--- "), message[4:]))
+        if message.startswith("    "):
+            print("{}{}".format(term.darkseagreen3("    "), message[4:]))
+        if message.startswith("*** "):
+            print("{}{}".format(term.gold("*** "), message[4:]))
+        if message.startswith("  - "):
+            print("{}{}".format(term.wheat("  - "), message[4:]))
+        if message.startswith("  . "):
+            print("{}{}".format(term.tan("  . "), message[4:]))
+else:
+    def _print(message: str):
+        print(message)
 
 
 # if SSL_CERT_FILE is not set prior to OpenPype launch, we set it to point
