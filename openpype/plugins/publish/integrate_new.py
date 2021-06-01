@@ -432,7 +432,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                     if index_frame_start is not None:
                         dst_padding_exp = "%0{}d".format(frame_start_padding)
-                        dst_padding = dst_padding_exp % (index_frame_start + frame_number)  # noqa: E401
+                        dst_padding = dst_padding_exp % (index_frame_start + frame_number)  # noqa: E501
 
                     dst = "{0}{1}{2}".format(
                         dst_head,
