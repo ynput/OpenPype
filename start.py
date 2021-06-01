@@ -132,7 +132,6 @@ import certifi  # noqa: E402
 if sys.__stdout__:
     term = blessed.Terminal()
 
-
     def _print(message: str):
         if message.startswith("!!! "):
             print("{}{}".format(term.orangered2("!!! "), message[4:]))
