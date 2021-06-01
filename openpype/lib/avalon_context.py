@@ -1301,16 +1301,21 @@ def _get_task_context_data_for_anatomy(
     project_task_types = anatomy["tasks"]
 
     # get relevant task type from asset doc
-    task_type = asset_doc["data"]["tasks"].get(task_name)
+    assert task_name in asset_doc["data"]["tasks"], (
+        "Task name \"{}\" not found on asset \"{}\"".format(
+            task_name, asset_name
+        )
+    )
+
+    task_type = asset_doc["data"]["tasks"][task_name].get("type")
 
     assert task_type, (
-        "Task type cannot be found in on asset `{}` "
-        "with given task name `{}`"
+        "Task name \"{}\" on asset \"{}\" does not have specified task type."
     ).format(asset_name, task_name)
 
     # get short name for task type defined in default anatomy settings
-    task_type_data = project_task_types.get(task_type)
-    assert task_type_data, (
+    project_task_type_data = project_task_types.get(task_type)
+    assert project_task_type_data, (
         "Something went wrong. Default anatomy tasks are not holding"
         "requested task type: `{}`".format(task_type)
     )
@@ -1324,7 +1329,7 @@ def _get_task_context_data_for_anatomy(
         "task": {
             "name": task_name,
             "type": task_type,
-            "short": task_type_data["short_name"]
+            "short_name": project_task_type_data["short_name"]
         }
     }
 
