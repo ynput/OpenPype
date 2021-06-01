@@ -27,7 +27,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'nukescript': 'comp',
                       'write': 'render',
                       'review': 'mov',
-                      'plate': 'img',
+                      'shot': 'img',
                       'audio': 'audio',
                       'workfile': 'scene',
                       'animation': 'cache',

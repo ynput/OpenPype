@@ -21,7 +21,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
 
     label = "Collect OTIO Review"
     order = pyblish.api.CollectorOrder - 0.57
-    families = ["clip"]
+    families = ["shot"]
     hosts = ["resolve", "hiero"]
 
     def process(self, instance):
@@ -29,7 +29,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
         otio_review_clips = []
         otio_timeline = instance.context.data["otioTimeline"]
         otio_clip = instance.data["otioClip"]
-
+        self.log.debug("__ otioClip: {}".format(otio_clip))
         # optionally get `reviewTrack`
         review_track_name = instance.data.get("reviewTrack")
 

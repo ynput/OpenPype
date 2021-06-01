@@ -102,9 +102,6 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "families": families,
                 "publish": tag_data["publish"],
                 "fps": context.data["fps"],
-                "versionData": {
-                    "colorspace": track_item.sourceMediaColourTransform(),
-                },
 
                 # clip's effect
                 "clipEffectItems": subtracks,
@@ -135,6 +132,13 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
             # create audio subset instance
             self.create_audio_instance(context, **data)
+
+            # add colorspace data
+            instance.data.update({
+                "versionData": {
+                    "colorspace": track_item.sourceMediaColourTransform(),
+                }
+            })
 
             # add audioReview attribute to plate instance data
             # if reviewTrack is on
