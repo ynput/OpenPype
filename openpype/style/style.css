@@ -72,6 +72,14 @@ QPushButton:disabled {
     background: {color:bg-buttons-disabled};
 }
 
+QPushButton::menu-indicator  {
+    subcontrol-origin: padding;
+    subcontrol-position: right;
+    width: 8px;
+    height: 8px;
+    padding-right: 5px;
+}
+
 QToolButton {
     border: none;
     background: transparent;
@@ -162,6 +170,15 @@ QComboBox::drop-down {
 QComboBox::down-arrow, QComboBox::down-arrow:on, QComboBox::down-arrow:hover, QComboBox::down-arrow:focus
 {
     image: url(:/openpype/images/combobox_arrow.png);
+}
+
+/* Splitter */
+QSplitter {
+    border: none;
+}
+
+QSplitter::handle {
+    border: 1px dotted {color:bg-menu-separator};
 }
 
 /* SLider */
@@ -541,4 +558,18 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #IconView[mode="icon"]::icon {
     top: 3px;
+}
+
+/* Standalone publisher */
+#ComponentList {
+    outline: none;
+}
+
+#ComponentItem {
+    background: transparent;
+}
+
+#ComponentFrame {
+    border: 1px solid {color:border};
+    border-radius: 0.1em;
 }
