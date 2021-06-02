@@ -24,7 +24,7 @@ from .widgets import (
 from .flickcharm import FlickCharm
 
 
-class IconListView(QtWidgets.QListView):
+class ProjectIconView(QtWidgets.QListView):
     """Styled ListView that allows to toggle between icon and list mode.
 
     Toggling between the two modes is done by Right Mouse Click.
@@ -35,7 +35,7 @@ class IconListView(QtWidgets.QListView):
     ListMode = 1
 
     def __init__(self, parent=None, mode=ListMode):
-        super(IconListView, self).__init__(parent=parent)
+        super(ProjectIconView, self).__init__(parent=parent)
 
         # Workaround for scrolling being super slow or fast when
         # toggling between the two visual modes
@@ -84,7 +84,7 @@ class IconListView(QtWidgets.QListView):
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
             self.set_mode(int(not self._mode))
-        return super(IconListView, self).mousePressEvent(event)
+        return super(ProjectIconView, self).mousePressEvent(event)
 
 
 class ProjectsPanel(QtWidgets.QWidget):
@@ -100,7 +100,7 @@ class ProjectsPanel(QtWidgets.QWidget):
         self.dbcon = dbcon
         self.dbcon.install()
 
-        view = IconListView(parent=self)
+        view = ProjectIconView(parent=self)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
         flick = FlickCharm(parent=self)
         flick.activateOn(view)
