@@ -9,7 +9,7 @@ class PrecollectRetime(api.InstancePlugin):
     order = api.CollectorOrder - 0.578
     label = "Precollect Retime"
     hosts = ["hiero"]
-    families = ['retime']
+    families = ['retime_']
 
     def process(self, instance):
         if not instance.data.get("versionData"):
