@@ -2,8 +2,9 @@ import os
 import json
 import collections
 
-from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
+
+from openpype import style
 from openpype.api import resources
 from openpype.settings.lib import get_local_settings
 from openpype.lib.pype_info import (
@@ -116,7 +117,6 @@ class EnvironmentsView(QtWidgets.QTreeView):
             event.ignore()
             return
         return super(EnvironmentsView, self).wheelEvent(event)
-
 
 
 class ClickableWidget(QtWidgets.QWidget):
