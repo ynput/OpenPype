@@ -531,7 +531,10 @@ OpenPype supports creating review video for almost any type of data you want to 
 What we call review video is actually _playblast_ or _capture_ (depending on terminology
 you are familiar with) made from pre-defined camera in scene. This is very useful
 in cases where you want to add turntable preview of your model for example. But it can
-be used to generate preview for animation, simulations, and so on.
+be used to generate preview for animation, simulations, and so on. You can either
+publish review as separate subset version, or you can attach generated video to subset you
+are publishing - for example attach video of turntable rotation to published model as in
+following example.
 
 ### Setting scene for review extraction
 
@@ -570,9 +573,13 @@ on this set to control review video generation:
 * `Step` - number of steps
 * `Fps` - framerate
 
+Next step is to move your model set to review set so it will be connected to each other.
+
 This is my scene:
 
 ![Maya - Review model setup](assets/maya-model_review_setup.jpg)
+
+You see that `modelMain` in under `reviewMain` with `reviewCamera`.
 
 _* note that I had to fix UVs and normals on Stanford dragon model as it wouldn't pass
 model validators_
@@ -588,6 +595,8 @@ version. All parts of this process - like what burnins, what type of video file,
 settings for Maya playblast - can be customized by your TDs. For more information
 about customizing review process refer to [admin section](admin_presets_plugins).
 
+If you don't move `modelMain` into `reviewMain`, review will be generated but it will
+be published as separate entity.
 
 ## Working with Yeti in OpenPype
 

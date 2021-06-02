@@ -64,7 +64,8 @@ module.exports = {
                     type: "category",
                     label: "Project Settings",
                     items: [
-                        "project_settings/settings_project_global"
+                        "project_settings/settings_project_global",
+                        "project_settings/settings_project_nuke"
                     ],
                 },
             ],

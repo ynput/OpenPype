@@ -9,7 +9,8 @@ from . import (
 
     CreateProjectDialog
 )
-from .style import load_stylesheet, ResourceCache
+from openpype.style import load_stylesheet
+from .style import ResourceCache
 
 from openpype import resources
 from avalon.api import AvalonMongoDB
@@ -34,11 +35,13 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         project_combobox = QtWidgets.QComboBox(project_widget)
         project_combobox.setModel(project_model)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
+        style_delegate = QtWidgets.QStyledItemDelegate()
+        project_combobox.setItemDelegate(style_delegate)
 
         refresh_projects_btn = QtWidgets.QPushButton(project_widget)
         refresh_projects_btn.setIcon(ResourceCache.get_icon("refresh"))
         refresh_projects_btn.setToolTip("Refresh projects")
-        refresh_projects_btn.setObjectName("RefreshBtn")
+        refresh_projects_btn.setObjectName("IconBtn")
 
         create_project_btn = QtWidgets.QPushButton(
             "Create project...", project_widget
@@ -65,6 +68,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
             "Task",
             helper_btns_widget
         )
+        add_asset_btn.setObjectName("IconBtn")
+        add_task_btn.setObjectName("IconBtn")
 
         helper_btns_layout = QtWidgets.QHBoxLayout(helper_btns_widget)
         helper_btns_layout.setContentsMargins(0, 0, 0, 0)
@@ -113,13 +118,19 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         add_asset_btn.clicked.connect(self._on_add_asset)
         add_task_btn.clicked.connect(self._on_add_task)
 
-        self.project_model = project_model
-        self.project_combobox = project_combobox
+        self._project_model = project_model
 
         self.hierarchy_view = hierarchy_view
         self.hierarchy_model = hierarchy_model
 
         self.message_label = message_label
+
+        self._refresh_projects_btn = refresh_projects_btn
+        self._project_combobox = project_combobox
+        self._create_project_btn = create_project_btn
+
+        self._add_asset_btn = add_asset_btn
+        self._add_task_btn = add_task_btn
 
         self.resize(1200, 600)
         self.setStyleSheet(load_stylesheet())
@@ -129,25 +140,33 @@ class ProjectManagerWindow(QtWidgets.QWidget):
     def _set_project(self, project_name=None):
         self.hierarchy_view.set_project(project_name)
 
+    def showEvent(self, event):
+        super(ProjectManagerWindow, self).showEvent(event)
+        font_size = self._refresh_projects_btn.fontMetrics().height()
+        icon_size = QtCore.QSize(font_size, font_size)
+        self._refresh_projects_btn.setIconSize(icon_size)
+        self._add_asset_btn.setIconSize(icon_size)
+        self._add_task_btn.setIconSize(icon_size)
+
     def refresh_projects(self, project_name=None):
         if project_name is None:
-            if self.project_combobox.count() > 0:
-                project_name = self.project_combobox.currentText()
+            if self._project_combobox.count() > 0:
+                project_name = self._project_combobox.currentText()
 
-        self.project_model.refresh()
+        self._project_model.refresh()
 
-        if self.project_combobox.count() == 0:
+        if self._project_combobox.count() == 0:
             return self._set_project()
 
         if project_name:
-            row = self.project_combobox.findText(project_name)
+            row = self._project_combobox.findText(project_name)
             if row >= 0:
-                self.project_combobox.setCurrentIndex(row)
+                self._project_combobox.setCurrentIndex(row)
 
-        self._set_project(self.project_combobox.currentText())
+        self._set_project(self._project_combobox.currentText())
 
     def _on_project_change(self):
-        self._set_project(self.project_combobox.currentText())
+        self._set_project(self._project_combobox.currentText())
 
     def _on_project_refresh(self):
         self.refresh_projects()

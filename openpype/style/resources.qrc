@@ -1,0 +1,23 @@
+<RCC>
+    <qresource prefix="/openpype">
+        <file>images/combobox_arrow.png</file>
+        <file>images/combobox_arrow_disabled.png</file>
+        <file>images/branch_closed.png</file>
+        <file>images/branch_closed_on.png</file>
+        <file>images/branch_open.png</file>
+        <file>images/branch_open_on.png</file>
+        <file>images/combobox_arrow_on.png</file>
+        <file>images/down_arrow.png</file>
+        <file>images/down_arrow_disabled.png</file>
+        <file>images/down_arrow_on.png</file>
+        <file>images/left_arrow.png</file>
+        <file>images/left_arrow_disabled.png</file>
+        <file>images/left_arrow_on.png</file>
+        <file>images/right_arrow.png</file>
+        <file>images/right_arrow_disabled.png</file>
+        <file>images/right_arrow_on.png</file>
+        <file>images/up_arrow.png</file>
+        <file>images/up_arrow_disabled.png</file>
+        <file>images/up_arrow_on.png</file>
+    </qresource>
+</RCC>

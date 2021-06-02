@@ -19,6 +19,10 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 
 
 def on_instance_toggle(instance, old_value, new_value):
+    # Review may not have real instance in wokrfile metadata
+    if not instance.data.get("uuid"):
+        return
+
     instance_id = instance.data["uuid"]
     found_idx = None
     current_instances = pipeline.list_instances()
