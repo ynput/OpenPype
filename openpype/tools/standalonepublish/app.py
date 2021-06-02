@@ -22,7 +22,6 @@ class Window(QtWidgets.QDialog):
     :param parent: Main widget that cares about all GUIs
     :type parent: QtWidgets.QMainWindow
     """
-    _db = AvalonMongoDB()
     _jobs = {}
     valid_family = False
     valid_components = False
@@ -32,6 +31,7 @@ class Window(QtWidgets.QDialog):
 
     def __init__(self, pyblish_paths, parent=None):
         super(Window, self).__init__(parent=parent)
+        self._db = AvalonMongoDB()
         self._db.install()
 
         self.pyblish_paths = pyblish_paths
