@@ -27,21 +27,29 @@ class ProjectBar(QtWidgets.QWidget):
 
         self.dbcon = dbcon
 
-        self.model = ProjectModel(self.dbcon)
-        self.model.hide_invisible = True
+        model = ProjectModel(dbcon)
+        model.hide_invisible = True
 
-        self.project_combobox = QtWidgets.QComboBox()
-        self.project_combobox.setModel(self.model)
-        self.project_combobox.setRootModelIndex(QtCore.QModelIndex())
+        project_combobox = QtWidgets.QComboBox(self)
+        # Change delegate so stylysheets are applied
+        project_delegate = QtWidgets.QStyledItemDelegate(project_combobox)
+        project_combobox.setItemDelegate(project_delegate)
+
+        project_combobox.setModel(model)
+        project_combobox.setRootModelIndex(QtCore.QModelIndex())
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.project_combobox)
+        layout.addWidget(project_combobox)
 
         self.setSizePolicy(
             QtWidgets.QSizePolicy.MinimumExpanding,
             QtWidgets.QSizePolicy.Maximum
         )
+
+        self.model = model
+        self.project_delegate = project_delegate
+        self.project_combobox = project_combobox
 
         # Initialize
         self.refresh()

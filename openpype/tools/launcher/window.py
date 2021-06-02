@@ -2,9 +2,10 @@ import copy
 import logging
 
 from Qt import QtWidgets, QtCore, QtGui
-from avalon import style
 
 from avalon.api import AvalonMongoDB
+
+from openpype import style
 from openpype.api import resources
 
 from avalon.tools import lib as tools_lib
@@ -23,7 +24,7 @@ from .widgets import (
 from .flickcharm import FlickCharm
 
 
-class IconListView(QtWidgets.QListView):
+class ProjectIconView(QtWidgets.QListView):
     """Styled ListView that allows to toggle between icon and list mode.
 
     Toggling between the two modes is done by Right Mouse Click.
@@ -34,7 +35,7 @@ class IconListView(QtWidgets.QListView):
     ListMode = 1
 
     def __init__(self, parent=None, mode=ListMode):
-        super(IconListView, self).__init__(parent=parent)
+        super(ProjectIconView, self).__init__(parent=parent)
 
         # Workaround for scrolling being super slow or fast when
         # toggling between the two visual modes
@@ -83,7 +84,7 @@ class IconListView(QtWidgets.QListView):
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.RightButton:
             self.set_mode(int(not self._mode))
-        return super(IconListView, self).mousePressEvent(event)
+        return super(ProjectIconView, self).mousePressEvent(event)
 
 
 class ProjectsPanel(QtWidgets.QWidget):
@@ -99,7 +100,7 @@ class ProjectsPanel(QtWidgets.QWidget):
         self.dbcon = dbcon
         self.dbcon.install()
 
-        view = IconListView(parent=self)
+        view = ProjectIconView(parent=self)
         view.setSelectionMode(QtWidgets.QListView.NoSelection)
         flick = FlickCharm(parent=self)
         flick.activateOn(view)
@@ -140,8 +141,6 @@ class AssetsPanel(QtWidgets.QWidget):
         btn_back_icon = qtawesome.icon("fa.angle-left", color="white")
         btn_back = QtWidgets.QPushButton(project_bar_widget)
         btn_back.setIcon(btn_back_icon)
-        btn_back.setFixedWidth(23)
-        btn_back.setFixedHeight(23)
 
         project_bar = ProjectBar(self.dbcon, project_bar_widget)
 
@@ -185,10 +184,6 @@ class AssetsPanel(QtWidgets.QWidget):
         layout.addWidget(project_bar_widget)
         layout.addWidget(body)
 
-        self.project_bar = project_bar
-        self.assets_widget = assets_widget
-        self.tasks_widget = tasks_widget
-
         # signals
         project_bar.project_changed.connect(self.on_project_changed)
         assets_widget.selection_changed.connect(self.on_asset_changed)
@@ -197,11 +192,24 @@ class AssetsPanel(QtWidgets.QWidget):
 
         btn_back.clicked.connect(self.back_clicked)
 
+        self.project_bar = project_bar
+        self.assets_widget = assets_widget
+        self.tasks_widget = tasks_widget
+        self._btn_back = btn_back
+
         # Force initial refresh for the assets since we might not be
         # trigging a Project switch if we click the project that was set
         # prior to launching the Launcher
         # todo: remove this behavior when AVALON_PROJECT is not required
         assets_widget.refresh()
+
+    def showEvent(self, event):
+        super(AssetsPanel, self).showEvent(event)
+
+        # Change size of a btn
+        # WARNING does not handle situation if combobox is bigger
+        btn_size = self.project_bar.height()
+        self._btn_back.setFixedSize(QtCore.QSize(btn_size, btn_size))
 
     def set_project(self, project):
         before = self.project_bar.get_current_project()

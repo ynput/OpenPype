@@ -1,7 +1,8 @@
 import os
 
-from avalon import api, style
+from avalon import api
 from openpype import PLUGINS_DIR
+from openpype import style
 from openpype.api import Logger, resources
 from openpype.lib import (
     ApplictionExecutableNotFound,

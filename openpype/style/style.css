@@ -55,7 +55,7 @@ QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
 /* Buttons */
 QPushButton {
     text-align:center center;
-    border: 0px solid {color:border};
+    border: 1px solid transparent;
     border-radius: 0.2em;
     padding: 3px 5px 3px 5px;
     background: {color:bg-buttons};
@@ -63,12 +63,11 @@ QPushButton {
 
 QPushButton:hover {
     background: {color:bg-button-hover};
-    border-color: {color:border-hover};
     color: {color:font-hover};
 }
-QPushButton:pressed {
-    border-color: {color:border-focus};
-}
+
+QPushButton:pressed {}
+
 QPushButton:disabled {
     background: {color:bg-buttons-disabled};
 }
@@ -523,6 +522,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 /* Launcher specific stylesheets */
 #IconView[mode="icon"] {
+    /* font size can't be set on items */
     font-size: 8pt;
     border: 0px;
     padding: 0px;
@@ -532,6 +532,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #IconView[mode="icon"]::item  {
     margin-top: 6px;
     border: 0px;
+}
+
+#IconView[mode="icon"]::item:hover {
+    background: rgba(0, 0, 0, 0);
+    color: {color:font-hover};
 }
 
 #IconView[mode="icon"]::icon {
