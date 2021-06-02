@@ -295,7 +295,7 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
 
     def _create_separator(self):
         separator_widget = QtWidgets.QWidget(self)
-        separator_widget.setStyleSheet("background: #222222;")
+        separator_widget.setObjectName("Separator")
         separator_widget.setMinimumHeight(2)
         separator_widget.setMaximumHeight(2)
         return separator_widget
