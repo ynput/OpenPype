@@ -10,7 +10,7 @@ from .widgets import (
     AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
 )
 from .widgets.constants import HOST_NAME
-from avalon import style
+from openpype import style
 from openpype.api import resources
 from avalon.api import AvalonMongoDB
 from openpype.modules import ModulesManager

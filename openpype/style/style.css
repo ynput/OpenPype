@@ -164,6 +164,40 @@ QComboBox::down-arrow, QComboBox::down-arrow:on, QComboBox::down-arrow:hover, QC
     image: url(:/openpype/images/combobox_arrow.png);
 }
 
+/* Splitter */
+QSplitter {
+    border: 0px;
+}
+
+QSplitter::handle {
+    border: 1px dashed {color:bg-view};
+}
+
+QSplitter::handle:hover {
+    background: {color:bg-menu-separator};
+    border: 1px solid {color:bg-view};
+}
+
+QSplitter::handle:horizontal {
+    width: 1px;
+    background-color: transparent;
+}
+
+QSplitter::handle:vertical {
+    height: 1px;
+    background-color: transparent;
+}
+
+QSplitter::handle:vertical:hover {
+    background: {color:bg-menu-separator};
+    border: 1px solid {color:bg-view};
+}
+
+QSplitter::handle:horizontal:hover {
+    background: {color:bg-menu-separator};
+    border: 1px solid {color:bg-view};
+}
+
 /* SLider */
 QSlider::groove {
     border: 1px solid #464b54;
@@ -541,4 +575,18 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #IconView[mode="icon"]::icon {
     top: 3px;
+}
+
+/* Standalone publisher */
+#ComponentList {
+    outline: none;
+}
+
+#ComponentItem {
+    background: transparent;
+}
+
+#ComponentFrame {
+    border: 1px solid {color:border};
+    border-radius: 0.1em;
 }
