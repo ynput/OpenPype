@@ -72,6 +72,14 @@ QPushButton:disabled {
     background: {color:bg-buttons-disabled};
 }
 
+QPushButton::menu-indicator  {
+    subcontrol-origin: padding;
+    subcontrol-position: right;
+    width: 8px;
+    height: 8px;
+    padding-right: 5px;
+}
+
 QToolButton {
     border: none;
     background: transparent;
