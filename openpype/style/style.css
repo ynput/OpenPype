@@ -518,6 +518,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 /* Launcher specific stylesheets */
 #IconView[mode="icon"] {
+    /* font size can't be set on items */
     font-size: 8pt;
     border: 0px;
     padding: 0px;
@@ -527,6 +528,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #IconView[mode="icon"]::item  {
     margin-top: 6px;
     border: 0px;
+}
+
+#IconView[mode="icon"]::item:hover {
+    background: rgba(0, 0, 0, 0);
+    color: {color:font-hover};
 }
 
 #IconView[mode="icon"]::icon {
