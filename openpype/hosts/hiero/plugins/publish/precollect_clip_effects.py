@@ -35,11 +35,6 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
         if clip_effect_items:
             tracks_effect_items[track_index] = clip_effect_items
 
-        retime_effect = None
-
-        if speed != 1:
-            retime_effect = True
-
         # process all effects and devide them to instance
         for _track_index, sub_track_items in tracks_effect_items.items():
             # skip if track index is the same as review track index
@@ -59,12 +54,6 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
 
                 if effect:
                     effects.update(effect)
-
-        # switch retime feature
-        if retime_effect:
-            instance.data["families"] += ["retime"]
-            instance.data["label"] = instance.data[
-                "label"].replace("]", ", retime]")
 
         # skip any without effects
         if not effects:
