@@ -37,7 +37,6 @@ class FamilyWidget(QtWidgets.QWidget):
 
         input_subset = QtWidgets.QLineEdit()
         input_result = QtWidgets.QLineEdit()
-        input_result.setStyleSheet("color: #BBBBBB;")
         input_result.setEnabled(False)
 
         # region Menu for default subset names
@@ -59,7 +58,6 @@ class FamilyWidget(QtWidgets.QWidget):
         version_spinbox.setMinimum(1)
         version_spinbox.setMaximum(9999)
         version_spinbox.setEnabled(False)
-        version_spinbox.setStyleSheet("color: #BBBBBB;")
 
         version_checkbox = QtWidgets.QCheckBox("Next Available Version")
         version_checkbox.setCheckState(QtCore.Qt.CheckState(2))
