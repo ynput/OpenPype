@@ -55,7 +55,7 @@ QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
 /* Buttons */
 QPushButton {
     text-align:center center;
-    border: 0px solid {color:border};
+    border: 1px solid transparent;
     border-radius: 0.2em;
     padding: 3px 5px 3px 5px;
     background: {color:bg-buttons};
@@ -63,12 +63,11 @@ QPushButton {
 
 QPushButton:hover {
     background: {color:bg-button-hover};
-    border-color: {color:border-hover};
     color: {color:font-hover};
 }
-QPushButton:pressed {
-    border-color: {color:border-focus};
-}
+
+QPushButton:pressed {}
+
 QPushButton:disabled {
     background: {color:bg-buttons-disabled};
 }
