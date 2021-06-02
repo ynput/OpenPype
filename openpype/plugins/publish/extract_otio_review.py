@@ -51,7 +51,6 @@ class ExtractOTIOReview(openpype.api.Extractor):
 
     def process(self, instance):
         # TODO: convert resulting image sequence to mp4
-        # TODO: add oudio ouput to the mp4 if audio in review is on.
 
         # get otio clip and other time info from instance clip
         # TODO: what if handles are different in `versionData`?
