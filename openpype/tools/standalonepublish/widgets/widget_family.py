@@ -48,8 +48,8 @@ class FamilyWidget(QtWidgets.QWidget):
 
         # endregion
         name_layout = QtWidgets.QHBoxLayout()
-        name_layout.addWidget(input_subset)
-        name_layout.addWidget(btn_subset)
+        name_layout.addWidget(input_subset, 1)
+        name_layout.addWidget(btn_subset, 0)
         name_layout.setContentsMargins(0, 0, 0, 0)
 
         # version
