@@ -55,6 +55,7 @@ class FamilyWidget(QtWidgets.QWidget):
 
         # version
         version_spinbox = QtWidgets.QSpinBox()
+        version_spinbox.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
         version_spinbox.setMinimum(1)
         version_spinbox.setMaximum(9999)
         version_spinbox.setEnabled(False)
