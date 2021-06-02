@@ -105,7 +105,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     families = ["render.farm", "prerender.farm",
                 "renderlayer", "imagesequence", "vrayscene"]
 
-    aov_filter = {"maya": [r".*(?:\.|_)?([Bb]eauty)(?:\.|_)?.*"],
+    aov_filter = {"maya": [r".*(?:\.|_)*([Bb]eauty)(?:\.|_)*.*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
@@ -435,9 +435,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             preview = False
             if app in self.aov_filter.keys():
                 for aov_pattern in self.aov_filter[app]:
-                    if re.match(aov_pattern,
-                                aov
-                                ):
+                    if re.match(aov_pattern, aov):
                         preview = True
                         break
 
