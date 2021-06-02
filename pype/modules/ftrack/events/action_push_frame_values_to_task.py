@@ -389,6 +389,9 @@ class PushHierValuesToNonHier(ServerAction):
                         value
                     )
                 )
+                if len(session.recorded_operations) > 100:
+                    session.commit()
+
         session.commit()
 
     def push_values_to_entities(
@@ -427,6 +430,9 @@ class PushHierValuesToNonHier(ServerAction):
                             value
                         )
                     )
+                    if len(session.recorded_operations) > 100:
+                        session.commit()
+
         session.commit()
 
 
