@@ -42,7 +42,6 @@ class FamilyWidget(QtWidgets.QWidget):
         # region Menu for default subset names
         btn_subset = QtWidgets.QPushButton()
         btn_subset.setFixedWidth(18)
-        btn_subset.setFixedHeight(20)
         menu_subset = QtWidgets.QMenu(btn_subset)
         btn_subset.setMenu(menu_subset)
 
