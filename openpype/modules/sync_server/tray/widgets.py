@@ -602,7 +602,6 @@ class SyncServerDetailWindow(QtWidgets.QDialog):
         layout.addWidget(body)
         layout.addWidget(footer)
 
-        self.setLayout(body_layout)
         self.setWindowTitle("Sync Representation Detail")
 
 
