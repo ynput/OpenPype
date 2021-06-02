@@ -5,13 +5,19 @@ import atexit
 import subprocess
 
 import platform
-from avalon import style
+
 from Qt import QtCore, QtGui, QtWidgets
-from openpype.api import Logger, resources
+
+import openpype.version
+from openpype.api import (
+    Logger,
+    resources,
+    get_system_settings
+)
 from openpype.lib import get_pype_execute_args
 from openpype.modules import TrayModulesManager, ITrayService
-from openpype.settings.lib import get_system_settings
-import openpype.version
+from openpype import style
+
 from .pype_info_widget import PypeInfoWidget
 
 
