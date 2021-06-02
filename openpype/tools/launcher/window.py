@@ -141,8 +141,6 @@ class AssetsPanel(QtWidgets.QWidget):
         btn_back_icon = qtawesome.icon("fa.angle-left", color="white")
         btn_back = QtWidgets.QPushButton(project_bar_widget)
         btn_back.setIcon(btn_back_icon)
-        btn_back.setFixedWidth(23)
-        btn_back.setFixedHeight(23)
 
         project_bar = ProjectBar(self.dbcon, project_bar_widget)
 
@@ -198,11 +196,21 @@ class AssetsPanel(QtWidgets.QWidget):
 
         btn_back.clicked.connect(self.back_clicked)
 
+        self._btn_back = btn_back
+
         # Force initial refresh for the assets since we might not be
         # trigging a Project switch if we click the project that was set
         # prior to launching the Launcher
         # todo: remove this behavior when AVALON_PROJECT is not required
         assets_widget.refresh()
+
+    def showEvent(self, event):
+        super(AssetsPanel, self).showEvent(event)
+
+        # Change size of a btn
+        # WARNING does not handle situation if combobox is bigger
+        btn_size = self.project_bar.height()
+        self._btn_back.setFixedSize(QtCore.QSize(btn_size, btn_size))
 
     def set_project(self, project):
         before = self.project_bar.get_current_project()
