@@ -387,10 +387,10 @@ class PushHierValuesToNonHier(ServerAction):
             for key, value in parent_values.items():
                 hier_values_by_entity_id[task_id][key] = value
                 configuration_id = hier_attr_id_by_key[key]
-                _entity_key = collections.OrderedDict({
-                    "configuration_id": configuration_id,
-                    "entity_id": task_id
-                })
+                _entity_key = collections.OrderedDict([
+                    ("configuration_id", configuration_id),
+                    ("entity_id", task_id)
+                ])
 
                 session.recorded_operations.push(
                     ftrack_api.operation.UpdateEntityOperation(
@@ -428,10 +428,10 @@ class PushHierValuesToNonHier(ServerAction):
                     if value is None:
                         continue
 
-                    _entity_key = collections.OrderedDict({
-                        "configuration_id": attr["id"],
-                        "entity_id": entity_id
-                    })
+                    _entity_key = collections.OrderedDict([
+                        ("configuration_id", attr["id"]),
+                        ("entity_id", entity_id)
+                    ])
 
                     session.recorded_operations.push(
                         ftrack_api.operation.UpdateEntityOperation(
