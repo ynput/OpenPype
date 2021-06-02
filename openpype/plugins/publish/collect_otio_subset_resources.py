@@ -45,13 +45,19 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
         retimed_attributes = editorial.get_media_range_with_retimes(
             otio_clip, handle_start, handle_end)
         self.log.debug(
-            ">> media_in, media_out: {}".format(retimed_attributes))
+            ">> retimed_attributes: {}".format(retimed_attributes))
 
         # break down into variables
         media_in = int(retimed_attributes["mediaIn"])
         media_out = int(retimed_attributes["mediaOut"])
         handle_start = int(retimed_attributes["handleStart"])
         handle_end = int(retimed_attributes["handleEnd"])
+
+        # set versiondata if any retime
+        version_data = retimed_attributes.get("versionData")
+
+        if version_data:
+            instance.data["versionData"].update(version_data)
 
         # convert to available frame range with handles
         a_frame_start_h = media_in - handle_start
@@ -85,6 +91,11 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
                 "frameEnd": frame_end,
                 "handleStart": handle_start,
                 "handleEnd": handle_end,
+            })
+        else:
+            instance.data["versionData"].update({
+                "frameStart": frame_start,
+                "frameEnd": frame_end
             })
 
         # change frame_start and frame_end values
