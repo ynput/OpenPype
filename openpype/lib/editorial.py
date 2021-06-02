@@ -4,8 +4,10 @@ import clique
 from .import_utils import discover_host_vendor_module
 
 try:
+    import opentimelineio as otio
     from opentimelineio import opentime as _ot
 except ImportError:
+    otio = discover_host_vendor_module("opentimelineio")
     _ot = discover_host_vendor_module("opentimelineio.opentime")
 
 
@@ -166,3 +168,92 @@ def make_sequence_collection(path, otio_range, metadata):
         head=head, tail=tail, padding=metadata["padding"])
     collection.indexes.update([i for i in range(first, (last + 1))])
     return dir_path, collection
+
+
+def _sequence_resize(source, length):
+    step = float(len(source) - 1) / (length - 1)
+    for i in range(length):
+        low, ratio = divmod(i * step, 1)
+        high = low + 1 if ratio > 0 else low
+        yield (1 - ratio) * source[int(low)] + ratio * source[int(high)]
+
+
+def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
+    source_range = otio_clip.source_range
+    available_range = otio_clip.available_range()
+    media_in = available_range.start_time.value
+    media_out = available_range.end_time_inclusive().value
+
+    # modifiers
+    time_scalar = 1.
+    offset_in = 0
+    offset_out = 0
+
+    # Check for speed effects and adjust playback speed accordingly
+    for effect in otio_clip.effects:
+        if isinstance(effect, otio.schema.LinearTimeWarp):
+            time_scalar = effect.time_scalar
+
+        elif isinstance(effect, otio.schema.FreezeFrame):
+            # For freeze frame, playback speed must be set after range
+            time_scalar = 0.
+
+        elif isinstance(effect, otio.schema.TimeEffect):
+            # For freeze frame, playback speed must be set after range
+            effect_name = effect.effect_name
+            if "TimeWarp" not in effect_name:
+                continue
+            metadata = effect.metadata
+            lookup = metadata.get("lookup")
+            if not lookup:
+                continue
+
+            # get first and last frame offsets
+            offset_in += lookup[0]
+            offset_out += lookup[-1]
+
+    # multiply by time scalar
+    offset_in *= time_scalar
+    offset_out *= time_scalar
+
+    # filip offset if reversed speed
+    if time_scalar < 0:
+        _offset_in = offset_out
+        _offset_out = offset_in
+        offset_in = _offset_in
+        offset_out = _offset_out
+
+    # scale handles
+    handle_start *= abs(time_scalar)
+    handle_end *= abs(time_scalar)
+
+    # filip handles if reversed speed
+    if time_scalar < 0:
+        _handle_start = handle_end
+        _handle_end = handle_start
+        handle_start = _handle_start
+        handle_end = _handle_end
+
+    source_in = source_range.start_time.value
+    source_out = (
+        source_in + ((source_range.duration.value - 1) * abs(time_scalar)))
+
+    media_in_trimmed = (
+        media_in + source_in + offset_in)
+    media_out_trimmed = (
+        media_in + source_in + (
+            ((source_range.duration.value - 1) * abs(
+                time_scalar)) + offset_out))
+
+    # calculate available hanles
+    if (media_in_trimmed - media_in) < handle_start:
+        handle_start = (media_in_trimmed - media_in)
+    if (media_out - media_out_trimmed) < handle_end:
+        handle_end = (media_out - media_out_trimmed)
+
+    return {
+        "mediaIn": media_in_trimmed,
+        "mediaOut": media_out_trimmed,
+        "handleStart": handle_start,
+        "handleEnd": handle_end
+        }
