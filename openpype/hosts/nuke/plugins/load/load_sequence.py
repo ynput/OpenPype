@@ -140,7 +140,7 @@ class LoadSequence(api.Loader):
             if version_data.get("retime", None):
                 speed = version_data.get("speed", 1)
                 time_warp_nodes = version_data.get("timewarps", [])
-                self.make_retimes(read_node, speed, time_warp_nodes)
+                self.make_retimes(speed, time_warp_nodes)
 
             return containerise(read_node,
                                 name=name,
@@ -256,7 +256,7 @@ class LoadSequence(api.Loader):
         if version_data.get("retime", None):
             speed = version_data.get("speed", 1)
             time_warp_nodes = version_data.get("timewarps", [])
-            self.make_retimes(read_node, speed, time_warp_nodes)
+            self.make_retimes(speed, time_warp_nodes)
 
         # Update the imprinted representation
         update_container(
@@ -285,10 +285,11 @@ class LoadSequence(api.Loader):
             rtn["after"].setValue("continue")
             rtn["input.first_lock"].setValue(True)
             rtn["input.first"].setValue(
-                self.handle_start + self.first_frame
+                self.first_frame
             )
 
         if time_warp_nodes != []:
+            start_anim = self.first_frame + (self.handle_start / speed)
             for timewarp in time_warp_nodes:
                 twn = nuke.createNode(timewarp["Class"],
                                       "name {}".format(timewarp["name"]))
@@ -297,8 +298,8 @@ class LoadSequence(api.Loader):
                     twn["lookup"].setAnimated()
                     for i, value in enumerate(timewarp["lookup"]):
                         twn["lookup"].setValueAt(
-                            (self.first_frame + i) + value,
-                            (self.first_frame + i))
+                            (start_anim + i) + value,
+                            (start_anim + i))
                 else:
                     # if static value `int`
                     twn["lookup"].setValue(timewarp["lookup"])

@@ -29,7 +29,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
         otio_review_clips = []
         otio_timeline = instance.context.data["otioTimeline"]
         otio_clip = instance.data["otioClip"]
-
+        self.log.debug("__ otioClip: {}".format(otio_clip))
         # optionally get `reviewTrack`
         review_track_name = instance.data.get("reviewTrack")
 
@@ -37,7 +37,7 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
         otio_tl_range = otio_clip.range_in_parent()
 
         # calculate real timeline end needed for the clip
-        clip_end_frame = int(
+        clip_frame_end = int(
             otio_tl_range.start_time.value + otio_tl_range.duration.value)
 
         # skip if no review track available
@@ -57,13 +57,12 @@ class CollectOcioReview(pyblish.api.InstancePlugin):
             track_rip = track.range_in_parent()
 
             # calculate real track end frame
-            track_end_frame = int(
-                track_rip.start_time.value + track_rip.duration.value)
+            track_frame_end = int(track_rip.end_time_exclusive().value)
 
             # check if the end of track is not lower then clip requirement
-            if clip_end_frame > track_end_frame:
+            if clip_frame_end > track_frame_end:
                 # calculate diference duration
-                gap_duration = clip_end_frame - track_end_frame
+                gap_duration = clip_frame_end - track_frame_end
                 # create rational time range for gap
                 otio_gap_range = otio.opentime.TimeRange(
                     start_time=otio.opentime.RationalTime(
