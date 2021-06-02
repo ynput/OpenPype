@@ -88,6 +88,9 @@ def create_time_effects(otio_clip, track_item):
 
     # loop trought and get all Timewarps
     for effect in subTrackItems:
+        if ((track_item not in effect.linkedItems())
+                and (len(effect.linkedItems()) > 0)):
+            continue
         # avoid all effect which are not TimeWarp and disabled
         if "TimeWarp" not in effect.name():
             continue
@@ -264,9 +267,12 @@ def create_otio_markers(otio_item, item):
 
 def create_otio_clip(track_item):
     clip = track_item.source()
-    source_in = track_item.sourceIn()
     speed = track_item.playbackSpeed()
-    duration = int(track_item.sourceDuration() / speed)
+    # flip if speed is in minus
+    source_in = track_item.sourceIn() if speed > 0 else track_item.sourceOut()
+
+    duration = int(track_item.duration())
+
     fps = utils.get_rate(track_item) or self.project_fps
     name = track_item.name()
 
