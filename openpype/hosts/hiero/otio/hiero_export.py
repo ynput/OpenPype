@@ -294,8 +294,10 @@ def create_otio_clip(track_item):
         create_otio_markers(otio_clip, track_item)
         create_otio_markers(otio_clip, track_item.source())
 
-    # Add effects to clips
-    create_time_effects(otio_clip, track_item)
+    # only if video
+    if not clip.mediaSource().hasAudio():
+        # Add effects to clips
+        create_time_effects(otio_clip, track_item)
 
     return otio_clip
 
