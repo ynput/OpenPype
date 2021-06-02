@@ -149,6 +149,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 self.log.warning(msg)
                 continue
 
+            self._rs.switchToLayer(maya_render_layers[expected_layer_name])
+
             # test if there are sets (subsets) to attach render to
             sets = cmds.sets(layer, query=True) or []
             attach_to = []
@@ -172,6 +174,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             renderer = cmds.getAttr(
                 "defaultRenderGlobals.currentRenderer"
             ).lower()
+
             # handle various renderman names
             if renderer.startswith("renderman"):
                 renderer = "renderman"

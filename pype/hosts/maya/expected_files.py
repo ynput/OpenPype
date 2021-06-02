@@ -241,7 +241,9 @@ class AExpectedFiles:
             "sceneName": scene_name,
             "layerName": layer_name,
             "renderer": self.renderer,
-            "defaultExt": cmds.getAttr("defaultRenderGlobals.imfPluginKey"),
+            "defaultExt": os.path.splitext(
+                cmds.renderSettings(firstImageName=True)[0]
+            )[1][1:],
             "filePrefix": file_prefix,
             "enabledAOVs": self.get_aovs(),
         }
