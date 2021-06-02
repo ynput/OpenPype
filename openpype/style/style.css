@@ -174,36 +174,11 @@ QComboBox::down-arrow, QComboBox::down-arrow:on, QComboBox::down-arrow:hover, QC
 
 /* Splitter */
 QSplitter {
-    border: 0px;
+    border: none;
 }
 
 QSplitter::handle {
-    border: 1px dashed {color:bg-view};
-}
-
-QSplitter::handle:hover {
-    background: {color:bg-menu-separator};
-    border: 1px solid {color:bg-view};
-}
-
-QSplitter::handle:horizontal {
-    width: 1px;
-    background-color: transparent;
-}
-
-QSplitter::handle:vertical {
-    height: 1px;
-    background-color: transparent;
-}
-
-QSplitter::handle:vertical:hover {
-    background: {color:bg-menu-separator};
-    border: 1px solid {color:bg-view};
-}
-
-QSplitter::handle:horizontal:hover {
-    background: {color:bg-menu-separator};
-    border: 1px solid {color:bg-view};
+    border: 1px dotted {color:bg-menu-separator};
 }
 
 /* SLider */
