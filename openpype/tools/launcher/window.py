@@ -184,10 +184,6 @@ class AssetsPanel(QtWidgets.QWidget):
         layout.addWidget(project_bar_widget)
         layout.addWidget(body)
 
-        self.project_bar = project_bar
-        self.assets_widget = assets_widget
-        self.tasks_widget = tasks_widget
-
         # signals
         project_bar.project_changed.connect(self.on_project_changed)
         assets_widget.selection_changed.connect(self.on_asset_changed)
@@ -196,6 +192,9 @@ class AssetsPanel(QtWidgets.QWidget):
 
         btn_back.clicked.connect(self.back_clicked)
 
+        self.project_bar = project_bar
+        self.assets_widget = assets_widget
+        self.tasks_widget = tasks_widget
         self._btn_back = btn_back
 
         # Force initial refresh for the assets since we might not be
