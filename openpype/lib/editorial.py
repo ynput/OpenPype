@@ -188,6 +188,7 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
     time_scalar = 1.
     offset_in = 0
     offset_out = 0
+    time_warp_nodes = []
 
     # Check for speed effects and adjust playback speed accordingly
     for effect in otio_clip.effects:
@@ -200,6 +201,7 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
 
         elif isinstance(effect, otio.schema.TimeEffect):
             # For freeze frame, playback speed must be set after range
+            name = effect.name
             effect_name = effect.effect_name
             if "TimeWarp" not in effect_name:
                 continue
@@ -208,9 +210,19 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
             if not lookup:
                 continue
 
+            # time warp node
+            tw_node = {
+                "Class": "TimeWarp",
+                "name": name
+            }
+            tw_node.update(metadata)
+
             # get first and last frame offsets
             offset_in += lookup[0]
             offset_out += lookup[-1]
+
+            # add to timewarp nodes
+            time_warp_nodes.append(tw_node)
 
     # multiply by time scalar
     offset_in *= time_scalar
@@ -235,8 +247,6 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
         handle_end = _handle_end
 
     source_in = source_range.start_time.value
-    source_out = (
-        source_in + ((source_range.duration.value - 1) * abs(time_scalar)))
 
     media_in_trimmed = (
         media_in + source_in + offset_in)
@@ -251,9 +261,26 @@ def get_media_range_with_retimes(otio_clip, handle_start, handle_end):
     if (media_out - media_out_trimmed) < handle_end:
         handle_end = (media_out - media_out_trimmed)
 
-    return {
+    # create version data
+    version_data = {
+        "versionData": {
+            "retime": True,
+            "speed": time_scalar,
+            "timewarps": time_warp_nodes,
+            "handleStart": handle_start,
+            "handleEnd": handle_end
+        }
+    }
+
+    returning_dict = {
         "mediaIn": media_in_trimmed,
         "mediaOut": media_out_trimmed,
         "handleStart": handle_start,
         "handleEnd": handle_end
-        }
+    }
+
+    # add version data only if retime
+    if time_warp_nodes or time_scalar != 1.:
+        returning_dict.update(version_data)
+
+    return returning_dict
