@@ -10,7 +10,7 @@ class ExtractThumnail(openpype.api.Extractor):
 
     label = "Extract Thumnail"
     order = pyblish.api.ExtractorOrder
-    families = ["plate", "take", "shot"]
+    families = ["plate", "take"]
     hosts = ["hiero"]
 
     def process(self, instance):
