@@ -39,18 +39,25 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
         # get basic variables
         otio_clip = instance.data["otioClip"]
         otio_avalable_range = otio_clip.available_range()
+        media_fps = otio_avalable_range.start_time.rate
+
+        # get available range trimmed with processed retimes
         retimed_attributes = editorial.get_media_range_with_retimes(
             otio_clip, handle_start, handle_end)
         self.log.debug(
             ">> media_in, media_out: {}".format(retimed_attributes))
 
-        media_in = retimed_attributes["mediaIn"]
-        media_out = retimed_attributes["mediaOut"]
-        handle_start = retimed_attributes["handleStart"]
-        handle_end = retimed_attributes["handleEnd"]
+        # break down into variables
+        media_in = int(retimed_attributes["mediaIn"])
+        media_out = int(retimed_attributes["mediaOut"])
+        handle_start = int(retimed_attributes["handleStart"])
+        handle_end = int(retimed_attributes["handleEnd"])
+
+        # convert to available frame range with handles
         a_frame_start_h = media_in - handle_start
         a_frame_end_h = media_out + handle_end
-        media_fps = otio_avalable_range.start_time.rate
+
+        # create trimmed ocio time range
         trimmed_media_range_h = editorial.range_from_frames(
             a_frame_start_h, (a_frame_end_h - a_frame_start_h + 1),
             media_fps
@@ -61,7 +68,8 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
             a_frame_start_h))
         self.log.debug("a_frame_end_h: {}".format(
             a_frame_end_h))
-        # get basic variables
+
+        # create frame start and end
         frame_start = instance.data["frameStart"]
         frame_end = frame_start + (media_out - media_in)
 
