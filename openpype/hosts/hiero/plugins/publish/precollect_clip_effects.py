@@ -55,10 +55,7 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
                 if not (track_index <= _track_index):
                     continue
 
-                if "TimeWarp" in sitem.name():
-                    retime_effect = True
-                else:
-                    effect = self.add_effect(_track_index, sitem)
+                effect = self.add_effect(_track_index, sitem)
 
                 if effect:
                     effects.update(effect)

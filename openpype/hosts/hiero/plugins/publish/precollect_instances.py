@@ -384,6 +384,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         subtracks = []
         subTrackItems = flatten(clip.parent().subTrackItems())
         for item in subTrackItems:
+            if "TimeWarp" in item.name():
+                continue
             # avoid all anotation
             if isinstance(item, hiero.core.Annotation):
                 continue
