@@ -29,7 +29,6 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
         track_index = track.trackIndex()
         tracks_effect_items = instance.context.data.get("tracksEffectItems")
         clip_effect_items = instance.data.get("clipEffectItems")
-        speed = track_item.playbackSpeed()
 
         # add clips effects to track's:
         if clip_effect_items:
