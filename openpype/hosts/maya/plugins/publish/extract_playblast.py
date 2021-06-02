@@ -72,7 +72,7 @@ class ExtractPlayblast(openpype.api.Extractor):
 
         # Isolate view is requested by having objects in the set besides a
         # camera.
-        if instance.data.get("isolate"):
+        if preset.pop("isolate_view", False) or instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
         # Show/Hide image planes on request.
@@ -89,9 +89,6 @@ class ExtractPlayblast(openpype.api.Extractor):
             # viewer opening call to allow a signal to trigger between
             # playblast and viewer
             preset['viewer'] = False
-
-            # Remove panel key since it's internal value to capture_gui
-            preset.pop("panel", None)
 
             self.log.info('using viewport preset: {}'.format(preset))
 
