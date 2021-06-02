@@ -41,12 +41,9 @@ class PushHierValuesToNonHier(ServerAction):
     label = "OpenPype Admin"
     variant = "- Push Hierarchical values To Non-Hierarchical"
 
-    hierarchy_entities_query = (
-        "select id, parent_id from TypedContext where project_id is \"{}\""
-    )
-    entities_query = (
-        "select id, name, parent_id, link from TypedContext"
-        " where project_id is \"{}\" and object_type_id in ({})"
+    entities_query_by_project = (
+        "select id, parent_id, object_type_id from TypedContext"
+        " where project_id is \"{}\""
     )
     cust_attrs_query = (
         "select id, key, object_type_id, is_hierarchical, default"
@@ -187,18 +184,18 @@ class PushHierValuesToNonHier(ServerAction):
                 "message": "Nothing has changed."
             }
 
-        entities = session.query(self.entities_query.format(
-            project_entity["id"],
-            self.join_query_keys(destination_object_type_ids)
-        )).all()
+        (
+            parent_id_by_entity_id,
+            filtered_entities
+        ) = self.all_hierarchy_entities(
+            session,
+            selected_ids,
+            project_entity,
+            destination_object_type_ids
+        )
 
         self.log.debug("Preparing whole project hierarchy by ids.")
-        parent_id_by_entity_id = self.all_hierarchy_ids(
-            session, project_entity
-        )
-        filtered_entities = self.filter_entities_by_selection(
-            entities, selected_ids, parent_id_by_entity_id
-        )
+
         entities_by_obj_id = {
             obj_id: []
             for obj_id in destination_object_type_ids
@@ -252,39 +249,77 @@ class PushHierValuesToNonHier(ServerAction):
 
         return True
 
-    def all_hierarchy_ids(self, session, project_entity):
-        parent_id_by_entity_id = {}
-
-        hierarchy_entities = session.query(
-            self.hierarchy_entities_query.format(project_entity["id"])
-        )
-        for hierarchy_entity in hierarchy_entities:
-            entity_id = hierarchy_entity["id"]
-            parent_id = hierarchy_entity["parent_id"]
-            parent_id_by_entity_id[entity_id] = parent_id
-        return parent_id_by_entity_id
-
-    def filter_entities_by_selection(
-        self, entities, selected_ids, parent_id_by_entity_id
+    def all_hierarchy_entities(
+        self,
+        session,
+        selected_ids,
+        project_entity,
+        destination_object_type_ids
     ):
+        selected_ids = set(selected_ids)
+
         filtered_entities = []
-        for entity in entities:
-            entity_id = entity["id"]
-            if entity_id in selected_ids:
-                filtered_entities.append(entity)
-                continue
+        parent_id_by_entity_id = {}
+        # Query is simple if project is in selection
+        if project_entity["id"] in selected_ids:
+            entities = session.query(
+                self.entities_query_by_project.format(project_entity["id"])
+            ).all()
 
-            parent_id = entity["parent_id"]
-            while True:
-                if parent_id in selected_ids:
+            for entity in entities:
+                if entity["object_type_id"] in destination_object_type_ids:
                     filtered_entities.append(entity)
-                    break
+                entity_id = entity["id"]
+                parent_id_by_entity_id[entity_id] = entity["parent_id"]
+            return parent_id_by_entity_id, filtered_entities
 
-                parent_id = parent_id_by_entity_id.get(parent_id)
-                if parent_id is None:
-                    break
+        # Query selection and get it's link to be able calculate parentings
+        entities_with_link = session.query((
+            "select id, parent_id, link, object_type_id"
+            " from TypedContext where id in ({})"
+        ).format(self.join_query_keys(selected_ids))).all()
 
-        return filtered_entities
+        # Process and store queried entities and store all lower entities to
+        #   `bottom_ids`
+        # - bottom_ids should not contain 2 ids where one is parent of second
+        bottom_ids = set(selected_ids)
+        for entity in entities_with_link:
+            if entity["object_type_id"] in destination_object_type_ids:
+                filtered_entities.append(entity)
+            children_id = None
+            for idx, item in enumerate(reversed(entity["link"])):
+                item_id = item["id"]
+                if idx > 0 and item_id in bottom_ids:
+                    bottom_ids.remove(item_id)
+
+                if children_id is not None:
+                    parent_id_by_entity_id[children_id] = item_id
+
+                children_id = item_id
+
+        # Query all children of selection per one hierarchy level and process
+        #   their data the same way as selection but parents are already known
+        chunk_size = 100
+        while bottom_ids:
+            child_entities = []
+            # Query entities in chunks
+            entity_ids = list(bottom_ids)
+            for idx in range(0, len(entity_ids), chunk_size):
+                _entity_ids = entity_ids[idx:idx + chunk_size]
+                child_entities.extend(session.query((
+                    "select id, parent_id, object_type_id from"
+                    " TypedContext where parent_id in ({})"
+                ).format(self.join_query_keys(_entity_ids))).all())
+
+            bottom_ids = set()
+            for entity in child_entities:
+                entity_id = entity["id"]
+                parent_id_by_entity_id[entity_id] = entity["parent_id"]
+                bottom_ids.add(entity_id)
+                if entity["object_type_id"] in destination_object_type_ids:
+                    filtered_entities.append(entity)
+
+        return parent_id_by_entity_id, filtered_entities
 
     def get_hier_values(
         self,
