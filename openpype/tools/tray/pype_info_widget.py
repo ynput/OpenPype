@@ -144,16 +144,14 @@ class CollapsibleWidget(QtWidgets.QWidget):
         button_toggle.setChecked(False)
 
         label_widget = QtWidgets.QLabel(label, parent=top_part)
-        spacer_widget = QtWidgets.QWidget(top_part)
 
         top_part_layout = QtWidgets.QHBoxLayout(top_part)
         top_part_layout.setContentsMargins(0, 0, 0, 5)
         top_part_layout.addWidget(button_toggle)
         top_part_layout.addWidget(label_widget)
-        top_part_layout.addWidget(spacer_widget, 1)
+        top_part_layout.addStretch(1)
 
         label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.button_toggle = button_toggle
