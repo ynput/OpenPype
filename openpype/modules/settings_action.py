@@ -66,7 +66,8 @@ class SettingsAction(PypeModule, ITrayAction):
         if self.settings_window:
             return
         from openpype.tools.settings import MainWidget
-        self.settings_window = MainWidget(self.user_role)
+
+        self.settings_window = MainWidget(self.user_role, reset_on_show=False)
         self.settings_window.trigger_restart.connect(self._on_trigger_restart)
 
     def _on_trigger_restart(self):
