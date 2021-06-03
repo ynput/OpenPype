@@ -20,6 +20,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(ProjectManagerWindow, self).__init__(parent)
 
+        self._initial_reset = False
+
         self.setWindowTitle("OpenPype Project Manager")
         self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
 
@@ -135,13 +137,15 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self.resize(1200, 600)
         self.setStyleSheet(load_stylesheet())
 
-        self.refresh_projects()
-
     def _set_project(self, project_name=None):
         self.hierarchy_view.set_project(project_name)
 
     def showEvent(self, event):
         super(ProjectManagerWindow, self).showEvent(event)
+
+        if not self._initial_reset:
+            self.refresh_projects()
+
         font_size = self._refresh_projects_btn.fontMetrics().height()
         icon_size = QtCore.QSize(font_size, font_size)
         self._refresh_projects_btn.setIconSize(icon_size)
@@ -149,6 +153,10 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._add_task_btn.setIconSize(icon_size)
 
     def refresh_projects(self, project_name=None):
+        # Mark as project were reset
+        if not self._initial_reset:
+            self._initial_reset = True
+
         if project_name is None:
             if self._project_combobox.count() > 0:
                 project_name = self._project_combobox.currentText()
