@@ -15,6 +15,8 @@ class LauncherAction(PypeModule, ITrayAction):
     def tray_init(self):
         self.create_window()
 
+        self.add_doubleclick_callback(self.show_launcher)
+
     def tray_start(self):
         return
 

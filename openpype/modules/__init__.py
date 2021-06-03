@@ -36,6 +36,7 @@ from .clockify import ClockifyModule
 from .log_viewer import LogViewModule
 from .muster import MusterModule
 from .deadline import DeadlineModule
+from .project_manager_action import ProjectManagerAction
 from .standalonepublish_action import StandAlonePublishAction
 from .sync_server import SyncServerModule
 
@@ -73,6 +74,7 @@ __all__ = (
     "LogViewModule",
     "MusterModule",
     "DeadlineModule",
+    "ProjectManagerAction",
     "StandAlonePublishAction",
 
     "SyncServerModule"

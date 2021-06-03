@@ -3,6 +3,9 @@ import re
 import copy
 import json
 
+from abc import ABCMeta, abstractmethod
+import six
+
 import clique
 
 import pyblish.api
@@ -14,6 +17,7 @@ from openpype.lib import (
     get_decompress_dir,
     decompress
 )
+import speedcopy
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -187,7 +191,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "New representation tags: `{}`".format(new_repre["tags"])
                 )
 
-                temp_data = self.prepare_temp_data(instance, repre, output_def)
+                temp_data = self.prepare_temp_data(
+                    instance, repre, output_def)
+                files_to_clean = []
+                if temp_data["input_is_sequence"]:
+                    self.log.info("Filling gaps in sequence.")
+                    files_to_clean = self.fill_sequence_gaps(
+                        temp_data["origin_repre"]["files"],
+                        new_repre["stagingDir"],
+                        temp_data["frame_start"],
+                        temp_data["frame_end"])
 
                 try:  # temporary until oiiotool is supported cross platform
                     ffmpeg_args = self._ffmpeg_arguments(
@@ -198,7 +211,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         self.log.debug("Unsupported compression on input " +
                                        "files. Skipping!!!")
                         return
-                    raise
+                    raise NotImplementedError
 
                 subprcs_cmd = " ".join(ffmpeg_args)
 
@@ -208,6 +221,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 openpype.api.run_subprocess(
                     subprcs_cmd, shell=True, logger=self.log
                 )
+
+                # delete files added to fill gaps
+                if files_to_clean:
+                    for f in files_to_clean:
+                        os.unlink(f)
 
                 output_name = output_def["filename_suffix"]
                 if temp_data["without_handles"]:
@@ -601,6 +619,89 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return all_args
 
+    def fill_sequence_gaps(self, files, staging_dir, start_frame, end_frame):
+        # type: (list, str, int, int) -> list
+        """Fill missing files in sequence by duplicating existing ones.
+
+        This will take nearest frame file and copy it with so as to fill
+        gaps in sequence. Last existing file there is is used to for the
+        hole ahead.
+
+        Args:
+            files (list): List of representation files.
+            staging_dir (str): Path to staging directory.
+            start_frame (int): Sequence start (no matter what files are there)
+            end_frame (int): Sequence end (no matter what files are there)
+
+        Returns:
+            list of added files. Those should be cleaned after work
+                is done.
+
+        Raises:
+            AssertionError: if more then one collection is obtained.
+
+        """
+        collections = clique.assemble(files)[0]
+        assert len(collections) == 1, "Multiple collections found."
+        col = collections[0]
+        # do nothing if sequence is complete
+        if list(col.indexes)[0] == start_frame and \
+                list(col.indexes)[-1] == end_frame and \
+                col.is_contiguous():
+            return []
+
+        holes = col.holes()
+
+        # generate ideal sequence
+        complete_col = clique.assemble(
+            [("{}{:0" + str(col.padding) + "d}{}").format(
+                col.head, f, col.tail
+            ) for f in range(start_frame, end_frame)]
+        )[0][0]  # type: clique.Collection
+
+        new_files = {}
+        last_existing_file = None
+
+        for idx in holes.indexes:
+            # get previous existing file
+            test_file = os.path.normpath(os.path.join(
+                staging_dir,
+                ("{}{:0" + str(complete_col.padding) + "d}{}").format(
+                    complete_col.head, idx - 1, complete_col.tail)))
+            if os.path.isfile(test_file):
+                new_files[idx] = test_file
+                last_existing_file = test_file
+            else:
+                if not last_existing_file:
+                    # previous file is not found (sequence has a hole
+                    # at the beginning. Use first available frame
+                    # there is.
+                    try:
+                        last_existing_file = list(col)[0]
+                    except IndexError:
+                        # empty collection?
+                        raise AssertionError(
+                            "Invalid sequence collected")
+                new_files[idx] = os.path.normpath(
+                    os.path.join(staging_dir, last_existing_file))
+
+        files_to_clean = []
+        if new_files:
+            # so now new files are dict with missing frame as a key and
+            # existing file as a value.
+            for frame, file in new_files.items():
+                self.log.info(
+                    "Filling gap {} with {}".format(frame, file))
+
+                hole = os.path.join(
+                    staging_dir,
+                    ("{}{:0" + str(col.padding) + "d}{}").format(
+                        col.head, frame, col.tail))
+                speedcopy.copyfile(file, hole)
+                files_to_clean.append(hole)
+
+        return files_to_clean
+
     def input_output_paths(self, new_repre, output_def, temp_data):
         """Deduce input nad output file paths based on entered data.
 
@@ -619,7 +720,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         if temp_data["input_is_sequence"]:
             collections = clique.assemble(repre["files"])[0]
-
             full_input_path = os.path.join(
                 staging_dir,
                 collections[0].format("{head}{padding}{tail}")
@@ -873,12 +973,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         """
         filters = []
 
-        letter_box_def = output_def["letter_box"]
-        letter_box_enabled = letter_box_def["enabled"]
-
-        # Get instance data
-        pixel_aspect = temp_data["pixel_aspect"]
-
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
         input_data = ffprobe_streams(
@@ -886,6 +980,33 @@ class ExtractReview(pyblish.api.InstancePlugin):
         )[0]
         input_width = int(input_data["width"])
         input_height = int(input_data["height"])
+
+        # NOTE Setting only one of `width` or `heigth` is not allowed
+        # - settings value can't have None but has value of 0
+        output_width = output_def.get("width") or None
+        output_height = output_def.get("height") or None
+
+        # Convert overscan value video filters
+        overscan_crop = output_def.get("overscan_crop")
+        overscan = OverscanCrop(input_width, input_height, overscan_crop)
+        overscan_crop_filters = overscan.video_filters()
+        # Add overscan filters to filters if are any and modify input
+        #   resolution by it's values
+        if overscan_crop_filters:
+            filters.extend(overscan_crop_filters)
+            input_width = overscan.width()
+            input_height = overscan.height()
+            # Use output resolution as inputs after cropping to skip usage of
+            #   instance data resolution
+            if output_width is None or output_height is None:
+                output_width = input_width
+                output_height = input_height
+
+        letter_box_def = output_def["letter_box"]
+        letter_box_enabled = letter_box_def["enabled"]
+
+        # Get instance data
+        pixel_aspect = temp_data["pixel_aspect"]
 
         # Make sure input width and height is not an odd number
         input_width_is_odd = bool(input_width % 2 != 0)
@@ -911,10 +1032,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("input_width: `{}`".format(input_width))
         self.log.debug("input_height: `{}`".format(input_height))
 
-        # NOTE Setting only one of `width` or `heigth` is not allowed
-        # - settings value can't have None but has value of 0
-        output_width = output_def.get("width") or None
-        output_height = output_def.get("height") or None
         # Use instance resolution if output definition has not set it.
         if output_width is None or output_height is None:
             output_width = temp_data["resolution_width"]
@@ -1438,3 +1555,291 @@ class ExtractReview(pyblish.api.InstancePlugin):
         vf_back = "-vf " + ",".join(vf_fixed)
 
         return vf_back
+
+
+@six.add_metaclass(ABCMeta)
+class _OverscanValue:
+    def __repr__(self):
+        return "<{}> {}".format(self.__class__.__name__, str(self))
+
+    @abstractmethod
+    def copy(self):
+        """Create a copy of object."""
+        pass
+
+    @abstractmethod
+    def size_for(self, value):
+        """Calculate new value for passed value."""
+        pass
+
+
+class PixValueExplicit(_OverscanValue):
+    def __init__(self, value):
+        self._value = int(value)
+
+    def __str__(self):
+        return "{}px".format(self._value)
+
+    def copy(self):
+        return PixValueExplicit(self._value)
+
+    def size_for(self, value):
+        if self._value == 0:
+            return value
+        return self._value
+
+
+class PercentValueExplicit(_OverscanValue):
+    def __init__(self, value):
+        self._value = float(value)
+
+    def __str__(self):
+        return "{}%".format(abs(self._value))
+
+    def copy(self):
+        return PercentValueExplicit(self._value)
+
+    def size_for(self, value):
+        if self._value == 0:
+            return value
+        return int((value / 100) * self._value)
+
+
+class PixValueRelative(_OverscanValue):
+    def __init__(self, value):
+        self._value = int(value)
+
+    def __str__(self):
+        sign = "-" if self._value < 0 else "+"
+        return "{}{}px".format(sign, abs(self._value))
+
+    def copy(self):
+        return PixValueRelative(self._value)
+
+    def size_for(self, value):
+        return value + self._value
+
+
+class PercentValueRelative(_OverscanValue):
+    def __init__(self, value):
+        self._value = float(value)
+
+    def __str__(self):
+        return "{}%".format(self._value)
+
+    def copy(self):
+        return PercentValueRelative(self._value)
+
+    def size_for(self, value):
+        if self._value == 0:
+            return value
+
+        offset = int((value / 100) * self._value)
+
+        return value + offset
+
+
+class PercentValueRelativeSource(_OverscanValue):
+    def __init__(self, value, source_sign):
+        self._value = float(value)
+        if source_sign not in ("-", "+"):
+            raise ValueError(
+                "Invalid sign value \"{}\" expected \"-\" or \"+\"".format(
+                    source_sign
+                )
+            )
+        self._source_sign = source_sign
+
+    def __str__(self):
+        return "{}%{}".format(self._value, self._source_sign)
+
+    def copy(self):
+        return PercentValueRelativeSource(self._value, self._source_sign)
+
+    def size_for(self, value):
+        if self._value == 0:
+            return value
+        return int((value * 100) / (100 - self._value))
+
+
+class OverscanCrop:
+    """Helper class to read overscan string and calculate output resolution.
+
+    It is possible to enter single value for both width and heigh or two values
+    for width and height. Overscan string may have a few variants. Each variant
+    define output size for input size.
+
+    ### Example
+    For input size: 2200px
+
+    | String   | Output | Description                                     |
+    |----------|--------|-------------------------------------------------|
+    | ""       | 2200px | Empty string does nothing.                      |
+    | "10%"    | 220px  | Explicit percent size.                          |
+    | "-10%"   | 1980px | Relative percent size (decrease).               |
+    | "+10%"   | 2420px | Relative percent size (increase).               |
+    | "-10%+"  | 2000px | Relative percent size to output size.           |
+    | "300px"  | 300px  | Explicit output size cropped or expanded.       |
+    | "-300px" | 1900px | Relative pixel size (decrease).                 |
+    | "+300px" | 2500px | Relative pixel size (increase).                 |
+    | "300"    | 300px  | Value without "%" and "px" is used as has "px". |
+
+    Value without sign (+/-) in is always explicit and value with sign is
+    relative. Output size for "200px" and "+200px" are not the same.
+    Values "0", "0px" or "0%" are ignored.
+
+    All values that cause output resolution smaller than 1 pixel are invalid.
+
+    Value "-10%+" is a special case which says that input's resolution is
+    bigger by 10% than expected output.
+
+    It is possible to combine these variants to define different output for
+    width and height.
+
+    Resolution: 2000px 1000px
+
+    | String        | Output        |
+    |---------------|---------------|
+    | "100px 120px" | 2100px 1120px |
+    | "-10% -200px" | 1800px 800px  |
+    """
+
+    item_regex = re.compile(r"([\+\-])?([0-9]+)(.+)?")
+    relative_source_regex = re.compile(r"%([\+\-])")
+
+    def __init__(self, input_width, input_height, string_value):
+        # Make sure that is not None
+        string_value = string_value or ""
+
+        self.input_width = input_width
+        self.input_height = input_height
+
+        width, height = self._convert_string_to_values(string_value)
+        self._width_value = width
+        self._height_value = height
+
+        self._string_value = string_value
+
+    def __str__(self):
+        return "{}".format(self._string_value)
+
+    def __repr__(self):
+        return "<{}>".format(self.__class__.__name__)
+
+    def width(self):
+        """Calculated width."""
+        return self._width_value.size_for(self.input_width)
+
+    def height(self):
+        """Calculated height."""
+        return self._height_value.size_for(self.input_height)
+
+    def video_filters(self):
+        """FFmpeg video filters to achieve expected result.
+
+        Filter may be empty, use "crop" filter, "pad" filter or combination of
+        "crop" and "pad".
+
+        Returns:
+            list: FFmpeg video filters.
+        """
+        # crop=width:height:x:y - explicit start x, y position
+        # crop=width:height     - x, y are related to center by width/height
+        # pad=width:heigth:x:y  - explicit start x, y position
+        # pad=width:heigth      - x, y are set to 0 by default
+
+        width = self.width()
+        height = self.height()
+
+        output = []
+        if self.input_width == width and self.input_height == height:
+            return output
+
+        # Make sure resolution has odd numbers
+        if width % 2 == 1:
+            width -= 1
+
+        if height % 2 == 1:
+            height -= 1
+
+        if width <= self.input_width and height <= self.input_height:
+            output.append("crop={}:{}".format(width, height))
+
+        elif width >= self.input_width and height >= self.input_height:
+            output.append(
+                "pad={}:{}:(iw-ow)/2:(ih-oh)/2".format(width, height)
+            )
+
+        elif width > self.input_width and height < self.input_height:
+            output.append("crop=iw:{}".format(height))
+            output.append("pad={}:ih:(iw-ow)/2:(ih-oh)/2".format(width))
+
+        elif width < self.input_width and height > self.input_height:
+            output.append("crop={}:ih".format(width))
+            output.append("pad=iw:{}:(iw-ow)/2:(ih-oh)/2".format(height))
+
+        return output
+
+    def _convert_string_to_values(self, orig_string_value):
+        string_value = orig_string_value.strip().lower()
+        if not string_value:
+            return [PixValueRelative(0), PixValueRelative(0)]
+
+        # Replace "px" (and spaces before) with single space
+        string_value = re.sub(r"([ ]+)?px", " ", string_value)
+        string_value = re.sub(r"([ ]+)%", "%", string_value)
+        # Make sure +/- sign at the beggining of string is next to number
+        string_value = re.sub(r"^([\+\-])[ ]+", "\g<1>", string_value)
+        # Make sure +/- sign in the middle has zero spaces before number under
+        #   which belongs
+        string_value = re.sub(
+            r"[ ]([\+\-])[ ]+([0-9])",
+            r" \g<1>\g<2>",
+            string_value
+        )
+        string_parts = [
+            part
+            for part in string_value.split(" ")
+            if part
+        ]
+
+        error_msg = "Invalid string for rescaling \"{}\"".format(
+            orig_string_value
+        )
+        if 1 > len(string_parts) > 2:
+            raise ValueError(error_msg)
+
+        output = []
+        for item in string_parts:
+            groups = self.item_regex.findall(item)
+            if not groups:
+                raise ValueError(error_msg)
+
+            relative_sign, value, ending = groups[0]
+            if not relative_sign:
+                if not ending:
+                    output.append(PixValueExplicit(value))
+                else:
+                    output.append(PercentValueExplicit(value))
+            else:
+                source_sign_group = self.relative_source_regex.findall(ending)
+                if not ending:
+                    output.append(PixValueRelative(int(relative_sign + value)))
+
+                elif source_sign_group:
+                    source_sign = source_sign_group[0]
+                    output.append(PercentValueRelativeSource(
+                        float(relative_sign + value), source_sign
+                    ))
+                else:
+                    output.append(
+                        PercentValueRelative(float(relative_sign + value))
+                    )
+
+        if len(output) == 1:
+            width = output.pop(0)
+            height = width.copy()
+        else:
+            width, height = output
+
+        return width, height

@@ -29,7 +29,10 @@ except ImportError:
 import six
 import appdirs
 
-from openpype.settings import get_local_settings
+from openpype.settings import (
+    get_local_settings,
+    get_system_settings
+)
 
 from .import validate_mongo_connection
 
@@ -562,3 +565,16 @@ def get_openpype_username():
         if not username:
             username = getpass.getuser()
     return username
+
+
+def is_admin_password_required():
+    system_settings = get_system_settings()
+    password = system_settings["general"].get("admin_password")
+    if not password:
+        return False
+
+    local_settings = get_local_settings()
+    is_admin = local_settings.get("general", {}).get("is_admin", False)
+    if is_admin:
+        return False
+    return True

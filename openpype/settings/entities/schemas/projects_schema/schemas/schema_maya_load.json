@@ -11,144 +11,74 @@
             "label": "Loaded Subsets Outliner Colors",
             "children": [
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Model",
-                            "name": "model"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Model:",
+                    "key": "model"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Rig",
-                            "name": "rig"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Rig:",
+                    "key": "rig"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Pointcache",
-                            "name": "pointcache"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Pointcache:",
+                    "key": "pointcache"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Animation",
-                            "name": "animation"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Animation:",
+                    "key": "animation"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Arnold Standin",
-                            "name": "ass"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Arnold Standin:",
+                    "key": "ass"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Camera",
-                            "name": "camera"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Camera:",
+                    "key": "camera"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "FBX",
-                            "name": "fbx"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "FBX:",
+                    "key": "fbx"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Maya Scene",
-                            "name": "mayaAscii"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Maya Scene:",
+                    "key": "mayaAscii"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Set Dress",
-                            "name": "setdress"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Set Dress:",
+                    "key": "setdress"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Layout",
-                            "name": "layout"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Layout:",
+                    "key": "layout"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "VDB Cache",
-                            "name": "vdbcache"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "VDB Cache:",
+                    "key": "vdbcache"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Vray Proxy",
-                            "name": "vrayproxy"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Vray Proxy:",
+                    "key": "vrayproxy"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Yeti Cache",
-                            "name": "yeticache"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Yeti Cache:",
+                    "key": "yeticache"
                 },
                 {
-                    "type": "schema_template",
-                    "name": "template_color",
-                    "template_data": [
-                        {
-                            "label": "Yeti Rig",
-                            "name": "yetiRig"
-                        }
-                    ]
+                    "type": "color",
+                    "label": "Yeti Rig:",
+                    "key": "yetiRig"
                 }
             ]
         }

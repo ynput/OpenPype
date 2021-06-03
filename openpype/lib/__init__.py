@@ -81,7 +81,13 @@ from .avalon_context import (
 
     get_creator_by_name,
 
-    change_timer_to_current_context
+    get_custom_workfile_template,
+
+    change_timer_to_current_context,
+
+    get_custom_workfile_template_by_context,
+    get_custom_workfile_template_by_string_context,
+    get_custom_workfile_template
 )
 
 from .local_settings import (
@@ -91,7 +97,8 @@ from .local_settings import (
     OpenPypeSettingsRegistry,
     get_local_site_id,
     change_openpype_mongo_url,
-    get_openpype_username
+    get_openpype_username,
+    is_admin_password_required
 )
 
 from .applications import (
@@ -192,6 +199,10 @@ __all__ = [
 
     "change_timer_to_current_context",
 
+    "get_custom_workfile_template_by_context",
+    "get_custom_workfile_template_by_string_context",
+    "get_custom_workfile_template",
+
     "IniSettingRegistry",
     "JSONSettingRegistry",
     "OpenPypeSecureRegistry",
@@ -199,6 +210,7 @@ __all__ = [
     "get_local_site_id",
     "change_openpype_mongo_url",
     "get_openpype_username",
+    "is_admin_password_required",
 
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",

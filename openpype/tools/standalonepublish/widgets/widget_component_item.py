@@ -16,6 +16,9 @@ class ComponentItem(QtWidgets.QFrame):
 
     def __init__(self, parent, main_parent):
         super().__init__()
+
+        self.setObjectName("ComponentItem")
+
         self.has_valid_repre = True
         self.actions = []
         self.resize(290, 70)
@@ -32,6 +35,7 @@ class ComponentItem(QtWidgets.QFrame):
 
         # Main widgets
         frame = QtWidgets.QFrame(self)
+        frame.setObjectName("ComponentFrame")
         frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         frame.setFrameShadow(QtWidgets.QFrame.Raised)
 

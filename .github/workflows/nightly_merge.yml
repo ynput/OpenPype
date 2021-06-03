@@ -1,0 +1,23 @@
+name: Nightly Merge
+
+on:
+  schedule:
+    - cron:  '21 3 * * 3,6'
+  workflow_dispatch:
+
+jobs:
+  develop-to-main:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🚛 Checkout Code
+      uses: actions/checkout@v2
+
+    - name: Merge development -> main
+      uses: devmasx/merge-branch@v1.3.1
+      with:
+        type: now
+        from_branch: develop
+        target_branch: main
+        github_token: ${{ secrets.TOKEN }}

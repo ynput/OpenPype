@@ -55,6 +55,7 @@
                                     "ftrack"
                                 ]
                             },
+                            "overscan_crop": "",
                             "width": 0,
                             "height": 0,
                             "bg_color": [
@@ -272,8 +273,7 @@
             "active_site": "studio",
             "remote_site": "studio"
         },
-        "sites": {
-        }
+        "sites": {}
     },
     "project_plugins": {
         "windows": [],

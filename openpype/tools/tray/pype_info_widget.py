@@ -2,8 +2,9 @@ import os
 import json
 import collections
 
-from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
+
+from openpype import style
 from openpype.api import resources
 from openpype.settings.lib import get_local_settings
 from openpype.lib.pype_info import (
@@ -118,7 +119,6 @@ class EnvironmentsView(QtWidgets.QTreeView):
         return super(EnvironmentsView, self).wheelEvent(event)
 
 
-
 class ClickableWidget(QtWidgets.QWidget):
     clicked = QtCore.Signal()
 
@@ -144,16 +144,14 @@ class CollapsibleWidget(QtWidgets.QWidget):
         button_toggle.setChecked(False)
 
         label_widget = QtWidgets.QLabel(label, parent=top_part)
-        spacer_widget = QtWidgets.QWidget(top_part)
 
         top_part_layout = QtWidgets.QHBoxLayout(top_part)
         top_part_layout.setContentsMargins(0, 0, 0, 5)
         top_part_layout.addWidget(button_toggle)
         top_part_layout.addWidget(label_widget)
-        top_part_layout.addWidget(spacer_widget, 1)
+        top_part_layout.addStretch(1)
 
         label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.button_toggle = button_toggle
@@ -297,7 +295,7 @@ class PypeInfoSubWidget(QtWidgets.QWidget):
 
     def _create_separator(self):
         separator_widget = QtWidgets.QWidget(self)
-        separator_widget.setStyleSheet("background: #222222;")
+        separator_widget.setObjectName("Separator")
         separator_widget.setMinimumHeight(2)
         separator_widget.setMaximumHeight(2)
         return separator_widget

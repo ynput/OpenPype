@@ -5,6 +5,8 @@ class ComponentsList(QtWidgets.QTableWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
+        self.setObjectName("ComponentList")
+
         self._main_column = 0
 
         self.setColumnCount(1)

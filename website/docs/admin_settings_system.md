@@ -7,15 +7,24 @@ sidebar_label: System settings
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-## Global
+## General
 
 Settings applicable to the full studio.
 
-`Studio Name`
+**`Studio Name`** - Full name of the studio (can be used as variable on some places)
 
-`Studio Code`
+**`Studio Code`** - Studio acronym or a short code (can be used as variable on some places)
 
-`Environment`
+**`Admin Password`** - After setting admin password, normal user won't have access to OpenPype settings
+and Project Manager GUI. Please keep in mind that this is a studio wide password and it is meant purely
+as a naive barier to prevent artists from accidental setting changes.
+
+**`Environment`** - Globally applied environment variables that will be appended to any OpenPype process in the studio.
+
+**`Versions Repository`** - Location where automatic update mechanism searches for zip files with
+OpenPype update packages. To read more about preparing OpenPype for automatic updates go to [Admin Distribute docs](admin_distribute#2-openpype-codebase)
+
+![general_settings](assets/settings/settings_system_general.png)
 
 ## Modules
 
@@ -24,25 +33,25 @@ their own attributes that need to be set, before they become fully functional.
 
 ### Avalon
 
-`Avalon Mongo Timeout` - You might need to change this if your mongo connection is a bit slow. Making the 
+**`Avalon Mongo Timeout`** - You might need to change this if your mongo connection is a bit slow. Making the 
 timeout longer will give Avalon better chance to connect.
 
-`Thumbnail Storage Location` - simple disk storage path, where all thumbnails will be stored. 
+**`Thumbnail Storage Location`** - simple disk storage path, where all thumbnails will be stored. 
 
 ### Ftrack
 
-`Server` - URL of your ftrack server.
+**`Server`** - URL of your ftrack server.
 
 Additional Action paths
 
-`Action paths` - Directories containing your custom ftrack actions.
+**`Action paths`** - Directories containing your custom ftrack actions.
 
-`Event paths` - Directories containing your custom ftrack event plugins.
+**`Event paths`** - Directories containing your custom ftrack event plugins.
 
-`Intent` - Special ftrack attribute that mark the intention of individual publishes. This setting will be reflected
+**`Intent`** - Special ftrack attribute that mark the intention of individual publishes. This setting will be reflected
 in publisher as well as ftrack custom attributes
 
-`Custom Attributes` - Write and Read permissions for all OpenPype required ftrack custom attributes. The values should be
+**`Custom Attributes`** - Write and Read permissions for all OpenPype required ftrack custom attributes. The values should be
 ftrack roles names.
 
 ### Sync Server
@@ -55,25 +64,25 @@ Disable/Enable Standalone Publisher option
 
 ### Deadline
 
-`Deadline Rest URL` - URL to deadline webservice that. This URL must be reachable from every 
+**`Deadline Rest URL`** - URL to deadline webservice that. This URL must be reachable from every 
 workstation that should be submitting render jobs to deadline via OpenPype.
 
 ### Muster
 
-`Muster Rest URL` - URL to Muster webservice that. This URL must be reachable from every 
+**`Muster Rest URL`** - URL to Muster webservice that. This URL must be reachable from every 
 workstation that should be submitting render jobs to muster via OpenPype.
 
-`templates mapping` - you can customize Muster templates to match your existing setup here. 
+**`templates mapping`** - you can customize Muster templates to match your existing setup here. 
 
 ### Clockify
 
-`Workspace Name` - name of the clockify workspace where you would like to be sending all the timelogs.
+**`Workspace Name`** - name of the clockify workspace where you would like to be sending all the timelogs.
 
 ### Timers Manager
 
-`Max Idle Time` - Duration (minutes) of inactivity, after which currently running timer will be stopped.
+**`Max Idle Time`** - Duration (minutes) of inactivity, after which currently running timer will be stopped.
 
-`Dialog popup time` - Time in minutes, before the end of Max Idle ti, when a notification will alert 
+**`Dialog popup time`** - Time in minutes, before the end of Max Idle ti, when a notification will alert 
 the user that their timer is about to be stopped.
 
 ### Idle Manager
@@ -87,16 +96,19 @@ Module that allows storing all logging into the database for easier retrieval an
 ## Applications
 
 In this section you can manage what Applications are available to your studio, locations of their 
-executables and their additional environments. 
+executables and their additional environments. In OpenPype context each application that is integrated is 
+also called a `Host` and these two terms might be used interchangeably in the documentation.
 
-Each DCC is made of two levels. 
+Each Host is made of two levels. 
 1. **Application group** - This is the main name of the application and you can define extra environments
-that are applicable to all version of the give application. For example any extra Maya scripts that are not
+that are applicable to all versions of the given application. For example any extra Maya scripts that are not
 version dependant, can be added to `Maya` environment here.
 2. **Application versions** - Here you can define executables (per platform) for each supported version of 
 the DCC and any default arguments (`--nukex` for instance). You can also further extend it's environment. 
 
 ![settings_applications](assets/settings/applications_01.png)
+
+### Environments
 
 Please keep in mind that the environments are not additive by default, so if you are extending variables like 
 `PYTHONPATH`, or `PATH` make sure that you add themselves to the end of the list. 
@@ -112,8 +124,15 @@ For instance:
 }
 ```
 
+### Adding versions
 
+It is possible to add new version for any supported application. There are two ways of doing it. 
 
+1. **Add new executable** to an existing application version. This is a good way if you have multiple fully compatible versions of your DCC across the studio. Nuke is a typical example where multiple artists might have different `v#` releases of the same minor Nuke release. For example `12.2v3` and `12.3v6`. When you add both to `12.2` Nuke executables they will be treated the same in OpenPype and the system will automatically pick the first that it finds on an artist machine when launching. Their order is also the order of their priority when choosing which version to run if multiple are present.
+![settings_applications](assets/settings/settings_addapplication.gif)
+
+2. **Add version** in case you want this version to be selectable individually. This is usually used for bigger releases that might not be fully compatible with previous versions. Keep in mind that if you add the latest version of an Application that is not yet part of the official OpenPype release, you might run into problems with integration. We test all the new software versions for compatibility and most often, smaller or bigger updates to OpenPype code are necessary to keep everything running.
+![settings_applications](assets/settings/settings_addappversion.gif)
 
 ## Tools
 

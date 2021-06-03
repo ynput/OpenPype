@@ -6,7 +6,7 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
     """Collect soft effects instances."""
 
     order = pyblish.api.CollectorOrder - 0.579
-    label = "Pre-collect Clip Effects Instances"
+    label = "Precollect Clip Effects Instances"
     families = ["clip"]
 
     def process(self, instance):
@@ -40,6 +40,12 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
             if review and review_track_index == _track_index:
                 continue
             for sitem in sub_track_items:
+                effect = None
+                # make sure this subtrack item is relative of track item
+                if ((track_item not in sitem.linkedItems())
+                        and (len(sitem.linkedItems()) > 0)):
+                    continue
+
                 if not (track_index <= _track_index):
                     continue
 
@@ -162,7 +168,7 @@ class PreCollectClipEffects(pyblish.api.InstancePlugin):
                 # grab animation including handles
                 knob_anim = [node[knob].getValueAt(i)
                              for i in range(
-                             self.clip_in_h, self.clip_in_h + 1)]
+                             self.clip_in_h, self.clip_out_h + 1)]
 
                 node_serialized[knob] = knob_anim
             else:

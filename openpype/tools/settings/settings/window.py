@@ -4,24 +4,24 @@ from .categories import (
     SystemWidget,
     ProjectWidget
 )
-from .widgets import ShadowWidget
+from .widgets import ShadowWidget, RestartDialog
 from . import style
 
-from openpype.tools.settings import (
-    is_password_required,
-    PasswordDialog
-)
+from openpype.lib import is_admin_password_required
+from openpype.widgets import PasswordDialog
 
 
 class MainWidget(QtWidgets.QWidget):
+    trigger_restart = QtCore.Signal()
+
     widget_width = 1000
     widget_height = 600
 
-    def __init__(self, user_role, parent=None):
+    def __init__(self, user_role, parent=None, reset_on_show=True):
         super(MainWidget, self).__init__(parent)
 
         self._user_passed = False
-        self._reset_on_show = True
+        self._reset_on_show = reset_on_show
 
         self._password_dialog = None
 
@@ -60,6 +60,9 @@ class MainWidget(QtWidgets.QWidget):
         for tab_widget in tab_widgets:
             tab_widget.saved.connect(self._on_tab_save)
             tab_widget.state_changed.connect(self._on_state_change)
+            tab_widget.restart_required_trigger.connect(
+                self._on_restart_required
+            )
 
         self.tab_widgets = tab_widgets
 
@@ -90,6 +93,7 @@ class MainWidget(QtWidgets.QWidget):
     def showEvent(self, event):
         super(MainWidget, self).showEvent(event)
         if self._reset_on_show:
+            self._reset_on_show = False
             self.reset()
 
     def _show_password_dialog(self):
@@ -111,7 +115,7 @@ class MainWidget(QtWidgets.QWidget):
             return
 
         if not self._user_passed:
-            self._user_passed = not is_password_required()
+            self._user_passed = not is_admin_password_required()
 
         self._on_state_change()
 
@@ -132,3 +136,15 @@ class MainWidget(QtWidgets.QWidget):
 
         for tab_widget in self.tab_widgets:
             tab_widget.reset()
+
+    def _on_restart_required(self):
+        # Don't show dialog if there are not registered slots for
+        #   `trigger_restart` signal.
+        # - For example when settings are runnin as standalone tool
+        if self.receivers(self.trigger_restart) < 1:
+            return
+
+        dialog = RestartDialog(self)
+        result = dialog.exec_()
+        if result == 1:
+            self.trigger_restart.emit()
