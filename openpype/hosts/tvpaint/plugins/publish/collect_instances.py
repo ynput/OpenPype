@@ -1,3 +1,4 @@
+import os
 import json
 import copy
 import pyblish.api
@@ -16,6 +17,20 @@ class CollectInstances(pyblish.api.ContextPlugin):
             len(workfile_instances),
             json.dumps(workfile_instances, indent=4)
         ))
+
+        # Backwards compatibility for workfiles that already have review
+        #   instance in metadata.
+        review_instance_exist = False
+        for instance_data in workfile_instances:
+            if instance_data["family"] == "review":
+                review_instance_exist = True
+                break
+
+        # Fake review instance if review was not found in metadata families
+        if not review_instance_exist:
+            workfile_instances.append(
+                self._create_review_instance_data(context)
+            )
 
         for instance_data in workfile_instances:
             instance_data["fps"] = context.data["sceneFps"]
@@ -89,6 +104,16 @@ class CollectInstances(pyblish.api.ContextPlugin):
             self.log.debug("Created instance: {}\n{}".format(
                 instance, json.dumps(instance.data, indent=4)
             ))
+
+    def _create_review_instance_data(self, context):
+        """Fake review instance data."""
+
+        return {
+            "family": "review",
+            "asset": context.data["asset"],
+            # Dummy subset name
+            "subset": "reviewMain"
+        }
 
     def create_render_layer_instance(self, context, instance_data):
         name = instance_data["name"]

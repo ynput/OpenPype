@@ -1,5 +1,5 @@
 import os
-import sys
+import platform
 import subprocess
 from openpype.lib import get_pype_execute_args
 from . import PypeModule, ITrayAction
@@ -35,4 +35,14 @@ class StandAlonePublishAction(PypeModule, ITrayAction):
 
     def run_standalone_publisher(self):
         args = get_pype_execute_args("standalonepublisher")
-        subprocess.Popen(args, creationflags=subprocess.DETACHED_PROCESS)
+        kwargs = {}
+        if platform.system().lower() == "darwin":
+            new_args = ["open", "-a", args.pop(0), "--args"]
+            new_args.extend(args)
+            args = new_args
+
+        detached_process = getattr(subprocess, "DETACHED_PROCESS", None)
+        if detached_process is not None:
+            kwargs["creationflags"] = detached_process
+
+        subprocess.Popen(args, **kwargs)

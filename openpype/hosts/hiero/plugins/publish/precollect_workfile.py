@@ -75,10 +75,26 @@ class PrecollectWorkfile(pyblish.api.ContextPlugin):
             "activeProject": project,
             "otioTimeline": otio_timeline,
             "currentFile": curent_file,
-            "fps": fps,
+            "colorspace": self.get_colorspace(project),
+            "fps": fps
         }
         context.data.update(context_data)
 
         self.log.info("Creating instance: {}".format(instance))
         self.log.debug("__ instance.data: {}".format(pformat(instance.data)))
         self.log.debug("__ context_data: {}".format(pformat(context_data)))
+
+    def get_colorspace(self, project):
+        # get workfile's colorspace properties
+        return {
+            "useOCIOEnvironmentOverride": project.useOCIOEnvironmentOverride(),
+            "lutSetting16Bit": project.lutSetting16Bit(),
+            "lutSetting8Bit": project.lutSetting8Bit(),
+            "lutSettingFloat": project.lutSettingFloat(),
+            "lutSettingLog": project.lutSettingLog(),
+            "lutSettingViewer": project.lutSettingViewer(),
+            "lutSettingWorkingSpace": project.lutSettingWorkingSpace(),
+            "lutUseOCIOForExport": project.lutUseOCIOForExport(),
+            "ocioConfigName": project.ocioConfigName(),
+            "ocioConfigPath": project.ocioConfigPath()
+        }

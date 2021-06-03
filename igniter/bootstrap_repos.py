@@ -203,6 +203,12 @@ class OpenPypeVersion(semver.VersionInfo):
             openpype_version.staging = True
         return openpype_version
 
+    def __hash__(self):
+        if self.path:
+            return hash(self.path)
+        else:
+            return hash(str(self))
+
 
 class BootstrapRepos:
     """Class for bootstrapping local OpenPype installation.
@@ -649,6 +655,9 @@ class BootstrapRepos:
             openpype_versions = [
                 v for v in openpype_versions if v.path.suffix != ".zip"
             ]
+
+        # remove duplicates
+        openpype_versions = list(set(openpype_versions))
 
         return openpype_versions
 

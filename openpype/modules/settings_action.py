@@ -67,6 +67,10 @@ class SettingsAction(PypeModule, ITrayAction):
             return
         from openpype.tools.settings import MainWidget
         self.settings_window = MainWidget(self.user_role)
+        self.settings_window.trigger_restart.connect(self._on_trigger_restart)
+
+    def _on_trigger_restart(self):
+        self.manager.restart_tray()
 
     def show_settings_window(self):
         """Show settings tool window.

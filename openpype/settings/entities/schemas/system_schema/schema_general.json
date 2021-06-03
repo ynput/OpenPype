@@ -34,7 +34,8 @@
             "key": "environment",
             "label": "Environment",
             "type": "raw-json",
-            "env_group_key": "global"
+            "env_group_key": "global",
+            "require_restart": true
         },
         {
             "type": "splitter"
@@ -44,7 +45,8 @@
             "key": "openpype_path",
             "label": "Versions Repository",
             "multiplatform": true,
-            "multipath": true
+            "multipath": true,
+            "require_restart": true
         }
     ]
 }

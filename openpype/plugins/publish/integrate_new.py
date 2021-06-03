@@ -78,7 +78,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
-                "lut",
                 "audio",
                 "yetiRig",
                 "yeticache",
@@ -97,7 +96,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "editorial",
                 "background",
                 "camerarig",
-                "redshiftproxy"
+                "redshiftproxy",
+                "effect"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [

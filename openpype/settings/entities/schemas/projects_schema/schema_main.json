@@ -80,6 +80,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_blender"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_aftereffects"
                 },
                 {

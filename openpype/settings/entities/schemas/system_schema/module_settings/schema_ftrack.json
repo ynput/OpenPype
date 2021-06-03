@@ -3,6 +3,7 @@
     "key": "ftrack",
     "label": "Ftrack",
     "collapsible": true,
+    "require_restart": true,
     "checkbox_key": "enabled",
     "children": [
         {

@@ -243,7 +243,10 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                         "Cannot get value of {}.{}".format(
                             node, attribute_name))
                 else:
-                    if value != render_value:
+                    # compare values as strings to get around various
+                    # datatypes possible in Settings and Render
+                    # Settings
+                    if str(value) != str(render_value):
                         invalid = True
                         cls.log.error(
                             ("Invalid value {} set on {}.{}. "

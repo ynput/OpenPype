@@ -81,7 +81,13 @@ from .avalon_context import (
 
     get_creator_by_name,
 
-    change_timer_to_current_context
+    get_custom_workfile_template,
+
+    change_timer_to_current_context,
+
+    get_custom_workfile_template_by_context,
+    get_custom_workfile_template_by_string_context,
+    get_custom_workfile_template
 )
 
 from .local_settings import (
@@ -191,6 +197,10 @@ __all__ = [
     "get_creator_by_name",
 
     "change_timer_to_current_context",
+
+    "get_custom_workfile_template_by_context",
+    "get_custom_workfile_template_by_string_context",
+    "get_custom_workfile_template",
 
     "IniSettingRegistry",
     "JSONSettingRegistry",

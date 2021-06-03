@@ -1,10 +1,14 @@
+import collections
 import os
 import sys
+import atexit
+import subprocess
 
 import platform
 from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
 from openpype.api import Logger, resources
+from openpype.lib import get_pype_execute_args
 from openpype.modules import TrayModulesManager, ITrayService
 from openpype.settings.lib import get_system_settings
 import openpype.version
@@ -20,7 +24,6 @@ class TrayManager:
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
-
         self.pype_info_widget = None
 
         self.log = Logger.get_logger(self.__class__.__name__)
@@ -30,6 +33,28 @@ class TrayManager:
         self.modules_manager = TrayModulesManager()
 
         self.errors = []
+
+        self.main_thread_timer = None
+        self._main_thread_callbacks = collections.deque()
+        self._execution_in_progress = None
+
+    def execute_in_main_thread(self, callback):
+        self._main_thread_callbacks.append(callback)
+
+    def _main_thread_execution(self):
+        if self._execution_in_progress:
+            return
+        self._execution_in_progress = True
+        while self._main_thread_callbacks:
+            try:
+                callback = self._main_thread_callbacks.popleft()
+                callback()
+            except:
+                self.log.warning(
+                    "Failed to execute {} in main thread".format(callback),
+                    exc_info=True)
+
+        self._execution_in_progress = False
 
     def initialize_modules(self):
         """Add modules to tray."""
@@ -55,6 +80,14 @@ class TrayManager:
 
         # Print time report
         self.modules_manager.print_report()
+
+        # create timer loop to check callback functions
+        main_thread_timer = QtCore.QTimer()
+        main_thread_timer.setInterval(300)
+        main_thread_timer.timeout.connect(self._main_thread_execution)
+        main_thread_timer.start()
+
+        self.main_thread_timer = main_thread_timer
 
     def show_tray_message(self, title, message, icon=None, msecs=None):
         """Show tray message.
@@ -92,6 +125,34 @@ class TrayManager:
         self.tray_widget.menu.addAction(version_action)
         self.tray_widget.menu.addSeparator()
 
+    def restart(self):
+        """Restart Tray tool.
+
+        First creates new process with same argument and close current tray.
+        """
+        args = get_pype_execute_args()
+        # Create a copy of sys.argv
+        additional_args = list(sys.argv)
+        # Check last argument from `get_pype_execute_args`
+        # - when running from code it is the same as first from sys.argv
+        if args[-1] == additional_args[0]:
+            additional_args.pop(0)
+        args.extend(additional_args)
+
+        kwargs = {}
+        if platform.system().lower() == "windows":
+            flags = (
+                subprocess.CREATE_NEW_PROCESS_GROUP
+                | subprocess.DETACHED_PROCESS
+            )
+            kwargs["creationflags"] = flags
+
+        subprocess.Popen(args, **kwargs)
+        self.exit()
+
+    def exit(self):
+        self.tray_widget.exit()
+
     def on_exit(self):
         self.modules_manager.on_exit()
 
@@ -116,6 +177,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         super(SystemTrayIcon, self).__init__(icon, parent)
 
+        self._exited = False
+
         # Store parent - QtWidgets.QMainWindow()
         self.parent = parent
 
@@ -134,6 +197,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         # Add menu to Context of SystemTrayIcon
         self.setContextMenu(self.menu)
 
+        atexit.register(self.exit)
+
     def on_systray_activated(self, reason):
         # show contextMenu if left click
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
@@ -145,6 +210,10 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
 
         - Icon won't stay in tray after exit.
         """
+        if self._exited:
+            return
+        self._exited = True
+
         self.hide()
         self.tray_man.on_exit()
         QtCore.QCoreApplication.exit()

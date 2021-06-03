@@ -4,137 +4,154 @@ title: OpenPype Commands Reference
 sidebar_label: OpenPype Commands
 ---
 
+:::info
+You can substitute `openpype_console` with `poetry run python start.py` if you want to run it
+directly from sources.
+:::
 
-## `tray`
+:::note
+Running OpenPype without any commands will default to `tray`.
+:::
 
-To launch Tray:
-```sh
-pype tray
+## Common arguments
+`--use-version` to specify explicit version to use:
+```shell
+openpype_console --use-version=3.0.0-foo+bar
 ```
 
-### `--debug`
+`--use-staging` - to use staging versions of OpenPype.
+
+For more information [see here](admin_use#run-openpype).
+
+## Commands
+
+| Command | Description | Arguments |
+| --- | --- |: --- :|
+| tray | Launch OpenPype Tray. |  [📑](#tray-arguments)
+| eventserver | This should be ideally used by system service (such as systemd or upstart on linux and window service). | [📑](#eventserver-arguments) |
+| launch | Launch application in Pype environment. | [📑](#launch-arguments) |
+| publish | Pype takes JSON from provided path and use it to publish data in it. | [📑](#publish-arguments) |
+| extractenvironments | Extract environment variables for entered context to a json file. | [📑](#extractenvironments-arguments) |
+| run | Execute given python script within OpenPype environment. | [📑](#run-arguments) |
+| projectmanager | Launch Project Manager UI | [📑](#projectmanager-arguments) |
+| settings | Open Settings UI | [📑](#settings-arguments) |
+| standalonepublisher | Open Standalone Publisher UI | [📑](#standalonepublisher-arguments) |
+
+---
+### `tray` arguments {#tray-arguments}
+| Argument | Description |
+| --- | --- |
+| `--debug` | print verbose information useful for debugging (works with `openpype_console`) |
 
 To launch Tray with debugging information:
-```sh
-pype tray --debug
+```shell
+openpype_console tray --debug
 ```
+---
+### `launch` arguments {#eventserver-arguments}
+You have to set either proper environment variables to provide URL and credentials or use
+option to specify them. If you use `--store_credentials` provided credentials will be stored for later use.
 
---------------------
-
-
-## `eventserver`
-
-This command launches ftrack event server.
-
-This should be ideally used by system service (such us systemd or upstart
-on linux and window service).
-
-You have to set either proper environment variables to provide URL and
-credentials or use option to specify them. If you use `--store_credentials`
-provided credentials will be stored for later use.
+| Argument | Description |
+| --- | --- |
+| `--debug` | print debug info |
+| `--ftrack-url` | URL to ftrack server (can be set with `FTRACK_SERVER`) |
+| `--ftrack-user` |user name to log in to ftrack (can be set with `FTRACK_API_USER`) |
+| `--ftrack-api-key` | ftrack api key (can be set with `FTRACK_API_KEY`) |
+| `--ftrack-events-path` | path to event server plugins (can be set with `FTRACK_EVENTS_PATH`) |
+| `--no-stored-credentials` | will use credential specified with options above |
+| `--store-credentials` | will store credentials to file for later use |
+| `--legacy` | run event server without mongo storing |
+| `--clockify-api-key` | Clockify API key (can be set with `CLOCKIFY_API_KEY`) |
+| `--clockify-workspace` | Clockify workspace (can be set with `CLOCKIFY_WORKSPACE`) |
 
 To run ftrack event server:
-```sh
-pype eventserver --ftrack-url=<url> --ftrack-user=<user> --ftrack-api-key=<key> --ftrack-events-path=<path> --no-stored-credentials --store-credentials
+```shell
+openpype_console eventserver --ftrack-url=<url> --ftrack-user=<user> --ftrack-api-key=<key> --ftrack-events-path=<path> --no-stored-credentials --store-credentials
 ```
 
+---
+### `launch` arguments {#launch-arguments}
 
-### `--debug`
-- print debug info
-
-### `--ftrack-url`
-- URL to ftrack server
-
-### `--ftrack-user`
-- user name to log in to ftrack
-
-### `--ftrack-api-key`
-- ftrack api key
-
-### `--ftrack-events-path`
-- path to event server plugins
-
-### `--no-stored-credentials`
-- will use credential specified with options above
-
-### `--store-credentials`
-- will store credentials to file for later use
-
---------------------
-
-## `launch`
-
-Launch application in Pype environment.
-
-### `--app`
-
-Application name - this should be the same as it's [defining toml](admin_hosts#launchers) file (without .toml)
-
-### `--project`
-Project name
-
-### `--asset`
-Asset name
-
-### `--task`
-Task name
-
-### `--tools`
-*Optional: Additional tools environment files to add*
-
-### `--user`
-*Optional: User on behalf to run*
-
-### `--ftrack-server` / `-fs`
-*Optional: Ftrack server URL*
-
-### `--ftrack-user` / `-fu`
-*Optional: Ftrack user*
-
-### `--ftrack-key` / `-fk`
-*Optional: Ftrack API key*
+| Argument | Description |
+| --- | --- |
+| `--app` | Application name - this should be the key for application from Settings. |
+| `--project` | Project name (default taken from `AVALON_PROJECT` if set) |
+| `--asset` | Asset name (default taken from `AVALON_ASSET` if set) |
+| `--task` | Task name (default taken from `AVALON_TASK` is set) |
+| `--tools` | *Optional: Additional tools to add* |
+| `--user` | *Optional: User on behalf to run* | 
+| `--ftrack-server` / `-fs` | *Optional: Ftrack server URL* | 
+| `--ftrack-user` / `-fu` | *Optional: Ftrack user* |
+| `--ftrack-key` / `-fk` | *Optional: Ftrack API key* |
 
 For example to run Python interactive console in Pype context:
-```sh
+```shell
 pype launch --app python --project my_project --asset my_asset --task my_task
 ```
 
---------------------
+---
+### `publish` arguments {#publish-arguments}
 
+| Argument | Description |
+| --- | --- |
+| `--debug` | print more verbose infomation |
 
-## `publish`
-
-Pype takes JSON from provided path and use it to publish data in it.
-```sh
+```shell
 pype publish <PATH_TO_JSON>
 ```
 
-### `--debug`
-- print more verbose infomation
-
---------------------
-
-## `extractenvironments`
-
-Extract environment variables for entered context to a json file.
+---
+### `extractenvironments` arguments {#extractenvironments-arguments}
 
 Entered output filepath will be created if does not exists.
-
 All context options must be passed otherwise only openpype's global environments will be extracted.
+Context options are `project`, `asset`, `task`, `app`
 
-Context options are "project", "asset", "task", "app"
+| Argument | Description |
+| --- | --- |
+| `output_json_path` | Absolute path to the exported json file |
+| `--project` | Project name |
+| `--asset` | Asset name |
+| `--task` | Task name |
+| `--app` | Application name |
 
-### `output_json_path`
-- Absolute path to the exported json file
+```shell
+openpype_console /home/openpype/env.json --project Foo --asset Bar --task modeling --app maya-2019
+```
 
-### `--project`
-- Project name
+---
+### `run` arguments {#run-arguments}
 
-### `--asset`
-- Asset name
+| Argument | Description |
+| `--script` | run specified python script |
 
-### `--task`
-- Task name
+Note that additional arguments are passed to the script.
 
-### `--app`
-- Application name
+```shell
+openpype_console run --script /foo/bar/baz.py arg1 arg2
+```
+
+---
+### `projectmanager` arguments {#projectmanager-arguments}
+`projectmanager` has no command-line arguments.
+```shell
+openpype_console projectmanager
+```
+
+---
+### `settings` arguments {#settings-arguments}
+
+| Argument | Description |
+| `-d` / `--dev` | Run settings in developer mode. |
+
+```shell
+openpypeconsole settings
+```
+
+---
+### `standalonepublisher` arguments {#standalonepublisher-arguments}
+`standalonepublisher` has no command-line arguments.
+```shell
+openpype_console standalonepublisher
+```

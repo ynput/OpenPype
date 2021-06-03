@@ -297,8 +297,8 @@
             "label": "Extractors"
         },
         {
-            "type": "schema_template",
-            "name": "template_maya_capture"
+            "type": "schema",
+            "name": "schema_maya_capture"
         },
         {
             "type": "dict",
