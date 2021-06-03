@@ -159,6 +159,10 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if self._current_project == project_name and not force:
             return
 
+        # Reset attributes
+        self._items_by_id.clear()
+        self._asset_items_by_name.clear()
+
         self.clear()
 
         self._current_project = project_name
