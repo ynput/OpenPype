@@ -11,6 +11,10 @@ from . import (
 )
 from openpype.style import load_stylesheet
 from .style import ResourceCache
+from openpype.tools.settings import (
+    is_password_required,
+    PasswordDialog
+)
 
 from openpype import resources
 from avalon.api import AvalonMongoDB
@@ -21,6 +25,8 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         super(ProjectManagerWindow, self).__init__(parent)
 
         self._initial_reset = False
+        self._password_dialog = None
+        self._user_passed = False
 
         self.setWindowTitle("OpenPype Project Manager")
         self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
@@ -147,7 +153,7 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         super(ProjectManagerWindow, self).showEvent(event)
 
         if not self._initial_reset:
-            self.refresh_projects()
+            self.reset()
 
         font_size = self._refresh_projects_btn.fontMetrics().height()
         icon_size = QtCore.QSize(font_size, font_size)
@@ -156,10 +162,6 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         self._add_task_btn.setIconSize(icon_size)
 
     def refresh_projects(self, project_name=None):
-        # Mark as project were reset
-        if not self._initial_reset:
-            self._initial_reset = True
-
         if project_name is None:
             if self._project_combobox.count() > 0:
                 project_name = self._project_combobox.currentText()
@@ -204,3 +206,45 @@ class ProjectManagerWindow(QtWidgets.QWidget):
         project_name = dialog.project_name
         self.show_message("Created project \"{}\"".format(project_name))
         self.refresh_projects(project_name)
+
+    def _show_password_dialog(self):
+        if self._password_dialog:
+            self._password_dialog.open()
+
+    def _on_password_dialog_close(self, password_passed):
+        # Store result for future settings reset
+        self._user_passed = password_passed
+        # Remove reference to password dialog
+        self._password_dialog = None
+        if password_passed:
+            self.reset()
+        else:
+            self.close()
+
+    def reset(self):
+        if self._password_dialog:
+            return
+
+        if not self._user_passed:
+            self._user_passed = not is_password_required()
+
+        if not self._user_passed:
+            self.setEnabled(False)
+            # Avoid doubled dialog
+            dialog = PasswordDialog(self)
+            dialog.setModal(True)
+            dialog.finished.connect(self._on_password_dialog_close)
+
+            self._password_dialog = dialog
+
+            QtCore.QTimer.singleShot(100, self._show_password_dialog)
+
+            return
+
+        self.setEnabled(True)
+
+        # Mark as was reset
+        if not self._initial_reset:
+            self._initial_reset = True
+
+        self.refresh_projects()
