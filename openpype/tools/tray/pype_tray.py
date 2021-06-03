@@ -44,6 +44,18 @@ class TrayManager:
         self._main_thread_callbacks = collections.deque()
         self._execution_in_progress = None
 
+    @property
+    def doubleclick_callback(self):
+        """Doubleclick callback for Tray icon."""
+        callback_name = self.modules_manager.doubleclick_callback
+        return self.modules_manager.doubleclick_callbacks.get(callback_name)
+
+    def execute_doubleclick(self):
+        """Execute double click callback in main thread."""
+        callback = self.doubleclick_callback
+        if callback:
+            self.execute_in_main_thread(callback)
+
     def execute_in_main_thread(self, callback):
         self._main_thread_callbacks.append(callback)
 
