@@ -106,7 +106,7 @@ class SettingsAction(PypeModule, ITrayAction):
 class LocalSettingsAction(PypeModule, ITrayAction):
     """Action to show Setttings tool."""
     name = "local_settings"
-    label = "Local Settings"
+    label = "Settings"
 
     def initialize(self, _modules_settings):
         # This action is always enabled
