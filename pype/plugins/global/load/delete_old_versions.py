@@ -126,7 +126,8 @@ class DeleteOldVersions(api.SubsetLoader):
                         os.remove(file_path)
                         self.log.debug("Removed file: {}".format(file_path))
 
-                    remainders.remove(file_path_base)
+                    if file_path_base in remainders:
+                        remainders.remove(file_path_base)
                     continue
 
                 seq_path_base = os.path.split(seq_path)[1]
@@ -419,6 +420,9 @@ class DeleteOldVersions(api.SubsetLoader):
 
                 data = self.get_data(context, versions_to_keep)
 
+                if not data:
+                    continue
+
                 size += self.main(data, remove_publish_folder)
                 print("Progressing {}/{}".format(count + 1, len(contexts)))
 
@@ -445,9 +449,6 @@ class CalculateOldVersions(DeleteOldVersions):
 
     def main(self, data, remove_publish_folder):
         size = 0
-
-        if not data:
-            return size
 
         if remove_publish_folder:
             size = self.delete_whole_dir_paths(

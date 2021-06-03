@@ -70,7 +70,8 @@ class CreateRender(plugin.Creator):
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
         'renderman': 'defaultRenderGlobals.imageFilePrefix',
-        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+        'redshift': 'defaultRenderGlobals.imageFilePrefix',
+        'mayahardware2': 'defaultRenderGlobals.imageFilePrefix'
     }
 
     _image_prefixes = {
@@ -78,7 +79,8 @@ class CreateRender(plugin.Creator):
         'vray': 'maya/<scene>/<Layer>/<Layer>',
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
         'renderman': 'maya/<Scene>/<layer>/<layer>_<aov>',
-        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>'
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
+        'mayahardware2': 'maya/<Scene>/<RenderLayer>/<RenderLayer>'
     }
 
     deadline_servers = {}

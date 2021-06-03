@@ -34,6 +34,9 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     def process(self, context):
 
         for instance in context[:]:
+            if instance.data["family"] not in self.families:
+                continue
+
             assets_shared = context.data.get("assetsShared")
             tags = instance.data.get("tags", None)
             clip = instance.data["item"]
@@ -218,6 +221,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
     label = "Collect Hierarchy Context"
     order = pyblish.api.CollectorOrder + 0.103
+    exclude_families = ["frame"]
 
     def update_dict(self, ex_dict, new_dict):
         for key in ex_dict:
@@ -238,6 +242,11 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
         temp_context = {}
         for instance in instances:
+            families = instance.data.get("families", [])
+            families += [instance.data["family"]]
+            if set(families) & set(self.exclude_families):
+                continue
+
             if 'projectfile' in instance.data.get('family', ''):
                 continue
 

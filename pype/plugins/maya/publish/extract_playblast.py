@@ -43,13 +43,16 @@ class ExtractPlayblast(pype.api.Extractor):
 
         # get cameras
         camera = instance.data['review_camera']
-        capture_preset = instance.context.data['presets']['maya']['capture']
+        capture_preset = instance.context.data.get(
+            'presets', {}).get('maya', {}).get('capture')
 
         try:
             preset = lib.load_capture_preset(data=capture_preset)
-        except Exception:
+        except Exception as exc:
+            self.log.error(
+                'Error loading capture presets: {}'.format(str(exc)))
             preset = {}
-        self.log.info('using viewport preset: {}'.format(preset))
+        self.log.info('Using viewport preset: {}'.format(preset))
 
         preset['camera'] = camera
         preset['format'] = "image"
@@ -78,7 +81,7 @@ class ExtractPlayblast(pype.api.Extractor):
 
         # Isolate view is requested by having objects in the set besides a
         # camera.
-        if instance.data.get("isolate"):
+        if preset.pop("isolate_view", False) or instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
         # Show/Hide image planes on request.
@@ -96,17 +99,11 @@ class ExtractPlayblast(pype.api.Extractor):
             # playblast and viewer
             preset['viewer'] = False
 
-            # Remove panel key since it's internal value to capture_gui
-            preset.pop("panel", None)
-
             path = capture.capture(**preset)
-
 
         collected_files = os.listdir(stagingdir)
         collections, remainder = clique.assemble(collected_files)
-        input_path = os.path.join(
-            stagingdir, collections[0].format('{head}{padding}{tail}'))
-        
+
         self.log.debug("filename {}".format(filename))
         frame_collection = None
         for collection in collections:
@@ -114,8 +111,11 @@ class ExtractPlayblast(pype.api.Extractor):
             self.log.debug("collection head {}".format(filebase))
             if filebase in filename:
                 frame_collection = collection
-                self.log.info("we found collection of interest {}".format(str(frame_collection)))
-
+                self.log.info(
+                    "We found collection of interest {}".format(
+                        str(frame_collection)
+                    )
+                )
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -140,8 +140,6 @@ class ExtractPlayblast(pype.api.Extractor):
             'camera_name': camera_node_name
         }
         instance.data["representations"].append(representation)
-
-        return filepath
 
 
 @contextlib.contextmanager

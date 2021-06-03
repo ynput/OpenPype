@@ -64,7 +64,7 @@ class Delivery(BaseAction):
             "value": project_name
         })
 
-        # Prpeare anatomy data
+        # Prepare anatomy data
         anatomy = Anatomy(project_name)
         new_anatomies = []
         first = None
@@ -358,12 +358,18 @@ class Delivery(BaseAction):
 
     def launch(self, session, entities, event):
         if "values" not in event["data"]:
-            return
+            return {
+                "success": True,
+                "message": "Nothing to do"
+            }
 
         values = event["data"]["values"]
         skipped = values.pop("__skipped__")
         if skipped:
-            return None
+            return {
+                "success": False,
+                "message": "Action skipped"
+            }
 
         user_id = event["source"]["user"]["id"]
         user_entity = session.query(
@@ -381,20 +387,46 @@ class Delivery(BaseAction):
 
         try:
             self.db_con.install()
-            self.real_launch(session, entities, event)
-            job["status"] = "done"
+            report = self.real_launch(session, entities, event)
+            if report["success"]:
+                job["status"] = "done"
+            else:
+                job["status"] = "failed"
 
-        except Exception:
+        except Exception as exc:
+            job["status"] = "failed"
+            report = {
+                "success": False,
+                "title": "Delivery failed",
+                "items": [{
+                    "type": "label",
+                    "value": (
+                        "Error during delivery action process:<br>{}"
+                        "<br><br>Check logs for more information."
+                    ).format(str(exc))
+                }]
+            }
             self.log.warning(
                 "Failed during processing delivery action.",
                 exc_info=True
             )
 
         finally:
-            if job["status"] != "done":
-                job["status"] = "failed"
             session.commit()
             self.db_con.uninstall()
+
+        if not report["success"]:
+            self.show_interface(
+                items=report["items"],
+                title=report["title"],
+                event=event
+            )
+            return {
+                "success": False,
+                "message": "Errors during delivery process. See report."
+            }
+
+        return report
 
     def real_launch(self, session, entities, event):
         self.log.info("Delivery action just started.")
@@ -414,7 +446,7 @@ class Delivery(BaseAction):
         if not repre_names:
             return {
                 "success": True,
-                "message": "Not selected components to deliver."
+                "message": "No selected components to deliver."
             }
 
         location_path = location_path.strip()
@@ -468,11 +500,15 @@ class Delivery(BaseAction):
                     " for anatomy template \"{}\"."
                 ).format(anatomy_name)
 
+                sub_msg = (
+                    "Representation: {}<br>"
+                ).format(str(repre["_id"]))
+
                 if test_path.missing_keys:
                     keys = ", ".join(test_path.missing_keys)
-                    sub_msg = (
-                        "Representation: {}<br>- Missing keys: \"{}\"<br>"
-                    ).format(str(repre["_id"]), keys)
+                    sub_msg += (
+                        "- Missing keys: \"{}\"<br>"
+                    ).format(keys)
 
                 if test_path.invalid_types:
                     items = []
@@ -480,10 +516,9 @@ class Delivery(BaseAction):
                         items.append("\"{}\" {}".format(key, str(value)))
 
                     keys = ", ".join(items)
-                    sub_msg = (
-                        "Representation: {}<br>"
+                    sub_msg += (
                         "- Invalid value DataType: \"{}\"<br>"
-                    ).format(str(repre["_id"]), keys)
+                    ).format(keys)
 
                 report_items[msg].append(sub_msg)
                 self.log.warning(
@@ -499,9 +534,9 @@ class Delivery(BaseAction):
             if frame:
                 repre["context"]["frame"] = len(str(frame)) * "#"
 
-            repre_path = self.path_from_represenation(repre, anatomy)
+            repre_path = self.path_from_representation(repre, anatomy)
             # TODO add backup solution where root of path from component
-            # is repalced with root
+            # is replaced with root
             args = (
                 repre_path,
                 anatomy,
@@ -560,7 +595,7 @@ class Delivery(BaseAction):
             if col.tail != ext:
                 continue
 
-            # skip if collection don't have same basename
+            # Skip if collection doesn't have same basename
             if not col.head.startswith(file_name_items[0]):
                 continue
 
@@ -611,7 +646,7 @@ class Delivery(BaseAction):
 
             self.copy_file(src, dst)
 
-    def path_from_represenation(self, representation, anatomy):
+    def path_from_representation(self, representation, anatomy):
         try:
             template = representation["data"]["template"]
 
@@ -633,6 +668,9 @@ class Delivery(BaseAction):
 
     def copy_file(self, src_path, dst_path):
         if os.path.exists(dst_path):
+            self.log.warning(
+                "Delivery file '{}' already exists".format(dst_path)
+            )
             return
         try:
             filelink.create(
@@ -645,7 +683,7 @@ class Delivery(BaseAction):
 
     def report(self, report_items):
         items = []
-        title = "Delivery report"
+
         for msg, _items in report_items.items():
             if not _items:
                 continue
@@ -676,9 +714,8 @@ class Delivery(BaseAction):
 
         return {
             "items": items,
-            "title": title,
-            "success": False,
-            "message": "Delivery Finished"
+            "title": "Delivery report",
+            "success": False
         }
 
 

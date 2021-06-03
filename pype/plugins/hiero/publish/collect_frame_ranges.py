@@ -14,6 +14,7 @@ class CollectClipFrameRanges(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.101
     label = "Collect Frame Ranges"
     hosts = ["hiero"]
+    families = ["clip"]
 
     def process(self, instance):
         data = {}
@@ -55,7 +56,6 @@ class CollectClipFrameRanges(pyblish.api.InstancePlugin):
             "clipOutH": timeline_out_h,
             "clipDurationH": instance.data.get(
                 "clipDuration") + handle_start + handle_end
-            }
-        )
+        })
         self.log.debug("__ data: {}".format(data))
         instance.data.update(data)
