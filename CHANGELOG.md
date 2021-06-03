@@ -27,6 +27,122 @@
 - Maya: Render workflow fixes - 2.0 backport [\#1609](https://github.com/pypeclub/OpenPype/pull/1609)
 - Maya Hardware support [\#1553](https://github.com/pypeclub/OpenPype/pull/1553)
 
+## [2.18.0](https://github.com/pypeclub/openpype/tree/2.18.0) (2021-05-18)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.4...2.18.0)
+
+**Implemented enhancements:**
+
+- Default environments per host imlementation [\#1405](https://github.com/pypeclub/OpenPype/issues/1405)
+- Blender: publish layout json [\#1346](https://github.com/pypeclub/OpenPype/issues/1346)
+- Ftrack without autosync in Pype 3 [\#1128](https://github.com/pypeclub/OpenPype/issues/1128)
+- Launcher: started action indicator [\#1102](https://github.com/pypeclub/OpenPype/issues/1102)
+- Launch arguments of applications [\#1094](https://github.com/pypeclub/OpenPype/issues/1094)
+- Publish: instance info [\#724](https://github.com/pypeclub/OpenPype/issues/724)
+- Review: ability to control review length [\#482](https://github.com/pypeclub/OpenPype/issues/482)
+- Colorized recognition of creator result [\#394](https://github.com/pypeclub/OpenPype/issues/394)
+- event assign user to started task [\#49](https://github.com/pypeclub/OpenPype/issues/49)
+- rebuild containers from reference in maya [\#55](https://github.com/pypeclub/OpenPype/issues/55)
+- nuke Load metadata [\#66](https://github.com/pypeclub/OpenPype/issues/66)
+- Maya: Safer handling of expected render output names [\#1496](https://github.com/pypeclub/OpenPype/pull/1496) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- TVPaint: Increment workfile version on successfull publish. [\#1489](https://github.com/pypeclub/OpenPype/pull/1489) ([tokejepsen](https://github.com/tokejepsen))
+- Use SubsetLoader and multiple contexts for delete\_old\_versions [\#1484](https://github.com/pypeclub/OpenPype/pull/1484) ([tokejepsen](https://github.com/tokejepsen))
+- Maya: Use of multiple deadline servers [\#1483](https://github.com/pypeclub/OpenPype/pull/1483) ([antirotor](https://github.com/antirotor))
+
+**Fixed bugs:**
+
+- Igniter version resolution doesn't consider it's own version [\#1505](https://github.com/pypeclub/OpenPype/issues/1505)
+- Maya: Safer handling of expected render output names [\#1159](https://github.com/pypeclub/OpenPype/issues/1159)
+- Harmony: Invalid render output from non-conventionally named instance [\#871](https://github.com/pypeclub/OpenPype/issues/871)
+- Existing subsets hints in creator [\#1503](https://github.com/pypeclub/OpenPype/pull/1503) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- nuke: space in node name breaking process [\#1494](https://github.com/pypeclub/OpenPype/pull/1494) ([jezscha](https://github.com/jezscha))
+-  Maya: wrong collection of playblasted frames [\#1517](https://github.com/pypeclub/OpenPype/pull/1517) ([mkolar](https://github.com/mkolar))
+- Existing subsets hints in creator [\#1502](https://github.com/pypeclub/OpenPype/pull/1502) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Use instance frame start instead of timeline. [\#1486](https://github.com/pypeclub/OpenPype/pull/1486) ([tokejepsen](https://github.com/tokejepsen))
+- Maya: Redshift - set proper start frame on proxy [\#1480](https://github.com/pypeclub/OpenPype/pull/1480) ([antirotor](https://github.com/antirotor))
+
+**Closed issues:**
+
+- Nuke: wrong "star at" value on render load [\#1352](https://github.com/pypeclub/OpenPype/issues/1352)
+- DV Resolve - loading/updating - image video [\#915](https://github.com/pypeclub/OpenPype/issues/915)
+
+**Merged pull requests:**
+
+- nuke: fixing start\_at with option gui [\#1507](https://github.com/pypeclub/OpenPype/pull/1507) ([jezscha](https://github.com/jezscha))
+
+## [2.17.3](https://github.com/pypeclub/openpype/tree/2.17.3) (2021-05-06)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.3...2.17.3)
+
+**Fixed bugs:**
+
+- Nuke: workfile version synced to db version always  [\#1479](https://github.com/pypeclub/OpenPype/pull/1479) ([jezscha](https://github.com/jezscha))
+
+
+## [2.17.2](https://github.com/pypeclub/openpype/tree/2.17.2) (2021-05-04)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.1...2.17.2)
+
+**Implemented enhancements:**
+
+- Forward/Backward compatible apps and tools with OpenPype 3 [\#1463](https://github.com/pypeclub/OpenPype/pull/1463) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+
+## [2.17.1](https://github.com/pypeclub/openpype/tree/2.17.1) (2021-04-30)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.0...2.17.1)
+
+**Enhancements:**
+
+- Nuke: deadline submission with gpu [\#1414](https://github.com/pypeclub/OpenPype/pull/1414)
+- TVPaint frame range definition [\#1424](https://github.com/pypeclub/OpenPype/pull/1424)
+- PS - group all published instances [\#1415](https://github.com/pypeclub/OpenPype/pull/1415)
+- Add task name to context pop up. [\#1383](https://github.com/pypeclub/OpenPype/pull/1383)
+- Enhance review letterbox feature. [\#1371](https://github.com/pypeclub/OpenPype/pull/1371)
+
+**Fixed bugs:**
+
+- Houdini menu filename [\#1417](https://github.com/pypeclub/OpenPype/pull/1417)
+- AE - validation for duration was 1 frame shorter [\#1426](https://github.com/pypeclub/OpenPype/pull/1426)
+
+**Merged pull requests:**
+
+- Maya: Vray - problem getting all file nodes for look publishing [\#1399](https://github.com/pypeclub/OpenPype/pull/1399)
+- Maya: Support for Redshift proxies [\#1360](https://github.com/pypeclub/OpenPype/pull/1360)
+
+## [2.17.0](https://github.com/pypeclub/openpype/tree/2.17.0) (2021-04-20)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-beta.2...2.17.0)
+
+**Enhancements:**
+
+- Forward compatible ftrack group [\#1243](https://github.com/pypeclub/OpenPype/pull/1243)
+- Settings in mongo as dict [\#1221](https://github.com/pypeclub/OpenPype/pull/1221)
+- Maya: Make tx option configurable with presets [\#1328](https://github.com/pypeclub/OpenPype/pull/1328)
+- TVPaint asset name validation [\#1302](https://github.com/pypeclub/OpenPype/pull/1302)
+- TV Paint: Set initial project settings. [\#1299](https://github.com/pypeclub/OpenPype/pull/1299)
+- TV Paint: Validate mark in and out. [\#1298](https://github.com/pypeclub/OpenPype/pull/1298)
+- Validate project settings [\#1297](https://github.com/pypeclub/OpenPype/pull/1297)
+- After Effects: added SubsetManager [\#1234](https://github.com/pypeclub/OpenPype/pull/1234)
+- Show error message in pyblish UI [\#1206](https://github.com/pypeclub/OpenPype/pull/1206)
+
+**Fixed bugs:**
+
+- Hiero: fixing source frame from correct object [\#1362](https://github.com/pypeclub/OpenPype/pull/1362)
+- Nuke: fix colourspace, prerenders and nuke panes opening [\#1308](https://github.com/pypeclub/OpenPype/pull/1308)
+- AE remove orphaned instance from workfile - fix self.stub [\#1282](https://github.com/pypeclub/OpenPype/pull/1282)
+- Nuke: deadline submission with search replaced env values from preset [\#1194](https://github.com/pypeclub/OpenPype/pull/1194)
+- Ftrack custom attributes in bulks [\#1312](https://github.com/pypeclub/OpenPype/pull/1312)
+- Ftrack optional pypclub role [\#1303](https://github.com/pypeclub/OpenPype/pull/1303)
+- After Effects: remove orphaned instances [\#1275](https://github.com/pypeclub/OpenPype/pull/1275)
+- Avalon schema names [\#1242](https://github.com/pypeclub/OpenPype/pull/1242)
+- Handle duplication of Task name [\#1226](https://github.com/pypeclub/OpenPype/pull/1226)
+- Modified path of plugin loads for Harmony and TVPaint [\#1217](https://github.com/pypeclub/OpenPype/pull/1217)
+- Regex checks in profiles filtering [\#1214](https://github.com/pypeclub/OpenPype/pull/1214)
+- Bulk mov strict task [\#1204](https://github.com/pypeclub/OpenPype/pull/1204)
+- Update custom ftrack session attributes [\#1202](https://github.com/pypeclub/OpenPype/pull/1202)
+- Nuke: write node colorspace ignore `default\(\)` label [\#1199](https://github.com/pypeclub/OpenPype/pull/1199)
+- Nuke: reverse search to make it more versatile [\#1178](https://github.com/pypeclub/OpenPype/pull/1178)
+
 
 
 ## [2.16.0](https://github.com/pypeclub/pype/tree/2.16.0) (2021-03-22)
