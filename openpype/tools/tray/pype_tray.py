@@ -190,6 +190,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     :type parent: QtWidgets.QMainWindow
     """
 
+    doubleclick_time_ms = 100
+
     def __init__(self, parent):
         icon = QtGui.QIcon(resources.pype_icon_filepath())
 
@@ -208,20 +210,50 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.tray_man = TrayManager(self, self.parent)
         self.tray_man.initialize_modules()
 
-        # Catch activate event for left click if not on MacOS
-        #   - MacOS has this ability by design so menu would be doubled
-        if platform.system().lower() != "darwin":
-            self.activated.connect(self.on_systray_activated)
         # Add menu to Context of SystemTrayIcon
         self.setContextMenu(self.menu)
 
         atexit.register(self.exit)
 
+        # Catch activate event for left click if not on MacOS
+        #   - MacOS has this ability by design and is harder to modify this
+        #       behavior
+        if platform.system().lower() == "darwin":
+            return
+
+        self.activated.connect(self.on_systray_activated)
+
+        click_timer = QtCore.QTimer()
+        click_timer.setInterval(self.doubleclick_time_ms)
+        click_timer.timeout.connect(self._click_timer_timeout)
+
+        self._click_timer = click_timer
+        self._doubleclick = False
+
+    def _click_timer_timeout(self):
+        self._click_timer.stop()
+        doubleclick = self._doubleclick
+        # Reset bool value
+        self._doubleclick = False
+        if doubleclick:
+            self.tray_man.execute_doubleclick()
+        else:
+            self._show_context_menu()
+
+    def _show_context_menu(self):
+        pos = QtGui.QCursor().pos()
+        self.contextMenu().popup(pos)
+
     def on_systray_activated(self, reason):
         # show contextMenu if left click
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
-            position = QtGui.QCursor().pos()
-            self.contextMenu().popup(position)
+            if self.tray_man.doubleclick_callback:
+                self._click_timer.start()
+            else:
+                self._show_context_menu()
+
+        elif reason == QtWidgets.QSystemTrayIcon.DoubleClick:
+            self._doubleclick = True
 
     def exit(self):
         """ Exit whole application.
