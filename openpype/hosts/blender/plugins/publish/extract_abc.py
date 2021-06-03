@@ -47,7 +47,7 @@ class ExtractABC(api.Extractor):
             context,
             filepath=filepath,
             selected=True,
-            flatten=True
+            flatten=False
         )
 
         bpy.ops.object.select_all(action='DESELECT')

@@ -14,19 +14,16 @@ from avalon.blender.pipeline import AVALON_PROPERTY
 from openpype.hosts.blender.api import plugin
 
 
-class CacheModelLoader(plugin.AssetLoader):
-    """Load cache models.
+class FbxModelLoader(plugin.AssetLoader):
+    """Load FBX models.
 
-    Stores the imported asset in a collection named after the asset.
-
-    Note:
-        At least for now it only supports Alembic files.
+    Stores the imported asset in an empty named after the asset.
     """
 
-    families = ["model", "pointcache"]
-    representations = ["abc"]
+    families = ["model"]
+    representations = ["fbx"]
 
-    label = "Load Alembic"
+    label = "Load FBX"
     icon = "code-fork"
     color = "orange"
 
@@ -37,7 +34,8 @@ class CacheModelLoader(plugin.AssetLoader):
         for obj in objects:
             if obj.type == 'MESH':
                 for material_slot in list(obj.material_slots):
-                    bpy.data.materials.remove(material_slot.material)
+                    if material_slot.material:
+                        bpy.data.materials.remove(material_slot.material)
                 bpy.data.meshes.remove(obj.data)
             elif obj.type == 'EMPTY':
                 objects.extend(obj.children)
@@ -51,12 +49,10 @@ class CacheModelLoader(plugin.AssetLoader):
 
         collection = bpy.context.view_layer.active_layer_collection.collection
 
-        relative = bpy.context.preferences.filepaths.use_relative_paths
         context = plugin.create_blender_context()
-        bpy.ops.wm.alembic_import(
+        bpy.ops.import_scene.fbx(
             context,
-            filepath=libpath,
-            relative_path=relative
+            filepath=libpath
         )
 
         parent = bpy.context.scene.collection

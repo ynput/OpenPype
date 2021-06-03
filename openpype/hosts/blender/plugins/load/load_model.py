@@ -200,9 +200,11 @@ class BlendModelLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
+        mat = asset_group.matrix_basis.copy()
         self._remove(asset_group)
 
         self._process(str(libpath), asset_group, object_name)
+        asset_group.matrix_basis = mat
 
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
