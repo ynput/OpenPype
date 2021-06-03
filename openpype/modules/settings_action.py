@@ -38,6 +38,7 @@ class SettingsAction(PypeModule, ITrayAction):
     """Action to show Setttings tool."""
     name = "settings"
     label = "Settings"
+    admin_action = True
 
     def initialize(self, _modules_settings):
         # This action is always enabled
