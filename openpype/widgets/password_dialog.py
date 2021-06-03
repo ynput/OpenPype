@@ -44,7 +44,7 @@ class PasswordDialog(QtWidgets.QDialog):
     def __init__(self, parent=None, allow_remember=True):
         super(PasswordDialog, self).__init__(parent)
 
-        self.setWindowTitle("Settings Password")
+        self.setWindowTitle("Admin Password")
         self.resize(300, 120)
 
         system_settings = get_system_settings()
