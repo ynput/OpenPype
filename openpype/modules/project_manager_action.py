@@ -25,6 +25,9 @@ class ProjectManagerAction(PypeModule, ITrayAction):
         """Initializa Settings Qt window."""
         if self.project_manager_window:
             return
+        from openpype.tools.project_manager import ProjectManagerWindow
+
+        self.project_manager_window = ProjectManagerWindow()
 
     def show_project_manager_window(self):
         """Show project manager tool window.
@@ -37,7 +40,6 @@ class ProjectManagerAction(PypeModule, ITrayAction):
             raise AssertionError("Window is not initialized.")
 
         # Store if was visible
-        was_visible = self.project_manager_window.isVisible()
         was_minimized = self.project_manager_window.isMinimized()
 
         # Show settings gui
@@ -49,7 +51,3 @@ class ProjectManagerAction(PypeModule, ITrayAction):
         # Pull window to the front.
         self.project_manager_window.raise_()
         self.project_manager_window.activateWindow()
-
-        # Reset content if was not visible
-        if not was_visible and not was_minimized:
-            self.project_manager_window.reset()
