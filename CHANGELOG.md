@@ -1,6 +1,9 @@
 # Changelog
 
-## 3.0.0 - Unreleased
+
+## [3.0.0](https://github.com/pypeclub/openpype/tree/3.0.0)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.6...3.0.0)
 
 ### Configuration
 - Studio Settings GUI: no more json configuration files.
@@ -92,23 +95,230 @@
 - all applications can be marked as python 2 or 3 compatible to make the switch a bit easier.
 
 
+### Pull Requests since 3.0.0-rc.6
 
-## [2.18.0](https://github.com/pypeclub/openpype/tree/2.18.0) (2021-05-18)
 
-[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.3...2.18.0)
+**Implemented enhancements:**
 
-**Enhancements:**
-
-- Use SubsetLoader and multiple contexts for delete_old_versions [\#1484](ttps://github.com/pypeclub/OpenPype/pull/1484))
-- TVPaint: Increment workfile version on successfull publish. [\#1489](https://github.com/pypeclub/OpenPype/pull/1489)
-- Maya: Use of multiple deadline servers [\#1483](https://github.com/pypeclub/OpenPype/pull/1483)
+- settings: task types enum entity [\#1605](https://github.com/pypeclub/OpenPype/issues/1605)
+- Settings: ignore keys in referenced schema [\#1600](https://github.com/pypeclub/OpenPype/issues/1600)
+- Maya: support for frame steps and frame lists [\#1585](https://github.com/pypeclub/OpenPype/issues/1585)
+- TVPaint: Publish workfile. [\#1548](https://github.com/pypeclub/OpenPype/issues/1548)
+- Loader: Current Asset Button [\#1448](https://github.com/pypeclub/OpenPype/issues/1448)
+- Hiero: publish with retiming [\#1377](https://github.com/pypeclub/OpenPype/issues/1377)
+- Ask user to restart after changing global environments in settings [\#910](https://github.com/pypeclub/OpenPype/issues/910)
+- add option to define paht to workfile template [\#895](https://github.com/pypeclub/OpenPype/issues/895)
+- Harmony: move server console to system tray [\#676](https://github.com/pypeclub/OpenPype/issues/676)
+- Standalone style [\#1630](https://github.com/pypeclub/OpenPype/pull/1630) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Faster hierarchical values push [\#1627](https://github.com/pypeclub/OpenPype/pull/1627) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Launcher tool style [\#1624](https://github.com/pypeclub/OpenPype/pull/1624) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Loader and Library loader enhancements [\#1623](https://github.com/pypeclub/OpenPype/pull/1623) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Tray style [\#1622](https://github.com/pypeclub/OpenPype/pull/1622) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Maya schemas cleanup [\#1610](https://github.com/pypeclub/OpenPype/pull/1610) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Settings: ignore keys in referenced schema [\#1608](https://github.com/pypeclub/OpenPype/pull/1608) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- settings: task types enum entity [\#1606](https://github.com/pypeclub/OpenPype/pull/1606) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Openpype style [\#1604](https://github.com/pypeclub/OpenPype/pull/1604) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- TVPaint: Publish workfile. [\#1597](https://github.com/pypeclub/OpenPype/pull/1597) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Nuke: add option to define path to workfile template [\#1571](https://github.com/pypeclub/OpenPype/pull/1571) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Crop overscan in Extract Review [\#1569](https://github.com/pypeclub/OpenPype/pull/1569) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Unreal and Blender: Material Workflow [\#1562](https://github.com/pypeclub/OpenPype/pull/1562) ([simonebarbieri](https://github.com/simonebarbieri))
+- Harmony: move server console to system tray [\#1560](https://github.com/pypeclub/OpenPype/pull/1560) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Ask user to restart after changing global environments in settings [\#1550](https://github.com/pypeclub/OpenPype/pull/1550) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Hiero: publish with retiming [\#1545](https://github.com/pypeclub/OpenPype/pull/1545) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
 
 **Fixed bugs:**
 
-- Use instance frame start instead of timeline. [\#1486](https://github.com/pypeclub/OpenPype/pull/1486)
-- Maya: Redshift - set proper start frame on proxy [\#1480](https://github.com/pypeclub/OpenPype/pull/1480)
-- Maya: wrong collection of playblasted frames [\#1517](https://github.com/pypeclub/OpenPype/pull/1517)
-- Existing subsets hints in creator [\#1502](https://github.com/pypeclub/OpenPype/pull/1502)
+- Library loader load asset documents on OpenPype start [\#1603](https://github.com/pypeclub/OpenPype/issues/1603)
+- Resolve: unable to load the same footage twice [\#1317](https://github.com/pypeclub/OpenPype/issues/1317)
+- Resolve: unable to load footage [\#1316](https://github.com/pypeclub/OpenPype/issues/1316)
+- Add required Python 2 modules [\#1291](https://github.com/pypeclub/OpenPype/issues/1291)
+- GUi scaling with hires displays [\#705](https://github.com/pypeclub/OpenPype/issues/705)
+- Maya: non unicode string in publish validation [\#673](https://github.com/pypeclub/OpenPype/issues/673)
+- Nuke: Rendered Frame validation is triggered by multiple collections [\#156](https://github.com/pypeclub/OpenPype/issues/156)
+- avalon-core debugging failing [\#80](https://github.com/pypeclub/OpenPype/issues/80)
+- Only check arnold shading group if arnold is used [\#72](https://github.com/pypeclub/OpenPype/issues/72)
+- Sync server Qt layout fix [\#1621](https://github.com/pypeclub/OpenPype/pull/1621) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Console Listener on Python 2 fix [\#1620](https://github.com/pypeclub/OpenPype/pull/1620) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Bug: Initialize blessed term only in console mode [\#1619](https://github.com/pypeclub/OpenPype/pull/1619) ([antirotor](https://github.com/antirotor))
+- Settings template skip paths support wrappers [\#1618](https://github.com/pypeclub/OpenPype/pull/1618) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Maya capture 'isolate\_view' fix + minor corrections [\#1617](https://github.com/pypeclub/OpenPype/pull/1617) ([2-REC](https://github.com/2-REC))
+- MacOs Fix launch of standalone publisher [\#1616](https://github.com/pypeclub/OpenPype/pull/1616) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- 'Delivery action' report fix + typos [\#1612](https://github.com/pypeclub/OpenPype/pull/1612) ([2-REC](https://github.com/2-REC))
+- List append fix in mutable dict settings [\#1599](https://github.com/pypeclub/OpenPype/pull/1599) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Documentation: Maya: fix review [\#1598](https://github.com/pypeclub/OpenPype/pull/1598) ([antirotor](https://github.com/antirotor))
+- Bugfix: Set certifi CA bundle for all platforms [\#1596](https://github.com/pypeclub/OpenPype/pull/1596) ([antirotor](https://github.com/antirotor))
+
+**Merged pull requests:**
+
+- Bump dns-packet from 1.3.1 to 1.3.4 in /website [\#1611](https://github.com/pypeclub/OpenPype/pull/1611) ([dependabot[bot]](https://github.com/apps/dependabot))
+- Maya: Render workflow fixes [\#1607](https://github.com/pypeclub/OpenPype/pull/1607) ([antirotor](https://github.com/antirotor))
+- Maya: support for frame steps and frame lists [\#1586](https://github.com/pypeclub/OpenPype/pull/1586) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- 3.0.0 - curated changelog [\#1284](https://github.com/pypeclub/OpenPype/pull/1284) ([mkolar](https://github.com/mkolar))
+
+## [CI/3.0.0-rc.6](https://github.com/pypeclub/openpype/tree/CI/3.0.0-rc.6) (2021-05-27)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.5...CI/3.0.0-rc.6)
+
+**Implemented enhancements:**
+
+- Hiero: publish color and transformation soft-effects [\#1376](https://github.com/pypeclub/OpenPype/issues/1376)
+- Get rid of `AVALON\_HIERARCHY` and `hiearchy` key on asset [\#432](https://github.com/pypeclub/OpenPype/issues/432)
+- Sync to avalon do not store hierarchy key [\#1582](https://github.com/pypeclub/OpenPype/pull/1582) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Tools: launcher scripts for project manager [\#1557](https://github.com/pypeclub/OpenPype/pull/1557) ([antirotor](https://github.com/antirotor))
+- Simple tvpaint publish [\#1555](https://github.com/pypeclub/OpenPype/pull/1555) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Feature Delivery in library loader [\#1546](https://github.com/pypeclub/OpenPype/pull/1546) ([kalisp](https://github.com/kalisp))
+- Documentation: Dev and system build documentation [\#1543](https://github.com/pypeclub/OpenPype/pull/1543) ([antirotor](https://github.com/antirotor))
+- Color entity [\#1542](https://github.com/pypeclub/OpenPype/pull/1542) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Extract review bg color [\#1534](https://github.com/pypeclub/OpenPype/pull/1534) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- TVPaint loader settings [\#1530](https://github.com/pypeclub/OpenPype/pull/1530) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Blender can initialize differente user script paths [\#1528](https://github.com/pypeclub/OpenPype/pull/1528) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Blender and Unreal: Improved Animation Workflow [\#1514](https://github.com/pypeclub/OpenPype/pull/1514) ([simonebarbieri](https://github.com/simonebarbieri))
+- Hiero: publish color and transformation soft-effects [\#1511](https://github.com/pypeclub/OpenPype/pull/1511) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+
+**Fixed bugs:**
+
+- OpenPype specific version issues [\#1583](https://github.com/pypeclub/OpenPype/issues/1583)
+- Ftrack login server can't work without stderr [\#1576](https://github.com/pypeclub/OpenPype/issues/1576)
+- Mac application launch [\#1575](https://github.com/pypeclub/OpenPype/issues/1575)
+- Settings are not propagated to Nuke write nodes [\#1538](https://github.com/pypeclub/OpenPype/issues/1538)
+- Subset names settings not applied for publishing [\#1537](https://github.com/pypeclub/OpenPype/issues/1537)
+- Nuke: callback at start not setting colorspace [\#1412](https://github.com/pypeclub/OpenPype/issues/1412)
+- Pype 3: Missing icon for Settings [\#1272](https://github.com/pypeclub/OpenPype/issues/1272)
+- Blender: cannot initialize Avalon if BLENDER\_USER\_SCRIPTS is already used [\#1050](https://github.com/pypeclub/OpenPype/issues/1050)
+- Ftrack delete action cause circular error [\#206](https://github.com/pypeclub/OpenPype/issues/206)
+- Build: stop cleaning of pyc files in build directory [\#1592](https://github.com/pypeclub/OpenPype/pull/1592) ([antirotor](https://github.com/antirotor))
+- Ftrack login server can't work without stderr [\#1591](https://github.com/pypeclub/OpenPype/pull/1591) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- FFmpeg filters in quote marks [\#1589](https://github.com/pypeclub/OpenPype/pull/1589) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- OpenPype specific version issues [\#1584](https://github.com/pypeclub/OpenPype/pull/1584) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Mac application launch [\#1580](https://github.com/pypeclub/OpenPype/pull/1580) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Ftrack delete action cause circular error [\#1579](https://github.com/pypeclub/OpenPype/pull/1579) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Hiero: publishing issues  [\#1578](https://github.com/pypeclub/OpenPype/pull/1578) ([jezscha](https://github.com/jezscha))
+- Nuke: callback at start not setting colorspace [\#1561](https://github.com/pypeclub/OpenPype/pull/1561) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Bugfix  PS subset and quick review [\#1541](https://github.com/pypeclub/OpenPype/pull/1541) ([kalisp](https://github.com/kalisp))
+- Settings are not propagated to Nuke write nodes [\#1540](https://github.com/pypeclub/OpenPype/pull/1540) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- OpenPype: Powershell scripts polishing [\#1536](https://github.com/pypeclub/OpenPype/pull/1536) ([antirotor](https://github.com/antirotor))
+- Host name collecting fix [\#1535](https://github.com/pypeclub/OpenPype/pull/1535) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Handle duplicated task names in project manager [\#1531](https://github.com/pypeclub/OpenPype/pull/1531) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Validate is file attribute in settings schema [\#1529](https://github.com/pypeclub/OpenPype/pull/1529) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+
+**Merged pull requests:**
+
+- Bump postcss from 8.2.8 to 8.3.0 in /website [\#1593](https://github.com/pypeclub/OpenPype/pull/1593) ([dependabot[bot]](https://github.com/apps/dependabot))
+- User installation documentation [\#1532](https://github.com/pypeclub/OpenPype/pull/1532) ([64qam](https://github.com/64qam))
+
+## [CI/3.0.0-rc.5](https://github.com/pypeclub/openpype/tree/CI/3.0.0-rc.5) (2021-05-19)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.18.0...CI/3.0.0-rc.5)
+
+**Implemented enhancements:**
+
+- OpenPype: Build - Add progress bars [\#1524](https://github.com/pypeclub/OpenPype/pull/1524) ([antirotor](https://github.com/antirotor))
+- Default environments per host imlementation [\#1522](https://github.com/pypeclub/OpenPype/pull/1522) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- OpenPype: use `semver` module for version resolution [\#1513](https://github.com/pypeclub/OpenPype/pull/1513) ([antirotor](https://github.com/antirotor))
+- Feature Aftereffects setting cleanup documentation [\#1510](https://github.com/pypeclub/OpenPype/pull/1510) ([kalisp](https://github.com/kalisp))
+- Feature Sync server settings enhancement [\#1501](https://github.com/pypeclub/OpenPype/pull/1501) ([kalisp](https://github.com/kalisp))
+- Project manager [\#1396](https://github.com/pypeclub/OpenPype/pull/1396) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+
+**Fixed bugs:**
+
+- Unified schema definition [\#874](https://github.com/pypeclub/OpenPype/issues/874)
+- Maya: fix look assignment [\#1526](https://github.com/pypeclub/OpenPype/pull/1526) ([antirotor](https://github.com/antirotor))
+- Bugfix Sync server local site issues [\#1523](https://github.com/pypeclub/OpenPype/pull/1523) ([kalisp](https://github.com/kalisp))
+- Store as list dictionary check initial value with right type [\#1520](https://github.com/pypeclub/OpenPype/pull/1520) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Maya: wrong collection of playblasted frames [\#1515](https://github.com/pypeclub/OpenPype/pull/1515) ([mkolar](https://github.com/mkolar))
+- Convert pyblish logs to string at the moment of logging [\#1512](https://github.com/pypeclub/OpenPype/pull/1512) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- 3.0 | nuke: fixing start\_at with option gui [\#1509](https://github.com/pypeclub/OpenPype/pull/1509) ([jezscha](https://github.com/jezscha))
+- Tests: fix pype -\> openpype to make tests work again [\#1508](https://github.com/pypeclub/OpenPype/pull/1508) ([antirotor](https://github.com/antirotor))
+
+**Merged pull requests:**
+
+- OpenPype: disable submodule update with `--no-submodule-update` [\#1525](https://github.com/pypeclub/OpenPype/pull/1525) ([antirotor](https://github.com/antirotor))
+- Ftrack without autosync in Pype 3 [\#1519](https://github.com/pypeclub/OpenPype/pull/1519) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Feature Harmony setting cleanup documentation [\#1506](https://github.com/pypeclub/OpenPype/pull/1506) ([kalisp](https://github.com/kalisp))
+- Sync Server beginning of documentation [\#1471](https://github.com/pypeclub/OpenPype/pull/1471) ([kalisp](https://github.com/kalisp))
+- Blender: publish layout json [\#1348](https://github.com/pypeclub/OpenPype/pull/1348) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+
+## [2.18.0](https://github.com/pypeclub/openpype/tree/2.18.0) (2021-05-18)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.4...2.18.0)
+
+**Implemented enhancements:**
+
+- Default environments per host imlementation [\#1405](https://github.com/pypeclub/OpenPype/issues/1405)
+- Blender: publish layout json [\#1346](https://github.com/pypeclub/OpenPype/issues/1346)
+- Ftrack without autosync in Pype 3 [\#1128](https://github.com/pypeclub/OpenPype/issues/1128)
+- Launcher: started action indicator [\#1102](https://github.com/pypeclub/OpenPype/issues/1102)
+- Launch arguments of applications [\#1094](https://github.com/pypeclub/OpenPype/issues/1094)
+- Publish: instance info [\#724](https://github.com/pypeclub/OpenPype/issues/724)
+- Review: ability to control review length [\#482](https://github.com/pypeclub/OpenPype/issues/482)
+- Colorized recognition of creator result [\#394](https://github.com/pypeclub/OpenPype/issues/394)
+- event assign user to started task [\#49](https://github.com/pypeclub/OpenPype/issues/49)
+- rebuild containers from reference in maya [\#55](https://github.com/pypeclub/OpenPype/issues/55)
+- nuke Load metadata [\#66](https://github.com/pypeclub/OpenPype/issues/66)
+- Maya: Safer handling of expected render output names [\#1496](https://github.com/pypeclub/OpenPype/pull/1496) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- TVPaint: Increment workfile version on successfull publish. [\#1489](https://github.com/pypeclub/OpenPype/pull/1489) ([tokejepsen](https://github.com/tokejepsen))
+- Use SubsetLoader and multiple contexts for delete\_old\_versions [\#1484](https://github.com/pypeclub/OpenPype/pull/1484) ([tokejepsen](https://github.com/tokejepsen))
+- Maya: Use of multiple deadline servers [\#1483](https://github.com/pypeclub/OpenPype/pull/1483) ([antirotor](https://github.com/antirotor))
+
+**Fixed bugs:**
+
+- Igniter version resolution doesn't consider it's own version [\#1505](https://github.com/pypeclub/OpenPype/issues/1505)
+- Maya: Safer handling of expected render output names [\#1159](https://github.com/pypeclub/OpenPype/issues/1159)
+- Harmony: Invalid render output from non-conventionally named instance [\#871](https://github.com/pypeclub/OpenPype/issues/871)
+- Existing subsets hints in creator [\#1503](https://github.com/pypeclub/OpenPype/pull/1503) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- nuke: space in node name breaking process [\#1494](https://github.com/pypeclub/OpenPype/pull/1494) ([jezscha](https://github.com/jezscha))
+-  Maya: wrong collection of playblasted frames [\#1517](https://github.com/pypeclub/OpenPype/pull/1517) ([mkolar](https://github.com/mkolar))
+- Existing subsets hints in creator [\#1502](https://github.com/pypeclub/OpenPype/pull/1502) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Use instance frame start instead of timeline. [\#1486](https://github.com/pypeclub/OpenPype/pull/1486) ([tokejepsen](https://github.com/tokejepsen))
+- Maya: Redshift - set proper start frame on proxy [\#1480](https://github.com/pypeclub/OpenPype/pull/1480) ([antirotor](https://github.com/antirotor))
+
+**Closed issues:**
+
+- Nuke: wrong "star at" value on render load [\#1352](https://github.com/pypeclub/OpenPype/issues/1352)
+- DV Resolve - loading/updating - image video [\#915](https://github.com/pypeclub/OpenPype/issues/915)
+
+**Merged pull requests:**
+
+- nuke: fixing start\_at with option gui [\#1507](https://github.com/pypeclub/OpenPype/pull/1507) ([jezscha](https://github.com/jezscha))
+
+## [CI/3.0.0-rc.4](https://github.com/pypeclub/openpype/tree/CI/3.0.0-rc.4) (2021-05-12)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.3...CI/3.0.0-rc.4)
+
+**Implemented enhancements:**
+
+- Resolve: documentation [\#1490](https://github.com/pypeclub/OpenPype/issues/1490)
+- Hiero: audio to review [\#1378](https://github.com/pypeclub/OpenPype/issues/1378)
+- nks color clips after publish [\#44](https://github.com/pypeclub/OpenPype/issues/44)
+- Store data from modifiable dict as list [\#1504](https://github.com/pypeclub/OpenPype/pull/1504) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Use SubsetLoader and multiple contexts for delete\_old\_versions [\#1497](https://github.com/pypeclub/OpenPype/pull/1497) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Hiero: publish audio and add to review [\#1493](https://github.com/pypeclub/OpenPype/pull/1493) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Resolve: documentation [\#1491](https://github.com/pypeclub/OpenPype/pull/1491) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Change integratenew template profiles setting [\#1487](https://github.com/pypeclub/OpenPype/pull/1487) ([kalisp](https://github.com/kalisp))
+- Settings tool cleanup [\#1477](https://github.com/pypeclub/OpenPype/pull/1477) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Sorted Applications and Tools in Custom attribute [\#1476](https://github.com/pypeclub/OpenPype/pull/1476) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- PS - group all published instances [\#1416](https://github.com/pypeclub/OpenPype/pull/1416) ([kalisp](https://github.com/kalisp))
+- OpenPype: Support for Docker [\#1289](https://github.com/pypeclub/OpenPype/pull/1289) ([antirotor](https://github.com/antirotor))
+
+**Fixed bugs:**
+
+- Harmony: palettes publishing [\#1439](https://github.com/pypeclub/OpenPype/issues/1439)
+- Photoshop: validation for already created images [\#1435](https://github.com/pypeclub/OpenPype/issues/1435)
+- Nuke Extracts Thumbnail from frame out of shot range [\#963](https://github.com/pypeclub/OpenPype/issues/963)
+- Instance in same Context repairing [\#390](https://github.com/pypeclub/OpenPype/issues/390)
+- User Inactivity - Start timers sets wrong time [\#91](https://github.com/pypeclub/OpenPype/issues/91)
+- Use instance frame start instead of timeline [\#1499](https://github.com/pypeclub/OpenPype/pull/1499) ([mkolar](https://github.com/mkolar))
+- Various smaller fixes [\#1498](https://github.com/pypeclub/OpenPype/pull/1498) ([mkolar](https://github.com/mkolar))
+- nuke: space in node name breaking process [\#1495](https://github.com/pypeclub/OpenPype/pull/1495) ([jezscha](https://github.com/jezscha))
+- Codec determination in extract burnin [\#1492](https://github.com/pypeclub/OpenPype/pull/1492) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Undefined constant in subprocess module [\#1485](https://github.com/pypeclub/OpenPype/pull/1485) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- List entity catch add/remove item changes properly [\#1482](https://github.com/pypeclub/OpenPype/pull/1482) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Resolve: additional fixes of publishing workflow [\#1481](https://github.com/pypeclub/OpenPype/pull/1481) ([jezscha](https://github.com/jezscha))
+- Photoshop: validation for already created images [\#1436](https://github.com/pypeclub/OpenPype/pull/1436) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+
+**Merged pull requests:**
+
+- Maya: Support for looks on VRay Proxies [\#1443](https://github.com/pypeclub/OpenPype/pull/1443) ([antirotor](https://github.com/antirotor))
 
 ## [2.17.3](https://github.com/pypeclub/openpype/tree/2.17.3) (2021-05-06)
 
@@ -116,15 +326,102 @@
 
 **Fixed bugs:**
 
-- Nuke: workfile version synced to db version always  [\#1479](https://github.com/pypeclub/OpenPype/pull/1479)
+- Nuke: workfile version synced to db version always  [\#1479](https://github.com/pypeclub/OpenPype/pull/1479) ([jezscha](https://github.com/jezscha))
+
+## [CI/3.0.0-rc.3](https://github.com/pypeclub/openpype/tree/CI/3.0.0-rc.3) (2021-05-05)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.2...CI/3.0.0-rc.3)
+
+**Implemented enhancements:**
+
+- Path entity with placeholder [\#1473](https://github.com/pypeclub/OpenPype/pull/1473) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Burnin custom font filepath [\#1472](https://github.com/pypeclub/OpenPype/pull/1472) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Poetry: Move to OpenPype [\#1449](https://github.com/pypeclub/OpenPype/pull/1449) ([antirotor](https://github.com/antirotor))
+
+**Fixed bugs:**
+
+- Mac SSL path needs to be relative to pype\_root [\#1469](https://github.com/pypeclub/OpenPype/issues/1469)
+- Resolve: fix loading clips to timeline [\#1421](https://github.com/pypeclub/OpenPype/issues/1421)
+- Wrong handling of slashes when loading on mac [\#1411](https://github.com/pypeclub/OpenPype/issues/1411)
+- Nuke openpype3 [\#1342](https://github.com/pypeclub/OpenPype/issues/1342)
+- Houdini launcher [\#1171](https://github.com/pypeclub/OpenPype/issues/1171)
+- Fix SyncServer get\_enabled\_projects should handle global state [\#1475](https://github.com/pypeclub/OpenPype/pull/1475) ([kalisp](https://github.com/kalisp))
+- Igniter buttons enable/disable fix [\#1474](https://github.com/pypeclub/OpenPype/pull/1474) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Mac SSL path needs to be relative to pype\_root [\#1470](https://github.com/pypeclub/OpenPype/pull/1470) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Resolve: 17 compatibility issues and load image sequences [\#1422](https://github.com/pypeclub/OpenPype/pull/1422) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+
+## [CI/3.0.0-rc.2](https://github.com/pypeclub/openpype/tree/CI/3.0.0-rc.2) (2021-05-04)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.2...CI/3.0.0-rc.2)
+
+**Implemented enhancements:**
+
+- Extract burnins with sequences [\#1467](https://github.com/pypeclub/OpenPype/pull/1467) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Extract burnins with color setting [\#1466](https://github.com/pypeclub/OpenPype/pull/1466) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+
+**Fixed bugs:**
+
+- Fix groups check in Python 2 [\#1468](https://github.com/pypeclub/OpenPype/pull/1468) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
 
 ## [2.17.2](https://github.com/pypeclub/openpype/tree/2.17.2) (2021-05-04)
 
 [Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.1...2.17.2)
 
-**Enhancements:**
+**Implemented enhancements:**
 
-- Forward/Backward compatible apps and tools with OpenPype 3 [\#1463](https://github.com/pypeclub/OpenPype/pull/1463)
+- Forward/Backward compatible apps and tools with OpenPype 3 [\#1463](https://github.com/pypeclub/OpenPype/pull/1463) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+
+## [CI/3.0.0-rc.1](https://github.com/pypeclub/openpype/tree/CI/3.0.0-rc.1) (2021-05-04)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.17.1...CI/3.0.0-rc.1)
+
+**Implemented enhancements:**
+
+- Only show studio settings to admins [\#1406](https://github.com/pypeclub/OpenPype/issues/1406)
+- Ftrack specific settings save warning messages [\#1458](https://github.com/pypeclub/OpenPype/pull/1458) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Faster settings actions [\#1446](https://github.com/pypeclub/OpenPype/pull/1446) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Feature/sync server priority [\#1444](https://github.com/pypeclub/OpenPype/pull/1444) ([kalisp](https://github.com/kalisp))
+- Faster settings UI loading [\#1442](https://github.com/pypeclub/OpenPype/pull/1442) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Igniter re-write [\#1441](https://github.com/pypeclub/OpenPype/pull/1441) ([mkolar](https://github.com/mkolar))
+- Wrap openpype build into installers [\#1419](https://github.com/pypeclub/OpenPype/pull/1419) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Extract review first documentation [\#1404](https://github.com/pypeclub/OpenPype/pull/1404) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Blender PySide2 install guide [\#1403](https://github.com/pypeclub/OpenPype/pull/1403) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Nuke: deadline submission with gpu [\#1394](https://github.com/pypeclub/OpenPype/pull/1394) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Igniter: Reverse item filter for OpenPype version [\#1349](https://github.com/pypeclub/OpenPype/pull/1349) ([antirotor](https://github.com/antirotor))
+
+**Fixed bugs:**
+
+- OpenPype Mongo URL definition [\#1450](https://github.com/pypeclub/OpenPype/issues/1450)
+- Various typos and smaller fixes [\#1464](https://github.com/pypeclub/OpenPype/pull/1464) ([mkolar](https://github.com/mkolar))
+- Validation of dynamic items in settings [\#1462](https://github.com/pypeclub/OpenPype/pull/1462) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- List can handle new items correctly [\#1459](https://github.com/pypeclub/OpenPype/pull/1459) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Settings actions process fix [\#1457](https://github.com/pypeclub/OpenPype/pull/1457) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Add to overrides actions fix [\#1456](https://github.com/pypeclub/OpenPype/pull/1456) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- OpenPype Mongo URL definition [\#1455](https://github.com/pypeclub/OpenPype/pull/1455) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Global settings save/load out of system settings [\#1447](https://github.com/pypeclub/OpenPype/pull/1447) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Keep metadata on remove overrides [\#1445](https://github.com/pypeclub/OpenPype/pull/1445) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Nuke: fixing undo for loaded mov and sequence [\#1432](https://github.com/pypeclub/OpenPype/pull/1432) ([jezscha](https://github.com/jezscha))
+- ExtractReview skip empty strings from settings [\#1431](https://github.com/pypeclub/OpenPype/pull/1431) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Bugfix Sync server tweaks [\#1430](https://github.com/pypeclub/OpenPype/pull/1430) ([kalisp](https://github.com/kalisp))
+- Hiero: missing thumbnail in review [\#1429](https://github.com/pypeclub/OpenPype/pull/1429) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Bugfix Maya in deadline for OpenPype [\#1428](https://github.com/pypeclub/OpenPype/pull/1428) ([kalisp](https://github.com/kalisp))
+- AE - validation for duration was 1 frame shorter [\#1427](https://github.com/pypeclub/OpenPype/pull/1427) ([kalisp](https://github.com/kalisp))
+- Houdini menu filename [\#1418](https://github.com/pypeclub/OpenPype/pull/1418) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Fix Avalon plugins attribute overrides [\#1413](https://github.com/pypeclub/OpenPype/pull/1413) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Nuke: submit to Deadline fails [\#1409](https://github.com/pypeclub/OpenPype/pull/1409) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- Validate MongoDB Url on start [\#1407](https://github.com/pypeclub/OpenPype/pull/1407) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Nuke: fix set colorspace with new settings [\#1386](https://github.com/pypeclub/OpenPype/pull/1386) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- MacOs build and install issues [\#1380](https://github.com/pypeclub/OpenPype/pull/1380) ([mkolar](https://github.com/mkolar))
+
+**Closed issues:**
+
+- test [\#1452](https://github.com/pypeclub/OpenPype/issues/1452)
+
+**Merged pull requests:**
+
+- TVPaint frame range definition [\#1425](https://github.com/pypeclub/OpenPype/pull/1425) ([iLLiCiTiT](https://github.com/iLLiCiTiT))
+- Only show studio settings to admins [\#1420](https://github.com/pypeclub/OpenPype/pull/1420) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
+- TVPaint documentation [\#1305](https://github.com/pypeclub/OpenPype/pull/1305) ([64qam](https://github.com/64qam))
 
 ## [2.17.1](https://github.com/pypeclub/openpype/tree/2.17.1) (2021-04-30)
 

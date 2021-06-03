@@ -17,7 +17,7 @@
 #### **Do you intend to add a new feature or change an existing one?**
 
 - Open a new thread in the [github discussions](https://github.com/pypeclub/pype/discussions/new)
-- Do not open issue untill the suggestion is discussed. We will convert accepted suggestions into backlog and point them to the relevant discussion thread to keep the context.
+- Do not open issue until the suggestion is discussed. We will convert accepted suggestions into backlog and point them to the relevant discussion thread to keep the context.
 
 #### **Do you have questions about the source code?**
 
