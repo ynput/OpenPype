@@ -120,7 +120,7 @@ _print("Copying dependencies ...")
 total_files = count_folders(site_pkg)
 progress_bar = enlighten.Counter(
     total=total_files, desc="Processing Dependencies",
-    units="%", color="green")
+    units="%", color=(53, 178, 202))
 
 
 def _progress(_base, _names):
@@ -140,7 +140,8 @@ to_delete = []
 deps_items = list(deps_dir.iterdir())
 item_count = len(list(libs_dir.iterdir()))
 find_progress_bar = enlighten.Counter(
-    total=item_count, desc="Finding duplicates", units="%", color="yellow")
+    total=item_count, desc="Finding duplicates", units="%",
+    color=(56, 211, 159))
 
 for d in libs_dir.iterdir():
     if (deps_dir / d.name) in deps_items:
@@ -152,16 +153,23 @@ find_progress_bar.close()
 # add openpype and igniter in libs too
 to_delete.append(libs_dir / "openpype")
 to_delete.append(libs_dir / "igniter")
+to_delete.append(libs_dir / "openpype.pth")
+to_delete.append(deps_dir / "openpype.pth")
 
 # delete duplicates
 # _print(f"Deleting {len(to_delete)} duplicates ...")
 delete_progress_bar = enlighten.Counter(
-    total=len(to_delete), desc="Deleting duplicates", units="%", color="red")
+    total=len(to_delete), desc="Deleting duplicates", units="%",
+    color=(251, 192, 32))
 for d in to_delete:
     if d.is_dir():
         shutil.rmtree(d)
     else:
-        d.unlink()
+        try:
+            d.unlink()
+        except FileNotFoundError:
+            # skip non-existent silently
+            pass
     delete_progress_bar.update()
 
 delete_progress_bar.close()
