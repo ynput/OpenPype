@@ -9,6 +9,23 @@ documentation = "https://openpype.io/docs/artist_getting_started"
 repository = "https://github.com/pypeclub/openpype"
 readme = "README.md"
 keywords = ["Pipeline", "Avalon", "VFX", "animation", "automation", "tracking", "asset management"]
+packages = [
+    {include = "igniter"},
+    {include = "repos"},
+    {include = "tools"},
+    {include = "tests"},
+    {include = "docs"},
+    {include = "openpype"},
+    {include = "start.py"},
+    {include = "LICENSE"},
+    {include = "README.md"},
+    {include = "setup.py"},
+    {include = "pyproject.toml"},
+    {include = "poetry.lock"}
+]
+
+[tool.poetry.scripts]
+openpype = 'start:boot'
 
 [tool.poetry.dependencies]
 python = "3.7.*"
@@ -66,6 +83,7 @@ sphinx-qt-documentation = "*"
 recommonmark = "*"
 wheel = "*"
 enlighten = "*"  # cool terminal progress bars
+aenum = "^3.1.0"  # cross-python compatible Enum, used in representations
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pypeclub/openpype/issues"
