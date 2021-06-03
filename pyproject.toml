@@ -83,7 +83,6 @@ sphinx-qt-documentation = "*"
 recommonmark = "*"
 wheel = "*"
 enlighten = "*"  # cool terminal progress bars
-aenum = "^3.1.0"  # cross-python compatible Enum, used in representations
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/pypeclub/openpype/issues"
