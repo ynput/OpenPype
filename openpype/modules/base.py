@@ -184,6 +184,7 @@ class ITrayAction(ITrayModule):
     necessary.
     """
 
+    admin_action = False
     _admin_submenu = None
 
     @property
@@ -199,9 +200,19 @@ class ITrayAction(ITrayModule):
 
     def tray_menu(self, tray_menu):
         from Qt import QtWidgets
-        action = QtWidgets.QAction(self.label, tray_menu)
+
+        if self.admin_action:
+            menu = self.admin_submenu(tray_menu)
+            action = QtWidgets.QAction(self.label, menu)
+            menu.addAction(action)
+            if not menu.menuAction().isVisible():
+                menu.menuAction().setVisible(True)
+
+        else:
+            action = QtWidgets.QAction(self.label, tray_menu)
+            tray_menu.addAction(action)
+
         action.triggered.connect(self.on_action_trigger)
-        tray_menu.addAction(action)
 
     def tray_start(self):
         return
