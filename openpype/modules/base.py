@@ -184,6 +184,8 @@ class ITrayAction(ITrayModule):
     necessary.
     """
 
+    _admin_submenu = None
+
     @property
     @abstractmethod
     def label(self):
@@ -206,6 +208,16 @@ class ITrayAction(ITrayModule):
 
     def tray_exit(self):
         return
+
+    @staticmethod
+    def admin_submenu(tray_menu):
+        if ITrayAction._admin_submenu is None:
+            from Qt import QtWidgets
+
+            admin_submenu = QtWidgets.QMenu("Admin", tray_menu)
+            admin_submenu.menuAction().setVisible(False)
+            ITrayAction._admin_submenu = admin_submenu
+        return ITrayAction._admin_submenu
 
 
 class ITrayService(ITrayModule):
@@ -233,6 +245,7 @@ class ITrayService(ITrayModule):
     def services_submenu(tray_menu):
         if ITrayService._services_submenu is None:
             from Qt import QtWidgets
+
             services_submenu = QtWidgets.QMenu("Services", tray_menu)
             services_submenu.menuAction().setVisible(False)
             ITrayService._services_submenu = services_submenu

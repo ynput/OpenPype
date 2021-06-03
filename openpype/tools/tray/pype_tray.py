@@ -15,7 +15,11 @@ from openpype.api import (
     get_system_settings
 )
 from openpype.lib import get_pype_execute_args
-from openpype.modules import TrayModulesManager, ITrayService
+from openpype.modules import (
+    TrayModulesManager,
+    ITrayAction,
+    ITrayService
+)
 from openpype import style
 
 from .pype_info_widget import PypeInfoWidget
@@ -66,6 +70,9 @@ class TrayManager:
         """Add modules to tray."""
 
         self.modules_manager.initialize(self, self.tray_widget.menu)
+
+        admin_submenu = ITrayAction.admin_submenu(self.tray_widget.menu)
+        self.tray_widget.menu.addMenu(admin_submenu)
 
         # Add services if they are
         services_submenu = ITrayService.services_submenu(self.tray_widget.menu)
