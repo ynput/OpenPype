@@ -43,16 +43,18 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
-    def publish(paths):
+    def publish(paths, targets=None):
         """Start headless publishing.
 
         Publish use json from passed paths argument.
 
         Args:
             paths (list): Paths to jsons.
+            targets (string): What module should be targeted
+                (to choose validator for example)
 
         Raises:
-            RuntimeError: When there is no pathto process.
+            RuntimeError: When there is no path to process.
         """
         if not any(paths):
             raise RuntimeError("No publish paths specified")
@@ -78,6 +80,10 @@ class PypeCommands:
 
         pyblish.api.register_target("filesequence")
         pyblish.api.register_host("shell")
+
+        if targets:
+            for target in targets:
+                pyblish.api.register_target(target)
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
 
