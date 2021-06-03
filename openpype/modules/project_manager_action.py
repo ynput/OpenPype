@@ -2,13 +2,16 @@ from . import PypeModule, ITrayAction
 
 
 class ProjectManagerAction(PypeModule, ITrayAction):
-    label = "Project Manager"
+    label = "Project Manager (beta)"
     name = "project_manager"
     admin_action = True
 
-    def initialize(self, _modules_settings):
-        # This action is always enabled
-        self.enabled = True
+    def initialize(self, modules_settings):
+        enabled = False
+        module_settings = modules_settings.get(self.name)
+        if module_settings:
+            enabled = module_settings.get("enabled", enabled)
+        self.enabled = enabled
 
         # Tray attributes
         self.project_manager_window = None
