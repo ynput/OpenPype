@@ -86,7 +86,7 @@ class AvalonModule(PypeModule, ITrayModule, IWebServerRoutes):
         from Qt import QtWidgets
         # Actions
         action_library_loader = QtWidgets.QAction(
-            "Library loader", tray_menu
+            "Loader", tray_menu
         )
 
         action_library_loader.triggered.connect(self.show_library_loader)

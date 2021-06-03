@@ -172,6 +172,10 @@ class ITrayModule:
         if self._tray_manager:
             self._tray_manager.show_tray_message(title, message, icon, msecs)
 
+    def add_doubleclick_callback(self, callback):
+        if hasattr(self.manager, "add_doubleclick_callback"):
+            self.manager.add_doubleclick_callback(self, callback)
+
 
 class ITrayAction(ITrayModule):
     """Implementation of Tray action.
@@ -183,6 +187,9 @@ class ITrayAction(ITrayModule):
     as it's not expected that action will use them. But it is possible if
     necessary.
     """
+
+    admin_action = False
+    _admin_submenu = None
 
     @property
     @abstractmethod
@@ -197,15 +204,35 @@ class ITrayAction(ITrayModule):
 
     def tray_menu(self, tray_menu):
         from Qt import QtWidgets
-        action = QtWidgets.QAction(self.label, tray_menu)
+
+        if self.admin_action:
+            menu = self.admin_submenu(tray_menu)
+            action = QtWidgets.QAction(self.label, menu)
+            menu.addAction(action)
+            if not menu.menuAction().isVisible():
+                menu.menuAction().setVisible(True)
+
+        else:
+            action = QtWidgets.QAction(self.label, tray_menu)
+            tray_menu.addAction(action)
+
         action.triggered.connect(self.on_action_trigger)
-        tray_menu.addAction(action)
 
     def tray_start(self):
         return
 
     def tray_exit(self):
         return
+
+    @staticmethod
+    def admin_submenu(tray_menu):
+        if ITrayAction._admin_submenu is None:
+            from Qt import QtWidgets
+
+            admin_submenu = QtWidgets.QMenu("Admin", tray_menu)
+            admin_submenu.menuAction().setVisible(False)
+            ITrayAction._admin_submenu = admin_submenu
+        return ITrayAction._admin_submenu
 
 
 class ITrayService(ITrayModule):
@@ -233,6 +260,7 @@ class ITrayService(ITrayModule):
     def services_submenu(tray_menu):
         if ITrayService._services_submenu is None:
             from Qt import QtWidgets
+
             services_submenu = QtWidgets.QMenu("Services", tray_menu)
             services_submenu.menuAction().setVisible(False)
             ITrayService._services_submenu = services_submenu
@@ -677,13 +705,35 @@ class TrayModulesManager(ModulesManager):
     )
 
     def __init__(self):
-        self.log = PypeLogger().get_logger(self.__class__.__name__)
+        self.log = PypeLogger.get_logger(self.__class__.__name__)
 
         self.modules = []
         self.modules_by_id = {}
         self.modules_by_name = {}
         self._report = {}
         self.tray_manager = None
+
+        self.doubleclick_callbacks = {}
+        self.doubleclick_callback = None
+
+    def add_doubleclick_callback(self, module, callback):
+        """Register doubleclick callbacks on tray icon.
+
+        Currently there is no way how to determine which is launched. Name of
+        callback can be defined with `doubleclick_callback` attribute.
+
+        Missing feature how to define default callback.
+        """
+        callback_name = "_".join([module.name, callback.__name__])
+        if callback_name not in self.doubleclick_callbacks:
+            self.doubleclick_callbacks[callback_name] = callback
+            if self.doubleclick_callback is None:
+                self.doubleclick_callback = callback_name
+            return
+
+        self.log.warning((
+            "Callback with name \"{}\" is already registered."
+        ).format(callback_name))
 
     def initialize(self, tray_manager, tray_menu):
         self.tray_manager = tray_manager
