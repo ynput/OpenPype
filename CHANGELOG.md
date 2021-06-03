@@ -155,6 +155,34 @@
 - Maya: support for frame steps and frame lists [\#1586](https://github.com/pypeclub/OpenPype/pull/1586) ([create-issue-branch[bot]](https://github.com/apps/create-issue-branch))
 - 3.0.0 - curated changelog [\#1284](https://github.com/pypeclub/OpenPype/pull/1284) ([mkolar](https://github.com/mkolar))
 
+## [2.18.1](https://github.com/pypeclub/openpype/tree/2.18.1) (2021-06-03)
+
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.18.0...2.18.1)
+
+**Enhancements:**
+
+- Faster hierarchical values push [\#1626](https://github.com/pypeclub/OpenPype/pull/1626)
+- Feature Delivery in library loader [\#1549](https://github.com/pypeclub/OpenPype/pull/1549)
+- Hiero: Initial frame publish support. [\#1172](https://github.com/pypeclub/OpenPype/pull/1172)
+
+**Fixed bugs:**
+
+- Maya capture 'isolate\_view' fix + minor corrections [\#1614](https://github.com/pypeclub/OpenPype/pull/1614)
+- 'Delivery action' report fix +typos [\#1613](https://github.com/pypeclub/OpenPype/pull/1613)
+- Delivery in LibraryLoader - fixed sequence issue [\#1590](https://github.com/pypeclub/OpenPype/pull/1590)
+- FFmpeg filters in quote marks [\#1588](https://github.com/pypeclub/OpenPype/pull/1588)
+- Ftrack delete action cause circular error [\#1581](https://github.com/pypeclub/OpenPype/pull/1581)
+- Fix Maya playblast. [\#1566](https://github.com/pypeclub/OpenPype/pull/1566)
+- More failsafes prevent errored runs. [\#1554](https://github.com/pypeclub/OpenPype/pull/1554)
+- Celaction publishing [\#1539](https://github.com/pypeclub/OpenPype/pull/1539)
+- celaction: app not starting [\#1533](https://github.com/pypeclub/OpenPype/pull/1533)
+
+**Merged pull requests:**
+
+- Maya: Render workflow fixes - 2.0 backport [\#1609](https://github.com/pypeclub/OpenPype/pull/1609)
+- Maya Hardware support [\#1553](https://github.com/pypeclub/OpenPype/pull/1553)
+
+
 ## [CI/3.0.0-rc.6](https://github.com/pypeclub/openpype/tree/CI/3.0.0-rc.6) (2021-05-27)
 
 [Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.5...CI/3.0.0-rc.6)
