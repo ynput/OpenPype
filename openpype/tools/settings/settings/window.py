@@ -19,11 +19,11 @@ class MainWidget(QtWidgets.QWidget):
     widget_width = 1000
     widget_height = 600
 
-    def __init__(self, user_role, parent=None):
+    def __init__(self, user_role, parent=None, reset_on_show=True):
         super(MainWidget, self).__init__(parent)
 
         self._user_passed = False
-        self._reset_on_show = True
+        self._reset_on_show = reset_on_show
 
         self._password_dialog = None
 
@@ -95,6 +95,7 @@ class MainWidget(QtWidgets.QWidget):
     def showEvent(self, event):
         super(MainWidget, self).showEvent(event)
         if self._reset_on_show:
+            self._reset_on_show = False
             self.reset()
 
     def _show_password_dialog(self):
