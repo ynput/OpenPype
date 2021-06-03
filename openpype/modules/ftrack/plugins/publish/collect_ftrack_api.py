@@ -21,7 +21,6 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
         import ftrack_api
 
         session = ftrack_api.Session(auto_connect_event_hub=False)
-        session = ftrack_api.Session(auto_connect_event_hub=False)
         self.log.debug("Ftrack user: \"{0}\"".format(session.api_user))
 
         # Collect task
