@@ -91,11 +91,6 @@ def create_project(
     #   and Anatomy
     try:
         project_settings_entity = ProjectSettings(project_name)
-        # Trigger remove project overrides
-        #   - will set all anatomy values to defaults
-        #   - project's anatomy will still be overriden
-        project_anatomy = project_settings_entity["project_anatomy"]
-        project_anatomy.remove_from_project_override()
         project_settings_entity.save()
     except SaveWarningExc as exc:
         print(str(exc))
