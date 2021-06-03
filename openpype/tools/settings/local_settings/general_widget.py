@@ -1,10 +1,8 @@
 import getpass
 
 from Qt import QtWidgets, QtCore
-from openpype.tools.settings import (
-    is_password_required,
-    PasswordDialog
-)
+from openpype.tools.settings import is_password_required
+from openpype.widgets import PasswordDialog
 
 
 class LocalGeneralWidgets(QtWidgets.QWidget):

@@ -7,10 +7,8 @@ from .categories import (
 from .widgets import ShadowWidget, RestartDialog
 from . import style
 
-from openpype.tools.settings import (
-    is_password_required,
-    PasswordDialog
-)
+from openpype.tools.settings import is_password_required
+from openpype.widgets import PasswordDialog
 
 
 class MainWidget(QtWidgets.QWidget):

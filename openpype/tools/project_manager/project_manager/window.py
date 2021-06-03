@@ -11,10 +11,8 @@ from . import (
 )
 from openpype.style import load_stylesheet
 from .style import ResourceCache
-from openpype.tools.settings import (
-    is_password_required,
-    PasswordDialog
-)
+from openpype.tools.settings import is_password_required
+from openpype.widgets import PasswordDialog
 
 from openpype import resources
 from avalon.api import AvalonMongoDB

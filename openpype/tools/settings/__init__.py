@@ -5,7 +5,6 @@ from .lib import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
 )
-from .widgets import PasswordDialog
 from .local_settings import LocalSettingsWindow
 from .settings import (
     style,
@@ -41,7 +40,6 @@ __all__ = (
 
     "style",
 
-    "PasswordDialog",
     "MainWidget",
     "ProjectListWidget",
     "LocalSettingsWindow",

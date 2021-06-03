@@ -1,6 +1,6 @@
 from Qt import QtWidgets, QtCore, QtGui
 
-from .resources import get_resource
+from openpype.resources import get_resource
 
 from openpype.api import get_system_settings
 from openpype.settings.lib import (
@@ -62,7 +62,7 @@ class PasswordDialog(QtWidgets.QDialog):
         password_input = QtWidgets.QLineEdit(password_widget)
         password_input.setEchoMode(QtWidgets.QLineEdit.Password)
 
-        show_password_icon_path = get_resource("images", "eye.png")
+        show_password_icon_path = get_resource("icons", "eye.png")
         show_password_icon = QtGui.QIcon(show_password_icon_path)
         show_password_btn = PressHoverButton(password_widget)
         show_password_btn.setObjectName("PasswordBtn")
