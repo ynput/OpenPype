@@ -97,7 +97,8 @@ from .local_settings import (
     OpenPypeSettingsRegistry,
     get_local_site_id,
     change_openpype_mongo_url,
-    get_openpype_username
+    get_openpype_username,
+    is_admin_password_required
 )
 
 from .applications import (
@@ -209,6 +210,7 @@ __all__ = [
     "get_local_site_id",
     "change_openpype_mongo_url",
     "get_openpype_username",
+    "is_admin_password_required",
 
     "ApplicationLaunchFailed",
     "ApplictionExecutableNotFound",

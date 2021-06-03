@@ -1,7 +1,7 @@
 import getpass
 
 from Qt import QtWidgets, QtCore
-from openpype.tools.settings import is_password_required
+from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
 
 
@@ -55,7 +55,7 @@ class LocalGeneralWidgets(QtWidgets.QWidget):
         if not self.is_admin_input.isChecked():
             return
 
-        if not is_password_required():
+        if not is_admin_password_required():
             return
 
         dialog = PasswordDialog(self, False)

@@ -7,7 +7,7 @@ from .categories import (
 from .widgets import ShadowWidget, RestartDialog
 from . import style
 
-from openpype.tools.settings import is_password_required
+from openpype.lib import is_admin_password_required
 from openpype.widgets import PasswordDialog
 
 
@@ -115,7 +115,7 @@ class MainWidget(QtWidgets.QWidget):
             return
 
         if not self._user_passed:
-            self._user_passed = not is_password_required()
+            self._user_passed = not is_admin_password_required()
 
         self._on_state_change()
 
