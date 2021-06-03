@@ -37,7 +37,7 @@ class ISettingsChangeListener:
 class SettingsAction(PypeModule, ITrayAction):
     """Action to show Setttings tool."""
     name = "settings"
-    label = "Settings"
+    label = "Studio Settings"
     admin_action = True
 
     def initialize(self, _modules_settings):
