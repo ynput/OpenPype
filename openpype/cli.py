@@ -26,7 +26,7 @@ def main(ctx):
 
 @main.command()
 @click.option("-d", "--dev", is_flag=True, help="Settings in Dev mode")
-def settings(dev=False):
+def settings(dev):
     """Show Pype Settings UI."""
     PypeCommands().launch_settings_gui(dev)
 
