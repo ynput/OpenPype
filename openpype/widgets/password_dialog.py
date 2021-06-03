@@ -1,5 +1,6 @@
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype import style
 from openpype.resources import get_resource
 
 from openpype.api import get_system_settings
@@ -109,6 +110,8 @@ class PasswordDialog(QtWidgets.QDialog):
         self.password_input = password_input
         self.remember_checkbox = remember_checkbox
         self.message_label = message_label
+
+        self.setStyleSheet(style.load_stylesheet())
 
     def remember_password(self):
         if not self._allow_remember:
