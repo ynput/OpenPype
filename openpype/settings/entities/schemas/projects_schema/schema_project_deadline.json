@@ -14,6 +14,35 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "ValidateRenderedFrames",
+                    "label": "Validate Rendered Frames",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Validate if all expected files were rendered"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "allow_user_override",
+                            "object_type": "text",
+                            "label": "Allow user change frame range"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "MayaSubmitDeadline",
                     "label": "Submit maya job to deadline",
                     "checkbox_key": "enabled",
