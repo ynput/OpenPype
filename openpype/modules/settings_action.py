@@ -79,7 +79,7 @@ class SettingsAction(PypeModule, ITrayAction):
 
         Raises:
             AssertionError: Window must be already created. Call
-                `create_settings_window` before callint this method.
+                `create_settings_window` before calling this method.
         """
         if not self.settings_window:
             raise AssertionError("Window is not initialized.")
