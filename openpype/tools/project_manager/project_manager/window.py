@@ -35,6 +35,9 @@ class ProjectManagerWindow(QtWidgets.QWidget):
 
         project_model = ProjectModel(dbcon)
         project_combobox = QtWidgets.QComboBox(project_widget)
+        project_combobox.setSizeAdjustPolicy(
+            QtWidgets.QComboBox.AdjustToContents
+        )
         project_combobox.setModel(project_model)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
         style_delegate = QtWidgets.QStyledItemDelegate()
