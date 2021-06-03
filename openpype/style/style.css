@@ -504,6 +504,21 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #IconBtn {}
 
+/* Password dialog*/
+#PasswordBtn {
+    border: none;
+    padding:0.1em;
+    background: transparent;
+}
+
+#PasswordBtn:hover {
+    background: {color:bg-buttons};
+}
+
+#RememberCheckbox {
+    spacing: 0.5em;
+}
+
 /* Project Manager stylesheets */
 #HierarchyView::item {
     padding-top: 3px;

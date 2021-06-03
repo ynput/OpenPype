@@ -65,10 +65,8 @@ class PasswordDialog(QtWidgets.QDialog):
         show_password_icon_path = get_resource("images", "eye.png")
         show_password_icon = QtGui.QIcon(show_password_icon_path)
         show_password_btn = PressHoverButton(password_widget)
+        show_password_btn.setObjectName("PasswordBtn")
         show_password_btn.setIcon(show_password_icon)
-        show_password_btn.setStyleSheet((
-            "border: none;padding:0.1em;"
-        ))
         show_password_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
 
         password_layout = QtWidgets.QHBoxLayout(password_widget)
@@ -83,10 +81,8 @@ class PasswordDialog(QtWidgets.QDialog):
         buttons_widget = QtWidgets.QWidget(self)
 
         remember_checkbox = QtWidgets.QCheckBox("Remember", buttons_widget)
+        remember_checkbox.setObjectName("RememberCheckbox")
         remember_checkbox.setVisible(allow_remember)
-        remember_checkbox.setStyleSheet((
-            "spacing: 0.5em;"
-        ))
 
         ok_btn = QtWidgets.QPushButton("Ok", buttons_widget)
         cancel_btn = QtWidgets.QPushButton("Cancel", buttons_widget)
