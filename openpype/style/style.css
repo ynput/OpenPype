@@ -313,6 +313,8 @@ QAbstractItemView {
     border-radius: 0.2em;
     background: {color:bg-view};
     alternate-background-color: {color:bg-view-alternate};
+    /* Mac shows selection color on branches. */
+    selection-background-color: transparent;
 }
 
 QAbstractItemView:disabled{
@@ -344,30 +346,35 @@ QAbstractItemView::item:selected:hover {
     background: {color:bg-view-selection-hover};
 }
 
+/* Row colors (alternate colors) are from left - right */
+QAbstractItemView:branch {
+    background: transparent;
+}
+
 QAbstractItemView::branch:open:has-children:!has-siblings,
 QAbstractItemView::branch:open:has-children:has-siblings {
     border-image: none;
     image: url(:/openpype/images/branch_open.png);
-    background: {color:bg-view};
+    background: transparent;
 }
 QAbstractItemView::branch:open:has-children:!has-siblings:hover,
 QAbstractItemView::branch:open:has-children:has-siblings:hover {
     border-image: none;
     image: url(:/openpype/images//branch_open_on.png);
-    /* background: {color:bg-view-hover}; */
+    background: transparent;
 }
 
 QAbstractItemView::branch:has-children:!has-siblings:closed,
 QAbstractItemView::branch:closed:has-children:has-siblings {
     border-image: none;
     image: url(:/openpype/images//branch_closed.png);
-    background: {color:bg-view};
+    background: transparent;
 }
 QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
 QAbstractItemView::branch:closed:has-children:has-siblings:hover {
     border-image: none;
     image: url(:/openpype/images//branch_closed_on.png);
-    /* background: {color:bg-view-hover}; */
+    background: transparent;
 }
 
 /* Progress bar */
