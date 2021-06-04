@@ -380,6 +380,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         item_id = source_index.data(IDENTIFIER_ROLE)
         item = self.items_by_id[item_id]
 
+        if isinstance(item, TaskItem):
+            item = item.parent()
+
         if isinstance(item, (RootItem, ProjectItem)):
             name = "ep"
             new_row = None
