@@ -52,6 +52,10 @@ install_requires = [
 ]
 
 includes = []
+# WARNING: As of cx_freeze there is a bug?
+# when this is empty, its hooks will not kick in
+# and won't clean platform irrelevant modules
+# like dbm mentioned above.
 excludes = [
     "openpype"
 ]
