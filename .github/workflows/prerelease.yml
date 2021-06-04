@@ -1,0 +1,93 @@
+name: Nightly Prerelease
+
+on:
+  push:
+    branches: [main]
+
+
+jobs:
+  create_nightly:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 🚛 Checkout Code
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Install Python requirements
+      run: pip install gitpython semver
+
+    - name: 🔎 Determine next version type
+      id: version_type
+      run: |
+        TYPE=$(python ./tools/ci_tools.py --bump)
+
+        echo ::set-output name=type::$TYPE
+
+    - name: 💉 Inject new version into files
+      id: version
+      if: steps.version_type.outputs.type != 'skip'
+      run: |
+        RESULT=$(python ./tools/ci_tools.py --nightly)
+
+        echo ::set-output name=next_tag::$RESULT
+
+    - name: "✏️ Generate full changelog"
+      if: steps.version_type.outputs.type != 'skip'
+      id: generate-full-changelog
+      uses: heinrichreimer/github-changelog-generator-action@v2.2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        breakingLabel: '#### 💥 Breaking'
+        enhancementLabel: '#### 🚀 Enhancements'
+        bugsLabel: '#### 🐛 Bug fixes'
+        deprecatedLabel: '#### ⚠️ Deprecations'
+        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]}}'
+        issues: false
+        issuesWoLabels: false
+        pullRequests: true
+        prWoLabels: false
+        author: false
+        unreleased: true
+        compareLink: true
+        stripGeneratorNotice: true
+        verbose: true
+        unreleasedLabel: ${{ steps.version.outputs.next_tag }}
+        excludeTagsRegex: "CI/.+"
+        releaseBranch: "main"
+
+    - name: "🖨️ Print changelog to console"
+      if: steps.version_type.outputs.type != 'skip'
+      run: cat CHANGELOG.md
+
+    - name: 💾 Commit and Tag
+      id: git_commit
+      if: steps.version_type.outputs.type != 'skip'
+      run: |
+        git config user.email ${{ secrets.CI_EMAIL }}
+        git config user.name ${{ secrets.CI_USER }}
+        cd repos/avalon-core
+        git checkout main
+        git pull
+        cd ../..
+        git add .
+        git commit -m "[Automated] Bump version"
+        tag_name="CI/${{ steps.version.outputs.next_tag }}"
+        git tag -a $tag_name -m "nightly build"
+        git push
+        git push origin $tag_name
+
+    - name: 🔨 Merge main back to develop    
+      uses: everlytic/branch-merge@1.1.0
+      if: steps.version_type.outputs.type != 'skip'
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        source_ref: 'main'
+        target_branch: 'develop'
+        commit_message_template: '[Automated] Merged {source_ref} into {target_branch}'

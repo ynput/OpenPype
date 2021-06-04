@@ -8,8 +8,19 @@ class AddLastWorkfileToLaunchArgs(PreLaunchHook):
     This is not possible to do for all applications the same way.
     """
 
-    order = 0
-    app_groups = ["maya", "nuke", "nukex", "hiero", "nukestudio"]
+    # Execute after workfile template copy
+    order = 10
+    app_groups = [
+        "maya",
+        "nuke",
+        "nukex",
+        "hiero",
+        "nukestudio",
+        "blender",
+        "photoshop",
+        "tvpaint",
+        "afftereffects"
+    ]
 
     def execute(self):
         if not self.data.get("start_last_workfile"):

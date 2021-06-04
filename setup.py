@@ -50,7 +50,9 @@ install_requires = [
 ]
 
 includes = []
-excludes = []
+excludes = [
+    "openpype"
+]
 bin_includes = []
 include_files = [
     "igniter",

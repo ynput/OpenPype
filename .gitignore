@@ -36,6 +36,7 @@ Temporary Items
 # CX_Freeze
 ###########
 /build
+/dist/
 
 /vendor/bin/*
 /.venv

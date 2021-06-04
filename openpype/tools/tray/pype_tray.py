@@ -1,16 +1,27 @@
+import collections
 import os
 import sys
 import atexit
 import subprocess
 
 import platform
-from avalon import style
+
 from Qt import QtCore, QtGui, QtWidgets
-from openpype.api import Logger, resources
-from openpype.lib import get_pype_execute_args
-from openpype.modules import TrayModulesManager, ITrayService
-from openpype.settings.lib import get_system_settings
+
 import openpype.version
+from openpype.api import (
+    Logger,
+    resources,
+    get_system_settings
+)
+from openpype.lib import get_pype_execute_args
+from openpype.modules import (
+    TrayModulesManager,
+    ITrayAction,
+    ITrayService
+)
+from openpype import style
+
 from .pype_info_widget import PypeInfoWidget
 
 
@@ -23,7 +34,6 @@ class TrayManager:
     def __init__(self, tray_widget, main_window):
         self.tray_widget = tray_widget
         self.main_window = main_window
-
         self.pype_info_widget = None
 
         self.log = Logger.get_logger(self.__class__.__name__)
@@ -34,10 +44,47 @@ class TrayManager:
 
         self.errors = []
 
+        self.main_thread_timer = None
+        self._main_thread_callbacks = collections.deque()
+        self._execution_in_progress = None
+
+    @property
+    def doubleclick_callback(self):
+        """Doubleclick callback for Tray icon."""
+        callback_name = self.modules_manager.doubleclick_callback
+        return self.modules_manager.doubleclick_callbacks.get(callback_name)
+
+    def execute_doubleclick(self):
+        """Execute double click callback in main thread."""
+        callback = self.doubleclick_callback
+        if callback:
+            self.execute_in_main_thread(callback)
+
+    def execute_in_main_thread(self, callback):
+        self._main_thread_callbacks.append(callback)
+
+    def _main_thread_execution(self):
+        if self._execution_in_progress:
+            return
+        self._execution_in_progress = True
+        while self._main_thread_callbacks:
+            try:
+                callback = self._main_thread_callbacks.popleft()
+                callback()
+            except:
+                self.log.warning(
+                    "Failed to execute {} in main thread".format(callback),
+                    exc_info=True)
+
+        self._execution_in_progress = False
+
     def initialize_modules(self):
         """Add modules to tray."""
 
         self.modules_manager.initialize(self, self.tray_widget.menu)
+
+        admin_submenu = ITrayAction.admin_submenu(self.tray_widget.menu)
+        self.tray_widget.menu.addMenu(admin_submenu)
 
         # Add services if they are
         services_submenu = ITrayService.services_submenu(self.tray_widget.menu)
@@ -58,6 +105,14 @@ class TrayManager:
 
         # Print time report
         self.modules_manager.print_report()
+
+        # create timer loop to check callback functions
+        main_thread_timer = QtCore.QTimer()
+        main_thread_timer.setInterval(300)
+        main_thread_timer.timeout.connect(self._main_thread_execution)
+        main_thread_timer.start()
+
+        self.main_thread_timer = main_thread_timer
 
     def show_tray_message(self, title, message, icon=None, msecs=None):
         """Show tray message.
@@ -142,6 +197,8 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     :type parent: QtWidgets.QMainWindow
     """
 
+    doubleclick_time_ms = 100
+
     def __init__(self, parent):
         icon = QtGui.QIcon(resources.pype_icon_filepath())
 
@@ -160,20 +217,50 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.tray_man = TrayManager(self, self.parent)
         self.tray_man.initialize_modules()
 
-        # Catch activate event for left click if not on MacOS
-        #   - MacOS has this ability by design so menu would be doubled
-        if platform.system().lower() != "darwin":
-            self.activated.connect(self.on_systray_activated)
         # Add menu to Context of SystemTrayIcon
         self.setContextMenu(self.menu)
 
         atexit.register(self.exit)
 
+        # Catch activate event for left click if not on MacOS
+        #   - MacOS has this ability by design and is harder to modify this
+        #       behavior
+        if platform.system().lower() == "darwin":
+            return
+
+        self.activated.connect(self.on_systray_activated)
+
+        click_timer = QtCore.QTimer()
+        click_timer.setInterval(self.doubleclick_time_ms)
+        click_timer.timeout.connect(self._click_timer_timeout)
+
+        self._click_timer = click_timer
+        self._doubleclick = False
+
+    def _click_timer_timeout(self):
+        self._click_timer.stop()
+        doubleclick = self._doubleclick
+        # Reset bool value
+        self._doubleclick = False
+        if doubleclick:
+            self.tray_man.execute_doubleclick()
+        else:
+            self._show_context_menu()
+
+    def _show_context_menu(self):
+        pos = QtGui.QCursor().pos()
+        self.contextMenu().popup(pos)
+
     def on_systray_activated(self, reason):
         # show contextMenu if left click
         if reason == QtWidgets.QSystemTrayIcon.Trigger:
-            position = QtGui.QCursor().pos()
-            self.contextMenu().popup(position)
+            if self.tray_man.doubleclick_callback:
+                self._click_timer.start()
+            else:
+                self._show_context_menu()
+
+        elif reason == QtWidgets.QSystemTrayIcon.DoubleClick:
+            self._doubleclick = True
 
     def exit(self):
         """ Exit whole application.

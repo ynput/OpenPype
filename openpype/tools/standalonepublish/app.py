@@ -10,7 +10,7 @@ from .widgets import (
     AssetWidget, FamilyWidget, ComponentsWidget, ShadowWidget
 )
 from .widgets.constants import HOST_NAME
-from avalon import style
+from openpype import style
 from openpype.api import resources
 from avalon.api import AvalonMongoDB
 from openpype.modules import ModulesManager
@@ -22,7 +22,6 @@ class Window(QtWidgets.QDialog):
     :param parent: Main widget that cares about all GUIs
     :type parent: QtWidgets.QMainWindow
     """
-    _db = AvalonMongoDB()
     _jobs = {}
     valid_family = False
     valid_components = False
@@ -32,6 +31,7 @@ class Window(QtWidgets.QDialog):
 
     def __init__(self, pyblish_paths, parent=None):
         super(Window, self).__init__(parent=parent)
+        self._db = AvalonMongoDB()
         self._db.install()
 
         self.pyblish_paths = pyblish_paths

@@ -45,7 +45,6 @@ class SyncServerWindow(QtWidgets.QDialog):
         self.pause_btn = QtWidgets.QPushButton("Pause server")
 
         left_column_layout.addWidget(self.pause_btn)
-        left_column.setLayout(left_column_layout)
 
         repres = SyncRepresentationSummaryWidget(
             sync_server,
@@ -59,8 +58,6 @@ class SyncServerWindow(QtWidgets.QDialog):
         split.addWidget(repres)
         split.setSizes([180, 950, 200])
         container_layout.addWidget(split)
-
-        container.setLayout(container_layout)
 
         body_layout = QtWidgets.QHBoxLayout(body)
         body_layout.addWidget(container)
@@ -77,7 +74,6 @@ class SyncServerWindow(QtWidgets.QDialog):
         layout.addWidget(body)
         layout.addWidget(footer)
 
-        self.setLayout(body_layout)
         self.setWindowTitle("Sync Queue")
 
         self.projects.project_changed.connect(

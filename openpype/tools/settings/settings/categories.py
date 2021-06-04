@@ -351,6 +351,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         dialog = None
         try:
             self._create_root_entity()
+
             self.entity.add_require_restart_change_callback(
                 self._on_require_restart_change
             )
@@ -363,6 +364,16 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
                 input_field.set_entity_value()
 
             self.ignore_input_changes.set_ignore(False)
+
+        except DefaultsNotDefined:
+            dialog = QtWidgets.QMessageBox(self)
+            dialog.setWindowTitle("Missing default values")
+            dialog.setText((
+                "Default values are not set and you"
+                " don't have permissions to modify them."
+                " Please contact OpenPype team."
+            ))
+            dialog.setIcon(QtWidgets.QMessageBox.Critical)
 
         except SchemaError as exc:
             dialog = QtWidgets.QMessageBox(self)
@@ -494,12 +505,7 @@ class SystemWidget(SettingsCategoryWidget):
                 self.modify_defaults_checkbox.setEnabled(True)
         except DefaultsNotDefined:
             if not self.modify_defaults_checkbox:
-                msg_box = QtWidgets.QMessageBox(
-                    "BUG: Default values are not set and you"
-                    " don't have permissions to modify them."
-                )
-                msg_box.exec_()
-                return
+                raise
 
             self.entity.set_defaults_state()
             self.modify_defaults_checkbox.setChecked(True)
@@ -571,12 +577,7 @@ class ProjectWidget(SettingsCategoryWidget):
 
         except DefaultsNotDefined:
             if not self.modify_defaults_checkbox:
-                msg_box = QtWidgets.QMessageBox(
-                    "BUG: Default values are not set and you"
-                    " don't have permissions to modify them."
-                )
-                msg_box.exec_()
-                return
+                raise
 
             self.entity.set_defaults_state()
             self.modify_defaults_checkbox.setChecked(True)

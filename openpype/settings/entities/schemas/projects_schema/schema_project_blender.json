@@ -1,0 +1,17 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "blender",
+    "label": "Blender",
+    "is_file": true,
+    "children": [
+        {
+            "type": "schema_template",
+            "name": "template_workfile_options",
+            "skip_paths": [
+                "workfile_builder/builder_on_start",
+                "workfile_builder/profiles"
+            ]
+        }
+    ]
+}

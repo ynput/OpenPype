@@ -40,6 +40,14 @@ class ExtractFBX(api.Extractor):
         context = plugin.create_blender_context(
             active=asset_group, selected=selected)
 
+        new_materials = []
+
+        for obj in collections[0].all_objects:
+            if obj.type == 'MESH':
+                mat = bpy.data.materials.new(obj.name)
+                obj.data.materials.append(mat)
+                new_materials.append(mat)
+
         # We export the fbx
         bpy.ops.export_scene.fbx(
             context,
@@ -51,6 +59,13 @@ class ExtractFBX(api.Extractor):
         )
 
         bpy.ops.object.select_all(action='DESELECT')
+
+        for mat in new_materials:
+            bpy.data.materials.remove(mat)
+
+        for obj in collections[0].all_objects:
+            if obj.type == 'MESH':
+                obj.data.materials.pop()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
