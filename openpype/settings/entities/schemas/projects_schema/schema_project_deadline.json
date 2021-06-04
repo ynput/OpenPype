@@ -14,8 +14,8 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "ValidateRenderedFrames",
-                    "label": "Validate Rendered Frames",
+                    "key": "ValidateExpectedFiles",
+                    "label": "Validate Expected Files",
                     "checkbox_key": "enabled",
                     "children": [
                         {
@@ -37,6 +37,18 @@
                             "key": "allow_user_override",
                             "object_type": "text",
                             "label": "Allow user change frame range"
+                        },
+                        {
+                            "type": "list",
+                            "key": "families",
+                            "object_type": "text",
+                            "label": "Trigger on families"
+                        },
+                        {
+                            "type": "list",
+                            "key": "targets",
+                            "object_type": "text",
+                            "label": "Trigger for plugins"
                         }
                     ]
                 },
