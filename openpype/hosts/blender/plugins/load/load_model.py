@@ -29,7 +29,6 @@ class BlendModelLoader(plugin.AssetLoader):
 
     def _remove(self, asset_group):
         objects = list(asset_group.children)
-        empties = []
 
         for obj in objects:
             if obj.type == 'MESH':
@@ -38,10 +37,7 @@ class BlendModelLoader(plugin.AssetLoader):
                 bpy.data.meshes.remove(obj.data)
             elif obj.type == 'EMPTY':
                 objects.extend(obj.children)
-                empties.append(obj)
-
-        for empty in empties:
-            bpy.data.objects.remove(empty)
+                bpy.data.objects.remove(obj)
 
     def _process(self, libpath, asset_group, group_name):
         relative = bpy.context.preferences.filepaths.use_relative_paths
@@ -145,9 +141,8 @@ class BlendModelLoader(plugin.AssetLoader):
             "family": context["representation"]["context"]["family"]
         }
 
-        nodes = objects
-        self[:] = nodes
-        return nodes
+        self[:] = objects
+        return objects
 
     def update(self, container: Dict, representation: Dict):
         """Update the loaded asset.

@@ -157,9 +157,8 @@ class FbxModelLoader(plugin.AssetLoader):
             "family": context["representation"]["context"]["family"]
         }
 
-        nodes = objects
-        self[:] = nodes
-        return nodes
+        self[:] = objects
+        return objects
 
     def update(self, container: Dict, representation: Dict):
         """Update the loaded asset.
