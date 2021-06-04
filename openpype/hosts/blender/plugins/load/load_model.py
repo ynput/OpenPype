@@ -200,10 +200,23 @@ class BlendModelLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
+        # Check how many assets use the same library
+        count = 0
+        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
+            if obj.get(AVALON_PROPERTY).get('libpath') == group_libpath:
+                count += 1
+
         mat = asset_group.matrix_basis.copy()
+
         self._remove(asset_group)
 
+        # If it is the last object to use that library, remove it
+        if count == 1:
+            library = bpy.data.libraries.get(bpy.path.basename(group_libpath))
+            bpy.data.libraries.remove(library)
+
         self._process(str(libpath), asset_group, object_name)
+
         asset_group.matrix_basis = mat
 
         metadata["libpath"] = str(libpath)
@@ -221,6 +234,13 @@ class BlendModelLoader(plugin.AssetLoader):
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
+        libpath = asset_group.get(AVALON_PROPERTY).get('libpath')
+
+        # Check how many assets use the same library
+        count = 0
+        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
+            if obj.get(AVALON_PROPERTY).get('libpath') == libpath:
+                count += 1
 
         if not asset_group:
             return False
@@ -228,5 +248,10 @@ class BlendModelLoader(plugin.AssetLoader):
         self._remove(asset_group)
 
         bpy.data.objects.remove(asset_group)
+
+        # If it is the last object to use that library, remove it
+        if count == 1:
+            library = bpy.data.libraries.get(bpy.path.basename(libpath))
+            bpy.data.libraries.remove(library)
 
         return True
