@@ -349,6 +349,11 @@ QAbstractItemView:branch {
     background: transparent;
 }
 
+/* Mac shows slection color on branches. */
+QAbstractItemView:branch:selected {
+    background: transparent;
+}
+
 QAbstractItemView::branch:open:has-children:!has-siblings,
 QAbstractItemView::branch:open:has-children:has-siblings {
     border-image: none;
