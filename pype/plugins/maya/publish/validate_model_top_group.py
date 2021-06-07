@@ -1,11 +1,11 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """Validate if model content has single top group.
 
 This was splitted from `validate_model_content` by client request.
 
 Todo:
     It would be better handle it back in the single validator using Settings.
-    
+
 Deprecated since 2.18
 
 """
@@ -14,7 +14,6 @@ from maya import cmds
 import pyblish.api
 import pype.api
 import pype.hosts.maya.action
-from pype.hosts.maya import lib
 
 
 class ValidateModelTopGroup(pyblish.api.InstancePlugin):
