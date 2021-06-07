@@ -54,6 +54,8 @@ jobs:
         addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]}}'
         issues: false
         issuesWoLabels: false
+        sinceTag: "3.0.0"
+        maxIssues: 100
         pullRequests: true
         prWoLabels: false
         author: false

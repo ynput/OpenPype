@@ -1,0 +1,16 @@
+pr-wo-labels=False
+exclude-labels=duplicate,question,invalid,wontfix,weekly-digest
+author=False
+unreleased=True
+since-tag=3.0.0
+enhancement-label=#### 🚀 Enhancements
+bugs-label=#### 🐛 Bug fixes
+deprecated-label:#### ⚠️ Deprecations
+breaking-label:#### 💥 Breaking
+release-branch=main
+issues=False
+author=False
+verbose=True
+issues-wo-labels=False
+exclude-tags-regex="CI/.+"
+max-issues=100

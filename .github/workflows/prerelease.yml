@@ -44,7 +44,7 @@ jobs:
       id: generate-full-changelog
       uses: heinrichreimer/github-changelog-generator-action@v2.2
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.ADMIN_TOKEN }}
         breakingLabel: '#### 💥 Breaking'
         enhancementLabel: '#### 🚀 Enhancements'
         bugsLabel: '#### 🐛 Bug fixes'
@@ -52,6 +52,8 @@ jobs:
         addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]}}'
         issues: false
         issuesWoLabels: false
+        sinceTag: "3.0.0"
+        maxIssues: 100
         pullRequests: true
         prWoLabels: false
         author: false
