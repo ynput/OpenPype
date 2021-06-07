@@ -265,6 +265,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     asset_dependencies = False
     limit_groups = []
     group = "none"
+    job_info = {}
+    plugin_info = {}
+
 
     def process(self, instance):
         """Plugin entry point."""
@@ -534,6 +537,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
 
         self.preflight_check(instance)
+
+        # override deadline job/plugin info with presets
+        # TODO: this should be adopted to deadline abstract job class.
+        payload["JobInfo"].update(self.job_info)
+        payload["PluginInfo"].update(self.plugin_info)
 
         # Prepare tiles data ------------------------------------------------
         if instance.data.get("tileRendering"):
