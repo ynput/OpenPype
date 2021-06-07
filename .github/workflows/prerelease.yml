@@ -83,9 +83,14 @@ jobs:
         git commit -m "[Automated] Bump version"
         tag_name="CI/${{ steps.version.outputs.next_tag }}"
         git tag -a $tag_name -m "nightly build"
-        git remote set-url --push origin https://pypebot:${{ secrets.ADMIN_TOKEN }}@github.com/pypeclub/openpype
-        git push
-        git push origin $tag_name
+    
+    - name: Push to protected main branch
+      uses: CasperWA/push-protected@v2
+      with:
+        token: ${{ secrets.ADMIN_TOKEN }}
+        branch: main
+        tags: true
+        unprotect_reviews: true
 
     - name: 🔨 Merge main back to develop    
       uses: everlytic/branch-merge@1.1.0
