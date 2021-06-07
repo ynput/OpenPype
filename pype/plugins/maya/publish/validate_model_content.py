@@ -58,7 +58,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
             return True
 
         assemblies = cmds.ls(content_instance, assemblies=True, long=True)
- 
+
         def _is_visible(node):
             """Return whether node is visible"""
             return lib.is_visible(node,
