@@ -234,16 +234,19 @@ class Window(QtWidgets.QDialog):
         footer_button_stop = QtWidgets.QPushButton(
             awesome["stop"], footer_widget
         )
+        footer_button_stop.setToolTip("Stop publishing")
         footer_button_reset = QtWidgets.QPushButton(
             awesome["refresh"], footer_widget
         )
+        footer_button_reset.setToolTip("Restart publishing")
         footer_button_validate = QtWidgets.QPushButton(
             awesome["flask"], footer_widget
         )
+        footer_button_validate.setToolTip("Run validations")
         footer_button_play = QtWidgets.QPushButton(
             awesome["play"], footer_widget
         )
-
+        footer_button_play.setToolTip("Publish")
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(5, 5, 5, 5)
         layout.addWidget(footer_info, 0)
