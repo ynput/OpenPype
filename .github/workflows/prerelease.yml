@@ -3,6 +3,7 @@ name: Nightly Prerelease
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 
 jobs:
@@ -80,6 +81,7 @@ jobs:
         git commit -m "[Automated] Bump version"
         tag_name="CI/${{ steps.version.outputs.next_tag }}"
         git tag -a $tag_name -m "nightly build"
+        git remote set-url --push origin https://pypebot:${{ secrets.ADMIN_TOKEN }}@github.com/pypeclub/openpype
         git push
         git push origin $tag_name
 
@@ -87,7 +89,7 @@ jobs:
       uses: everlytic/branch-merge@1.1.0
       if: steps.version_type.outputs.type != 'skip'
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.ADMIN_TOKEN }}
         source_ref: 'main'
         target_branch: 'develop'
         commit_message_template: '[Automated] Merged {source_ref} into {target_branch}'

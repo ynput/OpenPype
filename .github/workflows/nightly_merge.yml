@@ -14,10 +14,10 @@ jobs:
     - name: 🚛 Checkout Code
       uses: actions/checkout@v2
 
-    - name: Merge development -> main
-      uses: devmasx/merge-branch@v1.3.1
+    - name: 🔨 Merge main back to develop    
+      uses: everlytic/branch-merge@1.1.0
       with:
-        type: now
-        from_branch: develop
-        target_branch: main
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.ADMIN_TOKEN }}
+        source_ref: 'develop'
+        target_branch: 'main'
+        commit_message_template: '[Automated] Merged {source_ref} into {target_branch}'
