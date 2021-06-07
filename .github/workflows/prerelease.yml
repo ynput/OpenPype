@@ -9,6 +9,7 @@ on:
 jobs:
   create_nightly:
     runs-on: ubuntu-latest
+    if: github.actor != 'pypebot'
 
     steps:
     - name: 🚛 Checkout Code
