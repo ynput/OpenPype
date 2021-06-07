@@ -81,6 +81,7 @@ jobs:
         git commit -m "[Automated] Bump version"
         tag_name="CI/${{ steps.version.outputs.next_tag }}"
         git tag -a $tag_name -m "nightly build"
+        git remote set-url --push origin https://pypebot:${{ secrets.ADMIN_TOKEN }}@github.com/pypeclub/openpype
         git push
         git push origin $tag_name
 
