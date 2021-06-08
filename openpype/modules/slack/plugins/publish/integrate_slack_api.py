@@ -16,7 +16,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
 
         Message template can contain {} placeholders from anatomyData.
     """
-    order = pyblish.api.IntegratorOrder+0.499
+    order = pyblish.api.IntegratorOrder + 0.499
     label = "Integrate Slack Api"
     families = ["slack"]
 
@@ -44,7 +44,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         for channel in instance.data["slack_channel"]:
             try:
                 client = WebClient(token=instance.data["slack_token"])
-                _response = client.chat_postMessage(
+                _ = client.chat_postMessage(
                     channel=channel,
                     text=message
                 )

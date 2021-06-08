@@ -9,7 +9,7 @@ class CollectSlackFamilies(pyblish.api.InstancePlugin):
 
         Expects configured profile in
         Project settings > Slack > Publish plugins > Notification to Slack
-  
+
         Add Slack family to those instance that should be messaged to Slack
     """
     order = pyblish.api.CollectorOrder + 0.4999

@@ -22,5 +22,3 @@ class SlackIntegrationModule(PypeModule, IPluginPaths):
         return {
             "publish": [os.path.join(current_dir, "plugins", "publish")]
         }
-
-
