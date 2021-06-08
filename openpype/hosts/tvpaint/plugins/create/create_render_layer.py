@@ -122,7 +122,7 @@ class CreateRenderlayer(plugin.Creator):
 
         # Rename TVPaint group (keep color same)
         # - groups can't contain spaces
-        new_group_name = name.replace(" ", "_")
+        new_group_name = self.data["variant"].replace(" ", "_")
         rename_script = self.rename_script_template.format(
             clip_id=selected_group["clip_id"],
             group_id=selected_group["group_id"],

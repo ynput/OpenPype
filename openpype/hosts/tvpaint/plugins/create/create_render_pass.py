@@ -71,8 +71,10 @@ class CreateRenderPass(plugin.Creator):
         render_layer = beauty_instance["name"]
 
 
+        variant = self.data["variant"]
+
         self.data["group_id"] = group_id
-        self.data["pass"] = name
+        self.data["pass"] = variant
         self.data["render_layer"] = render_layer
 
         # Collect selected layer ids to be stored into instance
@@ -95,7 +97,7 @@ class CreateRenderPass(plugin.Creator):
             if (
                 instance["family"] == family
                 and instance["group_id"] == group_id
-                and instance["pass"] == name
+                and instance["pass"] == variant
             ):
                 existing_instance = instance
                 existing_instance_idx = idx
@@ -104,7 +106,7 @@ class CreateRenderPass(plugin.Creator):
         if existing_instance is not None:
             self.log.info(
                 f"Render pass instance for group id {group_id}"
-                f" and name \"{name}\" already exists, overriding."
+                f" and name \"{variant}\" already exists, overriding."
             )
             instances[existing_instance_idx] = self.data
         else:
