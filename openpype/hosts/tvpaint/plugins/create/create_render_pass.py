@@ -70,12 +70,6 @@ class CreateRenderPass(plugin.Creator):
 
         render_layer = beauty_instance["name"]
 
-        # Extract entered name
-        family = self.data["family"]
-        name = self.data["subset"]
-        # Is this right way how to get name?
-        name = name[len(family):]
-        self.log.info(f"Extracted name from subset name \"{name}\".")
 
         self.data["group_id"] = group_id
         self.data["pass"] = name

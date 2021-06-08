@@ -67,18 +67,6 @@ class CreateRenderlayer(plugin.Creator):
         self.log.debug(f"Selected group id is \"{group_id}\".")
         self.data["group_id"] = group_id
 
-        family = self.data["family"]
-        # Extract entered name
-        name = self.data["subset"][len(family):]
-        self.log.info(f"Extracted name from subset name \"{name}\".")
-        self.data["name"] = name
-
-        # Change subset name by template
-        subset_name = self.subset_template.format(**{
-            "family": self.family,
-            "name": name
-        })
-        self.log.info(f"New subset name \"{subset_name}\".")
         self.data["subset"] = subset_name
 
         # Check for instances of same group
