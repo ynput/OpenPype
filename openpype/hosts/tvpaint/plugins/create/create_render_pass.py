@@ -1,5 +1,6 @@
 from avalon.tvpaint import pipeline, lib
 from openpype.hosts.tvpaint.api import plugin
+from openpype.lib import prepare_template_data
 
 
 class CreateRenderPass(plugin.Creator):
@@ -68,7 +69,35 @@ class CreateRenderPass(plugin.Creator):
         if beauty_instance is None:
             raise AssertionError("Beauty pass does not exist yet.")
 
-        render_layer = beauty_instance["name"]
+        subset_name = self.data["subset"]
+
+        subset_name_fill_data = {}
+
+        layer_key = "{layer}"
+        if layer_key in subset_name.lower():
+            if len(selected_layers) != 1:
+                raise CreatorError((
+                    "Subset name expect to use layer name but"
+                    " multiple layers are selected."
+                ))
+            subset_name_fill_data["layer"] = selected_layers[0]["name"]
+
+        # Backwards compatibility
+        # - beauty may be created with older creator where variant was not
+        #   stored
+        if "variant" not in beauty_instance:
+            render_layer = beauty_instance["name"]
+        else:
+            render_layer = beauty_instance["variant"]
+
+        subset_name_fill_data["render_layer"] = render_layer
+
+        # Format dynamic keys in subset name
+        new_subset_name = subset_name.format(
+            **prepare_template_data(subset_name_fill_data)
+        )
+        self.data["subset"] = new_subset_name
+        self.log.info(f"New subset name is \"{new_subset_name}\".")
 
         # Set family back to "renderPass"
         family = self.family
@@ -83,15 +112,6 @@ class CreateRenderPass(plugin.Creator):
         # Collect selected layer ids to be stored into instance
         layer_names = [layer["name"] for layer in selected_layers]
         self.data["layer_names"] = layer_names
-
-        # Replace `beauty` in beauty's subset name with entered name
-        subset_name = self.subset_template.format(**{
-            "family": family,
-            "render_layer": render_layer,
-            "pass": name
-        })
-        self.data["subset"] = subset_name
-        self.log.info(f"New subset name is \"{subset_name}\".")
 
         # Check if same instance already exists
         existing_instance = None
