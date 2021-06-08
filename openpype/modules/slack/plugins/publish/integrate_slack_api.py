@@ -1,5 +1,10 @@
-from slack_sdk import WebClient
-from slack_sdk.errors import SlackApiError
+try:
+    from slackclient import SlackClient
+    python2 = True
+except ImportError:
+    python2 = False
+    from slack_sdk import WebClient
+    from slack_sdk.errors import SlackApiError
 
 import pyblish.api
 from openpype.lib.plugin_tools import prepare_template_data
@@ -30,7 +35,6 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             if not isinstance(value, str):
                 continue
             fill_pairs.add((key, value))
-        self.log.debug("fill_pairs:: {}".format(fill_pairs))
 
         message = message_templ.format(**prepare_template_data(fill_pairs))
 
@@ -42,13 +46,38 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             return
 
         for channel in instance.data["slack_channel"]:
-            try:
-                client = WebClient(token=instance.data["slack_token"])
-                _ = client.chat_postMessage(
-                    channel=channel,
-                    text=message
-                )
-            except SlackApiError as e:
-                # You will get a SlackApiError if "ok" is False
-                self.log.warning("Error happened {}".format(e.response[
-                    "error"]))
+            if python2:
+                self._python2_call(instance.data["slack_token"],
+                                   channel,
+                                   message)
+            else:
+                self._python3_call(instance.data["slack_token"],
+                                   channel,
+                                   message)
+
+    def _python2_call(self, token, channel, message):
+        try:
+            client = SlackClient(token)
+            response = client.api_call(
+                "chat.postMessage",
+                channel=channel,
+                text=message
+            )
+            if response.get("error"):
+                self.log.warning("Error happened: {}".format(
+                    response.get("error")))
+        except Exception as e:
+            # You will get a SlackApiError if "ok" is False
+            self.log.warning("Error happened: {}".format(str(e)))
+
+    def _python3_call(self, token, channel, message):
+        try:
+            client = WebClient(token=token)
+            _ = client.chat_postMessage(
+                channel=channel,
+                text=message
+            )
+        except SlackApiError as e:
+            # You will get a SlackApiError if "ok" is False
+            self.log.warning("Error happened {}".format(e.response[
+                                                            "error"]))

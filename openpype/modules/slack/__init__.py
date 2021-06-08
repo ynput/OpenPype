@@ -1,7 +1,9 @@
 from .slack_module import (
-    SlackIntegrationModule
+    SlackIntegrationModule,
+    SLACK_MODULE_DIR
 )
 
 __all__ = (
-    "SlackIntegrationModule"
+    "SlackIntegrationModule",
+    "SLACK_MODULE_DIR"
 )
