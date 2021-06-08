@@ -97,6 +97,7 @@ def prepare_template_data(fill_pairs):
 
     """
     fill_data = {}
+    regex = re.compile(r"[a-zA-Z0-9]")
     for key, value in dict(fill_pairs).items():
         # Handle cases when value is `None` (standalone publisher)
         if value is None:
@@ -108,13 +109,18 @@ def prepare_template_data(fill_pairs):
 
         # Capitalize only first char of value
         # - conditions are because of possible index errors
+        # - regex is to skip symbols that are not chars or numbers
+        #   - e.g. "{key}" which starts with curly bracket
         capitalized = ""
-        if value:
-            # Upper first character
-            capitalized += value[0].upper()
-            # Append rest of string if there is any
-            if len(value) > 1:
-                capitalized += value[1:]
+        for idx in range(len(value or "")):
+            char = value[idx]
+            if not regex.match(char):
+                capitalized += char
+            else:
+                capitalized += char.upper()
+                capitalized += value[idx + 1:]
+                break
+
         fill_data[key.capitalize()] = capitalized
 
     return fill_data
