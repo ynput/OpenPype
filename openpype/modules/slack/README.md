@@ -44,3 +44,6 @@ Only keys available in 'anatomyData' are currently implemented.
 
 Example of message content:
 ```{SUBSET} for {Asset} was published.```
+
+Integration can upload 'thumbnail' file (if present in instance), for that bot must be 
+manually added to target channel by Slack admin!

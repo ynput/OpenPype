@@ -53,3 +53,6 @@ Message could be delivered to one or multiple channels, by default app allows Sl
 to send messages to 'public' channels (eg. bot doesn't need to join the channel first).
 
 ![Configure module](assets/slack_system.png)
+
+Integration can upload 'thumbnail' file (if present in instance), for that bot must be 
+manually added to target channel by Slack admin!
