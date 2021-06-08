@@ -1,3 +1,4 @@
+from avalon.api import CreatorError
 from avalon.tvpaint import pipeline, lib
 from openpype.hosts.tvpaint.api import plugin
 from openpype.lib import prepare_template_data
@@ -15,7 +16,6 @@ class CreateRenderPass(plugin.Creator):
     icon = "cube"
     defaults = ["Main"]
 
-    subset_template = "{family}_{render_layer}_{pass}"
     dynamic_subset_keys = ["render_pass", "render_layer", "layer"]
 
     @classmethod
@@ -46,11 +46,11 @@ class CreateRenderPass(plugin.Creator):
 
         # Raise if nothing is selected
         if not selected_layers:
-            raise AssertionError("Nothing is selected.")
+            raise CreatorError("Nothing is selected.")
 
         # Raise if layers from multiple groups are selected
         if len(group_ids) != 1:
-            raise AssertionError("More than one group is in selection.")
+            raise CreatorError("More than one group is in selection.")
 
         group_id = tuple(group_ids)[0]
         self.log.debug(f"Selected group id is \"{group_id}\".")
@@ -67,7 +67,7 @@ class CreateRenderPass(plugin.Creator):
 
         # Beauty is required for this creator so raise if was not found
         if beauty_instance is None:
-            raise AssertionError("Beauty pass does not exist yet.")
+            raise CreatorError("Beauty pass does not exist yet.")
 
         subset_name = self.data["subset"]
 

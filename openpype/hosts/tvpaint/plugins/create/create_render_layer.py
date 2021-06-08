@@ -1,3 +1,4 @@
+from avalon.api import CreatorError
 from avalon.tvpaint import pipeline, lib
 from openpype.hosts.tvpaint.api import plugin
 from openpype.lib import prepare_template_data
@@ -51,16 +52,16 @@ class CreateRenderlayer(plugin.Creator):
 
         # Raise if there is no selection
         if not group_ids:
-            raise AssertionError("Nothing is selected.")
+            raise CreatorError("Nothing is selected.")
 
         # This creator should run only on one group
         if len(group_ids) > 1:
-            raise AssertionError("More than one group is in selection.")
+            raise CreatorError("More than one group is in selection.")
 
         group_id = tuple(group_ids)[0]
         # If group id is `0` it is `default` group which is invalid
         if group_id == 0:
-            raise AssertionError(
+            raise CreatorError(
                 "Selection is not in group. Can't mark selection as Beauty."
             )
 
