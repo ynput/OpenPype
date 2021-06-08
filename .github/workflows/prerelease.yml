@@ -1,15 +1,12 @@
 name: Nightly Prerelease
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 
 jobs:
   create_nightly:
     runs-on: ubuntu-latest
-    if: github.actor != 'pypebot'
 
     steps:
     - name: 🚛 Checkout Code
