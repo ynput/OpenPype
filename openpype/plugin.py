@@ -16,6 +16,8 @@ class PypeCreatorMixin:
 
     Mixin class must be used as first in inheritance order to override methods.
     """
+    dynamic_subset_keys = []
+
 
     @classmethod
     def get_subset_name(
