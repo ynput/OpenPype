@@ -6,7 +6,8 @@ from pprint import pformat
 class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
     """ Validating if editorial's asset names are not already created in db.
 
-    Checking variations of names with different size of caps or with or without underscores.
+    Checking variations of names with different size of caps or with
+    or without underscores.
     """
 
     order = pyblish.api.ValidatorOrder
@@ -71,8 +72,6 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
                 raise Exception(
                     "Some already existing asset name variants `{}`".format(
                         wrong_names))
-
-
 
         if assets_wrong_parent:
             self.log.debug(
