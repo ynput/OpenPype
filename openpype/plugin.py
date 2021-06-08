@@ -18,6 +18,14 @@ class PypeCreatorMixin:
     """
     dynamic_subset_keys = []
 
+    @classmethod
+    def get_dynamic_data(
+        cls, variant, task_name, asset_id, project_name, host_name
+    ):
+        dynamic_data = {}
+        for key in cls.dynamic_subset_keys:
+            dynamic_data[key] = "{" + key + "}"
+        return dynamic_data
 
     @classmethod
     def get_subset_name(
