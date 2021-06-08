@@ -8,6 +8,7 @@ on:
 jobs:
   create_release:
     runs-on: ubuntu-latest
+    if: github.actor != 'pypebot'
 
     steps:
     - name: 🚛 Checkout Code
