@@ -5,7 +5,11 @@
     "collapsible": true,
     "is_file": true,
     "children": [
-
+        {
+            "type": "text",
+            "key": "token",
+            "label": "Auth Token"
+        },
         {
             "type": "dict",
             "collapsible": true,
@@ -31,11 +35,6 @@
                             "type": "boolean",
                             "key": "optional",
                             "label": "Optional"
-                        },
-                        {
-                            "type": "text",
-                            "key": "token",
-                            "label": "Auth Token"
                         },
                         {
                             "type": "list",

@@ -34,20 +34,27 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
     def process(self, instance):
         message_templ = instance.data["slack_message"]
 
-        fill_pairs = set()
-        for key, value in instance.data["anatomyData"].items():
-            if not isinstance(value, str):
-                continue
-            fill_pairs.add((key, value))
-
-        message = message_templ.format(**prepare_template_data(fill_pairs))
+        fill_pairs = (
+            ("project_name", instance.data["anatomyData"]["project"]["name"]),
+            ("project_code", instance.data["anatomyData"]["project"]["code"]),
+            ("asset", instance.data["anatomyData"]["asset"]),
+            ("subset", instance.data["anatomyData"]["subset"]),
+            ("task", instance.data["anatomyData"]["task"]),
+            ("username", instance.data["anatomyData"]["username"]),
+            ("app", instance.data["anatomyData"]["app"]),
+            ("family", instance.data["anatomyData"]["family"]),
+            ("version", str(instance.data["anatomyData"]["version"])),
+        )
+        message = None
+        try:
+            message = message_templ.format(
+                **prepare_template_data(fill_pairs))
+        except Exception:
+            self.log.warning(
+                "Some keys are missing in {}".format(message_templ),
+                exc_info=True)
 
         self.log.debug("message:: {}".format(message))
-        if '{' in message:
-            self.log.warning(
-                "Missing values to fill message properly {}".format(message))
-
-            return
 
         published_path = self._get_thumbnail_path(instance)
 

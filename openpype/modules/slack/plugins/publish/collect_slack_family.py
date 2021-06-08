@@ -26,7 +26,7 @@ class CollectSlackFamilies(pyblish.api.InstancePlugin):
             "tasks": task_name,
             "hosts": instance.data["anatomyData"]["app"],
         }
-        self.log.debug("key_values {}".format(key_values))
+
         profile = filter_profiles(self.profiles, key_values,
                                   logger=self.log)
 
@@ -43,8 +43,6 @@ class CollectSlackFamilies(pyblish.api.InstancePlugin):
 
             slack_token = (instance.context.data["project_settings"]
                                                 ["slack"]
-                                                ["publish"]
-                                                ["CollectSlackFamilies"]
                                                 ["token"])
             instance.data["slack_token"] = slack_token
 

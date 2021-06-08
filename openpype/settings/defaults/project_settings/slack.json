@@ -1,9 +1,9 @@
 {
+    "token": "",
     "publish": {
         "CollectSlackFamilies": {
             "enabled": true,
             "optional": true,
-            "token": "",
             "profiles": [
                 {
                     "families": [],
