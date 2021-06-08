@@ -119,19 +119,23 @@ class CollectInstances(pyblish.api.ContextPlugin):
         name = instance_data["name"]
         # Change label
         subset_name = instance_data["subset"]
-        instance_data["label"] = "{}_Beauty".format(name)
 
-        # Change subset name
-        # Final family of an instance will be `render`
-        new_family = "render"
-        task_name = io.Session["AVALON_TASK"]
-        new_subset_name = "{}{}_{}_Beauty".format(
-            new_family, task_name.capitalize(), name
-        )
-        instance_data["subset"] = new_subset_name
-        self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
-            subset_name, new_subset_name
-        ))
+        # Backwards compatibility
+        # - subset names were not stored as final subset names during creation
+        if "variant" not in instance_data:
+            instance_data["label"] = "{}_Beauty".format(name)
+
+            # Change subset name
+            # Final family of an instance will be `render`
+            new_family = "render"
+            task_name = io.Session["AVALON_TASK"]
+            new_subset_name = "{}{}_{}_Beauty".format(
+                new_family, task_name.capitalize(), name
+            )
+            instance_data["subset"] = new_subset_name
+            self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
+                subset_name, new_subset_name
+            ))
 
         # Get all layers for the layer
         layers_data = context.data["layersData"]
@@ -165,18 +169,21 @@ class CollectInstances(pyblish.api.ContextPlugin):
         render_layer = instance_data["render_layer"]
         instance_data["label"] = "{}_{}".format(render_layer, pass_name)
 
-        # Change subset name
-        # Final family of an instance will be `render`
-        new_family = "render"
-        old_subset_name = instance_data["subset"]
-        task_name = io.Session["AVALON_TASK"]
-        new_subset_name = "{}{}_{}_{}".format(
-            new_family, task_name.capitalize(), render_layer, pass_name
-        )
-        instance_data["subset"] = new_subset_name
-        self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
-            old_subset_name, new_subset_name
-        ))
+        # Backwards compatibility
+        # - subset names were not stored as final subset names during creation
+        if "variant" not in instance_data:
+            # Change subset name
+            # Final family of an instance will be `render`
+            new_family = "render"
+            old_subset_name = instance_data["subset"]
+            task_name = io.Session["AVALON_TASK"]
+            new_subset_name = "{}{}_{}_{}".format(
+                new_family, task_name.capitalize(), render_layer, pass_name
+            )
+            instance_data["subset"] = new_subset_name
+            self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
+                old_subset_name, new_subset_name
+            ))
 
         layers_data = context.data["layersData"]
         layers_by_name = {
