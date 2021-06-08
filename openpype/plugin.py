@@ -31,8 +31,18 @@ class PypeCreatorMixin:
     def get_subset_name(
         cls, variant, task_name, asset_id, project_name, host_name=None
     ):
+        dynamic_data = cls.get_dynamic_data(
+            variant, task_name, asset_id, project_name, host_name
+        )
+
         return get_subset_name(
-            cls.family, variant, task_name, asset_id, project_name, host_name
+            cls.family,
+            variant,
+            task_name,
+            asset_id,
+            project_name,
+            host_name,
+            dynamic_data=dynamic_data
         )
 
 
