@@ -11,12 +11,31 @@ class CreateRenderlayer(plugin.Creator):
     defaults = ["Main"]
 
     rename_group = True
+    render_pass = "beauty"
 
     subset_template = "{family}_{name}"
     rename_script_template = (
         "tv_layercolor \"setcolor\""
         " {clip_id} {group_id} {r} {g} {b} \"{name}\""
     )
+
+    dynamic_subset_keys = ["render_pass", "render_layer", "group"]
+
+    @classmethod
+    def get_dynamic_data(
+        cls, variant, task_name, asset_id, project_name, host_name
+    ):
+        dynamic_data = super(CreateRenderlayer, cls).get_dynamic_data(
+            variant, task_name, asset_id, project_name, host_name
+        )
+        # Use render pass name from creator's plugin
+        dynamic_data["render_pass"] = cls.render_pass
+        # Add variant to render layer
+        dynamic_data["render_layer"] = variant
+        # Change family for subset name fill
+        dynamic_data["family"] = "render"
+
+        return dynamic_data
 
     def process(self):
         self.log.debug("Query data from workfile.")
