@@ -1,4 +1,4 @@
-name: Nightly Merge
+name: Merge Develop to Main
 
 on:
   schedule:
@@ -21,3 +21,9 @@ jobs:
         source_ref: 'develop'
         target_branch: 'main'
         commit_message_template: '[Automated] Merged {source_ref} into {target_branch}'
+
+    - name: Invoke pre-release workflow
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: Nightly Prerelease
+        token: ${{ secrets.ADMIN_TOKEN }}
