@@ -91,7 +91,7 @@ def prepare_template_data(fill_pairs):
 
     """
     fill_data = {}
-    for key, value in fill_pairs:
+    for key, value in dict(fill_pairs).items():
         # Handle cases when value is `None` (standalone publisher)
         if value is None:
             continue
