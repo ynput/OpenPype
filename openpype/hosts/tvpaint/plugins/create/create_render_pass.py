@@ -15,6 +15,19 @@ class CreateRenderPass(plugin.Creator):
     defaults = ["Main"]
 
     subset_template = "{family}_{render_layer}_{pass}"
+    dynamic_subset_keys = ["render_pass", "render_layer", "layer"]
+
+    @classmethod
+    def get_dynamic_data(
+        cls, variant, task_name, asset_id, project_name, host_name
+    ):
+        dynamic_data = super(CreateRenderPass, cls).get_dynamic_data(
+            variant, task_name, asset_id, project_name, host_name
+        )
+        dynamic_data["render_pass"] = variant
+        dynamic_data["family"] = "render"
+
+        return dynamic_data
 
     def process(self):
         self.log.debug("Query data from workfile.")
