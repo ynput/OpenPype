@@ -198,8 +198,13 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                     "step": 1,
                     "fps": self.context.data.get("fps"),
                     "name": "review",
-                    "tags": ["review", "ftrackreview", "delete"],
+                    "tags": ["review", "ftrackreview"],
                 })
+
+            if (instance_data.get("doNotDeleteReview") is not None) \
+                    and repre_data.get("tags"):
+                repre_data["tags"].append("delete")
+
             instance_data["representations"].append(repre_data)
 
             # add to frames for frame range reset
