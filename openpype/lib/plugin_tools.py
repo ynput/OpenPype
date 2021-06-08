@@ -34,7 +34,8 @@ def get_subset_name(
     asset_id,
     project_name=None,
     host_name=None,
-    default_template=None
+    default_template=None,
+    dynamic_data=None
 ):
     if not family:
         return ""
@@ -68,11 +69,16 @@ def get_subset_name(
     if not task_name and "{task" in template.lower():
         raise TaskNotSetError()
 
-    fill_pairs = (
-        ("variant", variant),
-        ("family", family),
-        ("task", task_name)
-    )
+    fill_pairs = {
+        "variant": variant,
+        "family": family,
+        "task": task_name
+    }
+    if dynamic_data:
+        # Dynamic data may override default values
+        for key, value in dynamic_data.items():
+            fill_pairs[key] = value
+
     return template.format(**prepare_template_data(fill_pairs))
 
 
