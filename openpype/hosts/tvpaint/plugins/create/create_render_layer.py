@@ -1,5 +1,6 @@
 from avalon.tvpaint import pipeline, lib
 from openpype.hosts.tvpaint.api import plugin
+from openpype.lib import prepare_template_data
 
 
 class CreateRenderlayer(plugin.Creator):
@@ -13,7 +14,6 @@ class CreateRenderlayer(plugin.Creator):
     rename_group = True
     render_pass = "beauty"
 
-    subset_template = "{family}_{name}"
     rename_script_template = (
         "tv_layercolor \"setcolor\""
         " {clip_id} {group_id} {r} {g} {b} \"{name}\""
@@ -67,10 +67,30 @@ class CreateRenderlayer(plugin.Creator):
         self.log.debug(f"Selected group id is \"{group_id}\".")
         self.data["group_id"] = group_id
 
+        group_data = lib.groups_data()
+        group_name = None
+        for group in group_data:
+            if group["group_id"] == group_id:
+                group_name = group["name"]
+                break
+
+        if group_name is None:
+            raise AssertionError(
+                "Couldn't find group by id \"{}\"".format(group_id)
+            )
+
+        subset_name_fill_data = {
+            "group": group_name
+        }
 
         # Set family back to "renderLayer"
         family = self.family
         self.data["family"] = family
+
+        # Fill dynamic key 'group'
+        subset_name = self.data["subset"].format(
+            **prepare_template_data(subset_name_fill_data)
+        )
         self.data["subset"] = subset_name
 
         # Check for instances of same group
