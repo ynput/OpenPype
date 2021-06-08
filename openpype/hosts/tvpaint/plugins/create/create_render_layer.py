@@ -67,6 +67,10 @@ class CreateRenderlayer(plugin.Creator):
         self.log.debug(f"Selected group id is \"{group_id}\".")
         self.data["group_id"] = group_id
 
+
+        # Set family back to "renderLayer"
+        family = self.family
+        self.data["family"] = family
         self.data["subset"] = subset_name
 
         # Check for instances of same group

@@ -70,6 +70,9 @@ class CreateRenderPass(plugin.Creator):
 
         render_layer = beauty_instance["name"]
 
+        # Set family back to "renderPass"
+        family = self.family
+        self.data["family"] = family
 
         variant = self.data["variant"]
 
