@@ -57,3 +57,18 @@ to send messages to 'public' channels (eg. bot doesn't need to join the channel 
 Integration can upload 'thumbnail' file (if present in instance), for that bot must be 
 manually added to target channel by Slack admin!
 (In target channel write: ```/invite @OpenPypeNotifier``)
+
+### Message
+Message content can use Templating (see https://openpype.io/docs/admin_settings_project_anatomy/#available-template-keys).
+
+Pre selected set of keys could be used in lowercase, Capitalized or UPPERCASE format, values will be modified accordingly.
+({Asset} >> "Asset", {FAMILY} >> "RENDER")
+
+**Available keys:**
+- asset
+- subset
+- task
+- username
+- app
+- family
+- version
