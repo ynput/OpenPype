@@ -4,7 +4,7 @@ import tempfile
 import pyblish.api
 from copy import deepcopy
 import clique
-
+from pprint import pformat
 
 class CollectInstanceResources(pyblish.api.InstancePlugin):
     """Collect instance's resources"""
@@ -142,6 +142,8 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
 
         # create all instances in self.new_instances into context
         for new_instance in self.new_instances:
+            self.log.debug(">> New instance.data: {}".format(
+                pformat(new_instance)))
             _new_instance = self.context.create_instance(
                 new_instance["name"])
             _new_instance.data.update(new_instance)
@@ -190,6 +192,10 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                 "stagingDir": staging_dir
             }
 
+            if instance_data.get("keepSequence"):
+                repre_data_keep = deepcopy(repre_data)
+                instance_data["representations"].append(repre_data_keep)
+
             if "review" in instance_data["families"]:
                 repre_data.update({
                     "thumbnail": True,
@@ -198,14 +204,11 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
                     "step": 1,
                     "fps": self.context.data.get("fps"),
                     "name": "review",
-                    "tags": ["review", "ftrackreview"],
+                    "tags": ["review", "ftrackreview", "delete"],
                 })
 
-            if (instance_data.get("doNotDeleteReview") is not None) \
-                    and repre_data.get("tags"):
-                repre_data["tags"].append("delete")
-
             instance_data["representations"].append(repre_data)
+
 
             # add to frames for frame range reset
             frames.append(frame_start)
