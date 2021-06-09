@@ -26,7 +26,7 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         message_templ = instance.data["slack_message"]
 
         fill_data = copy.deepcopy(instance.context.data["anatomyData"])
-        self.log.debug("fill_data {}".format(fill_data))
+
         fill_pairs = (
             ("asset", fill_data["asset"]),
             ("subset", fill_data.get("subset", instance.data["subset"])),
@@ -36,10 +36,9 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             ("family", fill_data.get("family", instance.data["family"])),
             ("version", str(fill_data.get("version"))),
         )
-        self.log.debug("fill_pairs {}".format(fill_pairs))
+
         multiple_case_variants = prepare_template_data(fill_pairs)
         fill_data.update(multiple_case_variants)
-        self.log.debug("fill_data upd {}".format(fill_data))
 
         try:
             message = message_templ.format(**fill_data)
@@ -67,7 +66,6 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         """Returns abs url for thumbnail if present in instance repres"""
         published_path = None
         for repre in instance.data['representations']:
-            self.log.debug("repre ::{}".format(repre))
             if repre.get('thumbnail') or "thumbnail" in repre.get('tags', []):
                 repre_files = repre["files"]
                 if isinstance(repre_files, (tuple, list, set)):
