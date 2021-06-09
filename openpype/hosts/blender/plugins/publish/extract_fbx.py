@@ -21,8 +21,6 @@ class ExtractFBX(api.Extractor):
         filename = f"{instance.name}.fbx"
         filepath = os.path.join(stagingdir, filename)
 
-        scene = bpy.context.scene
-
         # Perform extraction
         self.log.info("Performing extraction..")
 
@@ -41,12 +39,16 @@ class ExtractFBX(api.Extractor):
             active=asset_group, selected=selected)
 
         new_materials = []
+        new_materials_objs = []
+        objects = list(asset_group.children)
 
-        for obj in collections[0].all_objects:
-            if obj.type == 'MESH':
+        for obj in objects:
+            objects.extend(obj.children)
+            if obj.type == 'MESH' and len(obj.data.materials) == 0:
                 mat = bpy.data.materials.new(obj.name)
                 obj.data.materials.append(mat)
                 new_materials.append(mat)
+                new_materials_objs.append(obj)
 
         # We export the fbx
         bpy.ops.export_scene.fbx(
@@ -63,9 +65,8 @@ class ExtractFBX(api.Extractor):
         for mat in new_materials:
             bpy.data.materials.remove(mat)
 
-        for obj in collections[0].all_objects:
-            if obj.type == 'MESH':
-                obj.data.materials.pop()
+        for obj in new_materials_objs:
+            obj.data.materials.pop()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
