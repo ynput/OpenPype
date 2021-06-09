@@ -1,37 +1,51 @@
+# -*- coding: utf-8 -*-
+"""Unreal launching and project tools."""
 import sys
 import os
 import platform
 import json
-from distutils import dir_util
+from collections import OrderedDict
+import re
 import subprocess
+
+from distutils import dir_util
 from pype.api import config
 
 
-def get_engine_versions():
-    """
+def get_engine_versions(env=None):
+    """Detect Unreal Engine versions.
+
     This will try to detect location and versions of installed Unreal Engine.
     Location can be overridden by `UNREAL_ENGINE_LOCATION` environment
     variable.
 
-    Returns:
+    Args:
+        env (dict, optional): Environment to use.
 
-        dict: dictionary with version as a key and dir as value.
+    Returns:
+        OrderedDict: dictionary with version as a key and dir as value.
+            so the highest version is first.
 
     Example:
-
         >>> get_engine_version()
         {
             "4.23": "C:/Epic Games/UE_4.23",
             "4.24": "C:/Epic Games/UE_4.24"
         }
+
     """
+    env = env or os.environ
+    print("--- {}".format(env["UNREAL_ENGINE_LOCATION"]))
     try:
         engine_locations = {}
-        root, dirs, files = next(os.walk(os.environ["UNREAL_ENGINE_LOCATION"]))
+        root, dirs, files = next(os.walk(env["UNREAL_ENGINE_LOCATION"]))
 
         for dir in dirs:
-            if dir.startswith("UE_"):
-                ver = dir.split("_")[1]
+            if dir.startswith("UE"):
+                try:
+                    ver = re.split("-|_", dir)[1]
+                except IndexError:
+                    continue
                 engine_locations[ver] = os.path.join(root, dir)
     except KeyError:
         # environment variable not set
@@ -42,30 +56,38 @@ def get_engine_versions():
 
     # if we've got something, terminate autodetection process
     if engine_locations:
-        return engine_locations
+        return OrderedDict(sorted(engine_locations.items()))
 
     # else kick in platform specific detection
     if platform.system().lower() == "windows":
-        return _win_get_engine_versions()
+        return OrderedDict(sorted(_win_get_engine_versions(env).items()))
     elif platform.system().lower() == "linux":
         # on linux, there is no installation and getting Unreal Engine involves
         # git clone. So we'll probably depend on `UNREAL_ENGINE_LOCATION`.
         pass
     elif platform.system().lower() == "darwin":
-        return _darwin_get_engine_version()
+        return OrderedDict(sorted(_darwin_get_engine_version(env).items()))
 
-    return {}
+    return OrderedDict()
 
 
-def _win_get_engine_versions():
-    """
+def _win_get_engine_versions(env):
+    """Get Unreal Engine versions on Windows.
+
     If engines are installed via Epic Games Launcher then there is:
     `%PROGRAMDATA%/Epic/UnrealEngineLauncher/LauncherInstalled.dat`
     This file is JSON file listing installed stuff, Unreal engines
     are marked with `"AppName" = "UE_X.XX"`` like `UE_4.24`
+
+    Args:
+        env (dict, optional): Environment to use.
+
+    Returns:
+        dict: version as a key and path as a value.
+
     """
     install_json_path = os.path.join(
-        os.environ.get("PROGRAMDATA"),
+        env.get("PROGRAMDATA"),
         "Epic",
         "UnrealEngineLauncher",
         "LauncherInstalled.dat",
@@ -74,12 +96,23 @@ def _win_get_engine_versions():
     return _parse_launcher_locations(install_json_path)
 
 
-def _darwin_get_engine_version() -> dict:
-    """
+def _darwin_get_engine_version(env) -> dict:
+    """Get Unreal Engine versions on MacOS.
+
     It works the same as on Windows, just JSON file location is different.
+
+    Args:
+        env (dict, optional): Environment to use.
+
+    Returns:
+        dict: version as a key and path as a value.
+
+    See Aslo:
+        :func:`_win_get_engine_versions`.
+
     """
     install_json_path = os.path.join(
-        os.environ.get("HOME"),
+        env.get("HOME"),
         "Library",
         "Application Support",
         "Epic",
@@ -91,14 +124,15 @@ def _darwin_get_engine_version() -> dict:
 
 
 def _parse_launcher_locations(install_json_path: str) -> dict:
-    """
-    This will parse locations from json file.
+    """This will parse locations from json file.
 
-    :param install_json_path: path to `LauncherInstalled.dat`
-    :type install_json_path: str
-    :returns: returns dict with unreal engine versions as keys and
-              paths to those engine installations as value.
-    :rtype: dict
+    Args:
+        install_json_path (str): Path to `LauncherInstalled.dat`.
+
+    Returns:
+        dict: with unreal engine versions as keys and
+            paths to those engine installations as value.
+
     """
     engine_locations = {}
     if os.path.isfile(install_json_path):
@@ -123,36 +157,38 @@ def create_unreal_project(project_name: str,
                           ue_version: str,
                           pr_dir: str,
                           engine_path: str,
-                          dev_mode: bool = False) -> None:
-    """
-    This will create `.uproject` file at specified location. As there is no
-    way I know to create project via command line, this is easiest option.
-    Unreal project file is basically JSON file. If we find
+                          dev_mode: bool = False,
+                          env: dict = None) -> None:
+    """This will create `.uproject` file at specified location.
+
+    As there is no way I know to create project via command line, this is
+    easiest option. Unreal project file is basically JSON file. If we find
     `AVALON_UNREAL_PLUGIN` environment variable we assume this is location
     of Avalon Integration Plugin and we copy its content to project folder
     and enable this plugin.
 
-    :param project_name: project name
-    :type project_name: str
-    :param ue_version: unreal engine version (like 4.23)
-    :type ue_version: str
-    :param pr_dir: path to directory where project will be created
-    :type pr_dir: str
-    :param engine_path: Path to Unreal Engine installation
-    :type engine_path: str
-    :param dev_mode: Flag to trigger C++ style Unreal project needing
-                     Visual Studio and other tools to compile plugins from
-                     sources. This will trigger automatically if `Binaries`
-                     directory is not found in plugin folders as this indicates
-                     this is only source distribution of the plugin. Dev mode
-                     is also set by preset file `unreal/project_setup.json` in
-                     **PYPE_CONFIG**.
-    :type dev_mode: bool
-    :returns: None
+    Args:
+        project name (str): Name of the project.
+        ue_version (str): Unreal engine version (like 4.23).
+        pr_dir (str): Path to directory where project will be created.
+        engine_path (str): Path to Unreal Engine installation.
+        dev_mode (bool, optional): Flag to trigger C++ style Unreal project
+            needing Visual Studio and other tools to compile plugins from
+            sources. This will trigger automatically if `Binaries`
+            directory is not found in plugin folders as this indicates
+            this is only source distribution of the plugin. Dev mode
+            is also set by preset file `unreal/project_setup.json` in
+            **PYPE_CONFIG**.
+        env (dict, optional): Environment to use. If not set, `os.environ`.
+
+    Returns:
+        None
+
     """
+    env = env or os.environ
     preset = config.get_presets()["unreal"]["project_setup"]
 
-    if os.path.isdir(os.environ.get("AVALON_UNREAL_PLUGIN", "")):
+    if os.path.isdir(env.get("AVALON_UNREAL_PLUGIN", "")):
         # copy plugin to correct path under project
         plugins_path = os.path.join(pr_dir, "Plugins")
         avalon_plugin_path = os.path.join(plugins_path, "Avalon")
@@ -185,12 +221,12 @@ def create_unreal_project(project_name: str,
         # Otherwise clone UnrealEnginePython to Plugins directory
         # https://github.com/20tab/UnrealEnginePython.git
         uep_path = os.path.join(plugins_path, "UnrealEnginePython")
-        if os.environ.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
+        if env.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
 
             os.makedirs(uep_path, exist_ok=True)
             dir_util._path_created = {}
             dir_util.copy_tree(
-                os.environ.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
+                env.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
                 uep_path)
         else:
             # WARNING: this will trigger dev_mode, because we need to compile
@@ -247,11 +283,25 @@ def create_unreal_project(project_name: str,
         json.dump(data, pf, indent=4)
 
     # ensure we have PySide installed in engine
-    # TODO: make it work for other platforms 🍎 🐧
-    if platform.system().lower() == "windows":
-        python_path = os.path.join(engine_path, "Engine", "Binaries",
-                                   "ThirdParty", "Python", "Win64",
-                                   "python.exe")
+    # this won't work probably as pyside is no longer on pypi
+    # DEPRECATED: support for python 2 in UE4 is dropped.
+    if int(ue_version.split(".")[0]) == 4 and \
+            int(ue_version.split(".")[1] < 25):
+        if platform.system().lower() == "windows":
+            python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                       "ThirdParty", "Python", "Win64",
+                                       "python.exe")
+
+        if platform.system().lower() == "linux":
+            python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                       "ThirdParty", "Python", "Linux",
+                                       "bin", "python")
+
+        if platform.system().lower() == "darwin":
+            python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                       "ThirdParty", "Python", "Mac",
+                                       "bin", "python")
+
 
         subprocess.run([python_path, "-m",
                         "pip", "install", "pyside"])
@@ -261,7 +311,8 @@ def create_unreal_project(project_name: str,
 
 
 def _prepare_cpp_project(project_file: str, engine_path: str) -> None:
-    """
+    """Prepare CPP Unreal Project.
+
     This function will add source files needed for project to be
     rebuild along with the avalon integration plugin.
 
@@ -270,12 +321,12 @@ def _prepare_cpp_project(project_file: str, engine_path: str) -> None:
     by some generator. This needs more research as manually writing
     those files is rather hackish. :skull_and_crossbones:
 
-    :param project_file: path to .uproject file
-    :type project_file: str
-    :param engine_path: path to unreal engine associated with project
-    :type engine_path: str
-    """
 
+    Args:
+        project_file (str): Path to .uproject file.
+        engine_path (str): Path to unreal engine associated with project.
+
+    """
     project_name = os.path.splitext(os.path.basename(project_file))[0]
     project_dir = os.path.dirname(project_file)
     targets_dir = os.path.join(project_dir, "Source")
@@ -385,19 +436,19 @@ class {1}_API A{0}GameModeBase : public AGameModeBase
             sources_dir, f"{project_name}GameModeBase.h"), mode="w") as f:
         f.write(game_mode_h)
 
+    u_build_tool = (f"{engine_path}/Engine/Binaries/DotNET/"
+                    "UnrealBuildTool.exe")
+
     if platform.system().lower() == "windows":
-        u_build_tool = (f"{engine_path}/Engine/Binaries/DotNET/"
-                        "UnrealBuildTool.exe")
         u_header_tool = (f"{engine_path}/Engine/Binaries/Win64/"
                          f"UnrealHeaderTool.exe")
     elif platform.system().lower() == "linux":
-        # WARNING: there is no UnrealBuildTool on linux?
-        u_build_tool = ""
-        u_header_tool = ""
+        u_header_tool = (f"{engine_path}/Engine/Binaries/Linux/"
+                         f"UnrealHeaderTool")
     elif platform.system().lower() == "darwin":
-        # WARNING: there is no UnrealBuildTool on Mac?
-        u_build_tool = ""
-        u_header_tool = ""
+        # we need to test this out
+        u_header_tool = (f"{engine_path}/Engine/Binaries/Mac/"
+                         f"UnrealHeaderTool")
 
     u_build_tool = u_build_tool.replace("\\", "/")
     u_header_tool = u_header_tool.replace("\\", "/")
