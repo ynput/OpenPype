@@ -64,10 +64,6 @@
                 {
                     "key": "ValidateScript",
                     "label": "Validate script settings"
-                },
-                {
-                    "key": "ValidateNukeWriteBoundingBox",
-                    "label": "Validate and Write Bounding Box"
                 }
             ]
         },

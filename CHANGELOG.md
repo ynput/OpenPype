@@ -1,15 +1,17 @@
 # Changelog
 
-## [3.1.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.1.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.0.0...HEAD)
 
 #### 🚀 Enhancements
 
+- Nuke - Publish simplification [\#1653](https://github.com/pypeclub/OpenPype/pull/1653)
 - \#1333 - added tooltip hints to Pyblish buttons [\#1649](https://github.com/pypeclub/OpenPype/pull/1649)
 
 #### 🐛 Bug fixes
 
+- Mac launch arguments fix [\#1660](https://github.com/pypeclub/OpenPype/pull/1660)
 - Fix missing dbm python module [\#1652](https://github.com/pypeclub/OpenPype/pull/1652)
 - Transparent branches in view on Mac [\#1648](https://github.com/pypeclub/OpenPype/pull/1648)
 - Add asset on task item [\#1646](https://github.com/pypeclub/OpenPype/pull/1646)
