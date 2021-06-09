@@ -83,19 +83,22 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         from slackclient import SlackClient
         try:
             client = SlackClient(token)
-            if not published_path:
+            if published_path and os.path.exists(published_path):
+                with open(published_path, 'rb') as pf:
+                    response = client.api_call(
+                        "files.upload",
+                        channels=channel,
+                        initial_comment=message,
+                        file=pf,
+                        title=os.path.basename(published_path)
+                    )
+            else:
                 response = client.api_call(
                     "chat.postMessage",
                     channel=channel,
                     text=message
                 )
-            else:
-                response = client.api_call(
-                    "files.upload",
-                    channels=channel,
-                    initial_comment=message,
-                    file=published_path,
-                )
+
             if response.get("error"):
                 error_str = self._enrich_error(str(response.get("error")),
                                                channel)
@@ -110,16 +113,16 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         from slack_sdk.errors import SlackApiError
         try:
             client = WebClient(token=token)
-            if not published_path:
-                _ = client.chat_postMessage(
-                    channel=channel,
-                    text=message
-                )
-            else:
+            if published_path and os.path.exists(published_path):
                 _ = client.files_upload(
                     channels=channel,
                     initial_comment=message,
                     file=published_path,
+                )
+            else:
+                _ = client.chat_postMessage(
+                    channel=channel,
+                    text=message
                 )
         except SlackApiError as e:
             # You will get a SlackApiError if "ok" is False
