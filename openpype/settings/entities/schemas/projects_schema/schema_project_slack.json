@@ -68,16 +68,32 @@
                                         "type": "separator"
                                     },
                                     {
+                                        "key": "channel_messages",
+                                        "label": "Messages to channels",
                                         "type": "list",
-                                        "object_type": "text",
-                                        "key": "channel",
-                                        "label": "Channel"
-                                    },
-                                    {
-                                        "type": "text",
-                                        "multiline": true,
-                                        "key": "message",
-                                        "label": "Message"
+                                        "use_label_wrap": true,
+                                        "object_type": {
+                                            "type": "dict",
+                                            "children": [
+                                                {
+                                                    "type": "list",
+                                                    "object_type": "text",
+                                                    "key": "channels",
+                                                    "label": "Channels"
+                                                },
+                                                {
+                                                    "type": "boolean",
+                                                    "key": "upload_thumbnail",
+                                                    "label": "Upload thumbnail"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "multiline": false,
+                                                    "key": "message",
+                                                    "label": "Message"
+                                                }
+                                            ]
+                                        }
                                     }
                                 ]
                             }

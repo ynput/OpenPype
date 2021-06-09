@@ -23,8 +23,30 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
-        message_templ = instance.data["slack_message"]
+        published_path = self._get_thumbnail_path(instance)
 
+        for message_profile in instance.data["slack_channel_message_profiles"]:
+            message = self._get_filled_message(message_profile["message"],
+                                               instance)
+            if not message:
+                return
+
+            for channel in message_profile["channels"]:
+                if six.PY2:
+                    self._python2_call(instance.data["slack_token"],
+                                       channel,
+                                       message,
+                                       published_path,
+                                       message_profile["upload_thumbnail"])
+                else:
+                    self._python3_call(instance.data["slack_token"],
+                                       channel,
+                                       message,
+                                       published_path,
+                                       message_profile["upload_thumbnail"])
+
+    def _get_filled_message(self, message_templ, instance):
+        """Use message_templ and data from instance to get message content."""
         fill_data = copy.deepcopy(instance.context.data["anatomyData"])
 
         fill_pairs = (
@@ -40,27 +62,15 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         multiple_case_variants = prepare_template_data(fill_pairs)
         fill_data.update(multiple_case_variants)
 
+        message = None
         try:
             message = message_templ.format(**fill_data)
         except Exception:
             self.log.warning(
                 "Some keys are missing in {}".format(message_templ),
                 exc_info=True)
-            return
 
-        published_path = self._get_thumbnail_path(instance)
-
-        for channel in instance.data["slack_channel"]:
-            if six.PY2:
-                self._python2_call(instance.data["slack_token"],
-                                   channel,
-                                   message,
-                                   published_path)
-            else:
-                self._python3_call(instance.data["slack_token"],
-                                   channel,
-                                   message,
-                                   published_path)
+        return message
 
     def _get_thumbnail_path(self, instance):
         """Returns abs url for thumbnail if present in instance repres"""
@@ -79,11 +89,13 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
                 break
         return published_path
 
-    def _python2_call(self, token, channel, message, published_path):
+    def _python2_call(self, token, channel, message,
+                      published_path, upload_thumbnail):
         from slackclient import SlackClient
         try:
             client = SlackClient(token)
-            if published_path and os.path.exists(published_path):
+            if upload_thumbnail and \
+                    published_path and os.path.exists(published_path):
                 with open(published_path, 'rb') as pf:
                     response = client.api_call(
                         "files.upload",
@@ -108,12 +120,14 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
             error_str = self._enrich_error(str(e), channel)
             self.log.warning("Error happened: {}".format(error_str))
 
-    def _python3_call(self, token, channel, message, published_path):
+    def _python3_call(self, token, channel, message,
+                      published_path, upload_thumbnail):
         from slack_sdk import WebClient
         from slack_sdk.errors import SlackApiError
         try:
             client = WebClient(token=token)
-            if published_path and os.path.exists(published_path):
+            if upload_thumbnail and \
+                    published_path and os.path.exists(published_path):
                 _ = client.files_upload(
                     channels=channel,
                     initial_comment=message,

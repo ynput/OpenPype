@@ -30,7 +30,6 @@ class CollectSlackFamilies(pyblish.api.InstancePlugin):
         profile = filter_profiles(self.profiles, key_values,
                                   logger=self.log)
 
-        self.log.debug("profile ::{}".format(profile))
         # make slack publishable
         if profile:
             if instance.data.get('families'):
@@ -38,8 +37,8 @@ class CollectSlackFamilies(pyblish.api.InstancePlugin):
             else:
                 instance.data['families'] = ['slack']
 
-            instance.data["slack_channel"] = profile["channel"]
-            instance.data["slack_message"] = profile["message"]
+            instance.data["slack_channel_message_profiles"] = \
+                profile["channel_messages"]
 
             slack_token = (instance.context.data["project_settings"]
                                                 ["slack"]

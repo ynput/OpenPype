@@ -48,20 +48,23 @@ Eg. If I want to be notified when render is published from Maya, setting is:
 - family: 'render'
 - host: 'Maya'
 
-### Channel
-Message could be delivered to one or multiple channels, by default app allows Slack bot
+### Messages to channels
+
+#### Channels
+Multiple messages could be delivered to one or multiple channels, by default app allows Slack bot
 to send messages to 'public' channels (eg. bot doesn't need to join the channel first).
 
 ![Configure module](assets/slack_system.png)
 
+#### Upload thumbnail
 Integration can upload 'thumbnail' file (if present in instance), for that bot must be 
 manually added to target channel by Slack admin!
 (In target channel write: ```/invite @OpenPypeNotifier``)
 
-### Message
+#### Message
 Message content can use Templating (see https://openpype.io/docs/admin_settings_project_anatomy/#available-template-keys).
 
-Pre selected set of keys could be used in lowercase, Capitalized or UPPERCASE format, values will be modified accordingly.
+Pre-selected set of keys could be used in lowercase, Capitalized or UPPERCASE format, values will be modified accordingly.
 ({Asset} >> "Asset", {FAMILY} >> "RENDER")
 
 **Available keys:**
