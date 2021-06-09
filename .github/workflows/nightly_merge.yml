@@ -1,4 +1,4 @@
-name: Merge Develop to Main
+name: Dev -> Main
 
 on:
   schedule:
