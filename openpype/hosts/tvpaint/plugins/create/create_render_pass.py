@@ -16,7 +16,7 @@ class CreateRenderPass(plugin.Creator):
     icon = "cube"
     defaults = ["Main"]
 
-    dynamic_subset_keys = ["render_pass", "render_layer", "layer"]
+    dynamic_subset_keys = ["render_pass", "render_layer"]
 
     @classmethod
     def get_dynamic_data(
@@ -72,15 +72,6 @@ class CreateRenderPass(plugin.Creator):
         subset_name = self.data["subset"]
 
         subset_name_fill_data = {}
-
-        layer_key = "{layer}"
-        if layer_key in subset_name.lower():
-            if len(selected_layers) != 1:
-                raise CreatorError((
-                    "Subset name expect to use layer name but"
-                    " multiple layers are selected."
-                ))
-            subset_name_fill_data["layer"] = selected_layers[0]["name"]
 
         # Backwards compatibility
         # - beauty may be created with older creator where variant was not
