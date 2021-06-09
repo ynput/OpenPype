@@ -169,6 +169,6 @@
         "enabled": true
     },
     "slack": {
-        "enabled": true
+        "enabled": false
     }
 }

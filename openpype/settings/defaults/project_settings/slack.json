@@ -1,16 +1,20 @@
 {
-    "token": "",
+    "token": "xoxb-2134660737317-2122995982087-cALVXgj3mpBhdf2nO36cdWok",
     "publish": {
         "CollectSlackFamilies": {
             "enabled": true,
             "optional": true,
             "profiles": [
                 {
-                    "families": [],
-                    "hosts": [],
+                    "families": [
+                        "workfile"
+                    ],
                     "tasks": [],
-                    "channel": [],
-                    "message": ""
+                    "hosts": [],
+                    "channel": [
+                        "things"
+                    ],
+                    "message": "{Asset} was publishet {subset} with {thumbnail}"
                 }
             ]
         }

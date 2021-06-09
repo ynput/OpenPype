@@ -17,15 +17,16 @@
             "label": "Publish plugins",
             "children": [
                 {
+                    "type": "label",
+                    "label": "Fill combination of families, task names and hosts when to send notification"
+                },
+                {
                     "type": "dict",
                     "key": "CollectSlackFamilies",
                     "label": "Notification to Slack",
                     "use_label_wrap": true,
+                    "checkbox_key": "enabled",
                     "children": [
-                        {
-                            "type": "label",
-                            "label": ""
-                        },
                         {
                             "type": "boolean",
                             "key": "enabled",
@@ -41,6 +42,7 @@
                             "collapsible": true,
                             "key": "profiles",
                             "label": "Profiles",
+                            "use_label_wrap": true,
                             "object_type": {
                                 "type": "dict",
                                 "children": [
