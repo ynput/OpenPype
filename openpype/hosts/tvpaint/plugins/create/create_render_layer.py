@@ -84,9 +84,7 @@ class CreateRenderlayer(plugin.Creator):
             "group": group_name
         }
 
-        # Set family back to "renderLayer"
-        family = self.family
-        self.data["family"] = family
+        family = self.family = self.data["family"]
 
         # Fill dynamic key 'group'
         subset_name = self.data["subset"].format(

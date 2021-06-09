@@ -99,10 +99,7 @@ class CreateRenderPass(plugin.Creator):
         self.data["subset"] = new_subset_name
         self.log.info(f"New subset name is \"{new_subset_name}\".")
 
-        # Set family back to "renderPass"
-        family = self.family
-        self.data["family"] = family
-
+        family = self.data["family"]
         variant = self.data["variant"]
 
         self.data["group_id"] = group_id
