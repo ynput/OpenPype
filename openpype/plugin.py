@@ -22,8 +22,34 @@ class PypeCreatorMixin:
     def get_dynamic_data(
         cls, variant, task_name, asset_id, project_name, host_name
     ):
+        """Return dynamic data for current Creator plugin.
+
+        By default return keys from `dynamic_subset_keys` attribute as mapping
+        to keep formatted template unchanged.
+
+        ```
+        dynamic_subset_keys = ["my_key"]
+        ---
+        output = {
+            "my_key": "{my_key}"
+        }
+        ```
+
+        Dynamic keys may override default Creator keys (family, task, asset,
+        ...) but do it wisely if you need.
+
+        All of keys will be converted into 3 variants unchanged, capitalized
+        and all upper letters. Because of that are all keys lowered.
+
+        This method can be modified to prefill some values just keep in mind it
+        is class method.
+
+        Returns:
+            dict: Fill data for subset name template.
+        """
         dynamic_data = {}
         for key in cls.dynamic_subset_keys:
+            key = key.lower()
             dynamic_data[key] = "{" + key + "}"
         return dynamic_data
 
