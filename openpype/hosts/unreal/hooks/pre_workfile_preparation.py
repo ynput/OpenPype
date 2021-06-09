@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Hook to launch Unreal and prepare projects."""
 import os
 
 from openpype.lib import (
@@ -8,19 +10,21 @@ from openpype.hosts.unreal.api import lib as unreal_lib
 
 
 class UnrealPrelaunchHook(PreLaunchHook):
-    """
+    """Hook to handle launching Unreal.
+
     This hook will check if current workfile path has Unreal
     project inside. IF not, it initialize it and finally it pass
     path to the project by environment variable to Unreal launcher
     shell script.
-    """
 
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.signature = "( {} )".format(self.__class__.__name__)
 
     def execute(self):
+        """Hook entry method."""
         asset_name = self.data["asset_name"]
         task_name = self.data["task_name"]
         workdir = self.launch_context.env["AVALON_WORKDIR"]
@@ -52,7 +56,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
             f"[ {engine_version} ]"
         ))
 
-        detected = unreal_lib.get_engine_versions()
+        detected = unreal_lib.get_engine_versions(self.launch_context.env)
         detected_str = ', '.join(detected.keys()) or 'none'
         self.log.info((
             f"{self.signature} detected UE4 versions: "
