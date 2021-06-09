@@ -73,20 +73,17 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
     def _get_thumbnail_path(self, instance):
         """Returns abs url for thumbnail if present in instance repres"""
         published_path = None
-        for comp in instance.data['representations']:
-            self.log.debug('component {}'.format(comp))
+        for repre in instance.data['representations']:
+            if repre.get('thumbnail') or "thumbnail" in repre.get('tags', []):
 
-            if comp.get('thumbnail') or ("thumbnail" in comp.get('tags', [])):
-                self.log.debug("thumbnail present")
-
-                comp_files = comp["files"]
-                if isinstance(comp_files, (tuple, list, set)):
-                    filename = comp_files[0]
+                repre_files = repre["files"]
+                if isinstance(repre_files, (tuple, list, set)):
+                    filename = repre_files[0]
                 else:
-                    filename = comp_files
+                    filename = repre_files
 
                 published_path = os.path.join(
-                    comp['stagingDir'], filename
+                    repre['stagingDir'], filename
                 )
                 break
         return published_path
