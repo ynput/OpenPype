@@ -56,3 +56,4 @@ to send messages to 'public' channels (eg. bot doesn't need to join the channel 
 
 Integration can upload 'thumbnail' file (if present in instance), for that bot must be 
 manually added to target channel by Slack admin!
+(In target channel write: ```/invite @OpenPypeNotifier``)
