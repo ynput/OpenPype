@@ -99,7 +99,8 @@ class BlendRigLoader(plugin.AssetLoader):
                             constraint.target = local_obj
 
                 for material_slot in local_obj.material_slots:
-                    plugin.prepare_data(material_slot.material, group_name)
+                    if material_slot.material:
+                        plugin.prepare_data(material_slot.material, group_name)
             elif obj.type == 'ARMATURE':
                 plugin.prepare_data(local_obj.data, group_name)
 
