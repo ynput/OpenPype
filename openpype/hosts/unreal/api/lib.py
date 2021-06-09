@@ -59,12 +59,12 @@ def get_engine_versions(env=None):
     # else kick in platform specific detection
     if platform.system().lower() == "windows":
         return OrderedDict(sorted(_win_get_engine_versions().items()))
-    elif platform.system().lower() == "linux":
+    if platform.system().lower() == "linux":
         # on linux, there is no installation and getting Unreal Engine involves
         # git clone. So we'll probably depend on `UNREAL_ENGINE_LOCATION`.
         pass
-    elif platform.system().lower() == "darwin":
-        return OrderedDict(sorted(_darwin_get_engine_version(env).items()))
+    if platform.system().lower() == "darwin":
+        return OrderedDict(sorted(_darwin_get_engine_version().items()))
 
     return OrderedDict()
 
