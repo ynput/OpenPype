@@ -174,7 +174,7 @@ def create_unreal_project(project_name: str,
         env (dict, optional): Environment to use. If not set, `os.environ`.
 
     Throws:
-        NotImplemented: For unsupported platforms.
+        NotImplementedError: For unsupported platforms.
 
     Returns:
         None
@@ -304,7 +304,7 @@ def create_unreal_project(project_name: str,
             subprocess.run([python_path, "-m",
                             "pip", "install", "pyside"])
         else:
-            raise NotImplemented("Unsupported platform")
+            raise NotImplementedError("Unsupported platform")
 
     if dev_mode or preset["dev_mode"]:
         _prepare_cpp_project(project_file, engine_path)
@@ -452,7 +452,7 @@ class {1}_API A{0}GameModeBase : public AGameModeBase
                          f"UnrealHeaderTool")
 
     if not u_header_tool:
-        raise NotImplemented("Unsupported platform")
+        raise NotImplementedError("Unsupported platform")
 
     u_build_tool = u_build_tool.replace("\\", "/")
     u_header_tool = u_header_tool.replace("\\", "/")
