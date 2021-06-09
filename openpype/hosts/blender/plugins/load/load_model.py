@@ -122,6 +122,7 @@ class BlendModelLoader(plugin.AssetLoader):
             bpy.context.scene.collection.children.link(avalon_container)
 
         asset_group = bpy.data.objects.new(group_name, object_data=None)
+        asset_group.empty_display_type = 'SINGLE_ARROW'
         avalon_container.objects.link(asset_group)
 
         objects = self._process(libpath, asset_group, group_name)

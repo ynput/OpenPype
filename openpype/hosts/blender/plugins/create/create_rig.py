@@ -28,6 +28,7 @@ class CreateRig(plugin.Creator):
         subset = self.data["subset"]
         name = plugin.asset_name(asset, subset)
         asset_group = bpy.data.objects.new(name=name, object_data=None)
+        asset_group.empty_display_type = 'SINGLE_ARROW'
         instances.objects.link(asset_group)
         self.data['task'] = api.Session.get('AVALON_TASK')
         lib.imprint(asset_group, self.data)
