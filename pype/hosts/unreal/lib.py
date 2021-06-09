@@ -35,18 +35,17 @@ def get_engine_versions(env=None):
 
     """
     env = env or os.environ
-    print("--- {}".format(env["UNREAL_ENGINE_LOCATION"]))
+    engine_locations = {}
     try:
-        engine_locations = {}
-        root, dirs, files = next(os.walk(env["UNREAL_ENGINE_LOCATION"]))
+        root, dirs, _ = next(os.walk(env["UNREAL_ENGINE_LOCATION"]))
 
-        for dir in dirs:
-            if dir.startswith("UE"):
+        for directory in dirs:
+            if directory.startswith("UE"):
                 try:
-                    ver = re.split("-|_", dir)[1]
+                    ver = re.split("[-_]", directory)[1]
                 except IndexError:
                     continue
-                engine_locations[ver] = os.path.join(root, dir)
+                engine_locations[ver] = os.path.join(root, directory)
     except KeyError:
         # environment variable not set
         pass
@@ -61,11 +60,13 @@ def get_engine_versions(env=None):
     # else kick in platform specific detection
     if platform.system().lower() == "windows":
         return OrderedDict(sorted(_win_get_engine_versions(env).items()))
-    elif platform.system().lower() == "linux":
+
+    if platform.system().lower() == "linux":
         # on linux, there is no installation and getting Unreal Engine involves
         # git clone. So we'll probably depend on `UNREAL_ENGINE_LOCATION`.
         pass
-    elif platform.system().lower() == "darwin":
+
+    if platform.system().lower() == "darwin":
         return OrderedDict(sorted(_darwin_get_engine_version(env).items()))
 
     return OrderedDict()
@@ -168,7 +169,7 @@ def create_unreal_project(project_name: str,
     and enable this plugin.
 
     Args:
-        project name (str): Name of the project.
+        project_name (str): Name of the project.
         ue_version (str): Unreal engine version (like 4.23).
         pr_dir (str): Path to directory where project will be created.
         engine_path (str): Path to Unreal Engine installation.
