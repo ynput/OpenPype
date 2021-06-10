@@ -50,13 +50,15 @@ class IntegrateSlackAPI(pyblish.api.InstancePlugin):
         fill_data = copy.deepcopy(instance.context.data["anatomyData"])
 
         fill_pairs = (
-            ("asset", fill_data["asset"]),
-            ("subset", fill_data.get("subset", instance.data["subset"])),
-            ("task", fill_data.get("task")),
-            ("username", fill_data.get("username")),
-            ("app", fill_data.get("app")),
-            ("family", fill_data.get("family", instance.data["family"])),
-            ("version", str(fill_data.get("version"))),
+            ("asset", instance.data.get("asset", fill_data.get("asset"))),
+            ("subset", instance.data.get("subset", fill_data.get("subset"))),
+            ("task", instance.data.get("task", fill_data.get("task"))),
+            ("username", instance.data.get("username",
+                                           fill_data.get("username"))),
+            ("app", instance.data.get("app", fill_data.get("app"))),
+            ("family", instance.data.get("family", fill_data.get("family"))),
+            ("version", str(instance.data.get("version",
+                                              fill_data.get("version"))))
         )
 
         multiple_case_variants = prepare_template_data(fill_pairs)
