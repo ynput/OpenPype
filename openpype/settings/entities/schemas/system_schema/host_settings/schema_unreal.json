@@ -30,7 +30,11 @@
                 "children": [
                     {
                         "type": "schema_template",
-                        "name": "template_host_variant_items"
+                        "name": "template_host_variant_items",
+                        "skip_paths": [
+                            "executables",
+                            "arguments"
+                        ]
                     }
                 ]
             }
