@@ -591,7 +591,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
     def remove_delete_flag(self, item_ids, with_children=True):
         """Remove deletion flag on items with matching ids.
 
-        Flag is also removed on all parents of passed children as it wouldn't
+        The flag is also removed on all parents of passed children as it wouldn't
         make sense to not to do so.
 
         Children of passed item ids are by default also unset for deletion.
