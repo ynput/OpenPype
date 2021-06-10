@@ -16,6 +16,8 @@ from avalon.api import AvalonMongoDB
 
 
 class ProjectManagerWindow(QtWidgets.QWidget):
+    """Main widget of Project Manager tool."""
+
     def __init__(self, parent=None):
         super(ProjectManagerWindow, self).__init__(parent)
 
