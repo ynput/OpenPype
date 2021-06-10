@@ -14,7 +14,7 @@ jobs:
     - name: 🚛 Checkout Code
       uses: actions/checkout@v2
 
-    - name: 🔨 Merge main back to develop    
+    - name: 🔨 Merge develop to main    
       uses: everlytic/branch-merge@1.1.0
       with:
         github_token: ${{ secrets.ADMIN_TOKEN }}
