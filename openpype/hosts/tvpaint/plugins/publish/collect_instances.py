@@ -167,11 +167,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
         )
         # Change label
         render_layer = instance_data["render_layer"]
-        instance_data["label"] = "{}_{}".format(render_layer, pass_name)
 
         # Backwards compatibility
         # - subset names were not stored as final subset names during creation
         if "variant" not in instance_data:
+            instance_data["label"] = "{}_{}".format(render_layer, pass_name)
             # Change subset name
             # Final family of an instance will be `render`
             new_family = "render"
