@@ -62,10 +62,9 @@ manually added to target channel by Slack admin!
 (In target channel write: ```/invite @OpenPypeNotifier``)
 
 #### Message
-Message content can use Templating (see https://openpype.io/docs/admin_settings_project_anatomy/#available-template-keys).
+Message content can use Templating (see [Available template keys](admin_settings_project_anatomy#available-template-keys)).
 
-Pre-selected set of keys could be used in lowercase, Capitalized or UPPERCASE format, values will be modified accordingly.
-({Asset} >> "Asset", {FAMILY} >> "RENDER")
+Few keys also have Capitalized and UPPERCASE format. Values will be modified accordingly ({Asset} >> "Asset", {FAMILY} >> "RENDER").
 
 **Available keys:**
 - asset
