@@ -1,5 +1,5 @@
 ---
-id: module_site_sync
+id: module_slack
 title: Slack Integration Administration
 sidebar_label: Slack
 ---
@@ -41,7 +41,7 @@ It is possible to create multiple tokens and configure different scopes for them
 
 ### Profiles
 Profiles are used to select when to trigger notification. One or multiple profiles
-could be configured, `Families`, `Task names` (regex available), `Host names` and host combination is needed.
+could be configured, `Families`, `Task names` (regex available), `Host names` combination is needed.
 
 Eg. If I want to be notified when render is published from Maya, setting is:
 
@@ -54,10 +54,10 @@ Eg. If I want to be notified when render is published from Maya, setting is:
 Multiple messages could be delivered to one or multiple channels, by default app allows Slack bot
 to send messages to 'public' channels (eg. bot doesn't need to join the channel first).
 
-![Configure module](assets/slack_system.png)
+![Configure module](assets/slack_project.png)
 
 #### Upload thumbnail
-Integration can upload 'thumbnail' file (if present in instance), for that bot must be 
+Integration can upload 'thumbnail' file (if present in an instance), for that bot must be 
 manually added to target channel by Slack admin!
 (In target channel write: ```/invite @OpenPypeNotifier``)
 
