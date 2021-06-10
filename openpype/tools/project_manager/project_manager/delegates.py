@@ -172,7 +172,7 @@ class TypeDelegate(QtWidgets.QStyledItemDelegate):
 class ToolsDelegate(QtWidgets.QStyledItemDelegate):
     """Specific delegate for "tools_env" key.
 
-    Exected that editor will be used only on AssetItem which is only item that
+    Expected that editor will be used only on AssetItem which is only item that
     can have `tools_env` (except project).
 
     Delegate requires tools cache which is shared across all ToolsDelegate

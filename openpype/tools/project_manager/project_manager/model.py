@@ -441,7 +441,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         return self.index_from_item(row, column, parent_item)
 
     def index_for_item(self, item, column=0):
-        """Index for passet item.
+        """Index for passed item.
 
         This is for cases that index operations are required on specific item.
 
@@ -592,7 +592,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         """Remove deletion flag on items with matching ids.
 
         Flag is also removed on all parents of passed children as it wouldn't
-        make sence to not to do so.
+        make sense to not to do so.
 
         Children of passed item ids are by default also unset for deletion.
 
