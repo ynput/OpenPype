@@ -191,26 +191,32 @@ class Application:
         self.full_label = full_label
         self._environment = data.get("environment") or {}
 
+        arguments = data.get("arguments")
+        if isinstance(arguments, dict):
+            arguments = arguments.get(platform.system().lower())
+
+        if not arguments:
+            arguments = []
+        self.arguments = arguments
+
+        if "executables" not in data:
+            self.executables = [
+                UndefinedApplicationExecutable()
+            ]
+            return
+
         _executables = data["executables"]
+        if isinstance(_executables, dict):
+            _executables = _executables.get(platform.system().lower())
+
         if not _executables:
             _executables = []
-
-        elif isinstance(_executables, dict):
-            _executables = _executables.get(platform.system().lower()) or []
-
-        _arguments = data["arguments"]
-        if not _arguments:
-            _arguments = []
-
-        elif isinstance(_arguments, dict):
-            _arguments = _arguments.get(platform.system().lower()) or []
 
         executables = []
         for executable in _executables:
             executables.append(ApplicationExecutable(executable))
 
         self.executables = executables
-        self.arguments = _arguments
 
     def __repr__(self):
         return "<{}> - {}".format(self.__class__.__name__, self.full_name)
