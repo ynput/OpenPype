@@ -121,6 +121,9 @@ class AppGroupWidget(QtWidgets.QWidget):
 
         widgets_by_variant_name = {}
         for variant_name, variant_entity in valid_variants.items():
+            if "executables" not in variant_entity:
+                continue
+
             variant_widget = AppVariantWidget(
                 group_label, variant_name, variant_entity, content_widget
             )
