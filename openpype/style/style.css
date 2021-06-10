@@ -22,6 +22,7 @@ Enabled vs Disabled logic in most of stylesheets
     font-size: 9pt;
     font-family: "Spartan";
     font-weight: 450;
+    outline: none;
 }
 
 QWidget {
@@ -145,7 +146,6 @@ QComboBox:disabled {
 QComboBox QAbstractItemView {
     border: 1px solid {color:border};
 	background: {color:bg-inputs};
-    outline: none;
 }
 
 QComboBox QAbstractItemView::item:selected {
@@ -545,7 +545,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #CompleterView {
     border: 1px solid {color:border};
     background: {color:bg-inputs};
-    outline: none;
 }
 
 #CompleterView::item {
@@ -583,9 +582,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* Standalone publisher */
-#ComponentList {
-    outline: none;
-}
 
 #ComponentItem {
     background: transparent;
