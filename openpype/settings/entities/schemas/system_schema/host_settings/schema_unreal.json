@@ -33,6 +33,7 @@
                         "name": "template_host_variant_items",
                         "skip_paths": [
                             "executables",
+                            "separator",
                             "arguments"
                         ]
                     }
