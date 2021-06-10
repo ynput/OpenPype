@@ -56,6 +56,52 @@
             "key": "publish",
             "label": "Publish plugins",
             "children": [
+               {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ValidateSceneSettings",
+                    "label": "Validate Scene Settings",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Validate if frame range in DB matches number of published files"
+                        },
+                        {
+                            "type": "list",
+                            "key": "check_extensions",
+                            "object_type": "text",
+                            "label": "Check Frame Range for Extensions"
+                        },
+                        {
+                            "key": "families",
+                            "label": "Families",
+                            "type": "list",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "list",
+                            "key": "skip_timelines_check",
+                            "object_type": "text",
+                            "label": "Skip Frame Range check for Tasks"
+                        }
+                    ]
+                },
                 {
                     "type": "dict",
                     "collapsible": true,
