@@ -18,7 +18,7 @@ whenever configured asset type is published.
 Slack application must be installed to company's Slack first. 
 
 Please locate `openpype/modules/slack/manifest.yml` file in deployed OpenPype installation and follow instruction at
-https://api.slack.com/reference/manifests#using
+https://api.slack.com/reference/manifests#using and follow "Creating apps with manifests".
 
 
 ## System Settings
