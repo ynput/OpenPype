@@ -1,4 +1,8 @@
-from avalon.tvpaint import pipeline, lib
+from avalon.tvpaint import (
+    pipeline,
+    lib,
+    CommunicationWrapper
+)
 from openpype.hosts.tvpaint.api import plugin
 
 
@@ -17,6 +21,40 @@ class CreateRenderlayer(plugin.Creator):
         "tv_layercolor \"setcolor\""
         " {clip_id} {group_id} {r} {g} {b} \"{name}\""
     )
+
+    @classmethod
+    def get_default_variant(cls):
+        """Default value for variant in Creator tool.
+
+        Method checks if TVPaint implementation is running and tries to find
+        selected layers from TVPaint. If only one is selected it's name is
+        returned.
+
+        Returns:
+            str: Default variant name for Creator tool.
+        """
+        # Validate that communication is initialized
+        if CommunicationWrapper.communicator:
+            # Get currently selected layers
+            layers_data = lib.layers_data()
+
+            group_ids = set()
+            for layer in layers_data:
+                if layer["selected"]:
+                    group_ids.add(layer["group_id"])
+
+            # Return layer name if only one is selected
+            if len(group_ids) == 1:
+                group_id = list(group_ids)[0]
+                groups_data = lib.groups_data()
+                for group in groups_data:
+                    if group["group_id"] == group_id:
+                        return group["name"]
+
+        # Use defaults
+        if cls.defaults:
+            return cls.defaults[0]
+        return None
 
     def process(self):
         self.log.debug("Query data from workfile.")
