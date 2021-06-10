@@ -484,6 +484,27 @@ class ApplicationExecutable:
         return bool(self._realpath())
 
 
+class UndefinedApplicationExecutable(ApplicationExecutable):
+    """Some applications do not require executable path from settings.
+
+    In that case this class is used to "fake" existing executable.
+    """
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return self.__class__.__name__
+
+    def __repr__(self):
+        return "<{}>".format(self.__class__.__name__)
+
+    def as_args(self):
+        return []
+
+    def exists(self):
+        return True
+
+
 @six.add_metaclass(ABCMeta)
 class LaunchHook:
     """Abstract base class of launch hook."""
