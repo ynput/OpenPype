@@ -23,8 +23,22 @@ from pype import lib
 preset_templates = {
     "prores422HQ": {
         "args": [
-            "-c:v", "prores_ks", "-profile:v", "3", "-pix_fmt", "yuv422p10le",
-            "-qscale:v", "5", "-codec:a", "pcm_s16le"
+            "-c:v", "prores_ks",
+            "-profile:v", "3",
+            "-pix_fmt", "yuv422p10le",
+            "-qscale:v", "5",
+            "-codec:a", "pcm_s16le"
+        ],
+        "extension": ".mov"
+    },
+    "proresProxy": {
+        "args": [
+            "-c:v", "prores_ks",
+            "-profile:v", "0",
+            "-pix_fmt", "yuv422p10le",
+            "-qscale:v", "5",
+            "-codec:a", "pcm_s16le",
+            "-vf", "scale=trunc(oh*a/2)*2:trunc(ih/2)"
         ],
         "extension": ".mov"
     },
