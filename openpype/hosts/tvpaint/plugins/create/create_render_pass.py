@@ -1,4 +1,8 @@
-from avalon.tvpaint import pipeline, lib
+from avalon.tvpaint import (
+    pipeline,
+    lib,
+    CommunicationWrapper
+)
 from openpype.hosts.tvpaint.api import plugin
 
 
@@ -15,6 +19,36 @@ class CreateRenderPass(plugin.Creator):
     defaults = ["Main"]
 
     subset_template = "{family}_{render_layer}_{pass}"
+
+    @classmethod
+    def get_default_variant(cls):
+        """Default value for variant in Creator tool.
+
+        Method checks if TVPaint implementation is running and tries to find
+        selected layers from TVPaint. If only one is selected it's name is
+        returned.
+
+        Returns:
+            str: Default variant name for Creator tool.
+        """
+        # Validate that communication is initialized
+        if CommunicationWrapper.communicator:
+            # Get currently selected layers
+            layers_data = lib.layers_data()
+
+            selected_layers = [
+                layer
+                for layer in layers_data
+                if layer["selected"]
+            ]
+            # Return layer name if only one is selected
+            if len(selected_layers) == 1:
+                return selected_layers[0]["name"]
+
+        # Use defaults
+        if cls.defaults:
+            return cls.defaults[0]
+        return None
 
     def process(self):
         self.log.debug("Query data from workfile.")
