@@ -61,6 +61,11 @@ def main(input_path="",
         output_path, name + preset_templates[preset]["extension"]
     ).replace("//", "/")
 
+    # Ensure output directory exists.
+    if not os.path.exists(os.path.dirname(output_path)):
+        os.makedirs(os.path.dirname(output_path))
+
+    # Build ffmpeg arguments.
     ffmpeg_args = ["ffmpeg", "-y"]
 
     # Add audio.
