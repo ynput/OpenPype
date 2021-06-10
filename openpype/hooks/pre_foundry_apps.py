@@ -2,12 +2,13 @@ import subprocess
 from openpype.lib import PreLaunchHook
 
 
-class LaunchWindowsShell(PreLaunchHook):
-    """Add shell command before executable.
+class LaunchFoundryAppsWindows(PreLaunchHook):
+    """Foundry applications have specific way how to launch them.
 
-    Some hosts have issues when are launched directly from python in that case
-    it is possible to prepend shell executable which will trigger process
-    instead.
+    Nuke is executed "like" python process so it is required to pass
+    `CREATE_NEW_CONSOLE` flag on windows to trigger creation of new console.
+    At the same time the newly created console won't create it's own stdout
+    and stderr handlers so they should not be redirected to DEVNULL.
     """
 
     # Should be as last hook because must change launch arguments to string
