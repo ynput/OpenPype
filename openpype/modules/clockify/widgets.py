@@ -1,6 +1,5 @@
 from Qt import QtCore, QtGui, QtWidgets
-from avalon import style
-from openpype import resources
+from openpype import resources, style
 
 
 class MessageWidget(QtWidgets.QWidget):
