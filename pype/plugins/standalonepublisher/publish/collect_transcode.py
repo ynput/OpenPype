@@ -10,7 +10,7 @@ class CollectTranscode(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder
     label = "Collect Transcode"
     hosts = ["standalonepublisher"]
-    families = ["prores422HQ", "h264"]
+    families = ["prores422HQ", "proresProxy", "h264"]
 
     # presets
     audio_extensions = [".wav"]
