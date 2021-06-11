@@ -1,6 +1,6 @@
 import os
 import requests
-from avalon import style
+from openpype import style
 from openpype.modules.ftrack.lib import credentials
 from . import login_tools
 from openpype import resources
