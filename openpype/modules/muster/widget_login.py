@@ -1,13 +1,12 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
-from avalon import style
-from openpype import resources
+from openpype import resources, style
 
 
 class MusterLogin(QtWidgets.QWidget):
 
     SIZE_W = 300
-    SIZE_H = 130
+    SIZE_H = 150
 
     loginSignal = QtCore.Signal(object, object, object)
 
