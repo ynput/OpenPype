@@ -34,7 +34,8 @@ def get_subset_name(
     asset_id,
     project_name=None,
     host_name=None,
-    default_template=None
+    default_template=None,
+    dynamic_data=None
 ):
     if not family:
         return ""
@@ -68,11 +69,16 @@ def get_subset_name(
     if not task_name and "{task" in template.lower():
         raise TaskNotSetError()
 
-    fill_pairs = (
-        ("variant", variant),
-        ("family", family),
-        ("task", task_name)
-    )
+    fill_pairs = {
+        "variant": variant,
+        "family": family,
+        "task": task_name
+    }
+    if dynamic_data:
+        # Dynamic data may override default values
+        for key, value in dynamic_data.items():
+            fill_pairs[key] = value
+
     return template.format(**prepare_template_data(fill_pairs))
 
 
@@ -91,7 +97,8 @@ def prepare_template_data(fill_pairs):
 
     """
     fill_data = {}
-    for key, value in fill_pairs:
+    regex = re.compile(r"[a-zA-Z0-9]")
+    for key, value in dict(fill_pairs).items():
         # Handle cases when value is `None` (standalone publisher)
         if value is None:
             continue
@@ -102,13 +109,18 @@ def prepare_template_data(fill_pairs):
 
         # Capitalize only first char of value
         # - conditions are because of possible index errors
+        # - regex is to skip symbols that are not chars or numbers
+        #   - e.g. "{key}" which starts with curly bracket
         capitalized = ""
-        if value:
-            # Upper first character
-            capitalized += value[0].upper()
-            # Append rest of string if there is any
-            if len(value) > 1:
-                capitalized += value[1:]
+        for idx in range(len(value or "")):
+            char = value[idx]
+            if not regex.match(char):
+                capitalized += char
+            else:
+                capitalized += char.upper()
+                capitalized += value[idx + 1:]
+                break
+
         fill_data[key.capitalize()] = capitalized
 
     return fill_data
