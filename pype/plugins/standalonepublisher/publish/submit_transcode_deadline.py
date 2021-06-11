@@ -14,6 +14,7 @@ import pype
 import pyblish
 import pypeapp
 import acre
+import clique
 
 import pype.api
 import pype.lib
@@ -47,7 +48,7 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
     def process(self, instance):
         # Requried environment.
         PYTHONPATH = ""
-        for module in [pype, pyblish, avalon, pypeapp, acre]:
+        for module in [pype, pyblish, avalon, pypeapp, acre, clique]:
             PYTHONPATH += os.path.dirname(os.path.dirname(module.__file__))
             PYTHONPATH += os.pathsep
 
