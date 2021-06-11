@@ -153,7 +153,7 @@ class AppsEnumEntity(BaseEnumEntity):
                 valid_keys.add(full_name)
 
         enum_items = []
-        for key, value in sorted(enum_items_list, key=lambda item: item[0]):
+        for key, value in sorted(enum_items_list, key=lambda item: item[1]):
             enum_items.append({key: value})
         return enum_items, valid_keys
 
@@ -212,7 +212,7 @@ class ToolsEnumEntity(BaseEnumEntity):
                 valid_keys.add(tool_name)
 
         enum_items = []
-        for key, value in sorted(enum_items_list, key=lambda item: item[0]):
+        for key, value in sorted(enum_items_list, key=lambda item: item[1]):
             enum_items.append({key: value})
         return enum_items, valid_keys
 
