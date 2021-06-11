@@ -182,6 +182,17 @@ class ClockifySettings(QtWidgets.QWidget):
                 "Entered invalid API key"
             )
 
+    def showEvent(self, event):
+        super(ClockifySettings, self).showEvent(event)
+
+        # Make btns same width
+        max_width = max(
+            self.btn_ok.sizeHint().width(),
+            self.btn_cancel.sizeHint().width()
+        )
+        self.btn_ok.setMinimumWidth(max_width)
+        self.btn_cancel.setMinimumWidth(max_width)
+
     def closeEvent(self, event):
         if self.optional is True:
             event.ignore()
