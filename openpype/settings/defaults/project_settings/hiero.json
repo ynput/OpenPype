@@ -34,7 +34,8 @@
                 "jpeg",
                 "png",
                 "h264",
-                "mov"
+                "mov",
+                "mp4"
             ],
             "clip_name_template": "{asset}_{subset}_{representation}"
         }
