@@ -57,8 +57,6 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
 
         self.log.debug("representations: {}".format(representations))
 
-
-
     def _ffmpeg_trim_seqment(self, input_file_path, otio_range):
         """
         Trim seqment of video file.
@@ -103,7 +101,6 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
         self.log.debug("Output: {}".format(output))
 
         return os.path.basename(output_path)
-
 
     def _get_ffmpeg_output(self, file_path):
         """
