@@ -1,9 +1,11 @@
+from avalon.api import CreatorError
 from avalon.tvpaint import (
     pipeline,
     lib,
     CommunicationWrapper
 )
 from openpype.hosts.tvpaint.api import plugin
+from openpype.lib import prepare_template_data
 
 
 class CreateRenderPass(plugin.Creator):
@@ -18,7 +20,19 @@ class CreateRenderPass(plugin.Creator):
     icon = "cube"
     defaults = ["Main"]
 
-    subset_template = "{family}_{render_layer}_{pass}"
+    dynamic_subset_keys = ["render_pass", "render_layer"]
+
+    @classmethod
+    def get_dynamic_data(
+        cls, variant, task_name, asset_id, project_name, host_name
+    ):
+        dynamic_data = super(CreateRenderPass, cls).get_dynamic_data(
+            variant, task_name, asset_id, project_name, host_name
+        )
+        dynamic_data["render_pass"] = variant
+        dynamic_data["family"] = "render"
+
+        return dynamic_data
 
     @classmethod
     def get_default_variant(cls):
@@ -66,11 +80,11 @@ class CreateRenderPass(plugin.Creator):
 
         # Raise if nothing is selected
         if not selected_layers:
-            raise AssertionError("Nothing is selected.")
+            raise CreatorError("Nothing is selected.")
 
         # Raise if layers from multiple groups are selected
         if len(group_ids) != 1:
-            raise AssertionError("More than one group is in selection.")
+            raise CreatorError("More than one group is in selection.")
 
         group_id = tuple(group_ids)[0]
         self.log.debug(f"Selected group id is \"{group_id}\".")
@@ -87,33 +101,39 @@ class CreateRenderPass(plugin.Creator):
 
         # Beauty is required for this creator so raise if was not found
         if beauty_instance is None:
-            raise AssertionError("Beauty pass does not exist yet.")
+            raise CreatorError("Beauty pass does not exist yet.")
 
-        render_layer = beauty_instance["name"]
+        subset_name = self.data["subset"]
 
-        # Extract entered name
+        subset_name_fill_data = {}
+
+        # Backwards compatibility
+        # - beauty may be created with older creator where variant was not
+        #   stored
+        if "variant" not in beauty_instance:
+            render_layer = beauty_instance["name"]
+        else:
+            render_layer = beauty_instance["variant"]
+
+        subset_name_fill_data["render_layer"] = render_layer
+
+        # Format dynamic keys in subset name
+        new_subset_name = subset_name.format(
+            **prepare_template_data(subset_name_fill_data)
+        )
+        self.data["subset"] = new_subset_name
+        self.log.info(f"New subset name is \"{new_subset_name}\".")
+
         family = self.data["family"]
-        name = self.data["subset"]
-        # Is this right way how to get name?
-        name = name[len(family):]
-        self.log.info(f"Extracted name from subset name \"{name}\".")
+        variant = self.data["variant"]
 
         self.data["group_id"] = group_id
-        self.data["pass"] = name
+        self.data["pass"] = variant
         self.data["render_layer"] = render_layer
 
         # Collect selected layer ids to be stored into instance
         layer_names = [layer["name"] for layer in selected_layers]
         self.data["layer_names"] = layer_names
-
-        # Replace `beauty` in beauty's subset name with entered name
-        subset_name = self.subset_template.format(**{
-            "family": family,
-            "render_layer": render_layer,
-            "pass": name
-        })
-        self.data["subset"] = subset_name
-        self.log.info(f"New subset name is \"{subset_name}\".")
 
         # Check if same instance already exists
         existing_instance = None
@@ -122,7 +142,7 @@ class CreateRenderPass(plugin.Creator):
             if (
                 instance["family"] == family
                 and instance["group_id"] == group_id
-                and instance["pass"] == name
+                and instance["pass"] == variant
             ):
                 existing_instance = instance
                 existing_instance_idx = idx
@@ -131,7 +151,7 @@ class CreateRenderPass(plugin.Creator):
         if existing_instance is not None:
             self.log.info(
                 f"Render pass instance for group id {group_id}"
-                f" and name \"{name}\" already exists, overriding."
+                f" and name \"{variant}\" already exists, overriding."
             )
             instances[existing_instance_idx] = self.data
         else:

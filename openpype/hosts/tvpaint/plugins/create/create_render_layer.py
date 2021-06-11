@@ -1,9 +1,11 @@
+from avalon.api import CreatorError
 from avalon.tvpaint import (
     pipeline,
     lib,
     CommunicationWrapper
 )
 from openpype.hosts.tvpaint.api import plugin
+from openpype.lib import prepare_template_data
 
 
 class CreateRenderlayer(plugin.Creator):
@@ -15,12 +17,30 @@ class CreateRenderlayer(plugin.Creator):
     defaults = ["Main"]
 
     rename_group = True
+    render_pass = "beauty"
 
-    subset_template = "{family}_{name}"
     rename_script_template = (
         "tv_layercolor \"setcolor\""
         " {clip_id} {group_id} {r} {g} {b} \"{name}\""
     )
+
+    dynamic_subset_keys = ["render_pass", "render_layer", "group"]
+
+    @classmethod
+    def get_dynamic_data(
+        cls, variant, task_name, asset_id, project_name, host_name
+    ):
+        dynamic_data = super(CreateRenderlayer, cls).get_dynamic_data(
+            variant, task_name, asset_id, project_name, host_name
+        )
+        # Use render pass name from creator's plugin
+        dynamic_data["render_pass"] = cls.render_pass
+        # Add variant to render layer
+        dynamic_data["render_layer"] = variant
+        # Change family for subset name fill
+        dynamic_data["family"] = "render"
+
+        return dynamic_data
 
     @classmethod
     def get_default_variant(cls):
@@ -70,34 +90,44 @@ class CreateRenderlayer(plugin.Creator):
 
         # Raise if there is no selection
         if not group_ids:
-            raise AssertionError("Nothing is selected.")
+            raise CreatorError("Nothing is selected.")
 
         # This creator should run only on one group
         if len(group_ids) > 1:
-            raise AssertionError("More than one group is in selection.")
+            raise CreatorError("More than one group is in selection.")
 
         group_id = tuple(group_ids)[0]
         # If group id is `0` it is `default` group which is invalid
         if group_id == 0:
-            raise AssertionError(
+            raise CreatorError(
                 "Selection is not in group. Can't mark selection as Beauty."
             )
 
         self.log.debug(f"Selected group id is \"{group_id}\".")
         self.data["group_id"] = group_id
 
-        family = self.data["family"]
-        # Extract entered name
-        name = self.data["subset"][len(family):]
-        self.log.info(f"Extracted name from subset name \"{name}\".")
-        self.data["name"] = name
+        group_data = lib.groups_data()
+        group_name = None
+        for group in group_data:
+            if group["group_id"] == group_id:
+                group_name = group["name"]
+                break
 
-        # Change subset name by template
-        subset_name = self.subset_template.format(**{
-            "family": self.family,
-            "name": name
-        })
-        self.log.info(f"New subset name \"{subset_name}\".")
+        if group_name is None:
+            raise AssertionError(
+                "Couldn't find group by id \"{}\"".format(group_id)
+            )
+
+        subset_name_fill_data = {
+            "group": group_name
+        }
+
+        family = self.family = self.data["family"]
+
+        # Fill dynamic key 'group'
+        subset_name = self.data["subset"].format(
+            **prepare_template_data(subset_name_fill_data)
+        )
         self.data["subset"] = subset_name
 
         # Check for instances of same group
@@ -153,7 +183,7 @@ class CreateRenderlayer(plugin.Creator):
 
         # Rename TVPaint group (keep color same)
         # - groups can't contain spaces
-        new_group_name = name.replace(" ", "_")
+        new_group_name = self.data["variant"].replace(" ", "_")
         rename_script = self.rename_script_template.format(
             clip_id=selected_group["clip_id"],
             group_id=selected_group["group_id"],
