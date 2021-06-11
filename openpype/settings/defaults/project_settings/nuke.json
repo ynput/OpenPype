@@ -43,11 +43,6 @@
             "optional": true,
             "active": true
         },
-        "ValidateNukeWriteBoundingBox": {
-            "enabled": true,
-            "optional": true,
-            "active": true
-        },
         "ExtractThumbnail": {
             "enabled": true,
             "nodes": {

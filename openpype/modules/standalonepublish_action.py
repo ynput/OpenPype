@@ -37,7 +37,7 @@ class StandAlonePublishAction(PypeModule, ITrayAction):
         args = get_pype_execute_args("standalonepublisher")
         kwargs = {}
         if platform.system().lower() == "darwin":
-            new_args = ["open", "-a", args.pop(0), "--args"]
+            new_args = ["open", "-na", args.pop(0), "--args"]
             new_args.extend(args)
             args = new_args
 

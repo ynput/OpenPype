@@ -100,7 +100,6 @@ class ListItem(QtWidgets.QWidget):
         self.input_field = self.create_ui_for_entity(
             self.category_widget, self.entity, self
         )
-        self.input_field.set_entity_value()
 
         spacer_widget = QtWidgets.QWidget(self)
         spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
@@ -336,6 +335,12 @@ class ListWidget(InputWidget):
 
             self.content_layout.insertWidget(row + 1, item_widget)
             self.input_fields.insert(row, item_widget)
+
+        # Change to entity value after item is added to `input_fields`
+        # - may cause recursion error as setting a value may cause input field
+        #   change which will trigger this validation if entity is already
+        #   added as widget here which won't because is not in input_fields
+        item_widget.input_field.set_entity_value()
 
         if previous_field:
             previous_field.order_changed()
