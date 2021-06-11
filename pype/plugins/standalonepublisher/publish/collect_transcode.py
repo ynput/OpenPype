@@ -14,7 +14,6 @@ class CollectTranscode(pyblish.api.InstancePlugin):
 
     # presets
     audio_extensions = [".wav"]
-    editorial_extensions = ["edl", "xml", "otio"]
 
     def process(self, instance):
         self.log.debug(f"instance: `{instance}`")
