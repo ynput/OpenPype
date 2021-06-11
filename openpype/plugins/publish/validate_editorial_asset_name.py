@@ -24,26 +24,26 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
             {"type": "asset"}, {"name": 1, "data.parents": 1}))
         self.log.debug("__ db_assets: {}".format(db_assets))
 
-        project_entities = {
+        asset_db_docs = {
             str(e["name"]): e["data"]["parents"] for e in db_assets}
 
         self.log.debug("__ project_entities: {}".format(
-            pformat(project_entities)))
+            pformat(asset_db_docs)))
 
         assets_missing_name = {}
         assets_wrong_parent = {}
         for asset in asset_and_parents.keys():
-            if asset not in project_entities.keys():
+            if asset not in asset_db_docs.keys():
                 # add to some nonexistent list for next layer of check
                 assets_missing_name.update({asset: asset_and_parents[asset]})
                 continue
 
-            if asset_and_parents[asset] != project_entities[asset]:
+            if asset_and_parents[asset] != asset_db_docs[asset]:
                 # add to some nonexistent list for next layer of check
                 assets_wrong_parent.update({
                     asset: {
                         "required": asset_and_parents[asset],
-                        "already_in_db": project_entities[asset]
+                        "already_in_db": asset_db_docs[asset]
                     }
                 })
                 continue
@@ -57,11 +57,11 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
             for asset in assets_missing_name.keys():
                 _asset = asset.lower().replace("_", "")
                 if _asset in [a.lower().replace("_", "")
-                              for a in project_entities.keys()]:
+                              for a in asset_db_docs.keys()]:
                     wrong_names.update({
                         "required_name": asset,
                         "used_variants_in_db": [
-                            a for a in project_entities.keys()
+                            a for a in asset_db_docs.keys()
                             if a.lower().replace("_", "") == _asset
                         ]
                     })
