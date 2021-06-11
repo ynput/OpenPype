@@ -122,7 +122,6 @@ class MusterLogin(QtWidgets.QWidget):
             super().keyPressEvent(key_event)
 
     def setError(self, msg):
-
         self.error_label.setText(msg)
         self.error_label.show()
 
@@ -147,6 +146,17 @@ class MusterLogin(QtWidgets.QWidget):
 
     def save_credentials(self, username, password):
         self.module.get_auth_token(username, password)
+
+    def showEvent(self, event):
+        super(MusterLogin, self).showEvent(event)
+
+        # Make btns same width
+        max_width = max(
+            self.btn_ok.sizeHint().width(),
+            self.btn_cancel.sizeHint().width()
+        )
+        self.btn_ok.setMinimumWidth(max_width)
+        self.btn_cancel.setMinimumWidth(max_width)
 
     def closeEvent(self, event):
         event.ignore()
