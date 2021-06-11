@@ -21,14 +21,6 @@ class MessageWidget(QtWidgets.QWidget):
             QtCore.Qt.WindowMinimizeButtonHint
         )
 
-        # Font
-        self.font = QtGui.QFont()
-        self.font.setFamily("DejaVu Sans Condensed")
-        self.font.setPointSize(9)
-        self.font.setBold(True)
-        self.font.setWeight(50)
-        self.font.setKerning(True)
-
         # Size setting
         self.resize(self.SIZE_W, self.SIZE_H)
         self.setMinimumSize(QtCore.QSize(self.SIZE_W, self.SIZE_H))
@@ -52,7 +44,6 @@ class MessageWidget(QtWidgets.QWidget):
         labels = []
         for message in messages:
             label = QtWidgets.QLabel(message)
-            label.setFont(self.font)
             label.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
             label.setTextFormat(QtCore.Qt.RichText)
             label.setWordWrap(True)
@@ -102,20 +93,11 @@ class ClockifySettings(QtWidgets.QWidget):
         icon = QtGui.QIcon(resources.pype_icon_filepath())
         self.setWindowIcon(icon)
 
+        self.setWindowTitle("Clockify settings")
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint |
             QtCore.Qt.WindowMinimizeButtonHint
         )
-
-        self._translate = QtCore.QCoreApplication.translate
-
-        # Font
-        self.font = QtGui.QFont()
-        self.font.setFamily("DejaVu Sans Condensed")
-        self.font.setPointSize(9)
-        self.font.setBold(True)
-        self.font.setWeight(50)
-        self.font.setKerning(True)
 
         # Size setting
         self.resize(self.SIZE_W, self.SIZE_H)
@@ -123,63 +105,52 @@ class ClockifySettings(QtWidgets.QWidget):
         self.setMaximumSize(QtCore.QSize(self.SIZE_W+100, self.SIZE_H+100))
         self.setStyleSheet(style.load_stylesheet())
 
-        self.setLayout(self._main())
-        self.setWindowTitle('Clockify settings')
+        self._ui_init()
 
-    def _main(self):
-        self.main = QtWidgets.QVBoxLayout()
-        self.main.setObjectName("main")
+    def _ui_init(self):
+        label_api_key = QtWidgets.QLabel("Clockify API key:")
 
-        self.form = QtWidgets.QFormLayout()
-        self.form.setContentsMargins(10, 15, 10, 5)
-        self.form.setObjectName("form")
+        input_api_key = QtWidgets.QLineEdit()
+        input_api_key.setFrame(True)
+        input_api_key.setPlaceholderText("e.g. XX1XxXX2x3x4xXxx")
 
-        self.label_api_key = QtWidgets.QLabel("Clockify API key:")
-        self.label_api_key.setFont(self.font)
-        self.label_api_key.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-        self.label_api_key.setTextFormat(QtCore.Qt.RichText)
-        self.label_api_key.setObjectName("label_api_key")
+        error_label = QtWidgets.QLabel("")
+        error_label.setTextFormat(QtCore.Qt.RichText)
+        error_label.setWordWrap(True)
+        error_label.hide()
 
-        self.input_api_key = QtWidgets.QLineEdit()
-        self.input_api_key.setEnabled(True)
-        self.input_api_key.setFrame(True)
-        self.input_api_key.setObjectName("input_api_key")
-        self.input_api_key.setPlaceholderText(
-            self._translate("main", "e.g. XX1XxXX2x3x4xXxx")
-        )
+        form_layout = QtWidgets.QFormLayout()
+        form_layout.setContentsMargins(10, 15, 10, 5)
+        form_layout.addRow(label_api_key, input_api_key)
+        form_layout.addRow(error_label)
 
-        self.error_label = QtWidgets.QLabel("")
-        self.error_label.setFont(self.font)
-        self.error_label.setTextFormat(QtCore.Qt.RichText)
-        self.error_label.setObjectName("error_label")
-        self.error_label.setWordWrap(True)
-        self.error_label.hide()
+        btn_ok = QtWidgets.QPushButton("Ok")
+        btn_ok.setToolTip('Sets Clockify API Key so can Start/Stop timer')
 
-        self.form.addRow(self.label_api_key, self.input_api_key)
-        self.form.addRow(self.error_label)
-
-        self.btn_group = QtWidgets.QHBoxLayout()
-        self.btn_group.addStretch(1)
-        self.btn_group.setObjectName("btn_group")
-
-        self.btn_ok = QtWidgets.QPushButton("Ok")
-        self.btn_ok.setToolTip('Sets Clockify API Key so can Start/Stop timer')
-        self.btn_ok.clicked.connect(self.click_ok)
-
-        self.btn_cancel = QtWidgets.QPushButton("Cancel")
+        btn_cancel = QtWidgets.QPushButton("Cancel")
         cancel_tooltip = 'Application won\'t start'
         if self.optional:
             cancel_tooltip = 'Close this window'
-        self.btn_cancel.setToolTip(cancel_tooltip)
-        self.btn_cancel.clicked.connect(self._close_widget)
+        btn_cancel.setToolTip(cancel_tooltip)
 
-        self.btn_group.addWidget(self.btn_ok)
-        self.btn_group.addWidget(self.btn_cancel)
+        btn_group = QtWidgets.QHBoxLayout()
+        btn_group.addStretch(1)
+        btn_group.addWidget(btn_ok)
+        btn_group.addWidget(btn_cancel)
 
-        self.main.addLayout(self.form)
-        self.main.addLayout(self.btn_group)
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.addLayout(form_layout)
+        main_layout.addLayout(btn_group)
 
-        return self.main
+        btn_ok.clicked.connect(self.click_ok)
+        btn_cancel.clicked.connect(self._close_widget)
+
+        self.label_api_key = label_api_key
+        self.input_api_key = input_api_key
+        self.error_label = error_label
+
+        self.btn_ok = btn_ok
+        self.btn_cancel = btn_cancel
 
     def setError(self, msg):
         self.error_label.setText(msg)
