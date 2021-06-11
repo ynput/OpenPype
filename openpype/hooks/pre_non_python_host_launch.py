@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from openpype.lib import (
     PreLaunchHook,
@@ -16,6 +17,8 @@ class NonPythonHostHook(PreLaunchHook):
     prepend python (or openpype) executable and script path before application's.
     """
     app_groups = ["harmony", "photoshop", "aftereffects"]
+
+    order = 20
 
     def execute(self):
         # Pop executable
@@ -45,3 +48,6 @@ class NonPythonHostHook(PreLaunchHook):
 
         if remainders:
             self.launch_context.launch_args.extend(remainders)
+
+        self.launch_context.kwargs["stdout"] = subprocess.DEVNULL
+        self.launch_context.kwargs["stderr"] = subprocess.STDOUT

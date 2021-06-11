@@ -26,7 +26,7 @@ def main(ctx):
 
 @main.command()
 @click.option("-d", "--dev", is_flag=True, help="Settings in Dev mode")
-def settings(dev=False):
+def settings(dev):
     """Show Pype Settings UI."""
     PypeCommands().launch_settings_gui(dev)
 
@@ -60,13 +60,6 @@ def tray(debug=False):
               help="Ftrack api user")
 @click.option("--ftrack-api-key", envvar="FTRACK_API_KEY",
               help="Ftrack api key")
-@click.option("--ftrack-events-path",
-              envvar="FTRACK_EVENTS_PATH",
-              help=("path to ftrack event handlers"))
-@click.option("--no-stored-credentials", is_flag=True,
-              help="don't use stored credentials")
-@click.option("--store-credentials", is_flag=True,
-              help="store provided credentials")
 @click.option("--legacy", is_flag=True,
               help="run event server without mongo storing")
 @click.option("--clockify-api-key", envvar="CLOCKIFY_API_KEY",
@@ -77,9 +70,6 @@ def eventserver(debug,
                 ftrack_url,
                 ftrack_user,
                 ftrack_api_key,
-                ftrack_events_path,
-                no_stored_credentials,
-                store_credentials,
                 legacy,
                 clockify_api_key,
                 clockify_workspace):
@@ -87,10 +77,6 @@ def eventserver(debug,
 
     This should be ideally used by system service (such us systemd or upstart
     on linux and window service).
-
-    You have to set either proper environment variables to provide URL and
-    credentials or use option to specify them. If you use --store_credentials
-    provided credentials will be stored for later use.
     """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = "3"
@@ -99,9 +85,6 @@ def eventserver(debug,
         ftrack_url,
         ftrack_user,
         ftrack_api_key,
-        ftrack_events_path,
-        no_stored_credentials,
-        store_credentials,
         legacy,
         clockify_api_key,
         clockify_workspace

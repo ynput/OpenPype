@@ -1,7 +1,10 @@
+import os
 import json
 import copy
 import pyblish.api
 from avalon import io
+
+from openpype.lib import get_subset_name
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -16,6 +19,20 @@ class CollectInstances(pyblish.api.ContextPlugin):
             len(workfile_instances),
             json.dumps(workfile_instances, indent=4)
         ))
+
+        # Backwards compatibility for workfiles that already have review
+        #   instance in metadata.
+        review_instance_exist = False
+        for instance_data in workfile_instances:
+            if instance_data["family"] == "review":
+                review_instance_exist = True
+                break
+
+        # Fake review instance if review was not found in metadata families
+        if not review_instance_exist:
+            workfile_instances.append(
+                self._create_review_instance_data(context)
+            )
 
         for instance_data in workfile_instances:
             instance_data["fps"] = context.data["sceneFps"]
@@ -47,9 +64,38 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Different instance creation based on family
             instance = None
             if family == "review":
-                # Change subset name
+                # Change subset name of review instance
+
+                # Collect asset doc to get asset id
+                # - not sure if it's good idea to require asset id in
+                #   get_subset_name?
+                asset_name = context.data["workfile_context"]["asset"]
+                asset_doc = io.find_one(
+                    {
+                        "type": "asset",
+                        "name": asset_name
+                    },
+                    {"_id": 1}
+                )
+                asset_id = None
+                if asset_doc:
+                    asset_id = asset_doc["_id"]
+
+                # Project name from workfile context
+                project_name = context.data["workfile_context"]["project"]
+                # Host name from environemnt variable
+                host_name = os.environ["AVALON_APP"]
+                # Use empty variant value
+                variant = ""
                 task_name = io.Session["AVALON_TASK"]
-                new_subset_name = "{}{}".format(family, task_name.capitalize())
+                new_subset_name = get_subset_name(
+                    family,
+                    variant,
+                    task_name,
+                    asset_id,
+                    project_name,
+                    host_name
+                )
                 instance_data["subset"] = new_subset_name
 
                 instance = context.create_instance(**instance_data)
@@ -90,23 +136,37 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 instance, json.dumps(instance.data, indent=4)
             ))
 
+    def _create_review_instance_data(self, context):
+        """Fake review instance data."""
+
+        return {
+            "family": "review",
+            "asset": context.data["asset"],
+            # Dummy subset name
+            "subset": "reviewMain"
+        }
+
     def create_render_layer_instance(self, context, instance_data):
         name = instance_data["name"]
         # Change label
         subset_name = instance_data["subset"]
-        instance_data["label"] = "{}_Beauty".format(name)
 
-        # Change subset name
-        # Final family of an instance will be `render`
-        new_family = "render"
-        task_name = io.Session["AVALON_TASK"]
-        new_subset_name = "{}{}_{}_Beauty".format(
-            new_family, task_name.capitalize(), name
-        )
-        instance_data["subset"] = new_subset_name
-        self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
-            subset_name, new_subset_name
-        ))
+        # Backwards compatibility
+        # - subset names were not stored as final subset names during creation
+        if "variant" not in instance_data:
+            instance_data["label"] = "{}_Beauty".format(name)
+
+            # Change subset name
+            # Final family of an instance will be `render`
+            new_family = "render"
+            task_name = io.Session["AVALON_TASK"]
+            new_subset_name = "{}{}_{}_Beauty".format(
+                new_family, task_name.capitalize(), name
+            )
+            instance_data["subset"] = new_subset_name
+            self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
+                subset_name, new_subset_name
+            ))
 
         # Get all layers for the layer
         layers_data = context.data["layersData"]
@@ -138,20 +198,23 @@ class CollectInstances(pyblish.api.ContextPlugin):
         )
         # Change label
         render_layer = instance_data["render_layer"]
-        instance_data["label"] = "{}_{}".format(render_layer, pass_name)
 
-        # Change subset name
-        # Final family of an instance will be `render`
-        new_family = "render"
-        old_subset_name = instance_data["subset"]
-        task_name = io.Session["AVALON_TASK"]
-        new_subset_name = "{}{}_{}_{}".format(
-            new_family, task_name.capitalize(), render_layer, pass_name
-        )
-        instance_data["subset"] = new_subset_name
-        self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
-            old_subset_name, new_subset_name
-        ))
+        # Backwards compatibility
+        # - subset names were not stored as final subset names during creation
+        if "variant" not in instance_data:
+            instance_data["label"] = "{}_{}".format(render_layer, pass_name)
+            # Change subset name
+            # Final family of an instance will be `render`
+            new_family = "render"
+            old_subset_name = instance_data["subset"]
+            task_name = io.Session["AVALON_TASK"]
+            new_subset_name = "{}{}_{}_{}".format(
+                new_family, task_name.capitalize(), render_layer, pass_name
+            )
+            instance_data["subset"] = new_subset_name
+            self.log.debug("Changed subset name \"{}\"->\"{}\"".format(
+                old_subset_name, new_subset_name
+            ))
 
         layers_data = context.data["layersData"]
         layers_by_name = {

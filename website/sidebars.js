@@ -64,7 +64,8 @@ module.exports = {
                     type: "category",
                     label: "Project Settings",
                     items: [
-                        "project_settings/settings_project_global"
+                        "project_settings/settings_project_global",
+                        "project_settings/settings_project_nuke"
                     ],
                 },
             ],
@@ -77,7 +78,8 @@ module.exports = {
                 "module_site_sync",
                 "module_deadline",
                 "module_muster",
-                "module_clockify"
+                "module_clockify",
+                "module_slack"
             ],
         },
         {

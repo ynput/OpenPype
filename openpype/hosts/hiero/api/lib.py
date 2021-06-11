@@ -190,7 +190,7 @@ def get_track_items(
                     if not item.isEnabled():
                         continue
                 if track_item_name:
-                    if item.name() in track_item_name:
+                    if track_item_name in item.name():
                         return item
                 # make sure only track items with correct track names are added
                 if track_name and track_name in track.name():
@@ -214,7 +214,9 @@ def get_track_items(
             # add all if no track_type is defined
             return_list.append(track_item)
 
-    return return_list
+    # return output list but make sure all items are TrackItems
+    return [_i for _i in return_list
+            if type(_i) == hiero.core.TrackItem]
 
 
 def get_track_item_pype_tag(track_item):
@@ -947,6 +949,54 @@ def sync_clip_name_to_data_asset(track_items_list):
             print("asset was changed in clip: {}".format(ti_name))
 
 
+def check_inventory_versions():
+    """
+    Actual version color idetifier of Loaded containers
+
+    Check all track items and filter only
+    Loader nodes for its version. It will get all versions from database
+    and check if the node is having actual version. If not then it will color
+    it to red.
+    """
+    from . import parse_container
+    from avalon import io
+
+    # presets
+    clip_color_last = "green"
+    clip_color = "red"
+
+    # get all track items from current timeline
+    for track_item in get_track_items():
+        container = parse_container(track_item)
+
+        if container:
+            # get representation from io
+            representation = io.find_one({
+                "type": "representation",
+                "_id": io.ObjectId(container["representation"])
+            })
+
+            # Get start frame from version data
+            version = io.find_one({
+                "type": "version",
+                "_id": representation["parent"]
+            })
+
+            # get all versions in list
+            versions = io.find({
+                "type": "version",
+                "parent": version["parent"]
+            }).distinct('name')
+
+            max_version = max(versions)
+
+            # set clip colour
+            if version.get("name") == max_version:
+                track_item.source().binItem().setColor(clip_color_last)
+            else:
+                track_item.source().binItem().setColor(clip_color)
+
+
 def selection_changed_timeline(event):
     """Callback on timeline to check if asset in data is the same as clip name.
 
@@ -956,8 +1006,14 @@ def selection_changed_timeline(event):
     timeline_editor = event.sender
     selection = timeline_editor.selection()
 
+    selection = [ti for ti in selection
+                 if isinstance(ti, hiero.core.TrackItem)]
+
     # run checking function
     sync_clip_name_to_data_asset(selection)
+
+    # also mark old versions of loaded containers
+    check_inventory_versions()
 
 
 def before_project_save(event):
@@ -970,3 +1026,6 @@ def before_project_save(event):
 
     # run checking function
     sync_clip_name_to_data_asset(track_items)
+
+    # also mark old versions of loaded containers
+    check_inventory_versions()

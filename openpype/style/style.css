@@ -1,0 +1,593 @@
+/*
+Enabled vs Disabled logic in most of stylesheets
+
+- global font color
+    Enabled - should be same globalle except placeholders
+    Disabled - font color is greyed out
+
+- global active/hover
+   Enabled - color motive of borders and bg color
+       - combobox, slider, views, buttons, checkbox, radiobox, inputs
+
+- QLineEdit, QTextEdit, QPlainTextEdit, QAbstractSpinBox
+    Enabled - bg has lighter or darked color
+    Disabled - bg has same color as background
+
+- QComboBox, QPushButton, QToolButton
+    Enabled - slightly lighter color
+    Disabled - even lighter color
+*/
+
+* {
+    font-size: 9pt;
+    font-family: "Spartan";
+    font-weight: 450;
+    outline: none;
+}
+
+QWidget {
+    color: {color:font};
+    background: {color:bg};
+    border-radius: 0px;
+}
+
+QWidget:disabled {
+    color: {color:font-disabled};
+}
+
+/* Inputs */
+QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
+    border: 1px solid {color:border};
+    border-radius: 0.3em;
+    background: {color:bg-inputs};
+    padding: 0.1em;
+}
+
+QAbstractSpinBox:disabled, QLineEdit:disabled, QPlainTextEdit:disabled, QTextEdit:disabled {
+    background: {color:bg-inputs-disabled};
+}
+QAbstractSpinBox:hover, QLineEdit:hover, QPlainTextEdit:hover, QTextEdit:hover{
+    border-color: {color:border-hover};
+}
+QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
+    border-color: {color:border-focus};
+}
+
+/* Buttons */
+QPushButton {
+    text-align:center center;
+    border: 1px solid transparent;
+    border-radius: 0.2em;
+    padding: 3px 5px 3px 5px;
+    background: {color:bg-buttons};
+}
+
+QPushButton:hover {
+    background: {color:bg-button-hover};
+    color: {color:font-hover};
+}
+
+QPushButton:pressed {}
+
+QPushButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
+QPushButton::menu-indicator  {
+    subcontrol-origin: padding;
+    subcontrol-position: right;
+    width: 8px;
+    height: 8px;
+    padding-right: 5px;
+}
+
+QToolButton {
+    border: none;
+    background: transparent;
+    border-radius: 0.2em;
+    padding: 2px;
+}
+
+QToolButton:hover {
+    background: #333840;
+    border-color: {color:border-hover};
+}
+
+QToolButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
+/* QMenu */
+QMenu {
+    border: 1px solid #555555;
+    background: {color:bg-inputs};
+}
+
+QMenu::icon {
+    padding-left: 7px;
+}
+
+QMenu::item {
+    padding: 6px 25px 6px 10px;
+}
+
+QMenu::item:selected {
+    background: {color:bg-view-hover};
+}
+
+QMenu::item:selected:hover {
+    background: {color:bg-view-hover};
+}
+
+QMenu::right-arrow {
+    min-width: 10px;
+}
+QMenu::separator {
+    background: {color:bg-menu-separator};
+    height: 2px;
+    margin-right: 5px;
+}
+
+/* Combobox */
+QComboBox {
+    border: 1px solid {color:border};
+    border-radius: 3px;
+    padding: 1px 3px 1px 3px;
+    background: {color:bg-inputs};
+}
+QComboBox:hover {
+    border-color: {color:border-hover};
+}
+QComboBox:disabled {
+    background: {color:bg-inputs-disabled};
+}
+
+/* QComboBox must have explicitly set Styled delegate! */
+QComboBox QAbstractItemView {
+    border: 1px solid {color:border};
+	background: {color:bg-inputs};
+}
+
+QComboBox QAbstractItemView::item:selected {
+    background: {color:bg-view-hover};
+    color: {color:font};
+    padding-left: 0px;
+}
+
+QComboBox QAbstractItemView::item:selected:hover {
+    background: {color:bg-view-hover};
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 15px;
+    border-style: none;
+    border-left-style: solid;
+    border-left-color: {color:border};
+    border-left-width: 1px;
+}
+QComboBox::down-arrow, QComboBox::down-arrow:on, QComboBox::down-arrow:hover, QComboBox::down-arrow:focus
+{
+    image: url(:/openpype/images/combobox_arrow.png);
+}
+
+/* Splitter */
+QSplitter {
+    border: none;
+}
+
+QSplitter::handle {
+    border: 1px dotted {color:bg-menu-separator};
+}
+
+/* SLider */
+QSlider::groove {
+    border: 1px solid #464b54;
+    border-radius: 0.3em;
+    background: {color:bg-inputs};
+}
+QSlider::groove:horizontal {
+    height: 8px;
+}
+
+QSlider::groove:vertical {
+    width: 8px;
+}
+
+QSlider::groove:hover {
+    border-color: {color:border-hover};
+}
+QSlider::groove:disabled {
+    background: {color:bg-inputs-disabled};
+}
+QSlider::groove:focus {
+    border-color: {color:border-focus};
+}
+QSlider::handle {
+    background: qlineargradient(
+        x1: 0, y1: 0.5,
+        x2: 1, y2: 0.5,
+        stop: 0 {palette:blue-base},
+        stop: 1 {palette:green-base}
+    );
+    border: 1px solid #5c5c5c;
+    width: 10px;
+    height: 10px;
+
+    border-radius: 5px;
+}
+QSlider::handle:horizontal {
+    margin: -2px 0;
+}
+QSlider::handle:vertical {
+    margin: 0 -2px;
+}
+
+QSlider::handle:disabled {
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:1, y2:1,
+        stop:0 {color:bg-buttons},
+        stop:1 {color:bg-buttons-disabled}
+    );
+}
+
+/* Tab widget*/
+QTabWidget::pane {
+    border-top-style: none;
+}
+
+/* move to the right to not mess with borders of widget underneath */
+QTabWidget::tab-bar {
+    left: 2px;
+}
+
+QTabBar::tab {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 5px;
+
+}
+
+QTabBar::tab:selected {
+    background: {color:grey-lighter};
+    /* background: qradialgradient(
+        cx:0.5, cy:0.5, radius: 2,
+        fx:0.5, fy:1,
+        stop:0.3 {color:bg}, stop:1 white
+    ) */
+    /* background: qlineargradient(
+        x1: 0, y1: 0, x2: 0, y2: 1,
+        stop: 0 {color:bg-inputs}, stop: 1.0 {color:bg}
+    ); */
+}
+
+QTabBar::tab:!selected {
+    /* Make it smaller*/
+    margin-top: 3px;
+    background: {color:grey-light};
+}
+
+QTabBar::tab:!selected:hover {
+    background: {color:grey-lighter};
+}
+
+QTabBar::tab:first:selected {
+    margin-left: 0;
+}
+
+QTabBar::tab:last:selected {
+    margin-right: 0;
+}
+
+QTabBar::tab:only-one {
+    margin: 0;
+}
+
+QHeaderView {
+    border: none;
+    border-radius: 2px;
+    margin: 0px;
+    padding: 0px;
+}
+
+QHeaderView::section  {
+    background: {color:bg-view-header};
+    padding: 4px;
+    border-right: 1px solid {color:bg-view};
+    border-radius: 0px;
+    text-align: center;
+    color: {color:font};
+    font-weight: bold;
+}
+QHeaderView::section:first {
+    border-left: none;
+}
+QHeaderView::section:last {
+    border-right: none;
+}
+/* Views QListView QTreeView QTableView */
+QAbstractItemView {
+    border: 0px solid {color:border};
+    border-radius: 0.2em;
+    background: {color:bg-view};
+    alternate-background-color: {color:bg-view-alternate};
+    /* Mac shows selection color on branches. */
+    selection-background-color: transparent;
+}
+
+QAbstractItemView:disabled{
+    background: {color:bg-view-disabled};
+    alternate-background-color: {color:bg-view-alternate-disabled};
+}
+
+QAbstractItemView::item:hover {
+    /* color: {color:bg-view-hover}; */
+    background: {color:bg-view-hover};
+}
+
+QAbstractItemView::item:selected {
+    background: {color:bg-view-selection};
+    color: {color:font-view-selection};
+}
+
+QAbstractItemView::item:selected:active {
+    color: {color:font-view-selection};
+}
+
+/* Same as selected but give ability to easy change it */
+QAbstractItemView::item:selected:!active {
+    background: {color:bg-view-selection};
+    color: {color:font-view-selection};
+}
+
+QAbstractItemView::item:selected:hover {
+    background: {color:bg-view-selection-hover};
+}
+
+/* Row colors (alternate colors) are from left - right */
+QAbstractItemView:branch {
+    background: transparent;
+}
+
+QAbstractItemView::branch:open:has-children:!has-siblings,
+QAbstractItemView::branch:open:has-children:has-siblings {
+    border-image: none;
+    image: url(:/openpype/images/branch_open.png);
+    background: transparent;
+}
+QAbstractItemView::branch:open:has-children:!has-siblings:hover,
+QAbstractItemView::branch:open:has-children:has-siblings:hover {
+    border-image: none;
+    image: url(:/openpype/images//branch_open_on.png);
+    background: transparent;
+}
+
+QAbstractItemView::branch:has-children:!has-siblings:closed,
+QAbstractItemView::branch:closed:has-children:has-siblings {
+    border-image: none;
+    image: url(:/openpype/images//branch_closed.png);
+    background: transparent;
+}
+QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
+QAbstractItemView::branch:closed:has-children:has-siblings:hover {
+    border-image: none;
+    image: url(:/openpype/images//branch_closed_on.png);
+    background: transparent;
+}
+
+/* Progress bar */
+QProgressBar {
+    border: 1px solid {color:border};
+    font-weight: bold;
+    text-align: center;
+}
+
+QProgressBar:horizontal {
+    height: 20px;
+}
+QProgressBar:vertical {
+    width: 20px;
+}
+
+QProgressBar::chunk {
+    background: qlineargradient(
+        x1: 0, y1: 0.5,
+        x2: 1, y2: 0.5,
+        stop: 0 {palette:blue-base},
+        stop: 1 {palette:green-base}
+    );
+}
+
+/* Scroll bars */
+QScrollBar {
+    background: {color:bg-inputs};
+    border-radius: 4px;
+    border: 1px transparent {color:bg-inputs};
+}
+
+QScrollBar:horizontal {
+    height: 15px;
+    margin: 3px 3px 3px 6px;
+}
+
+QScrollBar:vertical {
+    width: 15px;
+    margin: 6px 3px 3px 3px;
+}
+
+QScrollBar::handle {
+    background: {color:bg-scroll-handle};
+    border-radius: 4px;
+}
+
+QScrollBar::handle:horizontal {
+    min-width: 5px;
+}
+
+QScrollBar::handle:vertical {
+    min-height: 5px;
+}
+
+QScrollBar::add-line:horizontal {
+    margin: 0px 3px 0px 3px;
+    width: 0px;
+    height: 0px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:horizontal {
+    margin: 0px 3px 0px 3px;
+    height: 0px;
+    width: 0px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:horizontal:hover,QScrollBar::add-line:horizontal:on {
+    height: 0px;
+    width: 0px;
+    subcontrol-position: right;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:horizontal:hover, QScrollBar::sub-line:horizontal:on {
+    height: 0px;
+    width: 0px;
+    subcontrol-position: left;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::up-arrow:horizontal, QScrollBar::down-arrow:horizontal {
+    background: none;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: none;
+}
+
+QScrollBar::sub-line:vertical {
+    margin: 3px 0px 3px 0px;
+    height: 0px;
+    width: 0px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::add-line:vertical {
+    margin: 3px 0px 3px 0px;
+    height: 0px;
+    width: 0px;
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::sub-line:vertical:hover,QScrollBar::sub-line:vertical:on {
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+
+
+QScrollBar::add-line:vertical:hover, QScrollBar::add-line:vertical:on {
+    subcontrol-position: bottom;
+    subcontrol-origin: margin;
+}
+
+QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical {
+    background: none;
+}
+
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+
+/* Globally used names */
+#Separator {
+    background: {color:bg-menu-separator};
+}
+
+#IconBtn {}
+
+/* Password dialog*/
+#PasswordBtn {
+    border: none;
+    padding:0.1em;
+    background: transparent;
+}
+
+#PasswordBtn:hover {
+    background: {color:bg-buttons};
+}
+
+#RememberCheckbox {
+    spacing: 0.5em;
+}
+
+/* Project Manager stylesheets */
+#HierarchyView::item {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-right: 3px;
+}
+
+#TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
+    background: transparent;
+    border-radius: 0.3em;
+}
+
+#TypeEditor:focus, #ToolEditor:focus, #NameEditor:focus, #NumberEditor:focus {
+    background: {color:bg-inputs};
+}
+
+#CompleterView {
+    border: 1px solid {color:border};
+    background: {color:bg-inputs};
+}
+
+#CompleterView::item {
+    padding: 2px 4px 2px 4px;
+    border-left: 3px solid {color:bg-view};
+}
+
+#CompleterView::item:hover {
+    border-left-color: {palette:blue-base};
+    background: {color:bg-view-selection};
+    color: {color:font};
+}
+
+/* Launcher specific stylesheets */
+#IconView[mode="icon"] {
+    /* font size can't be set on items */
+    font-size: 8pt;
+    border: 0px;
+    padding: 0px;
+    margin: 0px;
+}
+
+#IconView[mode="icon"]::item  {
+    margin-top: 6px;
+    border: 0px;
+}
+
+#IconView[mode="icon"]::item:hover {
+    background: rgba(0, 0, 0, 0);
+    color: {color:font-hover};
+}
+
+#IconView[mode="icon"]::icon {
+    top: 3px;
+}
+
+/* Standalone publisher */
+
+#ComponentItem {
+    background: transparent;
+}
+
+#ComponentFrame {
+    border: 1px solid {color:border};
+    border-radius: 0.1em;
+}

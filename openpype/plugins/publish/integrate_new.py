@@ -78,7 +78,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
-                "lut",
                 "audio",
                 "yetiRig",
                 "yeticache",
@@ -97,7 +96,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "editorial",
                 "background",
                 "camerarig",
-                "redshiftproxy"
+                "redshiftproxy",
+                "effect"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -417,21 +417,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 dst_padding_exp = src_padding_exp
                 dst_start_frame = None
+                collection_start = list(src_collection.indexes)[0]
                 for i in src_collection.indexes:
                     # TODO 1.) do not count padding in each index iteration
                     # 2.) do not count dst_padding from src_padding before
                     #   index_frame_start check
+                    frame_number = i - collection_start
                     src_padding = src_padding_exp % i
 
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
 
-                    dst_padding = src_padding_exp % i
+                    dst_padding = src_padding_exp % frame_number
 
                     if index_frame_start is not None:
                         dst_padding_exp = "%0{}d".format(frame_start_padding)
-                        dst_padding = dst_padding_exp % index_frame_start
-                        index_frame_start += 1
+                        dst_padding = dst_padding_exp % (index_frame_start + frame_number)  # noqa: E501
 
                     dst = "{0}{1}{2}".format(
                         dst_head,

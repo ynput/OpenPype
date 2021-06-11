@@ -41,10 +41,26 @@ version to run for the artist, until a higher version is detected in the update 
 #### Manual Updates
 
 If for some reason you don't want to use the automatic updates, you can distribute your
-zips manually. Your artist will then have to unpack them to the correct place on their disk.
+zips manually. Your artist will then have to put them to the correct place on their disk.
+Zips will be automatically unzipped there.
 
 The default locations are:
 
-- Windows: `C:\Users\%USERNAME%\AppData\Local\pypeclub\openpype`
-- Linux: `        `
-- Mac: `        `
+- Windows: `%LOCALAPPDATA%\pypeclub\openpype`
+- Linux: `~/.local/share/pypeclub/openpype`
+- Mac: `~/Library/Application Support/pypeclub/openpype`
+
+
+### Staging vs. Production
+You can have version of OpenPype with experimental features you want to try somewhere but you
+don't want to disrupt your production. You can tag version as **staging** simply by appending `+staging`
+to its name.
+
+So if you have OpenPype version like `OpenPype-v3.0.0.zip` just name it `OpenPype-v3.0.0+staging.zip`.
+When both these versions are present, production one will always take precedence over staging.
+
+You can run OpenPype with `--use-staging` argument to add use staging versions.
+
+:::note
+Running staging version is identified by orange **P** icon in system tray.
+:::

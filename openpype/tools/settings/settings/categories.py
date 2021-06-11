@@ -21,6 +21,7 @@ from openpype.settings.entities import (
     TextEntity,
     PathInput,
     RawJsonEntity,
+    ColorEntity,
 
     DefaultsNotDefined,
     StudioDefaultsNotDefined,
@@ -44,7 +45,7 @@ from .item_widgets import (
     PathWidget,
     PathInputWidget
 )
-
+from .color_widget import ColorWidget
 from avalon.vendor import qtawesome
 
 
@@ -72,6 +73,7 @@ class IgnoreInputChangesObj:
 class SettingsCategoryWidget(QtWidgets.QWidget):
     state_changed = QtCore.Signal()
     saved = QtCore.Signal(QtWidgets.QWidget)
+    restart_required_trigger = QtCore.Signal()
 
     def __init__(self, user_role, parent=None):
         super(SettingsCategoryWidget, self).__init__(parent)
@@ -112,6 +114,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         elif isinstance(entity, RawJsonEntity):
             return RawJsonWidget(*args)
+
+        elif isinstance(entity, ColorEntity):
+            return ColorWidget(*args)
 
         elif isinstance(entity, BaseEnumEntity):
             return EnumeratorWidget(*args)
@@ -181,9 +186,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         if self.user_role == "developer":
             self._add_developer_ui(footer_layout)
 
-        save_btn = QtWidgets.QPushButton("Save")
-        spacer_widget = QtWidgets.QWidget()
-        footer_layout.addWidget(spacer_widget, 1)
+        save_btn = QtWidgets.QPushButton("Save", footer_widget)
+        require_restart_label = QtWidgets.QLabel(footer_widget)
+        require_restart_label.setAlignment(QtCore.Qt.AlignCenter)
+        footer_layout.addWidget(require_restart_label, 1)
         footer_layout.addWidget(save_btn, 0)
 
         configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
@@ -201,6 +207,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         save_btn.clicked.connect(self._save)
 
         self.save_btn = save_btn
+        self.require_restart_label = require_restart_label
         self.scroll_widget = scroll_widget
         self.content_layout = content_layout
         self.content_widget = content_widget
@@ -319,6 +326,15 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def _on_reset_start(self):
         return
 
+    def _on_require_restart_change(self):
+        value = ""
+        if self.entity.require_restart:
+            value = (
+                "Your changes require restart of"
+                " all running OpenPype processes to take affect."
+            )
+        self.require_restart_label.setText(value)
+
     def reset(self):
         self.set_state(CategoryState.Working)
 
@@ -336,6 +352,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         try:
             self._create_root_entity()
 
+            self.entity.add_require_restart_change_callback(
+                self._on_require_restart_change
+            )
+
             self.add_children_gui()
 
             self.ignore_input_changes.set_ignore(True)
@@ -344,6 +364,16 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
                 input_field.set_entity_value()
 
             self.ignore_input_changes.set_ignore(False)
+
+        except DefaultsNotDefined:
+            dialog = QtWidgets.QMessageBox(self)
+            dialog.setWindowTitle("Missing default values")
+            dialog.setText((
+                "Default values are not set and you"
+                " don't have permissions to modify them."
+                " Please contact OpenPype team."
+            ))
+            dialog.setIcon(QtWidgets.QMessageBox.Critical)
 
         except SchemaError as exc:
             dialog = QtWidgets.QMessageBox(self)
@@ -429,6 +459,15 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         return
 
     def _save(self):
+        # Don't trigger restart if defaults are modified
+        if (
+            self.modify_defaults_checkbox
+            and self.modify_defaults_checkbox.isChecked()
+        ):
+            require_restart = False
+        else:
+            require_restart = self.entity.require_restart
+
         self.set_state(CategoryState.Working)
 
         if self.items_are_valid():
@@ -437,6 +476,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.set_state(CategoryState.Idle)
 
         self.saved.emit(self)
+
+        if require_restart:
+            self.restart_required_trigger.emit()
+        self.require_restart_label.setText("")
 
     def _on_refresh(self):
         self.reset()
@@ -462,12 +505,7 @@ class SystemWidget(SettingsCategoryWidget):
                 self.modify_defaults_checkbox.setEnabled(True)
         except DefaultsNotDefined:
             if not self.modify_defaults_checkbox:
-                msg_box = QtWidgets.QMessageBox(
-                    "BUG: Default values are not set and you"
-                    " don't have permissions to modify them."
-                )
-                msg_box.exec_()
-                return
+                raise
 
             self.entity.set_defaults_state()
             self.modify_defaults_checkbox.setChecked(True)
@@ -539,12 +577,7 @@ class ProjectWidget(SettingsCategoryWidget):
 
         except DefaultsNotDefined:
             if not self.modify_defaults_checkbox:
-                msg_box = QtWidgets.QMessageBox(
-                    "BUG: Default values are not set and you"
-                    " don't have permissions to modify them."
-                )
-                msg_box.exec_()
-                return
+                raise
 
             self.entity.set_defaults_state()
             self.modify_defaults_checkbox.setChecked(True)

@@ -43,6 +43,7 @@ import os
 from abc import ABCMeta, abstractmethod
 
 import six
+import attr
 
 import openpype.hosts.maya.api.lib as lib
 
@@ -88,6 +89,22 @@ IMAGE_PREFIXES = {
 }
 
 
+@attr.s
+class LayerMetadata(object):
+    """Data class for Render Layer metadata."""
+    frameStart = attr.ib()
+    frameEnd = attr.ib()
+    cameras = attr.ib()
+    sceneName = attr.ib()
+    layerName = attr.ib()
+    renderer = attr.ib()
+    defaultExt = attr.ib()
+    filePrefix = attr.ib()
+    enabledAOVs = attr.ib()
+    frameStep = attr.ib(default=1)
+    padding = attr.ib(default=4)
+
+
 class ExpectedFiles:
     """Class grouping functionality for all supported renderers.
 
@@ -95,7 +112,6 @@ class ExpectedFiles:
         multipart (bool): Flag if multipart exrs are used.
 
     """
-
     multipart = False
 
     def __init__(self, render_instance):
@@ -142,6 +158,7 @@ class ExpectedFiles:
         )
 
     def _get_files(self, renderer):
+        # type: (AExpectedFiles) -> list
         files = renderer.get_files()
         self.multipart = renderer.multipart
         return files
@@ -193,7 +210,7 @@ class AExpectedFiles:
     def get_renderer_prefix(self):
         """Return prefix for specific renderer.
 
-        This is for most renderers the same and can be overriden if needed.
+        This is for most renderers the same and can be overridden if needed.
 
         Returns:
             str: String with image prefix containing tokens
@@ -214,6 +231,7 @@ class AExpectedFiles:
         return file_prefix
 
     def _get_layer_data(self):
+        # type: () -> LayerMetadata
         #                      ______________________________________________
         # ____________________/ ____________________________________________/
         # 1 -  get scene name  /__________________/
@@ -230,30 +248,31 @@ class AExpectedFiles:
         if self.layer.startswith("rs_"):
             layer_name = self.layer[3:]
 
-        return {
-            "frameStart": int(self.get_render_attribute("startFrame")),
-            "frameEnd": int(self.get_render_attribute("endFrame")),
-            "frameStep": int(self.get_render_attribute("byFrameStep")),
-            "padding": int(self.get_render_attribute("extensionPadding")),
+        return LayerMetadata(
+            frameStart=int(self.get_render_attribute("startFrame")),
+            frameEnd=int(self.get_render_attribute("endFrame")),
+            frameStep=int(self.get_render_attribute("byFrameStep")),
+            padding=int(self.get_render_attribute("extensionPadding")),
             # if we have <camera> token in prefix path we'll expect output for
             # every renderable camera in layer.
-            "cameras": self.get_renderable_cameras(),
-            "sceneName": scene_name,
-            "layerName": layer_name,
-            "renderer": self.renderer,
-            "defaultExt": cmds.getAttr("defaultRenderGlobals.imfPluginKey"),
-            "filePrefix": file_prefix,
-            "enabledAOVs": self.get_aovs(),
-        }
+            cameras=self.get_renderable_cameras(),
+            sceneName=scene_name,
+            layerName=layer_name,
+            renderer=self.renderer,
+            defaultExt=cmds.getAttr("defaultRenderGlobals.imfPluginKey"),
+            filePrefix=file_prefix,
+            enabledAOVs=self.get_aovs()
+        )
 
     def _generate_single_file_sequence(
             self, layer_data, force_aov_name=None):
+        # type: (LayerMetadata, str) -> list
         expected_files = []
-        for cam in layer_data["cameras"]:
-            file_prefix = layer_data["filePrefix"]
+        for cam in layer_data.cameras:
+            file_prefix = layer_data.filePrefix
             mappings = (
-                (R_SUBSTITUTE_SCENE_TOKEN, layer_data["sceneName"]),
-                (R_SUBSTITUTE_LAYER_TOKEN, layer_data["layerName"]),
+                (R_SUBSTITUTE_SCENE_TOKEN, layer_data.sceneName),
+                (R_SUBSTITUTE_LAYER_TOKEN, layer_data.layerName),
                 (R_SUBSTITUTE_CAMERA_TOKEN, self.sanitize_camera_name(cam)),
                 # this is required to remove unfilled aov token, for example
                 # in Redshift
@@ -268,29 +287,30 @@ class AExpectedFiles:
                 file_prefix = re.sub(regex, value, file_prefix)
 
             for frame in range(
-                    int(layer_data["frameStart"]),
-                    int(layer_data["frameEnd"]) + 1,
-                    int(layer_data["frameStep"]),
+                    int(layer_data.frameStart),
+                    int(layer_data.frameEnd) + 1,
+                    int(layer_data.frameStep),
             ):
                 expected_files.append(
                     "{}.{}.{}".format(
                         file_prefix,
-                        str(frame).rjust(layer_data["padding"], "0"),
-                        layer_data["defaultExt"],
+                        str(frame).rjust(layer_data.padding, "0"),
+                        layer_data.defaultExt,
                     )
                 )
         return expected_files
 
     def _generate_aov_file_sequences(self, layer_data):
+        # type: (LayerMetadata) -> list
         expected_files = []
         aov_file_list = {}
-        for aov in layer_data["enabledAOVs"]:
-            for cam in layer_data["cameras"]:
-                file_prefix = layer_data["filePrefix"]
+        for aov in layer_data.enabledAOVs:
+            for cam in layer_data.cameras:
+                file_prefix = layer_data.filePrefix
 
                 mappings = (
-                    (R_SUBSTITUTE_SCENE_TOKEN, layer_data["sceneName"]),
-                    (R_SUBSTITUTE_LAYER_TOKEN, layer_data["layerName"]),
+                    (R_SUBSTITUTE_SCENE_TOKEN, layer_data.sceneName),
+                    (R_SUBSTITUTE_LAYER_TOKEN, layer_data.layerName),
                     (R_SUBSTITUTE_CAMERA_TOKEN,
                      self.sanitize_camera_name(cam)),
                     (R_SUBSTITUTE_AOV_TOKEN, aov[0]),
@@ -303,14 +323,14 @@ class AExpectedFiles:
 
                 aov_files = []
                 for frame in range(
-                        int(layer_data["frameStart"]),
-                        int(layer_data["frameEnd"]) + 1,
-                        int(layer_data["frameStep"]),
+                        int(layer_data.frameStart),
+                        int(layer_data.frameEnd) + 1,
+                        int(layer_data.frameStep),
                 ):
                     aov_files.append(
                         "{}.{}.{}".format(
                             file_prefix,
-                            str(frame).rjust(layer_data["padding"], "0"),
+                            str(frame).rjust(layer_data.padding, "0"),
                             aov[1],
                         )
                     )
@@ -318,12 +338,12 @@ class AExpectedFiles:
                 # if we have more then one renderable camera, append
                 # camera name to AOV to allow per camera AOVs.
                 aov_name = aov[0]
-                if len(layer_data["cameras"]) > 1:
+                if len(layer_data.cameras) > 1:
                     aov_name = "{}_{}".format(aov[0],
                                               self.sanitize_camera_name(cam))
 
                 aov_file_list[aov_name] = aov_files
-                file_prefix = layer_data["filePrefix"]
+                file_prefix = layer_data.filePrefix
 
         expected_files.append(aov_file_list)
         return expected_files
@@ -340,14 +360,13 @@ class AExpectedFiles:
         layer_data = self._get_layer_data()
 
         expected_files = []
-        if layer_data.get("enabledAOVs"):
-            expected_files = self._generate_aov_file_sequences(layer_data)
+        if layer_data.enabledAOVs:
+            return self._generate_aov_file_sequences(layer_data)
         else:
-            expected_files = self._generate_single_file_sequence(layer_data)
-
-        return expected_files
+            return self._generate_single_file_sequence(layer_data)
 
     def get_renderable_cameras(self):
+        # type: () -> list
         """Get all renderable cameras.
 
         Returns:
@@ -358,12 +377,11 @@ class AExpectedFiles:
             cmds.listRelatives(x, ap=True)[-1] for x in cmds.ls(cameras=True)
         ]
 
-        renderable_cameras = []
-        for cam in cam_parents:
-            if self.maya_is_true(cmds.getAttr("{}.renderable".format(cam))):
-                renderable_cameras.append(cam)
-
-        return renderable_cameras
+        return [
+            cam
+            for cam in cam_parents
+            if self.maya_is_true(cmds.getAttr("{}.renderable".format(cam)))
+        ]
 
     @staticmethod
     def maya_is_true(attr_val):
@@ -388,18 +406,17 @@ class AExpectedFiles:
         return bool(attr_val)
 
     @staticmethod
-    def get_layer_overrides(attr):
-        """Get overrides for attribute on given render layer.
+    def get_layer_overrides(attribute):
+        """Get overrides for attribute on current render layer.
 
         Args:
-            attr (str): Maya attribute name.
-            layer (str): Maya render layer name.
+            attribute (str): Maya attribute name.
 
         Returns:
             Value of attribute override.
 
         """
-        connections = cmds.listConnections(attr, plugs=True)
+        connections = cmds.listConnections(attribute, plugs=True)
         if connections:
             for connection in connections:
                 if connection:
@@ -410,18 +427,18 @@ class AExpectedFiles:
                     )
                     yield cmds.getAttr(attr_name)
 
-    def get_render_attribute(self, attr):
+    def get_render_attribute(self, attribute):
         """Get attribute from render options.
 
         Args:
-            attr (str): name of attribute to be looked up.
+            attribute (str): name of attribute to be looked up.
 
         Returns:
             Attribute value
 
         """
         return lib.get_attr_in_layer(
-            "defaultRenderGlobals.{}".format(attr), layer=self.layer
+            "defaultRenderGlobals.{}".format(attribute), layer=self.layer
         )
 
 
@@ -543,13 +560,14 @@ class ExpectedFilesVray(AExpectedFiles):
         return prefix
 
     def _get_layer_data(self):
+        # type: () -> LayerMetadata
         """Override to get vray specific extension."""
         layer_data = super(ExpectedFilesVray, self)._get_layer_data()
         default_ext = cmds.getAttr("vraySettings.imageFormatStr")
         if default_ext in ["exr (multichannel)", "exr (deep)"]:
             default_ext = "exr"
-        layer_data["defaultExt"] = default_ext
-        layer_data["padding"] = cmds.getAttr("vraySettings.fileNamePadding")
+        layer_data.defaultExt = default_ext
+        layer_data.padding = cmds.getAttr("vraySettings.fileNamePadding")
         return layer_data
 
     def get_files(self):
@@ -565,7 +583,7 @@ class ExpectedFilesVray(AExpectedFiles):
         layer_data = self._get_layer_data()
         # remove 'beauty' from filenames as vray doesn't output it
         update = {}
-        if layer_data.get("enabledAOVs"):
+        if layer_data.enabledAOVs:
             for aov, seqs in expected_files[0].items():
                 if aov.startswith("beauty"):
                     new_list = []
@@ -653,13 +671,14 @@ class ExpectedFilesVray(AExpectedFiles):
         vray_name = None
         vray_explicit_name = None
         vray_file_name = None
-        for attr in cmds.listAttr(node):
-            if attr.startswith("vray_filename"):
-                vray_file_name = cmds.getAttr("{}.{}".format(node, attr))
-            elif attr.startswith("vray_name"):
-                vray_name = cmds.getAttr("{}.{}".format(node, attr))
-            elif attr.startswith("vray_explicit_name"):
-                vray_explicit_name = cmds.getAttr("{}.{}".format(node, attr))
+        for node_attr in cmds.listAttr(node):
+            if node_attr.startswith("vray_filename"):
+                vray_file_name = cmds.getAttr("{}.{}".format(node, node_attr))
+            elif node_attr.startswith("vray_name"):
+                vray_name = cmds.getAttr("{}.{}".format(node, node_attr))
+            elif node_attr.startswith("vray_explicit_name"):
+                vray_explicit_name = cmds.getAttr(
+                    "{}.{}".format(node, node_attr))
 
             if vray_file_name is not None and vray_file_name != "":
                 final_name = vray_file_name
@@ -725,7 +744,7 @@ class ExpectedFilesRedshift(AExpectedFiles):
         # Redshift doesn't merge Cryptomatte AOV to final exr. We need to check
         # for such condition and add it to list of expected files.
 
-        for aov in layer_data.get("enabledAOVs"):
+        for aov in layer_data.enabledAOVs:
             if aov[0].lower() == "cryptomatte":
                 aov_name = aov[0]
                 expected_files.append(

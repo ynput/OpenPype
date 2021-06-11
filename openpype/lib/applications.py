@@ -440,7 +440,20 @@ class EnvironmentTool:
 
 
 class ApplicationExecutable:
+    """Representation of executable loaded from settings."""
+
     def __init__(self, executable):
+        # On MacOS check if exists path to executable when ends with `.app`
+        # - it is common that path will lead to "/Applications/Blender" but
+        #   real path is "/Applications/Blender.app"
+        if (
+            platform.system().lower() == "darwin"
+            and not os.path.exists(executable)
+        ):
+            _executable = executable + ".app"
+            if os.path.exists(_executable):
+                executable = _executable
+
         self.executable_path = executable
 
     def __str__(self):
@@ -1177,16 +1190,22 @@ def prepare_context_environments(data):
 
     try:
         workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
-        if not os.path.exists(workdir):
-            log.debug(
-                "Creating workdir folder: \"{}\"".format(workdir)
-            )
-            os.makedirs(workdir)
 
     except Exception as exc:
         raise ApplicationLaunchFailed(
             "Error in anatomy.format: {}".format(str(exc))
         )
+
+    if not os.path.exists(workdir):
+        log.debug(
+            "Creating workdir folder: \"{}\"".format(workdir)
+        )
+        try:
+            os.makedirs(workdir)
+        except Exception as exc:
+            raise ApplicationLaunchFailed(
+                "Couldn't create workdir because: {}".format(str(exc))
+            )
 
     context_env = {
         "AVALON_PROJECT": project_doc["name"],

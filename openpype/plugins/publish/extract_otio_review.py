@@ -51,7 +51,6 @@ class ExtractOTIOReview(openpype.api.Extractor):
 
     def process(self, instance):
         # TODO: convert resulting image sequence to mp4
-        # TODO: add oudio ouput to the mp4 if audio in review is on.
 
         # get otio clip and other time info from instance clip
         # TODO: what if handles are different in `versionData`?
@@ -209,7 +208,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
             "frameStart": start,
             "frameEnd": end,
             "stagingDir": self.staging_dir,
-            "tags": ["review", "ftrackreview", "delete"]
+            "tags": ["review", "delete"]
         }
 
         collection = clique.Collection(
@@ -313,7 +312,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
             out_frame_start += end_offset
 
         # start command list
-        command = [ffmpeg_path]
+        command = ['"{}"'.format(ffmpeg_path)]
 
         if sequence:
             input_dir, collection = sequence
@@ -326,7 +325,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
             # form command for rendering gap files
             command.extend([
                 "-start_number {}".format(in_frame_start),
-                "-i {}".format(input_path)
+                "-i \"{}\"".format(input_path)
             ])
 
         elif video:
@@ -341,7 +340,7 @@ class ExtractOTIOReview(openpype.api.Extractor):
             command.extend([
                 "-ss {}".format(sec_start),
                 "-t {}".format(sec_duration),
-                "-i {}".format(video_path)
+                "-i \"{}\"".format(video_path)
             ])
 
         elif gap:
@@ -360,11 +359,13 @@ class ExtractOTIOReview(openpype.api.Extractor):
         # add output attributes
         command.extend([
             "-start_number {}".format(out_frame_start),
-            output_path
+            "\"{}\"".format(output_path)
         ])
         # execute
         self.log.debug("Executing: {}".format(" ".join(command)))
-        output = openpype.api.run_subprocess(" ".join(command), shell=True)
+        output = openpype.api.run_subprocess(
+            " ".join(command), logger=self.log
+        )
         self.log.debug("Output: {}".format(output))
 
     def _generate_used_frames(self, duration, end_offset=None):

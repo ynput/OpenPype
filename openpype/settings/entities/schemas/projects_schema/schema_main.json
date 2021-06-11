@@ -68,6 +68,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_slack"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_maya"
                 },
                 {
@@ -77,6 +81,10 @@
                 {
                     "type": "schema",
                     "name": "schema_project_hiero"
+                },
+                {
+                    "type": "schema",
+                    "name": "schema_project_blender"
                 },
                 {
                     "type": "schema",

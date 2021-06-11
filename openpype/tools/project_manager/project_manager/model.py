@@ -1,7 +1,6 @@
 import collections
 import copy
 import json
-from queue import Queue
 from uuid import uuid4
 
 from .constants import (
@@ -202,7 +201,10 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         if self._current_project == project_name and not force:
             return
 
-        # Clear all current content
+        # Reset attributes
+        self._items_by_id.clear()
+        self._asset_items_by_name.clear()
+
         self.clear()
 
         self._current_project = project_name
@@ -271,13 +273,13 @@ class HierarchyModel(QtCore.QAbstractItemModel):
             parent_id = asset_doc["data"].get("visualParent")
             asset_docs_by_parent_id[parent_id].append(asset_doc)
 
-        appending_queue = Queue()
-        appending_queue.put((None, project_item))
+        appending_queue = collections.deque()
+        appending_queue.append((None, project_item))
 
         asset_items_by_id = {}
         non_modifiable_items = set()
-        while not appending_queue.empty():
-            parent_id, parent_item = appending_queue.get()
+        while appending_queue:
+            parent_id, parent_item = appending_queue.popleft()
             asset_docs = asset_docs_by_parent_id.get(parent_id) or []
 
             new_items = []
@@ -294,19 +296,19 @@ class HierarchyModel(QtCore.QAbstractItemModel):
 
                 asset_items_by_id[asset_id] = new_item
                 # Add item to appending queue
-                appending_queue.put((asset_id, new_item))
+                appending_queue.append((asset_id, new_item))
 
             if new_items:
                 self.add_items(new_items, parent_item)
 
         # Handle Asset's that are not modifiable
         # - pass the information to all it's parents
-        non_modifiable_queue = Queue()
+        non_modifiable_queue = collections.deque()
         for item_id in non_modifiable_items:
-            non_modifiable_queue.put(item_id)
+            non_modifiable_queue.append(item_id)
 
-        while not non_modifiable_queue.empty():
-            item_id = non_modifiable_queue.get()
+        while non_modifiable_queue:
+            item_id = non_modifiable_queue.popleft()
             item = self._items_by_id[item_id]
             item.setData(False, HIERARCHY_CHANGE_ABLE_ROLE)
 
@@ -316,7 +318,7 @@ class HierarchyModel(QtCore.QAbstractItemModel):
                 and parent.id not in non_modifiable_items
             ):
                 non_modifiable_items.add(parent.id)
-                non_modifiable_queue.put(parent.id)
+                non_modifiable_queue.append(parent.id)
 
         # Add task items
         for asset_id, asset_item in asset_items_by_id.items():
@@ -484,6 +486,9 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         """
         item_id = source_index.data(IDENTIFIER_ROLE)
         item = self.items_by_id[item_id]
+
+        if isinstance(item, TaskItem):
+            item = item.parent()
 
         if isinstance(item, (RootItem, ProjectItem)):
             name = "ep"
@@ -1328,18 +1333,18 @@ class HierarchyModel(QtCore.QAbstractItemModel):
         # Process asset items per one hierarchical level.
         # - new assets are inserted per one parent
         # - update and delete data are stored and processed at once at the end
-        to_process = Queue()
-        to_process.put(project_item)
+        to_process = collections.deque()
+        to_process.append(project_item)
 
         bulk_writes = []
-        while not to_process.empty():
-            parent = to_process.get()
+        while to_process:
+            parent = to_process.popleft()
             insert_list = []
             for item in parent.children():
                 if not isinstance(item, AssetItem):
                     continue
 
-                to_process.put(item)
+                to_process.append(item)
 
                 if item.is_new:
                     insert_list.append(item)

@@ -37,11 +37,11 @@
                                 "ftrackreview"
                             ],
                             "ffmpeg_args": {
-                                "video_filters": [
-                                    "eq=gamma=2.2"
-                                ],
+                                "video_filters": [],
                                 "audio_filters": [],
-                                "input": [],
+                                "input": [
+                                    "-apply_trc gamma22"
+                                ],
                                 "output": [
                                     "-pix_fmt yuv420p",
                                     "-crf 18",
@@ -55,8 +55,15 @@
                                     "ftrack"
                                 ]
                             },
+                            "overscan_crop": "",
                             "width": 0,
                             "height": 0,
+                            "bg_color": [
+                                0,
+                                0,
+                                0,
+                                0
+                            ],
                             "letter_box": {
                                 "enabled": false,
                                 "ratio": 0.0,
@@ -208,6 +215,17 @@
                     "hosts": [],
                     "tasks": [],
                     "template": "{family}{Task}{Variant}"
+                },
+                {
+                    "families": [
+                        "renderLayer",
+                        "renderPass"
+                    ],
+                    "hosts": [
+                        "tvpaint"
+                    ],
+                    "tasks": [],
+                    "template": "{family}{Task}_{Render_layer}_{Render_pass}"
                 }
             ]
         },
@@ -266,8 +284,7 @@
             "active_site": "studio",
             "remote_site": "studio"
         },
-        "sites": {
-        }
+        "sites": {}
     },
     "project_plugins": {
         "windows": [],

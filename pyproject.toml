@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "OpenPype"
-version = "3.0.0-rc.5"
+version = "3.0.0"
 description = "Open VFX and Animation pipeline with support."
 authors = ["OpenPype Team <info@openpype.io>"]
 license = "MIT License"
@@ -9,6 +9,23 @@ documentation = "https://openpype.io/docs/artist_getting_started"
 repository = "https://github.com/pypeclub/openpype"
 readme = "README.md"
 keywords = ["Pipeline", "Avalon", "VFX", "animation", "automation", "tracking", "asset management"]
+packages = [
+    {include = "igniter"},
+    {include = "repos"},
+    {include = "tools"},
+    {include = "tests"},
+    {include = "docs"},
+    {include = "openpype"},
+    {include = "start.py"},
+    {include = "LICENSE"},
+    {include = "README.md"},
+    {include = "setup.py"},
+    {include = "pyproject.toml"},
+    {include = "poetry.lock"}
+]
+
+[tool.poetry.scripts]
+openpype = 'start:boot'
 
 [tool.poetry.dependencies]
 python = "3.7.*"
@@ -45,12 +62,14 @@ jinxed = [
 ]
 python3-xlib = { version="*", markers = "sys_platform == 'linux'"}
 enlighten = "^1.9.0"
+slack-sdk = "^3.6.0"
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"
 autopep8 = "^1.4"
 coverage = "*"
 cx_freeze = "^6.6"
+GitPython = "^3.1.17"
 jedi = "^0.13"
 Jinja2 = "^2.11"
 pycodestyle = "^2.5.0"

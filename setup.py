@@ -46,11 +46,19 @@ install_requires = [
     "httplib2",
     # Harmony implementation
     "filecmp",
-    "dns"
+    "dns",
+    # Python defaults (cx_Freeze skip them by default)
+    "dbm"
 ]
 
 includes = []
-excludes = []
+# WARNING: As of cx_freeze there is a bug?
+# when this is empty, its hooks will not kick in
+# and won't clean platform irrelevant modules
+# like dbm mentioned above.
+excludes = [
+    "openpype"
+]
 bin_includes = []
 include_files = [
     "igniter",

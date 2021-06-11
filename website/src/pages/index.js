@@ -50,7 +50,7 @@ const collab = [
     infoLink: 'http://kredenc.studio'
   }, {
     title: 'Colorbleed',
-    image: '/img/colorbleed_logo.png',
+    image: '/img/colorbleed_logo_black.png',
     infoLink: 'http://colorbleed.nl'
   }, {
     title: 'Bumpybox',
@@ -67,7 +67,7 @@ const collab = [
   }
 ];
 
-const clients = [
+const studios = [
   {
     title: 'Imagine Studio',
     image: '/img/imagine_logo.png',
@@ -82,11 +82,11 @@ const clients = [
     infoLink: 'https://www.3de.com.pl/'
   }, {
     title: 'Incognito',
-    image: '/img/client_incognito.png',
+    image: '/img/incognito.png',
     infoLink: 'https://incognito.studio/'
   }, {
     title: 'Fourth Wall Animation',
-    image: '/img/client_fourthwall_logo.png',
+    image: '/img/fourthwall_logo.png',
     infoLink: 'https://fourthwallanimation.com/'
   }, {
     title: 'The Scope Studio',
@@ -99,22 +99,27 @@ const clients = [
   }, {
     title: 'Filmmore',
     image: '/img/filmmore_logotype_bw.png',
-    infoLink: 'https://filmmore.nl/'
+    infoLink: 'https://filmmore.eu/'
   },
   {
     title: 'Yowza Animation',
-    image: '/img/client_yowza_logo.png',
+    image: '/img/yowza_logo.png',
     infoLink: 'https://yowzaanimation.com/'
   },
   {
       title: "Red Knuckles",
-      image: "/img/redknuckles_logotype.png",
+      image: "/img/redknuckles_logo.png",
       infoLink: "https://www.redknuckles.co.uk/",
   },
   {
       title: "Orca Studios",
       image: "/img/orcastudios_logo.png",
       infoLink: "https://orcastudios.es/",
+  },
+  {
+      title: "Bad Clay",
+      image: "/img/badClay_logo.png",
+      infoLink: "https://www.bad-clay.com/",
   }
 ];
 
@@ -343,7 +348,12 @@ function Home() {
 
                 <a className="link" href="">
                   <img src="/img/app_resolve.png" alt="" title=""></img>
-                  <span className="caption">DaVinci Resolve (Alpha)</span>
+                  <span className="caption">DaVinci Resolve (Beta)</span>
+                </a>
+
+                <a className="link" href="">
+                  <img src="/img/app_slack.png" alt="" title=""></img>
+                  <span className="caption">Slack (Beta)</span>
                 </a>
 
               </div>
@@ -387,12 +397,12 @@ function Home() {
         )}
 
 
-        {clients && clients.length && (
+        {studios && studios.length && (
           <section className={styles.gallery}>
             <div className="container">
               <h2>Studios using openPYPE</h2>
               <div className="showcase">
-                {clients.map((props, idx) => (
+                {studios.map((props, idx) => (
                   <Client key={idx} {...props} />
                 ))}
               </div>

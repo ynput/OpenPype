@@ -11,22 +11,27 @@ from avalon.api import AvalonMongoDB
 class DeleteAssetSubset(BaseAction):
     '''Edit meta data action.'''
 
-    #: Action identifier.
+    # Action identifier.
     identifier = "delete.asset.subset"
-    #: Action label.
+    # Action label.
     label = "Delete Asset/Subsets"
-    #: Action description.
+    # Action description.
     description = "Removes from Avalon with all childs and asset from Ftrack"
     icon = statics_icon("ftrack", "action_icons", "DeleteAsset.svg")
 
     settings_key = "delete_asset_subset"
-    #: Db connection
-    dbcon = AvalonMongoDB()
+    # Db connection
+    dbcon = None
 
     splitter = {"type": "label", "value": "---"}
     action_data_by_id = {}
     asset_prefix = "asset:"
     subset_prefix = "subset:"
+
+    def __init__(self, *args, **kwargs):
+        self.dbcon = AvalonMongoDB()
+
+        super(DeleteAssetSubset, self).__init__(*args, **kwargs)
 
     def discover(self, session, entities, event):
         """ Validation """
@@ -446,7 +451,14 @@ class DeleteAssetSubset(BaseAction):
         if len(assets_to_delete) > 0:
             map_av_ftrack_id = spec_data["without_ftrack_id"]
             # Prepare data when deleting whole avalon asset
-            avalon_assets = self.dbcon.find({"type": "asset"})
+            avalon_assets = self.dbcon.find(
+                {"type": "asset"},
+                {
+                    "_id": 1,
+                    "data.visualParent": 1,
+                    "data.ftrackId": 1
+                }
+            )
             avalon_assets_by_parent = collections.defaultdict(list)
             for asset in avalon_assets:
                 asset_id = asset["_id"]
@@ -537,11 +549,13 @@ class DeleteAssetSubset(BaseAction):
                 ftrack_proc_txt, ", ".join(ftrack_ids_to_delete)
             ))
 
-            ftrack_ents_to_delete = (
+            entities_by_link_len = (
                 self._filter_entities_to_delete(ftrack_ids_to_delete, session)
             )
-            for entity in ftrack_ents_to_delete:
-                session.delete(entity)
+            for link_len in sorted(entities_by_link_len.keys(), reverse=True):
+                for entity in entities_by_link_len[link_len]:
+                    session.delete(entity)
+
                 try:
                     session.commit()
                 except Exception:
@@ -600,29 +614,11 @@ class DeleteAssetSubset(BaseAction):
                 joined_ids_to_delete
             )
         ).all()
-        filtered = to_delete_entities[:]
-        while True:
-            changed = False
-            _filtered = filtered[:]
-            for entity in filtered:
-                entity_id = entity["id"]
+        entities_by_link_len = collections.defaultdict(list)
+        for entity in to_delete_entities:
+            entities_by_link_len[len(entity["link"])].append(entity)
 
-                for _entity in tuple(_filtered):
-                    if entity_id == _entity["id"]:
-                        continue
-
-                    for _link in _entity["link"]:
-                        if entity_id == _link["id"] and _entity in _filtered:
-                            _filtered.remove(_entity)
-                            changed = True
-                            break
-
-            filtered = _filtered
-
-            if not changed:
-                break
-
-        return filtered
+        return entities_by_link_len
 
     def report_handle(self, report_messages, project_name, event):
         if not report_messages:

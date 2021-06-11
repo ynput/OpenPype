@@ -16,6 +16,18 @@ class LoginServerHandler(BaseHTTPRequestHandler):
         self.login_callback = login_callback
         BaseHTTPRequestHandler.__init__(self, *args, **kw)
 
+    def log_message(self, format_str, *args):
+        """Override method of BaseHTTPRequestHandler.
+
+        Goal is to use `print` instead of `sys.stderr.write`
+        """
+        # Change
+        print("%s - - [%s] %s\n" % (
+            self.client_address[0],
+            self.log_date_time_string(),
+            format_str % args
+        ))
+
     def do_GET(self):
         '''Override to handle requests ourselves.'''
         parsed_path = parse.urlparse(self.path)

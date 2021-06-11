@@ -275,8 +275,6 @@ class UnsavedChangesDialog(QtWidgets.QDialog):
         layout.addWidget(message_label)
         layout.addWidget(btns_widget)
 
-        self.state = None
-
     def on_cancel_pressed(self):
         self.done(0)
 
@@ -285,6 +283,48 @@ class UnsavedChangesDialog(QtWidgets.QDialog):
 
     def on_discard_pressed(self):
         self.done(2)
+
+
+class RestartDialog(QtWidgets.QDialog):
+    message = (
+        "Your changes require restart of process to take effect."
+        " Do you want to restart now?"
+    )
+
+    def __init__(self, parent=None):
+        super(RestartDialog, self).__init__(parent)
+        message_label = QtWidgets.QLabel(self.message)
+
+        btns_widget = QtWidgets.QWidget(self)
+        btns_layout = QtWidgets.QHBoxLayout(btns_widget)
+
+        btn_restart = QtWidgets.QPushButton("Restart")
+        btn_restart.clicked.connect(self.on_restart_pressed)
+        btn_cancel = QtWidgets.QPushButton("Cancel")
+        btn_cancel.clicked.connect(self.on_cancel_pressed)
+
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(btn_restart)
+        btns_layout.addWidget(btn_cancel)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(message_label)
+        layout.addWidget(btns_widget)
+
+        self.btn_cancel = btn_cancel
+        self.btn_restart = btn_restart
+
+    def showEvent(self, event):
+        super(RestartDialog, self).showEvent(event)
+        btns_width = max(self.btn_cancel.width(), self.btn_restart.width())
+        self.btn_cancel.setFixedWidth(btns_width)
+        self.btn_restart.setFixedWidth(btns_width)
+
+    def on_cancel_pressed(self):
+        self.done(0)
+
+    def on_restart_pressed(self):
+        self.done(1)
 
 
 class SpacerWidget(QtWidgets.QWidget):

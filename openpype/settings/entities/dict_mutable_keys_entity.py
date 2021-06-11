@@ -439,10 +439,10 @@ class DictMutableKeysEntity(EndpointEntity):
                 new_initial_value = []
                 for key, value in _settings_value:
                     if key in initial_value:
-                        new_initial_value.append(key, initial_value.pop(key))
+                        new_initial_value.append([key, initial_value.pop(key)])
 
                 for key, value in initial_value.items():
-                    new_initial_value.append(key, value)
+                    new_initial_value.append([key, value])
                 initial_value = new_initial_value
         else:
             initial_value = _settings_value
@@ -467,7 +467,7 @@ class DictMutableKeysEntity(EndpointEntity):
         if self.store_as_list:
             output = []
             for key, child_entity in self.children_by_key.items():
-                output.append(key, child_entity.value)
+                output.append([key, child_entity.value])
             return output
 
         output = {}

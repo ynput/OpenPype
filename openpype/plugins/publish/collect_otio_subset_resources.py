@@ -11,6 +11,7 @@ import clique
 import opentimelineio as otio
 import pyblish.api
 import openpype
+from openpype.lib import editorial
 
 
 class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
@@ -27,59 +28,80 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
             return
 
         if not instance.data.get("representations"):
-            instance.data["representations"] = list()
-        version_data = dict()
+            instance.data["representations"] = []
+
+        if not instance.data.get("versionData"):
+            instance.data["versionData"] = {}
+
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
 
         # get basic variables
         otio_clip = instance.data["otioClip"]
-        frame_start = instance.data["frameStart"]
-        frame_end = instance.data["frameEnd"]
-
-        # generate range in parent
-        otio_src_range = otio_clip.source_range
         otio_avalable_range = otio_clip.available_range()
-        trimmed_media_range = openpype.lib.trim_media_range(
-            otio_avalable_range, otio_src_range)
+        media_fps = otio_avalable_range.start_time.rate
 
-        # calculate wth handles
-        otio_src_range_handles = openpype.lib.otio_range_with_handles(
-            otio_src_range, instance)
-        trimmed_media_range_h = openpype.lib.trim_media_range(
-            otio_avalable_range, otio_src_range_handles)
+        # get available range trimmed with processed retimes
+        retimed_attributes = editorial.get_media_range_with_retimes(
+            otio_clip, handle_start, handle_end)
+        self.log.debug(
+            ">> retimed_attributes: {}".format(retimed_attributes))
 
-        # frame start and end from media
-        s_frame_start, s_frame_end = openpype.lib.otio_range_to_frame_range(
-            trimmed_media_range)
-        a_frame_start, a_frame_end = openpype.lib.otio_range_to_frame_range(
-            otio_avalable_range)
-        a_frame_start_h, a_frame_end_h = openpype.lib.\
-            otio_range_to_frame_range(trimmed_media_range_h)
+        # break down into variables
+        media_in = int(retimed_attributes["mediaIn"])
+        media_out = int(retimed_attributes["mediaOut"])
+        handle_start = int(retimed_attributes["handleStart"])
+        handle_end = int(retimed_attributes["handleEnd"])
 
-        # fix frame_start and frame_end frame to be in range of media
-        if a_frame_start_h < a_frame_start:
-            a_frame_start_h = a_frame_start
+        # set versiondata if any retime
+        version_data = retimed_attributes.get("versionData")
 
-        if a_frame_end_h > a_frame_end:
-            a_frame_end_h = a_frame_end
+        if version_data:
+            instance.data["versionData"].update(version_data)
 
-        # count the difference for frame_start and frame_end
-        diff_start = s_frame_start - a_frame_start_h
-        diff_end = a_frame_end_h - s_frame_end
+        # convert to available frame range with handles
+        a_frame_start_h = media_in - handle_start
+        a_frame_end_h = media_out + handle_end
+
+        # create trimmed ocio time range
+        trimmed_media_range_h = editorial.range_from_frames(
+            a_frame_start_h, (a_frame_end_h - a_frame_start_h + 1),
+            media_fps
+        )
+        self.log.debug("trimmed_media_range_h: {}".format(
+            trimmed_media_range_h))
+        self.log.debug("a_frame_start_h: {}".format(
+            a_frame_start_h))
+        self.log.debug("a_frame_end_h: {}".format(
+            a_frame_end_h))
+
+        # create frame start and end
+        frame_start = instance.data["frameStart"]
+        frame_end = frame_start + (media_out - media_in)
 
         # add to version data start and end range data
         # for loader plugins to be correctly displayed and loaded
-        version_data.update({
-            "frameStart": frame_start,
-            "frameEnd": frame_end,
-            "handleStart": diff_start,
-            "handleEnd": diff_end,
-            "fps": otio_avalable_range.start_time.rate
+        instance.data["versionData"].update({
+            "fps": media_fps
         })
+
+        if not instance.data["versionData"].get("retime"):
+            instance.data["versionData"].update({
+                "frameStart": frame_start,
+                "frameEnd": frame_end,
+                "handleStart": handle_start,
+                "handleEnd": handle_end,
+            })
+        else:
+            instance.data["versionData"].update({
+                "frameStart": frame_start,
+                "frameEnd": frame_end
+            })
 
         # change frame_start and frame_end values
         # for representation to be correctly renumbered in integrate_new
-        frame_start -= diff_start
-        frame_end += diff_end
+        frame_start -= handle_start
+        frame_end += handle_end
 
         media_ref = otio_clip.media_reference
         metadata = media_ref.metadata
@@ -136,11 +158,12 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
                 frame_start, frame_end, file=filename)
 
         if repre:
-            instance.data["versionData"] = version_data
-            self.log.debug(">>>>>>>> version data {}".format(version_data))
             # add representation to instance data
             instance.data["representations"].append(repre)
             self.log.debug(">>>>>>>> {}".format(repre))
+
+        import pprint
+        self.log.debug(pprint.pformat(instance.data))
 
     def _create_representation(self, start, end, **kwargs):
         """

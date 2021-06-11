@@ -1,0 +1,104 @@
+name: Stable Release
+
+on:
+  push:
+    tags:
+      - '*[0-9].*[0-9].*[0-9]*'
+
+jobs:
+  create_release:
+    runs-on: ubuntu-latest
+    if: github.actor != 'pypebot'
+
+    steps:
+    - name: 🚛 Checkout Code
+      uses: actions/checkout@v2
+      with:      
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Install Python requirements
+      run: pip install gitpython semver
+
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+        
+        git config user.email ${{ secrets.CI_EMAIL }}
+        git config user.name ${{ secrets.CI_USER }}
+        git fetch
+        git checkout -b main origin/main
+        git tag -d ${GITHUB_REF#refs/*/}
+        git remote set-url --push origin https://pypebot:${{ secrets.ADMIN_TOKEN }}@github.com/pypeclub/openpype
+        git push origin --delete ${GITHUB_REF#refs/*/}
+        echo PREVIOUS_VERSION=`git describe --tags --match="[0-9]*" --abbrev=0` >> $GITHUB_ENV
+          
+    - name: 💉 Inject new version into files
+      id: version
+      if: steps.version_type.outputs.type != 'skip'
+      run: |
+        python ./tools/ci_tools.py --version ${{ env.RELEASE_VERSION }}
+
+    - name: "✏️ Generate full changelog"
+      if: steps.version_type.outputs.type != 'skip'
+      id: generate-full-changelog
+      uses: heinrichreimer/github-changelog-generator-action@v2.2
+      with:
+        token: ${{ secrets.ADMIN_TOKEN }}
+        breakingLabel: '#### 💥 Breaking'
+        enhancementLabel: '#### 🚀 Enhancements'
+        bugsLabel: '#### 🐛 Bug fixes'
+        deprecatedLabel: '#### ⚠️ Deprecations'
+        addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]}}'
+        issues: false
+        issuesWoLabels: false
+        sinceTag: "3.0.0"
+        maxIssues: 100
+        pullRequests: true
+        prWoLabels: false
+        author: false
+        unreleased: true
+        compareLink: true
+        stripGeneratorNotice: true
+        verbose: true
+        futureRelease: ${{ env.RELEASE_VERSION }}
+        excludeTagsRegex: "CI/.+"
+        releaseBranch: "main"
+
+    - name: "🖨️ Print changelog to console"
+      run: echo ${{ steps.generate-last-changelog.outputs.changelog }}
+
+    - name: 💾 Commit and Tag
+      id: git_commit
+      if: steps.version_type.outputs.type != 'skip'
+      run: |
+        git add .
+        git commit -m "[Automated] Release"
+        tag_name="${{ env.RELEASE_VERSION }}"
+        git push
+        git tag -fa $tag_name -m "stable release"
+        git remote set-url --push origin https://pypebot:${{ secrets.ADMIN_TOKEN }}@github.com/pypeclub/openpype
+        git push origin $tag_name
+
+    - name: "🚀 Github Release"
+      uses: docker://antonyurchenko/git-release:latest
+      env:
+        GITHUB_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        DRAFT_RELEASE: "false"
+        PRE_RELEASE: "false"
+        CHANGELOG_FILE: "CHANGELOG.md"
+        ALLOW_EMPTY_CHANGELOG: "false"
+        ALLOW_TAG_PREFIX: "true"
+
+
+    - name: 🔨 Merge main back to develop    
+      uses: everlytic/branch-merge@1.1.0
+      if: steps.version_type.outputs.type != 'skip'
+      with:
+        github_token: ${{ secrets.ADMIN_TOKEN }}
+        source_ref: 'main'
+        target_branch: 'develop'
+        commit_message_template: '[Automated] Merged release {source_ref} into {target_branch}'

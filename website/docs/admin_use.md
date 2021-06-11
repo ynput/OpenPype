@@ -32,6 +32,60 @@ Once artist enters the Mongo URL address, OpenPype will remember the connection 
 next launch, so it is a one time process.From that moment OpenPype will do it's best to 
 always keep up to date with the latest studio updates. 
 
-If the launch was successfull, the artist should see a green OpenPype logo in their
+If the launch was successful, the artist should see a green OpenPype logo in their
 tray menu. Keep in mind that on Windows this icon might be hidden by default, in which case,
 the artist can simply drag the icon down to the tray.
+
+You can use following command line arguments:
+
+`--use-version` - to specify version you want to run explicitly, like:
+```shell
+openpype_console --use-version=3.0.1
+```
+
+`--use-staging` - to specify you prefer staging version. In that case it will be used
+(if found) instead of production one.
+
+### Details
+When you run OpenPype from executable, few check are made: 
+
+#### Check for mongoDB database connection
+MongoDB connection string is in format:
+```shell
+mongodb[+srv]://[username:password@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]
+```
+More on that in [MongoDB documentation](https://docs.mongodb.com/manual/reference/connection-string/).
+
+Example connection strings are `mongodb://local-unprotected-server:2707` or
+`mongodb+srv://user:superpassword:some.mongodb-hosted-on.net:27072`.
+
+When you start OpenPype first time, Igniter UI will show up and ask you for this string. It will then
+save it in secure way to your systems keyring - on Windows it is **Credential Manager**, on MacOS it will use its
+**Keychain**, on Linux it can be **GNOME Keyring** or other software, depending on your distribution.
+
+This can be also set beforehand with environment variable `OPENPYPE_MONGO`. If set it takes precedence
+over the one set in keyring.
+
+#### Check for OpenPype version path
+When connection to MongoDB is made, OpenPype will get various settings from there - one among them is
+directory location where OpenPype versions are stored. If this directory exists OpenPype tries to
+find the latest version there and if succeed it will copy it to user system and use it.
+
+This path can be set is OpenPype settings, but also with environment variable `OPENPYPE_PATH` or with
+`openPypePath` in json file located application directory depending on your system.
+
+- Windows: `%LOCALAPPDATA%\pypeclub\openpype`
+- Linux: `~/.local/share/pypeclub/openpype`
+- Mac: `~/Library/Application Support/pypeclub/openpype`
+
+### Runtime provided environment variables
+OpenPype is providing following environment variables for its subprocesses that can be used
+in various places, like scripting, etc.
+
+- `OPENPYPE_ROOT` - this will point to currently running code. 
+- `OPENPYPE_VERSION` - string of current version - like `3.0.0-foo+bar`
+- `OPENPYPE_REPOS_ROOT` - this is path where all components can be find (like Avalon Core and OpenPype)
+- `OPENPYPE_DATABASE_NAME` - database name in MongoDB used by OpenPype
+- `OPENPYPE_EXECUTABLE` - path to executable used to run OpenPype - when run from sources it will point
+to **python** stored in virtual environment. If run from frozen code, it will point to either `openpype_gui` or
+  `openpype_console`.

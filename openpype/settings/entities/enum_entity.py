@@ -219,6 +219,41 @@ class ToolsEnumEntity(BaseEnumEntity):
         self._current_value = new_value
 
 
+class TaskTypeEnumEntity(BaseEnumEntity):
+    schema_types = ["task-types-enum"]
+
+    def _item_initalization(self):
+        self.multiselection = True
+        self.value_on_not_set = []
+        self.enum_items = []
+        self.valid_keys = set()
+        self.valid_value_types = (list, )
+        self.placeholder = None
+
+    def _get_enum_values(self):
+        anatomy_entity = self.get_entity_from_path(
+            "project_settings/project_anatomy"
+        )
+
+        valid_keys = set()
+        enum_items = []
+        for task_type in anatomy_entity["tasks"].keys():
+            enum_items.append({task_type: task_type})
+            valid_keys.add(task_type)
+
+        return enum_items, valid_keys
+
+    def set_override_state(self, *args, **kwargs):
+        super(TaskTypeEnumEntity, self).set_override_state(*args, **kwargs)
+
+        self.enum_items, self.valid_keys = self._get_enum_values()
+        new_value = []
+        for key in self._current_value:
+            if key in self.valid_keys:
+                new_value.append(key)
+        self._current_value = new_value
+
+
 class ProvidersEnum(BaseEnumEntity):
     schema_types = ["providers-enum"]
 

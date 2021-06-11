@@ -175,6 +175,15 @@
                                         },
                                         {
                                             "type": "label",
+                                            "label": "Crop input overscan. See the documentation for more information."
+                                        },
+                                        {
+                                            "type": "text",
+                                            "key": "overscan_crop",
+                                            "label": "Overscan crop"
+                                        },
+                                        {
+                                            "type": "label",
                                             "label": "Width and Height must be both set to higher value than 0 else source resolution is used."
                                         },
                                         {
@@ -192,6 +201,15 @@
                                             "default": 0,
                                             "minimum": 0,
                                             "maximum": 100000
+                                        },
+                                        {
+                                            "type": "label",
+                                            "label": "Background color is used only when input have transparency and Alpha is higher than 0."
+                                        },
+                                        {
+                                            "type": "color",
+                                            "label": "Background color",
+                                            "key": "bg_color"
                                         },
                                         {
                                             "key": "letter_box",
@@ -228,14 +246,9 @@
                                                     ]
                                                 },
                                                 {
-                                                    "type": "schema_template",
-                                                    "name": "template_rgba_color",
-                                                    "template_data": [
-                                                        {
-                                                            "label": "Fill Color",
-                                                            "name": "fill_color"
-                                                        }
-                                                    ]
+                                                    "type": "color",
+                                                    "label": "Fill Color",
+                                                    "key": "fill_color"
                                                 },
                                                 {
                                                     "key": "line_thickness",
@@ -245,14 +258,9 @@
                                                     "maximum": 1000
                                                 },
                                                 {
-                                                    "type": "schema_template",
-                                                    "name": "template_rgba_color",
-                                                    "template_data": [
-                                                        {
-                                                            "label": "Line Color",
-                                                            "name": "line_color"
-                                                        }
-                                                    ]
+                                                    "type": "color",
+                                                    "label": "Line Color",
+                                                    "key": "line_color"
                                                 }
                                             ]
                                         }
@@ -290,24 +298,14 @@
                             "minimum": 0
                         },
                         {
-                            "type": "schema_template",
-                            "name": "template_rgba_color",
-                            "template_data": [
-                                {
-                                    "label": "Font Color",
-                                    "name": "font_color"
-                                }
-                            ]
+                            "type": "color",
+                            "key": "font_color",
+                            "label": "Font Color"
                         },
                         {
-                            "type": "schema_template",
-                            "name": "template_rgba_color",
-                            "template_data": [
-                                {
-                                    "label": "Background Color",
-                                    "name": "bg_color"
-                                }
-                            ]
+                            "type": "color",
+                            "key": "bg_color",
+                            "label": "Background Color"
                         },
                         {
                             "type": "number",
