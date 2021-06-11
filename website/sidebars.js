@@ -78,7 +78,8 @@ module.exports = {
                 "module_site_sync",
                 "module_deadline",
                 "module_muster",
-                "module_clockify"
+                "module_clockify",
+                "module_slack"
             ],
         },
         {

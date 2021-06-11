@@ -351,6 +351,11 @@ function Home() {
                   <span className="caption">DaVinci Resolve (Beta)</span>
                 </a>
 
+                <a className="link" href="">
+                  <img src="/img/app_slack.png" alt="" title=""></img>
+                  <span className="caption">Slack (Beta)</span>
+                </a>
+
               </div>
 
               <p> <span>In development by us or a community of <a href="https://github.com/getavalon/core/pulls">avalon core</a> developers.</span></p>
