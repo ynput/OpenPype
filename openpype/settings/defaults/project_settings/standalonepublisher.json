@@ -100,6 +100,22 @@
             ],
             "help": "Script exported from matchmoving application"
         },
+        "create_render": {
+            "name": "render",
+            "label": "Render",
+            "family": "render",
+            "icon": "image",
+            "defaults": ["Animation", "Lighting", "Lookdev", "Compositing"],
+            "help": "Rendered images or video files"
+        },
+        "create_mov_batch": {
+          "name": "mov_batch",
+          "label": "Batch Mov",
+          "family": "render_mov_batch",
+          "icon": "image",
+          "defaults": ["Main"],
+          "help": "Process multiple Mov files and publish them for layout and comp."
+        },
         "__dynamic_keys_labels__": {
             "create_workfile": "Workfile",
             "create_model": "Model",
@@ -109,10 +125,32 @@
             "create_camera": "Camera",
             "create_editorial": "Editorial",
             "create_image": "Image",
-            "create_matchmove": "Matchmove"
+            "create_matchmove": "Matchmove",
+            "create_render": "Render",
+            "create_mov_batch": "Batch Mov"
         }
     },
     "publish": {
+        "ValidateSceneSettings": {
+            "enabled": true,
+            "optional": true,
+            "active": true,
+            "check_extensions": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "tiff",
+                "tga",
+                "gif",
+                "svg"
+            ],
+            "families": [
+                "render"
+            ],
+            "skip_timelines_check": []
+        },
         "ExtractThumbnailSP": {
             "ffmpeg_args": {
                 "input": [

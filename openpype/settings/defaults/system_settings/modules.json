@@ -167,5 +167,8 @@
     },
     "project_manager": {
         "enabled": true
+    },
+    "slack": {
+        "enabled": false
     }
 }

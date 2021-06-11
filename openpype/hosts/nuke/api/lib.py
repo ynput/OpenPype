@@ -298,18 +298,21 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         review (bool): adding review knob
 
     Example:
-        prenodes = [(
-            "NameNode",  # string
-            "NodeClass",  # string
-            (   # OrderDict: knob and values pairs
-                ("knobName", "knobValue"),
-                ("knobName", "knobValue")
-            ),
-            (   # list outputs
-                "firstPostNodeName",
-                "secondPostNodeName"
-            )
-        )
+        prenodes = [
+            {
+                "nodeName": {
+                    "class": ""  # string
+                    "knobs": [
+                        ("knobName": value),
+                        ...
+                    ],
+                    "dependent": [
+                        following_node_01,
+                        ...
+                    ]
+                }
+            },
+            ...
         ]
 
     Return:
@@ -385,35 +388,42 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         prev_node.hideControlPanel()
         # creating pre-write nodes `prenodes`
         if prenodes:
-            for name, klass, properties, set_output_to in prenodes:
+            for node in prenodes:
+                # get attributes
+                name = node["name"]
+                klass = node["class"]
+                knobs = node["knobs"]
+                dependent = node["dependent"]
+
                 # create node
                 now_node = nuke.createNode(klass, "name {}".format(name))
                 now_node.hideControlPanel()
 
                 # add data to knob
-                for k, v in properties:
+                for _knob in knobs:
+                    knob, value = _knob
                     try:
-                        now_node[k].value()
+                        now_node[knob].value()
                     except NameError:
                         log.warning(
                             "knob `{}` does not exist on node `{}`".format(
-                                k, now_node["name"].value()
+                                knob, now_node["name"].value()
                             ))
                         continue
 
-                    if k and v:
-                        now_node[k].setValue(str(v))
+                    if knob and value:
+                        now_node[knob].setValue(value)
 
                 # connect to previous node
-                if set_output_to:
-                    if isinstance(set_output_to, (tuple or list)):
-                        for i, node_name in enumerate(set_output_to):
+                if dependent:
+                    if isinstance(dependent, (tuple or list)):
+                        for i, node_name in enumerate(dependent):
                             input_node = nuke.createNode(
                                 "Input", "name {}".format(node_name))
                             input_node.hideControlPanel()
                             now_node.setInput(1, input_node)
 
-                    elif isinstance(set_output_to, str):
+                    elif isinstance(dependent, str):
                         input_node = nuke.createNode(
                             "Input", "name {}".format(node_name))
                         input_node.hideControlPanel()
