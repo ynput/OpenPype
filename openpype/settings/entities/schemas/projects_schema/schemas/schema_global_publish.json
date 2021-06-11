@@ -5,11 +5,323 @@
     "label": "Publish plugins",
     "children": [
         {
+            "type": "label",
+            "label": "Collectors"
+        },
+        {
             "type": "dict",
             "collapsible": true,
+            "key": "CollectCurrentShellFile",
+            "label": "Current Shell File",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectHierarchy",
+            "label": "Collect Hierachy",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectMachineName",
+            "label": "Collect Local Machine Name",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectOcioFrameRanges",
+            "label": "Collect OTIO Frame Ranges",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectOcioReview",
+            "label": "Collect OTIO Review",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectOcioSubsetResources",
+            "label": "Collect OTIO Subset Resources",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectRenderedFiles",
+            "label": "Collect Rendered frames",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "targets",
+                    "label": "Targets",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectResourcesPath",
+            "label": "Collect Resources Path",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CollectShellWorkspace",
+            "label": "Collect Shell Workspace",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Validators"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateContainers",
+            "label": "Validate Containers",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateFFmpegInstalled",
+            "label": "Validate ffmpeg installation",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateCurrentSaveFile",
+            "label": "Validate File Saved",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateInstanceInContext",
+            "label": "Instance in same Context",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateIntent",
+            "label": "Validate Intent",
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                },
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "tasks",
+                    "label": "Tasks",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateSequenceFrames",
+            "label": "Validate Sequence Frames",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ValidateVersion",
+            "label": "Validate Version",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Extractors"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ShowInventory",
+            "label": "Extract Scanline EXR",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractBurnin",
+            "label": "ExtractBurnin",
             "checkbox_key": "enabled",
-            "key": "IntegrateHeroVersion",
-            "label": "IntegrateHeroVersion",
             "is_group": true,
             "children": [
                 {
@@ -18,14 +330,151 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "boolean",
-                    "key": "optional",
-                    "label": "Optional"
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "options",
+                    "label": "Burnin formating options",
+                    "children": [
+                        {
+                            "type": "number",
+                            "key": "font_size",
+                            "label": "Font size",
+                            "minimum": 0
+                        },
+                        {
+                            "type": "color",
+                            "key": "font_color",
+                            "label": "Font Color"
+                        },
+                        {
+                            "type": "color",
+                            "key": "bg_color",
+                            "label": "Background Color"
+                        },
+                        {
+                            "type": "number",
+                            "key": "x_offset",
+                            "label": "X Offset"
+                        },
+                        {
+                            "type": "number",
+                            "key": "y_offset",
+                            "label": "Y Offset"
+                        },
+                        {
+                            "type": "number",
+                            "key": "bg_padding",
+                            "label": "Padding aroung text"
+                        },
+                        {
+                            "type": "path",
+                            "key": "font_filepath",
+                            "label": "Font file path",
+                            "multipath": false,
+                            "multiplatform": true
+                        }
+                    ]
                 },
                 {
+                    "type": "separator"
+                },
+                {
+                    "type": "list",
+                    "key": "profiles",
+                    "label": "Profiles",
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "families",
+                                "label": "Families",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "key": "burnins",
+                                "label": "Burnins",
+                                "type": "dict-modifiable",
+                                "highlight_content": true,
+                                "collapsible": false,
+                                "object_type": {
+                                    "type": "dict",
+                                    "children": [
+                                        {
+                                            "key": "TOP_LEFT",
+                                            "label": "Top Left",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "TOP_CENTERED",
+                                            "label": "Top Centered",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "TOP_RIGHT",
+                                            "label": "top Right",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "BOTTOM_LEFT",
+                                            "label": "Bottom Left",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "BOTTOM_CENTERED",
+                                            "label": "Bottom Centered",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "BOTTOM_RIGHT",
+                                            "label": "BottomRight",
+                                            "type": "text"
+                                        },
+                                        {
+                                            "key": "filter",
+                                            "label": "Additional filtering",
+                                            "type": "dict",
+                                            "highlight_content": true,
+                                            "children": [
+                                                {
+                                                    "key": "families",
+                                                    "label": "Families",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "type": "schema",
+                                                    "name": "schema_representation_tags"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractHierarchyToAvalon",
+            "label": "Extract Hierarchy To Avalon",
+            "children": [
+                {
+                    "type": "list",
                     "key": "families",
                     "label": "Families",
-                    "type": "list",
                     "object_type": "text"
                 }
             ]
@@ -60,6 +509,86 @@
                             "label": "FFmpeg output arguments"
                         }
                     ]
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractOtioAudioTracks",
+            "label": "Extract OTIO Audio Tracks",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractOTIOFile",
+            "label": "Extract OTIO file",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractOTIOReview",
+            "label": "Extract OTIO review",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                },
+                {
+                    "type": "text",
+                    "key": "temp_file_head",
+                    "label": "Temp file prefix"
+                },
+                {
+                    "type": "number",
+                    "key": "to_width",
+                    "label": "Width",
+                    "decimal": 0,
+                    "minimum": 0,
+                    "maximum": 10000
+                },
+                {
+                    "type": "number",
+                    "key": "to_height",
+                    "label": "Height",
+                    "decimal": 0,
+                    "minimum": 0,
+                    "maximum": 10000
+                },
+                {
+                    "type": "text",
+                    "key": "output_ext",
+                    "label": "Output extension"
                 }
             ]
         },
@@ -275,9 +804,86 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "ExtractBurnin",
-            "label": "ExtractBurnin",
+            "key": "ExtractReviewSlate",
+            "label": "Extract OTIO Review Slate",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "ExtractScanlineExr",
+            "label": "Extract Scanline EXR",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "hosts",
+                    "label": "Hosts",
+                    "object_type": "text"
+                },
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "active",
+            "key": "IntegrateFtrackComponentOverwrite",
+            "label": "Overwrite ftrack created versions",
+            "children": [
+                {
+                    "type": "list",
+                    "key": "families",
+                    "label": "Families",
+                    "object_type": "text"
+                },
+                {
+                    "type": "boolean",
+                    "key": "active",
+                    "label": "Active"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                }
+            ]
+        },
+        {
+            "type": "splitter"
+        },
+        {
+            "type": "label",
+            "label": "Integrators"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
             "checkbox_key": "enabled",
+            "key": "IntegrateHeroVersion",
+            "label": "IntegrateHeroVersion",
             "is_group": true,
             "children": [
                 {
@@ -286,138 +892,27 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "dict",
-                    "collapsible": true,
-                    "key": "options",
-                    "label": "Burnin formating options",
-                    "children": [
-                        {
-                            "type": "number",
-                            "key": "font_size",
-                            "label": "Font size",
-                            "minimum": 0
-                        },
-                        {
-                            "type": "color",
-                            "key": "font_color",
-                            "label": "Font Color"
-                        },
-                        {
-                            "type": "color",
-                            "key": "bg_color",
-                            "label": "Background Color"
-                        },
-                        {
-                            "type": "number",
-                            "key": "x_offset",
-                            "label": "X Offset"
-                        },
-                        {
-                            "type": "number",
-                            "key": "y_offset",
-                            "label": "Y Offset"
-                        },
-                        {
-                            "type": "number",
-                            "key": "bg_padding",
-                            "label": "Padding aroung text"
-                        },
-                        {
-                            "type": "path",
-                            "key": "font_filepath",
-                            "label": "Font file path",
-                            "multipath": false,
-                            "multiplatform": true
-                        }
-                    ]
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
                 },
                 {
-                    "type": "separator"
-                },
-                {
+                    "key": "families",
+                    "label": "Families",
                     "type": "list",
-                    "key": "profiles",
-                    "label": "Profiles",
-                    "object_type": {
-                        "type": "dict",
-                        "children": [
-                            {
-                                "key": "families",
-                                "label": "Families",
-                                "type": "list",
-                                "object_type": "text"
-                            },
-                            {
-                                "key": "hosts",
-                                "label": "Hosts",
-                                "type": "list",
-                                "object_type": "text"
-                            },
-                            {
-                                "type": "splitter"
-                            },
-                            {
-                                "key": "burnins",
-                                "label": "Burnins",
-                                "type": "dict-modifiable",
-                                "highlight_content": true,
-                                "collapsible": false,
-                                "object_type": {
-                                    "type": "dict",
-                                    "children": [
-                                        {
-                                            "key": "TOP_LEFT",
-                                            "label": "Top Left",
-                                            "type": "text"
-                                        },
-                                        {
-                                            "key": "TOP_CENTERED",
-                                            "label": "Top Centered",
-                                            "type": "text"
-                                        },
-                                        {
-                                            "key": "TOP_RIGHT",
-                                            "label": "top Right",
-                                            "type": "text"
-                                        },
-                                        {
-                                            "key": "BOTTOM_LEFT",
-                                            "label": "Bottom Left",
-                                            "type": "text"
-                                        },
-                                        {
-                                            "key": "BOTTOM_CENTERED",
-                                            "label": "Bottom Centered",
-                                            "type": "text"
-                                        },
-                                        {
-                                            "key": "BOTTOM_RIGHT",
-                                            "label": "BottomRight",
-                                            "type": "text"
-                                        },
-                                        {
-                                            "key": "filter",
-                                            "label": "Additional filtering",
-                                            "type": "dict",
-                                            "highlight_content": true,
-                                            "children": [
-                                                {
-                                                    "key": "families",
-                                                    "label": "Families",
-                                                    "type": "list",
-                                                    "object_type": "text"
-                                                },
-                                                {
-                                                    "type": "schema",
-                                                    "name": "schema_representation_tags"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }
-                            }
-                        ]
-                    }
+                    "object_type": "text"
+                },
+                {
+                    "key": "ignored_representation_names",
+                    "label": "Ignore representation names",
+                    "type": "list",
+                    "object_type": "text"
+                },
+                {
+                    "key": "db_representation_context_keys",
+                    "label": "Context keys in DB",
+                    "type": "list",
+                    "object_type": "text"
                 }
             ]
         },
@@ -503,6 +998,42 @@
                             }
                         ]
                     }
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "IntegrateResourcesPath",
+            "label": "Integrate Resources Path",
+            "is_group": true,
+            "children": [
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "IntegrateThumbnails",
+            "label": "Integrate Thumbnails",
+            "is_group": true,
+            "children": [
+                {
+                    "key": "families",
+                    "label": "Families",
+                    "type": "list",
+                    "object_type": "text"
+                },
+                {
+                    "key": "required_context_keys",
+                    "label": "Required context keys",
+                    "type": "list",
+                    "object_type": "text"
                 }
             ]
         },

@@ -1,17 +1,206 @@
 {
     "publish": {
-        "IntegrateHeroVersion": {
-            "enabled": true,
-            "optional": true,
+        "CollectCurrentShellFile": {
+            "hosts": [
+                "shell"
+            ]
+        },
+        "CollectHierarchy": {
             "families": [
-                "model",
-                "rig",
-                "look",
+                "shot"
+            ],
+            "hosts": [
+                "resolve",
+                "hiero"
+            ]
+        },
+        "CollectMachineName": {
+            "hosts": [
+                "*"
+            ]
+        },
+        "CollectOcioFrameRanges": {
+            "families": [
+                "shot",
+                "clip"
+            ],
+            "hosts": [
+                "resolve",
+                "hiero"
+            ]
+        },
+        "CollectOcioReview": {
+            "families": [
+                "clip"
+            ],
+            "hosts": [
+                "resolve",
+                "hiero"
+            ]
+        },
+        "CollectOcioSubsetResources": {
+            "families": [
+                "clip"
+            ],
+            "hosts": [
+                "resolve",
+                "hiero"
+            ]
+        },
+        "CollectRenderedFiles": {
+            "targets": [
+                "filesequence"
+            ]
+        },
+        "CollectResourcesPath": {
+            "families": [
+                "workfile",
                 "pointcache",
+                "camera",
                 "animation",
+                "model",
+                "mayaAscii",
                 "setdress",
                 "layout",
-                "mayaAscii"
+                "ass",
+                "vdbcache",
+                "scene",
+                "vrayproxy",
+                "render",
+                "prerender",
+                "imagesequence",
+                "rendersetup",
+                "rig",
+                "plate",
+                "look",
+                "yetiRig",
+                "yeticache",
+                "nukenodes",
+                "gizmo",
+                "source",
+                "matchmove",
+                "image",
+                "assembly",
+                "fbx",
+                "textures",
+                "action",
+                "background",
+                "effect"
+            ]
+        },
+        "CollectShellWorkspace": {
+            "hosts": [
+                "shell"
+            ]
+        },
+        "ValidateContainers": {
+            "optional": true,
+            "hosts": [
+                "maya",
+                "houdini",
+                "nuke",
+                "harmony",
+                "photoshop"
+            ]
+        },
+        "ValidateFFmpegInstalled": {
+            "optional": true
+        },
+        "ValidateCurrentSaveFile": {
+            "hosts": [
+                "maya",
+                "houdini",
+                "nuke"
+            ]
+        },
+        "ValidateInstanceInContext": {
+            "optional": true,
+            "hosts": [
+                "maya",
+                "nuke"
+            ]
+        },
+        "ValidateIntent": {
+            "optional": true,
+            "hosts": [
+                "harmony"
+            ],
+            "tasks": [
+                "animation"
+            ]
+        },
+        "ValidateSequenceFrames": {
+            "hosts": [
+                "shell"
+            ],
+            "families": [
+                "imagesequence"
+            ]
+        },
+        "ValidateVersion": {
+            "hosts": [
+                "nuke",
+                "maya",
+                "blender",
+                "standalonepublisher"
+            ]
+        },
+        "ShowInventory": {
+            "hosts": [
+                "shell"
+            ],
+            "families": []
+        },
+        "ExtractBurnin": {
+            "enabled": true,
+            "options": {
+                "font_size": 42,
+                "font_color": [
+                    255,
+                    255,
+                    255,
+                    255
+                ],
+                "bg_color": [
+                    0,
+                    0,
+                    0,
+                    127
+                ],
+                "x_offset": 5,
+                "y_offset": 5,
+                "bg_padding": 5,
+                "font_filepath": {
+                    "windows": "",
+                    "darwin": "",
+                    "linux": ""
+                }
+            },
+            "profiles": [
+                {
+                    "families": [],
+                    "hosts": [],
+                    "burnins": {
+                        "burnin": {
+                            "TOP_LEFT": "{yy}-{mm}-{dd}",
+                            "TOP_CENTERED": "",
+                            "TOP_RIGHT": "{anatomy[version]}",
+                            "BOTTOM_LEFT": "{username}",
+                            "BOTTOM_CENTERED": "{asset}",
+                            "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
+                            "filter": {
+                                "families": [],
+                                "tags": []
+                            }
+                        }
+                    }
+                }
+            ]
+        },
+        "ExtractHierarchyToAvalon": {
+            "families": [
+                "clip",
+                "shot"
             ]
         },
         "ExtractJpegEXR": {
@@ -22,6 +211,34 @@
                 ],
                 "output": []
             }
+        },
+        "ExtractOtioAudioTracks": {
+            "hosts": [
+                "hiero",
+                "resolve"
+            ]
+        },
+        "ExtractOTIOFile": {
+            "hosts": [
+                "hiero",
+                "resolve"
+            ],
+            "families": [
+                "workfile"
+            ]
+        },
+        "ExtractOTIOReview": {
+            "hosts": [
+                "hiero",
+                "resolve"
+            ],
+            "families": [
+                "review"
+            ],
+            "temp_file_head": "tempFile.",
+            "to_width": 1280,
+            "to_height": 720,
+            "output_ext": ".jpg"
         },
         "ExtractReview": {
             "enabled": true,
@@ -87,50 +304,59 @@
                 }
             ]
         },
-        "ExtractBurnin": {
+        "ExtractReviewSlate": {
+            "hosts": [
+                "nuke",
+                "maya",
+                "shell"
+            ],
+            "families": [
+                "review",
+                "slate"
+            ],
+            "optional": true
+        },
+        "ExtractScanlineExr": {
+            "hosts": [
+                "shell"
+            ],
+            "families": [
+                "imagesequence",
+                "render",
+                "render2d",
+                "source"
+            ]
+        },
+        "IntegrateFtrackComponentOverwrite": {
+            "families": [
+                "clip"
+            ],
+            "active": false,
+            "optional": true
+        },
+        "IntegrateHeroVersion": {
             "enabled": true,
-            "options": {
-                "font_size": 42,
-                "font_color": [
-                    255,
-                    255,
-                    255,
-                    255
-                ],
-                "bg_color": [
-                    0,
-                    0,
-                    0,
-                    127
-                ],
-                "x_offset": 5,
-                "y_offset": 5,
-                "bg_padding": 5,
-                "font_filepath": {
-                    "windows": "",
-                    "darwin": "",
-                    "linux": ""
-                }
-            },
-            "profiles": [
-                {
-                    "families": [],
-                    "hosts": [],
-                    "burnins": {
-                        "burnin": {
-                            "TOP_LEFT": "{yy}-{mm}-{dd}",
-                            "TOP_CENTERED": "",
-                            "TOP_RIGHT": "{anatomy[version]}",
-                            "BOTTOM_LEFT": "{username}",
-                            "BOTTOM_CENTERED": "{asset}",
-                            "BOTTOM_RIGHT": "{frame_start}-{current_frame}-{frame_end}",
-                            "filter": {
-                                "families": [],
-                                "tags": []
-                            }
-                        }
-                    }
-                }
+            "optional": true,
+            "families": [
+                "model",
+                "rig",
+                "look",
+                "pointcache",
+                "animation",
+                "setdress",
+                "layout",
+                "mayaAscii"
+            ],
+            "ignored_representation_names": [],
+            "db_representation_context_keys": [
+                "project",
+                "asset",
+                "task",
+                "subset",
+                "representation",
+                "family",
+                "hierarchy",
+                "username"
             ]
         },
         "IntegrateAssetNew": {
@@ -157,6 +383,25 @@
                     "tasks": [],
                     "template": ""
                 }
+            ]
+        },
+        "IntegrateResourcesPath": {
+            "families": [
+                "clip",
+                "projectfile",
+                "plate"
+            ]
+        },
+        "IntegrateThumbnails": {
+            "families": [
+                "review"
+            ],
+            "required_context_keys": [
+                "project",
+                "asset",
+                "task",
+                "subset",
+                "version"
             ]
         },
         "ProcessSubmittedJobOnFarm": {
