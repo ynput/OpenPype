@@ -241,7 +241,11 @@ class QtColorTriangle(QtWidgets.QWidget):
 
         # Blit the static generated background with the hue gradient onto
         # the double buffer.
-        buf = QtGui.QImage(self.bg_image.copy())
+        buf = QtGui.QImage(
+            self.bg_image.width(),
+            self.bg_image.height(),
+            QtGui.QImage.Format_RGB32
+        )
 
         # Draw the trigon
         # Find the color with only the hue, and max value and saturation
@@ -254,9 +258,21 @@ class QtColorTriangle(QtWidgets.QWidget):
         )
 
         # Slow step: convert the image to a pixmap
-        pix = QtGui.QPixmap.fromImage(buf)
+        pix = self.bg_image.copy()
         pix_painter = QtGui.QPainter(pix)
-        pix_painter.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        pix_painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
+
+        trigon_path = QtGui.QPainterPath()
+        trigon_path.moveTo(self.point_a)
+        trigon_path.lineTo(self.point_b)
+        trigon_path.lineTo(self.point_c)
+        trigon_path.closeSubpath()
+        pix_painter.setClipPath(trigon_path)
+
+        pix_painter.drawImage(0, 0, buf)
+
+        pix_painter.setClipping(False)
 
         # Draw an outline of the triangle
         pix_painter.setPen(self._triangle_outline_pen)
