@@ -1,22 +1,38 @@
 # Changelog
 
-## [3.1.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.1.0-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.0.0...HEAD)
 
 #### 🚀 Enhancements
 
+- Sort applications and tools alphabetically in Settings UI [\#1689](https://github.com/pypeclub/OpenPype/pull/1689)
+- \#683 - Validate Frame Range in Standalone Publisher [\#1683](https://github.com/pypeclub/OpenPype/pull/1683)
+- Hiero: old container versions identify with red color [\#1682](https://github.com/pypeclub/OpenPype/pull/1682)
+- Project Manger: Default name column width [\#1669](https://github.com/pypeclub/OpenPype/pull/1669)
+- Remove outline in stylesheet [\#1667](https://github.com/pypeclub/OpenPype/pull/1667)
+- TVPaint: Creator take layer name as default value for subset variant [\#1663](https://github.com/pypeclub/OpenPype/pull/1663)
+- TVPaint custom subset template [\#1662](https://github.com/pypeclub/OpenPype/pull/1662)
+- Feature Slack integration [\#1657](https://github.com/pypeclub/OpenPype/pull/1657)
 - Nuke - Publish simplification [\#1653](https://github.com/pypeclub/OpenPype/pull/1653)
+- StandalonePublisher: adding  exception for adding `delete` tag to repre [\#1650](https://github.com/pypeclub/OpenPype/pull/1650)
 - \#1333 - added tooltip hints to Pyblish buttons [\#1649](https://github.com/pypeclub/OpenPype/pull/1649)
 
 #### 🐛 Bug fixes
 
+- Bad zip can break OpenPype start [\#1691](https://github.com/pypeclub/OpenPype/pull/1691)
+- Ftrack subprocess handle of stdout/stderr [\#1675](https://github.com/pypeclub/OpenPype/pull/1675)
+- Settings list race condifiton and mutable dict list conversion [\#1671](https://github.com/pypeclub/OpenPype/pull/1671)
 - Mac launch arguments fix [\#1660](https://github.com/pypeclub/OpenPype/pull/1660)
 - Fix missing dbm python module [\#1652](https://github.com/pypeclub/OpenPype/pull/1652)
-- Transparent branches in view on Mac [\#1648](https://github.com/pypeclub/OpenPype/pull/1648)
 - Add asset on task item [\#1646](https://github.com/pypeclub/OpenPype/pull/1646)
 - Project manager save and queue [\#1645](https://github.com/pypeclub/OpenPype/pull/1645)
 - New project anatomy values [\#1644](https://github.com/pypeclub/OpenPype/pull/1644)
+
+**Merged pull requests:**
+
+- Bump normalize-url from 4.5.0 to 4.5.1 in /website [\#1686](https://github.com/pypeclub/OpenPype/pull/1686)
+- Add docstrings to Project manager tool [\#1556](https://github.com/pypeclub/OpenPype/pull/1556)
 
 # Changelog
 
