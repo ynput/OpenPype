@@ -1,6 +1,5 @@
-from avalon import style
 from Qt import QtCore, QtGui, QtWidgets
-from openpype import resources
+from openpype import resources, style
 
 
 class WidgetUserIdle(QtWidgets.QWidget):

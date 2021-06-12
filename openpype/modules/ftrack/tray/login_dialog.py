@@ -1,6 +1,6 @@
 import os
 import requests
-from avalon import style
+from openpype import style
 from openpype.modules.ftrack.lib import credentials
 from . import login_tools
 from openpype import resources
@@ -46,8 +46,11 @@ class CredentialsDialog(QtWidgets.QDialog):
         self.user_label = QtWidgets.QLabel("Username:")
         self.api_label = QtWidgets.QLabel("API Key:")
 
-        self.ftsite_input = QtWidgets.QLineEdit()
-        self.ftsite_input.setReadOnly(True)
+        self.ftsite_input = QtWidgets.QLabel()
+        self.ftsite_input.setTextInteractionFlags(
+            QtCore.Qt.TextBrowserInteraction
+        )
+        # self.ftsite_input.setReadOnly(True)
         self.ftsite_input.setCursor(QtGui.QCursor(QtCore.Qt.IBeamCursor))
 
         self.user_input = QtWidgets.QLineEdit()
