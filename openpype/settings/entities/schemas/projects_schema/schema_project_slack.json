@@ -1,0 +1,106 @@
+{
+    "type": "dict",
+    "key": "slack",
+    "label": "Slack",
+    "collapsible": true,
+    "is_file": true,
+    "children": [
+        {
+            "type": "text",
+            "key": "token",
+            "label": "Auth Token"
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "label",
+                    "label": "Fill combination of families, task names and hosts when to send notification"
+                },
+                {
+                    "type": "dict",
+                    "key": "CollectSlackFamilies",
+                    "label": "Notification to Slack",
+                    "use_label_wrap": true,
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "optional",
+                            "label": "Optional"
+                        },
+                        {
+                            "type": "list",
+                            "collapsible": true,
+                            "key": "profiles",
+                            "label": "Profiles",
+                            "use_label_wrap": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "families",
+                                        "label": "Families",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "tasks",
+                                        "label": "Task names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "hosts",
+                                        "label": "Host names",
+                                        "type": "list",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "separator"
+                                    },
+                                    {
+                                        "key": "channel_messages",
+                                        "label": "Messages to channels",
+                                        "type": "list",
+                                        "use_label_wrap": true,
+                                        "object_type": {
+                                            "type": "dict",
+                                            "children": [
+                                                {
+                                                    "type": "list",
+                                                    "object_type": "text",
+                                                    "key": "channels",
+                                                    "label": "Channels"
+                                                },
+                                                {
+                                                    "type": "boolean",
+                                                    "key": "upload_thumbnail",
+                                                    "label": "Upload thumbnail"
+                                                },
+                                                {
+                                                    "type": "text",
+                                                    "multiline": true,
+                                                    "key": "message",
+                                                    "label": "Message"
+                                                }
+                                            ]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
