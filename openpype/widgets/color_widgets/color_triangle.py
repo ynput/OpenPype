@@ -724,27 +724,29 @@ class QtColorTriangle(QtWidgets.QWidget):
             lx = leftX[y]
             rx = rightX[y]
 
+            # if the xdist is 0, don't draw anything.
+            xdist = rx - lx
+            if xdist == 0.0:
+                continue
+
             lxi = int(floor(lx))
             rxi = int(floor(rx))
             rc = rightColors[y]
             lc = leftColors[y]
 
-            # if the xdist is 0, don't draw anything.
-            xdist = rx - lx
-            if xdist != 0.0:
-                r = lc.r
-                g = lc.g
-                b = lc.b
-                rdelta = (rc.r - r) / xdist
-                gdelta = (rc.g - g) / xdist
-                bdelta = (rc.b - b) / xdist
+            r = lc.r
+            g = lc.g
+            b = lc.b
+            rdelta = (rc.r - r) / xdist
+            gdelta = (rc.g - g) / xdist
+            bdelta = (rc.b - b) / xdist
 
-                # Inner loop 2. Draws the line from left to right.
-                for x in range(lxi, rxi + 1):
-                    buf.setPixel(x, y, QtGui.qRgb(int(r), int(g), int(b)))
-                    r += rdelta
-                    g += gdelta
-                    b += bdelta
+            # Inner loop 2. Draws the line from left to right.
+            for x in range(lxi, rxi):
+                buf.setPixel(x, y, QtGui.qRgb(int(r), int(g), int(b)))
+                r += rdelta
+                g += gdelta
+                b += bdelta
 
     def _radius_at(self, pos, rect):
         mousexdist = pos.x() - float(rect.center().x())
