@@ -30,7 +30,7 @@ class ExtractOTIOTrimmingVideo(openpype.api.Extractor):
 
         # get corresponding representation
         for _repre in representations:
-            if "trim" not in _repre.get("tags"):
+            if "trim" not in _repre.get("tags", []):
                 continue
 
             input_file = _repre["files"]
