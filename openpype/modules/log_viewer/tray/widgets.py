@@ -83,7 +83,6 @@ class CustomCombo(QtWidgets.QWidget):
 
         self.setLayout(layout)
 
-        # toolmenu.selection_changed.connect(self.on_selection_changed)
         toolmenu.selection_changed.connect(self.selection_changed)
 
         self.toolbutton = toolbutton
@@ -119,7 +118,6 @@ class LogsWidget(QtWidgets.QWidget):
 
         filter_layout = QtWidgets.QHBoxLayout()
 
-        # user_filter = SearchComboBox(self, "Users")
         user_filter = CustomCombo("Users", self)
         users = model.dbcon.distinct("username")
         user_filter.populate(users)
@@ -128,7 +126,6 @@ class LogsWidget(QtWidgets.QWidget):
         proxy_model.update_users_filter(users)
 
         level_filter = CustomCombo("Levels", self)
-        # levels = [(level, True) for level in model.dbcon.distinct("level")]
         levels = model.dbcon.distinct("level")
         level_filter.addItems(levels)
         level_filter.selection_changed.connect(self._level_changed)
