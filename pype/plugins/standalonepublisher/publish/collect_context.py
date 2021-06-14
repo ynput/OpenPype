@@ -34,7 +34,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
     # presets
     batch_extensions = ["edl", "xml", "psd"]
-    default_families = ["ftrack"]
+    default_families = []
 
     def process(self, context):
         # get json paths from os and load them
