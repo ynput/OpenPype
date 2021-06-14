@@ -77,6 +77,11 @@
                             "type": "text",
                             "key": "fpath_template",
                             "label": "Path template"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "use_range_limit",
+                            "label": "Use Frame range limit by default"
                         }
                     ]
                 }
