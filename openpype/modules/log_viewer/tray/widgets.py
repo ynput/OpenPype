@@ -132,14 +132,12 @@ class LogsWidget(QtWidgets.QWidget):
 
         detail_widget.update_level_filter(levels)
 
-        spacer = QtWidgets.QWidget()
-
         icon = qtawesome.icon("fa.refresh", color="white")
         refresh_btn = QtWidgets.QPushButton(icon, "")
 
         filter_layout.addWidget(user_filter)
         filter_layout.addWidget(level_filter)
-        filter_layout.addWidget(spacer, 1)
+        filter_layout.addStretch(1)
         filter_layout.addWidget(refresh_btn)
 
         view = QtWidgets.QTreeView(self)
