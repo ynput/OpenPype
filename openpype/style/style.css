@@ -97,6 +97,29 @@ QToolButton:disabled {
     background: {color:bg-buttons-disabled};
 }
 
+QToolButton[popupMode="1"] {
+    /* make way for the popup button */
+    padding-right: 20px;
+    border: 1px solid {color:bg-buttons};
+}
+
+QToolButton::menu-button {
+    width: 16px;
+    /* Set border only of left side. */
+    border: 1px solid transparent;
+    border-left: 1px solid {color:bg-buttons};
+}
+
+QToolButton::menu-arrow {
+    /* Offset arrow a little bit to center. */
+    left: 1px; top: 1px;
+}
+
+QToolButton::menu-arrow:open {
+    /* Don't offset arrow on open. */
+    left: 0px; top: 0px;
+}
+
 /* QMenu */
 QMenu {
     border: 1px solid #555555;
