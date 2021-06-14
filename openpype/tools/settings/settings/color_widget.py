@@ -25,7 +25,9 @@ class ColorWidget(InputWidget):
             self._dialog.open()
             return
 
-        dialog = ColorDialog(self.input_field.color(), self)
+        dialog = ColorDialog(
+            self.input_field.color(), self.entity.use_alpha, self
+        )
         self._dialog = dialog
 
         dialog.open()
@@ -120,12 +122,12 @@ class ColorViewer(QtWidgets.QWidget):
 
 
 class ColorDialog(QtWidgets.QDialog):
-    def __init__(self, color=None, parent=None):
+    def __init__(self, color=None, use_alpha=True, parent=None):
         super(ColorDialog, self).__init__(parent)
 
         self.setWindowTitle("Color picker dialog")
 
-        picker_widget = ColorPickerWidget(color, self)
+        picker_widget = ColorPickerWidget(color, use_alpha, self)
 
         footer_widget = QtWidgets.QWidget(self)
 
