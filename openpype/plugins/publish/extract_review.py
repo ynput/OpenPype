@@ -1154,13 +1154,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
             self.log.debug("height_scale: `{}`".format(height_scale))
             self.log.debug("height_half_pad: `{}`".format(height_half_pad))
 
+            # Overscal color
+            overscan_color_value = "black"
+            overscan_color = output_def.get("overscan_color")
+            if overscan_color:
+                bg_red, bg_green, bg_blue, _ = overscan_color
+                overscan_color_value = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
+                    bg_red, bg_green, bg_blue
+                )
+            self.log.debug("Overscan color: `{}`".format(overscan_color_value))
+
             filters.extend([
                 "scale={}x{}:flags=lanczos".format(
                     width_scale, height_scale
                 ),
-                "pad={}:{}:{}:{}:black".format(
+                "pad={}:{}:{}:{}:{}".format(
                     output_width, output_height,
-                    width_half_pad, height_half_pad
+                    width_half_pad, height_half_pad,
+                    overscan_color_value
                 ),
                 "setsar=1"
             ])
