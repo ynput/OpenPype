@@ -8,6 +8,10 @@ from .multiselection_combobox import MultiSelectionComboBox
 
 
 class ResizeEditorDelegate(QtWidgets.QStyledItemDelegate):
+    """Implementation of private method from QStyledItemDelegate.
+
+    Force editor to resize into item size.
+    """
     @staticmethod
     def _q_smart_min_size(editor):
         min_size_hint = editor.minimumSizeHint()
@@ -67,6 +71,16 @@ class ResizeEditorDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class NumberDelegate(QtWidgets.QStyledItemDelegate):
+    """Delegate for number attributes.
+
+    Editor correspond passed arguments.
+
+    Args:
+        minimum(int, float): Minimum possible value.
+        maximum(int, float): Maximum possible value.
+        decimals(int): How many decimal points can be used. Float will be used
+            as value if is higher than 0.
+    """
     def __init__(self, minimum, maximum, decimals, *args, **kwargs):
         super(NumberDelegate, self).__init__(*args, **kwargs)
         self.minimum = minimum
@@ -80,10 +94,13 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
             editor = QtWidgets.QSpinBox(parent)
 
         editor.setObjectName("NumberEditor")
+        # Set min/max
         editor.setMinimum(self.minimum)
         editor.setMaximum(self.maximum)
+        # Hide spinbox buttons
         editor.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
 
+        # Try to set value from item
         value = index.data(QtCore.Qt.EditRole)
         if value is not None:
             try:
@@ -98,6 +115,8 @@ class NumberDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class NameDelegate(QtWidgets.QStyledItemDelegate):
+    """Specific delegate for "name" key."""
+
     def createEditor(self, parent, option, index):
         editor = NameTextEdit(parent)
         editor.setObjectName("NameEditor")
@@ -108,11 +127,26 @@ class NameDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class TypeDelegate(QtWidgets.QStyledItemDelegate):
+    """Specific delegate for "type" key.
+
+    It is expected that will be used only for TaskItem which has modifiable
+    type. Type values are defined with cached project document.
+
+    Args:
+        project_doc_cache(ProjectDocCache): Project cache shared across all
+            delegates (kind of a struct pointer).
+    """
+
     def __init__(self, project_doc_cache, *args, **kwargs):
         self._project_doc_cache = project_doc_cache
         super(TypeDelegate, self).__init__(*args, **kwargs)
 
     def createEditor(self, parent, option, index):
+        """Editor is using filtrable combobox.
+
+        Editor should not be possible to create new items or set values that
+        are not in this method.
+        """
         editor = FilterComboBox(parent)
         editor.setObjectName("TypeEditor")
         editor.style().polish(editor)
@@ -136,6 +170,18 @@ class TypeDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class ToolsDelegate(QtWidgets.QStyledItemDelegate):
+    """Specific delegate for "tools_env" key.
+
+    Expected that editor will be used only on AssetItem which is the only item
+    that can have `tools_env` (except project).
+
+    Delegate requires tools cache which is shared across all ToolsDelegate
+    objects.
+
+    Args:
+        tools_cache (ToolsCache): Possible values of tools.
+    """
+
     def __init__(self, tools_cache, *args, **kwargs):
         self._tools_cache = tools_cache
         super(ToolsDelegate, self).__init__(*args, **kwargs)

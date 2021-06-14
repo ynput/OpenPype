@@ -467,7 +467,7 @@ class DictMutableKeysEntity(EndpointEntity):
         if self.store_as_list:
             output = []
             for key, child_entity in self.children_by_key.items():
-                output.append(key, child_entity.value)
+                output.append([key, child_entity.value])
             return output
 
         output = {}

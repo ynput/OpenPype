@@ -7,10 +7,8 @@ from .categories import (
 from .widgets import ShadowWidget, RestartDialog
 from . import style
 
-from openpype.tools.settings import (
-    is_password_required,
-    PasswordDialog
-)
+from openpype.lib import is_admin_password_required
+from openpype.widgets import PasswordDialog
 
 
 class MainWidget(QtWidgets.QWidget):
@@ -19,11 +17,11 @@ class MainWidget(QtWidgets.QWidget):
     widget_width = 1000
     widget_height = 600
 
-    def __init__(self, user_role, parent=None):
+    def __init__(self, user_role, parent=None, reset_on_show=True):
         super(MainWidget, self).__init__(parent)
 
         self._user_passed = False
-        self._reset_on_show = True
+        self._reset_on_show = reset_on_show
 
         self._password_dialog = None
 
@@ -95,6 +93,7 @@ class MainWidget(QtWidgets.QWidget):
     def showEvent(self, event):
         super(MainWidget, self).showEvent(event)
         if self._reset_on_show:
+            self._reset_on_show = False
             self.reset()
 
     def _show_password_dialog(self):
@@ -116,7 +115,7 @@ class MainWidget(QtWidgets.QWidget):
             return
 
         if not self._user_passed:
-            self._user_passed = not is_password_required()
+            self._user_passed = not is_admin_password_required()
 
         self._on_state_change()
 

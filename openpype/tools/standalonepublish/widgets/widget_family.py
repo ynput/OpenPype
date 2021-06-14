@@ -37,28 +37,26 @@ class FamilyWidget(QtWidgets.QWidget):
 
         input_subset = QtWidgets.QLineEdit()
         input_result = QtWidgets.QLineEdit()
-        input_result.setStyleSheet("color: #BBBBBB;")
         input_result.setEnabled(False)
 
         # region Menu for default subset names
         btn_subset = QtWidgets.QPushButton()
         btn_subset.setFixedWidth(18)
-        btn_subset.setFixedHeight(20)
         menu_subset = QtWidgets.QMenu(btn_subset)
         btn_subset.setMenu(menu_subset)
 
         # endregion
         name_layout = QtWidgets.QHBoxLayout()
-        name_layout.addWidget(input_subset)
-        name_layout.addWidget(btn_subset)
+        name_layout.addWidget(input_subset, 1)
+        name_layout.addWidget(btn_subset, 0)
         name_layout.setContentsMargins(0, 0, 0, 0)
 
         # version
         version_spinbox = QtWidgets.QSpinBox()
+        version_spinbox.setButtonSymbols(QtWidgets.QSpinBox.NoButtons)
         version_spinbox.setMinimum(1)
         version_spinbox.setMaximum(9999)
         version_spinbox.setEnabled(False)
-        version_spinbox.setStyleSheet("color: #BBBBBB;")
 
         version_checkbox = QtWidgets.QCheckBox("Next Available Version")
         version_checkbox.setCheckState(QtCore.Qt.CheckState(2))

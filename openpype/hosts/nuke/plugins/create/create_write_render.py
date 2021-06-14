@@ -99,10 +99,28 @@ class CreateWriteRender(plugin.PypeCreator):
                 "fpath_template": ("{work}/renders/nuke/{subset}"
                                    "/{subset}.{frame}.{ext}")})
 
+        # add crop node to cut off all outside of format bounding box
+        _prenodes = [
+            {
+                "name": "Crop01",
+                "class": "Crop",
+                "knobs": [
+                    ("box", [
+                        0.0,
+                        0.0,
+                        selected_node.width(),
+                        selected_node.height()
+                    ])
+                ],
+                "dependent": None
+            }
+        ]
+
         write_node = lib.create_write_node(
             self.data["subset"],
             write_data,
-            input=selected_node)
+            input=selected_node,
+            prenodes=_prenodes)
 
         # relinking to collected connections
         for i, input in enumerate(inputs):

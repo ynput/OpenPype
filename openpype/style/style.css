@@ -22,6 +22,7 @@ Enabled vs Disabled logic in most of stylesheets
     font-size: 9pt;
     font-family: "Spartan";
     font-weight: 450;
+    outline: none;
 }
 
 QWidget {
@@ -55,7 +56,7 @@ QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
 /* Buttons */
 QPushButton {
     text-align:center center;
-    border: 0px solid {color:border};
+    border: 1px solid transparent;
     border-radius: 0.2em;
     padding: 3px 5px 3px 5px;
     background: {color:bg-buttons};
@@ -63,14 +64,21 @@ QPushButton {
 
 QPushButton:hover {
     background: {color:bg-button-hover};
-    border-color: {color:border-hover};
     color: {color:font-hover};
 }
-QPushButton:pressed {
-    border-color: {color:border-focus};
-}
+
+QPushButton:pressed {}
+
 QPushButton:disabled {
     background: {color:bg-buttons-disabled};
+}
+
+QPushButton::menu-indicator  {
+    subcontrol-origin: padding;
+    subcontrol-position: right;
+    width: 8px;
+    height: 8px;
+    padding-right: 5px;
 }
 
 QToolButton {
@@ -138,7 +146,6 @@ QComboBox:disabled {
 QComboBox QAbstractItemView {
     border: 1px solid {color:border};
 	background: {color:bg-inputs};
-    outline: none;
 }
 
 QComboBox QAbstractItemView::item:selected {
@@ -163,6 +170,15 @@ QComboBox::drop-down {
 QComboBox::down-arrow, QComboBox::down-arrow:on, QComboBox::down-arrow:hover, QComboBox::down-arrow:focus
 {
     image: url(:/openpype/images/combobox_arrow.png);
+}
+
+/* Splitter */
+QSplitter {
+    border: none;
+}
+
+QSplitter::handle {
+    border: 1px dotted {color:bg-menu-separator};
 }
 
 /* SLider */
@@ -297,6 +313,8 @@ QAbstractItemView {
     border-radius: 0.2em;
     background: {color:bg-view};
     alternate-background-color: {color:bg-view-alternate};
+    /* Mac shows selection color on branches. */
+    selection-background-color: transparent;
 }
 
 QAbstractItemView:disabled{
@@ -328,30 +346,35 @@ QAbstractItemView::item:selected:hover {
     background: {color:bg-view-selection-hover};
 }
 
+/* Row colors (alternate colors) are from left - right */
+QAbstractItemView:branch {
+    background: transparent;
+}
+
 QAbstractItemView::branch:open:has-children:!has-siblings,
 QAbstractItemView::branch:open:has-children:has-siblings {
     border-image: none;
     image: url(:/openpype/images/branch_open.png);
-    background: {color:bg-view};
+    background: transparent;
 }
 QAbstractItemView::branch:open:has-children:!has-siblings:hover,
 QAbstractItemView::branch:open:has-children:has-siblings:hover {
     border-image: none;
     image: url(:/openpype/images//branch_open_on.png);
-    /* background: {color:bg-view-hover}; */
+    background: transparent;
 }
 
 QAbstractItemView::branch:has-children:!has-siblings:closed,
 QAbstractItemView::branch:closed:has-children:has-siblings {
     border-image: none;
     image: url(:/openpype/images//branch_closed.png);
-    background: {color:bg-view};
+    background: transparent;
 }
 QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
 QAbstractItemView::branch:closed:has-children:has-siblings:hover {
     border-image: none;
     image: url(:/openpype/images//branch_closed_on.png);
-    /* background: {color:bg-view-hover}; */
+    background: transparent;
 }
 
 /* Progress bar */
@@ -481,7 +504,27 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: none;
 }
 
+/* Globally used names */
+#Separator {
+    background: {color:bg-menu-separator};
+}
+
 #IconBtn {}
+
+/* Password dialog*/
+#PasswordBtn {
+    border: none;
+    padding:0.1em;
+    background: transparent;
+}
+
+#PasswordBtn:hover {
+    background: {color:bg-buttons};
+}
+
+#RememberCheckbox {
+    spacing: 0.5em;
+}
 
 /* Project Manager stylesheets */
 #HierarchyView::item {
@@ -502,7 +545,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #CompleterView {
     border: 1px solid {color:border};
     background: {color:bg-inputs};
-    outline: none;
 }
 
 #CompleterView::item {
@@ -518,6 +560,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 /* Launcher specific stylesheets */
 #IconView[mode="icon"] {
+    /* font size can't be set on items */
     font-size: 8pt;
     border: 0px;
     padding: 0px;
@@ -529,6 +572,22 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 0px;
 }
 
+#IconView[mode="icon"]::item:hover {
+    background: rgba(0, 0, 0, 0);
+    color: {color:font-hover};
+}
+
 #IconView[mode="icon"]::icon {
     top: 3px;
+}
+
+/* Standalone publisher */
+
+#ComponentItem {
+    background: transparent;
+}
+
+#ComponentFrame {
+    border: 1px solid {color:border};
+    border-radius: 0.1em;
 }

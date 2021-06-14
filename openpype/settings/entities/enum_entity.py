@@ -116,7 +116,7 @@ class AppsEnumEntity(BaseEnumEntity):
         system_settings_entity = self.get_entity_from_path("system_settings")
 
         valid_keys = set()
-        enum_items = []
+        enum_items_list = []
         applications_entity = system_settings_entity["applications"]
         for group_name, app_group in applications_entity.items():
             enabled_entity = app_group.get("enabled")
@@ -149,8 +149,12 @@ class AppsEnumEntity(BaseEnumEntity):
                     full_label = variant_label
 
                 full_name = "/".join((group_name, variant_name))
-                enum_items.append({full_name: full_label})
+                enum_items_list.append((full_name, full_label))
                 valid_keys.add(full_name)
+
+        enum_items = []
+        for key, value in sorted(enum_items_list, key=lambda item: item[1]):
+            enum_items.append({key: value})
         return enum_items, valid_keys
 
     def set_override_state(self, *args, **kwargs):
@@ -179,7 +183,7 @@ class ToolsEnumEntity(BaseEnumEntity):
         system_settings_entity = self.get_entity_from_path("system_settings")
 
         valid_keys = set()
-        enum_items = []
+        enum_items_list = []
         tool_groups_entity = system_settings_entity["tools"]["tool_groups"]
         for group_name, tool_group in tool_groups_entity.items():
             # Try to get group label from entity
@@ -204,8 +208,12 @@ class ToolsEnumEntity(BaseEnumEntity):
                 else:
                     tool_label = tool_name
 
-                enum_items.append({tool_name: tool_label})
+                enum_items_list.append((tool_name, tool_label))
                 valid_keys.add(tool_name)
+
+        enum_items = []
+        for key, value in sorted(enum_items_list, key=lambda item: item[1]):
+            enum_items.append({key: value})
         return enum_items, valid_keys
 
     def set_override_state(self, *args, **kwargs):

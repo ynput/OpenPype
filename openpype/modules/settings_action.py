@@ -37,7 +37,8 @@ class ISettingsChangeListener:
 class SettingsAction(PypeModule, ITrayAction):
     """Action to show Setttings tool."""
     name = "settings"
-    label = "Settings"
+    label = "Studio Settings"
+    admin_action = True
 
     def initialize(self, _modules_settings):
         # This action is always enabled
@@ -45,7 +46,7 @@ class SettingsAction(PypeModule, ITrayAction):
 
         # User role
         # TODO should be changeable
-        self.user_role = "developer"
+        self.user_role = "manager"
 
         # Tray attributes
         self.settings_window = None
@@ -66,7 +67,8 @@ class SettingsAction(PypeModule, ITrayAction):
         if self.settings_window:
             return
         from openpype.tools.settings import MainWidget
-        self.settings_window = MainWidget(self.user_role)
+
+        self.settings_window = MainWidget(self.user_role, reset_on_show=False)
         self.settings_window.trigger_restart.connect(self._on_trigger_restart)
 
     def _on_trigger_restart(self):
@@ -77,7 +79,7 @@ class SettingsAction(PypeModule, ITrayAction):
 
         Raises:
             AssertionError: Window must be already created. Call
-                `create_settings_window` before callint this method.
+                `create_settings_window` before calling this method.
         """
         if not self.settings_window:
             raise AssertionError("Window is not initialized.")
@@ -104,7 +106,7 @@ class SettingsAction(PypeModule, ITrayAction):
 class LocalSettingsAction(PypeModule, ITrayAction):
     """Action to show Setttings tool."""
     name = "local_settings"
-    label = "Local Settings"
+    label = "Settings"
 
     def initialize(self, _modules_settings):
         # This action is always enabled

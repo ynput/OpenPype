@@ -1,7 +1,6 @@
 [submodule "repos/avalon-core"]
 	path = repos/avalon-core
 	url = https://github.com/pypeclub/avalon-core.git
-	branch = develop
 [submodule "repos/avalon-unreal-integration"]
 	path = repos/avalon-unreal-integration
 	url = https://github.com/pypeclub/avalon-unreal-integration.git

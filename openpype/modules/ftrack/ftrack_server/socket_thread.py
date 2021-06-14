@@ -66,7 +66,16 @@ class SocketThread(threading.Thread):
             *self.additional_args,
             str(self.port)
         )
-        self.subproc = subprocess.Popen(args, env=env, stdin=subprocess.PIPE)
+        kwargs = {
+            "env": env,
+            "stdin": subprocess.PIPE
+        }
+        if not sys.stdout:
+            # Redirect to devnull if stdout is None
+            kwargs["stdout"] = subprocess.DEVNULL
+            kwargs["stderr"] = subprocess.DEVNULL
+
+        self.subproc = subprocess.Popen(args, **kwargs)
 
         # Listen for incoming connections
         sock.listen(1)

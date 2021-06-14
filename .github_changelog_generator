@@ -1,9 +1,0 @@
-pr-wo-labels=False
-exclude-labels=duplicate,question,invalid,wontfix,weekly-digest
-author=False
-unreleased=True
-since-tag=2.13.6
-release-branch=master
-enhancement-label=**Enhancements:**
-issues=False
-pulls=False

@@ -7,8 +7,6 @@ import six
 from openpype import resources
 from .. import PypeModule, ITrayService
 
-from openpype.modules.webserver.host_console_listener import HostListener
-
 
 @six.add_metaclass(ABCMeta)
 class IWebServerRoutes:
@@ -59,7 +57,11 @@ class WebServerModule(PypeModule, ITrayService):
         )
 
     def _add_listeners(self):
-        self._host_listener = HostListener(self.server_manager, self)
+        from openpype.modules.webserver import host_console_listener
+
+        self._host_listener = host_console_listener.HostListener(
+            self.server_manager, self
+        )
 
     def start_server(self):
         if self.server_manager:

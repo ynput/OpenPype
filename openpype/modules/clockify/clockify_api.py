@@ -36,6 +36,7 @@ class ClockifyAPI:
 
         self._secure_registry = None
 
+    @property
     def secure_registry(self):
         if self._secure_registry is None:
             self._secure_registry = OpenPypeSecureRegistry("clockify")

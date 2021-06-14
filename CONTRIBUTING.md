@@ -1,5 +1,7 @@
 ## How to contribute to Pype
 
+We are always happy for any contributions for OpenPype improvements. Before making a PR and starting working on an issue, please read these simple guidelines.
+
 #### **Did you find a bug?**
 
 1. Check in the issues and our [bug triage[(https://github.com/pypeclub/pype/projects/2) to make sure it wasn't reported already.
@@ -13,11 +15,11 @@
 - Open a new GitHub pull request with the patch.
 - Ensure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
 
-
 #### **Do you intend to add a new feature or change an existing one?**
 
 - Open a new thread in the [github discussions](https://github.com/pypeclub/pype/discussions/new)
-- Do not open issue untill the suggestion is discussed. We will convert accepted suggestions into backlog and point them to the relevant discussion thread to keep the context.
+- Do not open issue until the suggestion is discussed. We will convert accepted suggestions into backlog and point them to the relevant discussion thread to keep the context.
+- If you are already working on a new feature and you'd like it eventually merged to the main codebase, please consider making a DRAFT PR as soon as possible. This makes it a lot easier to give feedback, discuss the code and functionalit, plus it prevents multiple people tackling the same problem independently. 
 
 #### **Do you have questions about the source code?**
 
@@ -41,13 +43,11 @@ A few important notes about 2.x and 3.x development:
 - Please keep the corresponding 2 and 3 PR names the same so they can be easily identified from the PR list page.
 - Each 2.x PR should be labeled with `2.x-dev` label.
 
-Inside each PR, put a link to the corresponding PR
+Inside each PR, put a link to the corresponding PR for the other version
 
 Of course if you want to contribute, feel free to make a PR to only 2.x/develop or develop, based on what you are using. While reviewing the PRs, we might convert the code to corresponding PR for the other release ourselves. 
 
-We might also change the target of you PR to and intermediate branch, rather than `develop` if we feel it requires some extra work on our end. That way, we preserve all your commits so you don't loos out on the contribution credits.
-
-
+We might also change the target of you PR to and intermediate branch, rather than `develop` if we feel it requires some extra work on our end. That way, we preserve all your commits so you don't loose out on the contribution credits.
 
 
 If a PR is targeted at 2.x release it must be labelled with 2x-dev label in Github.   

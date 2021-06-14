@@ -133,6 +133,13 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             # create audio subset instance
             self.create_audio_instance(context, **data)
 
+            # add colorspace data
+            instance.data.update({
+                "versionData": {
+                    "colorspace": track_item.sourceMediaColourTransform(),
+                }
+            })
+
             # add audioReview attribute to plate instance data
             # if reviewTrack is on
             if tag_data.get("reviewTrack") is not None:
@@ -304,9 +311,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
     @staticmethod
     def create_otio_time_range_from_timeline_item_data(track_item):
+        speed = track_item.playbackSpeed()
         timeline = phiero.get_current_sequence()
         frame_start = int(track_item.timelineIn())
-        frame_duration = int(track_item.sourceDuration())
+        frame_duration = int(track_item.sourceDuration() / speed)
         fps = timeline.framerate().toFloat()
 
         return hiero_export.create_otio_time_range(
@@ -376,6 +384,8 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
         subtracks = []
         subTrackItems = flatten(clip.parent().subTrackItems())
         for item in subTrackItems:
+            if "TimeWarp" in item.name():
+                continue
             # avoid all anotation
             if isinstance(item, hiero.core.Annotation):
                 continue

@@ -27,7 +27,10 @@ class PypeCommands:
         from openpype.tools import settings
 
         # TODO change argument options to allow enum of user roles
-        user_role = "developer"
+        if dev:
+            user_role = "developer"
+        else:
+            user_role = "manager"
         settings.main(user_role)
 
     @staticmethod
