@@ -22,3 +22,21 @@ class AbtractAttrDef:
         converted.
         """
         pass
+
+
+class BoolDef(AbtractAttrDef):
+    """Boolean representation.
+
+    Args:
+        default(bool): Default value. Set to `False` if not defined.
+    """
+
+    def __init__(self, default=None):
+        if default is None:
+            default = False
+        self.default = default
+
+    def convert_value(self, value):
+        if isinstance(value, bool):
+            return value
+        return self.default
