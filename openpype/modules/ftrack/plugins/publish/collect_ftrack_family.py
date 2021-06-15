@@ -44,12 +44,19 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
         }
         profile = filter_profiles(self.profiles, filtering_criteria)
 
-        if profile and profile["add_ftrack_family"]:
-            self.log.debug("Adding ftrack family")
+        if profile:
             families = instance.data.get("families")
-            if families and "ftrack" not in families:
-                instance.data["families"].append("ftrack")
-            else:
-                instance.data["families"] = ["ftrack"]
+            if profile["add_ftrack_family"]:
+                self.log.debug("Adding ftrack family")
 
-        self.log.debug("instance.data:: {}".format(instance.data))
+                if families and "ftrack" not in families:
+                    instance.data["families"].append("ftrack")
+                else:
+                    instance.data["families"] = ["ftrack"]
+            else:
+                if families and "ftrack" in families:
+                    self.log.debug("Explicitly removing 'ftrack'")
+                    instance.data["families"].remove("ftrack")
+
+        self.log.debug("Resulting families '{}' for '{}'".format(
+            instance.data["families"], instance.data["family"]))
