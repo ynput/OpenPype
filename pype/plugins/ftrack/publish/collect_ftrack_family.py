@@ -37,7 +37,6 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
             self.log.warning("No profiles present for adding Ftrack family")
             return
 
-        anatomy_data = instance.context.data["anatomyData"]
         task_name = instance.data("task",
                                   instance.context.data["task"])
         host_name = os.environ["AVALON_APP"]
@@ -58,4 +57,5 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
             else:
                 instance.data["families"] = ["ftrack"]
 
-        self.log.debug("instance.data:: {}".format(instance.data))
+        self.log.debug("Resulting families '{}' for '{}'".format(
+            instance.data["families"], instance.data["family"]))
