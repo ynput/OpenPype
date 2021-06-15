@@ -28,8 +28,8 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
     def process(self, instance):
         if self.profiles:
             anatomy_data = instance.context.data["anatomyData"]
-            task_name = anatomy_data.get("task",
-                                         os.environ["AVALON_TASK"])
+            task_name = instance.data("task",
+                                      instance.context.data["task"])
             host_name = anatomy_data.get("app",
                                          os.environ["AVALON_APP"])
             family = instance.data["family"]
