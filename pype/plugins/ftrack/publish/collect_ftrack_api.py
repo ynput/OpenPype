@@ -12,7 +12,7 @@ except Exception:
 class CollectFtrackApi(pyblish.api.ContextPlugin):
     """ Collects an ftrack session and the current task id. """
 
-    order = pyblish.api.CollectorOrder + 0.4999
+    order = pyblish.api.CollectorOrder + 0.4998
     label = "Collect Ftrack Api"
 
     def process(self, context):

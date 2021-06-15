@@ -5,37 +5,48 @@ Requires:
 Provides:
     instance     -> families ([])
 """
-import re
+import os
 import pyblish.api
+
+from pype.lib.plugin_tools import filter_profiles
 
 
 class CollectFtrackFamily(pyblish.api.InstancePlugin):
     """
         Adds explicitly 'ftrack' to families to upload instance to FTrack.
 
-        Uses selection by combination of hosts/families/tasks names (regex)
+        Uses selection by combination of hosts/families/tasks names via
+        profiles resolution.
+
+        Triggered everywhere, checks instance against configured
     """
-    label = "Collect FTrack Family"
+    label = "Collect Ftrack Family"
     order = pyblish.api.CollectorOrder + 0.4999
 
-    hosts = ["standalonepublisher"]
-    families = ["render", "image"]
-    tasks = ['.*']
+    profiles = None
 
     def process(self, instance):
-        if self.tasks:
+        if self.profiles:
             anatomy_data = instance.context.data["anatomyData"]
-            task_name = anatomy_data["task"].lower()
+            task_name = anatomy_data.get("task",
+                                         os.environ["AVALON_TASK"])
+            host_name = anatomy_data.get("app",
+                                         os.environ["AVALON_APP"])
+            family = instance.data["family"]
 
-            if (not any([re.search(pattern, task_name)
-                         for pattern in self.tasks])):
-                self.log.debug("Task not matching, skipping.")
-                return
+            filtering_criteria = {
+                "hosts": host_name,
+                "families": family,
+                "tasks": task_name
+            }
+            profile = filter_profiles(self.profiles, filtering_criteria)
 
-        families = instance.data.get("families")
-        if families:
-            instance.data["families"].append("ftrack")
-        else:
-            instance.data["families"] = ["ftrack"]
+            if profile and profile["add_ftrack_family"]:
+                self.log.debug("Adding ftrack family")
+                families = instance.data.get("families")
+                if families and "ftrack" not in families:
+                    instance.data["families"].append("ftrack")
+                else:
+                    instance.data["families"] = ["ftrack"]
 
         self.log.debug("instance.data:: {}".format(instance.data))
