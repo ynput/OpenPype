@@ -79,6 +79,48 @@ class NumberDef(AbtractAttrDef):
         if self.decimals == 0:
             return int(value)
         return round(float(value), self.decimals)
+
+
+class TextDef(AbtractAttrDef):
+    """Text definition.
+
+    Text can have multiline option so endline characters are allowed regex
+    validation can be applied placeholder for UI purposes and default value.
+
+    Regex validation is not part of attribute implemntentation.
+
+    Args:
+        multiline(bool): Text has single or multiline support.
+        regex(str, re.Pattern): Regex validation.
+        placeholder(str): UI placeholder for attribute.
+        default(str, None): Default value. Empty string used when not defined.
+    """
+    def __init__(
+        self, multiline=None, regex=None, placeholder=None, default=None
+    ):
+        if multiline is None:
+            multiline = False
+
+        if default is None:
+            default = ""
+
+        elif not isinstance(default, six.string_types):
+            raise TypeError((
+                "'default' argument must be a {}, not '{}'"
+            ).format(six.string_types, type(default)))
+
+        if isinstance(regex, six.string_types):
+            regex = re.compile(regex)
+
+        self.multiline = multiline
+        self.placeholder = placeholder
+        self.regex = regex
+        self.default = default
+
+    def convert_value(self, value):
+        if isinstance(value, six.string_types):
+            return value
+        return self.default
 class BoolDef(AbtractAttrDef):
     """Boolean representation.
 
