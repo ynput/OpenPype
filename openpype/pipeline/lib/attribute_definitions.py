@@ -121,6 +121,40 @@ class TextDef(AbtractAttrDef):
         if isinstance(value, six.string_types):
             return value
         return self.default
+
+
+class EnumDef(AbtractAttrDef):
+    """Enumeration of single item from items.
+
+    Args:
+        items: Items definition that can be coverted to
+            `collections.OrderedDict`. Dictionary represent {value: label}
+            relation.
+        default: Default value. Must be one key(value) from passed items.
+    """
+
+    def __init__(self, items, default=None):
+        if not items:
+            raise ValueError((
+                "Empty 'items' value. {} must have"
+                " defined values on initialization."
+            ).format(self.__class__.__name__))
+
+        items = collections.OrderedDict(items)
+        if default not in items:
+            for key in items.keys():
+                default = key
+                break
+
+        self.items = items
+        self.default = default
+
+    def convert_value(self, value):
+        if value in self.items:
+            return value
+        return self.default
+
+
 class BoolDef(AbtractAttrDef):
     """Boolean representation.
 
