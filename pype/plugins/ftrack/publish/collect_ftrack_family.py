@@ -23,6 +23,8 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
     label = "Collect Ftrack Family"
     order = pyblish.api.CollectorOrder + 0.4999
 
+    hosts = ["standalonepublisher"]
+
     profiles = {
         "hosts": ["standalonepublisher"],
         "families": [],
