@@ -212,6 +212,14 @@
                     "add_ftrack_family": true
                 },
                 {
+                    "families": ["matchmove"],
+                    "tasks": [],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "add_ftrack_family": false
+                },
+                {
                     "families": [
                         "model",
                         "setdress",
