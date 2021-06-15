@@ -1,6 +1,6 @@
 from Qt import QtWidgets, QtCore
 from .widgets import LogsWidget, OutputWidget
-from avalon import style
+from openpype import style
 
 
 class LogsWindow(QtWidgets.QWidget):
@@ -14,7 +14,7 @@ class LogsWindow(QtWidgets.QWidget):
 
         main_layout = QtWidgets.QHBoxLayout()
 
-        log_splitter = QtWidgets.QSplitter()
+        log_splitter = QtWidgets.QSplitter(self)
         log_splitter.setOrientation(QtCore.Qt.Horizontal)
         log_splitter.addWidget(logs_widget)
         log_splitter.addWidget(log_detail)

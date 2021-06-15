@@ -1,5 +1,12 @@
 {
     "publish": {
+        "ValidateExpectedFiles": {
+            "enabled": true,
+            "active": true,
+            "families": ["render"],
+            "targets": ["deadline"],
+            "allow_user_override": true
+        },
         "MayaSubmitDeadline": {
             "enabled": true,
             "optional": false,
