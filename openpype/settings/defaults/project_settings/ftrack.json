@@ -204,10 +204,7 @@
             "enabled": true,
             "profiles": [
                 {
-                    "families": [
-                        "render",
-                        "image"
-                    ],
+                    "families": [],
                     "tasks": [],
                     "hosts": [
                         "standalonepublisher"
