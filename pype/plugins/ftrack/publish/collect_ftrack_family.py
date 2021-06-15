@@ -5,8 +5,8 @@ Requires:
 Provides:
     instance     -> families ([])
 """
-import os
 import pyblish.api
+import avalon.api
 
 from pype.lib.plugin_tools import filter_profiles
 
@@ -37,9 +37,11 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
             self.log.warning("No profiles present for adding Ftrack family")
             return
 
-        task_name = instance.data("task",
-                                  instance.context.data["task"])
-        host_name = os.environ["AVALON_APP"]
+        task_name = instance.data.get("task",
+                                      instance.context.data.get("task",
+                                          avalon.api.Session["AVALON_TASK"]))
+
+        host_name = avalon.api.Session["AVALON_APP"]
         family = instance.data["family"]
 
         filtering_criteria = {
@@ -49,13 +51,15 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
         }
         profile = filter_profiles(self.profiles, filtering_criteria)
 
-        if profile and profile["add_ftrack_family"]:
-            self.log.debug("Adding ftrack family")
-            families = instance.data.get("families")
-            if families and "ftrack" not in families:
-                instance.data["families"].append("ftrack")
-            else:
-                instance.data["families"] = ["ftrack"]
-
-        self.log.debug("Resulting families '{}' for '{}'".format(
-            instance.data["families"], instance.data["family"]))
+        if profile:
+            if profile["add_ftrack_family"]:
+                self.log.debug("Adding ftrack family for '{}'".
+                               format(instance.data.get("family")))
+                families = instance.data.get("families")
+                if families and "ftrack" not in families:
+                    instance.data["families"].append("ftrack")
+                else:
+                    instance.data["families"] = ["ftrack"]
+        else:
+            self.log.debug("Instance '{}' doesn't match any profile".format(
+                instance.data.get("family")))
