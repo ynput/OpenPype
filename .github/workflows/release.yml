@@ -39,13 +39,14 @@ jobs:
       uses: heinrichreimer/github-changelog-generator-action@v2.2
       with:
         token: ${{ secrets.ADMIN_TOKEN }}
-        breakingLabel: '#### 💥 Breaking'
-        enhancementLabel: '#### 🚀 Enhancements'
-        bugsLabel: '#### 🐛 Bug fixes'
-        deprecatedLabel: '#### ⚠️ Deprecations'
+        breakingLabel: '**💥 Breaking**'
+        enhancementLabel: '**🚀 Enhancements**'
+        bugsLabel: '**🐛 Bug fixes**'
+        deprecatedLabel: '**⚠️ Deprecations**'
         addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]}}'
         issues: false
         issuesWoLabels: false
+        sinceTag: "3.0.0"
         maxIssues: 100
         pullRequests: true
         prWoLabels: false
@@ -91,6 +92,7 @@ jobs:
         addSections: '{"documentation":{"prefix":"### 📖 Documentation","labels":["documentation"]},"tests":{"prefix":"### ✅ Testing","labels":["tests"]}}'
         issues: false
         issuesWoLabels: false
+        sinceTag: ${{ steps.version.outputs.last_release }}
         maxIssues: 100
         pullRequests: true
         prWoLabels: false
@@ -103,7 +105,7 @@ jobs:
         excludeTagsRegex: "CI/.+"
         releaseBranch: "main"
         stripHeaders: true
-        sinceTag: ${{ steps.version.outputs.last_release }}
+        base: ''
 
 
     - name: 🚀 Github Release
