@@ -18,6 +18,48 @@ import pyblish.api
 from .abstract_metaplugins import AbstractMetaInstancePlugin
 
 
+def requests_post(*args, **kwargs):
+    """Wrap request post method.
+
+    Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
+    variable is found. This is useful when Deadline or Muster server are
+    running with self-signed certificates and their certificate is not
+    added to trusted certificates on client machines.
+
+    Warning:
+        Disabling SSL certificate validation is defeating one line
+        of defense SSL is providing and it is not recommended.
+
+    """
+    if 'verify' not in kwargs:
+        kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL",
+                                              True) else True  # noqa
+    # add 10sec timeout before bailing out
+    kwargs['timeout'] = 10
+    return requests.post(*args, **kwargs)
+
+
+def requests_get(*args, **kwargs):
+    """Wrap request get method.
+
+    Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
+    variable is found. This is useful when Deadline or Muster server are
+    running with self-signed certificates and their certificate is not
+    added to trusted certificates on client machines.
+
+    Warning:
+        Disabling SSL certificate validation is defeating one line
+        of defense SSL is providing and it is not recommended.
+
+    """
+    if 'verify' not in kwargs:
+        kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL",
+                                              True) else True  # noqa
+    # add 10sec timeout before bailing out
+    kwargs['timeout'] = 10
+    return requests.get(*args, **kwargs)
+
+
 @attr.s
 class DeadlineJobInfo(object):
     """Mapping of all Deadline *JobInfo* attributes.
@@ -579,7 +621,7 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
         url = "{}/api/jobs".format(self._deadline_url)
-        response = self._requests_post(url, json=payload)
+        response = requests_post(url, json=payload)
         if not response.ok:
             self.log.error("Submission failed!")
             self.log.error(response.status_code)
@@ -592,41 +634,3 @@ class AbstractSubmitDeadline(pyblish.api.InstancePlugin):
         self._instance.data["deadlineSubmissionJob"] = result
 
         return result["_id"]
-
-    def _requests_post(self, *args, **kwargs):
-        """Wrap request post method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
-        # add 10sec timeout before bailing out
-        kwargs['timeout'] = 10
-        return requests.post(*args, **kwargs)
-
-    def _requests_get(self, *args, **kwargs):
-        """Wrap request get method.
-
-        Disabling SSL certificate validation if ``DONT_VERIFY_SSL`` environment
-        variable is found. This is useful when Deadline or Muster server are
-        running with self-signed certificates and their certificate is not
-        added to trusted certificates on client machines.
-
-        Warning:
-            Disabling SSL certificate validation is defeating one line
-            of defense SSL is providing and it is not recommended.
-
-        """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
-        # add 10sec timeout before bailing out
-        kwargs['timeout'] = 10
-        return requests.get(*args, **kwargs)

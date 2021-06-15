@@ -41,10 +41,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
         # process all sellected timeline track items
         for track_item in selected_timeline_items:
-
             data = {}
             clip_name = track_item.name()
             source_clip = track_item.source()
+            self.log.debug("clip_name: {}".format(clip_name))
 
             # get clips subtracks and anotations
             annotations = self.clip_annotations(source_clip)
@@ -128,7 +128,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "_ instance.data: {}".format(pformat(instance.data)))
 
             if not with_audio:
-                return
+                continue
 
             # create audio subset instance
             self.create_audio_instance(context, **data)

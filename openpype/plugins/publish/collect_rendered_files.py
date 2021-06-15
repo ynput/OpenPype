@@ -87,10 +87,13 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             instance = self._context.create_instance(
                 instance_data.get("subset")
             )
-            self.log.info("Filling stagignDir...")
+            self.log.info("Filling stagingDir...")
 
             self._fill_staging_dir(instance_data, anatomy)
             instance.data.update(instance_data)
+
+            # stash render job id for later validation
+            instance.data["render_job_id"] = data.get("job").get("_id")
 
             representations = []
             for repre_data in instance_data.get("representations") or []:
