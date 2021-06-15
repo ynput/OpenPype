@@ -105,16 +105,23 @@
             "label": "Render",
             "family": "render",
             "icon": "image",
-            "defaults": ["Animation", "Lighting", "Lookdev", "Compositing"],
+            "defaults": [
+                "Animation",
+                "Lighting",
+                "Lookdev",
+                "Compositing"
+            ],
             "help": "Rendered images or video files"
         },
         "create_mov_batch": {
-          "name": "mov_batch",
-          "label": "Batch Mov",
-          "family": "render_mov_batch",
-          "icon": "image",
-          "defaults": ["Main"],
-          "help": "Process multiple Mov files and publish them for layout and comp."
+            "name": "mov_batch",
+            "label": "Batch Mov",
+            "family": "render_mov_batch",
+            "icon": "image",
+            "defaults": [
+                "Main"
+            ],
+            "help": "Process multiple Mov files and publish them for layout and comp."
         },
         "__dynamic_keys_labels__": {
             "create_workfile": "Workfile",

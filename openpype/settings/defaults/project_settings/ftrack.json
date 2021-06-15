@@ -200,6 +200,37 @@
         }
     },
     "publish": {
+        "CollectFtrackFamily": {
+            "enabled": true,
+            "profiles": [
+                {
+                    "families": [
+                        "render",
+                        "image"
+                    ],
+                    "tasks": [],
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "add_ftrack_family": true
+                },
+                {
+                    "families": [
+                        "model",
+                        "setdress",
+                        "animation",
+                        "look",
+                        "rig",
+                        "camera"
+                    ],
+                    "tasks": [],
+                    "hosts": [
+                        "maya"
+                    ],
+                    "add_ftrack_family": true
+                }
+            ]
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
             "note_with_intent_template": "{intent}: {comment}",
