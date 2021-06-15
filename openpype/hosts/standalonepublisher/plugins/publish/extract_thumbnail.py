@@ -88,6 +88,13 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             jpeg_items.append("-i \"{}\"".format(full_input_path))
             # extract only single file
             jpeg_items.append("-frames:v 1")
+            # Add black background for transparent images
+            jpeg_items.append((
+                "-filter_complex"
+                " \"color=black,format=rgb24[c]"
+                ";[c][0]scale2ref[c][i]"
+                ";[c][i]overlay=format=auto:shortest=1,setsar=1\""
+            ))
 
             jpeg_items.extend(ffmpeg_args.get("output") or [])
 
