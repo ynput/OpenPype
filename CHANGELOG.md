@@ -1,10 +1,10 @@
 # Changelog
 
-## [3.1.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.1.0](https://github.com/pypeclub/OpenPype/tree/3.1.0) (2021-06-15)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.0.0...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.0.0...3.1.0)
 
-#### 🚀 Enhancements
+**🚀 Enhancements**
 
 - Log Viewer with OpenPype style [\#1703](https://github.com/pypeclub/OpenPype/pull/1703)
 - Scrolling in OpenPype info widget [\#1702](https://github.com/pypeclub/OpenPype/pull/1702)
@@ -21,7 +21,7 @@
 - Nuke - Publish simplification [\#1653](https://github.com/pypeclub/OpenPype/pull/1653)
 - \#1333 - added tooltip hints to Pyblish buttons [\#1649](https://github.com/pypeclub/OpenPype/pull/1649)
 
-#### 🐛 Bug fixes
+**🐛 Bug fixes**
 
 - Nuke: broken publishing rendered frames [\#1707](https://github.com/pypeclub/OpenPype/pull/1707)
 - Standalone publisher Thumbnail export args [\#1705](https://github.com/pypeclub/OpenPype/pull/1705)
@@ -33,9 +33,7 @@
 - Fix missing dbm python module [\#1652](https://github.com/pypeclub/OpenPype/pull/1652)
 - Transparent branches in view on Mac [\#1648](https://github.com/pypeclub/OpenPype/pull/1648)
 - Add asset on task item [\#1646](https://github.com/pypeclub/OpenPype/pull/1646)
-- Project manager save and queue [\#1645](https://github.com/pypeclub/OpenPype/pull/1645)
 - New project anatomy values [\#1644](https://github.com/pypeclub/OpenPype/pull/1644)
-- Farm publishing: check if published items do exist [\#1573](https://github.com/pypeclub/OpenPype/pull/1573)
 
 **Merged pull requests:**
 
