@@ -80,7 +80,7 @@ class AlphaSlider(QtWidgets.QSlider):
 
         painter.fillRect(event.rect(), QtCore.Qt.transparent)
 
-        painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+        painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
         rect = self.style().subControlRect(
             QtWidgets.QStyle.CC_Slider,
             opt,
@@ -135,19 +135,8 @@ class AlphaSlider(QtWidgets.QSlider):
 
         painter.save()
 
-        gradient = QtGui.QRadialGradient()
-        radius = handle_rect.height() / 2
-        center_x = handle_rect.width() / 2 + handle_rect.x()
-        center_y = handle_rect.height()
-        gradient.setCenter(center_x, center_y)
-        gradient.setCenterRadius(radius)
-        gradient.setFocalPoint(center_x, center_y)
-
-        gradient.setColorAt(0.9, QtGui.QColor(127, 127, 127))
-        gradient.setColorAt(1, QtCore.Qt.transparent)
-
         painter.setPen(QtCore.Qt.NoPen)
-        painter.setBrush(gradient)
+        painter.setBrush(QtGui.QColor(127, 127, 127))
         painter.drawEllipse(handle_rect)
 
         painter.restore()
