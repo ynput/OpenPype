@@ -40,8 +40,7 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
         anatomy_data = instance.context.data["anatomyData"]
         task_name = instance.data("task",
                                   instance.context.data["task"])
-        host_name = anatomy_data.get("app",
-                                     os.environ["AVALON_APP"])
+        host_name = os.environ["AVALON_APP"]
         family = instance.data["family"]
 
         filtering_criteria = {
