@@ -4,35 +4,6 @@ from Qt import QtWidgets, QtCore, QtGui
 from .color_view import draw_checkerboard_tile
 
 
-slide_style = """
-QSlider::groove:horizontal {
-    background: qlineargradient(
-        x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #000, stop: 1 #fff
-    );
-    height: 8px;
-    border-radius: 4px;
-}
-
-QSlider::handle:horizontal {
-    background: qlineargradient(
-        x1:0, y1:0, x2:1, y2:1, stop:0 #ddd, stop:1 #bbb
-    );
-    border: 1px solid #777;
-    width: 8px;
-    margin-top: -1px;
-    margin-bottom: -1px;
-    border-radius: 4px;
-}
-
-QSlider::handle:horizontal:hover {
-    background: qlineargradient(
-        x1:0, y1:0, x2:1, y2:1, stop:0 #eee, stop:1 #ddd
-    );
-    border: 1px solid #444;ff
-    border-radius: 4px;
-}"""
-
-
 class AlphaSlider(QtWidgets.QSlider):
     def __init__(self, *args, **kwargs):
         super(AlphaSlider, self).__init__(*args, **kwargs)
