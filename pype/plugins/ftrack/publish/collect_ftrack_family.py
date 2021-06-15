@@ -24,7 +24,7 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.4999
 
     profiles = {
-        "hosts": [],
+        "hosts": ["standalonepublisher"],
         "families": [],
         "task_names": [],
         "add_to_ftrack": True
