@@ -140,11 +140,11 @@ def _parse_launcher_locations(install_json_path: str) -> dict:
         with open(install_json_path, "r") as ilf:
             try:
                 install_data = json.load(ilf)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as exp:
                 raise Exception(
                     "Invalid `LauncherInstalled.dat file. `"
                     "Cannot determine Unreal Engine location."
-                )
+                ) from exp
 
         for installation in install_data.get("InstallationList", []):
             if installation.get("AppName").startswith("UE_"):
@@ -188,10 +188,43 @@ def create_unreal_project(project_name: str,
     """
     env = env or os.environ
     preset = config.get_presets()["unreal"]["project_setup"]
+    ue_id = ".".join(ue_version.split(".")[:2])
+    # get unreal engine identifier
+    # -------------------------------------------------------------------------
+    # FIXME (antirotor): As of 4.26 this is problem with UE4 built from
+    # sources. In that case Engine ID is calculated per machine/user and not
+    # from Engine files as this code then reads. This then prevents UE4
+    # to directly open project as it will complain about project being
+    # created in different UE4 version. When user convert such project
+    # to his UE4 version, Engine ID is replaced in uproject file. If some
+    # other user tries to open it, it will present him with similar error.
+    if platform.system().lower() == "windows":
+        ue4_modules = os.path.join(engine_path, "Engine", "Binaries",
+                                   "Win64", "UE4Editor.modules")
+
+    if platform.system().lower() == "linux":
+        ue4_modules = os.path.join(engine_path, "Engine", "Binaries",
+                                   "Linux", "UE4Editor.modules")
+
+    if platform.system().lower() == "darwin":
+        ue4_modules = os.path.join(engine_path, "Engine", "Binaries",
+                                   "Mac", "UE4Editor.modules")
+
+    if os.path.exists(ue4_modules):
+        print("--- Loading Engine ID from modules file ...")
+        with open(ue4_modules, "r") as mp:
+            loaded_modules = json.load(mp)
+
+        if loaded_modules.get("BuildId"):
+            ue_id = "{" + loaded_modules.get("BuildId") + "}"
 
     if os.path.isdir(env.get("AVALON_UNREAL_PLUGIN", "")):
         # copy plugin to correct path under project
         plugins_path = os.path.join(pr_dir, "Plugins")
+        content_path = os.path.join(pr_dir, "Content")
+        if not os.path.isdir(content_path):
+            os.makedirs(content_path, exist_ok=True)
+
         avalon_plugin_path = os.path.join(plugins_path, "Avalon")
         if not os.path.isdir(avalon_plugin_path):
             os.makedirs(avalon_plugin_path, exist_ok=True)
@@ -206,7 +239,7 @@ def create_unreal_project(project_name: str,
     # data for project file
     data = {
         "FileVersion": 3,
-        "EngineAssociation": ue_version,
+        "EngineAssociation": ue_id,
         "Category": "",
         "Description": "",
         "Plugins": [
@@ -287,7 +320,7 @@ def create_unreal_project(project_name: str,
     # this won't work probably as pyside is no longer on pypi
     # DEPRECATED: support for python 2 in UE4 is dropped.
     if int(ue_version.split(".")[0]) == 4 and \
-            int(ue_version.split(".")[1] < 25):
+            int(ue_version.split(".")[1]) < 25:
         if platform.system().lower() == "windows":
             python_path = os.path.join(engine_path, "Engine", "Binaries",
                                        "ThirdParty", "Python", "Win64",
@@ -303,9 +336,26 @@ def create_unreal_project(project_name: str,
                                        "ThirdParty", "Python", "Mac",
                                        "bin", "python")
 
-
         subprocess.run([python_path, "-m",
                         "pip", "install", "pyside"])
+    else:
+        if platform.system().lower() == "windows":
+            python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                       "ThirdParty", "Python3", "Win64",
+                                       "python3.exe")
+
+        if platform.system().lower() == "linux":
+            python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                       "ThirdParty", "Python3", "Linux",
+                                       "bin", "python3")
+
+        if platform.system().lower() == "darwin":
+            python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                       "ThirdParty", "Python3", "Mac",
+                                       "bin", "python3")
+
+        subprocess.run([python_path, "-m",
+                        "pip", "install", "PySide2"])
 
     if dev_mode or preset["dev_mode"]:
         _prepare_cpp_project(project_file, engine_path)
