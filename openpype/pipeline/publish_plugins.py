@@ -8,6 +8,7 @@ log = Logger.get_logger(__name__)
 
 
 class OpenPypePyblishPluginMixin:
+    executable_in_thread = False
 
     @classmethod
     def get_family_attribute_defs(cls, family):
