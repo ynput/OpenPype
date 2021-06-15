@@ -6,7 +6,9 @@ Provides:
     instance     -> families ([])
 """
 import os
+
 import pyblish.api
+import avalon.api
 
 from openpype.lib.plugin_tools import filter_profiles
 
@@ -31,10 +33,11 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
             return
 
         anatomy_data = instance.context.data["anatomyData"]
-        task_name = instance.data("task",
-                                  instance.context.data["task"])
+        task_name = instance.data.get("task",
+                                      instance.context.data.get("task",
+                                          avalon.api.Session["AVALON_TASK"]))
         host_name = anatomy_data.get("app",
-                                     os.environ["AVALON_APP"])
+                                     avalon.api.Session["AVALON_APP"])
         family = instance.data["family"]
 
         filtering_criteria = {
@@ -47,7 +50,8 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
         if profile:
             families = instance.data.get("families")
             if profile["add_ftrack_family"]:
-                self.log.debug("Adding ftrack family")
+                self.log.debug("Adding ftrack family for '{}'".
+                               format(instance.data.get("family")))
 
                 if families and "ftrack" not in families:
                     instance.data["families"].append("ftrack")
@@ -57,6 +61,6 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
                 if families and "ftrack" in families:
                     self.log.debug("Explicitly removing 'ftrack'")
                     instance.data["families"].remove("ftrack")
-
-        self.log.debug("Resulting families '{}' for '{}'".format(
-            instance.data["families"], instance.data["family"]))
+        else:
+            self.log.debug("Instance '{}' doesn't match any profile".format(
+                instance.data.get("family")))
