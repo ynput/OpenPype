@@ -21,7 +21,7 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
         Triggered everywhere, checks instance against configured
     """
     label = "Collect Ftrack Family"
-    order = pyblish.api.CollectorOrder + 0.4999
+    order = pyblish.api.CollectorOrder + 0.4998
 
     hosts = ["standalonepublisher"]
 
