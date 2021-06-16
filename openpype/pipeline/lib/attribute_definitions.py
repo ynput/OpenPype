@@ -63,9 +63,10 @@ class NumberDef(AbtractAttrDef):
     """
 
     def __init__(
-        self, key, minimum=None, maximum=None, decimals=None, default=None
+        self, key, minimum=None, maximum=None, decimals=None, default=None,
+        **kwargs
     ):
-        super(NumberDef, self).__init__(key)
+        super(NumberDef, self).__init__(key, **kwargs)
 
         minimum = 0 if minimum is None else minimum
         maximum = 999999 if maximum is None else maximum
@@ -123,9 +124,10 @@ class TextDef(AbtractAttrDef):
         default(str, None): Default value. Empty string used when not defined.
     """
     def __init__(
-        self, key, multiline=None, regex=None, placeholder=None, default=None
+        self, key, multiline=None, regex=None, placeholder=None, default=None,
+        **kwargs
     ):
-        super(TextDef, self).__init__(key)
+        super(TextDef, self).__init__(key, **kwargs)
 
         if multiline is None:
             multiline = False
@@ -162,8 +164,8 @@ class EnumDef(AbtractAttrDef):
         default: Default value. Must be one key(value) from passed items.
     """
 
-    def __init__(self, key, items, default=None):
-        super(EnumDef, self).__init__(key)
+    def __init__(self, key, items, default=None, **kwargs):
+        super(EnumDef, self).__init__(key, **kwargs)
 
         if not items:
             raise ValueError((
@@ -193,8 +195,8 @@ class BoolDef(AbtractAttrDef):
         default(bool): Default value. Set to `False` if not defined.
     """
 
-    def __init__(self, key, default=None):
-        super(BoolDef, self).__init__(key)
+    def __init__(self, key, default=None, **kwargs):
+        super(BoolDef, self).__init__(key, **kwargs)
 
         if default is None:
             default = False
