@@ -4,7 +4,21 @@ from abc import ABCMeta, abstractmethod
 import six
 
 
-@six.add_metaclass(ABCMeta)
+class AbstractAttrDefMeta(ABCMeta):
+    """Meta class to validate existence of 'key' attribute.
+
+    Each object of `AbtractAttrDef` mus have defined 'key' attribute.
+    """
+    def __call__(self, *args, **kwargs):
+        obj = super(AbstractAttrDefMeta, self).__call__(*args, **kwargs)
+        if not hasattr(obj, "key"):
+            raise TypeError("<{}> must have defined 'key' attribute.".format(
+                obj.__class__.__name__
+            ))
+        return obj
+
+
+@six.add_metaclass(AbstractAttrDefMeta)
 class AbtractAttrDef:
     """Abstraction of attribute definiton.
 
