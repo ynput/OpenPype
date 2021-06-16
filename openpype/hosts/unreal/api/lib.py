@@ -182,6 +182,36 @@ def create_unreal_project(project_name: str,
     """
     env = env or os.environ
     preset = get_project_settings(project_name)["unreal"]["project_setup"]
+    ue_id = ".".join(ue_version.split(".")[:2])
+    # get unreal engine identifier
+    # -------------------------------------------------------------------------
+    # FIXME (antirotor): As of 4.26 this is problem with UE4 built from
+    # sources. In that case Engine ID is calculated per machine/user and not
+    # from Engine files as this code then reads. This then prevents UE4
+    # to directly open project as it will complain about project being
+    # created in different UE4 version. When user convert such project
+    # to his UE4 version, Engine ID is replaced in uproject file. If some
+    # other user tries to open it, it will present him with similar error.
+    if platform.system().lower() == "windows":
+        ue4_modules = os.path.join(engine_path, "Engine", "Binaries",
+                                   "Win64", "UE4Editor.modules")
+
+    if platform.system().lower() == "linux":
+        ue4_modules = os.path.join(engine_path, "Engine", "Binaries",
+                                   "Linux", "UE4Editor.modules")
+
+    if platform.system().lower() == "darwin":
+        ue4_modules = os.path.join(engine_path, "Engine", "Binaries",
+                                   "Mac", "UE4Editor.modules")
+
+    if os.path.exists(ue4_modules):
+        print("--- Loading Engine ID from modules file ...")
+        with open(ue4_modules, "r") as mp:
+            loaded_modules = json.load(mp)
+
+        if loaded_modules.get("BuildId"):
+            ue_id = "{" + loaded_modules.get("BuildId") + "}"
+
     plugins_path = None
     uep_path = None
 
@@ -202,7 +232,7 @@ def create_unreal_project(project_name: str,
     # data for project file
     data = {
         "FileVersion": 3,
-        "EngineAssociation": ue_version,
+        "EngineAssociation": ue_id,
         "Category": "",
         "Description": "",
         "Plugins": [
@@ -303,6 +333,28 @@ def create_unreal_project(project_name: str,
         if python_path:
             subprocess.run([python_path, "-m",
                             "pip", "install", "pyside"])
+        else:
+            raise NotImplementedError("Unsupported platform")
+    else:
+        # install PySide2 inside newer engines
+        if platform.system().lower() == "windows":
+            python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                       "ThirdParty", "Python3", "Win64",
+                                       "python3.exe")
+
+        if platform.system().lower() == "linux":
+            python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                       "ThirdParty", "Python3", "Linux",
+                                       "bin", "python3")
+
+        if platform.system().lower() == "darwin":
+            python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                       "ThirdParty", "Python3", "Mac",
+                                       "bin", "python3")
+
+        if python_path:
+            subprocess.run([python_path, "-m",
+                            "pip", "install", "pyside2"])
         else:
             raise NotImplementedError("Unsupported platform")
 
