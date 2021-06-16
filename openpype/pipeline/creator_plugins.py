@@ -13,6 +13,11 @@ class InstanceData(collections.OrderedDict):
     Shouldn't have each instance identifier?
     - use current "id" value as "type" and use "id" for identifier
     - current "id" value make sence only in few hosts
+    - there must be mapping of avalon <> pyblish instance to be able handle
+        logs and errors
+        - what if avalon <> pyblish mapping is not set?
+        - where to show error? on which instance?
+        - should publisher crash if there is new instance that does not have matching to avalon instance?
     Handle changes of instance data here?
     - trigger callbacks on value change to update instance data in host
     Should have reference to workfile?
