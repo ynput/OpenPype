@@ -232,6 +232,16 @@
                     ],
                     "tasks": [],
                     "template": "{family}{Task}_{Render_layer}_{Render_pass}"
+                },
+                {
+                    "families": [
+                        "review"
+                    ],
+                    "hosts": [
+                        "tvpaint"
+                    ],
+                    "tasks": [],
+                    "template": "{family}{Task}"
                 }
             ]
         },
