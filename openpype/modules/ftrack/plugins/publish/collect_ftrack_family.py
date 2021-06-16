@@ -5,8 +5,6 @@ Requires:
 Provides:
     instance     -> families ([])
 """
-import os
-
 import pyblish.api
 import avalon.api
 
@@ -20,10 +18,14 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
         Uses selection by combination of hosts/families/tasks names via
         profiles resolution.
 
-        Triggered everywhere, checks instance against configured
+        Triggered everywhere, checks instance against configured.
+
+        Checks advanced filtering which works on 'families' not on main
+        'family', as some variants dynamically resolves addition of ftrack
+        based on 'families' (editorial drives it by presence of 'review')
     """
     label = "Collect Ftrack Family"
-    order = pyblish.api.CollectorOrder + 0.4999
+    order = pyblish.api.CollectorOrder + 0.4998
 
     profiles = None
 
@@ -34,8 +36,7 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
 
         anatomy_data = instance.context.data["anatomyData"]
         task_name = instance.data.get("task",
-                                      instance.context.data.get("task",
-                                          avalon.api.Session["AVALON_TASK"]))
+                                      avalon.api.Session["AVALON_TASK"])
         host_name = anatomy_data.get("app",
                                      avalon.api.Session["AVALON_APP"])
         family = instance.data["family"]
@@ -49,7 +50,17 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
 
         if profile:
             families = instance.data.get("families")
-            if profile["add_ftrack_family"]:
+            add_ftrack_family = profile["add_ftrack_family"]
+
+            additional_filters = profile.get("additional_filters")
+            if additional_filters:
+                add_ftrack_family = self._get_add_ftrack_f_from_addit_filters(
+                    additional_filters,
+                    families,
+                    add_ftrack_family
+                )
+
+            if add_ftrack_family:
                 self.log.debug("Adding ftrack family for '{}'".
                                format(instance.data.get("family")))
 
@@ -57,10 +68,41 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
                     instance.data["families"].append("ftrack")
                 else:
                     instance.data["families"] = ["ftrack"]
-            else:
-                if families and "ftrack" in families:
-                    self.log.debug("Explicitly removing 'ftrack'")
-                    instance.data["families"].remove("ftrack")
         else:
             self.log.debug("Instance '{}' doesn't match any profile".format(
                 instance.data.get("family")))
+
+    def _get_add_ftrack_f_from_addit_filters(self,
+                                             additional_filters,
+                                             families,
+                                             add_ftrack_family):
+        """
+            Compares additional filters - working on instance's families.
+
+            Triggered for more detailed filtering when main family matches,
+            but content of 'families' actually matter.
+            (For example 'review' in 'families' should result in adding to
+            Ftrack)
+
+            Args:
+                additional_filters (dict) - from Setting
+                families (list) - subfamilies
+                add_ftrack_family (bool) - add ftrack to families if True
+        """
+        override_filter = None
+        override_filter_value = -1
+        for additional_filter in additional_filters:
+            filter_families = set(additional_filter["families"])
+            valid = filter_families <= families  # issubset
+            if not valid:
+                continue
+
+            value = len(filter_families)
+            if value > override_filter_value:
+                override_filter = additional_filter
+                override_filter_value = value
+
+        if override_filter:
+            add_ftrack_family = override_filter["add_ftrack_family"]
+
+        return add_ftrack_family
