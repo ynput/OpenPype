@@ -154,7 +154,7 @@
         "ExtractThumbnailSP": {
             "ffmpeg_args": {
                 "input": [
-                    "-gamma 2.2"
+                    "-apply_trc gamma22"
                 ],
                 "output": []
             }

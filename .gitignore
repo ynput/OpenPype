@@ -98,3 +98,4 @@ website/.docusaurus
 ########
 
 .poetry/
+.python-version
