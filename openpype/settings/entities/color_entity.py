@@ -12,6 +12,17 @@ class ColorEntity(InputEntity):
     def _item_initalization(self):
         self.valid_value_types = (list, )
         self.value_on_not_set = [0, 0, 0, 255]
+        self.use_alpha = self.schema_data.get("use_alpha", True)
+
+    def set_override_state(self, *args, **kwargs):
+        super(ColorEntity, self).set_override_state(*args, **kwargs)
+        value = self._current_value
+        if (
+            not self.use_alpha
+            and isinstance(value, list)
+            and len(value) == 4
+        ):
+            value[3] = 255
 
     def convert_to_valid_type(self, value):
         """Conversion to valid type.
@@ -51,4 +62,8 @@ class ColorEntity(InputEntity):
                 ).format(value)
                 raise BaseInvalidValueType(reason, self.path)
             new_value.append(item)
+
+        # Make sure
+        if not self.use_alpha:
+            new_value[3] = 255
         return new_value

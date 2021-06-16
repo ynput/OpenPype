@@ -17,18 +17,11 @@ from .color_inputs import (
 class ColorPickerWidget(QtWidgets.QWidget):
     color_changed = QtCore.Signal(QtGui.QColor)
 
-    def __init__(self, color=None, parent=None):
+    def __init__(self, color=None, use_alpha=True, parent=None):
         super(ColorPickerWidget, self).__init__(parent)
 
         # Color triangle
         color_triangle = QtColorTriangle(self)
-
-        alpha_slider_proxy = QtWidgets.QWidget(self)
-        alpha_slider = AlphaSlider(QtCore.Qt.Horizontal, alpha_slider_proxy)
-
-        alpha_slider_layout = QtWidgets.QHBoxLayout(alpha_slider_proxy)
-        alpha_slider_layout.setContentsMargins(5, 5, 5, 5)
-        alpha_slider_layout.addWidget(alpha_slider, 1)
 
         # Eye picked widget
         pick_widget = PickScreenColorWidget()
@@ -47,8 +40,6 @@ class ColorPickerWidget(QtWidgets.QWidget):
         color_view = ColorViewer(self)
         color_view.setMaximumHeight(50)
 
-        alpha_inputs = AlphaInputs(self)
-
         color_inputs_color = QtGui.QColor()
         col_inputs_by_label = [
             ("HEX", HEXInputs(color_inputs_color, self)),
@@ -58,12 +49,16 @@ class ColorPickerWidget(QtWidgets.QWidget):
         ]
 
         layout = QtWidgets.QGridLayout(self)
+
         empty_col = 1
         label_col = empty_col + 1
         input_col = label_col + 1
         empty_widget = QtWidgets.QWidget(self)
         empty_widget.setFixedWidth(10)
         layout.addWidget(empty_widget, 0, empty_col)
+
+        layout.setColumnStretch(0, 1)
+        layout.setColumnStretch(input_col, 1)
 
         row = 0
         layout.addWidget(btn_pick_color, row, label_col)
@@ -84,20 +79,41 @@ class ColorPickerWidget(QtWidgets.QWidget):
         layout.setRowStretch(row, 1)
         row += 1
 
-        layout.addWidget(alpha_slider_proxy, row, 0)
+        alpha_label = None
+        alpha_slider_proxy = None
+        alpha_slider = None
+        alpha_inputs = None
+        if not use_alpha:
+            color.setAlpha(255)
+        else:
+            alpha_inputs = AlphaInputs(self)
+            alpha_label = QtWidgets.QLabel("Alpha", self)
+            alpha_slider_proxy = QtWidgets.QWidget(self)
+            alpha_slider = AlphaSlider(
+                QtCore.Qt.Horizontal, alpha_slider_proxy
+            )
 
-        layout.addWidget(QtWidgets.QLabel("Alpha", self), row, label_col)
-        layout.addWidget(alpha_inputs, row, input_col)
-        row += 1
+            alpha_slider_layout = QtWidgets.QHBoxLayout(alpha_slider_proxy)
+            alpha_slider_layout.setContentsMargins(5, 5, 5, 5)
+            alpha_slider_layout.addWidget(alpha_slider, 1)
+
+            layout.addWidget(alpha_slider_proxy, row, 0)
+
+            layout.addWidget(alpha_label, row, label_col)
+            layout.addWidget(alpha_inputs, row, input_col)
+
+            row += 1
+
         layout.setRowStretch(row, 1)
 
         color_view.set_color(color_triangle.cur_color)
 
         color_triangle.color_changed.connect(self.triangle_color_changed)
-        alpha_slider.valueChanged.connect(self._on_alpha_slider_change)
         pick_widget.color_selected.connect(self.on_color_change)
-        alpha_inputs.alpha_changed.connect(self._on_alpha_inputs_changed)
         btn_pick_color.released.connect(self.pick_color)
+        if alpha_slider:
+            alpha_slider.valueChanged.connect(self._on_alpha_slider_change)
+            alpha_inputs.alpha_changed.connect(self._on_alpha_inputs_changed)
 
         self.color_input_fields = color_input_fields
         self.color_inputs_color = color_inputs_color
@@ -131,7 +147,8 @@ class ColorPickerWidget(QtWidgets.QWidget):
         return self.color_view.color()
 
     def set_color(self, color):
-        self.alpha_inputs.set_alpha(color.alpha())
+        if self.alpha_inputs:
+            self.alpha_inputs.set_alpha(color.alpha())
         self.on_color_change(color)
 
     def pick_color(self):
@@ -163,10 +180,10 @@ class ColorPickerWidget(QtWidgets.QWidget):
 
     def alpha_changed(self, value):
         self.color_view.set_alpha(value)
-        if self.alpha_slider.value() != value:
+        if self.alpha_slider and self.alpha_slider.value() != value:
             self.alpha_slider.setValue(value)
 
-        if self.alpha_inputs.alpha_value != value:
+        if self.alpha_inputs and self.alpha_inputs.alpha_value != value:
             self.alpha_inputs.set_alpha(value)
 
     def _on_alpha_inputs_changed(self, value):

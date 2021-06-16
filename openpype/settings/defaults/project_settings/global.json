@@ -56,6 +56,12 @@
                                 ]
                             },
                             "overscan_crop": "",
+                            "overscan_color": [
+                                0,
+                                0,
+                                0,
+                                255
+                            ],
                             "width": 0,
                             "height": 0,
                             "bg_color": [

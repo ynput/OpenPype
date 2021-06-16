@@ -112,6 +112,10 @@ Profile may generate multiple outputs from a single input. Each output must defi
     | "-10% -200px" | 1800px 800px  |
     | "-10% -0px" | 1800px 1000px  |
 
+- **`Overscan color`**
+    - Color of empty area caused by different aspect ratio of input and output.
+    - By default is set to black color.
+
 - **`Letter Box`**
     - **Enabled** - Enable letter boxes
     - **Ratio** - Ratio of letter boxes
@@ -123,6 +127,14 @@ Profile may generate multiple outputs from a single input. Each output must defi
 
     ![global_extract_review_letter_box_settings](assets/global_extract_review_letter_box_settings.png)
     ![global_extract_review_letter_box](assets/global_extract_review_letter_box.png)
+
+- **`Background color`**
+    - Background color can be used for inputs with possible transparency (e.g. png sequence).
+    - Input's without possible alpha channel are ignored all the time (e.g. mov).
+    - Background color slows down rendering process.
+        - set alpha to `0` to not use this option at all (in most of cases background stays black)
+        - other than `0` alpha will draw color as background
+
 
 ### IntegrateAssetNew
 
