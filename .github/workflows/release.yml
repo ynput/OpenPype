@@ -105,7 +105,7 @@ jobs:
         excludeTagsRegex: "CI/.+"
         releaseBranch: "main"
         stripHeaders: true
-        base: ''
+        base: 'none'
 
 
     - name: 🚀 Github Release
