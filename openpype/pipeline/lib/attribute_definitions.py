@@ -11,9 +11,10 @@ class AbstractAttrDefMeta(ABCMeta):
     """
     def __call__(self, *args, **kwargs):
         obj = super(AbstractAttrDefMeta, self).__call__(*args, **kwargs)
-        if not hasattr(obj, "key"):
-            raise TypeError("<{}> must have defined 'key' attribute.".format(
-                obj.__class__.__name__
+        init_class = getattr(obj, "__init__class__", None)
+        if init_class is not AbtractAttrDef:
+            raise TypeError("{} super was not called in __init__.".format(
+                type(obj)
             ))
         return obj
 
@@ -34,10 +35,17 @@ class AbtractAttrDef:
 
     Args:
         key(str): Under which key will be attribute value stored.
+        label(str): Attribute label.
+        tooltip(str): Attribute tooltip.
     """
 
-    def __init__(self, key):
+    def __init__(self, key, label=None, tooltip=None):
         self.key = key
+        self.label = label
+        self.tooltip = tooltip
+
+        self.__init__class__ = AbtractAttrDef
+
 
     @abstractmethod
     def convert_value(self, value):
