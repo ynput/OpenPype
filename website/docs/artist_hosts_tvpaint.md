@@ -45,7 +45,7 @@ In TVPaint you can find the Tools in OpenPype menu extension. The OpenPype Tools
 
 
 ## Create 
-In TVPaint you can create and publish **[Reviews](#review)**, **[Render Passes](#render-pass)**, and **[Render Layers](#render-layer)**. 
+In TVPaint you can create and publish **[Reviews](#review)**, **[Workfile](#workfile)**, **[Render Passes](#render-pass)** and **[Render Layers](#render-layer)**.
 
 You have the possibility to organize your layers by using `Color group`.  
 
@@ -67,26 +67,13 @@ OpenPype specifically never tries to guess what you want to publish from the sce
 
 When you want to publish `review` or `render layer` or `render pass`, open the `Creator` through the Tools menu `Create` button.
 
-### Review 
+### Review
+`Review` renders the whole file as is and sends the resulting QuickTime to Ftrack.
+- Is automatically created during publishing.
 
-<div class="row markdown">
-<div class="col col--6 markdown">
-
-`Review` renders the whole file as is and sends the resulting QuickTime to Ftrack. 
-
-To create reviewable quicktime of your animation:
-
-- select `Review` in the `Creator`
-- press `Create`
-- When you run [publish](#publish), file will be rendered and converted to quicktime.`
-
-</div>
-<div class="col col--6 markdown">
-
-![createreview](assets/tvp_create_review.png)
-
-</div>
-</div>
+### Workfile
+`Workfile` stores the source workfile as is during publishing (e.g. for backup).
+- Is automatically created during publishing.
 
 ### Render Layer
 
