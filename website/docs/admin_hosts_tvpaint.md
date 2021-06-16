@@ -26,5 +26,5 @@ It is recommended to use same subset name template for both **renderLayer** and 
 - Example template: `"{family}{Task}_{Render_layer}_{Render_pass}"`
 :::
 
-### [Review](artist_hosts_tvpaint#review) and Workfile
+### [Review](artist_hosts_tvpaint#review) and [Workfile](artist_hosts_tvpaint#workfile)
 Families **review** and **workfile** are not manually created but are automatically generated during publishing. That's why it is recommended to not use **variant** key in their subset name template.
