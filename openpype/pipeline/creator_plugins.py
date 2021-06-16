@@ -6,11 +6,19 @@ class InstanceData(collections.OrderedDict):
     """Instance data that will be stored to workfile.
 
     Question:
+    Make sence to have this ordered???
+    - not sure how to achieve that when data are loaded from workfile
     Add creator metadata key on initialization?
     Add plugin metadata key on initialization?
     Shouldn't have each instance identifier?
     - use current "id" value as "type" and use "id" for identifier
     - current "id" value make sence only in few hosts
+    Handle changes of instance data here?
+    - trigger callbacks on value change to update instance data in host
+    Should have reference to workfile?
+    - not to store it to metadata!!! To be able tell host if should change
+        store to currently opened workfile...
+    - instances can be loaded in one workfile but change can happen in other
 
     Args:
         family(str): Name of family that will be created.
@@ -26,8 +34,24 @@ class InstanceData(collections.OrderedDict):
         self["family"] = family
         self["subset"] = subset_name
         self["active"] = True
+        # Stored family specific attribute values
+        # {key: value}
+        self["family_attributes"] = {}
+        # Stored publish specific attribute values
+        # {<plugin name>: {key: value}}
+        self["publish_attributes"] = {}
         if data:
             self.update(data)
+
+    @staticmethod
+    def from_existing(instance_data):
+        """Convert existing instance to InstanceData."""
+        instance_data = copy.deepcopy(instance_data)
+
+        family = instance_data.pop("family", None)
+        subset_name = instance_data.pop("subset", None)
+
+        return InstanceData(family, subset_name, instance_data)
 
 
 class Creator:
