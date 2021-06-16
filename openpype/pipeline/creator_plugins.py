@@ -54,26 +54,19 @@ class InstanceData(collections.OrderedDict):
         return InstanceData(family, subset_name, instance_data)
 
 
-class Creator:
+class BaseCreator:
     """Plugin that create and modify instance data before publishing process.
 
     We should maybe find better name as creation is only one part of it's logic
     and to avoid expectations that it is the same as `avalon.api.Creator`.
 
-    Single object should be used for multiple instances instead. Do not store
-    temp data or mid-process data to `self` if it's not Plugin specific.
-
-
+    Single object should be used for multiple instances instead of single
+    instance per one creator object. Do not store temp data or mid-process data
+    to `self` if it's not Plugin specific.
     """
     # Abstract attributes
-    # Label shown in UI
-    label = None
     # Family that plugin represents
     family = None
-    # Short description of family
-    # TODO there should be detailed description for UI purposes
-    # - using Plugin method
-    description = None
 
     # GUI Purposes
     # - default_variants may not be used if `get_default_variants` is overriden
@@ -161,3 +154,23 @@ class Creator:
                 created instance.
         """
         return []
+
+
+class Creator(BaseCreator):
+    """"""
+    # Label shown in UI
+    label = None
+
+    # Short description of family
+    description = None
+
+    def get_detail_description(self):
+        """Description of family and plugin.
+
+        Can be detailed with html tags.
+
+        Returns:
+            str: Detailed description of family for artist. By default returns
+                short description.
+        """
+        return self.description
