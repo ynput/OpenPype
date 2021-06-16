@@ -8,8 +8,6 @@ class InstanceData(collections.OrderedDict):
     Question:
     Make sence to have this ordered???
     - not sure how to achieve that when data are loaded from workfile
-    Add creator metadata key on initialization?
-    Add plugin metadata key on initialization?
     Shouldn't have each instance identifier?
     - use current "id" value as "type" and use "id" for identifier
     - current "id" value make sence only in few hosts
@@ -90,9 +88,10 @@ class BaseCreator:
             implementation
         """
 
-        instance = InstanceData(
-            self.family, subset_name, instance_data
-        )
+        # instance = InstanceData(
+        #     self.family, subset_name, instance_data
+        # )
+        pass
 
     def get_default_variants(self):
         """Default variant values for UI tooltips.
