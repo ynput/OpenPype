@@ -3,6 +3,24 @@ import collections
 
 
 class InstanceData(collections.OrderedDict):
+    """Instance data that will be stored to workfile.
+
+    Question:
+    Add creator metadata key on initialization?
+    Add plugin metadata key on initialization?
+    Shouldn't have each instance identifier?
+    - use current "id" value as "type" and use "id" for identifier
+    - current "id" value make sence only in few hosts
+
+    Args:
+        family(str): Name of family that will be created.
+        subset_name(str): Name of subset that will be created.
+        data(dict): Data used for filling subset name.
+
+    I think `data` must be required argument containing all minimum information
+    about instance like "asset" and "task" and all data used for filling subset
+    name as creators may have custom data for subset name filling.
+    """
     def __init__(self, family, subset_name, data=None):
         self["id"] = "pyblish.avalon.instance"
         self["family"] = family
@@ -13,9 +31,25 @@ class InstanceData(collections.OrderedDict):
 
 
 class Creator:
+    """Plugin that create and modify instance data before publishing process.
+
+    We should maybe find better name as creation is only one part of it's logic
+    and to avoid expectations that it is the same as `avalon.api.Creator`.
+
+    Single object should be used for multiple instances instead. Do not store
+    temp data or mid-process data to `self` if it's not Plugin specific.
+
+
+    """
     # Abstract attributes
+    # Label shown in UI
     label = None
+    # Family that plugin represents
     family = None
+    # Short description of family
+    # TODO there should be detailed description for UI purposes
+    # - using Plugin method
+    description = None
 
     # GUI Purposes
     # - default_variants may not be used if `get_default_variants` is overriden
@@ -26,39 +60,80 @@ class Creator:
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
 
-    # Process of creation
-    # - must expect all data that were passed to init in previous implementation
     def create(self, subset_name, instance_data, options=None):
-        instance = PublishInstanceData(
+        """Create new instance in workfile metadata.
+
+        Replacement of `process` method from avalon implementation.
+        - must expect all data that were passed to init in previous
+            implementation
+        """
+
         instance = InstanceData(
             self.family, subset_name, instance_data
         )
 
-    # Just replacement of class attribute `defaults`
-    # - gives ability to have some "logic" other than attribute values
-    # - by default just return `default_variants` value
     def get_default_variants(self):
+        """Default variant values for UI tooltips.
+
+        Replacement of `defatults` attribute. Using method gives ability to
+        have some "logic" other than attribute values.
+
+        By default returns `default_variants` value.
+
+        Returns:
+            list<str>: Whisper variants for user input.
+        """
         return copy.deepcopy(self.default_variants)
 
-    # Added possibility of returning default variant for default variants
-    # - UI purposes
-    # - can be different than `get_default_variants` offers
-    # - first item from `get_default_variants` should be used if `None`
-    #   is returned
     def get_default_variant(self):
+        """Default variant value that will be used to prefill variant input.
+
+        This is for user input and value may not be content of result from
+        `get_default_variants`.
+
+        Can return `None`. In that case first element from
+        `get_default_variants` should be used.
+        """
+
         return None
 
-    # Subset name for current Creator plugin
-    # - creator may define it's keys for filling
     def get_subset_name(
-        self, variant, task_name, asset_id, project_name, host_name=None
+        self, variant, task_name, asset_doc, project_name, host_name=None
     ):
-        # Capitalize first letter of user input
-        if variant:
-            variant = variant[0].capitalize() + variant[1:]
+        """Return subset name for passed context.
 
-        family = self.family.rsplit(".", 1)[-1]
-        return "{}{}".format(family, variant)
+        CHANGES:
+        Argument `asset_id` was replaced with `asset_doc`. It is easier to
+        query asset before. In some cases would this method be called multiple
+        times and it would be too slow to query asset document on each
+        callback.
+
+        NOTE:
+        Asset document is not used yet but is required if would like to use
+        task type in subset templates.
+
+        Args:
+            variant(str): Subset name variant. In most of cases user input.
+            task_name(str): For which task subset is created.
+            asset_doc(dict): Asset document for which subset is created.
+            project_name(str): Project name.
+            host_name(str): Which host creates subset.
+        """
+        pass
 
     def get_attribute_defs(self):
+        """Plugin attribute definitions.
+
+        Attribute definitions of plugin that hold data about created instance
+        and values are stored to metadata for future usage and for publishing
+        purposes.
+
+        NOTE:
+        Convert method should be implemented which should care about updating
+        keys/values when plugin attributes change.
+
+        Returns:
+            list<AbtractAttrDef>: Attribute definitions that can be tweaked for
+                created instance.
+        """
         return []
