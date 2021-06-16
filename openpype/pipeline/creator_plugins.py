@@ -2,7 +2,7 @@ import copy
 import collections
 
 
-class PublishInstanceData(collections.OrderedDict):
+class InstanceData(collections.OrderedDict):
     def __init__(self, family, subset_name, data=None):
         self["id"] = "pyblish.avalon.instance"
         self["family"] = family
@@ -30,6 +30,7 @@ class Creator:
     # - must expect all data that were passed to init in previous implementation
     def create(self, subset_name, instance_data, options=None):
         instance = PublishInstanceData(
+        instance = InstanceData(
             self.family, subset_name, instance_data
         )
 
