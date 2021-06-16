@@ -13,7 +13,8 @@
             "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
         },
         "CreateWritePrerender": {
-            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}"
+            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "use_range_limit": true
         }
     },
     "publish": {

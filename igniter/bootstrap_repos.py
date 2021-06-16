@@ -972,8 +972,12 @@ class BootstrapRepos:
                         "openpype/version.py") as version_file:
                     zip_version = {}
                     exec(version_file.read(), zip_version)
-                    version_check = OpenPypeVersion(
-                        version=zip_version["__version__"])
+                    try:
+                        version_check = OpenPypeVersion(
+                            version=zip_version["__version__"])
+                    except ValueError as e:
+                        self._print(str(e), True)
+                        return False
 
                     version_main = version_check.get_main_version()  # noqa: E501
                     detected_main = detected_version.get_main_version()  # noqa: E501

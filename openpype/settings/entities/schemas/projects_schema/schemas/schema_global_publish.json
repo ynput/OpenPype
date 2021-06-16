@@ -184,6 +184,16 @@
                                         },
                                         {
                                             "type": "label",
+                                            "label": "Overscan color is used when input aspect ratio is not same as output aspect ratio."
+                                        },
+                                        {
+                                            "type": "color",
+                                            "label": "Overscan color",
+                                            "key": "overscan_color",
+                                            "use_alpha": false
+                                        },
+                                        {
+                                            "type": "label",
                                             "label": "Width and Height must be both set to higher value than 0 else source resolution is used."
                                         },
                                         {

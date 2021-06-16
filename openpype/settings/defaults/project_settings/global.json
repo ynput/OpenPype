@@ -56,6 +56,12 @@
                                 ]
                             },
                             "overscan_crop": "",
+                            "overscan_color": [
+                                0,
+                                0,
+                                0,
+                                255
+                            ],
                             "width": 0,
                             "height": 0,
                             "bg_color": [
@@ -215,6 +221,17 @@
                     "hosts": [],
                     "tasks": [],
                     "template": "{family}{Task}{Variant}"
+                },
+                {
+                    "families": [
+                        "renderLayer",
+                        "renderPass"
+                    ],
+                    "hosts": [
+                        "tvpaint"
+                    ],
+                    "tasks": [],
+                    "template": "{family}{Task}_{Render_layer}_{Render_pass}"
                 }
             ]
         },

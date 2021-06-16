@@ -986,9 +986,21 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output_width = output_def.get("width") or None
         output_height = output_def.get("height") or None
 
+        # Overscal color
+        overscan_color_value = "black"
+        overscan_color = output_def.get("overscan_color")
+        if overscan_color:
+            bg_red, bg_green, bg_blue, _ = overscan_color
+            overscan_color_value = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
+                bg_red, bg_green, bg_blue
+            )
+        self.log.debug("Overscan color: `{}`".format(overscan_color_value))
+
         # Convert overscan value video filters
         overscan_crop = output_def.get("overscan_crop")
-        overscan = OverscanCrop(input_width, input_height, overscan_crop)
+        overscan = OverscanCrop(
+            input_width, input_height, overscan_crop, overscan_color_value
+        )
         overscan_crop_filters = overscan.video_filters()
         # Add overscan filters to filters if are any and modify input
         #   resolution by it's values
@@ -1158,9 +1170,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 "scale={}x{}:flags=lanczos".format(
                     width_scale, height_scale
                 ),
-                "pad={}:{}:{}:{}:black".format(
+                "pad={}:{}:{}:{}:{}".format(
                     output_width, output_height,
-                    width_half_pad, height_half_pad
+                    width_half_pad, height_half_pad,
+                    overscan_color_value
                 ),
                 "setsar=1"
             ])
@@ -1707,12 +1720,15 @@ class OverscanCrop:
     item_regex = re.compile(r"([\+\-])?([0-9]+)(.+)?")
     relative_source_regex = re.compile(r"%([\+\-])")
 
-    def __init__(self, input_width, input_height, string_value):
+    def __init__(
+        self, input_width, input_height, string_value, overscal_color=None
+    ):
         # Make sure that is not None
         string_value = string_value or ""
 
         self.input_width = input_width
         self.input_height = input_height
+        self.overscal_color = overscal_color
 
         width, height = self._convert_string_to_values(string_value)
         self._width_value = width
@@ -1767,16 +1783,22 @@ class OverscanCrop:
 
         elif width >= self.input_width and height >= self.input_height:
             output.append(
-                "pad={}:{}:(iw-ow)/2:(ih-oh)/2".format(width, height)
+                "pad={}:{}:(iw-ow)/2:(ih-oh)/2:{}".format(
+                    width, height, self.overscal_color
+                )
             )
 
         elif width > self.input_width and height < self.input_height:
             output.append("crop=iw:{}".format(height))
-            output.append("pad={}:ih:(iw-ow)/2:(ih-oh)/2".format(width))
+            output.append("pad={}:ih:(iw-ow)/2:(ih-oh)/2:{}".format(
+                width, self.overscal_color
+            ))
 
         elif width < self.input_width and height > self.input_height:
             output.append("crop={}:ih".format(width))
-            output.append("pad=iw:{}:(iw-ow)/2:(ih-oh)/2".format(height))
+            output.append("pad=iw:{}:(iw-ow)/2:(ih-oh)/2:{}".format(
+                height, self.overscal_color
+            ))
 
         return output
 

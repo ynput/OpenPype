@@ -9,6 +9,10 @@ from Deadline.Scripting import RepositoryUtils, FileUtils
 
 
 def inject_openpype_environment(deadlinePlugin):
+    """ Pull env vars from OpenPype and push them to rendering process.
+
+        Used for correct paths, configuration from OpenPype etc.
+    """
     job = deadlinePlugin.GetJob()
     job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
@@ -71,6 +75,21 @@ def inject_openpype_environment(deadlinePlugin):
         print("inject_openpype_environment failed")
         RepositoryUtils.FailJob(job)
         raise
+
+
+def inject_render_job_id(deadlinePlugin):
+    """Inject dependency ids to publish process as env var for validation."""
+    print("inject_render_job_id start")
+    job = deadlinePlugin.GetJob()
+    job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
+
+    dependency_ids = job.JobDependencyIDs
+    print("dependency_ids {}".format(dependency_ids))
+    render_job_ids = ",".join(dependency_ids)
+
+    deadlinePlugin.SetProcessEnvironmentVariable("RENDER_JOB_IDS",
+                                                 render_job_ids)
+    print("inject_render_job_id end")
 
 
 def pype_command_line(executable, arguments, workingDirectory):
@@ -156,8 +175,7 @@ def __main__(deadlinePlugin):
                            "render and publish.")
 
     if openpype_publish_job == '1':
-        print("Publish job, skipping inject.")
-        return
+        inject_render_job_id(deadlinePlugin)
     elif openpype_render_job == '1':
         inject_openpype_environment(deadlinePlugin)
     else:

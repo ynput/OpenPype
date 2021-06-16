@@ -92,19 +92,16 @@ class HierarchyView(QtWidgets.QTreeView):
             "stretch": QtWidgets.QHeaderView.ResizeToContents
         },
         "name": {
-            "stretch": QtWidgets.QHeaderView.Stretch
+            "stretch": QtWidgets.QHeaderView.Interactive,
+            "width": 260
         },
         "type": {
             "stretch": QtWidgets.QHeaderView.Interactive,
-            "width": 100
+            "width": 140
         },
         "tools_env": {
             "stretch": QtWidgets.QHeaderView.Interactive,
-            "width": 140
-        },
-        "pixelAspect": {
-            "stretch": QtWidgets.QHeaderView.Interactive,
-            "width": 80
+            "width": 200
         }
     }
     persistent_columns = {
@@ -180,13 +177,14 @@ class HierarchyView(QtWidgets.QTreeView):
 
     def header_init(self):
         header = self.header()
-        header.setStretchLastSection(False)
 
         default_behavior = self.columns_sizes["default"]
         widths_by_idx = {}
         for idx in range(header.count()):
             key = self._source_model.columns[idx]
             behavior = self.columns_sizes.get(key, default_behavior)
+            if behavior is None:
+                continue
             logical_index = header.logicalIndex(idx)
             stretch = behavior["stretch"]
             header.setSectionResizeMode(logical_index, stretch)
