@@ -14,7 +14,16 @@ class AbtractAttrDef:
     Attribute definition should have ability to return "default" value. That
     can be based on passed data into `__init__` so is not abstracted to
     attribute.
+
+    QUESTION:
+    How to force to set `key` attribute?
+
+    Args:
+        key(str): Under which key will be attribute value stored.
     """
+
+    def __init__(self, key):
+        self.key = key
 
     @abstractmethod
     def convert_value(self, value):
@@ -40,8 +49,10 @@ class NumberDef(AbtractAttrDef):
     """
 
     def __init__(
-        self, minimum=None, maximum=None, decimals=None, default=None
+        self, key, minimum=None, maximum=None, decimals=None, default=None
     ):
+        super(NumberDef, self).__init__(key)
+
         minimum = 0 if minimum is None else minimum
         maximum = 999999 if maximum is None else maximum
         # Swap min/max when are passed in opposited order
@@ -98,8 +109,10 @@ class TextDef(AbtractAttrDef):
         default(str, None): Default value. Empty string used when not defined.
     """
     def __init__(
-        self, multiline=None, regex=None, placeholder=None, default=None
+        self, key, multiline=None, regex=None, placeholder=None, default=None
     ):
+        super(TextDef, self).__init__(key)
+
         if multiline is None:
             multiline = False
 
@@ -135,7 +148,9 @@ class EnumDef(AbtractAttrDef):
         default: Default value. Must be one key(value) from passed items.
     """
 
-    def __init__(self, items, default=None):
+    def __init__(self, key, items, default=None):
+        super(EnumDef, self).__init__(key)
+
         if not items:
             raise ValueError((
                 "Empty 'items' value. {} must have"
@@ -164,7 +179,9 @@ class BoolDef(AbtractAttrDef):
         default(bool): Default value. Set to `False` if not defined.
     """
 
-    def __init__(self, default=None):
+    def __init__(self, key, default=None):
+        super(BoolDef, self).__init__(key)
+
         if default is None:
             default = False
         self.default = default
