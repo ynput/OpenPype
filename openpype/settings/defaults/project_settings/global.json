@@ -235,7 +235,8 @@
                 },
                 {
                     "families": [
-                        "review"
+                        "review",
+                        "workfile"
                     ],
                     "hosts": [
                         "tvpaint"
