@@ -81,7 +81,7 @@ class ExtractPlayblast(pype.api.Extractor):
 
         # Isolate view is requested by having objects in the set besides a
         # camera.
-        if preset.pop("isolate_view", False) or instance.data.get("isolate"):
+        if preset.pop("isolate_view", False) and instance.data.get("isolate"):
             preset["isolate"] = instance.data["setMembers"]
 
         # Show/Hide image planes on request.
