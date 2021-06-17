@@ -91,27 +91,14 @@ class ProjectBar(QtWidgets.QWidget):
         index = self.project_combobox.findText(project_name)
         if index < 0:
             # Try refresh combobox model
-            self.project_combobox.blockSignals(True)
-            self.model.refresh()
-            self.project_combobox.blockSignals(False)
-
+            self.refresh()
             index = self.project_combobox.findText(project_name)
 
         if index >= 0:
             self.project_combobox.setCurrentIndex(index)
 
     def refresh(self):
-        prev_project_name = self.get_current_project()
-
-        # Refresh without signals
-        self.project_combobox.blockSignals(True)
-
         self.model.refresh()
-        self.set_project(prev_project_name)
-
-        self.project_combobox.blockSignals(False)
-
-        self.project_changed.emit(self.project_combobox.currentIndex())
 
 
 class ActionBar(QtWidgets.QWidget):
