@@ -108,7 +108,6 @@ class ProjectsPanel(QtWidgets.QWidget):
         flick.activateOn(view)
         model = ProjectModel(self.dbcon)
         model.hide_invisible = True
-        model.refresh()
         view.setModel(model)
 
         layout.addWidget(view)
@@ -434,7 +433,6 @@ class LauncherWindow(QtWidgets.QDialog):
     def on_back_clicked(self):
         self.dbcon.Session["AVALON_PROJECT"] = None
         self.set_page(0)
-        self.project_panel.model.refresh()    # Refresh projects
         self.discover_actions()
 
     def on_action_clicked(self, action):
