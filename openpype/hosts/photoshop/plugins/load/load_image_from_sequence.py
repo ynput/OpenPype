@@ -1,13 +1,15 @@
 import os
+
+from avalon import api
 from avalon import photoshop
 from avalon.vendor import qargparse
 
-from openpype.hosts.photoshop.plugins.load.load_image import ImageLoader
+from openpype.hosts.photoshop.plugins.lib import get_unique_layer_name
 
 stub = photoshop.stub()
 
 
-class ImageFromSequenceLoader(ImageLoader):
+class ImageFromSequenceLoader(api.Loader):
     """ Load specifing image from sequence
 
         Used only as quick load of reference file from a sequence.
@@ -36,8 +38,11 @@ class ImageFromSequenceLoader(ImageLoader):
             if not os.path.exists(self.fname):
                 return
 
-        layer_name = self._get_unique_layer_name(context["asset"]["name"],
-                                                 name)
+        stub = photoshop.stub()
+        layer_name = get_unique_layer_name(stub.get_layers(),
+                                           context["asset"]["name"],
+                                           name)
+
         with photoshop.maintained_selection():
             layer = stub.import_smart_object(self.fname, layer_name)
 
@@ -59,7 +64,7 @@ class ImageFromSequenceLoader(ImageLoader):
         """
         files = []
         for context in repre_contexts:
-            fname = ImageLoader.filepath_from_context(context)
+            fname = ImageFromSequenceLoader.filepath_from_context(context)
             _, file_extension = os.path.splitext(fname)
 
             for file_name in os.listdir(os.path.dirname(fname)):
