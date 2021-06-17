@@ -91,6 +91,8 @@ class ProjectsPanel(QtWidgets.QWidget):
     """Projects Page"""
 
     project_clicked = QtCore.Signal(str)
+    # Refresh projects each 10000 msecs
+    refresh_interval = 10000
 
     def __init__(self, dbcon, parent=None):
         super(ProjectsPanel, self).__init__(parent=parent)
@@ -111,15 +113,35 @@ class ProjectsPanel(QtWidgets.QWidget):
 
         layout.addWidget(view)
 
+        refresh_timer = QtCore.QTimer()
+        refresh_timer.setInterval(self.refresh_interval)
+
+        refresh_timer.timeout.connect(self._on_refresh_timeout)
         view.clicked.connect(self.on_clicked)
 
         self.model = model
         self.view = view
+        self.refresh_timer = refresh_timer
 
     def on_clicked(self, index):
         if index.isValid():
             project_name = index.data(QtCore.Qt.DisplayRole)
             self.project_clicked.emit(project_name)
+
+    def showEvent(self, event):
+        self.model.refresh()
+        if not self.refresh_timer.isActive():
+            self.refresh_timer.start()
+        super(ProjectsPanel, self).showEvent(event)
+
+    def _on_refresh_timeout(self):
+        if not self.isVisible():
+            # Stop timer if widget is not visible
+            self.refresh_timer.stop()
+
+        elif self.isActiveWindow():
+            # Refresh projects if window is active
+            self.model.refresh()
 
 
 class AssetsPanel(QtWidgets.QWidget):

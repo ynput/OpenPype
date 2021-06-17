@@ -22,6 +22,9 @@ from .constants import (
 class ProjectBar(QtWidgets.QWidget):
     project_changed = QtCore.Signal(int)
 
+    # Project list will be refreshed each 10000 msecs
+    refresh_interval = 10000
+
     def __init__(self, dbcon, parent=None):
         super(ProjectBar, self).__init__(parent)
 
@@ -47,20 +50,39 @@ class ProjectBar(QtWidgets.QWidget):
             QtWidgets.QSizePolicy.Maximum
         )
 
+        refresh_timer = QtCore.QTimer()
+        refresh_timer.setInterval(self.refresh_interval)
+
         self.model = model
         self.project_delegate = project_delegate
         self.project_combobox = project_combobox
+        self.refresh_timer = refresh_timer
 
         # Initialize
         self.refresh()
 
         # Signals
+        refresh_timer.timeout.connect(self._on_refresh_timeout)
         self.project_combobox.currentIndexChanged.connect(self.project_changed)
 
         # Set current project by default if it's set.
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
             self.set_project(project_name)
+
+    def showEvent(self, event):
+        if not self.refresh_timer.isActive():
+            self.refresh_timer.start()
+        super(ProjectBar, self).showEvent(event)
+
+    def _on_refresh_timeout(self):
+        if not self.isVisible():
+            # Stop timer if widget is not visible
+            self.refresh_timer.stop()
+
+        elif self.isActiveWindow():
+            # Refresh projects if window is active
+            self.model.refresh()
 
     def get_current_project(self):
         return self.project_combobox.currentText()
