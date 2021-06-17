@@ -9,11 +9,12 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
     label = "Collect Batch Instances"
     order = pyblish.api.CollectorOrder + 0.489
     hosts = ["standalonepublisher"]
-    families = ["background_batch"]
+    families = ["background_batch", "textures_multi"]
 
     # presets
     default_subset_task = {
-        "background_batch": "background"
+        "background_batch": "background",
+        "textures_multi": "Texture"
     }
     subsets = {
         "background_batch": {
@@ -29,6 +30,12 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
                 "task": "background",
                 "family": "workfile"
             }
+        },
+        "textures_multi": {
+            "textures{}": {
+                "family": "textures",
+                "families": ["original_name"]
+            }
         }
     }
     unchecked_by_default = []
@@ -37,9 +44,13 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
         context = instance.context
         asset_name = instance.data["asset"]
         family = instance.data["family"]
+        subset = instance.data["subset"]
+        _subset_name = subset.replace(family, "")
+        task = instance.data.get("task")
 
-        default_task_name = self.default_subset_task.get(family)
+        default_task_name = task or self.default_subset_task.get(family)
         for subset_name, subset_data in self.subsets[family].items():
+            subset_name = subset_name.format(_subset_name)
             instance_name = f"{asset_name}_{subset_name}"
             task_name = subset_data.get("task") or default_task_name
 
