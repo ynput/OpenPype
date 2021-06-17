@@ -4,7 +4,8 @@ import os
 
 from openpype.lib import (
     PreLaunchHook,
-    ApplicationLaunchFailed
+    ApplicationLaunchFailed,
+    ApplicationNotFound
 )
 from openpype.hosts.unreal.api import lib as unreal_lib
 
@@ -62,6 +63,8 @@ class UnrealPrelaunchHook(PreLaunchHook):
             f"{self.signature} detected UE4 versions: "
             f"[ {detected_str} ]"
         ))
+        if not detected:
+            raise ApplicationNotFound("No Unreal Engines are found.")
 
         engine_version = ".".join(engine_version.split(".")[:2])
         if engine_version not in detected.keys():
