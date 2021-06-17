@@ -58,9 +58,6 @@ class ProjectBar(QtWidgets.QWidget):
         self.project_combobox = project_combobox
         self.refresh_timer = refresh_timer
 
-        # Initialize
-        self.refresh()
-
         # Signals
         refresh_timer.timeout.connect(self._on_refresh_timeout)
         self.project_combobox.currentIndexChanged.connect(self.project_changed)
