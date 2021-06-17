@@ -54,9 +54,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             families_ak = avalon_knob_data.get("families", [])
             families = list()
 
-            if families_ak:
-                families.append(families_ak)
-
             # except disabled nodes but exclude backdrops in test
             if ("nukenodes" not in family) and (node["disable"].value()):
                 continue
@@ -71,22 +68,23 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             # Add all nodes in group instances.
             if node.Class() == "Group":
                 # only alter families for render family
-                if "write" in families_ak:
+                if "write" in families_ak.lower():
                     target = node["render"].value()
                     if target == "Use existing frames":
                         # Local rendering
                         self.log.info("flagged for no render")
+                        families.append(family)
                     elif target == "Local":
                         # Local rendering
                         self.log.info("flagged for local render")
                         families.append("{}.local".format(family))
-                        family = "write"
                     elif target == "On farm":
                         # Farm rendering
                         self.log.info("flagged for farm render")
                         instance.data["transfer"] = False
                         families.append("{}.farm".format(family))
-                        family = "write"
+
+                    family = families_ak.lower()
 
                 node.begin()
                 for i in nuke.allNodes():

@@ -146,24 +146,34 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputDir": output_dir,
             "ext": ext,
             "label": label,
-            "handleStart": handle_start,
-            "handleEnd": handle_end,
-            "frameStart": first_frame + handle_start,
-            "frameEnd": last_frame - handle_end,
-            "frameStartHandle": first_frame,
-            "frameEndHandle": last_frame,
             "outputType": output_type,
             "colorspace": colorspace,
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority
         })
 
-        if "prerender" in families:
+        if self.is_prerender(_families_test):
             instance.data.update({
-                "family": "prerender",
-                "families": []
+                "handleStart": 0,
+                "handleEnd": 0,
+                "frameStart": first_frame,
+                "frameEnd": last_frame,
+                "frameStartHandle": first_frame,
+                "frameEndHandle": last_frame,
+            })
+        else:
+            instance.data.update({
+                "handleStart": handle_start,
+                "handleEnd": handle_end,
+                "frameStart": first_frame + handle_start,
+                "frameEnd": last_frame - handle_end,
+                "frameStartHandle": first_frame,
+                "frameEndHandle": last_frame,
             })
 
         self.log.debug("families: {}".format(families))
 
         self.log.debug("instance.data: {}".format(instance.data))
+
+    def is_prerender(self, families):
+        return next((f for f in families if "prerender" in f), None)
