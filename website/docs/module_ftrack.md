@@ -196,7 +196,7 @@ Is used to remove value from `Avalon/Mongo Id` Custom Attribute when entity is c
 
 ### Sync status from Task to Parent
 
-List of parent boject types where this is triggered ("Shot", "Asset build", etc. Skipped if it is empty)
+List of parent object types where this is triggered ("Shot", "Asset build", etc. Skipped if it is empty)
 
 ### Sync status from Version to Task
 
@@ -214,3 +214,29 @@ This is usefull for example if first version publish doesn't contain any actual 
 
 ### Update status on next task
 Change status on next task by task types order when task status state changed to "Done". All tasks with the same Task mapping of next task status changes From → To. Some status can be ignored. 
+
+## Publish plugins
+
+### Collect Ftrack Family
+
+Reviews uploads to Ftrack could be configured by combination of hosts, families and task names.
+(Currently implemented only in Standalone Publisher, Maya.)
+
+#### Profiles
+
+Profiles are used to select when to add Ftrack family to the instance. One or multiple profiles could be configured, Families, Task names (regex available), Host names combination is needed.
+
+Eg. If I want review created and uploaded to Ftrack for render published from Maya , setting is:
+
+Host names: 'Maya'
+Families: 'render'
+Add Ftrack Family: enabled
+
+![Collect Ftrack Family](assets/ftrack/ftrack-collect-main.png)
+
+#### Advanced adding if additional families present
+
+In special cases adding 'ftrack' based on main family ('Families' set higher) is not enough. 
+(For example upload to Ftrack for 'plate' main family should only happen if 'review' is contained in instance 'families', not added in other cases. )
+
+![Collect Ftrack Family](assets/ftrack/ftrack-collect-advanced.png)
