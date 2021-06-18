@@ -91,6 +91,8 @@ class ProjectsPanel(QtWidgets.QWidget):
     """Projects Page"""
 
     project_clicked = QtCore.Signal(str)
+    # Refresh projects each 10000 msecs
+    refresh_interval = 10000
 
     def __init__(self, dbcon, parent=None):
         super(ProjectsPanel, self).__init__(parent=parent)
@@ -106,20 +108,39 @@ class ProjectsPanel(QtWidgets.QWidget):
         flick.activateOn(view)
         model = ProjectModel(self.dbcon)
         model.hide_invisible = True
-        model.refresh()
         view.setModel(model)
 
         layout.addWidget(view)
 
+        refresh_timer = QtCore.QTimer()
+        refresh_timer.setInterval(self.refresh_interval)
+
+        refresh_timer.timeout.connect(self._on_refresh_timeout)
         view.clicked.connect(self.on_clicked)
 
         self.model = model
         self.view = view
+        self.refresh_timer = refresh_timer
 
     def on_clicked(self, index):
         if index.isValid():
             project_name = index.data(QtCore.Qt.DisplayRole)
             self.project_clicked.emit(project_name)
+
+    def showEvent(self, event):
+        self.model.refresh()
+        if not self.refresh_timer.isActive():
+            self.refresh_timer.start()
+        super(ProjectsPanel, self).showEvent(event)
+
+    def _on_refresh_timeout(self):
+        if not self.isVisible():
+            # Stop timer if widget is not visible
+            self.refresh_timer.stop()
+
+        elif self.isActiveWindow():
+            # Refresh projects if window is active
+            self.model.refresh()
 
 
 class AssetsPanel(QtWidgets.QWidget):
@@ -276,6 +297,8 @@ class AssetsPanel(QtWidgets.QWidget):
 
 class LauncherWindow(QtWidgets.QDialog):
     """Launcher interface"""
+    # Refresh actions each 10000msecs
+    actions_refresh_timeout = 10000
 
     def __init__(self, parent=None):
         super(LauncherWindow, self).__init__(parent)
@@ -344,6 +367,10 @@ class LauncherWindow(QtWidgets.QDialog):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        actions_refresh_timer = QtCore.QTimer()
+        actions_refresh_timer.setInterval(self.actions_refresh_timeout)
+
+        self.actions_refresh_timer = actions_refresh_timer
         self.message_label = message_label
         self.project_panel = project_panel
         self.asset_panel = asset_panel
@@ -353,6 +380,7 @@ class LauncherWindow(QtWidgets.QDialog):
         self._page = 0
 
         # signals
+        actions_refresh_timer.timeout.connect(self._on_action_timer)
         actions_bar.action_clicked.connect(self.on_action_clicked)
         action_history.trigger_history.connect(self.on_history_action)
         project_panel.project_clicked.connect(self.on_project_clicked)
@@ -367,9 +395,11 @@ class LauncherWindow(QtWidgets.QDialog):
         self.resize(520, 740)
 
     def showEvent(self, event):
-        super().showEvent(event)
-        # TODO implement refresh/reset which will trigger updating
-        self.discover_actions()
+        if not self.actions_refresh_timer.isActive():
+            self.actions_refresh_timer.start()
+            self.discover_actions()
+
+        super(LauncherWindow, self).showEvent(event)
 
     def set_page(self, page):
         current = self.page_slider.currentIndex()
@@ -402,6 +432,15 @@ class LauncherWindow(QtWidgets.QDialog):
     def filter_actions(self):
         self.actions_bar.filter_actions()
 
+    def _on_action_timer(self):
+        if not self.isVisible():
+            # Stop timer if widget is not visible
+            self.actions_refresh_timer.stop()
+
+        elif self.isActiveWindow():
+            # Refresh projects if window is active
+            self.discover_actions()
+
     def on_project_clicked(self, project_name):
         self.dbcon.Session["AVALON_PROJECT"] = project_name
         # Refresh projects
@@ -412,7 +451,6 @@ class LauncherWindow(QtWidgets.QDialog):
     def on_back_clicked(self):
         self.dbcon.Session["AVALON_PROJECT"] = None
         self.set_page(0)
-        self.project_panel.model.refresh()    # Refresh projects
         self.discover_actions()
 
     def on_action_clicked(self, action):
