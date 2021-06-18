@@ -651,6 +651,29 @@
                                         "key": "add_ftrack_family",
                                         "label": "Add Ftrack Family",
                                         "type": "boolean"
+                                    },
+                                    {
+                                        "type": "list",
+                                        "collapsible": true,
+                                        "key": "advanced_filtering",
+                                        "label": "Advanced adding if additional families present",
+                                        "use_label_wrap": true,
+                                        "object_type": {
+                                            "type": "dict",
+                                            "children": [
+                                                {
+                                                    "key": "families",
+                                                    "label": "Additional Families",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                },
+                                                {
+                                                    "key": "add_ftrack_family",
+                                                    "label": "Add Ftrack Family",
+                                                    "type": "boolean"
+                                                }
+                                            ]
+                                        }
                                     }
                                 ]
                             }
