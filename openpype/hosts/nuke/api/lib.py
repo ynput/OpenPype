@@ -286,7 +286,8 @@ def add_button_write_to_read(node):
     node.addKnob(knob)
 
 
-def create_write_node(name, data, input=None, prenodes=None, review=True):
+def create_write_node(name, data, input=None, prenodes=None,
+                      review=True, linked_knobs=None):
     ''' Creating write node which is group node
 
     Arguments:
@@ -465,12 +466,16 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     GN.addKnob(nuke.Text_Knob('', 'Rendering'))
 
     # Add linked knobs.
-    linked_knob_names = [
-        "_grp-start_",
-        "use_limit", "first", "last",
-        "_grp-end_",
-        "Render"
-    ]
+    linked_knob_names = []
+
+    # add input linked knobs and create group only if any input
+    if linked_knobs:
+        linked_knob_names.append("_grp-start_")
+        linked_knob_names.extend(linked_knobs)
+        linked_knob_names.append("_grp-end_")
+
+    linked_knob_names.append("Render")
+
     for name in linked_knob_names:
         if "_grp-start_" in name:
             knob = nuke.Tab_Knob(
@@ -481,13 +486,20 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
                 "rnd_attr_end", "Rendering attributes", nuke.TABENDGROUP)
             GN.addKnob(knob)
         else:
-            link = nuke.Link_Knob("")
-            link.makeLink(write_node.name(), name)
-            link.setName(name)
-            if "Render" in name:
-                link.setLabel("Render Local")
-            link.setFlag(0x1000)
-            GN.addKnob(link)
+            if "___" in name:
+                # add devider
+                GN.addKnob(nuke.Text_Knob(""))
+            else:
+                # add linked knob by name
+                link = nuke.Link_Knob("")
+                link.makeLink(write_node.name(), name)
+                link.setName(name)
+
+                # make render
+                if "Render" in name:
+                    link.setLabel("Render Local")
+                link.setFlag(0x1000)
+                GN.addKnob(link)
 
     # adding write to read button
     add_button_write_to_read(GN)

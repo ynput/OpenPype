@@ -90,7 +90,8 @@ module.exports = {
                 "admin_hosts_maya",
                 "admin_hosts_resolve",
                 "admin_hosts_harmony",
-                "admin_hosts_aftereffects"
+                "admin_hosts_aftereffects",
+                "admin_hosts_tvpaint"
             ],
         },
         {

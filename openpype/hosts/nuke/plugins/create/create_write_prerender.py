@@ -103,7 +103,8 @@ class CreateWritePrerender(plugin.PypeCreator):
             write_data,
             input=selected_node,
             prenodes=[],
-            review=False)
+            review=False,
+            linked_knobs=["channels", "___", "first", "last", "use_limit"])
 
         # relinking to collected connections
         for i, input in enumerate(inputs):
@@ -122,19 +123,10 @@ class CreateWritePrerender(plugin.PypeCreator):
                 w_node = n
         write_node.end()
 
-        # add inner write node Tab
-        write_node.addKnob(nuke.Tab_Knob("WriteLinkedKnobs"))
+        if self.presets.get("use_range_limit"):
+            w_node["use_limit"].setValue(True)
+            w_node["first"].setValue(nuke.root()["first_frame"].value())
+            w_node["last"].setValue(nuke.root()["last_frame"].value())
 
-        # linking knobs to group property panel
-        linking_knobs = ["channels", "___", "first", "last", "use_limit"]
-        for k in linking_knobs:
-            if "___" in k:
-                write_node.addKnob(nuke.Text_Knob(''))
-            else:
-                lnk = nuke.Link_Knob(k)
-                lnk.makeLink(w_node.name(), k)
-                lnk.setName(k.replace('_', ' ').capitalize())
-                lnk.clearFlag(nuke.STARTLINE)
-                write_node.addKnob(lnk)
 
         return write_node

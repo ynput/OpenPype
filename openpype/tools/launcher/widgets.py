@@ -22,6 +22,9 @@ from .constants import (
 class ProjectBar(QtWidgets.QWidget):
     project_changed = QtCore.Signal(int)
 
+    # Project list will be refreshed each 10000 msecs
+    refresh_interval = 10000
+
     def __init__(self, dbcon, parent=None):
         super(ProjectBar, self).__init__(parent)
 
@@ -47,20 +50,36 @@ class ProjectBar(QtWidgets.QWidget):
             QtWidgets.QSizePolicy.Maximum
         )
 
+        refresh_timer = QtCore.QTimer()
+        refresh_timer.setInterval(self.refresh_interval)
+
         self.model = model
         self.project_delegate = project_delegate
         self.project_combobox = project_combobox
-
-        # Initialize
-        self.refresh()
+        self.refresh_timer = refresh_timer
 
         # Signals
+        refresh_timer.timeout.connect(self._on_refresh_timeout)
         self.project_combobox.currentIndexChanged.connect(self.project_changed)
 
         # Set current project by default if it's set.
         project_name = self.dbcon.Session.get("AVALON_PROJECT")
         if project_name:
             self.set_project(project_name)
+
+    def showEvent(self, event):
+        if not self.refresh_timer.isActive():
+            self.refresh_timer.start()
+        super(ProjectBar, self).showEvent(event)
+
+    def _on_refresh_timeout(self):
+        if not self.isVisible():
+            # Stop timer if widget is not visible
+            self.refresh_timer.stop()
+
+        elif self.isActiveWindow():
+            # Refresh projects if window is active
+            self.model.refresh()
 
     def get_current_project(self):
         return self.project_combobox.currentText()
@@ -69,27 +88,14 @@ class ProjectBar(QtWidgets.QWidget):
         index = self.project_combobox.findText(project_name)
         if index < 0:
             # Try refresh combobox model
-            self.project_combobox.blockSignals(True)
-            self.model.refresh()
-            self.project_combobox.blockSignals(False)
-
+            self.refresh()
             index = self.project_combobox.findText(project_name)
 
         if index >= 0:
             self.project_combobox.setCurrentIndex(index)
 
     def refresh(self):
-        prev_project_name = self.get_current_project()
-
-        # Refresh without signals
-        self.project_combobox.blockSignals(True)
-
         self.model.refresh()
-        self.set_project(prev_project_name)
-
-        self.project_combobox.blockSignals(False)
-
-        self.project_changed.emit(self.project_combobox.currentIndex())
 
 
 class ActionBar(QtWidgets.QWidget):

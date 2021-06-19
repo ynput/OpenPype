@@ -1,5 +1,6 @@
 import os
 import re
+from pprint import pformat
 import nuke
 import pyblish.api
 import openpype.api as pype
@@ -17,6 +18,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         _families_test = [instance.data["family"]] + instance.data["families"]
+        self.log.debug("_families_test: {}".format(_families_test))
 
         node = None
         for x in instance:
@@ -133,22 +135,29 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputDir": output_dir,
             "ext": ext,
             "label": label,
-            "handleStart": handle_start,
-            "handleEnd": handle_end,
-            "frameStart": first_frame + handle_start,
-            "frameEnd": last_frame - handle_end,
-            "frameStartHandle": first_frame,
-            "frameEndHandle": last_frame,
             "outputType": output_type,
             "colorspace": colorspace,
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority
         })
 
-        if "prerender" in _families_test:
+        if self.is_prerender(_families_test):
             instance.data.update({
-                "family": "prerender",
-                "families": []
+                "handleStart": 0,
+                "handleEnd": 0,
+                "frameStart": first_frame,
+                "frameEnd": last_frame,
+                "frameStartHandle": first_frame,
+                "frameEndHandle": last_frame,
+            })
+        else:
+            instance.data.update({
+                "handleStart": handle_start,
+                "handleEnd": handle_end,
+                "frameStart": first_frame + handle_start,
+                "frameEnd": last_frame - handle_end,
+                "frameStartHandle": first_frame,
+                "frameEndHandle": last_frame,
             })
 
         # * Add audio to instance if exists.
@@ -170,4 +179,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 "filename": api.get_representation_path(repre_doc)
             }]
 
-        self.log.debug("instance.data: {}".format(instance.data))
+        self.log.debug("instance.data: {}".format(pformat(instance.data)))
+
+    def is_prerender(self, families):
+        return next((f for f in families if "prerender" in f), None)

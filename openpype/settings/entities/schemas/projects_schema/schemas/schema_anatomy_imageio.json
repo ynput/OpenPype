@@ -3,7 +3,6 @@
     "key": "imageio",
     "label": "Color Management and Output Formats",
     "is_file": true,
-    "is_group": true,
     "children": [
         {
             "key": "hiero",
@@ -15,6 +14,7 @@
                     "type": "dict",
                     "label": "Workfile",
                     "collapsible": false,
+                    "is_group": true,
                     "children": [
                         {
                             "type": "form",
@@ -89,6 +89,7 @@
                     "type": "dict",
                     "label": "Colorspace on Inputs by regex detection",
                     "collapsible": true,
+                    "is_group": true,
                     "children": [
                         {
                             "type": "list",
@@ -123,6 +124,7 @@
                     "type": "dict",
                     "label": "Viewer",
                     "collapsible": false,
+                    "is_group": true,
                     "children": [
                         {
                             "type": "text",
@@ -136,6 +138,7 @@
                     "type": "dict",
                     "label": "Workfile",
                     "collapsible": false,
+                    "is_group": true,
                     "children": [
                         {
                             "type": "form",
@@ -233,6 +236,7 @@
                     "type": "dict",
                     "label": "Nodes",
                     "collapsible": true,
+                    "is_group": true,
                     "children": [
                         {
                             "key": "requiredNodes",
@@ -335,6 +339,7 @@
                     "type": "dict",
                     "label": "Colorspace on Inputs by regex detection",
                     "collapsible": true,
+                    "is_group": true,
                     "children": [
                         {
                             "type": "list",

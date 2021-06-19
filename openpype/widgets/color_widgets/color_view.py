@@ -5,6 +5,8 @@ def draw_checkerboard_tile(piece_size=None, color_1=None, color_2=None):
     if piece_size is None:
         piece_size = 7
 
+    # Make sure piece size is not float
+    piece_size = int(piece_size)
     if color_1 is None:
         color_1 = QtGui.QColor(188, 188, 188)
 
