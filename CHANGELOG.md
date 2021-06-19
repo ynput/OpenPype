@@ -1,8 +1,59 @@
 # Changelog
 
+## [3.2.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.3...HEAD)
+
+**🚀 Enhancements**
+
+- Autoupdate launcher [\#1725](https://github.com/pypeclub/OpenPype/pull/1725)
+- Subset template and TVPaint subset template docs [\#1717](https://github.com/pypeclub/OpenPype/pull/1717)
+- Overscan color extract review [\#1701](https://github.com/pypeclub/OpenPype/pull/1701)
+- Nuke: Prerender Frame Range by default [\#1699](https://github.com/pypeclub/OpenPype/pull/1699)
+- Smoother edges of color triangle [\#1695](https://github.com/pypeclub/OpenPype/pull/1695)
+
+**🐛 Bug fixes**
+
+- TVPaint use layer name for default variant [\#1724](https://github.com/pypeclub/OpenPype/pull/1724)
+- Default subset template for TVPaint review and workfile families [\#1716](https://github.com/pypeclub/OpenPype/pull/1716)
+- Maya: Extract review hotfix [\#1714](https://github.com/pypeclub/OpenPype/pull/1714)
+- Settings: Imageio improving granularity [\#1711](https://github.com/pypeclub/OpenPype/pull/1711)
+
+## [2.18.3](https://github.com/pypeclub/OpenPype/tree/2.18.3) (2021-06-18)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.2...2.18.3)
+
+**🐛 Bug fixes**
+
+- Remove publish highlight icon in AE [\#1664](https://github.com/pypeclub/OpenPype/pull/1664)
+
+**Merged pull requests:**
+
+- Sync main 2.x back to 2.x develop [\#1715](https://github.com/pypeclub/OpenPype/pull/1715)
+- global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
+- \#683 - Validate frame range in Standalone Publisher [\#1680](https://github.com/pypeclub/OpenPype/pull/1680)
+- Maya: Split model content validator [\#1654](https://github.com/pypeclub/OpenPype/pull/1654)
+
+## [2.18.2](https://github.com/pypeclub/OpenPype/tree/2.18.2) (2021-06-16)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.1.0...2.18.2)
+
+**🚀 Enhancements**
+
+- StandalonePublisher: adding  exception for adding `delete` tag to repre [\#1650](https://github.com/pypeclub/OpenPype/pull/1650)
+
+**🐛 Bug fixes**
+
+- Maya: Extract review hotfix - 2.x backport [\#1713](https://github.com/pypeclub/OpenPype/pull/1713)
+- StandalonePublisher:  instance data attribute `keepSequence` [\#1668](https://github.com/pypeclub/OpenPype/pull/1668)
+
+**Merged pull requests:**
+
+- 1698 Nuke: Prerender Frame Range by default [\#1709](https://github.com/pypeclub/OpenPype/pull/1709)
+
 ## [3.1.0](https://github.com/pypeclub/OpenPype/tree/3.1.0) (2021-06-15)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.0.0...3.1.0)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.1.0-nightly.4...3.1.0)
 
 **🚀 Enhancements**
 
@@ -33,6 +84,7 @@
 - Fix missing dbm python module [\#1652](https://github.com/pypeclub/OpenPype/pull/1652)
 - Transparent branches in view on Mac [\#1648](https://github.com/pypeclub/OpenPype/pull/1648)
 - Add asset on task item [\#1646](https://github.com/pypeclub/OpenPype/pull/1646)
+- Project manager save and queue [\#1645](https://github.com/pypeclub/OpenPype/pull/1645)
 - New project anatomy values [\#1644](https://github.com/pypeclub/OpenPype/pull/1644)
 
 **Merged pull requests:**
