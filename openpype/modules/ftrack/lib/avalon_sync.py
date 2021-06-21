@@ -402,9 +402,9 @@ class SyncEntitiesFactory:
             items = []
             items.append({
                 "type": "label",
-                "value": "# Can't access Custom attribute <{}>".format(
-                    CUST_ATTR_ID_KEY
-                )
+                "value": (
+                    "# Can't access Custom attribute: <b>\"{}\"</b>"
+                ).format(CUST_ATTR_ID_KEY)
             })
             items.append({
                 "type": "label",
