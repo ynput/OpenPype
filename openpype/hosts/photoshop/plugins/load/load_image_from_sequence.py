@@ -2,8 +2,10 @@ import os
 
 from avalon import api
 from avalon import photoshop
+from avalon.pipeline import get_representation_path_from_context
 from avalon.vendor import qargparse
 
+from openpype.lib import Anatomy
 from openpype.hosts.photoshop.plugins.lib import get_unique_layer_name
 
 stub = photoshop.stub()
@@ -64,7 +66,7 @@ class ImageFromSequenceLoader(api.Loader):
         """
         files = []
         for context in repre_contexts:
-            fname = ImageFromSequenceLoader.filepath_from_context(context)
+            fname = get_representation_path_from_context(context)
             _, file_extension = os.path.splitext(fname)
 
             for file_name in os.listdir(os.path.dirname(fname)):
@@ -93,3 +95,4 @@ class ImageFromSequenceLoader(api.Loader):
     def remove(self, container):
         """No update possible, not containerized."""
         pass
+
