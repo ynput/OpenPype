@@ -15,12 +15,30 @@ provides a bridge between the file-based project inventory and configuration.
 """
 
 import os
-from Qt import QtGui
+from Qt import QtGui, QtCore
 from avalon.vendor import qtawesome
 from openpype.api import resources
 
 ICON_CACHE = {}
 NOT_FOUND = type("NotFound", (object, ), {})
+
+
+class ProjectHandler(QtCore.QObject):
+    project_changed = QtCore.Signal(str)
+
+    def __init__(self, dbcon, model):
+        super(ProjectHandler, self).__init__()
+        self.current_project = dbcon.Session.get("AVALON_PROJECT")
+        self.model = model
+        self.dbcon = dbcon
+
+    def set_project(self, project_name):
+        self.current_project = project_name
+        self.dbcon.Session["AVALON_PROJECT"] = project_name
+        self.project_changed.emit(project_name)
+
+    def refresh_model(self):
+        self.model.refresh()
 
 
 def get_action_icon(action):
