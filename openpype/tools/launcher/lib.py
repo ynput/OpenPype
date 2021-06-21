@@ -24,17 +24,44 @@ NOT_FOUND = type("NotFound", (object, ), {})
 
 
 class ProjectHandler(QtCore.QObject):
+    """Handler of project model and current project in Launcher tool.
+
+    Helps to organize two separate widgets handling current project selection.
+
+    It is easier to trigger project change callbacks from one place than from
+    multiple differect places without proper handling or sequence changes.
+
+    Args:
+        dbcon(AvalonMongoDB): Mongo connection with Session.
+        model(ProjectModel): Object of projects model which is shared across
+            all widgets using projects. Arg dbcon should be used as source for
+            the model.
+    """
+    # Project list will be refreshed each 10000 msecs
+    # - this is not part of helper implementation but should be used by widgets
+    #   that may require reshing of projects
+    refresh_interval = 10000
+
+    # Signal emmited when project has changed
     project_changed = QtCore.Signal(str)
 
     def __init__(self, dbcon, model):
         super(ProjectHandler, self).__init__()
-        self.current_project = dbcon.Session.get("AVALON_PROJECT")
+        # Store project model for usage
         self.model = model
+        # Store dbcon
         self.dbcon = dbcon
 
+        self.current_project = dbcon.Session.get("AVALON_PROJECT")
+
     def set_project(self, project_name):
+        # Change current project of this handler
         self.current_project = project_name
+        # Change session project to take effect for other widgets using the
+        #   dbcon object.
         self.dbcon.Session["AVALON_PROJECT"] = project_name
+
+        # Trigger change signal when everything is updated to new project
         self.project_changed.emit(project_name)
 
     def refresh_model(self):
