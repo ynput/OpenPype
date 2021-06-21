@@ -293,10 +293,15 @@ class ExtractSequence(pyblish.api.Extractor):
 
         thumbnail_filepath = os.path.join(output_dir, "thumbnail.jpg")
         if first_frame_filepath and os.path.exists(first_frame_filepath):
+            # Composite background only on rgba images
+            # - just making sure
             source_img = Image.open(first_frame_filepath)
-            thumbnail_obj = Image.new("RGB", source_img.size, (255, 255, 255))
-            thumbnail_obj.paste(source_img)
-            thumbnail_obj.save(thumbnail_filepath)
+            if source_img.mode.lower() == "rgba":
+                bg_image = Image.new("RGBA", source_img.size, (255, 255, 255))
+                thumbnail_obj = Image.alpha_composite(bg_image, source_img)
+                thumbnail_obj.convert("RGB").save(thumbnail_filepath)
+            else:
+                source_img.save(thumbnail_filepath)
 
         return output_filenames, thumbnail_filepath
 
@@ -392,9 +397,14 @@ class ExtractSequence(pyblish.api.Extractor):
         if thumbnail_src_filepath and os.path.exists(thumbnail_src_filepath):
             source_img = Image.open(thumbnail_src_filepath)
             thumbnail_filepath = os.path.join(output_dir, "thumbnail.jpg")
-            thumbnail_obj = Image.new("RGB", source_img.size, (255, 255, 255))
-            thumbnail_obj.paste(source_img)
-            thumbnail_obj.save(thumbnail_filepath)
+            # Composite background only on rgba images
+            # - just making sure
+            if source_img.mode.lower() == "rgba":
+                bg_image = Image.new("RGBA", source_img.size, (255, 255, 255))
+                thumbnail_obj = Image.alpha_composite(bg_image, source_img)
+                thumbnail_obj.convert("RGB").save(thumbnail_filepath)
+            else:
+                source_img.save(thumbnail_filepath)
 
         return output_filenames, thumbnail_filepath
 
