@@ -204,22 +204,30 @@
             "enabled": true,
             "profiles": [
                 {
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
                     "families": [],
                     "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
                     "hosts": [
                         "standalonepublisher"
                     ],
-                    "add_ftrack_family": true
-                },
-                {
-                    "families": ["matchmove"],
+                    "families": [
+                        "matchmove",
+                        "shot"
+                    ],
                     "tasks": [],
-                    "hosts": [
-                        "standalonepublisher"
-                    ],
-                    "add_ftrack_family": false
+                    "add_ftrack_family": false,
+                    "advanced_filtering": []
                 },
                 {
+                    "hosts": [
+                        "maya"
+                    ],
                     "families": [
                         "model",
                         "setdress",
@@ -229,10 +237,8 @@
                         "camera"
                     ],
                     "tasks": [],
-                    "hosts": [
-                        "maya"
-                    ],
-                    "add_ftrack_family": true
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
         },
