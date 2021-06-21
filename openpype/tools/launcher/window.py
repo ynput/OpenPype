@@ -12,7 +12,7 @@ from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget
 from avalon.vendor import qtawesome
 from .models import ProjectModel
-from .lib import get_action_label
+from .lib import get_action_label, ProjectHandler
 from .widgets import (
     ProjectBar,
     ActionBar,
@@ -321,8 +321,12 @@ class LauncherWindow(QtWidgets.QDialog):
             self.windowFlags() | QtCore.Qt.WindowMinimizeButtonHint
         )
 
-        project_panel = ProjectsPanel(self.dbcon)
-        asset_panel = AssetsPanel(self.dbcon)
+        project_model = ProjectModel(self.dbcon)
+        project_model.hide_invisible = True
+        project_handler = ProjectHandler(self.dbcon, project_model)
+
+        project_panel = ProjectsPanel(project_handler)
+        asset_panel = AssetsPanel(project_handler, self.dbcon)
 
         page_slider = SlidePageWidget()
         page_slider.addWidget(project_panel)
@@ -371,6 +375,8 @@ class LauncherWindow(QtWidgets.QDialog):
         actions_refresh_timer.setInterval(self.actions_refresh_timeout)
 
         self.actions_refresh_timer = actions_refresh_timer
+        self.project_handler = project_handler
+
         self.message_label = message_label
         self.project_panel = project_panel
         self.asset_panel = asset_panel
@@ -383,14 +389,9 @@ class LauncherWindow(QtWidgets.QDialog):
         actions_refresh_timer.timeout.connect(self._on_action_timer)
         actions_bar.action_clicked.connect(self.on_action_clicked)
         action_history.trigger_history.connect(self.on_history_action)
-        project_panel.project_clicked.connect(self.on_project_clicked)
+        project_handler.project_changed.connect(self.on_project_change)
         asset_panel.back_clicked.connect(self.on_back_clicked)
         asset_panel.session_changed.connect(self.on_session_changed)
-
-        # todo: Simplify this callback connection
-        asset_panel.project_bar.project_changed.connect(
-            self.on_project_changed
-        )
 
         self.resize(520, 740)
 
@@ -415,13 +416,6 @@ class LauncherWindow(QtWidgets.QDialog):
         QtCore.QTimer.singleShot(5000, lambda: self.message_label.setText(""))
         self.log.debug(message)
 
-    def on_project_changed(self):
-        project_name = self.asset_panel.project_bar.get_current_project()
-        self.dbcon.Session["AVALON_PROJECT"] = project_name
-
-        # Update the Action plug-ins available for the current project
-        self.discover_actions()
-
     def on_session_changed(self):
         self.filter_actions()
 
@@ -441,15 +435,13 @@ class LauncherWindow(QtWidgets.QDialog):
             # Refresh projects if window is active
             self.discover_actions()
 
-    def on_project_clicked(self, project_name):
-        self.dbcon.Session["AVALON_PROJECT"] = project_name
-        # Refresh projects
-        self.asset_panel.set_project(project_name)
+    def on_project_change(self, project_name):
+        # Update the Action plug-ins available for the current project
         self.set_page(1)
         self.discover_actions()
 
     def on_back_clicked(self):
-        self.dbcon.Session["AVALON_PROJECT"] = None
+        self.project_handler.set_project(None)
         self.set_page(0)
         self.discover_actions()
 
