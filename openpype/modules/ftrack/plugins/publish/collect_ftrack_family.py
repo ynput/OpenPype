@@ -34,11 +34,9 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
             self.log.warning("No profiles present for adding Ftrack family")
             return
 
-        anatomy_data = instance.context.data["anatomyData"]
         task_name = instance.data.get("task",
                                       avalon.api.Session["AVALON_TASK"])
-        host_name = anatomy_data.get("app",
-                                     avalon.api.Session["AVALON_APP"])
+        host_name = avalon.api.Session["AVALON_APP"]
         family = instance.data["family"]
 
         filtering_criteria = {
@@ -46,7 +44,8 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
             "families": family,
             "tasks": task_name
         }
-        profile = filter_profiles(self.profiles, filtering_criteria)
+        profile = filter_profiles(self.profiles, filtering_criteria,
+                                  logger=self.log)
 
         if profile:
             families = instance.data.get("families")
@@ -93,7 +92,7 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
         override_filter_value = -1
         for additional_filter in additional_filters:
             filter_families = set(additional_filter["families"])
-            valid = filter_families <= families  # issubset
+            valid = filter_families <= set(families)  # issubset
             if not valid:
                 continue
 
