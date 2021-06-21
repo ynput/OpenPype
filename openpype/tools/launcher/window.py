@@ -227,10 +227,7 @@ class AssetsPanel(QtWidgets.QWidget):
         """Callback on asset selection changed
 
         This updates the task view.
-
         """
-
-        print("Asset changed..")
 
         asset_name = None
         asset_silo = None
