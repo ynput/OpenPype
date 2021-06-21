@@ -4,35 +4,6 @@ from Qt import QtWidgets, QtCore, QtGui
 from .color_view import draw_checkerboard_tile
 
 
-slide_style = """
-QSlider::groove:horizontal {
-    background: qlineargradient(
-        x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #000, stop: 1 #fff
-    );
-    height: 8px;
-    border-radius: 4px;
-}
-
-QSlider::handle:horizontal {
-    background: qlineargradient(
-        x1:0, y1:0, x2:1, y2:1, stop:0 #ddd, stop:1 #bbb
-    );
-    border: 1px solid #777;
-    width: 8px;
-    margin-top: -1px;
-    margin-bottom: -1px;
-    border-radius: 4px;
-}
-
-QSlider::handle:horizontal:hover {
-    background: qlineargradient(
-        x1:0, y1:0, x2:1, y2:1, stop:0 #eee, stop:1 #ddd
-    );
-    border: 1px solid #444;ff
-    border-radius: 4px;
-}"""
-
-
 class AlphaSlider(QtWidgets.QSlider):
     def __init__(self, *args, **kwargs):
         super(AlphaSlider, self).__init__(*args, **kwargs)
@@ -80,7 +51,7 @@ class AlphaSlider(QtWidgets.QSlider):
 
         painter.fillRect(event.rect(), QtCore.Qt.transparent)
 
-        painter.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+        painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
         rect = self.style().subControlRect(
             QtWidgets.QStyle.CC_Slider,
             opt,
@@ -135,19 +106,8 @@ class AlphaSlider(QtWidgets.QSlider):
 
         painter.save()
 
-        gradient = QtGui.QRadialGradient()
-        radius = handle_rect.height() / 2
-        center_x = handle_rect.width() / 2 + handle_rect.x()
-        center_y = handle_rect.height()
-        gradient.setCenter(center_x, center_y)
-        gradient.setCenterRadius(radius)
-        gradient.setFocalPoint(center_x, center_y)
-
-        gradient.setColorAt(0.9, QtGui.QColor(127, 127, 127))
-        gradient.setColorAt(1, QtCore.Qt.transparent)
-
         painter.setPen(QtCore.Qt.NoPen)
-        painter.setBrush(gradient)
+        painter.setBrush(QtGui.QColor(127, 127, 127))
         painter.drawEllipse(handle_rect)
 
         painter.restore()

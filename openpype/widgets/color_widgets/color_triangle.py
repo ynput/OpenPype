@@ -241,7 +241,11 @@ class QtColorTriangle(QtWidgets.QWidget):
 
         # Blit the static generated background with the hue gradient onto
         # the double buffer.
-        buf = QtGui.QImage(self.bg_image.copy())
+        buf = QtGui.QImage(
+            self.bg_image.width(),
+            self.bg_image.height(),
+            QtGui.QImage.Format_RGB32
+        )
 
         # Draw the trigon
         # Find the color with only the hue, and max value and saturation
@@ -254,9 +258,21 @@ class QtColorTriangle(QtWidgets.QWidget):
         )
 
         # Slow step: convert the image to a pixmap
-        pix = QtGui.QPixmap.fromImage(buf)
+        pix = self.bg_image.copy()
         pix_painter = QtGui.QPainter(pix)
-        pix_painter.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        pix_painter.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
+
+        trigon_path = QtGui.QPainterPath()
+        trigon_path.moveTo(self.point_a)
+        trigon_path.lineTo(self.point_b)
+        trigon_path.lineTo(self.point_c)
+        trigon_path.closeSubpath()
+        pix_painter.setClipPath(trigon_path)
+
+        pix_painter.drawImage(0, 0, buf)
+
+        pix_painter.setClipping(False)
 
         # Draw an outline of the triangle
         pix_painter.setPen(self._triangle_outline_pen)
@@ -724,27 +740,37 @@ class QtColorTriangle(QtWidgets.QWidget):
             lx = leftX[y]
             rx = rightX[y]
 
+            # if the xdist is 0, don't draw anything.
+            xdist = rx - lx
+            if xdist == 0.0:
+                continue
+
             lxi = int(floor(lx))
             rxi = int(floor(rx))
             rc = rightColors[y]
             lc = leftColors[y]
 
-            # if the xdist is 0, don't draw anything.
-            xdist = rx - lx
-            if xdist != 0.0:
-                r = lc.r
-                g = lc.g
-                b = lc.b
-                rdelta = (rc.r - r) / xdist
-                gdelta = (rc.g - g) / xdist
-                bdelta = (rc.b - b) / xdist
+            r = lc.r
+            g = lc.g
+            b = lc.b
+            rdelta = (rc.r - r) / xdist
+            gdelta = (rc.g - g) / xdist
+            bdelta = (rc.b - b) / xdist
 
-                # Inner loop 2. Draws the line from left to right.
-                for x in range(lxi, rxi + 1):
-                    buf.setPixel(x, y, QtGui.qRgb(int(r), int(g), int(b)))
-                    r += rdelta
-                    g += gdelta
-                    b += bdelta
+            # Draw 2 more pixels on left side for smoothing
+            for x in range(lxi - 2, lxi):
+                buf.setPixel(x, y, QtGui.qRgb(int(r), int(g), int(b)))
+
+            # Inner loop 2. Draws the line from left to right.
+            for x in range(lxi, rxi):
+                buf.setPixel(x, y, QtGui.qRgb(int(r), int(g), int(b)))
+                r += rdelta
+                g += gdelta
+                b += bdelta
+
+            # Draw 2 more pixels on right side for smoothing
+            for x in range(rxi, rxi + 3):
+                buf.setPixel(x, y, QtGui.qRgb(int(r), int(g), int(b)))
 
     def _radius_at(self, pos, rect):
         mousexdist = pos.x() - float(rect.center().x())

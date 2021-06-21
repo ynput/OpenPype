@@ -172,6 +172,39 @@ Applicable context filters:
 ## Tools
 Settings for OpenPype tools.
 
+## Creator
+Settings related to [Creator tool](artist_tools.md#details).
+
+### Subset name profiles
+![global_tools_creator_subset_template](assets/global_tools_creator_subset_template.png)
+
+Subset name helps to identify published content. More specific name helps with organization and avoid mixing of published content. Subset name is defined using one of templates defined in **Subset name profiles settings**. The template is filled with context information at the time of creation.
+
+Usage of template is defined by profile filtering using creator's family, host and task name. Profile without filters is used as default template and it is recommend to set default template. If default template is not available `"{family}{Task}"` is used.
+
+**Formatting keys**
+
+All templates can contain text and formatting keys **family**, **task** and **variant** e.g. `"MyStudio_{family}_{task}"` (example - not recommended in production).
+
+|Key|Description|
+|---|---|
+|family|Creators family|
+|task|Task under which is creation triggered|
+|variant|User input in creator tool|
+
+**Formatting keys have 3 variants with different letter capitalization.**
+
+|Task|Key variant|Description|Result|
+|---|---|---|---|
+|`bgAnim`|`{task}`|Keep original value as is.|`bgAnim`|
+|`bgAnim`|`{Task}`|Capitalize first letter of value.|`BgAnim`|
+|`bgAnim`|`{TASK}`|Each letter which be capitalized.|`BGANIM`|
+
+Template may look like `"{family}{Task}{Variant}"`.
+
+Some creators may have other keys as their context may require more information or more specific values. Make sure you've read documentation of host you're using.
+
+
 ## Workfiles
 All settings related to Workfile tool.
 
