@@ -196,8 +196,12 @@ class LocalApplicationsWidgets(QtWidgets.QWidget):
 
             # Create App group specific widget and store it by the key
             group_widget = AppGroupWidget(entity, self)
-            self.widgets_by_group_name[key] = group_widget
-            self.content_layout.addWidget(group_widget)
+            if group_widget.widgets_by_variant_name:
+                self.widgets_by_group_name[key] = group_widget
+                self.content_layout.addWidget(group_widget)
+            else:
+                group_widget.setVisible(False)
+                group_widget.deleteLater()
 
     def update_local_settings(self, value):
         if not value:
