@@ -162,19 +162,19 @@ class AssetLoader(api.Loader):
         raise NotImplementedError("Must be implemented by a sub-class")
 
     def load(self,
-            context: dict,
-            name: Optional[str] = None,
-            namespace: Optional[str] = None,
-            options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
+             context: dict,
+             name: Optional[str] = None,
+             namespace: Optional[str] = None,
+             options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
         """ Run the loader on Blender main thread"""
         mti = ops.MainThreadItem(self._load, context, name, namespace, options)
         ops.execute_in_main_thread(mti)
 
     def _load(self,
-             context: dict,
-             name: Optional[str] = None,
-             namespace: Optional[str] = None,
-             options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
+              context: dict,
+              name: Optional[str] = None,
+              namespace: Optional[str] = None,
+              options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
         """Load asset via database
 
         Arguments:

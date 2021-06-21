@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 import bpy
 
 from avalon import api
-from avalon.blender import lib, ops
+from avalon.blender import lib
 from avalon.blender.pipeline import AVALON_CONTAINERS
 from avalon.blender.pipeline import AVALON_CONTAINER_ID
 from avalon.blender.pipeline import AVALON_PROPERTY
