@@ -6,10 +6,11 @@ from typing import Dict, List, Optional
 import bpy
 
 from avalon import api, blender
+from avalon.blender import ops
 from avalon.blender.pipeline import AVALON_CONTAINERS
 from openpype.api import PypeCreatorMixin
 
-VALID_EXTENSIONS = [".blend", ".json", ".abc"]
+VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
 
 def asset_name(
@@ -161,6 +162,15 @@ class AssetLoader(api.Loader):
         raise NotImplementedError("Must be implemented by a sub-class")
 
     def load(self,
+            context: dict,
+            name: Optional[str] = None,
+            namespace: Optional[str] = None,
+            options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
+        """ Run the loader on Blender main thread"""
+        mti = ops.MainThreadItem(self._load, context, name, namespace, options)
+        ops.execute_in_main_thread(mti)
+
+    def _load(self,
              context: dict,
              name: Optional[str] = None,
              namespace: Optional[str] = None,
@@ -216,10 +226,20 @@ class AssetLoader(api.Loader):
 
         return self._get_instance_collection(instance_name, nodes)
 
+    def exec_update(self, container: Dict, representation: Dict):
+        """Must be implemented by a sub-class"""
+        raise NotImplementedError("Must be implemented by a sub-class")
+
     def update(self, container: Dict, representation: Dict):
+        """ Run the update on Blender main thread"""
+        mti = ops.MainThreadItem(self.exec_update, container, representation)
+        ops.execute_in_main_thread(mti)
+
+    def exec_remove(self, container: Dict) -> bool:
         """Must be implemented by a sub-class"""
         raise NotImplementedError("Must be implemented by a sub-class")
 
     def remove(self, container: Dict) -> bool:
-        """Must be implemented by a sub-class"""
-        raise NotImplementedError("Must be implemented by a sub-class")
+        """ Run the remove on Blender main thread"""
+        mti = ops.MainThreadItem(self.exec_remove, container)
+        ops.execute_in_main_thread(mti)

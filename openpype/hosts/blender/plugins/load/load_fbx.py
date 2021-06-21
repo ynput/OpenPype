@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 import bpy
 
 from avalon import api
-from avalon.blender import lib
+from avalon.blender import lib, ops
 from avalon.blender.pipeline import AVALON_CONTAINERS
 from avalon.blender.pipeline import AVALON_CONTAINER_ID
 from avalon.blender.pipeline import AVALON_PROPERTY
@@ -20,7 +20,7 @@ class FbxModelLoader(plugin.AssetLoader):
     Stores the imported asset in an empty named after the asset.
     """
 
-    families = ["model"]
+    families = ["model", "rig"]
     representations = ["fbx"]
 
     label = "Load FBX"
@@ -29,7 +29,6 @@ class FbxModelLoader(plugin.AssetLoader):
 
     def _remove(self, asset_group):
         objects = list(asset_group.children)
-        empties = []
 
         for obj in objects:
             if obj.type == 'MESH':
@@ -37,23 +36,21 @@ class FbxModelLoader(plugin.AssetLoader):
                     if material_slot.material:
                         bpy.data.materials.remove(material_slot.material)
                 bpy.data.meshes.remove(obj.data)
+            elif obj.type == 'ARMATURE':
+                objects.extend(obj.children)
+                bpy.data.armatures.remove(obj.data)
+            elif obj.type == 'CURVE':
+                bpy.data.curves.remove(obj.data)
             elif obj.type == 'EMPTY':
                 objects.extend(obj.children)
-                empties.append(obj)
+                bpy.data.objects.remove(obj)
 
-        for empty in empties:
-            bpy.data.objects.remove(empty)
-
-    def _process(self, libpath, asset_group, group_name):
+    def _process(self, libpath, asset_group, group_name, action):
         bpy.ops.object.select_all(action='DESELECT')
 
         collection = bpy.context.view_layer.active_layer_collection.collection
 
-        context = plugin.create_blender_context()
-        bpy.ops.import_scene.fbx(
-            context,
-            filepath=libpath
-        )
+        bpy.ops.import_scene.fbx(filepath=libpath)
 
         parent = bpy.context.scene.collection
 
@@ -97,9 +94,17 @@ class FbxModelLoader(plugin.AssetLoader):
                 name_data = obj.data.name
                 obj.data.name = f"{group_name}:{name_data}"
 
+            if obj.type == 'MESH':
                 for material_slot in obj.material_slots:
                     name_mat = material_slot.material.name
                     material_slot.material.name = f"{group_name}:{name_mat}"
+            elif obj.type == 'ARMATURE':
+                anim_data = obj.animation_data
+                if action is not None:
+                    anim_data.action = action
+                elif anim_data.action is not None:
+                    name_action = anim_data.action.name
+                    anim_data.action.name = f"{group_name}:{name_action}"
 
             if not obj.get(AVALON_PROPERTY):
                 obj[AVALON_PROPERTY] = dict()
@@ -122,7 +127,6 @@ class FbxModelLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
@@ -140,7 +144,14 @@ class FbxModelLoader(plugin.AssetLoader):
         asset_group = bpy.data.objects.new(group_name, object_data=None)
         avalon_container.objects.link(asset_group)
 
-        objects = self._process(libpath, asset_group, group_name)
+        objects = self._process(libpath, asset_group, group_name, None)
+
+        objects = []
+        nodes = list(asset_group.children)
+
+        for obj in nodes:
+            objects.append(obj)
+            nodes.extend(list(obj.children))
 
         bpy.context.scene.collection.objects.link(asset_group)
 
@@ -160,7 +171,7 @@ class FbxModelLoader(plugin.AssetLoader):
         self[:] = objects
         return objects
 
-    def update(self, container: Dict, representation: Dict):
+    def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset.
 
         This will remove all objects of the current collection, load the new
@@ -214,16 +225,28 @@ class FbxModelLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
+        # Get the armature of the rig
+        objects = asset_group.children
+        armatures = [obj for obj in objects if obj.type == 'ARMATURE']
+        action = None
+
+        if armatures:
+            armature = armatures[0]
+
+            if armature.animation_data and armature.animation_data.action:
+                action = armature.animation_data.action
+
         mat = asset_group.matrix_basis.copy()
         self._remove(asset_group)
 
-        self._process(str(libpath), asset_group, object_name)
+        self._process(str(libpath), asset_group, object_name, action)
+
         asset_group.matrix_basis = mat
 
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
 
-    def remove(self, container: Dict) -> bool:
+    def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
 
         Arguments:

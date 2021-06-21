@@ -145,7 +145,7 @@ class BlendModelLoader(plugin.AssetLoader):
         self[:] = objects
         return objects
 
-    def update(self, container: Dict, representation: Dict):
+    def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset.
 
         This will remove all objects of the current collection, load the new
@@ -218,7 +218,7 @@ class BlendModelLoader(plugin.AssetLoader):
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
 
-    def remove(self, container: Dict) -> bool:
+    def exec_remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
 
         Arguments:

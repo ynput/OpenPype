@@ -29,7 +29,8 @@ class BlendRigLoader(plugin.AssetLoader):
         for obj in objects:
             if obj.type == 'MESH':
                 for material_slot in list(obj.material_slots):
-                    bpy.data.materials.remove(material_slot.material)
+                    if material_slot.material:
+                        bpy.data.materials.remove(material_slot.material)
                 bpy.data.meshes.remove(obj.data)
             elif obj.type == 'ARMATURE':
                 objects.extend(obj.children)
@@ -178,7 +179,7 @@ class BlendRigLoader(plugin.AssetLoader):
         self[:] = objects
         return objects
 
-    def update(self, container: Dict, representation: Dict):
+    def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset.
 
         This will remove all children of the asset group, load the new ones
@@ -232,7 +233,7 @@ class BlendRigLoader(plugin.AssetLoader):
             if obj.get(AVALON_PROPERTY).get('libpath') == group_libpath:
                 count += 1
 
-        # # Get the armature of the rig
+        # Get the armature of the rig
         objects = asset_group.children
         armature = [obj for obj in objects if obj.type == 'ARMATURE'][0]
 
@@ -256,7 +257,7 @@ class BlendRigLoader(plugin.AssetLoader):
         metadata["libpath"] = str(libpath)
         metadata["representation"] = str(representation["_id"])
 
-    def remove(self, container: Dict) -> bool:
+    def exec_remove(self, container: Dict) -> bool:
         """Remove an existing asset group from a Blender scene.
 
         Arguments:
