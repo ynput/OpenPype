@@ -2,6 +2,7 @@ import os
 import sys
 import importlib
 from .log import PypeLogger as Logger
+from pathlib import Path
 
 log = Logger().get_logger(__name__)
 
@@ -23,3 +24,17 @@ def discover_host_vendor_module(module_name):
 
     sys.path.insert(1, module_path)
     return importlib.import_module(module_name)
+
+
+def get_pyside2_location():
+    """Get location of PySide2 and its dependencies.
+
+    Returned path can be used with `site.addsitedir()`
+
+    Returns:
+        str: path to PySide2
+
+    """
+    path = Path(os.getenv("OPENPYPE_ROOT"))
+    path = path / "vendor/python/PySide2"
+    return str(path)

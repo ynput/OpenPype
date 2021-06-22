@@ -49,7 +49,6 @@ Pillow = "^8.1" # only used for slates prototype
 pyblish-base = "^1.8.8"
 pynput = "^1.7.2" # idle manager in tray
 pymongo = "^3.11.2"
-pyqt5 = "^5.12.2" # ideally should be replaced with PySide2
 "Qt.py" = "^1.3.3"
 speedcopy = "^2.1"
 six = "^1.15"
