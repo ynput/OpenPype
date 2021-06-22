@@ -101,6 +101,58 @@ class EnumEntity(BaseEnumEntity):
         super(EnumEntity, self).schema_validations()
 
 
+class HostsEnumEntity(BaseEnumEntity):
+    schema_types = ["hosts-enum"]
+
+    def _item_initalization(self):
+        self.multiselection = self.schema_data.get("multiselection", True)
+        self.use_empty_value = self.schema_data.get(
+            "use_empty_value", not self.multiselection
+        )
+        self.empty_label = (
+            self.schema_data.get("empty_label") or "< without host >"
+        )
+
+        self.enum_items = [
+            {"aftereffects": "aftereffects"},
+            {"blender": "blender"},
+            {"celaction": "celaction"},
+            {"fusion": "fusion"},
+            {"harmony": "harmony"},
+            {"hiero": "hiero"},
+            {"houdini": "houdini"},
+            {"maya": "maya"},
+            {"nuke": "nuke"},
+            {"photoshop": "photoshop"},
+            {"resolve": "resolve"},
+            {"tvpaint": "tvpaint"},
+            {"unreal": "unreal"}
+        ]
+
+        if self.use_empty_value:
+            self.enum_items.insert(0, {"": self.empty_label})
+
+        valid_keys = set()
+        for item in self.enum_items or []:
+            valid_keys.add(tuple(item.keys())[0])
+
+        self.valid_keys = valid_keys
+
+        if self.multiselection:
+            self.valid_value_types = (list, )
+            self.value_on_not_set = []
+        else:
+            for key in valid_keys:
+                if self.value_on_not_set is NOT_SET:
+                    self.value_on_not_set = key
+                    break
+
+            self.valid_value_types = (STRING_TYPE, )
+
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
+
 class AppsEnumEntity(BaseEnumEntity):
     schema_types = ["apps-enum"]
 
