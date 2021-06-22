@@ -102,6 +102,21 @@ class EnumEntity(BaseEnumEntity):
 
 
 class HostsEnumEntity(BaseEnumEntity):
+    """Enumeration of host names.
+
+    Enum items are hardcoded in definition of the entity.
+
+    Hosts enum can have defined empty value as valid option which is
+    represented by empty string. Schema key to set this option is
+    `use_empty_value` (true/false). And to set label of empty value set
+    `empty_label` (string).
+
+    Enum can have single and multiselection.
+
+    NOTE:
+    Host name is not the same as application name. Host name defines
+    implementation instead of application name.
+    """
     schema_types = ["hosts-enum"]
 
     def _item_initalization(self):
@@ -113,6 +128,7 @@ class HostsEnumEntity(BaseEnumEntity):
             self.schema_data.get("empty_label") or "< without host >"
         )
 
+        # These are hardcoded there is not list of available host in OpenPype
         self.enum_items = [
             {"aftereffects": "aftereffects"},
             {"blender": "blender"},
