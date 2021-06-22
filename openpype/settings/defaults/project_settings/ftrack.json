@@ -226,6 +226,26 @@
                 },
                 {
                     "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "families": [
+                        "review",
+                        "plate"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "clip",
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
+                },
+                {
+                    "hosts": [
                         "maya"
                     ],
                     "families": [
