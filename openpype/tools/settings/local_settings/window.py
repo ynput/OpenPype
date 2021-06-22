@@ -168,9 +168,6 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
         scroll_widget = QtWidgets.QScrollArea(self)
         scroll_widget.setObjectName("GroupWidget")
-        settings_widget = LocalSettingsWidget(scroll_widget)
-
-        scroll_widget.setWidget(settings_widget)
         scroll_widget.setWidgetResizable(True)
 
         footer = QtWidgets.QWidget(self)
@@ -191,7 +188,8 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         save_btn.clicked.connect(self._on_save_clicked)
         reset_btn.clicked.connect(self._on_reset_clicked)
 
-        self.settings_widget = settings_widget
+        self.settings_widget = None
+        self.scroll_widget = scroll_widget
         self.reset_btn = reset_btn
         self.save_btn = save_btn
 
@@ -206,6 +204,10 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
         error_msg = None
         try:
+            if self.settings_widget is None:
+                self.settings_widget = LocalSettingsWidget(self.scroll_widget)
+                self.scroll_widget.setWidget(self.settings_widget)
+
             value = get_local_settings()
             self.settings_widget.update_local_settings(value)
 
