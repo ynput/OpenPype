@@ -338,13 +338,11 @@ def create_unreal_project(project_name: str,
 
         if platform.system().lower() == "linux":
             python_path = engine_path / ("Engine/Binaries/ThirdParty/"
-                                         "Python3/Linux" /
-                           "bin" / "python3")
+                                         "Python3/Linux/bin/python3")
 
         if platform.system().lower() == "darwin":
-            python_path = (engine_path / "Engine" / "Binaries" /
-                           "ThirdParty" / "Python3" / "Mac" /
-                           "bin" / "python3")
+            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
+                                         "Python3/Mac/bin/python3")
 
         if python_path:
             if not python_path.exists():
