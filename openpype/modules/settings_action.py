@@ -114,6 +114,7 @@ class LocalSettingsAction(PypeModule, ITrayAction):
 
         # Tray attributes
         self.settings_window = None
+        self._first_trigger = True
 
     def connect_with_modules(self, *_a, **_kw):
         return
@@ -153,6 +154,9 @@ class LocalSettingsAction(PypeModule, ITrayAction):
         self.settings_window.raise_()
         self.settings_window.activateWindow()
 
-        # Reset content if was not visible
-        if not was_visible:
+        # Do not reset if it's first trigger of action
+        if self._first_trigger:
+            self._first_trigger = False
+        elif not was_visible:
+            # Reset content if was not visible
             self.settings_window.reset()
