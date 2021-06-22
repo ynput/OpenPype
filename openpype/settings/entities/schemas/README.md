@@ -272,6 +272,22 @@
 }
 ```
 
+### hosts-enum
+- enumeration of available hosts
+- multiselection can be allowed with setting key `"multiselection"` to `True` (Default: `False`)
+- it is possible to add empty value (represented with empty string) with setting `"use_empty_value"` to `True` (Default: `False`)
+- to modify label of empty value set `"empty_label"` key with your label (Default: `< without host >`)
+```
+{
+    "key": "host",
+    "label": "Host name",
+    "type": "hosts-enum",
+    "multiselection": false,
+    "use_empty_value": true,
+    "empty_label": "N/A"
+}
+```
+
 ## Inputs for setting value using Pure inputs
 - these inputs also have required `"key"`
 - attribute `"label"` is required in few conditions
