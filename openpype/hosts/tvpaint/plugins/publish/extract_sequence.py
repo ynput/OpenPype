@@ -13,6 +13,9 @@ class ExtractSequence(pyblish.api.Extractor):
     hosts = ["tvpaint"]
     families = ["review", "renderPass", "renderLayer"]
 
+    # Modifiable with settings
+    thumbnail_bg = [255, 255, 255, 255]
+
     def process(self, instance):
         self.log.info(
             "* Processing instance \"{}\"".format(instance.data["label"])
