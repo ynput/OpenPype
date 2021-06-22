@@ -12,6 +12,21 @@
             "label": "Publish plugins",
             "children": [
                 {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractSequence",
+                    "label": "ExtractSequence",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "color",
+                            "key": "thumbnail_bg",
+                            "label": "Thumbnail BG color",
+                            "use_alpha": false
+                        }
+                    ]
+                },
+                {
                     "type": "schema_template",
                     "name": "template_publish_plugin",
                     "template_data": [

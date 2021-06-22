@@ -1,5 +1,13 @@
 {
     "publish": {
+        "ExtractSequence": {
+            "thumbnail_bg": [
+                255,
+                255,
+                255,
+                255
+            ]
+        },
         "ValidateProjectSettings": {
             "enabled": true,
             "optional": true,
