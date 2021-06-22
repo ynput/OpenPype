@@ -318,11 +318,13 @@ class ExtractSequence(pyblish.api.Extractor):
             if first_frame_filepath is None:
                 first_frame_filepath = filepath
 
-        thumbnail_filepath = os.path.join(output_dir, "thumbnail.jpg")
+        thumbnail_filepath = None
         if first_frame_filepath and os.path.exists(first_frame_filepath):
-            # Composite background only on rgba images
-            # - just making sure
+            thumbnail_filepath = os.path.join(output_dir, "thumbnail.jpg")
             source_img = Image.open(first_frame_filepath)
+            if source_img.mode.lower() != "rgb":
+                source_img = source_img.convert("RGB")
+            source_img.save(thumbnail_filepath)
 
         return output_filenames, thumbnail_filepath
 
