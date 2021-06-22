@@ -14,7 +14,7 @@ class ExtractSequence(pyblish.api.Extractor):
     families = ["review", "renderPass", "renderLayer"]
 
     # Modifiable with settings
-    thumbnail_bg = [255, 255, 255, 255]
+    review_bg = [255, 255, 255, 255]
 
     def process(self, instance):
         self.log.info(
@@ -299,20 +299,6 @@ class ExtractSequence(pyblish.api.Extractor):
             # Composite background only on rgba images
             # - just making sure
             source_img = Image.open(first_frame_filepath)
-            if source_img.mode.lower() == "rgba":
-                bg_color = self._get_thumbnail_bg_color()
-                self.log.debug("Adding thumbnail background color {}.".format(
-                    " ".join(bg_color)
-                ))
-                bg_image = Image.new("RGBA", source_img.size, bg_color)
-                thumbnail_obj = Image.alpha_composite(bg_image, source_img)
-                thumbnail_obj.convert("RGB").save(thumbnail_filepath)
-            else:
-                self.log.info((
-                    "Source for thumbnail has mode \"{}\" (Expected: RGBA)."
-                    " Can't use thubmanail background color."
-                ).format(source_img.mode))
-                source_img.save(thumbnail_filepath)
 
         return output_filenames, thumbnail_filepath
 
@@ -411,9 +397,9 @@ class ExtractSequence(pyblish.api.Extractor):
             # Composite background only on rgba images
             # - just making sure
             if source_img.mode.lower() == "rgba":
-                bg_color = self._get_thumbnail_bg_color()
+                bg_color = self._get_review_bg_color()
                 self.log.debug("Adding thumbnail background color {}.".format(
-                    " ".join(bg_color)
+                    " ".join([str(val) for val in bg_color])
                 ))
                 bg_image = Image.new("RGBA", source_img.size, bg_color)
                 thumbnail_obj = Image.alpha_composite(bg_image, source_img)
@@ -428,13 +414,13 @@ class ExtractSequence(pyblish.api.Extractor):
 
         return output_filenames, thumbnail_filepath
 
-    def _get_thumbnail_bg_color(self):
+    def _get_review_bg_color(self):
         red = green = blue = 255
-        if self.thumbnail_bg:
-            if len(self.thumbnail_bg) == 4:
-                red, green, blue, _ = self.thumbnail_bg
-            elif len(self.thumbnail_bg) == 3:
-                red, green, blue = self.thumbnail_bg
+        if self.review_bg:
+            if len(self.review_bg) == 4:
+                red, green, blue, _ = self.review_bg
+            elif len(self.review_bg) == 3:
+                red, green, blue = self.review_bg
         return (red, green, blue)
 
     def _render_layer(

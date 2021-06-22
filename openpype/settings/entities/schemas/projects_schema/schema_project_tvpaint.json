@@ -19,9 +19,13 @@
                     "is_group": true,
                     "children": [
                         {
+                            "type": "label",
+                            "label": "<b>Review BG color</b> is used for whole scene review and for thumbnails."
+                        },
+                        {
                             "type": "color",
-                            "key": "thumbnail_bg",
-                            "label": "Thumbnail BG color",
+                            "key": "review_bg",
+                            "label": "Review BG color",
                             "use_alpha": false
                         }
                     ]
