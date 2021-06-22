@@ -56,7 +56,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             if tag_data.get("id") != "pyblish.avalon.instance":
                 continue
 
-             # get clips subtracks and anotations
+            # get clips subtracks and anotations
             annotations = self.clip_annotations(source_clip)
             subtracks = self.clip_subtrack(track_item)
             self.log.debug("Annotations: {}".format(annotations))
