@@ -227,12 +227,13 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         # Show message with error
         title = "Something went wrong"
         msg = (
-            "This is probably a bug. Loading of settings failed."
+            "Bug: Loading of settings failed."
+            " Please contact your project manager or OpenPype team."
             "\n\nError message:\n{}"
         ).format(error_msg)
 
         dialog = QtWidgets.QMessageBox(
-            QtWidgets.QMessageBox.Warning,
+            QtWidgets.QMessageBox.Critical,
             title,
             msg,
             QtWidgets.QMessageBox.Ok,
