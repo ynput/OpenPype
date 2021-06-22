@@ -153,7 +153,7 @@ class HostsEnumEntity(BaseEnumEntity):
         for key in host_names:
             label = custom_labels.get(key, key)
             valid_keys.add(key)
-            enum_items.append({key, label})
+            enum_items.append({key: label})
 
         self.enum_items = enum_items
         self.valid_keys = valid_keys
