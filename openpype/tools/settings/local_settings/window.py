@@ -203,8 +203,40 @@ class LocalSettingsWindow(QtWidgets.QWidget):
     def reset(self):
         if self._reset_on_show:
             self._reset_on_show = False
-        value = get_local_settings()
-        self.settings_widget.update_local_settings(value)
+
+        error_msg = None
+        try:
+            value = get_local_settings()
+            self.settings_widget.update_local_settings(value)
+
+        except Exception as exc:
+            error_msg = str(exc)
+
+        crashed = error_msg is not None
+        # Enable/Disable save button if crashed or not
+        self.save_btn.setEnabled(not crashed)
+        # Show/Hide settings widget if crashed or not
+        if self.settings_widget:
+            self.settings_widget.setVisible(not crashed)
+
+        if not crashed:
+            return
+
+        # Show message with error
+        title = "Something went wrong"
+        msg = (
+            "This is probably a bug. Loading of settings failed."
+            "\n\nError message:\n{}"
+        ).format(error_msg)
+
+        dialog = QtWidgets.QMessageBox(
+            QtWidgets.QMessageBox.Warning,
+            title,
+            msg,
+            QtWidgets.QMessageBox.Ok,
+            self
+        )
+        dialog.exec_()
 
     def _on_reset_clicked(self):
         self.reset()
