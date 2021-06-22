@@ -55,7 +55,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
         fps = plib.get_asset()["data"]["fps"]
 
         tracks = timeline.each_child(
-            descended_from_type=otio.schema.track.Track
+            descended_from_type=otio.schema.Track
         )
 
         # get data from avalon
@@ -92,7 +92,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
 
                 # Transitions are ignored, because Clips have the full frame
                 # range.
-                if isinstance(clip, otio.schema.transition.Transition):
+                if isinstance(clip, otio.schema.Transition):
                     continue
 
                 # basic unique asset name
