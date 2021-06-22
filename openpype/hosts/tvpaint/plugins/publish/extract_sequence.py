@@ -56,6 +56,8 @@ class ExtractSequence(pyblish.api.Extractor):
         handle_start = instance.context.data["handleStart"]
         handle_end = instance.context.data["handleEnd"]
 
+        scene_bg_color = instance.context.data["sceneBgColor"]
+
         # --- Fallbacks ----------------------------------------------------
         # This is required if validations of ranges are ignored.
         # - all of this code won't change processing if range to render
@@ -123,7 +125,8 @@ class ExtractSequence(pyblish.api.Extractor):
 
         if instance.data["family"] == "review":
             output_filenames, thumbnail_fullpath = self.render_review(
-                filename_template, output_dir, mark_in, mark_out
+                filename_template, output_dir, mark_in, mark_out,
+                scene_bg_color
             )
         else:
             # Render output
@@ -244,7 +247,9 @@ class ExtractSequence(pyblish.api.Extractor):
             for path in repre_filepaths
         ]
 
-    def render_review(self, filename_template, output_dir, mark_in, mark_out):
+    def render_review(
+        self, filename_template, output_dir, mark_in, mark_out, scene_bg_color
+    ):
         """ Export images from TVPaint using `tv_savesequence` command.
 
         Args:
@@ -255,6 +260,8 @@ class ExtractSequence(pyblish.api.Extractor):
             output_dir (str): Directory where files will be stored.
             mark_in (int): Starting frame index from which export will begin.
             mark_out (int): On which frame index export will end.
+            scene_bg_color (list): Bg color set in scene. Result of george
+                script command `tv_background`.
 
         Retruns:
             tuple: With 2 items first is list of filenames second is path to
