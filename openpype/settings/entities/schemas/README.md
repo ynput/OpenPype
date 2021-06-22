@@ -276,7 +276,7 @@
 - enumeration of available hosts
 - multiselection can be allowed with setting key `"multiselection"` to `True` (Default: `False`)
 - it is possible to add empty value (represented with empty string) with setting `"use_empty_value"` to `True` (Default: `False`)
-- to modify label of empty value set `"empty_label"` key with your label (Default: `< without host >`)
+- it is possible to set `"custom_labels"` for host names where key `""` is empty value (Default: `{}`)
 ```
 {
     "key": "host",
@@ -284,7 +284,10 @@
     "type": "hosts-enum",
     "multiselection": false,
     "use_empty_value": true,
-    "empty_label": "N/A"
+    "custom_labels": {
+        "": "N/A",
+        "nuke": "Nuke"
+    }
 }
 ```
 

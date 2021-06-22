@@ -124,34 +124,38 @@ class HostsEnumEntity(BaseEnumEntity):
         self.use_empty_value = self.schema_data.get(
             "use_empty_value", not self.multiselection
         )
-        self.empty_label = (
-            self.schema_data.get("empty_label") or "< without host >"
-        )
+        custom_labels = self.schema_data.get("custom_labels") or {}
+
+        host_names = [
+            "aftereffects",
+            "blender",
+            "celaction",
+            "fusion",
+            "harmony",
+            "hiero",
+            "houdini",
+            "maya",
+            "nuke",
+            "photoshop",
+            "resolve",
+            "tvpaint",
+            "unreal"
+        ]
+        if self.use_empty_value:
+            host_names.insert(0, "")
+            # Add default label for empty value if not available
+            if "" not in custom_labels:
+                custom_labels[""] = "< without host >"
 
         # These are hardcoded there is not list of available host in OpenPype
-        self.enum_items = [
-            {"aftereffects": "aftereffects"},
-            {"blender": "blender"},
-            {"celaction": "celaction"},
-            {"fusion": "fusion"},
-            {"harmony": "harmony"},
-            {"hiero": "hiero"},
-            {"houdini": "houdini"},
-            {"maya": "maya"},
-            {"nuke": "nuke"},
-            {"photoshop": "photoshop"},
-            {"resolve": "resolve"},
-            {"tvpaint": "tvpaint"},
-            {"unreal": "unreal"}
-        ]
-
-        if self.use_empty_value:
-            self.enum_items.insert(0, {"": self.empty_label})
-
+        enum_items = []
         valid_keys = set()
-        for item in self.enum_items or []:
-            valid_keys.add(tuple(item.keys())[0])
+        for key in host_names:
+            label = custom_labels.get(key, key)
+            valid_keys.add(key)
+            enum_items.append({key, label})
 
+        self.enum_items = enum_items
         self.valid_keys = valid_keys
 
         if self.multiselection:
