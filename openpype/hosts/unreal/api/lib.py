@@ -7,6 +7,7 @@ import json
 from distutils import dir_util
 import subprocess
 import re
+from pathlib import Path
 from collections import OrderedDict
 from openpype.api import get_project_settings
 
@@ -147,8 +148,8 @@ def _parse_launcher_locations(install_json_path: str) -> dict:
 
 def create_unreal_project(project_name: str,
                           ue_version: str,
-                          pr_dir: str,
-                          engine_path: str,
+                          pr_dir: Path,
+                          engine_path: Path,
                           dev_mode: bool = False,
                           env: dict = None) -> None:
     """This will create `.uproject` file at specified location.
@@ -162,8 +163,8 @@ def create_unreal_project(project_name: str,
     Args:
         project_name (str): Name of the project.
         ue_version (str): Unreal engine version (like 4.23).
-        pr_dir (str): Path to directory where project will be created.
-        engine_path (str): Path to Unreal Engine installation.
+        pr_dir (Path): Path to directory where project will be created.
+        engine_path (Path): Path to Unreal Engine installation.
         dev_mode (bool, optional): Flag to trigger C++ style Unreal project
             needing Visual Studio and other tools to compile plugins from
             sources. This will trigger automatically if `Binaries`
@@ -192,19 +193,20 @@ def create_unreal_project(project_name: str,
     # created in different UE4 version. When user convert such project
     # to his UE4 version, Engine ID is replaced in uproject file. If some
     # other user tries to open it, it will present him with similar error.
+    ue4_modules = Path()
     if platform.system().lower() == "windows":
-        ue4_modules = os.path.join(engine_path, "Engine", "Binaries",
-                                   "Win64", "UE4Editor.modules")
+        ue4_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
+                                        "Win64", "UE4Editor.modules"))
 
     if platform.system().lower() == "linux":
-        ue4_modules = os.path.join(engine_path, "Engine", "Binaries",
-                                   "Linux", "UE4Editor.modules")
+        ue4_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
+                                        "Linux", "UE4Editor.modules"))
 
     if platform.system().lower() == "darwin":
-        ue4_modules = os.path.join(engine_path, "Engine", "Binaries",
-                                   "Mac", "UE4Editor.modules")
+        ue4_modules = Path(os.path.join(engine_path, "Engine", "Binaries",
+                                        "Mac", "UE4Editor.modules"))
 
-    if os.path.exists(ue4_modules):
+    if ue4_modules.exists():
         print("--- Loading Engine ID from modules file ...")
         with open(ue4_modules, "r") as mp:
             loaded_modules = json.load(mp)
@@ -217,16 +219,16 @@ def create_unreal_project(project_name: str,
 
     if os.path.isdir(env.get("AVALON_UNREAL_PLUGIN", "")):
         # copy plugin to correct path under project
-        plugins_path = os.path.join(pr_dir, "Plugins")
-        avalon_plugin_path = os.path.join(plugins_path, "Avalon")
-        if not os.path.isdir(avalon_plugin_path):
-            os.makedirs(avalon_plugin_path, exist_ok=True)
+        plugins_path = pr_dir / "Plugins"
+        avalon_plugin_path = plugins_path / "Avalon"
+        if not avalon_plugin_path.is_dir():
+            avalon_plugin_path.mkdir(parents=True, exist_ok=True)
             dir_util._path_created = {}
             dir_util.copy_tree(os.environ.get("AVALON_UNREAL_PLUGIN"),
-                               avalon_plugin_path)
+                               avalon_plugin_path.as_posix())
 
-            if (not os.path.isdir(os.path.join(avalon_plugin_path, "Binaries"))
-                    or not os.path.join(avalon_plugin_path, "Intermediate")):
+            if not (avalon_plugin_path / "Binaries").is_dir() \
+                    or not (avalon_plugin_path / "Intermediate").is_dir():
                 dev_mode = True
 
     # data for project file
@@ -247,14 +249,14 @@ def create_unreal_project(project_name: str,
         # support offline installation.
         # Otherwise clone UnrealEnginePython to Plugins directory
         # https://github.com/20tab/UnrealEnginePython.git
-        uep_path = os.path.join(plugins_path, "UnrealEnginePython")
+        uep_path = plugins_path / "UnrealEnginePython"
         if env.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
 
             os.makedirs(uep_path, exist_ok=True)
             dir_util._path_created = {}
             dir_util.copy_tree(
                 env.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
-                uep_path)
+                uep_path.as_posix())
         else:
             # WARNING: this will trigger dev_mode, because we need to compile
             # this plugin.
@@ -262,13 +264,13 @@ def create_unreal_project(project_name: str,
             import git
             git.Repo.clone_from(
                 "https://github.com/20tab/UnrealEnginePython.git",
-                uep_path)
+                uep_path.as_posix())
 
         data["Plugins"].append(
             {"Name": "UnrealEnginePython", "Enabled": True})
 
-        if (not os.path.isdir(os.path.join(uep_path, "Binaries"))
-                or not os.path.join(uep_path, "Intermediate")):
+        if not (uep_path / "Binaries").is_dir() \
+                or not (uep_path / "Intermediate").is_dir():
             dev_mode = True
 
     if dev_mode or preset["dev_mode"]:
@@ -287,10 +289,8 @@ def create_unreal_project(project_name: str,
             # now we need to fix python path in:
             # `UnrealEnginePython.Build.cs`
             # to point to our python
-            with open(os.path.join(
-                    uep_path, "Source",
-                    "UnrealEnginePython",
-                    "UnrealEnginePython.Build.cs"), mode="r") as f:
+            with open(uep_path / "Source" / "UnrealEnginePython" /
+                      "UnrealEnginePython.Build.cs", mode="r") as f:
                 build_file = f.read()
 
             fix = build_file.replace(
@@ -298,14 +298,12 @@ def create_unreal_project(project_name: str,
                 'private string pythonHome = "{}";'.format(
                     sys.base_prefix.replace("\\", "/")))
 
-            with open(os.path.join(
-                    uep_path, "Source",
-                    "UnrealEnginePython",
-                    "UnrealEnginePython.Build.cs"), mode="w") as f:
+            with open(uep_path / "Source" / "UnrealEnginePython" /
+                      "UnrealEnginePython.Build.cs", mode="w") as f:
                 f.write(fix)
 
     # write project file
-    project_file = os.path.join(pr_dir, "{}.uproject".format(project_name))
+    project_file = pr_dir / f"{project_name}.uproject"
     with open(project_file, mode="w") as pf:
         json.dump(data, pf, indent=4)
 
@@ -316,44 +314,43 @@ def create_unreal_project(project_name: str,
     if int(ue_version.split(".")[0]) == 4 and \
             int(ue_version.split(".")[1]) < 25:
         if platform.system().lower() == "windows":
-            python_path = os.path.join(engine_path, "Engine", "Binaries",
-                                       "ThirdParty", "Python", "Win64",
-                                       "python.exe")
+            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
+                                         "Python/Win64/python.exe")
 
         if platform.system().lower() == "linux":
-            python_path = os.path.join(engine_path, "Engine", "Binaries",
-                                       "ThirdParty", "Python", "Linux",
-                                       "bin", "python")
+            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
+                                         "Python/Linux/bin/python")
 
         if platform.system().lower() == "darwin":
-            python_path = os.path.join(engine_path, "Engine", "Binaries",
-                                       "ThirdParty", "Python", "Mac",
-                                       "bin", "python")
+            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
+                                         "Python/Mac/bin/python")
 
-        if python_path:
-            subprocess.run([python_path, "-m",
+        if python_path.exists():
+            subprocess.run([python_path.as_posix(), "-m",
                             "pip", "install", "pyside"])
         else:
             raise NotImplementedError("Unsupported platform")
     else:
         # install PySide2 inside newer engines
         if platform.system().lower() == "windows":
-            python_path = os.path.join(engine_path, "Engine", "Binaries",
-                                       "ThirdParty", "Python3", "Win64",
-                                       "python3.exe")
+            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
+                                         "Python3/Win64/pythonw.exe")
 
         if platform.system().lower() == "linux":
-            python_path = os.path.join(engine_path, "Engine", "Binaries",
-                                       "ThirdParty", "Python3", "Linux",
-                                       "bin", "python3")
+            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
+                                         "Python3/Linux" /
+                           "bin" / "python3")
 
         if platform.system().lower() == "darwin":
-            python_path = os.path.join(engine_path, "Engine", "Binaries",
-                                       "ThirdParty", "Python3", "Mac",
-                                       "bin", "python3")
+            python_path = (engine_path / "Engine" / "Binaries" /
+                           "ThirdParty" / "Python3" / "Mac" /
+                           "bin" / "python3")
 
         if python_path:
-            subprocess.run([python_path, "-m",
+            if not python_path.exists():
+                raise RuntimeError(
+                    f"Unreal Python not found at {python_path}")
+            subprocess.run([python_path.as_posix(), "-m",
                             "pip", "install", "pyside2"])
         else:
             raise NotImplementedError("Unsupported platform")
@@ -362,7 +359,7 @@ def create_unreal_project(project_name: str,
         _prepare_cpp_project(project_file, engine_path)
 
 
-def _prepare_cpp_project(project_file: str, engine_path: str) -> None:
+def _prepare_cpp_project(project_file: Path, engine_path: Path) -> None:
     """Prepare CPP Unreal Project.
 
     This function will add source files needed for project to be
@@ -379,13 +376,13 @@ def _prepare_cpp_project(project_file: str, engine_path: str) -> None:
         engine_path (str): Path to unreal engine associated with project.
 
     """
-    project_name = os.path.splitext(os.path.basename(project_file))[0]
-    project_dir = os.path.dirname(project_file)
-    targets_dir = os.path.join(project_dir, "Source")
-    sources_dir = os.path.join(targets_dir, project_name)
+    project_name = project_file.stem
+    project_dir = project_file.parent
+    targets_dir = project_dir / "Source"
+    sources_dir = targets_dir / project_name
 
-    os.makedirs(sources_dir, exist_ok=True)
-    os.makedirs(os.path.join(project_dir, "Content"), exist_ok=True)
+    sources_dir.mkdir(parents=True, exist_ok=True)
+    (project_dir / "Content").mkdir(parents=True, exist_ok=True)
 
     module_target = '''
 using UnrealBuildTool;
@@ -460,63 +457,59 @@ class {1}_API A{0}GameModeBase : public AGameModeBase
 }};
 '''.format(project_name, project_name.upper())
 
-    with open(os.path.join(
-            targets_dir, f"{project_name}.Target.cs"), mode="w") as f:
+    with open(targets_dir / f"{project_name}.Target.cs", mode="w") as f:
         f.write(module_target)
 
-    with open(os.path.join(
-            targets_dir, f"{project_name}Editor.Target.cs"), mode="w") as f:
+    with open(targets_dir / f"{project_name}Editor.Target.cs", mode="w") as f:
         f.write(editor_module_target)
 
-    with open(os.path.join(
-            sources_dir, f"{project_name}.Build.cs"), mode="w") as f:
+    with open(sources_dir / f"{project_name}.Build.cs", mode="w") as f:
         f.write(module_build)
 
-    with open(os.path.join(
-            sources_dir, f"{project_name}.cpp"), mode="w") as f:
+    with open(sources_dir / f"{project_name}.cpp", mode="w") as f:
         f.write(module_cpp)
 
-    with open(os.path.join(
-            sources_dir, f"{project_name}.h"), mode="w") as f:
+    with open(sources_dir / f"{project_name}.h", mode="w") as f:
         f.write(module_header)
 
-    with open(os.path.join(
-            sources_dir, f"{project_name}GameModeBase.cpp"), mode="w") as f:
+    with open(sources_dir / f"{project_name}GameModeBase.cpp", mode="w") as f:
         f.write(game_mode_cpp)
 
-    with open(os.path.join(
-            sources_dir, f"{project_name}GameModeBase.h"), mode="w") as f:
+    with open(sources_dir / f"{project_name}GameModeBase.h", mode="w") as f:
         f.write(game_mode_h)
 
-    u_build_tool = (f"{engine_path}/Engine/Binaries/DotNET/"
-                    "UnrealBuildTool.exe")
+    u_build_tool = Path(
+        engine_path / "Engine/Binaries/DotNET/UnrealBuildTool.exe")
     u_header_tool = None
 
+    arch = "Win64"
     if platform.system().lower() == "windows":
-        u_header_tool = (f"{engine_path}/Engine/Binaries/Win64/"
-                         f"UnrealHeaderTool.exe")
+        arch = "Win64"
+        u_header_tool = Path(
+            engine_path / "Engine/Binaries/Win64/UnrealHeaderTool.exe")
     elif platform.system().lower() == "linux":
-        u_header_tool = (f"{engine_path}/Engine/Binaries/Linux/"
-                         f"UnrealHeaderTool")
+        arch = "Linux"
+        u_header_tool = Path(
+            engine_path / "Engine/Binaries/Linux/UnrealHeaderTool")
     elif platform.system().lower() == "darwin":
         # we need to test this out
-        u_header_tool = (f"{engine_path}/Engine/Binaries/Mac/"
-                         f"UnrealHeaderTool")
+        arch = "Mac"
+        u_header_tool = Path(
+            engine_path / "Engine/Binaries/Mac/UnrealHeaderTool")
 
     if not u_header_tool:
         raise NotImplementedError("Unsupported platform")
 
-    u_build_tool = u_build_tool.replace("\\", "/")
-    u_header_tool = u_header_tool.replace("\\", "/")
-
-    command1 = [u_build_tool, "-projectfiles", f"-project={project_file}",
-                "-progress"]
+    command1 = [u_build_tool.as_posix(), "-projectfiles",
+                f"-project={project_file}", "-progress"]
 
     subprocess.run(command1)
 
-    command2 = [u_build_tool, f"-ModuleWithSuffix={project_name},3555"
-                "Win64", "Development", "-TargetType=Editor"
-                f'-Project="{project_file}"', f'"{project_file}"'
+    command2 = [u_build_tool.as_posix(),
+                f"-ModuleWithSuffix={project_name},3555", arch,
+                "Development", "-TargetType=Editor",
+                f'-Project={project_file}',
+                f'{project_file}',
                 "-IgnoreJunk"]
 
     subprocess.run(command2)

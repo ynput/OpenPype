@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 """Hook to launch Unreal and prepare projects."""
 import os
+from pathlib import Path
+import platform
 
 from openpype.lib import (
     PreLaunchHook,
@@ -50,7 +52,7 @@ class UnrealPrelaunchHook(PreLaunchHook):
             ))
             unreal_project_name = f"P{unreal_project_name}"
 
-        project_path = os.path.join(workdir, unreal_project_name)
+        project_path = Path(os.path.join(workdir, unreal_project_name))
 
         self.log.info((
             f"{self.signature} requested UE4 version: "
@@ -73,13 +75,21 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 f"detected [ {engine_version} ]"
             ))
 
-        os.makedirs(project_path, exist_ok=True)
+        ue4_path = Path(detected[engine_version]) / "Engine/Binaries"
+        if platform.system().lower() == "windows":
+            ue4_path = ue4_path / "Win64/UE4Editor.exe"
 
-        project_file = os.path.join(
-            project_path,
-            f"{unreal_project_name}.uproject"
-        )
-        if not os.path.isfile(project_file):
+        elif platform.system().lower() == "linux":
+            ue4_path = ue4_path / "Linux/UE4Editor"
+
+        elif platform.system().lower() == "darwin":
+            ue4_path = ue4_path / "Mac/UE4Editor"
+
+        self.launch_context.launch_args.append(ue4_path.as_posix())
+        project_path.mkdir(parents=True, exist_ok=True)
+
+        project_file = project_path / f"{unreal_project_name}.uproject"
+        if not project_file.is_file():
             engine_path = detected[engine_version]
             self.log.info((
                 f"{self.signature} creating unreal "
@@ -95,8 +105,9 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 unreal_project_name,
                 engine_version,
                 project_path,
-                engine_path=engine_path
+                engine_path=Path(engine_path)
             )
 
         # Append project file to launch arguments
-        self.launch_context.launch_args.append(f"\"{project_file}\"")
+        self.launch_context.launch_args.append(
+            f"\"{project_file.as_posix()}\"")
