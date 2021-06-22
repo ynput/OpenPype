@@ -300,10 +300,18 @@ class ExtractSequence(pyblish.api.Extractor):
             # - just making sure
             source_img = Image.open(first_frame_filepath)
             if source_img.mode.lower() == "rgba":
-                bg_image = Image.new("RGBA", source_img.size, (255, 255, 255))
+                bg_color = self._get_thumbnail_bg_color()
+                self.log.debug("Adding thumbnail background color {}.".format(
+                    " ".join(bg_color)
+                ))
+                bg_image = Image.new("RGBA", source_img.size, bg_color)
                 thumbnail_obj = Image.alpha_composite(bg_image, source_img)
                 thumbnail_obj.convert("RGB").save(thumbnail_filepath)
             else:
+                self.log.info((
+                    "Source for thumbnail has mode \"{}\" (Expected: RGBA)."
+                    " Can't use thubmanail background color."
+                ).format(source_img.mode))
                 source_img.save(thumbnail_filepath)
 
         return output_filenames, thumbnail_filepath
@@ -403,13 +411,31 @@ class ExtractSequence(pyblish.api.Extractor):
             # Composite background only on rgba images
             # - just making sure
             if source_img.mode.lower() == "rgba":
-                bg_image = Image.new("RGBA", source_img.size, (255, 255, 255))
+                bg_color = self._get_thumbnail_bg_color()
+                self.log.debug("Adding thumbnail background color {}.".format(
+                    " ".join(bg_color)
+                ))
+                bg_image = Image.new("RGBA", source_img.size, bg_color)
                 thumbnail_obj = Image.alpha_composite(bg_image, source_img)
                 thumbnail_obj.convert("RGB").save(thumbnail_filepath)
+
             else:
+                self.log.info((
+                    "Source for thumbnail has mode \"{}\" (Expected: RGBA)."
+                    " Can't use thubmanail background color."
+                ).format(source_img.mode))
                 source_img.save(thumbnail_filepath)
 
         return output_filenames, thumbnail_filepath
+
+    def _get_thumbnail_bg_color(self):
+        red = green = blue = 255
+        if self.thumbnail_bg:
+            if len(self.thumbnail_bg) == 4:
+                red, green, blue, _ = self.thumbnail_bg
+            elif len(self.thumbnail_bg) == 3:
+                red, green, blue = self.thumbnail_bg
+        return (red, green, blue)
 
     def _render_layer(
         self,
