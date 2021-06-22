@@ -33,6 +33,9 @@ if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
 } else {
     Write-Host "OK" -ForegroundColor Green
 }
+Write-Host ">>> " -NoNewline -ForegroundColor Green
+Write-Host "Installing PySide2 ... "
+& "$($env:POETRY_HOME)\bin\poetry.bat" run python -m pip install PySide2 -t "$($openpype_root)\vendor\python\PySide2"
 
 & "$($env:POETRY_HOME)\bin\poetry" run python "$($openpype_root)\tools\fetch_thirdparty_libs.py"
 Set-Location -Path $current_dir
