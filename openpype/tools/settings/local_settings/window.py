@@ -188,8 +188,12 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         save_btn.clicked.connect(self._on_save_clicked)
         reset_btn.clicked.connect(self._on_reset_clicked)
 
-        self.settings_widget = None
-        self.scroll_widget = scroll_widget
+        # Do not create local settings widget in init phase as it's using
+        #   settings objects that must be OK to be able create this widget
+        #   - we want to show dialog if anything goes wrong
+        #   - without reseting nothing is shown
+        self._settings_widget = None
+        self._scroll_widget = scroll_widget
         self.reset_btn = reset_btn
         self.save_btn = save_btn
 
@@ -204,12 +208,15 @@ class LocalSettingsWindow(QtWidgets.QWidget):
 
         error_msg = None
         try:
-            if self.settings_widget is None:
-                self.settings_widget = LocalSettingsWidget(self.scroll_widget)
-                self.scroll_widget.setWidget(self.settings_widget)
+            # Create settings widget if is not created yet
+            if self._settings_widget is None:
+                self._settings_widget = LocalSettingsWidget(
+                    self._scroll_widget
+                )
+                self._scroll_widget.setWidget(self._settings_widget)
 
             value = get_local_settings()
-            self.settings_widget.update_local_settings(value)
+            self._settings_widget.update_local_settings(value)
 
         except Exception as exc:
             error_msg = str(exc)
@@ -218,8 +225,8 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         # Enable/Disable save button if crashed or not
         self.save_btn.setEnabled(not crashed)
         # Show/Hide settings widget if crashed or not
-        if self.settings_widget:
-            self.settings_widget.setVisible(not crashed)
+        if self._settings_widget:
+            self._settings_widget.setVisible(not crashed)
 
         if not crashed:
             return
@@ -245,6 +252,6 @@ class LocalSettingsWindow(QtWidgets.QWidget):
         self.reset()
 
     def _on_save_clicked(self):
-        value = self.settings_widget.settings_value()
+        value = self._settings_widget.settings_value()
         save_local_settings(value)
         self.reset()
