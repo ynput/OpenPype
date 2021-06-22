@@ -66,15 +66,7 @@ class VersionToTaskStatus(BaseEvent):
             ))
             return
 
-        _status_mapping = event_settings["mapping"]
-        if not _status_mapping:
-            self.log.debug(
-                "Project \"{}\" does not have set mapping for {}".format(
-                    project_name, self.__class__.__name__
-                )
-            )
-            return
-
+        _status_mapping = event_settings["mapping"] or {}
         status_mapping = {
             key.lower(): value
             for key, value in _status_mapping.items()
