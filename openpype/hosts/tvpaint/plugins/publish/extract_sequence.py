@@ -1,5 +1,6 @@
 import os
 import shutil
+import copy
 import tempfile
 
 import pyblish.api
@@ -273,7 +274,11 @@ class ExtractSequence(pyblish.api.Extractor):
             filename_template.format(frame=mark_in)
         )
 
+        bg_color = self._get_review_bg_color()
+
         george_script_lines = [
+            # Change bg color to color from settings
+            "tv_background \"color\" {} {} {}".format(*bg_color),
             "tv_SaveMode \"PNG\"",
             "export_path = \"{}\"".format(
                 first_frame_filepath.replace("\\", "/")
@@ -282,6 +287,18 @@ class ExtractSequence(pyblish.api.Extractor):
                 mark_in, mark_out
             )
         ]
+        if scene_bg_color:
+            # Change bg color back to previous scene bg color
+            _scene_bg_color = copy.deepcopy(scene_bg_color)
+            bg_type = _scene_bg_color.pop(0)
+            orig_color_command = [
+                "tv_background",
+                "\"{}\"".format(bg_type)
+            ]
+            orig_color_command.extend(_scene_bg_color)
+
+            george_script_lines.append(" ".join(orig_color_command))
+
         lib.execute_george_through_file("\n".join(george_script_lines))
 
         first_frame_filepath = None
