@@ -76,12 +76,11 @@ class CustomCombo(QtWidgets.QWidget):
 
         toolbutton.setMenu(toolmenu)
         toolbutton.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
+        toolbutton.setProperty("popup_mode", "1")
 
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(toolbutton)
-
-        self.setLayout(layout)
 
         toolmenu.selection_changed.connect(self.selection_changed)
 
