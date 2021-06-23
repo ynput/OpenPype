@@ -1,11 +1,12 @@
 # Changelog
 
-## [3.2.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.2.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.3...HEAD)
 
 **🚀 Enhancements**
 
+- Validate containers settings [\#1736](https://github.com/pypeclub/OpenPype/pull/1736)
 - Autoupdate launcher [\#1725](https://github.com/pypeclub/OpenPype/pull/1725)
 - Subset template and TVPaint subset template docs [\#1717](https://github.com/pypeclub/OpenPype/pull/1717)
 - Overscan color extract review [\#1701](https://github.com/pypeclub/OpenPype/pull/1701)
@@ -14,10 +15,14 @@
 
 **🐛 Bug fixes**
 
+- Local settings UI crash on missing defaults [\#1737](https://github.com/pypeclub/OpenPype/pull/1737)
+- Ftrack missing custom attribute message [\#1734](https://github.com/pypeclub/OpenPype/pull/1734)
+- Launcher project changes [\#1733](https://github.com/pypeclub/OpenPype/pull/1733)
 - TVPaint use layer name for default variant [\#1724](https://github.com/pypeclub/OpenPype/pull/1724)
 - Default subset template for TVPaint review and workfile families [\#1716](https://github.com/pypeclub/OpenPype/pull/1716)
 - Maya: Extract review hotfix [\#1714](https://github.com/pypeclub/OpenPype/pull/1714)
 - Settings: Imageio improving granularity [\#1711](https://github.com/pypeclub/OpenPype/pull/1711)
+- Application without executables [\#1679](https://github.com/pypeclub/OpenPype/pull/1679)
 
 ## [2.18.3](https://github.com/pypeclub/OpenPype/tree/2.18.3) (2021-06-18)
 
@@ -25,6 +30,7 @@
 
 **🐛 Bug fixes**
 
+- Nuke: broken publishing rendered frames [\#1707](https://github.com/pypeclub/OpenPype/pull/1707)
 - Remove publish highlight icon in AE [\#1664](https://github.com/pypeclub/OpenPype/pull/1664)
 
 **Merged pull requests:**
@@ -74,7 +80,6 @@
 
 **🐛 Bug fixes**
 
-- Nuke: broken publishing rendered frames [\#1707](https://github.com/pypeclub/OpenPype/pull/1707)
 - Standalone publisher Thumbnail export args [\#1705](https://github.com/pypeclub/OpenPype/pull/1705)
 - Bad zip can break OpenPype start [\#1691](https://github.com/pypeclub/OpenPype/pull/1691)
 - Hiero: published whole edit mov [\#1687](https://github.com/pypeclub/OpenPype/pull/1687)
