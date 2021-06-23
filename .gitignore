@@ -100,5 +100,3 @@ website/.docusaurus
 
 .poetry/
 .python-version
-
-vendor/python/PySide2
