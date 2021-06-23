@@ -160,6 +160,20 @@ class BaseCreator:
         """
         return []
 
+    def convert_family_attribute_values(self, attribute_values):
+        """Convert values loaded from workfile metadata.
+
+        If passed values match current creator version just return the value
+        back. Update of changes in workfile must not happen in this method.
+
+        Args:
+            attribute_values(dict): Values from instance metadata.
+
+        Returns:
+            dict: Converted values.
+        """
+        return attribute_values
+
 
 class Creator(BaseCreator):
     """"""
