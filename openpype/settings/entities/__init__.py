@@ -101,6 +101,7 @@ from .color_entity import ColorEntity
 from .enum_entity import (
     BaseEnumEntity,
     EnumEntity,
+    HostsEnumEntity,
     AppsEnumEntity,
     ToolsEnumEntity,
     TaskTypeEnumEntity,
@@ -153,6 +154,7 @@ __all__ = (
 
     "BaseEnumEntity",
     "EnumEntity",
+    "HostsEnumEntity",
     "AppsEnumEntity",
     "ToolsEnumEntity",
     "TaskTypeEnumEntity",
