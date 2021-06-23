@@ -70,12 +70,13 @@ class BaseCreator:
     # Abstract attributes
     # Family that plugin represents
     family = None
+    enabled = True
 
     # GUI Purposes
     # - default_variants may not be used if `get_default_variants` is overriden
     default_variants = []
 
-    def __init__(self, headless=False):
+    def __init__(self, system_settings, project_settings, headless=False):
         # Creator is running in headless mode (without UI elemets)
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
