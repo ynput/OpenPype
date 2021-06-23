@@ -124,6 +124,10 @@ else:
     paths.append(frozen_libs)
     os.environ["PYTHONPATH"] = os.pathsep.join(paths)
 
+# Vendored python modules that must not be in PYTHONPATH environment but
+#   are required for OpenPype processes
+vendor_python_path = os.path.join(OPENPYPE_ROOT, "vendor", "python")
+sys.path.insert(0, vendor_python_path)
 
 import blessed  # noqa: E402
 import certifi  # noqa: E402
