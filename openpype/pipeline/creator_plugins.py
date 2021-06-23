@@ -193,3 +193,10 @@ class Creator(BaseCreator):
                 short description.
         """
         return self.description
+
+
+class AutoCreator(BaseCreator):
+    """Creator which is automatically triggered without user interaction.
+
+    Can be used e.g. for `workfile`.
+    """
