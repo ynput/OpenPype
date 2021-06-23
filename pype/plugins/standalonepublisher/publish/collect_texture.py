@@ -82,19 +82,19 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     resource_files[workfile_subset].append(item)
 
                 if ext in self.texture_extensions:
-                    c_space = self._get_color_space(repre["files"],
+                    c_space = self._get_color_space(repre["files"][0],
                                                     self.color_space)
                     subset = "texturesMain_{}".format(c_space)
 
                     asset_build, version = \
-                        self._parse_asset_build(repre["files"],
+                        self._parse_asset_build(repre["files"][0],
                                                 self.version_regex)
 
                     if not representations.get(subset):
                         representations[subset] = []
                     representations[subset].append(repre)
 
-                    udim = self._parse_udim(repre["files"], self.udim_regex)
+                    udim = self._parse_udim(repre["files"][0], self.udim_regex)
 
                     if not version_data.get(subset):
                         version_data[subset] = []
@@ -154,7 +154,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
             repre = representations.get(subset)[0]
             new_instance.context.data["currentFile"] = os.path.join(
-                repre["stagingDir"], repre["files"])
+                repre["stagingDir"], repre["files"][0])
 
             ver_data = version_data.get(subset)
             if ver_data:
