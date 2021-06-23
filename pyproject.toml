@@ -101,6 +101,12 @@ build-backend = "poetry.core.masonry.api"
 
 [openpype]
 
+[openpype.pyside2]
+# note: in here we can use pip version specifiers as this is installed with pip until
+# Poetry will support custom location (-t flag for pip)
+# https://pip.pypa.io/en/stable/cli/pip_install/#requirement-specifiers
+version = "==5.15.2"
+
 [openpype.thirdparty.ffmpeg.windows]
 url = "https://distribute.openpype.io/thirdparty/ffmpeg-4.4-windows.zip"
 hash = "dd51ba29d64ee238e7c4c3c7301b19754c3f0ee2e2a729c20a0e2789e72db925"

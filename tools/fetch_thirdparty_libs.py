@@ -20,6 +20,7 @@ import hashlib
 import tarfile
 import zipfile
 import time
+import subprocess
 
 
 term = blessed.Terminal()
@@ -65,11 +66,27 @@ def _print(msg: str, message_type: int = 0) -> None:
 
     print("{}{}".format(header, msg))
 
-
-_print("Processing third-party dependencies ...")
 start_time = time.time_ns()
 openpype_root = Path(os.path.dirname(__file__)).parent
 pyproject = toml.load(openpype_root / "pyproject.toml")
+_print("Handling PySide2 Qt framework ...")
+pyside2_version = None
+try:
+    pyside2_version = pyproject["openpype"]["pyside2"]["version"]
+except AttributeError:
+    _print("No PySide2 version was specified, using latest available.", 2)
+
+pyside2_arg = "PySide2" if pyside2_version else "PySide2{}".format(pyside2_version)  # noqa: E501
+try:
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "--upgrade",
+         pyside2_arg, "-t", str(openpype_root / "vendor/python")], check=True)
+except subprocess.CalledProcessError as e:
+    _print("Error during PySide2 installation.", 1)
+    _print(str(e), 1)
+    sys.exit(1)
+
+_print("Processing third-party dependencies ...")
 platform_name = platform.system().lower()
 
 try:
