@@ -95,7 +95,7 @@ main () {
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Installing PySide2 ..."
-  "$POETRY_HOME/bin/poetry" run python -m pip install PySide2 -t "$openpype_root/vendor/python/PySide2"
+  "$POETRY_HOME/bin/poetry" run python -m pip install PySide2 -t "$openpype_root/vendor/python"
 
   echo -e "${BIGreen}>>>${RST} Running Pype tool ..."
   "$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/fetch_thirdparty_libs.py"
