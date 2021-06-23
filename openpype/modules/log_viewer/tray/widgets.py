@@ -77,10 +77,6 @@ class CustomCombo(QtWidgets.QWidget):
         toolbutton.setMenu(toolmenu)
         toolbutton.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
 
-        # Fake popupMenu property as PySide2 does not store it's value as
-        #   integer but as enum object
-        toolbutton.setProperty("popup_mode", "1")
-
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(toolbutton)
