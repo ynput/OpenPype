@@ -2,8 +2,8 @@ import subprocess
 import os
 import click
 
+
 @click.command()
-@click.option("--mongo-uri", help="mongo db uri", default=None)
 @click.option("--mongo-db-name", help="mongo db name", default=None)
 @click.option(
     "--collections",
@@ -13,16 +13,19 @@ import click
               help="Folder where should be saved all json files",
               default=None,
               type=click.Path())
-def backup(mongo_uri, mongo_db_name, collections, export_dir):
-    # input argument > mongo db url > mongodb+srv://user:password@mongodb.net
-    # input argument > mongo db name > avalon
-    # input argument > collections "project01|project02" (| slice to list)
-    # input argument > export_dir
+def backup(mongo_db_name, collections, export_dir):
+    """Backup OpenPype mongo db data
+
+    Args:
+        mongo_db_name (str): name of openpype database
+        collections (str): names of collections separated by `|` (no spaces)
+        export_dir (str): path pointing to directory of export
+    """
+    mongo_uri = os.getenv("OPENPYPE_MONGO")
+
     assert any((mongo_uri, mongo_db_name, collections,
                export_dir)), "missing input arguments"
 
-    # mongodb://<user>:<password>@<server>:<port>/<database>?authsource=admin
-    # create cmd
     if "|" in collections:
         _collections = [c for c in collections.split("|")]
     elif isinstance(collections, list):
@@ -54,6 +57,7 @@ def backup(mongo_uri, mongo_db_name, collections, export_dir):
             print(errors)
         else:
             print(output)
+
 
 if __name__ == '__main__':
     backup()
