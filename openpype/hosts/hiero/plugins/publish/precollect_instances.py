@@ -46,12 +46,6 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             source_clip = track_item.source()
             self.log.debug("clip_name: {}".format(clip_name))
 
-            # get clips subtracks and anotations
-            annotations = self.clip_annotations(source_clip)
-            subtracks = self.clip_subtrack(track_item)
-            self.log.debug("Annotations: {}".format(annotations))
-            self.log.debug(">> Subtracks: {}".format(subtracks))
-
             # get openpype tag data
             tag_data = phiero.get_track_item_pype_data(track_item)
             self.log.debug("__ tag_data: {}".format(pformat(tag_data)))
@@ -61,6 +55,12 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
             if tag_data.get("id") != "pyblish.avalon.instance":
                 continue
+
+            # get clips subtracks and anotations
+            annotations = self.clip_annotations(source_clip)
+            subtracks = self.clip_subtrack(track_item)
+            self.log.debug("Annotations: {}".format(annotations))
+            self.log.debug(">> Subtracks: {}".format(subtracks))
 
             # solve handles length
             tag_data["handleStart"] = min(
