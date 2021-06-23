@@ -76,6 +76,7 @@ class CustomCombo(QtWidgets.QWidget):
 
         toolbutton.setMenu(toolmenu)
         toolbutton.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
+        toolbutton.setProperty("popup_mode", "1")
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
