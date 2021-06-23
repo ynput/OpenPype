@@ -13,16 +13,8 @@ class OpenPypePyblishPluginMixin:
     _state_change_callbacks = []
 
     @classmethod
-    def get_family_attribute_defs(cls, families):
+    def get_family_attribute_defs(cls):
         """Publish attribute definitions per family.
-
-        Questions:
-        Allow to pass multiple families at one time?
-        - If yes return intersection of all attributes for all families or all attributes or attributes by family?
-        - "attributes by family" seems most reasonable so "Main" logic can decide how to handle that.
-        - also it is time saving if all instances will pass
-
-        Pass instance data (avalon instance) instead of families?
 
         Args:
             families(list): List of families for which should return attribute
