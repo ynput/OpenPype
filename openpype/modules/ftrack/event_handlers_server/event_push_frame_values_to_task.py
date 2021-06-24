@@ -55,10 +55,6 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             if entity_info.get("entityType") != "task":
                 continue
 
-            # Skip `Task` entity type
-            if entity_info["entity_type"].lower() == "task":
-                continue
-
             # Care only about changes of status
             changes = entity_info.get("changes")
             if not changes:
@@ -73,6 +69,14 @@ class PushFrameValuesToTaskEvent(BaseEvent):
 
             if project_id is None:
                 continue
+
+            # Skip `Task` entity type if parent didn't change
+            if entity_info["entity_type"].lower() == "task":
+                if (
+                    "parent_id" not in changes
+                    or changes["parent_id"]["new"] is None
+                ):
+                    continue
 
             if project_id not in entities_info_by_project_id:
                 entities_info_by_project_id[project_id] = []
