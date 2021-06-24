@@ -350,7 +350,17 @@ class SchemasHub:
         pass
 
     def create_schema_object(self, schema_data, *args, **kwargs):
-        pass
+        schema_type = schema_data["type"]
+        if schema_type in ("schema", "template", "schema_template"):
+            raise ValueError(
+                "Got unresolved schema data of type \"{}\"".format(schema_type)
+            )
+
+        klass = self._loaded_types.get(schema_type)
+        if not klass:
+            raise KeyError("Unknown type \"{}\"".format(schema_type))
+
+        return klass(schema_data, *args, **kwargs)
 
     def _load_schemas(self):
         dirpath = os.path.join(
