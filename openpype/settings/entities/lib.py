@@ -426,3 +426,49 @@ class OverrideState:
     DEFAULTS = OverrideStateItem(0, "Defaults")
     STUDIO = OverrideStateItem(1, "Studio overrides")
     PROJECT = OverrideStateItem(2, "Project Overrides")
+
+
+class SchemasHub:
+    def __init__(self, schema_subfolder):
+        from openpype.settings import entities
+
+        # Define known abstract classes
+        known_abstract_classes = (
+            entities.BaseEntity,
+            entities.BaseItemEntity,
+            entities.ItemEntity,
+            entities.EndpointEntity,
+            entities.InputEntity,
+            entities.BaseEnumEntity
+        )
+
+        self._loaded_types = {}
+        _gui_types = []
+        for attr in dir(entities):
+            item = getattr(entities, attr)
+            # Filter classes
+            if not inspect.isclass(item):
+                continue
+
+            # Skip classes that do not inherit from BaseEntity
+            if not issubclass(item, entities.BaseEntity):
+                continue
+
+            # Skip class that is abstract by design
+            if item in known_abstract_classes:
+                continue
+
+            if inspect.isabstract(item):
+                # Create an object to get crash and get traceback
+                item()
+
+            # Backwards compatibility
+            # Single entity may have multiple schema types
+            for schema_type in item.schema_types:
+                self._loaded_types[schema_type] = item
+
+            if item.gui_type:
+                _gui_types.append(item)
+        self._gui_types = tuple(_gui_types)
+
+        self._schema_subfolder = schema_subfolder
