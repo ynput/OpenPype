@@ -259,7 +259,7 @@ class SchemasHub:
         template_name = schema_data["name"]
         template_def = self.get_template(template_name)
 
-        filled_template = self._fill_schema_template(
+        filled_template = self._fill_template(
             schema_data, template_def
         )
         return filled_template
@@ -384,7 +384,7 @@ class SchemasHub:
         self._loaded_templates = loaded_templates
         self._loaded_schemas = loaded_schemas
 
-    def _fill_schema_template(self, child_data, template_def):
+    def _fill_template(self, child_data, template_def):
         template_name = child_data["name"]
 
         # Default value must be dictionary (NOT list)
@@ -400,7 +400,7 @@ class SchemasHub:
         output = []
         for single_template_data in template_data:
             try:
-                output.extend(self._fill_schema_template_data(
+                output.extend(self._fill_template_data(
                     template_def, single_template_data, skip_paths
                 ))
 
@@ -410,7 +410,7 @@ class SchemasHub:
                 )
         return output
 
-    def _fill_schema_template_data(
+    def _fill_template_data(
         self,
         template,
         template_data,
@@ -481,7 +481,7 @@ class SchemasHub:
                         if None in _skip_paths:
                             continue
 
-                output_item = self._fill_schema_template_data(
+                output_item = self._fill_template_data(
                     item,
                     template_data,
                     _skip_paths,
@@ -494,7 +494,7 @@ class SchemasHub:
         elif isinstance(template, dict):
             output = {}
             for key, value in template.items():
-                output[key] = self._fill_schema_template_data(
+                output[key] = self._fill_template_data(
                     value,
                     template_data,
                     skip_paths,
