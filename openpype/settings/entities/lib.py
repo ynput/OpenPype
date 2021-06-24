@@ -25,71 +25,6 @@ TEMPLATE_METADATA_KEYS = (
 template_key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
 
-
-
-def _fill_inner_schemas(schema_data, schema_collection, schema_templates):
-    if schema_data["type"] == "schema":
-        raise ValueError("First item in schema data can't be schema.")
-
-    children_key = "children"
-    object_type_key = "object_type"
-    for item_key in (children_key, object_type_key):
-        children = schema_data.get(item_key)
-        if not children:
-            continue
-
-        if object_type_key == item_key:
-            if not isinstance(children, dict):
-                continue
-            children = [children]
-
-        new_children = []
-        for child in children:
-            child_type = child["type"]
-            if child_type == "schema":
-                schema_name = child["name"]
-                if schema_name not in schema_collection:
-                    if schema_name in schema_templates:
-                        raise KeyError((
-                            "Schema template \"{}\" is used as `schema`"
-                        ).format(schema_name))
-                    raise KeyError(
-                        "Schema \"{}\" was not found".format(schema_name)
-                    )
-
-                filled_child = _fill_inner_schemas(
-                    schema_collection[schema_name],
-                    schema_collection,
-                    schema_templates
-                )
-
-            elif child_type in ("template", "schema_template"):
-                for filled_child in _fill_schema_template(
-                    child, schema_collection, schema_templates
-                ):
-                    new_children.append(filled_child)
-                continue
-
-            else:
-                filled_child = _fill_inner_schemas(
-                    child, schema_collection, schema_templates
-                )
-
-            new_children.append(filled_child)
-
-        if item_key == object_type_key:
-            if len(new_children) != 1:
-                raise KeyError((
-                    "Failed to fill object type with type: {} | name {}"
-                ).format(
-                    child_type, str(child.get("name"))
-                ))
-            new_children = new_children[0]
-
-        schema_data[item_key] = new_children
-    return schema_data
-
-
 # TODO reimplement logic inside entities
 def validate_environment_groups_uniquenes(
     schema_data, env_groups=None, keys=None
@@ -168,14 +103,6 @@ def get_gui_schema(subfolder, main_schema_name):
     )
     validate_schema(main_schema)
     return main_schema
-
-
-def get_studio_settings_schema():
-    return get_gui_schema("system_schema", "schema_main")
-
-
-def get_project_settings_schema():
-    return get_gui_schema("projects_schema", "schema_main")
 
 
 class OverrideStateItem:
