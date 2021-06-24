@@ -296,6 +296,11 @@ class SchemasHub:
         self._gui_types = tuple(_gui_types)
 
         self._schema_subfolder = schema_subfolder
+        self._crashed_on_load = {}
+        loaded_templates, loaded_schemas = self._load_schemas()
+
+        self._loaded_templates = loaded_templates
+        self._loaded_schemas = loaded_schemas
 
     @property
     def gui_types(self):
@@ -312,6 +317,65 @@ class SchemasHub:
 
     def create_schema_object(self, schema_data, *args, **kwargs):
         pass
+
+    def _load_schemas(self):
+        dirpath = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "schemas",
+            self._schema_subfolder
+        )
+        loaded_schemas = {}
+        loaded_templates = {}
+        for root, _, filenames in os.walk(dirpath):
+            for filename in filenames:
+                basename, ext = os.path.splitext(filename)
+                if ext != ".json":
+                    continue
+
+                filepath = os.path.join(root, filename)
+                with open(filepath, "r") as json_stream:
+                    try:
+                        schema_data = json.load(json_stream)
+                    except Exception as exc:
+                        msg = str(exc)
+                        print("Unable to parse JSON file {}\n{}".format(
+                            filepath, msg
+                        ))
+                        self._crashed_on_load[basename] = {
+                            "filepath": filepath,
+                            "message": msg
+                        }
+                        continue
+
+                if basename in self._crashed_on_load:
+                    crashed_item = self._crashed_on_load[basename]
+                    raise KeyError((
+                        "Duplicated filename \"{}\"."
+                        " One of them crashed on load \"{}\" {}"
+                    ).format(
+                        filename,
+                        crashed_item["filpath"],
+                        crashed_item["message"]
+                    ))
+
+                if isinstance(schema_data, list):
+                    if basename in loaded_templates:
+                        raise KeyError(
+                            "Duplicated template filename \"{}\"".format(
+                                filename
+                            )
+                        )
+                    loaded_templates[basename] = schema_data
+                else:
+                    if basename in loaded_schemas:
+                        raise KeyError(
+                            "Duplicated schema filename \"{}\"".format(
+                                filename
+                            )
+                        )
+                    loaded_schemas[basename] = schema_data
+
+        return loaded_templates, loaded_schemas
 
     def _fill_schema_template(self, child_data, template_def):
         template_name = child_data["name"]
