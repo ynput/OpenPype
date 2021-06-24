@@ -22,6 +22,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
     color_space = ["lin_srgb", "raw", "acesg"]
 
+    workfile_subset_template = "texturesMainWorkfile"
+    texture_subset_template = "texturesMain_{color_space}"
+
     version_regex = re.compile(r"^(.+)_v([0-9]+)")
     udim_regex = re.compile(r"_1[0-9]{3}\.")
 
@@ -31,7 +34,6 @@ class CollectTextures(pyblish.api.ContextPlugin):
         def convertor(value):
             return str(value)
 
-        workfile_subset = "texturesMainWorkfile"
         resource_files = {}
         workfile_files = {}
         representations = {}
@@ -48,11 +50,19 @@ class CollectTextures(pyblish.api.ContextPlugin):
             for repre in instance.data["representations"]:
                 ext = repre["ext"].replace('.', '')
                 asset_build = version = None
+
+                workfile_subset = self.workfile_subset_template
+
+                if isinstance(repre["files"], list):
+                    repre_file = repre["files"][0]
+                else:
+                    repre_file = repre["files"]
+
                 if ext in self.main_workfile_extensions or \
                     ext in self.other_workfile_extensions:
                     self.log.info('workfile')
                     asset_build, version = \
-                        self._parse_asset_build(repre["files"],
+                        self._parse_asset_build(repre_file,
                                                 self.version_regex)
                     asset_builds.add((asset_build, version,
                                       workfile_subset, 'workfile'))
@@ -61,13 +71,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     if not representations.get(workfile_subset):
                         representations[workfile_subset] = []
 
-                    # asset_build must be here to tie workfile and texture
-                    if not workfile_files.get(asset_build):
-                        workfile_files[asset_build] = []
-
                 if ext in self.main_workfile_extensions:
                     representations[workfile_subset].append(repre)
-                    workfile_files[asset_build].append(repre["files"])
+                    workfile_files[asset_build] = repre_file
 
                 if ext in self.other_workfile_extensions:
                     self.log.info("other")
@@ -75,8 +81,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     if not representations.get(workfile_subset):
                         representations[workfile_subset].append(repre)
 
+                    # only overwrite if not present
                     if not workfile_files.get(asset_build):
-                        workfile_files[asset_build].append(repre["files"])
+                        workfile_files[asset_build] = repre_file
 
                     if not resource_files.get(workfile_subset):
                         resource_files[workfile_subset] = []
@@ -88,19 +95,21 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     resource_files[workfile_subset].append(item)
 
                 if ext in self.texture_extensions:
-                    c_space = self._get_color_space(repre["files"][0],
+                    c_space = self._get_color_space(repre_file,
                                                     self.color_space)
-                    subset = "texturesMain_{}".format(c_space)
+                    subset_formatting_data = {"color_space": c_space}
+                    subset = self.texture_subset_template.format(
+                        **subset_formatting_data)
 
                     asset_build, version = \
-                        self._parse_asset_build(repre["files"][0],
+                        self._parse_asset_build(repre_file,
                                                 self.version_regex)
 
                     if not representations.get(subset):
                         representations[subset] = []
                     representations[subset].append(repre)
 
-                    udim = self._parse_udim(repre["files"][0], self.udim_regex)
+                    udim = self._parse_udim(repre_file, self.udim_regex)
 
                     if not version_data.get(subset):
                         version_data[subset] = []
@@ -148,6 +157,13 @@ class CollectTextures(pyblish.api.ContextPlugin):
             self.log.info("-"*25)
             self.log.info("workfile_files:: {}".format(workfile_files))
 
+            upd_representations = representations.get(subset)
+            if upd_representations and family != 'workfile':
+                for repre in upd_representations:
+                    repre.pop("frameStart", None)
+                    repre.pop("frameEnd", None)
+                    repre.pop("fps", None)
+
             new_instance = context.create_instance(subset)
             new_instance.data.update(
                 {
@@ -157,8 +173,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     "name": subset,
                     "family": family,
                     "version": int(version),
-                    "representations": representations.get(subset),
-                    "families": [family]
+                    "representations": upd_representations,
+                    "families": []
                 }
             )
             if resource_files.get(subset):
@@ -166,15 +182,22 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     "resources": resource_files.get(subset)
                 })
 
-            repre = representations.get(subset)[0]
-            new_instance.context.data["currentFile"] = os.path.join(
-                repre["stagingDir"], repre["files"][0])
+            workfile = workfile_files.get(asset_build)
 
+            # store origin
+            if family == 'workfile':
+                new_instance.data["source"] = "standalone publisher"
+            else:
+                repre = representations.get(subset)[0]
+                new_instance.context.data["currentFile"] = os.path.join(
+                    repre["stagingDir"], workfile)
+
+            # add data for version document
             ver_data = version_data.get(subset)
             if ver_data:
                 ver_data = ver_data[0]
-                if workfile_files.get(asset_build):
-                    ver_data['workfile'] = workfile_files.get(asset_build)[0]
+                if workfile:
+                    ver_data['workfile'] = workfile
 
                 new_instance.data.update(
                     {"versionData": ver_data}
