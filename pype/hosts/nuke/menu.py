@@ -1,9 +1,10 @@
+import os
 import nuke
 from avalon.api import Session
 
 from pype.hosts.nuke import lib
 from ...lib import BuildWorkfile
-from pype.api import Logger
+from pype.api import Logger, config
 
 log = Logger().get_logger(__name__, "nuke")
 
@@ -11,7 +12,9 @@ log = Logger().get_logger(__name__, "nuke")
 def install():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(Session["AVALON_LABEL"])
+
     workfile_settings = lib.WorkfileSettings
+
     # replace reset resolution from avalon core to pype's
     name = "Reset Resolution"
     new_name = "Set Resolution"
@@ -68,6 +71,9 @@ def install():
     )
     log.debug("Adding menu item: {}".format(name))
 
+    # adding shortcuts
+    add_shortcuts_from_presets()
+
 
 def uninstall():
 
@@ -77,3 +83,21 @@ def uninstall():
     for item in menu.items():
         log.info("Removing menu item: {}".format(item.name()))
         menu.removeItem(item.name())
+
+
+def add_shortcuts_from_presets():
+    menubar = nuke.menu("Nuke")
+    presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+    nuke_presets = presets.get("nuke", {})
+    if nuke_presets.get("menu"):
+        for menu_name, menuitems in nuke_presets.get("menu").items():
+            menu = menubar.findItem(menu_name)
+            for mitem_name, shortcut in menuitems.items():
+                log.info("Adding Shortcut `{}` to `{}`".format(
+                    shortcut, mitem_name
+                ))
+                try:
+                    menuitem = menu.findItem(mitem_name)
+                    menuitem.setShortcut(shortcut)
+                except AttributeError as e:
+                    log.error(e)

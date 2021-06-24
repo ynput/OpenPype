@@ -25,10 +25,14 @@ class ValidateNamingRepair(pyblish.api.Action):
         for instance in instances:
             self.log.info("validate_naming instance {}".format(instance))
             name = instance.data["name"].replace(" ", "_")
+            name = name.replace(instance.data["family"], '')
             instance[0].Name = name
             data = stub.read(instance[0])
             data["subset"] = "image" + name
             stub.imprint(instance[0], data)
+
+            name = stub.PUBLISH_ICON + name
+            stub.rename_layer(instance.data["uuid"], name)
 
         return True
 
@@ -46,8 +50,11 @@ class ValidateNaming(pyblish.api.InstancePlugin):
     actions = [ValidateNamingRepair]
 
     def process(self, instance):
-        msg = "Name \"{}\" is not allowed.".format(instance.data["name"])
+        help_msg = ' Use Repair action (A) in Pyblish to fix it.'
+        msg = "Name \"{}\" is not allowed.{}".format(instance.data["name"],
+                                                     help_msg)
         assert " " not in instance.data["name"], msg
 
-        msg = "Subset \"{}\" is not allowed.".format(instance.data["subset"])
+        msg = "Subset \"{}\" is not allowed.{}".format(instance.data["subset"],
+                                                       help_msg)
         assert " " not in instance.data["subset"], msg

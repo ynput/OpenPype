@@ -6,7 +6,7 @@ from avalon import api, blender
 import pype.hosts.blender.plugin
 
 
-class CreateAnimation(blender.Creator):
+class CreateAnimation(pype.hosts.blender.plugin.Creator):
     """Animation output for character rigs"""
 
     name = "animationMain"

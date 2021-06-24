@@ -2,24 +2,36 @@ import pyblish.api
 
 
 class CollectClipFrameRanges(pyblish.api.InstancePlugin):
-    """Collect all frame range data: source(In,Out), timeline(In,Out), edit_(in, out), f(start, end)"""
+    """Collect all frame range data.
+
+    Collecting data:
+        sourceIn, sourceOut with handles,
+        clipIn, clipOut with handles,
+        clipDuration with handles
+        frameStart, frameEnd
+    """
 
     order = pyblish.api.CollectorOrder + 0.101
     label = "Collect Frame Ranges"
     hosts = ["hiero"]
+    families = ["clip"]
 
     def process(self, instance):
-
-        data = dict()
+        data = {}
+        track_item = instance.data["item"]
+        item_handle_in = int(track_item.handleInLength())
+        item_handle_out = int(track_item.handleOutLength())
 
         # Timeline data.
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
 
-        source_in_h = instance.data("sourceInH",
-                                    instance.data("sourceIn") - handle_start)
-        source_out_h = instance.data("sourceOutH",
-                                     instance.data("sourceOut") + handle_end)
+        source_in_h = instance.data(
+            "sourceInH",
+            (instance.data("sourceIn") + item_handle_in) - handle_start)
+        source_out_h = instance.data(
+            "sourceOutH",
+            (instance.data("sourceOut") - item_handle_out) + handle_end)
 
         timeline_in = instance.data["clipIn"]
         timeline_out = instance.data["clipOut"]
@@ -44,7 +56,6 @@ class CollectClipFrameRanges(pyblish.api.InstancePlugin):
             "clipOutH": timeline_out_h,
             "clipDurationH": instance.data.get(
                 "clipDuration") + handle_start + handle_end
-            }
-        )
+        })
         self.log.debug("__ data: {}".format(data))
         instance.data.update(data)

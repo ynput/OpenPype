@@ -36,6 +36,8 @@ class AfterEffectsServerStub():
         is opened).
         'self.websocketserver.call' is used as async wrapper
     """
+    PUBLISH_ICON = '\u2117 '
+    LOADED_ICON = '\u25bc'
 
     def __init__(self):
         self.websocketserver = WebSocketServer.get_instance()
@@ -61,7 +63,7 @@ class AfterEffectsServerStub():
             by Creator.
 
         Returns:
-            (dict)
+            (list)
         """
         res = self.websocketserver.call(self.client.call
                                         ('AfterEffects.get_metadata')
@@ -212,6 +214,19 @@ class AfterEffectsServerStub():
                                         )
         return self._to_records(res)
 
+    def get_item(self, item_id):
+        """
+            Returns metadata for particular 'item_id' or None
+
+            Args:
+                item_id (int, or string)
+        """
+        for item in self.get_items(True, True, True):
+            if str(item.id) == str(item_id):
+                return item
+
+        return None
+
     def import_file(self, path, item_name, import_options=None):
         """
             Imports file as a FootageItem. Used in Loader
@@ -271,6 +286,30 @@ class AfterEffectsServerStub():
                                   ('AfterEffects.delete_item',
                                    item_id=item_id
                                    ))
+
+    def remove_instance(self, instance_id):
+        """
+            Removes instance with 'instance_id' from file's metadata and
+            saves them.
+
+            Keep matching item in file though.
+
+            Args:
+                instance_id(string): instance uuid
+        """
+        cleaned_data = []
+
+        for instance in self.get_metadata():
+            uuid_val = instance.get("uuid")
+            if not uuid_val:
+                uuid_val = instance.get("members")[0]  # legacy
+            if uuid_val != instance_id:
+                cleaned_data.append(instance)
+
+        payload = json.dumps(cleaned_data, indent=4)
+        self.websocketserver.call(self.client.call
+                                  ('AfterEffects.imprint', payload=payload)
+                                  )
 
     def is_saved(self):
         # TODO

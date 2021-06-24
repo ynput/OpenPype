@@ -1,9 +1,10 @@
-import tempfile
 import os
-import pyblish.api
-
-from pype.api import config
 import inspect
+import tempfile
+import pyblish.api
+import avalon.api
+from pype.api import config
+from pype.lib import get_subset_name
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
 ValidateContentsOrder = pyblish.api.ValidatorOrder + 0.1
@@ -35,6 +36,25 @@ def imprint_attributes(plugin):
         else:
             setattr(plugin, option, value)
             print("setting {}: {} on {}".format(option, value, plugin_name))
+
+
+class PypeCreatorMixin:
+    """Helper to override avalon's default class methods.
+
+    Mixin class must be used as first in inheritance order to override methods.
+    """
+
+    @classmethod
+    def get_subset_name(
+        cls, variant, task_name, asset_id, project_name, host_name=None
+    ):
+        return get_subset_name(
+            cls.family, variant, task_name, asset_id, project_name, host_name
+        )
+
+
+class Creator(PypeCreatorMixin, avalon.api.Creator):
+    pass
 
 
 class ContextPlugin(pyblish.api.ContextPlugin):

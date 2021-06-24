@@ -41,6 +41,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
     video_exts = ["mov", "mp4"]
     supported_exts = image_exts + video_exts
 
+    # Backgroud extensions
+    alpha_exts = ["exr", "png", "dpx"]
+    color_regex = re.compile(r"^#[a-fA-F0-9]{6}$")
+
     # FFmpeg tools paths
     ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
@@ -54,7 +58,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     to_height = 1080
 
     def process(self, instance):
-        self.log.debug(instance.data["representations"])
+        self.log.debug(str(instance.data["representations"]))
         # Skip review when requested.
         if not instance.data.get("review", True):
             return
@@ -299,6 +303,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ):
             with_audio = False
 
+        input_is_sequence = self.input_is_sequence(repre)
+
+        input_allow_bg = False
+        if input_is_sequence and repre["files"]:
+            ext = os.path.splitext(repre["files"][0])[1].replace(".", "")
+            if ext in self.alpha_exts:
+                input_allow_bg = True
+
         return {
             "fps": float(instance.data["fps"]),
             "frame_start": frame_start,
@@ -313,7 +325,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "resolution_width": instance.data.get("resolutionWidth"),
             "resolution_height": instance.data.get("resolutionHeight"),
             "origin_repre": repre,
-            "input_is_sequence": self.input_is_sequence(repre),
+            "input_is_sequence": input_is_sequence,
+            "input_allow_bg": input_allow_bg,
             "with_audio": with_audio,
             "without_handles": without_handles,
             "handles_are_set": handles_are_set
@@ -459,6 +472,33 @@ class ExtractReview(pyblish.api.InstancePlugin):
         lut_filters = self.lut_filters(new_repre, instance, ffmpeg_input_args)
         ffmpeg_video_filters.extend(lut_filters)
 
+        use_bg_color = output_def.get("use_bg_color")
+        bg_color = (
+            instance.context.data["presets"]
+            .get("tools", {})
+            .get("extract_colors", {})
+            .get("bg_color")
+        )
+        if use_bg_color and bg_color:
+            if not temp_data["input_allow_bg"]:
+                self.log.info((
+                    "Output definition has defined BG color input was"
+                    " resolved as does not support adding BG."
+                ))
+            elif not self.color_regex.match(bg_color):
+                self.log.warning((
+                    "Color defined in output definition does not match"
+                    " regex `^#[a-fA-F0-9]{6}$`"
+                ))
+
+            else:
+                self.log.info("Applying BG color {}".format(bg_color))
+                ffmpeg_video_filters.extend([
+                    "split=2[bg][fg]",
+                    "[bg]drawbox=c={}:replace=1:t=fill[bg]".format(bg_color),
+                    "[bg][fg]overlay=format=auto"
+                ])
+
         # Add argument to override output file
         ffmpeg_output_args.append("-y")
 
@@ -536,10 +576,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
         all_args.append("\"{}\"".format(self.ffmpeg_path))
         all_args.extend(input_args)
         if video_filters:
-            all_args.append("-filter:v {}".format(",".join(video_filters)))
+            all_args.append("-filter:v")
+            all_args.append("\"{}\"".format(",".join(video_filters)))
 
         if audio_filters:
-            all_args.append("-filter:a {}".format(",".join(audio_filters)))
+            all_args.append("-filter:a")
+            all_args.append("\"{}\"".format(",".join(audio_filters)))
 
         all_args.extend(output_args)
 
@@ -707,6 +749,62 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return audio_in_args, audio_filters, audio_out_args
 
+    def get_letterbox_filters(self,
+                              letter_box_def,
+                              input_res_ratio,
+                              output_res_ratio,
+                              pixel_aspect,
+                              scale_factor_by_width,
+                              scale_factor_by_height):
+        output = []
+
+        ratio = letter_box_def
+        state = "letterbox"
+        thickness = "fill"
+        color = "black"
+
+        if isinstance(letter_box_def, dict):
+            ratio = letter_box_def["ratio"]
+            state = letter_box_def["state"]
+            thickness = letter_box_def["thickness"]
+            color = letter_box_def["color"]
+
+        if input_res_ratio == output_res_ratio:
+            ratio /= pixel_aspect
+        elif input_res_ratio < output_res_ratio:
+            ratio /= scale_factor_by_width
+        else:
+            ratio /= scale_factor_by_height
+
+        if state == "letterbox":
+            top_box = (
+                "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t={}:c={}"
+            ).format(ratio, thickness, color)
+
+            bottom_box = (
+                "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
+                ":iw:round((ih-(iw*(1/{0})))/2):t={1}:c={2}"
+            ).format(ratio, thickness, color)
+
+            output.extend([top_box, bottom_box])
+        elif state == "pillar":
+            right_box = (
+                "drawbox=0:0:round((iw-(ih*{}))/2):ih:t={}:c={}"
+            ).format(ratio, thickness, color)
+
+            left_box = (
+                "drawbox=(round(ih*{0})+round((iw-(ih*{0}))/2))"
+                ":0:round((iw-(ih*{0}))/2):ih:t={1}:c={2}"
+            ).format(ratio, thickness, color)
+
+            output.extend([right_box, left_box])
+        else:
+            raise ValueError(
+                "Letterbox state \"{}\" is not recognized".format(state)
+            )
+
+        return output
+
     def rescaling_filters(self, temp_data, output_def, new_repre):
         """Prepare vieo filters based on tags in new representation.
 
@@ -840,28 +938,23 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # letter_box
         if letter_box:
-            if input_res_ratio == output_res_ratio:
-                letter_box /= pixel_aspect
-            elif input_res_ratio < output_res_ratio:
-                letter_box /= scale_factor_by_width
-            else:
-                letter_box /= scale_factor_by_height
+            filters.extend([
+                "scale={}x{}:flags=lanczos".format(
+                    output_width, output_height
+                ),
+                "setsar=1"
+            ])
 
-            scale_filter = "scale={}x{}:flags=lanczos".format(
-                output_width, output_height
+            filters.extend(
+                self.get_letterbox_filters(
+                    letter_box,
+                    input_res_ratio,
+                    output_res_ratio,
+                    pixel_aspect,
+                    scale_factor_by_width,
+                    scale_factor_by_height
+                )
             )
-
-            top_box = (
-                "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c=black"
-            ).format(letter_box)
-
-            bottom_box = (
-                "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
-                ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black"
-            ).format(letter_box)
-
-            # Add letter box filters
-            filters.extend([scale_filter, "setsar=1", top_box, bottom_box])
 
         # scaling none square pixels and 1920 width
         if (

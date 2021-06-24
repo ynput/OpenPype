@@ -1,5 +1,6 @@
 import pyblish.api
 
+import avalon.api
 from avalon import photoshop
 
 
@@ -19,11 +20,14 @@ class CollectInstances(pyblish.api.ContextPlugin):
     families_mapping = {
         "image": []
     }
+    # True will add all instances to same group in Loader
+    group_by_task_name = False
 
     def process(self, context):
         stub = photoshop.stub()
         layers = stub.get_layers()
         layers_meta = stub.get_layers_metadata()
+        instance_names = []
         for layer in layers:
             layer_data = stub.read(layer, layers_meta)
 
@@ -41,7 +45,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             #     self.log.info("%s skipped, it was empty." % layer.Name)
             #     continue
 
-            instance = context.create_instance(layer.name)
+            instance = context.create_instance(layer_data["subset"])
             instance.append(layer)
             instance.data.update(layer_data)
             instance.data["families"] = self.families_mapping[
@@ -49,6 +53,17 @@ class CollectInstances(pyblish.api.ContextPlugin):
             ]
             instance.data["publish"] = layer.visible
 
+            if self.group_by_task_name:
+                task_name = avalon.api.Session["AVALON_TASK"]
+                instance.data["subsetGroup"] = task_name
+
+            instance_names.append(layer_data["subset"])
+
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
+            self.log.info("instance: {} ".format(instance.data))
+
+        if len(instance_names) != len(set(instance_names)):
+            self.log.warning("Duplicate instances found. " +
+                             "Remove unwanted via SubsetManager")

@@ -48,7 +48,8 @@ class FileLoader(api.Loader):
         if '.psd' in file:
             import_options['ImportAsType'] = 'ImportAsType.COMP'
 
-        comp = stub.import_file(self.fname, comp_name, import_options)
+        comp = stub.import_file(self.fname, stub.LOADED_ICON + comp_name,
+                                import_options)
 
         if not comp:
             self.log.warning(
@@ -87,7 +88,7 @@ class FileLoader(api.Loader):
             layer_name = container["namespace"]
         path = api.get_representation_path(representation)
         # with aftereffects.maintained_selection():  # TODO
-        stub.replace_item(layer, path, layer_name)
+        stub.replace_item(layer, path, stub.LOADED_ICON + layer_name)
         stub.imprint(
             layer, {"representation": str(representation["_id"]),
                     "name": context["subset"],

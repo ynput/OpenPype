@@ -102,25 +102,37 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         session = instance.context.data["ftrackSession"]
-        if instance.data.get("ftrackTask"):
-            task = instance.data["ftrackTask"]
-            name = task
-            parent = task["parent"]
-        elif instance.data.get("ftrackEntity"):
-            task = None
-            name = instance.data.get("ftrackEntity")['name']
-            parent = instance.data.get("ftrackEntity")
-        elif instance.context.data.get("ftrackTask"):
-            task = instance.context.data["ftrackTask"]
-            name = task
-            parent = task["parent"]
-        elif instance.context.data.get("ftrackEntity"):
-            task = None
-            name = instance.context.data.get("ftrackEntity")['name']
-            parent = instance.context.data.get("ftrackEntity")
+        context = instance.context
 
-        info_msg = "Created new {entity_type} with data: {data}"
-        info_msg += ", metadata: {metadata}."
+        name = None
+        # If instance has set "ftrackEntity" or "ftrackTask" then use them from
+        #   instance. Even if they are set to None. If they are set to None it
+        #   has a reason. (like has different context)
+        if "ftrackEntity" in instance.data or "ftrackTask" in instance.data:
+            task = instance.data.get("ftrackTask")
+            parent = instance.data.get("ftrackEntity")
+
+        elif "ftrackEntity" in context.data or "ftrackTask" in context.data:
+            task = context.data.get("ftrackTask")
+            parent = context.data.get("ftrackEntity")
+
+        if task:
+            parent = task["parent"]
+            name = task
+        elif parent:
+            name = parent["name"]
+
+        if not name:
+            self.log.info((
+                "Skipping ftrack integration. Instance \"{}\" does not"
+                " have specified ftrack entities."
+            ).format(str(instance)))
+            return
+
+        info_msg = (
+            "Created new {entity_type} with data: {data}"
+            ", metadata: {metadata}."
+        )
 
         used_asset_versions = []
 

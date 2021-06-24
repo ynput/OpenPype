@@ -3,6 +3,7 @@ from avalon import api
 from pype.hosts import resolve
 from avalon.vendor import qargparse
 from pype.api import config
+import pype.api
 
 from Qt import QtWidgets, QtCore
 
@@ -251,7 +252,7 @@ class SequenceLoader(api.Loader):
         pass
 
 
-class Creator(api.Creator):
+class Creator(pype.api.Creator):
     """Creator class wrapper
     """
     marker_color = "Purple"

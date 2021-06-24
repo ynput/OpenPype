@@ -226,7 +226,8 @@ def add_button_write_to_read(node):
     node.addKnob(k)
 
 
-def create_write_node(name, data, input=None, prenodes=None, review=True):
+def create_write_node(name, data, input=None, prenodes=None,
+                      review=True, linked_knobs=None):
     ''' Creating write node which is group node
 
     Arguments:
@@ -236,6 +237,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         prenodes (list, optional): list of lists, definitions for nodes
                                 to be created before write
         review (bool): adding review knob
+        linked_knobs (list): list of knob names to be linked from write node
 
     Example:
         prenodes = [(
@@ -313,24 +315,25 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
 
     prev_node = None
     with GN:
-        connections = list()
         if input:
             # if connected input node was defined
-            connections.append({
-                "node": input,
-                "inputName": input.name()})
+            input_name = str(input.name()).replace(" ", "")
             prev_node = nuke.createNode(
-                "Input", "name {}".format(input.name()))
+                "Input", "name {}".format(input_name))
+            prev_node.hideControlPanel()
+
         else:
             # generic input node connected to nothing
             prev_node = nuke.createNode(
                 "Input", "name {}".format("rgba"))
+            prev_node.hideControlPanel()
 
         # creating pre-write nodes `prenodes`
         if prenodes:
             for name, klass, properties, set_output_to in prenodes:
                 # create node
                 now_node = nuke.createNode(klass, "name {}".format(name))
+                now_node.hideControlPanel()
 
                 # add data to knob
                 for k, v in properties:
@@ -352,17 +355,15 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
                         for i, node_name in enumerate(set_output_to):
                             input_node = nuke.createNode(
                                 "Input", "name {}".format(node_name))
-                            connections.append({
-                                "node": nuke.toNode(node_name),
-                                "inputName": node_name})
+                            input_node.hideControlPanel()
                             now_node.setInput(1, input_node)
+
                     elif isinstance(set_output_to, str):
                         input_node = nuke.createNode(
                             "Input", "name {}".format(node_name))
-                        connections.append({
-                            "node": nuke.toNode(set_output_to),
-                            "inputName": set_output_to})
+                        input_node.hideControlPanel()
                         now_node.setInput(0, input_node)
+
                 else:
                     now_node.setInput(0, prev_node)
 
@@ -374,6 +375,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
             "inside_{}".format(name),
             **_data
         )
+        write_node.hideControlPanel()
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -382,6 +384,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         prev_node = now_node
 
         now_node = nuke.createNode("Output", "name Output1")
+        now_node.hideControlPanel()
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -400,23 +403,49 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     # add divider
     GN.addKnob(nuke.Text_Knob(''))
 
-    # Add linked knobs.
-    linked_knob_names = ["Render", "use_limit", "first", "last"]
-    for name in linked_knob_names:
-        link = nuke.Link_Knob(name)
-        link.makeLink(write_node.name(), name)
-        link.setName(name)
-        link.setFlag(0x1000)
-        GN.addKnob(link)
+    linked_knob_names = []
 
-    # add divider
-    GN.addKnob(nuke.Text_Knob(''))
+    # add input linked knobs and create group only if any input
+    if linked_knobs:
+        linked_knob_names.append("_grp-start_")
+        linked_knob_names.extend(linked_knobs)
+        linked_knob_names.append("_grp-end_")
+
+    linked_knob_names.append("Render")
+
+    for name in linked_knob_names:
+        if "_grp-start_" in name:
+            knob = nuke.Tab_Knob(
+                "rnd_attr", "Rendering attributes", nuke.TABBEGINCLOSEDGROUP)
+            GN.addKnob(knob)
+        elif "_grp-end_" in name:
+            knob = nuke.Tab_Knob(
+                "rnd_attr_end", "Rendering attributes", nuke.TABENDGROUP)
+            GN.addKnob(knob)
+        else:
+            if "___" in name:
+                # add devider
+                GN.addKnob(nuke.Text_Knob(""))
+            else:
+                # add linked knob by name
+                link = nuke.Link_Knob("")
+                link.makeLink(write_node.name(), name)
+                link.setName(name)
+
+                # make render
+                if "Render" in name:
+                    link.setLabel("Render Local")
+                link.setFlag(0x1000)
+                GN.addKnob(link)
 
     # adding write to read button
     add_button_write_to_read(GN)
 
     # Deadline tab.
     add_deadline_tab(GN)
+
+    # open the AvalonTab as default
+    GN["AvalonTab"].setFlag(0)
 
     # set tile color
     tile_color = _data.get("tile_color", "0xff0000ff")
@@ -582,8 +611,7 @@ class WorkfileSettings(object):
         ]
 
         erased_viewers = []
-        for v in [n for n in self._nodes
-                  if "Viewer" in n.Class()]:
+        for v in [n for n in nuke.allNodes(filter="Viewer")]:
             v['viewerProcess'].setValue(str(viewer_dict["viewerProcess"]))
             if str(viewer_dict["viewerProcess"]) \
                     not in v['viewerProcess'].value():

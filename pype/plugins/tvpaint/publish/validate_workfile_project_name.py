@@ -13,7 +13,15 @@ class ValidateWorkfileProjectName(pyblish.api.ContextPlugin):
     order = pyblish.api.ValidatorOrder
 
     def process(self, context):
-        workfile_context = context.data["workfile_context"]
+        workfile_context = context.data.get("workfile_context")
+        # If workfile context is missing than project is matching to
+        #   `AVALON_PROJECT` value for 100%
+        if not workfile_context:
+            self.log.info(
+                "Workfile context (\"workfile_context\") is not filled."
+            )
+            return
+
         workfile_project_name = workfile_context["project"]
         env_project_name = os.environ["AVALON_PROJECT"]
         if workfile_project_name == env_project_name:

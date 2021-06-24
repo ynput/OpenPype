@@ -130,10 +130,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     hosts = ["fusion", "maya", "nuke", "celaction", "aftereffects", "harmony"]
 
-    families = ["render.farm", "prerender",
+    families = ["render.farm", "prerender.farm",
                 "renderlayer", "imagesequence", "vrayscene"]
 
-    aov_filter = {"maya": [r".+(?:\.|_)([Bb]eauty)(?:\.|_).*"],
+    aov_filter = {"maya": [r".*(?:\.|_)?([Bb]eauty)(?:\.|_)?.*"],
                   "aftereffects": [r".*"],  # for everything from AE
                   "harmony": [r".*"],  # for everything from AE
                   "celaction": [r".*"]}
@@ -928,6 +928,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.DEADLINE_REST_URL = os.environ.get(
                 "DEADLINE_REST_URL", "http://localhost:8082"
             )
+            if instance.data.get("deadlineUrl"):
+                self.DEADLINE_REST_URL = instance.data.get("deadlineUrl")
             assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
             self._submit_deadline_post_job(instance, render_job, instances)

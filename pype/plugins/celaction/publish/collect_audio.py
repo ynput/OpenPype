@@ -23,18 +23,19 @@ class AppendCelactionAudio(pyblish.api.ContextPlugin):
         )
         self.log.info(f"subsets is: {pformat(subsets)}")
 
-        if not subsets.get("audioMain"):
-            raise AttributeError("`audioMain` subset does not exist")
+        max_version = max(subsets.keys())
+        self.log.info("_ max version is: {}".format(max_version))
 
-        reprs = subsets.get("audioMain", {}).get("representations", [])
+        reprs = subsets[max_version].get("representations", [])
         self.log.info(f"reprs is: {pformat(reprs)}")
 
-        repr = next((r for r in reprs), None)
+        repr = next(iter(reprs), None)
         if not repr:
-            raise "Missing `audioMain` representation"
+            raise Exception("Missing `audioMain` representation")
         self.log.info(f"represetation is: {repr}")
 
         audio_file = repr.get('data', {}).get('path', "")
+        self.log.info("_ audio_file: {}".format(audio_file))
 
         if os.path.exists(audio_file):
             context.data["audioFile"] = audio_file

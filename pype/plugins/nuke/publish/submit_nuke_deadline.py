@@ -1,3 +1,6 @@
+"""
+Submit write to Deadline.
+"""
 import os
 import json
 import getpass
@@ -6,10 +9,11 @@ from avalon import api
 from avalon.vendor import requests
 import re
 import pyblish.api
+import nuke
 
 
 class NukeSubmitDeadline(pyblish.api.InstancePlugin):
-    """Submit write to Deadline
+    """Submit write to Deadline.
 
     Renders are submitted to a Deadline Web Service as
     supplied via the environment variable DEADLINE_REST_URL
@@ -29,6 +33,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_pool_secondary = ""
     deadline_group = ""
     deadline_department = ""
+    deadline_limit_groups = {}
+    deadline_use_gpu = False
+    env_allowed_keys = []
+    env_search_replace_values = {}
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
@@ -145,6 +153,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         if not priority:
             priority = self.deadline_priority
 
+        # resolve any limit groups
+        limit_groups = self.get_limit_groups()
+        self.log.info("Limit groups: `{}`".format(limit_groups))
+
         payload = {
             "JobInfo": {
                 # Top-level group name
@@ -176,7 +188,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": output_filename_0.replace("\\", "/")
+                "OutputFilename0": output_filename_0.replace("\\", "/"),
+
+                # limiting groups
+                "LimitGroups": ",".join(limit_groups)
 
             },
             "PluginInfo": {
@@ -193,6 +208,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 # Resolve relative references
                 "ProjectPath": script_path,
                 "AWSAssetFile0": render_path,
+
+                # using GPU by default
+                "UseGpu": self.deadline_use_gpu,
+
                 # Only the specific write node is rendered.
                 "WriteNode": exe_node_name
             },
@@ -222,15 +241,16 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "TOOL_ENV",
             "PYPE_DEV"
         ]
+
+        # add allowed keys from preset if any
+        if self.env_allowed_keys:
+            keys += self.env_allowed_keys
+
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
-        # self.log.debug("enviro: {}".format(pprint(environment)))
+
         for path in os.environ:
             if path.lower().startswith('pype_'):
-                environment[path] = os.environ[path]
-            if path.lower().startswith('nuke_'):
-                environment[path] = os.environ[path]
-            if 'license' in path.lower():
                 environment[path] = os.environ[path]
 
         clean_environment = {}
@@ -260,6 +280,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             clean_environment[key] = clean_path
 
         environment = clean_environment
+
+        # finally search replace in values of any key
+        if self.env_search_replace_values:
+            for key, value in environment.items():
+                for _k, _v in self.env_search_replace_values.items():
+                    environment[key] = value.replace(_k, _v)
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
@@ -319,9 +345,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             return int(search_results[1])
         if "#" in path:
             self.log.debug("_ path: `{}`".format(path))
-            return path
-        else:
-            return path
+
+        return path
 
     def expected_files(self,
                        instance,
@@ -329,7 +354,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         """ Create expected files in instance data
         """
         if not instance.data.get("expectedFiles"):
-            instance.data["expectedFiles"] = list()
+            instance.data["expectedFiles"] = []
 
         dir = os.path.dirname(path)
         file = os.path.basename(path)
@@ -346,3 +371,31 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         for i in range(self._frame_start, (self._frame_end + 1)):
             instance.data["expectedFiles"].append(
                 os.path.join(dir, (file % i)).replace("\\", "/"))
+
+    def get_limit_groups(self):
+        """Search for limit group nodes and return group name.
+
+        Limit groups will be defined as pairs in Nuke deadline submitter
+        presents where the key will be name of limit group and value will be
+        a list of plugin's node class names. Thus, when a plugin uses more
+        than one node, these will be captured and the triggered process
+        will add the appropriate limit group to the payload jobinfo attributes.
+
+        Returning:
+            list: captured groups list
+        """
+        captured_groups = []
+        for lg_name, list_node_class in self.deadline_limit_groups.items():
+            for node_class in list_node_class:
+                for node in nuke.allNodes(recurseGroups=True):
+                    # ignore all nodes not member of defined class
+                    if node_class not in node.Class():
+                        continue
+                    # ignore all disabled nodes
+                    if node["disable"].value():
+                        continue
+                    # add group name if not already added
+                    if lg_name not in captured_groups:
+                        captured_groups.append(lg_name)
+
+        return captured_groups

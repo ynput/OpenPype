@@ -13,6 +13,9 @@ class CollectClipTagHandles(api.ContextPlugin):
     def process(self, context):
         assets_shared = context.data.get("assetsShared")
         for instance in context[:]:
+            if instance.data["family"] not in self.families:
+                continue
+
             self.log.info("Instance.name: `{}`".format(
                 instance.data["name"]))
             # gets tags

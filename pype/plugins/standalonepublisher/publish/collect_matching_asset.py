@@ -1,4 +1,5 @@
 import os
+import re
 import collections
 import pyblish.api
 from avalon import io
@@ -14,36 +15,78 @@ class CollectMatchingAssetToInstance(pyblish.api.InstancePlugin):
     label = "Collect Matching Asset to Instance"
     order = pyblish.api.CollectorOrder - 0.05
     hosts = ["standalonepublisher"]
-    families = ["background_batch"]
+    families = ["background_batch", "render_mov_batch"]
+
+    # Version regex to parse asset name and version from filename
+    version_regex = re.compile(r"^(.+)_v([0-9]+)$")
 
     def process(self, instance):
-        source_file = os.path.basename(instance.data["source"]).lower()
+        source_filename = self.get_source_filename(instance)
         self.log.info("Looking for asset document for file \"{}\"".format(
-            instance.data["source"]
+            source_filename
         ))
+        asset_name = os.path.splitext(source_filename)[0].lower()
 
         asset_docs_by_name = self.selection_children_by_name(instance)
 
-        matching_asset_doc = asset_docs_by_name.get(source_file)
+        version_number = None
+        # Always first check if source filename is in assets
+        matching_asset_doc = asset_docs_by_name.get(asset_name)
+        if matching_asset_doc is None:
+            # Check if source file contain version in name
+            self.log.debug((
+                "Asset doc by \"{}\" was not found trying version regex."
+            ).format(asset_name))
+            regex_result = self.version_regex.findall(asset_name)
+            if regex_result:
+                _asset_name, _version_number = regex_result[0]
+                matching_asset_doc = asset_docs_by_name.get(_asset_name)
+                if matching_asset_doc:
+                    version_number = int(_version_number)
+
         if matching_asset_doc is None:
             for asset_name_low, asset_doc in asset_docs_by_name.items():
-                if asset_name_low in source_file:
+                if asset_name_low in asset_name:
                     matching_asset_doc = asset_doc
                     break
 
-        if matching_asset_doc:
-            instance.data["asset"] = matching_asset_doc["name"]
-            instance.data["assetEntity"] = matching_asset_doc
-            self.log.info(
-                f"Matching asset found: {pformat(matching_asset_doc)}"
-            )
-
-        else:
+        if not matching_asset_doc:
+            self.log.debug("Available asset names {}".format(
+                str(list(asset_docs_by_name.keys()))
+            ))
             # TODO better error message
             raise AssertionError((
                 "Filename \"{}\" does not match"
                 " any name of asset documents in database for your selection."
-            ).format(instance.data["source"]))
+            ).format(source_filename))
+
+        instance.data["asset"] = matching_asset_doc["name"]
+        instance.data["assetEntity"] = matching_asset_doc
+        if version_number is not None:
+            instance.data["version"] = version_number
+
+        self.log.info(
+            f"Matching asset found: {pformat(matching_asset_doc)}"
+        )
+
+    def get_source_filename(self, instance):
+        if instance.data["family"] == "background_batch":
+            return os.path.basename(instance.data["source"])
+
+        if len(instance.data["representations"]) != 1:
+            raise ValueError((
+                "Implementation bug: Instance data contain"
+                " more than one representation."
+            ))
+
+        repre = instance.data["representations"][0]
+        repre_files = repre["files"]
+        if not isinstance(repre_files, str):
+            raise ValueError((
+                "Implementation bug: Instance's representation contain"
+                " unexpected value (expected single file). {}"
+            ).format(str(repre_files)))
+        return repre_files
 
     def selection_children_by_name(self, instance):
         storing_key = "childrenDocsForSelection"

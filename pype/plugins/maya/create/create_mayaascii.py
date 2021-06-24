@@ -1,7 +1,7 @@
-import avalon.maya
+from pype.hosts.maya import plugin
 
 
-class CreateMayaAscii(avalon.maya.Creator):
+class CreateMayaAscii(plugin.Creator):
     """Raw Maya Ascii file export"""
 
     name = "mayaAscii"

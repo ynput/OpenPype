@@ -21,7 +21,6 @@ class CollectReview(api.InstancePlugin):
     families = ["plate"]
 
     def process(self, instance):
-        is_sequence = instance.data["isSequence"]
 
         # Exclude non-tagged instances.
         tagged = False
@@ -90,20 +89,19 @@ class CollectReview(api.InstancePlugin):
         ext = os.path.splitext(file)[-1]
 
         # detect if sequence
-        if not is_sequence:
+        if not self.detect_sequence(file)[-1]:
             # is video file
             files = file
         else:
             files = list()
-            source_first = instance.data["sourceFirst"]
             self.log.debug("_ file: {}".format(file))
             spliter, padding = self.detect_sequence(file)
             self.log.debug("_ spliter, padding: {}, {}".format(
                 spliter, padding))
             base_name = file.split(spliter)[0]
             collection = clique.Collection(base_name, ext, padding, set(range(
-                int(source_first + rev_inst.data.get("sourceInH")),
-                int(source_first + rev_inst.data.get("sourceOutH") + 1))))
+                int(rev_inst.data.get("sourceInH")),
+                int(rev_inst.data.get("sourceOutH") + 1))))
             self.log.debug("_ collection: {}".format(collection))
             real_files = os.listdir(file_dir)
             for item in collection:

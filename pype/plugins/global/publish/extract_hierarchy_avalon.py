@@ -148,7 +148,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
         # Unarchived asset should not use same data
         new_entity = {
             "_id": entity["_id"],
-            "schema": "avalon-core:asset-3.0",
+            "schema": "pype:asset-3.0",
             "name": entity["name"],
             "parent": self.project["_id"],
             "type": "asset",
@@ -162,7 +162,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
     def create_avalon_asset(self, name, data):
         item = {
-            "schema": "avalon-core:asset-3.0",
+            "schema": "pype:asset-3.0",
             "name": name,
             "parent": self.project["_id"],
             "type": "asset",

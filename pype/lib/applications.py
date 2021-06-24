@@ -115,7 +115,9 @@ def launch_application(project_name, asset_name, task_name, app_name):
     # collect all the 'environment' attributes from parents
     tools_attr = [prep_env["AVALON_APP"], prep_env["AVALON_APP_NAME"]]
     tools_env = asset_document["data"].get("tools_env") or []
-    tools_attr.extend(tools_env)
+    # Forwards compatibility with OpenPype 3
+    for tool in tools_env:
+        tools_attr.append(tool.replace("/", "_"))
 
     tools_env = acre.get_tools(tools_attr)
     env = acre.compute(tools_env)
@@ -228,7 +230,7 @@ class ApplicationAction(avalon.api.Action):
         project_name = session["AVALON_PROJECT"]
         asset_name = session["AVALON_ASSET"]
         task_name = session["AVALON_TASK"]
-        launch_application(
+        _ = launch_application(
             project_name, asset_name, task_name, self.name
         )
 

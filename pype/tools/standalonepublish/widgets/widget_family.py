@@ -1,10 +1,15 @@
-from collections import namedtuple
+import re
 
 from Qt import QtWidgets, QtCore
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
 from . import FamilyDescriptionWidget
 
-from pype.api import config
+from pype.api import (
+    config,
+    Creator
+)
+from pype.lib import TaskNotSetError
+from avalon.tools.creator.app import SubsetAllowedSymbols
 
 
 class FamilyWidget(QtWidgets.QWidget):
@@ -122,6 +127,9 @@ class FamilyWidget(QtWidgets.QWidget):
         }
         return data
 
+    def on_task_change(self):
+        self.on_data_changed()
+
     def change_asset(self, name):
         if name is None:
             name = self.NOT_SELECTED
@@ -167,65 +175,113 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def _on_data_changed(self):
         asset_name = self.asset_name
-        subset_name = self.input_subset.text()
+        user_input_text = self.input_subset.text()
         item = self.list_families.currentItem()
 
         if item is None:
             return
 
-        assets = None
+        asset_doc = None
         if asset_name != self.NOT_SELECTED:
             # Get the assets from the database which match with the name
-            assets_db = self.dbcon.find(
-                filter={"type": "asset"},
-                projection={"name": 1}
+            asset_doc = self.dbcon.find_one(
+                {
+                    "type": "asset",
+                    "name": asset_name
+                },
+                {"_id": 1}
             )
-            assets = [
-                asset for asset in assets_db if asset_name in asset["name"]
-            ]
 
         # Get plugin and family
         plugin = item.data(PluginRole)
-        if plugin is None:
+
+        # Early exit if no asset name
+        if not asset_name.strip():
+            self._build_menu([])
+            item.setData(ExistsRole, False)
+            print("Asset name is required ..")
+            self.stateChanged.emit(False)
             return
 
-        family = plugin.family.rsplit(".", 1)[-1]
+        # Get the asset from the database which match with the name
+        asset_doc = self.dbcon.find_one(
+            {"name": asset_name, "type": "asset"},
+            projection={"_id": 1}
+        )
+        # Get plugin
+        plugin = item.data(PluginRole)
+        if asset_doc and plugin:
+            project_name = self.dbcon.Session["AVALON_PROJECT"]
+            asset_id = asset_doc["_id"]
+            task_name = self.dbcon.Session["AVALON_TASK"]
 
-        # Update the result
-        if subset_name:
-            subset_name = subset_name[0].upper() + subset_name[1:]
-        self.input_result.setText("{}{}".format(family, subset_name))
+            # Calculate subset name with Creator plugin
+            try:
+                subset_name = plugin.get_subset_name(
+                    user_input_text, task_name, asset_id, project_name
+                )
+                # Force replacement of prohibited symbols
+                # QUESTION should Creator care about this and here should be
+                #   only validated with schema regex?
+                subset_name = re.sub(
+                    "[^{}]+".format(SubsetAllowedSymbols),
+                    "",
+                    subset_name
+                )
+                self.input_result.setText(subset_name)
 
-        if assets:
+            except TaskNotSetError:
+                subset_name = ""
+                self.input_result.setText("Select task please")
+
             # Get all subsets of the current asset
-            asset_ids = [asset["_id"] for asset in assets]
-            subsets = self.dbcon.find(filter={"type": "subset",
-                                      "name": {"$regex": "{}*".format(family),
-                                               "$options": "i"},
-                                      "parent": {"$in": asset_ids}}) or []
+            subset_docs = self.dbcon.find(
+                {
+                    "type": "subset",
+                    "parent": asset_id
+                },
+                {"name": 1}
+            )
+            existing_subset_names = set(subset_docs.distinct("name"))
 
-            # Get all subsets' their subset name, "Default", "High", "Low"
-            existed_subsets = [sub["name"].split(family)[-1]
-                               for sub in subsets]
+            # Defaults to dropdown
+            defaults = []
+            # Check if Creator plugin has set defaults
+            if (
+                plugin.defaults
+                and isinstance(plugin.defaults, (list, tuple, set))
+            ):
+                defaults = list(plugin.defaults)
 
-            if plugin.defaults and isinstance(plugin.defaults, list):
-                defaults = plugin.defaults[:] + [self.Separator]
-                lowered = [d.lower() for d in plugin.defaults]
-                for sub in [s for s in existed_subsets
-                            if s.lower() not in lowered]:
-                    defaults.append(sub)
-            else:
-                defaults = existed_subsets
+            # Replace
+            compare_regex = re.compile(re.sub(
+                user_input_text, "(.+)", subset_name, flags=re.IGNORECASE
+            ))
+            subset_hints = set()
+            if user_input_text:
+                for _name in existing_subset_names:
+                    _result = compare_regex.search(_name)
+                    if _result:
+                        subset_hints |= set(_result.groups())
 
+            subset_hints = subset_hints - set(defaults)
+            if subset_hints:
+                if defaults:
+                    defaults.append(self.Separator)
+                defaults.extend(subset_hints)
             self._build_menu(defaults)
 
             item.setData(ExistsRole, True)
+
         else:
+            subset_name = user_input_text
             self._build_menu([])
             item.setData(ExistsRole, False)
-            if asset_name != self.NOT_SELECTED:
-                # TODO add logging into standalone_publish
-                print("'%s' not found .." % asset_name)
+
+            if not plugin:
+                print("No registered families ..")
+            else:
+                print("Asset '%s' not found .." % asset_name)
 
         self.on_version_refresh()
 
@@ -248,30 +304,43 @@ class FamilyWidget(QtWidgets.QWidget):
         subset_name = self.input_result.text()
         version = 1
 
+        asset_doc = None
+        subset_doc = None
+        versions = None
         if (
             asset_name != self.NOT_SELECTED and
             subset_name.strip() != ''
         ):
-            asset = self.dbcon.find_one({
-                'type': 'asset',
-                'name': asset_name
-            })
-            subset = self.dbcon.find_one({
-                'type': 'subset',
-                'parent': asset['_id'],
-                'name': subset_name
-            })
-            if subset:
-                versions = self.dbcon.find({
+            asset_doc = self.dbcon.find_one(
+                {
+                    'type': 'asset',
+                    'name': asset_name
+                },
+                {"_id": 1}
+            )
+
+        if asset_doc:
+            subset_doc = self.dbcon.find_one(
+                {
+                    'type': 'subset',
+                    'parent': asset_doc['_id'],
+                    'name': subset_name
+                },
+                {"_id": 1}
+            )
+
+        if subset_doc:
+            versions = self.dbcon.find(
+                {
                     'type': 'version',
-                    'parent': subset['_id']
-                })
-                if versions:
-                    versions = sorted(
-                        [v for v in versions],
-                        key=lambda ver: ver['name']
-                    )
-                    version = int(versions[-1]['name']) + 1
+                    'parent': subset_doc['_id']
+                },
+                {"name": 1}
+            ).distinct("name")
+
+        if versions:
+            versions = sorted(versions)
+            version = int(versions[-1]) + 1
 
         self.version_spinbox.setValue(version)
 
@@ -284,7 +353,10 @@ class FamilyWidget(QtWidgets.QWidget):
         self.schedule(self._on_data_changed, 500, channel="gui")
 
     def on_selection_changed(self, *args):
-        plugin = self.list_families.currentItem().data(PluginRole)
+        item = self.list_families.currentItem()
+        if not item:
+            return
+        plugin = item.data(PluginRole)
         if plugin is None:
             return
 
@@ -308,11 +380,20 @@ class FamilyWidget(QtWidgets.QWidget):
         """
 
     def refresh(self):
-        has_families = False
-        presets = config.get_presets().get('standalone_publish', {})
+        self.list_families.clear()
 
-        for key, creator in presets.get('families', {}).items():
-            creator = namedtuple("Creator", creator.keys())(*creator.values())
+        has_families = False
+        project_name = self.dbcon.Session.get("AVALON_PROJECT")
+        if not project_name:
+            return
+
+        creators_data = (
+            config.get_presets(project_name)
+            .get("standalone_publish", {})
+            .get("families", {})
+        )
+        for key, creator_data in creators_data.items():
+            creator = type(key, (Creator, ), creator_data)
 
             label = creator.label or creator.family
             item = QtWidgets.QListWidgetItem(label)

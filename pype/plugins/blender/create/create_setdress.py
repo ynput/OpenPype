@@ -3,7 +3,8 @@ import bpy
 from avalon import api, blender
 import pype.hosts.blender.plugin
 
-class CreateSetDress(blender.Creator):
+
+class CreateSetDress(pype.hosts.blender.plugin.Creator):
     """A grouped package of loaded content"""
 
     name = "setdressMain"

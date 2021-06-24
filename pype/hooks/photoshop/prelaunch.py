@@ -25,7 +25,8 @@ class PhotoshopPrelaunch(pype.lib.PypeHook):
         workfile_path = self.get_workfile_path(env, self.host_name)
 
         # adding compulsory environment var for opening file
-        env["PYPE_WORKFILE_PATH"] = workfile_path.replace('\\', '/')
+        # windows must have \\ not /
+        env["PYPE_WORKFILE_PATH"] = workfile_path.replace('\\', '\\\\')
 
         return True
 

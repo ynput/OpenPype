@@ -3,11 +3,11 @@
 import bpy
 
 from avalon import api
-from avalon.blender import Creator, lib
+from avalon.blender import lib
 import pype.hosts.blender.plugin
 
 
-class CreateRig(Creator):
+class CreateRig(pype.hosts.blender.plugin.Creator):
     """Artist-friendly rig with controls to direct motion"""
 
     name = "rigMain"

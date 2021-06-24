@@ -11,6 +11,7 @@ import queue
 import pymongo
 
 import requests
+import appdirs
 import ftrack_api
 import ftrack_api.session
 import ftrack_api.cache
@@ -18,6 +19,11 @@ import ftrack_api.operation
 import ftrack_api._centralized_storage_scenario
 import ftrack_api.event
 from ftrack_api.logging import LazyLogMessage as L
+
+try:
+    from weakref import WeakMethod
+except ImportError:
+    from ftrack_api._weakref import WeakMethod
 
 from pype.api import (
     Logger,
@@ -276,8 +282,8 @@ class SocketSession(ftrack_api.session.Session):
     def __init__(
         self, server_url=None, api_key=None, api_user=None, auto_populate=True,
         plugin_paths=None, cache=None, cache_key_maker=None,
-        auto_connect_event_hub=None, schema_cache_path=None,
-        plugin_arguments=None, sock=None, Eventhub=None
+        auto_connect_event_hub=False, schema_cache_path=None,
+        plugin_arguments=None, timeout=60, sock=None, Eventhub=None
     ):
         super(ftrack_api.session.Session, self).__init__()
         self.logger = logging.getLogger(
@@ -354,6 +360,7 @@ class SocketSession(ftrack_api.session.Session):
         self._request.auth = ftrack_api.session.SessionAuthentication(
             self._api_key, self._api_user
         )
+        self.request_timeout = timeout
 
         self.auto_populate = auto_populate
 
@@ -374,7 +381,7 @@ class SocketSession(ftrack_api.session.Session):
         )
 
         self._auto_connect_event_hub_thread = None
-        if auto_connect_event_hub in (None, True):
+        if auto_connect_event_hub:
             # Connect to event hub in background thread so as not to block main
             # session usage waiting for event hub connection.
             self._auto_connect_event_hub_thread = threading.Thread(
@@ -383,14 +390,8 @@ class SocketSession(ftrack_api.session.Session):
             self._auto_connect_event_hub_thread.daemon = True
             self._auto_connect_event_hub_thread.start()
 
-        # To help with migration from auto_connect_event_hub default changing
-        # from True to False.
-        self._event_hub._deprecation_warning_auto_connect = (
-            auto_connect_event_hub is None
-        )
-
         # Register to auto-close session on exit.
-        atexit.register(self.close)
+        atexit.register(WeakMethod(self.close))
 
         self._plugin_paths = plugin_paths
         if self._plugin_paths is None:
@@ -404,8 +405,9 @@ class SocketSession(ftrack_api.session.Session):
         # rebuilding types)?
         if schema_cache_path is not False:
             if schema_cache_path is None:
+                schema_cache_path = appdirs.user_cache_dir()
                 schema_cache_path = os.environ.get(
-                    'FTRACK_API_SCHEMA_CACHE_PATH', tempfile.gettempdir()
+                    'FTRACK_API_SCHEMA_CACHE_PATH', schema_cache_path
                 )
 
             schema_cache_path = os.path.join(

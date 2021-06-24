@@ -31,9 +31,10 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         })
 
         # creating representation
+        _, ext = os.path.splitext(file_path)
         instance.data["representations"].append({
-            "name": "psd",
-            "ext": "psd",
+            "name": ext[1:],
+            "ext": ext[1:],
             "files": base_name,
             "stagingDir": staging_dir,
         })

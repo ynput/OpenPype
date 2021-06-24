@@ -1,8 +1,10 @@
-import avalon.maya
-from pype.hosts.maya import lib
+from pype.hosts.maya import (
+    lib,
+    plugin
+)
 
 
-class CreateLook(avalon.maya.Creator):
+class CreateLook(plugin.Creator):
     """Shader connections defining shape look"""
 
     name = "look"
@@ -10,6 +12,7 @@ class CreateLook(avalon.maya.Creator):
     family = "look"
     icon = "paint-brush"
     defaults = ['Main']
+    make_tx = True
 
     def __init__(self, *args, **kwargs):
         super(CreateLook, self).__init__(*args, **kwargs)
@@ -17,7 +20,7 @@ class CreateLook(avalon.maya.Creator):
         self.data["renderlayer"] = lib.get_current_renderlayer()
 
         # Whether to automatically convert the textures to .tx upon publish.
-        self.data["maketx"] = True
+        self.data["maketx"] = self.make_tx
 
         # Enable users to force a copy.
         self.data["forceCopy"] = False

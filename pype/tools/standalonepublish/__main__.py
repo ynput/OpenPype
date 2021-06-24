@@ -1,14 +1,16 @@
 import os
 import sys
-import app
 import ctypes
 import signal
+import app
 from Qt import QtWidgets, QtGui
 from avalon import style
 from pype.api import resources
+from pype.tools.standalonepublish.widgets.constants import HOST_NAME
 
 
 if __name__ == "__main__":
+    os.environ["AVALON_APP"] = HOST_NAME
 
     # Allow to change icon of running process in windows taskbar
     if os.name == "nt":

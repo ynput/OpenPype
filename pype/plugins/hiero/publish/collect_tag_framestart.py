@@ -29,13 +29,9 @@ class CollectClipTagFrameStart(api.InstancePlugin):
                     start_frame = int(start_frame)
                 except ValueError:
                     if "source" in t_value:
-                        source_first = instance.data["sourceFirst"]
-                        if source_first == 0:
-                            source_first = 1
-                        self.log.info("Start frame on `{0}`".format(source_first))
                         source_in = instance.data["sourceIn"]
                         self.log.info("Start frame on `{0}`".format(source_in))
-                        start_frame = source_first + source_in
+                        start_frame = source_in
 
                 instance.data["startingFrame"] = start_frame
                 self.log.info("Start frame on `{0}` set to `{1}`".format(

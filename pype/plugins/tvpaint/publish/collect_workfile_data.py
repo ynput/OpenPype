@@ -57,7 +57,10 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
 
         # Collect context from workfile metadata
         self.log.info("Collecting workfile context")
+
         workfile_context = pipeline.get_current_workfile_context()
+        # Store workfile context to pyblish context
+        context.data["workfile_context"] = workfile_context
         if workfile_context:
             # Change current context with context from workfile
             key_map = (
@@ -67,16 +70,27 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             for env_key, key in key_map:
                 avalon.api.Session[env_key] = workfile_context[key]
                 os.environ[env_key] = workfile_context[key]
+            self.log.info("Context changed to: {}".format(workfile_context))
+
+            asset_name = workfile_context["asset"]
+            task_name = workfile_context["task"]
+
         else:
+            asset_name = current_context["asset"]
+            task_name = current_context["task"]
             # Handle older workfiles or workfiles without metadata
-            self.log.warning(
+            self.log.warning((
                 "Workfile does not contain information about context."
                 " Using current Session context."
-            )
-            workfile_context = current_context.copy()
+            ))
 
-        context.data["workfile_context"] = workfile_context
-        self.log.info("Context changed to: {}".format(workfile_context))
+        # Store context asset name
+        context.data["asset"] = asset_name
+        self.log.info(
+            "Context is set to Asset: \"{}\" and Task: \"{}\"".format(
+                asset_name, task_name
+            )
+        )
 
         # Collect instances
         self.log.info("Collecting instance data from workfile")
@@ -113,7 +127,8 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         self.log.info("Collecting scene data from workfile")
         workfile_info_parts = lib.execute_george("tv_projectinfo").split(" ")
 
-        frame_start = int(workfile_info_parts.pop(-1))
+        # Project frame start - not used
+        workfile_info_parts.pop(-1)
         field_order = workfile_info_parts.pop(-1)
         frame_rate = float(workfile_info_parts.pop(-1))
         pixel_apsect = float(workfile_info_parts.pop(-1))
@@ -121,23 +136,24 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
         width = int(workfile_info_parts.pop(-1))
         workfile_path = " ".join(workfile_info_parts).replace("\"", "")
 
-        # TODO This is not porper way of getting last frame
-        # - but don't know better
-        last_frame = frame_start
-        for layer in layers_data:
-            frame_end = layer["frame_end"]
-            if frame_end > last_frame:
-                last_frame = frame_end
+        # Marks return as "{frame - 1} {state} ", example "0 set".
+        result = lib.execute_george("tv_markin")
+        mark_in_frame, mark_in_state, _ = result.split(" ")
+
+        result = lib.execute_george("tv_markout")
+        mark_out_frame, mark_out_state, _ = result.split(" ")
 
         scene_data = {
             "currentFile": workfile_path,
             "sceneWidth": width,
             "sceneHeight": height,
-            "pixelAspect": pixel_apsect,
-            "frameStart": frame_start,
-            "frameEnd": last_frame,
-            "fps": frame_rate,
-            "fieldOrder": field_order
+            "scenePixelAspect": pixel_apsect,
+            "sceneFps": frame_rate,
+            "sceneFieldOrder": field_order,
+            "sceneMarkIn": int(mark_in_frame),
+            "sceneMarkInState": mark_in_state == "set",
+            "sceneMarkOut": int(mark_out_frame),
+            "sceneMarkOutState": mark_out_state == "set"
         }
         self.log.debug(
             "Scene data: {}".format(json.dumps(scene_data, indent=4))

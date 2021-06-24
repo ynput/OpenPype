@@ -5,7 +5,7 @@ from pype.plugin import contextplugin_should_run
 import os
 
 
-class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
+class ValidateDeadlineConnection(pyblish.api.InstancePlugin):
     """Validate Deadline Web Service is running"""
 
     label = "Validate Deadline Web Service"
@@ -15,17 +15,19 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
     if not os.environ.get("DEADLINE_REST_URL"):
         active = False
 
-    def process(self, context):
+    def process(self, instance):
 
-        # Workaround bug pyblish-base#250
-        if not contextplugin_should_run(self, context):
-            return
-
-        try:
-            DEADLINE_REST_URL = os.environ["DEADLINE_REST_URL"]
-        except KeyError:
-            self.log.error("Deadline REST API url not found.")
-            raise ValueError("Deadline REST API url not found.")
+        if instance.data.get("deadlineUrl"):
+            DEADLINE_REST_URL = instance.data.get("deadlineUrl")
+            self.log.info(
+                "We have deadline URL on instance {}".format(
+                    DEADLINE_REST_URL))
+        else:
+            try:
+                DEADLINE_REST_URL = os.environ["DEADLINE_REST_URL"]
+            except KeyError:
+                self.log.error("Deadline REST API url not found.")
+                raise ValueError("Deadline REST API url not found.")
 
         # Check response
         response = self._requests_get(DEADLINE_REST_URL)

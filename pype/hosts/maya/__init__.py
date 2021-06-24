@@ -45,7 +45,7 @@ def install():
     avalon.before("save", on_before_save)
 
     log.info("Overriding existing event 'taskChanged'")
-    override_event("taskChanged", on_task_changed)
+    override_task_change_event()
 
     log.info("Setting default family states for loader..")
     avalon.data["familiesStateToggled"] = ["imagesequence"]
@@ -59,22 +59,19 @@ def uninstall():
     menu.uninstall()
 
 
-def override_event(event, callback):
-    """
-    Override existing event callback
-    Args:
-        event (str): name of the event
-        callback (function): callback to be triggered
+def override_task_change_event():
+    """Override taskChanged event callback in avalon's maya implementation."""
 
-    Returns:
-        None
+    event_name = "taskChanged"
+    callbacks = pipeline._registered_event_handlers.get(event_name)
+    if callbacks:
+        # Remove callback from `avalon.maya.pipeline`
+        from avalon.maya.pipeline import _on_task_changed
 
-    """
-
-    ref = weakref.WeakSet()
-    ref.add(callback)
-
-    pipeline._registered_event_handlers[event] = ref
+        if _on_task_changed in callbacks:
+            callbacks.remove(_on_task_changed)
+    # Register pype's callback
+    avalon.on(event_name, on_task_changed)
 
 
 def on_init(_):
@@ -229,6 +226,9 @@ def on_task_changed(*args):
         lib.set_context_settings()
         lib.update_content_on_context_change()
 
-    lib.show_message("Context was changed",
-                     ("Context was changed to {}".format(
-                        avalon.Session["AVALON_ASSET"])))
+    lib.show_message(
+        "Context was changed",
+        "Context was changed to {}/{}".format(
+            avalon.Session["AVALON_ASSET"], avalon.Session["AVALON_TASK"]
+        )
+    )

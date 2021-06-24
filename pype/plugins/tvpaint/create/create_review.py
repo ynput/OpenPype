@@ -1,7 +1,8 @@
 from avalon.tvpaint import pipeline
+from pype.hosts.tvpaint import plugin
 
 
-class CreateReview(pipeline.Creator):
+class CreateReview(plugin.Creator):
     """Review for global review of all layers."""
     name = "review"
     label = "Review"
