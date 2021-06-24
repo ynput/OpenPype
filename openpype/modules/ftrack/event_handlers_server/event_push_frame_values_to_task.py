@@ -121,6 +121,9 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             ))
             return
 
+        interest_attributes = set(self.interest_attributes)
+        interest_entity_types = set(self.interest_entity_types)
+
         # Separate value changes and task parent changes
         _entities_info = []
         task_parent_changes = []
