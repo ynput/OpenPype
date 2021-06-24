@@ -271,6 +271,12 @@ class SchemasHub:
                 "Got unresolved schema data of type \"{}\"".format(schema_type)
             )
 
+        if schema_type in WRAPPER_TYPES:
+            raise ValueError((
+                "Function `create_schema_object` can't create entities"
+                " of any wrapper type. Got type: \"{}\""
+            ).format(schema_type))
+
         klass = self._loaded_types.get(schema_type)
         if not klass:
             raise KeyError("Unknown type \"{}\"".format(schema_type))
