@@ -332,6 +332,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             session, attr_ids, entity_ids, task_entity_ids, hier_attrs
         )
 
+        changes = []
         for entity_id, current_values in current_values_by_id.items():
             parent_id = parent_id_by_task_id.get(entity_id)
             if not parent_id:
@@ -356,39 +357,13 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 if new_value == old_value:
                     continue
 
-                entity_key = collections.OrderedDict()
-                entity_key["configuration_id"] = attr_id
-                entity_key["entity_id"] = entity_id
-                self._cached_changes.append({
-                    "attr_key": attr_key,
+                changes.append({
+                    "new_value": new_value,
+                    "attr_id": attr_id,
                     "entity_id": entity_id,
-                    "value": new_value,
-                    "time": datetime.datetime.now()
+                    "attr_key": attr_key
                 })
-                if new_value is None:
-                    op = ftrack_api.operation.DeleteEntityOperation(
-                        "CustomAttributeValue",
-                        entity_key
-                    )
-                else:
-                    op = ftrack_api.operation.UpdateEntityOperation(
-                        "ContextCustomAttributeValue",
-                        entity_key,
-                        "value",
-                        ftrack_api.symbol.NOT_SET,
-                        new_value
-                    )
-
-                session.recorded_operations.push(op)
-                self.log.info((
-                    "Changing Custom Attribute \"{}\" to value"
-                    " \"{}\" on entity: {}"
-                ).format(attr_key, new_value, entity_id))
-            try:
-                session.commit()
-            except Exception:
-                session.rollback()
-                self.log.warning("Changing of values failed.", exc_info=True)
+        self._commit_changes(session, changes)
 
     def filter_changes(
         self, session, event, entities_info, interest_attributes
