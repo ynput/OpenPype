@@ -181,54 +181,26 @@ class OverrideState:
 
 
 class SchemasHub:
-    def __init__(self, schema_subfolder):
-        from openpype.settings import entities
-
-        # Define known abstract classes
-        known_abstract_classes = (
-            entities.BaseEntity,
-            entities.BaseItemEntity,
-            entities.ItemEntity,
-            entities.EndpointEntity,
-            entities.InputEntity,
-            entities.BaseEnumEntity
-        )
+    def __init__(self, schema_subfolder, reset=True):
+        self._schema_subfolder = schema_subfolder
 
         self._loaded_types = {}
-        _gui_types = []
-        for attr in dir(entities):
-            item = getattr(entities, attr)
-            # Filter classes
-            if not inspect.isclass(item):
-                continue
+        self._gui_types = tuple()
 
-            # Skip classes that do not inherit from BaseEntity
-            if not issubclass(item, entities.BaseEntity):
-                continue
-
-            # Skip class that is abstract by design
-            if item in known_abstract_classes:
-                continue
-
-            if inspect.isabstract(item):
-                # Create an object to get crash and get traceback
-                item()
-
-            # Backwards compatibility
-            # Single entity may have multiple schema types
-            for schema_type in item.schema_types:
-                self._loaded_types[schema_type] = item
-
-            if item.gui_type:
-                _gui_types.append(item)
-        self._gui_types = tuple(_gui_types)
-
-        self._schema_subfolder = schema_subfolder
         self._crashed_on_load = {}
-        loaded_templates, loaded_schemas = self._load_schemas()
+        self._loaded_templates = {}
+        self._loaded_schemas = {}
 
-        self._loaded_templates = loaded_templates
-        self._loaded_schemas = loaded_schemas
+        # It doesn't make sence to reload types on each reset as they can't be
+        #   changed
+        self._load_types()
+
+        # Trigger reset
+        if reset:
+            self.reset()
+
+    def reset(self):
+        self._load_schemas()
 
     @property
     def gui_types(self):
@@ -305,7 +277,54 @@ class SchemasHub:
 
         return klass(schema_data, *args, **kwargs)
 
+    def _load_types(self):
+        from openpype.settings import entities
+
+        # Define known abstract classes
+        known_abstract_classes = (
+            entities.BaseEntity,
+            entities.BaseItemEntity,
+            entities.ItemEntity,
+            entities.EndpointEntity,
+            entities.InputEntity,
+            entities.BaseEnumEntity
+        )
+
+        self._loaded_types = {}
+        _gui_types = []
+        for attr in dir(entities):
+            item = getattr(entities, attr)
+            # Filter classes
+            if not inspect.isclass(item):
+                continue
+
+            # Skip classes that do not inherit from BaseEntity
+            if not issubclass(item, entities.BaseEntity):
+                continue
+
+            # Skip class that is abstract by design
+            if item in known_abstract_classes:
+                continue
+
+            if inspect.isabstract(item):
+                # Create an object to get crash and get traceback
+                item()
+
+            # Backwards compatibility
+            # Single entity may have multiple schema types
+            for schema_type in item.schema_types:
+                self._loaded_types[schema_type] = item
+
+            if item.gui_type:
+                _gui_types.append(item)
+        self._gui_types = tuple(_gui_types)
+
     def _load_schemas(self):
+        # Refresh all affecting variables
+        self._crashed_on_load = {}
+        self._loaded_templates = {}
+        self._loaded_schemas = {}
+
         dirpath = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             "schemas",
@@ -362,7 +381,8 @@ class SchemasHub:
                         )
                     loaded_schemas[basename] = schema_data
 
-        return loaded_templates, loaded_schemas
+        self._loaded_templates = loaded_templates
+        self._loaded_schemas = loaded_schemas
 
     def _fill_schema_template(self, child_data, template_def):
         template_name = child_data["name"]
