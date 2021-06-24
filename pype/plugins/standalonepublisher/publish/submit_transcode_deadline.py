@@ -91,7 +91,7 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
 
                 # Get start of clips.
                 start_frame = int(clip.source_range.start_time.value)
-                end_frame = None
+                end_frame = int(start_frame + clip.duration().value)
 
                 # Get media path.
                 url = urlparse(clip.media_reference.target_url)
@@ -146,15 +146,24 @@ class SubmitTranscodeDeadline(pyblish.api.InstancePlugin):
 
         # Generate the payloads for Deadline submission
         payloads = []
+        args_template = (
+            "-input \"{}\"" +
+            " -preset {}" +
+            " -name {}" +
+            " -output {}" +
+            " -framerate {}" +
+            " -start {}" +
+            " -end {}"
+        )
         for job in jobs:
-            args_string = (
-                "-input \"{}\" -preset {} -name {} -output {}"
-            )
-            args = args_string.format(
+            args = args_template.format(
                 job["input_path"],
                 instance.data["family"],
                 job["name"],
-                job["output_path"]
+                job["output_path"],
+                framerate,
+                job["start"],
+                job["end"]
             )
             payload = {
                 "JobInfo": {

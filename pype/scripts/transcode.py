@@ -59,6 +59,7 @@ def main(input_path="",
          output_path="",
          audio_path="",
          start=None,
+         end=None,
          framerate=None):
 
     collection = None
@@ -135,6 +136,16 @@ def main(input_path="",
 
         # TODO: Copying file if its compatible with the destination codec.
 
+        if start:
+            ffmpeg_args.extend(
+                ["-ss", str(abs(int(start) / float(framerate)))]
+            )
+
+        if end:
+            ffmpeg_args.extend(
+                ["-to", str(abs(int(end) / float(framerate)))]
+            )
+
         ffmpeg_args.extend(["-i", first_file])
 
     # Process TXTs.
@@ -168,6 +179,7 @@ if __name__ == "__main__":
     parser.add_argument("-name", action="store", dest="name")
     parser.add_argument("-audio", nargs="?", dest="audio_path")
     parser.add_argument("-start", action="store", dest="start")
+    parser.add_argument("-end", action="store", dest="end")
     parser.add_argument("-framerate", action="store", dest="framerate")
     parser.add_argument("-output", action="store", dest="output_path")
 
