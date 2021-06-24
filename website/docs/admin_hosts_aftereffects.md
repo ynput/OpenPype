@@ -14,7 +14,7 @@ All of them are Project based, eg. each project could have different configurati
 
 Location: Settings > Project > AfterEffects
 
-![Harmony Project Settings](assets/admin_hosts_aftereffects_settings.png)
+![AfterEffects Project Settings](assets/admin_hosts_aftereffects_settings.png)
 
 ## Publish plugins
 

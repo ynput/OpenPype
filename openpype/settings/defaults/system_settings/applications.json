@@ -1101,16 +1101,6 @@
         "variants": {
             "4-26": {
                 "use_python_2": false,
-                "executables": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
-                "arguments": {
-                    "windows": [],
-                    "darwin": [],
-                    "linux": []
-                },
                 "environment": {}
             }
         }

@@ -59,10 +59,10 @@
                                         "object_type": "text"
                                     },
                                     {
+                                        "type": "hosts-enum",
                                         "key": "hosts",
                                         "label": "Host names",
-                                        "type": "list",
-                                        "object_type": "text"
+                                        "multiselection": true
                                     },
                                     {
                                         "type": "separator"
