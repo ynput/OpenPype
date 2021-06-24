@@ -63,11 +63,12 @@ class CollectTranscode(pyblish.api.InstancePlugin):
                 self.log.debug(f"audio_path: `{audio_path}`")
             instance.data["audioPath"] = audio_path
 
-        representation = {
-            "name": "audio",
-            "ext": os.path.splitext(instance.data["audioPath"])[1],
-            "files": os.path.basename(instance.data["audioPath"]),
-            "stagingDir": os.path.dirname(instance.data["audioPath"]),
-        }
-        self.log.info(representation)
-        instance.data["representations"].append(representation)
+        if audio_path:
+            representation = {
+                "name": "audio",
+                "ext": os.path.splitext(instance.data["audioPath"])[1],
+                "files": os.path.basename(instance.data["audioPath"]),
+                "stagingDir": os.path.dirname(instance.data["audioPath"]),
+            }
+            self.log.info(representation)
+            instance.data["representations"].append(representation)

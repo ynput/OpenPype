@@ -9,8 +9,9 @@ class ValidateTranscodeResources(pyblish.api.InstancePlugin):
     hosts = ["standalonepublisher"]
     families = ["transcode"]
     order = pype.api.ValidateContentsOrder
+    optional = True
 
     def process(self, instance):
         check_file = instance.data["audioPath"]
-        msg = f"Missing \"{check_file}\"."
+        msg = f"No audio file found. Audio path: \"{check_file}\"."
         assert check_file, msg
