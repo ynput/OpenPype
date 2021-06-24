@@ -121,11 +121,21 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             ))
             return
 
+        # Separate value changes and task parent changes
+        _entities_info = []
+        task_parent_changes = []
+        for entity_info in entities_info:
+            if entity_info["entity_type"].lower() == "task":
+                task_parent_changes.append(entity_info)
+            else:
+                _entities_info.append(entity_info)
+        entities_info = _entities_info
+
         # Filter entities info with changes
         interesting_data, changed_keys_by_object_id = self.filter_changes(
             session, event, entities_info, interest_attributes
         )
-        if not interesting_data:
+        if not interesting_data and not task_parent_changes:
             return
 
         # Prepare object types
