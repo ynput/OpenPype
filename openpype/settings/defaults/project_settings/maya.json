@@ -10,12 +10,16 @@
     "scriptsmenu": {
         "name": "OpenPype Tools",
         "definition": [
-             {
+            {
                 "type": "action",
-                "command": "$OPENPYPE_SCRIPTS\\others\\save_scene_incremental.py",
-                "sourcetype": "file",
-                "title": "# Version Up",
-                "tooltip": "Incremental save with a specific format"
+                "command": "import openpype.hosts.maya.api.commands as op_cmds; op_cmds.edit_shader_definitions()",
+                "sourcetype": "python",
+                "title": "Edit shader name definitions",
+                "tooltip": "Edit shader name definitions used in validation and renaming.",
+                "tags": [
+                    "pipeline",
+                    "shader"
+                ]
             }
         ]
     },
