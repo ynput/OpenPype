@@ -50,8 +50,8 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
 
         # creating instance data
         instance.data.update({
-            "subset": "{} {}".format(subset, families),
-            "label": scene_file,
+            "subset": subset,
+            "label": "{} {}".format(subset, families),
             "family": family,
             "families": families,
             "representations": list()
@@ -69,7 +69,7 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         }
 
         instance.data["representations"].append(representation)
-
+        self.log.debug(">> instance.data: {}".format(instance.data))
         self.log.info('Publishing Celaction workfile')
 
         # render instance
