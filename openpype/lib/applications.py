@@ -460,6 +460,12 @@ class ApplicationExecutable:
             if os.path.exists(_executable):
                 executable = _executable
 
+        # Try to format executable with environments
+        try:
+            executable = executable.format(**os.environ)
+        except Exception:
+            pass
+
         self.executable_path = executable
 
     def __str__(self):
