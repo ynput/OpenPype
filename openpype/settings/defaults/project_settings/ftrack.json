@@ -200,6 +200,68 @@
         }
     },
     "publish": {
+        "CollectFtrackFamily": {
+            "enabled": true,
+            "profiles": [
+                {
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "families": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "families": [
+                        "matchmove",
+                        "shot"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "families": [
+                        "review",
+                        "plate"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "clip",
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
+                },
+                {
+                    "hosts": [
+                        "maya"
+                    ],
+                    "families": [
+                        "model",
+                        "setdress",
+                        "animation",
+                        "look",
+                        "rig",
+                        "camera"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                }
+            ]
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
             "note_with_intent_template": "{intent}: {comment}",

@@ -1,5 +1,6 @@
 import os
 import json
+import tempfile
 
 import pyblish.api
 import avalon.api
@@ -153,9 +154,45 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "sceneMarkIn": int(mark_in_frame),
             "sceneMarkInState": mark_in_state == "set",
             "sceneMarkOut": int(mark_out_frame),
-            "sceneMarkOutState": mark_out_state == "set"
+            "sceneMarkOutState": mark_out_state == "set",
+            "sceneBgColor": self._get_bg_color()
         }
         self.log.debug(
             "Scene data: {}".format(json.dumps(scene_data, indent=4))
         )
         context.data.update(scene_data)
+
+    def _get_bg_color(self):
+        """Background color set on scene.
+
+        Is important for review exporting where scene bg color is used as
+        background.
+        """
+        output_file = tempfile.NamedTemporaryFile(
+            mode="w", prefix="a_tvp_", suffix=".txt", delete=False
+        )
+        output_file.close()
+        output_filepath = output_file.name.replace("\\", "/")
+        george_script_lines = [
+            # Variable containing full path to output file
+            "output_path = \"{}\"".format(output_filepath),
+            "tv_background",
+            "bg_color = result",
+            # Write data to output file
+            (
+                "tv_writetextfile"
+                " \"strict\" \"append\" '\"'output_path'\"' bg_color"
+            )
+        ]
+
+        george_script = "\n".join(george_script_lines)
+        lib.execute_george_through_file(george_script)
+
+        with open(output_filepath, "r") as stream:
+            data = stream.read()
+
+        os.remove(output_filepath)
+        data = data.strip()
+        if not data:
+            return None
+        return data.split(" ")

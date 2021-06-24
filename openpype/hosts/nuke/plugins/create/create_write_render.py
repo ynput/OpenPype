@@ -100,6 +100,13 @@ class CreateWriteRender(plugin.PypeCreator):
                                    "/{subset}.{frame}.{ext}")})
 
         # add crop node to cut off all outside of format bounding box
+        # get width and height
+        try:
+            width, height = (selected_node.width(), selected_node.height())
+        except AttributeError:
+            actual_format = nuke.root().knob('format').value()
+            width, height = (actual_format.width(), actual_format.height())
+
         _prenodes = [
             {
                 "name": "Crop01",
@@ -108,8 +115,8 @@ class CreateWriteRender(plugin.PypeCreator):
                     ("box", [
                         0.0,
                         0.0,
-                        selected_node.width(),
-                        selected_node.height()
+                        width,
+                        height
                     ])
                 ],
                 "dependent": None

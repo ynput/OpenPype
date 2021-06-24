@@ -128,5 +128,4 @@ class CreateWritePrerender(plugin.PypeCreator):
             w_node["first"].setValue(nuke.root()["first_frame"].value())
             w_node["last"].setValue(nuke.root()["last_frame"].value())
 
-
         return write_node

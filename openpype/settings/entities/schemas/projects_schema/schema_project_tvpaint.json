@@ -12,6 +12,25 @@
             "label": "Publish plugins",
             "children": [
                 {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "ExtractSequence",
+                    "label": "ExtractSequence",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "label",
+                            "label": "<b>Review BG color</b> is used for whole scene review and for thumbnails."
+                        },
+                        {
+                            "type": "color",
+                            "key": "review_bg",
+                            "label": "Review BG color",
+                            "use_alpha": false
+                        }
+                    ]
+                },
+                {
                     "type": "schema_template",
                     "name": "template_publish_plugin",
                     "template_data": [
