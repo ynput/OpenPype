@@ -168,24 +168,42 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         self, session, object_types_by_name, task_parent_changes,
         interest_entity_types, interest_attributes
     ):
+        """Push custom attribute values if task parent has changed.
+
+        Parent is changed if task is created or if is moved under different
+        entity. We don't care about all task changes only about those that
+        have it's parent in interest types (from settings).
+
+        Tasks hierarchical value should be unset or set based on parents
+        real hierarchical value and non hierarchical custom attribute value
+        should be set to hierarchical value.
+        """
+        # Store task ids which were created or moved under parent with entity
+        #   type defined in settings (interest_entity_types).
         task_ids = set()
+        # Store parent ids of matching task ids
         matching_parent_ids = set()
+        # Store all entity ids of all entities to be able query hierarchical
+        #   values.
         whole_hierarchy_ids = set()
+        # Store parent id of each entity id
         parent_id_by_entity_id = {}
         for entity_info in task_parent_changes:
-            parents = entity_info.get("parents") or []
             # Ignore entities with less parents than 2
             # NOTE entity itself is also part of "parents" value
+            parents = entity_info.get("parents") or []
             if len(parents) < 2:
                 continue
 
             parent_info = parents[1]
+            # Check if parent has entity type we care about.
             if parent_info["entity_type"] not in interest_entity_types:
                 continue
 
             task_ids.add(entity_info["entityId"])
             matching_parent_ids.add(parent_info["entityId"])
 
+            # Store whole hierarchi of task entity
             prev_id = None
             for item in parents:
                 item_id = item["entityId"]
@@ -200,9 +218,12 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                     break
                 prev_id = item_id
 
+        # Just skip if nothing is interesting for our settings
         if not matching_parent_ids:
             return
 
+        # Query object type ids of parent ids for custom attribute
+        #   definitions query
         entities = session.query(
             "select object_type_id from TypedContext where id in ({})".format(
                 self.join_query_keys(matching_parent_ids)
@@ -211,6 +232,8 @@ class PushFrameValuesToTaskEvent(BaseEvent):
 
         # Prepare task object id
         task_object_id = object_types_by_name["task"]["id"]
+
+        # All object ids for which we're querying custom attribute definitions
         object_type_ids = set()
         object_type_ids.add(task_object_id)
         for entity in entities:
@@ -220,10 +243,13 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             session, object_type_ids, interest_attributes
         )
 
+        # Skip if all task attributes are not available
         task_attrs = attrs_by_obj_id.get(task_object_id)
         if not task_attrs:
             return
 
+        # Skip attributes that is not in both hierarchical and nonhierarchical
+        # TODO be able to push values if hierarchical is available
         for key in interest_attributes:
             if key not in hier_attrs:
                 task_attrs.pop(key, None)
@@ -231,9 +257,11 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             elif key not in task_attrs:
                 hier_attrs.pop(key)
 
+        # Skip if nothing remained
         if not task_attrs:
             return
 
+        # Do some preparations for custom attribute values query
         attr_key_by_id = {}
         nonhier_id_by_key = {}
         hier_attr_ids = []
@@ -247,13 +275,21 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             nonhier_id_by_key[key] = attr_id
             conf_ids.append(attr_id)
 
+        # Query custom attribute values
+        # - result does not contain values for all entities only result of
+        #   query callback to ftrack server
         result = query_custom_attributes(
             session, conf_ids, whole_hierarchy_ids
         )
+
+        # Prepare variables where result will be stored
+        # - hierachical values should not contain attribute with value by
+        #   default
         hier_values_by_entity_id = {
             entity_id: {}
             for entity_id in whole_hierarchy_ids
         }
+        # - real values of custom attributes
         values_by_entity_id = {
             entity_id: {
                 attr_id: None
@@ -271,6 +307,10 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             if attr_id in hier_attr_ids and value is not None:
                 hier_values_by_entity_id[entity_id][attr_id] = value
 
+        # Prepare values for all task entities
+        # - going through all parents and storing first value value
+        # - store None to those that are already known that do not have set
+        #   value at all
         for task_id in tuple(task_ids):
             for attr_id in hier_attr_ids:
                 entity_ids = []
@@ -293,6 +333,7 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 for entity_id in entity_ids:
                     hier_values_by_entity_id[entity_id][attr_id] = value
 
+        # Prepare changes to commit
         changes = []
         for task_id in tuple(task_ids):
             parent_id = parent_id_by_entity_id[task_id]
