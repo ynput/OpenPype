@@ -472,3 +472,19 @@ class SchemasHub:
         self._gui_types = tuple(_gui_types)
 
         self._schema_subfolder = schema_subfolder
+
+    @property
+    def gui_types(self):
+        return self._gui_types
+
+    def get_schema(self, schema_name):
+        pass
+
+    def get_template(self, template_name):
+        pass
+
+    def resolve_schema_data(self, schema_data):
+        pass
+
+    def create_schema_object(self, schema_data, *args, **kwargs):
+        pass
