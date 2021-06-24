@@ -208,13 +208,13 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 self.join_query_keys(matching_parent_ids)
             )
         )
-        object_type_ids = set()
-        for entity in entities:
-            object_type_ids.add(entity["object_type_id"])
 
         # Prepare task object id
         task_object_id = object_types_by_name["task"]["id"]
+        object_type_ids = set()
         object_type_ids.add(task_object_id)
+        for entity in entities:
+            object_type_ids.add(entity["object_type_id"])
 
         attrs_by_obj_id, hier_attrs = self.attrs_configurations(
             session, object_type_ids, interest_attributes
