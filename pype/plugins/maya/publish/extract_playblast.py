@@ -1,5 +1,5 @@
 import os
-import glob
+import json
 import contextlib
 import clique
 import capture
@@ -91,6 +91,20 @@ class ExtractPlayblast(pype.api.Extractor):
         else:
             preset["viewport_options"] = {"imagePlane": image_plane}
 
+        # Image planes do not update the file sequence unless the active panel
+        # is viewing through the camera.
+        active_panel_camera = instance.context.data.get("active_panel_camera")
+        if not active_panel_camera:
+            active_panel_camera = capture.parse_active_view()["camera"]
+            instance.context.data["active_panel_camera"] = active_panel_camera
+
+        active_panel = instance.context.data.get("active_panel")
+        if not active_panel:
+            active_panel = capture.parse_active_panel()
+            instance.context.data["active_panel"] = active_panel
+
+        cmds.modelPanel(active_panel, edit=True, camera=preset["camera"])
+
         with maintained_time():
             filename = preset.get("filename", "%TEMP%")
 
@@ -99,7 +113,15 @@ class ExtractPlayblast(pype.api.Extractor):
             # playblast and viewer
             preset['viewer'] = False
 
+            self.log.info(
+                "Capturing with preset:\n{}".format(
+                    json.dumps(preset, indent=4, sort_keys=True)
+                )
+            )
             path = capture.capture(**preset)
+
+        # Restore panel camera.
+        cmds.modelPanel(active_panel, edit=True, camera=active_panel_camera)
 
         collected_files = os.listdir(stagingdir)
         collections, remainder = clique.assemble(collected_files)
