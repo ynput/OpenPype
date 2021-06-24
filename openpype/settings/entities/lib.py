@@ -2,6 +2,7 @@ import os
 import re
 import json
 import copy
+import inspect
 
 from .exceptions import (
     SchemaTemplateMissingKeys,
