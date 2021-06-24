@@ -151,6 +151,9 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             name_low = object_type["name"].lower()
             object_types_by_name[name_low] = object_type
 
+        # NOTE it would be nice to check if `interesting_data` do not contain
+        #   value changs of tasks that were created or moved
+        # - it is a complex way how to find out
         if interesting_data:
             self.process_attribute_changes(
                 session, object_types_by_name,
