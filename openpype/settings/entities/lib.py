@@ -347,7 +347,22 @@ class SchemasHub:
         return copy.deepcopy(self._loaded_templates[template_name])
 
     def resolve_schema_data(self, schema_data):
-        pass
+        schema_type = schema_data["type"]
+        if schema_type not in ("schema", "template", "schema_template"):
+            return [schema_data]
+
+        if schema_type == "schema":
+            return self.resolve_schema_data(
+                self.get_schema(schema_data["name"])
+            )
+
+        template_name = schema_data["name"]
+        template_def = self.get_template(template_name)
+
+        filled_template = self._fill_schema_template(
+            schema_data, template_def
+        )
+        return filled_template
 
     def create_schema_object(self, schema_data, *args, **kwargs):
         schema_type = schema_data["type"]
