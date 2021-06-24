@@ -307,10 +307,44 @@ class SchemasHub:
         return self._gui_types
 
     def get_schema(self, schema_name):
-        pass
+        if schema_name not in self._loaded_schemas:
+            if schema_name in self._loaded_templates:
+                raise KeyError((
+                    "Template \"{}\" is used as `schema`"
+                ).format(schema_name))
+
+            elif schema_name in self._crashed_on_load:
+                crashed_item = self._crashed_on_load[schema_name]
+                raise KeyError(
+                    "Unable to parse schema file \"{}\". {}".format(
+                        crashed_item["filpath"], crashed_item["message"]
+                    )
+                )
+
+            raise KeyError(
+                "Schema \"{}\" was not found".format(schema_name)
+            )
+        return copy.deepcopy(self._loaded_schemas[schema_name])
 
     def get_template(self, template_name):
-        pass
+        if template_name not in self._loaded_templates:
+            if template_name in self._loaded_schemas:
+                raise KeyError((
+                    "Schema \"{}\" is used as `template`"
+                ).format(template_name))
+
+            elif template_name in self._crashed_on_load:
+                crashed_item = self._crashed_on_load[template_name]
+                raise KeyError(
+                    "Unable to parse templace file \"{}\". {}".format(
+                        crashed_item["filpath"], crashed_item["message"]
+                    )
+                )
+
+            raise KeyError(
+                "Template \"{}\" was not found".format(template_name)
+            )
+        return copy.deepcopy(self._loaded_templates[template_name])
 
     def resolve_schema_data(self, schema_data):
         pass
