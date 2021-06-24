@@ -29,6 +29,8 @@
             "group": "",
             "department": "",
             "use_gpu": true,
+            "env_allowed_keys": [],
+            "env_search_replace_values": {},
             "limit_groups": {}
         },
         "HarmonySubmitDeadline": {
