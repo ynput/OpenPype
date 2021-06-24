@@ -100,7 +100,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         args = [
             f"<QUOTE>{script_path}<QUOTE>",
             "-a",
-            "-16",
+            "-8",
             "-s <STARTFRAME>",
             "-e <ENDFRAME>",
             f"-d <QUOTE>{render_dir}<QUOTE>",
