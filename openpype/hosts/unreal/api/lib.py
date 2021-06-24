@@ -245,17 +245,21 @@ def create_unreal_project(project_name: str,
     }
 
     if preset["install_unreal_python_engine"]:
-        # If `PYPE_UNREAL_ENGINE_PYTHON_PLUGIN` is set, copy it from there to
-        # support offline installation.
+        # WARNING: This is deprecated as Unreal Engine Python project
+        # is on hold and is mainly replaced in 4.26 by Epics own
+        # Python implementation.
+        # ---------------------------------------------------------------
+        # If `OPENPYPE_UNREAL_ENGINE_PYTHON_PLUGIN` is set, copy it from
+        # there to support offline installation.
         # Otherwise clone UnrealEnginePython to Plugins directory
         # https://github.com/20tab/UnrealEnginePython.git
         uep_path = plugins_path / "UnrealEnginePython"
-        if env.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
+        if env.get("OPENPYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
 
             os.makedirs(uep_path, exist_ok=True)
             dir_util._path_created = {}
             dir_util.copy_tree(
-                env.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
+                env.get("OPENPYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
                 uep_path.as_posix())
         else:
             # WARNING: this will trigger dev_mode, because we need to compile
