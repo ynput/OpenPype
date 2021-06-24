@@ -155,6 +155,61 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 interest_entity_types, interest_attributes
             )
 
+    def _commit_changes(self, session, changes):
+        uncommited_changes = False
+        for idx, item in enumerate(changes):
+            new_value = item["new_value"]
+            attr_id = item["attr_id"]
+            entity_id = item["entity_id"]
+            attr_key = item["attr_key"]
+
+            entity_key = collections.OrderedDict()
+            entity_key["configuration_id"] = attr_id
+            entity_key["entity_id"] = entity_id
+            self._cached_changes.append({
+                "attr_key": attr_key,
+                "entity_id": entity_id,
+                "value": new_value,
+                "time": datetime.datetime.now()
+            })
+            if new_value is None:
+                op = ftrack_api.operation.DeleteEntityOperation(
+                    "CustomAttributeValue",
+                    entity_key
+                )
+            else:
+                op = ftrack_api.operation.UpdateEntityOperation(
+                    "ContextCustomAttributeValue",
+                    entity_key,
+                    "value",
+                    ftrack_api.symbol.NOT_SET,
+                    new_value
+                )
+
+            session.recorded_operations.push(op)
+            self.log.info((
+                "Changing Custom Attribute \"{}\" to value"
+                " \"{}\" on entity: {}"
+            ).format(attr_key, new_value, entity_id))
+
+            if (idx + 1) % 20 == 0:
+                uncommited_changes = False
+                try:
+                    session.commit()
+                except Exception:
+                    session.rollback()
+                    self.log.warning(
+                        "Changing of values failed.", exc_info=True
+                    )
+            else:
+                uncommited_changes = True
+        if uncommited_changes:
+            try:
+                session.commit()
+            except Exception:
+                session.rollback()
+                self.log.warning("Changing of values failed.", exc_info=True)
+
     def process_attribute_changes(
         self, session, object_types_by_name,
         interesting_data, changed_keys_by_object_id,
