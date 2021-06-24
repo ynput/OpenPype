@@ -2,7 +2,10 @@ import collections
 import datetime
 
 import ftrack_api
-from openpype.modules.ftrack.lib import BaseEvent
+from openpype.modules.ftrack.lib import (
+    BaseEvent,
+    query_custom_attributes
+)
 
 
 class PushFrameValuesToTaskEvent(BaseEvent):
@@ -154,6 +157,178 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 interesting_data, changed_keys_by_object_id,
                 interest_entity_types, interest_attributes
             )
+
+        if task_parent_changes:
+            self.process_task_parent_change(
+                session, object_types_by_name, task_parent_changes,
+                interest_entity_types, interest_attributes
+            )
+
+    def process_task_parent_change(
+        self, session, object_types_by_name, task_parent_changes,
+        interest_entity_types, interest_attributes
+    ):
+        task_ids = set()
+        matching_parent_ids = set()
+        whole_hierarchy_ids = set()
+        parent_id_by_entity_id = {}
+        for entity_info in task_parent_changes:
+            parents = entity_info.get("parents") or []
+            # Ignore entities with less parents than 2
+            # NOTE entity itself is also part of "parents" value
+            if len(parents) < 2:
+                continue
+
+            parent_info = parents[1]
+            if parent_info["entity_type"] not in interest_entity_types:
+                continue
+
+            task_ids.add(entity_info["entityId"])
+            matching_parent_ids.add(parent_info["entityId"])
+
+            prev_id = None
+            for item in parents:
+                item_id = item["entityId"]
+                whole_hierarchy_ids.add(item_id)
+
+                if prev_id is None:
+                    prev_id = item_id
+                    continue
+
+                parent_id_by_entity_id[prev_id] = item_id
+                if item["entityType"] == "show":
+                    break
+                prev_id = item_id
+
+        if not matching_parent_ids:
+            return
+
+        entities = session.query(
+            "select object_type_id from TypedContext where id in ({})".format(
+                self.join_query_keys(matching_parent_ids)
+            )
+        )
+        object_type_ids = set()
+        for entity in entities:
+            object_type_ids.add(entity["object_type_id"])
+
+        # Prepare task object id
+        task_object_id = object_types_by_name["task"]["id"]
+        object_type_ids.add(task_object_id)
+
+        attrs_by_obj_id, hier_attrs = self.attrs_configurations(
+            session, object_type_ids, interest_attributes
+        )
+
+        task_attrs = attrs_by_obj_id.get(task_object_id)
+        if not task_attrs:
+            return
+
+        for key in interest_attributes:
+            if key not in hier_attrs:
+                task_attrs.pop(key, None)
+
+            elif key not in task_attrs:
+                hier_attrs.pop(key)
+
+        if not task_attrs:
+            return
+
+        attr_key_by_id = {}
+        nonhier_id_by_key = {}
+        hier_attr_ids = []
+        for key, attr_id in hier_attrs.items():
+            attr_key_by_id[attr_id] = key
+            hier_attr_ids.append(attr_id)
+
+        conf_ids = list(hier_attr_ids)
+        for key, attr_id in task_attrs.items():
+            attr_key_by_id[attr_id] = key
+            nonhier_id_by_key[key] = attr_id
+            conf_ids.append(attr_id)
+
+        result = query_custom_attributes(
+            session, conf_ids, whole_hierarchy_ids
+        )
+        hier_values_by_entity_id = {
+            entity_id: {}
+            for entity_id in whole_hierarchy_ids
+        }
+        values_by_entity_id = {
+            entity_id: {
+                attr_id: None
+                for attr_id in conf_ids
+            }
+            for entity_id in whole_hierarchy_ids
+        }
+        for item in result:
+            attr_id = item["configuration_id"]
+            entity_id = item["entity_id"]
+            value = item["value"]
+
+            values_by_entity_id[entity_id][attr_id] = value
+
+            if attr_id in hier_attr_ids and value is not None:
+                hier_values_by_entity_id[entity_id][attr_id] = value
+
+        for task_id in tuple(task_ids):
+            for attr_id in hier_attr_ids:
+                entity_ids = []
+                value = None
+                entity_id = task_id
+                while value is None:
+                    entity_value = hier_values_by_entity_id[entity_id]
+                    if attr_id in entity_value:
+                        value = entity_value[attr_id]
+                        if value is None:
+                            break
+
+                    if value is None:
+                        entity_ids.append(entity_id)
+
+                    entity_id = parent_id_by_entity_id.get(entity_id)
+                    if entity_id is None:
+                        break
+
+                for entity_id in entity_ids:
+                    hier_values_by_entity_id[entity_id][attr_id] = value
+
+        changes = []
+        for task_id in tuple(task_ids):
+            parent_id = parent_id_by_entity_id[task_id]
+            for attr_id in hier_attr_ids:
+                attr_key = attr_key_by_id[attr_id]
+                nonhier_id = nonhier_id_by_key[attr_key]
+
+                # Real value of hierarchical attribute on parent
+                # - If is none then should be unset
+                real_parent_value = values_by_entity_id[parent_id][attr_id]
+                # Current hierarchical value of a task
+                # - Will be compared to real parent value
+                hier_value = hier_values_by_entity_id[task_id][attr_id]
+
+                # Parent value that can be inherited from it's parent entity
+                parent_value = hier_values_by_entity_id[parent_id][attr_id]
+                # Task value of nonhierarchical custom attribute
+                nonhier_value = values_by_entity_id[task_id][nonhier_id]
+
+                if real_parent_value != hier_value:
+                    changes.append({
+                        "new_value": real_parent_value,
+                        "attr_id": attr_id,
+                        "entity_id": task_id,
+                        "attr_key": attr_key
+                    })
+
+                if parent_value != nonhier_value:
+                    changes.append({
+                        "new_value": parent_value,
+                        "attr_id": nonhier_id,
+                        "entity_id": task_id,
+                        "attr_key": attr_key
+                    })
+
+        self._commit_changes(session, changes)
 
     def _commit_changes(self, session, changes):
         uncommited_changes = False
