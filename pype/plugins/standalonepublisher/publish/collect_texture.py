@@ -3,8 +3,18 @@ import re
 import pyblish.api
 import json
 
+from avalon.api import format_template_with_optional_keys
+
+
 class CollectTextures(pyblish.api.ContextPlugin):
-    """Collect workfile (and its resource_files) and textures."""
+    """Collect workfile (and its resource_files) and textures.
+
+        Provides:
+            1 instance per workfile (with 'resources' filled if needed)
+                (workfile family)
+            1 instance per group of textures
+                (textures family)
+    """
 
     order = pyblish.api.CollectorOrder
     label = "Collect Textures"
@@ -19,8 +29,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
     color_space = ["lin_srgb", "raw", "acesg"]
 
-    workfile_subset_template = "texturesMainWorkfile"
-    texture_subset_template = "texturesMain_{color_space}"
+    workfile_subset_template = "textures{}Workfile"
+    # implemented keys: ["color_space", "channel", "subset"]
+    texture_subset_template = "textures{subset}_{channel}"
 
     version_regex = re.compile(r"^(.+)_v([0-9]+)")
     udim_regex = re.compile(r"_1[0-9]{3}\.")
@@ -38,12 +49,15 @@ class CollectTextures(pyblish.api.ContextPlugin):
             if not asset:
                 asset = instance.data["asset"]  # selected from SP
 
+            parsed_subset = instance.data["subset"].replace(
+                instance.data["family"], '')
+            workfile_subset = self.workfile_subset_template.format(
+                parsed_subset)
+
             processed_instance = False
             for repre in instance.data["representations"]:
                 ext = repre["ext"].replace('.', '')
                 asset_build = version = None
-
-                workfile_subset = self.workfile_subset_template
 
                 if isinstance(repre["files"], list):
                     repre_file = repre["files"][0]
@@ -51,7 +65,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     repre_file = repre["files"]
 
                 if ext in self.main_workfile_extensions or \
-                    ext in self.other_workfile_extensions:
+                        ext in self.other_workfile_extensions:
 
                     asset_build, version = \
                         self._parse_asset_build(repre_file,
@@ -88,9 +102,18 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 if ext in self.texture_extensions:
                     c_space = self._get_color_space(repre_file,
                                                     self.color_space)
-                    subset_formatting_data = {"color_space": c_space}
-                    subset = self.texture_subset_template.format(
-                        **subset_formatting_data)
+
+                    channel = self._get_channel_name(repre_file,
+                                                     self.color_space)
+
+                    formatting_data = {
+                        "color_space": c_space,
+                        "channel": channel,
+                        "subset": parsed_subset
+                    }
+                    self.log.debug("data::{}".format(formatting_data))
+                    subset = format_template_with_optional_keys(
+                        formatting_data, self.texture_subset_template)
 
                     asset_build, version = \
                         self._parse_asset_build(repre_file,
@@ -184,7 +207,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     ver_data['workfile'] = workfile
 
                 new_instance.data.update(
-                    {"versionData": ver_data}
+                    {"versionData": ver_data,
+                     "udim": ver_data["UDIM"]}
                 )
 
             self.log.debug("new instance:: {}".format(
@@ -226,3 +250,16 @@ class CollectTextures(pyblish.api.ContextPlugin):
             color_space = found[0]
 
         return color_space
+
+    def _get_channel_name(self, name, color_spaces):
+        """Return parsed channel name.
+
+            Unknown format of channel name and color spaces >> cs are known
+            list, channel between version and cs.
+        """
+        pattern = "(v[0-9]+_)(.*)(_{})"
+        for cs in color_spaces:
+            ret = re.findall(pattern.format(cs), name)
+            if ret:
+                return ret.pop()[1]
+
