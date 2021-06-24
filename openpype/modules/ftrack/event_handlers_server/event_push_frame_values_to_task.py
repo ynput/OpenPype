@@ -131,6 +131,18 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             name_low = object_type["name"].lower()
             object_types_by_name[name_low] = object_type
 
+        if interesting_data:
+            self.process_attribute_changes(
+                session, object_types_by_name,
+                interesting_data, changed_keys_by_object_id,
+                interest_entity_types, interest_attributes
+            )
+
+    def process_attribute_changes(
+        self, session, object_types_by_name,
+        interesting_data, changed_keys_by_object_id,
+        interest_entity_types, interest_attributes
+    ):
         # Prepare task object id
         task_object_id = object_types_by_name["task"]["id"]
 
@@ -216,13 +228,13 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             task_entity_ids.add(task_id)
             parent_id_by_task_id[task_id] = task_entity["parent_id"]
 
-        self.finalize(
+        self.finalize_attribute_changes(
             session, interesting_data,
             changed_keys, attrs_by_obj_id, hier_attrs,
             task_entity_ids, parent_id_by_task_id
         )
 
-    def finalize(
+    def finalize_attribute_changes(
         self, session, interesting_data,
         changed_keys, attrs_by_obj_id, hier_attrs,
         task_entity_ids, parent_id_by_task_id
