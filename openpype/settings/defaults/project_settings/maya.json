@@ -7,6 +7,18 @@
         "workfile": "ma",
         "yetiRig": "ma"
     },
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": [
+             {
+                "type": "action",
+                "command": "$OPENPYPE_SCRIPTS\\others\\save_scene_incremental.py",
+                "sourcetype": "file",
+                "title": "# Version Up",
+                "tooltip": "Incremental save with a specific format"
+            }
+        ]
+    },
     "create": {
         "CreateLook": {
             "enabled": true,

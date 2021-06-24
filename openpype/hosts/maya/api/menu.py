@@ -83,7 +83,7 @@ def deferred():
         if workfile_action:
             top_menu.removeAction(workfile_action)
 
-    log.info("Attempting to install scripts menu..")
+    log.info("Attempting to install scripts menu ...")
 
     add_build_workfiles_item()
     add_look_assigner_item()
@@ -116,7 +116,7 @@ def deferred():
 def uninstall():
     menu = _get_menu()
     if menu:
-        log.info("Attempting to uninstall..")
+        log.info("Attempting to uninstall ...")
 
         try:
             menu.deleteLater()
