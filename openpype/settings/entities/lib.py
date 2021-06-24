@@ -26,86 +26,6 @@ TEMPLATE_METADATA_KEYS = (
 template_key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
 
-# TODO reimplement logic inside entities
-def validate_environment_groups_uniquenes(
-    schema_data, env_groups=None, keys=None
-):
-    is_first = False
-    if env_groups is None:
-        is_first = True
-        env_groups = {}
-        keys = []
-
-    my_keys = copy.deepcopy(keys)
-    key = schema_data.get("key")
-    if key:
-        my_keys.append(key)
-
-    env_group_key = schema_data.get("env_group_key")
-    if env_group_key:
-        if env_group_key not in env_groups:
-            env_groups[env_group_key] = []
-        env_groups[env_group_key].append("/".join(my_keys))
-
-    children = schema_data.get("children")
-    if not children:
-        return
-
-    for child in children:
-        validate_environment_groups_uniquenes(
-            child, env_groups, copy.deepcopy(my_keys)
-        )
-
-    if is_first:
-        invalid = {}
-        for env_group_key, key_paths in env_groups.items():
-            if len(key_paths) > 1:
-                invalid[env_group_key] = key_paths
-
-        if invalid:
-            raise SchemaDuplicatedEnvGroupKeys(invalid)
-
-
-def validate_schema(schema_data):
-    validate_environment_groups_uniquenes(schema_data)
-
-
-def get_gui_schema(subfolder, main_schema_name):
-    dirpath = os.path.join(
-        os.path.dirname(__file__),
-        "schemas",
-        subfolder
-    )
-    loaded_schemas = {}
-    loaded_schema_templates = {}
-    for root, _, filenames in os.walk(dirpath):
-        for filename in filenames:
-            basename, ext = os.path.splitext(filename)
-            if ext != ".json":
-                continue
-
-            filepath = os.path.join(root, filename)
-            with open(filepath, "r") as json_stream:
-                try:
-                    schema_data = json.load(json_stream)
-                except Exception as exc:
-                    raise ValueError((
-                        "Unable to parse JSON file {}\n{}"
-                    ).format(filepath, str(exc)))
-            if isinstance(schema_data, list):
-                loaded_schema_templates[basename] = schema_data
-            else:
-                loaded_schemas[basename] = schema_data
-
-    main_schema = _fill_inner_schemas(
-        loaded_schemas[main_schema_name],
-        loaded_schemas,
-        loaded_schema_templates
-    )
-    validate_schema(main_schema)
-    return main_schema
-
-
 class OverrideStateItem:
     """Object used as item for `OverrideState` enum.
 
@@ -207,6 +127,7 @@ class SchemasHub:
         return self._gui_types
 
     def get_schema(self, schema_name):
+        """Get schema definition data by it's name."""
         if schema_name not in self._loaded_schemas:
             if schema_name in self._loaded_templates:
                 raise KeyError((
@@ -227,6 +148,7 @@ class SchemasHub:
         return copy.deepcopy(self._loaded_schemas[schema_name])
 
     def get_template(self, template_name):
+        """Get template definition data by it's name."""
         if template_name not in self._loaded_templates:
             if template_name in self._loaded_schemas:
                 raise KeyError((
@@ -247,6 +169,19 @@ class SchemasHub:
         return copy.deepcopy(self._loaded_templates[template_name])
 
     def resolve_schema_data(self, schema_data):
+        """Resolve single item schema data as few types can be expanded.
+
+        This is mainly for 'schema' and 'template' types. Type 'schema' does
+        not have entity representation and 'template' may contain more than one
+        output schemas.
+
+        In other cases is retuned passed schema item in list.
+
+        Goal is to have schema and template resolving at one place.
+
+        Returns:
+            list: Resolved schema data.
+        """
         schema_type = schema_data["type"]
         if schema_type not in ("schema", "template", "schema_template"):
             return [schema_data]
@@ -265,6 +200,19 @@ class SchemasHub:
         return filled_template
 
     def create_schema_object(self, schema_data, *args, **kwargs):
+        """Create entity for passed schema data.
+
+        Args:
+            schema_data(dict): Schema definition of settings entity.
+
+        Returns:
+            ItemEntity: Created entity for passed schema data item.
+
+        Raises:
+            ValueError: When 'schema', 'template' or any of wrapper types are
+                passed.
+            KeyError: When type of passed schema is not known.
+        """
         schema_type = schema_data["type"]
         if schema_type in ("schema", "template", "schema_template"):
             raise ValueError(
@@ -284,6 +232,8 @@ class SchemasHub:
         return klass(schema_data, *args, **kwargs)
 
     def _load_types(self):
+        """Prepare entity types for cretion of their objects."""
+
         from openpype.settings import entities
 
         # Define known abstract classes
@@ -326,6 +276,8 @@ class SchemasHub:
         self._gui_types = tuple(_gui_types)
 
     def _load_schemas(self):
+        """Load schema definitions from json files."""
+
         # Refresh all affecting variables
         self._crashed_on_load = {}
         self._loaded_templates = {}
@@ -391,6 +343,30 @@ class SchemasHub:
         self._loaded_schemas = loaded_schemas
 
     def _fill_template(self, child_data, template_def):
+        """Fill template based on schema definition and template definition.
+
+        Based on `child_data` is `template_def` modified and result is
+        returned.
+
+        Template definition may have defined data to fill which
+        should be filled with data from child data.
+
+        Child data may contain more than one output definition of an template.
+
+        Child data can define paths to skip. Path is full path of an item
+        which won't be returned.
+
+        TODO:
+        Be able to handle wrapper items here.
+
+        Args:
+            child_data(dict): Schema data of template item.
+            template_def(dict): Template definition that will be filled with
+                child_data.
+
+        Returns:
+            list: Resolved template always returns list of schemas.
+        """
         template_name = child_data["name"]
 
         # Default value must be dictionary (NOT list)
@@ -424,6 +400,7 @@ class SchemasHub:
         required_keys=None,
         missing_keys=None
     ):
+        """Fill template values with data from schema data."""
         first = False
         if required_keys is None:
             first = True
@@ -547,6 +524,12 @@ class SchemasHub:
         return output
 
     def _pop_metadata_item(self, template_def):
+        """Pop template metadata from template definition.
+
+        Template metadata may define default values if are not passed from
+        schema data.
+        """
+
         found_idx = None
         for idx, item in enumerate(template_def):
             if not isinstance(item, dict):
