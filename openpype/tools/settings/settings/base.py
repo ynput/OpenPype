@@ -221,6 +221,13 @@ class BaseWidget(QtWidgets.QWidget):
                 ))
                 dialog.exec_()
 
+        # Simple paste value method
+        def paste_value():
+            _set_entity_value(self.entity, value)
+
+        action = QtWidgets.QAction("Paste", menu)
+        output.append((action, paste_value))
+
         # Paste value to matchin entity
         def paste_value_to_path():
             _set_entity_value(matching_entity, value)
@@ -228,13 +235,6 @@ class BaseWidget(QtWidgets.QWidget):
         if matching_entity is not None:
             action = QtWidgets.QAction("Paste to same entity", menu)
             output.append((action, paste_value_to_path))
-
-        # Simple paste value method
-        def paste_value():
-            _set_entity_value(self.entity, value)
-
-        action = QtWidgets.QAction("Paste")
-        output.append((action, paste_value))
 
         return output
 
