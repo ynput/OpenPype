@@ -445,10 +445,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         dst_start_frame = dst_padding
 
                 # Store used frame value to template data
-                if not repre.get("udim"):
+                if repre.get("frame"):
                     template_data["frame"] = dst_start_frame
-                else:
-                    template_data["udim"] = dst_start_frame
 
                 dst = "{0}{1}{2}".format(
                     dst_head,
@@ -475,7 +473,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 template_data["representation"] = repre['ext']
                 # Store used frame value to template data
                 if repre.get("udim"):
-                    template_data["udim"] = repre["udim"]
+                    template_data["udim"] = repre["udim"][0]
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled[template_name]["path"]
@@ -487,6 +485,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 published_files.append(dst)
                 repre['published_path'] = dst
                 self.log.debug("__ dst: {}".format(dst))
+
+            if repre.get("udim"):
+                repre_context["udim"] = repre.get("udim")  # store list
 
             repre["publishedFiles"] = published_files
 
@@ -1023,6 +1024,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                 )
                             )
                             shutil.copy(file_url, new_name)
+                            os.remove(file_url)
                         else:
                             self.log.debug(
                                 "Renaming file {} to {}".format(
