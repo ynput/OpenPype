@@ -134,7 +134,6 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         "channel": channel,
                         "subset": parsed_subset
                     }
-                    self.log.debug("data::{}".format(formatting_data))
                     subset = format_template_with_optional_keys(
                         formatting_data, self.texture_subset_template)
 
@@ -229,11 +228,10 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     {"versionData": ver_data}
                 )
 
-            udims = []
             upd_representations = representations.get(subset)
             if upd_representations and family != 'workfile':
                 upd_representations = self._update_representations(
-                    udims, upd_representations)
+                    upd_representations)
 
             new_instance.data["representations"] = upd_representations
 
@@ -314,8 +312,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 if ret:
                     return ret.pop()[1]
 
-    def _update_representations(self, udims, upd_representations):
+    def _update_representations(self, upd_representations):
         """Frames dont have sense for textures, add collected udims instead."""
+        udims = []
         for repre in upd_representations:
             repre.pop("frameStart", None)
             repre.pop("frameEnd", None)
@@ -329,6 +328,6 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 udim = self._get_udim(file_name, self.udim_regex)
                 udims.append(udim)
 
-            repre["udim"] = udims
+            repre["udim"] = udims  # must be this way, used for filling path
 
         return upd_representations
