@@ -29,7 +29,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
     color_space = ["lin_srgb", "raw", "acesg"]
 
-    version_regex = re.compile(r"^(.+)_v([0-9]+)")
+    version_regex = re.compile(r"v([0-9]+)")
     udim_regex = re.compile(r"_1[0-9]{3}\.")
 
     #currently implemented placeholders ["color_space"]
@@ -82,11 +82,12 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 if ext in self.main_workfile_extensions or \
                         ext in self.other_workfile_extensions:
 
-                    asset_build, version = self._parse_asset_build(
+                    asset_build = self._get_asset_build(
                         repre_file,
                         self.input_naming_patterns.keys(),
                         self.color_space
                     )
+                    version = self._get_version(repre_file, self.version_regex)
                     asset_builds.add((asset_build, version,
                                       workfile_subset, 'workfile'))
                     processed_instance = True
@@ -137,11 +138,12 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     subset = format_template_with_optional_keys(
                         formatting_data, self.texture_subset_template)
 
-                    asset_build, version = self._parse_asset_build(
+                    asset_build = self._get_asset_build(
                         repre_file,
                         self.input_naming_patterns.values(),
                         self.color_space
                     )
+                    version = self._get_version(repre_file, self.version_regex)
 
                     if not representations.get(subset):
                         representations[subset] = []
@@ -181,7 +183,15 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 representations (dict) of representation files, key is
                     asset_build
         """
+        # sort workfile first
+        asset_builds = sorted(asset_builds,
+                              key=lambda tup: tup[3], reverse=True)
+
+        # workfile must have version, textures might
+        main_version = None
         for asset_build, version, subset, family in asset_builds:
+            if not main_version:
+                main_version = version
             new_instance = context.create_instance(subset)
             new_instance.data.update(
                 {
@@ -190,7 +200,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     "label": subset,
                     "name": subset,
                     "family": family,
-                    "version": int(version),
+                    "version": int(version or main_version),
                     "families": []
                 }
             )
@@ -230,7 +240,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
             self.log.debug("new instance:: {}".format(
                 json.dumps(new_instance.data, indent=4)))
 
-    def _parse_asset_build(self, name, input_naming_patterns, color_spaces):
+    def _get_asset_build(self, name, input_naming_patterns, color_spaces):
         """Loops through configured workfile patterns to find asset name.
 
             Asset name used to bind workfile and its textures.
@@ -247,10 +257,16 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
                 if regex_result:
                     asset_name = regex_result[0][0].lower()
-                    version = regex_result[0][-1]
-                    return asset_name, version
+                    return asset_name
 
         raise ValueError("Couldnt find asset name in {}".format(name))
+
+    def _get_version(self, name, version_regex):
+        found = re.search(version_regex, name)
+        if found:
+            return found.group().replace("v", "")
+
+        self.log.info("No version found in the name {}".format(name))
 
     def _get_udim(self, name, udim_regex):
         """Parses from 'name' udim value with 'udim_regex'."""
