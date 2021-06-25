@@ -491,6 +491,8 @@ class SystemSettings(RootEntity):
         schema_data (dict): Pass schema data to entity. This is for development
             and debugging purposes.
     """
+    root_key = SYSTEM_SETTINGS_KEY
+
     def __init__(
         self, set_studio_state=True, reset=True, schema_data=None
     ):
@@ -600,6 +602,8 @@ class ProjectSettings(RootEntity):
         schema_data (dict): Pass schema data to entity. This is for development
             and debugging purposes.
     """
+    root_key = PROJECT_SETTINGS_KEY
+
     def __init__(
         self,
         project_name=None,
