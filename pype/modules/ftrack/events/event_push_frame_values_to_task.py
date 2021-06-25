@@ -27,6 +27,8 @@ class PushFrameValuesToTaskEvent(BaseEvent):
     _cached_changes = []
     _max_delta = 30
 
+    _initial_launch = True
+
     # Configrable (lists)
     interest_entity_types = {"Shot"}
     interest_attributes = {"frameStart", "frameEnd"}
@@ -34,29 +36,6 @@ class PushFrameValuesToTaskEvent(BaseEvent):
     @staticmethod
     def join_keys(keys):
         return ",".join(["\"{}\"".format(key) for key in keys])
-
-    @classmethod
-    def task_object_id(cls, session):
-        if cls._cached_task_object_id is None:
-            task_object_type = session.query(
-                "ObjectType where name is \"Task\""
-            ).one()
-            cls._cached_task_object_id = task_object_type["id"]
-        return cls._cached_task_object_id
-
-    @classmethod
-    def interest_object_ids(cls, session):
-        if cls._cached_interest_object_ids is None:
-            object_types = session.query(
-                "ObjectType where name in ({})".format(
-                    cls.join_keys(cls.interest_entity_types)
-                )
-            ).all()
-            cls._cached_interest_object_ids = tuple(
-                object_type["id"]
-                for object_type in object_types
-            )
-        return cls._cached_interest_object_ids
 
     def session_user_id(self, session):
         if self._cached_user_id is None:
@@ -66,31 +45,393 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             self._cached_user_id = user["id"]
         return self._cached_user_id
 
-    def launch(self, session, event):
-        interesting_data, changed_keys_by_object_id = (
-            self.extract_interesting_data(session, event)
-        )
-        if not interesting_data:
+    def filter_entities_info(self, event):
+        # Filter if event contain relevant data
+        entities_info = event["data"].get("entities")
+        if not entities_info:
             return
 
-        entities = self.get_entities(session, interesting_data)
+        filtered_entities_info = []
+        task_parent_changes = []
+        for entity_info in entities_info:
+            # Care only about tasks
+            if entity_info.get("entityType") != "task":
+                continue
+
+            # Care only about changes of status
+            changes = entity_info.get("changes")
+            if not changes:
+                continue
+
+            # Skip `Task` entity type if parent didn't change
+            if entity_info["entity_type"].lower() == "task":
+                if (
+                    "parent_id" in changes
+                    and changes["parent_id"]["new"] is not None
+                ):
+                    task_parent_changes.append(entity_info)
+                continue
+
+            # Get project id from entity info
+            project_id = None
+            for parent_item in reversed(entity_info["parents"]):
+                if parent_item["entityType"] == "show":
+                    project_id = parent_item["entityId"]
+                    break
+
+            if project_id is None:
+                continue
+
+            filtered_entities_info.append(entity_info)
+
+        return filtered_entities_info, task_parent_changes
+
+    def launch(self, session, event):
+        initial_launch = self._initial_launch
+        if self._initial_launch:
+            self._initial_launch = False
+
+        if not self.interest_attributes:
+            if initial_launch:
+                self.log.info((
+                    "Attribute 'interest_attributes' is not set."
+                ))
+            return
+
+        if not self.interest_entity_types:
+            if initial_launch:
+                self.log.info((
+                    "Attribute 'interest_entity_types' is not set."
+                ))
+            return
+
+        interest_attributes = set(self.interest_attributes)
+        interest_entity_types = set(self.interest_entity_types)
+
+        entities_info, task_parent_changes = self.filter_entities_info(event)
+        if not entities_info and not task_parent_changes:
+            return
+
+        # Filter entities info with changes
+        interesting_data, changed_keys_by_object_id = self.filter_changes(
+            session, event, entities_info, interest_attributes
+        )
+        if not interesting_data and not task_parent_changes:
+            return
+
+        # Prepare object types
+        object_types = session.query("select id, name from ObjectType").all()
+        object_types_by_name = {}
+        for object_type in object_types:
+            name_low = object_type["name"].lower()
+            object_types_by_name[name_low] = object_type
+
+        if interesting_data:
+            self.process_attribute_changes(
+                session, object_types_by_name,
+                interesting_data, changed_keys_by_object_id,
+                interest_entity_types, interest_attributes
+            )
+
+        if task_parent_changes:
+            self.process_task_parent_change(
+                session, object_types_by_name, task_parent_changes,
+                interest_entity_types, interest_attributes
+            )
+
+    def process_task_parent_change(
+        self, session, object_types_by_name, task_parent_changes,
+        interest_entity_types, interest_attributes
+    ):
+        task_ids = set()
+        matching_parent_ids = set()
+        whole_hierarchy = set()
+        children_id_by_parent_id = collections.defaultdict(set)
+        parent_id_by_entity_id = {}
+        for entity_info in task_parent_changes:
+            parents = entity_info.get("parents") or []
+            # Ignore entities with less parents than 2
+            # NOTE entity itself is also part of "parents" value
+            if len(parents) < 2:
+                continue
+
+            parent_info = parents[1]
+            if parent_info["entity_type"] not in interest_entity_types:
+                continue
+
+            task_ids.add(entity_info["entityId"])
+            matching_parent_ids.add(parent_info["entityId"])
+
+            prev_id = None
+            for item in parents:
+                item_id = item["entityId"]
+                whole_hierarchy.add(item_id)
+                if prev_id is None:
+                    prev_id = item_id
+                    continue
+
+                parent_id_by_entity_id[prev_id] = item_id
+                if item["entityType"] == "show":
+                    children_id_by_parent_id[None].add(prev_id)
+                    break
+                children_id_by_parent_id[item_id].add(prev_id)
+                prev_id = item_id
+
+        if not matching_parent_ids:
+            return
+
+        entities = session.query(
+            "select object_type_id from TypedContext where id in ({})".format(
+                self.join_keys(matching_parent_ids)
+            )
+        )
+        object_type_ids = set()
+        for entity in entities:
+            object_type_ids.add(entity["object_type_id"])
+
+        for entity_info in task_parent_changes:
+            object_type_ids.add(entity_info["objectTypeId"])
+            break
+
+        attrs_by_obj_id, hier_attrs = self.attrs_configurations(
+            session, object_type_ids, interest_attributes
+        )
+
+        # Prepare task object id
+        task_object_id = object_types_by_name["task"]["id"]
+        task_attrs = attrs_by_obj_id.get(task_object_id)
+        if not task_attrs:
+            return
+
+        for key in interest_attributes:
+            if key not in hier_attrs:
+                task_attrs.pop(key, None)
+
+            elif key not in task_attrs:
+                hier_attrs.pop(key)
+
+        if not task_attrs:
+            return
+
+        attr_key_by_id = {}
+        nonhier_id_by_key = {}
+        hier_attr_ids = []
+        for key, attr_id in hier_attrs.items():
+            attr_key_by_id[attr_id] = key
+            hier_attr_ids.append(attr_id)
+
+        conf_ids = list(hier_attr_ids)
+        for key, attr_id in task_attrs.items():
+            attr_key_by_id[attr_id] = key
+            nonhier_id_by_key[key] = attr_id
+            conf_ids.append(attr_id)
+
+        result = self._query_custom_attributes(
+            session, conf_ids, whole_hierarchy
+        )
+        hier_values_by_entity_id = {}
+        values_by_entity_id = {}
+        for item in result:
+            attr_id = item["configuration_id"]
+            entity_id = item["entity_id"]
+            value = item["value"]
+
+            if attr_id in hier_attr_ids:
+                if entity_id not in hier_values_by_entity_id:
+                    hier_values_by_entity_id[entity_id] = {}
+
+                if value is None:
+                    continue
+                hier_values_by_entity_id[entity_id][attr_id] = value
+
+            else:
+                if entity_id not in values_by_entity_id:
+                    values_by_entity_id[entity_id] = {}
+                values_by_entity_id[entity_id][attr_id] = value
+
+        for task_id in tuple(task_ids):
+            for attr_id in hier_attr_ids:
+                entity_ids = []
+                value = None
+                entity_id = task_id
+                while value is None:
+                    entity_value = hier_values_by_entity_id[entity_id]
+                    if attr_id in entity_value:
+                        value = entity_value[attr_id]
+                        if value is None:
+                            break
+
+                    if value is None:
+                        entity_ids.append(entity_id)
+
+                    entity_id = parent_id_by_entity_id.get(entity_id)
+                    if entity_id is None:
+                        break
+
+                for entity_id in entity_ids:
+                    hier_values_by_entity_id[entity_id][attr_id] = value
+
+        changes = []
+        for task_id in tuple(task_ids):
+            parent_id = parent_id_by_entity_id[task_id]
+            for attr_id in hier_attr_ids:
+                parent_value = hier_values_by_entity_id[parent_id][attr_id]
+                if parent_value is None:
+                    continue
+
+                hier_value = hier_values_by_entity_id[task_id][attr_id]
+                attr_key = attr_key_by_id[attr_id]
+                nonhier_id = nonhier_id_by_key[attr_key]
+                nonhier_value = (
+                    values_by_entity_id
+                    .get(task_id, {})
+                    .get(nonhier_id)
+                )
+                if parent_value != hier_value:
+                    changes.append({
+                        "new_value": parent_value,
+                        "attr_id": attr_id,
+                        "entity_id": task_id
+                    })
+
+                if parent_value != nonhier_value:
+                    changes.append({
+                        "new_value": parent_value,
+                        "attr_id": nonhier_id,
+                        "entity_id": task_id
+                    })
+
+        uncommited_changes = False
+        for idx, item in enumerate(changes):
+            new_value = item["new_value"]
+            attr_id = item["attr_id"]
+            entity_id = item["entity_id"]
+
+            entity_key = collections.OrderedDict()
+            entity_key["configuration_id"] = attr_id
+            entity_key["entity_id"] = entity_id
+            self._cached_changes.append({
+                "attr_key": attr_key,
+                "entity_id": entity_id,
+                "value": new_value,
+                "time": datetime.datetime.now()
+            })
+            if new_value is None:
+                op = ftrack_api.operation.DeleteEntityOperation(
+                    "CustomAttributeValue",
+                    entity_key
+                )
+            else:
+                op = ftrack_api.operation.UpdateEntityOperation(
+                    "ContextCustomAttributeValue",
+                    entity_key,
+                    "value",
+                    ftrack_api.symbol.NOT_SET,
+                    new_value
+                )
+
+            session.recorded_operations.push(op)
+            self.log.info((
+                "Changing Custom Attribute \"{}\" to value"
+                " \"{}\" on entity: {}"
+            ).format(attr_key, new_value, entity_id))
+
+            if (idx + 1) % 20 == 0:
+                uncommited_changes = False
+                try:
+                    session.commit()
+                except Exception:
+                    session.rollback()
+                    self.log.warning(
+                        "Changing of values failed.", exc_info=True
+                    )
+            else:
+                uncommited_changes = True
+        if uncommited_changes:
+            try:
+                session.commit()
+            except Exception:
+                session.rollback()
+                self.log.warning("Changing of values failed.", exc_info=True)
+
+    def _query_custom_attributes(self, session, conf_ids, entity_ids):
+        output = []
+        # Prepare values to query
+        attributes_joined = self.join_keys(conf_ids)
+        attributes_len = len(conf_ids)
+        chunk_size = int(5000 / attributes_len)
+        entity_ids = list(entity_ids)
+        for idx in range(0, len(entity_ids), chunk_size):
+            entity_ids_joined = self.join_keys(
+                entity_ids[idx:idx + chunk_size]
+            )
+
+            call_expr = [{
+                "action": "query",
+                "expression": (
+                    "select value, entity_id from ContextCustomAttributeValue "
+                    "where entity_id in ({}) and configuration_id in ({})"
+                ).format(entity_ids_joined, attributes_joined)
+            }]
+            if hasattr(session, "call"):
+                [result] = session.call(call_expr)
+            else:
+                [result] = session._call(call_expr)
+
+            for item in result["data"]:
+                output.append(item)
+        return output
+
+    def process_attribute_changes(
+        self, session, object_types_by_name,
+        interesting_data, changed_keys_by_object_id,
+        interest_entity_types, interest_attributes
+    ):
+        # Prepare task object id
+        task_object_id = object_types_by_name["task"]["id"]
+
+        # Collect object type ids based on settings
+        interest_object_ids = []
+        for entity_type in interest_entity_types:
+            _entity_type = entity_type.lower()
+            object_type = object_types_by_name.get(_entity_type)
+            if not object_type:
+                self.log.warning("Couldn't find object type \"{}\"".format(
+                    entity_type
+                ))
+
+            interest_object_ids.append(object_type["id"])
+
+        # Query entities by filtered data and object ids
+        entities = self.get_entities(
+            session, interesting_data, interest_object_ids
+        )
         if not entities:
             return
 
-        entities_by_id = {
-            entity["id"]: entity
+        # Pop not found entities from interesting data
+        entity_ids = set(
+            entity["id"]
             for entity in entities
-        }
+        )
         for entity_id in tuple(interesting_data.keys()):
-            if entity_id not in entities_by_id:
+            if entity_id not in entity_ids:
                 interesting_data.pop(entity_id)
 
-        attrs_by_obj_id, hier_attrs = self.attrs_configurations(session)
+        # Add task object type to list
+        attr_obj_ids = list(interest_object_ids)
+        attr_obj_ids.append(task_object_id)
 
-        task_object_id = self.task_object_id(session)
+        attrs_by_obj_id, hier_attrs = self.attrs_configurations(
+            session, attr_obj_ids, interest_attributes
+        )
+
         task_attrs = attrs_by_obj_id.get(task_object_id)
+
+        changed_keys = set()
         # Skip keys that are not both in hierachical and type specific
         for object_id, keys in changed_keys_by_object_id.items():
+            changed_keys |= set(keys)
             object_id_attrs = attrs_by_obj_id.get(object_id)
             for key in keys:
                 if key not in hier_attrs:
@@ -113,8 +454,8 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 "There is not created Custom Attributes {} "
                 " for entity types: {}"
             ).format(
-                self.join_keys(self.interest_attributes),
-                self.join_keys(self.interest_entity_types)
+                self.join_keys(interest_attributes),
+                self.join_keys(interest_entity_types)
             ))
             return
 
@@ -124,16 +465,24 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         if task_attrs:
             task_entities = self.get_task_entities(session, interesting_data)
 
-        task_entities_by_id = {}
+        task_entity_ids = set()
         parent_id_by_task_id = {}
         for task_entity in task_entities:
-            task_entities_by_id[task_entity["id"]] = task_entity
-            parent_id_by_task_id[task_entity["id"]] = task_entity["parent_id"]
+            task_id = task_entity["id"]
+            task_entity_ids.add(task_id)
+            parent_id_by_task_id[task_id] = task_entity["parent_id"]
 
-        changed_keys = set()
-        for keys in changed_keys_by_object_id.values():
-            changed_keys |= set(keys)
+        self.finalize_attribute_changes(
+            session, interesting_data,
+            changed_keys, attrs_by_obj_id, hier_attrs,
+            task_entity_ids, parent_id_by_task_id
+        )
 
+    def finalize_attribute_changes(
+        self, session, interesting_data,
+        changed_keys, attrs_by_obj_id, hier_attrs,
+        task_entity_ids, parent_id_by_task_id
+    ):
         attr_id_to_key = {}
         for attr_confs in attrs_by_obj_id.values():
             for key in changed_keys:
@@ -147,12 +496,12 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 attr_id_to_key[custom_attr_id] = key
 
         entity_ids = (
-            set(interesting_data.keys()) | set(task_entities_by_id.keys())
+            set(interesting_data.keys()) | task_entity_ids
         )
         attr_ids = set(attr_id_to_key.keys())
 
         current_values_by_id = self.current_values(
-            session, attr_ids, entity_ids, task_entities_by_id, hier_attrs
+            session, attr_ids, entity_ids, task_entity_ids, hier_attrs
         )
 
         for entity_id, current_values in current_values_by_id.items():
@@ -179,10 +528,9 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 if new_value == old_value:
                     continue
 
-                entity_key = collections.OrderedDict({
-                    "configuration_id": attr_id,
-                    "entity_id": entity_id
-                })
+                entity_key = collections.OrderedDict()
+                entity_key["configuration_id"] = attr_id
+                entity_key["entity_id"] = entity_id
                 self._cached_changes.append({
                     "attr_key": attr_key,
                     "entity_id": entity_id,
@@ -214,45 +562,9 @@ class PushFrameValuesToTaskEvent(BaseEvent):
                 session.rollback()
                 self.log.warning("Changing of values failed.", exc_info=True)
 
-    def current_values(
-        self, session, attr_ids, entity_ids, task_entities_by_id, hier_attrs
+    def filter_changes(
+        self, session, event, entities_info, interest_attributes
     ):
-        current_values_by_id = {}
-        if not attr_ids or not entity_ids:
-            return current_values_by_id
-        joined_conf_ids = self.join_keys(attr_ids)
-        joined_entity_ids = self.join_keys(entity_ids)
-
-        call_expr = [{
-            "action": "query",
-            "expression": self.cust_attr_query.format(
-                joined_entity_ids, joined_conf_ids
-            )
-        }]
-        if hasattr(session, "call"):
-            [values] = session.call(call_expr)
-        else:
-            [values] = session._call(call_expr)
-
-        for item in values["data"]:
-            entity_id = item["entity_id"]
-            attr_id = item["configuration_id"]
-            if entity_id in task_entities_by_id and attr_id in hier_attrs:
-                continue
-
-            if entity_id not in current_values_by_id:
-                current_values_by_id[entity_id] = {}
-            current_values_by_id[entity_id][attr_id] = item["value"]
-        return current_values_by_id
-
-    def extract_interesting_data(self, session, event):
-        # Filter if event contain relevant data
-        entities_info = event["data"].get("entities")
-        if not entities_info:
-            return
-
-        # for key, value in event["data"].items():
-        #     self.log.info("{}: {}".format(key, value))
         session_user_id = self.session_user_id(session)
         user_data = event["data"].get("user")
         changed_by_session = False
@@ -264,18 +576,10 @@ class PushFrameValuesToTaskEvent(BaseEvent):
         interesting_data = {}
         changed_keys_by_object_id = {}
         for entity_info in entities_info:
-            # Care only about tasks
-            if entity_info.get("entityType") != "task":
-                continue
-
-            # Care only about changes of status
-            changes = entity_info.get("changes") or {}
-            if not changes:
-                continue
-
             # Care only about changes if specific keys
             entity_changes = {}
-            for key in self.interest_attributes:
+            changes = entity_info["changes"]
+            for key in interest_attributes:
                 if key in changes:
                     entity_changes[key] = changes[key]["new"]
 
@@ -307,47 +611,65 @@ class PushFrameValuesToTaskEvent(BaseEvent):
             if not entity_changes:
                 continue
 
-            # Do not care about "Task" entity_type
-            task_object_id = self.task_object_id(session)
-            object_id = entity_info.get("objectTypeId")
-            if not object_id or object_id == task_object_id:
-                continue
-
+            entity_id = entity_info["entityId"]
+            object_id = entity_info["objectTypeId"]
             interesting_data[entity_id] = entity_changes
             if object_id not in changed_keys_by_object_id:
                 changed_keys_by_object_id[object_id] = set()
-
             changed_keys_by_object_id[object_id] |= set(entity_changes.keys())
 
         return interesting_data, changed_keys_by_object_id
 
-    def get_entities(self, session, interesting_data):
-        entities = session.query(
-            "TypedContext where id in ({})".format(
-                self.join_keys(interesting_data.keys())
-            )
-        ).all()
+    def current_values(
+        self, session, attr_ids, entity_ids, task_entity_ids, hier_attrs
+    ):
+        current_values_by_id = {}
+        if not attr_ids or not entity_ids:
+            return current_values_by_id
+        joined_conf_ids = self.join_keys(attr_ids)
+        joined_entity_ids = self.join_keys(entity_ids)
 
-        output = []
-        interest_object_ids = self.interest_object_ids(session)
-        for entity in entities:
-            if entity["object_type_id"] in interest_object_ids:
-                output.append(entity)
-        return output
+        call_expr = [{
+            "action": "query",
+            "expression": self.cust_attr_query.format(
+                joined_entity_ids, joined_conf_ids
+            )
+        }]
+        if hasattr(session, "call"):
+            [values] = session.call(call_expr)
+        else:
+            [values] = session._call(call_expr)
+
+        for item in values["data"]:
+            entity_id = item["entity_id"]
+            attr_id = item["configuration_id"]
+            if entity_id in task_entity_ids and attr_id in hier_attrs:
+                continue
+
+            if entity_id not in current_values_by_id:
+                current_values_by_id[entity_id] = {}
+            current_values_by_id[entity_id][attr_id] = item["value"]
+        return current_values_by_id
+
+    def get_entities(self, session, interesting_data, interest_object_ids):
+        return session.query((
+            "select id from TypedContext"
+            " where id in ({}) and object_type_id in ({})"
+        ).format(
+            self.join_keys(interesting_data.keys()),
+            self.join_keys(interest_object_ids)
+        )).all()
 
     def get_task_entities(self, session, interesting_data):
         return session.query(
-            "Task where parent_id in ({})".format(
+            "select id, parent_id from Task where parent_id in ({})".format(
                 self.join_keys(interesting_data.keys())
             )
         ).all()
 
-    def attrs_configurations(self, session):
-        object_ids = list(self.interest_object_ids(session))
-        object_ids.append(self.task_object_id(session))
-
+    def attrs_configurations(self, session, object_ids, interest_attributes):
         attrs = session.query(self.cust_attrs_query.format(
-            self.join_keys(self.interest_attributes),
+            self.join_keys(interest_attributes),
             self.join_keys(object_ids)
         )).all()
 
