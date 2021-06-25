@@ -93,17 +93,21 @@ class ExtractPlayblast(pype.api.Extractor):
 
         # Image planes do not update the file sequence unless the active panel
         # is viewing through the camera.
-        active_panel_camera = instance.context.data.get("active_panel_camera")
-        if not active_panel_camera:
-            active_panel_camera = capture.parse_active_view()["camera"]
-            instance.context.data["active_panel_camera"] = active_panel_camera
+        model_panel = instance.context.data.get("model_panel")
+        if not model_panel:
+            model_panels = cmds.getPanel(type="modelPanel")
+            visible_panels = cmds.getPanel(visiblePanels=True)
+            model_panel = list(
+                set(visible_panels) - (set(visible_panels) - set(model_panels))
+            )[0]
+            instance.context.data["model_panel"] = model_panel
 
-        active_panel = instance.context.data.get("active_panel")
-        if not active_panel:
-            active_panel = capture.parse_active_panel()
-            instance.context.data["active_panel"] = active_panel
+        panel_camera = instance.context.data.get("panel_camera")
+        if not panel_camera:
+            panel_camera = capture.parse_view(model_panel)["camera"]
+            instance.context.data["panel_camera"] = panel_camera
 
-        cmds.modelPanel(active_panel, edit=True, camera=preset["camera"])
+        cmds.modelPanel(model_panel, edit=True, camera=preset["camera"])
 
         with maintained_time():
             filename = preset.get("filename", "%TEMP%")
@@ -121,7 +125,7 @@ class ExtractPlayblast(pype.api.Extractor):
             path = capture.capture(**preset)
 
         # Restore panel camera.
-        cmds.modelPanel(active_panel, edit=True, camera=active_panel_camera)
+        cmds.modelPanel(model_panel, edit=True, camera=panel_camera)
 
         collected_files = os.listdir(stagingdir)
         collections, remainder = clique.assemble(collected_files)
