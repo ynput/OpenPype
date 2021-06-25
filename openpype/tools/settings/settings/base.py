@@ -1,3 +1,5 @@
+import json
+
 from Qt import QtWidgets, QtGui, QtCore
 from openpype.tools.settings import CHILD_OFFSET
 from .widgets import ExpandingWidget
@@ -125,6 +127,58 @@ class BaseWidget(QtWidgets.QWidget):
         actions_mapping[action] = remove_from_project_override
         menu.addAction(action)
 
+    def _copy_value_action(self, menu, actions_mapping):
+        def copy_value():
+            mime_data = QtCore.QMimeData()
+
+            if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
+                entity_path = None
+            else:
+                entity_path = "/".join(
+                    [self.entity.root_key, self.entity.path]
+                )
+
+            value = self.entity.value
+            # Copy for settings tool
+            settings_data = {
+                "root_key": self.entity.root_key,
+                "value": value,
+                "path": entity_path
+            }
+            settings_encoded_data = QtCore.QByteArray()
+            settings_stream = QtCore.QDataStream(
+                settings_encoded_data, QtCore.QIODevice.WriteOnly
+            )
+            settings_stream.writeQString(json.dumps(settings_data))
+            mime_data.setData(
+                "application/copy_settings_value", settings_encoded_data
+            )
+
+            # Copy as json
+            json_encoded_data = None
+            if isinstance(value, (dict, list)):
+                json_encoded_data = QtCore.QByteArray()
+                json_stream = QtCore.QDataStream(
+                    json_encoded_data, QtCore.QIODevice.WriteOnly
+                )
+                json_stream.writeQString(json.dumps(value))
+
+                mime_data.setData("application/json", json_encoded_data)
+
+            # Copy as text
+            if json_encoded_data is None:
+                # Store value as string
+                mime_data.setText(str(value))
+            else:
+                # Store data as json string
+                mime_data.setText(json.dumps(value, indent=4))
+
+            QtWidgets.QApplication.clipboard().setMimeData(mime_data)
+
+        action = QtWidgets.QAction("Copy")
+        actions_mapping[action] = copy_value
+        menu.addAction(action)
+
     def show_actions_menu(self, event=None):
         if event and event.button() != QtCore.Qt.RightButton:
             return
@@ -143,6 +197,7 @@ class BaseWidget(QtWidgets.QWidget):
         self._remove_from_studio_default_action(menu, actions_mapping)
         self._add_to_project_override_action(menu, actions_mapping)
         self._remove_from_project_override_action(menu, actions_mapping)
+        self._copy_value_action(menu, actions_mapping)
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
