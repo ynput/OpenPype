@@ -127,7 +127,7 @@ class BaseWidget(QtWidgets.QWidget):
         actions_mapping[action] = remove_from_project_override
         menu.addAction(action)
 
-    def _copy_value_action(self, menu, actions_mapping):
+    def _copy_value_actions(self, menu):
         def copy_value():
             mime_data = QtCore.QMimeData()
 
@@ -175,15 +175,15 @@ class BaseWidget(QtWidgets.QWidget):
 
             QtWidgets.QApplication.clipboard().setMimeData(mime_data)
 
-        action = QtWidgets.QAction("Copy")
-        actions_mapping[action] = copy_value
-        menu.addAction(action)
+        action = QtWidgets.QAction("Copy", menu)
+        return [(action, copy_value)]
 
-    def _paste_value_action(self, menu, actions_mapping):
+    def _paste_value_actions(self, menu):
+        output = []
         mime_data = QtWidgets.QApplication.clipboard().mimeData()
         mime_value = mime_data.data("application/copy_settings_value")
         if not mime_value:
-            return
+            return output
 
         settings_stream = QtCore.QDataStream(
             mime_value, QtCore.QIODevice.ReadOnly
@@ -212,8 +212,7 @@ class BaseWidget(QtWidgets.QWidget):
 
         if matching_entity is not None:
             action = QtWidgets.QAction("Paste to same entity", menu)
-            actions_mapping[action] = paste_value_to_path
-            menu.addAction(action)
+            output.append((action, paste_value_to_path))
 
         def paste_value():
             try:
@@ -229,8 +228,9 @@ class BaseWidget(QtWidgets.QWidget):
                 dialog.exec_()
 
         action = QtWidgets.QAction("Paste")
-        actions_mapping[action] = paste_value
-        menu.addAction(action)
+        output.append((action, paste_value))
+
+        return output
 
     def show_actions_menu(self, event=None):
         if event and event.button() != QtCore.Qt.RightButton:
@@ -250,8 +250,15 @@ class BaseWidget(QtWidgets.QWidget):
         self._remove_from_studio_default_action(menu, actions_mapping)
         self._add_to_project_override_action(menu, actions_mapping)
         self._remove_from_project_override_action(menu, actions_mapping)
-        self._copy_value_action(menu, actions_mapping)
-        self._paste_value_action(menu, actions_mapping)
+
+        ui_actions = []
+        ui_actions.extend(self._copy_value_actions(menu))
+        ui_actions.extend(self._paste_value_actions(menu))
+        if ui_actions:
+            menu.addSeparator()
+            for action, callback in ui_actions:
+                menu.addAction(action)
+                actions_mapping[action] = callback
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
