@@ -180,8 +180,10 @@ class BaseWidget(QtWidgets.QWidget):
 
     def _paste_value_actions(self, menu):
         output = []
+        # Allow paste of value only if were copied from this UI
         mime_data = QtWidgets.QApplication.clipboard().mimeData()
         mime_value = mime_data.data("application/copy_settings_value")
+        # Skip if there is nothing to do
         if not mime_value:
             return output
 
@@ -206,18 +208,9 @@ class BaseWidget(QtWidgets.QWidget):
             except Exception:
                 pass
 
-        # Paste value to matchin entity
-        def paste_value_to_path():
-            matching_entity.set(value)
-
-        if matching_entity is not None:
-            action = QtWidgets.QAction("Paste to same entity", menu)
-            output.append((action, paste_value_to_path))
-
-        # Simple paste value method
-        def paste_value():
+        def _set_entity_value(_entity, _value):
             try:
-                self.entity.set(value)
+                _entity.set(_value)
             except Exception:
                 dialog = QtWidgets.QMessageBox(self)
                 dialog.setWindowTitle("Value does not match settings schema")
@@ -227,6 +220,18 @@ class BaseWidget(QtWidgets.QWidget):
                     " settings entity."
                 ))
                 dialog.exec_()
+
+        # Paste value to matchin entity
+        def paste_value_to_path():
+            _set_entity_value(matching_entity, value)
+
+        if matching_entity is not None:
+            action = QtWidgets.QAction("Paste to same entity", menu)
+            output.append((action, paste_value_to_path))
+
+        # Simple paste value method
+        def paste_value():
+            _set_entity_value(self.entity, value)
 
         action = QtWidgets.QAction("Paste")
         output.append((action, paste_value))
