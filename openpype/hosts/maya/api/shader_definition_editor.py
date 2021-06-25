@@ -20,7 +20,8 @@ class ShaderDefinitionsEditor(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(ShaderDefinitionsEditor, self).__init__(parent)
         self._mongo = OpenPypeMongoConnection.get_mongo_client()
-        self._gridfs = gridfs.GridFS( self._mongo[os.getenv("OPENPYPE_DATABASE_NAME")])
+        self._gridfs = gridfs.GridFS(
+            self._mongo[os.getenv("OPENPYPE_DATABASE_NAME")])
         self._editor = None
 
         self._original_content = self._read_definition_file()
