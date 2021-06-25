@@ -30,7 +30,7 @@ class ValidateModelName(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
         """Get invalid nodes."""
-        use_db = instance.context.data["project_settings"]["maya"]["publish"]["ValidateModelName"]["database"]  # noqa: E401
+        use_db = instance.context.data["project_settings"]["maya"]["publish"]["ValidateModelName"]["database"]  # noqa: E501
 
         def is_group(group_name):
             """Find out if supplied transform is group or not."""
@@ -84,7 +84,7 @@ class ValidateModelName(pyblish.api.InstancePlugin):
         shaders = map(lambda s: s.rstrip(), shaders)
 
         # compile regex for testing names
-        regex = instance.context.data["project_settings"]["maya"]["publish"]["ValidateModelName"]["regex"]  # noqa: E401
+        regex = instance.context.data["project_settings"]["maya"]["publish"]["ValidateModelName"]["regex"]  # noqa: E501
         r = re.compile(regex)
 
         for obj in filtered:
