@@ -199,12 +199,14 @@ class BaseWidget(QtWidgets.QWidget):
             try:
                 self.entity.set(value)
             except Exception:
-                # TODO show dialog
-                print("Failed")
-                import sys
-                import traceback
-
-                traceback.print_exception(*sys.exc_info())
+                dialog = QtWidgets.QMessageBox(self)
+                dialog.setWindowTitle("Value does not match settings schema")
+                dialog.setIcon(QtWidgets.QMessageBox.Warning)
+                dialog.setText((
+                    "Pasted value does not seem to match schema of destination"
+                    " settings entity."
+                ))
+                dialog.exec_()
 
         def paste_value_to_path():
             entity = self.entity.get_entity_from_path(path)
