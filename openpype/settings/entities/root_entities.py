@@ -189,11 +189,10 @@ class RootEntity(BaseItemEntity):
             if not KEY_REGEX.match(key):
                 raise InvalidKeySymbols(self.path, key)
 
+    @abstractmethod
     def get_entity_from_path(self, path):
-        """Return system settings entity."""
-        raise NotImplementedError((
-            "Method `get_entity_from_path` not available for \"{}\""
-        ).format(self.__class__.__name__))
+        """Return entity matching passed path."""
+        pass
 
     def create_schema_object(self, schema_data, *args, **kwargs):
         """Create entity by entered schema data.
@@ -504,6 +503,18 @@ class SystemSettings(RootEntity):
 
         if set_studio_state:
             self.set_studio_state()
+
+    def get_entity_from_path(self, path):
+        """Return system settings entity."""
+        path_parts = path.split("/")
+        first_part = path_parts[0]
+        output = self
+        if first_part == self.root_key:
+            path_parts.pop(0)
+
+        for path_part in path_parts:
+            output = output[path_part]
+        return output
 
     def _reset_values(self):
         default_value = get_default_settings()[SYSTEM_SETTINGS_KEY]
