@@ -179,6 +179,46 @@ class BaseWidget(QtWidgets.QWidget):
         actions_mapping[action] = copy_value
         menu.addAction(action)
 
+    def _paste_value_action(self, menu, actions_mapping):
+        mime_data = QtWidgets.QApplication.clipboard().mimeData()
+        mime_value = mime_data.data("application/copy_settings_value")
+        if not mime_value:
+            return
+
+        settings_stream = QtCore.QDataStream(
+            mime_value, QtCore.QIODevice.ReadOnly
+        )
+        mime_data_value_str = settings_stream.readQString()
+        mime_data_value = json.loads(mime_data_value_str)
+
+        value = mime_data_value["value"]
+        path = mime_data_value["path"]
+        root_key = mime_data_value["root_key"]
+
+        def paste_value():
+            try:
+                self.entity.set(value)
+            except Exception:
+                # TODO show dialog
+                print("Failed")
+                import sys
+                import traceback
+
+                traceback.print_exception(*sys.exc_info())
+
+        def paste_value_to_path():
+            entity = self.entity.get_entity_from_path(path)
+            entity.set(value)
+
+        if path and root_key == self.entity.root_key:
+            action = QtWidgets.QAction("Paste to same entity")
+            actions_mapping[action] = paste_value_to_path
+            menu.addAction(action)
+
+        action = QtWidgets.QAction("Paste")
+        actions_mapping[action] = paste_value
+        menu.addAction(action)
+
     def show_actions_menu(self, event=None):
         if event and event.button() != QtCore.Qt.RightButton:
             return
@@ -198,6 +238,7 @@ class BaseWidget(QtWidgets.QWidget):
         self._add_to_project_override_action(menu, actions_mapping)
         self._remove_from_project_override_action(menu, actions_mapping)
         self._copy_value_action(menu, actions_mapping)
+        self._paste_value_action(menu, actions_mapping)
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")
