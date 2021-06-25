@@ -147,15 +147,10 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         representations[subset] = []
                     representations[subset].append(repre)
 
-                    udim = self._parse_udim(repre_file, self.udim_regex)
-
-                    if not version_data.get(subset):
-                        version_data[subset] = []
                     ver_data = {
-                        "color_space": c_space,
-                        "UDIM": udim,
+                        "color_space": c_space
                     }
-                    version_data[subset].append(ver_data)
+                    version_data[subset] = ver_data
 
                     asset_builds.add(
                         (asset_build, version, subset, "textures"))
@@ -217,23 +212,18 @@ class CollectTextures(pyblish.api.ContextPlugin):
             # add data for version document
             ver_data = version_data.get(subset)
             if ver_data:
-                ver_data = ver_data[0]
                 if workfile:
                     ver_data['workfile'] = workfile
 
                 new_instance.data.update(
-                    {"versionData": ver_data,
-                     "udim": ver_data["UDIM"]}
+                    {"versionData": ver_data}
                 )
 
+            udims = []
             upd_representations = representations.get(subset)
             if upd_representations and family != 'workfile':
-                for repre in upd_representations:
-                    repre.pop("frameStart", None)
-                    repre.pop("frameEnd", None)
-                    repre.pop("fps", None)
-
-                    repre["udim"] = ver_data["UDIM"]
+                upd_representations = self._update_representations(
+                    udims, upd_representations)
 
             new_instance.data["representations"] = upd_representations
 
@@ -262,7 +252,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
         raise ValueError("Couldnt find asset name in {}".format(name))
 
-    def _parse_udim(self, name, udim_regex):
+    def _get_udim(self, name, udim_regex):
+        """Parses from 'name' udim value with 'udim_regex'."""
         regex_result = udim_regex.findall(name)
         udim = None
         if not regex_result:
@@ -306,3 +297,22 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 ret = re.findall(pattern, name)
                 if ret:
                     return ret.pop()[1]
+
+    def _update_representations(self, udims, upd_representations):
+        """Frames dont have sense for textures, add collected udims instead."""
+        for repre in upd_representations:
+            repre.pop("frameStart", None)
+            repre.pop("frameEnd", None)
+            repre.pop("fps", None)
+
+            files = repre.get("files", [])
+            if not isinstance(files, list):
+                files = [files]
+
+            for file_name in files:
+                udim = self._get_udim(file_name, self.udim_regex)
+                udims.append(udim)
+
+            repre["udim"] = udims
+
+        return upd_representations
