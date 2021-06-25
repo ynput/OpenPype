@@ -148,8 +148,13 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "boolean",
+                            "key": "database",
+                            "label": "Use database shader name definitions"
+                        },
+                        {
                             "type": "label",
-                            "label": "Path to material file defining list of material names to check. This is material name per line simple text file.<br/>It will be checked against named group <b>shader</b> in your <em>Validation regex</em>.<p>For example: <br/> <code>^.*(?P=&lt;shader&gt;.+)_GEO</code></p>"
+                            "label": "Path to material file defining list of material names to check. This is material name per line simple text file.<br/>It will be checked against named group <b>shader</b> in your <em>Validation regex</em>.<p>For example: <br/> <code>^.*(?P=&lt;shader&gt;.+)_GEO</code></p>This is used instead of database definitions if they are disabled."
                         },
                         {
                             "type": "path",
