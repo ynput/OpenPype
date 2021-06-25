@@ -214,6 +214,7 @@ class BaseWidget(QtWidgets.QWidget):
             action = QtWidgets.QAction("Paste to same entity", menu)
             output.append((action, paste_value_to_path))
 
+        # Simple paste value method
         def paste_value():
             try:
                 self.entity.set(value)
