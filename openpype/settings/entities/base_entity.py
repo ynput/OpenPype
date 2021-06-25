@@ -871,6 +871,10 @@ class ItemEntity(BaseItemEntity):
         """Call save on root item."""
         self.root_item.save()
 
+    @property
+    def root_key(self):
+        return self.root_item.root_key
+
     def schema_validations(self):
         if not self.label and self.use_label_wrap:
             reason = (
