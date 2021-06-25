@@ -233,7 +233,7 @@ class BaseWidget(QtWidgets.QWidget):
             _set_entity_value(matching_entity, value)
 
         if matching_entity is not None:
-            action = QtWidgets.QAction("Paste to same entity", menu)
+            action = QtWidgets.QAction("Paste to same place", menu)
             output.append((action, paste_value_to_path))
 
         return output
