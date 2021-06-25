@@ -29,12 +29,22 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
     color_space = ["lin_srgb", "raw", "acesg"]
 
+    version_regex = re.compile(r"^(.+)_v([0-9]+)")
+    udim_regex = re.compile(r"_1[0-9]{3}\.")
+
+    #currently implemented placeholders ["color_space"]
+    input_naming_patterns = {
+        # workfile: ctr_envCorridorMain_texturing_v005.mra >
+        #   expected groups: [(asset),(filler),(version)]
+        # texture: T_corridorMain_aluminium1_BaseColor_lin_srgb_1029.exr
+        #   expected groups: [(asset), (filler),(color_space),(udim)]
+        r'^ctr_env([^.]+)_(.+)_v([0-9]{3,}).+':
+            r'^T_([^_.]+)_(.*)_({color_space})_(1[0-9]{3}).+'
+    }
+
     workfile_subset_template = "textures{}Workfile"
     # implemented keys: ["color_space", "channel", "subset"]
     texture_subset_template = "textures{subset}_{channel}"
-
-    version_regex = re.compile(r"^(.+)_v([0-9]+)")
-    udim_regex = re.compile(r"_1[0-9]{3}\.")
 
     def process(self, context):
         self.context = context
@@ -46,6 +56,11 @@ class CollectTextures(pyblish.api.ContextPlugin):
         asset_builds = set()
         asset = None
         for instance in context:
+            if not self.input_naming_patterns:
+                raise ValueError("Naming patterns are not configured. \n"
+                                 "Ask admin to provide naming conventions "
+                                 "for workfiles and textures.")
+
             if not asset:
                 asset = instance.data["asset"]  # selected from SP
 
@@ -67,9 +82,11 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 if ext in self.main_workfile_extensions or \
                         ext in self.other_workfile_extensions:
 
-                    asset_build, version = \
-                        self._parse_asset_build(repre_file,
-                                                self.version_regex)
+                    asset_build, version = self._parse_asset_build(
+                        repre_file,
+                        self.input_naming_patterns.keys(),
+                        self.color_space
+                    )
                     asset_builds.add((asset_build, version,
                                       workfile_subset, 'workfile'))
                     processed_instance = True
@@ -100,11 +117,16 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     resource_files[workfile_subset].append(item)
 
                 if ext in self.texture_extensions:
-                    c_space = self._get_color_space(repre_file,
-                                                    self.color_space)
+                    c_space = self._get_color_space(
+                        repre_file,
+                        self.color_space
+                    )
 
-                    channel = self._get_channel_name(repre_file,
-                                                     self.color_space)
+                    channel = self._get_channel_name(
+                        repre_file,
+                        list(self.input_naming_patterns.values()),
+                        self.color_space
+                    )
 
                     formatting_data = {
                         "color_space": c_space,
@@ -115,9 +137,11 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     subset = format_template_with_optional_keys(
                         formatting_data, self.texture_subset_template)
 
-                    asset_build, version = \
-                        self._parse_asset_build(repre_file,
-                                                self.version_regex)
+                    asset_build, version = self._parse_asset_build(
+                        repre_file,
+                        self.input_naming_patterns.values(),
+                        self.color_space
+                    )
 
                     if not representations.get(subset):
                         representations[subset] = []
@@ -216,14 +240,27 @@ class CollectTextures(pyblish.api.ContextPlugin):
             self.log.debug("new instance:: {}".format(
                 json.dumps(new_instance.data, indent=4)))
 
-    def _parse_asset_build(self, name, version_regex):
-        regex_result = version_regex.findall(name)
-        asset_name = None  # ??
-        version_number = 1
-        if regex_result:
-            asset_name, version_number = regex_result[0]
+    def _parse_asset_build(self, name, input_naming_patterns, color_spaces):
+        """Loops through configured workfile patterns to find asset name.
 
-        return asset_name, version_number
+            Asset name used to bind workfile and its textures.
+
+            Args:
+                name (str): workfile name
+                input_naming_patterns (list):
+                    [workfile_pattern] or [texture_pattern]
+        """
+        for input_pattern in input_naming_patterns:
+            for cs in color_spaces:
+                pattern = input_pattern.replace('{color_space}', cs)
+                regex_result = re.findall(pattern, name)
+
+                if regex_result:
+                    asset_name = regex_result[0][0].lower()
+                    version = regex_result[0][-1]
+                    return asset_name, version
+
+        raise ValueError("Couldnt find asset name in {}".format(name))
 
     def _parse_udim(self, name, udim_regex):
         regex_result = udim_regex.findall(name)
@@ -236,7 +273,11 @@ class CollectTextures(pyblish.api.ContextPlugin):
         return udim
 
     def _get_color_space(self, name, color_spaces):
-        """Looks for color_space from a list in a file name."""
+        """Looks for color_space from a list in a file name.
+
+            Color space seems not to be recognizable by regex pattern, set of
+            known space spaces must be provided.
+        """
         color_space = None
         found = [cs for cs in color_spaces if
                  re.search("_{}_".format(cs), name)]
@@ -253,15 +294,15 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
         return color_space
 
-    def _get_channel_name(self, name, color_spaces):
+    def _get_channel_name(self, name, input_naming_patterns, color_spaces):
         """Return parsed channel name.
 
             Unknown format of channel name and color spaces >> cs are known
-            list, channel between version and cs.
+            list - 'color_space' used as a placeholder
         """
-        pattern = "(v[0-9]+_)(.*)(_{})"
-        for cs in color_spaces:
-            ret = re.findall(pattern.format(cs), name)
-            if ret:
-                return ret.pop()[1]
-
+        for texture_pattern in input_naming_patterns:
+            for cs in color_spaces:
+                pattern = texture_pattern.replace('{color_space}', cs)
+                ret = re.findall(pattern, name)
+                if ret:
+                    return ret.pop()[1]
