@@ -195,6 +195,26 @@ class BaseWidget(QtWidgets.QWidget):
         path = mime_data_value["path"]
         root_key = mime_data_value["root_key"]
 
+        # Try to find matching entity to be able paste values to same spot
+        # - entity can't by dynamic or in dynamic item
+        # - must be in same root entity as source copy
+        #       Can't copy system settings <-> project settings
+        matching_entity = None
+        if path and root_key == self.entity.root_key:
+            try:
+                matching_entity = self.entity.get_entity_from_path(path)
+            except Exception:
+                pass
+
+        # Paste value to matchin entity
+        def paste_value_to_path():
+            matching_entity.set(value)
+
+        if matching_entity is not None:
+            action = QtWidgets.QAction("Paste to same entity", menu)
+            actions_mapping[action] = paste_value_to_path
+            menu.addAction(action)
+
         def paste_value():
             try:
                 self.entity.set(value)
@@ -207,15 +227,6 @@ class BaseWidget(QtWidgets.QWidget):
                     " settings entity."
                 ))
                 dialog.exec_()
-
-        def paste_value_to_path():
-            entity = self.entity.get_entity_from_path(path)
-            entity.set(value)
-
-        if path and root_key == self.entity.root_key:
-            action = QtWidgets.QAction("Paste to same entity")
-            actions_mapping[action] = paste_value_to_path
-            menu.addAction(action)
 
         action = QtWidgets.QAction("Paste")
         actions_mapping[action] = paste_value
