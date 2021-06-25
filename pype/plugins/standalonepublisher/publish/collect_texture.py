@@ -163,14 +163,6 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     asset_build
         """
         for asset_build, version, subset, family in asset_builds:
-
-            upd_representations = representations.get(subset)
-            if upd_representations and family != 'workfile':
-                for repre in upd_representations:
-                    repre.pop("frameStart", None)
-                    repre.pop("frameEnd", None)
-                    repre.pop("fps", None)
-
             new_instance = context.create_instance(subset)
             new_instance.data.update(
                 {
@@ -180,7 +172,6 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     "name": subset,
                     "family": family,
                     "version": int(version),
-                    "representations": upd_representations,
                     "families": []
                 }
             )
@@ -210,6 +201,17 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     {"versionData": ver_data,
                      "udim": ver_data["UDIM"]}
                 )
+
+            upd_representations = representations.get(subset)
+            if upd_representations and family != 'workfile':
+                for repre in upd_representations:
+                    repre.pop("frameStart", None)
+                    repre.pop("frameEnd", None)
+                    repre.pop("fps", None)
+
+                    repre["udim"] = ver_data["UDIM"]
+
+            new_instance.data["representations"] = upd_representations
 
             self.log.debug("new instance:: {}".format(
                 json.dumps(new_instance.data, indent=4)))
