@@ -1,11 +1,12 @@
 # Changelog
 
-## [3.2.0-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.2.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.4...HEAD)
 
 **🚀 Enhancements**
 
+- Application executables with environment variables [\#1757](https://github.com/pypeclub/OpenPype/pull/1757)
 - Settings Hosts enum [\#1739](https://github.com/pypeclub/OpenPype/pull/1739)
 - Validate containers settings [\#1736](https://github.com/pypeclub/OpenPype/pull/1736)
 - PS - added loader from sequence [\#1726](https://github.com/pypeclub/OpenPype/pull/1726)
@@ -31,8 +32,11 @@
 - Default subset template for TVPaint review and workfile families [\#1716](https://github.com/pypeclub/OpenPype/pull/1716)
 - Maya: Extract review hotfix [\#1714](https://github.com/pypeclub/OpenPype/pull/1714)
 - Settings: Imageio improving granularity [\#1711](https://github.com/pypeclub/OpenPype/pull/1711)
-- Hiero: published whole edit mov [\#1687](https://github.com/pypeclub/OpenPype/pull/1687)
 - Application without executables [\#1679](https://github.com/pypeclub/OpenPype/pull/1679)
+
+**Merged pull requests:**
+
+- TVPaint ftrack family [\#1755](https://github.com/pypeclub/OpenPype/pull/1755)
 
 ## [2.18.4](https://github.com/pypeclub/OpenPype/tree/2.18.4) (2021-06-24)
 
@@ -98,6 +102,7 @@
 - Nuke: broken publishing rendered frames [\#1707](https://github.com/pypeclub/OpenPype/pull/1707)
 - Standalone publisher Thumbnail export args [\#1705](https://github.com/pypeclub/OpenPype/pull/1705)
 - Bad zip can break OpenPype start [\#1691](https://github.com/pypeclub/OpenPype/pull/1691)
+- Hiero: published whole edit mov [\#1687](https://github.com/pypeclub/OpenPype/pull/1687)
 - Ftrack subprocess handle of stdout/stderr [\#1675](https://github.com/pypeclub/OpenPype/pull/1675)
 - Settings list race condifiton and mutable dict list conversion [\#1671](https://github.com/pypeclub/OpenPype/pull/1671)
 - Mac launch arguments fix [\#1660](https://github.com/pypeclub/OpenPype/pull/1660)
@@ -111,6 +116,7 @@
 
 - update dependencies [\#1697](https://github.com/pypeclub/OpenPype/pull/1697)
 - Bump normalize-url from 4.5.0 to 4.5.1 in /website [\#1686](https://github.com/pypeclub/OpenPype/pull/1686)
+- Use poetry to build / publish OpenPype wheel [\#1636](https://github.com/pypeclub/OpenPype/pull/1636)
 
 # Changelog
 
