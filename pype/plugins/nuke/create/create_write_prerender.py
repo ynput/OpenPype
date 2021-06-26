@@ -14,6 +14,9 @@ class CreateWritePrerender(plugin.PypeCreator):
     family = "prerender"
     icon = "sign-out"
     defaults = ["Key01", "Bg01", "Fg01", "Branch01", "Part01"]
+    deadlineChunkSize = 0
+    deadlinePriority = 50
+    render = "Use existing frames"
 
     def __init__(self, *args, **kwargs):
         super(CreateWritePrerender, self).__init__(*args, **kwargs)
@@ -120,5 +123,11 @@ class CreateWritePrerender(plugin.PypeCreator):
             w_node["use_limit"].setValue(True)
             w_node["first"].setValue(nuke.root()["first_frame"].value())
             w_node["last"].setValue(nuke.root()["last_frame"].value())
+
+        render_mapping = {"Use existing frames": 0, "Local": 1, "On farm": 2}
+        write_node["render"].setValue(render_mapping[self.render])
+
+        write_node["deadlineChunkSize"].setValue(self.deadlineChunkSize)
+        write_node["deadlinePriority"].setValue(self.deadlinePriority)
 
         return write_node
