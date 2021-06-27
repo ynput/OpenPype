@@ -148,7 +148,7 @@ WantedBy=multi-user.target
 @echo off
 set OPENPYPE_DEBUG=3
 pushd \\path\to\file\
-call openpype_console.exe eventserver --ftrack-user <openpype-admin-user> --ftrack-api-key <api-key> 
+openpype_console.exe eventserver --ftrack-user <openpype-admin-user> --ftrack-api-key <api-key> 
 ```
 -   download and install `nssm.cc`
 -   create Windows service according to nssm.cc manual
