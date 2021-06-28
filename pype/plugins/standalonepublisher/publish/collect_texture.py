@@ -30,21 +30,24 @@ class CollectTextures(pyblish.api.ContextPlugin):
     color_space = ["lin_srgb", "raw", "acesg"]
 
     version_regex = re.compile(r"v([0-9]+)")
-    udim_regex = re.compile(r"_1[0-9]{3}\.")
+    udim_regex = re.compile(r"[\._]1[0-9]{3}\.")
 
     #currently implemented placeholders ["color_space"]
     input_naming_patterns = {
         # workfile: ctr_envCorridorMain_texturing_v005.mra >
         #   expected groups: [(asset),(filler),(version)]
         # texture: T_corridorMain_aluminium1_BaseColor_lin_srgb_1029.exr
-        #   expected groups: [(asset), (filler),(color_space),(udim)]
-        r'^ctr_env([^.]+)_(.+)_v([0-9]{3,}).+':
-            r'^T_([^_.]+)_(.*)_({color_space})_(1[0-9]{3}).+'
+        #   expected groups: [(asset),(shader),(channel),(color_space),(udim)]
+        r'^ctr_([^.]+)_(.+)_v([0-9]{3,}).+':
+            r'^T_([^_.]+)_([^_.]+)_({color_space})_(1[0-9]{3}).+',
+        # # substance format
+        r'^([^.]+)_v([0-9]{3,}_(.+))':
+            r'([^.]+)_ID\.(.*)(_MAT)\.(1[0-9]{3}).*'
     }
 
     workfile_subset_template = "textures{}Workfile"
-    # implemented keys: ["color_space", "channel", "subset"]
-    texture_subset_template = "textures{subset}_{channel}"
+    # implemented keys: ["color_space", "channel", "subset", "shader"]
+    texture_subset_template = "textures{subset}_{shader}_{channel}"
 
     def process(self, context):
         self.context = context
@@ -96,13 +99,17 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         representations[workfile_subset] = []
 
                 if ext in self.main_workfile_extensions:
-                    representations[workfile_subset].append(repre)
+                    # workfiles can have only single representation
+                    # currently OP is not supporting different extensions in
+                    # representation files
+                    representations[workfile_subset] = [repre]
+
                     workfile_files[asset_build] = repre_file
 
                 if ext in self.other_workfile_extensions:
                     # add only if not added already from main
                     if not representations.get(workfile_subset):
-                        representations[workfile_subset].append(repre)
+                        representations[workfile_subset] = [repre]
 
                     # only overwrite if not present
                     if not workfile_files.get(asset_build):
@@ -129,9 +136,16 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         self.color_space
                     )
 
+                    shader = self._get_shader_name(
+                        repre_file,
+                        list(self.input_naming_patterns.values()),
+                        self.color_space
+                    )
+
                     formatting_data = {
                         "color_space": c_space,
                         "channel": channel,
+                        "shader": shader,
                         "subset": parsed_subset
                     }
                     subset = format_template_with_optional_keys(
@@ -149,7 +163,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     representations[subset].append(repre)
 
                     ver_data = {
-                        "color_space": c_space
+                        "color_space": c_space,
+                        "channel_name": channel,
+                        "shader_name": shader
                     }
                     version_data[subset] = ver_data
 
@@ -178,9 +194,13 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 asset (string): selected asset from SP
                 asset_builds (set) of tuples
                     (asset_build, version, subset, family)
-                resource_files (list) of resource dicts
-                representations (dict) of representation files, key is
-                    asset_build
+                resource_files (list) of resource dicts - to store additional
+                  files to main workfile
+                representations (list) of dicts - to store workfile info OR
+                   all collected texture files, key is asset_build
+                version_data (dict) - prepared to store into version doc in DB
+                workfile_files (dict) - to store workfile to add to textures
+                    key is asset_build
         """
         # sort workfile first
         asset_builds = sorted(asset_builds,
@@ -235,7 +255,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
             new_instance.data["representations"] = upd_representations
 
-            self.log.debug("new instance:: {}".format(
+            self.log.debug("new instance - {}:: {}".format(
+                family,
                 json.dumps(new_instance.data, indent=4)))
 
     def _get_asset_build(self, name, input_naming_patterns, color_spaces):
@@ -255,6 +276,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
                 if regex_result:
                     asset_name = regex_result[0][0].lower()
+                    self.log.info("asset_name:: {}".format(asset_name))
                     return asset_name
 
         raise ValueError("Couldnt find asset name in {}".format(name))
@@ -299,6 +321,22 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
         return color_space
 
+    def _get_shader_name(self, name, input_naming_patterns, color_spaces):
+        """Return parsed shader name.
+
+            Shader name is needed for overlapping udims (eg. udims might be
+            used for different materials, shader needed to not overwrite).
+
+            Unknown format of channel name and color spaces >> cs are known
+            list - 'color_space' used as a placeholder
+        """
+        for texture_pattern in input_naming_patterns:
+            for cs in color_spaces:
+                pattern = texture_pattern.replace('{color_space}', cs)
+                ret = re.findall(pattern, name)
+                if ret:
+                    return ret.pop()[1]
+
     def _get_channel_name(self, name, input_naming_patterns, color_spaces):
         """Return parsed channel name.
 
@@ -310,7 +348,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 pattern = texture_pattern.replace('{color_space}', cs)
                 ret = re.findall(pattern, name)
                 if ret:
-                    return ret.pop()[1]
+                    return ret.pop()[2]
 
     def _update_representations(self, upd_representations):
         """Frames dont have sense for textures, add collected udims instead."""
