@@ -678,3 +678,9 @@ class DictConditionalEntity(ItemEntity):
 
         self._ignore_child_changes = False
 
+    def reset_callbacks(self):
+        """Reset registered callbacks on entity and children."""
+        super(DictConditionalEntity, self).reset_callbacks()
+        for children in self.children.values():
+            for child_entity in children:
+                child_entity.reset_callbacks()
