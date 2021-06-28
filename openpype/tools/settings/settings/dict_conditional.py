@@ -189,23 +189,30 @@ class DictConditionalWidget(BaseWidget):
         else:
             map_id = widget.entity.id
 
+        content_widget = self.content_widget
+        content_layout = self.content_layout
+        if map_id != self.entity.enum_entity.id:
+            enum_value = self._enum_key_by_wrapper_id[map_id]
+            content_widget = self._content_by_enum_value[enum_value]["widget"]
+            content_layout = self._content_by_enum_value[enum_value]["layout"]
+
         wrapper = self._parent_widget_by_entity_id[map_id]
-        if wrapper is not self.content_widget:
+        if wrapper is not content_widget:
             wrapper.add_widget_to_layout(widget, label)
             if wrapper.id not in self._added_wrapper_ids:
                 self.add_widget_to_layout(wrapper)
                 self._added_wrapper_ids.add(wrapper.id)
             return
 
-        row = self.content_layout.rowCount()
+        row = content_layout.rowCount()
         if not label or isinstance(widget, WrapperWidget):
-            self.content_layout.addWidget(widget, row, 0, 1, 2)
+            content_layout.addWidget(widget, row, 0, 1, 2)
         else:
             label_widget = GridLabelWidget(label, widget)
             label_widget.input_field = widget
             widget.label_widget = label_widget
-            self.content_layout.addWidget(label_widget, row, 0, 1, 1)
-            self.content_layout.addWidget(widget, row, 1, 1, 1)
+            content_layout.addWidget(label_widget, row, 0, 1, 1)
+            content_layout.addWidget(widget, row, 1, 1, 1)
 
     def set_entity_value(self):
         for input_field in self.input_fields:
