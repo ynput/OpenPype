@@ -474,3 +474,37 @@ class DictConditionalEntity(ItemEntity):
 
         output.update(self._current_metadata)
         return output
+
+    def _prepare_value(self, value):
+        if value is NOT_SET or self.enum_key not in value:
+            return NOT_SET, NOT_SET
+
+        enum_value = value.get(self.enum_key)
+        if enum_value not in self.non_gui_children:
+            return NOT_SET, NOT_SET
+
+        # Create copy of value before poping values
+        value = copy.deepcopy(value)
+        metadata = {}
+        for key in METADATA_KEYS:
+            if key in value:
+                metadata[key] = value.pop(key)
+
+        enum_value = value.get(self.enum_key)
+
+        old_metadata = metadata.get(M_OVERRIDEN_KEY)
+        if old_metadata:
+            old_metadata_set = set(old_metadata)
+            new_metadata = []
+            non_gui_children = self.non_gui_children[enum_value]
+            for key in non_gui_children.keys():
+                if key in old_metadata:
+                    new_metadata.append(key)
+                    old_metadata_set.remove(key)
+
+            for key in old_metadata_set:
+                new_metadata.append(key)
+            metadata[M_OVERRIDEN_KEY] = new_metadata
+
+        return value, metadata
+
