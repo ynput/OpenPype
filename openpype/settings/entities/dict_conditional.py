@@ -77,3 +77,33 @@ class DictConditionalEntity(ItemEntity):
         "collapsible": False,
         "collapsed": True
     }
+
+    def _item_initalization(self):
+        self._default_metadata = NOT_SET
+        self._studio_override_metadata = NOT_SET
+        self._project_override_metadata = NOT_SET
+
+        self._ignore_child_changes = False
+
+        # `current_metadata` are still when schema is loaded
+        # - only metadata stored with dict item are gorup overrides in
+        #   M_OVERRIDEN_KEY
+        self._current_metadata = {}
+        self._metadata_are_modified = False
+
+        # Children are stored by key as keys are immutable and are defined by
+        # schema
+        self.valid_value_types = (dict, )
+        self.children = collections.defaultdict(list)
+        self.non_gui_children = collections.defaultdict(dict)
+        self.gui_layout = collections.defaultdict(list)
+
+        if self.is_dynamic_item:
+            self.require_key = False
+
+        self.enum_key = self.schema_data.get("enum_key")
+        self.enum_label = self.schema_data.get("enum_label")
+        self.enum_children = self.schema_data.get("enum_children")
+
+        self.enum_entity = None
+        self.current_enum = None
