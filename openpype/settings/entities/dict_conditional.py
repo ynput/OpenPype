@@ -226,3 +226,24 @@ class DictConditionalEntity(ItemEntity):
                     continue
 
                 self.non_gui_children[item_key][child_obj.key] = child_obj
+
+    def get_child_path(self, child_obj):
+        """Get hierarchical path of child entity.
+
+        Child must be entity's direct children. This must be possible to get
+        for any children even if not from current enum value.
+        """
+        if child_obj is self.enum_entity:
+            return "/".join([self.path, self.enum_key])
+
+        result_key = None
+        for children in self.non_gui_children.values():
+            for key, _child_obj in children.items():
+                if _child_obj is child_obj:
+                    result_key = key
+                    break
+
+        if result_key is None:
+            raise ValueError("Didn't found child {}".format(child_obj))
+
+        return "/".join([self.path, result_key])
