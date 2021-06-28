@@ -52,8 +52,10 @@ class DictConditionalWidget(BaseWidget):
 
         self.entity_widget.add_widget_to_layout(self, label)
 
-    def _prepare_entity_layouts(self, children, widget):
-        for child in children:
+    def _prepare_entity_layouts(
+        self, gui_layout, widget, parent_widget_by_entity_id
+    ):
+        for child in gui_layout:
             if not isinstance(child, dict):
                 parent_widget_by_entity_id[child.id] = widget
                 continue
@@ -69,9 +71,11 @@ class DictConditionalWidget(BaseWidget):
                     "Unknown Wrapper type \"{}\"".format(child["type"])
                 )
 
-            self._parent_widget_by_entity_id[wrapper.id] = widget
+            parent_widget_by_entity_id[wrapper.id] = widget
 
-            self._prepare_entity_layouts(child["children"], wrapper)
+            self._prepare_entity_layouts(
+                child["children"], wrapper, parent_widget_by_entity_id
+            )
 
     def _ui_item_base(self):
         self.setObjectName("DictInvisible")
