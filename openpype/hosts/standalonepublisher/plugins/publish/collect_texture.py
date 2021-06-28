@@ -1,13 +1,20 @@
 import os
-import copy
 import re
-import opentimelineio as otio
 import pyblish.api
-from openpype import lib as plib
 import json
 
+from avalon.api import format_template_with_optional_keys
+
+
 class CollectTextures(pyblish.api.ContextPlugin):
-    """Collect workfile (and its resource_files) and textures."""
+    """Collect workfile (and its resource_files) and textures.
+
+        Provides:
+            1 instance per workfile (with 'resources' filled if needed)
+                (workfile family)
+            1 instance per group of textures
+                (textures family)
+    """
 
     order = pyblish.api.CollectorOrder
     label = "Collect Textures"
@@ -22,14 +29,29 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
     color_space = ["lin_srgb", "raw", "acesg"]
 
-    workfile_subset_template = "texturesMainWorkfile"
-    texture_subset_template = "texturesMain_{color_space}"
+    version_regex = re.compile(r"v([0-9]+)")
+    udim_regex = re.compile(r"_1[0-9]{3}\.")
+
+    #currently implemented placeholders ["color_space"]
+    input_naming_patterns = {
+        # workfile: ctr_envCorridorMain_texturing_v005.mra >
+        #   expected groups: [(asset),(filler),(version)]
+        # texture: T_corridorMain_aluminium1_BaseColor_lin_srgb_1029.exr
+        #   expected groups: [(asset), (filler),(color_space),(udim)]
+        r'^ctr_env([^.]+)_(.+)_v([0-9]{3,}).+':
+            r'^T_([^_.]+)_(.*)_({color_space})_(1[0-9]{3}).+'
+    }
+
+    workfile_subset_template = "textures{}Workfile"
+    # implemented keys: ["color_space", "channel", "subset"]
+    texture_subset_template = "textures{subset}_{channel}"
 
     version_regex = re.compile(r"^(.+)_v([0-9]+)")
     udim_regex = re.compile(r"_1[0-9]{3}\.")
 
     def process(self, context):
         self.context = context
+
         import json
         def convertor(value):
             return str(value)
@@ -41,8 +63,18 @@ class CollectTextures(pyblish.api.ContextPlugin):
         asset_builds = set()
         asset = None
         for instance in context:
+            if not self.input_naming_patterns:
+                raise ValueError("Naming patterns are not configured. \n"
+                                 "Ask admin to provide naming conventions "
+                                 "for workfiles and textures.")
+
             if not asset:
                 asset = instance.data["asset"]  # selected from SP
+
+            parsed_subset = instance.data["subset"].replace(
+                instance.data["family"], '')
+            workfile_subset = self.workfile_subset_template.format(
+                parsed_subset)
 
             self.log.info("instance.data:: {}".format(
                 json.dumps(instance.data, indent=4, default=convertor)))
@@ -51,19 +83,20 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 ext = repre["ext"].replace('.', '')
                 asset_build = version = None
 
-                workfile_subset = self.workfile_subset_template
-
                 if isinstance(repre["files"], list):
                     repre_file = repre["files"][0]
                 else:
                     repre_file = repre["files"]
 
                 if ext in self.main_workfile_extensions or \
-                    ext in self.other_workfile_extensions:
-                    self.log.info('workfile')
-                    asset_build, version = \
-                        self._parse_asset_build(repre_file,
-                                                self.version_regex)
+                        ext in self.other_workfile_extensions:
+
+                    asset_build = self._get_asset_build(
+                        repre_file,
+                        self.input_naming_patterns.keys(),
+                        self.color_space
+                    )
+                    version = self._get_version(repre_file, self.version_regex)
                     asset_builds.add((asset_build, version,
                                       workfile_subset, 'workfile'))
                     processed_instance = True
@@ -95,15 +128,32 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     resource_files[workfile_subset].append(item)
 
                 if ext in self.texture_extensions:
-                    c_space = self._get_color_space(repre_file,
-                                                    self.color_space)
-                    subset_formatting_data = {"color_space": c_space}
-                    subset = self.texture_subset_template.format(
-                        **subset_formatting_data)
+                    c_space = self._get_color_space(
+                        repre_file,
+                        self.color_space
+                    )
 
-                    asset_build, version = \
-                        self._parse_asset_build(repre_file,
-                                                self.version_regex)
+                    channel = self._get_channel_name(
+                        repre_file,
+                        list(self.input_naming_patterns.values()),
+                        self.color_space
+                    )
+
+                    formatting_data = {
+                        "color_space": c_space,
+                        "channel": channel,
+                        "subset": parsed_subset
+                    }
+                    self.log.debug("data::{}".format(formatting_data))
+                    subset = format_template_with_optional_keys(
+                        formatting_data, self.texture_subset_template)
+
+                    asset_build = self._get_asset_build(
+                        repre_file,
+                        self.input_naming_patterns.values(),
+                        self.color_space
+                    )
+                    version = self._get_version(repre_file, self.version_regex)
 
                     if not representations.get(subset):
                         representations[subset] = []
@@ -149,21 +199,15 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 representations (dict) of representation files, key is
                     asset_build
         """
+        # sort workfile first
+        asset_builds = sorted(asset_builds,
+                              key=lambda tup: tup[3], reverse=True)
+
+        # workfile must have version, textures might
+        main_version = None
         for asset_build, version, subset, family in asset_builds:
-
-            self.log.info("resources:: {}".format(resource_files))
-            self.log.info("-"*25)
-            self.log.info("representations:: {}".format(representations))
-            self.log.info("-"*25)
-            self.log.info("workfile_files:: {}".format(workfile_files))
-
-            upd_representations = representations.get(subset)
-            if upd_representations and family != 'workfile':
-                for repre in upd_representations:
-                    repre.pop("frameStart", None)
-                    repre.pop("frameEnd", None)
-                    repre.pop("fps", None)
-
+            if not main_version:
+                main_version = version
             new_instance = context.create_instance(subset)
             new_instance.data.update(
                 {
@@ -172,8 +216,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     "label": subset,
                     "name": subset,
                     "family": family,
-                    "version": int(version),
-                    "representations": upd_representations,
+                    "version": int(version or main_version),
                     "families": []
                 }
             )
@@ -203,18 +246,43 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     {"versionData": ver_data}
                 )
 
-            self.log.info("new instance:: {}".format(json.dumps(new_instance.data, indent=4)))
+            upd_representations = representations.get(subset)
+            if upd_representations and family != 'workfile':
+                upd_representations = self._update_representations(
+                    upd_representations)
 
-    def _parse_asset_build(self, name, version_regex):
-        regex_result = version_regex.findall(name)
-        asset_name = None  # ??
-        version_number = 1
-        if regex_result:
-            asset_name, version_number = regex_result[0]
+            new_instance.data["representations"] = upd_representations
 
-        return asset_name, version_number
+    def _get_asset_build(self, name, input_naming_patterns, color_spaces):
+        """Loops through configured workfile patterns to find asset name.
 
-    def _parse_udim(self, name, udim_regex):
+            Asset name used to bind workfile and its textures.
+
+            Args:
+                name (str): workfile name
+                input_naming_patterns (list):
+                    [workfile_pattern] or [texture_pattern]
+        """
+        for input_pattern in input_naming_patterns:
+            for cs in color_spaces:
+                pattern = input_pattern.replace('{color_space}', cs)
+                regex_result = re.findall(pattern, name)
+
+                if regex_result:
+                    asset_name = regex_result[0][0].lower()
+                    return asset_name
+
+        raise ValueError("Couldnt find asset name in {}".format(name))
+
+    def _get_version(self, name, version_regex):
+        found = re.search(version_regex, name)
+        if found:
+            return found.group().replace("v", "")
+
+        self.log.info("No version found in the name {}".format(name))
+
+    def _get_udim(self, name, udim_regex):
+        """Parses from 'name' udim value with 'udim_regex'."""
         regex_result = udim_regex.findall(name)
         udim = None
         if not regex_result:
@@ -225,7 +293,11 @@ class CollectTextures(pyblish.api.ContextPlugin):
         return udim
 
     def _get_color_space(self, name, color_spaces):
-        """Looks for color_space from a list in a file name."""
+        """Looks for color_space from a list in a file name.
+
+            Color space seems not to be recognizable by regex pattern, set of
+            known space spaces must be provided.
+        """
         color_space = None
         found = [cs for cs in color_spaces if
                  re.search("_{}_".format(cs), name)]
@@ -241,3 +313,37 @@ class CollectTextures(pyblish.api.ContextPlugin):
             color_space = found[0]
 
         return color_space
+
+    def _get_channel_name(self, name, input_naming_patterns, color_spaces):
+        """Return parsed channel name.
+
+            Unknown format of channel name and color spaces >> cs are known
+            list - 'color_space' used as a placeholder
+        """
+        for texture_pattern in input_naming_patterns:
+            for cs in color_spaces:
+                pattern = texture_pattern.replace('{color_space}', cs)
+                ret = re.findall(pattern, name)
+                if ret:
+                    return ret.pop()[1]
+
+    def _update_representations(self, upd_representations):
+        """Frames dont have sense for textures, add collected udims instead."""
+        udims = []
+        for repre in upd_representations:
+            repre.pop("frameStart", None)
+            repre.pop("frameEnd", None)
+            repre.pop("fps", None)
+
+            files = repre.get("files", [])
+            if not isinstance(files, list):
+                files = [files]
+
+            for file_name in files:
+                udim = self._get_udim(file_name, self.udim_regex)
+                udims.append(udim)
+
+            repre["udim"] = udims  # must be this way, used for filling path
+
+        return upd_representations
+
