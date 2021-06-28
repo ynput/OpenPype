@@ -18,6 +18,9 @@ class DictConditionalWidget(BaseWidget):
     def create_ui(self):
         self.input_fields = []
 
+        self._content_by_enum_value = {}
+        self._last_enum_value = None
+
         self.label_widget = None
         self.body_widget = None
         self.content_widget = None
@@ -35,6 +38,7 @@ class DictConditionalWidget(BaseWidget):
             label = self.entity.label
 
         self._parent_widget_by_entity_id = {}
+        self._enum_key_by_wrapper_id = {}
         self._added_wrapper_ids = set()
         self._prepare_entity_layouts(
             self.entity.gui_layout, self.content_widget
