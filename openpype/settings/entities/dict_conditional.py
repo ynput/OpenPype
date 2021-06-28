@@ -617,3 +617,64 @@ class DictConditionalEntity(ItemEntity):
                 child_value = value.get(key, NOT_SET)
                 child_obj.update_project_value(child_value)
 
+    def _discard_changes(self, on_change_trigger):
+        self._ignore_child_changes = True
+
+        self.enum_entity.discard_changes(on_change_trigger)
+        for children_by_key in self.non_gui_children.values():
+            for child_obj in children_by_key.values():
+                child_obj.discard_changes(on_change_trigger)
+
+        self._ignore_child_changes = False
+
+    def _add_to_studio_default(self, on_change_trigger):
+        self._ignore_child_changes = True
+
+        self.enum_entity.add_to_studio_default(on_change_trigger)
+        for children_by_key in self.non_gui_children.values():
+            for child_obj in children_by_key.values():
+                child_obj.add_to_studio_default(on_change_trigger)
+
+        self._ignore_child_changes = False
+
+        self._update_current_metadata()
+
+        self.parent.on_child_change(self)
+
+    def _remove_from_studio_default(self, on_change_trigger):
+        self._ignore_child_changes = True
+
+        self.enum_entity.remove_from_studio_default(on_change_trigger)
+        for children_by_key in self.non_gui_children.values():
+            for child_obj in children_by_key.values():
+                child_obj.remove_from_studio_default(on_change_trigger)
+
+        self._ignore_child_changes = False
+
+    def _add_to_project_override(self, on_change_trigger):
+        self._ignore_child_changes = True
+
+        self.enum_entity.add_to_project_override(on_change_trigger)
+        for children_by_key in self.non_gui_children.values():
+            for child_obj in children_by_key.values():
+                child_obj.add_to_project_override(on_change_trigger)
+
+        self._ignore_child_changes = False
+
+        self._update_current_metadata()
+
+        self.parent.on_child_change(self)
+
+    def _remove_from_project_override(self, on_change_trigger):
+        if self._override_state is not OverrideState.PROJECT:
+            return
+
+        self._ignore_child_changes = True
+
+        self.enum_entity.remove_from_project_override(on_change_trigger)
+        for children_by_key in self.non_gui_children.values():
+            for child_obj in children_by_key.values():
+                child_obj.remove_from_project_override(on_change_trigger)
+
+        self._ignore_child_changes = False
+
