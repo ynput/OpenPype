@@ -339,3 +339,53 @@ class DictConditionalEntity(ItemEntity):
                 child_obj.set_override_state(state)
 
         self._update_current_metadata()
+
+    @property
+    def value(self):
+        output = {
+            self.current_enum: self.enum_entity.value
+        }
+        for key, child_obj in self.non_gui_children[self.current_enum].items():
+            output[key] = child_obj.value
+        return output
+
+    def settings_value(self):
+        if self._override_state is OverrideState.NOT_DEFINED:
+            return NOT_SET
+
+        if self._override_state is OverrideState.DEFAULTS:
+            output = {
+                self.current_enum: self.enum_entity.settings_value()
+            }
+            non_gui_children = self.non_gui_children[self.current_enum]
+            for key, child_obj in non_gui_children.items():
+                child_value = child_obj.settings_value()
+                if not child_obj.is_file and not child_obj.file_item:
+                    for _key, _value in child_value.items():
+                        new_key = "/".join([key, _key])
+                        output[new_key] = _value
+                else:
+                    output[key] = child_value
+            return output
+
+        if self.is_group:
+            if self._override_state is OverrideState.STUDIO:
+                if not self.has_studio_override:
+                    return NOT_SET
+            elif self._override_state is OverrideState.PROJECT:
+                if not self.has_project_override:
+                    return NOT_SET
+
+        output = {
+            self.current_enum: self.enum_entity.settings_value()
+        }
+        for key, child_obj in self.non_gui_children[self.current_enum].items():
+            value = child_obj.settings_value()
+            if value is not NOT_SET:
+                output[key] = value
+
+        if not output:
+            return NOT_SET
+
+        output.update(self._current_metadata)
+        return output
