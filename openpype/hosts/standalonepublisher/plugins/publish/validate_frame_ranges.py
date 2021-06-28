@@ -43,7 +43,10 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
             self.log.warning("Cannot check for extension {}".format(ext))
             return
 
-        frames = len(instance.data.get("representations", [None])[0]["files"])
+        files = instance.data.get("representations", [None])[0]["files"]
+        if isinstance(files, str):
+            files = [files]
+        frames = len(files)
 
         err_msg = "Frame duration from DB:'{}' ". format(int(duration)) +\
                   " doesn't match number of files:'{}'".format(frames) +\
