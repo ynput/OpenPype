@@ -70,12 +70,23 @@ class DictConditionalWidget(BaseWidget):
                 self._enum_key_by_wrapper_id[item_id] = enum_key
             self._parent_widget_by_entity_id.update(parent_widget_by_entity_id)
 
-        for child_obj in self.entity.children:
-            self.input_fields.append(
-                self.create_ui_for_entity(
-                    self.category_widget, child_obj, self
+        enum_input_field = self.create_ui_for_entity(
+            self.category_widget, self.entity.enum_entity, self
+        )
+        self.enum_input_field = enum_input_field
+        self.input_fields.append(enum_input_field)
+
+        for item_key, children in self.entity.children.items():
+            content_widget = self._content_by_enum_value[item_key]["widget"]
+            row = self.content_layout.rowCount()
+            self.content_layout.addWidget(content_widget, row, 0, 1, 2)
+
+            for child_obj in children:
+                self.input_fields.append(
+                    self.create_ui_for_entity(
+                        self.category_widget, child_obj, self
+                    )
                 )
-            )
 
         if self.entity.use_label_wrap and self.content_layout.count() == 0:
             self.body_widget.hide_toolbox(True)
