@@ -48,9 +48,22 @@ class DictConditionalWidget(BaseWidget):
         # Add rest of entities to wrapper mappings
         for enum_key, children in self.entity.gui_layout.items():
             parent_widget_by_entity_id = {}
+
+            content_widget = QtWidgets.QWidget(self.content_widget)
+            content_layout = QtWidgets.QGridLayout(content_widget)
+            content_layout.setColumnStretch(0, 0)
+            content_layout.setColumnStretch(1, 1)
+            content_layout.setContentsMargins(0, 0, 0, 0)
+            content_layout.setSpacing(5)
+
+            self._content_by_enum_value[enum_key] = {
+                "widget": content_widget,
+                "layout": content_layout
+            }
+
             self._prepare_entity_layouts(
                 children,
-                self.content_widget,
+                content_widget,
                 parent_widget_by_entity_id
             )
             for item_id in parent_widget_by_entity_id.keys():
