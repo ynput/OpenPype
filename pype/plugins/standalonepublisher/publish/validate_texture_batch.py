@@ -21,6 +21,7 @@ class ValidateTextureBatch(pyblish.api.ContextPlugin):
 
         workfiles = []
         workfiles_in_textures = []
+        processed_versions = set()
         for instance in context:
             if instance.data["family"] == "workfile":
                 workfiles.append(instance.data["representations"][0]["files"])
@@ -29,6 +30,8 @@ class ValidateTextureBatch(pyblish.api.ContextPlugin):
                     msg = "No resources for workfile {}".\
                            format(instance.data["name"])
                     self.log.warning(msg)
+
+                processed_versions.add(instance.data["version"])
 
             if instance.data["family"] == "textures":
                 file_name = instance.data["representations"][0]["files"][0]
@@ -43,6 +46,7 @@ class ValidateTextureBatch(pyblish.api.ContextPlugin):
                     "Not matching version, texture {} - workfile {}".format(
                         instance.data["version"], wfile
                     )
+                processed_versions.add(instance.data["version"])
 
         msg = "Not matching set of workfiles and textures." + \
               "{} not equal to {}".format(set(workfiles),
@@ -50,6 +54,10 @@ class ValidateTextureBatch(pyblish.api.ContextPlugin):
               "\nCheck that both workfile and textures are present"
         keys = set(workfiles) == set(workfiles_in_textures)
         assert keys, msg
+
+        ver_msg = "Too many versions publishing. "\
+                  "Publish only single version at time!"
+        assert len(processed_versions) == 1, ver_msg
 
     def _check_proper_collected(self, versionData, file_name):
         """

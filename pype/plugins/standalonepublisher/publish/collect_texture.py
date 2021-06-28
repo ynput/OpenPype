@@ -27,22 +27,19 @@ class CollectTextures(pyblish.api.ContextPlugin):
     texture_extensions = ["exr", "dpx", "jpg", "jpeg", "png", "tiff", "tga",
                           "gif", "svg"]
 
-    color_space = ["lin_srgb", "raw", "acesg"]
+    color_space = ["linsRGB", "raw", "acesg"]
 
     version_regex = re.compile(r"v([0-9]+)")
     udim_regex = re.compile(r"[\._]1[0-9]{3}\.")
 
     #currently implemented placeholders ["color_space"]
     input_naming_patterns = {
-        # workfile: ctr_envCorridorMain_texturing_v005.mra >
+        # workfile: corridorMain_v001.mra >
         #   expected groups: [(asset),(filler),(version)]
-        # texture: T_corridorMain_aluminium1_BaseColor_lin_srgb_1029.exr
-        #   expected groups: [(asset),(shader),(channel),(color_space),(udim)]
-        r'^ctr_([^.]+)_(.+)_v([0-9]{3,}).+':
-            r'^T_([^_.]+)_([^_.]+)_({color_space})_(1[0-9]{3}).+',
-        # # substance format
-        r'^([^.]+)_v([0-9]{3,}_(.+))':
-            r'([^.]+)_ID\.(.*)(_MAT)\.(1[0-9]{3}).*'
+        # texture: corridorMain_v001_aluminiumID_baseColor_linsRGB_1001.exr
+        #   expected groups: [(asset),(version),(shader),(channel),(color_space),(udim)]
+        r'^([^.]+)_v([0-9]{3,}).+':
+            r'^([^_.]+)_v([0-9]{3,})_([^_.]+)_([^_.]+)_({color_space})_(1[0-9]{3}).+',
     }
 
     workfile_subset_template = "textures{}Workfile"
@@ -148,6 +145,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         "shader": shader,
                         "subset": parsed_subset
                     }
+                    self.log.info("forma {}".format(formatting_data))
                     subset = format_template_with_optional_keys(
                         formatting_data, self.texture_subset_template)
 
@@ -273,10 +271,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
             for cs in color_spaces:
                 pattern = input_pattern.replace('{color_space}', cs)
                 regex_result = re.findall(pattern, name)
-
                 if regex_result:
                     asset_name = regex_result[0][0].lower()
-                    self.log.info("asset_name:: {}".format(asset_name))
                     return asset_name
 
         raise ValueError("Couldnt find asset name in {}".format(name))
@@ -335,7 +331,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 pattern = texture_pattern.replace('{color_space}', cs)
                 ret = re.findall(pattern, name)
                 if ret:
-                    return ret.pop()[1]
+                    return ret.pop()[2]
 
     def _get_channel_name(self, name, input_naming_patterns, color_spaces):
         """Return parsed channel name.
@@ -348,7 +344,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 pattern = texture_pattern.replace('{color_space}', cs)
                 ret = re.findall(pattern, name)
                 if ret:
-                    return ret.pop()[2]
+                    return ret.pop()[3]
 
     def _update_representations(self, upd_representations):
         """Frames dont have sense for textures, add collected udims instead."""
