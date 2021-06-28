@@ -78,6 +78,52 @@ class DictConditionalEntity(ItemEntity):
         "collapsed": True
     }
 
+    def __getitem__(self, key):
+        """Return entity inder key."""
+        return self.non_gui_children[self.current_enum][key]
+
+    def __setitem__(self, key, value):
+        """Set value of item under key."""
+        child_obj = self.non_gui_children[self.current_enum][key]
+        child_obj.set(value)
+
+    def __iter__(self):
+        """Iter through keys."""
+        for key in self.keys():
+            yield key
+
+    def __contains__(self, key):
+        """Check if key is available."""
+        return key in self.non_gui_children[self.current_enum]
+
+    def get(self, key, default=None):
+        """Safe entity getter by key."""
+        return self.non_gui_children[self.current_enum].get(key, default)
+
+    def keys(self):
+        """Entity's keys."""
+        keys = list(self.non_gui_children[self.current_enum].keys())
+        keys.insert(0, [self.current_enum])
+        return keys
+
+    def values(self):
+        """Children entities."""
+        values = [
+            self.enum_entity
+        ]
+        for child_entiy in self.non_gui_children[self.current_enum].values():
+            values.append(child_entiy)
+        return values
+
+    def items(self):
+        """Children entities paired with their key (key, value)."""
+        items = [
+            (self.enum_key, self.enum_entity)
+        ]
+        for key, value in self.non_gui_children[self.current_enum].items():
+            items.append((key, value))
+        return items
+
     def _item_initalization(self):
         self._default_metadata = NOT_SET
         self._studio_override_metadata = NOT_SET
