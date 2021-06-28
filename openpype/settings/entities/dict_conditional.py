@@ -508,3 +508,112 @@ class DictConditionalEntity(ItemEntity):
 
         return value, metadata
 
+    def update_default_value(self, value):
+        """Update default values.
+
+        Not an api method, should be called by parent.
+        """
+        value = self._check_update_value(value, "default")
+        self.has_default_value = value is not NOT_SET
+        # TODO add value validation
+        value, metadata = self._prepare_value(value)
+        self._default_metadata = metadata
+
+        if value is NOT_SET:
+            self.enum_entity.update_default_value(value)
+            for children_by_key in self.non_gui_children.values():
+                for child_obj in children_by_key:
+                    child_obj.update_default_value(value)
+            return
+
+        value_keys = set(value.keys())
+        enum_value = value[self.enum_key]
+        expected_keys = set(self.non_gui_children[enum_value])
+        expected_keys.add(self.enum_key)
+        unknown_keys = value_keys - expected_keys
+        if unknown_keys:
+            self.log.warning(
+                "{} Unknown keys in default values: {}".format(
+                    self.path,
+                    ", ".join("\"{}\"".format(key) for key in unknown_keys)
+                )
+            )
+
+        self.enum_entity.update_default_value(enum_value)
+        for children_by_key in self.non_gui_children.items():
+            for key, child_obj in children_by_key.items():
+                child_value = value.get(key, NOT_SET)
+                child_obj.update_default_value(child_value)
+
+    def update_studio_value(self, value):
+        """Update studio override values.
+
+        Not an api method, should be called by parent.
+        """
+        value = self._check_update_value(value, "studio override")
+        value, metadata = self._prepare_value(value)
+        self._studio_override_metadata = metadata
+        self.had_studio_override = metadata is not NOT_SET
+
+        if value is NOT_SET:
+            self.enum_entity.update_default_value(value)
+            for children_by_key in self.non_gui_children.values():
+                for child_obj in children_by_key:
+                    child_obj.update_default_value(value)
+            return
+
+        value_keys = set(value.keys())
+        enum_value = value[self.enum_key]
+        expected_keys = set(self.non_gui_children[enum_value])
+        expected_keys.add(self.enum_key)
+        unknown_keys = value_keys - expected_keys
+        if unknown_keys:
+            self.log.warning(
+                "{} Unknown keys in studio overrides: {}".format(
+                    self.path,
+                    ", ".join("\"{}\"".format(key) for key in unknown_keys)
+                )
+            )
+
+        self.enum_entity.update_studio_value(enum_value)
+        for children_by_key in self.non_gui_children.items():
+            for key, child_obj in children_by_key.items():
+                child_value = value.get(key, NOT_SET)
+                child_obj.update_studio_value(child_value)
+
+    def update_project_value(self, value):
+        """Update project override values.
+
+        Not an api method, should be called by parent.
+        """
+        value = self._check_update_value(value, "project override")
+        value, metadata = self._prepare_value(value)
+        self._project_override_metadata = metadata
+        self.had_project_override = metadata is not NOT_SET
+
+        if value is NOT_SET:
+            self.enum_entity.update_default_value(value)
+            for children_by_key in self.non_gui_children.values():
+                for child_obj in children_by_key:
+                    child_obj.update_default_value(value)
+            return
+
+        value_keys = set(value.keys())
+        enum_value = value[self.enum_key]
+        expected_keys = set(self.non_gui_children[enum_value])
+        expected_keys.add(self.enum_key)
+        unknown_keys = value_keys - expected_keys
+        if unknown_keys:
+            self.log.warning(
+                "{} Unknown keys in project overrides: {}".format(
+                    self.path,
+                    ", ".join("\"{}\"".format(key) for key in unknown_keys)
+                )
+            )
+
+        self.enum_entity.update_project_value(enum_value)
+        for children_by_key in self.non_gui_children.items():
+            for key, child_obj in children_by_key.items():
+                child_value = value.get(key, NOT_SET)
+                child_obj.update_project_value(child_value)
+
