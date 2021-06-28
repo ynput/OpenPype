@@ -57,6 +57,8 @@ example_schema = {
             "label": "Menu",
             "children": [
                 {
+                    "key": "children",
+                    "label": "Children",
                     "type": "list",
                     "object_type": "text"
                 }
