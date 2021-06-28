@@ -227,6 +227,25 @@ class DictConditionalEntity(ItemEntity):
             for child_obj in children:
                 child_obj.schema_validations()
 
+    def on_change(self):
+        """Update metadata on change and pass change to parent."""
+        self._update_current_metadata()
+
+        for callback in self.on_change_callbacks:
+            callback()
+        self.parent.on_child_change(self)
+
+    def on_child_change(self, child_obj):
+        """Trigger on change callback if child changes are not ignored."""
+        if self._ignore_child_changes:
+            return
+
+        if (
+            child_obj is self.enum_entity
+            or child_obj in self.children[self.current_enum]
+        ):
+            self.on_change()
+
     def _add_children(self):
         """Add children from schema data and repare enum items.
 
