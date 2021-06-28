@@ -41,6 +41,9 @@ class DictConditionalWidget(BaseWidget):
         self._enum_key_by_wrapper_id = {}
         self._added_wrapper_ids = set()
 
+        self.content_layout.setColumnStretch(0, 0)
+        self.content_layout.setColumnStretch(1, 1)
+
         # Add enum entity to layout mapping
         enum_entity = self.entity.enum_entity
         self._parent_widget_by_entity_id[enum_entity.id] = self.content_widget
