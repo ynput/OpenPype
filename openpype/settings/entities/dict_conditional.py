@@ -524,7 +524,7 @@ class DictConditionalEntity(ItemEntity):
         if value is NOT_SET:
             self.enum_entity.update_default_value(value)
             for children_by_key in self.non_gui_children.values():
-                for child_obj in children_by_key:
+                for child_obj in children_by_key.values():
                     child_obj.update_default_value(value)
             return
 
@@ -560,7 +560,7 @@ class DictConditionalEntity(ItemEntity):
         if value is NOT_SET:
             self.enum_entity.update_default_value(value)
             for children_by_key in self.non_gui_children.values():
-                for child_obj in children_by_key:
+                for child_obj in children_by_key.values():
                     child_obj.update_default_value(value)
             return
 
@@ -596,7 +596,7 @@ class DictConditionalEntity(ItemEntity):
         if value is NOT_SET:
             self.enum_entity.update_default_value(value)
             for children_by_key in self.non_gui_children.values():
-                for child_obj in children_by_key:
+                for child_obj in children_by_key.values():
                     child_obj.update_default_value(value)
             return
 
