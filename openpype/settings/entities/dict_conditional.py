@@ -124,6 +124,16 @@ class DictConditionalEntity(ItemEntity):
             items.append((key, value))
         return items
 
+    def set(self, value):
+        """Set value."""
+        new_value = self.convert_to_valid_type(value)
+        # First change value of enum key if available
+        if self.enum_key in new_value:
+            self.enum_entity.set(new_value.pop(self.enum_key))
+
+        for _key, _value in new_value.items():
+            self.non_gui_children[self.current_enum][_key].set(_value)
+
     def _item_initalization(self):
         self._default_metadata = NOT_SET
         self._studio_override_metadata = NOT_SET
