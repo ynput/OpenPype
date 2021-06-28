@@ -17,7 +17,6 @@ from openpype.tools.settings import CHILD_OFFSET
 class DictConditionalWidget(BaseWidget):
     def create_ui(self):
         self.input_fields = []
-        self.checkbox_child = None
 
         self.label_widget = None
         self.body_widget = None
@@ -30,9 +29,6 @@ class DictConditionalWidget(BaseWidget):
 
         elif self.entity.use_label_wrap:
             self._ui_label_wrap()
-            self.checkbox_child = self.entity.non_gui_children.get(
-                self.entity.checkbox_key
-            )
 
         else:
             self._ui_item_base()
@@ -59,8 +55,7 @@ class DictConditionalWidget(BaseWidget):
     def _prepare_entity_layouts(self, children, widget):
         for child in children:
             if not isinstance(child, dict):
-                if child is not self.checkbox_child:
-                    self._parent_widget_by_entity_id[child.id] = widget
+                parent_widget_by_entity_id[child.id] = widget
                 continue
 
             if child["type"] == "collapsible-wrap":
@@ -137,20 +132,13 @@ class DictConditionalWidget(BaseWidget):
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        if len(self.input_fields) == 1 and self.checkbox_child:
-            body_widget.hide_toolbox(hide_content=True)
-
-        elif self.entity.collapsible:
+        if self.entity.collapsible:
             if not self.entity.collapsed:
                 body_widget.toggle_content()
         else:
             body_widget.hide_toolbox(hide_content=False)
 
     def add_widget_to_layout(self, widget, label=None):
-        if self.checkbox_child and widget.entity is self.checkbox_child:
-            self.body_widget.add_widget_before_label(widget)
-            return
-
         if not widget.entity:
             map_id = widget.id
         else:
