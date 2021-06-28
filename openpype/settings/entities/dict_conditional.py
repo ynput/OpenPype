@@ -323,6 +323,45 @@ class DictConditionalEntity(ItemEntity):
 
         return "/".join([self.path, result_key])
 
+    def _update_current_metadata(self):
+        current_metadata = {}
+        for key, child_obj in self.non_gui_children[self.current_enum].items():
+            if self._override_state is OverrideState.DEFAULTS:
+                break
+
+            if not child_obj.is_group:
+                continue
+
+            if (
+                self._override_state is OverrideState.STUDIO
+                and not child_obj.has_studio_override
+            ):
+                continue
+
+            if (
+                self._override_state is OverrideState.PROJECT
+                and not child_obj.has_project_override
+            ):
+                continue
+
+            if M_OVERRIDEN_KEY not in current_metadata:
+                current_metadata[M_OVERRIDEN_KEY] = []
+            current_metadata[M_OVERRIDEN_KEY].append(key)
+
+        # Define if current metadata are avaialble for current override state
+        metadata = NOT_SET
+        if self._override_state is OverrideState.STUDIO:
+            metadata = self._studio_override_metadata
+
+        elif self._override_state is OverrideState.PROJECT:
+            metadata = self._project_override_metadata
+
+        if metadata is NOT_SET:
+            metadata = {}
+
+        self._metadata_are_modified = current_metadata != metadata
+        self._current_metadata = current_metadata
+
     def set_override_state(self, state):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
