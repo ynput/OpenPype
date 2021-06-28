@@ -107,3 +107,61 @@ class DictConditionalEntity(ItemEntity):
 
         self.enum_entity = None
         self.current_enum = None
+
+        self._add_children()
+
+    def _add_children(self):
+        """Add children from schema data and repare enum items.
+
+        Each enum item must have defined it's children. None are shared across
+        all enum items.
+
+        Nice to have: Have ability to have shared keys across all enum items.
+
+        All children are stored by their enum item.
+        """
+        # Skip and wait for validation
+        if not self.enum_children or not self.enum_key:
+            return
+
+        enum_items = []
+        valid_enum_items = []
+        for item in self.enum_children:
+            if isinstance(item, dict) and "key" in item:
+                valid_enum_items.append(item)
+
+        first_key = None
+        for item in valid_enum_items:
+            item_key = item["key"]
+            if first_key is None:
+                first_key = item_key
+            item_label = item.get("label") or item_key
+            enum_items.append({item_key: item_label})
+
+        if not enum_items:
+            return
+
+        self.current_enum = first_key
+
+        enum_key = self.enum_key or "invalid"
+        enum_schema = {
+            "type": "enum",
+            "multiselection": False,
+            "enum_items": enum_items,
+            "key": enum_key,
+            "label": self.enum_label or enum_key
+        }
+        enum_entity = self.create_schema_object(enum_schema, self)
+        self.enum_entity = enum_entity
+
+        for item in valid_enum_items:
+            item_key = item["key"]
+            children = item.get("children") or []
+            for children_schema in children:
+                child_obj = self.create_schema_object(children_schema, self)
+                self.children[item_key].append(child_obj)
+                self.gui_layout[item_key].append(child_obj)
+                if isinstance(child_obj, GUIEntity):
+                    continue
+
+                self.non_gui_children[item_key][child_obj.key] = child_obj
