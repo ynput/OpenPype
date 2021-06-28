@@ -218,6 +218,8 @@ class DictConditionalWidget(BaseWidget):
         for input_field in self.input_fields:
             input_field.set_entity_value()
 
+        self._on_entity_change()
+
     def hierarchical_style_update(self):
         self.update_style()
         for input_field in self.input_fields:
