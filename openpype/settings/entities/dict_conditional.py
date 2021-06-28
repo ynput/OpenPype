@@ -322,3 +322,20 @@ class DictConditionalEntity(ItemEntity):
             raise ValueError("Didn't found child {}".format(child_obj))
 
         return "/".join([self.path, result_key])
+
+    def set_override_state(self, state):
+        # Trigger override state change of root if is not same
+        if self.root_item.override_state is not state:
+            self.root_item.set_override_state(state)
+            return
+
+        # Change has/had override states
+        self._override_state = state
+
+        self.enum_entity.set_override_state(state)
+
+        for children_by_key in self.non_gui_children.values():
+            for child_obj in children_by_key.values():
+                child_obj.set_override_state(state)
+
+        self._update_current_metadata()
