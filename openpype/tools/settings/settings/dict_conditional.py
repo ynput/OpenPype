@@ -273,7 +273,14 @@ class DictConditionalWidget(BaseWidget):
         self.label_widget.style().polish(self.label_widget)
 
     def _on_entity_change(self):
-        pass
+        enum_value = self.enum_input_field.entity.value
+        if enum_value == self._last_enum_value:
+            return
+
+        self._last_enum_value = enum_value
+        for item_key, content in self._content_by_enum_value.items():
+            widget = content["widget"]
+            widget.setVisible(item_key == enum_value)
 
     @property
     def is_invalid(self):
