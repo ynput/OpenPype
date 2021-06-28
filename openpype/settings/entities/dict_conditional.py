@@ -349,6 +349,52 @@ class DictConditionalEntity(ItemEntity):
             output[key] = child_obj.value
         return output
 
+    @property
+    def has_unsaved_changes(self):
+        if self._metadata_are_modified:
+            return True
+
+        return self._child_has_unsaved_changes
+
+    @property
+    def _child_has_unsaved_changes(self):
+        if self.enum_entity.has_unsaved_changes:
+            return True
+        for child_obj in self.non_gui_children[self.current_enum].values():
+            if child_obj.has_unsaved_changes:
+                return True
+        return False
+
+    @property
+    def has_studio_override(self):
+        return self._child_has_studio_override
+
+    @property
+    def _child_has_studio_override(self):
+        if self._override_state >= OverrideState.STUDIO:
+            if self.enum_entity.has_studio_override:
+                return True
+
+            for child_obj in self.non_gui_children[self.current_enum].values():
+                if child_obj.has_studio_override:
+                    return True
+        return False
+
+    @property
+    def has_project_override(self):
+        return self._child_has_project_override
+
+    @property
+    def _child_has_project_override(self):
+        if self._override_state >= OverrideState.PROJECT:
+            if self.enum_entity.has_project_override:
+                return True
+
+            for child_obj in self.non_gui_children[self.current_enum].values():
+                if child_obj.has_project_override:
+                    return True
+        return False
+
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
