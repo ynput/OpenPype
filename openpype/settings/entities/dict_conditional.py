@@ -110,6 +110,67 @@ class DictConditionalEntity(ItemEntity):
 
         self._add_children()
 
+    def schema_validations(self):
+        """Validation of schema data."""
+        if self.enum_key is None:
+            raise EntitySchemaError(self, "Key 'enum_key' is not set.")
+
+        if not isinstance(self.enum_children, list):
+            raise EntitySchemaError(
+                self, "Key 'enum_children' must be a list. Got: {}".format(
+                    str(type(self.enum_children))
+                )
+            )
+
+        if not self.enum_children:
+            raise EntitySchemaError(self, (
+                "Key 'enum_children' have empty value. Entity can't work"
+                " without children definitions."
+            ))
+
+        children_def_keys = []
+        for children_def in self.enum_children:
+            if not isinstance(children_def, dict):
+                raise EntitySchemaError((
+                    "Children definition under key 'enum_children' must"
+                    " be a dictionary."
+                ))
+
+            if "key" not in children_def:
+                raise EntitySchemaError((
+                    "Children definition under key 'enum_children' miss"
+                    " 'key' definition."
+                ))
+            # We don't validate regex of these keys because they will be stored
+            #   as value at the end.
+            key = children_def["key"]
+            if key in children_def_keys:
+                # TODO this hould probably be different exception?
+                raise SchemaDuplicatedKeys(self, key)
+            children_def_keys.append(key)
+
+        for children in self.children.values():
+            children_keys = set()
+            children_keys.add(self.enum_key)
+            for child_entity in children:
+                if not isinstance(child_entity, BaseItemEntity):
+                    continue
+                elif child_entity.key not in children_keys:
+                    children_keys.add(child_entity.key)
+                else:
+                    raise SchemaDuplicatedKeys(self, child_entity.key)
+
+        for children_by_key in self.non_gui_children.values():
+            for key in children_by_key.keys():
+                if not KEY_REGEX.match(key):
+                    raise InvalidKeySymbols(self.path, key)
+
+        super(DictConditionalEntity, self).schema_validations()
+        # Trigger schema validation on children entities
+        for children in self.children.values():
+            for child_obj in children:
+                child_obj.schema_validations()
+
     def _add_children(self):
         """Add children from schema data and repare enum items.
 
