@@ -145,7 +145,10 @@ def _fill_schema_template_data(
                 # Only replace the key in string
                 template = template.replace(replacement_string, value)
 
-        output = template.replace("__dbcb__", "{").replace("__decb__", "}")
+        if isinstance(template, STRING_TYPE):
+            output = template.replace("__dbcb__", "{").replace("__decb__", "}")
+        else:
+            output = template
 
     else:
         output = template
