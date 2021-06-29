@@ -391,7 +391,7 @@ class DictConditionalEntity(ItemEntity):
     @property
     def value(self):
         output = {
-            self.current_enum: self.enum_entity.value
+            self.enum_key: self.enum_entity.value
         }
         for key, child_obj in self.non_gui_children[self.current_enum].items():
             output[key] = child_obj.value
@@ -408,6 +408,7 @@ class DictConditionalEntity(ItemEntity):
     def _child_has_unsaved_changes(self):
         if self.enum_entity.has_unsaved_changes:
             return True
+
         for child_obj in self.non_gui_children[self.current_enum].values():
             if child_obj.has_unsaved_changes:
                 return True
@@ -448,11 +449,14 @@ class DictConditionalEntity(ItemEntity):
             return NOT_SET
 
         if self._override_state is OverrideState.DEFAULTS:
-            output = {
-                self.current_enum: self.enum_entity.settings_value()
-            }
-            non_gui_children = self.non_gui_children[self.current_enum]
-            for key, child_obj in non_gui_children.items():
+            children_items = [
+                (self.enum_key, self.enum_entity)
+            ]
+            for item in self.non_gui_children[self.current_enum].items():
+                children_items.append(item)
+
+            output = {}
+            for key, child_obj in children_items:
                 child_value = child_obj.settings_value()
                 if not child_obj.is_file and not child_obj.file_item:
                     for _key, _value in child_value.items():
@@ -470,10 +474,14 @@ class DictConditionalEntity(ItemEntity):
                 if not self.has_project_override:
                     return NOT_SET
 
-        output = {
-            self.current_enum: self.enum_entity.settings_value()
-        }
-        for key, child_obj in self.non_gui_children[self.current_enum].items():
+        output = {}
+        children_items = [
+            (self.enum_key, self.enum_entity)
+        ]
+        for item in self.non_gui_children[self.current_enum].items():
+            children_items.append(item)
+
+        for key, child_obj in children_items:
             value = child_obj.settings_value()
             if value is not NOT_SET:
                 output[key] = value
@@ -537,7 +545,7 @@ class DictConditionalEntity(ItemEntity):
 
         value_keys = set(value.keys())
         enum_value = value[self.enum_key]
-        expected_keys = set(self.non_gui_children[enum_value])
+        expected_keys = set(self.non_gui_children[enum_value].keys())
         expected_keys.add(self.enum_key)
         unknown_keys = value_keys - expected_keys
         if unknown_keys:
@@ -549,7 +557,7 @@ class DictConditionalEntity(ItemEntity):
             )
 
         self.enum_entity.update_default_value(enum_value)
-        for children_by_key in self.non_gui_children.items():
+        for children_by_key in self.non_gui_children.values():
             for key, child_obj in children_by_key.items():
                 child_value = value.get(key, NOT_SET)
                 child_obj.update_default_value(child_value)
@@ -565,10 +573,10 @@ class DictConditionalEntity(ItemEntity):
         self.had_studio_override = metadata is not NOT_SET
 
         if value is NOT_SET:
-            self.enum_entity.update_default_value(value)
+            self.enum_entity.update_studio_value(value)
             for children_by_key in self.non_gui_children.values():
                 for child_obj in children_by_key.values():
-                    child_obj.update_default_value(value)
+                    child_obj.update_studio_value(value)
             return
 
         value_keys = set(value.keys())
@@ -601,10 +609,10 @@ class DictConditionalEntity(ItemEntity):
         self.had_project_override = metadata is not NOT_SET
 
         if value is NOT_SET:
-            self.enum_entity.update_default_value(value)
+            self.enum_entity.update_project_value(value)
             for children_by_key in self.non_gui_children.values():
                 for child_obj in children_by_key.values():
-                    child_obj.update_default_value(value)
+                    child_obj.update_project_value(value)
             return
 
         value_keys = set(value.keys())
