@@ -103,8 +103,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 instance.data["layers"] = copy.deepcopy(
                     context.data["layersData"]
                 )
-                # Add ftrack family
-                instance.data["families"].append("ftrack")
 
             elif family == "renderLayer":
                 instance = self.create_render_layer_instance(
@@ -185,9 +183,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             return None
 
         instance_data["layers"] = group_layers
-
-        # Add ftrack family
-        instance_data["families"].append("ftrack")
 
         return context.create_instance(**instance_data)
 

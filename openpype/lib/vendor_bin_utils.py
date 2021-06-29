@@ -89,8 +89,13 @@ def ffprobe_streams(path_to_file, logger=None):
 
     popen_stdout, popen_stderr = popen.communicate()
     if popen_stdout:
-        logger.debug("ffprobe stdout: {}".format(popen_stdout))
+        logger.debug("FFprobe stdout:\n{}".format(
+            popen_stdout.decode("utf-8")
+        ))
 
     if popen_stderr:
-        logger.debug("ffprobe stderr: {}".format(popen_stderr))
+        logger.warning("FFprobe stderr:\n{}".format(
+            popen_stderr.decode("utf-8")
+        ))
+
     return json.loads(popen_stdout)["streams"]
