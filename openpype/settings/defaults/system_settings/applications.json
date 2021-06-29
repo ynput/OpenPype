@@ -927,7 +927,6 @@
         "environment": {},
         "variants": {
             "animation_11-64bits": {
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\TVPaint Developpement\\TVPaint Animation 11 (64bits)\\TVPaint Animation 11 (64bits).exe"
@@ -943,7 +942,6 @@
                 "environment": {}
             },
             "animation_11-32bits": {
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files (x86)\\TVPaint Developpement\\TVPaint Animation 11 (32bits)\\TVPaint Animation 11 (32bits).exe"
