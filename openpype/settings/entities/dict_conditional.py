@@ -252,6 +252,10 @@ class DictConditionalEntity(ItemEntity):
                 else:
                     raise SchemaDuplicatedKeys(self, child_entity.key)
 
+        # Enum key must match key regex
+        if not KEY_REGEX.match(self.enum_key):
+            raise InvalidKeySymbols(self.path, self.enum_key)
+
         # Validate all remaining keys with key regex
         for children_by_key in self.non_gui_children.values():
             for key in children_by_key.keys():
