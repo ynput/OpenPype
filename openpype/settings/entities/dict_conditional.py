@@ -1,8 +1,6 @@
 import copy
-import collections
 
 from .lib import (
-    WRAPPER_TYPES,
     OverrideState,
     NOT_SET
 )
@@ -14,7 +12,6 @@ from openpype.settings.constants import (
 from . import (
     BaseItemEntity,
     ItemEntity,
-    BoolEntity,
     GUIEntity
 )
 from .exceptions import (

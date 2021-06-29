@@ -1,5 +1,4 @@
-import collections
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets
 
 from .widgets import (
     ExpandingWidget,
