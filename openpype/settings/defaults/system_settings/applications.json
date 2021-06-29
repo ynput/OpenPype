@@ -888,7 +888,6 @@
             "20": {
                 "enabled": true,
                 "variant_label": "20",
-                "use_python_2": false,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -904,7 +903,6 @@
             "17": {
                 "enabled": true,
                 "variant_label": "17",
-                "use_python_2": false,
                 "executables": {
                     "windows": [],
                     "darwin": [
