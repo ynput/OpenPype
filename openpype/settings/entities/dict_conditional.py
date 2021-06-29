@@ -24,54 +24,6 @@ from .exceptions import (
 )
 
 
-example_schema = {
-    "type": "dict-conditional",
-    "key": "KEY",
-    "label": "LABEL",
-    "enum_key": "type",
-    "enum_label": "label",
-    "enum_children": [
-        {
-            "key": "action",
-            "label": "Action",
-            "children": [
-                {
-                    "type": "text",
-                    "key": "key",
-                    "label": "Key"
-                },
-                {
-                    "type": "text",
-                    "key": "label",
-                    "label": "Label"
-                },
-                {
-                    "type": "text",
-                    "key": "command",
-                    "label": "Comand"
-                }
-            ]
-        },
-        {
-            "key": "menu",
-            "label": "Menu",
-            "children": [
-                {
-                    "key": "children",
-                    "label": "Children",
-                    "type": "list",
-                    "object_type": "text"
-                }
-            ]
-        },
-        {
-            "key": "separator",
-            "label": "Separator"
-        }
-    ]
-}
-
-
 class DictConditionalEntity(ItemEntity):
     """Entity represents dictionay with only one persistent key definition.
 
