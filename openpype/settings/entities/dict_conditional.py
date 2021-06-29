@@ -159,9 +159,9 @@ class DictConditionalEntity(ItemEntity):
         # Children are stored by key as keys are immutable and are defined by
         # schema
         self.valid_value_types = (dict, )
-        self.children = collections.defaultdict(list)
-        self.non_gui_children = collections.defaultdict(dict)
-        self.gui_layout = collections.defaultdict(list)
+        self.children = {}
+        self.non_gui_children = {}
+        self.gui_layout = {}
 
         if self.is_dynamic_item:
             self.require_key = False
@@ -302,6 +302,11 @@ class DictConditionalEntity(ItemEntity):
 
         for item in valid_enum_items:
             item_key = item["key"]
+            # Make sure all keys have set value in there variables
+            self.non_gui_children[item_key] = {}
+            self.children[item_key] = []
+            self.gui_layout[item_key] = []
+
             children = item.get("children") or []
             for children_schema in children:
                 child_obj = self.create_schema_object(children_schema, self)
