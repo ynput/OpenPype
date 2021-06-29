@@ -599,7 +599,7 @@ class DictConditionalEntity(ItemEntity):
             )
 
         self.enum_entity.update_studio_value(enum_value)
-        for children_by_key in self.non_gui_children.items():
+        for children_by_key in self.non_gui_children.values():
             for key, child_obj in children_by_key.items():
                 child_value = value.get(key, NOT_SET)
                 child_obj.update_studio_value(child_value)
@@ -635,7 +635,7 @@ class DictConditionalEntity(ItemEntity):
             )
 
         self.enum_entity.update_project_value(enum_value)
-        for children_by_key in self.non_gui_children.items():
+        for children_by_key in self.non_gui_children.values():
             for key, child_obj in children_by_key.items():
                 child_value = value.get(key, NOT_SET)
                 child_obj.update_project_value(child_value)
