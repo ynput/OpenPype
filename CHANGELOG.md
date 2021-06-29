@@ -1,38 +1,63 @@
 # Changelog
 
-## [3.2.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.2.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.3...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.4...HEAD)
 
 **🚀 Enhancements**
 
+- Application executables with environment variables [\#1757](https://github.com/pypeclub/OpenPype/pull/1757)
+- Settings Hosts enum [\#1739](https://github.com/pypeclub/OpenPype/pull/1739)
+- Validate containers settings [\#1736](https://github.com/pypeclub/OpenPype/pull/1736)
+- PS - added loader from sequence [\#1726](https://github.com/pypeclub/OpenPype/pull/1726)
 - Autoupdate launcher [\#1725](https://github.com/pypeclub/OpenPype/pull/1725)
 - Subset template and TVPaint subset template docs [\#1717](https://github.com/pypeclub/OpenPype/pull/1717)
+- Toggle Ftrack upload in StandalonePublisher [\#1708](https://github.com/pypeclub/OpenPype/pull/1708)
 - Overscan color extract review [\#1701](https://github.com/pypeclub/OpenPype/pull/1701)
 - Nuke: Prerender Frame Range by default [\#1699](https://github.com/pypeclub/OpenPype/pull/1699)
 - Smoother edges of color triangle [\#1695](https://github.com/pypeclub/OpenPype/pull/1695)
 
 **🐛 Bug fixes**
 
+- Backend acre module commit update [\#1745](https://github.com/pypeclub/OpenPype/pull/1745)
+- hiero: precollect instances failing when audio selected [\#1743](https://github.com/pypeclub/OpenPype/pull/1743)
+- Hiero: creator instance error [\#1742](https://github.com/pypeclub/OpenPype/pull/1742)
+- Nuke: fixing render creator for no selection format failing [\#1741](https://github.com/pypeclub/OpenPype/pull/1741)
+- Local settings UI crash on missing defaults [\#1737](https://github.com/pypeclub/OpenPype/pull/1737)
+- TVPaint white background on thumbnail [\#1735](https://github.com/pypeclub/OpenPype/pull/1735)
+- Ftrack missing custom attribute message [\#1734](https://github.com/pypeclub/OpenPype/pull/1734)
+- Launcher project changes [\#1733](https://github.com/pypeclub/OpenPype/pull/1733)
+- Ftrack sync status [\#1732](https://github.com/pypeclub/OpenPype/pull/1732)
 - TVPaint use layer name for default variant [\#1724](https://github.com/pypeclub/OpenPype/pull/1724)
 - Default subset template for TVPaint review and workfile families [\#1716](https://github.com/pypeclub/OpenPype/pull/1716)
 - Maya: Extract review hotfix [\#1714](https://github.com/pypeclub/OpenPype/pull/1714)
 - Settings: Imageio improving granularity [\#1711](https://github.com/pypeclub/OpenPype/pull/1711)
-
-## [2.18.3](https://github.com/pypeclub/OpenPype/tree/2.18.3) (2021-06-18)
-
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.2...2.18.3)
-
-**🐛 Bug fixes**
-
-- Remove publish highlight icon in AE [\#1664](https://github.com/pypeclub/OpenPype/pull/1664)
+- Application without executables [\#1679](https://github.com/pypeclub/OpenPype/pull/1679)
 
 **Merged pull requests:**
 
-- Sync main 2.x back to 2.x develop [\#1715](https://github.com/pypeclub/OpenPype/pull/1715)
+- TVPaint ftrack family [\#1755](https://github.com/pypeclub/OpenPype/pull/1755)
+
+## [2.18.4](https://github.com/pypeclub/OpenPype/tree/2.18.4) (2021-06-24)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.3...2.18.4)
+
+**Merged pull requests:**
+
+- celaction fixes [\#1754](https://github.com/pypeclub/OpenPype/pull/1754)
+- celaciton: audio subset changed data structure [\#1750](https://github.com/pypeclub/OpenPype/pull/1750)
+
+## [2.18.3](https://github.com/pypeclub/OpenPype/tree/2.18.3) (2021-06-23)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.2.0-nightly.2...2.18.3)
+
+**🐛 Bug fixes**
+
+- Tools names forwards compatibility [\#1727](https://github.com/pypeclub/OpenPype/pull/1727)
+
+**Merged pull requests:**
+
 - global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
-- \#683 - Validate frame range in Standalone Publisher [\#1680](https://github.com/pypeclub/OpenPype/pull/1680)
-- Maya: Split model content validator [\#1654](https://github.com/pypeclub/OpenPype/pull/1654)
 
 ## [2.18.2](https://github.com/pypeclub/OpenPype/tree/2.18.2) (2021-06-16)
 
@@ -91,6 +116,7 @@
 
 - update dependencies [\#1697](https://github.com/pypeclub/OpenPype/pull/1697)
 - Bump normalize-url from 4.5.0 to 4.5.1 in /website [\#1686](https://github.com/pypeclub/OpenPype/pull/1686)
+- Use poetry to build / publish OpenPype wheel [\#1636](https://github.com/pypeclub/OpenPype/pull/1636)
 
 # Changelog
 

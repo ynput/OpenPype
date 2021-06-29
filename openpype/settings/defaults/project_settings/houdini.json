@@ -1,0 +1,9 @@
+{
+    "publish": {
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        }
+    }
+}

@@ -1,0 +1,27 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "houdini",
+    "label": "Houdini",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateContainers",
+                            "label": "ValidateContainers"
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

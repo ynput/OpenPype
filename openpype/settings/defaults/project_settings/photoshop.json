@@ -7,6 +7,11 @@
         }
     },
     "publish": {
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ExtractImage": {
             "formats": [
                 "png",
