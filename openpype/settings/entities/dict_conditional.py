@@ -105,7 +105,7 @@ class DictConditionalEntity(ItemEntity):
     def keys(self):
         """Entity's keys."""
         keys = list(self.non_gui_children[self.current_enum].keys())
-        keys.insert(0, [self.current_enum])
+        keys.insert(0, [self.enum_key])
         return keys
 
     def values(self):
