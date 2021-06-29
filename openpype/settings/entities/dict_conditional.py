@@ -95,11 +95,16 @@ class DictConditionalEntity(ItemEntity):
 
     def __getitem__(self, key):
         """Return entity inder key."""
+        if key == self.enum_key:
+            return self.enum_entity
         return self.non_gui_children[self.current_enum][key]
 
     def __setitem__(self, key, value):
         """Set value of item under key."""
-        child_obj = self.non_gui_children[self.current_enum][key]
+        if key == self.enum_key:
+            child_obj = self.enum_entity
+        else:
+            child_obj = self.non_gui_children[self.current_enum][key]
         child_obj.set(value)
 
     def __iter__(self):
@@ -109,10 +114,14 @@ class DictConditionalEntity(ItemEntity):
 
     def __contains__(self, key):
         """Check if key is available."""
+        if key == self.enum_key:
+            return True
         return key in self.non_gui_children[self.current_enum]
 
     def get(self, key, default=None):
         """Safe entity getter by key."""
+        if key == self.enum_key:
+            return self.enum_entity
         return self.non_gui_children[self.current_enum].get(key, default)
 
     def keys(self):
