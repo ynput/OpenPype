@@ -733,6 +733,9 @@ class Templates:
                 continue
             default_key_values[key] = templates.pop(key)
 
+        # Pop "others" key before before expected keys are processed
+        other_templates = templates.pop("others") or {}
+
         keys_by_subkey = {}
         for sub_key, sub_value in templates.items():
             key_values = {}
@@ -740,7 +743,6 @@ class Templates:
             key_values.update(sub_value)
             keys_by_subkey[sub_key] = cls.prepare_inner_keys(key_values)
 
-        other_templates = templates.get("others") or {}
         for sub_key, sub_value in other_templates.items():
             if sub_key in keys_by_subkey:
                 log.warning((
