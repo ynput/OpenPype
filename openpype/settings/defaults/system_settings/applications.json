@@ -807,7 +807,6 @@
         "environment": {},
         "variants": {
             "2-83": {
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe"
@@ -829,7 +828,6 @@
                 "environment": {}
             },
             "2-90": {
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe"
@@ -851,7 +849,6 @@
                 "environment": {}
             },
             "2-91": {
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.91\\blender.exe"
@@ -891,7 +888,6 @@
             "20": {
                 "enabled": true,
                 "variant_label": "20",
-                "use_python_2": false,
                 "executables": {
                     "windows": [],
                     "darwin": [],
@@ -907,7 +903,6 @@
             "17": {
                 "enabled": true,
                 "variant_label": "17",
-                "use_python_2": false,
                 "executables": {
                     "windows": [],
                     "darwin": [
@@ -932,7 +927,6 @@
         "environment": {},
         "variants": {
             "animation_11-64bits": {
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\TVPaint Developpement\\TVPaint Animation 11 (64bits)\\TVPaint Animation 11 (64bits).exe"
@@ -948,7 +942,6 @@
                 "environment": {}
             },
             "animation_11-32bits": {
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files (x86)\\TVPaint Developpement\\TVPaint Animation 11 (32bits)\\TVPaint Animation 11 (32bits).exe"
@@ -982,7 +975,6 @@
             "2020": {
                 "enabled": true,
                 "variant_label": "2020",
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2020\\Photoshop.exe"
@@ -1000,7 +992,6 @@
             "2021": {
                 "enabled": true,
                 "variant_label": "2021",
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe Photoshop 2021\\Photoshop.exe"
@@ -1030,7 +1021,6 @@
             "2020": {
                 "enabled": true,
                 "variant_label": "2020",
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         ""
@@ -1048,7 +1038,6 @@
             "2021": {
                 "enabled": true,
                 "variant_label": "2021",
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe"
