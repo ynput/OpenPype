@@ -34,6 +34,16 @@
             "label": "Publish plugins",
             "children": [
                 {
+                    "type": "schema_template",
+                    "name": "template_publish_plugin",
+                    "template_data": [
+                        {
+                            "key": "ValidateContainers",
+                            "label": "ValidateContainers"
+                        }
+                    ]
+                },
+                {
                     "type": "dict",
                     "collapsible": true,
                     "key": "ExtractImage",
@@ -50,7 +60,7 @@
                             "object_type": "text"
                         }
                     ]
-                }
+                }                
             ]
         },
         {

@@ -1,0 +1,17 @@
+{
+    "token": "",
+    "publish": {
+        "CollectSlackFamilies": {
+            "enabled": true,
+            "optional": true,
+            "profiles": [
+                {
+                    "families": [],
+                    "tasks": [],
+                    "hosts": [],
+                    "channel_messages": []
+                }
+            ]
+        }
+    }
+}

@@ -127,6 +127,11 @@
         "CollectMayaRender": {
             "sync_workfile_version": false
         },
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateShaderName": {
             "enabled": false,
             "regex": "(?P<asset>.*)_(.*)_SHD"

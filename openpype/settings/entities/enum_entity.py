@@ -101,6 +101,78 @@ class EnumEntity(BaseEnumEntity):
         super(EnumEntity, self).schema_validations()
 
 
+class HostsEnumEntity(BaseEnumEntity):
+    """Enumeration of host names.
+
+    Enum items are hardcoded in definition of the entity.
+
+    Hosts enum can have defined empty value as valid option which is
+    represented by empty string. Schema key to set this option is
+    `use_empty_value` (true/false). And to set label of empty value set
+    `empty_label` (string).
+
+    Enum can have single and multiselection.
+
+    NOTE:
+    Host name is not the same as application name. Host name defines
+    implementation instead of application name.
+    """
+    schema_types = ["hosts-enum"]
+
+    def _item_initalization(self):
+        self.multiselection = self.schema_data.get("multiselection", True)
+        self.use_empty_value = self.schema_data.get(
+            "use_empty_value", not self.multiselection
+        )
+        custom_labels = self.schema_data.get("custom_labels") or {}
+
+        host_names = [
+            "aftereffects",
+            "blender",
+            "celaction",
+            "fusion",
+            "harmony",
+            "hiero",
+            "houdini",
+            "maya",
+            "nuke",
+            "photoshop",
+            "resolve",
+            "tvpaint",
+            "unreal"
+        ]
+        if self.use_empty_value:
+            host_names.insert(0, "")
+            # Add default label for empty value if not available
+            if "" not in custom_labels:
+                custom_labels[""] = "< without host >"
+
+        # These are hardcoded there is not list of available host in OpenPype
+        enum_items = []
+        valid_keys = set()
+        for key in host_names:
+            label = custom_labels.get(key, key)
+            valid_keys.add(key)
+            enum_items.append({key: label})
+
+        self.enum_items = enum_items
+        self.valid_keys = valid_keys
+
+        if self.multiselection:
+            self.valid_value_types = (list, )
+            self.value_on_not_set = []
+        else:
+            for key in valid_keys:
+                if self.value_on_not_set is NOT_SET:
+                    self.value_on_not_set = key
+                    break
+
+            self.valid_value_types = (STRING_TYPE, )
+
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
+
 class AppsEnumEntity(BaseEnumEntity):
     schema_types = ["apps-enum"]
 
@@ -116,7 +188,7 @@ class AppsEnumEntity(BaseEnumEntity):
         system_settings_entity = self.get_entity_from_path("system_settings")
 
         valid_keys = set()
-        enum_items = []
+        enum_items_list = []
         applications_entity = system_settings_entity["applications"]
         for group_name, app_group in applications_entity.items():
             enabled_entity = app_group.get("enabled")
@@ -149,8 +221,12 @@ class AppsEnumEntity(BaseEnumEntity):
                     full_label = variant_label
 
                 full_name = "/".join((group_name, variant_name))
-                enum_items.append({full_name: full_label})
+                enum_items_list.append((full_name, full_label))
                 valid_keys.add(full_name)
+
+        enum_items = []
+        for key, value in sorted(enum_items_list, key=lambda item: item[1]):
+            enum_items.append({key: value})
         return enum_items, valid_keys
 
     def set_override_state(self, *args, **kwargs):
@@ -179,7 +255,7 @@ class ToolsEnumEntity(BaseEnumEntity):
         system_settings_entity = self.get_entity_from_path("system_settings")
 
         valid_keys = set()
-        enum_items = []
+        enum_items_list = []
         tool_groups_entity = system_settings_entity["tools"]["tool_groups"]
         for group_name, tool_group in tool_groups_entity.items():
             # Try to get group label from entity
@@ -204,8 +280,12 @@ class ToolsEnumEntity(BaseEnumEntity):
                 else:
                     tool_label = tool_name
 
-                enum_items.append({tool_name: tool_label})
+                enum_items_list.append((tool_name, tool_label))
                 valid_keys.add(tool_name)
+
+        enum_items = []
+        for key, value in sorted(enum_items_list, key=lambda item: item[1]):
+            enum_items.append({key: value})
         return enum_items, valid_keys
 
     def set_override_state(self, *args, **kwargs):

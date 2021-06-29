@@ -30,6 +30,16 @@
             "label": "Validators"
         },
         {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateContainers",
+                    "label": "ValidateContainers"
+                }
+            ]
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
@@ -64,10 +74,6 @@
                 {
                     "key": "ValidateScript",
                     "label": "Validate script settings"
-                },
-                {
-                    "key": "ValidateNukeWriteBoundingBox",
-                    "label": "Validate and Write Bounding Box"
                 }
             ]
         },

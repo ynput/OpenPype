@@ -22,6 +22,7 @@ Enabled vs Disabled logic in most of stylesheets
     font-size: 9pt;
     font-family: "Spartan";
     font-weight: 450;
+    outline: none;
 }
 
 QWidget {
@@ -96,6 +97,29 @@ QToolButton:disabled {
     background: {color:bg-buttons-disabled};
 }
 
+QToolButton[popupMode="1"] {
+    /* make way for the popup button */
+    padding-right: 20px;
+    border: 1px solid {color:bg-buttons};
+}
+
+QToolButton::menu-button {
+    width: 16px;
+    /* Set border only of left side. */
+    border: 1px solid transparent;
+    border-left: 1px solid {color:bg-buttons};
+}
+
+QToolButton::menu-arrow {
+    /* Offset arrow a little bit to center. */
+    left: 1px; top: 1px;
+}
+
+QToolButton::menu-arrow:open {
+    /* Don't offset arrow on open. */
+    left: 0px; top: 0px;
+}
+
 /* QMenu */
 QMenu {
     border: 1px solid #555555;
@@ -145,7 +169,6 @@ QComboBox:disabled {
 QComboBox QAbstractItemView {
     border: 1px solid {color:border};
 	background: {color:bg-inputs};
-    outline: none;
 }
 
 QComboBox QAbstractItemView::item:selected {
@@ -313,6 +336,8 @@ QAbstractItemView {
     border-radius: 0.2em;
     background: {color:bg-view};
     alternate-background-color: {color:bg-view-alternate};
+    /* Mac shows selection color on branches. */
+    selection-background-color: transparent;
 }
 
 QAbstractItemView:disabled{
@@ -344,30 +369,35 @@ QAbstractItemView::item:selected:hover {
     background: {color:bg-view-selection-hover};
 }
 
+/* Row colors (alternate colors) are from left - right */
+QAbstractItemView:branch {
+    background: transparent;
+}
+
 QAbstractItemView::branch:open:has-children:!has-siblings,
 QAbstractItemView::branch:open:has-children:has-siblings {
     border-image: none;
     image: url(:/openpype/images/branch_open.png);
-    background: {color:bg-view};
+    background: transparent;
 }
 QAbstractItemView::branch:open:has-children:!has-siblings:hover,
 QAbstractItemView::branch:open:has-children:has-siblings:hover {
     border-image: none;
     image: url(:/openpype/images//branch_open_on.png);
-    /* background: {color:bg-view-hover}; */
+    background: transparent;
 }
 
 QAbstractItemView::branch:has-children:!has-siblings:closed,
 QAbstractItemView::branch:closed:has-children:has-siblings {
     border-image: none;
     image: url(:/openpype/images//branch_closed.png);
-    background: {color:bg-view};
+    background: transparent;
 }
 QAbstractItemView::branch:has-children:!has-siblings:closed:hover,
 QAbstractItemView::branch:closed:has-children:has-siblings:hover {
     border-image: none;
     image: url(:/openpype/images//branch_closed_on.png);
-    /* background: {color:bg-view-hover}; */
+    background: transparent;
 }
 
 /* Progress bar */
@@ -538,7 +568,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #CompleterView {
     border: 1px solid {color:border};
     background: {color:bg-inputs};
-    outline: none;
 }
 
 #CompleterView::item {
@@ -576,9 +605,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* Standalone publisher */
-#ComponentList {
-    outline: none;
-}
 
 #ComponentItem {
     background: transparent;

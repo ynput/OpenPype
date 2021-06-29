@@ -41,16 +41,10 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
         # process all sellected timeline track items
         for track_item in selected_timeline_items:
-
             data = {}
             clip_name = track_item.name()
             source_clip = track_item.source()
-
-            # get clips subtracks and anotations
-            annotations = self.clip_annotations(source_clip)
-            subtracks = self.clip_subtrack(track_item)
-            self.log.debug("Annotations: {}".format(annotations))
-            self.log.debug(">> Subtracks: {}".format(subtracks))
+            self.log.debug("clip_name: {}".format(clip_name))
 
             # get openpype tag data
             tag_data = phiero.get_track_item_pype_data(track_item)
@@ -61,6 +55,12 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
             if tag_data.get("id") != "pyblish.avalon.instance":
                 continue
+
+            # get clips subtracks and anotations
+            annotations = self.clip_annotations(source_clip)
+            subtracks = self.clip_subtrack(track_item)
+            self.log.debug("Annotations: {}".format(annotations))
+            self.log.debug(">> Subtracks: {}".format(subtracks))
 
             # solve handles length
             tag_data["handleStart"] = min(
@@ -128,7 +128,7 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
                 "_ instance.data: {}".format(pformat(instance.data)))
 
             if not with_audio:
-                return
+                continue
 
             # create audio subset instance
             self.create_audio_instance(context, **data)

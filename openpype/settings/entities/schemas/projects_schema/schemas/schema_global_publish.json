@@ -90,10 +90,10 @@
                                 "object_type": "text"
                             },
                             {
+                                "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Hosts",
-                                "type": "list",
-                                "object_type": "text"
+                                "multiselection": true
                             },
                             {
                                 "type": "splitter"
@@ -181,6 +181,16 @@
                                             "type": "text",
                                             "key": "overscan_crop",
                                             "label": "Overscan crop"
+                                        },
+                                        {
+                                            "type": "label",
+                                            "label": "Overscan color is used when input aspect ratio is not same as output aspect ratio."
+                                        },
+                                        {
+                                            "type": "color",
+                                            "label": "Overscan color",
+                                            "key": "overscan_color",
+                                            "use_alpha": false
                                         },
                                         {
                                             "type": "label",
@@ -348,10 +358,10 @@
                                 "object_type": "text"
                             },
                             {
+                                "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Hosts",
-                                "type": "list",
-                                "object_type": "text"
+                                "multiselection": true
                             },
                             {
                                 "type": "splitter"
@@ -482,10 +492,10 @@
                                 "object_type": "text"
                             },
                             {
+                                "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Hosts",
-                                "type": "list",
-                                "object_type": "text"
+                                "multiselection": true
                             },
                             {
                                 "key": "tasks",

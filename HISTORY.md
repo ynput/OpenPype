@@ -3,7 +3,7 @@
 
 ## [3.0.0](https://github.com/pypeclub/openpype/tree/3.0.0)
 
-[Full Changelog](https://github.com/pypeclub/openpype/compare/CI/3.0.0-rc.6...3.0.0)
+[Full Changelog](https://github.com/pypeclub/openpype/compare/2.18.1...3.0.0)
 
 ### Configuration
 - Studio Settings GUI: no more json configuration files.

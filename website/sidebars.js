@@ -78,7 +78,8 @@ module.exports = {
                 "module_site_sync",
                 "module_deadline",
                 "module_muster",
-                "module_clockify"
+                "module_clockify",
+                "module_slack"
             ],
         },
         {
@@ -89,7 +90,8 @@ module.exports = {
                 "admin_hosts_maya",
                 "admin_hosts_resolve",
                 "admin_hosts_harmony",
-                "admin_hosts_aftereffects"
+                "admin_hosts_aftereffects",
+                "admin_hosts_tvpaint"
             ],
         },
         {

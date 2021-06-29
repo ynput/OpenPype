@@ -58,7 +58,7 @@ def file_regex_replace(filename, regex, version):
 
 def bump_file_versions(version):
 
-    filename = "./openpypeCItest/version.py"
+    filename = "./openpype/version.py"
     regex = "(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(-((0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?"
     file_regex_replace(filename, regex, version)
 
@@ -92,6 +92,24 @@ def calculate_next_nightly(token="nightly"):
         next_tag = last_pre_v.bump_prerelease(token=token).__str__()
         return next_tag
 
+def finalize_latest_nightly():
+    last_prerelease, last_pre_tag = get_last_version("CI")
+    last_pre_v = VersionInfo.parse(last_prerelease)
+    last_pre_v_finalized = last_pre_v.finalize_version()
+    # print(last_pre_v_finalized)
+
+    return last_pre_v_finalized.__str__()
+
+def finalize_prerelease(prerelease):
+
+    if "/" in prerelease:
+        prerelease = prerelease.split("/")[-1]
+
+    prerelease_v = VersionInfo.parse(prerelease)
+    prerelease_v_finalized = prerelease_v.finalize_version()
+
+    return prerelease_v_finalized.__str__()
+
 
 def main():
     usage = "usage: %prog [options] arg"
@@ -102,12 +120,22 @@ def main():
     parser.add_option("-b", "--bump",
                       dest="bump", action="store_true",
                       help="Return if there is something to bump")
-    parser.add_option("-v", "--version",
-                      dest="version", action="store",
-                      help="work with explicit version")
+    parser.add_option("-r", "--release-latest",
+                      dest="releaselatest", action="store_true",
+                      help="finalize latest prerelease to a release")
     parser.add_option("-p", "--prerelease",
                       dest="prerelease", action="store",
                       help="define prerelease token")
+    parser.add_option("-f", "--finalize",
+                      dest="finalize", action="store",
+                      help="define prerelease token")
+    parser.add_option("-v", "--version",
+                      dest="version", action="store",
+                      help="work with explicit version")
+    parser.add_option("-l", "--lastversion",
+                      dest="lastversion", action="store",
+                      help="work with explicit version")
+
 
     (options, args) = parser.parse_args()
 
@@ -123,6 +151,25 @@ def main():
         next_tag_v = calculate_next_nightly()
         print(next_tag_v)
         bump_file_versions(next_tag_v)
+
+    if options.finalize:
+        new_release = finalize_prerelease(options.finalize)
+        print(new_release)
+        bump_file_versions(new_release)
+
+    if options.lastversion:
+        last_release, last_release_tag = get_last_version(options.lastversion)
+        print(last_release_tag)
+
+    if options.releaselatest:
+        new_release = finalize_latest_nightly()
+        last_release, last_release_tag = get_last_version("release")
+
+        if VersionInfo.parse(new_release) > VersionInfo.parse(last_release):
+            print(new_release)
+            bump_file_versions(new_release)
+        else:
+            print("skip")
 
     if options.prerelease:
         current_prerelease = VersionInfo.parse(options.prerelease)
