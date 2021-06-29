@@ -807,7 +807,6 @@
         "environment": {},
         "variants": {
             "2-83": {
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.83\\blender.exe"
@@ -829,7 +828,6 @@
                 "environment": {}
             },
             "2-90": {
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.90\\blender.exe"
@@ -851,7 +849,6 @@
                 "environment": {}
             },
             "2-91": {
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Blender Foundation\\Blender 2.91\\blender.exe"
