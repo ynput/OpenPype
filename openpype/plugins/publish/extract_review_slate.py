@@ -323,16 +323,29 @@ class ExtractReviewSlate(openpype.api.Extractor):
             )
             return codec_args
 
-        codec_name = streams[0].get("codec_name")
+        # Try to find first stream that is not an audio
+        no_audio_stream = None
+        for stream in streams:
+            if stream.get("codec_type") != "audio":
+                no_audio_stream = stream
+                break
+
+        if no_audio_stream is None:
+            self.log.warning((
+                "Couldn't find stream that is not an audio from file \"{}\""
+            ).format(full_input_path))
+            return codec_args
+
+        codec_name = no_audio_stream.get("codec_name")
         if codec_name:
             codec_args.append("-codec:v {}".format(codec_name))
 
-        profile_name = streams[0].get("profile")
+        profile_name = no_audio_stream.get("profile")
         if profile_name:
             profile_name = profile_name.replace(" ", "_").lower()
             codec_args.append("-profile:v {}".format(profile_name))
 
-        pix_fmt = streams[0].get("pix_fmt")
+        pix_fmt = no_audio_stream.get("pix_fmt")
         if pix_fmt:
             codec_args.append("-pix_fmt {}".format(pix_fmt))
         return codec_args
