@@ -230,8 +230,6 @@ def create_unreal_project(project_name: str,
             ue_id = "{" + loaded_modules.get("BuildId") + "}"
 
     plugins_path = None
-    uep_path = None
-
     if os.path.isdir(env.get("AVALON_UNREAL_PLUGIN", "")):
         # copy plugin to correct path under project
         plugins_path = pr_dir / "Plugins"

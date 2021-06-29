@@ -2,7 +2,6 @@
 """Hook to launch Unreal and prepare projects."""
 import os
 from pathlib import Path
-import platform
 
 from openpype.lib import (
     PreLaunchHook,
