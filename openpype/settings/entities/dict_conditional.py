@@ -73,6 +73,19 @@ example_schema = {
 
 
 class DictConditionalEntity(ItemEntity):
+    """Entity represents dictionay with only one persistent key definition.
+
+    The persistent key is enumerator which define rest of children under
+    dictionary. There is not possibility of shared children.
+
+    Entity's keys can't be removed or added. But they may change based on
+    the persistent key. If you're change value manually (key by key) make sure
+    you'll change value of the persistent key as first. It is recommended to
+    use `set` method which handle this for you.
+
+    It is possible to use entity similar way as `dict` object. Returned values
+    are not real settings values but entities representing the value.
+    """
     schema_types = ["dict-conditional"]
     _default_label_wrap = {
         "use_label_wrap": False,
@@ -149,6 +162,7 @@ class DictConditionalEntity(ItemEntity):
         self._current_metadata = {}
         self._metadata_are_modified = False
 
+        # Entity must be group or in group
         if (
             self.group_item is None
             and not self.is_dynamic_item
@@ -176,15 +190,21 @@ class DictConditionalEntity(ItemEntity):
 
     @property
     def current_enum(self):
+        """Current value of enum entity.
+
+        This value define what children are used.
+        """
         if self.enum_entity is None:
             return None
         return self.enum_entity.value
 
     def schema_validations(self):
         """Validation of schema data."""
+        # Enum key must be defined
         if self.enum_key is None:
             raise EntitySchemaError(self, "Key 'enum_key' is not set.")
 
+        # Validate type of enum children
         if not isinstance(self.enum_children, list):
             raise EntitySchemaError(
                 self, "Key 'enum_children' must be a list. Got: {}".format(
@@ -192,6 +212,7 @@ class DictConditionalEntity(ItemEntity):
                 )
             )
 
+        # Without defined enum children entity has nothing to do
         if not self.enum_children:
             raise EntitySchemaError(self, (
                 "Key 'enum_children' have empty value. Entity can't work"
@@ -219,6 +240,7 @@ class DictConditionalEntity(ItemEntity):
                 raise SchemaDuplicatedKeys(self, key)
             children_def_keys.append(key)
 
+        # Validate key duplications per each enum item
         for children in self.children.values():
             children_keys = set()
             children_keys.add(self.enum_key)
@@ -230,6 +252,7 @@ class DictConditionalEntity(ItemEntity):
                 else:
                     raise SchemaDuplicatedKeys(self, child_entity.key)
 
+        # Validate all remaining keys with key regex
         for children_by_key in self.non_gui_children.values():
             for key in children_by_key.keys():
                 if not KEY_REGEX.match(key):
@@ -270,7 +293,8 @@ class DictConditionalEntity(ItemEntity):
 
         All children are stored by their enum item.
         """
-        # Skip and wait for validation
+        # Skip if are not defined
+        # - schema validations should raise and exception
         if not self.enum_children or not self.enum_key:
             return
 
@@ -288,6 +312,7 @@ class DictConditionalEntity(ItemEntity):
         if not enum_items:
             return
 
+        # Create Enum child first
         enum_key = self.enum_key or "invalid"
         enum_schema = {
             "type": "enum",
@@ -300,9 +325,11 @@ class DictConditionalEntity(ItemEntity):
         enum_entity = self.create_schema_object(enum_schema, self)
         self.enum_entity = enum_entity
 
+        # Create children per each enum item
         for item in valid_enum_items:
             item_key = item["key"]
-            # Make sure all keys have set value in there variables
+            # Make sure all keys have set value in these variables
+            # - key 'children' is optional
             self.non_gui_children[item_key] = {}
             self.children[item_key] = []
             self.gui_layout[item_key] = []
@@ -386,11 +413,15 @@ class DictConditionalEntity(ItemEntity):
         # Change has/had override states
         self._override_state = state
 
+        # Set override state on enum entity first
         self.enum_entity.set_override_state(state, ignore_missing_defaults)
 
+        # Set override state on other entities under current enum value
         for child_obj in self.non_gui_children[self.current_enum].values():
             child_obj.set_override_state(state, ignore_missing_defaults)
 
+        # Set override state on other enum children
+        # - these must not raise exception about missing defaults
         for item_key, children_by_key in self.non_gui_children.items():
             if item_key == self.current_enum:
                 continue
