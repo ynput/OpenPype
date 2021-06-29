@@ -70,6 +70,21 @@ def get_engine_versions(env=None):
     return OrderedDict()
 
 
+def get_editor_executable_path(engine_path: Path) -> Path:
+    """Get UE4 Editor executable path."""
+    ue4_path = engine_path / "Engine/Binaries"
+    if platform.system().lower() == "windows":
+        ue4_path /= "Win64/UE4Editor.exe"
+
+    elif platform.system().lower() == "linux":
+        ue4_path /= "Linux/UE4Editor"
+
+    elif platform.system().lower() == "darwin":
+        ue4_path /= "Mac/UE4Editor"
+
+    return ue4_path
+
+
 def _win_get_engine_versions():
     """Get Unreal Engine versions on Windows.
 
@@ -244,39 +259,6 @@ def create_unreal_project(project_name: str,
         ]
     }
 
-    if preset["install_unreal_python_engine"]:
-        # WARNING: This is deprecated as Unreal Engine Python project
-        # is on hold and is mainly replaced in 4.26 by Epics own
-        # Python implementation.
-        # ---------------------------------------------------------------
-        # If `OPENPYPE_UNREAL_ENGINE_PYTHON_PLUGIN` is set, copy it from
-        # there to support offline installation.
-        # Otherwise clone UnrealEnginePython to Plugins directory
-        # https://github.com/20tab/UnrealEnginePython.git
-        uep_path = plugins_path / "UnrealEnginePython"
-        if env.get("OPENPYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
-
-            os.makedirs(uep_path, exist_ok=True)
-            dir_util._path_created = {}
-            dir_util.copy_tree(
-                env.get("OPENPYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
-                uep_path.as_posix())
-        else:
-            # WARNING: this will trigger dev_mode, because we need to compile
-            # this plugin.
-            dev_mode = True
-            import git
-            git.Repo.clone_from(
-                "https://github.com/20tab/UnrealEnginePython.git",
-                uep_path.as_posix())
-
-        data["Plugins"].append(
-            {"Name": "UnrealEnginePython", "Enabled": True})
-
-        if not (uep_path / "Binaries").is_dir() \
-                or not (uep_path / "Intermediate").is_dir():
-            dev_mode = True
-
     if dev_mode or preset["dev_mode"]:
         # this will add project module and necessary source file to make it
         # C++ project and to (hopefully) make Unreal Editor to compile all
@@ -289,73 +271,31 @@ def create_unreal_project(project_name: str,
             "AdditionalDependencies": ["Engine"],
         }]
 
-        if preset["install_unreal_python_engine"]:
-            # now we need to fix python path in:
-            # `UnrealEnginePython.Build.cs`
-            # to point to our python
-            with open(uep_path / "Source" / "UnrealEnginePython" /
-                      "UnrealEnginePython.Build.cs", mode="r") as f:
-                build_file = f.read()
-
-            fix = build_file.replace(
-                'private string pythonHome = "";',
-                'private string pythonHome = "{}";'.format(
-                    sys.base_prefix.replace("\\", "/")))
-
-            with open(uep_path / "Source" / "UnrealEnginePython" /
-                      "UnrealEnginePython.Build.cs", mode="w") as f:
-                f.write(fix)
-
     # write project file
     project_file = pr_dir / f"{project_name}.uproject"
     with open(project_file, mode="w") as pf:
         json.dump(data, pf, indent=4)
 
-    # ensure we have PySide installed in engine
-    # this won't work probably as pyside is no longer on pypi
-    # DEPRECATED: support for python 2 in UE4 is dropped.
+    # ensure we have PySide2 installed in engine
     python_path = None
-    if int(ue_version.split(".")[0]) == 4 and \
-            int(ue_version.split(".")[1]) < 25:
-        if platform.system().lower() == "windows":
-            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
-                                         "Python/Win64/python.exe")
+    if platform.system().lower() == "windows":
+        python_path = engine_path / ("Engine/Binaries/ThirdParty/"
+                                     "Python3/Win64/pythonw.exe")
 
-        if platform.system().lower() == "linux":
-            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
-                                         "Python/Linux/bin/python")
+    if platform.system().lower() == "linux":
+        python_path = engine_path / ("Engine/Binaries/ThirdParty/"
+                                     "Python3/Linux/bin/python3")
 
-        if platform.system().lower() == "darwin":
-            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
-                                         "Python/Mac/bin/python")
+    if platform.system().lower() == "darwin":
+        python_path = engine_path / ("Engine/Binaries/ThirdParty/"
+                                     "Python3/Mac/bin/python3")
 
-        if python_path.exists():
-            subprocess.run([python_path.as_posix(), "-m",
-                            "pip", "install", "pyside"])
-        else:
-            raise NotImplementedError("Unsupported platform")
-    else:
-        # install PySide2 inside newer engines
-        if platform.system().lower() == "windows":
-            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
-                                         "Python3/Win64/pythonw.exe")
-
-        if platform.system().lower() == "linux":
-            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
-                                         "Python3/Linux/bin/python3")
-
-        if platform.system().lower() == "darwin":
-            python_path = engine_path / ("Engine/Binaries/ThirdParty/"
-                                         "Python3/Mac/bin/python3")
-
-        if python_path:
-            if not python_path.exists():
-                raise RuntimeError(
-                    f"Unreal Python not found at {python_path}")
-            subprocess.run([python_path.as_posix(), "-m",
-                            "pip", "install", "pyside2"])
-        else:
-            raise NotImplementedError("Unsupported platform")
+    if not python_path:
+        raise NotImplementedError("Unsupported platform")
+    if not python_path.exists():
+        raise RuntimeError(f"Unreal Python not found at {python_path}")
+    subprocess.run(
+        [python_path.as_posix(), "-m", "pip", "install", "pyside2"])
 
     if dev_mode or preset["dev_mode"]:
         _prepare_cpp_project(project_file, engine_path)

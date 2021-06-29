@@ -33,6 +33,18 @@ class UnrealPrelaunchHook(PreLaunchHook):
         workdir = self.launch_context.env["AVALON_WORKDIR"]
         engine_version = self.app_name.split("/")[-1].replace("-", ".")
         unreal_project_name = f"{asset_name}_{task_name}"
+        try:
+            if int(engine_version.split(".")[0]) < 4 and \
+                    int(engine_version.split(".")[1]) < 26:
+                raise ApplicationLaunchFailed((
+                    f"{self.signature} Old unsupported version of UE4 "
+                    f"detected - {engine_version}"))
+        except ValueError:
+            # there can be string in minor version and in that case
+            # int cast is failing. This probably happens only with
+            # early access versions and is of no concert for this check
+            # so lets keep it quite.
+            ...
 
         # Unreal is sensitive about project names longer then 20 chars
         if len(unreal_project_name) > 20:
@@ -75,15 +87,8 @@ class UnrealPrelaunchHook(PreLaunchHook):
                 f"detected [ {engine_version} ]"
             ))
 
-        ue4_path = Path(detected[engine_version]) / "Engine/Binaries"
-        if platform.system().lower() == "windows":
-            ue4_path = ue4_path / "Win64/UE4Editor.exe"
-
-        elif platform.system().lower() == "linux":
-            ue4_path = ue4_path / "Linux/UE4Editor"
-
-        elif platform.system().lower() == "darwin":
-            ue4_path = ue4_path / "Mac/UE4Editor"
+        ue4_path = unreal_lib.get_editor_executable_path(
+            Path(detected[engine_version]))
 
         self.launch_context.launch_args.append(ue4_path.as_posix())
         project_path.mkdir(parents=True, exist_ok=True)
