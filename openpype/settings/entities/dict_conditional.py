@@ -386,11 +386,17 @@ class DictConditionalEntity(ItemEntity):
         # Change has/had override states
         self._override_state = state
 
-        self.enum_entity.set_override_state(state)
+        self.enum_entity.set_override_state(state, ignore_missing_defaults)
 
-        for children_by_key in self.non_gui_children.values():
+        for child_obj in self.non_gui_children[self.current_enum].values():
+            child_obj.set_override_state(state, ignore_missing_defaults)
+
+        for item_key, children_by_key in self.non_gui_children.items():
+            if item_key == self.current_enum:
+                continue
+
             for child_obj in children_by_key.values():
-                child_obj.set_override_state(state)
+                child_obj.set_override_state(state, True)
 
         self._update_current_metadata()
 
