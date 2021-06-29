@@ -149,6 +149,13 @@ class DictConditionalEntity(ItemEntity):
         self._current_metadata = {}
         self._metadata_are_modified = False
 
+        if (
+            self.group_item is None
+            and not self.is_dynamic_item
+            and not self.is_in_dynamic_item
+        ):
+            self.is_group = True
+
         # Children are stored by key as keys are immutable and are defined by
         # schema
         self.valid_value_types = (dict, )
