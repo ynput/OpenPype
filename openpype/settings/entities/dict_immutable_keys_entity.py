@@ -266,6 +266,7 @@ class DictImmutableKeysEntity(ItemEntity):
 
         # Change has/had override states
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
 
         for child_obj in self.non_gui_children.values():
             child_obj.set_override_state(state, ignore_missing_defaults)

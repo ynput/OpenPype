@@ -377,6 +377,7 @@ class DictConditionalEntity(ItemEntity):
 
         # Change has/had override states
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
 
         # Set override state on enum entity first
         self.enum_entity.set_override_state(state, ignore_missing_defaults)

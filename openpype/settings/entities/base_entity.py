@@ -136,6 +136,7 @@ class BaseItemEntity(BaseEntity):
         # Override state defines which values are used, saved and how.
         # TODO convert to private attribute
         self._override_state = OverrideState.NOT_DEFINED
+        self._ignore_missing_defaults = None
 
         # These attributes may change values during existence of an object
         # Default value, studio override values and project override values

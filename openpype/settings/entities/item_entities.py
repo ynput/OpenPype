@@ -157,6 +157,7 @@ class PathEntity(ItemEntity):
             return
 
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
         self.child_obj.set_override_state(state, ignore_missing_defaults)
 
     def update_default_value(self, value):
@@ -351,6 +352,7 @@ class ListStrictEntity(ItemEntity):
             return
 
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
         # Ignore if is dynamic item and use default in that case
         if not self.is_dynamic_item and not self.is_in_dynamic_item:
             if state > OverrideState.DEFAULTS:

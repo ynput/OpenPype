@@ -154,7 +154,9 @@ class DictMutableKeysEntity(EndpointEntity):
 
     def add_key(self, key):
         new_child = self._add_key(key)
-        new_child.set_override_state(self._override_state)
+        new_child.set_override_state(
+            self._override_state, self._ignore_missing_defaults
+        )
         self.on_change()
         return new_child
 
@@ -328,6 +330,8 @@ class DictMutableKeysEntity(EndpointEntity):
 
         # TODO change metadata
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
+
         # Ignore if is dynamic item and use default in that case
         if not self.is_dynamic_item and not self.is_in_dynamic_item:
             if state > OverrideState.DEFAULTS:
@@ -616,7 +620,9 @@ class DictMutableKeysEntity(EndpointEntity):
         if not self._can_discard_changes:
             return
 
-        self.set_override_state(self._override_state)
+        self.set_override_state(
+            self._override_state, self._ignore_missing_defaults
+        )
         on_change_trigger.append(self.on_change)
 
     def _add_to_studio_default(self, _on_change_trigger):
@@ -651,7 +657,9 @@ class DictMutableKeysEntity(EndpointEntity):
             if label:
                 children_label_by_id[child_entity.id] = label
 
-            child_entity.set_override_state(self._override_state)
+            child_entity.set_override_state(
+                self._override_state, self._ignore_missing_defaults
+            )
 
         self.children_label_by_id = children_label_by_id
 
@@ -700,7 +708,9 @@ class DictMutableKeysEntity(EndpointEntity):
             if label:
                 children_label_by_id[child_entity.id] = label
 
-            child_entity.set_override_state(self._override_state)
+            child_entity.set_override_state(
+                self._override_state, self._ignore_missing_defaults
+            )
 
         self.children_label_by_id = children_label_by_id
 
