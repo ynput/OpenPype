@@ -171,9 +171,14 @@ class DictConditionalEntity(ItemEntity):
         self.enum_children = self.schema_data.get("enum_children")
 
         self.enum_entity = None
-        self.current_enum = None
 
         self._add_children()
+
+    @property
+    def current_enum(self):
+        if self.enum_entity is None:
+            return None
+        return self.enum_entity.value
 
     def schema_validations(self):
         """Validation of schema data."""
@@ -269,24 +274,19 @@ class DictConditionalEntity(ItemEntity):
         if not self.enum_children or not self.enum_key:
             return
 
-        enum_items = []
         valid_enum_items = []
         for item in self.enum_children:
             if isinstance(item, dict) and "key" in item:
                 valid_enum_items.append(item)
 
-        first_key = None
+        enum_items = []
         for item in valid_enum_items:
             item_key = item["key"]
-            if first_key is None:
-                first_key = item_key
             item_label = item.get("label") or item_key
             enum_items.append({item_key: item_label})
 
         if not enum_items:
             return
-
-        self.current_enum = first_key
 
         enum_key = self.enum_key or "invalid"
         enum_schema = {
@@ -296,6 +296,7 @@ class DictConditionalEntity(ItemEntity):
             "key": enum_key,
             "label": self.enum_label or enum_key
         }
+
         enum_entity = self.create_schema_object(enum_schema, self)
         self.enum_entity = enum_entity
 
