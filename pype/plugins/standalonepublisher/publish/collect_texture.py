@@ -145,7 +145,6 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         "shader": shader,
                         "subset": parsed_subset
                     }
-                    self.log.info("forma {}".format(formatting_data))
                     subset = format_template_with_optional_keys(
                         formatting_data, self.texture_subset_template)
 
@@ -228,6 +227,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
             workfile = workfile_files.get(asset_build)
 
+            assert workfile, "Missing workfile, attach it."
+
             # store origin
             if family == 'workfile':
                 new_instance.data["source"] = "standalone publisher"
@@ -267,6 +268,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 input_naming_patterns (list):
                     [workfile_pattern] or [texture_pattern]
         """
+        asset_name = None
         for input_pattern in input_naming_patterns:
             for cs in color_spaces:
                 pattern = input_pattern.replace('{color_space}', cs)
@@ -275,7 +277,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     asset_name = regex_result[0][0].lower()
                     return asset_name
 
-        raise ValueError("Couldnt find asset name in {}".format(name))
+        msg = "Couldnt find asset name in '{}'\n".format(name) +\
+              "Must follow pattern like '{}'".format(pattern)
+        assert asset_name, msg
 
     def _get_version(self, name, version_regex):
         found = re.search(version_regex, name)
@@ -353,6 +357,10 @@ class CollectTextures(pyblish.api.ContextPlugin):
             repre.pop("frameStart", None)
             repre.pop("frameEnd", None)
             repre.pop("fps", None)
+
+            # ignore unique name from SP, use extension instead
+            # SP enforces unique name, here different subsets >> unique repres
+            repre["name"] = repre["ext"].replace('.', '')
 
             files = repre.get("files", [])
             if not isinstance(files, list):
