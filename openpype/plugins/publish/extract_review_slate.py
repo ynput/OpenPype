@@ -26,9 +26,23 @@ class ExtractReviewSlate(openpype.api.Extractor):
         slate_path = inst_data.get("slateFrame")
         ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        slate_stream = openpype.lib.ffprobe_streams(slate_path, self.log)[0]
-        slate_width = slate_stream["width"]
-        slate_height = slate_stream["height"]
+        slate_streams = openpype.lib.ffprobe_streams(slate_path, self.log)
+        # Try to find first stream with defined 'width' and 'height'
+        # - this is to avoid order of streams where audio can be as first
+        # - there may be a better way (checking `codec_type`?)+
+        slate_width = None
+        slate_height = None
+        for slate_stream in slate_streams:
+            if "width" in slate_stream and "height" in slate_stream:
+                slate_width = int(slate_stream["width"])
+                slate_height = int(slate_stream["height"])
+                break
+
+        # Raise exception of any stream didn't define input resolution
+        if slate_width is None:
+            raise AssertionError((
+                "FFprobe couldn't read resolution from input file: \"{}\""
+            ).format(slate_path))
 
         if "reviewToWidth" in inst_data:
             use_legacy_code = True
