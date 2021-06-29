@@ -320,7 +320,7 @@ class DictMutableKeysEntity(EndpointEntity):
     def _metadata_for_current_state(self):
         return self._get_metadata_for_state(self._override_state)
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
             self.root_item.set_override_state(state)
@@ -331,11 +331,17 @@ class DictMutableKeysEntity(EndpointEntity):
         # Ignore if is dynamic item and use default in that case
         if not self.is_dynamic_item and not self.is_in_dynamic_item:
             if state > OverrideState.DEFAULTS:
-                if not self.has_default_value:
+                if (
+                    not self.has_default_value
+                    and not ignore_missing_defaults
+                ):
                     raise DefaultsNotDefined(self)
 
             elif state > OverrideState.STUDIO:
-                if not self.had_studio_override:
+                if (
+                    not self.had_studio_override
+                    and not ignore_missing_defaults
+                ):
                     raise StudioDefaultsNotDefined(self)
 
         if state is OverrideState.STUDIO:
@@ -426,7 +432,7 @@ class DictMutableKeysEntity(EndpointEntity):
 
             if label:
                 children_label_by_id[child_entity.id] = label
-            child_entity.set_override_state(state)
+            child_entity.set_override_state(state, ignore_missing_defaults)
 
         self.children_label_by_id = children_label_by_id
 

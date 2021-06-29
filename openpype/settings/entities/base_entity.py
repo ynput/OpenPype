@@ -280,7 +280,7 @@ class BaseItemEntity(BaseEntity):
             )
 
     @abstractmethod
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         """Set override state and trigger it on children.
 
         Method discard all changes in hierarchy and use values, metadata
@@ -290,8 +290,15 @@ class BaseItemEntity(BaseEntity):
         Should start on root entity and when triggered then must be called on
         all entities in hierarchy.
 
+        Argument `ignore_missing_defaults` should be used when entity has
+        children that are not saved or used all the time but override statu
+        must be changed and children must have any default value.
+
         Args:
             state (OverrideState): State to which should be data changed.
+            ignore_missing_defaults (bool): Ignore missing default values.
+                Entity won't raise `DefaultsNotDefined` and
+                `StudioDefaultsNotDefined`.
         """
         pass
 

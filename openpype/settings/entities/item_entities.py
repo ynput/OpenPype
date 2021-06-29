@@ -150,14 +150,14 @@ class PathEntity(ItemEntity):
     def value(self):
         return self.child_obj.value
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
             self.root_item.set_override_state(state)
             return
 
         self._override_state = state
-        self.child_obj.set_override_state(state)
+        self.child_obj.set_override_state(state, ignore_missing_defaults)
 
     def update_default_value(self, value):
         self.child_obj.update_default_value(value)
@@ -344,7 +344,7 @@ class ListStrictEntity(ItemEntity):
                 return True
         return False
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
             self.root_item.set_override_state(state)
@@ -354,15 +354,21 @@ class ListStrictEntity(ItemEntity):
         # Ignore if is dynamic item and use default in that case
         if not self.is_dynamic_item and not self.is_in_dynamic_item:
             if state > OverrideState.DEFAULTS:
-                if not self.has_default_value:
+                if (
+                    not self.has_default_value
+                    and not ignore_missing_defaults
+                ):
                     raise DefaultsNotDefined(self)
 
             elif state > OverrideState.STUDIO:
-                if not self.had_studio_override:
+                if (
+                    not self.had_studio_override
+                    and not ignore_missing_defaults
+                ):
                     raise StudioDefaultsNotDefined(self)
 
         for child_entity in self.children:
-            child_entity.set_override_state(state)
+            child_entity.set_override_state(state, ignore_missing_defaults)
 
         self.initial_value = self.settings_value()
 
