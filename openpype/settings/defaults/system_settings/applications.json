@@ -1021,7 +1021,6 @@
             "2020": {
                 "enabled": true,
                 "variant_label": "2020",
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         ""
@@ -1039,7 +1038,6 @@
             "2021": {
                 "enabled": true,
                 "variant_label": "2021",
-                "use_python_2": false,
                 "executables": {
                     "windows": [
                         "C:\\Program Files\\Adobe\\Adobe After Effects 2021\\Support Files\\AfterFX.exe"
