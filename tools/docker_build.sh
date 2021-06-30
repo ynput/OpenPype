@@ -32,7 +32,7 @@ main () {
   openpype_version="$(python3 <<< ${version_command})"
 
   echo -e "${BIGreen}>>>${RST} Running docker build ..."
-  docker build --pull --no-cache -t pypeclub/openpype:$openpype_version .
+  docker build --pull -t pypeclub/openpype:$openpype_version .
   if [ $? -ne 0 ] ; then
     echo -e "${BIRed}!!!${RST} Docker build failed."
     return 1

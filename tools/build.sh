@@ -58,7 +58,7 @@ BICyan='\033[1;96m'       # Cyan
 BIWhite='\033[1;97m'      # White
 
 args=$@
-disable_submodule_update = 0
+disable_submodule_update=0
 while :; do
   case $1 in
     --no-submodule-update)
@@ -122,7 +122,7 @@ clean_pyc () {
   local path
   path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
-  find "$path" -path ./build -prune -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
+  find "$path" -path ./build -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
 
   echo -e "${BIGreen}DONE${RST}"
 }
@@ -228,3 +228,4 @@ if [ "$disable_submodule_update" == 1 ]; then
 }
 
 main
+exit $?

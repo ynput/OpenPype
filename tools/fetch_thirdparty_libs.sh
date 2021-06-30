@@ -99,7 +99,7 @@ main () {
 
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
-  echo -e "${BIGreen}>>>${RST} Running Pype tool ..."
+  echo -e "${BIGreen}>>>${RST} Fetching third party dependencies ..."
   poetry run python "$openpype_root/tools/fetch_thirdparty_libs.py"
 }
 

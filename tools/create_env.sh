@@ -126,7 +126,7 @@ clean_pyc () {
   local path
   path=$openpype_root
   echo -e "${BIGreen}>>>${RST} Cleaning pyc at [ ${BIWhite}$path${RST} ] ... \c"
-  find "$path" -path ./build -prune -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
+  find "$path" -path ./build -o -regex '^.*\(__pycache__\|\.py[co]\)$' -delete
   echo -e "${BIGreen}DONE${RST}"
 }
 
@@ -177,7 +177,7 @@ main () {
     echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
   fi
 
-  poetry install --no-root $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
+  poetry install --no-root --ansi $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
 
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
