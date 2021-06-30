@@ -1,10 +1,3 @@
-from openpype.api import (
-    Logger
-)
-
-log = Logger.get_logger(__name__)
-
-
 class OpenPypePyblishPluginMixin:
     executable_in_thread = False
 
