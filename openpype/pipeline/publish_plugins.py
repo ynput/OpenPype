@@ -13,17 +13,14 @@ class OpenPypePyblishPluginMixin:
     _state_change_callbacks = []
 
     @classmethod
-    def get_family_attribute_defs(cls):
-        """Publish attribute definitions per family.
+    def get_attribute_defs(cls):
+        """Publish attribute definitions.
 
-        Args:
-            families(list): List of families for which should return attribute
-                definitions.
-
+        Attributes available for all families in plugin's `families` attribute.
         Returns:
-            dict<list<AbtractAttrDef>>: Attribute definitions per family.
+            list<AbtractAttrDef>: Attribute definitions for plugin.
         """
-        return {}
+        return []
 
     def set_state(self, percent=None, message=None):
         """Inner callback of plugin that would help to show in UI state.
