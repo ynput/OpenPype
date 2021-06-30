@@ -10,6 +10,7 @@ class PublisherWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(PublisherWindow, self).__init__(parent)
 
+        self._first_show = True
         # TODO Title, Icon, Stylesheet
 
         main_frame = QtWidgets.QWidget(self)
@@ -81,6 +82,12 @@ class PublisherWindow(QtWidgets.QWidget):
             "<project>/<hierarchy>/<asset>/<task>/<workfile>"
         )
         # self.setStyleSheet("border: 1px solid black;")
+
+    def showEvent(self, event):
+        super(PublisherWindow, self).showEvent(event)
+        if self._first_show:
+            self._first_show = False
+            self.reset()
 
     def reset(self):
         self.controller.reset()
