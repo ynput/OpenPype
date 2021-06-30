@@ -1,5 +1,24 @@
+import os
 import sys
-sys.path.append(r"C:\Users\iLLiCiT\PycharmProjects\pype3\.venv\Lib\site-packages")
+
+openpype_dir = ""
+mongo_url = ""
+project_name = ""
+
+os.environ["OPENPYPE_MONGO"] = mongo_url
+os.environ["AVALON_MONGO"] = mongo_url
+os.environ["AVALON_PROJECT"] = project_name
+os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"
+os.environ["AVALON_CONFIG"] = "openpype"
+os.environ["AVALON_TIMEOUT"] = "1000"
+os.environ["AVALON_DB"] = "avalon"
+for path in [
+    openpype_dir,
+    r"{}\repos\avalon-core".format(openpype_dir),
+    r"{}\.venv\Lib\site-packages".format(openpype_dir)
+]:
+    sys.path.append(path)
+
 from Qt import QtWidgets, QtCore
 
 from control import PublisherController
