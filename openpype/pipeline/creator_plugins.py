@@ -16,9 +16,10 @@ class AvalonInstance:
         data(dict): Data used for filling subset name or override data from
             already existing instance.
     """
-    def __init__(self, family, subset_name, data=None):
-
+    def __init__(self, family, subset_name, data=None, new=True):
+        # Family of instance
         self.family = family
+        # Subset name
         self.subset_name = subset_name
 
         self.data = collections.OrderedDict()
@@ -26,6 +27,9 @@ class AvalonInstance:
         self.data["family"] = family
         self.data["subset"] = subset_name
         self.data["active"] = True
+        # Schema or version?
+        if new:
+            self.data["version"] = 1
         # Stored family specific attribute values
         # {key: value}
         self.data["family_attributes"] = {}
@@ -37,6 +41,9 @@ class AvalonInstance:
 
         if not self.data.get("uuid"):
             self.data["uuid"] = str(uuid4())
+
+        if not new and "version" not in self.data:
+            self.data["version"] = None
 
     @staticmethod
     def from_existing(instance_data):
