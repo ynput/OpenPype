@@ -307,14 +307,8 @@ class FtrackTrayWrapper:
     def start_timer_thread(self):
         try:
             if self.thread_timer is None:
-                self.thread_timer = FtrackEventsThread(self)
+                self.thread_timer = FtrackEventsThread(self.module)
                 self.bool_timer_event = True
-                self.thread_timer.signal_timer_started.connect(
-                    self.timer_started
-                )
-                self.thread_timer.signal_timer_stopped.connect(
-                    self.timer_stopped
-                )
                 self.thread_timer.start()
         except Exception:
             pass
@@ -322,8 +316,8 @@ class FtrackTrayWrapper:
     def stop_timer_thread(self):
         try:
             if self.thread_timer is not None:
-                self.thread_timer.terminate()
-                self.thread_timer.wait()
+                self.thread_timer.stop()
+                self.thread_timer.join()
                 self.thread_timer = None
 
         except Exception as e:
@@ -342,24 +336,16 @@ class FtrackTrayWrapper:
         if self.thread_timer is not None:
             self.thread_timer.ftrack_stop_timer()
 
-    def timer_started(self, data):
-        self.module.timer_started(data)
 
-    def timer_stopped(self):
-        self.module.timer_stopped()
-
-
-class FtrackEventsThread(QtCore.QThread):
-    # Senders
-    signal_timer_started = QtCore.Signal(object)
-    signal_timer_stopped = QtCore.Signal()
-
-    def __init__(self, parent):
+class FtrackEventsThread(threading.Thread):
+    def __init__(self, module):
         super(FtrackEventsThread, self).__init__()
         cred = credentials.get_credentials()
         self.username = cred['username']
         self.user = None
         self.last_task = None
+        self.timer_session = None
+        self.module = module
 
     def run(self):
         self.timer_session = ftrack_api.Session(auto_connect_event_hub=True)
@@ -376,7 +362,7 @@ class FtrackEventsThread(QtCore.QThread):
         timer = self.timer_session.query(timer_query).first()
         if timer is not None:
             self.last_task = timer['context']
-            self.signal_timer_started.emit(
+            self.module.timer_started(
                 self.get_data_from_task(self.last_task)
             )
 
@@ -419,11 +405,11 @@ class FtrackEventsThread(QtCore.QThread):
             self.last_task = timer['context']
 
         if old is None:
-            self.signal_timer_started.emit(
+            self.module.timer_started(
                 self.get_data_from_task(self.last_task)
             )
         elif new is None:
-            self.signal_timer_stopped.emit()
+            self.module.timer_stopped()
 
     def ftrack_stop_timer(self):
         actual_timer = self.timer_session.query(
@@ -433,7 +419,7 @@ class FtrackEventsThread(QtCore.QThread):
         if actual_timer is not None:
             self.user.stop_timer()
             self.timer_session.commit()
-            self.signal_timer_stopped.emit()
+            self.module.timer_stopped()
 
     def ftrack_start_timer(self, input_data):
         if self.user is None:
@@ -461,6 +447,6 @@ class FtrackEventsThread(QtCore.QThread):
         self.last_task = task
         self.user.start_timer(task)
         self.timer_session.commit()
-        self.signal_timer_started.emit(
+        self.module.timer_started(
             self.get_data_from_task(self.last_task)
         )
