@@ -37,12 +37,14 @@ class PublisherWindow(QtWidgets.QWidget):
         # Footer
         footer_widget = QtWidgets.QWidget(self)
 
+        create_btn = QtWidgets.QPushButton("Create", footer_widget)
         message_input = QtWidgets.QLineEdit(footer_widget)
         validate_btn = QtWidgets.QPushButton("Validate", footer_widget)
         publish_btn = QtWidgets.QPushButton("Publish", footer_widget)
 
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(0, 0, 0, 0)
+        footer_layout.addWidget(create_btn, 0)
         footer_layout.addWidget(message_input, 1)
         footer_layout.addWidget(validate_btn, 0)
         footer_layout.addWidget(publish_btn, 0)
@@ -57,6 +59,7 @@ class PublisherWindow(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(main_frame)
 
+        create_btn.clicked.connect(self._on_create_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
@@ -84,6 +87,9 @@ class PublisherWindow(QtWidgets.QWidget):
 
     def set_context_label(self, label):
         self.context_label.setText(label)
+
+    def _on_create_clicked(self):
+        print("Creation!!!")
 
     def _on_validate_clicked(self):
         print("Validation!!!")
