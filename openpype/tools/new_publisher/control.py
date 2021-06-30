@@ -13,7 +13,17 @@ class PublisherController:
         self.publish_plugins = []
         self.instances = []
 
+        self._in_reset = False
+
     def reset(self):
+        if self._in_reset:
+            return
+
+        self._in_reset = True
+        self._reset()
+        self._in_reset = False
+
+    def _reset(self):
         """Reset to initial state."""
         creators = []
         for creator in avalon.api.discover(BaseCreator):
