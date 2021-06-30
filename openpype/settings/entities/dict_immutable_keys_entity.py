@@ -1,4 +1,5 @@
 import copy
+import collections
 
 from .lib import (
     WRAPPER_TYPES,
@@ -138,7 +139,16 @@ class DictImmutableKeysEntity(ItemEntity):
                 method when handling gui wrappers.
         """
         added_children = []
-        for children_schema in schema_data["children"]:
+        children_deque = collections.deque()
+        for _children_schema in schema_data["children"]:
+            children_schemas = self.schema_hub.resolve_schema_data(
+                _children_schema
+            )
+            for children_schema in children_schemas:
+                children_deque.append(children_schema)
+
+        while children_deque:
+            children_schema = children_deque.popleft()
             if children_schema["type"] in WRAPPER_TYPES:
                 _children_schema = copy.deepcopy(children_schema)
                 wrapper_children = self._add_children(
