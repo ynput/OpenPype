@@ -61,6 +61,45 @@ def check_ftrack_url(url, log_errors=True):
     return url
 
 
+class EasyStopEventHub(ftrack_api.event.hub.EventHub):
+    def __init__(self, *args, **kwargs):
+        self._stopped = False
+        super(EasyStopEventHub, self).__init__(*args, **kwargs)
+
+    def stop(self):
+        self._stopped = True
+        if self.connected:
+            self.disconnect()
+
+    def wait(self, duration=None):
+        if not self._connection_initialised:
+            raise ftrack_api.exception.EventHubConnectionError(
+                'Event hub does not have a connection to the event server and '
+                'will therefore only be able to receive syncronous events.'
+                'Please see http://ftrack-python-api.rtd.ftrack.com/en/stable/'
+                'release/migration.html#default-behavior'
+                '-for-connecting-to-event-hub for further information.'
+            )
+
+        started = time.time()
+
+        while not self._stopped:
+            try:
+                event = self._event_queue.get(timeout=0.1)
+            except queue.Empty:
+                pass
+            else:
+                self._handle(event)
+
+                # Additional special processing of events.
+                if event['topic'] == 'ftrack.meta.disconnected':
+                    break
+
+            if duration is not None:
+                if (time.time() - started) > duration:
+                    break
+
+
 class SocketBaseEventHub(ftrack_api.event.hub.EventHub):
 
     hearbeat_msg = b"hearbeat"
@@ -395,6 +434,15 @@ class CustomEventHubSession(ftrack_api.session.Session):
 
     def _create_event_hub(self):
         return ftrack_api.event.hub.EventHub(
+            self._server_url,
+            self._api_user,
+            self._api_key
+        )
+
+
+class EasyStopSession(CustomEventHubSession):
+    def _create_event_hub(self):
+        return EasyStopEventHub(
             self._server_url,
             self._api_user,
             self._api_key
