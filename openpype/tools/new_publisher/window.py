@@ -22,7 +22,10 @@ for path in [
 from Qt import QtWidgets, QtCore
 
 from control import PublisherController
-from widgets import SubsetAttributesWidget
+from widgets import (
+    SubsetAttributesWidget,
+    CreateDialog
+)
 
 
 class PublisherWindow(QtWidgets.QWidget):
@@ -30,8 +33,10 @@ class PublisherWindow(QtWidgets.QWidget):
         super(PublisherWindow, self).__init__(parent)
 
         self._first_show = True
-        # TODO Title, Icon, Stylesheet
 
+        controller = PublisherController()
+
+        # TODO Title, Icon, Stylesheet
         main_frame = QtWidgets.QWidget(self)
 
         # Header
@@ -86,6 +91,8 @@ class PublisherWindow(QtWidgets.QWidget):
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(main_frame)
 
+        creator_window = CreateDialog(controller, self)
+
         reset_btn.clicked.connect(self._on_reset_clicked)
 
         create_btn.clicked.connect(self._on_create_clicked)
@@ -101,9 +108,9 @@ class PublisherWindow(QtWidgets.QWidget):
         self.validate_btn = validate_btn
         self.publish_btn = publish_btn
 
-        controller = PublisherController()
-
         self.controller = controller
+
+        self.creator_window = creator_window
 
         # DEBUGING
         self.set_context_label(
@@ -127,7 +134,7 @@ class PublisherWindow(QtWidgets.QWidget):
         self.reset()
 
     def _on_create_clicked(self):
-        print("Creation!!!")
+        self.creator_window.show()
 
     def _on_validate_clicked(self):
         print("Validation!!!")
