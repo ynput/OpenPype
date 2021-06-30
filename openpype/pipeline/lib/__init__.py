@@ -1,7 +1,4 @@
 from .attribute_definitions import (
-    InvalidValueError,
-    InvalidValueTypeError,
-
     AbtractAttrDef,
     NumberDef,
     TextDef,
@@ -11,9 +8,6 @@ from .attribute_definitions import (
 
 
 __all__ = (
-    "InvalidValueError",
-    "InvalidValueTypeError",
-
     "AbtractAttrDef",
     "NumberDef",
     "TextDef",

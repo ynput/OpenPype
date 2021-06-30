@@ -46,7 +46,6 @@ class AbtractAttrDef:
 
         self.__init__class__ = AbtractAttrDef
 
-
     @abstractmethod
     def convert_value(self, value):
         """Convert value to a valid one.
