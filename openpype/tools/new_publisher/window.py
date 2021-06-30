@@ -2,6 +2,7 @@ import sys
 sys.path.append(r"C:\Users\iLLiCiT\PycharmProjects\pype3\.venv\Lib\site-packages")
 from Qt import QtWidgets, QtCore
 
+from control import PublisherController
 from widgets import SubsetAttributesWidget
 
 
@@ -68,11 +69,18 @@ class PublisherWindow(QtWidgets.QWidget):
         self.validate_btn = validate_btn
         self.publish_btn = publish_btn
 
+        controller = PublisherController()
+
+        self.controller = controller
+
         # DEBUGING
         self.set_context_label(
             "<project>/<hierarchy>/<asset>/<task>/<workfile>"
         )
         # self.setStyleSheet("border: 1px solid black;")
+
+    def reset(self):
+        self.controller.reset()
 
     def set_context_label(self, label):
         self.context_label.setText(label)
