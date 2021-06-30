@@ -1,60 +1,52 @@
 import copy
 import collections
+from uuid import uuid4
 
 
-class InstanceData(collections.OrderedDict):
-    """Instance data that will be stored to workfile.
-
-    Question:
-    Make sence to have this ordered???
-    - not sure how to achieve that when data are loaded from workfile
-    Shouldn't have each instance identifier?
-    - use current "id" value as "type" and use "id" for identifier
-    - current "id" value make sence only in few hosts
-    - there must be mapping of avalon <> pyblish instance to be able handle
-        logs and errors
-        - what if avalon <> pyblish mapping is not set?
-        - where to show error? on which instance?
-        - should publisher crash if there is new instance that does not have matching to avalon instance?
-    Handle changes of instance data here?
-    - trigger callbacks on value change to update instance data in host
-    Should have reference to workfile?
-    - not to store it to metadata!!! To be able tell host if should change
-        store to currently opened workfile...
-    - instances can be loaded in one workfile but change can happen in other
-
-    Args:
-        family(str): Name of family that will be created.
-        subset_name(str): Name of subset that will be created.
-        data(dict): Data used for filling subset name.
+class AvalonInstance:
+    """Instance entity with data that will be stored to workfile.
 
     I think `data` must be required argument containing all minimum information
     about instance like "asset" and "task" and all data used for filling subset
     name as creators may have custom data for subset name filling.
+
+    Args:
+        family(str): Name of family that will be created.
+        subset_name(str): Name of subset that will be created.
+        data(dict): Data used for filling subset name or override data from
+            already existing instance.
     """
     def __init__(self, family, subset_name, data=None):
-        self["id"] = "pyblish.avalon.instance"
-        self["family"] = family
-        self["subset"] = subset_name
-        self["active"] = True
+
+        self.family = family
+        self.subset_name = subset_name
+
+        self.data = collections.OrderedDict()
+        self.data["id"] = "pyblish.avalon.instance"
+        self.data["family"] = family
+        self.data["subset"] = subset_name
+        self.data["active"] = True
         # Stored family specific attribute values
         # {key: value}
-        self["family_attributes"] = {}
+        self.data["family_attributes"] = {}
         # Stored publish specific attribute values
         # {<plugin name>: {key: value}}
-        self["publish_attributes"] = {}
+        self.data["publish_attributes"] = {}
         if data:
-            self.update(data)
+            self.data.update(data)
+
+        if not self.data.get("uuid"):
+            self.data["uuid"] = str(uuid4())
 
     @staticmethod
     def from_existing(instance_data):
-        """Convert existing instance to InstanceData."""
+        """Convert instance data from workfile to AvalonInstance."""
         instance_data = copy.deepcopy(instance_data)
 
         family = instance_data.pop("family", None)
         subset_name = instance_data.pop("subset", None)
 
-        return InstanceData(family, subset_name, instance_data)
+        return AvalonInstance(family, subset_name, instance_data)
 
 
 class BaseCreator:
