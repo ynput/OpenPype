@@ -129,6 +129,7 @@ def _fill_schema_template_data(
     elif isinstance(template, STRING_TYPE):
         # TODO find much better way how to handle filling template data
         template = template.replace("{{", "__dbcb__").replace("}}", "__decb__")
+        full_replacement = False
         for replacement_string in template_key_pattern.findall(template):
             key = str(replacement_string[1:-1])
             required_keys.add(key)
@@ -141,11 +142,15 @@ def _fill_schema_template_data(
                 # Replace the value with value from templates data
                 # - with this is possible to set value with different type
                 template = value
+                full_replacement = True
             else:
                 # Only replace the key in string
                 template = template.replace(replacement_string, value)
 
-        output = template.replace("__dbcb__", "{").replace("__decb__", "}")
+        if not full_replacement:
+            output = template.replace("__dbcb__", "{").replace("__decb__", "}")
+        else:
+            output = template
 
     else:
         output = template
