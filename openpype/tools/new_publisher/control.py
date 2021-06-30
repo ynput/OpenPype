@@ -2,6 +2,10 @@ import logging
 import inspect
 import avalon.api
 import pyblish.api
+from openpype.api import (
+    get_system_settings,
+    get_project_settings
+)
 from openpype.pipeline import (
     BaseCreator,
     AvalonInstance
@@ -33,6 +37,10 @@ class PublisherController:
         publish_plugins = pyblish.api.discover()
         self.publish_plugins = publish_plugins
 
+        project_name = avalon.api.Session["AVALON_PROJECT"]
+        system_settings = get_system_settings()
+        project_settings = get_project_settings(project_name)
+
         creators = {}
         for creator in avalon.api.discover(BaseCreator):
             if inspect.isabstract(creator):
@@ -40,7 +48,11 @@ class PublisherController:
                     "Skipping abstract Creator {}".format(str(creator))
                 )
                 continue
-            creators[creator.family] = creator
+            creators[creator.family] = creator(
+                system_settings,
+                project_settings,
+                self.headless
+            )
 
         self.creators = creators
 
