@@ -2,6 +2,13 @@ import copy
 import collections
 from uuid import uuid4
 
+from abc import (
+    ABCMeta,
+    abstractmethod,
+    abstractproperty
+)
+import six
+
 
 class AvalonInstance:
     """Instance entity with data that will be stored to workfile.
@@ -56,6 +63,7 @@ class AvalonInstance:
         return AvalonInstance(family, subset_name, instance_data)
 
 
+@six.add_metaclass(ABCMeta)
 class BaseCreator:
     """Plugin that create and modify instance data before publishing process.
 
@@ -66,9 +74,8 @@ class BaseCreator:
     instance per one creator object. Do not store temp data or mid-process data
     to `self` if it's not Plugin specific.
     """
-    # Abstract attributes
-    # Family that plugin represents
-    family = None
+
+    # Creator is enabled (Probably does not have reason of existence?)
     enabled = True
 
     # GUI Purposes
@@ -80,17 +87,19 @@ class BaseCreator:
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
 
-    def create(self, subset_name, instance_data, options=None):
-        """Create new instance in workfile metadata.
+    @abstractproperty
+    def family(self):
+        """Family that plugin represents."""
+        pass
+
+    @abstractmethod
+    def create(self, options=None):
+        """Create new instance.
 
         Replacement of `process` method from avalon implementation.
         - must expect all data that were passed to init in previous
             implementation
         """
-
-        # instance = InstanceData(
-        #     self.family, subset_name, instance_data
-        # )
         pass
 
     def get_default_variants(self):
@@ -181,6 +190,22 @@ class Creator(BaseCreator):
 
     # Short description of family
     description = None
+
+    @abstractmethod
+    def create(self, subset_name, instance_data, options=None):
+        """Create new instance and store it.
+
+        Ideally should be stored to workfile using host implementation.
+
+        Args:
+            subset_name(str): Subset name of created instance.
+            instance_data(dict):
+        """
+
+        # instance = AvalonInstance(
+        #     self.family, subset_name, instance_data
+        # )
+        pass
 
     def get_detail_description(self):
         """Description of family and plugin.
