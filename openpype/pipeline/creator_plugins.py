@@ -52,6 +52,16 @@ class AvalonInstance:
         if not new and "version" not in self.data:
             self.data["version"] = None
 
+    def change_order(self, keys_order):
+        data = collections.OrderedDict()
+        for key in keys_order:
+            if key in self.data:
+                data[key] = self.data.pop(key)
+
+        for key in tuple(self.data.keys()):
+            data[key] = self.data.pop(key)
+        self.data = data
+
     @staticmethod
     def from_existing(instance_data):
         """Convert instance data from workfile to AvalonInstance."""
