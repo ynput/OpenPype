@@ -9,9 +9,10 @@ from openpype.pipeline import (
 
 
 class PublisherController:
-    def __init__(self):
+    def __init__(self, headless=False):
         self.log = logging.getLogger("PublisherController")
         self.host = avalon.api.registered_host()
+        self.headless = headless
 
         self.creators = {}
         self.publish_plugins = []
