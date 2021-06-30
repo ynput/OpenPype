@@ -1,44 +1,69 @@
 # Changelog
 
-## [3.2.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.2.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.3...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.4...HEAD)
 
 **🚀 Enhancements**
 
+- Settings UI copy/paste [\#1769](https://github.com/pypeclub/OpenPype/pull/1769)
+- Workfile tool widths [\#1766](https://github.com/pypeclub/OpenPype/pull/1766)
+- Push hierarchical attributes care about task parent changes [\#1763](https://github.com/pypeclub/OpenPype/pull/1763)
+- Application executables with environment variables [\#1757](https://github.com/pypeclub/OpenPype/pull/1757)
+- Settings Hosts enum [\#1739](https://github.com/pypeclub/OpenPype/pull/1739)
 - Validate containers settings [\#1736](https://github.com/pypeclub/OpenPype/pull/1736)
+- PS - added loader from sequence [\#1726](https://github.com/pypeclub/OpenPype/pull/1726)
 - Autoupdate launcher [\#1725](https://github.com/pypeclub/OpenPype/pull/1725)
 - Subset template and TVPaint subset template docs [\#1717](https://github.com/pypeclub/OpenPype/pull/1717)
+- Toggle Ftrack upload in StandalonePublisher [\#1708](https://github.com/pypeclub/OpenPype/pull/1708)
 - Overscan color extract review [\#1701](https://github.com/pypeclub/OpenPype/pull/1701)
 - Nuke: Prerender Frame Range by default [\#1699](https://github.com/pypeclub/OpenPype/pull/1699)
 - Smoother edges of color triangle [\#1695](https://github.com/pypeclub/OpenPype/pull/1695)
 
 **🐛 Bug fixes**
 
+- FFprobe streams order [\#1775](https://github.com/pypeclub/OpenPype/pull/1775)
+- Project specific environments [\#1767](https://github.com/pypeclub/OpenPype/pull/1767)
+- Settings UI with refresh button [\#1764](https://github.com/pypeclub/OpenPype/pull/1764)
+- Standalone publisher thumbnail extractor fix [\#1761](https://github.com/pypeclub/OpenPype/pull/1761)
+- Anatomy others templates don't cause crash [\#1758](https://github.com/pypeclub/OpenPype/pull/1758)
+- Backend acre module commit update [\#1745](https://github.com/pypeclub/OpenPype/pull/1745)
+- hiero: precollect instances failing when audio selected [\#1743](https://github.com/pypeclub/OpenPype/pull/1743)
+- Hiero: creator instance error [\#1742](https://github.com/pypeclub/OpenPype/pull/1742)
+- Nuke: fixing render creator for no selection format failing [\#1741](https://github.com/pypeclub/OpenPype/pull/1741)
 - Local settings UI crash on missing defaults [\#1737](https://github.com/pypeclub/OpenPype/pull/1737)
+- TVPaint white background on thumbnail [\#1735](https://github.com/pypeclub/OpenPype/pull/1735)
 - Ftrack missing custom attribute message [\#1734](https://github.com/pypeclub/OpenPype/pull/1734)
 - Launcher project changes [\#1733](https://github.com/pypeclub/OpenPype/pull/1733)
+- Ftrack sync status [\#1732](https://github.com/pypeclub/OpenPype/pull/1732)
 - TVPaint use layer name for default variant [\#1724](https://github.com/pypeclub/OpenPype/pull/1724)
 - Default subset template for TVPaint review and workfile families [\#1716](https://github.com/pypeclub/OpenPype/pull/1716)
 - Maya: Extract review hotfix [\#1714](https://github.com/pypeclub/OpenPype/pull/1714)
 - Settings: Imageio improving granularity [\#1711](https://github.com/pypeclub/OpenPype/pull/1711)
 - Application without executables [\#1679](https://github.com/pypeclub/OpenPype/pull/1679)
 
-## [2.18.3](https://github.com/pypeclub/OpenPype/tree/2.18.3) (2021-06-18)
+**Merged pull requests:**
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.2...2.18.3)
+- Bump prismjs from 1.23.0 to 1.24.0 in /website [\#1773](https://github.com/pypeclub/OpenPype/pull/1773)
+- TVPaint ftrack family [\#1755](https://github.com/pypeclub/OpenPype/pull/1755)
+- global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
 
-**🐛 Bug fixes**
+## [2.18.4](https://github.com/pypeclub/OpenPype/tree/2.18.4) (2021-06-24)
 
-- Nuke: broken publishing rendered frames [\#1707](https://github.com/pypeclub/OpenPype/pull/1707)
-- Remove publish highlight icon in AE [\#1664](https://github.com/pypeclub/OpenPype/pull/1664)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.3...2.18.4)
 
 **Merged pull requests:**
 
-- Sync main 2.x back to 2.x develop [\#1715](https://github.com/pypeclub/OpenPype/pull/1715)
-- global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
-- \#683 - Validate frame range in Standalone Publisher [\#1680](https://github.com/pypeclub/OpenPype/pull/1680)
-- Maya: Split model content validator [\#1654](https://github.com/pypeclub/OpenPype/pull/1654)
+- celaction fixes [\#1754](https://github.com/pypeclub/OpenPype/pull/1754)
+- celaciton: audio subset changed data structure [\#1750](https://github.com/pypeclub/OpenPype/pull/1750)
+
+## [2.18.3](https://github.com/pypeclub/OpenPype/tree/2.18.3) (2021-06-23)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.2.0-nightly.2...2.18.3)
+
+**🐛 Bug fixes**
+
+- Tools names forwards compatibility [\#1727](https://github.com/pypeclub/OpenPype/pull/1727)
 
 ## [2.18.2](https://github.com/pypeclub/OpenPype/tree/2.18.2) (2021-06-16)
 
@@ -80,6 +105,7 @@
 
 **🐛 Bug fixes**
 
+- Nuke: broken publishing rendered frames [\#1707](https://github.com/pypeclub/OpenPype/pull/1707)
 - Standalone publisher Thumbnail export args [\#1705](https://github.com/pypeclub/OpenPype/pull/1705)
 - Bad zip can break OpenPype start [\#1691](https://github.com/pypeclub/OpenPype/pull/1691)
 - Hiero: published whole edit mov [\#1687](https://github.com/pypeclub/OpenPype/pull/1687)
