@@ -368,6 +368,10 @@ class FtrackEventsThread(threading.Thread):
 
         self.timer_session.event_hub.wait()
 
+    def stop(self):
+        if self.timer_session is not None:
+            self.timer_session.close()
+
     def get_data_from_task(self, task_entity):
         data = {}
         data['task_name'] = task_entity['name']
