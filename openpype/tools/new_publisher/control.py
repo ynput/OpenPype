@@ -2,6 +2,7 @@ import logging
 import inspect
 import avalon.api
 from openpype.pipeline import BaseCreator
+import pyblish.api
 
 
 class PublisherController:
@@ -26,6 +27,9 @@ class PublisherController:
     def _reset(self):
         """Reset to initial state."""
         creators = []
+        publish_plugins = pyblish.api.discover()
+        self.publish_plugins = publish_plugins
+
         for creator in avalon.api.discover(BaseCreator):
             if inspect.isabstract(creator):
                 self.log.info(
