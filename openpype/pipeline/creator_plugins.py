@@ -70,7 +70,7 @@ class AvalonInstance:
         family = instance_data.pop("family", None)
         subset_name = instance_data.pop("subset", None)
 
-        return AvalonInstance(family, subset_name, instance_data)
+        return AvalonInstance(family, subset_name, instance_data, new=False)
 
 
 @six.add_metaclass(ABCMeta)
