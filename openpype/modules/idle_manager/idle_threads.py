@@ -81,6 +81,29 @@ class IdleManagerThread(threading.Thread):
                 'Idle Manager service has failed', exc_info=True
             )
 
+        if self.threads:
+            self.log.info(
+                "Have to finish {} threads".format(len(self.threads))
+            )
+            start_time = time.time()
+            mid_time = time.time()
+            while self.threads:
+                thread = self.threads[0]
+                if not thread.isAlive():
+                    thread.join()
+                    self.threads.remove(thread)
+
+                current_time = time.time()
+                if (current_time - start_time) > 6:
+                    raise RuntimeError("Couldn't stop Idle Manager's threads.")
+
+                if (current_time - mid_time) > 1:
+                    self.log.info(
+                        "Thread to finish {}".format(len(self.threads))
+                    )
+                    mid_time = current_time
+                time.sleep(0.1)
+
         # Threads don't have their attrs when Qt application already finished
         try:
             thread_mouse.stop()
