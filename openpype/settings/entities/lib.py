@@ -127,7 +127,16 @@ class SchemasHub:
         return self._gui_types
 
     def get_schema(self, schema_name):
-        """Get schema definition data by it's name."""
+        """Get schema definition data by it's name.
+
+        Returns:
+            dict: Copy of schema loaded from json files.
+
+        Raises:
+            KeyError: When schema name is stored in loaded templates or json
+                file was not possible to parse or when schema name was not
+                found.
+        """
         if schema_name not in self._loaded_schemas:
             if schema_name in self._loaded_templates:
                 raise KeyError((
@@ -148,7 +157,16 @@ class SchemasHub:
         return copy.deepcopy(self._loaded_schemas[schema_name])
 
     def get_template(self, template_name):
-        """Get template definition data by it's name."""
+        """Get template definition data by it's name.
+
+        Returns:
+            list: Copy of template items loaded from json files.
+
+        Raises:
+            KeyError: When template name is stored in loaded schemas or json
+                file was not possible to parse or when template name was not
+                found.
+        """
         if template_name not in self._loaded_templates:
             if template_name in self._loaded_schemas:
                 raise KeyError((
@@ -232,7 +250,16 @@ class SchemasHub:
         return klass(schema_data, *args, **kwargs)
 
     def _load_types(self):
-        """Prepare entity types for cretion of their objects."""
+        """Prepare entity types for cretion of their objects.
+
+        Currently all classes in `openpype.settings.entities` that inherited
+        from `BaseEntity` are stored as loaded types. GUI types are stored to
+        separated attribute to not mess up api access of entities.
+
+        TODOs:
+            Add more dynamic way how to add custom types from anywhere and
+            better handling of abstract classes. Skipping them is dangerous.
+        """
 
         from openpype.settings import entities
 
@@ -400,7 +427,25 @@ class SchemasHub:
         required_keys=None,
         missing_keys=None
     ):
-        """Fill template values with data from schema data."""
+        """Fill template values with data from schema data.
+
+        Template has more abilities than schemas. It is expected that template
+        will be used at multiple places (but may not). Schema represents
+        exactly one entity and it's children but template may represent more
+        entities.
+
+        Template can have "keys to fill" from their definition. Some key may be
+        required and some may be optional because template has their default
+        values defined.
+
+        Template also have ability to "skip paths" which means to skip entities
+        from it's content. A template can be used across multiple places with
+        different requirements.
+
+        Raises:
+            SchemaTemplateMissingKeys: When fill data do not contain all
+                required keys for template.
+        """
         first = False
         if required_keys is None:
             first = True
