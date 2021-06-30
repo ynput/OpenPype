@@ -1,11 +1,14 @@
 # Changelog
 
-## [3.2.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.2.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.4...HEAD)
 
 **🚀 Enhancements**
 
+- Settings UI copy/paste [\#1769](https://github.com/pypeclub/OpenPype/pull/1769)
+- Workfile tool widths [\#1766](https://github.com/pypeclub/OpenPype/pull/1766)
+- Push hierarchical attributes care about task parent changes [\#1763](https://github.com/pypeclub/OpenPype/pull/1763)
 - Application executables with environment variables [\#1757](https://github.com/pypeclub/OpenPype/pull/1757)
 - Settings Hosts enum [\#1739](https://github.com/pypeclub/OpenPype/pull/1739)
 - Validate containers settings [\#1736](https://github.com/pypeclub/OpenPype/pull/1736)
@@ -19,6 +22,11 @@
 
 **🐛 Bug fixes**
 
+- FFprobe streams order [\#1775](https://github.com/pypeclub/OpenPype/pull/1775)
+- Project specific environments [\#1767](https://github.com/pypeclub/OpenPype/pull/1767)
+- Settings UI with refresh button [\#1764](https://github.com/pypeclub/OpenPype/pull/1764)
+- Standalone publisher thumbnail extractor fix [\#1761](https://github.com/pypeclub/OpenPype/pull/1761)
+- Anatomy others templates don't cause crash [\#1758](https://github.com/pypeclub/OpenPype/pull/1758)
 - Backend acre module commit update [\#1745](https://github.com/pypeclub/OpenPype/pull/1745)
 - hiero: precollect instances failing when audio selected [\#1743](https://github.com/pypeclub/OpenPype/pull/1743)
 - Hiero: creator instance error [\#1742](https://github.com/pypeclub/OpenPype/pull/1742)
@@ -36,7 +44,9 @@
 
 **Merged pull requests:**
 
+- Bump prismjs from 1.23.0 to 1.24.0 in /website [\#1773](https://github.com/pypeclub/OpenPype/pull/1773)
 - TVPaint ftrack family [\#1755](https://github.com/pypeclub/OpenPype/pull/1755)
+- global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
 
 ## [2.18.4](https://github.com/pypeclub/OpenPype/tree/2.18.4) (2021-06-24)
 
@@ -54,10 +64,6 @@
 **🐛 Bug fixes**
 
 - Tools names forwards compatibility [\#1727](https://github.com/pypeclub/OpenPype/pull/1727)
-
-**Merged pull requests:**
-
-- global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
 
 ## [2.18.2](https://github.com/pypeclub/OpenPype/tree/2.18.2) (2021-06-16)
 
@@ -116,7 +122,6 @@
 
 - update dependencies [\#1697](https://github.com/pypeclub/OpenPype/pull/1697)
 - Bump normalize-url from 4.5.0 to 4.5.1 in /website [\#1686](https://github.com/pypeclub/OpenPype/pull/1686)
-- Use poetry to build / publish OpenPype wheel [\#1636](https://github.com/pypeclub/OpenPype/pull/1636)
 
 # Changelog
 
