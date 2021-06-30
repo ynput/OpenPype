@@ -20,22 +20,15 @@ from .constants import (
 
 
 class ProjectBar(QtWidgets.QWidget):
-    project_changed = QtCore.Signal(int)
-
-    def __init__(self, dbcon, parent=None):
+    def __init__(self, project_handler, parent=None):
         super(ProjectBar, self).__init__(parent)
-
-        self.dbcon = dbcon
-
-        model = ProjectModel(dbcon)
-        model.hide_invisible = True
 
         project_combobox = QtWidgets.QComboBox(self)
         # Change delegate so stylysheets are applied
         project_delegate = QtWidgets.QStyledItemDelegate(project_combobox)
         project_combobox.setItemDelegate(project_delegate)
 
-        project_combobox.setModel(model)
+        project_combobox.setModel(project_handler.model)
         project_combobox.setRootModelIndex(QtCore.QModelIndex())
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -47,20 +40,42 @@ class ProjectBar(QtWidgets.QWidget):
             QtWidgets.QSizePolicy.Maximum
         )
 
-        self.model = model
+        refresh_timer = QtCore.QTimer()
+        refresh_timer.setInterval(project_handler.refresh_interval)
+
+        self.project_handler = project_handler
         self.project_delegate = project_delegate
         self.project_combobox = project_combobox
-
-        # Initialize
-        self.refresh()
+        self.refresh_timer = refresh_timer
 
         # Signals
-        self.project_combobox.currentIndexChanged.connect(self.project_changed)
+        refresh_timer.timeout.connect(self._on_refresh_timeout)
+        self.project_combobox.currentIndexChanged.connect(self.on_index_change)
+        project_handler.project_changed.connect(self._on_project_change)
 
         # Set current project by default if it's set.
-        project_name = self.dbcon.Session.get("AVALON_PROJECT")
+        project_name = project_handler.current_project
         if project_name:
             self.set_project(project_name)
+
+    def showEvent(self, event):
+        if not self.refresh_timer.isActive():
+            self.refresh_timer.start()
+        super(ProjectBar, self).showEvent(event)
+
+    def _on_refresh_timeout(self):
+        if not self.isVisible():
+            # Stop timer if widget is not visible
+            self.refresh_timer.stop()
+
+        elif self.isActiveWindow():
+            # Refresh projects if window is active
+            self.project_handler.refresh_model()
+
+    def _on_project_change(self, project_name):
+        if self.get_current_project() == project_name:
+            return
+        self.set_project(project_name)
 
     def get_current_project(self):
         return self.project_combobox.currentText()
@@ -69,27 +84,18 @@ class ProjectBar(QtWidgets.QWidget):
         index = self.project_combobox.findText(project_name)
         if index < 0:
             # Try refresh combobox model
-            self.project_combobox.blockSignals(True)
-            self.model.refresh()
-            self.project_combobox.blockSignals(False)
-
+            self.project_handler.refresh_model()
             index = self.project_combobox.findText(project_name)
 
         if index >= 0:
             self.project_combobox.setCurrentIndex(index)
 
-    def refresh(self):
-        prev_project_name = self.get_current_project()
+    def on_index_change(self, idx):
+        if not self.isVisible():
+            return
 
-        # Refresh without signals
-        self.project_combobox.blockSignals(True)
-
-        self.model.refresh()
-        self.set_project(prev_project_name)
-
-        self.project_combobox.blockSignals(False)
-
-        self.project_changed.emit(self.project_combobox.currentIndex())
+        project_name = self.get_current_project()
+        self.project_handler.set_project(project_name)
 
 
 class ActionBar(QtWidgets.QWidget):

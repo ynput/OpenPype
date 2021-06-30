@@ -14,25 +14,11 @@
         "roles": ["developer"]
     },
     {
-        "type": "enum",
+        "type": "hosts-enum",
         "key": "host_name",
         "label": "Host implementation",
-        "enum_items": [
-            { "": "< without host >" },
-            { "aftereffects": "aftereffects" },
-            { "blender": "blender" },
-            { "celaction": "celaction" },
-            { "fusion": "fusion" },
-            { "harmony": "harmony" },
-            { "hiero": "hiero" },
-            { "houdini": "houdini" },
-            { "maya": "maya" },
-            { "nuke": "nuke" },
-            { "photoshop": "photoshop" },
-            { "resolve": "resolve" },
-            { "tvpaint": "tvpaint" },
-            { "unreal": "unreal" }
-        ],
+        "multiselection": false,
+        "use_empty_value": true,
         "roles": ["developer"]
     }
 ]
