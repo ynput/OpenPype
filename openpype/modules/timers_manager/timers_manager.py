@@ -166,37 +166,42 @@ class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
             return {}
 
         callbacks = collections.defaultdict(list)
-        callbacks[self.time_show_message].append(lambda: self.time_callback(0))
+        callbacks[self.time_show_message].append(
+            lambda: self.execute_in_main_thread(
+                self.signal_handler.signal_show_message.emit
+            )
+        )
 
         # Times when idle is between show widget and stop timers
         show_to_stop_range = range(
             self.time_show_message - 1, self.time_stop_timer
         )
         for num in show_to_stop_range:
-            callbacks[num].append(lambda: self.time_callback(1))
+            callbacks[num].append(
+                lambda: self.execute_in_main_thread(
+                    self.signal_handler.signal_change_label.emit
+                )
+            )
 
         # Times when widget is already shown and user restart idle
         shown_and_moved_range = range(
             self.time_stop_timer - self.time_show_message
         )
         for num in shown_and_moved_range:
-            callbacks[num].append(lambda: self.time_callback(1))
+            callbacks[num].append(
+                lambda: self.execute_in_main_thread(
+                    self.signal_handler.signal_change_label.emit
+                )
+            )
 
         # Time when timers are stopped
-        callbacks[self.time_stop_timer].append(lambda: self.time_callback(2))
+        callbacks[self.time_stop_timer].append(
+            lambda: self.execute_in_main_thread(
+                self.signal_handler.signal_stop_timers.emit
+            )
+        )
 
         return callbacks
-
-    def time_callback(self, int_def):
-        if not self.signal_handler:
-            return
-
-        if int_def == 0:
-            self.signal_handler.signal_show_message.emit()
-        elif int_def == 1:
-            self.signal_handler.signal_change_label.emit()
-        elif int_def == 2:
-            self.signal_handler.signal_stop_timers.emit()
 
     def change_label(self):
         if self.is_running is False:
