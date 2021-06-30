@@ -5,7 +5,7 @@ import threading
 from Qt import QtCore, QtWidgets, QtGui
 
 import ftrack_api
-from ..ftrack_server.lib import check_ftrack_url
+from ..ftrack_server.lib import check_ftrack_url, EasyStopSession
 from ..ftrack_server import socket_thread
 from ..lib import credentials
 from ..ftrack_module import FTRACK_MODULE_DIR
@@ -348,7 +348,7 @@ class FtrackEventsThread(threading.Thread):
         self.module = module
 
     def run(self):
-        self.timer_session = ftrack_api.Session(auto_connect_event_hub=True)
+        self.timer_session = EasyStopSession(auto_connect_event_hub=True)
         self.timer_session.event_hub.subscribe(
             'topic=ftrack.update and source.user.username={}'.format(
                 self.username
@@ -370,6 +370,7 @@ class FtrackEventsThread(threading.Thread):
 
     def stop(self):
         if self.timer_session is not None:
+            self.timer_session.event_hub.stop()
             self.timer_session.close()
 
     def get_data_from_task(self, task_entity):
