@@ -96,3 +96,49 @@ class ThumbnailWidget(QtWidgets.QWidget):
         self.thumbnail_label = thumbnail_label
         self.default_pix = default_pix
         self.current_pix = None
+
+
+class CreateDialog(QtWidgets.QDialog):
+    def __init__(self, controller, parent=None):
+        super(CreateDialog, self).__init__(parent)
+
+        self.controller = controller
+
+        family_list = QtWidgets.QListView(self)
+        variant_input = QtWidgets.QLineEdit(self)
+
+        checkbox_inputs = QtWidgets.QWidget(self)
+        auto_close_checkbox = QtWidgets.QCheckBox(
+            "Auto-close", checkbox_inputs
+        )
+        use_selection_checkbox = QtWidgets.QCheckBox(
+            "Use selection", checkbox_inputs
+        )
+
+        checkbox_layout = QtWidgets.QHBoxLayout(checkbox_inputs)
+        checkbox_layout.setContentsMargins(0, 0, 0, 0)
+        checkbox_layout.addWidget(auto_close_checkbox)
+        checkbox_layout.addWidget(use_selection_checkbox)
+
+        create_btn = QtWidgets.QPushButton("Create", self)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(QtWidgets.QLabel("Family:", self))
+        layout.addWidget(family_list, 1)
+        layout.addWidget(QtWidgets.QLabel("Name:", self))
+        layout.addWidget(variant_input, 0)
+        layout.addWidget(checkbox_inputs, 0)
+        layout.addWidget(create_btn, 0)
+
+        create_btn.clicked.connect(self._on_create)
+
+        self.variant_input = variant_input
+        self.family_list = family_list
+        self.auto_close_checkbox = auto_close_checkbox
+        self.use_selection_checkbox = auto_close_checkbox
+        self.create_btn = create_btn
+
+    def _on_create(self):
+        # TODO do some stuff
+        if self.auto_close_checkbox.isChecked():
+            self.hide()
