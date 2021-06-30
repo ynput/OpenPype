@@ -104,6 +104,8 @@ class CreateDialog(QtWidgets.QDialog):
 
         self.controller = controller
 
+        self._last_pos = None
+
         family_list = QtWidgets.QListView(self)
         variant_input = QtWidgets.QLineEdit(self)
 
@@ -137,6 +139,15 @@ class CreateDialog(QtWidgets.QDialog):
         self.auto_close_checkbox = auto_close_checkbox
         self.use_selection_checkbox = auto_close_checkbox
         self.create_btn = create_btn
+
+    def moveEvent(self, event):
+        super(CreateDialog, self).moveEvent(event)
+        self._last_pos = self.pos()
+
+    def showEvent(self, event):
+        super(CreateDialog, self).showEvent(event)
+        if self._last_pos is not None:
+            self.move(self._last_pos)
 
     def _on_create(self):
         # TODO do some stuff
