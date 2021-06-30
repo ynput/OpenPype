@@ -16,7 +16,14 @@ class PublisherWindow(QtWidgets.QWidget):
         main_frame = QtWidgets.QWidget(self)
 
         # Header
-        context_label = QtWidgets.QLabel(main_frame)
+        header_widget = QtWidgets.QWidget(main_frame)
+        context_label = QtWidgets.QLabel(header_widget)
+        reset_btn = QtWidgets.QPushButton("Reset", header_widget)
+
+        header_layout = QtWidgets.QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.addWidget(context_label, 1)
+        header_layout.addWidget(reset_btn, 0)
 
         # Content
         content_widget = QtWidgets.QWidget(main_frame)
@@ -52,13 +59,15 @@ class PublisherWindow(QtWidgets.QWidget):
 
         # Main frame
         main_frame_layout = QtWidgets.QVBoxLayout(main_frame)
-        main_frame_layout.addWidget(context_label, 0)
+        main_frame_layout.addWidget(header_widget, 0)
         main_frame_layout.addWidget(content_widget, 1)
         main_frame_layout.addWidget(footer_widget, 0)
 
         # Add main frame to this window
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.addWidget(main_frame)
+
+        reset_btn.clicked.connect(self._on_reset_clicked)
 
         create_btn.clicked.connect(self._on_create_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
@@ -94,6 +103,9 @@ class PublisherWindow(QtWidgets.QWidget):
 
     def set_context_label(self, label):
         self.context_label.setText(label)
+
+    def _on_reset_clicked(self):
+        self.reset()
 
     def _on_create_clicked(self):
         print("Creation!!!")
