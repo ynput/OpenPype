@@ -81,7 +81,8 @@ pyside2_arg = "PySide2" if not pyside2_version else "PySide2{}".format(pyside2_v
 try:
     subprocess.run(
         [sys.executable, "-m", "pip", "install", "--upgrade",
-         pyside2_arg, "-t", str(openpype_root / "vendor/python")], check=True, stdout=subprocess.DEVNULL)
+         pyside2_arg, "-t", str(openpype_root / "vendor/python")],
+        check=True, stdout=subprocess.DEVNULL)
 except subprocess.CalledProcessError as e:
     _print("Error during PySide2 installation.", 1)
     _print(str(e), 1)
