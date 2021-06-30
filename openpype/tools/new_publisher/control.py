@@ -1,8 +1,11 @@
 import logging
 import inspect
 import avalon.api
-from openpype.pipeline import BaseCreator
 import pyblish.api
+from openpype.pipeline import (
+    BaseCreator,
+    AvalonInstance
+)
 
 
 class PublisherController:
@@ -39,6 +42,17 @@ class PublisherController:
             creators[creator.family] = creator
 
         self.creators = creators
-        self.publish_plugins = []
 
-        self.instances = self.host.list_instances()
+        host_instances = self.host.list_instances()
+        instances = []
+        for instance_data in host_instances:
+            family = instance_data["family"]
+            creator = creators.get(family)
+            if creator is not None:
+                instance_data = creator.convert_family_attribute_values(
+                    instance_data
+                )
+            instance = AvalonInstance.from_existing(instance_data)
+            instances.append(instance)
+
+        self.instances = instances
