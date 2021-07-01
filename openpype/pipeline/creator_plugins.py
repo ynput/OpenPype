@@ -9,6 +9,8 @@ from abc import (
 )
 import six
 
+from openpype.lib import get_subset_name
+
 
 class AvalonInstance:
     """Instance entity with data that will be stored to workfile.
@@ -137,6 +139,11 @@ class BaseCreator:
 
         return None
 
+    def get_dynamic_data(
+        self, variant, task_name, asset_doc, project_name, host_name
+    ):
+        return {}
+
     def get_subset_name(
         self, variant, task_name, asset_doc, project_name, host_name=None
     ):
@@ -159,7 +166,19 @@ class BaseCreator:
             project_name(str): Project name.
             host_name(str): Which host creates subset.
         """
-        pass
+        dynamic_data = self.get_dynamic_data(
+            variant, task_name, asset_doc, project_name, host_name
+        )
+
+        return get_subset_name(
+            self.family,
+            variant,
+            task_name,
+            asset_doc,
+            project_name,
+            host_name,
+            dynamic_data=dynamic_data
+        )
 
     def get_attribute_defs(self):
         """Plugin attribute definitions.
