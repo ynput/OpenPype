@@ -92,7 +92,7 @@ class BlendModelLoader(plugin.AssetLoader):
 
         objects.reverse()
 
-        bpy.data.orphans_purge(do_local_ids = False)
+        bpy.data.orphans_purge(do_local_ids=False)
 
         bpy.ops.object.select_all(action='DESELECT')
 
