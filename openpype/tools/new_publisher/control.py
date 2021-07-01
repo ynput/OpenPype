@@ -94,3 +94,6 @@ class PublisherController:
             instances.append(instance)
 
         self.instances = instances
+
+    def create(self, family, variant=None, options=None):
+        print("TODO implement create")
