@@ -1,4 +1,5 @@
 import os
+import copy
 from Qt import QtWidgets, QtCore, QtGui
 
 SEPARATORS = ("---separator---", "---")
@@ -313,6 +314,22 @@ class CreateDialog(QtWidgets.QDialog):
         value = action.text()
         if self.variant_input.text() != value:
             self.variant_input.setText(value)
+
+    def _on_variant_change(self, variant_value):
+        if not self._prereq_available or not self._selected_creator:
+            if self.subset_name_input.text():
+                self.subset_name_input.setText("")
+            return
+
+        project_name = self.dbcon.Session["AVALON_PROJECT"]
+        task_name = self.dbcon.Session.get("AVALON_TASK")
+
+        asset_doc = copy.deepcopy(self._asset_doc)
+        # Calculate subset name with Creator plugin
+        subset_name = self._selected_creator.get_subset_name(
+            variant_value, task_name, asset_doc, project_name
+        )
+        self.subset_name_input.setText(subset_name)
 
     def moveEvent(self, event):
         super(CreateDialog, self).moveEvent(event)
