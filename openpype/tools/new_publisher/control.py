@@ -13,10 +13,16 @@ from openpype.pipeline import (
 
 
 class PublisherController:
-    def __init__(self, headless=False):
+    def __init__(self, dbcon=None, headless=False):
         self.log = logging.getLogger("PublisherController")
         self.host = avalon.api.registered_host()
         self.headless = headless
+
+        if dbcon is None:
+            session = avalon.api.session_data_from_environment(True)
+            dbcon = avalon.api.AvalonMongoDB(session)
+        dbcon.install()
+        self.dbcon = dbcon
 
         self.creators = {}
         self.publish_plugins = []
