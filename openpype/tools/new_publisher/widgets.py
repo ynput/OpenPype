@@ -108,6 +108,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         self._last_pos = None
         self._asset_doc = None
+        self._subset_names = None
         family_view = QtWidgets.QListView(self)
         family_model = QtGui.QStandardItemModel()
         family_view.setModel(family_model)
@@ -192,6 +193,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         # Make sure `_asset_doc` and `_subset_names` variables are reset
         self._asset_doc = None
+        self._subset_names = None
         if asset_name is None:
             return
 
@@ -203,6 +205,14 @@ class CreateDialog(QtWidgets.QDialog):
 
         if asset_doc:
             self.asset_name_input.setText(asset_doc["name"])
+            subset_docs = self.dbcon.find(
+                {
+                    "type": "subset",
+                    "parent": asset_doc["_id"]
+                },
+                {"name": 1}
+            )
+            self._subset_names = set(subset_docs.distinct("name"))
 
     def moveEvent(self, event):
         super(CreateDialog, self).moveEvent(event)
