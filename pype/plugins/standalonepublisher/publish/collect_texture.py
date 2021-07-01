@@ -22,15 +22,21 @@ class CollectTextures(pyblish.api.ContextPlugin):
     families = ["texture_batch"]
     actions = []
 
+    # internal
+    version_regex = re.compile(r"v([0-9]+)")
+    udim_regex = re.compile(r"[\._]1[0-9]{3}\.")
+
+    # from presets
     main_workfile_extensions = ['mra']
     other_workfile_extensions = ['spp', 'psd']
     texture_extensions = ["exr", "dpx", "jpg", "jpeg", "png", "tiff", "tga",
                           "gif", "svg"]
 
-    color_space = ["linsRGB", "raw", "acesg"]
+    # additional families (ftrack etc.)
+    workfile_families = []
+    textures_families = []
 
-    version_regex = re.compile(r"v([0-9]+)")
-    udim_regex = re.compile(r"[\._]1[0-9]{3}\.")
+    color_space = ["linsRGB", "raw", "acesg"]
 
     #currently implemented placeholders ["color_space"]
     input_naming_patterns = {
@@ -217,25 +223,34 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     "name": subset,
                     "family": family,
                     "version": int(version or main_version),
-                    "families": []
+                    "asset_build": asset_build  # remove in validator
                 }
             )
+
+            workfile = workfile_files.get(asset_build, "DUMMY")
+
             if resource_files.get(subset):
-                new_instance.data.update({
-                    "resources": resource_files.get(subset)
-                })
-
-            workfile = workfile_files.get(asset_build)
-
-            assert workfile, "Missing workfile, attach it."
+                # add resources only when workfile is main style
+                for ext in self.main_workfile_extensions:
+                    if ext in workfile:
+                        new_instance.data.update({
+                            "resources": resource_files.get(subset)
+                        })
+                        break
 
             # store origin
             if family == 'workfile':
+                families = self.workfile_families
+
                 new_instance.data["source"] = "standalone publisher"
             else:
+                families = self.textures_families
+
                 repre = representations.get(subset)[0]
                 new_instance.context.data["currentFile"] = os.path.join(
                     repre["stagingDir"], workfile)
+
+            new_instance.data["families"] = families
 
             # add data for version document
             ver_data = version_data.get(subset)
@@ -268,7 +283,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 input_naming_patterns (list):
                     [workfile_pattern] or [texture_pattern]
         """
-        asset_name = None
+        asset_name = "NOT_AVAIL"
         for input_pattern in input_naming_patterns:
             for cs in color_spaces:
                 pattern = input_pattern.replace('{color_space}', cs)
@@ -277,9 +292,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     asset_name = regex_result[0][0].lower()
                     return asset_name
 
-        msg = "Couldnt find asset name in '{}'\n".format(name) +\
-              "Must follow pattern like '{}'".format(pattern)
-        assert asset_name, msg
+        return asset_name
 
     def _get_version(self, name, version_regex):
         found = re.search(version_regex, name)

@@ -23,6 +23,17 @@ class ValidateTextureBatch(pyblish.api.ContextPlugin):
         workfiles_in_textures = []
         processed_versions = set()
         for instance in context:
+            file_name = instance.data["representations"][0]["files"]
+            if isinstance(file_name, list):
+                file_name = file_name[0]
+
+            msg = "Couldnt find asset name in '{}'\n".format(file_name) + \
+                  "File name doesn't follow configured pattern.\n" + \
+                  "Please rename the file."
+            assert "NOT_AVAIL" not in instance.data["asset_build"], msg
+
+            instance.data.pop("asset_build")
+
             if instance.data["family"] == "workfile":
                 workfiles.append(instance.data["representations"][0]["files"])
 
