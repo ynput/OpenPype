@@ -118,6 +118,7 @@ class CreateDialog(QtWidgets.QDialog):
         family_view.setModel(family_model)
 
         variant_input = QtWidgets.QLineEdit(self)
+        variant_input.setObjectName("VariantInput")
 
         variant_hints_btn = QtWidgets.QPushButton(self)
         variant_hints_btn.setFixedWidth(18)
@@ -369,6 +370,23 @@ class CreateDialog(QtWidgets.QDialog):
         for variant_hint in variant_hints:
             action = self.variant_hints_menu.addAction(variant_hint)
             self.variant_hints_group.addAction(action)
+
+        # Indicate subset existence
+        if not variant_value:
+            property_value = "empty"
+
+        elif subset_name.lower() in existing_subset_names_low:
+            # validate existence of subset name with lowered text
+            #   - "renderMain" vs. "rendermain" mean same path item for
+            #   windows
+            property_value = "exists"
+        else:
+            property_value = "new"
+
+        current_value = self.variant_input.property("state")
+        if current_value != property_value:
+            self.variant_input.setProperty("state", property_value)
+            self.variant_input.style().polish(self.variant_input)
 
         variant_is_valid = variant_value.strip() != ""
         if variant_is_valid != self.create_btn.isEnabled():

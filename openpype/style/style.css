@@ -614,3 +614,15 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 1px solid {color:border};
     border-radius: 0.1em;
 }
+
+#VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
+    border-color: #7AAB8F;
+}
+
+#VariantInput[state="empty"], #VariantInput[state="empty"]:focus, #VariantInput[state="empty"]:hover {
+    border-color: {color:bg-inputs};
+}
+
+#VariantInput[state="exists"], #VariantInput[state="exists"]:focus, #VariantInput[state="exists"]:hover {
+    border-color: #4E76BB;
+}
