@@ -1,4 +1,5 @@
 import os
+import re
 import copy
 from Qt import QtWidgets, QtCore, QtGui
 
