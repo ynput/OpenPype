@@ -114,6 +114,10 @@ class CreateDialog(QtWidgets.QDialog):
         variant_hints_btn = QtWidgets.QPushButton(self)
         variant_hints_btn.setFixedWidth(18)
 
+        variant_hints_menu = QtWidgets.QMenu(variant_hints_btn)
+        variant_hints_group = QtWidgets.QActionGroup(variant_hints_menu)
+        variant_hints_btn.setMenu(variant_hints_menu)
+
         variant_layout = QtWidgets.QHBoxLayout()
         variant_layout.setContentsMargins(0, 0, 0, 0)
         variant_layout.setSpacing(0)
@@ -160,6 +164,8 @@ class CreateDialog(QtWidgets.QDialog):
 
         self.variant_input = variant_input
         self.variant_hints_btn = variant_hints_btn
+        self.variant_hints_menu = variant_hints_menu
+        self.variant_hints_group = variant_hints_group
 
         self.family_model = family_model
         self.family_view = family_view
