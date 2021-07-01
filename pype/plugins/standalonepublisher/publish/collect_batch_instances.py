@@ -13,8 +13,7 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
 
     # presets
     default_subset_task = {
-        "background_batch": "background",
-        "textures_multi": "Texture"
+        "background_batch": "background"
     }
     subsets = {
         "background_batch": {
