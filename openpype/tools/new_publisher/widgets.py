@@ -189,7 +189,10 @@ class CreateDialog(QtWidgets.QDialog):
     def refresh(self):
         self._prereq_available = True
 
+        # Refresh data before update of creators
         self._refresh_asset()
+        # Then refresh creators which may trigger callbacks using refreshed
+        #   data
         self._refresh_creators()
 
         if self._asset_doc is None:
