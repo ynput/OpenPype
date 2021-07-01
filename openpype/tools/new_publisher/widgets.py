@@ -107,6 +107,7 @@ class CreateDialog(QtWidgets.QDialog):
         self.controller = controller
 
         self._last_pos = None
+        self._asset_doc = None
         family_view = QtWidgets.QListView(self)
         family_model = QtGui.QStandardItemModel()
         family_view.setModel(family_model)
@@ -178,6 +179,30 @@ class CreateDialog(QtWidgets.QDialog):
     @property
     def dbcon(self):
         return self.controller.dbcon
+
+    def refresh(self):
+        self._refresh_asset()
+
+    def _refresh_asset(self):
+        asset_name = self.dbcon.Session.get("AVALON_ASSET")
+
+        # Skip if asset did not change
+        if self._asset_doc and self._asset_doc["name"] == asset_name:
+            return
+
+        # Make sure `_asset_doc` and `_subset_names` variables are reset
+        self._asset_doc = None
+        if asset_name is None:
+            return
+
+        asset_doc = self.dbcon.find_one({
+            "type": "asset",
+            "name": asset_name
+        })
+        self._asset_doc = asset_doc
+
+        if asset_doc:
+            self.asset_name_input.setText(asset_doc["name"])
 
     def moveEvent(self, event):
         super(CreateDialog, self).moveEvent(event)
