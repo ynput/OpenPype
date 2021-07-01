@@ -332,6 +332,46 @@ class CreateDialog(QtWidgets.QDialog):
         )
         self.subset_name_input.setText(subset_name)
 
+        self._validate_subset_name(subset_name, variant_value)
+
+    def _validate_subset_name(self, subset_name, variant_value):
+        # Get all subsets of the current asset
+        existing_subset_names = set(self._subset_names)
+        existing_subset_names_low = set(
+            _name.lower()
+            for _name in existing_subset_names
+        )
+
+        # Replace
+        compare_regex = re.compile(re.sub(
+            variant_value, "(.+)", subset_name, flags=re.IGNORECASE
+        ))
+        variant_hints = set()
+        if variant_value:
+            for _name in existing_subset_names:
+                _result = compare_regex.search(_name)
+                if _result:
+                    variant_hints |= set(_result.groups())
+
+        # Remove previous hints from menu
+        for action in tuple(self.variant_hints_group.actions()):
+            self.variant_hints_group.removeAction(action)
+            self.variant_hints_menu.removeAction(action)
+            action.deleteLater()
+
+        # Add separator if there are hints and menu already has actions
+        if variant_hints and self.variant_hints_menu.actions():
+            self.variant_hints_menu.addSeparator()
+
+        # Add hints to actions
+        for variant_hint in variant_hints:
+            action = self.variant_hints_menu.addAction(variant_hint)
+            self.variant_hints_group.addAction(action)
+
+        variant_is_valid = variant_value.strip() != ""
+        if variant_is_valid != self.create_btn.isEnabled():
+            self.create_btn.setEnabled(variant_is_valid)
+
     def moveEvent(self, event):
         super(CreateDialog, self).moveEvent(event)
         self._last_pos = self.pos()
