@@ -106,6 +106,8 @@ class CreateDialog(QtWidgets.QDialog):
 
         self._last_pos = None
         family_view = QtWidgets.QListView(self)
+        family_model = QtGui.QStandardItemModel()
+        family_view.setModel(family_model)
 
         variant_input = QtWidgets.QLineEdit(self)
 
@@ -135,6 +137,7 @@ class CreateDialog(QtWidgets.QDialog):
         create_btn.clicked.connect(self._on_create)
 
         self.variant_input = variant_input
+        self.family_model = family_model
         self.family_view = family_view
         self.auto_close_checkbox = auto_close_checkbox
         self.use_selection_checkbox = auto_close_checkbox
