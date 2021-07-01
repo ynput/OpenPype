@@ -283,7 +283,7 @@ class CreateDialog(QtWidgets.QDialog):
         if self.isVisible():
             self.refresh()
 
-    def _on_family_change(self, new_index, old_index):
+    def _on_family_change(self, new_index, _old_index):
         family = None
         if new_index.isValid():
             family = new_index.data(QtCore.Qt.DisplayRole)
