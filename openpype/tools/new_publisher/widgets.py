@@ -111,6 +111,15 @@ class CreateDialog(QtWidgets.QDialog):
 
         variant_input = QtWidgets.QLineEdit(self)
 
+        variant_hints_btn = QtWidgets.QPushButton(self)
+        variant_hints_btn.setFixedWidth(18)
+
+        variant_layout = QtWidgets.QHBoxLayout()
+        variant_layout.setContentsMargins(0, 0, 0, 0)
+        variant_layout.setSpacing(0)
+        variant_layout.addWidget(variant_input, 1)
+        variant_layout.addWidget(variant_hints_btn, 0)
+
         asset_name_input = QtWidgets.QLineEdit(self)
         asset_name_input.setEnabled(False)
 
@@ -138,7 +147,7 @@ class CreateDialog(QtWidgets.QDialog):
         layout.addWidget(QtWidgets.QLabel("Asset:", self))
         layout.addWidget(asset_name_input, 0)
         layout.addWidget(QtWidgets.QLabel("Name:", self))
-        layout.addWidget(variant_input, 0)
+        layout.addLayout(variant_layout, 0)
         layout.addWidget(QtWidgets.QLabel("Subset:", self))
         layout.addWidget(subset_name_input, 0)
         layout.addWidget(checkbox_inputs, 0)
@@ -150,6 +159,8 @@ class CreateDialog(QtWidgets.QDialog):
         self.subset_name_input = subset_name_input
 
         self.variant_input = variant_input
+        self.variant_hints_btn = variant_hints_btn
+
         self.family_model = family_model
         self.family_view = family_view
         self.auto_close_checkbox = auto_close_checkbox
