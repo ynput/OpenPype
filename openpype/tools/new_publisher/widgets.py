@@ -381,6 +381,8 @@ class CreateDialog(QtWidgets.QDialog):
         if self._last_pos is not None:
             self.move(self._last_pos)
 
+        self.refresh()
+
     def _on_create(self):
         indexes = self.family_view.selectedIndexes()
         if not indexes or len(indexes) > 1:
