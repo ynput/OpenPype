@@ -8,21 +8,21 @@ def get_default_thumbnail_image_path():
 
 
 class SubsetAttributesWidget(QtWidgets.QWidget):
+    """Widget where attributes of instance/s are modified.
+     _____________________________
+    |                 |           |
+    |     Global      | Thumbnail |
+    |     attributes  |           | TOP
+    |_________________|___________|
+    |              |              |
+    |              |  Publish     |
+    |  Family      |  plugin      |
+    |  attributes  |  attributes  | BOTTOM
+    |______________|______________|
+    """
+
     def __init__(self, parent):
         super(SubsetAttributesWidget, self).__init__(parent)
-
-        """
-         _____________________________
-        |                 |           |
-        |     Global      | Thumbnail |
-        |     attributes  |           | TOP
-        |_________________|___________|
-        |              |              |
-        |              |  Publish     |
-        |  Family      |  plugin      |
-        |  attributes  |  attributes  | BOTTOM
-        |______________|______________|
-        """
 
         # TOP PART
         top_widget = QtWidgets.QWidget(self)
