@@ -975,11 +975,31 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
-        input_data = ffprobe_streams(
-            full_input_path_single_file, self.log
-        )[0]
-        input_width = int(input_data["width"])
-        input_height = int(input_data["height"])
+        try:
+            streams = ffprobe_streams(
+                full_input_path_single_file, self.log
+            )
+        except Exception:
+            raise AssertionError((
+                "FFprobe couldn't read information about input file: \"{}\""
+            ).format(full_input_path_single_file))
+
+        # Try to find first stream with defined 'width' and 'height'
+        # - this is to avoid order of streams where audio can be as first
+        # - there may be a better way (checking `codec_type`?)
+        input_width = None
+        input_height = None
+        for stream in streams:
+            if "width" in stream and "height" in stream:
+                input_width = int(stream["width"])
+                input_height = int(stream["height"])
+                break
+
+        # Raise exception of any stream didn't define input resolution
+        if input_width is None:
+            raise AssertionError((
+                "FFprobe couldn't read resolution from input file: \"{}\""
+            ).format(full_input_path_single_file))
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
         # - settings value can't have None but has value of 0

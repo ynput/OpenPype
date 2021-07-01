@@ -1,11 +1,15 @@
 # Changelog
 
-## [3.2.0-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.2.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.4...HEAD)
 
 **🚀 Enhancements**
 
+- Settings UI copy/paste [\#1769](https://github.com/pypeclub/OpenPype/pull/1769)
+- Workfile tool widths [\#1766](https://github.com/pypeclub/OpenPype/pull/1766)
+- Push hierarchical attributes care about task parent changes [\#1763](https://github.com/pypeclub/OpenPype/pull/1763)
+- Application executables with environment variables [\#1757](https://github.com/pypeclub/OpenPype/pull/1757)
 - Settings Hosts enum [\#1739](https://github.com/pypeclub/OpenPype/pull/1739)
 - Validate containers settings [\#1736](https://github.com/pypeclub/OpenPype/pull/1736)
 - PS - added loader from sequence [\#1726](https://github.com/pypeclub/OpenPype/pull/1726)
@@ -18,6 +22,11 @@
 
 **🐛 Bug fixes**
 
+- FFprobe streams order [\#1775](https://github.com/pypeclub/OpenPype/pull/1775)
+- Project specific environments [\#1767](https://github.com/pypeclub/OpenPype/pull/1767)
+- Settings UI with refresh button [\#1764](https://github.com/pypeclub/OpenPype/pull/1764)
+- Standalone publisher thumbnail extractor fix [\#1761](https://github.com/pypeclub/OpenPype/pull/1761)
+- Anatomy others templates don't cause crash [\#1758](https://github.com/pypeclub/OpenPype/pull/1758)
 - Backend acre module commit update [\#1745](https://github.com/pypeclub/OpenPype/pull/1745)
 - hiero: precollect instances failing when audio selected [\#1743](https://github.com/pypeclub/OpenPype/pull/1743)
 - Hiero: creator instance error [\#1742](https://github.com/pypeclub/OpenPype/pull/1742)
@@ -31,8 +40,13 @@
 - Default subset template for TVPaint review and workfile families [\#1716](https://github.com/pypeclub/OpenPype/pull/1716)
 - Maya: Extract review hotfix [\#1714](https://github.com/pypeclub/OpenPype/pull/1714)
 - Settings: Imageio improving granularity [\#1711](https://github.com/pypeclub/OpenPype/pull/1711)
-- Hiero: published whole edit mov [\#1687](https://github.com/pypeclub/OpenPype/pull/1687)
 - Application without executables [\#1679](https://github.com/pypeclub/OpenPype/pull/1679)
+
+**Merged pull requests:**
+
+- Bump prismjs from 1.23.0 to 1.24.0 in /website [\#1773](https://github.com/pypeclub/OpenPype/pull/1773)
+- TVPaint ftrack family [\#1755](https://github.com/pypeclub/OpenPype/pull/1755)
+- global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
 
 ## [2.18.4](https://github.com/pypeclub/OpenPype/tree/2.18.4) (2021-06-24)
 
@@ -50,10 +64,6 @@
 **🐛 Bug fixes**
 
 - Tools names forwards compatibility [\#1727](https://github.com/pypeclub/OpenPype/pull/1727)
-
-**Merged pull requests:**
-
-- global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
 
 ## [2.18.2](https://github.com/pypeclub/OpenPype/tree/2.18.2) (2021-06-16)
 
@@ -98,6 +108,7 @@
 - Nuke: broken publishing rendered frames [\#1707](https://github.com/pypeclub/OpenPype/pull/1707)
 - Standalone publisher Thumbnail export args [\#1705](https://github.com/pypeclub/OpenPype/pull/1705)
 - Bad zip can break OpenPype start [\#1691](https://github.com/pypeclub/OpenPype/pull/1691)
+- Hiero: published whole edit mov [\#1687](https://github.com/pypeclub/OpenPype/pull/1687)
 - Ftrack subprocess handle of stdout/stderr [\#1675](https://github.com/pypeclub/OpenPype/pull/1675)
 - Settings list race condifiton and mutable dict list conversion [\#1671](https://github.com/pypeclub/OpenPype/pull/1671)
 - Mac launch arguments fix [\#1660](https://github.com/pypeclub/OpenPype/pull/1660)
