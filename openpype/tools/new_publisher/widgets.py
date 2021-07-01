@@ -111,6 +111,9 @@ class CreateDialog(QtWidgets.QDialog):
 
         variant_input = QtWidgets.QLineEdit(self)
 
+        asset_name_input = QtWidgets.QLineEdit(self)
+        asset_name_input.setEnabled(False)
+
         subset_name_input = QtWidgets.QLineEdit(self)
         subset_name_input.setEnabled(False)
 
@@ -132,6 +135,8 @@ class CreateDialog(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(QtWidgets.QLabel("Family:", self))
         layout.addWidget(family_view, 1)
+        layout.addWidget(QtWidgets.QLabel("Asset:", self))
+        layout.addWidget(asset_name_input, 0)
         layout.addWidget(QtWidgets.QLabel("Name:", self))
         layout.addWidget(variant_input, 0)
         layout.addWidget(QtWidgets.QLabel("Subset:", self))
@@ -140,6 +145,8 @@ class CreateDialog(QtWidgets.QDialog):
         layout.addWidget(create_btn, 0)
 
         create_btn.clicked.connect(self._on_create)
+
+        self.asset_name_input = asset_name_input
         self.subset_name_input = subset_name_input
 
         self.variant_input = variant_input
