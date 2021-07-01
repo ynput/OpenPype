@@ -111,6 +111,9 @@ class CreateDialog(QtWidgets.QDialog):
 
         variant_input = QtWidgets.QLineEdit(self)
 
+        subset_name_input = QtWidgets.QLineEdit(self)
+        subset_name_input.setEnabled(False)
+
         checkbox_inputs = QtWidgets.QWidget(self)
         auto_close_checkbox = QtWidgets.QCheckBox(
             "Auto-close", checkbox_inputs
@@ -131,10 +134,13 @@ class CreateDialog(QtWidgets.QDialog):
         layout.addWidget(family_view, 1)
         layout.addWidget(QtWidgets.QLabel("Name:", self))
         layout.addWidget(variant_input, 0)
+        layout.addWidget(QtWidgets.QLabel("Subset:", self))
+        layout.addWidget(subset_name_input, 0)
         layout.addWidget(checkbox_inputs, 0)
         layout.addWidget(create_btn, 0)
 
         create_btn.clicked.connect(self._on_create)
+        self.subset_name_input = subset_name_input
 
         self.variant_input = variant_input
         self.family_model = family_model
