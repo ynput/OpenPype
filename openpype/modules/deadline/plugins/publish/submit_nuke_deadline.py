@@ -254,9 +254,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                             if key in os.environ}, **api.Session)
         # self.log.debug("enviro: {}".format(pprint(environment)))
 
-        for path in os.environ:
-            if path.lower().startswith('openpype_'):
-                environment[path] = os.environ[path]
+        for _path in os.environ:
+            if _path.lower().startswith('openpype_'):
+                environment[_path] = os.environ[_path]
 
         clean_environment = {}
         for key, value in environment.items():
