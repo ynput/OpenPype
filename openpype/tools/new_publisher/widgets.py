@@ -148,6 +148,7 @@ class CreateDialog(QtWidgets.QDialog):
         checkbox_layout.addWidget(use_selection_checkbox)
 
         create_btn = QtWidgets.QPushButton("Create", self)
+        create_btn.setEnabled(False)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(QtWidgets.QLabel("Family:", self))
