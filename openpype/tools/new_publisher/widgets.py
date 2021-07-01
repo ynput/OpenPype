@@ -1,6 +1,8 @@
 import os
 from Qt import QtWidgets, QtCore, QtGui
 
+SEPARATORS = ("---separator---", "---")
+
 
 def get_default_thumbnail_image_path():
     dirpath = os.path.dirname(os.path.abspath(__file__))
