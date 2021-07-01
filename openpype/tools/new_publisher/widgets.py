@@ -168,6 +168,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         create_btn.clicked.connect(self._on_create)
         variant_input.returnPressed.connect(self._on_create)
+        variant_input.textChanged.connect(self._on_variant_change)
         family_view.selectionModel().currentChanged.connect(
             self._on_family_change
         )
