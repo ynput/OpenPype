@@ -279,7 +279,9 @@ class CreateDialog(QtWidgets.QDialog):
             self.family_view.setCurrentIndex(index)
 
     def _on_control_reset(self):
-        self.refresh()
+        # Trigger refresh only if is visible
+        if self.isVisible():
+            self.refresh()
 
     def _on_family_change(self, new_index, old_index):
         family = None
