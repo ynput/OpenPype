@@ -22,7 +22,7 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
         which \
         git \
         devtoolset-7-gcc* \
-	gcc-c++ \
+	    gcc-c++ \
         make \
         cmake \
         curl \
@@ -36,8 +36,9 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
         openssl-devel \
         tk-devel libffi-devel \
         qt5-qtbase-devel \
-	autoconf \
-	automake \
+	    autoconf \
+	    automake \
+	    ncurses-libs \
     && yum clean all
 
 # we need to build our own patchelf
