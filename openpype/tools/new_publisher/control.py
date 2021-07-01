@@ -1,3 +1,4 @@
+import weakref
 import logging
 import inspect
 import avalon.api
@@ -24,11 +25,17 @@ class PublisherController:
         dbcon.install()
         self.dbcon = dbcon
 
+        self._reset_callback_refs = set()
+
         self.creators = {}
         self.publish_plugins = []
         self.instances = []
 
         self._in_reset = False
+
+    def add_reset_callback(self, callback):
+        ref = weakref.WeakMethod(callback)
+        self._reset_callback_refs.add(ref)
 
     def reset(self):
         if self._in_reset:
@@ -36,6 +43,18 @@ class PublisherController:
 
         self._in_reset = True
         self._reset()
+
+        # Trigger reset callbacks
+        to_remove = set()
+        for ref in self._reset_callback_refs:
+            callback = ref()
+            if callback:
+                callback()
+            else:
+                to_remove.add(ref)
+        for ref in to_remove:
+            self._reset_callback_refs.remove(ref)
+
         self._in_reset = False
 
     def _reset(self):
