@@ -165,6 +165,7 @@ class CreateDialog(QtWidgets.QDialog):
         layout.addWidget(create_btn, 0)
 
         create_btn.clicked.connect(self._on_create)
+        variant_hints_menu.triggered.connect(self._on_variant_action)
 
         controller.add_reset_callback(self._on_control_reset)
 
@@ -272,6 +273,11 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _on_control_reset(self):
         self.refresh()
+
+    def _on_variant_action(self, action):
+        value = action.text()
+        if self.variant_input.text() != value:
+            self.variant_input.setText(value)
 
     def moveEvent(self, event):
         super(CreateDialog, self).moveEvent(event)
