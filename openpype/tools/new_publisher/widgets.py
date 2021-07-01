@@ -241,6 +241,15 @@ class CreateDialog(QtWidgets.QDialog):
             item = existing_items[family]
             self.family_model.takeRow(item.row())
 
+        if self.family_model.rowCount() < 1:
+            return
+
+        # Make sure there is a selection
+        indexes = self.family_view.selectedIndexes()
+        if not indexes:
+            index = self.family_model.index(0, 0)
+            self.family_view.setCurrentIndex(index)
+
     def _on_control_reset(self):
         self.refresh()
 
