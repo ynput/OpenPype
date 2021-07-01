@@ -109,6 +109,8 @@ class CreateDialog(QtWidgets.QDialog):
         self._last_pos = None
         self._asset_doc = None
         self._subset_names = None
+
+        self._prereq_available = False
         family_view = QtWidgets.QListView(self)
         family_model = QtGui.QStandardItemModel()
         family_view.setModel(family_model)
@@ -185,8 +187,22 @@ class CreateDialog(QtWidgets.QDialog):
         return self.controller.dbcon
 
     def refresh(self):
+        self._prereq_available = True
+
         self._refresh_asset()
         self._refresh_creators()
+
+        if self._asset_doc is None:
+            self.asset_name_input.setText("< Asset is not set >")
+            self._prereq_available = False
+
+        if self.family_model.rowCount() < 1:
+            self._prereq_available = False
+
+        self.create_btn.setEnabled(self._prereq_available)
+        self.family_view.setEnabled(self._prereq_available)
+        self.variant_input.setEnabled(self._prereq_available)
+        self.variant_hints_btn.setEnabled(self._prereq_available)
 
     def _refresh_asset(self):
         asset_name = self.dbcon.Session.get("AVALON_ASSET")
