@@ -341,6 +341,21 @@ class CreateDialog(QtWidgets.QDialog):
             self.move(self._last_pos)
 
     def _on_create(self):
-        # TODO do some stuff
+        indexes = self.family_view.selectedIndexes()
+        if not indexes or len(indexes) > 1:
+            return
+
+        if not self.create_btn.isEnabled():
+            return
+
+        index = indexes[0]
+        family = index.data(QtCore.Qt.DisplayRole)
+        variant = self.variant_input.text()
+        options = {
+            "useSelection": self.use_selection_checkbox.isChecked()
+        }
+
+        self.controller.create(family, variant, options)
+
         if self.auto_close_checkbox.isChecked():
             self.hide()
