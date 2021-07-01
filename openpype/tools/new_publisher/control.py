@@ -62,7 +62,7 @@ class PublisherController:
         publish_plugins = pyblish.api.discover()
         self.publish_plugins = publish_plugins
 
-        project_name = avalon.api.Session["AVALON_PROJECT"]
+        project_name = self.dbcon.Session["AVALON_PROJECT"]
         system_settings = get_system_settings()
         project_settings = get_project_settings(project_name)
 
