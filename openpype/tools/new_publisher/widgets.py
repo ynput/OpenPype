@@ -105,8 +105,8 @@ class CreateDialog(QtWidgets.QDialog):
         self.controller = controller
 
         self._last_pos = None
+        family_view = QtWidgets.QListView(self)
 
-        family_list = QtWidgets.QListView(self)
         variant_input = QtWidgets.QLineEdit(self)
 
         checkbox_inputs = QtWidgets.QWidget(self)
@@ -126,7 +126,7 @@ class CreateDialog(QtWidgets.QDialog):
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(QtWidgets.QLabel("Family:", self))
-        layout.addWidget(family_list, 1)
+        layout.addWidget(family_view, 1)
         layout.addWidget(QtWidgets.QLabel("Name:", self))
         layout.addWidget(variant_input, 0)
         layout.addWidget(checkbox_inputs, 0)
@@ -135,7 +135,7 @@ class CreateDialog(QtWidgets.QDialog):
         create_btn.clicked.connect(self._on_create)
 
         self.variant_input = variant_input
-        self.family_list = family_list
+        self.family_view = family_view
         self.auto_close_checkbox = auto_close_checkbox
         self.use_selection_checkbox = auto_close_checkbox
         self.create_btn = create_btn
