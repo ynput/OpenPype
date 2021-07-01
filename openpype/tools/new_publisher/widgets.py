@@ -166,6 +166,7 @@ class CreateDialog(QtWidgets.QDialog):
         layout.addWidget(create_btn, 0)
 
         create_btn.clicked.connect(self._on_create)
+        variant_input.returnPressed.connect(self._on_create)
         family_view.selectionModel().currentChanged.connect(
             self._on_family_change
         )
