@@ -21,6 +21,7 @@ for path in [
 
 from Qt import QtWidgets, QtCore
 
+from openpype import style
 from control import PublisherController
 from widgets import (
     SubsetAttributesWidget,
@@ -116,7 +117,7 @@ class PublisherWindow(QtWidgets.QWidget):
         self.set_context_label(
             "<project>/<hierarchy>/<asset>/<task>/<workfile>"
         )
-        # self.setStyleSheet("border: 1px solid black;")
+        self.setStyleSheet(style.load_stylesheet())
 
     def showEvent(self, event):
         super(PublisherWindow, self).showEvent(event)
