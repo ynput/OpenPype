@@ -109,6 +109,7 @@ class CreateDialog(QtWidgets.QDialog):
         self._last_pos = None
         self._asset_doc = None
         self._subset_names = None
+        self._selected_creator = None
 
         self._prereq_available = False
         family_view = QtWidgets.QListView(self)
@@ -165,6 +166,9 @@ class CreateDialog(QtWidgets.QDialog):
         layout.addWidget(create_btn, 0)
 
         create_btn.clicked.connect(self._on_create)
+        family_view.selectionModel().currentChanged.connect(
+            self._on_family_change
+        )
         variant_hints_menu.triggered.connect(self._on_variant_action)
 
         controller.add_reset_callback(self._on_control_reset)
@@ -273,6 +277,36 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _on_control_reset(self):
         self.refresh()
+
+    def _on_family_change(self, new_index, old_index):
+        family = None
+        if new_index.isValid():
+            family = new_index.data(QtCore.Qt.DisplayRole)
+
+        creator = self.controller.creators.get(family)
+        self._selected_creator = creator
+        if not creator:
+            return
+
+        default_variants = creator.get_default_variants()
+        if not default_variants:
+            default_variants = ["Main"]
+
+        default_variant = creator.get_default_variant()
+        if not default_variant:
+            default_variant = default_variants[0]
+
+        for action in tuple(self.variant_hints_menu.actions()):
+            self.variant_hints_menu.removeAction(action)
+            action.deleteLater()
+
+        for variant in default_variants:
+            if variant in SEPARATORS:
+                self.variant_hints_menu.addSeparator()
+            elif variant:
+                self.variant_hints_menu.addAction(variant)
+
+        self.variant_input.setText(default_variant or "Main")
 
     def _on_variant_action(self, action):
         value = action.text()
