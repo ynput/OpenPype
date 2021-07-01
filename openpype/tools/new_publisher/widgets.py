@@ -167,6 +167,10 @@ class CreateDialog(QtWidgets.QDialog):
         self.use_selection_checkbox = auto_close_checkbox
         self.create_btn = create_btn
 
+    @property
+    def dbcon(self):
+        return self.controller.dbcon
+
     def moveEvent(self, event):
         super(CreateDialog, self).moveEvent(event)
         self._last_pos = self.pos()
