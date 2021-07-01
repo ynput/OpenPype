@@ -4,10 +4,16 @@ import sys
 openpype_dir = ""
 mongo_url = ""
 project_name = ""
+asset_name = ""
+task_name = ""
+host_name = ""
 
 os.environ["OPENPYPE_MONGO"] = mongo_url
 os.environ["AVALON_MONGO"] = mongo_url
 os.environ["AVALON_PROJECT"] = project_name
+os.environ["AVALON_ASSET"] = asset_name
+os.environ["AVALON_TASK"] = task_name
+os.environ["AVALON_APP"] = host_name
 os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"
 os.environ["AVALON_CONFIG"] = "openpype"
 os.environ["AVALON_TIMEOUT"] = "1000"
