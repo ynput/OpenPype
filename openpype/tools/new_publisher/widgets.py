@@ -185,6 +185,7 @@ class CreateDialog(QtWidgets.QDialog):
 
     def refresh(self):
         self._refresh_asset()
+        self._refresh_creators()
 
     def _refresh_asset(self):
         asset_name = self.dbcon.Session.get("AVALON_ASSET")
@@ -215,6 +216,30 @@ class CreateDialog(QtWidgets.QDialog):
                 {"name": 1}
             )
             self._subset_names = set(subset_docs.distinct("name"))
+
+    def _refresh_creators(self):
+        # Refresh creators and add their families to list
+        existing_items = {}
+        old_families = set()
+        for row in range(self.family_model.rowCount()):
+            item = self.family_model.item(row, 0)
+            family = item.data(QtCore.Qt.DisplayRole)
+            existing_items[family] = item
+            old_families.add(family)
+
+        # Add new families
+        new_families = set()
+        for family, creator in self.controller.creators.items():
+            # TODO add details about creator
+            new_families.add(family)
+            if family not in existing_items:
+                item = QtGui.QStandardItem(family)
+                self.family_model.appendRow(item)
+
+        # Remove families that are no more available
+        for family in (old_families - new_families):
+            item = existing_items[family]
+            self.family_model.takeRow(item.row())
 
     def _on_control_reset(self):
         self.refresh()
