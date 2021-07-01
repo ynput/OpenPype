@@ -9,7 +9,7 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
     label = "Collect Batch Instances"
     order = pyblish.api.CollectorOrder + 0.489
     hosts = ["standalonepublisher"]
-    families = ["background_batch", "textures_multi"]
+    families = ["background_batch"]
 
     # presets
     default_subset_task = {
@@ -29,12 +29,6 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
             "workfileBackground": {
                 "task": "background",
                 "family": "workfile"
-            }
-        },
-        "textures_multi": {
-            "textures{}": {
-                "family": "textures",
-                "families": ["original_name"]
             }
         }
     }
