@@ -163,6 +163,8 @@ class CreateDialog(QtWidgets.QDialog):
 
         create_btn.clicked.connect(self._on_create)
 
+        controller.add_reset_callback(self._on_control_reset)
+
         self.asset_name_input = asset_name_input
         self.subset_name_input = subset_name_input
 
@@ -213,6 +215,9 @@ class CreateDialog(QtWidgets.QDialog):
                 {"name": 1}
             )
             self._subset_names = set(subset_docs.distinct("name"))
+
+    def _on_control_reset(self):
+        self.refresh()
 
     def moveEvent(self, event):
         super(CreateDialog, self).moveEvent(event)
