@@ -176,8 +176,7 @@ class CollectReview(api.InstancePlugin):
         self.log.debug("__ media_duration: {}".format(media_duration))
         self.log.debug("__ clip_duration_h: {}".format(clip_duration_h))
 
-        thumb_frame = int(instance.data["sourceIn"] + (
-            (instance.data["sourceOut"] - instance.data["sourceIn"]) / 2))
+        thumb_frame = int(item.sourceIn() + (item.sourceDuration() / 2))
 
         thumb_file = "{}thumbnail{}{}".format(head, thumb_frame, ".png")
         thumb_path = os.path.join(staging_dir, thumb_file)
