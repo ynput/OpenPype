@@ -78,19 +78,21 @@ class BlendModelLoader(plugin.AssetLoader):
 
         for obj in objects:
             local_obj = plugin.prepare_data(obj, group_name)
-            if obj.type != 'EMPTY':
+            if local_obj.type != 'EMPTY':
                 plugin.prepare_data(local_obj.data, group_name)
 
                 for material_slot in local_obj.material_slots:
                     plugin.prepare_data(material_slot.material, group_name)
 
-            if not obj.get(AVALON_PROPERTY):
+            if not local_obj.get(AVALON_PROPERTY):
                 local_obj[AVALON_PROPERTY] = dict()
 
             avalon_info = local_obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": group_name})
 
         objects.reverse()
+
+        bpy.data.orphans_purge(do_local_ids = False)
 
         bpy.ops.object.select_all(action='DESELECT')
 

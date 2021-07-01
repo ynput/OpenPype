@@ -91,7 +91,7 @@ class BlendRigLoader(plugin.AssetLoader):
         for obj in objects:
             local_obj = plugin.prepare_data(obj, group_name)
 
-            if obj.type == 'MESH':
+            if local_obj.type == 'MESH':
                 plugin.prepare_data(local_obj.data, group_name)
 
                 if obj != local_obj:
@@ -102,7 +102,7 @@ class BlendRigLoader(plugin.AssetLoader):
                 for material_slot in local_obj.material_slots:
                     if material_slot.material:
                         plugin.prepare_data(material_slot.material, group_name)
-            elif obj.type == 'ARMATURE':
+            elif local_obj.type == 'ARMATURE':
                 plugin.prepare_data(local_obj.data, group_name)
 
                 if action is not None:
@@ -118,13 +118,15 @@ class BlendRigLoader(plugin.AssetLoader):
                             for t in v.targets:
                                 t.id = local_obj
 
-            if not obj.get(AVALON_PROPERTY):
+            if not local_obj.get(AVALON_PROPERTY):
                 local_obj[AVALON_PROPERTY] = dict()
 
             avalon_info = local_obj[AVALON_PROPERTY]
             avalon_info.update({"container_name": group_name})
 
         objects.reverse()
+
+        bpy.data.orphans_purge(do_local_ids = False)
 
         bpy.ops.object.select_all(action='DESELECT')
 
