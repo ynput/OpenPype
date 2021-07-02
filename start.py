@@ -812,7 +812,7 @@ def boot():
     from openpype.version import __version__
 
     assert version_path, "Version path not defined."
-    info = get_info()
+    info = get_info(use_staging)
     info.insert(0, f">>> Using OpenPype from [ {version_path} ]")
 
     t_width = 20
@@ -839,7 +839,7 @@ def boot():
         sys.exit(1)
 
 
-def get_info() -> list:
+def get_info(use_staging=None) -> list:
     """Print additional information to console."""
     from openpype.lib.mongo import get_default_components
     from openpype.lib.log import PypeLogger
@@ -847,7 +847,7 @@ def get_info() -> list:
     components = get_default_components()
 
     inf = []
-    if not getattr(sys, 'frozen', False):
+    if use_staging:
         inf.append(("OpenPype variant", "staging"))
     else:
         inf.append(("OpenPype variant", "production"))
