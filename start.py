@@ -339,20 +339,21 @@ def _process_arguments() -> tuple:
             _print("    --use-version=3.0.0")
             sys.exit(1)
 
-        m = re.search(
-            r"--use-version=(?P<version>\d+\.\d+\.\d+(?:\S*)?)", arg)
-        if m and m.group('version'):
-            use_version = m.group('version')
-            _print(">>> Requested version [ {} ]".format(use_version))
-            sys.argv.remove(arg)
-            if "+staging" in use_version:
-                use_staging = True
-            break
-        else:
-            _print("!!! Requested version isn't in correct format.")
-            _print(("    Use --list-versions to find out"
-                   " proper version string."))
-            sys.exit(1)
+        if arg.startswith("--use-version="):
+            m = re.search(
+                r"--use-version=(?P<version>\d+\.\d+\.\d+(?:\S*)?)", arg)
+            if m and m.group('version'):
+                use_version = m.group('version')
+                _print(">>> Requested version [ {} ]".format(use_version))
+                sys.argv.remove(arg)
+                if "+staging" in use_version:
+                    use_staging = True
+                break
+            else:
+                _print("!!! Requested version isn't in correct format.")
+                _print(("    Use --list-versions to find out"
+                       " proper version string."))
+                sys.exit(1)
 
     if "--use-staging" in sys.argv:
         use_staging = True
