@@ -537,7 +537,7 @@ def _find_frozen_openpype(use_version: str = None,
             _print("*** Still no luck finding OpenPype.")
             _print(("*** We'll try to use the one coming "
                    "with OpenPype installation."))
-        version_path = _bootstrap_from_code(use_version)
+        version_path = _bootstrap_from_code(use_version, use_staging)
         openpype_version = OpenPypeVersion(
             version=BootstrapRepos.get_version(version_path),
             path=version_path)
