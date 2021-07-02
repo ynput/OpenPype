@@ -348,6 +348,12 @@ def _process_arguments() -> tuple:
             if "+staging" in use_version:
                 use_staging = True
             break
+        else:
+            _print("!!! Requested version isn't in correct format.")
+            _print(("    Use --list-versions to find out"
+                   " proper version string."))
+            sys.exit(1)
+
     if "--use-staging" in sys.argv:
         use_staging = True
         sys.argv.remove("--use-staging")
@@ -607,7 +613,8 @@ def _bootstrap_from_code(use_version, use_staging):
     _openpype_root = OPENPYPE_ROOT
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(_openpype_root))
-        _print(f"  - running version: {local_version}")
+        switch_str = f" - will switch to {use_version}" if use_version else ""
+        _print(f"  - booting version: {local_version}{switch_str}")
         assert local_version
     else:
         # get current version of OpenPype
@@ -706,8 +713,13 @@ def boot():
     use_version, use_staging, print_versions = _process_arguments()
 
     if os.getenv("OPENPYPE_VERSION"):
-        use_staging = "staging" in os.getenv("OPENPYPE_VERSION")
-        use_version = os.getenv("OPENPYPE_VERSION")
+        if use_version:
+            _print(("*** environment variable OPENPYPE_VERSION"
+                    "is overridden by command line argument."))
+        else:
+            _print(">>> version set by environment variable")
+            use_staging = "staging" in os.getenv("OPENPYPE_VERSION")
+            use_version = os.getenv("OPENPYPE_VERSION")
 
     # ------------------------------------------------------------------------
     # Determine mongodb connection
