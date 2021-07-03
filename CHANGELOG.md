@@ -1,15 +1,18 @@
 # Changelog
 
-## [3.2.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.2.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.4...HEAD)
 
 **🚀 Enhancements**
 
+- Settings application use python 2 only where needed [\#1776](https://github.com/pypeclub/OpenPype/pull/1776)
 - Settings UI copy/paste [\#1769](https://github.com/pypeclub/OpenPype/pull/1769)
 - Workfile tool widths [\#1766](https://github.com/pypeclub/OpenPype/pull/1766)
 - Push hierarchical attributes care about task parent changes [\#1763](https://github.com/pypeclub/OpenPype/pull/1763)
 - Application executables with environment variables [\#1757](https://github.com/pypeclub/OpenPype/pull/1757)
+- Deadline: Nuke submission additional attributes [\#1756](https://github.com/pypeclub/OpenPype/pull/1756)
+- Settings schema without prefill [\#1753](https://github.com/pypeclub/OpenPype/pull/1753)
 - Settings Hosts enum [\#1739](https://github.com/pypeclub/OpenPype/pull/1739)
 - Validate containers settings [\#1736](https://github.com/pypeclub/OpenPype/pull/1736)
 - PS - added loader from sequence [\#1726](https://github.com/pypeclub/OpenPype/pull/1726)
@@ -22,7 +25,9 @@
 
 **🐛 Bug fixes**
 
+- Otio unrelated error on import [\#1782](https://github.com/pypeclub/OpenPype/pull/1782)
 - FFprobe streams order [\#1775](https://github.com/pypeclub/OpenPype/pull/1775)
+- Fix - single file files are str only, cast it to list to count properly [\#1772](https://github.com/pypeclub/OpenPype/pull/1772)
 - Project specific environments [\#1767](https://github.com/pypeclub/OpenPype/pull/1767)
 - Settings UI with refresh button [\#1764](https://github.com/pypeclub/OpenPype/pull/1764)
 - Standalone publisher thumbnail extractor fix [\#1761](https://github.com/pypeclub/OpenPype/pull/1761)
@@ -46,7 +51,7 @@
 
 - Bump prismjs from 1.23.0 to 1.24.0 in /website [\#1773](https://github.com/pypeclub/OpenPype/pull/1773)
 - TVPaint ftrack family [\#1755](https://github.com/pypeclub/OpenPype/pull/1755)
-- global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
+- Sync main 2.x back to 2.x develop [\#1715](https://github.com/pypeclub/OpenPype/pull/1715)
 
 ## [2.18.4](https://github.com/pypeclub/OpenPype/tree/2.18.4) (2021-06-24)
 
@@ -60,6 +65,10 @@
 ## [2.18.3](https://github.com/pypeclub/OpenPype/tree/2.18.3) (2021-06-23)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.2.0-nightly.2...2.18.3)
+
+**🚀 Enhancements**
+
+- Log Viewer with OpenPype style [\#1703](https://github.com/pypeclub/OpenPype/pull/1703)
 
 **🐛 Bug fixes**
 
@@ -88,7 +97,6 @@
 
 **🚀 Enhancements**
 
-- Log Viewer with OpenPype style [\#1703](https://github.com/pypeclub/OpenPype/pull/1703)
 - Scrolling in OpenPype info widget [\#1702](https://github.com/pypeclub/OpenPype/pull/1702)
 - OpenPype style in modules [\#1694](https://github.com/pypeclub/OpenPype/pull/1694)
 - Sort applications and tools alphabetically in Settings UI [\#1689](https://github.com/pypeclub/OpenPype/pull/1689)
@@ -116,10 +124,10 @@
 - Transparent branches in view on Mac [\#1648](https://github.com/pypeclub/OpenPype/pull/1648)
 - Add asset on task item [\#1646](https://github.com/pypeclub/OpenPype/pull/1646)
 - Project manager save and queue [\#1645](https://github.com/pypeclub/OpenPype/pull/1645)
-- New project anatomy values [\#1644](https://github.com/pypeclub/OpenPype/pull/1644)
 
 **Merged pull requests:**
 
+- global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
 - update dependencies [\#1697](https://github.com/pypeclub/OpenPype/pull/1697)
 - Bump normalize-url from 4.5.0 to 4.5.1 in /website [\#1686](https://github.com/pypeclub/OpenPype/pull/1686)
 
