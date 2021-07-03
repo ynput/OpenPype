@@ -32,6 +32,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     department = ""
     limit_groups = {}
     use_gpu = False
+    env_allowed_keys = []
+    env_search_replace_values = {}
 
     def process(self, instance):
         instance.data["toBeRenderedOn"] = "deadline"
@@ -242,19 +244,19 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "PYBLISHPLUGINPATH",
             "NUKE_PATH",
             "TOOL_ENV",
-            "OPENPYPE_DEV",
             "FOUNDRY_LICENSE"
         ]
+        # add allowed keys from preset if any
+        if self.env_allowed_keys:
+            keys += self.env_allowed_keys
+
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
         # self.log.debug("enviro: {}".format(pprint(environment)))
-        for path in os.environ:
-            if path.lower().startswith('pype_'):
-                environment[path] = os.environ[path]
-            if path.lower().startswith('nuke_'):
-                environment[path] = os.environ[path]
-            if 'license' in path.lower():
-                environment[path] = os.environ[path]
+
+        for _path in os.environ:
+            if _path.lower().startswith('openpype_'):
+                environment[_path] = os.environ[_path]
 
         clean_environment = {}
         for key, value in environment.items():
@@ -285,6 +287,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         environment = clean_environment
         # to recognize job from PYPE for turning Event On/Off
         environment["OPENPYPE_RENDER_JOB"] = "1"
+
+        # finally search replace in values of any key
+        if self.env_search_replace_values:
+            for key, value in environment.items():
+                for _k, _v in self.env_search_replace_values.items():
+                    environment[key] = value.replace(_k, _v)
+
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,
