@@ -40,9 +40,8 @@ class BlendModelLoader(plugin.AssetLoader):
                 bpy.data.objects.remove(obj)
 
     def _process(self, libpath, asset_group, group_name):
-        relative = bpy.context.preferences.filepaths.use_relative_paths
         with bpy.data.libraries.load(
-            libpath, link=True, relative=relative
+            libpath, link=True, relative=False
         ) as (data_from, data_to):
             data_to.objects = data_from.objects
 
@@ -126,6 +125,42 @@ class BlendModelLoader(plugin.AssetLoader):
         asset_group = bpy.data.objects.new(group_name, object_data=None)
         asset_group.empty_display_type = 'SINGLE_ARROW'
         avalon_container.objects.link(asset_group)
+
+        bpy.ops.object.select_all(action='DESELECT')
+
+        if options is not None:
+            parent = options.get('parent')
+            transform = options.get('transform')
+
+            if parent and transform:
+                location = transform.get('translation')
+                rotation = transform.get('rotation')
+                scale = transform.get('scale')
+
+                # Y position is inverted in sign because Unreal and Blender have the
+                # Y axis mirrored
+                asset_group.location = (
+                    location.get('x'),
+                    location.get('y'),
+                    location.get('z')
+                )
+                asset_group.rotation_euler = (
+                    rotation.get('x'),
+                    rotation.get('y'),
+                    rotation.get('z')
+                )
+                asset_group.scale = (
+                    scale.get('x'),
+                    scale.get('y'),
+                    scale.get('z')
+                )
+
+                bpy.context.view_layer.objects.active = parent
+                asset_group.select_set(True)
+
+                bpy.ops.object.parent_set(keep_transform=True)
+
+                bpy.ops.object.select_all(action='DESELECT')
 
         objects = self._process(libpath, asset_group, group_name)
 

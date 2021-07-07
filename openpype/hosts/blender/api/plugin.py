@@ -31,9 +31,9 @@ def get_unique_number(
     avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
     if not avalon_container:
         return "01"
-    asset_groups = avalon_container.objects
+    asset_groups = avalon_container.all_objects
 
-    container_names = [c.name for c in asset_groups]
+    container_names = [c.name for c in asset_groups if c.type == 'EMPTY']
     count = 1
     name = f"{asset}_{count:0>2}_{subset}"
     while name in container_names:
@@ -220,11 +220,11 @@ class AssetLoader(api.Loader):
         #         loader=self.__class__.__name__,
         #     )
 
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-        instance_name = asset_name(asset, subset, unique_number) + '_CON'
+        # asset = context["asset"]["name"]
+        # subset = context["subset"]["name"]
+        # instance_name = asset_name(asset, subset, unique_number) + '_CON'
 
-        return self._get_instance_collection(instance_name, nodes)
+        # return self._get_instance_collection(instance_name, nodes)
 
     def exec_update(self, container: Dict, representation: Dict):
         """Must be implemented by a sub-class"""
