@@ -255,6 +255,16 @@ class AssetWidget(QtWidgets.QWidget):
         project_name = self.combo_projects.currentText()
         if project_name in projects:
             self.dbcon.Session["AVALON_PROJECT"] = project_name
+            last_projects = [
+                value
+                for value in self._settings.value("projects", "").split("|")
+            ]
+            if project_name in last_projects:
+                last_projects.remove(project_name)
+            last_projects.insert(0, project_name)
+            while len(last_projects) > 5:
+                last_projects.pop(-1)
+            self._settings.setValue("projects", "|".join(last_projects))
 
         self.project_changed.emit(project_name)
 
