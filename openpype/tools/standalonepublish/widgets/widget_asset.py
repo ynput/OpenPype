@@ -239,14 +239,31 @@ class AssetWidget(QtWidgets.QWidget):
         return output
 
     def _set_projects(self):
-        projects = list()
+        project_names = list()
         for project in self.dbcon.projects():
-            projects.append(project['name'])
+            project_name = project.get("name")
+            if project_name:
+                project_names.append(project_name)
 
         self.combo_projects.clear()
-        if len(projects) > 0:
-            self.combo_projects.addItems(projects)
-            self.dbcon.Session["AVALON_PROJECT"] = projects[0]
+
+        if not project_names:
+            return
+
+        sorted_project_names = list(sorted(project_names))
+        self.combo_projects.addItems(list(sorted(sorted_project_names)))
+
+        last_projects = self._settings.value("projects", "")
+        last_project = sorted_project_names[0]
+        for project_name in last_projects.split("|"):
+            if project_name in sorted_project_names:
+                last_project = project_name
+                break
+
+        index = sorted_project_names.index(last_project)
+        self.combo_projects.setCurrentIndex(index)
+
+        self.dbcon.Session["AVALON_PROJECT"] = last_project
 
     def on_project_change(self):
         projects = list()
