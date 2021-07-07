@@ -165,7 +165,8 @@ class FbxModelLoader(plugin.AssetLoader):
             "libpath": libpath,
             "asset_name": asset_name,
             "parent": str(context["representation"]["parent"]),
-            "family": context["representation"]["context"]["family"]
+            "family": context["representation"]["context"]["family"],
+            "objectName": group_name
         }
 
         self[:] = objects
