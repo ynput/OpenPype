@@ -8,6 +8,8 @@ class MultipleNotesServer(ServerAction):
     label = "Multiple Notes (Server)"
     description = "Add same note to multiple Asset Versions"
 
+    _none_category = "__NONE__"
+
     def discover(self, session, entities, event):
         ''' Validation '''
         valid = True
@@ -46,7 +48,7 @@ class MultipleNotesServer(ServerAction):
             category_data = []
             category_data.append({
                 'label': '- None -',
-                'value': 'none'
+                "value": self._none_category
             })
             all_categories = session.query('NoteCategory').all()
             for cat in all_categories:
@@ -58,7 +60,7 @@ class MultipleNotesServer(ServerAction):
                 'type': 'enumerator',
                 'name': 'category',
                 'data': category_data,
-                'value': 'none'
+                "value": self._none_category
             }
 
             splitter = {
@@ -108,7 +110,7 @@ class MultipleNotesServer(ServerAction):
         }
         # Get category
         category_value = values['category']
-        if category_value != 'none':
+        if category_value != self._none_category:
             category = session.query(
                 'NoteCategory where id is "{}"'.format(category_value)
             ).one()
