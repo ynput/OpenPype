@@ -29,52 +29,57 @@ class MultipleNotesServer(ServerAction):
                 "message": "Couldn't get user information."
             }
 
-        if not event['data'].get('values', {}):
-            note_label = {
-                "type": "label",
-                "value": "# Enter note: #"
-            }
+        values = event["data"].get("values")
+        if values:
+            return None
 
-            note_value = {
-                "name": "note",
-                "type": "textarea"
-            }
+        note_label = {
+            "type": "label",
+            "value": "# Enter note: #"
+        }
 
-            category_label = {
-                "type": "label",
-                "value": "## Category: ##"
-            }
+        note_value = {
+            "name": "note",
+            "type": "textarea"
+        }
 
-            category_data = []
+        category_label = {
+            "type": "label",
+            "value": "## Category: ##"
+        }
+
+        category_data = []
+        category_data.append({
+            "label": "- None -",
+            "value": self._none_category
+        })
+        all_categories = session.query(
+            "select id, name from NoteCategory"
+        ).all()
+        for cat in all_categories:
             category_data.append({
-                "label": "- None -",
-                "value": self._none_category
+                "label": cat["name"],
+                "value": cat["id"]
             })
-            all_categories = session.query('NoteCategory').all()
-            for cat in all_categories:
-                category_data.append({
-                    "label": cat["name"],
-                    "value": cat["id"]
-                })
-            category_value = {
-                "type": "enumerator",
-                "name": "category",
-                "data": category_data,
-                "value": self._none_category
-            }
+        category_value = {
+            "type": "enumerator",
+            "name": "category",
+            "data": category_data,
+            "value": self._none_category
+        }
 
-            splitter = {
-                "type": "label",
-                "value": "---"
-            }
+        splitter = {
+            "type": "label",
+            "value": "---"
+        }
 
-            return [
-                note_label,
-                note_value,
-                splitter,
-                category_label,
-                category_value
-            ]
+        return [
+            note_label,
+            note_value,
+            splitter,
+            category_label,
+            category_value
+        ]
 
     def launch(self, session, entities, event):
         if "values" not in event["data"]:
