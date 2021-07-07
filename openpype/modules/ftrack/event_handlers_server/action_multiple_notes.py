@@ -14,7 +14,7 @@ class MultipleNotesServer(ServerAction):
         ''' Validation '''
         valid = True
         for entity in entities:
-            if entity.entity_type.lower() != 'assetversion':
+            if entity.entity_type.lower() != "assetversion":
                 valid = False
                 break
         return valid
@@ -31,62 +31,64 @@ class MultipleNotesServer(ServerAction):
 
         if not event['data'].get('values', {}):
             note_label = {
-                'type': 'label',
-                'value': '# Enter note: #'
+                "type": "label",
+                "value": "# Enter note: #"
             }
 
             note_value = {
-                'name': 'note',
-                'type': 'textarea'
+                "name": "note",
+                "type": "textarea"
             }
 
             category_label = {
-                'type': 'label',
-                'value': '## Category: ##'
+                "type": "label",
+                "value": "## Category: ##"
             }
 
             category_data = []
             category_data.append({
-                'label': '- None -',
+                "label": "- None -",
                 "value": self._none_category
             })
             all_categories = session.query('NoteCategory').all()
             for cat in all_categories:
                 category_data.append({
-                    'label': cat['name'],
-                    'value': cat['id']
+                    "label": cat["name"],
+                    "value": cat["id"]
                 })
             category_value = {
-                'type': 'enumerator',
-                'name': 'category',
-                'data': category_data,
+                "type": "enumerator",
+                "name": "category",
+                "data": category_data,
                 "value": self._none_category
             }
 
             splitter = {
-                'type': 'label',
-                'value': '{}'.format(200*"-")
+                "type": "label",
+                "value": "---"
             }
 
-            items = []
-            items.append(note_label)
-            items.append(note_value)
-            items.append(splitter)
-            items.append(category_label)
-            items.append(category_value)
-            return items
+            return [
+                note_label,
+                note_value,
+                splitter,
+                category_label,
+                category_value
+            ]
 
     def launch(self, session, entities, event):
-        if 'values' not in event['data']:
+        if "values" not in event["data"]:
             return
 
-        values = event['data']['values']
-        if len(values) <= 0 or 'note' not in values:
+        values = event["data"]["values"]
+        if len(values) <= 0 or "note" not in values:
             return False
+
         # Get Note text
-        note_value = values['note']
-        if note_value.lower().strip() == '':
+        note_value = values["note"]
+        if note_value.lower().strip() == "":
             return False
+
         # Get User
         event_source = event["source"]
         user_info = event_source.get("user") or {}
@@ -105,20 +107,20 @@ class MultipleNotesServer(ServerAction):
 
         # Base note data
         note_data = {
-            'content': note_value,
-            'author': user
+            "content": note_value,
+            "author": user
         }
         # Get category
-        category_value = values['category']
+        category_value = values["category"]
         if category_value != self._none_category:
             category = session.query(
-                'NoteCategory where id is "{}"'.format(category_value)
+                "NoteCategory where id is \"{}\"".format(category_value)
             ).one()
-            note_data['category'] = category
+            note_data["category"] = category
         # Create notes for entities
         for entity in entities:
-            new_note = session.create('Note', note_data)
-            entity['notes'].append(new_note)
+            new_note = session.create("Note", note_data)
+            entity["notes"].append(new_note)
             session.commit()
         return True
 
