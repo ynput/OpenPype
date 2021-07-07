@@ -127,11 +127,12 @@ class AssetWidget(QtWidgets.QWidget):
     current_changed = QtCore.Signal()    # on view current index change
     task_changed = QtCore.Signal()
 
-    def __init__(self, dbcon, parent=None):
+    def __init__(self, settings, dbcon, parent=None):
         super(AssetWidget, self).__init__(parent=parent)
         self.setContentsMargins(0, 0, 0, 0)
 
         self.dbcon = dbcon
+        self._settings = settings
 
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)

@@ -34,6 +34,8 @@ class Window(QtWidgets.QDialog):
         self._db = AvalonMongoDB()
         self._db.install()
 
+        self._settings = QtCore.QSettings("pypeclub", "StandalonePublisher")
+
         self.pyblish_paths = pyblish_paths
 
         self.setWindowTitle("Standalone Publish")
@@ -44,7 +46,9 @@ class Window(QtWidgets.QDialog):
         self.valid_parent = False
 
         # assets widget
-        widget_assets = AssetWidget(dbcon=self._db, parent=self)
+        widget_assets = AssetWidget(
+            self._settings, dbcon=self._db, parent=self
+        )
 
         # family widget
         widget_family = FamilyWidget(dbcon=self._db, parent=self)
