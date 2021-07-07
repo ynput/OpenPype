@@ -176,7 +176,7 @@ class SchemasHub:
             elif template_name in self._crashed_on_load:
                 crashed_item = self._crashed_on_load[template_name]
                 raise KeyError(
-                    "Unable to parse templace file \"{}\". {}".format(
+                    "Unable to parse template file \"{}\". {}".format(
                         crashed_item["filepath"], crashed_item["message"]
                     )
                 )
