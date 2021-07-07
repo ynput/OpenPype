@@ -111,18 +111,44 @@ class MultipleNotesServer(ServerAction):
                 "message": "Couldn't get user information."
             }
 
+        # Logging message preparation
+        # - username
+        username = user.get("username") or "N/A"
+
+        # - AssetVersion ids
+        asset_version_ids_str = ",".join([entity["id"] for entity in entities])
+
         # Base note data
         note_data = {
             "content": note_value,
             "author": user
         }
+
         # Get category
-        category_value = values["category"]
-        if category_value != self._none_category:
+        category_id = values["category"]
+        if category_id == self._none_category:
+            category_id = None
+
+        category_name = None
+        if category_id is not None:
             category = session.query(
-                "NoteCategory where id is \"{}\"".format(category_value)
-            ).one()
-            note_data["category"] = category
+                "select id, name from NoteCategory where id is \"{}\"".format(
+                    category_id
+                )
+            ).first()
+            if category:
+                note_data["category"] = category
+                category_name = category["name"]
+
+        category_msg = ""
+        if category_name:
+            category_msg = " with category: \"{}\"".format(category_name)
+
+        self.log.warning((
+            "Creating note{} as User \"{}\" on "
+            "AssetVersions: {} with value \"{}\""
+        ).format(category_msg, username, asset_version_ids_str, note_value))
+
         # Create notes for entities
         for entity in entities:
             new_note = session.create("Note", note_data)
