@@ -1,16 +1,12 @@
-from openpype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype.modules.ftrack.lib import ServerAction
 
 
-class MultipleNotes(BaseAction):
-    '''Edit meta data action.'''
+class MultipleNotesServer(ServerAction):
+    """Action adds same note for muliple AssetVersions."""
 
-    #: Action identifier.
-    identifier = 'multiple.notes'
-    #: Action label.
-    label = 'Multiple Notes'
-    #: Action description.
-    description = 'Add same note to multiple Asset Versions'
-    icon = statics_icon("ftrack", "action_icons", "MultipleNotes.svg")
+    identifier = "multiple.notes.server"
+    label = "Multiple Notes (Server)"
+    description = "Add same note to multiple Asset Versions"
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -107,4 +103,4 @@ class MultipleNotes(BaseAction):
 def register(session):
     '''Register plugin. Called when used as an plugin.'''
 
-    MultipleNotes(session).register()
+    MultipleNotesServer(session).register()
