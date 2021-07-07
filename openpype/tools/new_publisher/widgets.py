@@ -414,12 +414,22 @@ class CreateDialog(QtWidgets.QDialog):
 
         index = indexes[0]
         family = index.data(QtCore.Qt.DisplayRole)
+        subset_name = self.subset_name_input.text()
         variant = self.variant_input.text()
+        asset_name = self._asset_doc["name"]
+        task_name = self.dbcon.Session.get("AVALON_TASK")
         options = {
             "useSelection": self.use_selection_checkbox.isChecked()
         }
-
-        self.controller.create(family, variant, options)
+        # Where to define these data?
+        # - what data show be stored?
+        instance_data = {
+            "asset": asset_name,
+            "task": task_name,
+            "variant": variant,
+            "family": family
+        }
+        self.controller.create(family, subset_name, instance_data, options)
 
         if self.auto_close_checkbox.isChecked():
             self.hide()

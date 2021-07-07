@@ -95,5 +95,6 @@ class PublisherController:
 
         self.instances = instances
 
-    def create(self, family, variant=None, options=None):
-        print("TODO implement create")
+    def create(self, family, subset_name, instance_data, options):
+        creator = self.creators[family]
+        return creator.create(subset_name, instance_data, options)
