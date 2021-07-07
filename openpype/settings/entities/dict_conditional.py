@@ -144,6 +144,11 @@ class DictConditionalEntity(ItemEntity):
 
         self.enum_entity = None
 
+        self.highlight_content = self.schema_data.get(
+            "highlight_content", False
+        )
+        self.show_borders = self.schema_data.get("show_borders", True)
+
         self._add_children()
 
     @property
