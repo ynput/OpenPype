@@ -94,7 +94,8 @@ class MainWidget(QtWidgets.QWidget):
         super(MainWidget, self).showEvent(event)
         if self._reset_on_show:
             self._reset_on_show = False
-            self.reset()
+            # Trigger reset with 100ms delay
+            QtCore.QTimer.singleShot(100, self.reset)
 
     def _show_password_dialog(self):
         if self._password_dialog:
