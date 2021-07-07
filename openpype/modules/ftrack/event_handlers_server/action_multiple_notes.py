@@ -25,10 +25,7 @@ class MultipleNotesServer(ServerAction):
         user_info = event_source.get("user") or {}
         user_id = user_info.get("id")
         if not user_id:
-            return {
-                "success": False,
-                "message": "Couldn't get user information."
-            }
+            return None
 
         values = event["data"].get("values")
         if values:
@@ -84,7 +81,7 @@ class MultipleNotesServer(ServerAction):
 
     def launch(self, session, entities, event):
         if "values" not in event["data"]:
-            return
+            return None
 
         values = event["data"]["values"]
         if len(values) <= 0 or "note" not in values:
@@ -93,7 +90,10 @@ class MultipleNotesServer(ServerAction):
         # Get Note text
         note_value = values["note"]
         if note_value.lower().strip() == "":
-            return False
+            return {
+                "success": True,
+                "message": "Note was not entered. Skipping"
+            }
 
         # Get User
         event_source = event["source"]
