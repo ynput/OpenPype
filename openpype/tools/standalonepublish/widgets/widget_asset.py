@@ -140,6 +140,10 @@ class AssetWidget(QtWidgets.QWidget):
 
         # Project
         self.combo_projects = QtWidgets.QComboBox()
+        # Change delegate so stylysheets are applied
+        project_delegate = QtWidgets.QStyledItemDelegate(self.combo_projects)
+        self.combo_projects.setItemDelegate(project_delegate)
+
         self._set_projects()
         self.combo_projects.currentTextChanged.connect(self.on_project_change)
         # Tree View
@@ -199,6 +203,7 @@ class AssetWidget(QtWidgets.QWidget):
 
         self.selection_changed.connect(self._refresh_tasks)
 
+        self.project_delegate = project_delegate
         self.task_view = task_view
         self.task_model = task_model
         self.refreshButton = refresh
