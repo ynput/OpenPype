@@ -391,6 +391,10 @@
                 }
             }
         },
+        "deadline": {
+            "jobInfo": {},
+            "pluginInfo": {}
+        },
         "ExtractCameraAlembic": {
             "enabled": true,
             "optional": true,
