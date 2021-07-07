@@ -621,10 +621,26 @@ def _bootstrap_from_code(use_version, use_staging):
         # get current version of OpenPype
         local_version = bootstrap.get_local_live_version()
 
-    if use_version and use_version != local_version:
-        version_to_use = None
-        openpype_versions = bootstrap.find_openpype(
-            include_zips=True, staging=use_staging)
+    version_to_use = None
+    openpype_versions = bootstrap.find_openpype(
+        include_zips=True, staging=use_staging)
+    if use_staging and not use_version:
+        try:
+            version_to_use = openpype_versions[-1]
+        except IndexError:
+            _print("!!! No staging versions are found.")
+            list_versions(openpype_versions, local_version)
+            sys.exit(1)
+        if version_to_use.path.is_file():
+            version_to_use.path = bootstrap.extract_openpype(
+                version_to_use)
+        bootstrap.add_paths_from_directory(version_to_use.path)
+        os.environ["OPENPYPE_VERSION"] = str(version_to_use)
+        version_path = version_to_use.path
+        os.environ["OPENPYPE_REPOS_ROOT"] = (version_path / "openpype").as_posix()  # noqa: E501
+        _openpype_root = version_to_use.path.as_posix()
+
+    elif use_version and use_version != local_version:
         v: OpenPypeVersion
         found = [v for v in openpype_versions if str(v) == use_version]
         if found:
