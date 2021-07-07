@@ -11,13 +11,14 @@ class MultipleNotesServer(ServerAction):
     _none_category = "__NONE__"
 
     def discover(self, session, entities, event):
-        ''' Validation '''
-        valid = True
+        """Show action only on AssetVersions."""
+        if not entities:
+            return False
+
         for entity in entities:
             if entity.entity_type.lower() != "assetversion":
-                valid = False
-                break
-        return valid
+                return False
+        return True
 
     def interface(self, session, entities, event):
         event_source = event["source"]
