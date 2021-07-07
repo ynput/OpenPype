@@ -1084,7 +1084,7 @@
     "unreal": {
         "enabled": true,
         "label": "Unreal Editor",
-        "icon": "{}/app_icons/ue4.png'",
+        "icon": "{}/app_icons/ue4.png",
         "host_name": "unreal",
         "environment": {},
         "variants": {
