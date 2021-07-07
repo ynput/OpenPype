@@ -108,6 +108,8 @@ class MainWidget(QtWidgets.QWidget):
         self._password_dialog = None
         if password_passed:
             self.reset()
+            if not self.isVisible():
+                self.show()
         else:
             self.close()
 
