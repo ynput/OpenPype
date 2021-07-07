@@ -5,9 +5,9 @@ class MultipleNotes(BaseAction):
     '''Edit meta data action.'''
 
     #: Action identifier.
-    identifier = 'multiple.notes'
+    identifier = 'multiple.notes.server'
     #: Action label.
-    label = 'Multiple Notes'
+    label = 'Multiple Notes (Server)'
     #: Action description.
     description = 'Add same note to multiple Asset Versions'
     icon = statics_icon("ftrack", "action_icons", "MultipleNotes.svg")
