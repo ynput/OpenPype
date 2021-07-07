@@ -429,7 +429,15 @@ class CreateDialog(QtWidgets.QDialog):
             "variant": variant,
             "family": family
         }
-        self.controller.create(family, subset_name, instance_data, options)
+
+        error_info = None
+        try:
+            self.controller.create(family, subset_name, instance_data, options)
+
+        except Exception as exc:
+            # TODO better handling
+            print(str(exc))
+
 
         if self.auto_close_checkbox.isChecked():
             self.hide()
