@@ -127,7 +127,7 @@ class AssetWidget(QtWidgets.QWidget):
     current_changed = QtCore.Signal()    # on view current index change
     task_changed = QtCore.Signal()
 
-    def __init__(self, settings, dbcon, parent=None):
+    def __init__(self, dbcon, settings, parent=None):
         super(AssetWidget, self).__init__(parent=parent)
         self.setContentsMargins(0, 0, 0, 0)
 
@@ -238,6 +238,34 @@ class AssetWidget(QtWidgets.QWidget):
         output.extend(self.get_parents(parent))
         return output
 
+    def _get_last_projects(self):
+        if not self._settings:
+            return []
+
+        project_names = []
+        for project_name in self._settings.value("projects", "").split("|"):
+            if project_name:
+                project_names.append(project_name)
+        return project_names
+
+    def _add_last_project(self, project_name):
+        if not self._settings:
+            return
+
+        last_projects = []
+        for _project_name in self._settings.value("projects", "").split("|"):
+            if _project_name:
+                last_projects.append(_project_name)
+
+        if project_name in last_projects:
+            last_projects.remove(project_name)
+
+        last_projects.insert(0, project_name)
+        while len(last_projects) > 5:
+            last_projects.pop(-1)
+
+        self._settings.setValue("projects", "|".join(last_projects))
+
     def _set_projects(self):
         project_names = list()
         for project in self.dbcon.projects():
@@ -253,9 +281,8 @@ class AssetWidget(QtWidgets.QWidget):
         sorted_project_names = list(sorted(project_names))
         self.combo_projects.addItems(list(sorted(sorted_project_names)))
 
-        last_projects = self._settings.value("projects", "")
         last_project = sorted_project_names[0]
-        for project_name in last_projects.split("|"):
+        for project_name in self._get_last_projects():
             if project_name in sorted_project_names:
                 last_project = project_name
                 break
@@ -272,16 +299,7 @@ class AssetWidget(QtWidgets.QWidget):
         project_name = self.combo_projects.currentText()
         if project_name in projects:
             self.dbcon.Session["AVALON_PROJECT"] = project_name
-            last_projects = [
-                value
-                for value in self._settings.value("projects", "").split("|")
-            ]
-            if project_name in last_projects:
-                last_projects.remove(project_name)
-            last_projects.insert(0, project_name)
-            while len(last_projects) > 5:
-                last_projects.pop(-1)
-            self._settings.setValue("projects", "|".join(last_projects))
+            self._add_last_project(project_name)
 
         self.project_changed.emit(project_name)
 
