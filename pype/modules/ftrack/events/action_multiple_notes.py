@@ -21,6 +21,15 @@ class MultipleNotesServer(ServerAction):
         return valid
 
     def interface(self, session, entities, event):
+        event_source = event["source"]
+        user_info = event_source.get("user") or {}
+        user_id = user_info.get("id")
+        if not user_id:
+            return {
+                "success": False,
+                "message": "Couldn't get user information."
+            }
+
         if not event['data'].get('values', {}):
             note_label = {
                 'type': 'label',
@@ -79,10 +88,23 @@ class MultipleNotesServer(ServerAction):
         note_value = values['note']
         if note_value.lower().strip() == '':
             return False
+
         # Get User
-        user = session.query(
-            'User where username is "{}"'.format(session.api_user)
-        ).one()
+        event_source = event["source"]
+        user_info = event_source.get("user") or {}
+        user_id = user_info.get("id")
+        user = None
+        if user_id:
+            user = session.query(
+                'User where id is "{}"'.format(user_id)
+            ).first()
+
+        if not user:
+            return {
+                "success": False,
+                "message": "Couldn't get user information."
+            }
+
         # Base note data
         note_data = {
             'content': note_value,
