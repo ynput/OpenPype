@@ -11,6 +11,35 @@ def get_default_thumbnail_image_path():
     return os.path.join(dirpath, "image_file.png")
 
 
+class GlobalAttrsWidget(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super(GlobalAttrsWidget, self).__init__(parent)
+
+        variant_input = QtWidgets.QLineEdit(self)
+        family_value_widget = QtWidgets.QLabel(self)
+        asset_value_widget = QtWidgets.QLabel(self)
+        task_value_widget = QtWidgets.QLabel(self)
+        subset_value_widget = QtWidgets.QLabel(self)
+
+        subset_value_widget.setText("")
+        family_value_widget.setText("")
+        asset_value_widget.setText("")
+        task_value_widget.setText("")
+
+        main_layout = QtWidgets.QFormLayout(self)
+        main_layout.addRow("Name", variant_input)
+        main_layout.addRow("Family", family_value_widget)
+        main_layout.addRow("Asset", asset_value_widget)
+        main_layout.addRow("Task", task_value_widget)
+        main_layout.addRow("Subset", subset_value_widget)
+
+        self.variant_input = variant_input
+        self.family_value_widget = family_value_widget
+        self.asset_value_widget = asset_value_widget
+        self.task_value_widget = task_value_widget
+        self.subset_value_widget = subset_value_widget
+
+
 class SubsetAttributesWidget(QtWidgets.QWidget):
     """Widget where attributes of instance/s are modified.
      _____________________________
@@ -32,26 +61,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         top_widget = QtWidgets.QWidget(self)
 
         # Global attributes
-        global_attrs_widget = QtWidgets.QWidget(top_widget)
-
-        variant_input = QtWidgets.QLineEdit(global_attrs_widget)
-        subset_value_widget = QtWidgets.QLabel(global_attrs_widget)
-        family_value_widget = QtWidgets.QLabel(global_attrs_widget)
-        asset_value_widget = QtWidgets.QLabel(global_attrs_widget)
-        task_value_widget = QtWidgets.QLabel(global_attrs_widget)
-
-        subset_value_widget.setText("<Subset>")
-        family_value_widget.setText("<Family>")
-        asset_value_widget.setText("<Asset>")
-        task_value_widget.setText("<Task>")
-
-        global_attrs_layout = QtWidgets.QFormLayout(global_attrs_widget)
-        global_attrs_layout.addRow("Name", variant_input)
-        global_attrs_layout.addRow("Family", family_value_widget)
-        global_attrs_layout.addRow("Asset", asset_value_widget)
-        global_attrs_layout.addRow("Task", task_value_widget)
-        global_attrs_layout.addRow("Subset", subset_value_widget)
-
+        global_attrs_widget = GlobalAttrsWidget(top_widget)
         thumbnail_widget = ThumbnailWidget(top_widget)
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
