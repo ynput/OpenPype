@@ -3,6 +3,8 @@ import re
 import copy
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.widgets.attribute_defs import create_widget_for_attr_def
+
 SEPARATORS = ("---separator---", "---")
 
 
@@ -56,7 +58,96 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             self.task_value_widget.setText(task_name)
             self.subset_value_widget.setText(subset_name)
             return
-        # TODO what to do when mulsiselection?
+        # TODO mulsiselection
+
+
+class FamilyAttrsWidget(QtWidgets.QWidget):
+    def __init__(self, controller, parent):
+        super(FamilyAttrsWidget, self).__init__(parent)
+
+        scroll_area = QtWidgets.QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(scroll_area, 1)
+
+        self._main_layout = main_layout
+
+        self.controller = controller
+        self._scroll_area = scroll_area
+        # Store content of scroll area to prevend garbage collection
+        self._content_widget = None
+
+    def set_current_instances(self, instances):
+        prev_content_widget = self._scroll_area.widget()
+        if prev_content_widget:
+            self._scroll_area.takeWidget()
+            prev_content_widget.hide()
+            prev_content_widget.deleteLater()
+
+        self._content_widget = None
+
+        attr_defs = self.controller.get_family_attribute_definitions(
+            instances
+        )
+
+        content_widget = QtWidgets.QWidget(self._scroll_area)
+        content_layout = QtWidgets.QFormLayout(content_widget)
+        for attr_def in attr_defs:
+            widget = create_widget_for_attr_def(attr_def, content_widget)
+            label = attr_def.label or attr_def.key
+            content_layout.addRow(label, widget)
+
+        self._scroll_area.setWidget(content_widget)
+        self._content_widget = content_widget
+
+
+class PublishPluginAttrsWidget(QtWidgets.QWidget):
+    def __init__(self, controller, parent):
+        super(PublishPluginAttrsWidget, self).__init__(parent)
+
+        scroll_area = QtWidgets.QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+
+        main_layout = QtWidgets.QHBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(scroll_area, 1)
+
+        self._main_layout = main_layout
+
+        self.controller = controller
+        self._scroll_area = scroll_area
+        # Store content of scroll area to prevend garbage collection
+        self._content_widget = None
+
+    def set_current_instances(self, instances):
+        prev_content_widget = self._scroll_area.widget()
+        if prev_content_widget:
+            self._scroll_area.takeWidget()
+            prev_content_widget.hide()
+            prev_content_widget.deleteLater()
+
+        self._content_widget = None
+
+        attr_defs = self.controller.get_publish_attribute_definitions(
+            instances
+        )
+
+        content_widget = QtWidgets.QWidget(self._scroll_area)
+        content_layout = QtWidgets.QFormLayout(content_widget)
+        for plugin_name, plugin_attr_defs in attr_defs:
+            for attr_def in plugin_attr_defs:
+                widget = create_widget_for_attr_def(
+                    attr_def, content_widget
+                )
+                label = attr_def.label or attr_def.key
+                content_layout.addRow(label, widget)
+
+        self._scroll_area.setWidget(content_widget)
+        self._content_widget = content_widget
 
 
 class SubsetAttributesWidget(QtWidgets.QWidget):
@@ -90,9 +181,12 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         # BOTTOM PART
         bottom_widget = QtWidgets.QWidget(self)
-        # TODO they should be scrollable
-        family_attrs_widget = QtWidgets.QWidget(bottom_widget)
-        publish_attrs_widget = QtWidgets.QWidget(bottom_widget)
+        family_attrs_widget = FamilyAttrsWidget(
+            controller, bottom_widget
+        )
+        publish_attrs_widget = PublishPluginAttrsWidget(
+            controller, bottom_widget
+        )
 
         bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
@@ -105,10 +199,14 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
 
         self.controller = controller
         self.global_attrs_widget = global_attrs_widget
+        self.family_attrs_widget = family_attrs_widget
+        self.publish_attrs_widget = publish_attrs_widget
         self.thumbnail_widget = thumbnail_widget
 
     def set_current_instances(self, instances):
         self.global_attrs_widget.set_current_instances(instances)
+        self.family_attrs_widget.set_current_instances(instances)
+        self.publish_attrs_widget.set_current_instances(instances)
 
 
 class ThumbnailWidget(QtWidgets.QWidget):
