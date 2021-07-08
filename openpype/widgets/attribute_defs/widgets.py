@@ -74,6 +74,10 @@ class NumberAttrWidget(_BaseAttrDefWidget):
         input_widget.setMaximum(self.attr_def.maximum)
         input_widget.setValue(self.attr_def.default)
 
+        input_widget.setButtonSymbols(
+            QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons
+        )
+
         self._last_value = input_widget.value()
 
         input_widget.valueChanged.connect(self._on_value_change)
