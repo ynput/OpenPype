@@ -46,6 +46,11 @@ class AbtractAttrDef:
 
         self.__init__class__ = AbtractAttrDef
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self.key == other.key
+
     @abstractmethod
     def convert_value(self, value):
         """Convert value to a valid one.
@@ -101,6 +106,16 @@ class NumberDef(AbtractAttrDef):
         self.default = default
         self.decimals = 0 if decimals is None else decimals
 
+    def __eq__(self, other):
+        if not super(NumberDef, self).__eq__(other):
+            return False
+
+        return (
+            self.decimals == other.decimals
+            and self.maximum == other.maximum
+            and self.maximum == other.maximum
+        )
+
     def convert_value(self, value):
         if isinstance(value, six.string_types):
             try:
@@ -155,6 +170,15 @@ class TextDef(AbtractAttrDef):
         self.regex = regex
         self.default = default
 
+    def __eq__(self, other):
+        if not super(TextDef, self).__eq__(other):
+            return False
+
+        return (
+            self.multiline == other.multiline
+            and self.regex == other.regex
+        )
+
     def convert_value(self, value):
         if isinstance(value, six.string_types):
             return value
@@ -188,6 +212,18 @@ class EnumDef(AbtractAttrDef):
 
         self.items = items
         self.default = default
+
+    def __eq__(self, other):
+        if not super(EnumDef, self).__eq__(other):
+            return False
+
+        if set(self.items.keys()) != set(other.items.keys()):
+            return False
+
+        for key, label in self.items.items():
+            if other.items[key] != label:
+                return False
+        return True
 
     def convert_value(self, value):
         if value in self.items:
