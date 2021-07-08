@@ -105,6 +105,24 @@ class PublisherController:
 
         self.instances = instances
 
+    def get_family_attribute_definitions(self, instances):
+        attr_defs = []
+        if len(instances) == 1:
+            instance = instances[0]
+            family = instance.data["family"]
+            creator = self.creators.get(family)
+            if not creator:
+                # TODO handle when creator is not available
+                return
+
+            attr_defs = creator.get_attribute_defs()
+
+        else:
+            # TODO mulsiselection
+            pass
+
+        return attr_defs
+
     def create(self, family, subset_name, instance_data, options):
         # QUESTION Force to return instances or call `list_instances` on each
         #   creation? (`list_instances` may slow down...)
