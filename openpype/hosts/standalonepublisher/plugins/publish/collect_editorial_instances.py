@@ -8,7 +8,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
     """Collect instances from editorial's OTIO sequence"""
 
     order = pyblish.api.CollectorOrder + 0.01
-    label = "Collect Instances"
+    label = "Collect Editorial Instances"
     hosts = ["standalonepublisher"]
     families = ["editorial"]
 
@@ -82,6 +82,9 @@ class CollectInstances(pyblish.api.InstancePlugin):
 
             for clip in track.each_child():
                 if clip.name is None:
+                    continue
+
+                if isinstance(clip, otio.schema.Gap):
                     continue
 
                 # skip all generators like black ampty
