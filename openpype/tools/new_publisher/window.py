@@ -66,11 +66,11 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_model = QtGui.QStandardItemModel()
         subset_view.setModel(subset_model)
 
-        subset_attributes = SubsetAttributesWidget(subset_widget)
+        subset_attributes_widget = SubsetAttributesWidget(subset_widget)
 
         subset_layout = QtWidgets.QHBoxLayout(subset_widget)
         subset_layout.addWidget(subset_view, 0)
-        subset_layout.addWidget(subset_attributes, 1)
+        subset_layout.addWidget(subset_attributes_widget, 1)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(0, 0, 0, 0)
@@ -119,6 +119,7 @@ class PublisherWindow(QtWidgets.QWidget):
         self.subset_view = subset_view
         self.subset_model = subset_model
 
+        self.subset_attributes_widget = subset_attributes_widget
         self.footer_widget = footer_widget
         self.message_input = message_input
         self.validate_btn = validate_btn
