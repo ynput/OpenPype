@@ -112,6 +112,10 @@ class PublisherWindow(QtWidgets.QWidget):
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
+        subset_view.selectionModel().selectionChanged.connect(
+            self._on_subset_change
+        )
+
         self.main_frame = main_frame
 
         self.context_label = context_label
@@ -195,6 +199,21 @@ class PublisherWindow(QtWidgets.QWidget):
 
     def _on_control_reset(self):
         self._refresh_instances()
+
+    def _on_subset_change(self, *_args):
+        instances = []
+        instances_by_id = {}
+        for instance in self.controller.instances:
+            instance_id = instance.data["uuid"]
+            instances_by_id[instance_id] = instance
+
+        for index in self.subset_view.selectionModel().selectedIndexes():
+            instance_id = index.data(QtCore.Qt.UserRole)
+            instance = instances_by_id.get(instance_id)
+            if instance:
+                instances.append(instance)
+
+        self.subset_attributes_widget.set_current_instances(instances)
 
 
 def main():
