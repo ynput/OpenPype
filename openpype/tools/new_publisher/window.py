@@ -63,6 +63,9 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_widget = QtWidgets.QWidget(content_widget)
 
         subset_view = QtWidgets.QTreeView(subset_widget)
+        subset_model = QtGui.QStandardItemModel()
+        subset_view.setModel(subset_model)
+
         subset_attributes = SubsetAttributesWidget(subset_widget)
 
         subset_layout = QtWidgets.QHBoxLayout(subset_widget)
@@ -109,6 +112,9 @@ class PublisherWindow(QtWidgets.QWidget):
         self.main_frame = main_frame
 
         self.context_label = context_label
+
+        self.subset_view = subset_view
+        self.subset_model = subset_model
 
         self.footer_widget = footer_widget
         self.message_input = message_input
