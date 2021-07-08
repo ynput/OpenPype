@@ -145,7 +145,7 @@ class DictImmutableKeysWidget(BaseWidget):
         self.content_widget = content_widget
         self.content_layout = content_layout
 
-        if len(self.input_fields) == 1 and self.checkbox_widget:
+        if len(self.input_fields) == 1 and self.checkbox_child:
             body_widget.hide_toolbox(hide_content=True)
 
         elif self.entity.collapsible:
