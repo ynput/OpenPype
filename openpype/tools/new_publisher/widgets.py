@@ -106,6 +106,9 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         self.global_attrs_widget = global_attrs_widget
         self.thumbnail_widget = thumbnail_widget
 
+    def set_current_instances(self, instances):
+        self.global_attrs_widget.set_current_instances(instances)
+
 
 class ThumbnailWidget(QtWidgets.QWidget):
     def __init__(self, parent):
