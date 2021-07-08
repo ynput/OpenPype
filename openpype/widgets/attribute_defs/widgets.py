@@ -144,6 +144,8 @@ class BoolAttrWidget(_BaseAttrDefWidget):
         self._last_value = input_widget.isChecked()
         self.input_widget = input_widget
 
+        self.main_layout.addWidget(input_widget, 0)
+
     def _on_value_change(self):
         new_value = self.input_widget.isChecked()
         old_value = self._last_value
@@ -173,6 +175,8 @@ class EnumAttrWidget(_BaseAttrDefWidget):
         self._combo_delegate = combo_delegate
         self._input_widget = input_widget
         self._last_value = self.current_value()
+
+        self.main_layout.addWidget(input_widget, 0)
 
     def _on_value_change(self):
         new_value = self.current_value()
