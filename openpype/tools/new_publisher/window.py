@@ -103,6 +103,9 @@ class PublisherWindow(QtWidgets.QWidget):
 
         creator_window = CreateDialog(controller, self)
 
+        controller.add_on_reset_callback(self._on_control_reset)
+        controller.add_on_create_callback(self._on_control_create)
+
         reset_btn.clicked.connect(self._on_reset_clicked)
 
         create_btn.clicked.connect(self._on_create_clicked)
@@ -154,6 +157,43 @@ class PublisherWindow(QtWidgets.QWidget):
 
     def _on_publish_clicked(self):
         print("Publishing!!!")
+
+    def _refresh_instances(self):
+        to_remove = set()
+        existing_mapping = {}
+
+        for idx in range(self.subset_model.rowCount()):
+            index = self.subset_model.index(idx, 0)
+            uuid = index.data(QtCore.Qt.UserRole)
+            to_remove.add(uuid)
+            existing_mapping[uuid] = idx
+
+        new_items = []
+        for instance in self.controller.instances:
+            uuid = instance.data["uuid"]
+            if uuid in to_remove:
+                to_remove.remove(uuid)
+                continue
+
+            item = QtGui.QStandardItem(instance.data["subset"])
+            item.setData(instance.data["uuid"], QtCore.Qt.UserRole)
+            new_items.append(item)
+
+        idx_to_remove = []
+        for uuid in to_remove:
+            idx_to_remove.append(existing_mapping[uuid])
+
+        for idx in reversed(sorted(idx_to_remove)):
+            self.subset_model.removeRows(idx, 1)
+
+        if new_items:
+            self.subset_model.invisibleRootItem().appendRows(new_items)
+
+    def _on_control_create(self):
+        self._refresh_instances()
+
+    def _on_control_reset(self):
+        self._refresh_instances()
 
 
 def main():
