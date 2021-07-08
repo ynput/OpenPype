@@ -135,18 +135,36 @@ if sys.__stdout__:
     def _print(message: str):
         if message.startswith("!!! "):
             print("{}{}".format(term.orangered2("!!! "), message[4:]))
+            return
         if message.startswith(">>> "):
             print("{}{}".format(term.aquamarine3(">>> "), message[4:]))
+            return
         if message.startswith("--- "):
             print("{}{}".format(term.darkolivegreen3("--- "), message[4:]))
-        if message.startswith("    "):
-            print("{}{}".format(term.darkseagreen3("    "), message[4:]))
+            return
         if message.startswith("*** "):
             print("{}{}".format(term.gold("*** "), message[4:]))
+            return
         if message.startswith("  - "):
             print("{}{}".format(term.wheat("  - "), message[4:]))
+            return
         if message.startswith("  . "):
             print("{}{}".format(term.tan("  . "), message[4:]))
+            return
+        if message.startswith("     - "):
+            print("{}{}".format(term.seagreen3("     - "), message[7:]))
+            return
+        if message.startswith("     ! "):
+            print("{}{}".format(term.goldenrod("     ! "), message[7:]))
+            return
+        if message.startswith("     * "):
+            print("{}{}".format(term.aquamarine1("     * "), message[7:]))
+            return
+        if message.startswith("    "):
+            print("{}{}".format(term.darkseagreen3("    "), message[4:]))
+            return
+
+        print(message)
 else:
     def _print(message: str):
         print(message)
@@ -173,6 +191,17 @@ from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
 bootstrap = BootstrapRepos()
 silent_commands = ["run", "igniter", "standalonepublisher",
                    "extractenvironments"]
+
+
+def list_versions(openpype_versions: list, local_version=None) -> None:
+    """Print list of detected versions."""
+    _print("  - Detected versions:")
+    for v in sorted(openpype_versions):
+        _print(f"     - {v}: {v.path}")
+    if not openpype_versions:
+        _print("     ! none in repository detected")
+    if local_version:
+        _print(f"     * local version {local_version}")
 
 
 def set_openpype_global_environments() -> None:
@@ -303,21 +332,36 @@ def _process_arguments() -> tuple:
     # check for `--use-version=3.0.0` argument and `--use-staging`
     use_version = None
     use_staging = False
+    print_versions = False
     for arg in sys.argv:
         if arg == "--use-version":
             _print("!!! Please use option --use-version like:")
             _print("    --use-version=3.0.0")
             sys.exit(1)
 
-        m = re.search(
-            r"--use-version=(?P<version>\d+\.\d+\.\d+(?:\S*)?)", arg)
-        if m and m.group('version'):
-            use_version = m.group('version')
-            sys.argv.remove(arg)
-            break
+        if arg.startswith("--use-version="):
+            m = re.search(
+                r"--use-version=(?P<version>\d+\.\d+\.\d+(?:\S*)?)", arg)
+            if m and m.group('version'):
+                use_version = m.group('version')
+                _print(">>> Requested version [ {} ]".format(use_version))
+                sys.argv.remove(arg)
+                if "+staging" in use_version:
+                    use_staging = True
+                break
+            else:
+                _print("!!! Requested version isn't in correct format.")
+                _print(("    Use --list-versions to find out"
+                       " proper version string."))
+                sys.exit(1)
+
     if "--use-staging" in sys.argv:
         use_staging = True
         sys.argv.remove("--use-staging")
+
+    if "--list-versions" in sys.argv:
+        print_versions = True
+        sys.argv.remove("--list-versions")
 
     # handle igniter
     # this is helper to run igniter before anything else
@@ -334,7 +378,7 @@ def _process_arguments() -> tuple:
         sys.argv.pop(idx)
         sys.argv.insert(idx, "tray")
 
-    return use_version, use_staging
+    return use_version, use_staging, print_versions
 
 
 def _determine_mongodb() -> str:
@@ -487,7 +531,7 @@ def _find_frozen_openpype(use_version: str = None,
                     openpype_version = openpype_versions[-1]
                 except IndexError:
                     _print(("!!! Something is wrong and we didn't "
-                          "found it again."))
+                            "found it again."))
                     sys.exit(1)
             elif return_code != 2:
                 _print(f"  . finished ({return_code})")
@@ -500,7 +544,7 @@ def _find_frozen_openpype(use_version: str = None,
             _print("*** Still no luck finding OpenPype.")
             _print(("*** We'll try to use the one coming "
                    "with OpenPype installation."))
-        version_path = _bootstrap_from_code(use_version)
+        version_path = _bootstrap_from_code(use_version, use_staging)
         openpype_version = OpenPypeVersion(
             version=BootstrapRepos.get_version(version_path),
             path=version_path)
@@ -519,13 +563,8 @@ def _find_frozen_openpype(use_version: str = None,
         if found:
             openpype_version = sorted(found)[-1]
         if not openpype_version:
-            _print(f"!!! requested version {use_version} was not found.")
-            if openpype_versions:
-                _print("  - found: ")
-                for v in sorted(openpype_versions):
-                    _print(f"     - {v}: {v.path}")
-
-            _print(f"     - local version {local_version}")
+            _print(f"!!! Requested version {use_version} was not found.")
+            list_versions(openpype_versions, local_version)
             sys.exit(1)
 
     # test if latest detected is installed (in user data dir)
@@ -560,7 +599,7 @@ def _find_frozen_openpype(use_version: str = None,
     return openpype_version.path
 
 
-def _bootstrap_from_code(use_version):
+def _bootstrap_from_code(use_version, use_staging):
     """Bootstrap live code (or the one coming with frozen OpenPype.
 
     Args:
@@ -575,15 +614,33 @@ def _bootstrap_from_code(use_version):
     _openpype_root = OPENPYPE_ROOT
     if getattr(sys, 'frozen', False):
         local_version = bootstrap.get_version(Path(_openpype_root))
-        _print(f"  - running version: {local_version}")
+        switch_str = f" - will switch to {use_version}" if use_version else ""
+        _print(f"  - booting version: {local_version}{switch_str}")
         assert local_version
     else:
         # get current version of OpenPype
         local_version = bootstrap.get_local_live_version()
 
-    if use_version and use_version != local_version:
-        version_to_use = None
-        openpype_versions = bootstrap.find_openpype(include_zips=True)
+    version_to_use = None
+    openpype_versions = bootstrap.find_openpype(
+        include_zips=True, staging=use_staging)
+    if use_staging and not use_version:
+        try:
+            version_to_use = openpype_versions[-1]
+        except IndexError:
+            _print("!!! No staging versions are found.")
+            list_versions(openpype_versions, local_version)
+            sys.exit(1)
+        if version_to_use.path.is_file():
+            version_to_use.path = bootstrap.extract_openpype(
+                version_to_use)
+        bootstrap.add_paths_from_directory(version_to_use.path)
+        os.environ["OPENPYPE_VERSION"] = str(version_to_use)
+        version_path = version_to_use.path
+        os.environ["OPENPYPE_REPOS_ROOT"] = (version_path / "openpype").as_posix()  # noqa: E501
+        _openpype_root = version_to_use.path.as_posix()
+
+    elif use_version and use_version != local_version:
         v: OpenPypeVersion
         found = [v for v in openpype_versions if str(v) == use_version]
         if found:
@@ -600,13 +657,8 @@ def _bootstrap_from_code(use_version):
             os.environ["OPENPYPE_REPOS_ROOT"] = (version_path / "openpype").as_posix()  # noqa: E501
             _openpype_root = version_to_use.path.as_posix()
         else:
-            _print(f"!!! requested version {use_version} was not found.")
-            if openpype_versions:
-                _print("  - found: ")
-                for v in sorted(openpype_versions):
-                    _print(f"     - {v}: {v.path}")
-
-            _print(f"     - local version {local_version}")
+            _print(f"!!! Requested version {use_version} was not found.")
+            list_versions(openpype_versions, local_version)
             sys.exit(1)
     else:
         os.environ["OPENPYPE_VERSION"] = local_version
@@ -675,11 +727,16 @@ def boot():
     # Process arguments
     # ------------------------------------------------------------------------
 
-    use_version, use_staging = _process_arguments()
+    use_version, use_staging, print_versions = _process_arguments()
 
     if os.getenv("OPENPYPE_VERSION"):
-        use_staging = "staging" in os.getenv("OPENPYPE_VERSION")
-        use_version = os.getenv("OPENPYPE_VERSION")
+        if use_version:
+            _print(("*** environment variable OPENPYPE_VERSION"
+                    "is overridden by command line argument."))
+        else:
+            _print(">>> version set by environment variable")
+            use_staging = "staging" in os.getenv("OPENPYPE_VERSION")
+            use_version = os.getenv("OPENPYPE_VERSION")
 
     # ------------------------------------------------------------------------
     # Determine mongodb connection
@@ -704,6 +761,24 @@ def boot():
     if not os.getenv("OPENPYPE_PATH") and openpype_path:
         os.environ["OPENPYPE_PATH"] = openpype_path
 
+    if print_versions:
+        if not use_staging:
+            _print("--- This will list only non-staging versions detected.")
+            _print("    To see staging versions, use --use-staging argument.")
+        else:
+            _print("--- This will list only staging versions detected.")
+            _print("    To see other version, omit --use-staging argument.")
+        _openpype_root = OPENPYPE_ROOT
+        openpype_versions = bootstrap.find_openpype(include_zips=True,
+                                                    staging=use_staging)
+        if getattr(sys, 'frozen', False):
+            local_version = bootstrap.get_version(Path(_openpype_root))
+        else:
+            local_version = bootstrap.get_local_live_version()
+
+        list_versions(openpype_versions, local_version)
+        sys.exit(1)
+
     # ------------------------------------------------------------------------
     # Find OpenPype versions
     # ------------------------------------------------------------------------
@@ -718,7 +793,7 @@ def boot():
             _print(f"!!! {e}")
             sys.exit(1)
     else:
-        version_path = _bootstrap_from_code(use_version)
+        version_path = _bootstrap_from_code(use_version, use_staging)
 
     # set this to point either to `python` from venv in case of live code
     # or to `openpype` or `openpype_console` in case of frozen code
@@ -754,7 +829,7 @@ def boot():
     from openpype.version import __version__
 
     assert version_path, "Version path not defined."
-    info = get_info()
+    info = get_info(use_staging)
     info.insert(0, f">>> Using OpenPype from [ {version_path} ]")
 
     t_width = 20
@@ -781,7 +856,7 @@ def boot():
         sys.exit(1)
 
 
-def get_info() -> list:
+def get_info(use_staging=None) -> list:
     """Print additional information to console."""
     from openpype.lib.mongo import get_default_components
     from openpype.lib.log import PypeLogger
@@ -789,7 +864,7 @@ def get_info() -> list:
     components = get_default_components()
 
     inf = []
-    if not getattr(sys, 'frozen', False):
+    if use_staging:
         inf.append(("OpenPype variant", "staging"))
     else:
         inf.append(("OpenPype variant", "production"))

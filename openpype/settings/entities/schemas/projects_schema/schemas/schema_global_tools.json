@@ -35,10 +35,10 @@
                                 "object_type": "text"
                             },
                             {
+                                "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Hosts",
-                                "type": "list",
-                                "object_type": "text"
+                                "multiselection": true
                             },
                             {
                                 "key": "tasks",
@@ -75,10 +75,10 @@
                         "type": "dict",
                         "children": [
                             {
+                                "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Hosts",
-                                "type": "list",
-                                "object_type": "text"
+                                "multiselection": true
                             },
                             {
                                 "key": "tasks",

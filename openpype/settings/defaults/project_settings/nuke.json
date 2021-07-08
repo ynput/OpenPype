@@ -21,6 +21,11 @@
         "PreCollectNukeInstances": {
             "sync_workfile_version": true
         },
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateKnobs": {
             "enabled": false,
             "knobs": {

@@ -16,12 +16,12 @@ class CollectInstances(pyblish.api.InstancePlugin):
     subsets = {
         "referenceMain": {
             "family": "review",
-            "families": ["clip", "ftrack"],
+            "families": ["clip"],
             "extensions": [".mp4"]
         },
         "audioMain": {
             "family": "audio",
-            "families": ["clip", "ftrack"],
+            "families": ["clip"],
             "extensions": [".wav"],
         },
         "shotMain": {

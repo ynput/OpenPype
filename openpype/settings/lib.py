@@ -532,7 +532,11 @@ def apply_local_settings_on_system_settings(system_settings, local_settings):
 
         variants = system_settings["applications"][app_group_name]["variants"]
         for app_name, app_value in value.items():
-            if not app_value or app_name not in variants:
+            if (
+                not app_value
+                or app_name not in variants
+                or "executables" not in variants[app_name]
+            ):
                 continue
 
             executable = app_value.get("executable")

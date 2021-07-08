@@ -279,6 +279,11 @@ class BaseItemEntity(BaseEntity):
                 self, "Dynamic entity can't require restart."
             )
 
+    @abstractproperty
+    def root_key(self):
+        """Root is represented as this dictionary key."""
+        pass
+
     @abstractmethod
     def set_override_state(self, state):
         """Set override state and trigger it on children.
@@ -866,6 +871,10 @@ class ItemEntity(BaseItemEntity):
         """Call save on root item."""
         self.root_item.save()
 
+    @property
+    def root_key(self):
+        return self.root_item.root_key
+
     def schema_validations(self):
         if not self.label and self.use_label_wrap:
             reason = (
@@ -885,7 +894,11 @@ class ItemEntity(BaseItemEntity):
 
     def create_schema_object(self, *args, **kwargs):
         """Reference method for creation of entities defined in RootEntity."""
-        return self.root_item.create_schema_object(*args, **kwargs)
+        return self.schema_hub.create_schema_object(*args, **kwargs)
+
+    @property
+    def schema_hub(self):
+        return self.root_item.schema_hub
 
     def get_entity_from_path(self, path):
         return self.root_item.get_entity_from_path(path)

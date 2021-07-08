@@ -402,16 +402,18 @@ class SyncEntitiesFactory:
             items = []
             items.append({
                 "type": "label",
-                "value": "# Can't access Custom attribute <{}>".format(
-                    CUST_ATTR_ID_KEY
-                )
+                "value": (
+                    "# Can't access Custom attribute: <b>\"{}\"</b>"
+                ).format(CUST_ATTR_ID_KEY)
             })
             items.append({
                 "type": "label",
                 "value": (
-                    "<p>- Check if user \"{}\" has permissions"
-                    " to access the Custom attribute</p>"
-                ).format(self._api_key)
+                    "<p>- Check if your User and API key has permissions"
+                    " to access the Custom attribute."
+                    "<br>Username:\"{}\""
+                    "<br>API key:\"{}\"</p>"
+                ).format(self._api_user, self._api_key)
             })
             items.append({
                 "type": "label",

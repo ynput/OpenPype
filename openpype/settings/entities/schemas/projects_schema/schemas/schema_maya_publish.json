@@ -28,7 +28,16 @@
             "type": "label",
             "label": "Validators"
         },
-
+        {
+            "type": "schema_template",
+            "name": "template_publish_plugin",
+            "template_data": [
+                {
+                    "key": "ValidateContainers",
+                    "label": "ValidateContainers"
+                }
+            ]
+        },
         {
             "type": "dict",
             "collapsible": true,
