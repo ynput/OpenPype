@@ -384,16 +384,9 @@ class DictConditionalEntity(ItemEntity):
         # Set override state on enum entity first
         self.enum_entity.set_override_state(state, ignore_missing_defaults)
 
-        # Set override state on other entities under current enum value
-        for child_obj in self.non_gui_children[self.current_enum].values():
-            child_obj.set_override_state(state, ignore_missing_defaults)
-
         # Set override state on other enum children
         # - these must not raise exception about missing defaults
         for item_key, children_by_key in self.non_gui_children.items():
-            if item_key == self.current_enum:
-                continue
-
             for child_obj in children_by_key.values():
                 child_obj.set_override_state(state, True)
 
