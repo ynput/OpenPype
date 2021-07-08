@@ -39,6 +39,25 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.task_value_widget = task_value_widget
         self.subset_value_widget = subset_value_widget
 
+    def set_current_instances(self, instances):
+        if len(instances) == 1:
+            instance = instances[0]
+            unknown = "N/A"
+
+            variant = instance.data.get("variant") or unknown
+            family = instance.data.get("family") or unknown
+            asset_name = instance.data.get("asset") or unknown
+            task_name = instance.data.get("task") or unknown
+            subset_name = instance.data.get("subset") or unknown
+
+            self.variant_input.setText(variant)
+            self.family_value_widget.setText(family)
+            self.asset_value_widget.setText(asset_name)
+            self.task_value_widget.setText(task_name)
+            self.subset_value_widget.setText(subset_name)
+            return
+        # TODO what to do when mulsiselection?
+
 
 class SubsetAttributesWidget(QtWidgets.QWidget):
     """Widget where attributes of instance/s are modified.
