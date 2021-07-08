@@ -33,7 +33,7 @@ class PublisherController:
 
         self._in_reset = False
 
-    def add_reset_callback(self, callback):
+    def add_on_reset_callback(self, callback):
         ref = weakref.WeakMethod(callback)
         self._reset_callback_refs.add(ref)
 

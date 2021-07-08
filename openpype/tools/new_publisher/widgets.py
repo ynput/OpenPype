@@ -176,7 +176,7 @@ class CreateDialog(QtWidgets.QDialog):
         )
         variant_hints_menu.triggered.connect(self._on_variant_action)
 
-        controller.add_reset_callback(self._on_control_reset)
+        controller.add_on_reset_callback(self._on_control_reset)
 
         self.asset_name_input = asset_name_input
         self.subset_name_input = subset_name_input
