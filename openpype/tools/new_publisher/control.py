@@ -37,6 +37,20 @@ class PublisherController:
         ref = weakref.WeakMethod(callback)
         self._reset_callback_refs.add(ref)
 
+
+    def _trigger_callbacks(self, callbacks, *args, **kwargs):
+        # Trigger reset callbacks
+        to_remove = set()
+        for ref in callbacks:
+            callback = ref()
+            if callback:
+                callback()
+            else:
+                to_remove.add(ref)
+
+        for ref in to_remove:
+            callbacks.remove(ref)
+
     def reset(self):
         if self._in_reset:
             return
@@ -45,15 +59,7 @@ class PublisherController:
         self._reset()
 
         # Trigger reset callbacks
-        to_remove = set()
-        for ref in self._reset_callback_refs:
-            callback = ref()
-            if callback:
-                callback()
-            else:
-                to_remove.add(ref)
-        for ref in to_remove:
-            self._reset_callback_refs.remove(ref)
+        self._trigger_callbacks(self._reset_callback_refs)
 
         self._in_reset = False
 
