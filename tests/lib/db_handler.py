@@ -69,6 +69,7 @@ class DBHandler():
             print("{} doesn't exist".format(db_name))
             return
 
+        print("Dropping {} database".format(db_name))
         self.client.drop_database(db_name)
 
     def backup_to_dump(self, db_name, dump_dir, overwrite=False):

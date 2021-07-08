@@ -264,9 +264,9 @@ class RemoteFileHandler:
         return match.group("id")
 
 
-url = "https://drive.google.com/file/d/1LOVnao6WLW7FpbQELKawzjd19GKx-HH_/view?usp=sharing" # readme
-url = "https://drive.google.com/file/d/1SYTZGRVjJUwMUGgZjmOjhDljMzyGaWcv/view?usp=sharing"
-
-
-RemoteFileHandler.download_url(url, root="c:/projects/", filename="temp.zip")
-RemoteFileHandler.unzip("c:/projects/temp.zip")
+# url = "https://drive.google.com/file/d/1LOVnao6WLW7FpbQELKawzjd19GKx-HH_/view?usp=sharing" # readme
+# url = "https://drive.google.com/file/d/1SYTZGRVjJUwMUGgZjmOjhDljMzyGaWcv/view?usp=sharing"
+#
+#
+# RemoteFileHandler.download_url(url, root="c:/projects/", filename="temp.zip")
+# RemoteFileHandler.unzip("c:/projects/temp.zip")

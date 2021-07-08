@@ -1,14 +1,33 @@
-"""Test file for Sync Server, tests site operations add_site, remove_site"""
+"""Test file for Sync Server, tests site operations add_site, remove_site.
+
+    File:
+        creates temporary directory and downloads .zip file from GDrive
+        unzips .zip file
+        uses content of .zip file (MongoDB's dumps) to import to new databases
+        with use of 'monkeypatch_session' modifies required env vars
+            temporarily
+        runs battery of tests checking that site operation for Sync Server
+            module are working
+        removes temporary folder
+        removes temporary databases (?)
+"""
 import os
 import pytest
+import tempfile
+import shutil
 from bson.objectid import ObjectId
 
-from tests.lib.DBHandler import DBHandler
+from tests.lib.db_handler import DBHandler
+from tests.lib.file_handler import RemoteFileHandler
 
 TEST_DB_NAME = "test_db"
 TEST_PROJECT_NAME = "test_project"
 TEST_OPENPYPE_NAME = "test_openpype"
 REPRESENTATION_ID = "60e578d0c987036c6a7b741d"
+
+TEST_FILES = [
+    ("1eCwPljuJeOI8A3aisfOIBKKjcmIycTEt", "test_site_operations.zip", "")
+]
 
 
 @pytest.fixture(scope='session')
@@ -21,21 +40,36 @@ def monkeypatch_session():
 
 
 @pytest.fixture(scope="module")
-def db_init(monkeypatch_session):
-    backup_dir = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            'fixture'
-        )
-    )
+def download_test_data():
+    tmpdir = tempfile.mkdtemp()
+    for test_file in TEST_FILES:
+        file_id, file_name, md5 = test_file
+
+        f_name, ext = os.path.splitext(file_name)
+
+        RemoteFileHandler.download_file_from_google_drive(file_id,
+                                                          str(tmpdir),
+                                                          file_name)
+
+        if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:
+            RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
+
+
+        yield tmpdir
+        shutil.rmtree(tmpdir)
+
+
+@pytest.fixture(scope="module")
+def db(monkeypatch_session, download_test_data):
+    backup_dir = download_test_data
 
     uri = os.environ.get("OPENPYPE_MONGO") or "mongodb://localhost:27017"
-    db = DBHandler(uri)
-    db.setup_from_dump(TEST_DB_NAME, backup_dir, True,
-                       db_name_out=TEST_DB_NAME)
+    db_handler = DBHandler(uri)
+    db_handler.setup_from_dump(TEST_DB_NAME, backup_dir, True,
+                               db_name_out=TEST_DB_NAME)
 
-    db.setup_from_dump("openpype", backup_dir, True,
-                       db_name_out=TEST_OPENPYPE_NAME)
+    db_handler.setup_from_dump("openpype", backup_dir, True,
+                               db_name_out=TEST_OPENPYPE_NAME)
 
     # set needed env vars temporarily for tests
     monkeypatch_session.setenv("OPENPYPE_MONGO", uri)
@@ -46,17 +80,15 @@ def db_init(monkeypatch_session):
     monkeypatch_session.setenv("AVALON_PROJECT", TEST_PROJECT_NAME)
     monkeypatch_session.setenv("PYPE_DEBUG", "3")
 
-
-@pytest.fixture(scope="module")
-def setup_avalon_db(db_init):
-    """Connect to Avalon, only after 'db_init' sets env vars."""
     from avalon.api import AvalonMongoDB
     db = AvalonMongoDB()
     yield db
 
+    db_handler.teardown(TEST_DB_NAME)
+    db_handler.teardown(TEST_OPENPYPE_NAME)
 
 @pytest.fixture(scope="module")
-def setup_sync_server_module(db_init):
+def setup_sync_server_module(db):
     """Get sync_server_module from ModulesManager"""
     from openpype.modules import ModulesManager
 
@@ -65,25 +97,25 @@ def setup_sync_server_module(db_init):
     yield sync_server
 
 
-@pytest.mark.usefixtures("setup_avalon_db")
-def test_project_created(setup_avalon_db):
-    assert ['test_project'] == setup_avalon_db.database.collection_names(False)
+@pytest.mark.usefixtures("db")
+def test_project_created(db):
+    assert ['test_project'] == db.database.collection_names(False)
 
 
-@pytest.mark.usefixtures("setup_avalon_db")
-def test_objects_imported(setup_avalon_db):
-    count_obj = len(list(setup_avalon_db.database[TEST_PROJECT_NAME].find({})))
+@pytest.mark.usefixtures("db")
+def test_objects_imported(db):
+    count_obj = len(list(db.database[TEST_PROJECT_NAME].find({})))
     assert 15 == count_obj
 
 
 @pytest.mark.usefixtures("setup_sync_server_module")
-def test_add_site(setup_avalon_db, setup_sync_server_module):
+def test_add_site(db, setup_sync_server_module):
     """Adds 'test_site', checks that added, checks that doesn't duplicate."""
     query = {
         "_id": ObjectId(REPRESENTATION_ID)
     }
 
-    ret = setup_avalon_db.database[TEST_PROJECT_NAME].find(query)
+    ret = db.database[TEST_PROJECT_NAME].find(query)
 
     assert 1 == len(list(ret)), \
         "Single {} must be in DB".format(REPRESENTATION_ID)
@@ -91,7 +123,7 @@ def test_add_site(setup_avalon_db, setup_sync_server_module):
     setup_sync_server_module.add_site(TEST_PROJECT_NAME, REPRESENTATION_ID,
                                       site_name='test_site')
 
-    ret = list(setup_avalon_db.database[TEST_PROJECT_NAME].find(query))
+    ret = list(db.database[TEST_PROJECT_NAME].find(query))
 
     assert 1 == len(ret), \
         "Single {} must be in DB".format(REPRESENTATION_ID)
@@ -102,7 +134,7 @@ def test_add_site(setup_avalon_db, setup_sync_server_module):
 
 
 @pytest.mark.usefixtures("setup_sync_server_module")
-def test_add_site_again(setup_avalon_db, setup_sync_server_module):
+def test_add_site_again(db, setup_sync_server_module):
     """Depends on test_add_site, must throw exception."""
     with pytest.raises(ValueError):
         setup_sync_server_module.add_site(TEST_PROJECT_NAME, REPRESENTATION_ID,
@@ -110,7 +142,7 @@ def test_add_site_again(setup_avalon_db, setup_sync_server_module):
 
 
 @pytest.mark.usefixtures("setup_sync_server_module")
-def test_add_site_again_force(setup_avalon_db, setup_sync_server_module):
+def test_add_site_again_force(db, setup_sync_server_module):
     """Depends on test_add_site, must not throw exception."""
     setup_sync_server_module.add_site(TEST_PROJECT_NAME, REPRESENTATION_ID,
                                       site_name='test_site', force=True)
@@ -119,14 +151,14 @@ def test_add_site_again_force(setup_avalon_db, setup_sync_server_module):
         "_id": ObjectId(REPRESENTATION_ID)
     }
 
-    ret = list(setup_avalon_db.database[TEST_PROJECT_NAME].find(query))
+    ret = list(db.database[TEST_PROJECT_NAME].find(query))
 
     assert 1 == len(ret), \
         "Single {} must be in DB".format(REPRESENTATION_ID)
 
 
 @pytest.mark.usefixtures("setup_sync_server_module")
-def test_remove_site(setup_avalon_db, setup_sync_server_module):
+def test_remove_site(db, setup_sync_server_module):
     """Depends on test_add_site, must remove 'test_site'."""
     setup_sync_server_module.remove_site(TEST_PROJECT_NAME, REPRESENTATION_ID,
                                          site_name='test_site')
@@ -135,7 +167,7 @@ def test_remove_site(setup_avalon_db, setup_sync_server_module):
         "_id": ObjectId(REPRESENTATION_ID)
     }
 
-    ret = list(setup_avalon_db.database[TEST_PROJECT_NAME].find(query))
+    ret = list(db.database[TEST_PROJECT_NAME].find(query))
 
     assert 1 == len(ret), \
         "Single {} must be in DB".format(REPRESENTATION_ID)
@@ -147,7 +179,7 @@ def test_remove_site(setup_avalon_db, setup_sync_server_module):
 
 
 @pytest.mark.usefixtures("setup_sync_server_module")
-def test_remove_site_again(setup_avalon_db, setup_sync_server_module):
+def test_remove_site_again(db, setup_sync_server_module):
     """Depends on test_add_site, must trow exception"""
     with pytest.raises(ValueError):
         setup_sync_server_module.remove_site(TEST_PROJECT_NAME,
@@ -158,7 +190,7 @@ def test_remove_site_again(setup_avalon_db, setup_sync_server_module):
         "_id": ObjectId(REPRESENTATION_ID)
     }
 
-    ret = list(setup_avalon_db.database[TEST_PROJECT_NAME].find(query))
+    ret = list(db.database[TEST_PROJECT_NAME].find(query))
 
     assert 1 == len(ret), \
         "Single {} must be in DB".format(REPRESENTATION_ID)
