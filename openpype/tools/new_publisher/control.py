@@ -26,6 +26,7 @@ class PublisherController:
         self.dbcon = dbcon
 
         self._reset_callback_refs = set()
+        self._on_create_callback_refs = set()
 
         self.creators = {}
         self.publish_plugins = []
@@ -37,6 +38,9 @@ class PublisherController:
         ref = weakref.WeakMethod(callback)
         self._reset_callback_refs.add(ref)
 
+    def add_on_create_callback(self, callback):
+        ref = weakref.WeakMethod(callback)
+        self._on_create_callback_refs.add(ref)
 
     def _trigger_callbacks(self, callbacks, *args, **kwargs):
         # Trigger reset callbacks
@@ -102,5 +106,16 @@ class PublisherController:
         self.instances = instances
 
     def create(self, family, subset_name, instance_data, options):
+        # QUESTION Force to return instances or call `list_instances` on each
+        #   creation? (`list_instances` may slow down...)
         creator = self.creators[family]
-        return creator.create(subset_name, instance_data, options)
+        result = creator.create(subset_name, instance_data, options)
+        if result and not isinstance(result, (list, tuple)):
+            result = [result]
+
+        for instance in result:
+            self.instances.append(instance)
+
+        self._trigger_callbacks(self._on_create_callback_refs)
+
+        return result
