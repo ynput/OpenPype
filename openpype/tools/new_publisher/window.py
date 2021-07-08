@@ -69,7 +69,9 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_model = QtGui.QStandardItemModel()
         subset_view.setModel(subset_model)
 
-        subset_attributes_widget = SubsetAttributesWidget(subset_widget)
+        subset_attributes_widget = SubsetAttributesWidget(
+            controller, subset_widget
+        )
 
         subset_layout = QtWidgets.QHBoxLayout(subset_widget)
         subset_layout.addWidget(subset_view, 0)

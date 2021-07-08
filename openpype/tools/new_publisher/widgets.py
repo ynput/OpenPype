@@ -73,7 +73,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
     |______________|______________|
     """
 
-    def __init__(self, parent):
+    def __init__(self, controller, parent):
         super(SubsetAttributesWidget, self).__init__(parent)
 
         # TOP PART
@@ -103,6 +103,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         layout.addWidget(top_widget, 0)
         layout.addWidget(bottom_widget, 1)
 
+        self.controller = controller
         self.global_attrs_widget = global_attrs_widget
         self.thumbnail_widget = thumbnail_widget
 
