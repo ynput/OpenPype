@@ -1,4 +1,5 @@
 import copy
+import logging
 import collections
 from uuid import uuid4
 
@@ -87,6 +88,9 @@ class BaseCreator:
     to `self` if it's not Plugin specific.
     """
 
+    # Variable to store logger
+    _log = None
+
     # Creator is enabled (Probably does not have reason of existence?)
     enabled = True
 
@@ -103,6 +107,12 @@ class BaseCreator:
     def family(self):
         """Family that plugin represents."""
         pass
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = logging.getLogger(self.__class__.__name__)
+        return self._log
 
     @abstractmethod
     def create(self, options=None):
