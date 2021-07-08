@@ -8,6 +8,7 @@ from openpype.api import (
     get_project_settings
 )
 from openpype.pipeline import (
+    OpenPypePyblishPluginMixin,
     BaseCreator,
     AvalonInstance
 )
@@ -30,6 +31,7 @@ class PublisherController:
 
         self.creators = {}
         self.publish_plugins = []
+
         self.instances = []
 
         self._in_reset = False
@@ -122,6 +124,27 @@ class PublisherController:
             pass
 
         return attr_defs
+
+    def get_publish_attribute_definitions(self, instances):
+        families = set()
+        for instance in instances:
+            family = instance.data["family"]
+            families.add(family)
+
+        plugins_with_defs = []
+        for plugin in self.publish_plugins:
+            if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
+                plugins_with_defs.append(plugin)
+
+        filtered_plugins = pyblish.logic.plugins_by_families(
+            plugins_with_defs, families
+        )
+        output = []
+        for plugin in filtered_plugins:
+            attr_defs = plugin.get_attribute_defs()
+            if attr_defs:
+                output.append((plugin.__name__, attr_defs))
+        return output
 
     def create(self, family, subset_name, instance_data, options):
         # QUESTION Force to return instances or call `list_instances` on each
