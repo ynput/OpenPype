@@ -314,7 +314,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
     def _get_version(self, name, input_naming_patterns, input_naming_groups,
                      color_spaces):
         found = self._parse(name, input_naming_patterns, input_naming_groups,
-                           color_spaces, 'version')
+                            color_spaces, 'version')
 
         if found:
             return found.replace('v', '')
@@ -322,10 +322,10 @@ class CollectTextures(pyblish.api.ContextPlugin):
         self.log.info("No version found in the name {}".format(name))
 
     def _get_udim(self, name, input_naming_patterns, input_naming_groups,
-                     color_spaces):
+                  color_spaces):
         """Parses from 'name' udim value."""
         found = self._parse(name, input_naming_patterns, input_naming_groups,
-                           color_spaces, 'udim')
+                            color_spaces, 'udim')
         if found:
             return found
 
