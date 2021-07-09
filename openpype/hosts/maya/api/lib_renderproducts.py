@@ -801,8 +801,8 @@ class RenderProductsVray(ARenderProducts):
                     "vray_mtllist_mtlselect",
                     "vray_mtl_mtlselect"
                 ]
-                for attr in attrs:
-                    name = _get_source_name(node, attr)
+                for attribute in attrs:
+                    name = _get_source_name(node, attribute)
                     if name:
                         final_name += '_{}'.format(name)
                         break
