@@ -50,6 +50,7 @@ import pyblish.api
 
 from avalon import maya, api
 from openpype.hosts.maya.api.expected_files import ExpectedFiles
+from openpype.hosts.maya.api.lib_renderproducts import get as get_layer_render_products  # noqa: E501
 from openpype.hosts.maya.api import lib
 
 
@@ -157,10 +158,21 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             # return all expected files for all cameras and aovs in given
             # frame range
-            ef = ExpectedFiles(render_instance)
-            exp_files = ef.get(renderer, layer_name)
-            self.log.info("multipart: {}".format(ef.multipart))
+            layer_render_products = get_layer_render_products(
+                layer_name, render_instance)
+            render_products = layer_render_products.layer_data.products
+            assert render_products, "no render products generated"
+            exp_files = []
+            for product in render_products:
+                for camera in layer_render_products.layer_data.cameras:
+                    exp_files.append(
+                        {product.productName: layer_render_products.get_files(
+                            product, camera)})
+            # ef = ExpectedFiles(render_instance)
+            # exp_files = [render_products.get_files(p) for p in render_products]
+            # self.log.info("multipart: {}".format(ef.multipart))
             assert exp_files, "no file names were generated, this is bug"
+            self.log.info(exp_files)
 
             # if we want to attach render to subset, check if we have AOV's
             # in expectedFiles. If so, raise error as we cannot attach AOV
@@ -224,7 +236,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "subset": expected_layer_name,
                 "attachTo": attach_to,
                 "setMembers": layer_name,
-                "multipartExr": ef.multipart,
+                "multipartExr": layer_render_products.multipart,
                 "review": render_instance.data.get("review") or False,
                 "publish": True,
 
