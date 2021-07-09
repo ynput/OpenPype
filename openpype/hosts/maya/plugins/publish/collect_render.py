@@ -168,9 +168,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     exp_files.append(
                         {product.productName: layer_render_products.get_files(
                             product, camera)})
-            # ef = ExpectedFiles(render_instance)
-            # exp_files = [render_products.get_files(p) for p in render_products]
-            # self.log.info("multipart: {}".format(ef.multipart))
+
+            self.log.info("multipart: {}".format(
+                layer_render_products.multipart))
             assert exp_files, "no file names were generated, this is bug"
             self.log.info(exp_files)
 

@@ -6,10 +6,6 @@ import logging
 
 import maya.app.renderSetup.model.utils as utils
 from maya.app.renderSetup.model import (
-    override,
-    selector,
-    collection,
-    renderLayer,
     renderSetup
 )
 from maya.app.renderSetup.model.override import (
@@ -102,7 +98,7 @@ def get_attr_in_layer(node_attr, layer):
         """Return whether layer needs updating."""
         # Use `getattr` as e.g. DefaultRenderLayer does not have the attribute
         return getattr(layer, "needsMembershipUpdate", False) or \
-               getattr(layer, "needsApplyUpdate", False)
+            getattr(layer, "needsApplyUpdate", False)
 
     def get_default_layer_value(node_attr_):
         """Return attribute value in defaultRenderLayer"""
@@ -111,15 +107,16 @@ def get_attr_in_layer(node_attr, layer):
                                       destination=False,
                                       # We want to skip conversion nodes since
                                       # an override to `endFrame` could have
-                                      # a `unitToTimeConversion` node in-between
+                                      # a `unitToTimeConversion` node
+                                      # in-between
                                       skipConversionNodes=True,
                                       type="applyOverride") or []
         if inputs:
-            override = inputs[0]
-            history_overrides = cmds.ls(cmds.listHistory(override,
+            _override = inputs[0]
+            history_overrides = cmds.ls(cmds.listHistory(_override,
                                                          pruneDagObjects=True),
                                         type="applyOverride")
-            node = history_overrides[-1] if history_overrides else override
+            node = history_overrides[-1] if history_overrides else _override
             node_attr_ = node + ".original"
 
         return pm.getAttr(node_attr_, asString=True)
@@ -133,7 +130,7 @@ def get_attr_in_layer(node_attr, layer):
         if _layer_needs_update(current_layer):
             try:
                 rs.switchToLayer(current_layer)
-            except RuntimeError as exc:
+            except RuntimeError:
                 # Some cases can cause errors on switching
                 # the first time with Render Setup layers
                 # e.g. different overrides to compounds
@@ -229,28 +226,28 @@ def get_attr_overrides(node_attr, layer,
 
     def get_mplug_names(mplug):
         """Return long and short name of MPlug"""
-        l = mplug.partialName(useLongNames=True)
-        s = mplug.partialName(useLongNames=False)
-        return {l, s}
+        long_name = mplug.partialName(useLongNames=True)
+        short_name = mplug.partialName(useLongNames=False)
+        return {long_name, short_name}
 
-    def iter_override_targets(override):
+    def iter_override_targets(_override):
         try:
-            for target in override._targets():
+            for target in _override._targets():
                 yield target
         except AssertionError:
             # Workaround: There is a bug where the private `_targets()` method
             #             fails on some attribute plugs. For example overrides
             #             to the defaultRenderGlobals.endFrame
             #             (Tested in Maya 2020.2)
-            log.debug("Workaround for %s" % override)
+            log.debug("Workaround for %s" % _override)
             from maya.app.renderSetup.common.utils import findPlug
 
-            attr = override.attributeName()
-            if isinstance(override, UniqueOverride):
-                node = override.targetNodeName()
+            attr = _override.attributeName()
+            if isinstance(_override, UniqueOverride):
+                node = _override.targetNodeName()
                 yield findPlug(node, attr)
             else:
-                nodes = override.parent().selector().nodes()
+                nodes = _override.parent().selector().nodes()
                 for node in nodes:
                     if cmds.attributeQuery(attr, node=node, exists=True):
                         yield findPlug(node, attr)

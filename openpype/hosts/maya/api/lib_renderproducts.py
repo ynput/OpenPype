@@ -258,7 +258,7 @@ class ARenderProducts:
         """
         return self._get_attr("defaultRenderGlobals", attribute)
 
-    def _get_attr(self, node_attr, attr=None):
+    def _get_attr(self, node_attr, attribute=None):
         """Return the value of the attribute in the renderlayer
 
         For readability this allows passing in the attribute in two ways.
@@ -273,10 +273,10 @@ class ARenderProducts:
 
         """
 
-        if attr is None:
+        if attribute is None:
             plug = node_attr
         else:
-            plug = "{}.{}".format(node_attr, attr)
+            plug = "{}.{}".format(node_attr, attribute)
 
         return lib.get_attr_in_layer(plug, layer=self.layer)
 
@@ -512,7 +512,8 @@ class RenderProductsArnold(ARenderProducts):
 
             all_light_groups = self._get_attr(aov, "lightGroups")
             if all_light_groups:
-                # All light groups is enabled. A single multipart Render Product
+                # All light groups is enabled. A single multipart
+                # Render Product
                 product = RenderProduct(productName=name + "_lgroups",
                                         ext=ext,
                                         aov=aov_name,
@@ -571,7 +572,7 @@ class RenderProductsArnold(ARenderProducts):
         # We don't need to check for Merge AOVs due to overridden
         # `get_renderer_prefix()` behavior which forces <renderpass>
         has_renderpass_token = (
-                "<renderpass>" in self.layer_data.filePrefix.lower()
+            "<renderpass>" in self.layer_data.filePrefix.lower()
         )
         if not has_renderpass_token:
             beauty_product.multipart = True
