@@ -192,12 +192,12 @@ class ExtractYetiRig(openpype.api.Extractor):
                 'stagingDir': dirname
             }
         )
-        self.log.info("settings file: {}".format(settings))
+        self.log.info("settings file: {}".format(settings_path))
         instance.data["representations"].append(
             {
                 'name': 'rigsettings',
                 'ext': 'rigsettings',
-                'files': os.path.basename(settings),
+                'files': os.path.basename(settings_path),
                 'stagingDir': dirname
             }
         )
