@@ -26,7 +26,7 @@ Set-Location -Path $openpype_root
 
 Write-Host ">>> " -NoNewline -ForegroundColor Green
 Write-Host "Reading Poetry ... " -NoNewline
-if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
+if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Host "NOT FOUND" -ForegroundColor Yellow
     Write-Host "*** " -NoNewline -ForegroundColor Yellow
     Write-Host "We need to install Poetry create virtual env first ..."
@@ -35,5 +35,5 @@ if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
     Write-Host "OK" -ForegroundColor Green
 }
 
-& poetry run python "$($openpype_root)\start.py" tray --debug
+& "$($env:POETRY_HOME)\bin\poetry" run python "$($openpype_root)\start.py" tray --debug
 Set-Location -Path $current_dir

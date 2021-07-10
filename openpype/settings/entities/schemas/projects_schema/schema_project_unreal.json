@@ -15,11 +15,6 @@
                     "type": "boolean",
                     "key": "dev_mode",
                     "label": "Dev mode"
-                },
-                {
-                    "type": "boolean",
-                    "key": "install_unreal_python_engine",
-                    "label": "Install unreal python engine"
                 }
             ]
         }

@@ -15,6 +15,9 @@ from .pype_commands import PypeCommands
               expose_value=False, help="use specified version")
 @click.option("--use-staging", is_flag=True,
               expose_value=False, help="use staging variants")
+@click.option("--list-versions", is_flag=True, expose_value=False,
+              help=("list all detected versions. Use With `--use-staging "
+                    "to list staging versions."))
 def main(ctx):
     """Pype is main command serving as entry point to pipeline system.
 

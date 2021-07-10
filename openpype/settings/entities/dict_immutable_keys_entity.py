@@ -258,7 +258,7 @@ class DictImmutableKeysEntity(ItemEntity):
         self._metadata_are_modified = current_metadata != metadata
         self._current_metadata = current_metadata
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
             self.root_item.set_override_state(state)
@@ -266,9 +266,10 @@ class DictImmutableKeysEntity(ItemEntity):
 
         # Change has/had override states
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
 
         for child_obj in self.non_gui_children.values():
-            child_obj.set_override_state(state)
+            child_obj.set_override_state(state, ignore_missing_defaults)
 
         self._update_current_metadata()
 

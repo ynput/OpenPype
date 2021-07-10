@@ -16,11 +16,13 @@ def clone_review_session(session, entity):
 
     # Add all invitees.
     for invitee in entity["review_session_invitees"]:
+        # Make sure email is not None but string
+        email = invitee["email"] or ""
         session.create(
             "ReviewSessionInvitee",
             {
                 "name": invitee["name"],
-                "email": invitee["email"],
+                "email": email,
                 "review_session": review_session
             }
         )

@@ -657,7 +657,7 @@ class BootstrapRepos:
             ]
 
         # remove duplicates
-        openpype_versions = list(set(openpype_versions))
+        openpype_versions = sorted(list(set(openpype_versions)))
 
         return openpype_versions
 
