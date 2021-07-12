@@ -111,6 +111,10 @@ class SchemasHub:
         self._loaded_templates = {}
         self._loaded_schemas = {}
 
+        # Store validating and validated dynamic template or schemas
+        self._validating_dynamic = set()
+        self._validated_dynamic = set()
+
         # It doesn't make sence to reload types on each reset as they can't be
         #   changed
         self._load_types()
@@ -141,6 +145,27 @@ class SchemasHub:
         if item_type in ("template", "schema_template"):
             output = item_def["name"]
         return output
+
+    def is_dynamic_template_validating(self, template_name):
+        """Is template validating using different entity.
+
+        Returns:
+            bool: Is template validating.
+        """
+        if template_name in self._validating_dynamic:
+            return True
+        return False
+
+    def is_dynamic_template_validated(self, template_name):
+        """Is template already validated.
+
+        Returns:
+            bool: Is template validated.
+        """
+
+        if template_name in self._validated_dynamic:
+            return True
+        return False
 
     def get_schema(self, schema_name):
         """Get schema definition data by it's name.
