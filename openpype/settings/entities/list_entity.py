@@ -187,7 +187,11 @@ class ListEntity(EndpointEntity):
             child_validated = True
             break
 
-        if not child_validated:
+        # Do not validate if was used schema or template
+        # - that is validated on first created children
+        # - it is because template or schema can use itself inside children
+        # TODO Do validations maybe store to `schema_hub` what is validated
+        if not self._schema_template_used and not child_validated:
             idx = 0
             tmp_child = self._add_new_item(idx)
             tmp_child.schema_validations()
