@@ -65,15 +65,15 @@ class AvalonInstance:
             data[key] = self.data.pop(key)
         self.data = data
 
-    @staticmethod
-    def from_existing(instance_data):
+    @classmethod
+    def from_existing(cls, instance_data):
         """Convert instance data from workfile to AvalonInstance."""
         instance_data = copy.deepcopy(instance_data)
 
         family = instance_data.pop("family", None)
         subset_name = instance_data.pop("subset", None)
 
-        return AvalonInstance(family, subset_name, instance_data, new=False)
+        return cls(family, subset_name, instance_data, new=False)
 
 
 @six.add_metaclass(ABCMeta)
