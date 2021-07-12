@@ -272,18 +272,19 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         )
 
         self._job_info = (
-            context.data["project_settings"]
-            ["maya"]
-            ["publish"]
-            ["deadline"]
-            ["jobInfo"]
+            context.data["project_settings"].get(
+                "maya", {}).get(
+                "publish", {}).get(
+                "deadline", {}).get(
+                "jobInfo", {})
         )
+
         self._plugin_info = (
-            context.data["project_settings"]
-            ["maya"]
-            ["publish"]
-            ["deadline"]
-            ["pluginInfo"]
+            context.data["project_settings"].get(
+                "maya", {}).get(
+                "publish", {}).get(
+                "deadline", {}).get(
+                "pluginInfo", {})
         )
 
         assert self._deadline_url, "Requires DEADLINE_REST_URL"
