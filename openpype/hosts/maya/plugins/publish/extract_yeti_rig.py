@@ -133,10 +133,10 @@ class ExtractYetiRig(openpype.api.Extractor):
         image_search_path = resources_dir = instance.data["resourcesDir"]
 
         settings = instance.data.get("rigsettings", None)
-        if settings:
-            settings["imageSearchPath"] = image_search_path
-            with open(settings_path, "w") as fp:
-                json.dump(settings, fp, ensure_ascii=False)
+        assert settings, "Yeti rig settings were not collected."
+        settings["imageSearchPath"] = image_search_path
+        with open(settings_path, "w") as fp:
+            json.dump(settings, fp, ensure_ascii=False)
 
         # add textures to transfers
         if 'transfers' not in instance.data:
