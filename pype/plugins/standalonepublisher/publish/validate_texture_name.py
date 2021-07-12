@@ -2,7 +2,7 @@ import pyblish.api
 import pype.api
 
 
-class ValidateTextureBatchNaming(pyblish.api.ContextPlugin):
+class ValidateTextureBatchNaming(pyblish.api.InstancePlugin):
     """Validates that all instances had properly formatted name."""
 
     label = "Validate Texture Batch Naming"
@@ -11,25 +11,22 @@ class ValidateTextureBatchNaming(pyblish.api.ContextPlugin):
     families = ["workfile", "textures"]
     optional = False
 
-    def process(self, context):
-        for instance in context:
-            file_name = instance.data["representations"][0]["files"]
-            if isinstance(file_name, list):
-                file_name = file_name[0]
+    def process(self, instance):
+        file_name = instance.data["representations"][0]["files"]
+        if isinstance(file_name, list):
+            file_name = file_name[0]
 
-            msg = "Couldnt find asset name in '{}'\n".format(file_name) + \
-                  "File name doesn't follow configured pattern.\n" + \
-                  "Please rename the file."
-            assert "NOT_AVAIL" not in instance.data["asset_build"], msg
+        msg = "Couldnt find asset name in '{}'\n".format(file_name) + \
+              "File name doesn't follow configured pattern.\n" + \
+              "Please rename the file."
+        assert "NOT_AVAIL" not in instance.data["asset_build"], msg
 
-            instance.data.pop("asset_build")
+        instance.data.pop("asset_build")
 
-            if instance.data["family"] == "textures":
-                file_name = instance.data["representations"][0]["files"][0]
-                self._check_proper_collected(instance.data["versionData"],
-                                             file_name)
-
-        self.log.info("Naming matches expected patterns.")
+        if instance.data["family"] == "textures":
+            file_name = instance.data["representations"][0]["files"][0]
+            self._check_proper_collected(instance.data["versionData"],
+                                         file_name)
 
     def _check_proper_collected(self, versionData, file_name):
         """
