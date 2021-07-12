@@ -3,6 +3,7 @@ import re
 import json
 import copy
 import inspect
+import contextlib
 
 from .exceptions import (
     SchemaTemplateMissingKeys,
@@ -166,6 +167,23 @@ class SchemasHub:
         if template_name in self._validated_dynamic:
             return True
         return False
+
+    @contextlib.contextmanager
+    def validating_dynamic(self, template_name):
+        """Template name is validating and validated.
+
+        Context manager that cares about storing template name validations of
+        template.
+
+        This is to avoid infinite loop of dynamic children validation.
+        """
+        self._validating_dynamic.add(template_name)
+        try:
+            yield
+            self._validated_dynamic.add(template_name)
+
+        finally:
+            self._validating_dynamic.remove(template_name)
 
     def get_schema(self, schema_name):
         """Get schema definition data by it's name.
