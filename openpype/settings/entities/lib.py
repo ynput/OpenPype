@@ -126,6 +126,22 @@ class SchemasHub:
     def gui_types(self):
         return self._gui_types
 
+    def get_template_name(self, item_def, default=None):
+        """Get template name from passed item definition.
+
+        Args:
+            item_def(dict): Definition of item with "type".
+            default(object): Default return value.
+        """
+        output = default
+        if not item_def or not isinstance(item_def, dict):
+            return output
+
+        item_type = item_def.get("type")
+        if item_type in ("template", "schema_template"):
+            output = item_def["name"]
+        return output
+
     def get_schema(self, schema_name):
         """Get schema definition data by it's name.
 
