@@ -179,7 +179,7 @@ class Application:
         if group.enabled:
             enabled = data.get("enabled", True)
         self.enabled = enabled
-        self.use_python_2 = data["use_python_2"]
+        self.use_python_2 = data.get("use_python_2", False)
 
         self.label = data.get("variant_label") or name
         self.full_name = "/".join((group.name, name))
@@ -449,6 +449,12 @@ class ApplicationExecutable:
     """Representation of executable loaded from settings."""
 
     def __init__(self, executable):
+        # Try to format executable with environments
+        try:
+            executable = executable.format(**os.environ)
+        except Exception:
+            pass
+
         # On MacOS check if exists path to executable when ends with `.app`
         # - it is common that path will lead to "/Applications/Blender" but
         #   real path is "/Applications/Blender.app"
@@ -459,12 +465,6 @@ class ApplicationExecutable:
             _executable = executable + ".app"
             if os.path.exists(_executable):
                 executable = _executable
-
-        # Try to format executable with environments
-        try:
-            executable = executable.format(**os.environ)
-        except Exception:
-            pass
 
         self.executable_path = executable
 

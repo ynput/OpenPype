@@ -11,7 +11,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
 
     # must be after `CollectInstances`
     order = pyblish.api.CollectorOrder + 0.011
-    label = "Collect Instance Resources"
+    label = "Collect Editorial Resources"
     hosts = ["standalonepublisher"]
     families = ["clip"]
 

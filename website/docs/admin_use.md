@@ -46,6 +46,16 @@ openpype_console --use-version=3.0.1
 `--use-staging` - to specify you prefer staging version. In that case it will be used
 (if found) instead of production one.
 
+:::tip List available versions
+To list all available versions, use:
+
+```shell
+openpype_console --list-versions
+```
+
+You can add `--use-staging` to list staging versions.
+:::
+
 ### Details
 When you run OpenPype from executable, few check are made: 
 

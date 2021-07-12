@@ -137,12 +137,12 @@ $ pyenv install -v 3.7.10
 $ cd /path/to/pype-3
 
 # set local python version
-$ pyenv local 3.7.9
+$ pyenv local 3.7.10
 ```
 :::note Install build requirements for **Ubuntu**
 
 ```shell
-sudo apt-get update; sudo apt-get install --no-install-recommends make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev git
+sudo apt-get update; sudo apt-get install --no-install-recommends make build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev git patchelf
 ```
 
 In case you run in error about `xcb` when running Pype,

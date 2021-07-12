@@ -83,7 +83,8 @@ function Show-PSWarning() {
 function Install-Poetry() {
     Write-Host ">>> " -NoNewline -ForegroundColor Green
     Write-Host "Installing Poetry ... "
-    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
+    $env:POETRY_HOME="$openpype_root\.poetry"
+    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
 }
 
 $art = @"
@@ -115,11 +116,9 @@ $openpype_root = (Get-Item $script_dir).parent.FullName
 
 $env:_INSIDE_OPENPYPE_TOOL = "1"
 
-# make sure Poetry is in PATH
 if (-not (Test-Path 'env:POETRY_HOME')) {
     $env:POETRY_HOME = "$openpype_root\.poetry"
 }
-$env:PATH = "$($env:PATH);$($env:POETRY_HOME)\bin"
 
 Set-Location -Path $openpype_root
 
@@ -164,7 +163,7 @@ Write-Host " ]" -ForegroundColor white
 
 Write-Host ">>> " -NoNewline -ForegroundColor Green
 Write-Host "Reading Poetry ... " -NoNewline
-if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
+if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Host "NOT FOUND" -ForegroundColor Yellow
     Write-Host "*** " -NoNewline -ForegroundColor Yellow
     Write-Host "We need to install Poetry create virtual env first ..."
@@ -184,10 +183,10 @@ Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building OpenPype ..."
 $startTime = [int][double]::Parse((Get-Date -UFormat %s))
 
-$out = & poetry run python setup.py build 2>&1
+$out = &  "$($env:POETRY_HOME)\bin\poetry" run python setup.py build 2>&1
+Set-Content -Path "$($openpype_root)\build\build.log" -Value $out
 if ($LASTEXITCODE -ne 0)
 {
-    Set-Content -Path "$($openpype_root)\build\build.log" -Value $out
     Write-Host "!!! " -NoNewLine -ForegroundColor Red
     Write-Host "Build failed. Check the log: " -NoNewline
     Write-Host ".\build\build.log" -ForegroundColor Yellow
@@ -195,7 +194,7 @@ if ($LASTEXITCODE -ne 0)
 }
 
 Set-Content -Path "$($openpype_root)\build\build.log" -Value $out
-& poetry run python "$($openpype_root)\tools\build_dependencies.py"
+& "$($env:POETRY_HOME)\bin\poetry" run python "$($openpype_root)\tools\build_dependencies.py"
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "restoring current directory"
