@@ -423,7 +423,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.payload_skeleton["JobInfo"]["Priority"] = \
             self._instance.data.get("priority", 50)
 
-        if self.group != "none":
+        if self.group != "none" and self.group:
             self.payload_skeleton["JobInfo"]["Group"] = self.group
 
         if self.limit_groups:
