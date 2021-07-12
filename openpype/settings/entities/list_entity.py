@@ -94,12 +94,6 @@ class ListEntity(EndpointEntity):
 
     def _add_new_item(self, idx=None):
         child_obj = self.create_schema_object(self.item_schema, self, True)
-
-        # Validate child if was not validated yet
-        if not self._child_validated:
-            child_obj.schema_validations()
-            self._child_validated = True
-
         if idx is None:
             self.children.append(child_obj)
         else:
@@ -148,12 +142,11 @@ class ListEntity(EndpointEntity):
         if not isinstance(item_schema, dict):
             item_schema = {"type": item_schema}
 
-        schema_template_used = False
+        obj_template_name = self.schema_hub.get_template_name(item_schema)
         _item_schemas = self.schema_hub.resolve_schema_data(item_schema)
         if len(_item_schemas) == 1:
             self.item_schema = _item_schemas[0]
             if self.item_schema != item_schema:
-                schema_template_used = True
                 if "label" in self.item_schema:
                     self.item_schema.pop("label")
                 self.item_schema["use_label_wrap"] = False
@@ -161,9 +154,7 @@ class ListEntity(EndpointEntity):
             self.item_schema = _item_schemas
 
         # Store if was used template or schema
-        self._schema_template_used = schema_template_used
-        # Store if child was validated
-        self._child_validated = False
+        self._obj_template_name = obj_template_name
 
         if self.group_item is None:
             self.is_group = True
@@ -195,24 +186,35 @@ class ListEntity(EndpointEntity):
             raise EntitySchemaError(self, reason)
 
         # Validate object type schema
-        child_validated = False
+        validate_children = True
         for child_entity in self.children:
             child_entity.schema_validations()
-            child_validated = True
+            validate_children = False
             break
 
-        # Do not validate if was used schema or template
-        # - that is validated on first created children
-        # - it is because template or schema can use itself inside children
-        # TODO Do validations maybe store to `schema_hub` what is validated
-        if not self._schema_template_used and not child_validated:
+        if validate_children and self._obj_template_name:
+            _validated = self.schema_hub.is_dynamic_template_validated(
+                self._obj_template_name
+            )
+            _validating = self.schema_hub.is_dynamic_template_validating(
+                self._obj_template_name
+            )
+            validate_children = not _validated and not _validating
+
+        if not validate_children:
+            return
+
+        def _validate():
             idx = 0
             tmp_child = self._add_new_item(idx)
             tmp_child.schema_validations()
             self.children.pop(idx)
-            child_validated = True
 
-        self._child_validated = child_validated
+        if self._obj_template_name:
+            with self.schema_hub.validating_dynamic(self._obj_template_name):
+                _validate()
+        else:
+            _validate()
 
     def get_child_path(self, child_obj):
         result_idx = None
