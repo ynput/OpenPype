@@ -273,17 +273,17 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         self._job_info = (
             context.data["project_settings"].get(
-                "maya", {}).get(
-                "publish", {}).get(
                 "deadline", {}).get(
+                "publish", {}).get(
+                "MayaSubmitDeadline", {}).get(
                 "jobInfo", {})
         )
 
         self._plugin_info = (
             context.data["project_settings"].get(
-                "maya", {}).get(
-                "publish", {}).get(
                 "deadline", {}).get(
+                "publish", {}).get(
+                "MayaSubmitDeadline", {}).get(
                 "pluginInfo", {})
         )
 

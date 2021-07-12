@@ -312,24 +312,6 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "deadline",
-            "label": "Additional Deadline Settings",
-            "children": [
-                {
-                    "type": "raw-json",
-                    "key": "jobInfo",
-                    "label": "Additional JobInfo data"
-                },
-                {
-                    "type": "raw-json",
-                    "key": "pluginInfo",
-                    "label": "Additional PluginInfo data"
-                }
-            ]
-        },
-        {
-            "type": "dict",
-            "collapsible": true,
             "key": "ExtractCameraAlembic",
             "label": "Extract camera to Alembic",
             "checkbox_key": "enabled",
