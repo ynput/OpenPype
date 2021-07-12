@@ -164,6 +164,12 @@ class ListEntity(EndpointEntity):
         self.initial_value = []
 
     def schema_validations(self):
+        if isinstance(self.item_schema, list):
+            reason = (
+                "`ListWidget` has multiple items as object type."
+            )
+            raise EntitySchemaError(self, reason)
+
         super(ListEntity, self).schema_validations()
 
         if self.is_dynamic_item and self.use_label_wrap:
