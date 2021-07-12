@@ -94,6 +94,12 @@ class ListEntity(EndpointEntity):
 
     def _add_new_item(self, idx=None):
         child_obj = self.create_schema_object(self.item_schema, self, True)
+
+        # Validate child if was not validated yet
+        if not self._child_validated:
+            child_obj.schema_validations()
+            self._child_validated = True
+
         if idx is None:
             self.children.append(child_obj)
         else:
@@ -156,6 +162,8 @@ class ListEntity(EndpointEntity):
 
         # Store if was used template or schema
         self._schema_template_used = schema_template_used
+        # Store if child was validated
+        self._child_validated = False
 
         if self.group_item is None:
             self.is_group = True
@@ -202,6 +210,9 @@ class ListEntity(EndpointEntity):
             tmp_child = self._add_new_item(idx)
             tmp_child.schema_validations()
             self.children.pop(idx)
+            child_validated = True
+
+        self._child_validated = child_validated
 
     def get_child_path(self, child_obj):
         result_idx = None
