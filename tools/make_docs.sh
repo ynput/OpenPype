@@ -83,11 +83,9 @@ main () {
 
   _inside_openpype_tool="1"
 
-  # make sure Poetry is in PATH
   if [[ -z $POETRY_HOME ]]; then
     export POETRY_HOME="$openpype_root/.poetry"
   fi
-  export PATH="$POETRY_HOME/bin:$PATH"
 
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
   if [ -f "$POETRY_HOME/bin/poetry" ]; then
@@ -101,11 +99,11 @@ main () {
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Running apidoc ..."
-  poetry run sphinx-apidoc -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$openpype_root/docs/source" igniter
-  poetry run sphinx-apidoc -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$openpype_root/docs/source" openpype vendor, openpype\vendor
+  "$POETRY_HOME/bin/poetry" run sphinx-apidoc -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$openpype_root/docs/source" igniter
+  "$POETRY_HOME/bin/poetry" run sphinx-apidoc -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$openpype_root/docs/source" openpype vendor, openpype\vendor
 
   echo -e "${BIGreen}>>>${RST} Building html ..."
-  poetry run python3 "$openpype_root/setup.py" build_sphinx
+  "$POETRY_HOME/bin/poetry" run python3 "$openpype_root/setup.py" build_sphinx
 }
 
 main

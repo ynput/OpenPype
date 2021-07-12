@@ -49,9 +49,7 @@ function Install-Poetry() {
     Write-Host ">>> " -NoNewline -ForegroundColor Green
     Write-Host "Installing Poetry ... "
     $env:POETRY_HOME="$openpype_root\.poetry"
-    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
-    # add it to PATH
-    $env:PATH = "$($env:PATH);$openpype_root\.poetry\bin"
+    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
 }
 
 
@@ -94,11 +92,10 @@ $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $openpype_root = (Get-Item $script_dir).parent.FullName
 
-# make sure Poetry is in PATH
 if (-not (Test-Path 'env:POETRY_HOME')) {
     $env:POETRY_HOME = "$openpype_root\.poetry"
 }
-$env:PATH = "$($env:PATH);$($env:POETRY_HOME)\bin"
+
 
 Set-Location -Path $openpype_root
 
@@ -145,7 +142,7 @@ Test-Python
 
 Write-Host ">>> " -NoNewline -ForegroundColor Green
 Write-Host "Reading Poetry ... " -NoNewline
-if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
+if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Host "NOT FOUND" -ForegroundColor Yellow
     Install-Poetry
     Write-Host "INSTALLED" -ForegroundColor Cyan
@@ -160,7 +157,7 @@ if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
     Write-Host ">>> " -NoNewline -ForegroundColor green
     Write-Host "Installing virtual environment from lock."
 }
-& poetry install --no-root $poetry_verbosity
+& "$env:POETRY_HOME\bin\poetry" install --no-root $poetry_verbosity --ansi
 if ($LASTEXITCODE -ne 0) {
     Write-Host "!!! " -ForegroundColor yellow -NoNewline
     Write-Host "Poetry command failed."

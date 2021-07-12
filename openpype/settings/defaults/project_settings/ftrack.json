@@ -229,7 +229,6 @@
                         "standalonepublisher"
                     ],
                     "families": [
-                        "review",
                         "plate"
                     ],
                     "tasks": [],
@@ -279,6 +278,25 @@
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "nuke"
+                    ],
+                    "families": [
+                        "write",
+                        "render"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
                 }
             ]
         },

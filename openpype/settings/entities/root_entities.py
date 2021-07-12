@@ -217,7 +217,7 @@ class RootEntity(BaseItemEntity):
             schema_data, *args, **kwargs
         )
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults=None):
         """Set override state and trigger it on children.
 
         Method will discard all changes in hierarchy and use values, metadata
@@ -226,9 +226,12 @@ class RootEntity(BaseItemEntity):
         Args:
             state (OverrideState): State to which should be data changed.
         """
+        if not ignore_missing_defaults:
+            ignore_missing_defaults = False
+
         self._override_state = state
         for child_obj in self.non_gui_children.values():
-            child_obj.set_override_state(state)
+            child_obj.set_override_state(state, ignore_missing_defaults)
 
     def on_change(self):
         """Trigger callbacks on change."""

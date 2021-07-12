@@ -140,21 +140,6 @@ realpath () {
   echo $(cd $(dirname "$1") || return; pwd)/$(basename "$1")
 }
 
-##############################################################################
-# Install Poetry when needed
-# Globals:
-#   PATH
-# Arguments:
-#   None
-# Returns:
-#   None
-###############################################################################
-install_poetry () {
-  echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
-  command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
-  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-}
-
 # Main
 main () {
   echo -e "${BGreen}"
@@ -171,11 +156,9 @@ main () {
 
   _inside_openpype_tool="1"
 
-  # make sure Poetry is in PATH
   if [[ -z $POETRY_HOME ]]; then
     export POETRY_HOME="$openpype_root/.poetry"
   fi
-  export PATH="$POETRY_HOME/bin:$PATH"
 
   echo -e "${BIYellow}---${RST} Cleaning build directory ..."
   rm -rf "$openpype_root/build" && mkdir "$openpype_root/build" > /dev/null
@@ -201,11 +184,11 @@ if [ "$disable_submodule_update" == 1 ]; then
   fi
   echo -e "${BIGreen}>>>${RST} Building ..."
   if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    poetry run python "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" build > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
   elif [[ "$OSTYPE" == "darwin"* ]]; then
-    poetry run python "$openpype_root/setup.py" bdist_mac > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
+    "$POETRY_HOME/bin/poetry" run python "$openpype_root/setup.py" bdist_mac > "$openpype_root/build/build.log" || { echo -e "${BIRed}!!!${RST} Build failed, see the build log."; return; }
   fi
-  poetry run python "$openpype_root/tools/build_dependencies.py"
+  "$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/build_dependencies.py"
 
   if [[ "$OSTYPE" == "darwin"* ]]; then
     # fix code signing issue

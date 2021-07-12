@@ -8,7 +8,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
     """Collect instances from editorial's OTIO sequence"""
 
     order = pyblish.api.CollectorOrder + 0.01
-    label = "Collect Instances"
+    label = "Collect Editorial Instances"
     hosts = ["standalonepublisher"]
     families = ["editorial"]
 
@@ -55,7 +55,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
         fps = plib.get_asset()["data"]["fps"]
 
         tracks = timeline.each_child(
-            descended_from_type=otio.schema.track.Track
+            descended_from_type=otio.schema.Track
         )
 
         # get data from avalon
@@ -84,6 +84,9 @@ class CollectInstances(pyblish.api.InstancePlugin):
                 if clip.name is None:
                     continue
 
+                if isinstance(clip, otio.schema.Gap):
+                    continue
+
                 # skip all generators like black ampty
                 if isinstance(
                     clip.media_reference,
@@ -92,7 +95,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
 
                 # Transitions are ignored, because Clips have the full frame
                 # range.
-                if isinstance(clip, otio.schema.transition.Transition):
+                if isinstance(clip, otio.schema.Transition):
                     continue
 
                 # basic unique asset name
