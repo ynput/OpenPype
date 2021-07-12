@@ -141,7 +141,21 @@ class ListEntity(EndpointEntity):
         item_schema = self.schema_data["object_type"]
         if not isinstance(item_schema, dict):
             item_schema = {"type": item_schema}
-        self.item_schema = item_schema
+
+        schema_template_used = False
+        _item_schemas = self.schema_hub.resolve_schema_data(item_schema)
+        if len(_item_schemas) == 1:
+            self.item_schema = _item_schemas[0]
+            if self.item_schema != item_schema:
+                schema_template_used = True
+                if "label" in self.item_schema:
+                    self.item_schema.pop("label")
+                self.item_schema["use_label_wrap"] = False
+        else:
+            self.item_schema = _item_schemas
+
+        # Store if was used template or schema
+        self._schema_template_used = schema_template_used
 
         if self.group_item is None:
             self.is_group = True
