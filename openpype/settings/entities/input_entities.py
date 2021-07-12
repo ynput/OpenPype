@@ -1,5 +1,6 @@
 import re
 import copy
+import json
 from abc import abstractmethod
 
 from .base_entity import ItemEntity
@@ -440,6 +441,7 @@ class RawJsonEntity(InputEntity):
 
     def _item_initalization(self):
         # Schema must define if valid value is dict or list
+        store_as_string = self.schema_data.get("store_as_string", False)
         is_list = self.schema_data.get("is_list", False)
         if is_list:
             valid_value_types = (list, )
@@ -447,6 +449,8 @@ class RawJsonEntity(InputEntity):
         else:
             valid_value_types = (dict, )
             value_on_not_set = {}
+
+        self.store_as_string = store_as_string
 
         self._is_list = is_list
         self.valid_value_types = valid_value_types
@@ -491,6 +495,23 @@ class RawJsonEntity(InputEntity):
             result = self.metadata != self._metadata_for_current_state()
         return result
 
+    def schema_validations(self):
+        if self.store_as_string and self.is_env_group:
+            reason = (
+                "RawJson entity can't store environment group metadata"
+                " as string."
+            )
+            raise EntitySchemaError(self, reason)
+        super(RawJsonEntity, self).schema_validations()
+
+    def _convert_to_valid_type(self, value):
+        if isinstance(value, STRING_TYPE):
+            try:
+                return json.loads(value)
+            except Exception:
+                pass
+        return super(RawJsonEntity, self)._convert_to_valid_type(value)
+
     def _metadata_for_current_state(self):
         if (
             self._override_state is OverrideState.PROJECT
@@ -510,6 +531,9 @@ class RawJsonEntity(InputEntity):
         value = super(RawJsonEntity, self)._settings_value()
         if self.is_env_group and isinstance(value, dict):
             value.update(self.metadata)
+
+        if self.store_as_string:
+            return json.dumps(value)
         return value
 
     def _prepare_value(self, value):
