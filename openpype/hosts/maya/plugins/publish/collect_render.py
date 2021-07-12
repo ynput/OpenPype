@@ -318,10 +318,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             instance.data.update(data)
             self.log.debug("data: {}".format(json.dumps(data, indent=4)))
 
-        # Restore current layer.
-        self.log.info("Restoring to {}".format(current_layer.name()))
-        self._rs.switchToLayer(current_layer)
-
     def parse_options(self, render_globals):
         """Get all overrides with a value, skip those without.
 
