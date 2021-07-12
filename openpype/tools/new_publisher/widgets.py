@@ -188,13 +188,23 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             controller, bottom_widget
         )
 
+        bottom_separator = QtWidgets.QWidget(bottom_widget)
+        bottom_separator.setObjectName("Separator")
+        bottom_separator.setMinimumWidth(1)
+
         bottom_layout = QtWidgets.QHBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
         bottom_layout.addWidget(family_attrs_widget, 1)
+        bottom_layout.addWidget(bottom_separator, 0)
         bottom_layout.addWidget(publish_attrs_widget, 1)
+
+        top_bottom = QtWidgets.QWidget(self)
+        top_bottom.setObjectName("Separator")
+        top_bottom.setMinimumHeight(1)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(top_widget, 0)
+        layout.addWidget(top_bottom, 0)
         layout.addWidget(bottom_widget, 1)
 
         self.controller = controller
