@@ -2,18 +2,18 @@ import pyblish.api
 import pype.api
 
 
-class ValidateTextureBatch(pyblish.api.ContextPlugin):
+class ValidateTextureBatch(pyblish.api.InstancePlugin):
     """Validates that some texture files are present."""
 
-    label = "Validate Texture Batch"
+    label = "Validate Texture Presence"
     hosts = ["standalonepublisher"]
     order = pype.api.ValidateContentsOrder
-    families = ["workfile", "textures"]
+    families = ["workfile"]
     optional = False
 
-    def process(self, context):
+    def process(self, instance):
         present = False
-        for instance in context:
+        for instance in instance.context:
             if instance.data["family"] == "textures":
                 self.log.info("Some textures present.")
 
