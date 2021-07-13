@@ -1,6 +1,7 @@
 import uuid
 from openpype.pipeline.lib import (
     AbtractAttrDef,
+    UnknownDef,
     NumberDef,
     TextDef,
     EnumDef,
@@ -26,6 +27,9 @@ def create_widget_for_attr_def(attr_def, parent=None):
 
     if isinstance(attr_def, BoolDef):
         return BoolAttrWidget(attr_def, parent)
+
+    if isinstance(attr_def, UnknownDef):
+        return UnknownAttrWidget(attr_def, parent)
 
     raise ValueError("Unknown attribute definition \"{}\"".format(
         str(type(attr_def))
@@ -157,12 +161,12 @@ class BoolAttrWidget(_BaseAttrDefWidget):
 
         input_widget.stateChanged.connect(self._on_value_change)
 
-        self.input_widget = input_widget
+        self._input_widget = input_widget
 
         self.main_layout.addWidget(input_widget, 0)
 
     def _on_value_change(self):
-        new_value = self.input_widget.isChecked()
+        new_value = self._input_widget.isChecked()
         self.value_changed.emit(new_value, self.attr_def.id)
 
     def current_value(self):
@@ -209,3 +213,23 @@ class EnumAttrWidget(_BaseAttrDefWidget):
             return
         if idx >= 0:
             self._input_widget.setCurrentIndex(idx)
+
+
+class UnknownAttrWidget(_BaseAttrDefWidget):
+    def _ui_init(self):
+        input_widget = QtWidgets.QLabel(self)
+        self._value = self.attr_def.default
+        input_widget.setText(str(self._value))
+
+        self._input_widget = input_widget
+
+        self.main_layout.addWidget(input_widget, 0)
+
+    def current_value(self):
+        return self._input_widget.text()
+
+    def set_value(self, value):
+        str_value = str(value)
+        if str_value != self._value:
+            self._value = str_value
+            self._input_widget.setText(str_value)
