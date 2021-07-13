@@ -61,6 +61,13 @@ class _BaseAttrDefWidget(QtWidgets.QWidget):
             )
         )
 
+    def set_value(self, value):
+        raise NotImplementedError(
+            "Method 'current_value' is not implemented. {}".format(
+                self.__class__.__name__
+            )
+        )
+
 
 class NumberAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
@@ -90,6 +97,10 @@ class NumberAttrWidget(_BaseAttrDefWidget):
 
     def current_value(self):
         return self._input_widget.value()
+
+    def set_value(self, value):
+        if self.current_value != value:
+            self._input_widget.setValue(value)
 
 
 class TextAttrWidget(_BaseAttrDefWidget):
@@ -130,6 +141,14 @@ class TextAttrWidget(_BaseAttrDefWidget):
             return self._input_widget.toPlainText()
         return self._input_widget.text()
 
+    def set_value(self, value):
+        if value == self.current_value():
+            return
+        if self.multiline:
+            self._input_widget.setPlainText(value)
+        else:
+            self._input_widget.setText(value)
+
 
 class BoolAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
@@ -148,6 +167,10 @@ class BoolAttrWidget(_BaseAttrDefWidget):
 
     def current_value(self):
         return self._input_widget.isChecked()
+
+    def set_value(self, value):
+        if value != self.current_value():
+            self._input_widget.setChecked(value)
 
 
 class EnumAttrWidget(_BaseAttrDefWidget):
@@ -178,3 +201,11 @@ class EnumAttrWidget(_BaseAttrDefWidget):
     def current_value(self):
         idx = self._input_widget.currentIndex()
         return self._input_widget.itemData(idx)
+
+    def set_value(self, value):
+        idx = self._input_widget.findData(value)
+        cur_idx = self._input_widget.currentIndex()
+        if idx == cur_idx:
+            return
+        if idx >= 0:
+            self._input_widget.setCurrentIndex(idx)
