@@ -240,7 +240,7 @@ class AvalonInstance:
         return output
 
     def on_family_attribute_change(self, changes):
-        print(changes)
+        self.host.update_instance(self, changes)
 
     def change_order(self, keys_order):
         data = collections.OrderedDict()
