@@ -14,12 +14,16 @@ class ValidateTextureBatchVersions(pyblish.api.InstancePlugin):
     hosts = ["standalonepublisher"]
     order = pype.api.ValidateContentsOrder
     families = ["textures"]
-    optional = True
+    optional = False
 
     def process(self, instance):
-        wfile = instance.data["versionData"]["workfile"]
+        wfile = instance.data["versionData"].get("workfile")
 
         version_str = "v{:03d}".format(instance.data["version"])
+
+        if not wfile:  # no matching workfile, do not check versions
+            self.log.info("No workfile present for textures")
+            return
 
         msg = "Not matching version: texture v{:03d} - workfile {}"
         assert version_str in wfile, \

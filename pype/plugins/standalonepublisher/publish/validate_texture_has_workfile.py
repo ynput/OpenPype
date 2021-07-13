@@ -3,7 +3,11 @@ import pype.api
 
 
 class ValidateTextureHasWorkfile(pyblish.api.InstancePlugin):
-    """Validates that textures have appropriate workfile attached."""
+    """Validates that textures have appropriate workfile attached.
+
+        Workfile is optional, disable this Validator after Refresh if you are
+        sure it is not needed.
+    """
     label = "Validate Texture Has Workfile"
     hosts = ["standalonepublisher"]
     order = pype.api.ValidateContentsOrder
@@ -11,7 +15,6 @@ class ValidateTextureHasWorkfile(pyblish.api.InstancePlugin):
     optional = True
 
     def process(self, instance):
-        wfile = instance.data["versionData"]["workfile"]
+        wfile = instance.data["versionData"].get("workfile")
 
-        assert "DUMMY" not in wfile,\
-            "Textures are missing attached workfile"
+        assert wfile, "Textures are missing attached workfile"
