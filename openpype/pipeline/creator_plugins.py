@@ -36,6 +36,32 @@ class FamilyAttributeValues(dict):
 
         self._last_data = copy.deepcopy(values)
 
+    def __setitem__(self, key, value):
+        if key not in self._attr_defs_by_key:
+            raise KeyError("Key \"{}\" was not found.".format(key))
+
+        old_value = self._data.get(key)
+        if old_value == value:
+            return
+        self._data[key] = value
+
+        self._propagate_changes({
+            key: (old_value, value)
+        })
+
+    def __getitem__(self, key):
+        if key not in self._attr_defs_by_key:
+            return self._data[key]
+        return self._data.get(key, self._attr_defs_by_key[key].default)
+
+    def __contains__(self, key):
+        return key in self._attr_defs_by_key
+
+    def get(self, key, default=None):
+        if key in self._attr_defs_by_key:
+            return self[key]
+        return default
+
     def keys(self):
         return self._attr_defs_by_key.keys()
 
