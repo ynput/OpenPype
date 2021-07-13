@@ -1,3 +1,4 @@
+import uuid
 from openpype.pipeline.lib import (
     AbtractAttrDef,
     NumberDef,
@@ -32,7 +33,7 @@ def create_widget_for_attr_def(attr_def, parent=None):
 
 
 class _BaseAttrDefWidget(QtWidgets.QWidget):
-    value_changed = QtCore.Signal(object, object)
+    value_changed = QtCore.Signal(object, uuid.UUID)
 
     def __init__(self, attr_def, parent):
         super(_BaseAttrDefWidget, self).__init__(parent)
@@ -78,8 +79,6 @@ class NumberAttrWidget(_BaseAttrDefWidget):
             QtWidgets.QAbstractSpinBox.ButtonSymbols.NoButtons
         )
 
-        self._last_value = input_widget.value()
-
         input_widget.valueChanged.connect(self._on_value_change)
 
         self._input_widget = input_widget
@@ -87,9 +86,7 @@ class NumberAttrWidget(_BaseAttrDefWidget):
         self.main_layout.addWidget(input_widget, 0)
 
     def _on_value_change(self, new_value):
-        old_value = self._last_value
-        self._last_value = new_value
-        self.value_changed.emit(old_value, new_value)
+        self.value_changed.emit(new_value, self.attr_def.id)
 
     def current_value(self):
         return self._input_widget.value()
@@ -118,8 +115,6 @@ class TextAttrWidget(_BaseAttrDefWidget):
             else:
                 input_widget.setText(self.attr_def.default)
 
-        self._last_value = self.current_value()
-
         input_widget.textChanged.connect(self._on_value_change)
 
         self._input_widget = input_widget
@@ -128,9 +123,7 @@ class TextAttrWidget(_BaseAttrDefWidget):
 
     def _on_value_change(self):
         new_value = self._input_widget.toPlainText()
-        old_value = self._last_value
-        self._last_value = new_value
-        self.value_changed.emit(old_value, new_value)
+        self.value_changed.emit(new_value, self.attr_def.id)
 
     def current_value(self):
         if self.multiline:
@@ -145,16 +138,13 @@ class BoolAttrWidget(_BaseAttrDefWidget):
 
         input_widget.stateChanged.connect(self._on_value_change)
 
-        self._last_value = input_widget.isChecked()
         self.input_widget = input_widget
 
         self.main_layout.addWidget(input_widget, 0)
 
     def _on_value_change(self):
         new_value = self.input_widget.isChecked()
-        old_value = self._last_value
-        self._last_value = new_value
-        self.value_changed.emit(old_value, new_value)
+        self.value_changed.emit(new_value, self.attr_def.id)
 
     def current_value(self):
         return self._input_widget.isChecked()
@@ -178,15 +168,12 @@ class EnumAttrWidget(_BaseAttrDefWidget):
 
         self._combo_delegate = combo_delegate
         self._input_widget = input_widget
-        self._last_value = self.current_value()
 
         self.main_layout.addWidget(input_widget, 0)
 
     def _on_value_change(self):
         new_value = self.current_value()
-        old_value = self._last_value
-        self._last_value = new_value
-        self.value_changed.emit(old_value, new_value)
+        self.value_changed.emit(new_value, self.attr_def.id)
 
     def current_value(self):
         idx = self._input_widget.currentIndex()
