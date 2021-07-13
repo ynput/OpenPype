@@ -36,6 +36,17 @@ class FamilyAttributeValues(dict):
 
         self._last_data = copy.deepcopy(values)
 
+    def keys(self):
+        return self._attr_defs_by_key.keys()
+
+    def values(self):
+        for key in self._attr_defs_by_key.keys():
+            yield self._data.get(key)
+
+    def items(self):
+        for key in self._attr_defs_by_key.keys():
+            yield key, self._data.get(key)
+
     @property
     def attr_defs(self):
         return self._attr_defs
