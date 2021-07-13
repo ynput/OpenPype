@@ -184,6 +184,10 @@
                     ".*"
                 ]
             }
+        },
+        "CleanUp": {
+            "paterns": [],
+            "remove_temp_renders": false
         }
     },
     "tools": {
