@@ -403,12 +403,23 @@ class BaseCreator:
         If passed values match current creator version just return the value
         back. Update of changes in workfile must not happen in this method.
 
+        Default implementation only convert passed values to right types. But
+        implementation can be changed to do more stuff (update instance
+        to newer version etc.).
+
         Args:
             attribute_values(dict): Values from instance metadata.
 
         Returns:
             dict: Converted values.
         """
+        attr_defs = self.get_attribute_defs()
+        for attr_def in attr_defs:
+            key = attr_def.key
+            if key in attribute_values:
+                attribute_values[key] = attr_def.convert_value(
+                    attribute_values[key]
+                )
         return attribute_values
 
 
