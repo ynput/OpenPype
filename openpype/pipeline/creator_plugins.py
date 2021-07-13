@@ -37,6 +37,9 @@ class AvalonInstance:
         # Subset name
         self.subset_name = subset_name
 
+        data = copy.deepcopy(data or {})
+        self._orig_data = copy.deepcopy(data)
+
         self.data = collections.OrderedDict()
         self.data["id"] = "pyblish.avalon.instance"
         self.data["family"] = family
