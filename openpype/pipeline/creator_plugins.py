@@ -113,6 +113,9 @@ class AvalonInstance:
     def family_attribute_defs(self):
         return self._data["family_attributes"].attr_defs
 
+    def on_family_attribute_change(self, changes):
+        print(changes)
+
     def change_order(self, keys_order):
         data = collections.OrderedDict()
         for key in keys_order:
