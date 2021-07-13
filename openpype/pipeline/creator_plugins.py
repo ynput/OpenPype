@@ -96,13 +96,17 @@ class FamilyAttributeValues:
     def attr_defs(self):
         return self._attr_defs
 
-    def changes(self):
+    @staticmethod
+    def calculate_changes(new_data, old_data):
         changes = {}
-        for key, new_value in self._data.items():
-            old_value = self._last_data.get(key)
+        for key, new_value in new_data.items():
+            old_value = old_data.get(key)
             if old_value != new_value:
                 changes[key] = (old_value, new_value)
         return changes
+
+    def changes(self):
+        return self.calculate_changes(self._data, self._last_data)
 
     def _propagate_changes(self, changes=None):
         if self._chunk_value > 0:
