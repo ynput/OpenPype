@@ -70,8 +70,9 @@ class AbtractAttrDef:
 
 class UnknownDef(AbtractAttrDef):
     """Definition is not known because definition is not available."""
-    def __init__(self, key):
-        super(UnknownDef, self).__init__(key, None)
+    def __init__(self, key, default=None, **kwargs):
+        kwargs["default"] = default
+        super(UnknownDef, self).__init__(key, **kwargs)
 
     def convert_value(self, value):
         return value
