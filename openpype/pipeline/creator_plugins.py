@@ -13,7 +13,7 @@ import six
 from openpype.lib import get_subset_name
 
 
-class FamilyAttributeValues(dict):
+class FamilyAttributeValues:
     def __init__(self, instance, values):
         self.instance = instance
         creator = self.instance.creator
