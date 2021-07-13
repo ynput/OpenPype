@@ -100,13 +100,21 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
 
         content_widget = QtWidgets.QWidget(self._scroll_area)
         content_layout = QtWidgets.QFormLayout(content_widget)
-        for attr_def, _instances in result:
+        for attr_def, attr_instances, values in result:
             widget = create_widget_for_attr_def(attr_def, content_widget)
+            if len(values) == 1:
+                value = values[0]
+                if value is not None:
+                    widget.set_value(values[0])
+            else:
+                # TODO multiselection
+                pass
+
             label = attr_def.label or attr_def.key
             content_layout.addRow(label, widget)
             widget.value_changed.connect(self._input_value_changed)
 
-            self._attr_def_id_to_instances[attr_def.id] = _instances
+            self._attr_def_id_to_instances[attr_def.id] = attr_instances
             self._attr_def_id_to_attr_def[attr_def.id] = attr_def
 
         self._scroll_area.setWidget(content_widget)

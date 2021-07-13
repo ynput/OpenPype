@@ -110,11 +110,12 @@ class PublisherController:
             instance = instances[0]
             output = []
             for attr_def in instance.family_attribute_defs:
-                output.append((attr_def, [instance]))
+                value = instance.data["family_attributes"][attr_def.key]
+                output.append((attr_def, [instance], [value]))
             return output
 
         # TODO mulsiselection
-        return ([], [])
+        return ([], [], [])
 
     def get_publish_attribute_definitions(self, instances):
         families = set()
