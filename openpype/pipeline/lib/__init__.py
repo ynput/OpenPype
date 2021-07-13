@@ -1,5 +1,6 @@
 from .attribute_definitions import (
     AbtractAttrDef,
+    UnknownDef,
     NumberDef,
     TextDef,
     EnumDef,
@@ -9,6 +10,7 @@ from .attribute_definitions import (
 
 __all__ = (
     "AbtractAttrDef",
+    "UnknownDef",
     "NumberDef",
     "TextDef",
     "EnumDef",

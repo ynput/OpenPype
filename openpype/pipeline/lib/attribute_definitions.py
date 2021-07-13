@@ -68,6 +68,15 @@ class AbtractAttrDef:
         pass
 
 
+class UnknownDef(AbtractAttrDef):
+    """Definition is not known because definition is not available."""
+    def __init__(self, key):
+        super(UnknownDef, self).__init__(key, None)
+
+    def convert_value(self, value):
+        return value
+
+
 class NumberDef(AbtractAttrDef):
     """Number definition.
 
