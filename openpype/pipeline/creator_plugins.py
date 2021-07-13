@@ -13,6 +13,10 @@ import six
 from openpype.lib import get_subset_name
 
 
+class FamilyAttributeValues(dict):
+    pass
+
+
 class AvalonInstance:
     """Instance entity with data that will be stored to workfile.
 
@@ -53,7 +57,7 @@ class AvalonInstance:
             self._data["version"] = data.get("version")
         # Stored family specific attribute values
         # {key: value}
-        self._data["family_attributes"] = {}
+        self._data["family_attributes"] = FamilyAttributeValues()
         # Stored publish specific attribute values
         # {<plugin name>: {key: value}}
         self._data["publish_attributes"] = {}
