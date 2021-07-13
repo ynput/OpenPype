@@ -36,6 +36,10 @@ class FamilyAttributeValues(dict):
 
         self._last_data = copy.deepcopy(values)
 
+    @property
+    def attr_defs(self):
+        return self._attr_defs
+
 
 class AvalonInstance:
     """Instance entity with data that will be stored to workfile.
@@ -96,6 +100,10 @@ class AvalonInstance:
     @property
     def data(self):
         return self._data
+
+    @property
+    def family_attribute_defs(self):
+        return self._data["family_attributes"].attr_defs
 
     def change_order(self, keys_order):
         data = collections.OrderedDict()
