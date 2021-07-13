@@ -14,7 +14,27 @@ from openpype.lib import get_subset_name
 
 
 class FamilyAttributeValues(dict):
-    pass
+    def __init__(self, instance, values):
+        self.instance = instance
+        creator = self.instance.creator
+
+        if creator is not None:
+            attr_defs = creator.get_attribute_defs()
+        else:
+            attr_defs = [
+                UnknownDef(key, label=key, default=value)
+                for key, value in values.items()
+            ]
+
+        self._attr_defs = attr_defs
+        self._attr_defs_by_key = {}
+        self._data = {}
+        for attr_def in attr_defs:
+            key = attr_def.key
+            self._attr_defs_by_key[key] = attr_def
+            self._data[key] = values.get(key)
+
+        self._last_data = copy.deepcopy(values)
 
 
 class AvalonInstance:
@@ -44,6 +64,9 @@ class AvalonInstance:
         data = copy.deepcopy(data or {})
         self._orig_data = copy.deepcopy(data)
 
+
+        orig_family_attributes = data.pop("family_attributes") or {}
+
         self._data = collections.OrderedDict()
         self._data["id"] = "pyblish.avalon.instance"
         self._data["family"] = family
@@ -57,7 +80,10 @@ class AvalonInstance:
             self._data["version"] = data.get("version")
         # Stored family specific attribute values
         # {key: value}
-        self._data["family_attributes"] = FamilyAttributeValues()
+        self._data["family_attributes"] = FamilyAttributeValues(
+            self, orig_family_attributes
+        )
+
         # Stored publish specific attribute values
         # {<plugin name>: {key: value}}
         self._data["publish_attributes"] = {}
