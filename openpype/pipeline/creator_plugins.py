@@ -40,6 +40,14 @@ class FamilyAttributeValues(dict):
     def attr_defs(self):
         return self._attr_defs
 
+    def changes(self):
+        changes = {}
+        for key, new_value in self._data.items():
+            old_value = self._last_data.get(key)
+            if old_value != new_value:
+                changes[key] = (old_value, new_value)
+        return changes
+
 
 class AvalonInstance:
     """Instance entity with data that will be stored to workfile.
