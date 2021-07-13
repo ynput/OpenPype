@@ -77,7 +77,10 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
 
         self.controller = controller
         self._scroll_area = scroll_area
-        # Store content of scroll area to prevend garbage collection
+
+        self._attr_def_id_to_instances = {}
+        self._attr_def_id_to_attr_def = {}
+        # To store content of scroll area to prevend garbage collection
         self._content_widget = None
 
     def set_current_instances(self, instances):
@@ -88,17 +91,22 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
             prev_content_widget.deleteLater()
 
         self._content_widget = None
+        self._attr_def_id_to_instances = {}
+        self._attr_def_id_to_attr_def = {}
 
-        attr_defs = self.controller.get_family_attribute_definitions(
+        result = self.controller.get_family_attribute_definitions(
             instances
         )
 
         content_widget = QtWidgets.QWidget(self._scroll_area)
         content_layout = QtWidgets.QFormLayout(content_widget)
-        for attr_def in attr_defs:
+        for attr_def, _instances in result:
             widget = create_widget_for_attr_def(attr_def, content_widget)
             label = attr_def.label or attr_def.key
             content_layout.addRow(label, widget)
+
+            self._attr_def_id_to_instances[attr_def.id] = _instances
+            self._attr_def_id_to_attr_def[attr_def.id] = attr_def
 
         self._scroll_area.setWidget(content_widget)
         self._content_widget = content_widget

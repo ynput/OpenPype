@@ -98,10 +98,6 @@ class PublisherController:
         for instance_data in host_instances:
             family = instance_data["family"]
             creator = creators.get(family)
-            if creator is not None:
-                instance_data = creator.convert_family_attribute_values(
-                    instance_data
-                )
             instance = AvalonInstance.from_existing(
                 self.host, creator, instance_data
             )
@@ -110,22 +106,15 @@ class PublisherController:
         self.instances = instances
 
     def get_family_attribute_definitions(self, instances):
-        attr_defs = []
         if len(instances) == 1:
             instance = instances[0]
-            family = instance.data["family"]
-            creator = self.creators.get(family)
-            if not creator:
-                # TODO handle when creator is not available
-                return
+            output = []
+            for attr_def in instance.family_attribute_defs:
+                output.append((attr_def, [instance]))
+            return output
 
-            attr_defs = creator.get_attribute_defs()
-
-        else:
-            # TODO mulsiselection
-            pass
-
-        return attr_defs
+        # TODO mulsiselection
+        return ([], [])
 
     def get_publish_attribute_definitions(self, instances):
         families = set()
