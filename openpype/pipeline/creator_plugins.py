@@ -15,21 +15,11 @@ from .lib import UnknownDef
 from openpype.lib import get_subset_name
 
 
-class FamilyAttributeValues:
-    def __init__(self, instance, values):
-        self.instance = instance
-        creator = self.instance.creator
-
-        if creator is None:
-            attr_defs = []
-        else:
-            new_values = creator.convert_family_attribute_values(values)
-            attr_defs = creator.get_attribute_defs()
-            if values != new_values:
-                self._propagate_changes(
-                    self.calculate_changes(new_values, values)
-                )
-                values = new_values
+class AttributeValues:
+    def __init__(self, attr_defs, values, origin_data=None):
+        if origin_data is None:
+            origin_data = copy.deepcopy(values)
+        self._origin_data = origin_data
 
         attr_defs_by_key = {
             attr_def.key: attr_def
@@ -111,6 +101,23 @@ class FamilyAttributeValues:
 
     def changes(self):
         return self.calculate_changes(self._data, self._origin_data)
+
+
+class FamilyAttributeValues(AttributeValues):
+    def __init__(self, instance, values, origin_values=None):
+        self.instance = instance
+        creator = self.instance.creator
+
+        origin_values = copy.deepcopy(values)
+        if creator is None:
+            attr_defs = []
+        else:
+            values = creator.convert_family_attribute_values(values)
+            attr_defs = creator.get_attribute_defs()
+
+        super(FamilyAttributeValues, self).__init__(
+            attr_defs, values, origin_values
+        )
 
 
 
