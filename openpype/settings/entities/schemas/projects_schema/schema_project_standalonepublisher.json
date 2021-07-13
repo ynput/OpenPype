@@ -134,6 +134,26 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "CollectEditorial",
+                    "label": "Collect Editorial",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "source_dir",
+                            "label": "Editorial resources pointer"
+                        },
+                        {
+                            "type": "list",
+                            "key": "extensions",
+                            "label": "Accepted extensions",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "CollectHierarchyInstance",
                     "label": "Collect Instance Hierarchy",
                     "is_group": true,

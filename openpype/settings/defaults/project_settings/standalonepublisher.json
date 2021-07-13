@@ -166,6 +166,13 @@
                 "output": []
             }
         },
+        "CollectEditorial": {
+            "source_dir": "",
+            "extensions": [
+                "mov",
+                "mp4"
+            ]
+        },
         "CollectHierarchyInstance": {
             "shot_rename_template": "{project[code]}_{_sequence_}_{_shot_}",
             "shot_rename_search_patterns": {
