@@ -40,28 +40,32 @@ class AvalonInstance:
         data = copy.deepcopy(data or {})
         self._orig_data = copy.deepcopy(data)
 
-        self.data = collections.OrderedDict()
-        self.data["id"] = "pyblish.avalon.instance"
-        self.data["family"] = family
-        self.data["subset"] = subset_name
-        self.data["active"] = True
+        self._data = collections.OrderedDict()
+        self._data["id"] = "pyblish.avalon.instance"
+        self._data["family"] = family
+        self._data["subset"] = subset_name
+        self._data["active"] = data.get("active", True)
+
         # Schema or version?
         if new:
-            self.data["version"] = 1
+            self._data["version"] = 1
+        else:
+            self._data["version"] = data.get("version")
         # Stored family specific attribute values
         # {key: value}
-        self.data["family_attributes"] = {}
+        self._data["family_attributes"] = {}
         # Stored publish specific attribute values
         # {<plugin name>: {key: value}}
-        self.data["publish_attributes"] = {}
+        self._data["publish_attributes"] = {}
         if data:
-            self.data.update(data)
+            self._data.update(data)
 
-        if not self.data.get("uuid"):
-            self.data["uuid"] = str(uuid4())
+        if not self._data.get("uuid"):
+            self._data["uuid"] = str(uuid4())
 
-        if not new and "version" not in self.data:
-            self.data["version"] = None
+    @property
+    def data(self):
+        return self._data
 
     def change_order(self, keys_order):
         data = collections.OrderedDict()
