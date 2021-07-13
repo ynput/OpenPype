@@ -147,7 +147,7 @@ class SchemasHub:
                 crashed_item = self._crashed_on_load[schema_name]
                 raise KeyError(
                     "Unable to parse schema file \"{}\". {}".format(
-                        crashed_item["filpath"], crashed_item["message"]
+                        crashed_item["filepath"], crashed_item["message"]
                     )
                 )
 
@@ -176,8 +176,8 @@ class SchemasHub:
             elif template_name in self._crashed_on_load:
                 crashed_item = self._crashed_on_load[template_name]
                 raise KeyError(
-                    "Unable to parse templace file \"{}\". {}".format(
-                        crashed_item["filpath"], crashed_item["message"]
+                    "Unable to parse template file \"{}\". {}".format(
+                        crashed_item["filepath"], crashed_item["message"]
                     )
                 )
 
@@ -345,7 +345,7 @@ class SchemasHub:
                         " One of them crashed on load \"{}\" {}"
                     ).format(
                         filename,
-                        crashed_item["filpath"],
+                        crashed_item["filepath"],
                         crashed_item["message"]
                     ))
 

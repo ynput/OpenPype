@@ -109,8 +109,7 @@ install_poetry () {
   echo -e "${BIGreen}>>>${RST} Installing Poetry ..."
   export POETRY_HOME="$openpype_root/.poetry"
   command -v curl >/dev/null 2>&1 || { echo -e "${BIRed}!!!${RST}${BIYellow} Missing ${RST}${BIBlue}curl${BIYellow} command.${RST}"; return 1; }
-  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
-  export PATH="$PATH:$POETRY_HOME/bin"
+  curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py | python -
 }
 
 ##############################################################################
@@ -154,11 +153,10 @@ main () {
 
   # Directories
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
-  # make sure Poetry is in PATH
+
   if [[ -z $POETRY_HOME ]]; then
     export POETRY_HOME="$openpype_root/.poetry"
   fi
-  export PATH="$POETRY_HOME/bin:$PATH"
 
 
   pushd "$openpype_root" > /dev/null || return > /dev/null
@@ -177,7 +175,7 @@ main () {
     echo -e "${BIGreen}>>>${RST} Installing dependencies ..."
   fi
 
-  poetry install --no-root $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
+  "$POETRY_HOME/bin/poetry" install --no-root $poetry_verbosity || { echo -e "${BIRed}!!!${RST} Poetry environment installation failed"; return; }
 
   echo -e "${BIGreen}>>>${RST} Cleaning cache files ..."
   clean_pyc
@@ -186,10 +184,10 @@ main () {
   # cx_freeze will crash on missing __pychache__ on these but
   # reinstalling them solves the problem.
   echo -e "${BIGreen}>>>${RST} Fixing pycache bug ..."
-  poetry run python -m pip install --force-reinstall pip
-  poetry run pip install --force-reinstall setuptools
-  poetry run pip install --force-reinstall wheel
-  poetry run python -m pip install --force-reinstall pip
+  "$POETRY_HOME/bin/poetry" run python -m pip install --force-reinstall pip
+  "$POETRY_HOME/bin/poetry" run pip install --force-reinstall setuptools
+  "$POETRY_HOME/bin/poetry" run pip install --force-reinstall wheel
+  "$POETRY_HOME/bin/poetry" run python -m pip install --force-reinstall pip
 }
 
 main -3
