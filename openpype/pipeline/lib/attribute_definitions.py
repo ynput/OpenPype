@@ -1,5 +1,6 @@
 import re
 import collections
+import uuid
 from abc import ABCMeta, abstractmethod
 import six
 
@@ -43,8 +44,13 @@ class AbtractAttrDef:
         self.key = key
         self.label = label
         self.tooltip = tooltip
+        self._id = uuid.uuid4()
 
         self.__init__class__ = AbtractAttrDef
+
+    @property
+    def id(self):
+        return self._id
 
     def __eq__(self, other):
         if not isinstance(other, self.__class__):
