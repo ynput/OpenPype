@@ -104,7 +104,7 @@ class AttributeValues:
 
 
 class FamilyAttributeValues(AttributeValues):
-    def __init__(self, instance, values, origin_values=None):
+    def __init__(self, instance, values):
         self.instance = instance
         creator = self.instance.creator
 
