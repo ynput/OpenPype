@@ -222,7 +222,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             aov_dict = {}
 
             # replace relative paths with absolute. Render products are
-            # retuned as list of dictionaries.
+            # returned as list of dictionaries.
             for aov in exp_files:
                 full_paths = []
                 for file in aov[aov.keys()[0]]:
