@@ -40,10 +40,11 @@ class AbtractAttrDef:
         tooltip(str): Attribute tooltip.
     """
 
-    def __init__(self, key, label=None, tooltip=None):
+    def __init__(self, key, default, label=None, tooltip=None):
         self.key = key
         self.label = label
         self.tooltip = tooltip
+        self.default = default
         self._id = uuid.uuid4()
 
         self.__init__class__ = AbtractAttrDef
@@ -84,8 +85,6 @@ class NumberDef(AbtractAttrDef):
         self, key, minimum=None, maximum=None, decimals=None, default=None,
         **kwargs
     ):
-        super(NumberDef, self).__init__(key, **kwargs)
-
         minimum = 0 if minimum is None else minimum
         maximum = 999999 if maximum is None else maximum
         # Swap min/max when are passed in opposited order
@@ -107,9 +106,10 @@ class NumberDef(AbtractAttrDef):
         elif default > maximum:
             default = maximum
 
+        super(NumberDef, self).__init__(key, default=default, **kwargs)
+
         self.minimum = minimum
         self.maximum = maximum
-        self.default = default
         self.decimals = 0 if decimals is None else decimals
 
     def __eq__(self, other):
@@ -155,13 +155,13 @@ class TextDef(AbtractAttrDef):
         self, key, multiline=None, regex=None, placeholder=None, default=None,
         **kwargs
     ):
-        super(TextDef, self).__init__(key, **kwargs)
+        if default is None:
+            default = ""
+
+        super(TextDef, self).__init__(key, default=default, **kwargs)
 
         if multiline is None:
             multiline = False
-
-        if default is None:
-            default = ""
 
         elif not isinstance(default, six.string_types):
             raise TypeError((
@@ -174,7 +174,6 @@ class TextDef(AbtractAttrDef):
         self.multiline = multiline
         self.placeholder = placeholder
         self.regex = regex
-        self.default = default
 
     def __eq__(self, other):
         if not super(TextDef, self).__eq__(other):
@@ -202,8 +201,6 @@ class EnumDef(AbtractAttrDef):
     """
 
     def __init__(self, key, items, default=None, **kwargs):
-        super(EnumDef, self).__init__(key, **kwargs)
-
         if not items:
             raise ValueError((
                 "Empty 'items' value. {} must have"
@@ -212,12 +209,13 @@ class EnumDef(AbtractAttrDef):
 
         items = collections.OrderedDict(items)
         if default not in items:
-            for key in items.keys():
-                default = key
+            for _key in items.keys():
+                default = _key
                 break
 
+        super(EnumDef, self).__init__(key, default=default, **kwargs)
+
         self.items = items
-        self.default = default
 
     def __eq__(self, other):
         if not super(EnumDef, self).__eq__(other):
@@ -245,11 +243,9 @@ class BoolDef(AbtractAttrDef):
     """
 
     def __init__(self, key, default=None, **kwargs):
-        super(BoolDef, self).__init__(key, **kwargs)
-
         if default is None:
             default = False
-        self.default = default
+        super(BoolDef, self).__init__(key, default=default, **kwargs)
 
     def convert_value(self, value):
         if isinstance(value, bool):
