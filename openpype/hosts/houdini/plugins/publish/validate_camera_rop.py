@@ -6,7 +6,7 @@ class ValidateCameraROP(pyblish.api.InstancePlugin):
     """Validate Camera ROP settings."""
 
     order = openpype.api.ValidateContentsOrder
-    families = ['camera']
+    families = ['colorbleed.camera']
     hosts = ['houdini']
     label = 'Camera ROP'
 
@@ -34,7 +34,7 @@ class ValidateCameraROP(pyblish.api.InstancePlugin):
         if not camera:
             raise ValueError("Camera path does not exist: %s" % path)
 
-        if not camera.type().name() == "cam":
+        if camera.type().name() != "cam":
             raise ValueError("Object set in Alembic ROP is not a camera: "
                              "%s (type: %s)" % (camera, camera.type().name()))
 

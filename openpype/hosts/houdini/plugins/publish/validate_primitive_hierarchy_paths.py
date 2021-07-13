@@ -28,7 +28,6 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
         import hou
 
         output = instance.data["output_node"]
-        prims = output.geometry().prims()
 
         rop = instance[0]
         build_from_path = rop.parm("build_from_path").eval()
@@ -46,30 +45,41 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
         cls.log.debug("Checking for attribute: %s" % path_attr)
 
-        missing_attr = []
-        invalid_attr = []
-        for prim in prims:
+        # Check if the primitive attribute exists
+        frame = instance.data.get("startFrame", 0)
+        geo = output.geometryAtFrame(frame)
 
-            try:
-                path = prim.stringAttribValue(path_attr)
-            except hou.OperationFailed:
-                # Attribute does not exist.
-                missing_attr.append(prim)
-                continue
+        # If there are no primitives on the current frame then we can't
+        # check whether the path names are correct. So we'll just issue a
+        # warning that the check can't be done consistently and skip
+        # validation.
+        if len(geo.iterPrims()) == 0:
+            cls.log.warning("No primitives found on current frame. Validation"
+                            " for primitive hierarchy paths will be skipped,"
+                            " thus can't be validated.")
+            return
 
-            if not path:
-                # Empty path value is invalid.
-                invalid_attr.append(prim)
-                continue
+        # Check if there are any values for the primitives
+        attrib = geo.findPrimAttrib(path_attr)
+        if not attrib:
+            cls.log.info("Geometry Primitives are missing "
+                         "path attribute: `%s`" % path_attr)
+            return [output.path()]
 
-        if missing_attr:
-            cls.log.info("Prims are missing attribute `%s`" % path_attr)
+        # Ensure at least a single string value is present
+        if not attrib.strings():
+            cls.log.info("Primitive path attribute has no "
+                         "string values: %s" % path_attr)
+            return [output.path()]
 
-        if invalid_attr:
+        paths = geo.primStringAttribValues(path_attr)
+        # Ensure all primitives are set to a valid path
+        # Collect all invalid primitive numbers
+        invalid_prims = [i for i, path in enumerate(paths) if not path]
+        if invalid_prims:
+            num_prims = len(geo.iterPrims())  # faster than len(geo.prims())
             cls.log.info("Prims have no value for attribute `%s` "
                          "(%s of %s prims)" % (path_attr,
-                                      len(invalid_attr),
-                                      len(prims)))
-
-        if missing_attr or invalid_attr:
+                                               len(invalid_prims),
+                                               num_prims))
             return [output.path()]

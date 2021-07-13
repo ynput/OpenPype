@@ -1,5 +1,5 @@
 import pyblish.api
-import openpype.api
+import colorbleed.api
 
 
 class ValidateBypassed(pyblish.api.InstancePlugin):
@@ -11,12 +11,17 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
 
     """
 
-    order = openpype.api.ValidateContentsOrder - 0.1
+    order = colorbleed.api.ValidateContentsOrder - 0.1
     families = ["*"]
     hosts = ["houdini"]
     label = "Validate ROP Bypass"
 
     def process(self, instance):
+
+        if len(instance) == 0:
+            # Ignore instances without any nodes
+            # e.g. in memory bootstrap instances
+            return
 
         invalid = self.get_invalid(instance)
         if invalid:
