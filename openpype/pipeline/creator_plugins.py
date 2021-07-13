@@ -48,6 +48,17 @@ class FamilyAttributeValues(dict):
                 changes[key] = (old_value, new_value)
         return changes
 
+    def _propagate_changes(self, changes=None):
+        if changes is None:
+            changes = self.changes()
+
+        if not changes:
+            return
+
+        self.instance.on_family_attribute_change(changes)
+        for key, values in changes.items():
+            self._last_data[key] = values[1]
+
 
 class AvalonInstance:
     """Instance entity with data that will be stored to workfile.
