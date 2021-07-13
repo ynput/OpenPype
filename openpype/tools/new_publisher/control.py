@@ -105,6 +105,16 @@ class PublisherController:
 
         self.instances = instances
 
+    def save_instance_changes(self):
+        update_list = []
+        for instance in self.instances:
+            instance_changes = instance.changes()
+            if instance_changes:
+                update_list.append((instance, instance_changes))
+
+        if update_list:
+            self.host.update_instances(update_list)
+
     def get_family_attribute_definitions(self, instances):
         if len(instances) == 1:
             instance = instances[0]
