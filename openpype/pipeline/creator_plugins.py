@@ -1,5 +1,6 @@
 import copy
 import logging
+import contextlib
 import collections
 from uuid import uuid4
 
@@ -10,6 +11,7 @@ from abc import (
 )
 import six
 
+from .lib import UnknownDef
 from openpype.lib import get_subset_name
 
 
