@@ -26,7 +26,12 @@ class AvalonInstance:
         data(dict): Data used for filling subset name or override data from
             already existing instance.
     """
-    def __init__(self, family, subset_name, data=None, new=True):
+    def __init__(
+        self, host, creator, family, subset_name, data=None, new=True
+    ):
+        self.host = host
+        self.creator = creator
+
         # Family of instance
         self.family = family
         # Subset name
@@ -66,14 +71,16 @@ class AvalonInstance:
         self.data = data
 
     @classmethod
-    def from_existing(cls, instance_data):
+    def from_existing(cls, host, creator, instance_data):
         """Convert instance data from workfile to AvalonInstance."""
         instance_data = copy.deepcopy(instance_data)
 
         family = instance_data.pop("family", None)
         subset_name = instance_data.pop("subset", None)
+        return cls(
+            host, creator, family, subset_name, instance_data, new=False
+        )
 
-        return cls(family, subset_name, instance_data, new=False)
 
 
 @six.add_metaclass(ABCMeta)

@@ -102,7 +102,9 @@ class PublisherController:
                 instance_data = creator.convert_family_attribute_values(
                     instance_data
                 )
-            instance = AvalonInstance.from_existing(instance_data)
+            instance = AvalonInstance.from_existing(
+                self.host, creator, instance_data
+            )
             instances.append(instance)
 
         self.instances = instances
