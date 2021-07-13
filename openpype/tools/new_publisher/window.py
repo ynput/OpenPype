@@ -85,6 +85,7 @@ class PublisherWindow(QtWidgets.QWidget):
         footer_widget = QtWidgets.QWidget(self)
 
         create_btn = QtWidgets.QPushButton("Create", footer_widget)
+        save_btn = QtWidgets.QPushButton("Save", footer_widget)
         message_input = QtWidgets.QLineEdit(footer_widget)
         validate_btn = QtWidgets.QPushButton("Validate", footer_widget)
         publish_btn = QtWidgets.QPushButton("Publish", footer_widget)
@@ -92,6 +93,7 @@ class PublisherWindow(QtWidgets.QWidget):
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(create_btn, 0)
+        footer_layout.addWidget(save_btn, 0)
         footer_layout.addWidget(message_input, 1)
         footer_layout.addWidget(validate_btn, 0)
         footer_layout.addWidget(publish_btn, 0)
@@ -114,6 +116,7 @@ class PublisherWindow(QtWidgets.QWidget):
         reset_btn.clicked.connect(self._on_reset_clicked)
 
         create_btn.clicked.connect(self._on_create_clicked)
+        save_btn.clicked.connect(self._on_save_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
@@ -161,6 +164,9 @@ class PublisherWindow(QtWidgets.QWidget):
 
     def _on_create_clicked(self):
         self.creator_window.show()
+
+    def _on_save_clicked(self):
+        self.controller.save_instance_changes()
 
     def _on_validate_clicked(self):
         print("Validation!!!")
