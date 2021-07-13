@@ -186,24 +186,15 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             full_exp_files = []
             aov_dict = {}
 
-            # we either get AOVs or just list of files. List of files can
-            # mean two things - there are no AOVs enabled or multipass EXR
-            # is produced. In either case we treat those as `beauty`.
-            if isinstance(exp_files[0], dict):
-                for aov, files in exp_files[0].items():
-                    full_paths = []
-                    for e in files:
-                        full_path = os.path.join(workspace, "renders", e)
-                        full_path = full_path.replace("\\", "/")
-                        full_paths.append(full_path)
-                    aov_dict[aov] = full_paths
-            else:
+            # replace relative paths with absolute. Render products are
+            # returned as list of dictionaries.
+            for aov in exp_files:
                 full_paths = []
-                for e in exp_files:
-                    full_path = os.path.join(workspace, "renders", e)
+                for file in aov[aov.keys()[0]]:
+                    full_path = os.path.join(workspace, "renders", file)
                     full_path = full_path.replace("\\", "/")
                     full_paths.append(full_path)
-                aov_dict["beauty"] = full_paths
+                aov_dict[aov.keys()[0]] = full_paths
 
             frame_start_render = int(self.get_render_attribute(
                 "startFrame", layer=layer_name))
