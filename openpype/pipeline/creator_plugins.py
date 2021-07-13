@@ -36,6 +36,8 @@ class FamilyAttributeValues(dict):
 
         self._last_data = copy.deepcopy(values)
 
+        self._chunk_value = 0
+
     def __setitem__(self, key, value):
         if key not in self._attr_defs_by_key:
             raise KeyError("Key \"{}\" was not found.".format(key))
@@ -73,6 +75,11 @@ class FamilyAttributeValues(dict):
         for key in self._attr_defs_by_key.keys():
             yield key, self._data.get(key)
 
+    def update(self, value):
+        with self.chunk_changes():
+            for _key, _value in dict(value):
+                self[_key] = _value
+
     def pop(self, key, default=None):
         if key not in self._data:
             return default
@@ -96,6 +103,9 @@ class FamilyAttributeValues(dict):
         return changes
 
     def _propagate_changes(self, changes=None):
+        if self._chunk_value > 0:
+            return
+
         if changes is None:
             changes = self.changes()
 
@@ -105,6 +115,17 @@ class FamilyAttributeValues(dict):
         self.instance.on_family_attribute_change(changes)
         for key, values in changes.items():
             self._last_data[key] = values[1]
+
+    @contextlib.contextmanager
+    def chunk_changes(self):
+        try:
+            self._chunk_value += 1
+            yield
+        finally:
+            self._chunk_value -= 1
+
+        if self._chunk_value == 0:
+            self._propagate_changes()
 
 
 class AvalonInstance:
