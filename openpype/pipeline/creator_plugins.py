@@ -191,6 +191,28 @@ class AvalonInstance:
     def data(self):
         return self._data
 
+    def changes(self):
+        changes = {}
+        new_keys = set()
+        for key, new_value in self._data.items():
+            new_keys.add(key)
+            if key in ("family_attributes", "publish_attributes"):
+                continue
+
+            old_value = self._orig_data.get(key)
+            if old_value != new_value:
+                changes[key] = (old_value, new_value)
+
+        family_attributes = self.data["family_attributes"]
+        family_attr_changes = family_attributes.changes()
+        if family_attr_changes:
+            changes["family_attributes"] = family_attr_changes
+
+        for key, old_value in self._orig_data.items():
+            if key not in new_keys:
+                changes[key] = (old_value, None)
+        return changes
+
     @property
     def family_attribute_defs(self):
         return self._data["family_attributes"].attr_defs
