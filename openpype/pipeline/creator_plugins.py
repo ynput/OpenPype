@@ -20,21 +20,33 @@ class FamilyAttributeValues:
         self.instance = instance
         creator = self.instance.creator
 
-        if creator is not None:
-            attr_defs = creator.get_attribute_defs()
+        if creator is None:
+            attr_defs = []
         else:
-            attr_defs = [
-                UnknownDef(key, label=key, default=value)
-                for key, value in values.items()
-            ]
+            new_values = creator.convert_family_attribute_values(values)
+            attr_defs = creator.get_attribute_defs()
+            if values != new_values:
+                self._propagate_changes(
+                    self.calculate_changes(new_values, values)
+                )
+                values = new_values
+
+        attr_defs_by_key = {
+            attr_def.key: attr_def
+            for attr_def in attr_defs
+        }
+        for key, value in values.items():
+            if key not in attr_defs_by_key:
+                new_def = UnknownDef(key, label=key, default=value)
+                attr_defs.append(new_def)
+                attr_defs_by_key[key] = new_def
 
         self._attr_defs = attr_defs
-        self._attr_defs_by_key = {}
+        self._attr_defs_by_key = attr_defs_by_key
+
         self._data = {}
         for attr_def in attr_defs:
-            key = attr_def.key
-            self._attr_defs_by_key[key] = attr_def
-            self._data[key] = values.get(key)
+            self._data[attr_def.key] = values.get(attr_def.key)
 
         self._last_data = copy.deepcopy(values)
 
