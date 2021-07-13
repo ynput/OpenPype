@@ -104,12 +104,24 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
             widget = create_widget_for_attr_def(attr_def, content_widget)
             label = attr_def.label or attr_def.key
             content_layout.addRow(label, widget)
+            widget.value_changed.connect(self._input_value_changed)
 
             self._attr_def_id_to_instances[attr_def.id] = _instances
             self._attr_def_id_to_attr_def[attr_def.id] = attr_def
 
         self._scroll_area.setWidget(content_widget)
         self._content_widget = content_widget
+
+    def _input_value_changed(self, value, attr_id):
+        instances = self._attr_def_id_to_instances.get(attr_id)
+        attr_def = self._attr_def_id_to_attr_def.get(attr_id)
+        if not instances or not attr_def:
+            return
+
+        for instance in instances:
+            family_attributes = instance.data["family_attributes"]
+            if attr_def.key in family_attributes:
+                family_attributes[attr_def.key] = value
 
 
 class PublishPluginAttrsWidget(QtWidgets.QWidget):
