@@ -73,6 +73,16 @@ class FamilyAttributeValues(dict):
         for key in self._attr_defs_by_key.keys():
             yield key, self._data.get(key)
 
+    def pop(self, key, default=None):
+        if key not in self._data:
+            return default
+
+        result = self._data.pop(key)
+        self._propagate_changes({
+            key: (result, None)
+        })
+        return result
+
     @property
     def attr_defs(self):
         return self._attr_defs
