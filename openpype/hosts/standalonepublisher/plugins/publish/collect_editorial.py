@@ -73,7 +73,7 @@ class CollectEditorial(pyblish.api.InstancePlugin):
             video_path = None
             basename = os.path.splitext(os.path.basename(file_path))[0]
 
-            if self.source_dir is not "":
+            if self.source_dir != "":
                 source_dir = self.source_dir.replace("\\", "/")
                 if ("./" in source_dir) or ("../" in source_dir):
                     # get current working dir
