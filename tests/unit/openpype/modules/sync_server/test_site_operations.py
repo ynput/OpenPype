@@ -12,6 +12,9 @@
         removes temporary databases (?)
 """
 import os
+import sys
+import six
+import json
 import pytest
 import tempfile
 import shutil
@@ -20,6 +23,7 @@ from bson.objectid import ObjectId
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler
 
+TEST_OPENPYPE_MONGO = "mongodb://localhost:27017"
 TEST_DB_NAME = "test_db"
 TEST_PROJECT_NAME = "test_project"
 TEST_OPENPYPE_NAME = "test_openpype"
@@ -54,14 +58,36 @@ def download_test_data():
         if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:
             RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
 
-
         yield tmpdir
         shutil.rmtree(tmpdir)
 
 
 @pytest.fixture(scope="module")
-def db(monkeypatch_session, download_test_data):
-    backup_dir = download_test_data
+def env_var(monkeypatch_session, download_test_data):
+    """Sets temporary env vars from json file."""
+    env_url = os.path.join(download_test_data, "input",
+                           "env_vars", "env_var.json")
+    if not os.path.exists(env_url):
+        raise ValueError("Env variable file {} doesn't exist".format(env_url))
+
+    env_dict = {}
+    try:
+        with open(env_url) as json_file:
+            env_dict = json.load(json_file)
+    except ValueError:
+        print("{} doesn't contain valid JSON")
+        six.reraise(*sys.exc_info())
+
+    for key, value in env_dict.items():
+        value = value.format(**globals())
+        print("Setting {}:{}".format(key, value))
+        monkeypatch_session.setenv(key, value)
+
+
+@pytest.fixture(scope="module")
+def db_setup(download_test_data, env_var, monkeypatch_session):
+    """Restore prepared MongoDB dumps into selected DB."""
+    backup_dir = os.path.join(download_test_data, "input", "dumps")
 
     uri = os.environ.get("OPENPYPE_MONGO") or "mongodb://localhost:27017"
     db_handler = DBHandler(uri)
@@ -71,21 +97,22 @@ def db(monkeypatch_session, download_test_data):
     db_handler.setup_from_dump("openpype", backup_dir, True,
                                db_name_out=TEST_OPENPYPE_NAME)
 
-    # set needed env vars temporarily for tests
-    monkeypatch_session.setenv("OPENPYPE_MONGO", uri)
-    monkeypatch_session.setenv("AVALON_MONGO", uri)
-    monkeypatch_session.setenv("OPENPYPE_DATABASE_NAME", TEST_OPENPYPE_NAME)
-    monkeypatch_session.setenv("AVALON_TIMEOUT", '3000')
-    monkeypatch_session.setenv("AVALON_DB", TEST_DB_NAME)
-    monkeypatch_session.setenv("AVALON_PROJECT", TEST_PROJECT_NAME)
-    monkeypatch_session.setenv("PYPE_DEBUG", "3")
+    yield db_handler
 
+    db_handler.teardown(TEST_DB_NAME)
+    db_handler.teardown(TEST_OPENPYPE_NAME)
+
+
+@pytest.fixture(scope="module")
+def db(db_setup):
+    """Provide test database connection.
+
+        Database prepared from dumps with 'db_setup' fixture.
+    """
     from avalon.api import AvalonMongoDB
     db = AvalonMongoDB()
     yield db
 
-    db_handler.teardown(TEST_DB_NAME)
-    db_handler.teardown(TEST_OPENPYPE_NAME)
 
 @pytest.fixture(scope="module")
 def setup_sync_server_module(db):
