@@ -32,6 +32,73 @@ class DBHandler():
         # not much sense
         self.db = self.client[name]
 
+    def setup_from_sql(self, db_name, sql_dir, collection=None,
+                       drop=True, mode=None):
+        """
+            Restores 'db_name' from 'sql_url'.
+
+            Works with directory with .json files,
+            if 'collection' arg is empty, name
+            of .json file is used as name of target collection.
+
+            Args:
+                db_name (str): source DB name
+                sql_dir (str): folder with json files
+                collection (str): if all sql files are meant for single coll.
+                drop (bool): True if drop whole collection
+                mode (str): "insert" - fails on duplicates
+                            "upsert" - modifies existing
+                            "merge" - updates existing
+                            "delete" - removes in DB present if file
+        """
+        if not os.path.exists(sql_dir):
+            raise RuntimeError(
+                "Backup folder {} doesn't exist".format(sql_dir))
+
+        for (dirpath, dirnames, filenames) in os.walk(sql_dir):
+            for file_name in filenames:
+                sql_url = os.path.join(dirpath, file_name)
+                query = self._import_query(self.uri, sql_url,
+                                           db_name=db_name,
+                                           collection=collection,
+                                           drop=drop,
+                                           mode=mode)
+
+                print("mongoimport query:: {}".format(query))
+                subprocess.run(query)
+
+    def setup_from_sql_file(self, db_name, sql_url,
+                            collection=None, drop=True, mode=None):
+        """
+            Restores 'db_name' from 'sql_url'.
+
+            Works with single .json file.
+            If 'collection' arg is empty, name
+            of .json file is used as name of target collection.
+
+            Args:
+                db_name (str): source DB name
+                sql_file (str): folder with json files
+                collection (str): name of target collection
+                drop (bool): True if drop collection
+                mode (str): "insert" - fails on duplicates
+                            "upsert" - modifies existing
+                            "merge" - updates existing
+                            "delete" - removes in DB present if file
+        """
+        if not os.path.exists(sql_url):
+            raise RuntimeError(
+                "Sql file {} doesn't exist".format(sql_url))
+
+        query = self._import_query(self.uri, sql_url,
+                                   db_name=db_name,
+                                   collection=collection,
+                                   drop=drop,
+                                   mode=mode)
+
+        print("mongoimport query:: {}".format(query))
+        subprocess.run(query)
+
     def setup_from_dump(self, db_name, dump_dir, overwrite=False,
                         collection=None, db_name_out=None):
         """
@@ -137,9 +204,39 @@ class DBHandler():
 
         return query
 
+    def _import_query(self, uri, sql_url,
+                      db_name=None,
+                      collection=None, drop=True, mode=None):
+
+        utility_path = os.path.join(self.MONGODB_UTILS_DIR, "mongoimport")
+
+        db_part = coll_part = drop_part = mode_part = ""
+        if db_name:
+            db_part = "--db {}".format(db_name)
+        if collection:
+            assert db_name, "Must provide db name too"
+            coll_part = "--collection {}".format(collection)
+        if drop:
+            drop_part = "--drop"
+        if mode:
+            mode_part = "--mode {}".format(mode)
+
+        query = \
+            "\"{}\" --legacy --uri=\"{}\" --file=\"{}\" {} {} {} {}".format(
+            utility_path, uri, sql_url,
+                db_part, coll_part, drop_part, mode_part)
+
+        return query
+
 # handler = DBHandler(uri="mongodb://localhost:27017")
 #
 # backup_dir = "c:\\projects\\dumps"
-#
-# handler.backup_to_dump("openpype", backup_dir, True)
-# handler.setup_from_dump("test_db", backup_dir, True)
+# #
+# # handler.backup_to_dump("openpype", backup_dir, True)
+# # handler.setup_from_dump("test_db", backup_dir, True)
+# # handler.setup_from_sql_file("test_db", "c:\\projects\\sql\\item.sql",
+# #                             collection="test_project",
+# #                             drop=False, mode="upsert")
+# handler.setup_from_sql("test_db", "c:\\projects\\sql",
+#                             collection="test_project",
+#                             drop=False, mode="upsert")
