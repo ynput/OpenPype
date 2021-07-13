@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.2.0-nightly.7](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.2.0](https://github.com/pypeclub/OpenPype/tree/3.2.0) (2021-07-13)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.4...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.4...3.2.0)
 
 **🚀 Enhancements**
 
@@ -11,6 +11,7 @@
 - Ftrack Multiple notes as server action [\#1795](https://github.com/pypeclub/OpenPype/pull/1795)
 - Settings conditional dict [\#1777](https://github.com/pypeclub/OpenPype/pull/1777)
 - Settings application use python 2 only where needed [\#1776](https://github.com/pypeclub/OpenPype/pull/1776)
+- Settings UI copy/paste [\#1769](https://github.com/pypeclub/OpenPype/pull/1769)
 - Workfile tool widths [\#1766](https://github.com/pypeclub/OpenPype/pull/1766)
 - Push hierarchical attributes care about task parent changes [\#1763](https://github.com/pypeclub/OpenPype/pull/1763)
 - Application executables with environment variables [\#1757](https://github.com/pypeclub/OpenPype/pull/1757)
@@ -24,7 +25,6 @@
 **🐛 Bug fixes**
 
 - nuke: fixing wrong name of family folder when `used existing frames` [\#1803](https://github.com/pypeclub/OpenPype/pull/1803)
-- Collect ftrack family bugs [\#1801](https://github.com/pypeclub/OpenPype/pull/1801)
 - Invitee email can be None which break the Ftrack commit. [\#1788](https://github.com/pypeclub/OpenPype/pull/1788)
 - Fix: staging and `--use-version` option [\#1786](https://github.com/pypeclub/OpenPype/pull/1786)
 - Otio unrelated error on import [\#1782](https://github.com/pypeclub/OpenPype/pull/1782)
@@ -105,7 +105,6 @@
 - Bad zip can break OpenPype start [\#1691](https://github.com/pypeclub/OpenPype/pull/1691)
 - Hiero: published whole edit mov [\#1687](https://github.com/pypeclub/OpenPype/pull/1687)
 - Ftrack subprocess handle of stdout/stderr [\#1675](https://github.com/pypeclub/OpenPype/pull/1675)
-- Settings list race condifiton and mutable dict list conversion [\#1671](https://github.com/pypeclub/OpenPype/pull/1671)
 
 **Merged pull requests:**
 
