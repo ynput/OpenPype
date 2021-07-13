@@ -46,11 +46,9 @@ class FamilyAttributeValues:
 
         self._data = {}
         for attr_def in attr_defs:
-            self._data[attr_def.key] = values.get(attr_def.key)
-
-        self._last_data = copy.deepcopy(values)
-
-        self._chunk_value = 0
+            value = values.get(attr_def.key)
+            if value is not None:
+                self._data[attr_def.key] = value
 
     def __setitem__(self, key, value):
         if key not in self._attr_defs_by_key:
@@ -60,10 +58,6 @@ class FamilyAttributeValues:
         if old_value == value:
             return
         self._data[key] = value
-
-        self._propagate_changes({
-            key: (old_value, value)
-        })
 
     def __getitem__(self, key):
         if key not in self._attr_defs_by_key:
@@ -90,23 +84,21 @@ class FamilyAttributeValues:
             yield key, self._data.get(key)
 
     def update(self, value):
-        with self.chunk_changes():
-            for _key, _value in dict(value):
-                self[_key] = _value
+        for _key, _value in dict(value):
+            self[_key] = _value
 
     def pop(self, key, default=None):
-        if key not in self._data:
-            return default
-
-        result = self._data.pop(key)
-        self._propagate_changes({
-            key: (result, None)
-        })
-        return result
+        return self._data.pop(key, default)
 
     @property
     def attr_defs(self):
         return self._attr_defs
+
+    def data_to_store(self):
+        output = {}
+        for key in self._data:
+            output[key] = self[key]
+        return output
 
     @staticmethod
     def calculate_changes(new_data, old_data):
@@ -118,38 +110,9 @@ class FamilyAttributeValues:
         return changes
 
     def changes(self):
-        return self.calculate_changes(self._data, self._last_data)
+        return self.calculate_changes(self._data, self._origin_data)
 
-    def data_to_store(self):
-        output = {}
-        for key in self._data:
-            output[key] = self[key]
-        return output
 
-    def _propagate_changes(self, changes=None):
-        if self._chunk_value > 0:
-            return
-
-        if changes is None:
-            changes = self.changes()
-
-        if not changes:
-            return
-
-        self.instance.on_family_attribute_change(changes)
-        for key, values in changes.items():
-            self._last_data[key] = values[1]
-
-    @contextlib.contextmanager
-    def chunk_changes(self):
-        try:
-            self._chunk_value += 1
-            yield
-        finally:
-            self._chunk_value -= 1
-
-        if self._chunk_value == 0:
-            self._propagate_changes()
 
 
 class AvalonInstance:
@@ -238,9 +201,6 @@ class AvalonInstance:
         output["publish_attributes"] = self._data["publish_attributes"]
 
         return output
-
-    def on_family_attribute_change(self, changes):
-        self.host.update_instance(self, changes)
 
     def change_order(self, keys_order):
         data = collections.OrderedDict()
