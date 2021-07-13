@@ -33,7 +33,8 @@ class ExtractWorkfileUrl(pyblish.api.ContextPlugin):
                     filepath))
 
         if not filepath:
-            raise ValueError("Texture batch doesn't contain workfile.")
+            self.log.info("Texture batch doesn't contain workfile.")
+            return
 
         # then apply to all textures
         for instance in context:
