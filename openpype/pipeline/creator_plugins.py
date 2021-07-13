@@ -120,6 +120,12 @@ class FamilyAttributeValues:
     def changes(self):
         return self.calculate_changes(self._data, self._last_data)
 
+    def data_to_store(self):
+        output = {}
+        for key in self._data:
+            output[key] = self[key]
+        return output
+
     def _propagate_changes(self, changes=None):
         if self._chunk_value > 0:
             return
@@ -218,6 +224,20 @@ class AvalonInstance:
     @property
     def family_attribute_defs(self):
         return self._data["family_attributes"].attr_defs
+
+    def data_to_store(self):
+        output = collections.OrderedDict()
+        for key, value in self._data.items():
+            if key in ("family_attributes", "publish_attributes"):
+                continue
+            output[key] = value
+
+        family_attributes = self._data["family_attributes"]
+        output["family_attributes"] = family_attributes.data_to_store()
+
+        output["publish_attributes"] = self._data["publish_attributes"]
+
+        return output
 
     def on_family_attribute_change(self, changes):
         print(changes)
