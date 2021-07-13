@@ -154,11 +154,19 @@ class AvalonInstance:
         # Subset name
         self.subset_name = subset_name
 
+        # Create a copy of passed data to avoid changing them on the fly
         data = copy.deepcopy(data or {})
+        # Store original value of passed data
         self._orig_data = copy.deepcopy(data)
 
+        # Pop family and subset to preved unexpected changes
+        data.pop("family", None)
+        data.pop("subset", None)
 
+        # Pop dictionary values that will be converted to objects to be able
+        #   catch changes
         orig_family_attributes = data.pop("family_attributes") or {}
+        orig_publish_attributes = data.pop("publish_attributes") or {}
 
         self._data = collections.OrderedDict()
         self._data["id"] = "pyblish.avalon.instance"
@@ -171,6 +179,7 @@ class AvalonInstance:
             self._data["version"] = 1
         else:
             self._data["version"] = data.get("version")
+
         # Stored family specific attribute values
         # {key: value}
         self._data["family_attributes"] = FamilyAttributeValues(
@@ -212,8 +221,9 @@ class AvalonInstance:
         """Convert instance data from workfile to AvalonInstance."""
         instance_data = copy.deepcopy(instance_data)
 
-        family = instance_data.pop("family", None)
-        subset_name = instance_data.pop("subset", None)
+        family = instance_data.get("family", None)
+        subset_name = instance_data.get("subset", None)
+
         return cls(
             host, creator, family, subset_name, instance_data, new=False
         )
