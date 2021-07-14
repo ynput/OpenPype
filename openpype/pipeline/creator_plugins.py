@@ -104,20 +104,11 @@ class AttributeValues:
 
 
 class FamilyAttributeValues(AttributeValues):
-    def __init__(self, instance, values):
+    def __init__(self, instance, *args, **kwargs):
         self.instance = instance
-        creator = self.instance.creator
+        super(FamilyAttributeValues, self).__init__(*args, **kwargs)
 
-        origin_values = copy.deepcopy(values)
-        if creator is None:
-            attr_defs = []
-        else:
-            values = creator.convert_family_attribute_values(values)
-            attr_defs = creator.get_attribute_defs()
 
-        super(FamilyAttributeValues, self).__init__(
-            attr_defs, values, origin_values
-        )
 
 
 
@@ -157,8 +148,8 @@ class AvalonInstance:
 
         # Pop dictionary values that will be converted to objects to be able
         #   catch changes
-        orig_family_attributes = data.pop("family_attributes") or {}
-        orig_publish_attributes = data.pop("publish_attributes") or {}
+        orig_family_attributes = data.pop("family_attributes", None) or {}
+        orig_publish_attributes = data.pop("publish_attributes", None) or {}
 
         self._data = collections.OrderedDict()
         self._data["id"] = "pyblish.avalon.instance"
@@ -174,8 +165,16 @@ class AvalonInstance:
 
         # Stored family specific attribute values
         # {key: value}
+        new_family_values = copy.deepcopy(orig_family_attributes)
+        family_attr_defs = []
+        if creator is not None:
+            new_family_values = creator.convert_family_attribute_values(
+                new_family_values
+            )
+            family_attr_defs = creator.get_attribute_defs()
+
         self._data["family_attributes"] = FamilyAttributeValues(
-            self, orig_family_attributes
+            self, family_attr_defs, new_family_values, orig_family_attributes
         )
 
         # Stored publish specific attribute values
