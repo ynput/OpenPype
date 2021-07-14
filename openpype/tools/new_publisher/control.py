@@ -146,16 +146,26 @@ class PublisherController:
             self.host.update_instances(update_list)
 
     def get_family_attribute_definitions(self, instances):
-        if len(instances) == 1:
-            instance = instances[0]
-            output = []
+        output = []
+        _attr_defs = {}
+        for instance in instances:
             for attr_def in instance.family_attribute_defs:
-                value = instance.data["family_attributes"][attr_def.key]
-                output.append((attr_def, [instance], [value]))
-            return output
+                found_idx = None
+                for idx, _attr_def in _attr_defs.items():
+                    if attr_def == _attr_def:
+                        found_idx = idx
+                        break
 
-        # TODO mulsiselection
-        return ([], [], [])
+                value = instance.data["family_attributes"][attr_def.key]
+                if found_idx is None:
+                    idx = len(output)
+                    output.append((attr_def, [instance], [value]))
+                    _attr_defs[idx] = attr_def
+                else:
+                    item = output[found_idx]
+                    item[1].append(instance)
+                    item[2].append(value)
+        return output
 
     def get_publish_attribute_definitions(self, instances):
         all_defs_by_plugin_name = {}
