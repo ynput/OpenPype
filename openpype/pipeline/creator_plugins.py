@@ -177,7 +177,7 @@ class PublishAttributes:
                 continue
 
 
-class AvalonInstance:
+class CreatedInstance:
     """Instance entity with data that will be stored to workfile.
 
     I think `data` must be required argument containing all minimum information
@@ -307,7 +307,7 @@ class AvalonInstance:
 
     @classmethod
     def from_existing(cls, host, creator, instance_data, attr_plugins=None):
-        """Convert instance data from workfile to AvalonInstance."""
+        """Convert instance data from workfile to CreatedInstance."""
         instance_data = copy.deepcopy(instance_data)
 
         family = instance_data.get("family", None)
@@ -496,7 +496,7 @@ class Creator(BaseCreator):
             instance_data(dict):
         """
 
-        # instance = AvalonInstance(
+        # instance = CreatedInstance(
         #     self.family, subset_name, instance_data
         # )
         pass

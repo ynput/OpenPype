@@ -10,7 +10,7 @@ from openpype.api import (
 from openpype.pipeline import (
     OpenPypePyblishPluginMixin,
     BaseCreator,
-    AvalonInstance
+    CreatedInstance
 )
 
 
@@ -128,7 +128,7 @@ class PublisherController:
             attr_plugins = self._get_publish_plugins_with_attr_for_family(
                 family
             )
-            instance = AvalonInstance.from_existing(
+            instance = CreatedInstance.from_existing(
                 self.host, creator, instance_data, attr_plugins
             )
             instances.append(instance)

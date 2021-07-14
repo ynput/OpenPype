@@ -4,7 +4,7 @@ from .creator_plugins import (
     BaseCreator,
     Creator,
     AutoCreator,
-    AvalonInstance
+    CreatedInstance
 )
 
 from .publish_plugins import OpenPypePyblishPluginMixin
@@ -16,7 +16,7 @@ __all__ = (
     "BaseCreator",
     "Creator",
     "AutoCreator",
-    "AvalonInstance",
+    "CreatedInstance",
 
     "OpenPypePyblishPluginMixin"
 )
