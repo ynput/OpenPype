@@ -169,6 +169,12 @@ class PublishAttributes:
         for name in self._plugin_names_order:
             yield name
 
+    def data_to_store(self):
+        output = {}
+        for key, attr_value in self._data.items():
+            output[key] = attr_value.data_to_store()
+        return output
+
     def set_publish_plugins(self, attr_plugins):
         self.attr_plugins = attr_plugins or []
         for plugin in attr_plugins:
@@ -297,7 +303,8 @@ class CreatedInstance:
         family_attributes = self._data["family_attributes"]
         output["family_attributes"] = family_attributes.data_to_store()
 
-        output["publish_attributes"] = self._data["publish_attributes"]
+        publish_attributes = self._data["publish_attributes"]
+        output["publish_attributes"] = publish_attributes.data_to_store()
 
         return output
 
