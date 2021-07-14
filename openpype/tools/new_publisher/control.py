@@ -129,7 +129,7 @@ class PublisherController:
                 family
             )
             instance = CreatedInstance.from_existing(
-                self.host, creator, instance_data, attr_plugins
+                instance_data, creator, self.host, attr_plugins
             )
             instances.append(instance)
 

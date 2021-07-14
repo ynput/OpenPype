@@ -12,6 +12,7 @@ from abc import (
 import six
 
 from .lib import UnknownDef
+import avalon.api
 from openpype.lib import get_subset_name
 
 
@@ -221,9 +222,11 @@ class CreatedInstance:
             already existing instance.
     """
     def __init__(
-        self, host, creator, family, subset_name, data=None,
+        self, family, subset_name, data=None, creator=None, host=None,
         attr_plugins=None, new=True
     ):
+        if not host:
+            host = avalon.api.registered_host()
         self.host = host
         self.creator = creator
 
@@ -347,7 +350,9 @@ class CreatedInstance:
         self.data = data
 
     @classmethod
-    def from_existing(cls, host, creator, instance_data, attr_plugins=None):
+    def from_existing(
+        cls, instance_data, creator=None, host=None, attr_plugins=None
+    ):
         """Convert instance data from workfile to CreatedInstance."""
         instance_data = copy.deepcopy(instance_data)
 
@@ -355,7 +360,7 @@ class CreatedInstance:
         subset_name = instance_data.get("subset", None)
 
         return cls(
-            host, creator, family, subset_name, instance_data,
+            family, subset_name, instance_data, creator, host,
             attr_plugins, new=False
         )
 
