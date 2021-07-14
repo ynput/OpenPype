@@ -13,11 +13,65 @@ def get_default_thumbnail_image_path():
     return os.path.join(dirpath, "image_file.png")
 
 
+class ReadWriteLineEdit(QtWidgets.QFrame):
+    textChanged = QtCore.Signal(str)
+
+    def __init__(self, parent):
+        super(ReadWriteLineEdit, self).__init__(parent)
+
+        read_widget = QtWidgets.QLabel(self)
+        edit_widget = QtWidgets.QLineEdit(self)
+
+        self._editable = False
+        edit_widget.setVisible(self._editable)
+        read_widget.setVisible(not self._editable)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addWidget(read_widget)
+        layout.addWidget(edit_widget)
+
+        edit_widget.textChanged.connect(self.textChanged)
+
+        self.read_widget = read_widget
+        self.edit_widget = edit_widget
+
+    def set_editable(self, editable):
+        if self._editable == editable:
+            return
+        self._editable = editable
+        self.set_edit(False)
+
+    def set_edit(self, edit=None):
+        if edit is None:
+            edit = not self.edit_widget.isVisible()
+
+        if not self._editable and edit:
+            return
+
+        if self.edit_widget.isVisible() == edit:
+            return
+
+        self.read_widget.setVisible(not edit)
+        self.edit_widget.setVisible(edit)
+
+    def setText(self, text):
+        self.read_widget.setText(text)
+        if self.edit_widget.text() != text:
+            self.edit_widget.setText(text)
+
+    def text(self):
+        if self.edit_widget.isVisible():
+            return self.edit_widget.text()
+        return self.read_widget.text()
+
+
 class GlobalAttrsWidget(QtWidgets.QWidget):
     def __init__(self, parent):
         super(GlobalAttrsWidget, self).__init__(parent)
 
-        variant_input = QtWidgets.QLineEdit(self)
+        variant_input = ReadWriteLineEdit(self)
         family_value_widget = QtWidgets.QLabel(self)
         asset_value_widget = QtWidgets.QLabel(self)
         task_value_widget = QtWidgets.QLabel(self)
