@@ -109,8 +109,72 @@ class FamilyAttributeValues(AttributeValues):
         super(FamilyAttributeValues, self).__init__(*args, **kwargs)
 
 
+class PublishAttributeValues(AttributeValues):
+    def __init__(self, publish_attributes, *args, **kwargs):
+        self.publish_attributes = publish_attributes
+        super(PublishAttributeValues, self).__init__(*args, **kwargs)
+
+    @property
+    def instance(self):
+        self.publish_attributes.instance
 
 
+class PublishAttributes:
+    def __init__(self, instance, origin_data, attr_plugins=None):
+        self.instance = instance
+        self._origin_data = copy.deepcopy(origin_data)
+
+        attr_plugins = attr_plugins or []
+        self.attr_plugins = attr_plugins
+
+        self._data = {}
+        self._plugin_names_order = []
+        data = copy.deepcopy(origin_data)
+        for plugin in attr_plugins:
+            data = plugin.convert_attribute_values(data)
+            attr_defs = plugin.get_attribute_defs()
+            if not attr_defs:
+                continue
+
+            key = plugin.__name__
+            self._plugin_names_order.append(key)
+
+            value = data.get(key) or {}
+            orig_value = copy.deepcopy(origin_data.get(key) or {})
+            self._data[key] = PublishAttributeValues(
+                self, attr_defs, value, orig_value
+            )
+
+        for key, value in origin_data.items():
+            if key not in self._data:
+                orig_value = copy.deepcopy(value)
+                self._data[key] = PublishAttributeValues(
+                    self, attr_defs, value, orig_value
+                )
+
+    def __getitem__(self, key):
+        self._data[key]
+
+    def __contains__(self, key):
+        return key in self._data
+
+    def pop(self, key, default=None):
+        # TODO implement
+        if key not in self._data:
+            return default
+
+        # if key not in self._plugin_keys:
+
+    def plugin_names_order(self):
+        for name in self._plugin_names_order:
+            yield name
+
+    def set_publish_plugins(self, attr_plugins):
+        self.attr_plugins = attr_plugins or []
+        for plugin in attr_plugins:
+            attr_defs = plugin.get_attribute_defs()
+            if not attr_defs:
+                continue
 
 
 class AvalonInstance:
