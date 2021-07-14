@@ -127,7 +127,8 @@ class AvalonInstance:
             already existing instance.
     """
     def __init__(
-        self, host, creator, family, subset_name, data=None, new=True
+        self, host, creator, family, subset_name, data=None,
+        attr_plugins=None, new=True
     ):
         self.host = host
         self.creator = creator
@@ -241,7 +242,7 @@ class AvalonInstance:
         self.data = data
 
     @classmethod
-    def from_existing(cls, host, creator, instance_data):
+    def from_existing(cls, host, creator, instance_data, attr_plugins=None):
         """Convert instance data from workfile to AvalonInstance."""
         instance_data = copy.deepcopy(instance_data)
 
@@ -249,7 +250,8 @@ class AvalonInstance:
         subset_name = instance_data.get("subset", None)
 
         return cls(
-            host, creator, family, subset_name, instance_data, new=False
+            host, creator, family, subset_name, instance_data,
+            attr_plugins, new=False
         )
 
 
