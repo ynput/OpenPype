@@ -1,8 +1,20 @@
 # Changelog
 
+## [3.3.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.2.0...HEAD)
+
+**🐛 Bug fixes**
+
+- Houdini colector formatting keys fix [\#1802](https://github.com/pypeclub/OpenPype/pull/1802)
+
+**Merged pull requests:**
+
+- Maya: Deadline custom settings  [\#1797](https://github.com/pypeclub/OpenPype/pull/1797)
+
 ## [3.2.0](https://github.com/pypeclub/OpenPype/tree/3.2.0) (2021-07-13)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.4...3.2.0)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.2.0-nightly.7...3.2.0)
 
 **🚀 Enhancements**
 
@@ -25,6 +37,7 @@
 **🐛 Bug fixes**
 
 - nuke: fixing wrong name of family folder when `used existing frames` [\#1803](https://github.com/pypeclub/OpenPype/pull/1803)
+- Collect ftrack family bugs [\#1801](https://github.com/pypeclub/OpenPype/pull/1801)
 - Invitee email can be None which break the Ftrack commit. [\#1788](https://github.com/pypeclub/OpenPype/pull/1788)
 - Fix: staging and `--use-version` option [\#1786](https://github.com/pypeclub/OpenPype/pull/1786)
 - Otio unrelated error on import [\#1782](https://github.com/pypeclub/OpenPype/pull/1782)
@@ -69,7 +82,7 @@
 
 - Tools names forwards compatibility [\#1727](https://github.com/pypeclub/OpenPype/pull/1727)
 
-**Merged pull requests:**
+**⚠️ Deprecations**
 
 - global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
 
