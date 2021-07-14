@@ -30,7 +30,10 @@ class PublisherController:
         self._on_create_callback_refs = set()
 
         self.creators = {}
+
         self.publish_plugins = []
+        self.plugins_with_defs = []
+        self._attr_plugins_by_family = {}
 
         self.instances = []
 
@@ -69,15 +72,36 @@ class PublisherController:
 
         self._in_reset = False
 
+    def _get_publish_plugins_with_attr_for_family(self, family):
+        if family not in self._attr_plugins_by_family:
+            filtered_plugins = pyblish.logic.plugins_by_families(
+                self.plugins_with_defs, [family]
+            )
+            self._attr_plugins_by_family[family] = filtered_plugins
+
+        return self._attr_plugins_by_family[family]
+
     def _reset(self):
         """Reset to initial state."""
+        # Reset publish plugins
+        self._attr_plugins_by_family = {}
+
         publish_plugins = pyblish.api.discover()
         self.publish_plugins = publish_plugins
 
+        # Collect plugins that can have attribute definitions
+        plugins_with_defs = []
+        for plugin in publish_plugins:
+            if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
+                plugins_with_defs.append(plugin)
+        self.plugins_with_defs = plugins_with_defs
+
+        # Prepare settings
         project_name = self.dbcon.Session["AVALON_PROJECT"]
         system_settings = get_system_settings()
         project_settings = get_project_settings(project_name)
 
+        # Discover and prepare creators
         creators = {}
         for creator in avalon.api.discover(BaseCreator):
             if inspect.isabstract(creator):
@@ -93,13 +117,19 @@ class PublisherController:
 
         self.creators = creators
 
+        # Collect instances
         host_instances = self.host.list_instances()
         instances = []
         for instance_data in host_instances:
             family = instance_data["family"]
+            # Prepare publish plugins with attribute definitions
+
             creator = creators.get(family)
+            attr_plugins = self._get_publish_plugins_with_attr_for_family(
+                family
+            )
             instance = AvalonInstance.from_existing(
-                self.host, creator, instance_data
+                self.host, creator, instance_data, attr_plugins
             )
             instances.append(instance)
 
