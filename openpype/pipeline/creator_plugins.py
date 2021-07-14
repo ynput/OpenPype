@@ -244,7 +244,9 @@ class CreatedInstance:
 
         # Stored publish specific attribute values
         # {<plugin name>: {key: value}}
-        self._data["publish_attributes"] = {}
+        self._data["publish_attributes"] = PublishAttributes(
+            self, orig_publish_attributes, attr_plugins
+        )
         if data:
             self._data.update(data)
 
@@ -280,6 +282,10 @@ class CreatedInstance:
     @property
     def family_attribute_defs(self):
         return self._data["family_attributes"].attr_defs
+
+    @property
+    def publish_attributes(self):
+        return self._data["publish_attributes"]
 
     def data_to_store(self):
         output = collections.OrderedDict()
@@ -317,6 +323,9 @@ class CreatedInstance:
             host, creator, family, subset_name, instance_data,
             attr_plugins, new=False
         )
+
+    def set_publish_plugins(self, attr_plugins):
+        self._data["publish_attributes"].set_publish_plugins(attr_plugins)
 
 
 
