@@ -11,213 +11,121 @@
         removes temporary folder
         removes temporary databases (?)
 """
-import os
-import sys
-import six
-import json
 import pytest
-import tempfile
-import shutil
+
+from tests.lib.testing_wrapper import TestCase
 from bson.objectid import ObjectId
 
-from tests.lib.db_handler import DBHandler
-from tests.lib.file_handler import RemoteFileHandler
 
-TEST_OPENPYPE_MONGO = "mongodb://localhost:27017"
-TEST_DB_NAME = "test_db"
-TEST_PROJECT_NAME = "test_project"
-TEST_OPENPYPE_NAME = "test_openpype"
-REPRESENTATION_ID = "60e578d0c987036c6a7b741d"
+class TestSiteOperation(TestCase):
 
-TEST_FILES = [
-    ("1eCwPljuJeOI8A3aisfOIBKKjcmIycTEt", "test_site_operations.zip", "")
-]
-
-
-@pytest.fixture(scope='session')
-def monkeypatch_session():
-    """Monkeypatch couldn't be used with module or session fixtures."""
-    from _pytest.monkeypatch import MonkeyPatch
-    m = MonkeyPatch()
-    yield m
-    m.undo()
-
-
-@pytest.fixture(scope="module")
-def download_test_data():
-    tmpdir = tempfile.mkdtemp()
-    for test_file in TEST_FILES:
-        file_id, file_name, md5 = test_file
-
-        f_name, ext = os.path.splitext(file_name)
-
-        RemoteFileHandler.download_file_from_google_drive(file_id,
-                                                          str(tmpdir),
-                                                          file_name)
-
-        if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:
-            RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
-
-        yield tmpdir
-        shutil.rmtree(tmpdir)
-
-
-@pytest.fixture(scope="module")
-def env_var(monkeypatch_session, download_test_data):
-    """Sets temporary env vars from json file."""
-    env_url = os.path.join(download_test_data, "input",
-                           "env_vars", "env_var.json")
-    if not os.path.exists(env_url):
-        raise ValueError("Env variable file {} doesn't exist".format(env_url))
-
-    env_dict = {}
-    try:
-        with open(env_url) as json_file:
-            env_dict = json.load(json_file)
-    except ValueError:
-        print("{} doesn't contain valid JSON")
-        six.reraise(*sys.exc_info())
-
-    for key, value in env_dict.items():
-        value = value.format(**globals())
-        print("Setting {}:{}".format(key, value))
-        monkeypatch_session.setenv(key, value)
-
-
-@pytest.fixture(scope="module")
-def db_setup(download_test_data, env_var, monkeypatch_session):
-    """Restore prepared MongoDB dumps into selected DB."""
-    backup_dir = os.path.join(download_test_data, "input", "dumps")
-
-    uri = os.environ.get("OPENPYPE_MONGO") or "mongodb://localhost:27017"
-    db_handler = DBHandler(uri)
-    db_handler.setup_from_dump(TEST_DB_NAME, backup_dir, True,
-                               db_name_out=TEST_DB_NAME)
-
-    db_handler.setup_from_dump("openpype", backup_dir, True,
-                               db_name_out=TEST_OPENPYPE_NAME)
-
-    yield db_handler
-
-    db_handler.teardown(TEST_DB_NAME)
-    db_handler.teardown(TEST_OPENPYPE_NAME)
-
-
-@pytest.fixture(scope="module")
-def db(db_setup):
-    """Provide test database connection.
-
-        Database prepared from dumps with 'db_setup' fixture.
-    """
-    from avalon.api import AvalonMongoDB
-    db = AvalonMongoDB()
-    yield db
-
-
-@pytest.fixture(scope="module")
-def setup_sync_server_module(db):
-    """Get sync_server_module from ModulesManager"""
-    from openpype.modules import ModulesManager
-
-    manager = ModulesManager()
-    sync_server = manager.modules_by_name["sync_server"]
-    yield sync_server
-
-
-@pytest.mark.usefixtures("db")
-def test_project_created(db):
-    assert ['test_project'] == db.database.collection_names(False)
-
-
-@pytest.mark.usefixtures("db")
-def test_objects_imported(db):
-    count_obj = len(list(db.database[TEST_PROJECT_NAME].find({})))
-    assert 15 == count_obj
-
-
-@pytest.mark.usefixtures("setup_sync_server_module")
-def test_add_site(db, setup_sync_server_module):
-    """Adds 'test_site', checks that added, checks that doesn't duplicate."""
-    query = {
-        "_id": ObjectId(REPRESENTATION_ID)
-    }
-
-    ret = db.database[TEST_PROJECT_NAME].find(query)
-
-    assert 1 == len(list(ret)), \
-        "Single {} must be in DB".format(REPRESENTATION_ID)
-
-    setup_sync_server_module.add_site(TEST_PROJECT_NAME, REPRESENTATION_ID,
-                                      site_name='test_site')
-
-    ret = list(db.database[TEST_PROJECT_NAME].find(query))
-
-    assert 1 == len(ret), \
-        "Single {} must be in DB".format(REPRESENTATION_ID)
-
-    ret = ret.pop()
-    site_names = [site["name"] for site in ret["files"][0]["sites"]]
-    assert 'test_site' in site_names, "Site name wasn't added"
-
-
-@pytest.mark.usefixtures("setup_sync_server_module")
-def test_add_site_again(db, setup_sync_server_module):
-    """Depends on test_add_site, must throw exception."""
-    with pytest.raises(ValueError):
-        setup_sync_server_module.add_site(TEST_PROJECT_NAME, REPRESENTATION_ID,
+    @pytest.fixture(scope="module")
+    def setup_sync_server_module(self, db):
+        """Get sync_server_module from ModulesManager"""
+        from openpype.modules import ModulesManager
+    
+        manager = ModulesManager()
+        sync_server = manager.modules_by_name["sync_server"]
+        yield sync_server
+    
+    
+    @pytest.mark.usefixtures("db")
+    def test_project_created(self, db):
+        assert ['test_project'] == db.database.collection_names(False)
+    
+    
+    @pytest.mark.usefixtures("db")
+    def test_objects_imported(self, db):
+        count_obj = len(list(db.database[self.TEST_PROJECT_NAME].find({})))
+        assert 15 == count_obj
+    
+    
+    @pytest.mark.usefixtures("setup_sync_server_module")
+    def test_add_site(self, db, setup_sync_server_module):
+        """Adds 'test_site', checks that added, checks that doesn't duplicate."""
+        query = {
+            "_id": ObjectId(self.REPRESENTATION_ID)
+        }
+    
+        ret = db.database[self.TEST_PROJECT_NAME].find(query)
+    
+        assert 1 == len(list(ret)), \
+            "Single {} must be in DB".format(self.REPRESENTATION_ID)
+    
+        setup_sync_server_module.add_site(self.TEST_PROJECT_NAME, self.REPRESENTATION_ID,
                                           site_name='test_site')
-
-
-@pytest.mark.usefixtures("setup_sync_server_module")
-def test_add_site_again_force(db, setup_sync_server_module):
-    """Depends on test_add_site, must not throw exception."""
-    setup_sync_server_module.add_site(TEST_PROJECT_NAME, REPRESENTATION_ID,
-                                      site_name='test_site', force=True)
-
-    query = {
-        "_id": ObjectId(REPRESENTATION_ID)
-    }
-
-    ret = list(db.database[TEST_PROJECT_NAME].find(query))
-
-    assert 1 == len(ret), \
-        "Single {} must be in DB".format(REPRESENTATION_ID)
-
-
-@pytest.mark.usefixtures("setup_sync_server_module")
-def test_remove_site(db, setup_sync_server_module):
-    """Depends on test_add_site, must remove 'test_site'."""
-    setup_sync_server_module.remove_site(TEST_PROJECT_NAME, REPRESENTATION_ID,
-                                         site_name='test_site')
-
-    query = {
-        "_id": ObjectId(REPRESENTATION_ID)
-    }
-
-    ret = list(db.database[TEST_PROJECT_NAME].find(query))
-
-    assert 1 == len(ret), \
-        "Single {} must be in DB".format(REPRESENTATION_ID)
-
-    ret = ret.pop()
-    site_names = [site["name"] for site in ret["files"][0]["sites"]]
-
-    assert 'test_site' not in site_names, "Site name wasn't removed"
-
-
-@pytest.mark.usefixtures("setup_sync_server_module")
-def test_remove_site_again(db, setup_sync_server_module):
-    """Depends on test_add_site, must trow exception"""
-    with pytest.raises(ValueError):
-        setup_sync_server_module.remove_site(TEST_PROJECT_NAME,
-                                             REPRESENTATION_ID,
+    
+        ret = list(db.database[self.TEST_PROJECT_NAME].find(query))
+    
+        assert 1 == len(ret), \
+            "Single {} must be in DB".format(self.REPRESENTATION_ID)
+    
+        ret = ret.pop()
+        site_names = [site["name"] for site in ret["files"][0]["sites"]]
+        assert 'test_site' in site_names, "Site name wasn't added"
+    
+    
+    @pytest.mark.usefixtures("setup_sync_server_module")
+    def test_add_site_again(self, db, setup_sync_server_module):
+        """Depends on test_add_site, must throw exception."""
+        with pytest.raises(ValueError):
+            setup_sync_server_module.add_site(self.TEST_PROJECT_NAME, self.REPRESENTATION_ID,
+                                              site_name='test_site')
+    
+    
+    @pytest.mark.usefixtures("setup_sync_server_module")
+    def test_add_site_again_force(self, db, setup_sync_server_module):
+        """Depends on test_add_site, must not throw exception."""
+        setup_sync_server_module.add_site(self.TEST_PROJECT_NAME, self.REPRESENTATION_ID,
+                                          site_name='test_site', force=True)
+    
+        query = {
+            "_id": ObjectId(self.REPRESENTATION_ID)
+        }
+    
+        ret = list(db.database[self.TEST_PROJECT_NAME].find(query))
+    
+        assert 1 == len(ret), \
+            "Single {} must be in DB".format(self.REPRESENTATION_ID)
+    
+    
+    @pytest.mark.usefixtures("setup_sync_server_module")
+    def test_remove_site(self, db, setup_sync_server_module):
+        """Depends on test_add_site, must remove 'test_site'."""
+        setup_sync_server_module.remove_site(self.TEST_PROJECT_NAME, self.REPRESENTATION_ID,
                                              site_name='test_site')
+    
+        query = {
+            "_id": ObjectId(self.REPRESENTATION_ID)
+        }
+    
+        ret = list(db.database[self.TEST_PROJECT_NAME].find(query))
+    
+        assert 1 == len(ret), \
+            "Single {} must be in DB".format(self.REPRESENTATION_ID)
+    
+        ret = ret.pop()
+        site_names = [site["name"] for site in ret["files"][0]["sites"]]
+    
+        assert 'test_site' not in site_names, "Site name wasn't removed"
+    
+    
+    @pytest.mark.usefixtures("setup_sync_server_module")
+    def test_remove_site_again(self, db, setup_sync_server_module):
+        """Depends on test_add_site, must trow exception"""
+        with pytest.raises(ValueError):
+            setup_sync_server_module.remove_site(self.TEST_PROJECT_NAME,
+                                                 self.REPRESENTATION_ID,
+                                                 site_name='test_site')
+    
+        query = {
+            "_id": ObjectId(self.REPRESENTATION_ID)
+        }
+    
+        ret = list(db.database[self.TEST_PROJECT_NAME].find(query))
+    
+        assert 1 == len(ret), \
+            "Single {} must be in DB".format(self.REPRESENTATION_ID)
 
-    query = {
-        "_id": ObjectId(REPRESENTATION_ID)
-    }
 
-    ret = list(db.database[TEST_PROJECT_NAME].find(query))
-
-    assert 1 == len(ret), \
-        "Single {} must be in DB".format(REPRESENTATION_ID)
+test_case = TestSiteOperation()
