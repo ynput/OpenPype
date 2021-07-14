@@ -108,6 +108,16 @@
                             "key": "limit",
                             "label": "Limit Groups",
                             "object_type": "text"
+                        },
+                        {
+                            "type": "raw-json",
+                            "key": "jobInfo",
+                            "label": "Additional JobInfo data"
+                        },
+                        {
+                            "type": "raw-json",
+                            "key": "pluginInfo",
+                            "label": "Additional PluginInfo data"
                         }
                     ]
                 },
