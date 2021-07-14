@@ -172,6 +172,8 @@
             "deadline_group": "",
             "deadline_chunk_size": 1,
             "deadline_priority": 50,
+            "publishing_script": "",
+            "skip_integration_repre_list": [],
             "aov_filter": {
                 "maya": [
                     ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
@@ -184,6 +186,10 @@
                     ".*"
                 ]
             }
+        },
+        "CleanUp": {
+            "paterns": [],
+            "remove_temp_renders": false
         }
     },
     "tools": {

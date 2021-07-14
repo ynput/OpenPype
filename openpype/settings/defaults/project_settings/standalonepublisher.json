@@ -165,6 +165,58 @@
                 ],
                 "output": []
             }
+        },
+        "CollectEditorial": {
+            "source_dir": "",
+            "extensions": [
+                "mov",
+                "mp4"
+            ]
+        },
+        "CollectHierarchyInstance": {
+            "shot_rename_template": "{project[code]}_{_sequence_}_{_shot_}",
+            "shot_rename_search_patterns": {
+                "_sequence_": "(\\d{4})(?=_\\d{4})",
+                "_shot_": "(\\d{4})(?!_\\d{4})"
+            },
+            "shot_add_hierarchy": {
+                "parents_path": "{project}/{folder}/{sequence}",
+                "parents": {
+                    "project": "{project[name]}",
+                    "sequence": "{_sequence_}",
+                    "folder": "shots"
+                }
+            },
+            "shot_add_tasks": {}
+        },
+        "shot_add_tasks": {
+            "custom_start_frame": 0,
+            "timeline_frame_start": 900000,
+            "timeline_frame_offset": 0,
+            "subsets": {
+                "referenceMain": {
+                    "family": "review",
+                    "families": [
+                        "clip"
+                    ],
+                    "extensions": [
+                        "mp4"
+                    ],
+                    "version": 0,
+                    "keepSequence": false
+                },
+                "audioMain": {
+                    "family": "audio",
+                    "families": [
+                        "clip"
+                    ],
+                    "extensions": [
+                        "wav"
+                    ],
+                    "version": 0,
+                    "keepSequence": false
+                }
+            }
         }
     }
 }

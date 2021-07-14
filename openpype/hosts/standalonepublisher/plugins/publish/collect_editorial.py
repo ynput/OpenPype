@@ -2,7 +2,7 @@
 Optional:
     presets     -> extensions (
         example of use:
-            [".mov", ".mp4"]
+            ["mov", "mp4"]
     )
     presets     -> source_dir (
         example of use:
@@ -11,6 +11,7 @@ Optional:
             "{root[work]}/{project[name]}/inputs"
             "./input"
             "../input"
+            ""
     )
 """
 
@@ -48,7 +49,7 @@ class CollectEditorial(pyblish.api.InstancePlugin):
     actions = []
 
     # presets
-    extensions = [".mov", ".mp4"]
+    extensions = ["mov", "mp4"]
     source_dir = None
 
     def process(self, instance):
@@ -72,7 +73,7 @@ class CollectEditorial(pyblish.api.InstancePlugin):
             video_path = None
             basename = os.path.splitext(os.path.basename(file_path))[0]
 
-            if self.source_dir:
+            if self.source_dir != "":
                 source_dir = self.source_dir.replace("\\", "/")
                 if ("./" in source_dir) or ("../" in source_dir):
                     # get current working dir
@@ -98,7 +99,7 @@ class CollectEditorial(pyblish.api.InstancePlugin):
                     if os.path.splitext(f)[0] not in basename:
                         continue
                     # filter out by respected extensions
-                    if os.path.splitext(f)[1] not in self.extensions:
+                    if os.path.splitext(f)[1][1:] not in self.extensions:
                         continue
                     video_path = os.path.join(
                         staging_dir, f
