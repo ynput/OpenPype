@@ -42,8 +42,19 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.subset_value_widget = subset_value_widget
 
     def set_current_instances(self, instances):
-        if len(instances) == 1:
+        editable = False
+        if len(instances) == 0:
+            variant = ""
+            family = ""
+            asset_name = ""
+            task_name = ""
+            subset_name = ""
+
+        elif len(instances) == 1:
             instance = instances[0]
+            if instance.creator is not None:
+                editable = True
+
             unknown = "N/A"
 
             variant = instance.data.get("variant") or unknown
@@ -52,13 +63,38 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             task_name = instance.data.get("task") or unknown
             subset_name = instance.data.get("subset") or unknown
 
-            self.variant_input.setText(variant)
-            self.family_value_widget.setText(family)
-            self.asset_value_widget.setText(asset_name)
-            self.task_value_widget.setText(task_name)
-            self.subset_value_widget.setText(subset_name)
-            return
-        # TODO mulsiselection
+        else:
+            families = set()
+            asset_names = set()
+            task_names = set()
+            for instance in instances:
+                families.add(instance.data.get("family") or unknown)
+                asset_names.add(instance.data.get("asset") or unknown)
+                task_names.add(instance.data.get("task") or unknown)
+
+            multiselection_text = "< Multiselection >"
+
+            variant = multiselection_text
+            family = multiselection_text
+            asset_name = multiselection_text
+            task_name = multiselection_text
+            subset_name = multiselection_text
+            if len(families) < 4:
+                family = " / ".join(families)
+
+            if len(asset_names) < 4:
+                asset_name = " / ".join(asset_names)
+
+            if len(task_names) < 4:
+                task_name = " / ".join(task_names)
+
+        self.variant_input.set_editable(editable)
+
+        self.variant_input.setText(variant)
+        self.family_value_widget.setText(family)
+        self.asset_value_widget.setText(asset_name)
+        self.task_value_widget.setText(task_name)
+        self.subset_value_widget.setText(subset_name)
 
 
 class FamilyAttrsWidget(QtWidgets.QWidget):
