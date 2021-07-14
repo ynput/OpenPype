@@ -37,9 +37,13 @@ class CollectBatchInstances(pyblish.api.InstancePlugin):
         context = instance.context
         asset_name = instance.data["asset"]
         family = instance.data["family"]
+        subset = instance.data["subset"]
+        _subset_name = subset.replace(family, "")
+        task = instance.data.get("task")
 
-        default_task_name = self.default_subset_task.get(family)
+        default_task_name = task or self.default_subset_task.get(family)
         for subset_name, subset_data in self.subsets[family].items():
+            subset_name = subset_name.format(_subset_name)
             instance_name = f"{asset_name}_{subset_name}"
             task_name = subset_data.get("task") or default_task_name
 
