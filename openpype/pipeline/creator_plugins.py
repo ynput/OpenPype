@@ -153,10 +153,19 @@ class PublishAttributes:
                 )
 
     def __getitem__(self, key):
-        self._data[key]
+        return self._data[key]
 
     def __contains__(self, key):
         return key in self._data
+
+    def keys(self):
+        return self._data.keys()
+
+    def values(self):
+        return self._data.values()
+
+    def items(self):
+        return self._data.items()
 
     def pop(self, key, default=None):
         # TODO implement
