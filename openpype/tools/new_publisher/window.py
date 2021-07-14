@@ -65,6 +65,9 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_view = QtWidgets.QTreeView(subset_widget)
         subset_view.setHeaderHidden(True)
         subset_view.setIndentation(0)
+        subset_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection
+        )
 
         subset_model = QtGui.QStandardItemModel()
         subset_view.setModel(subset_model)
