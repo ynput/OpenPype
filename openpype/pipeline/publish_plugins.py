@@ -15,6 +15,22 @@ class OpenPypePyblishPluginMixin:
         """
         return []
 
+    @classmethod
+    def convert_attribute_values(cls, attribute_values):
+        if cls.__name__ not in attribute_values:
+            return attribute_values
+
+        plugin_values = attribute_values[cls.__name__]
+
+        attr_defs = cls.get_attribute_defs()
+        for attr_def in attr_defs:
+            key = attr_def.key
+            if key in plugin_values:
+                plugin_values[key] = attr_def.convert_value(
+                    plugin_values[key]
+                )
+        return attribute_values
+
     def set_state(self, percent=None, message=None):
         """Inner callback of plugin that would help to show in UI state.
 
