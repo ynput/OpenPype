@@ -184,7 +184,22 @@ class PublishAttributes:
             output[key] = attr_value.data_to_store()
         return output
 
+    def changes(self):
+        changes = {}
+        for key, attr_val in self._data.items():
+            attr_changes = attr_val.changes()
+            if attr_changes:
+                if key not in changes:
+                    changes[key] = {}
+                changes[key].update(attr_val)
+
+        for key, value in self._origin_data.items():
+            if key not in self._data:
+                changes[key] = (value, None)
+        return changes
+
     def set_publish_plugins(self, attr_plugins):
+        # TODO implement
         self.attr_plugins = attr_plugins or []
         for plugin in attr_plugins:
             attr_defs = plugin.get_attribute_defs()
@@ -288,6 +303,10 @@ class CreatedInstance:
         family_attr_changes = family_attributes.changes()
         if family_attr_changes:
             changes["family_attributes"] = family_attr_changes
+
+        publish_attr_changes = self.publish_attributes.changes()
+        if publish_attr_changes:
+            changes["publish_attributes"] = publish_attr_changes
 
         for key, old_value in self._orig_data.items():
             if key not in new_keys:
