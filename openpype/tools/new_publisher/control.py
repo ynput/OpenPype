@@ -158,24 +158,40 @@ class PublisherController:
         return ([], [], [])
 
     def get_publish_attribute_definitions(self, instances):
-        families = set()
+        all_defs_by_plugin_name = {}
+        all_plugin_values = {}
         for instance in instances:
-            family = instance.data["family"]
-            families.add(family)
+            for plugin_name, attr_val in instance.publish_attributes.items():
+                attr_defs = attr_val.attr_defs
+                if not attr_defs:
+                    continue
 
-        plugins_with_defs = []
-        for plugin in self.publish_plugins:
-            if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
-                plugins_with_defs.append(plugin)
+                if plugin_name not in all_defs_by_plugin_name:
+                    all_defs_by_plugin_name[plugin_name] = attr_val.attr_defs
 
-        filtered_plugins = pyblish.logic.plugins_by_families(
-            plugins_with_defs, families
-        )
+                if plugin_name not in all_plugin_values:
+                    all_plugin_values[plugin_name] = {}
+
+                plugin_values = all_plugin_values[plugin_name]
+
+                for attr_def in attr_defs:
+                    if attr_def.key not in plugin_values:
+                        plugin_values[attr_def.key] = []
+                    attr_values = plugin_values[attr_def.key]
+
+                    value = attr_val[attr_def.key]
+                    attr_values.append((instance, value))
+
         output = []
-        for plugin in filtered_plugins:
-            attr_defs = plugin.get_attribute_defs()
-            if attr_defs:
-                output.append((plugin.__name__, attr_defs))
+        for plugin in self.plugins_with_defs:
+            plugin_name = plugin.__name__
+            if plugin_name not in all_defs_by_plugin_name:
+                continue
+            output.append((
+                plugin_name,
+                all_defs_by_plugin_name[plugin_name],
+                all_plugin_values
+            ))
         return output
 
     def create(self, family, subset_name, instance_data, options):

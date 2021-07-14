@@ -80,6 +80,7 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
 
         self._attr_def_id_to_instances = {}
         self._attr_def_id_to_attr_def = {}
+
         # To store content of scroll area to prevend garbage collection
         self._content_widget = None
 
@@ -148,6 +149,11 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
         self.controller = controller
         self._scroll_area = scroll_area
+
+        self._attr_def_id_to_instances = {}
+        self._attr_def_id_to_attr_def = {}
+        self._attr_def_id_to_plugin_name = {}
+
         # Store content of scroll area to prevend garbage collection
         self._content_widget = None
 
@@ -160,22 +166,57 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
         self._content_widget = None
 
-        attr_defs = self.controller.get_publish_attribute_definitions(
+        self._attr_def_id_to_instances = {}
+        self._attr_def_id_to_attr_def = {}
+        self._attr_def_id_to_plugin_name = {}
+
+        result = self.controller.get_publish_attribute_definitions(
             instances
         )
 
         content_widget = QtWidgets.QWidget(self._scroll_area)
         content_layout = QtWidgets.QFormLayout(content_widget)
-        for plugin_name, plugin_attr_defs in attr_defs:
-            for attr_def in plugin_attr_defs:
+        for plugin_name, attr_defs, all_plugin_values in result:
+            plugin_values = all_plugin_values[plugin_name]
+
+            for attr_def in attr_defs:
                 widget = create_widget_for_attr_def(
                     attr_def, content_widget
                 )
                 label = attr_def.label or attr_def.key
                 content_layout.addRow(label, widget)
 
+                widget.value_changed.connect(self._input_value_changed)
+
+                attr_values = plugin_values[attr_def.key]
+                mutlivalue = len(attr_values) > 1
+                values = set()
+                instances = []
+                for instance, value in attr_values:
+                    values.add(value)
+                    instances.append(instance)
+
+                values = list(values)
+
+                self._attr_def_id_to_attr_def[attr_def.id] = attr_def
+                self._attr_def_id_to_instances[attr_def.id] = instances
+                self._attr_def_id_to_plugin_name[attr_def.id] = plugin_name
+
+                widget.set_value(values[0])
+
         self._scroll_area.setWidget(content_widget)
         self._content_widget = content_widget
+
+    def _input_value_changed(self, value, attr_id):
+        instances = self._attr_def_id_to_instances.get(attr_id)
+        attr_def = self._attr_def_id_to_attr_def.get(attr_id)
+        plugin_name = self._attr_def_id_to_plugin_name.get(attr_id)
+        if not instances or not attr_def or not plugin_name:
+            return
+
+        for instance in instances:
+            plugin_val = instance.publish_attributes[plugin_name]
+            plugin_val[attr_def.key] = value
 
 
 class SubsetAttributesWidget(QtWidgets.QWidget):
