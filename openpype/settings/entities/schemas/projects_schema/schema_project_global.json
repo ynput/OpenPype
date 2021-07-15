@@ -17,7 +17,8 @@
             "type": "raw-json",
             "label": "Project Folder Structure",
             "key": "project_folder_structure",
-            "use_label_wrap": true
+            "use_label_wrap": true,
+            "store_as_string": true
         },
         {
             "type": "schema",
