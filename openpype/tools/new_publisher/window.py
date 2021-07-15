@@ -213,6 +213,25 @@ class PublisherWindow(QtWidgets.QWidget):
     def _on_delete_clicked(self):
         instances = self.get_selected_instances()
 
+        # Ask user if he really wants to remove instances
+        dialog = QtWidgets.QMessageBox(self)
+        dialog.setIcon(QtWidgets.QMessageBox.Question)
+        dialog.setWindowTitle("Are you sure?")
+        if len(instances) > 1:
+            msg = (
+                "Do you really want to remove {} instances?"
+            ).format(len(instances))
+        else:
+            msg = (
+                "Do you really want to remove the instance?"
+            )
+        dialog.setText(msg)
+        dialog.setStandardButtons(
+            QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel
+        )
+        dialog.setDefaultButton(QtWidgets.QMessageBox.Ok)
+        dialog.setEscapeButton(QtWidgets.QMessageBox.Cancel)
+        dialog.exec_()
     def _on_change_view_clicked(self):
         print("change view")
 
