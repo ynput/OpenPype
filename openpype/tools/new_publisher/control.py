@@ -26,8 +26,8 @@ class PublisherController:
         dbcon.install()
         self.dbcon = dbcon
 
-        self._reset_callback_refs = set()
-        self._on_create_callback_refs = set()
+        self._instances_refresh_callback_refs = set()
+        self._plugins_refresh_callback_refs = set()
 
         self.creators = {}
 
@@ -37,15 +37,16 @@ class PublisherController:
 
         self.instances = []
 
-        self._in_reset = False
+        self._resetting_plugins = False
+        self._resetting_instances = False
 
-    def add_on_reset_callback(self, callback):
+    def add_instances_refresh_callback(self, callback):
         ref = weakref.WeakMethod(callback)
-        self._reset_callback_refs.add(ref)
+        self._instances_refresh_callback_refs.add(ref)
 
-    def add_on_create_callback(self, callback):
+    def add_plugins_refresh_callback(self, callback):
         ref = weakref.WeakMethod(callback)
-        self._on_create_callback_refs.add(ref)
+        self._plugins_refresh_callback_refs.add(ref)
 
     def _trigger_callbacks(self, callbacks, *args, **kwargs):
         # Trigger reset callbacks
@@ -61,16 +62,8 @@ class PublisherController:
             callbacks.remove(ref)
 
     def reset(self):
-        if self._in_reset:
-            return
-
-        self._in_reset = True
-        self._reset()
-
-        # Trigger reset callbacks
-        self._trigger_callbacks(self._reset_callback_refs)
-
-        self._in_reset = False
+        self._reset_plugin()
+        self._reset_instances()
 
     def _get_publish_plugins_with_attr_for_family(self, family):
         if family not in self._attr_plugins_by_family:
@@ -81,8 +74,13 @@ class PublisherController:
 
         return self._attr_plugins_by_family[family]
 
-    def _reset(self):
+    def _reset_plugin(self):
         """Reset to initial state."""
+        if self._resetting_plugins:
+            return
+
+        self._resetting_plugins = True
+
         # Reset publish plugins
         self._attr_plugins_by_family = {}
 
@@ -117,6 +115,16 @@ class PublisherController:
 
         self.creators = creators
 
+        self._resetting_plugins = False
+
+        self._trigger_callbacks(self._plugins_refresh_callback_refs)
+
+    def _reset_instances(self):
+        if self._resetting_instances:
+            return
+
+        self._resetting_instances = True
+
         # Collect instances
         host_instances = self.host.list_instances()
         instances = []
@@ -124,7 +132,7 @@ class PublisherController:
             family = instance_data["family"]
             # Prepare publish plugins with attribute definitions
 
-            creator = creators.get(family)
+            creator = self.creators.get(family)
             attr_plugins = self._get_publish_plugins_with_attr_for_family(
                 family
             )
@@ -134,6 +142,10 @@ class PublisherController:
             instances.append(instance)
 
         self.instances = instances
+
+        self._resetting_instances = False
+
+        self._trigger_callbacks(self._instances_refresh_callback_refs)
 
     def get_family_attribute_definitions(self, instances):
         output = []
@@ -198,16 +210,9 @@ class PublisherController:
         # QUESTION Force to return instances or call `list_instances` on each
         #   creation? (`list_instances` may slow down...)
         creator = self.creators[family]
-        result = creator.create(subset_name, instance_data, options)
-        if result and not isinstance(result, (list, tuple)):
-            result = [result]
+        creator.create(subset_name, instance_data, options)
 
-        for instance in result:
-            self.instances.append(instance)
-
-        self._trigger_callbacks(self._on_create_callback_refs)
-
-        return result
+        self._reset_instances()
 
     def save_instance_changes(self):
         update_list = []
@@ -221,3 +226,5 @@ class PublisherController:
 
     def remove_instances(self, instances):
         self.host.remove_instances(instances)
+
+        self._reset_instances()

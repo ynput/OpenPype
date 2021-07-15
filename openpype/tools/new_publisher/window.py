@@ -135,8 +135,7 @@ class PublisherWindow(QtWidgets.QWidget):
 
         creator_window = CreateDialog(controller, self)
 
-        controller.add_on_reset_callback(self._on_control_reset)
-        controller.add_on_create_callback(self._on_control_create)
+        controller.add_instances_refresh_callback(self._on_instances_refresh)
 
         reset_btn.clicked.connect(self._on_reset_clicked)
 
@@ -289,10 +288,7 @@ class PublisherWindow(QtWidgets.QWidget):
         # Force to change instance and refresh details
         self._on_subset_change()
 
-    def _on_control_create(self):
-        self._refresh_instances()
-
-    def _on_control_reset(self):
+    def _on_instances_refresh(self):
         self._refresh_instances()
 
     def _on_subset_change(self, *_args):

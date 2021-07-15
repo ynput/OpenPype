@@ -476,7 +476,7 @@ class CreateDialog(QtWidgets.QDialog):
         )
         variant_hints_menu.triggered.connect(self._on_variant_action)
 
-        controller.add_on_reset_callback(self._on_control_reset)
+        controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
         self.asset_name_input = asset_name_input
         self.subset_name_input = subset_name_input
@@ -580,7 +580,7 @@ class CreateDialog(QtWidgets.QDialog):
             index = self.family_model.index(0, 0)
             self.family_view.setCurrentIndex(index)
 
-    def _on_control_reset(self):
+    def _on_plugins_refresh(self):
         # Trigger refresh only if is visible
         if self.isVisible():
             self.refresh()
