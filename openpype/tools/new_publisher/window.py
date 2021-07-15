@@ -141,7 +141,10 @@ class PublisherWindow(QtWidgets.QWidget):
         reset_btn.clicked.connect(self._on_reset_clicked)
 
         create_btn.clicked.connect(self._on_create_clicked)
+        delete_btn.clicked.connect(self._on_delete_clicked)
         save_btn.clicked.connect(self._on_save_clicked)
+        change_view_btn.clicked.connect(self._on_change_view_clicked)
+
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
@@ -155,6 +158,8 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self.subset_view = subset_view
         self.subset_model = subset_model
+
+        self.delete_btn = delete_btn
 
         self.subset_attributes_widget = subset_attributes_widget
         self.footer_widget = footer_widget
@@ -204,6 +209,12 @@ class PublisherWindow(QtWidgets.QWidget):
 
     def _on_create_clicked(self):
         self.creator_window.show()
+
+    def _on_delete_clicked(self):
+        instances = self.get_selected_instances()
+
+    def _on_change_view_clicked(self):
+        print("change view")
 
     def _on_save_clicked(self):
         self.controller.save_instance_changes()
