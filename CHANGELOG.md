@@ -1,8 +1,20 @@
 # Changelog
 
-## [3.2.0-nightly.7](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.3.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.4...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.2.0...HEAD)
+
+**🐛 Bug fixes**
+
+- Houdini colector formatting keys fix [\#1802](https://github.com/pypeclub/OpenPype/pull/1802)
+
+**Merged pull requests:**
+
+- Maya: Deadline custom settings  [\#1797](https://github.com/pypeclub/OpenPype/pull/1797)
+
+## [3.2.0](https://github.com/pypeclub/OpenPype/tree/3.2.0) (2021-07-13)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.2.0-nightly.7...3.2.0)
 
 **🚀 Enhancements**
 
@@ -11,6 +23,7 @@
 - Ftrack Multiple notes as server action [\#1795](https://github.com/pypeclub/OpenPype/pull/1795)
 - Settings conditional dict [\#1777](https://github.com/pypeclub/OpenPype/pull/1777)
 - Settings application use python 2 only where needed [\#1776](https://github.com/pypeclub/OpenPype/pull/1776)
+- Settings UI copy/paste [\#1769](https://github.com/pypeclub/OpenPype/pull/1769)
 - Workfile tool widths [\#1766](https://github.com/pypeclub/OpenPype/pull/1766)
 - Push hierarchical attributes care about task parent changes [\#1763](https://github.com/pypeclub/OpenPype/pull/1763)
 - Application executables with environment variables [\#1757](https://github.com/pypeclub/OpenPype/pull/1757)
@@ -69,7 +82,7 @@
 
 - Tools names forwards compatibility [\#1727](https://github.com/pypeclub/OpenPype/pull/1727)
 
-**Merged pull requests:**
+**⚠️ Deprecations**
 
 - global: removing obsolete ftrack validator plugin [\#1710](https://github.com/pypeclub/OpenPype/pull/1710)
 
@@ -105,7 +118,6 @@
 - Bad zip can break OpenPype start [\#1691](https://github.com/pypeclub/OpenPype/pull/1691)
 - Hiero: published whole edit mov [\#1687](https://github.com/pypeclub/OpenPype/pull/1687)
 - Ftrack subprocess handle of stdout/stderr [\#1675](https://github.com/pypeclub/OpenPype/pull/1675)
-- Settings list race condifiton and mutable dict list conversion [\#1671](https://github.com/pypeclub/OpenPype/pull/1671)
 
 **Merged pull requests:**
 

@@ -139,7 +139,8 @@ class HostsEnumEntity(BaseEnumEntity):
             "photoshop",
             "resolve",
             "tvpaint",
-            "unreal"
+            "unreal",
+            "standalonepublisher"
         ]
         if self.use_empty_value:
             host_names.insert(0, "")

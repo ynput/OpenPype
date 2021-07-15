@@ -130,6 +130,165 @@
                             ]
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectEditorial",
+                    "label": "Collect Editorial",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "source_dir",
+                            "label": "Editorial resources pointer"
+                        },
+                        {
+                            "type": "list",
+                            "key": "extensions",
+                            "label": "Accepted extensions",
+                            "object_type": "text"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectHierarchyInstance",
+                    "label": "Collect Instance Hierarchy",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "shot_rename_template",
+                            "label": "Shot rename template"
+                        },
+                        {
+                            "key": "shot_rename_search_patterns",
+                            "label": "Shot renaming paterns search",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "text"
+                            }
+                        },
+                        {
+                            "type": "dict",
+                            "key": "shot_add_hierarchy",
+                            "label": "Shot hierarchy",
+                            "children": [
+                                {
+                                    "type": "text",
+                                    "key": "parents_path",
+                                    "label": "Parents path template"
+                                },
+                                {
+                                    "key": "parents",
+                                    "label": "Parents",
+                                    "type": "dict-modifiable",
+                                    "highlight_content": true,
+                                    "object_type": {
+                                        "type": "text"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "key": "shot_add_tasks",
+                            "label": "Add tasks to shot",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "task-types-enum",
+                                        "key": "type",
+                                        "label": "Task type"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "shot_add_tasks",
+                    "label": "Collect Clip Instances",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "number",
+                            "key": "custom_start_frame",
+                            "label": "Custom start frame",
+                            "default": 0,
+                            "minimum": 1,
+                            "maximum": 100000
+                        },
+                        {
+                            "type": "number",
+                            "key": "timeline_frame_start",
+                            "label": "Timeline start frame",
+                            "default": 900000,
+                            "minimum": 1,
+                            "maximum": 10000000
+                        },
+                        {
+                            "type": "number",
+                            "key": "timeline_frame_offset",
+                            "label": "Timeline frame offset",
+                            "default": 0,
+                            "minimum": -1000000,
+                            "maximum": 1000000
+                        },
+                        {
+                            "key": "subsets",
+                            "label": "Subsets",
+                            "type": "dict-modifiable",
+                            "highlight_content": true,
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "type": "text",
+                                        "key": "family",
+                                        "label": "Family"
+                                    },
+                                    {
+                                        "type": "list",
+                                        "key": "families",
+                                        "label": "Families",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "type": "splitter"
+                                    },
+                                    {
+                                        "type": "list",
+                                        "key": "extensions",
+                                        "label": "Extensions",
+                                        "object_type": "text"
+                                    },
+                                    {
+                                        "key": "version",
+                                        "label": "Version lock",
+                                        "type": "number",
+                                        "default": 0,
+                                        "minimum": 0,
+                                        "maximum": 10
+                                    }
+                                    ,
+                                    {
+                                        "type": "boolean",
+                                        "key": "keepSequence",
+                                        "label": "Keep sequence if used for review",
+                                        "default": false
+                                    }
+                                ]
+                            }
+                        }
+                    ]
                 }
             ]
         }
