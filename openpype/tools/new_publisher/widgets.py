@@ -827,9 +827,26 @@ class InstanceCardWidget(QtWidgets.QWidget):
         self._set_expanded()
 
 
-class InstanceCardView(QtWidgets.QWidget):
+class _AbstractInstanceView(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
 
+    def refresh(self):
+        raise NotImplementedError((
+            "{} Method 'refresh' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def get_selected_instances(self):
+        raise NotImplementedError((
+            "{} Method 'get_selected_instances' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def set_selected_instances(self, instances):
+        raise NotImplementedError((
+            "{} Method 'set_selected_instances' is not implemented."
+        ).format(self.__class__.__name__))
+
+
+class InstanceCardView(_AbstractInstanceView):
     def __init__(self, controller, parent):
         super(InstanceCardView, self).__init__(parent)
 
@@ -912,3 +929,125 @@ class InstanceCardView(QtWidgets.QWidget):
             if widget:
                 instances.append(widget.instance)
         return instances
+
+    def set_selected_instances(self, instances):
+        indexes = []
+        model = self.list_widget.model()
+        for instance in instances:
+            instance_id = instance.data["uuid"]
+            item = self._items_by_id.get(instance_id)
+            if item:
+                row = self.list_widget.row(item)
+                index = model.index(row, 0)
+                indexes.append(index)
+
+        selection_model = self.list_widget.selectionModel()
+        first_item = True
+        for index in indexes:
+            if first_item:
+                first_item = False
+                select_type = QtCore.QItemSelectionModel.SelectCurrent
+            else:
+                select_type = QtCore.QItemSelectionModel.Select
+            selection_model.select(index, select_type)
+
+
+class InstanceListView(_AbstractInstanceView):
+    def __init__(self, controller, parent):
+        super(InstanceListView, self).__init__(parent)
+
+        self.controller = controller
+
+        instance_view = QtWidgets.QTreeView(self)
+        instance_view.setHeaderHidden(True)
+        instance_view.setIndentation(0)
+        instance_view.setSelectionMode(
+            QtWidgets.QAbstractItemView.ExtendedSelection
+        )
+
+        instance_model = QtGui.QStandardItemModel()
+        instance_view.setModel(instance_model)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(instance_view)
+
+        instance_view.selectionModel().selectionChanged.connect(
+            self._on_selection_change
+        )
+
+        self.instance_view = instance_view
+        self.instance_model = instance_model
+
+    def refresh(self):
+        to_remove = set()
+        existing_mapping = {}
+
+        for idx in range(self.instance_model.rowCount()):
+            index = self.instance_model.index(idx, 0)
+            uuid = index.data(QtCore.Qt.UserRole)
+            to_remove.add(uuid)
+            existing_mapping[uuid] = idx
+
+        new_items = []
+        for instance in self.controller.instances:
+            uuid = instance.data["uuid"]
+            if uuid in to_remove:
+                to_remove.remove(uuid)
+                continue
+
+            item = QtGui.QStandardItem(instance.data["subset"])
+            item.setData(instance.data["uuid"], QtCore.Qt.UserRole)
+            new_items.append(item)
+
+        idx_to_remove = []
+        for uuid in to_remove:
+            idx_to_remove.append(existing_mapping[uuid])
+
+        for idx in reversed(sorted(idx_to_remove)):
+            self.instance_model.removeRows(idx, 1)
+
+        if new_items:
+            self.instance_model.invisibleRootItem().appendRows(new_items)
+
+    def get_selected_instances(self):
+        instances = []
+        instances_by_id = {}
+        for instance in self.controller.instances:
+            instance_id = instance.data["uuid"]
+            instances_by_id[instance_id] = instance
+
+        for index in self.instance_view.selectionModel().selectedIndexes():
+            instance_id = index.data(QtCore.Qt.UserRole)
+            instance = instances_by_id.get(instance_id)
+            if instance:
+                instances.append(instance)
+
+        return instances
+
+    def set_selected_instances(self, instances):
+        model = self.instance_view.model()
+        selected_ids = set()
+        for instance in instances:
+            instance_id = instance.data["uuid"]
+            selected_ids.add(instance_id)
+
+        indexes = []
+        for row in range(model.rowCount()):
+            index = model.index(row, 0)
+            instance_id = index.data(QtCore.Qt.UserRole)
+            if instance_id in selected_ids:
+                indexes.append(index)
+
+        selection_model = self.instance_view.selectionModel()
+        first_item = True
+        for index in indexes:
+            if first_item:
+                first_item = False
+                select_type = QtCore.QItemSelectionModel.SelectCurrent
+            else:
+                select_type = QtCore.QItemSelectionModel.Select
+            selection_model.select(index, select_type)
+
+    def _on_selection_change(self, *_args):
+        self.selection_changed.emit()

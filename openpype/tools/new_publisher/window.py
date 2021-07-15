@@ -31,6 +31,8 @@ from openpype import style
 from control import PublisherController
 from widgets import (
     SubsetAttributesWidget,
+    InstanceCardView,
+    InstanceListView,
     CreateDialog
 )
 
@@ -41,6 +43,10 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self._first_show = True
         self._refreshing_instances = False
+
+        self._view_type_order = ["card", "list"]
+        self._view_type = self._view_type_order[0]
+        self._views_refreshed = {}
 
         controller = PublisherController()
 
@@ -61,15 +67,11 @@ class PublisherWindow(QtWidgets.QWidget):
         # Subset widget
         subset_widget = QtWidgets.QWidget(main_frame)
 
-        subset_view = QtWidgets.QTreeView(subset_widget)
-        subset_view.setHeaderHidden(True)
-        subset_view.setIndentation(0)
-        subset_view.setSelectionMode(
-            QtWidgets.QAbstractItemView.ExtendedSelection
-        )
+        subset_view_cards = InstanceCardView(controller, subset_widget)
+        subset_list_view = InstanceListView(controller, subset_widget)
 
-        subset_model = QtGui.QStandardItemModel()
-        subset_view.setModel(subset_model)
+        subset_view_cards.setVisible(False)
+        subset_list_view.setVisible(False)
 
         # Buttons at the bottom of subset view
         create_btn = QtWidgets.QPushButton("Create", subset_widget)
@@ -95,7 +97,8 @@ class PublisherWindow(QtWidgets.QWidget):
         # Layout of view and buttons
         subset_view_layout = QtWidgets.QVBoxLayout()
         subset_view_layout.setContentsMargins(0, 0, 0, 0)
-        subset_view_layout.addWidget(subset_view, 1)
+        subset_view_layout.addWidget(subset_view_cards, 1)
+        subset_view_layout.addWidget(subset_list_view, 1)
         subset_view_layout.addLayout(subset_view_btns_layout, 0)
 
         # Whole subset layout with attributes and details
@@ -143,7 +146,10 @@ class PublisherWindow(QtWidgets.QWidget):
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
-        subset_view.selectionModel().selectionChanged.connect(
+        subset_list_view.selection_changed.connect(
+            self._on_subset_change
+        )
+        subset_view_cards.selection_changed.connect(
             self._on_subset_change
         )
 
@@ -151,8 +157,8 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self.context_label = context_label
 
-        self.subset_view = subset_view
-        self.subset_model = subset_model
+        self.subset_view_cards = subset_view_cards
+        self.subset_list_view = subset_list_view
 
         self.delete_btn = delete_btn
 
@@ -165,11 +171,19 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self.creator_window = creator_window
 
+        self.views_by_type = {
+            "card": subset_view_cards,
+            "list": subset_list_view
+        }
+
+        self._change_view_type(self._view_type)
+
+        self.setStyleSheet(style.load_stylesheet())
+
         # DEBUGING
         self.set_context_label(
             "<project>/<hierarchy>/<asset>/<task>/<workfile>"
         )
-        self.setStyleSheet(style.load_stylesheet())
 
     def showEvent(self, event):
         super(PublisherWindow, self).showEvent(event)
@@ -184,19 +198,37 @@ class PublisherWindow(QtWidgets.QWidget):
         self.context_label.setText(label)
 
     def get_selected_instances(self):
-        instances = []
-        instances_by_id = {}
-        for instance in self.controller.instances:
-            instance_id = instance.data["uuid"]
-            instances_by_id[instance_id] = instance
+        view = self.views_by_type[self._view_type]
+        return view.get_selected_instances()
 
-        for index in self.subset_view.selectionModel().selectedIndexes():
-            instance_id = index.data(QtCore.Qt.UserRole)
-            instance = instances_by_id.get(instance_id)
-            if instance:
-                instances.append(instance)
+    def _change_view_type(self, view_type=None):
+        if view_type is None:
+            next_type = False
+            for _view_type in self._view_type_order:
+                if next_type:
+                    view_type = _view_type
+                    break
 
-        return instances
+                if _view_type == self._view_type:
+                    next_type = True
+
+            if view_type is None:
+                view_type = self._view_type_order[0]
+
+        old_view = self.views_by_type[self._view_type]
+        old_view.setVisible(False)
+
+        self._view_type = view_type
+        refreshed = self._views_refreshed.get(view_type, False)
+        new_view = self.views_by_type[view_type]
+        new_view.setVisible(True)
+        if not refreshed:
+            new_view.refresh()
+            self._views_refreshed[view_type] = True
+
+        if new_view is not old_view:
+            selected_instances = old_view.get_selected_instances()
+            new_view.set_selected_instances(selected_instances)
 
     def _on_reset_clicked(self):
         self.reset()
@@ -231,7 +263,7 @@ class PublisherWindow(QtWidgets.QWidget):
             self.controller.remove_instances(instances)
 
     def _on_change_view_clicked(self):
-        print("change view")
+        self._change_view_type()
 
     def _on_save_clicked(self):
         self.controller.save_instance_changes()
@@ -248,35 +280,10 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self._refreshing_instances = True
 
-        to_remove = set()
-        existing_mapping = {}
+        view = self.views_by_type[self._view_type]
+        view.refresh()
 
-        for idx in range(self.subset_model.rowCount()):
-            index = self.subset_model.index(idx, 0)
-            uuid = index.data(QtCore.Qt.UserRole)
-            to_remove.add(uuid)
-            existing_mapping[uuid] = idx
-
-        new_items = []
-        for instance in self.controller.instances:
-            uuid = instance.data["uuid"]
-            if uuid in to_remove:
-                to_remove.remove(uuid)
-                continue
-
-            item = QtGui.QStandardItem(instance.data["subset"])
-            item.setData(instance.data["uuid"], QtCore.Qt.UserRole)
-            new_items.append(item)
-
-        idx_to_remove = []
-        for uuid in to_remove:
-            idx_to_remove.append(existing_mapping[uuid])
-
-        for idx in reversed(sorted(idx_to_remove)):
-            self.subset_model.removeRows(idx, 1)
-
-        if new_items:
-            self.subset_model.invisibleRootItem().appendRows(new_items)
+        self._views_refreshed = {self._view_type: True}
 
         self._refreshing_instances = False
 
