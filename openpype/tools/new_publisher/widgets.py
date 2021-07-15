@@ -1,9 +1,11 @@
 import os
 import re
 import copy
+import collections
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
+from constants import INSTANCE_ID_ROLE
 
 SEPARATORS = ("---separator---", "---")
 
@@ -895,7 +897,7 @@ class InstanceCardView(_AbstractInstanceView):
                 item = QtWidgets.QListWidgetItem(self.list_widget)
                 widget = InstanceCardWidget(instance, item, self)
                 widget.active_changed.connect(self._on_active_changed)
-                item.setData(QtCore.Qt.UserRole, instance_id)
+                item.setData(INSTANCE_ID_ROLE, instance_id)
                 self.list_widget.addItem(item)
                 self.list_widget.setItemWidget(item, widget)
                 self._items_by_id[instance_id] = item
@@ -905,7 +907,7 @@ class InstanceCardView(_AbstractInstanceView):
         selected_ids = set()
         found = False
         for item in self.list_widget.selectedItems():
-            instance_id = item.data(QtCore.Qt.UserRole)
+            instance_id = item.data(INSTANCE_ID_ROLE)
             selected_ids.add(instance_id)
             if not found and instance_id == changed_instance_id:
                 found = True
@@ -924,7 +926,7 @@ class InstanceCardView(_AbstractInstanceView):
     def get_selected_instances(self):
         instances = []
         for item in self.list_widget.selectedItems():
-            instance_id = item.data(QtCore.Qt.UserRole)
+            instance_id = item.data(INSTANCE_ID_ROLE)
             widget = self._widgets_by_id.get(instance_id)
             if widget:
                 instances.append(widget.instance)
@@ -1014,7 +1016,7 @@ class InstanceListView(_AbstractInstanceView):
 
             for idx in range(group_item.rowCount()):
                 index = group_item.index(idx, 0)
-                instance_id = index.data(QtCore.Qt.UserRole)
+                instance_id = index.data(INSTANCE_ID_ROLE)
                 to_remove.add(instance_id)
                 existing_mapping[instance_id] = idx
 
@@ -1026,7 +1028,7 @@ class InstanceListView(_AbstractInstanceView):
                     continue
 
                 item = QtGui.QStandardItem(instance.data["subset"])
-                item.setData(instance.data["uuid"], QtCore.Qt.UserRole)
+                item.setData(instance.data["uuid"], INSTANCE_ID_ROLE)
                 new_items.append(item)
 
             idx_to_remove = []
@@ -1047,7 +1049,7 @@ class InstanceListView(_AbstractInstanceView):
             instances_by_id[instance_id] = instance
 
         for index in self.instance_view.selectionModel().selectedIndexes():
-            instance_id = index.data(QtCore.Qt.UserRole)
+            instance_id = index.data(INSTANCE_ID_ROLE)
             if instance_id is not None:
                 instance = instances_by_id.get(instance_id)
                 if instance:
@@ -1073,7 +1075,7 @@ class InstanceListView(_AbstractInstanceView):
             has_indexes = False
             for row in range(group_item.rowCount()):
                 index = model.index(row, 0, group_index)
-                instance_id = index.data(QtCore.Qt.UserRole)
+                instance_id = index.data(INSTANCE_ID_ROLE)
                 if instance_id in selected_ids:
                     indexes.append(index)
                     has_indexes = True
