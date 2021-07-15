@@ -337,6 +337,11 @@ How output of the schema could look like on save:
 - schema also defines valid value type
     - by default it is dictionary
     - to be able use list it is required to define `is_list` to `true`
+- output can be stored as string
+    - this is to allow any keys in dictionary
+    - set key `store_as_string` to `true`
+    - code using that setting must expected that value is string and use json module to convert it to python types
+
 ```
 {
     "type": "raw-json",
