@@ -40,6 +40,7 @@ class PublisherWindow(QtWidgets.QWidget):
         super(PublisherWindow, self).__init__(parent)
 
         self._first_show = True
+        self._refreshing_instances = False
 
         controller = PublisherController()
 
@@ -214,6 +215,11 @@ class PublisherWindow(QtWidgets.QWidget):
         print("Publishing!!!")
 
     def _refresh_instances(self):
+        if self._refreshing_instances:
+            return
+
+        self._refreshing_instances = True
+
         to_remove = set()
         existing_mapping = {}
 
@@ -244,6 +250,11 @@ class PublisherWindow(QtWidgets.QWidget):
         if new_items:
             self.subset_model.invisibleRootItem().appendRows(new_items)
 
+        self._refreshing_instances = False
+
+        # Force to change instance and refresh details
+        self._on_subset_change()
+
     def _on_control_create(self):
         self._refresh_instances()
 
@@ -251,8 +262,13 @@ class PublisherWindow(QtWidgets.QWidget):
         self._refresh_instances()
 
     def _on_subset_change(self, *_args):
+        # Ignore changes if in middle of refreshing
+        if self._refreshing_instances:
+            return
+
         instances = self.get_selected_instances()
 
+        # Disable delete button if nothing is selected
         self.delete_btn.setEnabled(len(instances) >= 0)
 
         self.subset_attributes_widget.set_current_instances(instances)
