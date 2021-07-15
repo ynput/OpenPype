@@ -58,10 +58,8 @@ class PublisherWindow(QtWidgets.QWidget):
         header_layout.addWidget(reset_btn, 0)
 
         # Content
-        content_widget = QtWidgets.QWidget(main_frame)
-
         # Subset widget
-        subset_widget = QtWidgets.QWidget(content_widget)
+        subset_widget = QtWidgets.QWidget(main_frame)
 
         subset_view = QtWidgets.QTreeView(subset_widget)
         subset_view.setHeaderHidden(True)
@@ -106,18 +104,16 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_layout.addLayout(subset_view_layout, 0)
         subset_layout.addWidget(subset_attributes_widget, 1)
 
-        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout = QtWidgets.QVBoxLayout()
         content_layout.setContentsMargins(0, 0, 0, 0)
         content_layout.addWidget(subset_widget)
 
         # Footer
-        footer_widget = QtWidgets.QWidget(self)
+        message_input = QtWidgets.QLineEdit(main_frame)
+        validate_btn = QtWidgets.QPushButton("Validate", main_frame)
+        publish_btn = QtWidgets.QPushButton("Publish", main_frame)
 
-        message_input = QtWidgets.QLineEdit(footer_widget)
-        validate_btn = QtWidgets.QPushButton("Validate", footer_widget)
-        publish_btn = QtWidgets.QPushButton("Publish", footer_widget)
-
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(message_input, 1)
         footer_layout.addWidget(validate_btn, 0)
@@ -126,8 +122,8 @@ class PublisherWindow(QtWidgets.QWidget):
         # Main frame
         main_frame_layout = QtWidgets.QVBoxLayout(main_frame)
         main_frame_layout.addWidget(header_widget, 0)
-        main_frame_layout.addWidget(content_widget, 1)
-        main_frame_layout.addWidget(footer_widget, 0)
+        main_frame_layout.addLayout(content_layout, 1)
+        main_frame_layout.addLayout(footer_layout, 0)
 
         # Add main frame to this window
         main_layout = QtWidgets.QHBoxLayout(self)
@@ -161,7 +157,6 @@ class PublisherWindow(QtWidgets.QWidget):
         self.delete_btn = delete_btn
 
         self.subset_attributes_widget = subset_attributes_widget
-        self.footer_widget = footer_widget
         self.message_input = message_input
         self.validate_btn = validate_btn
         self.publish_btn = publish_btn
