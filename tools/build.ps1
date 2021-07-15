@@ -28,6 +28,13 @@ if($arguments -eq "--no-submodule-update") {
     $disable_submodule_update=$true
 }
 
+$current_dir = Get-Location
+$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$openpype_root = (Get-Item $script_dir).parent.FullName
+
+# Install PSWriteColor to support colorized output to terminal
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\vendor\powershell"
+
 function Start-Progress {
     param([ScriptBlock]$code)
     $scroll = "/-\|/-\|"
@@ -109,10 +116,6 @@ Write-Host $art -ForegroundColor DarkGreen
 
 # Enable if PS 7.x is needed.
 # Show-PSWarning
-
-$current_dir = Get-Location
-$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$openpype_root = (Get-Item $script_dir).parent.FullName
 
 $env:_INSIDE_OPENPYPE_TOOL = "1"
 
@@ -201,6 +204,8 @@ Write-Host "restoring current directory"
 Set-Location -Path $current_dir
 
 $endTime = [int][double]::Parse((Get-Date -UFormat %s))
+New-BurntToastNotification -AppLogo "$openpype_root/openpype/resources/icons/openpype_icon.png" -Text "OpenPype build complete!", "All done in $($endTime - $startTime) secs. You will find OpenPype and build log in build directory."
+
 Write-Host "*** " -NoNewline -ForegroundColor Cyan
 Write-Host "All done in $($endTime - $startTime) secs. You will find OpenPype and build log in " -NoNewLine
 Write-Host "'.\build'" -NoNewline -ForegroundColor Green

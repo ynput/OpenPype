@@ -10,3 +10,9 @@
 [submodule "openpype/modules/ftrack/python2_vendor/arrow"]
 	path = openpype/modules/ftrack/python2_vendor/arrow
 	url = https://github.com/arrow-py/arrow.git
+[submodule "vendor/powershell/BurntToast"]
+    path = vendor/powershell/BurntToast
+    url = https://github.com/Windos/BurntToast.git
+[submodule "vendor/powershell/PSWriteColor"]
+    path = vendor/powershell/PSWriteColor
+    url = "https://github.com/EvotecIT/PSWriteColor.git"
