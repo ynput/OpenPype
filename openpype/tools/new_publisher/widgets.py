@@ -198,8 +198,7 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
                 if value is not None:
                     widget.set_value(values[0])
             else:
-                # TODO multiselection
-                pass
+                widget.set_value(values, True)
 
             label = attr_def.label or attr_def.key
             content_layout.addRow(label, widget)
@@ -279,20 +278,21 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
                 widget.value_changed.connect(self._input_value_changed)
 
                 attr_values = plugin_values[attr_def.key]
-                mutlivalue = len(attr_values) > 1
-                values = set()
+                multivalue = len(attr_values) > 1
+                values = []
                 instances = []
                 for instance, value in attr_values:
-                    values.add(value)
+                    values.append(value)
                     instances.append(instance)
-
-                values = list(values)
 
                 self._attr_def_id_to_attr_def[attr_def.id] = attr_def
                 self._attr_def_id_to_instances[attr_def.id] = instances
                 self._attr_def_id_to_plugin_name[attr_def.id] = plugin_name
 
-                widget.set_value(values[0])
+                if multivalue:
+                    widget.set_value(values, multivalue)
+                else:
+                    widget.set_value(values[0])
 
         self._scroll_area.setWidget(content_widget)
         self._content_widget = content_widget
