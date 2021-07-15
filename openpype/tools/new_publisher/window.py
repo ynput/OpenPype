@@ -72,12 +72,37 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_model = QtGui.QStandardItemModel()
         subset_view.setModel(subset_model)
 
+        # Buttons at the bottom of subset view
+        create_btn = QtWidgets.QPushButton("Create", subset_widget)
+        delete_btn = QtWidgets.QPushButton("Delete", subset_widget)
+        save_btn = QtWidgets.QPushButton("Save", subset_widget)
+        change_view_btn = QtWidgets.QPushButton("=", subset_widget)
+
+        # Subset details widget
         subset_attributes_widget = SubsetAttributesWidget(
             controller, subset_widget
         )
 
+        # Layout of buttons at the bottom of subset view
+        subset_view_btns_layout = QtWidgets.QHBoxLayout()
+        subset_view_btns_layout.setContentsMargins(0, 0, 0, 0)
+        subset_view_btns_layout.setSpacing(5)
+        subset_view_btns_layout.addWidget(create_btn)
+        subset_view_btns_layout.addWidget(delete_btn)
+        subset_view_btns_layout.addWidget(save_btn)
+        subset_view_btns_layout.addStretch(1)
+        subset_view_btns_layout.addWidget(change_view_btn)
+
+        # Layout of view and buttons
+        subset_view_layout = QtWidgets.QVBoxLayout()
+        subset_view_layout.setContentsMargins(0, 0, 0, 0)
+        subset_view_layout.addWidget(subset_view, 1)
+        subset_view_layout.addLayout(subset_view_btns_layout, 0)
+
+        # Whole subset layout with attributes and details
         subset_layout = QtWidgets.QHBoxLayout(subset_widget)
-        subset_layout.addWidget(subset_view, 0)
+        subset_layout.setContentsMargins(0, 0, 0, 0)
+        subset_layout.addLayout(subset_view_layout, 0)
         subset_layout.addWidget(subset_attributes_widget, 1)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
@@ -87,16 +112,12 @@ class PublisherWindow(QtWidgets.QWidget):
         # Footer
         footer_widget = QtWidgets.QWidget(self)
 
-        create_btn = QtWidgets.QPushButton("Create", footer_widget)
-        save_btn = QtWidgets.QPushButton("Save", footer_widget)
         message_input = QtWidgets.QLineEdit(footer_widget)
         validate_btn = QtWidgets.QPushButton("Validate", footer_widget)
         publish_btn = QtWidgets.QPushButton("Publish", footer_widget)
 
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
         footer_layout.setContentsMargins(0, 0, 0, 0)
-        footer_layout.addWidget(create_btn, 0)
-        footer_layout.addWidget(save_btn, 0)
         footer_layout.addWidget(message_input, 1)
         footer_layout.addWidget(validate_btn, 0)
         footer_layout.addWidget(publish_btn, 0)
