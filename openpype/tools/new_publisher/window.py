@@ -232,6 +232,10 @@ class PublisherWindow(QtWidgets.QWidget):
         dialog.setDefaultButton(QtWidgets.QMessageBox.Ok)
         dialog.setEscapeButton(QtWidgets.QMessageBox.Cancel)
         dialog.exec_()
+        # Skip if OK was not clicked
+        if dialog.result() == QtWidgets.QMessageBox.Ok:
+            self.controller.remove_instances(instances)
+
     def _on_change_view_clicked(self):
         print("change view")
 
