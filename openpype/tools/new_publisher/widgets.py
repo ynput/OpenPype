@@ -976,39 +976,68 @@ class InstanceListView(_AbstractInstanceView):
             self._on_selection_change
         )
 
+        self._group_items = {}
         self.instance_view = instance_view
         self.instance_model = instance_model
 
     def refresh(self):
-        to_remove = set()
-        existing_mapping = {}
-
-        for idx in range(self.instance_model.rowCount()):
-            index = self.instance_model.index(idx, 0)
-            uuid = index.data(QtCore.Qt.UserRole)
-            to_remove.add(uuid)
-            existing_mapping[uuid] = idx
-
-        new_items = []
+        instances_by_family = collections.defaultdict(list)
+        families = set()
         for instance in self.controller.instances:
-            uuid = instance.data["uuid"]
-            if uuid in to_remove:
-                to_remove.remove(uuid)
+            family = instance.data["family"]
+            families.add(family)
+            instances_by_family[family].append(instance)
+
+        new_group_items = []
+        for family in families:
+            if family in self._group_items:
                 continue
 
-            item = QtGui.QStandardItem(instance.data["subset"])
-            item.setData(instance.data["uuid"], QtCore.Qt.UserRole)
-            new_items.append(item)
+            group_item = QtGui.QStandardItem(family)
+            self._group_items[family] = group_item
+            new_group_items.append(group_item)
 
-        idx_to_remove = []
-        for uuid in to_remove:
-            idx_to_remove.append(existing_mapping[uuid])
+        root_item = self.instance_model.invisibleRootItem()
+        if new_group_items:
+            root_item.appendRows(new_group_items)
 
-        for idx in reversed(sorted(idx_to_remove)):
-            self.instance_model.removeRows(idx, 1)
+        for family in tuple(self._group_items.keys()):
+            if family in families:
+                continue
 
-        if new_items:
-            self.instance_model.invisibleRootItem().appendRows(new_items)
+            group_item = self._group_items.pop(family)
+            root_item.removeRow(group_item.row())
+
+        for family, group_item in self._group_items.items():
+            to_remove = set()
+            existing_mapping = {}
+
+            for idx in range(group_item.rowCount()):
+                index = group_item.index(idx, 0)
+                instance_id = index.data(QtCore.Qt.UserRole)
+                to_remove.add(instance_id)
+                existing_mapping[instance_id] = idx
+
+            new_items = []
+            for instance in instances_by_family[family]:
+                instance_id = instance.data["uuid"]
+                if instance_id in to_remove:
+                    to_remove.remove(instance_id)
+                    continue
+
+                item = QtGui.QStandardItem(instance.data["subset"])
+                item.setData(instance.data["uuid"], QtCore.Qt.UserRole)
+                new_items.append(item)
+
+            idx_to_remove = []
+            for instance_id in to_remove:
+                idx_to_remove.append(existing_mapping[instance_id])
+
+            for idx in reversed(sorted(idx_to_remove)):
+                group_item.removeRows(idx, 1)
+
+            if new_items:
+                group_item.appendRows(new_items)
 
     def get_selected_instances(self):
         instances = []
@@ -1019,25 +1048,38 @@ class InstanceListView(_AbstractInstanceView):
 
         for index in self.instance_view.selectionModel().selectedIndexes():
             instance_id = index.data(QtCore.Qt.UserRole)
-            instance = instances_by_id.get(instance_id)
-            if instance:
-                instances.append(instance)
+            if instance_id is not None:
+                instance = instances_by_id.get(instance_id)
+                if instance:
+                    instances.append(instance)
 
         return instances
 
     def set_selected_instances(self, instances):
         model = self.instance_view.model()
-        selected_ids = set()
+        instance_ids_by_family = collections.defaultdict(set)
         for instance in instances:
+            family = instance.data["family"]
             instance_id = instance.data["uuid"]
-            selected_ids.add(instance_id)
+            instance_ids_by_family[family].add(instance_id)
 
         indexes = []
-        for row in range(model.rowCount()):
-            index = model.index(row, 0)
-            instance_id = index.data(QtCore.Qt.UserRole)
-            if instance_id in selected_ids:
-                indexes.append(index)
+        for family, group_item in self._group_items.items():
+            selected_ids = instance_ids_by_family[family]
+            if not selected_ids:
+                continue
+
+            group_index = model.index(group_item.row(), group_item.column())
+            has_indexes = False
+            for row in range(group_item.rowCount()):
+                index = model.index(row, 0, group_index)
+                instance_id = index.data(QtCore.Qt.UserRole)
+                if instance_id in selected_ids:
+                    indexes.append(index)
+                    has_indexes = True
+
+            if has_indexes:
+                self.instance_view.setExpanded(group_index, True)
 
         selection_model = self.instance_view.selectionModel()
         first_item = True
