@@ -1,6 +1,5 @@
 import copy
 import logging
-import contextlib
 import collections
 from uuid import uuid4
 
@@ -366,7 +365,6 @@ class CreatedInstance:
 
     def set_publish_plugins(self, attr_plugins):
         self._data["publish_attributes"].set_publish_plugins(attr_plugins)
-
 
 
 @six.add_metaclass(ABCMeta)

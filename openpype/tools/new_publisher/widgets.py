@@ -740,7 +740,6 @@ class CreateDialog(QtWidgets.QDialog):
             # TODO better handling
             print(str(exc))
 
-
         if self.auto_close_checkbox.isChecked():
             self.hide()
 

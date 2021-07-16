@@ -25,7 +25,7 @@ for path in [
 ]:
     sys.path.append(path)
 
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets
 
 from openpype import style
 from control import PublisherController

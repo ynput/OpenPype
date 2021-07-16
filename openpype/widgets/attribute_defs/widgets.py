@@ -7,7 +7,7 @@ from openpype.pipeline.lib import (
     EnumDef,
     BoolDef
 )
-from Qt import QtWidgets, QtCore, QtGui
+from Qt import QtWidgets, QtCore
 
 
 def create_widget_for_attr_def(attr_def, parent=None):
