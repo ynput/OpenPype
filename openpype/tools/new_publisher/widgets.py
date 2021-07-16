@@ -1186,17 +1186,20 @@ class InstanceListView(_AbstractInstanceView):
             if not selected_ids:
                 continue
 
-            group_index = model.index(group_item.row(), group_item.column())
+            group_index = self.instance_model.index(
+                group_item.row(), group_item.column()
+            )
+            proxy_group_index = self.proxy_model.mapFromSource(group_index)
             has_indexes = False
             for row in range(group_item.rowCount()):
-                index = model.index(row, 0, group_index)
+                index = model.index(row, 0, proxy_group_index)
                 instance_id = index.data(INSTANCE_ID_ROLE)
                 if instance_id in selected_ids:
                     indexes.append(index)
                     has_indexes = True
 
             if has_indexes:
-                self.instance_view.setExpanded(group_index, True)
+                self.instance_view.setExpanded(proxy_group_index, True)
 
         selection_model = self.instance_view.selectionModel()
         first_item = True
