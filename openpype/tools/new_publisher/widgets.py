@@ -1078,8 +1078,10 @@ class InstanceListView(_AbstractInstanceView):
             self._group_items[family] = group_item
             new_group_items.append(group_item)
 
+        sort_at_the_end = False
         root_item = self.instance_model.invisibleRootItem()
         if new_group_items:
+            sort_at_the_end = True
             root_item.appendRows(new_group_items)
 
         for family in tuple(self._group_items.keys()):
@@ -1145,6 +1147,10 @@ class InstanceListView(_AbstractInstanceView):
                     widget = InstanceListItemWidget(instance, self)
                     self.instance_view.setIndexWidget(proxy_index, widget)
                     self._widgets_by_id[instance.data["uuid"]] = widget
+
+            # Trigger sort at the end of refresh
+            if sort_at_the_end:
+                self.proxy_model.sort(0)
 
     def refresh_active_state(self):
         for widget in self._widgets_by_id.values():
