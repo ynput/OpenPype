@@ -1070,6 +1070,7 @@ class InstanceListView(_AbstractInstanceView):
                 continue
 
             group_item = QtGui.QStandardItem(family)
+            group_item.setFlags(QtCore.Qt.ItemIsEnabled)
             self._group_items[family] = group_item
             new_group_items.append(group_item)
 
