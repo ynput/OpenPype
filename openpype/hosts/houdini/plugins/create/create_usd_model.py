@@ -1,10 +1,9 @@
 import re
-
-from avalon import api
+from openpype.hosts.houdini.api import plugin
 import hou
 
 
-class CreateUSDModel(api.Creator):
+class CreateUSDModel(plugin.Creator):
     """Author USD Model"""
 
     label = "USD Model"

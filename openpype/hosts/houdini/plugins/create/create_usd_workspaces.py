@@ -1,8 +1,8 @@
-from avalon import api
+from openpype.hosts.houdini.api import plugin
 import hou
 
 
-class _USDWorkspace(api.Creator):
+class _USDWorkspace(plugin.Creator):
     """Base class to create pre-built USD Workspaces"""
 
     node_name = None

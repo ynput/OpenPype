@@ -1,7 +1,7 @@
-from avalon import houdini
+from openpype.hosts.houdini.api import plugin
 
 
-class CreateCompositeSequence(houdini.Creator):
+class CreateCompositeSequence(plugin.Creator):
     """Composite ROP to Image Sequence"""
 
     label = "Composite (Image Sequence)"

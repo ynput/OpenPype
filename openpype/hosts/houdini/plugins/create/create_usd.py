@@ -1,7 +1,7 @@
-from avalon import houdini
+from openpype.hosts.houdini.api import plugin
 
 
-class CreateUSD(houdini.Creator):
+class CreateUSD(plugin.Creator):
     """Universal Scene Description"""
 
     label = "USD"

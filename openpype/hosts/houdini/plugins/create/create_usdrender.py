@@ -1,9 +1,8 @@
 import hou
+from openpype.hosts.houdini.api import plugin
 
-from avalon import houdini
 
-
-class CreateUSDRender(houdini.Creator):
+class CreateUSDRender(plugin.Creator):
     """USD Render ROP in /stage"""
 
     label = "USD Render"

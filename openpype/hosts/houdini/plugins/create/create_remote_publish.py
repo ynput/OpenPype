@@ -1,9 +1,8 @@
-from avalon import houdini
+from openpype.hosts.houdini.api import plugin
+from openpype.hosts.houdini.api import lib
 
-from colorbleed.houdini import lib
 
-
-class CreateRemotePublish(houdini.Creator):
+class CreateRemotePublish(plugin.Creator):
     """Create Remote Publish Submission Settings node."""
 
     label = "Remote Publish"

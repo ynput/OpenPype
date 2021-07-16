@@ -1,9 +1,8 @@
 import hou
+from openpype.hosts.houdini.api import plugin
 
-from avalon import houdini
 
-
-class CreateRedshiftROP(houdini.Creator):
+class CreateRedshiftROP(plugin.Creator):
     """Redshift ROP"""
 
     label = "Redshift ROP"
