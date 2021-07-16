@@ -955,7 +955,7 @@ class InstanceCardView(_AbstractInstanceView):
         for index in indexes:
             if first_item:
                 first_item = False
-                select_type = QtCore.QItemSelectionModel.SelectCurrent
+                select_type = QtCore.QItemSelectionModel.ClearAndSelect
             else:
                 select_type = QtCore.QItemSelectionModel.Select
             selection_model.select(index, select_type)
@@ -1187,7 +1187,7 @@ class InstanceListView(_AbstractInstanceView):
         for index in indexes:
             if first_item:
                 first_item = False
-                select_type = QtCore.QItemSelectionModel.SelectCurrent
+                select_type = QtCore.QItemSelectionModel.ClearAndSelect
             else:
                 select_type = QtCore.QItemSelectionModel.Select
             selection_model.select(index, select_type)
