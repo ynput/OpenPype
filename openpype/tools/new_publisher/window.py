@@ -225,6 +225,8 @@ class PublisherWindow(QtWidgets.QWidget):
         if not refreshed:
             new_view.refresh()
             self._views_refreshed[view_type] = True
+        else:
+            new_view.refresh_active_state()
 
         if new_view is not old_view:
             selected_instances = old_view.get_selected_instances()
