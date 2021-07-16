@@ -1021,6 +1021,53 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self.active_changed.emit(self.instance.data["uuid"], new_value)
 
 
+class InstanceListGroupWidget(QtWidgets.QFrame):
+    expand_changed = QtCore.Signal(str, bool)
+
+    def __init__(self, family, parent):
+        super(InstanceListGroupWidget, self).__init__(parent)
+        self.setObjectName("InstanceListGroupWidget")
+
+        self.family = family
+        self._expanded = False
+
+        subset_name_label = QtWidgets.QLabel(family, self)
+
+        expand_btn = QtWidgets.QToolButton(self)
+        expand_btn.setStyleSheet("background: transparent;")
+        expand_btn.setArrowType(QtCore.Qt.RightArrow)
+        expand_btn.setMaximumWidth(14)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(5, 0, 2, 0)
+        layout.addWidget(
+            subset_name_label, 1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        )
+        layout.addWidget(expand_btn)
+
+        # self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        subset_name_label.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        expand_btn.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        expand_btn.clicked.connect(self._on_expand_clicked)
+
+        self.subset_name_label = subset_name_label
+        self.expand_btn = expand_btn
+
+    def _on_expand_clicked(self):
+        self.expand_changed.emit(self.family, not self._expanded)
+
+    def set_expanded(self, expanded):
+        if self._expanded == expanded:
+            return
+
+        self._expanded = expanded
+        if expanded:
+            self.expand_btn.setArrowType(QtCore.Qt.DownArrow)
+        else:
+            self.expand_btn.setArrowType(QtCore.Qt.RightArrow)
+
+
 class InstanceListView(_AbstractInstanceView):
     def __init__(self, controller, parent):
         super(InstanceListView, self).__init__(parent)
@@ -1054,6 +1101,7 @@ class InstanceListView(_AbstractInstanceView):
         )
 
         self._group_items = {}
+        self._group_widgets = {}
         self._widgets_by_id = {}
         self.instance_view = instance_view
         self.instance_model = instance_model
@@ -1072,7 +1120,7 @@ class InstanceListView(_AbstractInstanceView):
             if family in self._group_items:
                 continue
 
-            group_item = QtGui.QStandardItem(family)
+            group_item = QtGui.QStandardItem()
             group_item.setData(family, SORT_VALUE_ROLE)
             group_item.setFlags(QtCore.Qt.ItemIsEnabled)
             self._group_items[family] = group_item
@@ -1084,12 +1132,24 @@ class InstanceListView(_AbstractInstanceView):
             sort_at_the_end = True
             root_item.appendRows(new_group_items)
 
+        for group_item in new_group_items:
+            index = self.instance_model.index(
+                group_item.row(), group_item.column()
+            )
+            proxy_index = self.proxy_model.mapFromSource(index)
+            widget = InstanceListGroupWidget(family, self.instance_view)
+            family = group_item.data(SORT_VALUE_ROLE)
+            self._group_widgets[family] = widget
+            self.instance_view.setIndexWidget(proxy_index, widget)
+
         for family in tuple(self._group_items.keys()):
             if family in families:
                 continue
 
             group_item = self._group_items.pop(family)
             root_item.removeRow(group_item.row())
+            widget = self._group_widgets.pop(family)
+            widget.deleteLater()
 
         for family, group_item in self._group_items.items():
             to_remove = set()
@@ -1144,7 +1204,9 @@ class InstanceListView(_AbstractInstanceView):
                         group_index
                     )
                     proxy_index = self.proxy_model.mapFromSource(item_index)
-                    widget = InstanceListItemWidget(instance, self)
+                    widget = InstanceListItemWidget(
+                        instance, self.instance_view
+                    )
                     self.instance_view.setIndexWidget(proxy_index, widget)
                     self._widgets_by_id[instance.data["uuid"]] = widget
 
