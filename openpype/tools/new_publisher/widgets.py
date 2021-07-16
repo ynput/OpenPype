@@ -961,6 +961,63 @@ class InstanceCardView(_AbstractInstanceView):
             selection_model.select(index, select_type)
 
 
+class InstanceListItemWidget(QtWidgets.QWidget):
+    active_changed = QtCore.Signal(str, bool)
+
+    def __init__(self, instance, parent):
+        super(InstanceListItemWidget, self).__init__(parent)
+
+        self.instance = instance
+
+        subset_name_label = QtWidgets.QLabel(instance.data["subset"], self)
+        active_checkbox = QtWidgets.QCheckBox(self)
+        active_checkbox.setStyleSheet("background: transparent;")
+        active_checkbox.setChecked(instance.data["active"])
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(subset_name_label)
+        layout.addStretch(1)
+        layout.addWidget(active_checkbox)
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        subset_name_label.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        active_checkbox.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        active_checkbox.stateChanged.connect(self._on_active_change)
+
+        self.subset_name_label = subset_name_label
+        self.active_checkbox = active_checkbox
+
+    def set_active(self, new_value):
+        checkbox_value = self.active_checkbox.isChecked()
+        instance_value = self.instance.data["active"]
+
+        # First change instance value and them change checkbox
+        # - prevent to trigger `active_changed` signal
+        if instance_value != new_value:
+            self.instance.data["active"] = new_value
+
+        if checkbox_value != new_value:
+            self.active_checkbox.setChecked(new_value)
+
+    def update_instance(self, instance):
+        self.instance = instance
+        self.update_instance_values()
+
+    def update_instance_values(self):
+        self.set_active(self.instance.data["active"])
+
+    def _on_active_change(self):
+        new_value = self.active_checkbox.isChecked()
+        old_value = self.instance.data["active"]
+        if new_value == old_value:
+            return
+
+        self.instance.data["active"] = new_value
+        self.active_changed.emit(self.instance.data["uuid"], new_value)
+
+
 class InstanceListView(_AbstractInstanceView):
     def __init__(self, controller, parent):
         super(InstanceListView, self).__init__(parent)
@@ -994,6 +1051,7 @@ class InstanceListView(_AbstractInstanceView):
         )
 
         self._group_items = {}
+        self._widgets_by_id = {}
         self.instance_view = instance_view
         self.instance_model = instance_model
         self.proxy_model = proxy_model
@@ -1041,15 +1099,19 @@ class InstanceListView(_AbstractInstanceView):
                 existing_mapping[instance_id] = idx
 
             new_items = []
+            items_with_instance = []
             for instance in instances_by_family[family]:
                 instance_id = instance.data["uuid"]
                 if instance_id in to_remove:
                     to_remove.remove(instance_id)
+                    widget = self._widgets_by_id[instance_id]
+                    widget.update_instance(instance)
                     continue
 
-                item = QtGui.QStandardItem(instance.data["subset"])
+                item = QtGui.QStandardItem()
                 item.setData(instance.data["uuid"], INSTANCE_ID_ROLE)
                 new_items.append(item)
+                items_with_instance.append((item, instance))
 
             idx_to_remove = []
             for instance_id in to_remove:
@@ -1058,8 +1120,25 @@ class InstanceListView(_AbstractInstanceView):
             for idx in reversed(sorted(idx_to_remove)):
                 group_item.removeRows(idx, 1)
 
-            if new_items:
-                group_item.appendRows(new_items)
+            for instance_id in to_remove:
+                widget = self._widgets_by_id.pop(instance.data["uuid"])
+                widget.deleteLater()
+
+            if not new_items:
+                continue
+
+            group_item.appendRows(new_items)
+
+            for item, instance in items_with_instance:
+                item_index = self.instance_model.index(
+                    item.row(),
+                    item.column(),
+                    group_index
+                )
+                proxy_index = self.proxy_model.mapFromSource(item_index)
+                widget = InstanceListItemWidget(instance, self)
+                self.instance_view.setIndexWidget(proxy_index, widget)
+                self._widgets_by_id[instance.data["uuid"]] = widget
 
     def get_selected_instances(self):
         instances = []
