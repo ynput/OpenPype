@@ -967,7 +967,15 @@ class InstanceListView(_AbstractInstanceView):
         )
 
         instance_model = QtGui.QStandardItemModel()
-        instance_view.setModel(instance_model)
+
+        proxy_model = QtCore.QSortFilterProxyModel()
+        proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        proxy_model.setFilterKeyColumn(0)
+        proxy_model.setDynamicSortFilter(True)
+        proxy_model.setSortRole(QtCore.Qt.DisplayRole)
+        proxy_model.setSourceModel(instance_model)
+
+        instance_view.setModel(proxy_model)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -980,6 +988,7 @@ class InstanceListView(_AbstractInstanceView):
         self._group_items = {}
         self.instance_view = instance_view
         self.instance_model = instance_model
+        self.proxy_model = proxy_model
 
     def refresh(self):
         instances_by_family = collections.defaultdict(list)
