@@ -793,13 +793,14 @@ class InstanceCardWidget(QtWidgets.QWidget):
     def set_active(self, new_value):
         checkbox_value = self.active_checkbox.isChecked()
         instance_value = self.instance.data["active"]
-        if instance_value == checkbox_value == new_value:
-            return
 
         # First change instance value and them change checkbox
         # - prevent to trigger `active_changed` signal
-        self.instance.data["active"] = new_value
-        self.active_checkbox.setChecked(new_value)
+        if instance_value != new_value:
+            self.instance.data["active"] = new_value
+
+        if checkbox_value != new_value:
+            self.active_checkbox.setChecked(new_value)
 
     def update_instance(self, instance):
         self.instance = instance
