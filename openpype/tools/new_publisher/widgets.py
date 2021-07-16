@@ -1129,7 +1129,7 @@ class InstanceListView(_AbstractInstanceView):
                 group_item.removeRows(idx, 1)
 
             for instance_id in to_remove:
-                widget = self._widgets_by_id.pop(instance.data["uuid"])
+                widget = self._widgets_by_id.pop(instance_id)
                 widget.deleteLater()
 
             if new_items:
