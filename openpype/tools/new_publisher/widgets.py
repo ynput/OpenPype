@@ -804,7 +804,10 @@ class InstanceCardWidget(QtWidgets.QWidget):
 
     def update_instance(self, instance):
         self.instance = instance
-        self.set_active(instance.data["active"])
+        self.update_instance_values()
+
+    def update_instance_values(self):
+        self.set_active(self.instance.data["active"])
 
     def _set_expanded(self, expanded=None):
         if expanded is None:
@@ -902,6 +905,10 @@ class InstanceCardView(_AbstractInstanceView):
                 self.list_widget.setItemWidget(item, widget)
                 self._items_by_id[instance_id] = item
                 self._widgets_by_id[instance_id] = widget
+
+    def refresh_active_state(self):
+        for widget in self._widgets_by_id.values():
+            widget.update_instance_values()
 
     def _on_active_changed(self, changed_instance_id, new_value):
         selected_ids = set()
