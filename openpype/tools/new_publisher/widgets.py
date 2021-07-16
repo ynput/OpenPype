@@ -1099,6 +1099,8 @@ class InstanceListView(_AbstractInstanceView):
         instance_view.selectionModel().selectionChanged.connect(
             self._on_selection_change
         )
+        instance_view.collapsed.connect(self._on_collapse)
+        instance_view.expanded.connect(self._on_expand)
 
         self._group_items = {}
         self._group_widgets = {}
@@ -1106,6 +1108,18 @@ class InstanceListView(_AbstractInstanceView):
         self.instance_view = instance_view
         self.instance_model = instance_model
         self.proxy_model = proxy_model
+
+    def _on_expand(self, index):
+        family = index.data(SORT_VALUE_ROLE)
+        group_widget = self._group_widgets.get(family)
+        if group_widget:
+            group_widget.set_expanded(True)
+
+    def _on_collapse(self, index):
+        family = index.data(SORT_VALUE_ROLE)
+        group_widget = self._group_widgets.get(family)
+        if group_widget:
+            group_widget.set_expanded(False)
 
     def refresh(self):
         instances_by_family = collections.defaultdict(list)
