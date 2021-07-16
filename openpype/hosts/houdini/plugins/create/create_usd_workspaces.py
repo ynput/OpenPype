@@ -1,5 +1,4 @@
 from avalon import api
-from avalon.houdini import lib
 import hou
 
 

@@ -2,9 +2,8 @@
 
 import contextlib
 
-from avalon import io
 import logging
-from avalon.vendor.Qt import QtCore, QtGui
+from Qt import QtCore, QtGui
 from avalon.tools.widgets import AssetWidget
 from avalon import style
 

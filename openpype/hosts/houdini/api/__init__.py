@@ -6,16 +6,13 @@ import contextlib
 import hou
 
 from pyblish import api as pyblish
-
 from avalon import api as avalon
-from avalon.houdini import pipeline as houdini
 
 import openpype.hosts.houdini
 from openpype.hosts.houdini.api import lib
 
 from openpype.lib import (
-    any_outdated,
-    update_task_from_path
+    any_outdated
 )
 
 from .lib import get_asset_fps
@@ -29,6 +26,7 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
+
 def install():
 
     pyblish.register_plugin_path(PUBLISH_PATH)
@@ -36,7 +34,7 @@ def install():
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
 
     log.info("Installing callbacks ... ")
-    avalon.on("init", on_init)
+    # avalon.on("init", on_init)
     avalon.before("save", before_save)
     avalon.on("save", on_save)
     avalon.on("open", on_open)
@@ -50,11 +48,10 @@ def install():
         "review"
     ]
 
-    # Expose Houdini husdoutputprocessors
-    hou_setup_pythonpath = os.path.join(os.path.dirname(PACKAGE_DIR),
-                                        "setup", "houdini", "pythonpath")
-    print("Adding PYTHONPATH: %s" % hou_setup_pythonpath)
-    sys.path.append(hou_setup_pythonpath)
+    # add houdini vendor packages
+    hou_pythonpath = os.path.join(os.path.dirname(HOST_DIR), "vendor")
+
+    sys.path.append(hou_pythonpath)
 
     # Set asset FPS for the empty scene directly after launch of Houdini
     # so it initializes into the correct scene FPS
@@ -69,8 +66,6 @@ def on_save(*args):
 
     avalon.logger.info("Running callback on save..")
 
-    update_task_from_path(hou.hipFile.path())
-
     nodes = lib.get_id_required_nodes()
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
@@ -84,14 +79,12 @@ def on_open(*args):
 
     avalon.logger.info("Running callback on open..")
 
-    update_task_from_path(hou.hipFile.path())
-
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
     lib.validate_fps()
 
     if any_outdated():
-        from ..widgets import popup
+        from openpype.widgets import popup
 
         log.warning("Scene has outdated content.")
 
