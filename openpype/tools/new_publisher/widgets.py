@@ -1030,8 +1030,12 @@ class InstanceListView(_AbstractInstanceView):
             to_remove = set()
             existing_mapping = {}
 
+            group_index = self.instance_model.index(
+                group_item.row(), group_item.column()
+            )
+
             for idx in range(group_item.rowCount()):
-                index = group_item.index(idx, 0)
+                index = self.instance_model.index(idx, 0, group_index)
                 instance_id = index.data(INSTANCE_ID_ROLE)
                 to_remove.add(instance_id)
                 existing_mapping[instance_id] = idx
