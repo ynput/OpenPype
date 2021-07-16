@@ -1,9 +1,6 @@
-import hou
-
 import pyblish.api
 
 from avalon import io
-from avalon.houdini import lib
 import openpype.lib.usdlib as usdlib
 
 

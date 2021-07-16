@@ -125,7 +125,6 @@ def _set_asset_fps():
 
 def on_pyblish_instance_toggled(instance, new_value, old_value):
     """Toggle saver tool passthrough states on instance toggles."""
-    
     @contextlib.contextmanager
     def main_take(no_update=True):
         """Enter root take during context"""

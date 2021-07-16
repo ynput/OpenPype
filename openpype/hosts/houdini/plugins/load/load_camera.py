@@ -146,7 +146,7 @@ class CameraLoader(api.Loader):
                        "representation": str(representation["_id"])})
 
         # Store the cam temporarily next to the Alembic Archive
-        # so that we can preserve parm values the user set on it 
+        # so that we can preserve parm values the user set on it
         # after build hierarchy was triggered.
         old_camera = self._get_camera(node)
         temp_camera = old_camera.copyTo(node.parent())

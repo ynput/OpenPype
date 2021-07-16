@@ -1,12 +1,7 @@
 import os
 
 import pyblish.api
-
-from avalon import io
-from avalon.houdini import lib
-import openpype.hosts.houdini.lib.usd as usdlib
-
-import hou
+import openpype.hosts.houdini.api.usd as usdlib
 
 
 class CollectUsdLayers(pyblish.api.InstancePlugin):

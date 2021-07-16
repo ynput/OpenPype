@@ -44,12 +44,13 @@ class ExitStack(object):
         self.push(_exit_wrapper)
 
     def push(self, exit):
-        """Registers a callback with the standard __exit__ method signature
+        """Registers a callback with the standard __exit__ method signature.
 
         Can suppress exceptions the same way __exit__ methods can.
 
         Also accepts any object with an __exit__ method (registering a call
         to the method instead of the object itself)
+
         """
         # We use an unbound method rather than a bound method to follow
         # the standard lookup behaviour for special methods
@@ -84,7 +85,8 @@ class ExitStack(object):
         If successful, also pushes its __exit__ method as a callback and
         returns the result of the __enter__ method.
         """
-        # We look up the special methods on the type to match the with statement
+        # We look up the special methods on the type to match the with
+        # statement
         _cm_type = type(cm)
         _exit = _cm_type.__exit__
         result = _cm_type.__enter__(cm)
@@ -174,7 +176,8 @@ class ExtractUSDLayered(openpype.api.Extractor):
             node.type().name() in {"usd", "usd_rop"} for node in ropnodes
         )
 
-        # Main ROP node, either a USD Rop or ROP network with multiple USD ROPs
+        # Main ROP node, either a USD Rop or ROP network with
+        # multiple USD ROPs
         node = instance[0]
 
         # Collect any output dependencies that have not been processed yet
@@ -288,7 +291,8 @@ class ExtractUSDLayered(openpype.api.Extractor):
             return False
 
         version = io.find_one(
-            {"type": "version", "parent": subset["_id"], }, sort=[("name", -1)]
+            {"type": "version", "parent": subset["_id"], },
+            sort=[("name", -1)]
         )
         if not version:
             self.log.debug("No existing version..")

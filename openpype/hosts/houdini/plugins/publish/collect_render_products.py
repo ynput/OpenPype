@@ -4,8 +4,6 @@ import os
 import hou
 import pxr.UsdRender
 
-import avalon.io as io
-import avalon.api as api
 import pyblish.api
 
 
@@ -49,7 +47,7 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
     label = "Collect Render Products"
     order = pyblish.api.CollectorOrder + 0.4
     hosts = ["houdini"]
-    families = ["colorbleed.usdrender"]
+    families = ["usdrender"]
 
     def process(self, instance):
 

@@ -1,6 +1,5 @@
 import os
 import json
-import getpass
 
 import hou
 

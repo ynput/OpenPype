@@ -30,8 +30,9 @@ class CollectInstanceActiveState(pyblish.api.InstancePlugin):
         instance.data.update(
             {
                 "active": active,
-                # temporarily translation of `active` to `publish` till issue has
-                # been resolved: https://github.com/pyblish/pyblish-base/issues/307
+                # temporarily translation of `active` to `publish` till
+                # issue has been resolved:
+                # https://github.com/pyblish/pyblish-base/issues/307
                 "publish": active,
             }
         )

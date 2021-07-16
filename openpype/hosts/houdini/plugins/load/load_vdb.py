@@ -2,13 +2,13 @@ import os
 import re
 from avalon import api
 
-from avalon.houdini import pipeline, lib
+from avalon.houdini import pipeline
 
 
 class VdbLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["colorbleed.vdbcache"]
+    families = ["vdbcache"]
     label = "Load VDB"
     representations = ["vdb"]
     order = -10
@@ -55,8 +55,7 @@ class VdbLoader(api.Loader):
         )
 
     def format_path(self, path):
-        """Format file path correctly for single vdb or vdb sequence"""
-
+        """Format file path correctly for single vdb or vdb sequence."""
         if not os.path.exists(path):
             raise RuntimeError("Path does not exist: %s" % path)
 
