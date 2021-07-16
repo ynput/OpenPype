@@ -1104,7 +1104,7 @@ class InstanceListView(_AbstractInstanceView):
                 existing_mapping[instance_id] = idx
 
             new_items = []
-            items_with_instance = []
+            new_items_with_instance = []
             for instance in instances_by_family[family]:
                 instance_id = instance.data["uuid"]
                 if instance_id in to_remove:
@@ -1117,7 +1117,7 @@ class InstanceListView(_AbstractInstanceView):
                 item.setData(instance.data["subset"], SORT_VALUE_ROLE)
                 item.setData(instance.data["uuid"], INSTANCE_ID_ROLE)
                 new_items.append(item)
-                items_with_instance.append((item, instance))
+                new_items_with_instance.append((item, instance))
 
             idx_to_remove = []
             for instance_id in to_remove:
@@ -1130,21 +1130,21 @@ class InstanceListView(_AbstractInstanceView):
                 widget = self._widgets_by_id.pop(instance.data["uuid"])
                 widget.deleteLater()
 
-            if not new_items:
-                continue
+            if new_items:
+                sort_at_the_end = True
 
-            group_item.appendRows(new_items)
+                group_item.appendRows(new_items)
 
-            for item, instance in items_with_instance:
-                item_index = self.instance_model.index(
-                    item.row(),
-                    item.column(),
-                    group_index
-                )
-                proxy_index = self.proxy_model.mapFromSource(item_index)
-                widget = InstanceListItemWidget(instance, self)
-                self.instance_view.setIndexWidget(proxy_index, widget)
-                self._widgets_by_id[instance.data["uuid"]] = widget
+                for item, instance in new_items_with_instance:
+                    item_index = self.instance_model.index(
+                        item.row(),
+                        item.column(),
+                        group_index
+                    )
+                    proxy_index = self.proxy_model.mapFromSource(item_index)
+                    widget = InstanceListItemWidget(instance, self)
+                    self.instance_view.setIndexWidget(proxy_index, widget)
+                    self._widgets_by_id[instance.data["uuid"]] = widget
 
     def refresh_active_state(self):
         for widget in self._widgets_by_id.values():
