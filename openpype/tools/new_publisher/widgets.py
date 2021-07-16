@@ -1151,8 +1151,9 @@ class InstanceListView(_AbstractInstanceView):
                 group_item.row(), group_item.column()
             )
             proxy_index = self.proxy_model.mapFromSource(index)
-            widget = InstanceListGroupWidget(family, self.instance_view)
             family = group_item.data(SORT_VALUE_ROLE)
+            widget = InstanceListGroupWidget(family, self.instance_view)
+            widget.expand_changed.connect(self._on_group_expand_request)
             self._group_widgets[family] = widget
             self.instance_view.setIndexWidget(proxy_index, widget)
 
@@ -1289,3 +1290,14 @@ class InstanceListView(_AbstractInstanceView):
 
     def _on_selection_change(self, *_args):
         self.selection_changed.emit()
+
+    def _on_group_expand_request(self, family, expanded):
+        group_item = self._group_items.get(family)
+        if not group_item:
+            return
+
+        group_index = self.instance_model.index(
+            group_item.row(), group_item.column()
+        )
+        proxy_index = self.proxy_model.mapFromSource(group_index)
+        self.instance_view.setExpanded(proxy_index, expanded)
