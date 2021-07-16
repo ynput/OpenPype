@@ -16,20 +16,20 @@ log = logging.getLogger(__name__)
 # The predefined steps order used for bootstrapping USD Shots and Assets.
 # These are ordered in order from strongest to weakest opinions, like in USD.
 PIPELINE = {
-    "shot": ["usdLighting",
-             "usdFx",
-             "usdSimulation",
-             "usdAnimation",
-             "usdLayout"],
-    "asset": ["usdShade",
-              "usdModel"]
+    "shot": [
+        "usdLighting",
+        "usdFx",
+        "usdSimulation",
+        "usdAnimation",
+        "usdLayout",
+    ],
+    "asset": ["usdShade", "usdModel"],
 }
 
 
-def create_asset(filepath,
-                 asset_name,
-                 reference_layers,
-                 kind=Kind.Tokens.component):
+def create_asset(
+    filepath, asset_name, reference_layers, kind=Kind.Tokens.component
+):
     """
     Creates an asset file that consists of a top level layer and sublayers for
     shading and geometry.
@@ -49,11 +49,11 @@ def create_asset(filepath,
     log.info("Creating asset at %s", filepath)
 
     # Make the layer ascii - good for readability, plus the file is small
-    root_layer = Sdf.Layer.CreateNew(filepath, args={'format': 'usda'})
+    root_layer = Sdf.Layer.CreateNew(filepath, args={"format": "usda"})
     stage = Usd.Stage.Open(root_layer)
 
     # Define a prim for the asset and make it the default for the stage.
-    asset_prim = UsdGeom.Xform.Define(stage, '/%s' % asset_name).GetPrim()
+    asset_prim = UsdGeom.Xform.Define(stage, "/%s" % asset_name).GetPrim()
     stage.SetDefaultPrim(asset_prim)
 
     # Let viewing applications know how to orient a free camera properly
@@ -67,7 +67,7 @@ def create_asset(filepath,
         model.SetKind(kind)
 
     model.SetAssetName(asset_name)
-    model.SetAssetIdentifier('%s/%s.usd' % (asset_name, asset_name))
+    model.SetAssetIdentifier("%s/%s.usd" % (asset_name, asset_name))
 
     # Add references to the  asset prim
     references = asset_prim.GetReferences()
@@ -135,20 +135,23 @@ def create_model(filename, asset, variant_subsets):
             # Strip off `usdModel_`
             variant = subset[len(prefix):]
         else:
-            raise ValueError("Model subsets must start "
-                             "with usdModel: %s" % subset)
+            raise ValueError(
+                "Model subsets must start " "with usdModel: %s" % subset
+            )
 
-        path = get_usd_master_path(asset=asset_doc,
-                                   subset=subset,
-                                   representation="usd")
+        path = get_usd_master_path(
+            asset=asset_doc, subset=subset, representation="usd"
+        )
         variants.append((variant, path))
 
-    stage = _create_variants_file(filename,
-                                  variants=variants,
-                                  variantset="model",
-                                  variant_prim="/root",
-                                  reference_prim="/root/geo",
-                                  as_payload=True)
+    stage = _create_variants_file(
+        filename,
+        variants=variants,
+        variantset="model",
+        variant_prim="/root",
+        reference_prim="/root/geo",
+        as_payload=True,
+    )
 
     UsdGeom.SetStageMetersPerUnit(stage, 1)
     UsdGeom.SetStageUpAxis(stage, UsdGeom.Tokens.y)
@@ -183,27 +186,24 @@ def create_shade(filename, asset, variant_subsets):
             # Strip off `usdModel_`
             variant = subset[len(prefix):]
         else:
-            raise ValueError("Model subsets must start "
-                             "with usdModel: %s" % subset)
+            raise ValueError(
+                "Model subsets must start " "with usdModel: %s" % subset
+            )
 
         shade_subset = re.sub("^usdModel", "usdShade", subset)
-        path = get_usd_master_path(asset=asset_doc,
-                                   subset=shade_subset,
-                                   representation="usd")
+        path = get_usd_master_path(
+            asset=asset_doc, subset=shade_subset, representation="usd"
+        )
         variants.append((variant, path))
 
-    stage = _create_variants_file(filename,
-                                  variants=variants,
-                                  variantset="model",
-                                  variant_prim="/root")
+    stage = _create_variants_file(
+        filename, variants=variants, variantset="model", variant_prim="/root"
+    )
 
     stage.GetRootLayer().Save()
 
 
-def create_shade_variation(filename,
-                           asset,
-                           model_variant,
-                           shade_variants):
+def create_shade_variation(filename, asset, model_variant, shade_variants):
     """Create the master Shade file for a specific model variant.
 
     This should reference all shade variants for the specific model variant.
@@ -215,32 +215,34 @@ def create_shade_variation(filename,
 
     variants = []
     for variant in shade_variants:
-        subset = "usdShade_{model}_{shade}".format(model=model_variant,
-                                                   shade=variant)
-        path = get_usd_master_path(asset=asset_doc,
-                                   subset=subset,
-                                   representation="usd")
+        subset = "usdShade_{model}_{shade}".format(
+            model=model_variant, shade=variant
+        )
+        path = get_usd_master_path(
+            asset=asset_doc, subset=subset, representation="usd"
+        )
         variants.append((variant, path))
 
-    stage = _create_variants_file(filename,
-                                  variants=variants,
-                                  variantset="shade",
-                                  variant_prim="/root")
+    stage = _create_variants_file(
+        filename, variants=variants, variantset="shade", variant_prim="/root"
+    )
 
     stage.GetRootLayer().Save()
 
 
-def _create_variants_file(filename,
-                          variants,
-                          variantset,
-                          default_variant=None,
-                          variant_prim="/root",
-                          reference_prim=None,
-                          set_default_variant=True,
-                          as_payload=False,
-                          skip_variant_on_single_file=True):
+def _create_variants_file(
+    filename,
+    variants,
+    variantset,
+    default_variant=None,
+    variant_prim="/root",
+    reference_prim=None,
+    set_default_variant=True,
+    as_payload=False,
+    skip_variant_on_single_file=True,
+):
 
-    root_layer = Sdf.Layer.CreateNew(filename, args={'format': 'usda'})
+    root_layer = Sdf.Layer.CreateNew(filename, args={"format": "usda"})
     stage = Usd.Stage.Open(root_layer)
 
     root_prim = stage.DefinePrim(variant_prim)
@@ -276,8 +278,9 @@ def _create_variants_file(filename,
     else:
         # Variants
         append = Usd.ListPositionBackOfAppendList
-        variant_set = root_prim.GetVariantSets().AddVariantSet(variantset,
-                                                               append)
+        variant_set = root_prim.GetVariantSets().AddVariantSet(
+            variantset, append
+        )
 
         for variant, variant_path in variants:
 
@@ -299,9 +302,7 @@ def _create_variants_file(filename,
     return stage
 
 
-def get_usd_master_path(asset,
-                        subset,
-                        representation):
+def get_usd_master_path(asset, subset, representation):
     """Get the filepath for a .usd file of a subset.
 
     This will return the path to an unversioned master file generated by
@@ -309,26 +310,28 @@ def get_usd_master_path(asset,
 
     """
 
-    project = io.find_one({"type": "project"},
-                          projection={"config.template.publish": True})
+    project = io.find_one(
+        {"type": "project"}, projection={"config.template.publish": True}
+    )
     template = project["config"]["template"]["publish"]
 
     if isinstance(asset, dict) and "silo" in asset and "name" in asset:
         # Allow explicitly passing asset document
         asset_doc = asset
     else:
-        asset_doc = io.find_one({"name": asset,
-                                "type": "asset"})
+        asset_doc = io.find_one({"name": asset, "type": "asset"})
 
-    path = template.format(**{
-        "root": api.registered_root(),
-        "project": api.Session["AVALON_PROJECT"],
-        "silo": asset_doc["silo"],
-        "asset": asset_doc["name"],
-        "subset": subset,
-        "representation": representation,
-        "version": 0                # stub version zero
-     })
+    path = template.format(
+        **{
+            "root": api.registered_root(),
+            "project": api.Session["AVALON_PROJECT"],
+            "silo": asset_doc["silo"],
+            "asset": asset_doc["name"],
+            "subset": subset,
+            "representation": representation,
+            "version": 0,  # stub version zero
+        }
+    )
 
     # Remove the version folder
     subset_folder = os.path.dirname(os.path.dirname(path))
