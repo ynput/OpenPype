@@ -1141,6 +1141,10 @@ class InstanceListView(_AbstractInstanceView):
                 self.instance_view.setIndexWidget(proxy_index, widget)
                 self._widgets_by_id[instance.data["uuid"]] = widget
 
+    def refresh_active_state(self):
+        for widget in self._widgets_by_id.values():
+            widget.update_instance_values()
+
     def get_selected_instances(self):
         instances = []
         instances_by_id = {}
