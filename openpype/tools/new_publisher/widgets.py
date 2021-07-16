@@ -5,7 +5,10 @@ import collections
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
-from constants import INSTANCE_ID_ROLE
+from constants import (
+    INSTANCE_ID_ROLE,
+    SORT_VALUE_ROLE
+)
 
 SEPARATORS = ("---separator---", "---")
 
@@ -1034,11 +1037,11 @@ class InstanceListView(_AbstractInstanceView):
         instance_model = QtGui.QStandardItemModel()
 
         proxy_model = QtCore.QSortFilterProxyModel()
+        proxy_model.setSourceModel(instance_model)
         proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        proxy_model.setSortRole(SORT_VALUE_ROLE)
         proxy_model.setFilterKeyColumn(0)
         proxy_model.setDynamicSortFilter(True)
-        proxy_model.setSortRole(QtCore.Qt.DisplayRole)
-        proxy_model.setSourceModel(instance_model)
 
         instance_view.setModel(proxy_model)
 
@@ -1070,6 +1073,7 @@ class InstanceListView(_AbstractInstanceView):
                 continue
 
             group_item = QtGui.QStandardItem(family)
+            group_item.setData(family, SORT_VALUE_ROLE)
             group_item.setFlags(QtCore.Qt.ItemIsEnabled)
             self._group_items[family] = group_item
             new_group_items.append(group_item)
@@ -1110,6 +1114,7 @@ class InstanceListView(_AbstractInstanceView):
                     continue
 
                 item = QtGui.QStandardItem()
+                item.setData(instance.data["subset"], SORT_VALUE_ROLE)
                 item.setData(instance.data["uuid"], INSTANCE_ID_ROLE)
                 new_items.append(item)
                 items_with_instance.append((item, instance))
