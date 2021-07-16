@@ -1,5 +1,3 @@
-import re
-
 import pyblish.api
 import openpype.api
 

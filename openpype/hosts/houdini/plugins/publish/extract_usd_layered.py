@@ -122,7 +122,7 @@ class ExitStack(object):
                 if cb(*exc_details):
                     suppressed_exc = True
                     exc_details = (None, None, None)
-            except:
+            except Exception:
                 new_exc_details = sys.exc_info()
                 # simulate the stack of exceptions by setting the context
                 _fix_exception_context(new_exc_details[1], exc_details[1])

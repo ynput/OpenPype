@@ -42,6 +42,7 @@ def pick_asset(node):
     name = parm.eval()
     if name:
         from avalon import io
+
         db_asset = io.find_one({"name": name, "type": "asset"})
         if db_asset:
             silo = db_asset.get("silo")
@@ -74,11 +75,13 @@ def add_usd_output_processor(ropnode, processor):
 
     import loputils
 
-    loputils.handleOutputProcessorAdd({
-        "node": ropnode,
-        "parm": ropnode.parm("outputprocessors"),
-        "script_value": processor
-    })
+    loputils.handleOutputProcessorAdd(
+        {
+            "node": ropnode,
+            "parm": ropnode.parm("outputprocessors"),
+            "script_value": processor,
+        }
+    )
 
 
 def remove_usd_output_processor(ropnode, processor):
@@ -94,19 +97,16 @@ def remove_usd_output_processor(ropnode, processor):
 
     parm = ropnode.parm(processor + "_remove")
     if not parm:
-        raise RuntimeError("Output Processor %s does not "
-                           "exist on %s" % (processor, ropnode.name()))
+        raise RuntimeError(
+            "Output Processor %s does not "
+            "exist on %s" % (processor, ropnode.name())
+        )
 
-    loputils.handleOutputProcessorRemove({
-        "node": ropnode,
-        "parm": parm
-    })
+    loputils.handleOutputProcessorRemove({"node": ropnode, "parm": parm})
 
 
 @contextlib.contextmanager
-def outputprocessors(ropnode,
-                     processors=tuple(),
-                     disable_all_others=True):
+def outputprocessors(ropnode, processors=tuple(), disable_all_others=True):
     """Context manager to temporarily add Output Processors to USD ROP node.
 
     Args:
@@ -240,8 +240,9 @@ def get_configured_save_layers(usd_rop):
     lop_node = get_usd_rop_loppath(usd_rop)
     stage = lop_node.stage(apply_viewport_overrides=False)
     if not stage:
-        raise RuntimeError("No valid USD stage for ROP node: "
-                           "%s" % usd_rop.path())
+        raise RuntimeError(
+            "No valid USD stage for ROP node: " "%s" % usd_rop.path()
+        )
 
     root_layer = stage.GetRootLayer()
 
