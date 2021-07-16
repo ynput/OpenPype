@@ -15,24 +15,23 @@ class ValidateFileExtension(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["pointcache",
-                "camera",
-                "vdbcache"]
+    families = ["pointcache", "camera", "vdbcache"]
     hosts = ["houdini"]
     label = "Output File Extension"
 
     family_extensions = {
         "pointcache": ".abc",
         "camera": ".abc",
-        "vdbcache": ".vdb"
+        "vdbcache": ".vdb",
     }
 
     def process(self, instance):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("ROP node has incorrect "
-                               "file extension: %s" % invalid)
+            raise RuntimeError(
+                "ROP node has incorrect " "file extension: %s" % invalid
+            )
 
     @classmethod
     def get_invalid(cls, instance):

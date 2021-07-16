@@ -11,7 +11,7 @@ class ExtractUSD(openpype.api.Extractor):
     label = "Extract USD"
     hosts = ["houdini"]
     targets = ["local"]
-    families = ["colorbleed.usd",
+    families = ["usd",
                 "usdModel",
                 "usdSetDress"]
 

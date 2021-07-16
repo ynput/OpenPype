@@ -3,7 +3,6 @@ import re
 import pyblish.api
 import openpype.api
 
-from avalon import io
 import hou
 
 
@@ -46,15 +45,21 @@ class ValidateUsdShadeWorkspace(pyblish.api.InstancePlugin):
             highest = max(highest, other_version)
 
         if version != highest:
-            raise RuntimeError("Shading Workspace is not the latest version."
-                               " Found %s. Latest is %s." % (version, highest))
+            raise RuntimeError(
+                "Shading Workspace is not the latest version."
+                " Found %s. Latest is %s." % (version, highest)
+            )
 
         # There were some issues with the editable node not having the right
         # configured path. So for now let's assure that is correct to.from
-        value = ('avalon://`chs("../asset_name")`/'
-                 'usdShade`chs("../model_variantname1")`.usd')
+        value = (
+            'avalon://`chs("../asset_name")`/'
+            'usdShade`chs("../model_variantname1")`.usd'
+        )
         rop_value = rop.parm("lopoutput").rawValue()
         if rop_value != value:
-            raise RuntimeError("Shading Workspace has invalid 'lopoutput'"
-                               " parameter value. The Shading Workspace"
-                               " needs to be reset to its default values.")
+            raise RuntimeError(
+                "Shading Workspace has invalid 'lopoutput'"
+                " parameter value. The Shading Workspace"
+                " needs to be reset to its default values."
+            )

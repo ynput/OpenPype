@@ -5,12 +5,14 @@ class CollectOutputSOPPath(pyblish.api.InstancePlugin):
     """Collect the out node's SOP/COP Path value."""
 
     order = pyblish.api.CollectorOrder
-    families = ["pointcache",
-                "camera",
-                "vdbcache",
-                "imagesequence",
-                "usd",
-                "usdrender"]
+    families = [
+        "pointcache",
+        "camera",
+        "vdbcache",
+        "imagesequence",
+        "usd",
+        "usdrender",
+    ]
 
     hosts = ["houdini"]
     label = "Collect Output Node Path"
@@ -53,8 +55,9 @@ class CollectOutputSOPPath(pyblish.api.InstancePlugin):
                 out_node = node.parm("loppath").evalAsNode()
 
         else:
-            raise ValueError("ROP node type '%s' is"
-                             " not supported." % node_type)
+            raise ValueError(
+                "ROP node type '%s' is" " not supported." % node_type
+            )
 
         if not out_node:
             self.log.warning("No output node collected.")

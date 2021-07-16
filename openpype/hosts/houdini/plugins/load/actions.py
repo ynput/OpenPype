@@ -6,13 +6,15 @@ from avalon import api
 
 
 class SetFrameRangeLoader(api.Loader):
-    """Set Maya frame range"""
+    """Set Houdini frame range"""
 
-    families = ["colorbleed.animation",
-                "colorbleed.camera",
-                "colorbleed.pointcache",
-                "colorbleed.vdbcache",
-                "colorbleed.usd"]
+    families = [
+        "animation",
+        "camera",
+        "pointcache",
+        "vdbcache",
+        "usd",
+    ]
     representations = ["abc", "vdb", "usd"]
 
     label = "Set frame range"
@@ -24,15 +26,17 @@ class SetFrameRangeLoader(api.Loader):
 
         import hou
 
-        version = context['version']
+        version = context["version"]
         version_data = version.get("data", {})
 
         start = version_data.get("startFrame", None)
         end = version_data.get("endFrame", None)
 
         if start is None or end is None:
-            print("Skipping setting frame range because start or "
-                  "end frame data is missing..")
+            print(
+                "Skipping setting frame range because start or "
+                "end frame data is missing.."
+            )
             return
 
         hou.playbar.setFrameRange(start, end)
@@ -42,11 +46,13 @@ class SetFrameRangeLoader(api.Loader):
 class SetFrameRangeWithHandlesLoader(api.Loader):
     """Set Maya frame range including pre- and post-handles"""
 
-    families = ["colorbleed.animation",
-                "colorbleed.camera",
-                "colorbleed.pointcache",
-                "colorbleed.vdbcache",
-                "colorbleed.usd"]
+    families = [
+        "animation",
+        "camera",
+        "pointcache",
+        "vdbcache",
+        "usd",
+    ]
     representations = ["abc", "vdb", "usd"]
 
     label = "Set frame range (with handles)"
@@ -58,15 +64,17 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
 
         import hou
 
-        version = context['version']
+        version = context["version"]
         version_data = version.get("data", {})
 
         start = version_data.get("startFrame", None)
         end = version_data.get("endFrame", None)
 
         if start is None or end is None:
-            print("Skipping setting frame range because start or "
-                  "end frame data is missing..")
+            print(
+                "Skipping setting frame range because start or "
+                "end frame data is missing.."
+            )
             return
 
         # Include handles

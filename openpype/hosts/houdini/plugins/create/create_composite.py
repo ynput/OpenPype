@@ -5,7 +5,7 @@ class CreateCompositeSequence(houdini.Creator):
     """Composite ROP to Image Sequence"""
 
     label = "Composite (Image Sequence)"
-    family = "colorbleed.imagesequence"
+    family = "imagesequence"
     icon = "gears"
 
     def __init__(self, *args, **kwargs):

@@ -11,7 +11,7 @@ def fullname(o):
     module = o.__module__
     if module is None or module == str.__module__:
         return o.__name__
-    return module + '.' + o.__name__
+    return module + "." + o.__name__
 
 
 class ValidateUsdModel(pyblish.api.InstancePlugin):
@@ -32,7 +32,7 @@ class ValidateUsdModel(pyblish.api.InstancePlugin):
         UsdRender.Settings,
         UsdRender.Product,
         UsdRender.Var,
-        UsdLux.Light
+        UsdLux.Light,
     ]
 
     def process(self, instance):
@@ -64,6 +64,7 @@ class ValidateUsdShade(ValidateUsdModel):
     Disallow Render settings, products, vars and Lux lights.
 
     """
+
     families = ["usdShade"]
     label = "Validate USD Shade"
 
@@ -71,5 +72,5 @@ class ValidateUsdShade(ValidateUsdModel):
         UsdRender.Settings,
         UsdRender.Product,
         UsdRender.Var,
-        UsdLux.Light
+        UsdLux.Light,
     ]

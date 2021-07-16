@@ -10,9 +10,9 @@ class ValidateUSDShadeModelExists(pyblish.api.InstancePlugin):
     """Validate the Instance has no current cooking errors."""
 
     order = openpype.api.ValidateContentsOrder
-    hosts = ['houdini']
+    hosts = ["houdini"]
     families = ["usdShade"]
-    label = 'USD Shade model exists'
+    label = "USD Shade model exists"
 
     def process(self, instance):
 
@@ -23,14 +23,19 @@ class ValidateUSDShadeModelExists(pyblish.api.InstancePlugin):
         shade_subset = subset.split(".", 1)[0]
         model_subset = re.sub("^usdShade", "usdModel", shade_subset)
 
-        asset_doc = io.find_one({"name": asset,
-                                 "type": "asset"})
+        asset_doc = io.find_one({"name": asset, "type": "asset"})
         if not asset_doc:
             raise RuntimeError("Asset does not exist: %s" % asset)
 
-        subset_doc = io.find_one({"name": model_subset,
-                                  "type": "subset",
-                                  "parent": asset_doc["_id"]})
+        subset_doc = io.find_one(
+            {
+                "name": model_subset,
+                "type": "subset",
+                "parent": asset_doc["_id"],
+            }
+        )
         if not subset_doc:
-            raise RuntimeError("USD Model subset not found: "
-                               "%s (%s)" % (model_subset, asset))
+            raise RuntimeError(
+                "USD Model subset not found: "
+                "%s (%s)" % (model_subset, asset)
+            )

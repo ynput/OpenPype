@@ -12,7 +12,7 @@ from openpype.hosts.houdini.api.lib import render_rop
 
 
 class ExitStack(object):
-    """Context manager for dynamic management of a stack of exit callbacks
+    """Context manager for dynamic management of a stack of exit callbacks.
 
     For example:
 
@@ -23,6 +23,7 @@ class ExitStack(object):
             # in the list raise an exception
 
     """
+
     def __init__(self):
         self._exit_callbacks = deque()
 
@@ -35,8 +36,10 @@ class ExitStack(object):
 
     def _push_cm_exit(self, cm, cm_exit):
         """Helper to correctly register callbacks to __exit__ methods"""
+
         def _exit_wrapper(*exc_details):
             return cm_exit(cm, *exc_details)
+
         _exit_wrapper.__self__ = cm
         self.push(_exit_wrapper)
 
@@ -58,20 +61,22 @@ class ExitStack(object):
             self._exit_callbacks.append(exit)
         else:
             self._push_cm_exit(exit, exit_method)
-        return exit # Allow use as a decorator
+        return exit  # Allow use as a decorator
 
     def callback(self, callback, *args, **kwds):
         """Registers an arbitrary callback and arguments.
 
         Cannot suppress exceptions.
         """
+
         def _exit_wrapper(exc_type, exc, tb):
             callback(*args, **kwds)
+
         # We changed the signature, so using @wraps is not appropriate, but
         # setting __wrapped__ may still help with introspection
         _exit_wrapper.__wrapped__ = callback
         self.push(_exit_wrapper)
-        return callback # Allow use as a decorator
+        return callback  # Allow use as a decorator
 
     def enter_context(self, cm):
         """Enters the supplied context manager
@@ -97,6 +102,7 @@ class ExitStack(object):
         # We manipulate the exception state so it behaves as though
         # we were actually nesting multiple with statements
         frame_exc = sys.exc_info()[1]
+
         def _fix_exception_context(new_exc, old_exc):
             while 1:
                 exc_context = new_exc.__context__
@@ -148,15 +154,11 @@ class ExtractUSDLayered(openpype.api.Extractor):
     label = "Extract Layered USD"
     hosts = ["houdini"]
     targets = ["local"]
-    families = ["colorbleed.usd.layered",
-                "usdShade"]
+    families = ["colorbleed.usd.layered", "usdShade"]
 
     # Force Output Processors so it will always save any file
     # into our unique staging directory with processed Avalon paths
-    output_processors = [
-        "avalon_uri_processor",
-        "stagingdir_processor"
-    ]
+    output_processors = ["avalon_uri_processor", "stagingdir_processor"]
 
     def process(self, instance):
 
@@ -168,8 +170,9 @@ class ExtractUSDLayered(openpype.api.Extractor):
         # The individual rop nodes are collected as "publishDependencies"
         dependencies = instance.data["publishDependencies"]
         ropnodes = [dependency[0] for dependency in dependencies]
-        assert all(node.type().name() in {"usd", "usd_rop"}
-                   for node in ropnodes)
+        assert all(
+            node.type().name() in {"usd", "usd_rop"} for node in ropnodes
+        )
 
         # Main ROP node, either a USD Rop or ROP network with multiple USD ROPs
         node = instance[0]
@@ -177,9 +180,12 @@ class ExtractUSDLayered(openpype.api.Extractor):
         # Collect any output dependencies that have not been processed yet
         # during extraction of other instances
         outputs = [fname]
-        active_dependencies = [dep for dep in dependencies if
-                               dep.data.get("publish", True) and
-                               not dep.data.get("_isExtracted", False)]
+        active_dependencies = [
+            dep
+            for dep in dependencies
+            if dep.data.get("publish", True)
+            and not dep.data.get("_isExtracted", False)
+        ]
         for dependency in active_dependencies:
             outputs.append(dependency.data["usdFilename"])
 
@@ -192,13 +198,11 @@ class ExtractUSDLayered(openpype.api.Extractor):
             # This sets staging directory on the processor to force our
             # output files to end up in the Staging Directory.
             "stagingdiroutputprocessor_stagingDir": staging_dir,
-
             # Force the Avalon URI Output Processor to refactor paths for
             # references, payloads and layers to published paths.
             "avalonurioutputprocessor_use_publish_paths": True,
-
             # Only write out specific USD files based on our outputs
-            "savepattern": save_pattern
+            "savepattern": save_pattern,
         }
         overrides = list()
         with ExitStack() as stack:
@@ -207,7 +211,7 @@ class ExtractUSDLayered(openpype.api.Extractor):
                 manager = hou_usdlib.outputprocessors(
                     ropnode,
                     processors=self.output_processors,
-                    disable_all_others=True
+                    disable_all_others=True,
                 )
                 stack.enter_context(manager)
 
@@ -216,8 +220,10 @@ class ExtractUSDLayered(openpype.api.Extractor):
                 # exist when the Output Processor is added to the ROP node.
                 for name, value in rop_overrides.items():
                     parm = ropnode.parm(name)
-                    assert parm, "Parm not found: %s.%s" % (ropnode.path(),
-                                                            name)
+                    assert parm, "Parm not found: %s.%s" % (
+                        ropnode.path(),
+                        name,
+                    )
                     overrides.append((parm, value))
 
             stack.enter_context(parm_values(overrides))
@@ -236,12 +242,13 @@ class ExtractUSDLayered(openpype.api.Extractor):
             dependency_fname = dependency.data["usdFilename"]
 
             filepath = os.path.join(staging_dir, dependency_fname)
-            similar = self._compare_with_latest_publish(dependency,
-                                                        filepath)
+            similar = self._compare_with_latest_publish(dependency, filepath)
             if similar:
                 # Deactivate this dependency
-                self.log.debug("Dependency matches previous publish version,"
-                               " deactivating %s for publish" % dependency)
+                self.log.debug(
+                    "Dependency matches previous publish version,"
+                    " deactivating %s for publish" % dependency
+                )
                 dependency.data["publish"] = False
             else:
                 self.log.debug("Extracted dependency: %s" % dependency)
@@ -265,33 +272,35 @@ class ExtractUSDLayered(openpype.api.Extractor):
         # Compare this dependency with the latest published version
         # to detect whether we should make this into a new publish
         # version. If not, skip it.
-        asset = io.find_one({
-            "name": dependency.data["asset"],
-            "type": "asset"
-        })
-        subset = io.find_one({
-            "name": dependency.data["subset"],
-            "type": "subset",
-            "parent": asset["_id"]
-        })
+        asset = io.find_one(
+            {"name": dependency.data["asset"], "type": "asset"}
+        )
+        subset = io.find_one(
+            {
+                "name": dependency.data["subset"],
+                "type": "subset",
+                "parent": asset["_id"],
+            }
+        )
         if not subset:
             # Subset doesn't exist yet. Definitely new file
             self.log.debug("No existing subset..")
             return False
 
-        version = io.find_one({
-            "type": "version",
-            "parent": subset["_id"],
-        }, sort=[("name", -1)])
+        version = io.find_one(
+            {"type": "version", "parent": subset["_id"], }, sort=[("name", -1)]
+        )
         if not version:
             self.log.debug("No existing version..")
             return False
 
-        representation = io.find_one({
-            "name": ext.lstrip("."),
-            "type": "representation",
-            "parent": version["_id"]
-        })
+        representation = io.find_one(
+            {
+                "name": ext.lstrip("."),
+                "type": "representation",
+                "parent": version["_id"],
+            }
+        )
         if not representation:
             self.log.debug("No existing representation..")
             return False

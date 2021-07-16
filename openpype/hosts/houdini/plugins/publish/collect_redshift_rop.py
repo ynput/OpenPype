@@ -7,11 +7,11 @@ import pyblish.api
 
 def get_top_referenced_parm(parm):
 
-    processed = set() # disallow infinite loop
+    processed = set()  # disallow infinite loop
     while True:
         if parm.path() in processed:
             raise RuntimeError("Parameter references result in cycle.")
-    
+
         processed.add(parm.path())
 
         ref = parm.getReferencedParm()
@@ -27,7 +27,7 @@ def evalParmNoFrame(node, parm, pad_character="#"):
 
     parameter = node.parm(parm)
     assert parameter, "Parameter does not exist: %s.%s" % (node, parm)
-    
+
     # If the parameter has a parameter reference, then get that
     # parameter instead as otherwise `unexpandedString()` fails.
     parameter = get_top_referenced_parm(parameter)
@@ -38,7 +38,7 @@ def evalParmNoFrame(node, parm, pad_character="#"):
     except hou.Error as exc:
         print("Failed: %s" % parameter)
         raise RuntimeError(exc)
-            
+
     def replace(match):
         padding = 1
         n = match.group(2)
@@ -70,31 +70,32 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         rop = instance[0]
-        
+
         # Collect chunkSize
         chunk_size_parm = rop.parm("chunkSize")
         if chunk_size_parm:
             chunk_size = int(chunk_size_parm.eval())
             instance.data["chunkSize"] = chunk_size
             self.log.debug("Chunk Size: %s" % chunk_size)
-        
+
         default_prefix = evalParmNoFrame(rop, "RS_outputFileNamePrefix")
         beauty_suffix = rop.evalParm("RS_outputBeautyAOVSuffix")
         render_products = []
 
         # Default beauty AOV
-        beauty_product = self.get_render_product_name(prefix=default_prefix,
-                                                      suffix=beauty_suffix)
+        beauty_product = self.get_render_product_name(
+            prefix=default_prefix, suffix=beauty_suffix
+        )
         render_products.append(beauty_product)
 
         num_aovs = rop.evalParm("RS_aov")
         for index in range(num_aovs):
             i = index + 1
-        
+
             # Skip disabled AOVs
             if not rop.evalParm("RS_aovEnable_%s" % i):
                 continue
-        
+
             aov_suffix = rop.evalParm("RS_aovSuffix_%s" % i)
             aov_prefix = evalParmNoFrame(rop, "RS_aovCustomPrefix_%s" % i)
             if not aov_prefix:
@@ -122,10 +123,7 @@ class CollectRedshiftROPRenderProducts(pyblish.api.InstancePlugin):
             # there is no suffix for the current product, for example:
             # foo_%AOV% -> foo.exr
             pattern = "%AOV%" if suffix else "[._-]?%AOV%"
-            product_name = re.sub(pattern,
-                                  suffix,
-                                  prefix,
-                                  flags=re.IGNORECASE)
+            product_name = re.sub(pattern, suffix, prefix, flags=re.IGNORECASE)
         else:
             if suffix:
                 # Add ".{suffix}" before the extension

@@ -15,8 +15,7 @@ class IncrementCurrentFile(pyblish.api.InstancePlugin):
     label = "Increment current file"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["houdini"]
-    families = ["colorbleed.usdrender",
-                "redshift_rop"]
+    families = ["colorbleed.usdrender", "redshift_rop"]
     targets = ["local"]
 
     def process(self, instance):
@@ -32,17 +31,21 @@ class IncrementCurrentFile(pyblish.api.InstancePlugin):
 
         context = instance.context
         errored_plugins = get_errored_plugins_from_data(context)
-        if any(plugin.__name__ == "HoudiniSubmitPublishDeadline"
-                for plugin in errored_plugins):
-            raise RuntimeError("Skipping incrementing current file because "
-                               "submission to deadline failed.")
+        if any(
+            plugin.__name__ == "HoudiniSubmitPublishDeadline"
+            for plugin in errored_plugins
+        ):
+            raise RuntimeError(
+                "Skipping incrementing current file because "
+                "submission to deadline failed."
+            )
 
         # Filename must not have changed since collecting
         host = avalon.api.registered_host()
         current_file = host.current_file()
-        assert context.data['currentFile'] == current_file, (
-            "Collected filename from current scene name."
-        )
+        assert (
+            context.data["currentFile"] == current_file
+        ), "Collected filename from current scene name."
 
         new_filepath = version_up(current_file)
         host.save(new_filepath)

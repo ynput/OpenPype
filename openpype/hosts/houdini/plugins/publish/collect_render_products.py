@@ -28,7 +28,7 @@ def get_var_changed(variable=None):
     cmd = "varchange -V"
     if variable:
         cmd += " {0}".format(variable)
-    output, errors = hou.hscript(cmd)
+    output, _ = hou.hscript(cmd)
 
     changed = {}
     for line in output.split("Variable: "):
@@ -44,7 +44,7 @@ def get_var_changed(variable=None):
 
 
 class CollectRenderProducts(pyblish.api.InstancePlugin):
-    """Collect USD Render Products"""
+    """Collect USD Render Products."""
 
     label = "Collect Render Products"
     order = pyblish.api.CollectorOrder + 0.4
@@ -56,14 +56,17 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
         node = instance.data.get("output_node")
         if not node:
             rop_path = instance[0].path()
-            raise RuntimeError("No output node found. Make sure to connect an "
-                               "input to the USD ROP: %s" % rop_path)
+            raise RuntimeError(
+                "No output node found. Make sure to connect an "
+                "input to the USD ROP: %s" % rop_path
+            )
 
         # Workaround Houdini 18.0.391 bug where $HIPNAME doesn't automatically
         # update after scene save.
         if hou.applicationVersion() == (18, 0, 391):
-            self.log.debug("Checking for recook to workaround "
-                           "$HIPNAME refresh bug...")
+            self.log.debug(
+                "Checking for recook to workaround " "$HIPNAME refresh bug..."
+            )
             changed = get_var_changed("HIPNAME").get("HIPNAME")
             if changed:
                 self.log.debug("Recooking for $HIPNAME refresh bug...")
@@ -101,7 +104,7 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
                 # TODO: Confirm this actually is allowed USD stages and HUSK
                 # Substitute $F
                 def replace(match):
-                    """Replace $F4 with padded #"""
+                    """Replace $F4 with padded #."""
                     padding = int(match.group(2)) if match.group(2) else 1
                     return "#" * padding
 
@@ -118,8 +121,10 @@ class CollectRenderProducts(pyblish.api.InstancePlugin):
                 filename = os.path.join(dirname, filename_base)
                 filename = filename.replace("\\", "/")
 
-            assert "#" in filename, "Couldn't resolve render product name " \
-                                    "with frame number: %s" % name
+            assert "#" in filename, (
+                "Couldn't resolve render product name "
+                "with frame number: %s" % name
+            )
 
             filenames.append(filename)
 

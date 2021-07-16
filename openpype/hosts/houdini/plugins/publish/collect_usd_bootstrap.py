@@ -25,8 +25,7 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.35
     label = "Collect USD Bootstrap"
     hosts = ["houdini"]
-    families = ["colorbleed.usd",
-                "colorbleed.usd.layered"]
+    families = ["usd", "usd.layered"]
 
     def process(self, instance):
 
@@ -35,7 +34,7 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
             instance_subset = instance.data["subset"]
             for name, layers in usdlib.PIPELINE.items():
                 if instance_subset in set(layers):
-                    return name    # e.g. "asset"
+                    return name  # e.g. "asset"
                     break
             else:
                 return
@@ -54,15 +53,11 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
 
         self.log.debug("Add bootstrap for: %s" % bootstrap)
 
-        asset = io.find_one({"name": instance.data["asset"],
-                             "type": "asset"})
+        asset = io.find_one({"name": instance.data["asset"], "type": "asset"})
         assert asset, "Asset must exist: %s" % asset
 
         # Check which are not about to be created and don't exist yet
-        required = {
-            "shot": ["usdShot"],
-            "asset": ["usdAsset"]
-        }.get(bootstrap)
+        required = {"shot": ["usdShot"], "asset": ["usdAsset"]}.get(bootstrap)
 
         require_all_layers = instance.data.get("requireAllLayers", False)
         if require_all_layers:
@@ -78,18 +73,18 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
             if self._subset_exists(instance, subset, asset):
                 continue
 
-            self.log.debug("Creating {0} USD bootstrap: {1} {2}".format(
-                bootstrap,
-                asset["name"],
-                subset
-            ))
+            self.log.debug(
+                "Creating {0} USD bootstrap: {1} {2}".format(
+                    bootstrap, asset["name"], subset
+                )
+            )
 
             new = instance.context.create_instance(subset)
             new.data["subset"] = subset
             new.data["label"] = "{0} ({1})".format(subset, asset["name"])
-            new.data["family"] = "colorbleed.usd.bootstrap"
+            new.data["family"] = "usd.bootstrap"
             new.data["comment"] = "Automated bootstrap USD file."
-            new.data["publishFamilies"] = ["colorbleed.usd"]
+            new.data["publishFamilies"] = ["usd"]
 
             # Do not allow the user to toggle this instance
             new.data["optional"] = False
@@ -100,7 +95,6 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
 
     def _subset_exists(self, instance, subset, asset):
         """Return whether subset exists in current context or in database."""
-
         # Allow it to be created during this publish session
         context = instance.context
         for inst in context:
@@ -112,6 +106,8 @@ class CollectUsdBootstrap(pyblish.api.InstancePlugin):
 
         # Or, if they already exist in the database we can
         # skip them too.
-        return bool(io.find_one({"name": subset,
-                        "type": "subset",
-                        "parent": asset["_id"]}))
+        return bool(
+            io.find_one(
+                {"name": subset, "type": "subset", "parent": asset["_id"]}
+            )
+        )

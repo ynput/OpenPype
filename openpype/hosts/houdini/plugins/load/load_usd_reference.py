@@ -5,11 +5,13 @@ from avalon.houdini import pipeline, lib
 class USDReferenceLoader(api.Loader):
     """Reference USD file in Solaris"""
 
-    families = ["colorbleed.usd",
-                "colorbleed.pointcache",
-                "colorbleed.animation",
-                "colorbleed.camera",
-                "usdCamera"]
+    families = [
+        "colorbleed.usd",
+        "colorbleed.pointcache",
+        "colorbleed.animation",
+        "colorbleed.camera",
+        "usdCamera",
+    ]
     label = "Reference USD"
     representations = ["usd", "usda", "usdlc", "usdnc", "abc"]
     order = -8
@@ -62,8 +64,12 @@ class USDReferenceLoader(api.Loader):
         file_path = file_path.replace("\\", "/")
 
         # Update attributes
-        node.setParms({"filepath1": file_path,
-                       "representation": str(representation["_id"])})
+        node.setParms(
+            {
+                "filepath1": file_path,
+                "representation": str(representation["_id"]),
+            }
+        )
 
         # Reload files
         node.parm("reload").pressButton()

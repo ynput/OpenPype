@@ -3,7 +3,7 @@ import openpype.api
 
 
 class ValidatOutputNodeExists(pyblish.api.InstancePlugin):
-    """Validate if node attribute Create intermediate Directories is turned on
+    """Validate if node attribute Create intermediate Directories is turned on.
 
     Rules:
         * The node must have Create intermediate Directories turned on to
@@ -13,7 +13,7 @@ class ValidatOutputNodeExists(pyblish.api.InstancePlugin):
 
     order = openpype.api.ValidateContentsOrder
     families = ["*"]
-    hosts = ['houdini']
+    hosts = ["houdini"]
     label = "Output Node Exists"
 
     def process(self, instance):

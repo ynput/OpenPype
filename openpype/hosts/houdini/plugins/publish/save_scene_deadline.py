@@ -12,9 +12,9 @@ class SaveCurrentSceneDeadline(pyblish.api.ContextPlugin):
     def process(self, context):
         import hou
 
-        assert context.data['currentFile'] == hou.hipFile.path(), (
-            "Collected filename from current scene name."
-        )
+        assert (
+            context.data["currentFile"] == hou.hipFile.path()
+        ), "Collected filename from current scene name."
 
         if hou.hipFile.hasUnsavedChanges():
             self.log.info("Saving current file..")

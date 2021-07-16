@@ -1,5 +1,4 @@
 import pyblish.api
-import openpype.api
 
 
 class CollectInstanceActiveState(pyblish.api.InstancePlugin):
@@ -28,9 +27,11 @@ class CollectInstanceActiveState(pyblish.api.InstancePlugin):
         active = not node.isBypassed()
 
         # Set instance active state
-        instance.data.update({
-            "active": active,
-            # temporarily translation of `active` to `publish` till issue has
-            # been resolved: https://github.com/pyblish/pyblish-base/issues/307
-            "publish": active
-        })
+        instance.data.update(
+            {
+                "active": active,
+                # temporarily translation of `active` to `publish` till issue has
+                # been resolved: https://github.com/pyblish/pyblish-base/issues/307
+                "publish": active,
+            }
+        )

@@ -17,10 +17,7 @@ class ValidateUSDLayerPathBackslashes(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["usdSetDress",
-                "usdShade",
-                "usd",
-                "usdrender"]
+    families = ["usdSetDress", "usdShade", "usd", "usdrender"]
     hosts = ["houdini"]
     label = "USD Layer path backslashes"
     optional = True
@@ -47,5 +44,7 @@ class ValidateUSDLayerPathBackslashes(pyblish.api.InstancePlugin):
                     invalid.append(layer)
 
         if invalid:
-            raise RuntimeError("Loaded layers have backslashes. "
-                               "This is invalid for HUSK USD rendering.")
+            raise RuntimeError(
+                "Loaded layers have backslashes. "
+                "This is invalid for HUSK USD rendering."
+            )

@@ -10,8 +10,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder
     label = "Collect Frames"
-    families = ["vdbcache",
-                "imagesequence"]
+    families = ["vdbcache", "imagesequence"]
 
     def process(self, instance):
 
@@ -39,9 +38,9 @@ class CollectFrames(pyblish.api.InstancePlugin):
             # Check if frames are bigger than 1 (file collection)
             # override the result
             if end_frame - start_frame > 1:
-                result = self.create_file_list(match,
-                                               int(start_frame),
-                                               int(end_frame))
+                result = self.create_file_list(
+                    match, int(start_frame), int(end_frame)
+                )
 
         # todo: `frames` currently conflicts with "explicit frames" for a
         #       for a custom frame list. So this should be refactored.
@@ -67,12 +66,12 @@ class CollectFrames(pyblish.api.InstancePlugin):
         # Get the parts of the filename surrounding the frame number
         # so we can put our own frame numbers in.
         span = match.span(1)
-        prefix = match.string[:span[0]]
+        prefix = match.string[: span[0]]
         suffix = match.string[span[1]:]
 
         # Generate filenames for all frames
         result = []
-        for i in range(start_frame, end_frame+1):
+        for i in range(start_frame, end_frame + 1):
 
             # Format frame number by the padding amount
             str_frame = "{number:0{width}d}".format(number=i, width=padding)

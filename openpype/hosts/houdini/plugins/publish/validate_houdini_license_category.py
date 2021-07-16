@@ -24,5 +24,7 @@ class ValidateHoudiniCommercialLicense(pyblish.api.InstancePlugin):
 
         license = hou.licenseCategory()
         if license != hou.licenseCategoryType.Commercial:
-            raise RuntimeError("USD Publishing requires a full Commercial "
-                               "license. You are on: %s" % license)
+            raise RuntimeError(
+                "USD Publishing requires a full Commercial "
+                "license. You are on: %s" % license
+            )

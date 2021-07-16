@@ -16,15 +16,17 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
     """
 
     order = openpype.api.ValidateContentsOrder + 0.1
-    families = ["colorbleed.pointcache"]
+    families = ["pointcache"]
     hosts = ["houdini"]
     label = "Validate Primitive to Detail (Abc)"
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Primitives found with inconsistent primitive "
-                               "to detail attributes. See log.")
+            raise RuntimeError(
+                "Primitives found with inconsistent primitive "
+                "to detail attributes. See log."
+            )
 
     @classmethod
     def get_invalid(cls, instance):
@@ -34,21 +36,27 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
         rop = instance[0]
         pattern = rop.parm("prim_to_detail_pattern").eval().strip()
         if not pattern:
-            cls.log.debug("Alembic ROP has no 'Primitive to Detail' pattern. "
-                          "Validation is ignored..")
+            cls.log.debug(
+                "Alembic ROP has no 'Primitive to Detail' pattern. "
+                "Validation is ignored.."
+            )
             return
 
         build_from_path = rop.parm("build_from_path").eval()
         if not build_from_path:
-            cls.log.debug("Alembic ROP has 'Build from Path' disabled. "
-                          "Validation is ignored..")
+            cls.log.debug(
+                "Alembic ROP has 'Build from Path' disabled. "
+                "Validation is ignored.."
+            )
             return
 
         path_attr = rop.parm("path_attrib").eval()
         if not path_attr:
-            cls.log.error("The Alembic ROP node has no Path Attribute"
-                          "value set, but 'Build Hierarchy from Attribute'"
-                          "is enabled.")
+            cls.log.error(
+                "The Alembic ROP node has no Path Attribute"
+                "value set, but 'Build Hierarchy from Attribute'"
+                "is enabled."
+            )
             return [rop.path()]
 
         # Let's assume each attribute is explicitly named for now and has no
@@ -59,26 +67,32 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
         # Check if the primitive attribute exists
         frame = instance.data.get("startFrame", 0)
         geo = output.geometryAtFrame(frame)
-        
+
         # If there are no primitives on the start frame then it might be
         # something that is emitted over time. As such we can't actually
         # validate whether the attributes exist, because they won't exist
         # yet. In that case, just warn the user and allow it.
         if len(geo.iterPrims()) == 0:
-            cls.log.warning("No primitives found on current frame. Validation"
-                            " for Primitive to Detail will be skipped.")
+            cls.log.warning(
+                "No primitives found on current frame. Validation"
+                " for Primitive to Detail will be skipped."
+            )
             return
-        
+
         attrib = geo.findPrimAttrib(path_attr)
         if not attrib:
-            cls.log.info("Geometry Primitives are missing "
-                         "path attribute: `%s`" % path_attr)
+            cls.log.info(
+                "Geometry Primitives are missing "
+                "path attribute: `%s`" % path_attr
+            )
             return [output.path()]
 
         # Ensure at least a single string value is present
         if not attrib.strings():
-            cls.log.info("Primitive path attribute has no "
-                         "string values: %s" % path_attr)
+            cls.log.info(
+                "Primitive path attribute has no "
+                "string values: %s" % path_attr
+            )
             return [output.path()]
 
         paths = None
@@ -111,6 +125,8 @@ class ValidateAbcPrimitiveToDetail(pyblish.api.InstancePlugin):
                 # Primitive to Detail attribute then we consider it
                 # inconsistent and invalidate the ROP node's content.
                 if len(values) > 1:
-                    cls.log.warning("Path has multiple values: %s (path: %s)"
-                                    % (list(values), path))
+                    cls.log.warning(
+                        "Path has multiple values: %s (path: %s)"
+                        % (list(values), path)
+                    )
                     return [output.path()]

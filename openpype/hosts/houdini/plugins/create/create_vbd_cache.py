@@ -21,8 +21,10 @@ class CreateVDBCache(plugin.Creator):
     def process(self):
         instance = super(CreateVDBCache, self).process()
 
-        parms = {"sopoutput": "$HIP/pyblish/%s.$F4.vdb" % self.name,
-                 "initsim": True}
+        parms = {
+            "sopoutput": "$HIP/pyblish/%s.$F4.vdb" % self.name,
+            "initsim": True,
+        }
 
         if self.nodes:
             node = self.nodes[0]

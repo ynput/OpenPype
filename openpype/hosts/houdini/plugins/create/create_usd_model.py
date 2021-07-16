@@ -13,7 +13,7 @@ class CreateUSDModel(api.Creator):
 
     def process(self):
 
-        node_type = "cb::author_model:1.0"
+        node_type = "op::author_model:1.0"
 
         subset = self.data["subset"]
         name = "author_{}".format(subset)
@@ -24,10 +24,7 @@ class CreateUSDModel(api.Creator):
         instance = stage.createNode(node_type, node_name=name)
         instance.moveToGoodPosition(move_unconnected=True)
 
-        parms = {
-            "asset_name": self.data["asset"],
-            "variant_name": variant
-        }
+        parms = {"asset_name": self.data["asset"], "variant_name": variant}
 
         # Set the Geo Path to the first selected node (if any)
         selection = hou.selectedNodes()

@@ -35,8 +35,9 @@ class CreateRedshiftROP(houdini.Creator):
         instance.setName(basename + "_ROP", unique_name=True)
 
         # Also create the linked Redshift IPR Rop
-        ipr_rop = self.parent.createNode("Redshift_IPR",
-                                         node_name=basename + "_IPR")
+        ipr_rop = self.parent.createNode(
+            "Redshift_IPR", node_name=basename + "_IPR"
+        )
 
         # Move it to directly under the Redshift ROP
         ipr_rop.setPosition(instance.position() + hou.Vector2(0, -1))
@@ -48,11 +49,10 @@ class CreateRedshiftROP(houdini.Creator):
         parms = {
             # Render frame range
             "trange": 1,
-
             # Redshift ROP settings
             "RS_outputFileNamePrefix": prefix,
-            "RS_outputMultilayerMode": 0,           # no multi-layered exr
-            "RS_outputBeautyAOVSuffix": "beauty"
+            "RS_outputMultilayerMode": 0,  # no multi-layered exr
+            "RS_outputBeautyAOVSuffix": "beauty",
         }
         instance.setParms(parms)
 

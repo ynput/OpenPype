@@ -1,23 +1,23 @@
 import pyblish.api
-import colorbleed.api
+import openpype.api
 
 
 class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
     """Validate Create Intermediate Directories is enabled on ROP node."""
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.pointcache',
-                'colorbleed.camera',
-                'colorbleed.vdbcache']
-    hosts = ['houdini']
-    label = 'Create Intermediate Directories Checked'
+    order = openpype.api.ValidateContentsOrder
+    families = ["pointcache", "camera", "vdbcache"]
+    hosts = ["houdini"]
+    label = "Create Intermediate Directories Checked"
 
     def process(self, instance):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found ROP node with Create Intermediate "
-                               "Directories turned off: %s" % invalid)
+            raise RuntimeError(
+                "Found ROP node with Create Intermediate "
+                "Directories turned off: %s" % invalid
+            )
 
     @classmethod
     def get_invalid(cls, instance):
@@ -30,5 +30,3 @@ class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
                 result.append(node.path())
 
         return result
-
-

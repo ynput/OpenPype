@@ -40,5 +40,4 @@ class ShowInUsdview(api.Loader):
         # Force string to avoid unicode issues
         env = {str(key): str(value) for key, value in env.items()}
 
-        subprocess.Popen([usdview, filepath, "--renderer", "GL"],
-                         env=env)
+        subprocess.Popen([usdview, filepath, "--renderer", "GL"], env=env)

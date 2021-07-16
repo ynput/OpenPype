@@ -31,9 +31,7 @@ class _USDWorkspace(api.Creator):
         # With the Workspace HDAs there is no need to imprint the instance data
         # since this data is pre-built into it. However, we do set the right
         # asset as that can be defined by the user.
-        parms = {
-            "asset": self.data["asset"]
-        }
+        parms = {"asset": self.data["asset"]}
         instance.setParms(parms)
 
         return instance
@@ -47,7 +45,7 @@ class USDCreateShadingWorkspace(_USDWorkspace):
     label = "USD Shading Workspace"
     family = "colorbleed.shade.usd"
 
-    node_type = "cb::shadingWorkspace::1.0"
+    node_type = "op::shadingWorkspace::1.0"
     node_name = "shadingWorkspace"
     step = "Shade"
 

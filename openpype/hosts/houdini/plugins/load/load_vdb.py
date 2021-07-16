@@ -45,12 +45,14 @@ class VdbLoader(api.Loader):
         nodes = [container, file_node]
         self[:] = nodes
 
-        return pipeline.containerise(node_name,
-                                     namespace,
-                                     nodes,
-                                     context,
-                                     self.__class__.__name__,
-                                     suffix="")
+        return pipeline.containerise(
+            node_name,
+            namespace,
+            nodes,
+            context,
+            self.__class__.__name__,
+            suffix="",
+        )
 
     def format_path(self, path):
         """Format file path correctly for single vdb or vdb sequence"""
@@ -68,8 +70,10 @@ class VdbLoader(api.Loader):
             files = sorted(os.listdir(path))
             first = next((x for x in files if x.endswith(".vdb")), None)
             if first is None:
-                raise RuntimeError("Couldn't find first .vdb file of "
-                                   "sequence in: %s" % path)
+                raise RuntimeError(
+                    "Couldn't find first .vdb file of "
+                    "sequence in: %s" % path
+                )
 
             # Set <frame>.vdb to $F.vdb
             first = re.sub(r"\.(\d+)\.vdb$", ".$F.vdb", first)
@@ -85,8 +89,9 @@ class VdbLoader(api.Loader):
 
         node = container["node"]
         try:
-            file_node = next(n for n in node.children() if
-                             n.type().name() == "file")
+            file_node = next(
+                n for n in node.children() if n.type().name() == "file"
+            )
         except StopIteration:
             self.log.error("Could not find node of type `alembic`")
             return

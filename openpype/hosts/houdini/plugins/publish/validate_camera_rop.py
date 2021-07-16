@@ -6,9 +6,9 @@ class ValidateCameraROP(pyblish.api.InstancePlugin):
     """Validate Camera ROP settings."""
 
     order = openpype.api.ValidateContentsOrder
-    families = ['colorbleed.camera']
-    hosts = ['houdini']
-    label = 'Camera ROP'
+    families = ["camera"]
+    hosts = ["houdini"]
+    label = "Camera ROP"
 
     def process(self, instance):
 
@@ -16,8 +16,10 @@ class ValidateCameraROP(pyblish.api.InstancePlugin):
 
         node = instance[0]
         if node.parm("use_sop_path").eval():
-            raise RuntimeError("Alembic ROP for Camera export should not be "
-                               "set to 'Use Sop Path'. Please disable.")
+            raise RuntimeError(
+                "Alembic ROP for Camera export should not be "
+                "set to 'Use Sop Path'. Please disable."
+            )
 
         # Get the root and objects parameter of the Alembic ROP node
         root = node.parm("root").eval()
@@ -35,7 +37,7 @@ class ValidateCameraROP(pyblish.api.InstancePlugin):
             raise ValueError("Camera path does not exist: %s" % path)
 
         if camera.type().name() != "cam":
-            raise ValueError("Object set in Alembic ROP is not a camera: "
-                             "%s (type: %s)" % (camera, camera.type().name()))
-
-
+            raise ValueError(
+                "Object set in Alembic ROP is not a camera: "
+                "%s (type: %s)" % (camera, camera.type().name())
+            )

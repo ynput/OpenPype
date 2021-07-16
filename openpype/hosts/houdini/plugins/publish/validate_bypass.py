@@ -1,5 +1,5 @@
 import pyblish.api
-import colorbleed.api
+import openpype.api
 
 
 class ValidateBypassed(pyblish.api.InstancePlugin):
@@ -11,7 +11,7 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder - 0.1
+    order = openpype.api.ValidateContentsOrder - 0.1
     families = ["*"]
     hosts = ["houdini"]
     label = "Validate ROP Bypass"
@@ -27,8 +27,8 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
         if invalid:
             rop = invalid[0]
             raise RuntimeError(
-                "ROP node %s is set to bypass, publishing cannot continue.." %
-                rop.path()
+                "ROP node %s is set to bypass, publishing cannot continue.."
+                % rop.path()
             )
 
     @classmethod

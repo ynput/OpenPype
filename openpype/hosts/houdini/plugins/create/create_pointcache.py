@@ -20,13 +20,15 @@ class CreatePointCache(plugin.Creator):
     def process(self):
         instance = super(CreatePointCache, self).process()
 
-        parms = {"use_sop_path": True,  # Export single node from SOP Path
-                 "build_from_path": True,  # Direct path of primitive in output
-                 "path_attrib": "path",  # Pass path attribute for output
-                 "prim_to_detail_pattern": "cbId",
-                 "format": 2,  # Set format to Ogawa
-                 "facesets": 0,  # No face sets (by default exclude them)
-                 "filename": "$HIP/pyblish/%s.abc" % self.name}
+        parms = {
+            "use_sop_path": True,  # Export single node from SOP Path
+            "build_from_path": True,  # Direct path of primitive in output
+            "path_attrib": "path",  # Pass path attribute for output
+            "prim_to_detail_pattern": "cbId",
+            "format": 2,  # Set format to Ogawa
+            "facesets": 0,  # No face sets (by default exclude them)
+            "filename": "$HIP/pyblish/%s.abc" % self.name,
+        }
 
         if self.nodes:
             node = self.nodes[0]

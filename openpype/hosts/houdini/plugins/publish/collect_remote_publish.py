@@ -10,9 +10,9 @@ class CollectRemotePublishSettings(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     families = ["*"]
-    hosts = ['houdini']
+    hosts = ["houdini"]
     targets = ["deadline"]
-    label = 'Remote Publish Submission Settings'
+    label = "Remote Publish Submission Settings"
     actions = [openpype.api.RepairAction]
 
     def process(self, context):

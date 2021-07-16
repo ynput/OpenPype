@@ -11,7 +11,7 @@ import hou
 
 
 class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
-    """Submit Solaris USD Render ROPs to Deadline
+    """Submit Solaris USD Render ROPs to Deadline.
 
     Renders are submitted to a Deadline Web Service as
     supplied via the environment variable AVALON_DEADLINE.
@@ -26,7 +26,7 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
     label = "Submit Render to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["houdini"]
-    families = ["colorbleed.usdrender",
+    families = ["usdrender",
                 "redshift_rop"]
     targets = ["local"]
 
@@ -50,9 +50,9 @@ class HoudiniSubmitRenderDeadline(pyblish.api.InstancePlugin):
 
         # StartFrame to EndFrame by byFrameStep
         frames = "{start}-{end}x{step}".format(
-                start=int(instance.data["startFrame"]),
-                end=int(instance.data["endFrame"]),
-                step=int(instance.data["byFrameStep"]),
+            start=int(instance.data["startFrame"]),
+            end=int(instance.data["endFrame"]),
+            step=int(instance.data["byFrameStep"]),
         )
 
         # Documentation for keys available at:

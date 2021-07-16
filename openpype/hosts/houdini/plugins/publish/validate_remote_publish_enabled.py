@@ -9,9 +9,9 @@ class ValidateRemotePublishEnabled(pyblish.api.ContextPlugin):
 
     order = pyblish.api.ValidatorOrder - 0.39
     families = ["*"]
-    hosts = ['houdini']
+    hosts = ["houdini"]
     targets = ["deadline"]
-    label = 'Remote Publish ROP enabled'
+    label = "Remote Publish ROP enabled"
     actions = [openpype.api.RepairContextAction]
 
     def process(self, context):
@@ -25,7 +25,7 @@ class ValidateRemotePublishEnabled(pyblish.api.ContextPlugin):
 
     @classmethod
     def repair(cls, context):
-        """(Re)create the node if it fails to pass validation"""
+        """(Re)create the node if it fails to pass validation."""
 
         node = hou.node("/out/REMOTE_PUBLISH")
         if not node:

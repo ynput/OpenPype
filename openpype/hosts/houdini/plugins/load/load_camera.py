@@ -2,24 +2,25 @@ from avalon import api
 from avalon.houdini import pipeline, lib
 
 
-ARCHIVE_EXPRESSION = '__import__("_alembic_hom_extensions").alembicGetCameraDict'
+ARCHIVE_EXPRESSION = ('__import__("_alembic_hom_extensions")'
+                      '.alembicGetCameraDict')
 
 
 def transfer_non_default_values(src, dest, ignore=None):
     """Copy parm from src to dest.
-    
+
     Because the Alembic Archive rebuilds the entire node
     hierarchy on triggering "Build Hierarchy" we want to
     preserve any local tweaks made by the user on the camera
     for ease of use. That could be a background image, a
     resolution change or even Redshift camera parameters.
-    
+
     We try to do so by finding all Parms that exist on both
     source and destination node, include only those that both
     are not at their default value, they must be visible,
     we exclude those that have the special "alembic archive"
     channel expression and ignore certain Parm types.
-    
+
     """
     import hou
 

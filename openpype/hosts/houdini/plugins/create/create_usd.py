@@ -5,7 +5,7 @@ class CreateUSD(houdini.Creator):
     """Universal Scene Description"""
 
     label = "USD"
-    family = "colorbleed.usd"
+    family = "usd"
     icon = "gears"
 
     def __init__(self, *args, **kwargs):
@@ -21,7 +21,7 @@ class CreateUSD(houdini.Creator):
 
         parms = {
             "lopoutput": "$HIP/pyblish/%s.usd" % self.name,
-            "enableoutputprocessor_simplerelativepaths": False
+            "enableoutputprocessor_simplerelativepaths": False,
         }
 
         if self.nodes:
@@ -31,9 +31,12 @@ class CreateUSD(houdini.Creator):
         instance.setParms(parms)
 
         # Lock any parameters in this list
-        to_lock = ["fileperframe",
-                   # Lock some Avalon attributes
-                   "family", "id"]
+        to_lock = [
+            "fileperframe",
+            # Lock some Avalon attributes
+            "family",
+            "id",
+        ]
         for name in to_lock:
             parm = instance.parm(name)
             parm.lock(True)

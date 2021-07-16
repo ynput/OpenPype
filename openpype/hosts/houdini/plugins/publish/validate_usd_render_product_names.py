@@ -7,7 +7,7 @@ class ValidateUSDRenderProductNames(pyblish.api.InstancePlugin):
     """Validate USD Render Product names are correctly set absolute paths."""
 
     order = pyblish.api.ValidatorOrder
-    families = ["colorbleed.usdrender"]
+    families = ["usdrender"]
     hosts = ["houdini"]
     label = "Validate USD Render Product Names"
     optional = True
@@ -21,8 +21,9 @@ class ValidateUSDRenderProductNames(pyblish.api.InstancePlugin):
                 invalid.append("Detected empty output filepath.")
 
             if not os.path.isabs(filepath):
-                invalid.append("Output file path is not "
-                               "absolute path: %s" % filepath)
+                invalid.append(
+                    "Output file path is not " "absolute path: %s" % filepath
+                )
 
         if invalid:
             for message in invalid:

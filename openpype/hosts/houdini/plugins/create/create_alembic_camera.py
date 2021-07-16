@@ -23,7 +23,7 @@ class CreateAlembicCamera(plugin.Creator):
 
         parms = {
             "filename": "$HIP/pyblish/%s.abc" % self.name,
-            "use_sop_path": False
+            "use_sop_path": False,
         }
 
         if self.nodes:
@@ -33,10 +33,7 @@ class CreateAlembicCamera(plugin.Creator):
             # Split the node path into the first root and the remainder
             # So we can set the root and objects parameters correctly
             _, root, remainder = path.split("/", 2)
-            parms.update({
-                "root": "/" + root,
-                "objects": remainder
-            })
+            parms.update({"root": "/" + root, "objects": remainder})
 
         instance.setParms(parms)
 

@@ -7,7 +7,7 @@ class CreateUSDRender(houdini.Creator):
     """USD Render ROP in /stage"""
 
     label = "USD Render"
-    family = "colorbleed.usdrender"
+    family = "usdrender"
     icon = "magic"
 
     def __init__(self, *args, **kwargs):

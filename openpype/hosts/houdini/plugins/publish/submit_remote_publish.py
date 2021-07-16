@@ -31,12 +31,14 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
     def process(self, context):
 
         # Ensure no errors so far
-        assert all(result["success"] for result in context.data["results"]), (
-            "Errors found, aborting integration..")
+        assert all(
+            result["success"] for result in context.data["results"]
+        ), "Errors found, aborting integration.."
 
         # Deadline connection
-        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
-                                          "http://localhost:8082")
+        AVALON_DEADLINE = api.Session.get(
+            "AVALON_DEADLINE", "http://localhost:8082"
+        )
         assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
 
         # Note that `publish` data member might change in the future.
@@ -45,8 +47,9 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
         instance_names = sorted(instance.name for instance in actives)
 
         if not instance_names:
-            self.log.warning("No active instances found. "
-                             "Skipping submission..")
+            self.log.warning(
+                "No active instances found. " "Skipping submission.."
+            )
             return
 
         scene = context.data["currentFile"]
@@ -72,30 +75,24 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
                 "BatchName": batch_name,
                 "Comment": context.data.get("comment", ""),
                 "Priority": 50,
-                "Frames": "1-1",    # Always trigger a single frame
+                "Frames": "1-1",  # Always trigger a single frame
                 "IsFrameDependent": False,
                 "Name": job_name,
                 "UserName": deadline_user,
                 # "Comment": instance.context.data.get("comment", ""),
                 # "InitialStatus": state
-
             },
             "PluginInfo": {
-
                 "Build": None,  # Don't force build
                 "IgnoreInputs": True,
-
                 # Inputs
                 "SceneFile": scene,
                 "OutputDriver": "/out/REMOTE_PUBLISH",
-
                 # Mandatory for Deadline
                 "Version": version,
-
             },
-
             # Mandatory for Deadline, may be empty
-            "AuxFiles": []
+            "AuxFiles": [],
         }
 
         # Process submission per individual instance if the submission
@@ -108,14 +105,14 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
             for instance in instance_names:
                 # Clarify job name per submission (include instance name)
                 payload["JobInfo"]["Name"] = job_name + " - %s" % instance
-                self.submit_job(payload,
-                                instances=[instance],
-                                deadline=AVALON_DEADLINE)
+                self.submit_job(
+                    payload, instances=[instance], deadline=AVALON_DEADLINE
+                )
         else:
             # Submit a single job
-            self.submit_job(payload,
-                            instances=instance_names,
-                            deadline=AVALON_DEADLINE)
+            self.submit_job(
+                payload, instances=instance_names, deadline=AVALON_DEADLINE
+            )
 
     def submit_job(self, payload, instances, deadline):
 
@@ -130,16 +127,21 @@ class HoudiniSubmitPublishDeadline(pyblish.api.ContextPlugin):
             "AVALON_TOOLS",
         ]
 
-        environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
+        environment = dict(
+            {key: os.environ[key] for key in keys if key in os.environ},
+            **api.Session
+        )
         environment["PYBLISH_ACTIVE_INSTANCES"] = ",".join(instances)
 
-        payload["JobInfo"].update({
-            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
-                key=key,
-                value=environment[key]
-            ) for index, key in enumerate(environment)
-        })
+        payload["JobInfo"].update(
+            {
+                "EnvironmentKeyValue%d"
+                % index: "{key}={value}".format(
+                    key=key, value=environment[key]
+                )
+                for index, key in enumerate(environment)
+            }
+        )
 
         # Submit
         self.log.info("Submitting..")

@@ -1,6 +1,5 @@
 import pyblish.api
 
-import os
 import hou
 from openpype.api import version_up
 from openpype.action import get_errored_plugins_from_data
@@ -21,14 +20,16 @@ class IncrementCurrentFileDeadline(pyblish.api.ContextPlugin):
     def process(self, context):
 
         errored_plugins = get_errored_plugins_from_data(context)
-        if any(plugin.__name__ == "HoudiniSubmitPublishDeadline"
-                for plugin in errored_plugins):
-            raise RuntimeError("Skipping incrementing current file because "
-                               "submission to deadline failed.")
+        if any(
+            plugin.__name__ == "HoudiniSubmitPublishDeadline"
+            for plugin in errored_plugins
+        ):
+            raise RuntimeError(
+                "Skipping incrementing current file because "
+                "submission to deadline failed."
+            )
 
         current_filepath = context.data["currentFile"]
         new_filepath = version_up(current_filepath)
 
-        hou.hipFile.save(file_name=new_filepath,
-                         save_to_recent_files=True)
-
+        hou.hipFile.save(file_name=new_filepath, save_to_recent_files=True)

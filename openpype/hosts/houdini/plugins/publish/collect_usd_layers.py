@@ -7,7 +7,6 @@ from avalon.houdini import lib
 import openpype.hosts.houdini.lib.usd as usdlib
 
 import hou
-from pxr import Sdf
 
 
 class CollectUsdLayers(pyblish.api.InstancePlugin):

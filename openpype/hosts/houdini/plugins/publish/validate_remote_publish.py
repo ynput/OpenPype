@@ -11,9 +11,9 @@ class ValidateRemotePublishOutNode(pyblish.api.ContextPlugin):
 
     order = pyblish.api.ValidatorOrder - 0.4
     families = ["*"]
-    hosts = ['houdini']
+    hosts = ["houdini"]
     targets = ["deadline"]
-    label = 'Remote Publish ROP node'
+    label = "Remote Publish ROP node"
     actions = [openpype.api.RepairContextAction]
 
     def process(self, context):
@@ -30,14 +30,14 @@ class ValidateRemotePublishOutNode(pyblish.api.ContextPlugin):
         assert node.type().name() == "shell", "Must be shell ROP node"
         assert node.parm("command").eval() == "", "Must have no command"
         assert not node.parm("shellexec").eval(), "Must not execute in shell"
-        assert node.parm("prerender").eval() == cmd, (
-            "REMOTE_PUBLISH node does not have correct prerender script."
-        )
-        assert node.parm("lprerender").eval() == "python", (
-            "REMOTE_PUBLISH node prerender script type not set to 'python'"
-        )
+        assert (
+            node.parm("prerender").eval() == cmd
+        ), "REMOTE_PUBLISH node does not have correct prerender script."
+        assert (
+            node.parm("lprerender").eval() == "python"
+        ), "REMOTE_PUBLISH node prerender script type not set to 'python'"
 
     @classmethod
     def repair(cls, context):
-        """(Re)create the node if it fails to pass validation"""
+        """(Re)create the node if it fails to pass validation."""
         lib.create_remote_publish_node(force=True)

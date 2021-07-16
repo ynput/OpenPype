@@ -41,11 +41,14 @@ class ValidateUsdSetDress(pyblish.api.InstancePlugin):
                         break
                 else:
                     prim_path = node.GetPath()
-                    self.log.error("%s is not referenced geometry." %
-                                   prim_path)
+                    self.log.error(
+                        "%s is not referenced geometry." % prim_path
+                    )
                     invalid.append(node)
 
         if invalid:
-            raise RuntimeError("SetDress contains local geometry. "
-                               "This is not allowed, it must be an assembly "
-                               "of referenced assets.")
+            raise RuntimeError(
+                "SetDress contains local geometry. "
+                "This is not allowed, it must be an assembly "
+                "of referenced assets."
+            )

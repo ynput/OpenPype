@@ -1,6 +1,3 @@
-import hou
-
-import avalon.io as io
 import avalon.api as api
 import pyblish.api
 
@@ -30,7 +27,7 @@ def collect_input_containers(nodes):
         # and the contained children should be all we need. So we disregard
         # checking for .references() on the nodes.
         members = set(node.allSubChildren())
-        members.add(node)    # include the node itself
+        members.add(node)  # include the node itself
 
         # If there's an intersection
         if not lookup.isdisjoint(members):
@@ -51,8 +48,9 @@ def iter_upstream(node):
 
     """
 
-    upstream = node.inputAncestors(include_ref_inputs=True,
-                                   follow_subnets=True)
+    upstream = node.inputAncestors(
+        include_ref_inputs=True, follow_subnets=True
+    )
 
     # Initialize process queue with the node's ancestors itself
     queue = list(upstream)
@@ -73,8 +71,9 @@ def iter_upstream(node):
 
         # Include the references' ancestors that have not been collected yet.
         for reference in references:
-            ancestors = reference.inputAncestors(include_ref_inputs=True,
-                                                 follow_subnets=True)
+            ancestors = reference.inputAncestors(
+                include_ref_inputs=True, follow_subnets=True
+            )
             ancestors = [n for n in ancestors if n not in collected]
 
             queue.extend(ancestors)
@@ -103,8 +102,9 @@ class CollectUpstreamInputs(pyblish.api.InstancePlugin):
         if output is None:
             # If no valid output node is set then ignore it as validation
             # will be checking those cases.
-            self.log.debug("No output node found, skipping "
-                           "collecting of inputs..")
+            self.log.debug(
+                "No output node found, skipping " "collecting of inputs.."
+            )
             return
 
         # Collect all upstream parents

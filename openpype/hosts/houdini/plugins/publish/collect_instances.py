@@ -62,7 +62,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             # Create nice name if the instance has a frame range.
             label = data.get("name", node.name())
-            label += " (%s)" % data["asset"]    # include asset in name
+            label += " (%s)" % data["asset"]  # include asset in name
 
             if "frameStart" in data and "frameEnd" in data:
                 frames = "[{frameStart} - {frameEnd}]".format(**data)

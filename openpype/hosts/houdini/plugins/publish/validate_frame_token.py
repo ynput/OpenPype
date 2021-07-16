@@ -4,7 +4,7 @@ from openpype.hosts.houdini.api import lib
 
 
 class ValidateFrameToken(pyblish.api.InstancePlugin):
-    """Validate if the unexpanded string contains the frame ('$F') token
+    """Validate if the unexpanded string contains the frame ('$F') token.
 
     This validator will *only* check the output parameter of the node if
     the Valid Frame Range is not set to 'Render Current Frame'
@@ -29,8 +29,9 @@ class ValidateFrameToken(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Output settings do no match for '%s'" %
-                               instance)
+            raise RuntimeError(
+                "Output settings do no match for '%s'" % instance
+            )
 
     @classmethod
     def get_invalid(cls, instance):
