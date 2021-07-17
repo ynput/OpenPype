@@ -1,16 +1,20 @@
 # Changelog
 
-## [3.3.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.3.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.2.0...HEAD)
 
+**🚀 Enhancements**
+
+- nuke: settings create missing default subsets [\#1829](https://github.com/pypeclub/OpenPype/pull/1829)
+- Settings: settings for plugins [\#1819](https://github.com/pypeclub/OpenPype/pull/1819)
+- Maya: Deadline custom settings  [\#1797](https://github.com/pypeclub/OpenPype/pull/1797)
+
 **🐛 Bug fixes**
 
+- Project folder structure overrides [\#1813](https://github.com/pypeclub/OpenPype/pull/1813)
+- Maya: fix yeti settings path in extractor [\#1809](https://github.com/pypeclub/OpenPype/pull/1809)
 - Houdini colector formatting keys fix [\#1802](https://github.com/pypeclub/OpenPype/pull/1802)
-
-**Merged pull requests:**
-
-- Maya: Deadline custom settings  [\#1797](https://github.com/pypeclub/OpenPype/pull/1797)
 
 ## [3.2.0](https://github.com/pypeclub/OpenPype/tree/3.2.0) (2021-07-13)
 
@@ -55,8 +59,6 @@
 - StandalonePublisher: failing collector for editorial [\#1738](https://github.com/pypeclub/OpenPype/pull/1738)
 - Local settings UI crash on missing defaults [\#1737](https://github.com/pypeclub/OpenPype/pull/1737)
 - TVPaint white background on thumbnail [\#1735](https://github.com/pypeclub/OpenPype/pull/1735)
-- Application without executables [\#1679](https://github.com/pypeclub/OpenPype/pull/1679)
-- Unreal: launching on Linux [\#1672](https://github.com/pypeclub/OpenPype/pull/1672)
 
 **Merged pull requests:**
 
@@ -117,7 +119,6 @@
 - Standalone publisher Thumbnail export args [\#1705](https://github.com/pypeclub/OpenPype/pull/1705)
 - Bad zip can break OpenPype start [\#1691](https://github.com/pypeclub/OpenPype/pull/1691)
 - Hiero: published whole edit mov [\#1687](https://github.com/pypeclub/OpenPype/pull/1687)
-- Ftrack subprocess handle of stdout/stderr [\#1675](https://github.com/pypeclub/OpenPype/pull/1675)
 
 **Merged pull requests:**
 
