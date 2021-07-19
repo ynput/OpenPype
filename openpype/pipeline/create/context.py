@@ -1,9 +1,16 @@
 import copy
+import logging
 import collections
+import inspect
 from uuid import uuid4
 
 from ..lib import UnknownDef
-import avalon.api
+from .creator_plugins import BaseCreator
+
+from openpype.api import (
+    get_system_settings,
+    get_project_settings
+)
 
 
 class InstanceMember:
@@ -232,6 +239,8 @@ class CreatedInstance:
         attr_plugins=None, new=True
     ):
         if not host:
+            import avalon.api
+
             host = avalon.api.registered_host()
         self.host = host
         self.creator = creator
@@ -373,3 +382,110 @@ class CreatedInstance:
         for member in members:
             if member not in self._members:
                 self._members.append(member)
+
+
+class CreateContext:
+    def __init__(self, host, dbcon=None, headless=False, reset=True):
+        if dbcon is None:
+            import avalon.api
+
+            session = avalon.api.session_data_from_environment(True)
+            dbcon = avalon.api.AvalonMongoDB(session)
+            dbcon.install()
+
+        self.dbcon = dbcon
+
+        self.host = host
+        self.headless = headless
+
+        self.instances = []
+
+        self.creators = {}
+        self.publish_plugins = []
+        self.plugins_with_defs = []
+        self.attr_plugins_by_family = {}
+
+        self._log = None
+
+        if reset:
+            self.reset()
+
+    @property
+    def log(self):
+        if self._log is None:
+            self._log = logging.getLogger(self.__class__.__name__)
+        return self._log
+
+    def reset(self):
+        self.reset_plugins()
+        self.reset_instances()
+
+    def reset_plugins(self):
+        import avalon.api
+        import pyblish.api
+
+        from openpype.pipeline import OpenPypePyblishPluginMixin
+
+        # Reset publish plugins
+        self.attr_plugins_by_family = {}
+
+        publish_plugins = pyblish.api.discover()
+        self.publish_plugins = publish_plugins
+
+        # Collect plugins that can have attribute definitions
+        plugins_with_defs = []
+        for plugin in publish_plugins:
+            if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
+                plugins_with_defs.append(plugin)
+        self.plugins_with_defs = plugins_with_defs
+
+        # Prepare settings
+        project_name = self.dbcon.Session["AVALON_PROJECT"]
+        system_settings = get_system_settings()
+        project_settings = get_project_settings(project_name)
+
+        # Discover and prepare creators
+        creators = {}
+        for creator in avalon.api.discover(BaseCreator):
+            if inspect.isabstract(creator):
+                self.log.info(
+                    "Skipping abstract Creator {}".format(str(creator))
+                )
+                continue
+            creators[creator.family] = creator(
+                self,
+                system_settings,
+                project_settings,
+                self.headless
+            )
+
+        self.creators = creators
+
+    def reset_instances(self):
+        # Collect instances
+        host_instances = self.host.list_instances()
+        instances = []
+        for instance_data in host_instances:
+            family = instance_data["family"]
+            # Prepare publish plugins with attribute definitions
+            creator = self.creators.get(family)
+            attr_plugins = self._get_publish_plugins_with_attr_for_family(
+                family
+            )
+            instance = CreatedInstance.from_existing(
+                instance_data, creator, self.host, attr_plugins
+            )
+            instances.append(instance)
+
+        self.instances = instances
+
+    def _get_publish_plugins_with_attr_for_family(self, family):
+        if family not in self.attr_plugins_by_family:
+            import pyblish.logic
+
+            filtered_plugins = pyblish.logic.plugins_by_families(
+                self.plugins_with_defs, [family]
+            )
+            self.attr_plugins_by_family[family] = filtered_plugins
+
+        return self.attr_plugins_by_family[family]

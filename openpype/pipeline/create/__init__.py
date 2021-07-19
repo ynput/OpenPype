@@ -1,8 +1,12 @@
 from .creator_plugins import (
     BaseCreator,
     Creator,
-    AutoCreator,
-    CreatedInstance
+    AutoCreator
+)
+
+from .context import (
+    CreatedInstance,
+    CreateContext
 )
 
 
@@ -10,5 +14,7 @@ __all__ = (
     "BaseCreator",
     "Creator",
     "AutoCreator",
-    "CreatedInstance"
+
+    "CreatedInstance",
+    "CreateContext"
 )
