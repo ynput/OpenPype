@@ -5,6 +5,8 @@ import json
 
 from avalon.api import format_template_with_optional_keys
 
+from openpype.lib import prepare_template_data
+
 
 class CollectTextures(pyblish.api.ContextPlugin):
     """Collect workfile (and its resource_files) and textures.
@@ -44,18 +46,19 @@ class CollectTextures(pyblish.api.ContextPlugin):
     input_naming_patterns = {
         # workfile: corridorMain_v001.mra >
         # texture: corridorMain_aluminiumID_v001_baseColor_linsRGB_1001.exr
-        r'^([^.]+)(_[^_.]*)?_v([0-9]{3,}).+':
-            r'^([^_.]+)_([^_.]+)_v([0-9]{3,})_([^_.]+)_({color_space})_(1[0-9]{3}).+',
+        "workfile": r'^([^.]+)(_[^_.]*)?_v([0-9]{3,}).+',
+        "textures": r'^([^_.]+)_([^_.]+)_v([0-9]{3,})_([^_.]+)_({color_space})_(1[0-9]{3}).+',
     }
     # matching regex group position to 'input_naming_patterns'
     input_naming_groups = {
-        ('asset', 'filler', 'version'):
-            ('asset', 'shader', 'version', 'channel', 'color_space', 'udim')
+        "workfile": ('asset', 'filler', 'version'),
+        "textures": ('asset', 'shader', 'version', 'channel', 'color_space',
+                     'udim')
     }
 
-    workfile_subset_template = "textures{}Workfile"
+    workfile_subset_template = "textures{Subset}Workfile"
     # implemented keys: ["color_space", "channel", "subset", "shader"]
-    texture_subset_template = "textures{subset}_{shader}_{channel}"
+    texture_subset_template = "textures{Subset}_{Shader}_{Channel}"
 
     def process(self, context):
         self.context = context
@@ -77,8 +80,14 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
             parsed_subset = instance.data["subset"].replace(
                 instance.data["family"], '')
-            workfile_subset = self.workfile_subset_template.format(
-                parsed_subset)
+
+            fill_pairs = {
+                "subset": parsed_subset
+            }
+
+            fill_pairs = prepare_template_data(fill_pairs)
+            workfile_subset = format_template_with_optional_keys(
+                fill_pairs, self.workfile_subset_template)
 
             processed_instance = False
             for repre in instance.data["representations"]:
@@ -95,14 +104,14 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
                     asset_build = self._get_asset_build(
                         repre_file,
-                        self.input_naming_patterns.keys(),
-                        self.input_naming_groups.keys(),
+                        self.input_naming_patterns["workfile"],
+                        self.input_naming_groups["workfile"],
                         self.color_space
                     )
                     version = self._get_version(
                         repre_file,
-                        self.input_naming_patterns.keys(),
-                        self.input_naming_groups.keys(),
+                        self.input_naming_patterns["workfile"],
+                        self.input_naming_groups["workfile"],
                         self.color_space
                     )
                     asset_builds.add((asset_build, version,
@@ -146,15 +155,15 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
                     channel = self._get_channel_name(
                         repre_file,
-                        self.input_naming_patterns.values(),
-                        self.input_naming_groups.values(),
+                        self.input_naming_patterns["textures"],
+                        self.input_naming_groups["textures"],
                         self.color_space
                     )
 
                     shader = self._get_shader_name(
                         repre_file,
-                        self.input_naming_patterns.values(),
-                        self.input_naming_groups.values(),
+                        self.input_naming_patterns["textures"],
+                        self.input_naming_groups["textures"],
                         self.color_space
                     )
 
@@ -164,19 +173,21 @@ class CollectTextures(pyblish.api.ContextPlugin):
                         "shader": shader,
                         "subset": parsed_subset
                     }
+
+                    fill_pairs = prepare_template_data(formatting_data)
                     subset = format_template_with_optional_keys(
-                        formatting_data, self.texture_subset_template)
+                        fill_pairs, self.texture_subset_template)
 
                     asset_build = self._get_asset_build(
                         repre_file,
-                        self.input_naming_patterns.values(),
-                        self.input_naming_groups.values(),
+                        self.input_naming_patterns["textures"],
+                        self.input_naming_groups["textures"],
                         self.color_space
                     )
                     version = self._get_version(
                         repre_file,
-                        self.input_naming_patterns.values(),
-                        self.input_naming_groups.values(),
+                        self.input_naming_patterns["textures"],
+                        self.input_naming_groups["textures"],
                         self.color_space
                     )
                     if not representations.get(subset):
@@ -404,7 +415,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 pattern = input_pattern.replace('{color_space}', cs)
                 regex_result = re.findall(pattern, name)
                 if regex_result:
-                    idx = list(input_naming_groups)[0].index(key)
+                    idx = list(input_naming_groups).index(key)
                     if idx < 0:
                         msg = "input_naming_groups must " +\
                               "have '{}' key".format(key)
@@ -431,8 +442,8 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
             for file_name in files:
                 udim = self._get_udim(file_name,
-                                      self.input_naming_patterns.values(),
-                                      self.input_naming_groups.values(),
+                                      self.input_naming_patterns["textures"],
+                                      self.input_naming_groups["textures"],
                                       self.color_space)
                 udims.append(udim)
 

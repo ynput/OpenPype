@@ -31,8 +31,8 @@ class ValidateTextureBatchVersions(pyblish.api.InstancePlugin):
                 instance.data["version"], wfile
             )
 
-        present_versions = []
+        present_versions = set()
         for instance in instance.context:
-            present_versions.append(instance.data["version"])
+            present_versions.add(instance.data["version"])
 
         assert len(present_versions) == 1, "Too many versions in a batch!"
