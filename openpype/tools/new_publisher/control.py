@@ -8,9 +8,11 @@ from openpype.api import (
     get_project_settings
 )
 from openpype.pipeline import (
-    OpenPypePyblishPluginMixin,
+    OpenPypePyblishPluginMixin
+)
+from openpype.pipeline.create import (
     BaseCreator,
-    CreatedInstance
+    CreateContext
 )
 
 
@@ -20,25 +22,35 @@ class PublisherController:
         self.host = avalon.api.registered_host()
         self.headless = headless
 
-        if dbcon is None:
-            session = avalon.api.session_data_from_environment(True)
-            dbcon = avalon.api.AvalonMongoDB(session)
-        dbcon.install()
-        self.dbcon = dbcon
+        self.create_context = CreateContext(
+            self.host, dbcon, headless=False, reset=False
+        )
 
         self._instances_refresh_callback_refs = set()
         self._plugins_refresh_callback_refs = set()
 
-        self.creators = {}
-
-        self.publish_plugins = []
-        self.plugins_with_defs = []
-        self._attr_plugins_by_family = {}
-
-        self.instances = []
-
         self._resetting_plugins = False
         self._resetting_instances = False
+
+    @property
+    def dbcon(self):
+        return self.create_context.dbcon
+
+    @property
+    def instances(self):
+        return self.create_context.instances
+
+    @property
+    def creators(self):
+        return self.create_context.creators
+
+    @property
+    def publish_plugins(self):
+        return self.create_context.publish_plugins
+
+    @property
+    def plugins_with_defs(self):
+        return self.create_context.plugins_with_defs
 
     def add_instances_refresh_callback(self, callback):
         ref = weakref.WeakMethod(callback)
@@ -65,15 +77,6 @@ class PublisherController:
         self._reset_plugin()
         self._reset_instances()
 
-    def _get_publish_plugins_with_attr_for_family(self, family):
-        if family not in self._attr_plugins_by_family:
-            filtered_plugins = pyblish.logic.plugins_by_families(
-                self.plugins_with_defs, [family]
-            )
-            self._attr_plugins_by_family[family] = filtered_plugins
-
-        return self._attr_plugins_by_family[family]
-
     def _reset_plugin(self):
         """Reset to initial state."""
         if self._resetting_plugins:
@@ -81,39 +84,7 @@ class PublisherController:
 
         self._resetting_plugins = True
 
-        # Reset publish plugins
-        self._attr_plugins_by_family = {}
-
-        publish_plugins = pyblish.api.discover()
-        self.publish_plugins = publish_plugins
-
-        # Collect plugins that can have attribute definitions
-        plugins_with_defs = []
-        for plugin in publish_plugins:
-            if OpenPypePyblishPluginMixin in inspect.getmro(plugin):
-                plugins_with_defs.append(plugin)
-        self.plugins_with_defs = plugins_with_defs
-
-        # Prepare settings
-        project_name = self.dbcon.Session["AVALON_PROJECT"]
-        system_settings = get_system_settings()
-        project_settings = get_project_settings(project_name)
-
-        # Discover and prepare creators
-        creators = {}
-        for creator in avalon.api.discover(BaseCreator):
-            if inspect.isabstract(creator):
-                self.log.info(
-                    "Skipping abstract Creator {}".format(str(creator))
-                )
-                continue
-            creators[creator.family] = creator(
-                system_settings,
-                project_settings,
-                self.headless
-            )
-
-        self.creators = creators
+        self.create_context.reset_plugins()
 
         self._resetting_plugins = False
 
@@ -125,23 +96,7 @@ class PublisherController:
 
         self._resetting_instances = True
 
-        # Collect instances
-        host_instances = self.host.list_instances()
-        instances = []
-        for instance_data in host_instances:
-            family = instance_data["family"]
-            # Prepare publish plugins with attribute definitions
-
-            creator = self.creators.get(family)
-            attr_plugins = self._get_publish_plugins_with_attr_for_family(
-                family
-            )
-            instance = CreatedInstance.from_existing(
-                instance_data, creator, self.host, attr_plugins
-            )
-            instances.append(instance)
-
-        self.instances = instances
+        self.create_context.reset_instances()
 
         self._resetting_instances = False
 

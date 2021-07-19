@@ -33,7 +33,12 @@ class BaseCreator:
     # - default_variants may not be used if `get_default_variants` is overriden
     default_variants = []
 
-    def __init__(self, system_settings, project_settings, headless=False):
+    def __init__(
+        self, create_context, system_settings, project_settings, headless=False
+    ):
+        # Reference to CreateContext
+        self.create_context = create_context
+
         # Creator is running in headless mode (without UI elemets)
         # - we may use UI inside processing this attribute should be checked
         self.headless = headless
