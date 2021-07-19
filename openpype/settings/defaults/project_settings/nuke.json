@@ -10,11 +10,22 @@
     },
     "create": {
         "CreateWriteRender": {
-            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
+            "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "defaults": [
+                "Main",
+                "Mask"
+            ]
         },
         "CreateWritePrerender": {
             "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
-            "use_range_limit": true
+            "use_range_limit": true,
+            "defaults": [
+                "Key01",
+                "Bg01",
+                "Fg01",
+                "Branch01",
+                "Part01"
+            ]
         }
     },
     "publish": {

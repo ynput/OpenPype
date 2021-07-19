@@ -8,7 +8,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
     """Collect instances from editorial's OTIO sequence"""
 
     order = pyblish.api.CollectorOrder + 0.01
-    label = "Collect Instances"
+    label = "Collect Editorial Instances"
     hosts = ["standalonepublisher"]
     families = ["editorial"]
 
@@ -17,16 +17,12 @@ class CollectInstances(pyblish.api.InstancePlugin):
         "referenceMain": {
             "family": "review",
             "families": ["clip"],
-            "extensions": [".mp4"]
+            "extensions": ["mp4"]
         },
         "audioMain": {
             "family": "audio",
             "families": ["clip"],
-            "extensions": [".wav"],
-        },
-        "shotMain": {
-            "family": "shot",
-            "families": []
+            "extensions": ["wav"],
         }
     }
     timeline_frame_start = 900000  # starndard edl default (10:00:00:00)
@@ -55,7 +51,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
         fps = plib.get_asset()["data"]["fps"]
 
         tracks = timeline.each_child(
-            descended_from_type=otio.schema.track.Track
+            descended_from_type=otio.schema.Track
         )
 
         # get data from avalon
@@ -84,6 +80,9 @@ class CollectInstances(pyblish.api.InstancePlugin):
                 if clip.name is None:
                     continue
 
+                if isinstance(clip, otio.schema.Gap):
+                    continue
+
                 # skip all generators like black ampty
                 if isinstance(
                     clip.media_reference,
@@ -92,7 +91,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
 
                 # Transitions are ignored, because Clips have the full frame
                 # range.
-                if isinstance(clip, otio.schema.transition.Transition):
+                if isinstance(clip, otio.schema.Transition):
                     continue
 
                 # basic unique asset name
@@ -175,7 +174,16 @@ class CollectInstances(pyblish.api.InstancePlugin):
                         data_key: instance.data.get(data_key)})
 
                 # adding subsets to context as instances
+                self.subsets.update({
+                    "shotMain": {
+                        "family": "shot",
+                        "families": []
+                    }
+                })
                 for subset, properities in self.subsets.items():
+                    if properities["version"] == 0:
+                        properities.pop("version")
+
                     # adding Review-able instance
                     subset_instance_data = instance_data.copy()
                     subset_instance_data.update(properities)

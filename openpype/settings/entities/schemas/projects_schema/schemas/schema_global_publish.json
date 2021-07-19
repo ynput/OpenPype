@@ -555,6 +555,22 @@
                     "label": "Deadline Priotity"
                 },
                 {
+                    "type": "splitter"
+                },
+                {
+                    "type": "text",
+                    "key": "publishing_script",
+                    "label": "Publishing script path"
+                },
+                {
+                    "type": "list",
+                    "key": "skip_integration_repre_list",
+                    "label": "Skip integration of representation with ext",
+                    "object_type": {
+                        "type": "text"
+                    }
+                },
+                {
                     "type": "dict",
                     "key": "aov_filter",
                     "label": "Reviewable subsets filter",
@@ -593,6 +609,30 @@
                         }
                     ]
                 }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "CleanUp",
+            "label": "Clean Up",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "list",
+                    "key": "paterns",
+                    "label": "Paterrns (regex)",
+                    "object_type": {
+                        "type": "text"
+                    }
+                },
+                {
+                    "type": "boolean",
+                    "key": "remove_temp_renders",
+                    "label": "Remove Temp renders",
+                    "default": false
+                }
+
             ]
         }
     ]

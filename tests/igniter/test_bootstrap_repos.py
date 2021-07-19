@@ -330,8 +330,8 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     assert result[-1].path == expected_path, ("not a latest version of "
                                               "OpenPype 3")
 
+    printer("testing finding OpenPype in OPENPYPE_PATH ...")
     monkeypatch.setenv("OPENPYPE_PATH", e_path.as_posix())
-
     result = fix_bootstrap.find_openpype(include_zips=True)
     # we should have results as file were created
     assert result is not None, "no OpenPype version found"
@@ -348,6 +348,8 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
                                               "OpenPype 1")
 
     monkeypatch.delenv("OPENPYPE_PATH", raising=False)
+
+    printer("testing finding OpenPype in user data dir ...")
 
     # mock appdirs user_data_dir
     def mock_user_data_dir(*args, **kwargs):
@@ -373,18 +375,7 @@ def test_find_openpype(fix_bootstrap, tmp_path_factory, monkeypatch, printer):
     assert result[-1].path == expected_path, ("not a latest version of "
                                               "OpenPype 2")
 
-    result = fix_bootstrap.find_openpype(e_path, include_zips=True)
-    assert result is not None, "no OpenPype version found"
-    expected_path = Path(
-        e_path / "{}{}{}".format(
-            test_versions_1[5].prefix,
-            test_versions_1[5].version,
-            test_versions_1[5].suffix
-        )
-    )
-    assert result[-1].path == expected_path, ("not a latest version of "
-                                              "OpenPype 1")
-
+    printer("testing finding OpenPype zip/dir precedence ...")
     result = fix_bootstrap.find_openpype(dir_path, include_zips=True)
     assert result is not None, "no OpenPype versions found"
     expected_path = Path(
