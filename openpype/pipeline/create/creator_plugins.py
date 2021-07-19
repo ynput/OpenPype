@@ -15,6 +15,22 @@ import avalon.api
 from openpype.lib import get_subset_name
 
 
+class InstanceMember:
+    def __init__(self, instance, name):
+        self.instance = instance
+
+        instance.add_members(self)
+
+        self.name = name
+        self._actions = []
+
+    def add_action(self, label, callback):
+        self._actions.append({
+            "label": label,
+            "callback": callback
+        })
+
+
 class AttributeValues:
     def __init__(self, attr_defs, values, origin_data=None):
         if origin_data is None:
@@ -233,6 +249,8 @@ class CreatedInstance:
         self.family = family
         # Subset name
         self.subset_name = subset_name
+        # Instance members may have actions on them
+        self._members = []
 
         # Create a copy of passed data to avoid changing them on the fly
         data = copy.deepcopy(data or {})
@@ -254,7 +272,7 @@ class CreatedInstance:
         self._data["subset"] = subset_name
         self._data["active"] = data.get("active", True)
 
-        # Schema or version?
+        # QUESTION handle version of instance here or in creator?
         if new:
             self._data["version"] = 1
         else:
@@ -369,6 +387,11 @@ class CreatedInstance:
 
     def set_publish_plugins(self, attr_plugins):
         self._data["publish_attributes"].set_publish_plugins(attr_plugins)
+
+    def add_members(self, members):
+        for member in members:
+            if member not in self._members:
+                self._members.append(member)
 
 
 @six.add_metaclass(ABCMeta)
