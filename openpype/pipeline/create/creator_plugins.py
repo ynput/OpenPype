@@ -360,15 +360,6 @@ class CreatedInstance:
 
         return output
 
-    def change_order(self, keys_order):
-        data = collections.OrderedDict()
-        for key in keys_order:
-            if key in self.data:
-                data[key] = self.data.pop(key)
-
-        for key in tuple(self.data.keys()):
-            data[key] = self.data.pop(key)
-        self.data = data
 
     @classmethod
     def from_existing(
