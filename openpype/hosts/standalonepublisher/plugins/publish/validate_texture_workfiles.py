@@ -8,7 +8,7 @@ class ValidateTextureBatchWorkfiles(pyblish.api.InstancePlugin):
         Collected recourses means secondary workfiles (in most cases).
     """
 
-    label = "Validate Texture Workfile"
+    label = "Validate Texture Workfile Has Resources"
     hosts = ["standalonepublisher"]
     order = openpype.api.ValidateContentsOrder
     families = ["workfile"]
@@ -16,7 +16,6 @@ class ValidateTextureBatchWorkfiles(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         if instance.data["family"] == "workfile":
-            if not instance.data.get("resources"):
-                msg = "No resources for workfile {}".\
-                    format(instance.data["name"])
-                self.log.warning(msg)
+            msg = "No resources for workfile {}".\
+                format(instance.data["name"])
+            assert instance.data.get("resources"), msg

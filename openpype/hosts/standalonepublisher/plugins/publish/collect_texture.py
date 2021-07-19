@@ -245,7 +245,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                 }
             )
 
-            workfile = workfile_files.get(asset_build, "DUMMY")
+            workfile = workfile_files.get(asset_build)
 
             if resource_files.get(subset):
                 # add resources only when workfile is main style
@@ -266,7 +266,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
                 repre = representations.get(subset)[0]
                 new_instance.context.data["currentFile"] = os.path.join(
-                    repre["stagingDir"], workfile)
+                    repre["stagingDir"], workfile or 'dummy.txt')
 
             new_instance.data["families"] = families
 
