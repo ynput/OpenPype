@@ -286,6 +286,10 @@ class CreatedInstance:
             self._data["uuid"] = str(uuid4())
 
     @property
+    def id(self):
+        return self._data["uuid"]
+
+    @property
     def data(self):
         return self._data
 
