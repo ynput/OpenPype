@@ -10,7 +10,7 @@ from abc import (
 )
 import six
 
-from .lib import UnknownDef
+from ..lib import UnknownDef
 import avalon.api
 from openpype.lib import get_subset_name
 

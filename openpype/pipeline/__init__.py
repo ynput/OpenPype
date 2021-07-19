@@ -1,6 +1,6 @@
 from .lib import attribute_definitions
 
-from .creator_plugins import (
+from .create import (
     BaseCreator,
     Creator,
     AutoCreator,
