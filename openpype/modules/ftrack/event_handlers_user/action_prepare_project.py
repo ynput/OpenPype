@@ -26,6 +26,21 @@ class PrepareProjectLocal(BaseAction):
 
     # Key to store info about trigerring create folder structure
     item_splitter = {"type": "label", "value": "---"}
+    _keys_order = (
+        "fps",
+        "frameStart",
+        "frameEnd",
+        "handleStart",
+        "handleEnd",
+        "clipIn",
+        "clipOut",
+        "resolutionHeight",
+        "resolutionWidth",
+        "pixelAspect",
+        "applications",
+        "tools_env",
+        "library_project",
+    )
 
     def discover(self, session, entities, event):
         """Show only on project."""
@@ -211,7 +226,18 @@ class PrepareProjectLocal(BaseAction):
             str([key for key in attributes_to_set])
         ))
 
-        for key, in_data in attributes_to_set.items():
+        attribute_keys = set(attributes_to_set.keys())
+        keys_order = []
+        for key in self._keys_order:
+            if key in attribute_keys:
+                keys_order.append(key)
+
+        attribute_keys = attribute_keys - set(keys_order)
+        for key in sorted(attribute_keys):
+            keys_order.append(key)
+
+        for key in keys_order:
+            in_data = attributes_to_set[key]
             attr = in_data["object"]
 
             # initial item definition
