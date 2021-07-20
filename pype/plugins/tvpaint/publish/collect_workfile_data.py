@@ -153,7 +153,8 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "sceneMarkIn": int(mark_in_frame),
             "sceneMarkInState": mark_in_state == "set",
             "sceneMarkOut": int(mark_out_frame),
-            "sceneMarkOutState": mark_out_state == "set"
+            "sceneMarkOutState": mark_out_state == "set",
+            "sceneStartFrame": int(lib.execute_george("tv_startframe"))
         }
         self.log.debug(
             "Scene data: {}".format(json.dumps(scene_data, indent=4))
