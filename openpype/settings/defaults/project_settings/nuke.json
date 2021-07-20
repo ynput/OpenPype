@@ -15,6 +15,12 @@
         "CreateWritePrerender": {
             "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
             "use_range_limit": true
+        },
+        "CreateWriteStill": {
+            "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}",
+            "defaults": [
+                "Mattepaint"
+            ]
         }
     },
     "publish": {

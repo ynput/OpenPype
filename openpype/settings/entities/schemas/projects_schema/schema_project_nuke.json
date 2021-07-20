@@ -84,6 +84,28 @@
                             "label": "Use Frame range limit by default"
                         }
                     ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": false,
+                    "key": "CreateWriteStill",
+                    "label": "CreateWriteStill",
+                    "is_group": true,
+                    "children": [
+                        {
+                            "type": "text",
+                            "key": "fpath_template",
+                            "label": "Path template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "defaults",
+                            "label": "Subset name defaults",
+                            "object_type": {
+                                "type": "text"
+                            }
+                        }
+                    ]
                 }
             ]
         },
