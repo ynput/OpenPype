@@ -65,21 +65,6 @@ class PrepareProjectLocal(BaseAction):
         project_entity = entities[0]
         project_name = project_entity["full_name"]
 
-        # Try to find project document
-        dbcon = AvalonMongoDB()
-        dbcon.install()
-        dbcon.Session["AVALON_PROJECT"] = project_name
-        project_doc = dbcon.find_one({
-            "type": "project"
-        })
-        # Create project if is not available
-        # - creation is required to be able set project anatomy and attributes
-        if not project_doc:
-            project_code = project_entity["name"]
-            create_project(project_name, project_code, dbcon=dbcon)
-
-        dbcon.uninstall()
-
         project_settings = ProjectSettings(project_name)
 
         project_anatom_settings = project_settings["project_anatomy"]
@@ -375,7 +360,27 @@ class PrepareProjectLocal(BaseAction):
 
         self.log.debug("Setting Custom Attribute values")
 
-        project_name = entities[0]["full_name"]
+        project_entity = entities[0]
+        project_name = project_entity["full_name"]
+
+        # Try to find project document
+        dbcon = AvalonMongoDB()
+        dbcon.install()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+        project_doc = dbcon.find_one({
+            "type": "project"
+        })
+        # Create project if is not available
+        # - creation is required to be able set project anatomy and attributes
+        if not project_doc:
+            project_code = project_entity["name"]
+            self.log.info("Creating project \"{} [{}]\"".format(
+                project_name, project_code
+            ))
+            create_project(project_name, project_code, dbcon=dbcon)
+
+        dbcon.uninstall()
+
         project_settings = ProjectSettings(project_name)
         project_anatomy_settings = project_settings["project_anatomy"]
         project_anatomy_settings["roots"] = root_data
