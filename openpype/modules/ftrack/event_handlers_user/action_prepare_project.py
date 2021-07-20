@@ -1,6 +1,8 @@
 import json
 
+from avalon.api import AvalonMongoDB
 from openpype.api import ProjectSettings
+from openpype.lib import create_project
 
 from openpype.modules.ftrack.lib import (
     BaseAction,
@@ -48,13 +50,22 @@ class PrepareProjectLocal(BaseAction):
         project_entity = entities[0]
         project_name = project_entity["full_name"]
 
-        try:
-            project_settings = ProjectSettings(project_name)
-        except ValueError:
-            return {
-                "message": "Project is not synchronized yet",
-                "success": False
-            }
+        # Try to find project document
+        dbcon = AvalonMongoDB()
+        dbcon.install()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+        project_doc = dbcon.find_one({
+            "type": "project"
+        })
+        # Create project if is not available
+        # - creation is required to be able set project anatomy and attributes
+        if not project_doc:
+            project_code = project_entity["name"]
+            create_project(project_name, project_code, dbcon=dbcon)
+
+        dbcon.uninstall()
+
+        project_settings = ProjectSettings(project_name)
 
         project_anatom_settings = project_settings["project_anatomy"]
         root_items = self.prepare_root_items(project_anatom_settings)
