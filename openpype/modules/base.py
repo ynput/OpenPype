@@ -352,21 +352,16 @@ class ModulesManager:
         # For report of time consumption
         self._report = {}
 
+        self._raw_modules = None
+
         self.initialize_modules()
         self.connect_modules()
 
-    def initialize_modules(self):
-        """Import and initialize modules."""
-        self.log.debug("*** Pype modules initialization.")
-        # Prepare settings for modules
-        system_settings = getattr(self, "_system_settings", None)
-        if system_settings is None:
-            system_settings = get_system_settings()
-        modules_settings = system_settings["modules"]
+    def collect_modules(self):
+        if self._raw_modules is not None:
+            return
 
-        report = {}
-        time_start = time.time()
-        prev_start_time = time_start
+        self._raw_modules = []
 
         # Go through globals in `pype.modules`
         for name in dir(openpype.modules):
@@ -394,7 +389,27 @@ class ModulesManager:
                 ).format(name, ", ".join(not_implemented)))
                 continue
 
+            self._raw_modules.append(modules_item)
+
+    def initialize_modules(self):
+        """Import and initialize modules."""
+        self.collect_modules()
+
+        self.log.debug("*** Pype modules initialization.")
+        # Prepare settings for modules
+        system_settings = getattr(self, "_system_settings", None)
+        if system_settings is None:
+            system_settings = get_system_settings()
+        modules_settings = system_settings["modules"]
+
+        report = {}
+        time_start = time.time()
+        prev_start_time = time_start
+
+        # Go through globals in `pype.modules`
+        for modules_item in self._raw_modules:
             try:
+                name = modules_item.__name__
                 # Try initialize module
                 module = modules_item(self, modules_settings)
                 # Store initialized object
@@ -711,6 +726,9 @@ class TrayModulesManager(ModulesManager):
         self.modules_by_id = {}
         self.modules_by_name = {}
         self._report = {}
+
+        self._raw_modules = None
+
         self.tray_manager = None
 
         self.doubleclick_callbacks = {}
