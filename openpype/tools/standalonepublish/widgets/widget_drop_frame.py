@@ -211,7 +211,8 @@ class DropDataFrame(QtWidgets.QFrame):
         folder_path = os.path.dirname(collection.head)
         if file_base[-1] in ['.', '_']:
             file_base = file_base[:-1]
-        file_ext = collection.tail
+        file_ext = os.path.splitext(
+            collection.format('{head}{padding}{tail}'))[1]
         repr_name = file_ext.replace('.', '')
         range = collection.format('{ranges}')
 

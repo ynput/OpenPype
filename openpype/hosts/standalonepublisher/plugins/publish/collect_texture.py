@@ -421,8 +421,12 @@ class CollectTextures(pyblish.api.ContextPlugin):
                               "have '{}' key".format(key)
                         raise ValueError(msg)
 
-                    parsed_value = regex_result[0][idx]
-                    return parsed_value
+                    try:
+                        parsed_value = regex_result[0][idx]
+                        return parsed_value
+                    except IndexError:
+                        self.log.warning("Wrong index, probably "
+                                         "wrong name {}".format(name))
 
     def _update_representations(self, upd_representations):
         """Frames dont have sense for textures, add collected udims instead."""
