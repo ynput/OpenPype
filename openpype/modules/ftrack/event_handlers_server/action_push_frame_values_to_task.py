@@ -101,7 +101,7 @@ class PushHierValuesToNonHier(ServerAction):
 
             description = "{} (Download traceback)".format(msg)
             self.add_traceback_to_job(
-                job, session, sys.exc_info(), event, description
+                job, session, sys.exc_info(), description
             )
 
             return {
