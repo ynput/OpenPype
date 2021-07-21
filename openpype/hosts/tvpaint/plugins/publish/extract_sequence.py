@@ -106,7 +106,7 @@ class ExtractSequence(pyblish.api.Extractor):
             self.log.warning((
                 "Lowering representation range to {} frames."
                 " Changed frame end {} -> {}"
-            ).format(output_range + 1, mark_out, new_mark_out))
+            ).format(output_range + 1, mark_out, new_output_frame_end))
             output_frame_end = new_output_frame_end
 
         # -------------------------------------------------------------------
