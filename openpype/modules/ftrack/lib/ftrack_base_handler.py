@@ -641,7 +641,7 @@ class BaseHandler(object):
                 cls.__name__,
                 datetime.datetime.now().strftime("%y-%m-%d-%H%M")
             )
-        cls.add_component_to_job(
+        cls.add_file_component_to_job(
             job, session, temp_filepath, component_name
         )
         # Delete temp file
