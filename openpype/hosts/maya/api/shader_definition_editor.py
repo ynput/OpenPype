@@ -11,11 +11,14 @@ from openpype import resources
 import gridfs
 
 
+DEFINITION_FILENAME = "{}/maya/shader_definition.txt".format(
+    os.getenv("AVALON_PROJECT"))
+
+
 class ShaderDefinitionsEditor(QtWidgets.QWidget):
     """Widget serving as simple editor for shader name definitions."""
 
     # name of the file used to store definitions
-    DEFINITION_FILENAME = "maya/shader_definition.txt"
 
     def __init__(self, parent=None):
         super(ShaderDefinitionsEditor, self).__init__(parent)
@@ -78,7 +81,7 @@ class ShaderDefinitionsEditor(QtWidgets.QWidget):
         content = ""
         if not file:
             file = self._gridfs.find_one(
-                {"filename": self.DEFINITION_FILENAME})
+                {"filename": DEFINITION_FILENAME})
         if not file:
             print(">>> [SNDE]: nothing in database yet")
             return content
@@ -102,7 +105,7 @@ class ShaderDefinitionsEditor(QtWidgets.QWidget):
                 editor is running.
         """
         file = self._gridfs.find_one(
-            {"filename": self.DEFINITION_FILENAME})
+            {"filename": DEFINITION_FILENAME})
         if file:
             content_check = self._read_definition_file(file)
             if content == content_check:
@@ -116,7 +119,7 @@ class ShaderDefinitionsEditor(QtWidgets.QWidget):
             self._gridfs.delete(file._id)
 
         file = self._gridfs.new_file(
-            filename=self.DEFINITION_FILENAME,
+            filename=DEFINITION_FILENAME,
             content_type='text/plain',
             encoding='utf-8')
         file.write(content)
@@ -134,7 +137,11 @@ class ShaderDefinitionsEditor(QtWidgets.QWidget):
         self._editor.setStyleSheet("border: none;")
 
     def _close(self):
-        self.close()
+        self.hide()
+
+    def closeEvent(self, event):
+        event.ignore()
+        self.hide()
 
     def _reload(self):
         print(">>> [SNDE]: reloading")
@@ -156,16 +163,10 @@ class ShaderDefinitionsEditor(QtWidgets.QWidget):
             self,
             "Warning",
             ("Content you are editing was changed meanwhile in database.\n"
-             "Do you want to overwrite it?"),
-            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+             "Please, reload and solve the conflict."),
+            QtWidgets.QMessageBox.OK)
 
-        if reply == QtWidgets.QMessageBox.Yes:
-            self._write_definition_file(
-                content=self._editor.toPlainText(),
-                force=True
-            )
-
-        elif reply == QtWidgets.QMessageBox.No:
+        if reply == QtWidgets.QMessageBox.OK:
             # do nothing
             pass
 

@@ -3,6 +3,28 @@
 import sys
 
 
+class ToolWindows:
+
+    _windows = {}
+
+    @classmethod
+    def get_window(cls, tool, window=None):
+        # type: (str, QtWidgets.QWidget) -> QtWidgets.QWidget
+        try:
+            return cls._windows[tool]
+        except KeyError:
+            if window:
+                cls.set_window(tool, window)
+                return window
+            else:
+                return None
+
+    @classmethod
+    def set_window(cls, tool, window):
+        # type: (str, QtWidget.QWidget) -> None
+        cls._windows[tool] = window
+
+
 def edit_shader_definitions():
     from avalon.tools import lib
     from Qt import QtWidgets
@@ -10,15 +32,13 @@ def edit_shader_definitions():
         ShaderDefinitionsEditor
     )
 
-    module = sys.modules[__name__]
-    module.window = None
-
     top_level_widgets = QtWidgets.QApplication.topLevelWidgets()
     main_window = next(widget for widget in top_level_widgets
                        if widget.objectName() == "MayaWindow")
 
     with lib.application():
-        window = ShaderDefinitionsEditor(parent=main_window)
+        window = ToolWindows.get_window("shader_definition_editor")
+        if not window:
+            window = ShaderDefinitionsEditor(parent=main_window)
+            ToolWindows.set_window("shader_definition_editor", window)
         window.show()
-
-        module.window = window

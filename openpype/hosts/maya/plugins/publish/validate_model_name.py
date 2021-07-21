@@ -4,6 +4,8 @@ from maya import cmds
 import pyblish.api
 import openpype.api
 import openpype.hosts.maya.api.action
+from openpype.hosts.maya.api.shader_definition_editor import (
+    DEFINITION_FILENAME)
 from openpype.lib.mongo import OpenPypeMongoConnection
 import gridfs
 import re
@@ -25,12 +27,13 @@ class ValidateModelName(pyblish.api.InstancePlugin):
     label = "Model Name"
     actions = [openpype.hosts.maya.api.action.SelectInvalidAction]
     material_file = None
-    database_file = "maya/shader_definition.txt"
+    database_file = DEFINITION_FILENAME
 
     @classmethod
     def get_invalid(cls, instance):
         """Get invalid nodes."""
-        use_db = instance.context.data["project_settings"]["maya"]["publish"]["ValidateModelName"]["database"]  # noqa: E501
+        # use_db = instance.context.data["project_settings"]["maya"]["publish"]["ValidateModelName"]["database"]  # noqa: E501
+        use_db = cls.database
 
         def is_group(group_name):
             """Find out if supplied transform is group or not."""
@@ -84,7 +87,8 @@ class ValidateModelName(pyblish.api.InstancePlugin):
         shaders = map(lambda s: s.rstrip(), shaders)
 
         # compile regex for testing names
-        regex = instance.context.data["project_settings"]["maya"]["publish"]["ValidateModelName"]["regex"]  # noqa: E501
+        # regex = instance.context.data["project_settings"]["maya"]["publish"]["ValidateModelName"]["regex"]  # noqa: E501
+        regex = cls.regex
         r = re.compile(regex)
 
         for obj in filtered:

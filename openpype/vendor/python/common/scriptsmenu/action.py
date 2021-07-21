@@ -119,8 +119,7 @@ module.{module_name}()"""
         """
 
         # get the current application and its linked keyboard modifiers
-        app = QtWidgets.QApplication.instance()
-        modifiers = app.keyboardModifiers()
+        modifiers = QtWidgets.QApplication.keyboardModifiers()
 
         # If the menu has a callback registered for the current modifier
         # we run the callback instead of the action itself.

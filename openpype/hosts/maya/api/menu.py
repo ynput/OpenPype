@@ -9,8 +9,6 @@ import maya.cmds as cmds
 from openpype.settings import get_project_settings
 
 self = sys.modules[__name__]
-project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-self._menu = project_settings["maya"]["scriptsmenu"]["name"]
 
 
 log = logging.getLogger(__name__)
@@ -19,8 +17,11 @@ log = logging.getLogger(__name__)
 def _get_menu(menu_name=None):
     """Return the menu instance if it currently exists in Maya"""
 
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    _menu = project_settings["maya"]["scriptsmenu"]["name"]
+
     if menu_name is None:
-        menu_name = self._menu
+        menu_name = _menu
     widgets = dict((
         w.objectName(), w) for w in QtWidgets.QApplication.allWidgets())
     menu = widgets.get(menu_name)
@@ -74,12 +75,18 @@ def deferred():
         return
 
     # load configuration of custom menu
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
     config = project_settings["maya"]["scriptsmenu"]["definition"]
+    _menu = project_settings["maya"]["scriptsmenu"]["name"]
+
+    if not config:
+        log.warning("Skipping studio menu, no definition found.")
+        return
 
     # run the launcher for Maya menu
     studio_menu = launchformaya.main(
-        title=self._menu.title(),
-        objectName=self._menu
+        title=_menu.title(),
+        objectName=_menu.title().lower().replace(" ", "_")
     )
 
     # apply configuration
@@ -109,9 +116,8 @@ def install():
 
 
 def popup():
-    """Pop-up the existing menu near the mouse cursor"""
+    """Pop-up the existing menu near the mouse cursor."""
     menu = _get_menu()
-
     cursor = QtGui.QCursor()
     point = cursor.pos()
     menu.exec_(point)
