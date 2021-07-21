@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """OpenPype script commands to be used directly in Maya."""
-import sys
 
 
 class ToolWindows:
@@ -8,20 +7,30 @@ class ToolWindows:
     _windows = {}
 
     @classmethod
-    def get_window(cls, tool, window=None):
-        # type: (str, QtWidgets.QWidget) -> QtWidgets.QWidget
+    def get_window(cls, tool):
+        """Get widget for specific tool.
+
+        Args:
+            tool (str): Name of the tool.
+
+        Returns:
+            Stored widget.
+
+        """
         try:
             return cls._windows[tool]
         except KeyError:
-            if window:
-                cls.set_window(tool, window)
-                return window
-            else:
-                return None
+            return None
 
     @classmethod
     def set_window(cls, tool, window):
-        # type: (str, QtWidget.QWidget) -> None
+        """Set widget for the tool.
+
+        Args:
+            tool (str): Name of the tool.
+            window (QtWidgets.QWidget): Widget
+
+        """
         cls._windows[tool] = window
 
 
