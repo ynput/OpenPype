@@ -50,3 +50,26 @@ Note that `aiOptions` is not the name of node but rather its type. For renderers
 just one instance of this node type but if that is not so, validator will go through all its
 instances and check the value there. Node type for **VRay** settings is `VRaySettingsNode`, for **Renderman**
 it is `rmanGlobals`, for **Redshift** it is `RedshiftOptions`.
+
+#### Model Name Validator (`ValidateRenderSettings`)
+This validator can enforce specific names for model members. It will check them against **Validation Regex**.
+There is special group in that regex - **shader**. If present, it will take that part of the name as shader name
+and it will compare it with list of shaders defined either in file name specified in **Material File** or from
+database file that is per project and can be directly edited from Maya's *OpenPype Tools > Edit Shader name definitions* when
+**Use database shader name definitions** is on. This list defines simply as one shader name per line.
+
+![Settings example](assets/maya-admin_model_name_validator.png)
+
+For example - you are using default regex `(.*)_(\d)*_(?P<shader>.*)_(GEO)` and you have two shaders defined
+in either file or database `foo` and `bar`.
+
+Object named `SomeCube_0001_foo_GEO` will pass but `SomeCube_GEO` will not and `SomeCube_001_xxx_GEO` will not too.
+
+### Custom Menu
+You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
+![Custom menu definition](assets/maya-admin_scriptsmenu.png)
+
+:::note Work in progress
+This is still work in progress. Menu definition will be handled more friendly with widgets and not
+raw json.
+:::
