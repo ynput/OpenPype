@@ -1,6 +1,5 @@
 import os
 import tempfile
-import subprocess
 import pyblish.api
 import openpype.api
 import openpype.lib
@@ -67,7 +66,6 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
         else:
             # Convert to jpeg if not yet
             full_input_path = os.path.join(thumbnail_repre["stagingDir"], file)
-            full_input_path = '"{}"'.format(full_input_path)
             self.log.info("input {}".format(full_input_path))
 
             full_thumbnail_path = tempfile.mkstemp(suffix=".jpg")[1]
@@ -77,30 +75,37 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
 
             ffmpeg_args = self.ffmpeg_args or {}
 
-            jpeg_items = []
-            jpeg_items.append("\"{}\"".format(ffmpeg_path))
-            # override file if already exists
-            jpeg_items.append("-y")
+            jpeg_items = [
+                "\"{}\"".format(ffmpeg_path),
+                # override file if already exists
+                "-y"
+            ]
+
             # add input filters from peresets
             jpeg_items.extend(ffmpeg_args.get("input") or [])
             # input file
-            jpeg_items.append("-i {}".format(full_input_path))
+            jpeg_items.append("-i \"{}\"".format(full_input_path))
             # extract only single file
-            jpeg_items.append("-vframes 1")
+            jpeg_items.append("-frames:v 1")
+            # Add black background for transparent images
+            jpeg_items.append((
+                "-filter_complex"
+                " \"color=black,format=rgb24[c]"
+                ";[c][0]scale2ref[c][i]"
+                ";[c][i]overlay=format=auto:shortest=1,setsar=1\""
+            ))
 
             jpeg_items.extend(ffmpeg_args.get("output") or [])
 
             # output file
-            jpeg_items.append(full_thumbnail_path)
+            jpeg_items.append("\"{}\"".format(full_thumbnail_path))
 
             subprocess_jpeg = " ".join(jpeg_items)
 
             # run subprocess
             self.log.debug("Executing: {}".format(subprocess_jpeg))
-            subprocess.Popen(
-                subprocess_jpeg,
-                stdout=subprocess.PIPE,
-                shell=True
+            openpype.api.run_subprocess(
+                subprocess_jpeg, shell=True, logger=self.log
             )
 
         # remove thumbnail key from origin repre

@@ -5,6 +5,11 @@
                 ".*"
             ]
         },
+        "ValidateContainers": {
+            "enabled": true,
+            "optional": true,
+            "active": true
+        },
         "ValidateSceneSettings": {
             "enabled": true,
             "optional": true,

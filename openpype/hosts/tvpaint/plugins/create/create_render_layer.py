@@ -58,18 +58,14 @@ class CreateRenderlayer(plugin.Creator):
             # Get currently selected layers
             layers_data = lib.layers_data()
 
-            group_ids = set()
-            for layer in layers_data:
-                if layer["selected"]:
-                    group_ids.add(layer["group_id"])
-
+            selected_layers = [
+                layer
+                for layer in layers_data
+                if layer["selected"]
+            ]
             # Return layer name if only one is selected
-            if len(group_ids) == 1:
-                group_id = list(group_ids)[0]
-                groups_data = lib.groups_data()
-                for group in groups_data:
-                    if group["group_id"] == group_id:
-                        return group["name"]
+            if len(selected_layers) == 1:
+                return selected_layers[0]["name"]
 
         # Use defaults
         if cls.defaults:

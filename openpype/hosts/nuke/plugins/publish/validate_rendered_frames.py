@@ -61,7 +61,6 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
     hosts = ["nuke", "nukestudio"]
     actions = [RepairCollectionActionToLocal, RepairCollectionActionToFarm]
 
-
     def process(self, instance):
 
         for repre in instance.data["representations"]:
@@ -78,10 +77,10 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
 
             collection = collections[0]
 
-            frame_length = int(
-                instance.data["frameEndHandle"]
-                - instance.data["frameStartHandle"] + 1
-            )
+            fstartH = instance.data["frameStartHandle"]
+            fendH = instance.data["frameEndHandle"]
+
+            frame_length = int(fendH - fstartH + 1)
 
             if frame_length != 1:
                 if len(collections) != 1:
@@ -95,7 +94,16 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                     raise ValidationException(msg)
 
             collected_frames_len = int(len(collection.indexes))
+            coll_start = min(collection.indexes)
+            coll_end = max(collection.indexes)
+
             self.log.info("frame_length: {}".format(frame_length))
+            self.log.info("collected_frames_len: {}".format(
+                collected_frames_len))
+            self.log.info("fstartH-fendH: {}-{}".format(fstartH, fendH))
+            self.log.info(
+                "coll_start-coll_end: {}-{}".format(coll_start, coll_end))
+
             self.log.info(
                 "len(collection.indexes): {}".format(collected_frames_len)
             )
@@ -103,8 +111,11 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             if ("slate" in instance.data["families"]) \
                     and (frame_length != collected_frames_len):
                 collected_frames_len -= 1
+                fstartH += 1
 
-            assert (collected_frames_len == frame_length), (
+            assert ((collected_frames_len >= frame_length)
+                    and (coll_start <= fstartH)
+                    and (coll_end >= fendH)), (
                 "{} missing frames. Use repair to render all frames"
             ).format(__name__)
 

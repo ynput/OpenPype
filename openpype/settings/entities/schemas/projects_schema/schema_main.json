@@ -84,6 +84,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_houdini"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_blender"
                 },
                 {

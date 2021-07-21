@@ -286,7 +286,8 @@ def add_button_write_to_read(node):
     node.addKnob(knob)
 
 
-def create_write_node(name, data, input=None, prenodes=None, review=True):
+def create_write_node(name, data, input=None, prenodes=None,
+                      review=True, linked_knobs=None):
     ''' Creating write node which is group node
 
     Arguments:
@@ -390,13 +391,14 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         if prenodes:
             for node in prenodes:
                 # get attributes
-                name = node["name"]
+                pre_node_name = node["name"]
                 klass = node["class"]
                 knobs = node["knobs"]
                 dependent = node["dependent"]
 
                 # create node
-                now_node = nuke.createNode(klass, "name {}".format(name))
+                now_node = nuke.createNode(
+                    klass, "name {}".format(pre_node_name))
                 now_node.hideControlPanel()
 
                 # add data to knob
@@ -465,29 +467,40 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     GN.addKnob(nuke.Text_Knob('', 'Rendering'))
 
     # Add linked knobs.
-    linked_knob_names = [
-        "_grp-start_",
-        "use_limit", "first", "last",
-        "_grp-end_",
-        "Render"
-    ]
-    for name in linked_knob_names:
-        if "_grp-start_" in name:
+    linked_knob_names = []
+
+    # add input linked knobs and create group only if any input
+    if linked_knobs:
+        linked_knob_names.append("_grp-start_")
+        linked_knob_names.extend(linked_knobs)
+        linked_knob_names.append("_grp-end_")
+
+    linked_knob_names.append("Render")
+
+    for _k_name in linked_knob_names:
+        if "_grp-start_" in _k_name:
             knob = nuke.Tab_Knob(
                 "rnd_attr", "Rendering attributes", nuke.TABBEGINCLOSEDGROUP)
             GN.addKnob(knob)
-        elif "_grp-end_" in name:
+        elif "_grp-end_" in _k_name:
             knob = nuke.Tab_Knob(
                 "rnd_attr_end", "Rendering attributes", nuke.TABENDGROUP)
             GN.addKnob(knob)
         else:
-            link = nuke.Link_Knob("")
-            link.makeLink(write_node.name(), name)
-            link.setName(name)
-            if "Render" in name:
-                link.setLabel("Render Local")
-            link.setFlag(0x1000)
-            GN.addKnob(link)
+            if "___" in _k_name:
+                # add devider
+                GN.addKnob(nuke.Text_Knob(""))
+            else:
+                # add linked knob by _k_name
+                link = nuke.Link_Knob("")
+                link.makeLink(write_node.name(), _k_name)
+                link.setName(_k_name)
+
+                # make render
+                if "Render" in _k_name:
+                    link.setLabel("Render Local")
+                link.setFlag(0x1000)
+                GN.addKnob(link)
 
     # adding write to read button
     add_button_write_to_read(GN)

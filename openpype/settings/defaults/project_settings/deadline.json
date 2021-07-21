@@ -1,5 +1,16 @@
 {
     "publish": {
+        "ValidateExpectedFiles": {
+            "enabled": true,
+            "active": true,
+            "allow_user_override": true,
+            "families": [
+                "render"
+            ],
+            "targets": [
+                "deadline"
+            ]
+        },
         "MayaSubmitDeadline": {
             "enabled": true,
             "optional": false,
@@ -8,7 +19,9 @@
             "use_published": true,
             "asset_dependencies": true,
             "group": "none",
-            "limit": []
+            "limit": [],
+            "jobInfo": {},
+            "pluginInfo": {}
         },
         "NukeSubmitDeadline": {
             "enabled": true,
@@ -22,6 +35,8 @@
             "group": "",
             "department": "",
             "use_gpu": true,
+            "env_allowed_keys": [],
+            "env_search_replace_values": {},
             "limit_groups": {}
         },
         "HarmonySubmitDeadline": {

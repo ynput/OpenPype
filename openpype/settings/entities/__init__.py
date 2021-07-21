@@ -101,6 +101,7 @@ from .color_entity import ColorEntity
 from .enum_entity import (
     BaseEnumEntity,
     EnumEntity,
+    HostsEnumEntity,
     AppsEnumEntity,
     ToolsEnumEntity,
     TaskTypeEnumEntity,
@@ -110,6 +111,7 @@ from .enum_entity import (
 from .list_entity import ListEntity
 from .dict_immutable_keys_entity import DictImmutableKeysEntity
 from .dict_mutable_keys_entity import DictMutableKeysEntity
+from .dict_conditional import DictConditionalEntity
 
 from .anatomy_entities import AnatomyEntity
 
@@ -153,6 +155,7 @@ __all__ = (
 
     "BaseEnumEntity",
     "EnumEntity",
+    "HostsEnumEntity",
     "AppsEnumEntity",
     "ToolsEnumEntity",
     "TaskTypeEnumEntity",
@@ -163,6 +166,8 @@ __all__ = (
     "DictImmutableKeysEntity",
 
     "DictMutableKeysEntity",
+
+    "DictConditionalEntity",
 
     "AnatomyEntity"
 )

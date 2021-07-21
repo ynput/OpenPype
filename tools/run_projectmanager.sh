@@ -79,11 +79,9 @@ main () {
 
   _inside_openpype_tool="1"
 
-  # make sure Poetry is in PATH
   if [[ -z $POETRY_HOME ]]; then
     export POETRY_HOME="$openpype_root/.poetry"
   fi
-  export PATH="$POETRY_HOME/bin:$PATH"
 
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
@@ -97,7 +95,7 @@ main () {
   fi
 
   echo -e "${BIGreen}>>>${RST} Generating zip from current sources ..."
-  poetry run python "$openpype_root/start.py" projectmanager
+  "$POETRY_HOME/bin/poetry" run python "$openpype_root/start.py" projectmanager
 }
 
 main

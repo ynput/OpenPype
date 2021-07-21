@@ -11,6 +11,7 @@ from openpype.settings.entities import (
     GUIEntity,
     DictImmutableKeysEntity,
     DictMutableKeysEntity,
+    DictConditionalEntity,
     ListEntity,
     PathEntity,
     ListStrictEntity,
@@ -35,6 +36,7 @@ from .base import GUIWidget
 from .list_item_widget import ListWidget
 from .list_strict_widget import ListStrictWidget
 from .dict_mutable_widget import DictMutableKeysWidget
+from .dict_conditional import DictConditionalWidget
 from .item_widgets import (
     BoolWidget,
     DictImmutableKeysWidget,
@@ -99,6 +101,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         args = (category_widget, entity, entity_widget)
         if isinstance(entity, GUIEntity):
             return GUIWidget(*args)
+
+        elif isinstance(entity, DictConditionalEntity):
+            return DictConditionalWidget(*args)
 
         elif isinstance(entity, DictImmutableKeysEntity):
             return DictImmutableKeysWidget(*args)
@@ -183,6 +188,12 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         footer_widget = QtWidgets.QWidget(configurations_widget)
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)
 
+        refresh_icon = qtawesome.icon("fa.refresh", color="white")
+        refresh_btn = QtWidgets.QPushButton(footer_widget)
+        refresh_btn.setIcon(refresh_icon)
+
+        footer_layout.addWidget(refresh_btn, 0)
+
         if self.user_role == "developer":
             self._add_developer_ui(footer_layout)
 
@@ -205,8 +216,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         main_layout.addWidget(configurations_widget, 1)
 
         save_btn.clicked.connect(self._save)
+        refresh_btn.clicked.connect(self._on_refresh)
 
         self.save_btn = save_btn
+        self.refresh_btn = refresh_btn
         self.require_restart_label = require_restart_label
         self.scroll_widget = scroll_widget
         self.content_layout = content_layout
@@ -220,10 +233,6 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         return
 
     def _add_developer_ui(self, footer_layout):
-        refresh_icon = qtawesome.icon("fa.refresh", color="white")
-        refresh_button = QtWidgets.QPushButton()
-        refresh_button.setIcon(refresh_icon)
-
         modify_defaults_widget = QtWidgets.QWidget()
         modify_defaults_checkbox = QtWidgets.QCheckBox(modify_defaults_widget)
         modify_defaults_checkbox.setChecked(self._hide_studio_overrides)
@@ -235,10 +244,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         modify_defaults_layout.addWidget(label_widget)
         modify_defaults_layout.addWidget(modify_defaults_checkbox)
 
-        footer_layout.addWidget(refresh_button, 0)
         footer_layout.addWidget(modify_defaults_widget, 0)
 
-        refresh_button.clicked.connect(self._on_refresh)
         modify_defaults_checkbox.stateChanged.connect(
             self._on_modify_defaults
         )

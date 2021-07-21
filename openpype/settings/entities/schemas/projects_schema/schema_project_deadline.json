@@ -14,6 +14,47 @@
                 {
                     "type": "dict",
                     "collapsible": true,
+                    "key": "ValidateExpectedFiles",
+                    "label": "Validate Expected Files",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Validate if all expected files were rendered"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "allow_user_override",
+                            "object_type": "text",
+                            "label": "Allow user change frame range"
+                        },
+                        {
+                            "type": "list",
+                            "key": "families",
+                            "object_type": "text",
+                            "label": "Trigger on families"
+                        },
+                        {
+                            "type": "list",
+                            "key": "targets",
+                            "object_type": "text",
+                            "label": "Trigger for plugins"
+                        }
+                    ]
+                },
+                {
+                    "type": "dict",
+                    "collapsible": true,
                     "key": "MayaSubmitDeadline",
                     "label": "Submit maya job to deadline",
                     "checkbox_key": "enabled",
@@ -67,6 +108,16 @@
                             "key": "limit",
                             "label": "Limit Groups",
                             "object_type": "text"
+                        },
+                        {
+                            "type": "raw-json",
+                            "key": "jobInfo",
+                            "label": "Additional JobInfo data"
+                        },
+                        {
+                            "type": "raw-json",
+                            "key": "pluginInfo",
+                            "label": "Additional PluginInfo data"
                         }
                     ]
                 },
@@ -131,6 +182,20 @@
                             "type": "boolean",
                             "key": "use_gpu",
                             "label": "Use GPU"
+                        },
+                        {
+                            "type": "list",
+                            "key": "env_allowed_keys",
+                            "object_type": "text",
+                            "label": "Allowed environment keys"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "env_search_replace_values",
+                            "label": "Search & replace in environment values",
+                            "object_type": {
+                                "type": "text"
+                            }
                         },
                         {
                             "type": "dict-modifiable",

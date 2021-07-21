@@ -78,6 +78,10 @@
                         {
                             "name": "colorspace",
                             "value": "linear"
+                        },
+                        {
+                            "name": "create_directories",
+                            "value": "True"
                         }
                     ]
                 },
@@ -114,6 +118,10 @@
                         {
                             "name": "colorspace",
                             "value": "linear"
+                        },
+                        {
+                            "name": "create_directories",
+                            "value": "True"
                         }
                     ]
                 }

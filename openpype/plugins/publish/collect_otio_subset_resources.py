@@ -40,6 +40,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
         otio_clip = instance.data["otioClip"]
         otio_avalable_range = otio_clip.available_range()
         media_fps = otio_avalable_range.start_time.rate
+        available_duration = otio_avalable_range.duration.value
 
         # get available range trimmed with processed retimes
         retimed_attributes = editorial.get_media_range_with_retimes(
@@ -68,6 +69,8 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
             a_frame_start_h, (a_frame_end_h - a_frame_start_h + 1),
             media_fps
         )
+        trimmed_duration = trimmed_media_range_h.duration.value
+
         self.log.debug("trimmed_media_range_h: {}".format(
             trimmed_media_range_h))
         self.log.debug("a_frame_start_h: {}".format(
@@ -150,12 +153,18 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
                 repre = self._create_representation(
                     frame_start, frame_end, collection=collection)
         else:
+            _trim = False
             dirname, filename = os.path.split(media_ref.target_url)
             self.staging_dir = dirname
+            if trimmed_duration < available_duration:
+                self.log.debug("Ready for Trimming")
+                instance.data["families"].append("trim")
+                instance.data["otioTrimmingRange"] = trimmed_media_range_h
+                _trim = True
 
             self.log.debug(filename)
             repre = self._create_representation(
-                frame_start, frame_end, file=filename)
+                frame_start, frame_end, file=filename, trim=_trim)
 
         if repre:
             # add representation to instance data
@@ -196,7 +205,7 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
                 "frameStart": start,
                 "frameEnd": end,
             })
-            return representation_data
+
         if kwargs.get("file"):
             file = kwargs.get("file")
             ext = os.path.splitext(file)[-1]
@@ -207,4 +216,9 @@ class CollectOcioSubsetResources(pyblish.api.InstancePlugin):
                 "frameStart": start,
                 "frameEnd": end,
             })
-            return representation_data
+
+        if kwargs.get("trim") is True:
+            representation_data.update({
+                "tags": ["trim"]
+            })
+        return representation_data

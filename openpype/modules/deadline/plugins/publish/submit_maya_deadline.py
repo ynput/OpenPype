@@ -271,6 +271,22 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             ["DEADLINE_REST_URL"]
         )
 
+        self._job_info = (
+            context.data["project_settings"].get(
+                "deadline", {}).get(
+                "publish", {}).get(
+                "MayaSubmitDeadline", {}).get(
+                "jobInfo", {})
+        )
+
+        self._plugin_info = (
+            context.data["project_settings"].get(
+                "deadline", {}).get(
+                "publish", {}).get(
+                "MayaSubmitDeadline", {}).get(
+                "pluginInfo", {})
+        )
+
         assert self._deadline_url, "Requires DEADLINE_REST_URL"
 
         context = instance.context
@@ -407,7 +423,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.payload_skeleton["JobInfo"]["Priority"] = \
             self._instance.data.get("priority", 50)
 
-        if self.group != "none":
+        if self.group != "none" and self.group:
             self.payload_skeleton["JobInfo"]["Group"] = self.group
 
         if self.limit_groups:
@@ -535,6 +551,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
 
         self.preflight_check(instance)
+
+        # add jobInfo and pluginInfo variables from Settings
+        payload["JobInfo"].update(self._job_info)
+        payload["PluginInfo"].update(self._plugin_info)
 
         # Prepare tiles data ------------------------------------------------
         if instance.data.get("tileRendering"):

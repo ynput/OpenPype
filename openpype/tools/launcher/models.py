@@ -325,19 +325,59 @@ class ProjectModel(QtGui.QStandardItemModel):
 
         self.hide_invisible = False
         self.project_icon = qtawesome.icon("fa.map", color="white")
+        self._project_names = set()
 
     def refresh(self):
-        self.clear()
-        self.beginResetModel()
-
+        project_names = set()
         for project_doc in self.get_projects():
-            item = QtGui.QStandardItem(self.project_icon, project_doc["name"])
-            self.appendRow(item)
+            project_names.add(project_doc["name"])
 
-        self.endResetModel()
+        origin_project_names = set(self._project_names)
+        self._project_names = project_names
+
+        project_names_to_remove = origin_project_names - project_names
+        if project_names_to_remove:
+            row_counts = {}
+            continuous = None
+            for row in range(self.rowCount()):
+                index = self.index(row, 0)
+                index_name = index.data(QtCore.Qt.DisplayRole)
+                if index_name in project_names_to_remove:
+                    if continuous is None:
+                        continuous = row
+                        row_counts[continuous] = 0
+                    row_counts[continuous] += 1
+                else:
+                    continuous = None
+
+            for row in reversed(sorted(row_counts.keys())):
+                count = row_counts[row]
+                self.removeRows(row, count)
+
+        continuous = None
+        row_counts = {}
+        for idx, project_name in enumerate(sorted(project_names)):
+            if project_name in origin_project_names:
+                continuous = None
+                continue
+
+            if continuous is None:
+                continuous = idx
+                row_counts[continuous] = []
+
+            row_counts[continuous].append(project_name)
+
+        for row in reversed(sorted(row_counts.keys())):
+            items = []
+            for project_name in row_counts[row]:
+                item = QtGui.QStandardItem(self.project_icon, project_name)
+                items.append(item)
+
+            self.invisibleRootItem().insertRows(row, items)
 
     def get_projects(self):
         project_docs = []
+
         for project_doc in sorted(
             self.dbcon.projects(), key=lambda x: x["name"]
         ):
