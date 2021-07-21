@@ -1,20 +1,27 @@
 # Changelog
 
-## [3.3.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.3.0-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.2.0...HEAD)
 
 **🚀 Enhancements**
 
 - nuke: settings create missing default subsets [\#1829](https://github.com/pypeclub/OpenPype/pull/1829)
+- Update poetry lock [\#1823](https://github.com/pypeclub/OpenPype/pull/1823)
 - Settings: settings for plugins [\#1819](https://github.com/pypeclub/OpenPype/pull/1819)
+- Nuke: ftrack family plugin settings preset [\#1805](https://github.com/pypeclub/OpenPype/pull/1805)
 - Maya: Deadline custom settings  [\#1797](https://github.com/pypeclub/OpenPype/pull/1797)
 
 **🐛 Bug fixes**
 
+- nuke: write render node skipped with crop [\#1836](https://github.com/pypeclub/OpenPype/pull/1836)
 - Project folder structure overrides [\#1813](https://github.com/pypeclub/OpenPype/pull/1813)
 - Maya: fix yeti settings path in extractor [\#1809](https://github.com/pypeclub/OpenPype/pull/1809)
 - Houdini colector formatting keys fix [\#1802](https://github.com/pypeclub/OpenPype/pull/1802)
+
+**Merged pull requests:**
+
+- PS, AE - send actual context when another webserver is running [\#1811](https://github.com/pypeclub/OpenPype/pull/1811)
 
 ## [3.2.0](https://github.com/pypeclub/OpenPype/tree/3.2.0) (2021-07-13)
 
@@ -22,7 +29,6 @@
 
 **🚀 Enhancements**
 
-- Nuke: ftrack family plugin settings preset [\#1805](https://github.com/pypeclub/OpenPype/pull/1805)
 - Standalone publisher last project [\#1799](https://github.com/pypeclub/OpenPype/pull/1799)
 - Ftrack Multiple notes as server action [\#1795](https://github.com/pypeclub/OpenPype/pull/1795)
 - Settings conditional dict [\#1777](https://github.com/pypeclub/OpenPype/pull/1777)
@@ -110,20 +116,16 @@
 - Scrolling in OpenPype info widget [\#1702](https://github.com/pypeclub/OpenPype/pull/1702)
 - OpenPype style in modules [\#1694](https://github.com/pypeclub/OpenPype/pull/1694)
 - Sort applications and tools alphabetically in Settings UI [\#1689](https://github.com/pypeclub/OpenPype/pull/1689)
-- \#683 - Validate Frame Range in Standalone Publisher [\#1683](https://github.com/pypeclub/OpenPype/pull/1683)
-- Hiero: old container versions identify with red color [\#1682](https://github.com/pypeclub/OpenPype/pull/1682)
 
 **🐛 Bug fixes**
 
 - Nuke: broken publishing rendered frames [\#1707](https://github.com/pypeclub/OpenPype/pull/1707)
 - Standalone publisher Thumbnail export args [\#1705](https://github.com/pypeclub/OpenPype/pull/1705)
 - Bad zip can break OpenPype start [\#1691](https://github.com/pypeclub/OpenPype/pull/1691)
-- Hiero: published whole edit mov [\#1687](https://github.com/pypeclub/OpenPype/pull/1687)
 
 **Merged pull requests:**
 
 - update dependencies [\#1697](https://github.com/pypeclub/OpenPype/pull/1697)
-- Bump normalize-url from 4.5.0 to 4.5.1 in /website [\#1686](https://github.com/pypeclub/OpenPype/pull/1686)
 
 # Changelog
 
