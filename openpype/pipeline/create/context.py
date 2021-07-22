@@ -403,7 +403,7 @@ class CreateContext:
         self.creators = {}
         self.publish_plugins = []
         self.plugins_with_defs = []
-        self.attr_plugins_by_family = {}
+        self._attr_plugins_by_family = {}
 
         self._log = None
 
@@ -427,7 +427,7 @@ class CreateContext:
         from openpype.pipeline import OpenPypePyblishPluginMixin
 
         # Reset publish plugins
-        self.attr_plugins_by_family = {}
+        self._attr_plugins_by_family = {}
 
         publish_plugins = pyblish.api.discover()
         self.publish_plugins = publish_plugins
@@ -480,12 +480,12 @@ class CreateContext:
         self.instances = instances
 
     def _get_publish_plugins_with_attr_for_family(self, family):
-        if family not in self.attr_plugins_by_family:
+        if family not in self._attr_plugins_by_family:
             import pyblish.logic
 
             filtered_plugins = pyblish.logic.plugins_by_families(
                 self.plugins_with_defs, [family]
             )
-            self.attr_plugins_by_family[family] = filtered_plugins
+            self._attr_plugins_by_family[family] = filtered_plugins
 
-        return self.attr_plugins_by_family[family]
+        return self._attr_plugins_by_family[family]
