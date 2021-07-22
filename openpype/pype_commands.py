@@ -41,6 +41,13 @@ class PypeCommands:
         return run_event_server(*args)
 
     @staticmethod
+    def launch_webpublisher_webservercli(*args):
+        from openpype.modules.webserver.webserver_cli import (
+            run_webserver
+        )
+        return run_webserver(*args)
+
+    @staticmethod
     def launch_standalone_publisher():
         from openpype.tools import standalonepublish
         standalonepublish.main()

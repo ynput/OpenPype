@@ -95,6 +95,15 @@ def eventserver(debug,
 
 
 @main.command()
+@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+def webpublisherwebserver(debug):
+    if debug:
+        os.environ['OPENPYPE_DEBUG'] = "3"
+
+    PypeCommands().launch_webpublisher_webservercli()
+
+
+@main.command()
 @click.argument("output_json_path")
 @click.option("--project", help="Project name", default=None)
 @click.option("--asset", help="Asset name", default=None)

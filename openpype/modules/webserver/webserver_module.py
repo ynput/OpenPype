@@ -50,10 +50,8 @@ class WebServerModule(PypeModule, ITrayService):
         static_prefix = "/res"
         self.server_manager.add_static(static_prefix, resources.RESOURCES_DIR)
 
-        webserver_url = "http://localhost:{}".format(self.port)
-        os.environ["OPENPYPE_WEBSERVER_URL"] = webserver_url
         os.environ["OPENPYPE_STATICS_SERVER"] = "{}{}".format(
-            webserver_url, static_prefix
+            os.environ["OPENPYPE_WEBSERVER_URL"], static_prefix
         )
 
     def _add_listeners(self):
@@ -81,6 +79,8 @@ class WebServerModule(PypeModule, ITrayService):
         self.server_manager.on_stop_callbacks.append(
             self.set_service_failed_icon
         )
+        webserver_url = "http://localhost:{}".format(self.port)
+        os.environ["OPENPYPE_WEBSERVER_URL"] = webserver_url
 
     @staticmethod
     def find_free_port(
