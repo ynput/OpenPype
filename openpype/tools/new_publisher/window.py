@@ -30,6 +30,7 @@ from Qt import QtWidgets
 from openpype import style
 from control import PublisherController
 from widgets import (
+    PublishOverlayFrame,
     SubsetAttributesWidget,
     InstanceCardView,
     InstanceListView,
@@ -52,6 +53,15 @@ class PublisherWindow(QtWidgets.QWidget):
 
         # TODO Title, Icon, Stylesheet
         main_frame = QtWidgets.QWidget(self)
+        # Overlay MUST be created after Main to be painted on top of it
+        overlay_frame = PublishOverlayFrame(self)
+        overlay_frame.setVisible(False)
+
+        blur_effect = QtWidgets.QGraphicsBlurEffect(main_frame)
+        blur_effect.setBlurRadius(3)
+        blur_effect.setEnabled(False)
+
+        main_frame.setGraphicsEffect(blur_effect)
 
         # Header
         header_widget = QtWidgets.QWidget(main_frame)
@@ -154,6 +164,9 @@ class PublisherWindow(QtWidgets.QWidget):
         )
 
         self.main_frame = main_frame
+        self.overlay_frame = overlay_frame
+
+        self.blur_effect = blur_effect
 
         self.context_label = context_label
 
@@ -184,6 +197,15 @@ class PublisherWindow(QtWidgets.QWidget):
         self.set_context_label(
             "<project>/<hierarchy>/<asset>/<task>/<workfile>"
         )
+
+    def resizeEvent(self, event):
+        super(PublisherWindow, self).resizeEvent(event)
+
+        self.overlay_frame.resize(self.main_frame.size())
+
+    def moveEvent(self, event):
+        super(PublisherWindow, self).moveEvent(event)
+        self.overlay_frame.move(self.main_frame.pos())
 
     def showEvent(self, event):
         super(PublisherWindow, self).showEvent(event)
@@ -270,10 +292,20 @@ class PublisherWindow(QtWidgets.QWidget):
     def _on_save_clicked(self):
         self.controller.save_instance_changes()
 
+    def _show_overlay(self):
+        if self.overlay_frame.isVisible():
+            return
+
+        self.overlay_frame.setVisible(True)
+
+        self.blur_effect.setEnabled(True)
+
     def _on_validate_clicked(self):
+        self._show_overlay()
         self.controller.validate()
 
     def _on_publish_clicked(self):
+        self._show_overlay()
         self.controller.publish()
 
     def _refresh_instances(self):

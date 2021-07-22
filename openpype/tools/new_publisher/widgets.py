@@ -1301,3 +1301,69 @@ class InstanceListView(_AbstractInstanceView):
         )
         proxy_index = self.proxy_model.mapFromSource(group_index)
         self.instance_view.setExpanded(proxy_index, expanded)
+
+
+class PublishOverlayFrame(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super(PublishOverlayFrame, self).__init__(parent)
+
+        info_frame = QtWidgets.QFrame(self)
+        info_frame.setObjectName("PublishOverlay")
+
+        content_widget = QtWidgets.QWidget(info_frame)
+        content_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        info_layout = QtWidgets.QVBoxLayout(info_frame)
+        info_layout.setContentsMargins(0, 0, 0, 0)
+        info_layout.addWidget(content_widget)
+
+        main_label = QtWidgets.QLabel("Publishing...", content_widget)
+        main_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        instance_label = QtWidgets.QLabel("<Instance name>", content_widget)
+        instance_label.setAlignment(
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        )
+        plugin_label = QtWidgets.QLabel("<Plugin name>", content_widget)
+        plugin_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
+        instance_plugin_layout = QtWidgets.QHBoxLayout()
+        instance_plugin_layout.addWidget(instance_label, 1)
+        instance_plugin_layout.addWidget(plugin_label, 1)
+
+        progress_widget = QtWidgets.QProgressBar(content_widget)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setAlignment(QtCore.Qt.AlignCenter)
+        content_layout.addStretch(1)
+        content_layout.addWidget(main_label)
+        content_layout.addStretch(1)
+        content_layout.addLayout(instance_plugin_layout)
+        content_layout.addWidget(progress_widget)
+        content_layout.addStretch(1)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addStretch(1)
+        main_layout.addWidget(info_frame, 2)
+        main_layout.addStretch(1)
+
+        self.main_label = main_label
+        self.info_frame = info_frame
+
+        self.instance_label = instance_label
+        self.plugin_label = plugin_label
+        self.progress_widget = progress_widget
+
+    def set_instance(self, instance_name):
+        self.instance_label.setText(instance_name)
+
+    def set_plugin(self, plugin_name):
+        self.plugin_label.setText(plugin_name)
+
+    def set_progress_range(self, max_value):
+        self.progress_widget.setMaximum(max_value)
+
+    def set_progress(self, value):
+        self.progress_widget.setValue(value)
