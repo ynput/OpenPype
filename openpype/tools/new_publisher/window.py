@@ -271,10 +271,10 @@ class PublisherWindow(QtWidgets.QWidget):
         self.controller.save_instance_changes()
 
     def _on_validate_clicked(self):
-        print("Validation!!!")
+        self.controller.validate()
 
     def _on_publish_clicked(self):
-        print("Publishing!!!")
+        self.controller.publish()
 
     def _refresh_instances(self):
         if self._refreshing_instances:

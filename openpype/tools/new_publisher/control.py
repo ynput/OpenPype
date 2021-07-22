@@ -1,6 +1,7 @@
 import weakref
 import logging
 import inspect
+import collections
 import avalon.api
 import pyblish.api
 from openpype.api import (
@@ -17,6 +18,57 @@ from openpype.pipeline.create import (
     CreateContext
 )
 
+from Qt import QtCore
+
+
+PLUGIN_ORDER_OFFSET = 0.5
+
+
+class MainThreadItem:
+    def __init__(self, callback, *args, **kwargs):
+        self.callback = callback
+        self.args = args
+        self.kwargs = kwargs
+
+    def process(self):
+        self.callback(*self.args, **self.kwargs)
+
+
+class MainThreadProcess(QtCore.QObject):
+    def __init__(self):
+        super(MainThreadProcess, self).__init__()
+        self._items_to_process = collections.deque()
+
+        timer = QtCore.QTimer()
+        timer.setInterval(50)
+
+        timer.timeout.connect(self._execute)
+
+        self._timer = timer
+
+    def add_item(self, item):
+        self._items_to_process.append(item)
+
+    def _execute(self):
+        if not self._items_to_process:
+            return
+
+        item = self._items_to_process.popleft()
+        item.process()
+
+    def start(self):
+        if not self._timer.isActive():
+            self._timer.start()
+
+    def stop(self):
+        if self._timer.isActive():
+            self._timer.stop()
+
+    def clear(self):
+        if self._timer.isActive():
+            self._timer.stop()
+        self._items_to_process = collections.deque()
+
 
 class PublisherController:
     def __init__(self, dbcon=None, headless=False):
@@ -27,6 +79,15 @@ class PublisherController:
         self.create_context = CreateContext(
             self.host, dbcon, headless=False, reset=False
         )
+
+        self._publish_context = None
+        self._publish_validated = False
+        self._publish_up_validation = False
+        self._validation_order = (
+            pyblish.api.ValidatorOrder + PLUGIN_ORDER_OFFSET
+        )
+        self._main_thread_processor = MainThreadProcess()
+        self._main_thread_iter = None
 
         self._instances_refresh_callback_refs = set()
         self._plugins_refresh_callback_refs = set()
@@ -76,10 +137,12 @@ class PublisherController:
             callbacks.remove(ref)
 
     def reset(self):
-        self._reset_plugin()
+        self._reset_plugins()
+        # Publish part must be resetted after plugins
+        self._reset_publish()
         self._reset_instances()
 
-    def _reset_plugin(self):
+    def _reset_plugins(self):
         """Reset to initial state."""
         if self._resetting_plugins:
             return
@@ -185,3 +248,88 @@ class PublisherController:
         self.host.remove_instances(instances)
 
         self._reset_instances()
+
+    def _reset_publish(self):
+        self._publish_validated = False
+        self._publish_up_validation = False
+        self._main_thread_processor.clear()
+        self._main_thread_iter = self._publish_iterator()
+        self._publish_context = pyblish.api.Context()
+
+    def validate(self):
+        if self._publish_validated:
+            return
+        self._publish_up_validation = True
+        self._start_publish()
+
+    def publish(self):
+        self._publish_up_validation = False
+        self._start_publish()
+
+    def _start_publish(self):
+        self._main_thread_processor.start()
+        self._publish_next_process()
+
+    def _stop_publish(self):
+        self._main_thread_processor.stop()
+
+    def _publish_next_process(self):
+        item = next(self._main_thread_iter)
+        self._main_thread_processor.add_item(item)
+
+    def _publish_iterator(self):
+        for plugin in self.publish_plugins:
+            if (
+                self._publish_up_validation
+                and plugin.order >= self._validation_order
+            ):
+                yield MainThreadItem(self._stop_publish)
+
+            if plugin.__instanceEnabled__:
+                instances = pyblish.logic.instances_by_plugin(
+                    self._publish_context, plugin
+                )
+                if not instances:
+                    continue
+
+                for instance in instances:
+                    if instance.data.get("publish") is False:
+                        continue
+
+                    yield MainThreadItem(
+                        self._process_and_continue, plugin, instance
+                    )
+            else:
+                families = collect_families_from_instances(
+                    self._publish_context, only_active=True
+                )
+                plugins = pyblish.logic.plugins_by_families(
+                    [plugin], families
+                )
+                if plugins:
+                    yield MainThreadItem(
+                        self._process_and_continue, plugin, None
+                    )
+        yield MainThreadItem(self._stop_publish)
+
+    def _process_and_continue(self, plugin, instance):
+        # TODO execute plugin
+        print(plugin, instance)
+        self._publish_next_process()
+
+
+def collect_families_from_instances(instances, only_active=False):
+    all_families = set()
+    for instance in instances:
+        if only_active:
+            if instance.data.get("publish") is False:
+                continue
+        family = instance.data.get("family")
+        if family:
+            all_families.add(family)
+
+        families = instance.data.get("families") or tuple()
+        for family in families:
+            all_families.add(family)
+
+    return list(all_families)
