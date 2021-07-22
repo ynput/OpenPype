@@ -1259,7 +1259,7 @@ class SyncToAvalonEvent(BaseEvent):
             self.process_session,
             entity,
             hier_attrs,
-            self.cust_attr_types_by_id
+            self.cust_attr_types_by_id.values()
         )
         for key, val in hier_values.items():
             output[key] = val
