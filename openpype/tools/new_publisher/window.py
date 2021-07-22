@@ -74,8 +74,8 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_list_view.setVisible(False)
 
         # Buttons at the bottom of subset view
-        create_btn = QtWidgets.QPushButton("Create", subset_widget)
-        delete_btn = QtWidgets.QPushButton("Delete", subset_widget)
+        create_btn = QtWidgets.QPushButton("+", subset_widget)
+        delete_btn = QtWidgets.QPushButton("-", subset_widget)
         save_btn = QtWidgets.QPushButton("Save", subset_widget)
         change_view_btn = QtWidgets.QPushButton("=", subset_widget)
 
