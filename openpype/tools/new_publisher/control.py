@@ -91,6 +91,9 @@ class PublisherController:
 
         self._instances_refresh_callback_refs = set()
         self._plugins_refresh_callback_refs = set()
+        self._publish_instance_changed_callback_refs = set()
+        self._publish_plugin_changed_callback_refs = set()
+        self._publishing_stopped_callback_refs = set()
 
         self._resetting_plugins = False
         self._resetting_instances = False
@@ -123,13 +126,25 @@ class PublisherController:
         ref = weakref.WeakMethod(callback)
         self._plugins_refresh_callback_refs.add(ref)
 
+    def add_instance_change_callback(self, callback):
+        ref = weakref.WeakMethod(callback)
+        self._publish_instance_changed_callback_refs.add(ref)
+
+    def add_plugin_change_callback(self, callback):
+        ref = weakref.WeakMethod(callback)
+        self._publish_plugin_changed_callback_refs.add(ref)
+
+    def add_publish_stopped_callback(self, callback):
+        ref = weakref.WeakMethod(callback)
+        self._publishing_stopped_callback_refs.add(ref)
+
     def _trigger_callbacks(self, callbacks, *args, **kwargs):
         # Trigger reset callbacks
         to_remove = set()
         for ref in callbacks:
             callback = ref()
             if callback:
-                callback()
+                callback(*args, **kwargs)
             else:
                 to_remove.add(ref)
 
@@ -272,6 +287,7 @@ class PublisherController:
 
     def _stop_publish(self):
         self._main_thread_processor.stop()
+        self._trigger_callbacks(self._publishing_stopped_callback_refs)
 
     def _publish_next_process(self):
         item = next(self._main_thread_iter)
@@ -285,6 +301,9 @@ class PublisherController:
             ):
                 yield MainThreadItem(self._stop_publish)
 
+            self._trigger_callbacks(
+                self._publish_plugin_changed_callback_refs, plugin
+            )
             if plugin.__instanceEnabled__:
                 instances = pyblish.logic.instances_by_plugin(
                     self._publish_context, plugin
@@ -296,6 +315,11 @@ class PublisherController:
                     if instance.data.get("publish") is False:
                         continue
 
+                    self._trigger_callbacks(
+                        self._publish_instance_changed_callback_refs,
+                        self._publish_context,
+                        instance
+                    )
                     yield MainThreadItem(
                         self._process_and_continue, plugin, instance
                     )
@@ -307,6 +331,11 @@ class PublisherController:
                     [plugin], families
                 )
                 if plugins:
+                    self._trigger_callbacks(
+                        self._publish_instance_changed_callback_refs,
+                        self._publish_context,
+                        None
+                    )
                     yield MainThreadItem(
                         self._process_and_continue, plugin, None
                     )

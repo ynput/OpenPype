@@ -163,6 +163,10 @@ class PublisherWindow(QtWidgets.QWidget):
             self._on_subset_change
         )
 
+        controller.add_instance_change_callback(self._on_instance_change)
+        controller.add_plugin_change_callback(self._on_plugin_change)
+        controller.add_publish_stopped_callback(self._on_publish_stop)
+
         self.main_frame = main_frame
         self.overlay_frame = overlay_frame
 
@@ -338,6 +342,32 @@ class PublisherWindow(QtWidgets.QWidget):
         self.delete_btn.setEnabled(len(instances) >= 0)
 
         self.subset_attributes_widget.set_current_instances(instances)
+
+    def _on_plugin_change(self, plugin):
+        plugin_name = plugin.__name__
+        if hasattr(plugin, "label") and plugin.label:
+            plugin_name = plugin.label
+        self.overlay_frame.set_plugin(plugin_name)
+
+    def _on_instance_change(self, context, instance):
+        if instance is None:
+            new_name = (
+                context.data.get("label")
+                or getattr(context, "label", None)
+                or context.data.get("name")
+                or "Context"
+            )
+        else:
+            new_name = (
+                instance.data.get("label")
+                or getattr(instance, "label", None)
+                or instance.data["name"]
+            )
+
+        self.overlay_frame.set_instance(new_name)
+
+    def _on_publish_stop(self):
+        pass
 
 
 def main():
