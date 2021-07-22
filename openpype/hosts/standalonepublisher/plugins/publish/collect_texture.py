@@ -41,13 +41,13 @@ class CollectTextures(pyblish.api.ContextPlugin):
 
     color_space = ["linsRGB", "raw", "acesg"]
 
-    #currently implemented placeholders ["color_space"]
+    # currently implemented placeholders ["color_space"]
     # describing patterns in file names splitted by regex groups
     input_naming_patterns = {
         # workfile: corridorMain_v001.mra >
         # texture: corridorMain_aluminiumID_v001_baseColor_linsRGB_1001.exr
         "workfile": r'^([^.]+)(_[^_.]*)?_v([0-9]{3,}).+',
-        "textures": r'^([^_.]+)_([^_.]+)_v([0-9]{3,})_([^_.]+)_({color_space})_(1[0-9]{3}).+',
+        "textures": r'^([^_.]+)_([^_.]+)_v([0-9]{3,})_([^_.]+)_({color_space})_(1[0-9]{3}).+', # noqa
     }
     # matching regex group position to 'input_naming_patterns'
     input_naming_groups = {
@@ -168,10 +168,10 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     )
 
                     formatting_data = {
-                        "color_space": c_space,
-                        "channel": channel,
-                        "shader": shader,
-                        "subset": parsed_subset
+                        "color_space": c_space or '',  # None throws exception
+                        "channel": channel or '',
+                        "shader": shader or '',
+                        "subset": parsed_subset or ''
                     }
 
                     fill_pairs = prepare_template_data(formatting_data)
@@ -195,9 +195,9 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     representations[subset].append(repre)
 
                     ver_data = {
-                        "color_space": c_space,
-                        "channel_name": channel,
-                        "shader_name": shader
+                        "color_space": c_space or '',
+                        "channel_name": channel or '',
+                        "shader_name": shader or ''
                     }
                     version_data[subset] = ver_data
 
@@ -251,7 +251,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
                     "label": subset,
                     "name": subset,
                     "family": family,
-                    "version": int(version or main_version),
+                    "version": int(version or main_version or 1),
                     "asset_build": asset_build  # remove in validator
                 }
             )
