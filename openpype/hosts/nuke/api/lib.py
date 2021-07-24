@@ -113,6 +113,14 @@ def check_inventory_versions():
                 "_id": io.ObjectId(avalon_knob_data["representation"])
             })
 
+            # Failsafe for not finding the representation.
+            if not representation:
+                log.warning(
+                    "Could not find the representation on "
+                    "node \"{}\"".format(node.name())
+                )
+                continue
+
             # Get start frame from version data
             version = io.find_one({
                 "type": "version",
