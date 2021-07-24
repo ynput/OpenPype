@@ -1,26 +1,30 @@
 # Changelog
 
-## [3.3.0-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.3.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.2.0...HEAD)
 
 **🚀 Enhancements**
 
+- Ftrack push attributes action adds traceback to job [\#1843](https://github.com/pypeclub/OpenPype/pull/1843)
+- Prepare project action enhance [\#1838](https://github.com/pypeclub/OpenPype/pull/1838)
 - nuke: settings create missing default subsets [\#1829](https://github.com/pypeclub/OpenPype/pull/1829)
 - Update poetry lock [\#1823](https://github.com/pypeclub/OpenPype/pull/1823)
 - Settings: settings for plugins [\#1819](https://github.com/pypeclub/OpenPype/pull/1819)
-- Nuke: ftrack family plugin settings preset [\#1805](https://github.com/pypeclub/OpenPype/pull/1805)
 - Maya: Deadline custom settings  [\#1797](https://github.com/pypeclub/OpenPype/pull/1797)
 
 **🐛 Bug fixes**
 
+- Nuke: updating effects subset fail [\#1841](https://github.com/pypeclub/OpenPype/pull/1841)
 - nuke: write render node skipped with crop [\#1836](https://github.com/pypeclub/OpenPype/pull/1836)
 - Project folder structure overrides [\#1813](https://github.com/pypeclub/OpenPype/pull/1813)
 - Maya: fix yeti settings path in extractor [\#1809](https://github.com/pypeclub/OpenPype/pull/1809)
+- Failsafe for cross project containers. [\#1806](https://github.com/pypeclub/OpenPype/pull/1806)
 - Houdini colector formatting keys fix [\#1802](https://github.com/pypeclub/OpenPype/pull/1802)
 
 **Merged pull requests:**
 
+- Add support for pyenv-win on windows [\#1822](https://github.com/pypeclub/OpenPype/pull/1822)
 - PS, AE - send actual context when another webserver is running [\#1811](https://github.com/pypeclub/OpenPype/pull/1811)
 
 ## [3.2.0](https://github.com/pypeclub/OpenPype/tree/3.2.0) (2021-07-13)
@@ -29,6 +33,7 @@
 
 **🚀 Enhancements**
 
+- Nuke: ftrack family plugin settings preset [\#1805](https://github.com/pypeclub/OpenPype/pull/1805)
 - Standalone publisher last project [\#1799](https://github.com/pypeclub/OpenPype/pull/1799)
 - Ftrack Multiple notes as server action [\#1795](https://github.com/pypeclub/OpenPype/pull/1795)
 - Settings conditional dict [\#1777](https://github.com/pypeclub/OpenPype/pull/1777)
@@ -114,18 +119,11 @@
 
 - Log Viewer with OpenPype style [\#1703](https://github.com/pypeclub/OpenPype/pull/1703)
 - Scrolling in OpenPype info widget [\#1702](https://github.com/pypeclub/OpenPype/pull/1702)
-- OpenPype style in modules [\#1694](https://github.com/pypeclub/OpenPype/pull/1694)
-- Sort applications and tools alphabetically in Settings UI [\#1689](https://github.com/pypeclub/OpenPype/pull/1689)
 
 **🐛 Bug fixes**
 
 - Nuke: broken publishing rendered frames [\#1707](https://github.com/pypeclub/OpenPype/pull/1707)
 - Standalone publisher Thumbnail export args [\#1705](https://github.com/pypeclub/OpenPype/pull/1705)
-- Bad zip can break OpenPype start [\#1691](https://github.com/pypeclub/OpenPype/pull/1691)
-
-**Merged pull requests:**
-
-- update dependencies [\#1697](https://github.com/pypeclub/OpenPype/pull/1697)
 
 # Changelog
 
