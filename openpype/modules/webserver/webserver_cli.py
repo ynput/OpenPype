@@ -13,6 +13,7 @@ from openpype.api import get_hierarchy
 
 
 class WebpublisherProjectsEndpoint(_RestApiEndpoint):
+    """Returns list of project names."""
     async def get(self) -> Response:
         output = []
         for project_name in self.dbcon.database.collection_names():
@@ -32,23 +33,44 @@ class WebpublisherProjectsEndpoint(_RestApiEndpoint):
         )
 
 
-@attr.s
-class AssetItem(object):
-    """Data class for Render Layer metadata."""
-    id = attr.ib()
-    name = attr.ib()
+class Node(dict):
+    """Node element in context tree."""
 
-    # Render Products
-    children = attr.ib(init=False, default=attr.Factory(list))
+    def __init__(self, uid, node_type, name):
+        self._parent = None  # pointer to parent Node
+        self["type"] = node_type
+        self["name"] = name
+        self['id'] = uid  # keep reference to id #
+        self['children'] = []  # collection of pointers to child Nodes
+
+    @property
+    def parent(self):
+        return self._parent  # simply return the object at the _parent pointer
+
+    @parent.setter
+    def parent(self, node):
+        self._parent = node
+        # add this node to parent's list of children
+        node['children'].append(self)
+
+
+class TaskNode(Node):
+    """Special node type only for Tasks."""
+    def __init__(self, node_type, name):
+        self._parent = None
+        self["type"] = node_type
+        self["name"] = name
+        self["attributes"] = {}
 
 
 class WebpublisherHiearchyEndpoint(_RestApiEndpoint):
+    """Returns dictionary with context tree from assets."""
     async def get(self, project_name) -> Response:
-        output = []
         query_projection = {
             "_id": 1,
             "data.tasks": 1,
             "data.visualParent": 1,
+            "data.entityType": 1,
             "name": 1,
             "type": 1,
         }
@@ -62,106 +84,51 @@ class WebpublisherHiearchyEndpoint(_RestApiEndpoint):
             for asset_doc in asset_docs
         }
 
-        asset_ids = list(asset_docs_by_id.keys())
-        result = []
-        if asset_ids:
-            result = self.dbcon.database[project_name].aggregate([
-                {
-                    "$match": {
-                        "type": "subset",
-                        "parent": {"$in": asset_ids}
-                    }
-                },
-                {
-                    "$group": {
-                        "_id": "$parent",
-                        "count": {"$sum": 1}
-                    }
-                }
-            ])
-
         asset_docs_by_parent_id = collections.defaultdict(list)
         for asset_doc in asset_docs_by_id.values():
             parent_id = asset_doc["data"].get("visualParent")
             asset_docs_by_parent_id[parent_id].append(asset_doc)
 
-        appending_queue = collections.deque()
-        appending_queue.append((None, "root"))
+        assets = collections.defaultdict(list)
 
-        asset_items_by_id = {}
-        non_modifiable_items = set()
-        assets = {}
+        for parent_id, children in asset_docs_by_parent_id.items():
+            for child in children:
+                node = assets.get(child["_id"])
+                if not node:
+                    node = Node(child["_id"],
+                                child["data"]["entityType"],
+                                child["name"])
+                    assets[child["_id"]] = node
 
-        # # # while appending_queue:
-        # # assets = self._recur_hiearchy(asset_docs_by_parent_id,
-        # #                               appending_queue,
-        # #                               assets, None)
-        # while asset_docs_by_parent_id:
-        #     for parent_id, asset_docs in asset_items_by_id.items():
-        #         asset_docs = asset_docs_by_parent_id.get(parent_id) or []
+                    tasks = child["data"].get("tasks", {})
+                    for t_name, t_con in tasks.items():
+                        task_node = TaskNode("task", t_name)
+                        task_node["attributes"]["type"] = t_con.get("type")
 
-        while appending_queue:
-            parent_id, parent_item_name = appending_queue.popleft()
+                        task_node.parent = node
 
-            asset_docs = asset_docs_by_parent_id.get(parent_id) or []
+                parent_node = assets.get(parent_id)
+                if not parent_node:
+                    asset_doc = asset_docs_by_id.get(parent_id)
+                    if asset_doc:  # regular node
+                        parent_node = Node(parent_id,
+                                           asset_doc["data"]["entityType"],
+                                           asset_doc["name"])
+                    else:  # root
+                        parent_node = Node(parent_id,
+                                           "project",
+                                           project_name)
+                    assets[parent_id] = parent_node
+                node.parent = parent_node
 
-            asset_item = assets.get(parent_id)
-            if not asset_item:
-                asset_item = AssetItem(str(parent_id), parent_item_name)
-
-            for asset_doc in sorted(asset_docs, key=lambda item: item["name"]):
-                child_item = AssetItem(str(asset_doc["_id"]),
-                                       asset_doc["name"])
-                asset_item.children.append(child_item)
-                if not asset_doc["data"]["tasks"]:
-                    appending_queue.append((asset_doc["_id"],
-                                            child_item.name))
-
-                else:
-                    asset_item = child_item
-                    for task_name, _ in asset_doc["data"]["tasks"].items():
-                        child_item = AssetItem(str(asset_doc["_id"]),
-                                               task_name)
-                        asset_item.children.append(child_item)
-            assets[parent_id] = attr.asdict(asset_item)
-
+        roots = [x for x in assets.values() if x.parent is None]
 
         return Response(
             status=200,
-            body=self.resource.encode(assets),
+            body=self.resource.encode(roots[0]),
             content_type="application/json"
         )
 
-    def _recur_hiearchy(self, asset_docs_by_parent_id,
-                        appending_queue, assets, asset_item):
-        parent_id, parent_item_name = appending_queue.popleft()
-
-        asset_docs = asset_docs_by_parent_id.get(parent_id) or []
-
-        if not asset_item:
-            asset_item = assets.get(parent_id)
-            if not asset_item:
-                asset_item = AssetItem(str(parent_id), parent_item_name)
-
-        for asset_doc in sorted(asset_docs, key=lambda item: item["name"]):
-            child_item = AssetItem(str(asset_doc["_id"]),
-                                   asset_doc["name"])
-            asset_item.children.append(child_item)
-            if not asset_doc["data"]["tasks"]:
-                appending_queue.append((asset_doc["_id"],
-                                        child_item.name))
-                asset_item = child_item
-                assets = self._recur_hiearchy(asset_docs_by_parent_id, appending_queue,
-                                     assets, asset_item)
-            else:
-                asset_item = child_item
-                for task_name, _ in asset_doc["data"]["tasks"].items():
-                    child_item = AssetItem(str(asset_doc["_id"]),
-                                           task_name)
-                    asset_item.children.append(child_item)
-        assets[asset_item.id] = attr.asdict(asset_item)
-
-        return assets
 
 class RestApiResource:
     def __init__(self, server_manager):
@@ -172,7 +139,6 @@ class RestApiResource:
 
     @staticmethod
     def json_dump_handler(value):
-        print("valuetype:: {}".format(type(value)))
         if isinstance(value, datetime.datetime):
             return value.isoformat()
         if isinstance(value, ObjectId):
@@ -189,7 +155,6 @@ class RestApiResource:
 
 
 def run_webserver():
-    print("webserver")
     from openpype.modules import ModulesManager
 
     manager = ModulesManager()
