@@ -30,6 +30,10 @@ class BaseAction(BaseHandler):
     icon = None
     type = 'Action'
 
+    _identifier_id = str(uuid4())
+    _discover_identifier = None
+    _launch_identifier = None
+
     settings_frack_subkey = "user_handlers"
     settings_enabled_key = "enabled"
 
@@ -42,6 +46,22 @@ class BaseAction(BaseHandler):
             raise ValueError('Action missing identifier.')
 
         super().__init__(session)
+
+    @property
+    def discover_identifier(self):
+        if self._discover_identifier is None:
+            self._discover_identifier = "{}.{}".format(
+                self.identifier, self._identifier_id
+            )
+        return self._discover_identifier
+
+    @property
+    def launch_identifier(self):
+        if self._launch_identifier is None:
+            self._launch_identifier = "{}.{}".format(
+                self.identifier, self._identifier_id
+            )
+        return self._launch_identifier
 
     def register(self):
         '''
@@ -61,7 +81,7 @@ class BaseAction(BaseHandler):
             ' and data.actionIdentifier={0}'
             ' and source.user.username={1}'
         ).format(
-            self.identifier,
+            self.launch_identifier,
             self.session.api_user
         )
         self.session.event_hub.subscribe(
@@ -87,7 +107,7 @@ class BaseAction(BaseHandler):
                 'label': self.label,
                 'variant': self.variant,
                 'description': self.description,
-                'actionIdentifier': self.identifier,
+                'actionIdentifier': self.discover_identifier,
                 'icon': self.icon,
             }]
         }
@@ -319,6 +339,14 @@ class ServerAction(BaseAction):
 
     settings_frack_subkey = "events"
 
+    @property
+    def discover_identifier(self):
+        return self.identifier
+
+    @property
+    def launch_identifier(self):
+        return self.identifier
+
     def register(self):
         """Register subcription to Ftrack event hub."""
         self.session.event_hub.subscribe(
@@ -329,5 +357,5 @@ class ServerAction(BaseAction):
 
         launch_subscription = (
             "topic=ftrack.action.launch and data.actionIdentifier={0}"
-        ).format(self.identifier)
+        ).format(self.launch_identifier)
         self.session.event_hub.subscribe(launch_subscription, self._launch)

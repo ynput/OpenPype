@@ -29,7 +29,7 @@ class AppplicationsAction(BaseAction):
     icon_url = os.environ.get("OPENPYPE_STATICS_SERVER")
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(AppplicationsAction, self).__init__(*args, **kwargs)
 
         self.application_manager = ApplicationManager()
         self.dbcon = AvalonMongoDB()
