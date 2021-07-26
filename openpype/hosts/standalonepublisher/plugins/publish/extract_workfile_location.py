@@ -26,6 +26,7 @@ class ExtractWorkfileUrl(pyblish.api.ContextPlugin):
                 template_data = instance.data.get("anatomyData")
                 rep_name = instance.data.get("representations")[0].get("name")
                 template_data["representation"] = rep_name
+                template_data["ext"] = rep_name
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled["publish"]["path"]
                 filepath = os.path.normpath(template_filled)
