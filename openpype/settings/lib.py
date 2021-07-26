@@ -873,6 +873,25 @@ def get_environments():
     return find_environments(get_system_settings(False))
 
 
+def get_general_environments():
+    """Get general environments.
+
+    Function is implemented to be able load general environments without using
+    `get_default_settings`.
+    """
+    # Use only openpype defaults.
+    # - prevent to use `get_system_settings` where `get_default_settings`
+    #   is used
+    default_values = load_openpype_default_settings()
+    studio_overrides = get_studio_system_settings_overrides()
+    result = apply_overrides(default_values, studio_overrides)
+    environments = result["general"]["environment"]
+
+    clear_metadata_from_settings(environments)
+
+    return environments
+
+
 def clear_metadata_from_settings(values):
     """Remove all metadata keys from loaded settings."""
     if isinstance(values, dict):
