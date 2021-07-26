@@ -315,6 +315,11 @@ class DuplicatedEnvGroups(Exception):
         super(DuplicatedEnvGroups, self).__init__(msg)
 
 
+def load_openpype_default_settings():
+    """Load openpype default settings."""
+    return load_jsons_from_dir(DEFAULTS_DIR)
+
+
 def reset_default_settings():
     global _DEFAULT_SETTINGS
     _DEFAULT_SETTINGS = None
@@ -322,7 +327,7 @@ def reset_default_settings():
 
 def get_default_settings():
     # TODO add cacher
-    return load_jsons_from_dir(DEFAULTS_DIR)
+    return load_openpype_default_settings()
     # global _DEFAULT_SETTINGS
     # if _DEFAULT_SETTINGS is None:
     #     _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
