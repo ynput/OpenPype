@@ -49,19 +49,36 @@ Provide regex matching pattern containing regex groups used to parse workfile na
 build name.)
 
 Example:
-```^([^.]+)(_[^_.]*)?_v([0-9]{3,}).+``` - parses `corridorMain_v001` into three groups:
+
+- pattern: ```^([^.]+)(_[^_.]*)?_v([0-9]{3,}).+``` 
+- with groups: ```["asset", "filler", "version"]```
+  
+parses `corridorMain_v001` into three groups:
 - asset build (`corridorMain`)
 - filler (in this case empty)
 - version (`001`)
 
-In case of different naming pattern, additional groups could be added or removed.
+Advanced example (for texture files):
+
+- pattern: ```^([^_.]+)_([^_.]+)_v([0-9]{3,})_([^_.]+)_({color_space})_(1[0-9]{3}).+``` 
+- with groups: ```["asset", "shader", "version", "channel", "color_space", "udim"]```
+  
+parses `corridorMain_aluminiumID_v001_baseColor_linsRGB_1001.exr`:
+- asset build (`corridorMain`)
+- shader (`aluminiumID`)
+- version (`001`)
+- channel (`baseColor`)
+- color_space (`linsRGB`)
+- udim (`1001`)
+
+
+In case of different naming pattern, additional groups could be added or removed. Number of matching groups (`(...)`) must be same as number of items in `Group order for regex patterns`
 
 ##### Workfile group positions
 
 For each matching regex group set in previous paragraph, its ordinal position is required (in case of need for addition of new groups etc.)
-Number of groups added here must match number of parsing groups from `Workfile naming pattern`.
 
-Same configuration is available for texture files.
+Number of groups added here must match number of parsing groups from `Workfile naming pattern`.
 
 ##### Output names
 
