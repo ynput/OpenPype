@@ -321,11 +321,20 @@ def load_openpype_default_settings():
 
 
 def reset_default_settings():
+    """Reset cache of default settings. Can't be used now."""
     global _DEFAULT_SETTINGS
     _DEFAULT_SETTINGS = None
 
 
 def get_default_settings():
+    """Get default settings.
+
+    Todo:
+        Cache loaded defaults.
+
+    Returns:
+        dict: Loaded default settings.
+    """
     # TODO add cacher
     return load_openpype_default_settings()
     # global _DEFAULT_SETTINGS
