@@ -165,14 +165,14 @@ def run_webserver():
     projects_endpoint = WebpublisherProjectsEndpoint(resource)
     webserver_module.server_manager.add_route(
         "GET",
-        "/webpublisher/projects",
+        "/api/projects",
         projects_endpoint.dispatch
     )
 
     hiearchy_endpoint = WebpublisherHiearchyEndpoint(resource)
     webserver_module.server_manager.add_route(
         "GET",
-        "/webpublisher/hiearchy/{project_name}",
+        "/api/hiearchy/{project_name}",
         hiearchy_endpoint.dispatch
     )
 
