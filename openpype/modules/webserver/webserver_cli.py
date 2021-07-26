@@ -172,7 +172,7 @@ def run_webserver():
     hiearchy_endpoint = WebpublisherHiearchyEndpoint(resource)
     webserver_module.server_manager.add_route(
         "GET",
-        "/api/hiearchy/{project_name}",
+        "/api/hierarchy/{project_name}",
         hiearchy_endpoint.dispatch
     )
 
