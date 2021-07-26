@@ -1,4 +1,5 @@
 import os
+from uuid import uuid4
 from .ftrack_base_handler import BaseHandler
 
 
@@ -29,6 +30,10 @@ class BaseAction(BaseHandler):
     icon = None
     type = 'Action'
 
+    # Modified identifier used for local actions
+    _identifier = None
+    _identifier_id = str(uuid4())
+
     settings_frack_subkey = "user_handlers"
     settings_enabled_key = "enabled"
 
@@ -41,6 +46,14 @@ class BaseAction(BaseHandler):
             raise ValueError('Action missing identifier.')
 
         super().__init__(session)
+
+    def get_identifier(self):
+        """Modify identifier to trigger the action only on once machine."""
+        if self._identifier is None:
+            self._identifier = "{}.{}".format(
+                self.identifier, self._identifier_id
+            )
+        return self._identifier
 
     def register(self):
         '''
@@ -60,7 +73,7 @@ class BaseAction(BaseHandler):
             ' and data.actionIdentifier={0}'
             ' and source.user.username={1}'
         ).format(
-            self.identifier,
+            self.get_identifier(),
             self.session.api_user
         )
         self.session.event_hub.subscribe(
@@ -86,7 +99,7 @@ class BaseAction(BaseHandler):
                 'label': self.label,
                 'variant': self.variant,
                 'description': self.description,
-                'actionIdentifier': self.identifier,
+                'actionIdentifier': self.get_identifier(),
                 'icon': self.icon,
             }]
         }
