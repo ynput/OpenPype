@@ -331,6 +331,12 @@ class ServerAction(BaseAction):
 
     settings_frack_subkey = "events"
 
+    def get_identifier(self):
+        """Override default implementation to not add identifier id."""
+        if self._identifier is None:
+            self._identifier = self.identifier
+        return self._identifier
+
     def register(self):
         """Register subcription to Ftrack event hub."""
         self.session.event_hub.subscribe(
@@ -341,5 +347,5 @@ class ServerAction(BaseAction):
 
         launch_subscription = (
             "topic=ftrack.action.launch and data.actionIdentifier={0}"
-        ).format(self.identifier)
+        ).format(self.get_identifier())
         self.session.event_hub.subscribe(launch_subscription, self._launch)
