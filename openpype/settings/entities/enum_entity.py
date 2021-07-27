@@ -187,6 +187,44 @@ class HostsEnumEntity(BaseEnumEntity):
         # GUI attribute
         self.placeholder = self.schema_data.get("placeholder")
 
+    def schema_validations(self):
+        if self.hosts_filter:
+            enum_len = len(self.enum_items)
+            if (
+                enum_len == 0
+                or (enum_len == 1 and self.use_empty_value)
+            ):
+                joined_filters = ", ".join([
+                    '"{}"'.format(item)
+                    for item in self.hosts_filter
+                ])
+                reason = (
+                    "All host names were removed after applying"
+                    " host filters. {}"
+                ).format(joined_filters)
+                raise EntitySchemaError(self, reason)
+
+            invalid_filters = set()
+            for item in self.hosts_filter:
+                if item not in self.all_host_names:
+                    invalid_filters.add(item)
+
+            if invalid_filters:
+                joined_filters = ", ".join([
+                    '"{}"'.format(item)
+                    for item in self.hosts_filter
+                ])
+                expected_hosts = ", ".join([
+                    '"{}"'.format(item)
+                    for item in self.all_host_names
+                ])
+                self.log.warning((
+                    "Host filters containt invalid host names:"
+                    " \"{}\" Expected values are {}"
+                ).format(joined_filters, expected_hosts))
+
+        super(HostsEnumEntity, self).schema_validations()
+
 
 class AppsEnumEntity(BaseEnumEntity):
     schema_types = ["apps-enum"]
