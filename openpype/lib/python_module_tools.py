@@ -9,6 +9,29 @@ log = logging.getLogger(__name__)
 PY3 = sys.version_info[0] == 3
 
 
+def import_filepath(filepath, module_name=None):
+    if module_name is None:
+        module_name = os.path.splitext(os.path.basename(filepath))[0]
+
+    # Prepare module object where content of file will be parsed
+    module = types.ModuleType(module_name)
+
+    if PY3:
+        # Use loader so module has full specs
+        module_loader = importlib.machinery.SourceFileLoader(
+            module_name, filepath
+        )
+        module_loader.exec_module(module)
+    else:
+        # Execute module code and store content to module
+        with open(filepath) as _stream:
+            # Execute content and store it to module object
+            exec(_stream.read(), module.__dict__)
+
+        module.__file__ = filepath
+    return module
+
+
 def modules_from_path(folder_path):
     """Get python scripts as modules from a path.
 
@@ -55,23 +78,7 @@ def modules_from_path(folder_path):
             continue
 
         try:
-            # Prepare module object where content of file will be parsed
-            module = types.ModuleType(mod_name)
-
-            if PY3:
-                # Use loader so module has full specs
-                module_loader = importlib.machinery.SourceFileLoader(
-                    mod_name, full_path
-                )
-                module_loader.exec_module(module)
-            else:
-                # Execute module code and store content to module
-                with open(full_path) as _stream:
-                    # Execute content and store it to module object
-                    exec(_stream.read(), module.__dict__)
-
-                module.__file__ = full_path
-
+            module = import_filepath(full_path, mod_name)
             modules.append((full_path, module))
 
         except Exception:
@@ -127,3 +134,58 @@ def classes_from_module(superclass, module):
 
         classes.append(obj)
     return classes
+
+
+def _load_module_from_dirpath_py2(dirpath, module_name, dst_module_name):
+    full_module_name = "{}.{}".format(dst_module_name, module_name)
+    if full_module_name in sys.modules:
+        return sys.modules[full_module_name]
+
+    import imp
+
+    dst_module = sys.modules[dst_module_name]
+
+    fp, pathname, description = imp.find_module(module_name, [dirpath])
+    module = imp.load_module(full_module_name, fp, pathname, description)
+    setattr(dst_module, module_name, module)
+
+    return module
+
+
+def _load_module_from_dirpath_py3(dirpath, module_name, dst_module_name):
+    full_module_name = "{}.{}".format(dst_module_name, module_name)
+    if full_module_name in sys.modules:
+        return sys.modules[full_module_name]
+
+    import importlib.util
+    from importlib._bootstrap_external import PathFinder
+
+    dst_module = sys.modules[dst_module_name]
+    loader = PathFinder.find_module(full_module_name, [dirpath])
+
+    spec = importlib.util.spec_from_loader(
+        full_module_name, loader, origin=dirpath
+    )
+
+    module = importlib.util.module_from_spec(spec)
+
+    if dst_module is not None:
+        setattr(dst_module, module_name, module)
+
+    sys.modules[full_module_name] = module
+
+    loader.exec_module(module)
+
+    return module
+
+
+def load_module_from_dirpath(dirpath, folder_name, dst_module_name):
+    if PY3:
+        module = _load_module_from_dirpath_py3(
+            dirpath, folder_name, dst_module_name
+        )
+    else:
+        module = _load_module_from_dirpath_py2(
+            dirpath, folder_name, dst_module_name
+        )
+    return module
