@@ -78,7 +78,21 @@
                                 "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Hosts",
-                                "multiselection": true
+                                "multiselection": true,
+                                "hosts_filter": [
+                                      "aftereffects",
+                                      "blender",
+                                      "celaction",
+                                      "fusion",
+                                      "harmony",
+                                      "hiero",
+                                      "houdini",
+                                      "maya",
+                                      "nuke",
+                                      "photoshop",
+                                      "resolve",
+                                      "tvpaint"
+                                  ]
                             },
                             {
                                 "key": "tasks",
