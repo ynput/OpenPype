@@ -1,8 +1,8 @@
 import os
 import openpype
 from openpype import resources
-from .. import (
-    PypeModule,
+from openpype.modules import PypeModule
+from openpype_interfaces import (
     ITrayModule,
     IWebServerRoutes
 )

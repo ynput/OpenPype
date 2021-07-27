@@ -2,14 +2,15 @@ import os
 import json
 import collections
 import openpype
-from openpype.modules import (
-    PypeModule,
-    OpenPypeInterface,
+from openpype.modules import PypeModule
+
+from openpype_interfaces import (
     ITrayModule,
     IPluginPaths,
     ITimersManager,
     ILaunchHookPaths,
-    ISettingsChangeListener
+    ISettingsChangeListener,
+    IFtrackEventHandlerPaths
 )
 from openpype.settings import SaveWarningExc
 

@@ -2,7 +2,8 @@ import os
 import platform
 import subprocess
 from openpype.lib import get_pype_execute_args
-from . import PypeModule, ITrayAction
+from openpype.modules import PypeModule
+from openpype_interfaces import ITrayAction
 
 
 class StandAlonePublishAction(PypeModule, ITrayAction):

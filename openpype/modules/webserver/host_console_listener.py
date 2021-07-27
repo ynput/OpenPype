@@ -5,7 +5,7 @@ import logging
 from concurrent.futures import CancelledError
 from Qt import QtWidgets
 
-from openpype.modules import ITrayService
+from openpype_interfaces import ITrayService
 
 log = logging.getLogger(__name__)
 

@@ -1,10 +1,10 @@
 import platform
 import collections
 
-from openpype.modules import (
-    PypeModule,
-    OpenPypeInterface,
-    ITrayService
+from openpype.modules import PypeModule
+from openpype_interfaces import (
+    ITrayService,
+    IIdleManager
 )
 
 

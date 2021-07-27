@@ -1,10 +1,8 @@
 import os
 import collections
-from abc import ABCMeta, abstractmethod
-import six
-from .. import (
-    PypeModule,
-    OpenPypeInterface,
+from openpype.modules import PypeModule
+from openpype_interfaces import (
+    ITimersManager,
     ITrayService,
     IIdleManager,
     IWebServerRoutes

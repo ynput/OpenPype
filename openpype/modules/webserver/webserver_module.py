@@ -1,14 +1,11 @@
 import os
 import socket
-from abc import ABCMeta, abstractmethod
-
-import six
 
 from openpype import resources
-from .. import (
-    PypeModule,
-    OpenPypeInterface,
-    ITrayService
+from openpype.modules import PypeModule
+from openpype_interfaces import (
+    ITrayService,
+    IWebServerRoutes
 )
 
 

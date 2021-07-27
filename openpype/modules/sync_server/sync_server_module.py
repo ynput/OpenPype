@@ -7,7 +7,8 @@ import copy
 
 from avalon.api import AvalonMongoDB
 
-from .. import PypeModule, ITrayModule
+from openpype.modules import PypeModule
+from openpype_interfaces import ITrayModule
 from openpype.api import (
     Anatomy,
     get_project_settings,

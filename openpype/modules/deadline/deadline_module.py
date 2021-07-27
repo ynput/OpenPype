@@ -1,6 +1,6 @@
 import os
-from openpype.modules import (
-    PypeModule, IPluginPaths)
+from openpype.modules import PypeModule
+from openpype_interfaces import IPluginPaths
 
 
 class DeadlineModule(PypeModule, IPluginPaths):

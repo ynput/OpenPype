@@ -1,5 +1,6 @@
 from openpype.api import Logger
-from .. import PypeModule, ITrayModule
+from openpype.modules import PypeModule
+from openpype_interfaces import ITrayModule
 
 
 class LogViewModule(PypeModule, ITrayModule):

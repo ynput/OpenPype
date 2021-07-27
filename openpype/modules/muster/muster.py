@@ -2,8 +2,8 @@ import os
 import json
 import appdirs
 import requests
-from .. import (
-    PypeModule,
+from openpype.modules import PypeModule
+from openpype_interfaces import (
     ITrayModule,
     IWebServerRoutes
 )
