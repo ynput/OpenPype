@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from .base import (
     PypeModule,
+    OpenPypeInterface,
     ITrayModule,
     ITrayAction,
     ITrayService,
@@ -44,6 +45,8 @@ from .slack import SlackIntegrationModule
 
 __all__ = (
     "PypeModule",
+    "OpenPypeInterface",
+
     "ITrayModule",
     "ITrayAction",
     "ITrayService",

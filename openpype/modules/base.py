@@ -15,6 +15,16 @@ from openpype import resources
 
 
 @six.add_metaclass(ABCMeta)
+class OpenPypeInterface:
+    """Base class of Interface that can be used as Mixin with abstract parts.
+
+    This is way how OpenPype module or addon can tell that has implementation
+    for specific part or for other module/addon.
+    """
+    pass
+
+
+@six.add_metaclass(ABCMeta)
 class PypeModule:
     """Base class of pype module.
 
