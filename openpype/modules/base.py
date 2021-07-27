@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """Base class for Pype Modules."""
+import os
+import sys
+import types
 import time
 import inspect
 import logging
@@ -12,6 +15,141 @@ import openpype
 from openpype.settings import get_system_settings
 from openpype.lib import PypeLogger
 from openpype import resources
+
+
+class __ModuleClass:
+    def __init__(self):
+        self.object_setattr("__attributes__", {})
+        self.object_setattr("__defaults__", set())
+
+    def __getattr__(self, attr_name):
+        return self.__attributes__.get(
+            attr_name,
+            type("Missing.{}".format(attr_name), (), {})
+        )
+
+    def __iter__(self):
+        for module in self.values():
+            yield module
+
+    def object_setattr(self, attr_name, value):
+        object.__setattr__(self, attr_name, value)
+
+    def __setattr__(self, attr_name, value):
+        self.__attributes__[attr_name] = value
+
+    def keys(self):
+        return self.__attributes__.keys()
+
+    def values(self):
+        return self.__attributes__.values()
+
+    def items(self):
+        return self.__attributes__.items()
+
+
+def load_interfaces(force=False):
+    if not force and "openpype_interfaces" in sys.modules:
+        return
+
+    sys.modules["openpype_interfaces"] = openpype_interfaces = __ModuleClass()
+
+    log = PypeLogger.get_logger("InterfacesLoader")
+
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+
+    interface_paths = [
+        os.path.join(current_dir, "interfaces.py")
+    ]
+
+    for filename in os.listdir(current_dir):
+        full_path = os.path.join(current_dir, filename)
+        if os.path.isdir(full_path):
+            interface_paths.append(
+                os.path.join(full_path, "interfaces.py")
+            )
+
+    # print(interface_paths)
+    for full_path in interface_paths:
+        if not os.path.exists(full_path):
+            continue
+
+        filename = os.path.splitext(os.path.basename(full_path))[0]
+
+        try:
+            # Prepare module object where content of file will be parsed
+            module = types.ModuleType(filename)
+
+            if six.PY3:
+                import importlib
+
+                # Use loader so module has full specs
+                module_loader = importlib.machinery.SourceFileLoader(
+                    filename, full_path
+                )
+                module_loader.exec_module(module)
+            else:
+                # Execute module code and store content to module
+                with open(full_path) as _stream:
+                    # Execute content and store it to module object
+                    exec(_stream.read(), module.__dict__)
+
+                module.__file__ = full_path
+
+        except Exception:
+            log.warning(
+                "Failed to load path: \"{0}\"".format(full_path),
+                exc_info=True
+            )
+            continue
+
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+            if (
+                not inspect.isclass(attr)
+                or attr is OpenPypeInterface
+                or not issubclass(attr, OpenPypeInterface)
+            ):
+                continue
+            setattr(openpype_interfaces, attr_name, attr)
+
+
+def load_modules(force=False):
+    if not force and "openpype_modules" in sys.modules:
+        return
+
+    from openpype.lib import modules_from_path
+
+    sys.modules["openpype_modules"] = openpype_modules = __ModuleClass()
+
+    log = PypeLogger.get_logger("ModulesLoader")
+
+    from . import (
+        avalon_apps,
+        clockify,
+        deadline,
+        ftrack,
+        idle_manager,
+        log_viewer,
+        muster,
+        settings_module,
+        slack,
+        sync_server,
+        timers_manager,
+        webserver
+    )
+    setattr(openpype_modules, "avalon_apps", avalon_apps)
+    setattr(openpype_modules, "clockify", clockify)
+    setattr(openpype_modules, "deadline", deadline)
+    setattr(openpype_modules, "ftrack", ftrack)
+    setattr(openpype_modules, "idle_manager", idle_manager)
+    setattr(openpype_modules, "log_viewer", log_viewer)
+    setattr(openpype_modules, "muster", muster)
+    setattr(openpype_modules, "settings_module", settings_module)
+    setattr(openpype_modules, "sync_server", sync_server)
+    setattr(openpype_modules, "slack", slack)
+    setattr(openpype_modules, "timers_manager", timers_manager)
+    setattr(openpype_modules, "webserver", webserver)
 
 
 @six.add_metaclass(ABCMeta)
@@ -105,44 +243,12 @@ class ModulesManager:
         # For report of time consumption
         self._report = {}
 
-        self._raw_modules = None
-
         self.initialize_modules()
         self.connect_modules()
 
     def collect_modules(self):
-        if self._raw_modules is not None:
-            return
-
-        self._raw_modules = []
-
-        # Go through globals in `pype.modules`
-        for name in dir(openpype.modules):
-            modules_item = getattr(openpype.modules, name, None)
-            # Filter globals that are not classes which inherit from PypeModule
-            if (
-                not inspect.isclass(modules_item)
-                or modules_item is openpype.modules.PypeModule
-                or not issubclass(modules_item, openpype.modules.PypeModule)
-            ):
-                continue
-
-            # Check if class is abstract (Developing purpose)
-            if inspect.isabstract(modules_item):
-                # Find missing implementations by convetion on `abc` module
-                not_implemented = []
-                for attr_name in dir(modules_item):
-                    attr = getattr(modules_item, attr_name, None)
-                    if attr and getattr(attr, "__isabstractmethod__", None):
-                        not_implemented.append(attr_name)
-
-                # Log missing implementations
-                self.log.warning((
-                    "Skipping abstract Class: {}. Missing implementations: {}"
-                ).format(name, ", ".join(not_implemented)))
-                continue
-
-            self._raw_modules.append(modules_item)
+        load_interfaces()
+        load_modules()
 
     def initialize_modules(self):
         """Import and initialize modules."""
@@ -159,8 +265,37 @@ class ModulesManager:
         time_start = time.time()
         prev_start_time = time_start
 
-        # Go through globals in `pype.modules`
-        for modules_item in self._raw_modules:
+        module_classes = []
+        for module in openpype_modules:
+            # Go through globals in `pype.modules`
+            for name in dir(module):
+                modules_item = getattr(module, name, None)
+                # Filter globals that are not classes which inherit from
+                #   PypeModule
+                if (
+                    not inspect.isclass(modules_item)
+                    or modules_item is PypeModule
+                    or not issubclass(modules_item, PypeModule)
+                ):
+                    continue
+
+                # Check if class is abstract (Developing purpose)
+                if inspect.isabstract(modules_item):
+                    # Find missing implementations by convetion on `abc` module
+                    not_implemented = []
+                    for attr_name in dir(modules_item):
+                        attr = getattr(modules_item, attr_name, None)
+                        if attr and getattr(attr, "__isabstractmethod__", None):
+                            not_implemented.append(attr_name)
+
+                    # Log missing implementations
+                    self.log.warning((
+                        "Skipping abstract Class: {}. Missing implementations: {}"
+                    ).format(name, ", ".join(not_implemented)))
+                    continue
+                module_classes.append(modules_item)
+
+        for modules_item in module_classes:
             try:
                 name = modules_item.__name__
                 # Try initialize module
@@ -479,8 +614,6 @@ class TrayModulesManager(ModulesManager):
         self.modules_by_id = {}
         self.modules_by_name = {}
         self._report = {}
-
-        self._raw_modules = None
 
         self.tray_manager = None
 
