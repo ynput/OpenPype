@@ -5,7 +5,7 @@ from openpype.tools.settings import style
 from openpype.lib import PypeLogger
 from openpype import resources
 
-from openpype.modules.sync_server.tray.widgets import (
+from .widgets import (
     SyncProjectListWidget,
     SyncRepresentationSummaryWidget
 )

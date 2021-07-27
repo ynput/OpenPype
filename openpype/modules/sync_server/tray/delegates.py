@@ -2,7 +2,7 @@ import os
 from Qt import QtCore, QtWidgets, QtGui
 
 from openpype.lib import PypeLogger
-from openpype.modules.sync_server.tray import lib
+from . import lib
 
 log = PypeLogger().get_logger("SyncServer")
 

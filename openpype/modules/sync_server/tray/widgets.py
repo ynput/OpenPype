@@ -17,13 +17,13 @@ from openpype.lib import PypeLogger
 from avalon.tools.delegates import pretty_timestamp
 from avalon.vendor import qtawesome
 
-from openpype.modules.sync_server.tray.models import (
+from .models import (
     SyncRepresentationSummaryModel,
     SyncRepresentationDetailModel
 )
 
-from openpype.modules.sync_server.tray import lib
-from openpype.modules.sync_server.tray import delegates
+from . import lib
+from . import delegates
 
 log = PypeLogger().get_logger("SyncServer")
 
@@ -187,7 +187,7 @@ class _SyncRepresentationWidget(QtWidgets.QWidget):
         detail_window = SyncServerDetailWindow(
             self.sync_server, _id, self.model.project, parent=self)
         detail_window.exec()
-        
+
     def _on_context_menu(self, point):
         """
             Shows menu with loader actions on Right-click.

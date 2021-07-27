@@ -11,7 +11,7 @@ from avalon.vendor import qtawesome
 from openpype.lib import PypeLogger
 from openpype.api import get_local_site_id
 
-from openpype.modules.sync_server.tray import lib
+from . import lib
 
 
 log = PypeLogger().get_logger("SyncServer")
