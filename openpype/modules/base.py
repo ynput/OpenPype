@@ -86,6 +86,10 @@ class IPluginPaths:
         pass
 
 
+class OpenPypeAddOn(PypeModule):
+    pass
+
+
 @six.add_metaclass(ABCMeta)
 class ILaunchHookPaths:
     """Module has launch hook paths to return.
