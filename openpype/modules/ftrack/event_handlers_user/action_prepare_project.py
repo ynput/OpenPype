@@ -24,7 +24,7 @@ class PrepareProjectLocal(BaseAction):
 
     settings_key = "prepare_project"
 
-    # Key to store info about trigerring create folder structure\
+    # Key to store info about trigerring create folder structure
     create_project_structure_key = "create_folder_structure"
     create_project_structure_identifier = "create.project.structure"
     item_splitter = {"type": "label", "value": "---"}
