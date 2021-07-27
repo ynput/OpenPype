@@ -1,11 +1,11 @@
 from avalon import api
 import pyblish.api
 import openpype.api
-from avalon import photoshop
+from avalon import aftereffects
 
 
 class ValidateInstanceAssetRepair(pyblish.api.Action):
-    """Repair the instance asset."""
+    """Repair the instance asset with value from Context."""
 
     label = "Repair"
     icon = "wrench"
@@ -22,7 +22,7 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
 
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(failed, plugin)
-        stub = photoshop.stub()
+        stub = aftereffects.stub()
         for instance in instances:
             data = stub.read(instance[0])
 
@@ -33,8 +33,10 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
 class ValidateInstanceAsset(pyblish.api.InstancePlugin):
     """Validate the instance asset is the current selected context asset.
 
-        As it might happen that multiple worfiles are opened, switching
-        between them would mess with selected context.
+        As it might happen that multiple worfiles are opened at same time,
+        switching between them would mess with selected context. (From Launcher
+        or Ftrack).
+
         In that case outputs might be output under wrong asset!
 
         Repair action will use Context asset value (from Workfiles or Launcher)
@@ -42,7 +44,7 @@ class ValidateInstanceAsset(pyblish.api.InstancePlugin):
     """
 
     label = "Validate Instance Asset"
-    hosts = ["photoshop"]
+    hosts = ["aftereffects"]
     actions = [ValidateInstanceAssetRepair]
     order = openpype.api.ValidateContentsOrder
 
