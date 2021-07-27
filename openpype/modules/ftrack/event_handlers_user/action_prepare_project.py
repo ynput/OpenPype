@@ -246,7 +246,7 @@ class PrepareProjectLocal(BaseAction):
                     multiselect_enumerators.append(self.item_splitter)
                     multiselect_enumerators.append({
                         "type": "label",
-                        "value": in_data["label"]
+                        "value": "<h3>{}</h3>".format(in_data["label"])
                     })
 
                     default = in_data["default"]
