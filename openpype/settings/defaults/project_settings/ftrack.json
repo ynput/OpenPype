@@ -136,7 +136,8 @@
                 "Pypeclub",
                 "Administrator",
                 "Project manager"
-            ]
+            ],
+            "create_project_structure_checked": false
         },
         "clean_hierarchical_attr": {
             "enabled": true,
