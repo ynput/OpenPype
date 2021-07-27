@@ -1,38 +1,11 @@
 import platform
 import collections
-from abc import ABCMeta, abstractmethod
-
-import six
 
 from openpype.modules import (
     PypeModule,
     OpenPypeInterface,
     ITrayService
 )
-
-
-class IIdleManager(OpenPypeInterface):
-    """Other modules interface to return callbacks by idle time in seconds.
-
-    Expected output is dictionary with seconds <int> as keys and callback/s
-    as value, value may be callback of list of callbacks.
-    EXAMPLE:
-    ```
-    {
-        60: self.on_minute_idle
-    }
-    ```
-    """
-    idle_manager = None
-
-    @abstractmethod
-    def callbacks_by_idle_time(self):
-        pass
-
-    @property
-    def idle_time(self):
-        if self.idle_manager:
-            return self.idle_manager.idle_time
 
 
 class IdleManager(PypeModule, ITrayService):

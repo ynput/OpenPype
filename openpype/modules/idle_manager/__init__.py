@@ -1,10 +1,8 @@
 from .idle_module import (
-    IdleManager,
-    IIdleManager
+    IdleManager
 )
 
 
 __all__ = (
     "IdleManager",
-    "IIdleManager"
 )

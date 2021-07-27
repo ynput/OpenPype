@@ -1,10 +1,8 @@
 from .webserver_module import (
-    WebServerModule,
-    IWebServerRoutes
+    WebServerModule
 )
 
 
 __all__ = (
     "WebServerModule",
-    "IWebServerRoutes"
 )

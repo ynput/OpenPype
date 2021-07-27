@@ -1,8 +1,6 @@
 import os
 import json
 import collections
-from abc import ABCMeta, abstractmethod
-import six
 import openpype
 from openpype.modules import (
     PypeModule,
@@ -16,16 +14,6 @@ from openpype.modules import (
 from openpype.settings import SaveWarningExc
 
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
-class IFtrackEventHandlerPaths(OpenPypeInterface):
-    """Other modules interface to return paths to ftrack event handlers.
-
-    Expected output is dictionary with "server" and "user" keys.
-    """
-    @abstractmethod
-    def get_event_handler_paths(self):
-        pass
 
 
 class FtrackModule(

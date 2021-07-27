@@ -2,9 +2,7 @@ from abc import abstractmethod
 
 from openpype import resources
 
-from .base import (
-    OpenPypeInterface
-)
+from openpype.modules import OpenPypeInterface
 
 
 class IPluginPaths(OpenPypeInterface):

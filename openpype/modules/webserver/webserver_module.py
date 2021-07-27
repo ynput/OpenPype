@@ -12,13 +12,6 @@ from .. import (
 )
 
 
-class IWebServerRoutes(OpenPypeInterface):
-    """Other modules interface to register their routes."""
-    @abstractmethod
-    def webserver_initialization(self, server_manager):
-        pass
-
-
 class WebServerModule(PypeModule, ITrayService):
     name = "webserver"
     label = "WebServer"
