@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import copy
 import json
@@ -707,6 +708,10 @@ class ApplicationLaunchContext:
                 | subprocess.DETACHED_PROCESS
             )
             self.kwargs["creationflags"] = flags
+
+        if not sys.stdout:
+            self.kwargs["stdout"] = subprocess.DEVNULL
+            self.kwargs["stderr"] = subprocess.DEVNULL
 
         self.prelaunch_hooks = None
         self.postlaunch_hooks = None
