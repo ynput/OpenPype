@@ -75,10 +75,10 @@ class LoadMov(api.Loader):
 
         if workfile_start:
             read_node['frame_mode'].setValue("start at")
-            read_node['frame'].setValue(str(script_start))
+            read_node['frame'].setValue(str(int(script_start)))
         else:
             read_node['frame_mode'].setValue("start at")
-            read_node['frame'].setValue(str(frame))
+            read_node['frame'].setValue(str(int(frame)))
 
         return int(script_start)
 
@@ -277,11 +277,19 @@ class LoadMov(api.Loader):
             "__ read_node['file']: {}".format(read_node["file"].value()))
 
         # Set the global in to the start frame of the sequence
+
+        # Bug fix for read nodes frame value being string of float.
+        frame = read_node['frame'].value()
+        try:
+            frame = int(frame)
+        except ValueError:
+            frame = int(float(frame))
+
         self.loader_shift(
-            read_node, orig_first,
-            bool(int(
-                nuke.root()["first_frame"].value()) == int(
-                    read_node['frame'].value())))
+            read_node,
+            orig_first,
+            bool(int(nuke.root()["first_frame"].value()) == frame)
+        )
         read_node["origfirst"].setValue(first)
         read_node["first"].setValue(first)
         read_node["origlast"].setValue(last)
