@@ -1,3 +1,4 @@
+import copy
 from .input_entities import InputEntity
 from .exceptions import EntitySchemaError
 from .lib import (
@@ -118,6 +119,22 @@ class HostsEnumEntity(BaseEnumEntity):
     implementation instead of application name.
     """
     schema_types = ["hosts-enum"]
+    all_host_names = [
+        "aftereffects",
+        "blender",
+        "celaction",
+        "fusion",
+        "harmony",
+        "hiero",
+        "houdini",
+        "maya",
+        "nuke",
+        "photoshop",
+        "resolve",
+        "tvpaint",
+        "unreal",
+        "standalonepublisher"
+    ]
 
     def _item_initalization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
@@ -126,22 +143,7 @@ class HostsEnumEntity(BaseEnumEntity):
         )
         custom_labels = self.schema_data.get("custom_labels") or {}
 
-        host_names = [
-            "aftereffects",
-            "blender",
-            "celaction",
-            "fusion",
-            "harmony",
-            "hiero",
-            "houdini",
-            "maya",
-            "nuke",
-            "photoshop",
-            "resolve",
-            "tvpaint",
-            "unreal",
-            "standalonepublisher"
-        ]
+        host_names = copy.deepcopy(self.all_host_names)
         if self.use_empty_value:
             host_names.insert(0, "")
             # Add default label for empty value if not available
