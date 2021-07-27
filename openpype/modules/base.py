@@ -14,7 +14,6 @@ import six
 import openpype
 from openpype.settings import get_system_settings
 from openpype.lib import PypeLogger
-from openpype import resources
 
 
 class __ModuleClass:
@@ -136,7 +135,9 @@ def load_modules(force=False):
         slack,
         sync_server,
         timers_manager,
-        webserver
+        webserver,
+        standalonepublish_action,
+        project_manager_action
     )
     setattr(openpype_modules, "avalon_apps", avalon_apps)
     setattr(openpype_modules, "clockify", clockify)
@@ -150,6 +151,10 @@ def load_modules(force=False):
     setattr(openpype_modules, "slack", slack)
     setattr(openpype_modules, "timers_manager", timers_manager)
     setattr(openpype_modules, "webserver", webserver)
+    setattr(
+        openpype_modules, "standalonepublish_action", standalonepublish_action
+    )
+    setattr(openpype_modules, "project_manager_action", project_manager_action)
 
 
 @six.add_metaclass(ABCMeta)

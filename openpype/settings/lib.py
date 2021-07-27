@@ -114,7 +114,8 @@ def save_studio_settings(data):
         SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager, ISettingsChangeListener
+    from openpype.modules import ModulesManager
+    from openpype_interfaces import ISettingsChangeListener
 
     old_data = get_system_settings()
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
