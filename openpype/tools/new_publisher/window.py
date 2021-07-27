@@ -197,11 +197,11 @@ class PublisherWindow(QtWidgets.QWidget):
     def resizeEvent(self, event):
         super(PublisherWindow, self).resizeEvent(event)
 
-        self.overlay_frame.resize(self.main_frame.size())
+        self.overlay_frame.resize(self.size())
 
     def moveEvent(self, event):
         super(PublisherWindow, self).moveEvent(event)
-        self.overlay_frame.move(self.main_frame.pos())
+        self.overlay_frame.move(0, 0)
 
     def showEvent(self, event):
         super(PublisherWindow, self).showEvent(event)
