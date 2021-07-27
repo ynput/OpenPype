@@ -340,6 +340,11 @@ QAbstractItemView {
     selection-background-color: transparent;
 }
 
+QAbstractItemView::item {
+    /* `border: none` hide outline of selected item. */
+    border: none;
+}
+
 QAbstractItemView:disabled{
     background: {color:bg-view-disabled};
     alternate-background-color: {color:bg-view-alternate-disabled};
