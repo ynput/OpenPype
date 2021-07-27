@@ -49,5 +49,7 @@ class NonPythonHostHook(PreLaunchHook):
         if remainders:
             self.launch_context.launch_args.extend(remainders)
 
+        # This must be set otherwise it wouldn't be possible to catch output
+        #   when build OpenPype is used.
         self.launch_context.kwargs["stdout"] = subprocess.DEVNULL
-        self.launch_context.kwargs["stderr"] = subprocess.STDOUT
+        self.launch_context.kwargs["stderr"] = subprocess.DEVNULL

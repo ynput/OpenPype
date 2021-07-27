@@ -944,10 +944,8 @@ class Window(QtWidgets.QMainWindow):
         split_widget.addWidget(tasks_widget)
         split_widget.addWidget(files_widget)
         split_widget.addWidget(side_panel)
-        split_widget.setStretchFactor(0, 1)
-        split_widget.setStretchFactor(1, 1)
-        split_widget.setStretchFactor(2, 3)
-        split_widget.setStretchFactor(3, 1)
+        split_widget.setSizes([255, 160, 455, 175])
+
         body_layout.addWidget(split_widget)
 
         # Add top margin for tasks to align it visually with files as
@@ -976,7 +974,7 @@ class Window(QtWidgets.QMainWindow):
         # Force focus on the open button by default, required for Houdini.
         files_widget.btn_open.setFocus()
 
-        self.resize(1000, 600)
+        self.resize(1200, 600)
 
     def keyPressEvent(self, event):
         """Custom keyPressEvent.

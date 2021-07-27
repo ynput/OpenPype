@@ -200,6 +200,106 @@
         }
     },
     "publish": {
+        "CollectFtrackFamily": {
+            "enabled": true,
+            "profiles": [
+                {
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "families": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "families": [
+                        "matchmove",
+                        "shot"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "standalonepublisher"
+                    ],
+                    "families": [
+                        "plate"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "clip",
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
+                },
+                {
+                    "hosts": [
+                        "maya"
+                    ],
+                    "families": [
+                        "model",
+                        "setdress",
+                        "animation",
+                        "look",
+                        "rig",
+                        "camera"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "tvpaint"
+                    ],
+                    "families": [
+                        "renderPass"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "tvpaint"
+                    ],
+                    "families": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "nuke"
+                    ],
+                    "families": [
+                        "write",
+                        "render"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
+                }
+            ]
+        },
         "IntegrateFtrackNote": {
             "enabled": true,
             "note_with_intent_template": "{intent}: {comment}",

@@ -1,3 +1,4 @@
+from copy import deepcopy
 import openpype.hosts.hiero.api as phiero
 # from openpype.hosts.hiero.api import plugin, lib
 # reload(lib)
@@ -206,20 +207,24 @@ class CreateShotClip(phiero.Creator):
     presets = None
 
     def process(self):
+        # Creator copy of object attributes that are modified during `process`
+        presets = deepcopy(self.presets)
+        gui_inputs = deepcopy(self.gui_inputs)
+
         # get key pares from presets and match it on ui inputs
-        for k, v in self.gui_inputs.items():
+        for k, v in gui_inputs.items():
             if v["type"] in ("dict", "section"):
                 # nested dictionary (only one level allowed
                 # for sections and dict)
                 for _k, _v in v["value"].items():
-                    if self.presets.get(_k):
-                        self.gui_inputs[k][
-                            "value"][_k]["value"] = self.presets[_k]
-            if self.presets.get(k):
-                self.gui_inputs[k]["value"] = self.presets[k]
+                    if presets.get(_k):
+                        gui_inputs[k][
+                            "value"][_k]["value"] = presets[_k]
+            if presets.get(k):
+                gui_inputs[k]["value"] = presets[k]
 
         # open widget for plugins inputs
-        widget = self.widget(self.gui_name, self.gui_info, self.gui_inputs)
+        widget = self.widget(self.gui_name, self.gui_info, gui_inputs)
         widget.exec_()
 
         if len(self.selected) < 1:

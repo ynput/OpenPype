@@ -1,3 +1,5 @@
+import json
+
 from Qt import QtWidgets, QtGui, QtCore
 from openpype.tools.settings import CHILD_OFFSET
 from .widgets import ExpandingWidget
@@ -125,6 +127,117 @@ class BaseWidget(QtWidgets.QWidget):
         actions_mapping[action] = remove_from_project_override
         menu.addAction(action)
 
+    def _copy_value_actions(self, menu):
+        def copy_value():
+            mime_data = QtCore.QMimeData()
+
+            if self.entity.is_dynamic_item or self.entity.is_in_dynamic_item:
+                entity_path = None
+            else:
+                entity_path = "/".join(
+                    [self.entity.root_key, self.entity.path]
+                )
+
+            value = self.entity.value
+            # Copy for settings tool
+            settings_data = {
+                "root_key": self.entity.root_key,
+                "value": value,
+                "path": entity_path
+            }
+            settings_encoded_data = QtCore.QByteArray()
+            settings_stream = QtCore.QDataStream(
+                settings_encoded_data, QtCore.QIODevice.WriteOnly
+            )
+            settings_stream.writeQString(json.dumps(settings_data))
+            mime_data.setData(
+                "application/copy_settings_value", settings_encoded_data
+            )
+
+            # Copy as json
+            json_encoded_data = None
+            if isinstance(value, (dict, list)):
+                json_encoded_data = QtCore.QByteArray()
+                json_stream = QtCore.QDataStream(
+                    json_encoded_data, QtCore.QIODevice.WriteOnly
+                )
+                json_stream.writeQString(json.dumps(value))
+
+                mime_data.setData("application/json", json_encoded_data)
+
+            # Copy as text
+            if json_encoded_data is None:
+                # Store value as string
+                mime_data.setText(str(value))
+            else:
+                # Store data as json string
+                mime_data.setText(json.dumps(value, indent=4))
+
+            QtWidgets.QApplication.clipboard().setMimeData(mime_data)
+
+        action = QtWidgets.QAction("Copy", menu)
+        return [(action, copy_value)]
+
+    def _paste_value_actions(self, menu):
+        output = []
+        # Allow paste of value only if were copied from this UI
+        mime_data = QtWidgets.QApplication.clipboard().mimeData()
+        mime_value = mime_data.data("application/copy_settings_value")
+        # Skip if there is nothing to do
+        if not mime_value:
+            return output
+
+        settings_stream = QtCore.QDataStream(
+            mime_value, QtCore.QIODevice.ReadOnly
+        )
+        mime_data_value_str = settings_stream.readQString()
+        mime_data_value = json.loads(mime_data_value_str)
+
+        value = mime_data_value["value"]
+        path = mime_data_value["path"]
+        root_key = mime_data_value["root_key"]
+
+        # Try to find matching entity to be able paste values to same spot
+        # - entity can't by dynamic or in dynamic item
+        # - must be in same root entity as source copy
+        #       Can't copy system settings <-> project settings
+        matching_entity = None
+        if path and root_key == self.entity.root_key:
+            try:
+                matching_entity = self.entity.get_entity_from_path(path)
+            except Exception:
+                pass
+
+        def _set_entity_value(_entity, _value):
+            try:
+                _entity.set(_value)
+            except Exception:
+                dialog = QtWidgets.QMessageBox(self)
+                dialog.setWindowTitle("Value does not match settings schema")
+                dialog.setIcon(QtWidgets.QMessageBox.Warning)
+                dialog.setText((
+                    "Pasted value does not seem to match schema of destination"
+                    " settings entity."
+                ))
+                dialog.exec_()
+
+        # Simple paste value method
+        def paste_value():
+            _set_entity_value(self.entity, value)
+
+        action = QtWidgets.QAction("Paste", menu)
+        output.append((action, paste_value))
+
+        # Paste value to matchin entity
+        def paste_value_to_path():
+            _set_entity_value(matching_entity, value)
+
+        if matching_entity is not None:
+            action = QtWidgets.QAction("Paste to same place", menu)
+            output.append((action, paste_value_to_path))
+
+        return output
+
     def show_actions_menu(self, event=None):
         if event and event.button() != QtCore.Qt.RightButton:
             return
@@ -143,6 +256,15 @@ class BaseWidget(QtWidgets.QWidget):
         self._remove_from_studio_default_action(menu, actions_mapping)
         self._add_to_project_override_action(menu, actions_mapping)
         self._remove_from_project_override_action(menu, actions_mapping)
+
+        ui_actions = []
+        ui_actions.extend(self._copy_value_actions(menu))
+        ui_actions.extend(self._paste_value_actions(menu))
+        if ui_actions:
+            menu.addSeparator()
+            for action, callback in ui_actions:
+                menu.addAction(action)
+                actions_mapping[action] = callback
 
         if not actions_mapping:
             action = QtWidgets.QAction("< No action >")

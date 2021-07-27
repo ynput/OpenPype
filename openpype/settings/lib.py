@@ -315,14 +315,28 @@ class DuplicatedEnvGroups(Exception):
         super(DuplicatedEnvGroups, self).__init__(msg)
 
 
+def load_openpype_default_settings():
+    """Load openpype default settings."""
+    return load_jsons_from_dir(DEFAULTS_DIR)
+
+
 def reset_default_settings():
+    """Reset cache of default settings. Can't be used now."""
     global _DEFAULT_SETTINGS
     _DEFAULT_SETTINGS = None
 
 
 def get_default_settings():
+    """Get default settings.
+
+    Todo:
+        Cache loaded defaults.
+
+    Returns:
+        dict: Loaded default settings.
+    """
     # TODO add cacher
-    return load_jsons_from_dir(DEFAULTS_DIR)
+    return load_openpype_default_settings()
     # global _DEFAULT_SETTINGS
     # if _DEFAULT_SETTINGS is None:
     #     _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
@@ -532,7 +546,11 @@ def apply_local_settings_on_system_settings(system_settings, local_settings):
 
         variants = system_settings["applications"][app_group_name]["variants"]
         for app_name, app_value in value.items():
-            if not app_value or app_name not in variants:
+            if (
+                not app_value
+                or app_name not in variants
+                or "executables" not in variants[app_name]
+            ):
                 continue
 
             executable = app_value.get("executable")
@@ -862,6 +880,25 @@ def get_environments():
     """
 
     return find_environments(get_system_settings(False))
+
+
+def get_general_environments():
+    """Get general environments.
+
+    Function is implemented to be able load general environments without using
+    `get_default_settings`.
+    """
+    # Use only openpype defaults.
+    # - prevent to use `get_system_settings` where `get_default_settings`
+    #   is used
+    default_values = load_openpype_default_settings()
+    studio_overrides = get_studio_system_settings_overrides()
+    result = apply_overrides(default_values, studio_overrides)
+    environments = result["general"]["environment"]
+
+    clear_metadata_from_settings(environments)
+
+    return environments
 
 
 def clear_metadata_from_settings(values):

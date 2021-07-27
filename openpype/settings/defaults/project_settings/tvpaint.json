@@ -1,5 +1,13 @@
 {
     "publish": {
+        "ExtractSequence": {
+            "review_bg": [
+                255,
+                255,
+                255,
+                255
+            ]
+        },
         "ValidateProjectSettings": {
             "enabled": true,
             "optional": true,
@@ -7,6 +15,11 @@
         },
         "ValidateMarks": {
             "enabled": true,
+            "optional": true,
+            "active": true
+        },
+        "ValidateStartFrame": {
+            "enabled": false,
             "optional": true,
             "active": true
         },

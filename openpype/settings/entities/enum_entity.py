@@ -101,6 +101,79 @@ class EnumEntity(BaseEnumEntity):
         super(EnumEntity, self).schema_validations()
 
 
+class HostsEnumEntity(BaseEnumEntity):
+    """Enumeration of host names.
+
+    Enum items are hardcoded in definition of the entity.
+
+    Hosts enum can have defined empty value as valid option which is
+    represented by empty string. Schema key to set this option is
+    `use_empty_value` (true/false). And to set label of empty value set
+    `empty_label` (string).
+
+    Enum can have single and multiselection.
+
+    NOTE:
+    Host name is not the same as application name. Host name defines
+    implementation instead of application name.
+    """
+    schema_types = ["hosts-enum"]
+
+    def _item_initalization(self):
+        self.multiselection = self.schema_data.get("multiselection", True)
+        self.use_empty_value = self.schema_data.get(
+            "use_empty_value", not self.multiselection
+        )
+        custom_labels = self.schema_data.get("custom_labels") or {}
+
+        host_names = [
+            "aftereffects",
+            "blender",
+            "celaction",
+            "fusion",
+            "harmony",
+            "hiero",
+            "houdini",
+            "maya",
+            "nuke",
+            "photoshop",
+            "resolve",
+            "tvpaint",
+            "unreal",
+            "standalonepublisher"
+        ]
+        if self.use_empty_value:
+            host_names.insert(0, "")
+            # Add default label for empty value if not available
+            if "" not in custom_labels:
+                custom_labels[""] = "< without host >"
+
+        # These are hardcoded there is not list of available host in OpenPype
+        enum_items = []
+        valid_keys = set()
+        for key in host_names:
+            label = custom_labels.get(key, key)
+            valid_keys.add(key)
+            enum_items.append({key: label})
+
+        self.enum_items = enum_items
+        self.valid_keys = valid_keys
+
+        if self.multiselection:
+            self.valid_value_types = (list, )
+            self.value_on_not_set = []
+        else:
+            for key in valid_keys:
+                if self.value_on_not_set is NOT_SET:
+                    self.value_on_not_set = key
+                    break
+
+            self.valid_value_types = (STRING_TYPE, )
+
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
+
 class AppsEnumEntity(BaseEnumEntity):
     schema_types = ["apps-enum"]
 

@@ -1,5 +1,6 @@
 import os
 import shutil
+import copy
 import tempfile
 
 import pyblish.api
@@ -12,6 +13,9 @@ class ExtractSequence(pyblish.api.Extractor):
     label = "Extract Sequence"
     hosts = ["tvpaint"]
     families = ["review", "renderPass", "renderLayer"]
+
+    # Modifiable with settings
+    review_bg = [255, 255, 255, 255]
 
     def process(self, instance):
         self.log.info(
@@ -45,6 +49,14 @@ class ExtractSequence(pyblish.api.Extractor):
         family_lowered = instance.data["family"].lower()
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
+
+        # Scene start frame offsets the output files, so we need to offset the
+        # marks.
+        scene_start_frame = instance.context.data["sceneStartFrame"]
+        difference = scene_start_frame - mark_in
+        mark_in += difference
+        mark_out += difference
+
         # Frame start/end may be stored as float
         frame_start = int(instance.data["frameStart"])
         frame_end = int(instance.data["frameEnd"])
@@ -52,6 +64,8 @@ class ExtractSequence(pyblish.api.Extractor):
         # Handles are not stored per instance but on Context
         handle_start = instance.context.data["handleStart"]
         handle_end = instance.context.data["handleEnd"]
+
+        scene_bg_color = instance.context.data["sceneBgColor"]
 
         # --- Fallbacks ----------------------------------------------------
         # This is required if validations of ranges are ignored.
@@ -92,7 +106,7 @@ class ExtractSequence(pyblish.api.Extractor):
             self.log.warning((
                 "Lowering representation range to {} frames."
                 " Changed frame end {} -> {}"
-            ).format(output_range + 1, mark_out, new_mark_out))
+            ).format(output_range + 1, mark_out, new_output_frame_end))
             output_frame_end = new_output_frame_end
 
         # -------------------------------------------------------------------
@@ -120,7 +134,8 @@ class ExtractSequence(pyblish.api.Extractor):
 
         if instance.data["family"] == "review":
             output_filenames, thumbnail_fullpath = self.render_review(
-                filename_template, output_dir, mark_in, mark_out
+                filename_template, output_dir, mark_in, mark_out,
+                scene_bg_color
             )
         else:
             # Render output
@@ -241,7 +256,9 @@ class ExtractSequence(pyblish.api.Extractor):
             for path in repre_filepaths
         ]
 
-    def render_review(self, filename_template, output_dir, mark_in, mark_out):
+    def render_review(
+        self, filename_template, output_dir, mark_in, mark_out, scene_bg_color
+    ):
         """ Export images from TVPaint using `tv_savesequence` command.
 
         Args:
@@ -252,6 +269,8 @@ class ExtractSequence(pyblish.api.Extractor):
             output_dir (str): Directory where files will be stored.
             mark_in (int): Starting frame index from which export will begin.
             mark_out (int): On which frame index export will end.
+            scene_bg_color (list): Bg color set in scene. Result of george
+                script command `tv_background`.
 
         Retruns:
             tuple: With 2 items first is list of filenames second is path to
@@ -263,7 +282,11 @@ class ExtractSequence(pyblish.api.Extractor):
             filename_template.format(frame=mark_in)
         )
 
+        bg_color = self._get_review_bg_color()
+
         george_script_lines = [
+            # Change bg color to color from settings
+            "tv_background \"color\" {} {} {}".format(*bg_color),
             "tv_SaveMode \"PNG\"",
             "export_path = \"{}\"".format(
                 first_frame_filepath.replace("\\", "/")
@@ -272,6 +295,18 @@ class ExtractSequence(pyblish.api.Extractor):
                 mark_in, mark_out
             )
         ]
+        if scene_bg_color:
+            # Change bg color back to previous scene bg color
+            _scene_bg_color = copy.deepcopy(scene_bg_color)
+            bg_type = _scene_bg_color.pop(0)
+            orig_color_command = [
+                "tv_background",
+                "\"{}\"".format(bg_type)
+            ]
+            orig_color_command.extend(_scene_bg_color)
+
+            george_script_lines.append(" ".join(orig_color_command))
+
         lib.execute_george_through_file("\n".join(george_script_lines))
 
         first_frame_filepath = None
@@ -291,12 +326,13 @@ class ExtractSequence(pyblish.api.Extractor):
             if first_frame_filepath is None:
                 first_frame_filepath = filepath
 
-        thumbnail_filepath = os.path.join(output_dir, "thumbnail.jpg")
+        thumbnail_filepath = None
         if first_frame_filepath and os.path.exists(first_frame_filepath):
+            thumbnail_filepath = os.path.join(output_dir, "thumbnail.jpg")
             source_img = Image.open(first_frame_filepath)
-            thumbnail_obj = Image.new("RGB", source_img.size, (255, 255, 255))
-            thumbnail_obj.paste(source_img)
-            thumbnail_obj.save(thumbnail_filepath)
+            if source_img.mode.lower() != "rgb":
+                source_img = source_img.convert("RGB")
+            source_img.save(thumbnail_filepath)
 
         return output_filenames, thumbnail_filepath
 
@@ -392,11 +428,34 @@ class ExtractSequence(pyblish.api.Extractor):
         if thumbnail_src_filepath and os.path.exists(thumbnail_src_filepath):
             source_img = Image.open(thumbnail_src_filepath)
             thumbnail_filepath = os.path.join(output_dir, "thumbnail.jpg")
-            thumbnail_obj = Image.new("RGB", source_img.size, (255, 255, 255))
-            thumbnail_obj.paste(source_img)
-            thumbnail_obj.save(thumbnail_filepath)
+            # Composite background only on rgba images
+            # - just making sure
+            if source_img.mode.lower() == "rgba":
+                bg_color = self._get_review_bg_color()
+                self.log.debug("Adding thumbnail background color {}.".format(
+                    " ".join([str(val) for val in bg_color])
+                ))
+                bg_image = Image.new("RGBA", source_img.size, bg_color)
+                thumbnail_obj = Image.alpha_composite(bg_image, source_img)
+                thumbnail_obj.convert("RGB").save(thumbnail_filepath)
+
+            else:
+                self.log.info((
+                    "Source for thumbnail has mode \"{}\" (Expected: RGBA)."
+                    " Can't use thubmanail background color."
+                ).format(source_img.mode))
+                source_img.save(thumbnail_filepath)
 
         return output_filenames, thumbnail_filepath
+
+    def _get_review_bg_color(self):
+        red = green = blue = 255
+        if self.review_bg:
+            if len(self.review_bg) == 4:
+                red, green, blue, _ = self.review_bg
+            elif len(self.review_bg) == 3:
+                red, green, blue = self.review_bg
+        return (red, green, blue)
 
     def _render_layer(
         self,

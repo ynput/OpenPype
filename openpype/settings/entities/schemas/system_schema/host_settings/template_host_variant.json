@@ -1,5 +1,10 @@
 [
     {
+        "__default_values__": {
+            "variant_skip_paths": null
+        }
+    },
+    {
         "type": "dict",
         "key": "{app_variant}",
         "label": "{app_variant_label}",
@@ -19,7 +24,8 @@
             },
             {
                 "type": "schema_template",
-                "name": "template_host_variant_items"
+                "name": "template_host_variant_items",
+                "skip_paths": "{variant_skip_paths}"
             }
         ]
     }

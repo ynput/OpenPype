@@ -11,7 +11,7 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
 
     # must be after `CollectInstances`
     order = pyblish.api.CollectorOrder + 0.011
-    label = "Collect Instance Resources"
+    label = "Collect Editorial Resources"
     hosts = ["standalonepublisher"]
     families = ["clip"]
 
@@ -177,18 +177,22 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
         collection_head_name = None
         # loop trough collections and create representations
         for _collection in collections:
-            ext = _collection.tail
+            ext = _collection.tail[1:]
             collection_head_name = _collection.head
             frame_start = list(_collection.indexes)[0]
             frame_end = list(_collection.indexes)[-1]
             repre_data = {
                 "frameStart": frame_start,
                 "frameEnd": frame_end,
-                "name": ext[1:],
-                "ext": ext[1:],
+                "name": ext,
+                "ext": ext,
                 "files": [item for item in _collection],
                 "stagingDir": staging_dir
             }
+
+            if instance_data.get("keepSequence"):
+                repre_data_keep = deepcopy(repre_data)
+                instance_data["representations"].append(repre_data_keep)
 
             if "review" in instance_data["families"]:
                 repre_data.update({
@@ -208,20 +212,20 @@ class CollectInstanceResources(pyblish.api.InstancePlugin):
 
         # loop trough reminders and create representations
         for _reminding_file in remainder:
-            ext = os.path.splitext(_reminding_file)[-1]
+            ext = os.path.splitext(_reminding_file)[-1][1:]
             if ext not in instance_data["extensions"]:
                 continue
             if collection_head_name and (
-                (collection_head_name + ext[1:]) not in _reminding_file
-            ) and (ext in [".mp4", ".mov"]):
+                (collection_head_name + ext) not in _reminding_file
+            ) and (ext in ["mp4", "mov"]):
                 self.log.info(f"Skipping file: {_reminding_file}")
                 continue
             frame_start = 1
             frame_end = 1
 
             repre_data = {
-                "name": ext[1:],
-                "ext": ext[1:],
+                "name": ext,
+                "ext": ext,
                 "files": _reminding_file,
                 "stagingDir": staging_dir
             }

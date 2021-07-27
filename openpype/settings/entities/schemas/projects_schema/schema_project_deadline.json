@@ -108,6 +108,16 @@
                             "key": "limit",
                             "label": "Limit Groups",
                             "object_type": "text"
+                        },
+                        {
+                            "type": "raw-json",
+                            "key": "jobInfo",
+                            "label": "Additional JobInfo data"
+                        },
+                        {
+                            "type": "raw-json",
+                            "key": "pluginInfo",
+                            "label": "Additional PluginInfo data"
                         }
                     ]
                 },
@@ -172,6 +182,20 @@
                             "type": "boolean",
                             "key": "use_gpu",
                             "label": "Use GPU"
+                        },
+                        {
+                            "type": "list",
+                            "key": "env_allowed_keys",
+                            "object_type": "text",
+                            "label": "Allowed environment keys"
+                        },
+                        {
+                            "type": "dict-modifiable",
+                            "key": "env_search_replace_values",
+                            "label": "Search & replace in environment values",
+                            "object_type": {
+                                "type": "text"
+                            }
                         },
                         {
                             "type": "dict-modifiable",
