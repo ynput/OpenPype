@@ -38,8 +38,11 @@ class AnatomyEntity(DictImmutableKeysEntity):
             ]
             reason = (
                 "Anatomy must have all children as groups."
-                " Non-group children {}"
-            ).format(", ".join(_non_group_children))
+                " Set 'is_group' to `true` on > {}"
+            ).format(", ".join([
+                '"{}"'.format(item)
+                for item in _non_group_children
+            ]))
             raise EntitySchemaError(self, reason)
 
         return super(AnatomyEntity, self).schema_validations()
