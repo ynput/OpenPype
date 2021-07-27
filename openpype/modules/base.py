@@ -254,6 +254,8 @@ class ModulesManager:
         """Import and initialize modules."""
         self.collect_modules()
 
+        import openpype_modules
+
         self.log.debug("*** Pype modules initialization.")
         # Prepare settings for modules
         system_settings = getattr(self, "_system_settings", None)
@@ -395,6 +397,8 @@ class ModulesManager:
                 and "actions" each containing list of paths.
         """
         # Output structure
+        from openpype_interfaces import IPluginPaths
+
         output = {
             "publish": [],
             "create": [],
@@ -447,6 +451,8 @@ class ModulesManager:
         Returns:
             list: Paths to launch hook directories.
         """
+        from openpype_interfaces import ILaunchHookPaths
+
         str_type = type("")
         expected_types = (list, tuple, set)
 
@@ -647,6 +653,8 @@ class TrayModulesManager(ModulesManager):
         self.tray_menu(tray_menu)
 
     def get_enabled_tray_modules(self):
+        from openpype_interfaces import ITrayModule
+
         output = []
         for module in self.modules:
             if module.enabled and isinstance(module, ITrayModule):
@@ -722,6 +730,8 @@ class TrayModulesManager(ModulesManager):
             self._report["Tray menu"] = report
 
     def start_modules(self):
+        from openpype_interfaces import ITrayService
+
         report = {}
         time_start = time.time()
         prev_start_time = time_start
