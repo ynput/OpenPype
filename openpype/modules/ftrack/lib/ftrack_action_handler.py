@@ -328,6 +328,78 @@ class BaseAction(BaseHandler):
         return True
 
 
+class LocalAction(BaseAction):
+    """Action that warn user when more Processes with same action are running.
+
+    Action is launched all the time but if id does not match id of current
+    instanace then message is shown to user.
+
+    Handy for actions where matters if is executed on specific machine.
+    """
+    _full_launch_identifier = None
+
+    @property
+    def discover_identifier(self):
+        if self._discover_identifier is None:
+            self._discover_identifier = "{}.{}".format(
+                self.identifier, self.process_identifier()
+            )
+        return self._discover_identifier
+
+    @property
+    def launch_identifier(self):
+        """Catch all topics with same identifier."""
+        if self._launch_identifier is None:
+            self._launch_identifier = "{}.*".format(self.identifier)
+        return self._launch_identifier
+
+    @property
+    def full_launch_identifier(self):
+        """Catch all topics with same identifier."""
+        if self._full_launch_identifier is None:
+            self._full_launch_identifier = "{}.{}".format(
+                self.identifier, self.process_identifier()
+            )
+        return self._full_launch_identifier
+
+    def _discover(self, event):
+        entities = self._translate_event(event)
+        if not entities:
+            return
+
+        accepts = self.discover(self.session, entities, event)
+        if not accepts:
+            return
+
+        self.log.debug("Discovering action with selection: {0}".format(
+            event["data"].get("selection", [])
+        ))
+
+        return {
+            "items": [{
+                "label": self.label,
+                "variant": self.variant,
+                "description": self.description,
+                "actionIdentifier": self.discover_identifier,
+                "icon": self.icon,
+            }]
+        }
+
+    def _launch(self, event):
+        event_identifier = event["data"]["actionIdentifier"]
+        # Check if identifier is same
+        # - show message that acion may not be triggered on this machine
+        if event_identifier != self.full_launch_identifier:
+            return {
+                "success": False,
+                "message": (
+                    "There are running more OpenPype processes"
+                    " where this action could be launched."
+                )
+            }
+        return super(LocalAction, self)._launch(event)
+
+
 class ServerAction(BaseAction):
     """Action class meant to be used on event server.
 
