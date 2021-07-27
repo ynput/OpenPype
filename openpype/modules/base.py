@@ -107,6 +107,7 @@ def load_modules(force=False):
 
     log = PypeLogger.get_logger("ModulesLoader")
 
+    # TODO import dynamically from defined paths
     from . import (
         avalon_apps,
         clockify,
@@ -175,7 +176,7 @@ class PypeModule:
     def __init__(self, manager, settings):
         self.manager = manager
 
-        self.log = PypeLogger().get_logger(self.name)
+        self.log = PypeLogger.get_logger(self.name)
 
         self.initialize(settings)
 
