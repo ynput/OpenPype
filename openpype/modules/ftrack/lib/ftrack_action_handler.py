@@ -1,5 +1,4 @@
 import os
-from uuid import uuid4
 from .ftrack_base_handler import BaseHandler
 
 
@@ -30,7 +29,6 @@ class BaseAction(BaseHandler):
     icon = None
     type = 'Action'
 
-    _identifier_id = str(uuid4())
     _discover_identifier = None
     _launch_identifier = None
 
@@ -51,7 +49,7 @@ class BaseAction(BaseHandler):
     def discover_identifier(self):
         if self._discover_identifier is None:
             self._discover_identifier = "{}.{}".format(
-                self.identifier, self._identifier_id
+                self.identifier, self.process_identifier()
             )
         return self._discover_identifier
 
@@ -59,7 +57,7 @@ class BaseAction(BaseHandler):
     def launch_identifier(self):
         if self._launch_identifier is None:
             self._launch_identifier = "{}.{}".format(
-                self.identifier, self._identifier_id
+                self.identifier, self.process_identifier()
             )
         return self._launch_identifier
 
