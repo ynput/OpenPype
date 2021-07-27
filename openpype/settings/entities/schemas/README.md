@@ -181,6 +181,103 @@
 }
 ```
 
+## dict-conditional
+- is similar to `dict` but has only one child entity that will be always available
+- the one entity is enumerator of possible values and based on value of the entity are defined and used other children entities
+- each value of enumerator have defined children that will be used
+    - there is no way how to have shared entities across multiple enum items
+- value from enumerator is also stored next to other values
+    - to define the key under which will be enum value stored use `enum_key`
+    - `enum_key` must match key regex and any enum item can't have children with same key
+    - `enum_label` is label of the entity for UI purposes
+- enum items are define with `enum_children`
+    - it's a list where each item represents enum item
+    - all items in `enum_children` must have at least `key` key which represents value stored under `enum_key`
+    - items can define `label` for UI purposes
+    - most important part is that item can define `children` key where are definitions of it's children (`children` value works the same way as in `dict`)
+- entity must have defined `"label"` if is not used as widget
+- is set as group if any parent is not group
+- if `"label"` is entetered there which will be shown in GUI
+    - item with label can be collapsible
+        - that can be set with key `"collapsible"` as `True`/`False` (Default: `True`)
+            - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
+    - it is possible to add darker background with `"highlight_content"` (Default: `False`)
+        - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
+    - output is dictionary `{the "key": children values}`
+```
+# Example
+{
+    "type": "dict-conditional",
+    "key": "my_key",
+    "label": "My Key",
+    "enum_key": "type",
+    "enum_label": "label",
+    "enum_children": [
+        # Each item must be a dictionary with 'key'
+        {
+            "key": "action",
+            "label": "Action",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "key",
+                    "label": "Key"
+                },
+                {
+                    "type": "text",
+                    "key": "label",
+                    "label": "Label"
+                },
+                {
+                    "type": "text",
+                    "key": "command",
+                    "label": "Comand"
+                }
+            ]
+        },
+        {
+            "key": "menu",
+            "label": "Menu",
+            "children": [
+                {
+                    "key": "children",
+                    "label": "Children",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            # Separator does not have children as "separator" value is enough
+            "key": "separator",
+            "label": "Separator"
+        }
+    ]
+}
+```
+
+How output of the schema could look like on save:
+```
+{
+    "type": "separator"
+}
+
+{
+    "type": "action",
+    "key": "action_1",
+    "label": "Action 1",
+    "command": "run command -arg"
+}
+
+{
+    "type": "menu",
+    "children": [
+        "child_1",
+        "child_2"
+    ]
+}
+```
+
 ## Inputs for setting any kind of value (`Pure` inputs)
 - all these input must have defined `"key"` under which will be stored and `"label"` which will be shown next to input
     - unless they are used in different types of inputs (later) "as widgets" in that case `"key"` and `"label"` are not required as there is not place where to set them
@@ -240,6 +337,11 @@
 - schema also defines valid value type
     - by default it is dictionary
     - to be able use list it is required to define `is_list` to `true`
+- output can be stored as string
+    - this is to allow any keys in dictionary
+    - set key `store_as_string` to `true`
+    - code using that setting must expected that value is string and use json module to convert it to python types
+
 ```
 {
     "type": "raw-json",

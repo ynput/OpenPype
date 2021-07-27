@@ -59,11 +59,9 @@ $openpype_root = (Get-Item $script_dir).parent.FullName
 
 $env:_INSIDE_OPENPYPE_TOOL = "1"
 
-# make sure Poetry is in PATH
 if (-not (Test-Path 'env:POETRY_HOME')) {
     $env:POETRY_HOME = "$openpype_root\.poetry"
 }
-$env:PATH = "$($env:PATH);$($env:POETRY_HOME)\bin"
 
 Set-Location -Path $openpype_root
 
@@ -83,7 +81,7 @@ Write-Host " ] ..." -ForegroundColor white
 
 Write-Host ">>> " -NoNewline -ForegroundColor Green
 Write-Host "Reading Poetry ... " -NoNewline
-if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
+if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Host "NOT FOUND" -ForegroundColor Yellow
     Write-Host "*** " -NoNewline -ForegroundColor Yellow
     Write-Host "We need to install Poetry create virtual env first ..."
@@ -102,7 +100,7 @@ Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Testing OpenPype ..."
 $original_pythonpath = $env:PYTHONPATH
 $env:PYTHONPATH="$($openpype_root);$($env:PYTHONPATH)"
-& poetry run pytest -x --capture=sys --print -W ignore::DeprecationWarning "$($openpype_root)/tests"
+& "$env:POETRY_HOME\bin\poetry" run pytest -x --capture=sys --print -W ignore::DeprecationWarning "$($openpype_root)/tests"
 $env:PYTHONPATH = $original_pythonpath
 
 Write-Host ">>> " -NoNewline -ForegroundColor green

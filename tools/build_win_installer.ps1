@@ -64,14 +64,6 @@ function Show-PSWarning() {
     }
 }
 
-function Install-Poetry() {
-    Write-Host ">>> " -NoNewline -ForegroundColor Green
-    Write-Host "Installing Poetry ... "
-    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
-    # add it to PATH
-    $env:PATH = "$($env:PATH);$($env:USERPROFILE)\.poetry\bin"
-}
-
 $art = @"
 
              . .   ..     .    ..

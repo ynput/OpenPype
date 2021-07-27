@@ -18,6 +18,11 @@
             "optional": true,
             "active": true
         },
+        "ValidateStartFrame": {
+            "enabled": false,
+            "optional": true,
+            "active": true
+        },
         "ValidateAssetName": {
             "enabled": true,
             "optional": true,

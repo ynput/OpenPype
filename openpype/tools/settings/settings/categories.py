@@ -11,6 +11,7 @@ from openpype.settings.entities import (
     GUIEntity,
     DictImmutableKeysEntity,
     DictMutableKeysEntity,
+    DictConditionalEntity,
     ListEntity,
     PathEntity,
     ListStrictEntity,
@@ -35,6 +36,7 @@ from .base import GUIWidget
 from .list_item_widget import ListWidget
 from .list_strict_widget import ListStrictWidget
 from .dict_mutable_widget import DictMutableKeysWidget
+from .dict_conditional import DictConditionalWidget
 from .item_widgets import (
     BoolWidget,
     DictImmutableKeysWidget,
@@ -99,6 +101,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         args = (category_widget, entity, entity_widget)
         if isinstance(entity, GUIEntity):
             return GUIWidget(*args)
+
+        elif isinstance(entity, DictConditionalEntity):
+            return DictConditionalWidget(*args)
 
         elif isinstance(entity, DictImmutableKeysEntity):
             return DictImmutableKeysWidget(*args)
