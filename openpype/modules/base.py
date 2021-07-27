@@ -149,12 +149,12 @@ class ITrayModule:
             Some callbacks need to be processed on main thread (menu actions
             must be added on main thread or they won't get triggered etc.)
         """
-        # called without initialized tray, still main thread needed
         if not self.tray_initialized:
+            # TODO Called without initialized tray, still main thread needed
             try:
-                callback = self._main_thread_callbacks.popleft()
                 callback()
-            except:
+
+            except Exception:
                 self.log.warning(
                     "Failed to execute {} in main thread".format(callback),
                     exc_info=True)
