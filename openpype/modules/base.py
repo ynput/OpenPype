@@ -51,6 +51,8 @@ def load_interfaces(force=False):
     if not force and "openpype_interfaces" in sys.modules:
         return
 
+    from openpype.lib import import_filepath
+
     sys.modules["openpype_interfaces"] = openpype_interfaces = __ModuleClass()
 
     log = PypeLogger.get_logger("InterfacesLoader")
@@ -73,27 +75,9 @@ def load_interfaces(force=False):
         if not os.path.exists(full_path):
             continue
 
-        filename = os.path.splitext(os.path.basename(full_path))[0]
-
         try:
             # Prepare module object where content of file will be parsed
-            module = types.ModuleType(filename)
-
-            if six.PY3:
-                import importlib
-
-                # Use loader so module has full specs
-                module_loader = importlib.machinery.SourceFileLoader(
-                    filename, full_path
-                )
-                module_loader.exec_module(module)
-            else:
-                # Execute module code and store content to module
-                with open(full_path) as _stream:
-                    # Execute content and store it to module object
-                    exec(_stream.read(), module.__dict__)
-
-                module.__file__ = full_path
+            module = import_filepath(full_path)
 
         except Exception:
             log.warning(
