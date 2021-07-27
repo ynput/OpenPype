@@ -24,7 +24,9 @@ class PrepareProjectLocal(BaseAction):
 
     settings_key = "prepare_project"
 
-    # Key to store info about trigerring create folder structure
+    # Key to store info about trigerring create folder structure\
+    create_project_structure_key = "create_folder_structure"
+    create_project_structure_identifier = "create.project.structure"
     item_splitter = {"type": "label", "value": "---"}
     _keys_order = (
         "fps",
@@ -102,6 +104,27 @@ class PrepareProjectLocal(BaseAction):
         }
         # Add autosync attribute
         items.append(auto_sync_item)
+
+        # This item will be last before enumerators
+        # Ask if want to trigger Action Create Folder Structure
+        create_project_structure_checked = (
+            project_settings
+            ["project_settings"]
+            ["ftrack"]
+            ["user_handlers"]
+            ["prepare_project"]
+            ["create_project_structure_checked"]
+        ).value
+        items.append({
+            "type": "label",
+            "value": "<h3>Want to create basic Folder Structure?</h3>"
+        })
+        items.append({
+            "name": self.create_project_structure_key,
+            "type": "boolean",
+            "value": create_project_structure_checked,
+            "label": "Check if Yes"
+        })
 
         # Add enumerator items at the end
         for item in multiselect_enumerators:
@@ -307,10 +330,13 @@ class PrepareProjectLocal(BaseAction):
         return items, multiselect_enumerators
 
     def launch(self, session, entities, event):
-        if not event['data'].get('values', {}):
+        in_data = event["data"].get("values")
+        if not in_data:
             return
 
-        in_data = event['data']['values']
+        create_project_structure_checked = in_data.pop(
+            self.create_project_structure_key
+        )
 
         root_values = {}
         root_key = "__root__"
@@ -400,6 +426,11 @@ class PrepareProjectLocal(BaseAction):
                 self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
             session.commit()
 
+        # Trigger create project structure action
+        if create_project_structure_checked:
+            self.trigger_action(
+                self.create_project_structure_identifier, event
+            )
         return True
 
 
