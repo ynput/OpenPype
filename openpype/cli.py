@@ -96,11 +96,16 @@ def eventserver(debug,
 
 @main.command()
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
-def webpublisherwebserver(debug):
+@click.option("-e", "--executable", help="Executable")
+@click.option("-u", "--upload_dir", help="Upload dir")
+def webpublisherwebserver(debug, executable, upload_dir):
     if debug:
         os.environ['OPENPYPE_DEBUG'] = "3"
 
-    PypeCommands().launch_webpublisher_webservercli()
+    PypeCommands().launch_webpublisher_webservercli(
+        upload_dir=upload_dir,
+        executable=executable
+    )
 
 
 @main.command()
@@ -138,6 +143,24 @@ def publish(debug, paths, targets):
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
     PypeCommands.publish(list(paths), targets)
+
+
+@main.command()
+@click.argument("paths", nargs=-1)
+@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click.option("-h", "--host", help="Host")
+@click.option("-p", "--project", help="Project")
+@click.option("-t", "--targets", help="Targets module", default=None,
+              multiple=True)
+def remotepublish(debug, project, paths, host, targets=None):
+    """Start CLI publishing.
+
+    Publish collects json from paths provided as an argument.
+    More than one path is allowed.
+    """
+    if debug:
+        os.environ['OPENPYPE_DEBUG'] = '3'
+    PypeCommands.remotepublish(project, list(paths), host, targets=None)
 
 
 @main.command()

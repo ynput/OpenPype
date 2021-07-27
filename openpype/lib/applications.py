@@ -1004,7 +1004,7 @@ class EnvironmentPrepData(dict):
 
 
 def get_app_environments_for_context(
-    project_name, asset_name, task_name, app_name, env=None
+    project_name, asset_name, task_name, app_name=None, env=None
 ):
     """Prepare environment variables by context.
     Args:
@@ -1033,19 +1033,13 @@ def get_app_environments_for_context(
         "name": asset_name
     })
 
-    # Prepare app object which can be obtained only from ApplciationManager
-    app_manager = ApplicationManager()
-    app = app_manager.applications[app_name]
-
     # Project's anatomy
     anatomy = Anatomy(project_name)
 
-    data = EnvironmentPrepData({
+    prep_dict = {
         "project_name": project_name,
         "asset_name": asset_name,
         "task_name": task_name,
-
-        "app": app,
 
         "dbcon": dbcon,
         "project_doc": project_doc,
@@ -1054,7 +1048,15 @@ def get_app_environments_for_context(
         "anatomy": anatomy,
 
         "env": env
-    })
+    }
+
+    if app_name:
+        # Prepare app object which can be obtained only from ApplicationManager
+        app_manager = ApplicationManager()
+        app = app_manager.applications[app_name]
+        prep_dict["app"] = app
+
+    data = EnvironmentPrepData(prep_dict)
 
     prepare_host_environments(data)
     prepare_context_environments(data)

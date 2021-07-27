@@ -41,11 +41,11 @@ class PypeCommands:
         return run_event_server(*args)
 
     @staticmethod
-    def launch_webpublisher_webservercli(*args):
+    def launch_webpublisher_webservercli(*args, **kwargs):
         from openpype.modules.webserver.webserver_cli import (
             run_webserver
         )
-        return run_webserver(*args)
+        return run_webserver(*args, **kwargs)
 
     @staticmethod
     def launch_standalone_publisher():
@@ -53,7 +53,7 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
-    def publish(paths, targets=None):
+    def publish(paths, targets=None, host=None):
         """Start headless publishing.
 
         Publish use json from passed paths argument.
@@ -96,6 +96,62 @@ class PypeCommands:
                 pyblish.api.register_target(target)
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
+
+        log.info("Running publish ...")
+
+        # Error exit as soon as any error occurs.
+        error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+
+        for result in pyblish.util.publish_iter():
+            if result["error"]:
+                log.error(error_format.format(**result))
+                uninstall()
+                sys.exit(1)
+
+        log.info("Publish finished.")
+        uninstall()
+
+    @staticmethod
+    def remotepublish(project, paths, host, targets=None):
+        """Start headless publishing.
+
+        Publish use json from passed paths argument.
+
+        Args:
+            paths (list): Paths to jsons.
+            targets (string): What module should be targeted
+                (to choose validator for example)
+            host (string)
+
+        Raises:
+            RuntimeError: When there is no path to process.
+        """
+        if not any(paths):
+            raise RuntimeError("No publish paths specified")
+
+        from openpype import install, uninstall
+        from openpype.api import Logger
+
+        # Register target and host
+        import pyblish.api
+        import pyblish.util
+
+        log = Logger.get_logger()
+
+        install()
+
+        if host:
+            pyblish.api.register_host(host)
+
+        if targets:
+            if isinstance(targets, str):
+                targets = [targets]
+            for target in targets:
+                pyblish.api.register_target(target)
+
+        os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
+        os.environ["AVALON_PROJECT"] = project
+        os.environ["AVALON_APP"] = host  # to trigger proper plugings
 
         log.info("Running publish ...")
 

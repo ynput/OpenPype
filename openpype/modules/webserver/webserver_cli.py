@@ -1,15 +1,14 @@
-import attr
+import os
 import time
 import json
 import datetime
 from bson.objectid import ObjectId
 import collections
 from aiohttp.web_response import Response
+import subprocess
 
 from avalon.api import AvalonMongoDB
 from openpype.modules.avalon_apps.rest_api import _RestApiEndpoint
-
-from openpype.api import get_hierarchy
 
 
 class WebpublisherProjectsEndpoint(_RestApiEndpoint):
@@ -130,9 +129,51 @@ class WebpublisherHiearchyEndpoint(_RestApiEndpoint):
         )
 
 
+class WebpublisherTaskFinishEndpoint(_RestApiEndpoint):
+    """Returns list of project names."""
+    async def post(self, request) -> Response:
+        output = {}
+
+        print(request)
+
+        json_path = os.path.join(self.resource.upload_dir,
+                                 "webpublisher.json")  # temp - pull from request
+
+        openpype_app = self.resource.executable
+        args = [
+            openpype_app,
+            'remotepublish',
+            json_path
+        ]
+
+        if not openpype_app or not os.path.exists(openpype_app):
+            msg = "Non existent OpenPype executable {}".format(openpype_app)
+            raise RuntimeError(msg)
+
+        add_args = {
+            "host": "webpublisher",
+            "project": request.query["project"]
+        }
+
+        for key, value in add_args.items():
+            args.append("--{}".format(key))
+            args.append(value)
+
+        print("args:: {}".format(args))
+
+        exit_code = subprocess.call(args, shell=True)
+        return Response(
+            status=200,
+            body=self.resource.encode(output),
+            content_type="application/json"
+        )
+
+
 class RestApiResource:
-    def __init__(self, server_manager):
+    def __init__(self, server_manager, executable, upload_dir):
         self.server_manager = server_manager
+        self.upload_dir = upload_dir
+        self.executable = executable
 
         self.dbcon = AvalonMongoDB()
         self.dbcon.install()
@@ -154,14 +195,16 @@ class RestApiResource:
         ).encode("utf-8")
 
 
-def run_webserver():
+def run_webserver(*args, **kwargs):
     from openpype.modules import ModulesManager
 
     manager = ModulesManager()
     webserver_module = manager.modules_by_name["webserver"]
     webserver_module.create_server_manager()
 
-    resource = RestApiResource(webserver_module.server_manager)
+    resource = RestApiResource(webserver_module.server_manager,
+                               upload_dir=kwargs["upload_dir"],
+                               executable=kwargs["executable"])
     projects_endpoint = WebpublisherProjectsEndpoint(resource)
     webserver_module.server_manager.add_route(
         "GET",
@@ -174,6 +217,13 @@ def run_webserver():
         "GET",
         "/api/hierarchy/{project_name}",
         hiearchy_endpoint.dispatch
+    )
+
+    task_finish_endpoint = WebpublisherTaskFinishEndpoint(resource)
+    webserver_module.server_manager.add_route(
+        "POST",
+        "/api/task_finish",
+        task_finish_endpoint.dispatch
     )
 
     webserver_module.start_server()
