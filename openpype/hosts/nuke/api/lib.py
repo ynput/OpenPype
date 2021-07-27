@@ -1660,9 +1660,13 @@ def find_free_space_to_paste_nodes(
 def launch_workfiles_app():
     '''Function letting start workfiles after start of host
     '''
-    # get state from settings
-    open_at_start = get_current_project_settings()["nuke"].get(
-        "general", {}).get("open_workfile_at_start")
+    from openpype.lib import (
+        env_value_to_bool
+    )
+    # get all imortant settings
+    open_at_start = env_value_to_bool(
+        env_key="WORKFILE_STARTUP",
+        default=None)
 
     # return if none is defined
     if not open_at_start:
