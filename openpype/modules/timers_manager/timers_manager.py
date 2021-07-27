@@ -2,12 +2,17 @@ import os
 import collections
 from abc import ABCMeta, abstractmethod
 import six
-from .. import PypeModule, ITrayService, IIdleManager, IWebServerRoutes
+from .. import (
+    PypeModule,
+    OpenPypeInterface,
+    ITrayService,
+    IIdleManager,
+    IWebServerRoutes
+)
 from avalon.api import AvalonMongoDB
 
 
-@six.add_metaclass(ABCMeta)
-class ITimersManager:
+class ITimersManager(OpenPypeInterface):
     timer_manager_module = None
 
     @abstractmethod

@@ -6,6 +6,7 @@ import six
 import openpype
 from openpype.modules import (
     PypeModule,
+    OpenPypeInterface,
     ITrayModule,
     IPluginPaths,
     ITimersManager,
@@ -17,8 +18,7 @@ from openpype.settings import SaveWarningExc
 FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-@six.add_metaclass(ABCMeta)
-class IFtrackEventHandlerPaths:
+class IFtrackEventHandlerPaths(OpenPypeInterface):
     """Other modules interface to return paths to ftrack event handlers.
 
     Expected output is dictionary with "server" and "user" keys.

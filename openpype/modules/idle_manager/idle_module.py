@@ -4,11 +4,14 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from openpype.modules import PypeModule, ITrayService
+from openpype.modules import (
+    PypeModule,
+    OpenPypeInterface,
+    ITrayService
+)
 
 
-@six.add_metaclass(ABCMeta)
-class IIdleManager:
+class IIdleManager(OpenPypeInterface):
     """Other modules interface to return callbacks by idle time in seconds.
 
     Expected output is dictionary with seconds <int> as keys and callback/s

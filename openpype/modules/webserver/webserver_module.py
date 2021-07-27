@@ -5,11 +5,14 @@ from abc import ABCMeta, abstractmethod
 import six
 
 from openpype import resources
-from .. import PypeModule, ITrayService
+from .. import (
+    PypeModule,
+    OpenPypeInterface,
+    ITrayService
+)
 
 
-@six.add_metaclass(ABCMeta)
-class IWebServerRoutes:
+class IWebServerRoutes(OpenPypeInterface):
     """Other modules interface to register their routes."""
     @abstractmethod
     def webserver_initialization(self, server_manager):

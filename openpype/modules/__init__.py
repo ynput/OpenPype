@@ -2,13 +2,15 @@
 from .base import (
     PypeModule,
     OpenPypeInterface,
+    ModulesManager,
+    TrayModulesManager
+)
+from .interfaces import (
     ITrayModule,
     ITrayAction,
     ITrayService,
     IPluginPaths,
-    ILaunchHookPaths,
-    ModulesManager,
-    TrayModulesManager
+    ILaunchHookPaths
 )
 from .settings_action import (
     SettingsAction,
@@ -47,13 +49,14 @@ __all__ = (
     "PypeModule",
     "OpenPypeInterface",
 
+    "ModulesManager",
+    "TrayModulesManager",
+
     "ITrayModule",
     "ITrayAction",
     "ITrayService",
     "IPluginPaths",
     "ILaunchHookPaths",
-    "ModulesManager",
-    "TrayModulesManager",
 
     "SettingsAction",
     "LocalSettingsAction",

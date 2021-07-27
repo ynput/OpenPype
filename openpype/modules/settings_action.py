@@ -2,11 +2,14 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from . import PypeModule, ITrayAction
+from . import (
+    PypeModule,
+    OpenPypeInterface,
+    ITrayAction
+)
 
 
-@six.add_metaclass(ABCMeta)
-class ISettingsChangeListener:
+class ISettingsChangeListener(OpenPypeInterface):
     """Module has plugin paths to return.
 
     Expected result is dictionary with keys "publish", "create", "load" or
