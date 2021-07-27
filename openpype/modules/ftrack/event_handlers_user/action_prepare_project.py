@@ -393,10 +393,12 @@ class PrepareProjectLocal(BaseAction):
 
         project_settings.save()
 
-        entity = entities[0]
-        for key, value in custom_attribute_values.items():
-            entity["custom_attributes"][key] = value
-            self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
+        # Change custom attributes on project
+        if custom_attribute_values:
+            for key, value in custom_attribute_values.items():
+                project_entity["custom_attributes"][key] = value
+                self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
+            session.commit()
 
         return True
 
