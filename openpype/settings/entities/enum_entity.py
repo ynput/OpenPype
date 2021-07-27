@@ -138,9 +138,12 @@ class HostsEnumEntity(BaseEnumEntity):
 
     def _item_initalization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
-        self.use_empty_value = self.schema_data.get(
-            "use_empty_value", not self.multiselection
-        )
+        use_empty_value = False
+        if not self.multiselection:
+            use_empty_value = self.schema_data.get(
+                "use_empty_value", use_empty_value
+            )
+        self.use_empty_value = use_empty_value
         custom_labels = self.schema_data.get("custom_labels") or {}
 
         host_names = copy.deepcopy(self.all_host_names)
