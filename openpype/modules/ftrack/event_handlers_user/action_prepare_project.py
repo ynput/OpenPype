@@ -90,14 +90,12 @@ class PrepareProjectLocal(BaseAction):
 
         items.extend(ca_items)
 
-        # This item will be last (before enumerators)
-        # - sets value of auto synchronization
-        auto_sync_name = "avalon_auto_sync"
+        # Set value of auto synchronization
         auto_sync_value = project_entity["custom_attributes"].get(
             CUST_ATTR_AUTO_SYNC, False
         )
         auto_sync_item = {
-            "name": auto_sync_name,
+            "name": CUST_ATTR_AUTO_SYNC,
             "type": "boolean",
             "value": auto_sync_value,
             "label": "AutoSync to Avalon"
