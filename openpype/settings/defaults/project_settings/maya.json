@@ -7,6 +7,19 @@
         "workfile": "ma",
         "yetiRig": "ma"
     },
+    "maya-dirmap": {
+        "enabled": true,
+        "paths": {
+            "source-path": [
+                "foo1",
+                "foo2"
+            ],
+            "destination-path": [
+                "bar1",
+                "bar2"
+            ]
+        }
+    },
     "create": {
         "CreateLook": {
             "enabled": true,

@@ -26,6 +26,24 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "inventory")
 
 
 def install():
+    from openpype.settings import get_project_settings
+
+    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+    mapping = project_settings["maya"]["maya-dirmap"]["paths"] or {}
+    if mapping.get("source-path") and project_settings["maya"]["maya-dirmap"]["enabled"] is True:
+        log.info("Processing directory mapping ...")
+        cmds.dirmap(en=True)
+    for k, sp in enumerate(mapping["source-path"]):
+        try:
+            print("{} -> {}".format(sp, mapping["destination-path"][k]))
+            cmds.dirmap(m=[sp, mapping["destination-path"][k]])
+            cmds.dirmap(m=[mapping["destination-path"][k], sp])
+        except IndexError:
+            # missing corresponding destination path
+            log.error(("invalid dirmap mapping, missing corresponding"
+                       " destination directory."))
+            break
+
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
