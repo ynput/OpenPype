@@ -452,6 +452,8 @@ How output of the schema could look like on save:
 # WARNING:
 #  In this example the template use itself inside which will work in `list`
 #  but may cause an issue in other entity types (e.g. `dict`).
+
+'template_object_example.json' :
 [
     {
         "type": "dict-conditional",
