@@ -1303,9 +1303,11 @@ class InstanceListView(_AbstractInstanceView):
         self.instance_view.setExpanded(proxy_index, expanded)
 
 
-class PublishOverlayFrame(QtWidgets.QWidget):
+class PublishOverlayFrame(QtWidgets.QFrame):
     def __init__(self, parent):
         super(PublishOverlayFrame, self).__init__(parent)
+
+        self.setObjectName("PublishOverlayFrame")
 
         info_frame = QtWidgets.QFrame(self)
         info_frame.setObjectName("PublishOverlay")

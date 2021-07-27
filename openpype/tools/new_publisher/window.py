@@ -57,12 +57,6 @@ class PublisherWindow(QtWidgets.QWidget):
         overlay_frame = PublishOverlayFrame(self)
         overlay_frame.setVisible(False)
 
-        blur_effect = QtWidgets.QGraphicsBlurEffect(main_frame)
-        blur_effect.setBlurRadius(3)
-        blur_effect.setEnabled(False)
-
-        main_frame.setGraphicsEffect(blur_effect)
-
         # Header
         header_widget = QtWidgets.QWidget(main_frame)
         context_label = QtWidgets.QLabel(header_widget)
@@ -169,8 +163,6 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self.main_frame = main_frame
         self.overlay_frame = overlay_frame
-
-        self.blur_effect = blur_effect
 
         self.context_label = context_label
 
@@ -301,8 +293,6 @@ class PublisherWindow(QtWidgets.QWidget):
             return
 
         self.overlay_frame.setVisible(True)
-
-        self.blur_effect.setEnabled(True)
 
     def _on_validate_clicked(self):
         self._show_overlay()
