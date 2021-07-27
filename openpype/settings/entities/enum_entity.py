@@ -144,9 +144,18 @@ class HostsEnumEntity(BaseEnumEntity):
                 "use_empty_value", use_empty_value
             )
         self.use_empty_value = use_empty_value
+
+        hosts_filter = self.schema_data.get("hosts_filter") or []
+        self.hosts_filter = hosts_filter
+
         custom_labels = self.schema_data.get("custom_labels") or {}
 
         host_names = copy.deepcopy(self.all_host_names)
+        if hosts_filter:
+            for host_name in tuple(host_names):
+                if host_name not in hosts_filter:
+                    host_names.remove(host_name)
+
         if self.use_empty_value:
             host_names.insert(0, "")
             # Add default label for empty value if not available
