@@ -8,6 +8,8 @@ from aiohttp.web_response import Response
 import subprocess
 
 from avalon.api import AvalonMongoDB
+
+from openpype.lib import OpenPypeMongoConnection
 from openpype.modules.avalon_apps.rest_api import _RestApiEndpoint
 
 
@@ -30,36 +32,6 @@ class WebpublisherProjectsEndpoint(_RestApiEndpoint):
             body=self.resource.encode(output),
             content_type="application/json"
         )
-
-
-class Node(dict):
-    """Node element in context tree."""
-
-    def __init__(self, uid, node_type, name):
-        self._parent = None  # pointer to parent Node
-        self["type"] = node_type
-        self["name"] = name
-        self['id'] = uid  # keep reference to id #
-        self['children'] = []  # collection of pointers to child Nodes
-
-    @property
-    def parent(self):
-        return self._parent  # simply return the object at the _parent pointer
-
-    @parent.setter
-    def parent(self, node):
-        self._parent = node
-        # add this node to parent's list of children
-        node['children'].append(self)
-
-
-class TaskNode(Node):
-    """Special node type only for Tasks."""
-    def __init__(self, node_type, name):
-        self._parent = None
-        self["type"] = node_type
-        self["name"] = name
-        self["attributes"] = {}
 
 
 class WebpublisherHiearchyEndpoint(_RestApiEndpoint):
@@ -129,21 +101,52 @@ class WebpublisherHiearchyEndpoint(_RestApiEndpoint):
         )
 
 
-class WebpublisherTaskFinishEndpoint(_RestApiEndpoint):
+class Node(dict):
+    """Node element in context tree."""
+
+    def __init__(self, uid, node_type, name):
+        self._parent = None  # pointer to parent Node
+        self["type"] = node_type
+        self["name"] = name
+        self['id'] = uid  # keep reference to id #
+        self['children'] = []  # collection of pointers to child Nodes
+
+    @property
+    def parent(self):
+        return self._parent  # simply return the object at the _parent pointer
+
+    @parent.setter
+    def parent(self, node):
+        self._parent = node
+        # add this node to parent's list of children
+        node['children'].append(self)
+
+
+class TaskNode(Node):
+    """Special node type only for Tasks."""
+
+    def __init__(self, node_type, name):
+        self._parent = None
+        self["type"] = node_type
+        self["name"] = name
+        self["attributes"] = {}
+
+
+class WebpublisherPublishEndpoint(_RestApiEndpoint):
     """Returns list of project names."""
     async def post(self, request) -> Response:
         output = {}
 
         print(request)
 
-        json_path = os.path.join(self.resource.upload_dir,
-                                 "webpublisher.json")  # temp - pull from request
+        batch_path = os.path.join(self.resource.upload_dir,
+                                  request.query["batch_id"])
 
         openpype_app = self.resource.executable
         args = [
             openpype_app,
             'remotepublish',
-            json_path
+            batch_path
         ]
 
         if not openpype_app or not os.path.exists(openpype_app):
@@ -152,7 +155,8 @@ class WebpublisherTaskFinishEndpoint(_RestApiEndpoint):
 
         add_args = {
             "host": "webpublisher",
-            "project": request.query["project"]
+            "project": request.query["project"],
+            "user": request.query["user"]
         }
 
         for key, value in add_args.items():
@@ -162,6 +166,30 @@ class WebpublisherTaskFinishEndpoint(_RestApiEndpoint):
         print("args:: {}".format(args))
 
         exit_code = subprocess.call(args, shell=True)
+        return Response(
+            status=200,
+            body=self.resource.encode(output),
+            content_type="application/json"
+        )
+
+
+class BatchStatusEndpoint(_RestApiEndpoint):
+    """Returns list of project names."""
+    async def get(self, batch_id) -> Response:
+        output = self.dbcon.find_one({"batch_id": batch_id})
+
+        return Response(
+            status=200,
+            body=self.resource.encode(output),
+            content_type="application/json"
+        )
+
+
+class PublishesStatusEndpoint(_RestApiEndpoint):
+    """Returns list of project names."""
+    async def get(self, user) -> Response:
+        output = self.dbcon.find({"user": user})
+
         return Response(
             status=200,
             body=self.resource.encode(output),
@@ -195,6 +223,13 @@ class RestApiResource:
         ).encode("utf-8")
 
 
+class OpenPypeRestApiResource(RestApiResource):
+    def __init__(self, ):
+        mongo_client = OpenPypeMongoConnection.get_mongo_client()
+        database_name = os.environ["OPENPYPE_DATABASE_NAME"]
+        self.dbcon = mongo_client[database_name]["webpublishes"]
+
+
 def run_webserver(*args, **kwargs):
     from openpype.modules import ModulesManager
 
@@ -219,11 +254,26 @@ def run_webserver(*args, **kwargs):
         hiearchy_endpoint.dispatch
     )
 
-    task_finish_endpoint = WebpublisherTaskFinishEndpoint(resource)
+    webpublisher_publish_endpoint = WebpublisherPublishEndpoint(resource)
     webserver_module.server_manager.add_route(
         "POST",
-        "/api/task_finish",
-        task_finish_endpoint.dispatch
+        "/api/webpublish/{batch_id}",
+        webpublisher_publish_endpoint.dispatch
+    )
+
+    openpype_resource = OpenPypeRestApiResource()
+    batch_status_endpoint = BatchStatusEndpoint(openpype_resource)
+    webserver_module.server_manager.add_route(
+        "GET",
+        "/api/batch_status/{batch_id}",
+        batch_status_endpoint.dispatch
+    )
+
+    user_status_endpoint = PublishesStatusEndpoint(openpype_resource)
+    webserver_module.server_manager.add_route(
+        "GET",
+        "/api/publishes/{user}",
+        user_status_endpoint.dispatch
     )
 
     webserver_module.start_server()
