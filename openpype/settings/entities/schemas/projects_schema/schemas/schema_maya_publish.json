@@ -167,6 +167,15 @@
                             "type": "text",
                             "key": "regex",
                             "label": "Validation regex"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Regex for validating name of top level group name.<br/>You can use named capturing groups:<br/><code>(?P&lt;asset&gt;.*)</code> for Asset name<br/><code>(?P&lt;subset&gt;.*)</code> for Subset<br/><code>(?P&lt;project&gt;.*)</code> for project<br/><p>For example to check for asset in name so <code>*_some_asset_name_GRP</code> is valid, use:<br/><code>.*?_(?P&lt;asset&gt;.*)_GEO</code>"
+                        },
+                        {
+                            "type": "text",
+                            "key": "top_level_regex",
+                            "label": "Top level group name regex"
                         }
                     ]
                 },

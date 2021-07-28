@@ -3,6 +3,7 @@
 from maya import cmds
 import pyblish.api
 import openpype.api
+import avalon.api
 import openpype.hosts.maya.api.action
 from openpype.hosts.maya.api.shader_definition_editor import (
     DEFINITION_FILENAME)
@@ -51,6 +52,34 @@ class ValidateModelName(pyblish.api.InstancePlugin):
             cls.log.error("Instance has no nodes!")
             return True
         pass
+
+        # validate top level group name
+        assemblies = cmds.ls(content_instance, assemblies=True, long=True)
+        if len(assemblies) != 1:
+            cls.log.error("Must have exactly one top group")
+            return assemblies or True
+        top_group = assemblies[0]
+        regex = cls.top_level_regex
+        r = re.compile(regex)
+        m = r.match(top_group)
+        if m is None:
+            cls.log.error("invalid name on: {}".format(top_group))
+            cls.log.error("name doesn't match regex {}".format(regex))
+            invalid.append(top_group)
+        else:
+            if "asset" in r.groupindex:
+                if m.group("asset") != avalon.api.Session["AVALON_ASSET"]:
+                    cls.log.error("Invalid asset name in top level group.")
+                    return top_group
+            if "subset" in r.groupindex:
+                if m.group("subset") != instance.data.get("subset"):
+                    cls.log.error("Invalid subset name in top level group.")
+                    return top_group
+            if "project" in r.groupindex:
+                if m.group("project") != avalon.api.Session["AVALON_PROJECT"]:
+                    cls.log.error("Invalid project name in top level group.")
+                    return top_group
+
         descendants = cmds.listRelatives(content_instance,
                                          allDescendents=True,
                                          fullPath=True) or []

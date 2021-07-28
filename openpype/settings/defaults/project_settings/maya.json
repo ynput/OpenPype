@@ -170,7 +170,8 @@
                 "darwin": "",
                 "linux": ""
             },
-            "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)"
+            "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
+            "top_level_regex": ".*_GRP"
         },
         "ValidateTransformNamingSuffix": {
             "enabled": true,
