@@ -65,6 +65,25 @@ in either file or database `foo` and `bar`.
 
 Object named `SomeCube_0001_foo_GEO` will pass but `SomeCube_GEO` will not and `SomeCube_001_xxx_GEO` will not too.
 
+##### Top level group name
+There is a validation for top level group name too. You can specify whatever regex you'd like to use. Default will
+pass everything with `_GRP` suffix. You can use *named capturing groups* to validate against specific data. If you
+put `(?P<asset>.*)` it will try to match everything captured in that group against current asset name. Likewise you can
+use it for **subset** and **project** - `(?P<subset>.*)` and `(?P<project>.*)`.
+
+**Example**
+
+You are working on asset (shot) `0030_OGC_0190`. You have this regex in **Top level group name**:
+```regexp
+.*?_(?P<asset>.*)_GRP
+```
+
+When you publish your model with top group named like `foo_GRP` it will fail. But with `foo_0030_OGC_0190_GRP` it will pass.
+
+:::info About regex
+All regexes used here are in Python variant.
+:::
+
 ### Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
 ![Custom menu definition](assets/maya-admin_scriptsmenu.png)
