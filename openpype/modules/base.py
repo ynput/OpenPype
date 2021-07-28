@@ -70,10 +70,15 @@ class _InterfacesClass(_ModuleClass):
         return self.__attributes__[attr_name]
 
 
-def module_dirs():
+def get_default_modules_dir():
     current_dir = os.path.abspath(os.path.dirname(__file__))
+
+    return os.path.join(current_dir, "default_modules")
+
+
+def get_module_dirs():
     dirpaths = [
-        os.path.join(current_dir, "default_modules")
+        get_default_modules_dir()
     ]
     return dirpaths
 
@@ -90,18 +95,24 @@ def load_interfaces(force=False):
 
     log = PypeLogger.get_logger("InterfacesLoader")
 
-    current_dir = os.path.abspath(os.path.dirname(__file__))
+    dirpaths = get_module_dirs()
 
-    interface_paths = [
-        os.path.join(current_dir, "interfaces.py")
-    ]
+    interface_paths = []
+    interface_paths.append(
+        os.path.join(get_default_modules_dir(), "interfaces.py")
+    )
+    for dirpath in dirpaths:
+        for filename in os.listdir(dirpath):
+            if filename in ("__pycache__", ):
+                continue
 
-    for filename in os.listdir(current_dir):
-        full_path = os.path.join(current_dir, filename)
-        if os.path.isdir(full_path):
-            interface_paths.append(
-                os.path.join(full_path, "interfaces.py")
-            )
+            full_path = os.path.join(dirpath, filename)
+            if not os.path.isdir(full_path):
+                continue
+
+            interfaces_path = os.path.join(full_path, "interfaces.py")
+            if os.path.exists(interfaces_path):
+                interface_paths.append(interfaces_path)
 
     # print(interface_paths)
     for full_path in interface_paths:
@@ -131,54 +142,63 @@ def load_interfaces(force=False):
 
 
 def load_modules(force=False):
-    if not force and "openpype_modules" in sys.modules:
+    # TODO add thread lock
+
+    # First load interfaces
+    # - modules must not be imported before interfaces
+    load_interfaces(force)
+
+    # Key under which will be modules imported in `sys.modules`
+    modules_key = "openpype_modules"
+
+    # Check if are modules already loaded or no
+    if not force and modules_key in sys.modules:
         return
 
-    from openpype.lib import modules_from_path
-
-    sys.modules["openpype_modules"] = openpype_modules = _ModuleClass(
-        "openpype_modules"
+    # Import helper functions from lib
+    from openpype.lib import (
+        import_filepath,
+        load_module_from_dirpath
     )
+
+    # Change `sys.modules`
+    sys.modules[modules_key] = openpype_modules = _ModuleClass(modules_key)
 
     log = PypeLogger.get_logger("ModulesLoader")
 
-    # TODO import dynamically from defined paths
-    from . import (
-        avalon_apps,
-        clockify,
-        deadline,
-        ftrack,
-        idle_manager,
-        log_viewer,
-        muster,
-        settings_module,
-        slack,
-        sync_server,
-        timers_manager,
-        webserver,
-        launcher_action,
-        standalonepublish_action,
-        project_manager_action
-    )
-    setattr(openpype_modules, "avalon_apps", avalon_apps)
-    setattr(openpype_modules, "clockify", clockify)
-    setattr(openpype_modules, "deadline", deadline)
-    setattr(openpype_modules, "ftrack", ftrack)
-    setattr(openpype_modules, "idle_manager", idle_manager)
-    setattr(openpype_modules, "log_viewer", log_viewer)
-    setattr(openpype_modules, "muster", muster)
-    setattr(openpype_modules, "settings_module", settings_module)
-    setattr(openpype_modules, "sync_server", sync_server)
-    setattr(openpype_modules, "slack", slack)
-    setattr(openpype_modules, "timers_manager", timers_manager)
-    setattr(openpype_modules, "webserver", webserver)
-    setattr(openpype_modules, "launcher_action", launcher_action)
-    setattr(
-        openpype_modules, "standalonepublish_action", standalonepublish_action
-    )
-    setattr(openpype_modules, "project_manager_action", project_manager_action)
+    # Look for OpenPype modules in paths defined with `get_module_dirs`
+    dirpaths = get_module_dirs()
 
+    for dirpath in dirpaths:
+        if not os.path.exists(dirpath):
+            log.warning((
+                "Could not find path when loading OpenPype modules \"{}\""
+            ).format(dirpath))
+            continue
 
+        for filename in os.listdir(dirpath):
+            # Ignore filenames
+            if filename in ("__pycache__", ):
+                continue
+
+            fullpath = os.path.join(dirpath, filename)
+            basename, ext = os.path.splitext(filename)
+
+            module = None
+            # TODO add more logic how to define if folder is module or not
+            # - check manifest and content of manifest
+            if os.path.isdir(fullpath):
+                module = load_module_from_dirpath(
+                    dirpath, filename, modules_key
+                )
+                module_name = filename
+
+            elif ext in (".py", ):
+                module = import_filepath(fullpath)
+                module_name = basename
+
+            if module is not None:
+                setattr(openpype_modules, module_name, module)
 
 
 class _OpenPypeInterfaceMeta(ABCMeta):
