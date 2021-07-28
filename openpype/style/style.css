@@ -35,6 +35,10 @@ QWidget:disabled {
     color: {color:font-disabled};
 }
 
+QLabel {
+    background: transparent;
+}
+
 /* Inputs */
 QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
     border: 1px solid {color:border};
