@@ -170,7 +170,15 @@ def load_modules(force=False):
     setattr(openpype_modules, "project_manager_action", project_manager_action)
 
 
-@six.add_metaclass(ABCMeta)
+
+
+class _OpenPypeInterfaceMeta(ABCMeta):
+    """OpenPypeInterface meta class to print proper string."""
+    def __str__(self):
+        return "<'OpenPypeInterface.{}'>".format(self.__name__)
+
+
+@six.add_metaclass(_OpenPypeInterfaceMeta)
 class OpenPypeInterface:
     """Base class of Interface that can be used as Mixin with abstract parts.
 
