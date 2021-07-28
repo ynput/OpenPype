@@ -1,16 +1,13 @@
 import os
-import re
 import json
 import datetime
 
-import bson
 from bson.objectid import ObjectId
-import bson.json_util
 
 from aiohttp.web_response import Response
 
 from avalon.api import AvalonMongoDB
-from openpype.modules.webserver.base_routes import RestApiEndpoint
+from openpype_modules.webserver.base_routes import RestApiEndpoint
 
 
 class _RestApiEndpoint(RestApiEndpoint):
