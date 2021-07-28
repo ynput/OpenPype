@@ -25,10 +25,11 @@ class _ModuleClass(object):
         super(_ModuleClass, self).__setattr__("__defaults__", set())
 
     def __getattr__(self, attr_name):
-        return self.__attributes__.get(
-            attr_name,
-            type("Missing.{}".format(attr_name), (), {})
-        )
+        if attr_name not in self.__attributes__:
+            raise ImportError("No module named {}.{}".format(
+                self.name, attr_name
+            ))
+        return self.__attributes__[attr_name]
 
     def __iter__(self):
         for module in self.values():
@@ -48,7 +49,16 @@ class _ModuleClass(object):
 
 
 class _InterfacesClass(_ModuleClass):
-    pass
+    def __getattr__(self, attr_name):
+        if attr_name not in self.__attributes__:
+            # Fake Interface if is not missing
+            self.__attributes__[attr_name] = type(
+                "{}".format(attr_name),
+                (MissingInteface, ),
+                {}
+            )
+
+        return self.__attributes__[attr_name]
 
 
 def load_interfaces(force=False):
@@ -159,6 +169,10 @@ class OpenPypeInterface:
     This is way how OpenPype module or addon can tell that has implementation
     for specific part or for other module/addon.
     """
+    pass
+
+
+class MissingInteface(OpenPypeInterface):
     pass
 
 
