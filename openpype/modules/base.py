@@ -38,6 +38,15 @@ class _ModuleClass(object):
     def __setattr__(self, attr_name, value):
         self.__attributes__[attr_name] = value
 
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def get(self, key, default=None):
+        return self.__attributes__.get(key, default)
+
     def keys(self):
         return self.__attributes__.keys()
 
