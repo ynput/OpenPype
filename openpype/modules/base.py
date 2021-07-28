@@ -305,13 +305,10 @@ class ModulesManager:
         self.initialize_modules()
         self.connect_modules()
 
-    def collect_modules(self):
-        load_interfaces()
-        load_modules()
-
     def initialize_modules(self):
         """Import and initialize modules."""
-        self.collect_modules()
+        # Make sure modules are loaded
+        load_modules()
 
         import openpype_modules
 
