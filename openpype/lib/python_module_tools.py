@@ -10,6 +10,15 @@ PY3 = sys.version_info[0] == 3
 
 
 def import_filepath(filepath, module_name=None):
+    """Import python file as python module.
+
+    Python 2 and Python 3 compatibility.
+
+    Args:
+        filepath(str): Path to python file.
+        module_name(str): Name of loaded module. Only for Python 3. By default
+            is filled with filename of filepath.
+    """
     if module_name is None:
         module_name = os.path.splitext(os.path.basename(filepath))[0]
 
@@ -137,6 +146,7 @@ def classes_from_module(superclass, module):
 
 
 def _import_module_from_dirpath_py2(dirpath, module_name, dst_module_name):
+    """Import passed dirpath as python module using `imp`."""
     if dst_module_name:
         full_module_name = "{}.{}".format(dst_module_name, module_name)
         dst_module = sys.modules[dst_module_name]
@@ -158,38 +168,65 @@ def _import_module_from_dirpath_py2(dirpath, module_name, dst_module_name):
 
 
 def _import_module_from_dirpath_py3(dirpath, module_name, dst_module_name):
+    """Import passed dirpath as python module using Python 3 modules."""
     if dst_module_name:
         full_module_name = "{}.{}".format(dst_module_name, module_name)
         dst_module = sys.modules[dst_module_name]
     else:
         full_module_name = module_name
         dst_module = None
+
+    # Skip import if is already imported
     if full_module_name in sys.modules:
         return sys.modules[full_module_name]
 
     import importlib.util
     from importlib._bootstrap_external import PathFinder
 
-    dst_module = sys.modules[dst_module_name]
+    # Find loader for passed path and name
     loader = PathFinder.find_module(full_module_name, [dirpath])
 
+    # Load specs of module
     spec = importlib.util.spec_from_loader(
         full_module_name, loader, origin=dirpath
     )
 
+    # Create module based on specs
     module = importlib.util.module_from_spec(spec)
 
+    # Store module to destination module and `sys.modules`
+    # WARNING this mus be done before module execution
     if dst_module is not None:
         setattr(dst_module, module_name, module)
 
     sys.modules[full_module_name] = module
 
+    # Execute module import
     loader.exec_module(module)
 
     return module
 
 
 def import_module_from_dirpath(dirpath, folder_name, dst_module_name=None):
+    """Import passed directory as a python module.
+
+    Python 2 and 3 compatible.
+
+    Imported module can be assigned as a child attribute of already loaded
+    module from `sys.modules` if has support of `setattr`. That is not default
+    behavior of python modules so parent module must be a custom module with
+    that ability.
+
+    It is not possible to reimport already cached module. If you need to
+    reimport module you have to remove it from caches manually.
+
+    Args:
+        dirpath(str): Parent directory path of loaded folder.
+        folder_name(str): Folder name which should be imported inside passed
+            directory.
+        dst_module_name(str): Parent module name under which can be loaded
+            module added.
+    """
     if PY3:
         module = _import_module_from_dirpath_py3(
             dirpath, folder_name, dst_module_name
