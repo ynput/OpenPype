@@ -15,12 +15,11 @@ from .items import (
 log = logging.getLogger(__name__)
 
 
-RequiredSlateKeys = ["width", "height", "destination_path"]
+required_keys = ["width", "height", "destination_path"]
 
 
-# TODO proper documentation
 def create_slates(
-    fill_data, slate_name=None, slate_data=None, data_output_json=None
+    fill_data, slate_data=None, data_output_json=None
 ):
     """Implmentation for command line executing.
 
@@ -29,31 +28,18 @@ def create_slates(
 
     `data_output` should be path to json file where data will be collected.
     """
-    if slate_data is None and slate_name is None:
+    if slate_data is None:
         raise TypeError(
-            "`create_slates` expects to enter data for slates or name"
-            " of slate preset."
+            "`create_slates` expects to enter data for slates"
         )
 
-    elif slate_data is None:
-        slate_presets = {}
-        slate_data = slate_presets.get(slate_name)
-        if slate_data is None:
-            raise ValueError(
-                "Preset name \"{}\" was not found in slate presets.".format(
-                    slate_name
-                )
-            )
-
-    missing_keys = []
-    for key in RequiredSlateKeys:
-        if key not in slate_data:
-            missing_keys.append("`{}`".format(key))
+    missing_keys = [
+        "`{}`".format(key) for key in required_keys if key not in slate_data
+    ]
 
     if missing_keys:
-        log.error("Slate data of <{}> miss required keys: {}".format(
-            slate_name, ", ".join(missing_keys)
-        ))
+        log.error("Slate data are missing required keys: {}".format(
+            ", ".join(missing_keys)))
         return False
 
     width = slate_data["width"]
@@ -110,7 +96,9 @@ def create_slates(
             ItemImage(path, **kwargs)
 
         elif item_type == "rectangle":
-            ItemRectangle(**kwargs)
+            item_obj = ItemRectangle(**kwargs)
+            for item in item_data.get("items", []):
+                load_queue.put((item, item_obj))
 
         elif item_type == "placeholder":
             path = item_data["path"]

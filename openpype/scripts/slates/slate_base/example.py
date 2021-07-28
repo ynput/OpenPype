@@ -1,8 +1,4 @@
-# import sys
-# sys.append(r"PATH/TO/PILLOW/PACKAGE")
-
 from . import api
-
 
 def example():
     """Example data to demontrate function.
@@ -12,15 +8,13 @@ def example():
     """
 
     example_fill_data = {
-        "destination_path": "PATH/TO/OUTPUT/FILE",
-        "project": {
-            "name": "Testing project"
-        },
-        "intent": "WIP",
-        "version_name": "seq01_sh0100_compositing_v01",
-        "date": "2019-08-09",
-        "shot_type": "2d comp",
-        "submission_note": (
+        "destination_path": "C:/CODE/_PYPE_testing/slates_testing/slate.png",
+        "shot": "106_V12_010",
+        "version": "V007",
+        "length": 187,
+        "date": "11/02/2021",
+        "artist": "John Murdoch",
+        "notes": (
             "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
             " Aenean commodo ligula eget dolor. Aenean massa."
             " Cum sociis natoque penatibus et magnis dis parturient montes,"
@@ -29,28 +23,21 @@ def example():
             " enim. Donec pede justo, fringilla vel,"
             " aliquet nec, vulputate eget, arcu."
         ),
-        "thumbnail_path": "PATH/TO/THUMBNAIL/FILE",
-        "color_bar_path": "PATH/TO/COLOR/BAR/FILE",
-        "vendor": "Our Studio",
-        "shot_name": "sh0100",
-        "frame_start": 1001,
-        "frame_end": 1004,
-        "duration": 3
+        "thumbnail_path": "C:/CODE/_PYPE_testing/slates_testing/thumbnail.png",
+        "logo": "C:/CODE/_PYPE_testing/slates_testing/logo.jpg",
+        "vendor": "VENDOR"
     }
 
-    example_presets = {"example_HD": {
-        "width": 1920,
+    example_presets = {
+        "width": 2048,
         "height": 1080,
         "destination_path": "{destination_path}",
         "style": {
             "*": {
-                "font-family": "arial",
+                "font-family": "verdana",
                 "font-color": "#ffffff",
                 "font-bold": False,
-                "font-italic": False,
-                "bg-color": "#0077ff",
-                "alignment-horizontal": "left",
-                "alignment-vertical": "top"
+                "font-italic": False
             },
             "layer": {
                 "padding": 0,
@@ -59,138 +46,83 @@ def example():
             "rectangle": {
                 "padding": 0,
                 "margin": 0,
-                "bg-color": "#E9324B",
                 "fill": True
             },
             "main_frame": {
                 "padding": 0,
-                "margin": 0,
-                "bg-color": "#252525"
+                "margin": 30
             },
             "table": {
                 "padding": 0,
-                "margin": 0,
-                "bg-color": "transparent"
+                "margin-top": 30
             },
             "table-item": {
                 "padding": 5,
-                "padding-bottom": 10,
+                "padding-bottom": 20,
                 "margin": 0,
-                "bg-color": "#212121",
-                "bg-alter-color": "#272727",
+                "bg-color": "transparent",
+                "bg-alter-color": "transparent",
                 "font-color": "#dcdcdc",
-                "font-bold": False,
+                "font-bold": True,
                 "font-italic": False,
                 "alignment-horizontal": "left",
                 "alignment-vertical": "top",
-                "word-wrap": False,
-                "ellide": True,
-                "max-lines": 1
-            },
-            "table-item-col[0]": {
-                "font-size": 20,
-                "font-color": "#898989",
-                "font-bold": True,
-                "ellide": False,
                 "word-wrap": True,
-                "max-lines": None
+                "ellide": True,
+                "max-lines": 2
             },
-            "table-item-col[1]": {
-                "font-size": 40,
-                "padding-left": 10
+            "#MainLayer": {
+                "margin": 0,
+                "padding": 0,
+                "min-width": 2048,
+                "min-height": 1080,
+                "alignment-horizontal": "center",
+                "alignment-vertical": "center"
             },
-            "#colorbar": {
-                "bg-color": "#9932CC"
+            "#VendorLayer": {
+                "margin": 0,
+                "padding-right": 0,
+                "min-width": 2048,
+                "min-height": 1080,
+                "alignment-horizontal": "right",
+                "alignment-vertical": "center"
+            },
+            "#Thumbnail": {
+                "margin-top": 50,
             }
         },
         "items": [{
             "type": "layer",
-            "direction": 1,
             "name": "MainLayer",
-            "style": {
-                "#MainLayer": {
-                    "width": 1094,
-                    "height": 1000,
-                    "margin": 25,
-                    "padding": 0
-                },
-                "#LeftSide": {
-                    "margin-right": 25
-                }
-            },
             "items": [{
                 "type": "layer",
-                "name": "LeftSide",
+                "name": "Thumbnail",
                 "items": [{
-                    "type": "layer",
-                    "direction": 1,
+                    "type": "image",
+                    "name": "thumbnail",
+                    "path": "{thumbnail_path}",
                     "style": {
-                        "table-item": {
-                            "bg-color": "transparent",
-                            "padding-bottom": 20
-                        },
-                        "table-item-col[0]": {
-                            "font-size": 20,
-                            "font-color": "#898989",
-                            "alignment-horizontal": "right"
-                        },
-                        "table-item-col[1]": {
-                            "alignment-horizontal": "left",
-                            "font-bold": True,
-                            "font-size": 40
-                        }
-                    },
-                    "items": [{
-                        "type": "table",
-                        "values": [
-                            ["Show:", "{project[name]}"]
-                        ],
-                        "style": {
-                            "table-item-field[0:0]": {
-                                "width": 150
-                            },
-                            "table-item-field[0:1]": {
-                                "width": 580
-                            }
-                        }
-                    }, {
-                        "type": "table",
-                        "values": [
-                            ["Submitting For:", "{intent}"]
-                        ],
-                        "style": {
-                            "table-item-field[0:0]": {
-                                "width": 160
-                            },
-                            "table-item-field[0:1]": {
-                                "width": 218,
-                                "alignment-horizontal": "right"
-                            }
-                        }
-                    }]
-                }, {
-                    "type": "rectangle",
-                    "style": {
-                        "bg-color": "#bc1015",
-                        "width": 1108,
-                        "height": 5,
-                        "fill": True
+                        "width": 730,
+                        "height": 412
                     }
-                }, {
+                }]
+            }, {
+                "type": "layer",
+                "name": "Metadata",
+                "items": [{
                     "type": "table",
                     "use_alternate_color": True,
                     "values": [
-                        ["Version name:", "{version_name}"],
-                        ["Date:", "{date}"],
-                        ["Shot Types:", "{shot_type}"],
-                        ["Submission Note:", "{submission_note}"]
+                        ["SHOT", "{shot}"],
+                        ["VERSION", "{version}"],
+                        ["LENGTH", "{length}"],
+                        ["DATE", "{date}"],
+                        ["ARTIST", "{artist}"],
+                        ["NOTES", "{notes}"]
                     ],
                     "style": {
                         "table-item": {
-                            "padding-bottom": 20
-                        },
-                        "table-item-field[0:1]": {
-                            "font-bold": True
+                            "padding": 0
                         },
                         "table-item-field[3:0]": {
                             "word-wrap": True,
@@ -198,57 +130,46 @@ def example():
                             "max-lines": 4
                         },
                         "table-item-col[0]": {
+                            "font-size": 30,
+                            "font-color": "#527ce8",
+                            "font-bold": False,
+                            "ellide": False,
+                            "word-wrap": True,
+                            "max-lines": None,
                             "alignment-horizontal": "right",
-                            "width": 150
-                        },
-                        "table-item-col[1]": {
-                            "alignment-horizontal": "left",
-                            "width": 958
-                        }
-                    }
-                }]
-            }, {
-                "type": "layer",
-                "name": "RightSide",
-                "items": [{
-                    "type": "placeholder",
-                    "name": "thumbnail",
-                    "path": "{thumbnail_path}",
-                    "style": {
-                        "width": 730,
-                        "height": 412
-                    }
-                }, {
-                    "type": "placeholder",
-                    "name": "colorbar",
-                    "path": "{color_bar_path}",
-                    "return_data": True,
-                    "style": {
-                        "width": 730,
-                        "height": 55
-                    }
-                }, {
-                    "type": "table",
-                    "use_alternate_color": True,
-                    "values": [
-                        ["Vendor:", "{vendor}"],
-                        ["Shot Name:", "{shot_name}"],
-                        ["Frames:", "{frame_start} - {frame_end} ({duration})"]
-                    ],
-                    "style": {
-                        "table-item-col[0]": {
-                            "alignment-horizontal": "left",
                             "width": 200
                         },
                         "table-item-col[1]": {
-                            "alignment-horizontal": "right",
-                            "width": 530,
-                            "font-size": 30
+                            "font-size": 30,
+                            "padding-left": 10,
+                            "alignment-horizontal": "left",
+                            "width": 800
                         }
                     }
                 }]
             }]
+        }, {
+            "type": "layer",
+            "name": "VendorLayer",
+            "items": [
+                    {
+                        "type": "table",
+                        "values": [
+                            ["{vendor}"]
+                        ],
+                        "style": {
+                            "table-item-col[0]": {
+                                "font-size": 50,
+                                "margin-right": 50,
+                                "font-color": "#ffffff",
+                                "alignment-horizontal": "right",
+                                "width": 500,
+                                "bg-color": "#527ce8"
+                            }
+                        }
+                    }
+            ]
         }]
-    }}
+    }
 
-    api.create_slates(example_fill_data, "example_HD", example_presets)
+    api.create_slates(example_fill_data, example_presets)

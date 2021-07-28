@@ -1,6 +1,6 @@
 import sys
 import json
-from slate_base import api
+from .slate_base import api
 
 
 def main(in_args=None):

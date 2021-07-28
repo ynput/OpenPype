@@ -18,6 +18,7 @@ class Layer(BaseObj):
             pos_x = self._pos_x
         else:
             pos_x = self.parent.value_pos_x
+
         return int(pos_x)
 
     @property
@@ -91,7 +92,6 @@ class Layer(BaseObj):
                 pos_y += item.height()
                 if item.obj_type not in ["image", "placeholder"]:
                     pos_y += 1
-
         else:
             if alignment_ver in ["center", "centre"]:
                 pos_y += (self.content_height() - item.content_height()) / 2
@@ -112,10 +112,10 @@ class Layer(BaseObj):
             else:
                 height += item.height()
 
-        # TODO this is not right
         min_height = self.style.get("min-height")
         if min_height and min_height > height:
             return min_height
+
         return height
 
     def value_width(self):
@@ -132,6 +132,7 @@ class Layer(BaseObj):
         min_width = self.style.get("min-width")
         if min_width and min_width > width:
             return min_width
+
         return width
 
     def draw(self, image, drawer):
