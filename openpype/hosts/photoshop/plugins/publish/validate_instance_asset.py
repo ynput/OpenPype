@@ -1,5 +1,4 @@
-import os
-
+from avalon import api
 import pyblish.api
 import openpype.api
 from avalon import photoshop
@@ -27,12 +26,20 @@ class ValidateInstanceAssetRepair(pyblish.api.Action):
         for instance in instances:
             data = stub.read(instance[0])
 
-            data["asset"] = os.environ["AVALON_ASSET"]
+            data["asset"] = api.Session["AVALON_ASSET"]
             stub.imprint(instance[0], data)
 
 
 class ValidateInstanceAsset(pyblish.api.InstancePlugin):
-    """Validate the instance asset is the current asset."""
+    """Validate the instance asset is the current selected context asset.
+
+        As it might happen that multiple worfiles are opened, switching
+        between them would mess with selected context.
+        In that case outputs might be output under wrong asset!
+
+        Repair action will use Context asset value (from Workfiles or Launcher)
+        Closing and reopening with Workfiles will refresh  Context value.
+    """
 
     label = "Validate Instance Asset"
     hosts = ["photoshop"]
@@ -41,9 +48,12 @@ class ValidateInstanceAsset(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         instance_asset = instance.data["asset"]
-        current_asset = os.environ["AVALON_ASSET"]
+        current_asset = api.Session["AVALON_ASSET"]
         msg = (
-            "Instance asset is not the same as current asset:"
-            f"\nInstance: {instance_asset}\nCurrent: {current_asset}"
+            f"Instance asset {instance_asset} is not the same "
+            f"as current context {current_asset}. PLEASE DO:\n"
+            f"Repair with 'A' action to use '{current_asset}'.\n"
+            f"If that's not correct value, close workfile and "
+            f"reopen via Workfiles!"
         )
         assert instance_asset == current_asset, msg

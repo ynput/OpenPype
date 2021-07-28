@@ -1,7 +1,7 @@
 import os
 import json
 import copy
-import inspect
+import collections
 
 from abc import abstractmethod
 
@@ -10,8 +10,7 @@ from .lib import (
     NOT_SET,
     WRAPPER_TYPES,
     OverrideState,
-    get_studio_settings_schema,
-    get_project_settings_schema
+    SchemasHub
 )
 from .exceptions import (
     SchemaError,
@@ -53,7 +52,12 @@ class RootEntity(BaseItemEntity):
     """
     schema_types = ["root"]
 
-    def __init__(self, schema_data, reset):
+    def __init__(self, schema_hub, reset, main_schema_name=None):
+        self.schema_hub = schema_hub
+        if not main_schema_name:
+            main_schema_name = "schema_main"
+        schema_data = schema_hub.get_schema(main_schema_name)
+
         super(RootEntity, self).__init__(schema_data)
         self._require_restart_callbacks = []
         self._item_ids_require_restart = set()
@@ -130,7 +134,17 @@ class RootEntity(BaseItemEntity):
 
     def _add_children(self, schema_data, first=True):
         added_children = []
-        for children_schema in schema_data["children"]:
+        children_deque = collections.deque()
+        for _children_schema in schema_data["children"]:
+            children_schemas = self.schema_hub.resolve_schema_data(
+                _children_schema
+            )
+            for children_schema in children_schemas:
+                children_deque.append(children_schema)
+
+        while children_deque:
+            children_schema = children_deque.popleft()
+
             if children_schema["type"] in WRAPPER_TYPES:
                 _children_schema = copy.deepcopy(children_schema)
                 wrapper_children = self._add_children(
@@ -143,11 +157,13 @@ class RootEntity(BaseItemEntity):
             child_obj = self.create_schema_object(children_schema, self)
             self.children.append(child_obj)
             added_children.append(child_obj)
-            if isinstance(child_obj, self._gui_types):
+            if isinstance(child_obj, self.schema_hub.gui_types):
                 continue
 
             if child_obj.key in self.non_gui_children:
-                raise KeyError("Duplicated key \"{}\"".format(child_obj.key))
+                raise KeyError(
+                    "Duplicated key \"{}\"".format(child_obj.key)
+                )
             self.non_gui_children[child_obj.key] = child_obj
 
         if not first:
@@ -159,9 +175,6 @@ class RootEntity(BaseItemEntity):
     def _item_initalization(self):
         # Store `self` to `root_item` for children entities
         self.root_item = self
-
-        self._loaded_types = None
-        self._gui_types = None
 
         # Children are stored by key as keys are immutable and are defined by
         # schema
@@ -200,56 +213,11 @@ class RootEntity(BaseItemEntity):
         Available entities are loaded on first run. Children entities can call
         this method.
         """
-        if self._loaded_types is None:
-            # Load available entities
-            from openpype.settings import entities
+        return self.schema_hub.create_schema_object(
+            schema_data, *args, **kwargs
+        )
 
-            # Define known abstract classes
-            known_abstract_classes = (
-                entities.BaseEntity,
-                entities.BaseItemEntity,
-                entities.ItemEntity,
-                entities.EndpointEntity,
-                entities.InputEntity,
-                entities.BaseEnumEntity
-            )
-
-            self._loaded_types = {}
-            _gui_types = []
-            for attr in dir(entities):
-                item = getattr(entities, attr)
-                # Filter classes
-                if not inspect.isclass(item):
-                    continue
-
-                # Skip classes that do not inherit from BaseEntity
-                if not issubclass(item, entities.BaseEntity):
-                    continue
-
-                # Skip class that is abstract by design
-                if item in known_abstract_classes:
-                    continue
-
-                if inspect.isabstract(item):
-                    # Create an object to get crash and get traceback
-                    item()
-
-                # Backwards compatibility
-                # Single entity may have multiple schema types
-                for schema_type in item.schema_types:
-                    self._loaded_types[schema_type] = item
-
-                if item.gui_type:
-                    _gui_types.append(item)
-            self._gui_types = tuple(_gui_types)
-
-        klass = self._loaded_types.get(schema_data["type"])
-        if not klass:
-            raise KeyError("Unknown type \"{}\"".format(schema_data["type"]))
-
-        return klass(schema_data, *args, **kwargs)
-
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults=None):
         """Set override state and trigger it on children.
 
         Method will discard all changes in hierarchy and use values, metadata
@@ -258,9 +226,12 @@ class RootEntity(BaseItemEntity):
         Args:
             state (OverrideState): State to which should be data changed.
         """
+        if not ignore_missing_defaults:
+            ignore_missing_defaults = False
+
         self._override_state = state
         for child_obj in self.non_gui_children.values():
-            child_obj.set_override_state(state)
+            child_obj.set_override_state(state, ignore_missing_defaults)
 
     def on_change(self):
         """Trigger callbacks on change."""
@@ -493,13 +464,13 @@ class SystemSettings(RootEntity):
     root_key = SYSTEM_SETTINGS_KEY
 
     def __init__(
-        self, set_studio_state=True, reset=True, schema_data=None
+        self, set_studio_state=True, reset=True, schema_hub=None
     ):
-        if schema_data is None:
+        if schema_hub is None:
             # Load system schemas
-            schema_data = get_studio_settings_schema()
+            schema_hub = SchemasHub("system_schema")
 
-        super(SystemSettings, self).__init__(schema_data, reset)
+        super(SystemSettings, self).__init__(schema_hub, reset)
 
         if set_studio_state:
             self.set_studio_state()
@@ -620,17 +591,17 @@ class ProjectSettings(RootEntity):
         project_name=None,
         change_state=True,
         reset=True,
-        schema_data=None
+        schema_hub=None
     ):
         self._project_name = project_name
 
         self._system_settings_entity = None
 
-        if schema_data is None:
+        if schema_hub is None:
             # Load system schemas
-            schema_data = get_project_settings_schema()
+            schema_hub = SchemasHub("projects_schema")
 
-        super(ProjectSettings, self).__init__(schema_data, reset)
+        super(ProjectSettings, self).__init__(schema_hub, reset)
 
         if change_state:
             if self.project_name is None:

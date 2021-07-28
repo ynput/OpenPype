@@ -19,11 +19,9 @@ $openpype_root = (Get-Item $script_dir).parent.FullName
 
 $env:_INSIDE_OPENPYPE_TOOL = "1"
 
-# make sure Poetry is in PATH
 if (-not (Test-Path 'env:POETRY_HOME')) {
     $env:POETRY_HOME = "$openpype_root\.poetry"
 }
-$env:PATH = "$($env:PATH);$($env:POETRY_HOME)\bin"
 
 Set-Location -Path $openpype_root
 
@@ -50,7 +48,7 @@ Write-Host $art -ForegroundColor DarkGreen
 
 Write-Host ">>> " -NoNewline -ForegroundColor Green
 Write-Host "Reading Poetry ... " -NoNewline
-if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
+if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Host "NOT FOUND" -ForegroundColor Yellow
     Write-Host "*** " -NoNewline -ForegroundColor Yellow
     Write-Host "We need to install Poetry create virtual env first ..."
@@ -63,10 +61,10 @@ Write-Host "This will not overwrite existing source rst files, only scan and add
 Set-Location -Path $openpype_root
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Running apidoc ..."
-& poetry run sphinx-apidoc -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($openpype_root)\docs\source" igniter
-& poetry run sphinx-apidoc.exe -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($openpype_root)\docs\source" openpype vendor, openpype\vendor
+& "$env:POETRY_HOME\bin\poetry" run sphinx-apidoc -M -e -d 10  --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($openpype_root)\docs\source" igniter
+& "$env:POETRY_HOME\bin\poetry" run sphinx-apidoc.exe -M -e -d 10 --ext-intersphinx --ext-todo --ext-coverage --ext-viewcode -o "$($openpype_root)\docs\source" openpype vendor, openpype\vendor
 
 Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Building html ..."
-& poetry run python "$($openpype_root)\setup.py" build_sphinx
+& "$env:POETRY_HOME\bin\poetry" run python "$($openpype_root)\setup.py" build_sphinx
 Set-Location -Path $current_dir

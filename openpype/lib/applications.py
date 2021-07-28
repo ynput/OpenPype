@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import copy
 import json
@@ -449,6 +450,12 @@ class ApplicationExecutable:
     """Representation of executable loaded from settings."""
 
     def __init__(self, executable):
+        # Try to format executable with environments
+        try:
+            executable = executable.format(**os.environ)
+        except Exception:
+            pass
+
         # On MacOS check if exists path to executable when ends with `.app`
         # - it is common that path will lead to "/Applications/Blender" but
         #   real path is "/Applications/Blender.app"
@@ -459,12 +466,6 @@ class ApplicationExecutable:
             _executable = executable + ".app"
             if os.path.exists(_executable):
                 executable = _executable
-
-        # Try to format executable with environments
-        try:
-            executable = executable.format(**os.environ)
-        except Exception:
-            pass
 
         self.executable_path = executable
 
@@ -707,6 +708,10 @@ class ApplicationLaunchContext:
                 | subprocess.DETACHED_PROCESS
             )
             self.kwargs["creationflags"] = flags
+
+        if not sys.stdout:
+            self.kwargs["stdout"] = subprocess.DEVNULL
+            self.kwargs["stderr"] = subprocess.DEVNULL
 
         self.prelaunch_hooks = None
         self.postlaunch_hooks = None

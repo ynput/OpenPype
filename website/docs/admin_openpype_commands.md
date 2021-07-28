@@ -21,6 +21,8 @@ openpype_console --use-version=3.0.0-foo+bar
 
 `--use-staging` - to use staging versions of OpenPype.
 
+`--list-versions [--use-staging]` - to list available versions.
+
 For more information [see here](admin_use#run-openpype).
 
 ## Commands

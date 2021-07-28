@@ -7,6 +7,8 @@ try:
     import opentimelineio as otio
     from opentimelineio import opentime as _ot
 except ImportError:
+    if not os.environ.get("AVALON_APP"):
+        raise
     otio = discover_host_vendor_module("opentimelineio")
     _ot = discover_host_vendor_module("opentimelineio.opentime")
 
