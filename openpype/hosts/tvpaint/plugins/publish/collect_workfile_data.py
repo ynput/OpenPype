@@ -155,6 +155,7 @@ class CollectWorkfileData(pyblish.api.ContextPlugin):
             "sceneMarkInState": mark_in_state == "set",
             "sceneMarkOut": int(mark_out_frame),
             "sceneMarkOutState": mark_out_state == "set",
+            "sceneStartFrame": int(lib.execute_george("tv_startframe")),
             "sceneBgColor": self._get_bg_color()
         }
         self.log.debug(

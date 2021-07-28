@@ -577,6 +577,15 @@ How output of the schema could look like on save:
 }
 ```
 
+## Anatomy
+Anatomy represents data stored on project document.
+
+### anatomy
+- entity works similarly to `dict`
+- anatomy has always all keys overriden with overrides
+    - overrides are not applied as all anatomy data must be available from project document
+    - all children must be groups
+
 ## Proxy wrappers
 - should wraps multiple inputs only visually
 - these does not have `"key"` key and do not allow to have `"is_file"` or `"is_group"` modifiers enabled
