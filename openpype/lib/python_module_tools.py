@@ -137,23 +137,33 @@ def classes_from_module(superclass, module):
 
 
 def _import_module_from_dirpath_py2(dirpath, module_name, dst_module_name):
-    full_module_name = "{}.{}".format(dst_module_name, module_name)
+    if dst_module_name:
+        full_module_name = "{}.{}".format(dst_module_name, module_name)
+        dst_module = sys.modules[dst_module_name]
+    else:
+        full_module_name = module_name
+        dst_module = None
+
     if full_module_name in sys.modules:
         return sys.modules[full_module_name]
 
     import imp
 
-    dst_module = sys.modules[dst_module_name]
-
     fp, pathname, description = imp.find_module(module_name, [dirpath])
     module = imp.load_module(full_module_name, fp, pathname, description)
-    setattr(dst_module, module_name, module)
+    if dst_module is not None:
+        setattr(dst_module, module_name, module)
 
     return module
 
 
 def _import_module_from_dirpath_py3(dirpath, module_name, dst_module_name):
-    full_module_name = "{}.{}".format(dst_module_name, module_name)
+    if dst_module_name:
+        full_module_name = "{}.{}".format(dst_module_name, module_name)
+        dst_module = sys.modules[dst_module_name]
+    else:
+        full_module_name = module_name
+        dst_module = None
     if full_module_name in sys.modules:
         return sys.modules[full_module_name]
 
@@ -179,7 +189,7 @@ def _import_module_from_dirpath_py3(dirpath, module_name, dst_module_name):
     return module
 
 
-def import_module_from_dirpath(dirpath, folder_name, dst_module_name):
+def import_module_from_dirpath(dirpath, folder_name, dst_module_name=None):
     if PY3:
         module = _import_module_from_dirpath_py3(
             dirpath, folder_name, dst_module_name
