@@ -1311,7 +1311,7 @@ def _prepare_last_workfile(data, workdir):
     data["env"]["AVALON_OPEN_LAST_WORKFILE"] = (
         str(int(bool(start_last_workfile)))
     )
-    data["env"]["WORKFILE_STARTUP"] = (
+    data["env"]["OPENPYPE_WORKFILE_TOOL_ON_START"] = (
         str(int(bool(workfile_startup)))
     )
 
@@ -1352,7 +1352,7 @@ def _prepare_last_workfile(data, workdir):
     data["last_workfile_path"] = last_workfile_path
 
 
-def get_option_from_preset(
+def get_option_from_settings(
     startup_presets, host_name, task_name, default_output
 ):
     host_name_lowered = host_name.lower()
@@ -1432,7 +1432,7 @@ def should_start_last_workfile(
     if not startup_presets:
         return default_output
 
-    return get_option_from_preset(
+    return get_option_from_settings(
         startup_presets, host_name, task_name, default_output)
 
 
@@ -1442,7 +1442,7 @@ def should_workfile_tool_start(
     """Define if host should start workfile tool at host launch.
 
     Default output is `False`. Can be overriden with environment variable
-    `WORKFILE_STARTUP`, valid values without case sensitivity are
+    `OPENPYPE_WORKFILE_TOOL_ON_START`, valid values without case sensitivity are
     `"0", "1", "true", "false", "yes", "no"`.
 
     Args:
@@ -1470,7 +1470,7 @@ def should_workfile_tool_start(
     if not startup_presets:
         return default_output
 
-    return get_option_from_preset(
+    return get_option_from_settings(
         startup_presets, host_name, task_name, default_output)
 
 
