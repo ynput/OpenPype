@@ -53,7 +53,7 @@ class _InterfacesClass(_ModuleClass):
         if attr_name not in self.__attributes__:
             # Fake Interface if is not missing
             self.__attributes__[attr_name] = type(
-                "{}".format(attr_name),
+                attr_name,
                 (MissingInteface, ),
                 {}
             )
