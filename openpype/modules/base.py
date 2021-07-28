@@ -18,14 +18,23 @@ from openpype.lib import PypeLogger
 
 # Inherit from `object` for Python 2 hosts
 class _ModuleClass(object):
+    """Fake module class for storing OpenPype modules.
+
+    Object of this class can be stored to `sys.modules` and used for storing
+    dynamically imported modules.
+    """
     def __init__(self, name):
         # Call setattr on super class
         super(_ModuleClass, self).__setattr__("name", name)
+
+        # Where modules and interfaces are stored
         super(_ModuleClass, self).__setattr__("__attributes__", dict())
         super(_ModuleClass, self).__setattr__("__defaults__", set())
 
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
+            if attr_name in ("__path__"):
+                return None
             raise ImportError("No module named {}.{}".format(
                 self.name, attr_name
             ))
@@ -58,6 +67,12 @@ class _ModuleClass(object):
 
 
 class _InterfacesClass(_ModuleClass):
+    """Fake module class for storing OpenPype interfaces.
+
+    MissingInterface object is returned if interfaces does not exists.
+    - this is because interfaces must be available even if are missing
+        implementation
+    """
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
             # Fake Interface if is not missing
@@ -213,11 +228,19 @@ class OpenPypeInterface:
 
     This is way how OpenPype module or addon can tell that has implementation
     for specific part or for other module/addon.
+
+    Child classes of OpenPypeInterface may be used as mixin in different
+    OpenPype modules which means they have to have implemented methods defined
+    in the interface. By default interface does not have any abstract parts.
     """
     pass
 
 
 class MissingInteface(OpenPypeInterface):
+    """Class representing missing interface class.
+
+    Used when interface is not available from currently registered paths.
+    """
     pass
 
 
