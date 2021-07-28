@@ -47,14 +47,18 @@ class _ModuleClass(object):
         return self.__attributes__.items()
 
 
+class _InterfacesClass(_ModuleClass):
+    pass
+
+
 def load_interfaces(force=False):
     if not force and "openpype_interfaces" in sys.modules:
         return
 
     from openpype.lib import import_filepath
 
-    sys.modules["openpype_interfaces"] = openpype_interfaces = _ModuleClass(
-        "openpype_interfaces"
+    sys.modules["openpype_interfaces"] = openpype_interfaces = (
+        _InterfacesClass("openpype_interfaces")
     )
 
     log = PypeLogger.get_logger("InterfacesLoader")
