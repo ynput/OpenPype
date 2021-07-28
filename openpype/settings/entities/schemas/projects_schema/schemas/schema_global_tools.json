@@ -125,7 +125,10 @@
                                 "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Hosts",
-                                "multiselection": true
+                                "multiselection": true,
+                                "hosts_filter": [
+                                    "nuke"
+                                ]
                             },
                             {
                                 "key": "tasks",
