@@ -136,7 +136,7 @@ def classes_from_module(superclass, module):
     return classes
 
 
-def _load_module_from_dirpath_py2(dirpath, module_name, dst_module_name):
+def _import_module_from_dirpath_py2(dirpath, module_name, dst_module_name):
     full_module_name = "{}.{}".format(dst_module_name, module_name)
     if full_module_name in sys.modules:
         return sys.modules[full_module_name]
@@ -152,7 +152,7 @@ def _load_module_from_dirpath_py2(dirpath, module_name, dst_module_name):
     return module
 
 
-def _load_module_from_dirpath_py3(dirpath, module_name, dst_module_name):
+def _import_module_from_dirpath_py3(dirpath, module_name, dst_module_name):
     full_module_name = "{}.{}".format(dst_module_name, module_name)
     if full_module_name in sys.modules:
         return sys.modules[full_module_name]
@@ -179,13 +179,13 @@ def _load_module_from_dirpath_py3(dirpath, module_name, dst_module_name):
     return module
 
 
-def load_module_from_dirpath(dirpath, folder_name, dst_module_name):
+def import_module_from_dirpath(dirpath, folder_name, dst_module_name):
     if PY3:
-        module = _load_module_from_dirpath_py3(
+        module = _import_module_from_dirpath_py3(
             dirpath, folder_name, dst_module_name
         )
     else:
-        module = _load_module_from_dirpath_py2(
+        module = _import_module_from_dirpath_py2(
             dirpath, folder_name, dst_module_name
         )
     return module

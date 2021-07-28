@@ -173,7 +173,7 @@ def load_modules(force=False):
     # Import helper functions from lib
     from openpype.lib import (
         import_filepath,
-        load_module_from_dirpath
+        import_module_from_dirpath
     )
 
     # Change `sys.modules`
@@ -203,7 +203,7 @@ def load_modules(force=False):
             # TODO add more logic how to define if folder is module or not
             # - check manifest and content of manifest
             if os.path.isdir(fullpath):
-                module = load_module_from_dirpath(
+                module = import_module_from_dirpath(
                     dirpath, filename, modules_key
                 )
                 module_name = filename

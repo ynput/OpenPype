@@ -56,7 +56,7 @@ from .python_module_tools import (
     modules_from_path,
     recursive_bases_from_class,
     classes_from_module,
-    load_module_from_dirpath
+    import_module_from_dirpath
 )
 
 from .avalon_context import (
@@ -176,7 +176,7 @@ __all__ = [
     "modules_from_path",
     "recursive_bases_from_class",
     "classes_from_module",
-    "load_module_from_dirpath",
+    "import_module_from_dirpath",
 
     "CURRENT_DOC_SCHEMAS",
     "PROJECT_NAME_ALLOWED_SYMBOLS",
