@@ -61,6 +61,14 @@ class _InterfacesClass(_ModuleClass):
         return self.__attributes__[attr_name]
 
 
+def module_dirs():
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+    dirpaths = [
+        os.path.join(current_dir, "default_modules")
+    ]
+    return dirpaths
+
+
 def load_interfaces(force=False):
     if not force and "openpype_interfaces" in sys.modules:
         return
