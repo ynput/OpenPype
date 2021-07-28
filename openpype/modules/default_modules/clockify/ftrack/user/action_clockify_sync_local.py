@@ -1,53 +1,37 @@
-import os
 import json
-from openpype.modules.ftrack.lib import ServerAction
+from openpype_modules.ftrack.lib import BaseAction, statics_icon
 from openpype.modules.clockify.clockify_api import ClockifyAPI
 
 
-class SyncClocifyServer(ServerAction):
+class SyncClocifyLocal(BaseAction):
     '''Synchronise project names and task types.'''
 
-    identifier = "clockify.sync.server"
-    label = "Sync To Clockify (server)"
-    description = "Synchronise data to Clockify workspace"
-
+    #: Action identifier.
+    identifier = 'clockify.sync.local'
+    #: Action label.
+    label = 'Sync To Clockify (local)'
+    #: Action description.
+    description = 'Synchronise data to Clockify workspace'
+    #: roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator", "project Manager"]
+    #: icon
+    icon = statics_icon("app_icons", "clockify-white.png")
 
     def __init__(self, *args, **kwargs):
-        super(SyncClocifyServer, self).__init__(*args, **kwargs)
-
-        workspace_name = os.environ.get("CLOCKIFY_WORKSPACE")
-        api_key = os.environ.get("CLOCKIFY_API_KEY")
-        self.clockapi = ClockifyAPI(api_key)
-        self.clockapi.set_workspace(workspace_name)
-        if api_key is None:
-            modified_key = "None"
-        else:
-            str_len = int(len(api_key) / 2)
-            start_replace = int(len(api_key) / 4)
-            modified_key = ""
-            for idx in range(len(api_key)):
-                if idx >= start_replace and idx < start_replace + str_len:
-                    replacement = "X"
-                else:
-                    replacement = api_key[idx]
-                modified_key += replacement
-
-        self.log.info(
-            "Clockify info. Workspace: \"{}\" API key: \"{}\"".format(
-                str(workspace_name), str(modified_key)
-            )
-        )
+        super(SyncClocifyLocal, self).__init__(*args, **kwargs)
+        #: CLockifyApi
+        self.clockapi = ClockifyAPI()
 
     def discover(self, session, entities, event):
         if (
-            len(entities) != 1
-            or entities[0].entity_type.lower() != "project"
+            len(entities) == 1
+            and entities[0].entity_type.lower() == "project"
         ):
-            return False
-        return True
+            return True
+        return False
 
     def launch(self, session, entities, event):
+        self.clockapi.set_api()
         if self.clockapi.workspace_id is None:
             return {
                 "success": False,
@@ -61,13 +45,15 @@ class SyncClocifyServer(ServerAction):
             }
 
         # JOB SETTINGS
-        user_id = event["source"]["user"]["id"]
-        user = session.query("User where id is " + user_id).one()
+        userId = event['source']['user']['id']
+        user = session.query('User where id is ' + userId).one()
 
-        job = session.create("Job", {
-            "user": user,
-            "status": "running",
-            "data": json.dumps({"description": "Sync Ftrack to Clockify"})
+        job = session.create('Job', {
+            'user': user,
+            'status': 'running',
+            'data': json.dumps({
+                'description': 'Sync Ftrack to Clockify'
+            })
         })
         session.commit()
 
@@ -124,10 +110,7 @@ class SyncClocifyServer(ServerAction):
             job["status"] = "done"
 
         except Exception:
-            self.log.warning(
-                "Synchronization to clockify failed.",
-                exc_info=True
-            )
+            pass
 
         finally:
             if job["status"] != "done":
@@ -138,4 +121,4 @@ class SyncClocifyServer(ServerAction):
 
 
 def register(session, **kw):
-    SyncClocifyServer(session).register()
+    SyncClocifyLocal(session).register()
