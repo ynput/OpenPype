@@ -169,7 +169,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                                                      "manifest.json"))
             self.log.info("task_data:: {}".format(task_data))
             ctx = task_data["context"]
-            asset = subset = task = task_type = None
+            task_type = None
 
             subset = "Main"  # temp
             if ctx["type"] == "task":
@@ -289,4 +289,3 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             )
 
         self._process_batch(batch_dir)
-

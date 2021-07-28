@@ -165,7 +165,7 @@ class WebpublisherPublishEndpoint(_RestApiEndpoint):
 
         print("args:: {}".format(args))
 
-        exit_code = subprocess.call(args, shell=True)
+        _exit_code = subprocess.call(args, shell=True)
         return Response(
             status=200,
             body=self.resource.encode(output),
@@ -279,4 +279,3 @@ def run_webserver(*args, **kwargs):
     webserver_module.start_server()
     while True:
         time.sleep(0.5)
-

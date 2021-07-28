@@ -191,8 +191,7 @@ class PypeCommands:
                             "finish_date": datetime.now(),
                             "status": "error",
                             "msg": error_format.format(**result)
-                        }
-                    }
+                        }}
                 )
                 sys.exit(1)
             else:
@@ -201,8 +200,7 @@ class PypeCommands:
                     {"$set":
                         {
                             "progress": result["progress"]
-                        }
-                    }
+                        }}
                 )
 
         dbcon.update_one(
@@ -212,8 +210,7 @@ class PypeCommands:
                     "finish_date": datetime.now(),
                     "state": "finished_ok",
                     "progress": 1
-                }
-            }
+                }}
         )
 
         log.info("Publish finished.")

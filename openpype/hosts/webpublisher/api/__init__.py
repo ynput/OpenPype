@@ -29,8 +29,8 @@ def install():
 
     avalon.on("application.launched", application_launch)
 
+
 def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
-
