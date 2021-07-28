@@ -18,8 +18,9 @@ from openpype.lib import PypeLogger
 
 # Inherit from `object` for Python 2 hosts
 class _ModuleClass(object):
-    def __init__(self):
+    def __init__(self, name):
         # Call setattr on super class
+        super(_ModuleClass, self).__setattr__("name", name)
         super(_ModuleClass, self).__setattr__("__attributes__", dict())
         super(_ModuleClass, self).__setattr__("__defaults__", set())
 
@@ -52,7 +53,9 @@ def load_interfaces(force=False):
 
     from openpype.lib import import_filepath
 
-    sys.modules["openpype_interfaces"] = openpype_interfaces = _ModuleClass()
+    sys.modules["openpype_interfaces"] = openpype_interfaces = _ModuleClass(
+        "openpype_interfaces"
+    )
 
     log = PypeLogger.get_logger("InterfacesLoader")
 
@@ -102,7 +105,9 @@ def load_modules(force=False):
 
     from openpype.lib import modules_from_path
 
-    sys.modules["openpype_modules"] = openpype_modules = _ModuleClass()
+    sys.modules["openpype_modules"] = openpype_modules = _ModuleClass(
+        "openpype_modules"
+    )
 
     log = PypeLogger.get_logger("ModulesLoader")
 
