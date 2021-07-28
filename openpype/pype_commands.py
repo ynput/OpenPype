@@ -3,7 +3,7 @@
 import os
 import sys
 import json
-from pathlib import Path
+from datetime import datetime
 
 from openpype.lib import PypeLogger
 from openpype.api import get_app_environments_for_context
@@ -112,25 +112,30 @@ class PypeCommands:
         uninstall()
 
     @staticmethod
-    def remotepublish(project, paths, host, targets=None):
+    def remotepublish(project, batch_path, host, user, targets=None):
         """Start headless publishing.
 
         Publish use json from passed paths argument.
 
         Args:
-            paths (list): Paths to jsons.
+            project (str): project to publish (only single context is expected
+                per call of remotepublish
+            batch_path (str): Path batch folder. Contains subfolders with
+                resources (workfile, another subfolder 'renders' etc.)
             targets (string): What module should be targeted
                 (to choose validator for example)
             host (string)
+            user (string): email address for webpublisher
 
         Raises:
             RuntimeError: When there is no path to process.
         """
-        if not any(paths):
+        if not batch_path:
             raise RuntimeError("No publish paths specified")
 
         from openpype import install, uninstall
         from openpype.api import Logger
+        from openpype.lib import OpenPypeMongoConnection
 
         # Register target and host
         import pyblish.api
@@ -149,20 +154,67 @@ class PypeCommands:
             for target in targets:
                 pyblish.api.register_target(target)
 
-        os.environ["OPENPYPE_PUBLISH_DATA"] = os.pathsep.join(paths)
+        os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
         os.environ["AVALON_PROJECT"] = project
-        os.environ["AVALON_APP"] = host  # to trigger proper plugings
+        os.environ["AVALON_APP_NAME"] = host  # to trigger proper plugings
+
+        # this should be more generic
+        from openpype.hosts.webpublisher.api import install as w_install
+        w_install()
+        pyblish.api.register_host(host)
 
         log.info("Running publish ...")
 
         # Error exit as soon as any error occurs.
         error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
 
+        mongo_client = OpenPypeMongoConnection.get_mongo_client()
+        database_name = os.environ["OPENPYPE_DATABASE_NAME"]
+        dbcon = mongo_client[database_name]["webpublishes"]
+
+        _, batch_id = os.path.split(batch_path)
+        _id = dbcon.insert_one({
+            "batch_id": batch_id,
+            "start_date": datetime.now(),
+            "user": user,
+            "status": "in_progress"
+        }).inserted_id
+
         for result in pyblish.util.publish_iter():
             if result["error"]:
                 log.error(error_format.format(**result))
                 uninstall()
+                dbcon.update_one(
+                    {"_id": _id},
+                    {"$set":
+                        {
+                            "finish_date": datetime.now(),
+                            "status": "error",
+                            "msg": error_format.format(**result)
+                        }
+                    }
+                )
                 sys.exit(1)
+            else:
+                dbcon.update_one(
+                    {"_id": _id},
+                    {"$set":
+                        {
+                            "progress": result["progress"]
+                        }
+                    }
+                )
+
+        dbcon.update_one(
+            {"_id": _id},
+            {"$set":
+                {
+                    "finish_date": datetime.now(),
+                    "state": "finished_ok",
+                    "progress": 1
+                }
+            }
+        )
 
         log.info("Publish finished.")
         uninstall()
