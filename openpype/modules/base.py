@@ -120,6 +120,7 @@ def load_modules(force=False):
         sync_server,
         timers_manager,
         webserver,
+        launcher_action,
         standalonepublish_action,
         project_manager_action
     )
@@ -135,6 +136,7 @@ def load_modules(force=False):
     setattr(openpype_modules, "slack", slack)
     setattr(openpype_modules, "timers_manager", timers_manager)
     setattr(openpype_modules, "webserver", webserver)
+    setattr(openpype_modules, "launcher_action", launcher_action)
     setattr(
         openpype_modules, "standalonepublish_action", standalonepublish_action
     )
