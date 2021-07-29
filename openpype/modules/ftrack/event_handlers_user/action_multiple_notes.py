@@ -14,12 +14,19 @@ class MultipleNotes(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
-        valid_entity_types = ['assetversion', 'task']
         valid = True
+
+        # Check for multiple selection.
+        if len(entities) < 2:
+            valid = False
+
+        # Check for valid entities.
+        valid_entity_types = ['assetversion', 'task']
         for entity in entities:
             if entity.entity_type.lower() not in valid_entity_types:
                 valid = False
                 break
+
         return valid
 
     def interface(self, session, entities, event):
