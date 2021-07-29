@@ -19,15 +19,8 @@ from openpype.lib import (
     OpenPypeMongoConnection
 )
 from openpype_modules.ftrack import FTRACK_MODULE_DIR
-from openpype_modules.ftrack.lib import (
-    credentials,
-    get_ftrack_url_from_settings
-)
-from openpype_modules.ftrack.ftrack_server.lib import (
-    check_ftrack_url,
-    get_ftrack_event_mongo_info
-)
-
+from openpype_modules.ftrack.lib import credentials
+from openpype_modules.ftrack.ftrack_server.lib import check_ftrack_url
 from openpype_modules.ftrack.ftrack_server import socket_thread
 
 

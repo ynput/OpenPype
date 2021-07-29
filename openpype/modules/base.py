@@ -2,7 +2,6 @@
 """Base class for Pype Modules."""
 import os
 import sys
-import types
 import time
 import inspect
 import logging
@@ -366,12 +365,16 @@ class ModulesManager:
                     not_implemented = []
                     for attr_name in dir(modules_item):
                         attr = getattr(modules_item, attr_name, None)
-                        if attr and getattr(attr, "__isabstractmethod__", None):
+                        abs_method = getattr(
+                            attr, "__isabstractmethod__", None
+                        )
+                        if attr and abs_method:
                             not_implemented.append(attr_name)
 
                     # Log missing implementations
                     self.log.warning((
-                        "Skipping abstract Class: {}. Missing implementations: {}"
+                        "Skipping abstract Class: {}."
+                        " Missing implementations: {}"
                     ).format(name, ", ".join(not_implemented)))
                     continue
                 module_classes.append(modules_item)
