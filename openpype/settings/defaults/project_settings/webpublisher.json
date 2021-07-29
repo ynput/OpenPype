@@ -1,0 +1,72 @@
+{
+    "publish": {
+        "CollectPublishedFiles": {
+            "task_type_to_family": {
+                "Animation": {
+                    "workfile": {
+                        "is_sequence": false,
+                        "extensions": [
+                            "tvp"
+                        ],
+                        "families": []
+                    },
+                    "render": {
+                        "is_sequence": true,
+                        "extensions": [
+                            "png",
+                            "exr",
+                            "tiff",
+                            "tif"
+                        ],
+                        "families": [
+                            "review"
+                        ]
+                    }
+                },
+                "Compositing": {
+                    "workfile": {
+                        "is_sequence": false,
+                        "extensions": [
+                            "aep"
+                        ],
+                        "families": []
+                    },
+                    "render": {
+                        "is_sequence": true,
+                        "extensions": [
+                            "png",
+                            "exr",
+                            "tiff",
+                            "tif"
+                        ],
+                        "families": [
+                            "review"
+                        ]
+                    }
+                },
+                "Layout": {
+                    "workfile": {
+                        "is_sequence": false,
+                        "extensions": [
+                            "psd"
+                        ],
+                        "families": []
+                    },
+                    "image": {
+                        "is_sequence": false,
+                        "extensions": [
+                            "png",
+                            "jpg",
+                            "jpeg",
+                            "tiff",
+                            "tif"
+                        ],
+                        "families": [
+                            "review"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
