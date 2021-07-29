@@ -294,6 +294,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             msg = "<br><br>".join(warnings)
 
             dialog = QtWidgets.QMessageBox(self)
+            dialog.setWindowTitle("Save warnings")
             dialog.setText(msg)
             dialog.setIcon(QtWidgets.QMessageBox.Warning)
             dialog.exec_()
@@ -303,6 +304,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         except Exception as exc:
             formatted_traceback = traceback.format_exception(*sys.exc_info())
             dialog = QtWidgets.QMessageBox(self)
+            dialog.setWindowTitle("Unexpected error")
             msg = "Unexpected error happened!\n\nError: {}".format(str(exc))
             dialog.setText(msg)
             dialog.setDetailedText("\n".join(formatted_traceback))
@@ -392,6 +394,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         except Exception as exc:
             formatted_traceback = traceback.format_exception(*sys.exc_info())
             dialog = QtWidgets.QMessageBox(self)
+            dialog.setWindowTitle("Unexpected error")
             msg = "Unexpected error happened!\n\nError: {}".format(str(exc))
             dialog.setText(msg)
             dialog.setDetailedText("\n".join(formatted_traceback))
