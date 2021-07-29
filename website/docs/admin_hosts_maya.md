@@ -4,11 +4,11 @@ title: Maya
 sidebar_label: Maya
 ---
 
-## Maya
+## Publish Plugins
 
-### Publish Plugins
+### Render Settings Validator 
 
-#### Render Settings Validator (`ValidateRenderSettings`)
+`ValidateRenderSettings`
 
 Render Settings Validator is here to make sure artists will submit renders
 we correct settings. Some of these settings are needed by OpenPype but some
@@ -51,7 +51,10 @@ just one instance of this node type but if that is not so, validator will go thr
 instances and check the value there. Node type for **VRay** settings is `VRaySettingsNode`, for **Renderman**
 it is `rmanGlobals`, for **Redshift** it is `RedshiftOptions`.
 
-#### Model Name Validator (`ValidateRenderSettings`)
+### Model Name Validator 
+
+`ValidateRenderSettings`
+
 This validator can enforce specific names for model members. It will check them against **Validation Regex**.
 There is special group in that regex - **shader**. If present, it will take that part of the name as shader name
 and it will compare it with list of shaders defined either in file name specified in **Material File** or from
@@ -65,7 +68,7 @@ in either file or database `foo` and `bar`.
 
 Object named `SomeCube_0001_foo_GEO` will pass but `SomeCube_GEO` will not and `SomeCube_001_xxx_GEO` will not too.
 
-##### Top level group name
+#### Top level group name
 There is a validation for top level group name too. You can specify whatever regex you'd like to use. Default will
 pass everything with `_GRP` suffix. You can use *named capturing groups* to validate against specific data. If you
 put `(?P<asset>.*)` it will try to match everything captured in that group against current asset name. Likewise you can
@@ -84,7 +87,7 @@ When you publish your model with top group named like `foo_GRP` it will fail. Bu
 All regexes used here are in Python variant.
 :::
 
-### Custom Menu
+## Custom Menu
 You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
 ![Custom menu definition](assets/maya-admin_scriptsmenu.png)
 
