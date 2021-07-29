@@ -9,14 +9,15 @@ class MultipleNotes(BaseAction):
     #: Action label.
     label = 'Multiple Notes'
     #: Action description.
-    description = 'Add same note to multiple Asset Versions'
+    description = 'Add same note to multiple entities'
     icon = statics_icon("ftrack", "action_icons", "MultipleNotes.svg")
 
     def discover(self, session, entities, event):
         ''' Validation '''
+        valid_entity_types = ['assetversion', 'task']
         valid = True
         for entity in entities:
-            if entity.entity_type.lower() != 'assetversion':
+            if entity.entity_type.lower() not in valid_entity_types:
                 valid = False
                 break
         return valid
@@ -58,7 +59,7 @@ class MultipleNotes(BaseAction):
 
             splitter = {
                 'type': 'label',
-                'value': '{}'.format(200*"-")
+                'value': '{}'.format(200 * "-")
             }
 
             items = []
