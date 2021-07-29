@@ -693,7 +693,7 @@ class FilesWidget(QtWidgets.QWidget):
                 )
                 return
 
-        file_path = os.path.join(self.root, work_file)
+        file_path = os.path.join(os.path.normpath(self.root), work_file)
 
         pipeline.emit("before.workfile.save", file_path)
 
