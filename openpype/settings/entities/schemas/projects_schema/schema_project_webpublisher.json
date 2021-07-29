@@ -47,6 +47,11 @@
                                             "key": "families",
                                             "label": "Families",
                                             "object_type": "text"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "key": "subset_template_name",
+                                            "label": "Subset template name"
                                         }
                                     ]
                                 }

@@ -8,7 +8,8 @@
                         "extensions": [
                             "tvp"
                         ],
-                        "families": []
+                        "families": [],
+                        "subset_template_name": ""
                     },
                     "render": {
                         "is_sequence": true,
@@ -20,7 +21,8 @@
                         ],
                         "families": [
                             "review"
-                        ]
+                        ],
+                        "subset_template_name": ""
                     }
                 },
                 "Compositing": {
@@ -29,7 +31,8 @@
                         "extensions": [
                             "aep"
                         ],
-                        "families": []
+                        "families": [],
+                        "subset_template_name": ""
                     },
                     "render": {
                         "is_sequence": true,
@@ -41,7 +44,8 @@
                         ],
                         "families": [
                             "review"
-                        ]
+                        ],
+                        "subset_template_name": ""
                     }
                 },
                 "Layout": {
@@ -50,7 +54,8 @@
                         "extensions": [
                             "psd"
                         ],
-                        "families": []
+                        "families": [],
+                        "subset_template_name": ""
                     },
                     "image": {
                         "is_sequence": false,
@@ -63,8 +68,35 @@
                         ],
                         "families": [
                             "review"
-                        ]
+                        ],
+                        "subset_template_name": ""
                     }
+                },
+                "default_task_type": {
+                    "workfile": {
+                        "is_sequence": false,
+                        "extensions": [
+                            "tvp"
+                        ],
+                        "families": [],
+                        "subset_template_name": "{family}{Variant}"
+                    },
+                    "render": {
+                        "is_sequence": true,
+                        "extensions": [
+                            "png",
+                            "exr",
+                            "tiff",
+                            "tif"
+                        ],
+                        "families": [
+                            "review"
+                        ],
+                        "subset_template_name": "{family}{Variant}"
+                    }
+                },
+                "__dynamic_keys_labels__": {
+                    "default_task_type": "Default task type"
                 }
             }
         }
