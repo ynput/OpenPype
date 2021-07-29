@@ -9,7 +9,7 @@ except Exception:
 from .main_frame import MainFrame
 from .layer import Layer
 from .items import (
-    ItemTable, ItemImage, ItemRectangle, ItemPlaceHolder
+    ItemTable, ItemImage, ItemRectangle, ItemPlaceHolder, ItemText
 )
 
 log = logging.getLogger(__name__)
@@ -83,6 +83,7 @@ def create_slates(
         if item_type == "layer":
             direction = item_data.get("direction", 0)
             item_obj = Layer(direction, **kwargs)
+
             for item in item_data.get("items", []):
                 load_queue.put((item, item_obj))
 
@@ -94,6 +95,10 @@ def create_slates(
         elif item_type == "image":
             path = item_data["path"]
             ItemImage(path, **kwargs)
+
+        elif item_type == "text":
+            value = item_data.get("value", "")
+            ItemText(value, **kwargs)
 
         elif item_type == "rectangle":
             item_obj = ItemRectangle(**kwargs)

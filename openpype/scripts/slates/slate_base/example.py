@@ -43,12 +43,17 @@ def example():
                 "padding": 0,
                 "margin": 0
             },
+            "text": {
+                "padding": 0,
+                "margin": 0
+            },
             "rectangle": {
                 "padding": 0,
                 "margin": 0,
                 "fill": True
             },
             "main_frame": {
+                "bg-color": "#393939",
                 "padding": 0,
                 "margin": 30
             },
@@ -80,15 +85,15 @@ def example():
                 "alignment-vertical": "center"
             },
             "#VendorLayer": {
-                "margin": 0,
-                "padding-right": 0,
                 "min-width": 2048,
-                "min-height": 1080,
-                "alignment-horizontal": "right",
-                "alignment-vertical": "center"
+                "alignment-horizontal": "right"
             },
             "#Thumbnail": {
-                "margin-top": 50,
+                "margin-top": 50
+            },
+            "#LogoLayer": {
+                "min-width": 2048,
+                "alignment-horizontal": "left"
             }
         },
         "items": [{
@@ -153,19 +158,44 @@ def example():
             "name": "VendorLayer",
             "items": [
                     {
-                        "type": "table",
-                        "values": [
-                            ["{vendor}"]
-                        ],
+                        "type": "rectangle",
                         "style": {
-                            "table-item-col[0]": {
-                                "font-size": 50,
-                                "margin-right": 50,
-                                "font-color": "#ffffff",
-                                "alignment-horizontal": "right",
-                                "width": 500,
-                                "bg-color": "#527ce8"
-                            }
+                           "width": 2048,
+                           "height": 980,
+                           "bg-color": "transparent"
+                        }
+                    }, {
+                        "type": "text",
+                        "value": "{vendor}",
+                        "name": "vendorText",
+                        "style": {
+                            "padding-right": 50,
+                            "font-size": 50,
+                            "font-color": "#ffffff",
+                            "bg-color": "transparent",
+                            "font-bold": True
+                        }
+                    }
+            ]
+        }, {
+            "type": "layer",
+            "name": "LogoLayer",
+            "items": [
+                    {
+                        "type": "rectangle",
+                        "style": {
+                            "width": 2048,
+                            "height": 830,
+                            "bg-color": "transparent"
+                        }
+                    }, {
+                        "type": "image",
+                        "name": "logo",
+                        "path": "{logo}",
+                        "style": {
+                            "padding-left": 50,
+                            "width": 200,
+                            "height": 200
                         }
                     }
             ]

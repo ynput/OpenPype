@@ -249,7 +249,6 @@ class BaseObj:
         margin_left = self.style.get("margin-left") or margin
 
         pos_x += margin_left
-
         return pos_x
 
     @property
@@ -257,7 +256,9 @@ class BaseObj:
         pos_y = self.item_pos_y
         margin = self.style["margin"]
         margin_top = self.style.get("margin-top") or margin
-        return pos_y + margin_top
+
+        pos_y += margin_top
+        return pos_y
 
     @property
     def value_pos_x(self):

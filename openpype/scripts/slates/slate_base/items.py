@@ -66,6 +66,8 @@ class ItemRectangle(BaseItem):
 
     def draw(self, image, drawer):
         bg_color = self.style["bg-color"]
+        if bg_color == "transparent":
+            return
         fill = self.style.get("fill", False)
         kwargs = {}
         if fill:
@@ -145,6 +147,10 @@ class ItemText(BaseItem):
     def __init__(self, value, *args, **kwargs):
         self.value = value
         super(ItemText, self).__init__(*args, **kwargs)
+
+    def fill_data_format(self):
+        if re.match(self.fill_data_regex, self.value):
+            self.value = self.value.format(**self.fill_data)
 
     def draw(self, image, drawer):
         bg_color = self.style["bg-color"]
