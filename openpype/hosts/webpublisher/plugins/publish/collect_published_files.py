@@ -12,60 +12,9 @@ import json
 import clique
 
 import pyblish.api
-from avalon import api
+from avalon import io
+from openpype.lib import prepare_template_data
 
-FAMILY_SETTING = {  # TEMP
-    "Animation": {
-        "workfile": {
-            "is_sequence": False,
-            "extensions": ["tvp"],
-            "families": []
-        },
-        "render": {
-            "is_sequence": True,
-            "extensions": [
-                "png", "exr", "tiff", "tif"
-            ],
-            "families": ["review"]
-        }
-    },
-    "Compositing": {
-        "workfile": {
-            "is_sequence": False,
-            "extensions": ["aep"],
-            "families": []
-        },
-        "render": {
-            "is_sequence": True,
-            "extensions": [
-                "png", "exr", "tiff", "tif"
-            ],
-            "families": ["review"]
-        }
-    },
-    "Layout": {
-        "workfile": {
-            "is_sequence": False,
-            "extensions": [
-                ".psd"
-            ],
-            "families": []
-        },
-        "image": {
-            "is_sequence": False,
-            "extensions": [
-                "png",
-                "jpg",
-                "jpeg",
-                "tiff",
-                "tif"
-            ],
-            "families": [
-                "review"
-            ]
-        }
-    }
-}
 
 class CollectPublishedFiles(pyblish.api.ContextPlugin):
     """
@@ -79,6 +28,9 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
     host = ["webpublisher"]
 
     _context = None
+
+    # from Settings
+    task_type_to_family = {}
 
     def _load_json(self, path):
         path = path.strip('\"')
@@ -96,69 +48,6 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 )
         return data
 
-    def _fill_staging_dir(self, data_object, anatomy):
-        staging_dir = data_object.get("stagingDir")
-        if staging_dir:
-            data_object["stagingDir"] = anatomy.fill_root(staging_dir)
-
-    def _process_path(self, data):
-        # validate basic necessary data
-        data_err = "invalid json file - missing data"
-        # required = ["asset", "user", "comment",
-        #             "job", "instances", "session", "version"]
-        # assert all(elem in data.keys() for elem in required), data_err
-
-        # set context by first json file
-        ctx = self._context.data
-
-        ctx["asset"] = ctx.get("asset") or data.get("asset")
-        ctx["intent"] = ctx.get("intent") or data.get("intent")
-        ctx["comment"] = ctx.get("comment") or data.get("comment")
-        ctx["user"] = ctx.get("user") or data.get("user")
-        ctx["version"] = ctx.get("version") or data.get("version")
-
-        # basic sanity check to see if we are working in same context
-        # if some other json file has different context, bail out.
-        ctx_err = "inconsistent contexts in json files - %s"
-        assert ctx.get("asset") == data.get("asset"), ctx_err % "asset"
-        assert ctx.get("intent") == data.get("intent"), ctx_err % "intent"
-        assert ctx.get("comment") == data.get("comment"), ctx_err % "comment"
-        assert ctx.get("user") == data.get("user"), ctx_err % "user"
-        assert ctx.get("version") == data.get("version"), ctx_err % "version"
-
-        # now we can just add instances from json file and we are done
-        for instance_data in data.get("instances"):
-            self.log.info("  - processing instance for {}".format(
-                instance_data.get("subset")))
-            instance = self._context.create_instance(
-                instance_data.get("subset")
-            )
-            self.log.info("Filling stagingDir...")
-
-            self._fill_staging_dir(instance_data, anatomy)
-            instance.data.update(instance_data)
-
-            # stash render job id for later validation
-            instance.data["render_job_id"] = data.get("job").get("_id")
-
-            representations = []
-            for repre_data in instance_data.get("representations") or []:
-                self._fill_staging_dir(repre_data, anatomy)
-                representations.append(repre_data)
-
-            instance.data["representations"] = representations
-
-            # add audio if in metadata data
-            if data.get("audio"):
-                instance.data.update({
-                    "audio": [{
-                        "filename": data.get("audio"),
-                        "offset": 0
-                    }]
-                })
-                self.log.info(
-                    f"Adding audio to instance: {instance.data['audio']}")
-
     def _process_batch(self, dir_url):
         task_subfolders = [os.path.join(dir_url, o)
                                for o in os.listdir(dir_url)
@@ -169,32 +58,41 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                                                      "manifest.json"))
             self.log.info("task_data:: {}".format(task_data))
             ctx = task_data["context"]
-            task_type = None
+            task_type = "default_task_type"
+            task_name = None
 
             subset = "Main"  # temp
             if ctx["type"] == "task":
                 items = ctx["path"].split('/')
                 asset = items[-2]
                 os.environ["AVALON_TASK"] = ctx["name"]
+                task_name = ctx["name"]
                 task_type = ctx["attributes"]["type"]
             else:
                 asset = ctx["name"]
 
             is_sequence = len(task_data["files"]) > 1
 
-            instance = self._context.create_instance(subset)
             _, extension = os.path.splitext(task_data["files"][0])
             self.log.info("asset:: {}".format(asset))
-            family, families = self._get_family(FAMILY_SETTING,  # todo
-                                                task_type,
-                                                is_sequence,
-                                                extension.replace(".", ''))
+            family, families, subset_template = self._get_family(
+                self.task_type_to_family,
+                task_type,
+                is_sequence,
+                extension.replace(".", ''))
+
+            subset = self._get_subset_name(family, subset_template, task_name,
+                                           task_data["variant"])
+
             os.environ["AVALON_ASSET"] = asset
+            io.Session["AVALON_ASSET"] = asset
+
+            instance = self._context.create_instance(subset)
             instance.data["asset"] = asset
             instance.data["subset"] = subset
             instance.data["family"] = family
             instance.data["families"] = families
-            # instance.data["version"] = self._get_version(task_data["subset"])
+            instance.data["version"] = self._get_version(asset, subset) + 1
             instance.data["stagingDir"] = task_dir
             instance.data["source"] = "webpublisher"
 
@@ -205,16 +103,32 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                     task_data["files"], task_dir
                 )
             else:
-                _, ext = os.path.splittext(task_data["files"][0])
-                repre_data = {
-                    "name": ext[1:],
-                    "ext": ext[1:],
-                    "files": task_data["files"],
-                    "stagingDir": task_dir
-                }
-                instance.data["representation"] = repre_data
+
+                instance.data["representation"] = self._get_single_repre(
+                    task_dir, task_data["files"]
+                )
 
             self.log.info("instance.data:: {}".format(instance.data))
+
+    def _get_subset_name(self, family, subset_template, task_name, variant):
+        fill_pairs = {
+            "variant": variant,
+            "family": family,
+            "task": task_name
+        }
+        subset = subset_template.format(**prepare_template_data(fill_pairs))
+        return subset
+
+    def _get_single_repre(self, task_dir, files):
+        _, ext = os.path.splittext(files[0])
+        repre_data = {
+            "name": ext[1:],
+            "ext": ext[1:],
+            "files": files,
+            "stagingDir": task_dir
+        }
+
+        return repre_data
 
     def _process_sequence(self, files, task_dir):
         """Prepare reprentations for sequence of files."""
@@ -246,7 +160,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 extension (str): without '.'
 
             Returns:
-                (family, [families]) tuple
+                (family, [families], subset_template_name) tuple
                 AssertionError if not matching family found
         """
         task_obj = settings.get(task_type)
@@ -265,10 +179,59 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                   task_type, is_sequence, extension)
         assert found_family, msg
 
-        return found_family, content["families"]
+        return found_family, \
+               content["families"], \
+               content["subset_template_name"]
 
-    def _get_version(self, subset_name):
-        return 1
+    def _get_version(self, asset_name, subset_name):
+        """Returns version number or 0 for 'asset' and 'subset'"""
+        query = [
+            {
+                "$match": {"type": "asset", "name": asset_name}
+            },
+            {
+                "$lookup":
+                    {
+                        "from": os.environ["AVALON_PROJECT"],
+                        "localField": "_id",
+                        "foreignField": "parent",
+                        "as": "subsets"
+                    }
+            },
+            {
+                "$unwind": "$subsets"
+            },
+            {
+                "$match": {"subsets.type": "subset",
+                           "subsets.name": subset_name}},
+            {
+                "$lookup":
+                    {
+                        "from": os.environ["AVALON_PROJECT"],
+                        "localField": "subsets._id",
+                        "foreignField": "parent",
+                        "as": "versions"
+                    }
+            },
+            {
+                "$unwind": "$versions"
+            },
+            {
+                "$group": {
+                    "_id": {
+                        "asset_name": "$name",
+                        "subset_name": "$subsets.name"
+                    },
+                    'version': {'$max': "$versions.name"}
+                }
+            }
+        ]
+        version = list(io.aggregate(query))
+
+        if version:
+            return version[0].get("version") or 0
+        else:
+            return 0
 
     def process(self, context):
         self._context = context

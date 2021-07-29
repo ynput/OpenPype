@@ -2,6 +2,7 @@ import os
 import logging
 
 from avalon import api as avalon
+from avalon import io
 from pyblish import api as pyblish
 import openpype.hosts.webpublisher
 
@@ -27,6 +28,7 @@ def install():
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     log.info(PUBLISH_PATH)
 
+    io.install()
     avalon.on("application.launched", application_launch)
 
 

@@ -146,7 +146,8 @@ class WebpublisherPublishEndpoint(_RestApiEndpoint):
         args = [
             openpype_app,
             'remotepublish',
-            batch_path
+            batch_id,
+            task_id
         ]
 
         if not openpype_app or not os.path.exists(openpype_app):
@@ -174,7 +175,7 @@ class WebpublisherPublishEndpoint(_RestApiEndpoint):
 
 
 class BatchStatusEndpoint(_RestApiEndpoint):
-    """Returns list of project names."""
+    """Returns dict with info for batch_id."""
     async def get(self, batch_id) -> Response:
         output = self.dbcon.find_one({"batch_id": batch_id})
 
@@ -186,9 +187,9 @@ class BatchStatusEndpoint(_RestApiEndpoint):
 
 
 class PublishesStatusEndpoint(_RestApiEndpoint):
-    """Returns list of project names."""
+    """Returns list of dict with batch info for user (email address)."""
     async def get(self, user) -> Response:
-        output = self.dbcon.find({"user": user})
+        output = list(self.dbcon.find({"user": user}))
 
         return Response(
             status=200,
@@ -198,6 +199,7 @@ class PublishesStatusEndpoint(_RestApiEndpoint):
 
 
 class RestApiResource:
+    """Resource carrying needed info and Avalon DB connection for publish."""
     def __init__(self, server_manager, executable, upload_dir):
         self.server_manager = server_manager
         self.upload_dir = upload_dir
@@ -224,6 +226,7 @@ class RestApiResource:
 
 
 class OpenPypeRestApiResource(RestApiResource):
+    """Resource carrying OP DB connection for storing batch info into DB."""
     def __init__(self, ):
         mongo_client = OpenPypeMongoConnection.get_mongo_client()
         database_name = os.environ["OPENPYPE_DATABASE_NAME"]
@@ -254,6 +257,7 @@ def run_webserver(*args, **kwargs):
         hiearchy_endpoint.dispatch
     )
 
+    # triggers publish
     webpublisher_publish_endpoint = WebpublisherPublishEndpoint(resource)
     webserver_module.server_manager.add_route(
         "POST",
@@ -261,6 +265,7 @@ def run_webserver(*args, **kwargs):
         webpublisher_publish_endpoint.dispatch
     )
 
+    # reporting
     openpype_resource = OpenPypeRestApiResource()
     batch_status_endpoint = BatchStatusEndpoint(openpype_resource)
     webserver_module.server_manager.add_route(

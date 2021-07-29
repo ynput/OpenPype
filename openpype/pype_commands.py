@@ -161,7 +161,6 @@ class PypeCommands:
         # this should be more generic
         from openpype.hosts.webpublisher.api import install as w_install
         w_install()
-        pyblish.api.register_host(host)
 
         log.info("Running publish ...")
 
@@ -199,7 +198,7 @@ class PypeCommands:
                     {"_id": _id},
                     {"$set":
                         {
-                            "progress": result["progress"]
+                            "progress": max(result["progress"], 0.95)
                         }}
                 )
 
