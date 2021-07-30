@@ -215,6 +215,7 @@ class PypeCommands:
         log.info("Publish finished.")
         uninstall()
 
+    @staticmethod
     def extractenvironments(output_json_path, project, asset, task, app):
         env = os.environ.copy()
         if all((project, asset, task, app)):
