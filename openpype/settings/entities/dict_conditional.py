@@ -144,6 +144,13 @@ class DictConditionalEntity(ItemEntity):
 
         self.enum_entity = None
 
+        # GUI attributes
+        self.enum_is_horizontal = self.schema_data.get(
+            "enum_is_horizontal", False
+        )
+        # `enum_on_right` can be used only if
+        self.enum_on_right = self.schema_data.get("enum_on_right", False)
+
         self.highlight_content = self.schema_data.get(
             "highlight_content", False
         )
