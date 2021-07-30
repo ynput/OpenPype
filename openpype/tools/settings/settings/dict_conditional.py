@@ -24,6 +24,7 @@ class DictConditionalWidget(BaseWidget):
         self.body_widget = None
         self.content_widget = None
         self.content_layout = None
+        self.enum_layout = None
 
         label = None
         if self.entity.is_dynamic_item:
@@ -40,8 +41,36 @@ class DictConditionalWidget(BaseWidget):
         self._enum_key_by_wrapper_id = {}
         self._added_wrapper_ids = set()
 
-        self.content_layout.setColumnStretch(0, 0)
-        self.content_layout.setColumnStretch(1, 1)
+        enum_layout = QtWidgets.QGridLayout()
+        enum_layout.setContentsMargins(0, 0, 0, 0)
+        enum_layout.setColumnStretch(0, 0)
+        enum_layout.setColumnStretch(1, 1)
+
+        all_children_layout = QtWidgets.QVBoxLayout()
+        all_children_layout.setContentsMargins(0, 0, 0, 0)
+
+        if self.entity.enum_is_horizontal:
+            if self.entity.enum_on_right:
+                self.content_layout.addLayout(all_children_layout, 0, 0)
+                self.content_layout.addLayout(enum_layout, 0, 1)
+                # Stretch combobox to minimum and expand value
+                self.content_layout.setColumnStretch(0, 1)
+                self.content_layout.setColumnStretch(1, 0)
+            else:
+                self.content_layout.addLayout(enum_layout, 0, 0)
+                self.content_layout.addLayout(all_children_layout, 0, 1)
+                # Stretch combobox to minimum and expand value
+                self.content_layout.setColumnStretch(0, 0)
+                self.content_layout.setColumnStretch(1, 1)
+
+        else:
+            # Expand content
+            self.content_layout.setColumnStretch(0, 1)
+            self.content_layout.addLayout(enum_layout, 0, 0)
+            self.content_layout.addLayout(all_children_layout, 1, 0)
+
+        self.enum_layout = enum_layout
+        self.all_children_layout = all_children_layout
 
         # Add enum entity to layout mapping
         enum_entity = self.entity.enum_entity
@@ -57,6 +86,8 @@ class DictConditionalWidget(BaseWidget):
             content_layout.setColumnStretch(1, 1)
             content_layout.setContentsMargins(0, 0, 0, 0)
             content_layout.setSpacing(5)
+
+            all_children_layout.addWidget(content_widget)
 
             self._content_by_enum_value[enum_key] = {
                 "widget": content_widget,
@@ -80,9 +111,6 @@ class DictConditionalWidget(BaseWidget):
 
         for item_key, children in self.entity.children.items():
             content_widget = self._content_by_enum_value[item_key]["widget"]
-            row = self.content_layout.rowCount()
-            self.content_layout.addWidget(content_widget, row, 0, 1, 2)
-
             for child_obj in children:
                 self.input_fields.append(
                     self.create_ui_for_entity(
@@ -191,12 +219,25 @@ class DictConditionalWidget(BaseWidget):
         else:
             map_id = widget.entity.id
 
-        content_widget = self.content_widget
-        content_layout = self.content_layout
-        if map_id != self.entity.enum_entity.id:
-            enum_value = self._enum_key_by_wrapper_id[map_id]
-            content_widget = self._content_by_enum_value[enum_value]["widget"]
-            content_layout = self._content_by_enum_value[enum_value]["layout"]
+        is_enum_item = map_id == self.entity.enum_entity.id
+        if is_enum_item:
+            content_widget = self.content_widget
+            content_layout = self.enum_layout
+
+            if not label:
+                content_layout.addWidget(widget, 0, 0, 1, 2)
+                return
+
+            label_widget = GridLabelWidget(label, widget)
+            label_widget.input_field = widget
+            widget.label_widget = label_widget
+            content_layout.addWidget(label_widget, 0, 0, 1, 1)
+            content_layout.addWidget(widget, 0, 1, 1, 1)
+            return
+
+        enum_value = self._enum_key_by_wrapper_id[map_id]
+        content_widget = self._content_by_enum_value[enum_value]["widget"]
+        content_layout = self._content_by_enum_value[enum_value]["layout"]
 
         wrapper = self._parent_widget_by_entity_id[map_id]
         if wrapper is not content_widget:
