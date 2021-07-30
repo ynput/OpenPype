@@ -293,7 +293,7 @@ class DictConditionalEntity(ItemEntity):
             "multiselection": False,
             "enum_items": enum_items,
             "key": enum_key,
-            "label": self.enum_label or enum_key
+            "label": self.enum_label
         }
 
         enum_entity = self.create_schema_object(enum_schema, self)
