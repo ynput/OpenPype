@@ -102,7 +102,7 @@ class WebpublisherHiearchyEndpoint(_RestApiEndpoint):
                 node = assets.get(child["_id"])
                 if not node:
                     node = Node(child["_id"],
-                                child["data"]["entityType"],
+                                child["data"].get("entityType", "Folder"),
                                 child["name"])
                     assets[child["_id"]] = node
 
@@ -118,7 +118,8 @@ class WebpublisherHiearchyEndpoint(_RestApiEndpoint):
                     asset_doc = asset_docs_by_id.get(parent_id)
                     if asset_doc:  # regular node
                         parent_node = Node(parent_id,
-                                           asset_doc["data"]["entityType"],
+                                           asset_doc["data"].get("entityType",
+                                                                 "Folder"),
                                            asset_doc["name"])
                     else:  # root
                         parent_node = Node(parent_id,
@@ -173,9 +174,10 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
         output = {}
 
         print(request)
+        content = await request.json()
 
         batch_path = os.path.join(self.resource.upload_dir,
-                                  request.query["batch_id"])
+                                  content["batch"])
 
         openpype_app = self.resource.executable
         args = [
@@ -190,8 +192,8 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
 
         add_args = {
             "host": "webpublisher",
-            "project": request.query["project"],
-            "user": request.query["user"]
+            "project": content["project_name"],
+            "user": content["user"]
         }
 
         for key, value in add_args.items():
