@@ -60,6 +60,11 @@
                     "decimal": 2,
                     "key": "message_time",
                     "label": "When dialog will show"
+                },
+                {
+                    "type": "boolean",
+                    "key": "disregard_publishing",
+                    "label": "Disregard Publishing"
                 }
             ]
         },
