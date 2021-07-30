@@ -14,6 +14,8 @@ class MainFrame(BaseObj):
         self, width, height, destination_path, fill_data={}, *args, **kwargs
     ):
         kwargs["parent"] = None
+        kwargs["root_width"] = width
+        kwargs["root_height"] = height
         super(MainFrame, self).__init__(*args, **kwargs)
         self._width = width
         self._height = height

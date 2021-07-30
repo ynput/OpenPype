@@ -31,7 +31,8 @@ class BaseObj:
     ]
     fill_data_regex = r"{[^}]+}"
 
-    def __init__(self, parent, style={}, name=None, pos_x=None, pos_y=None):
+    def __init__(self, parent, style={},
+                 name=None, pos_x=None, pos_y=None, *args, **kwargs):
         if not self.obj_type:
             raise NotImplementedError(
                 "Class don't have set object type <{}>".format(
@@ -55,9 +56,12 @@ class BaseObj:
         self._style = style
 
         self.id = uuid4()
+        self.root_width = kwargs.get("root_width")
+        self.root_height = kwargs.get("root_height")
         self.name = name
         self.items = {}
 
+        print(f"{self.name} [{self.obj_type}] - {self.root_width}/{self.root_height}")
         self._pos_x = pos_x or 0
         self._pos_y = pos_y or 0
 

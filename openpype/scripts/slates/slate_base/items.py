@@ -1,7 +1,7 @@
 import os
 import re
 from PIL import Image
-
+from copy import deepcopy
 from .base import BaseObj
 from .font_factory import FontFactory
 
@@ -210,7 +210,7 @@ class ItemTable(BaseItem):
     def __init__(self, values, use_alternate_color=False, *args, **kwargs):
 
         self.values_by_cords = None
-        self.prepare_values(values)
+        self.prepare_values(values, kwargs)
 
         super(ItemTable, self).__init__(*args, **kwargs)
         self.size_values = None
@@ -227,7 +227,8 @@ class ItemTable(BaseItem):
         for item in self.values:
             item.fill_data_format()
 
-    def prepare_values(self, _values):
+    def prepare_values(self, _values, kwargs):
+        _kwargs = deepcopy(kwargs)
         values = []
         values_by_cords = []
         row_count = 0
@@ -246,7 +247,11 @@ class ItemTable(BaseItem):
                 else:
                     col = ""
 
-                col_item = TableField(row_idx, col_idx, col, parent=self)
+                _kwargs.update(
+                    {"parent": self}
+                )
+                col_item = TableField(
+                    row_idx, col_idx, col, **_kwargs)
                 values_by_cords[row_idx][col_idx] = col_item
                 values.append(col_item)
 

@@ -67,7 +67,9 @@ def slate_generator(
             "style": item_style,
             "name": item_name,
             "pos_x": pos_x,
-            "pos_y": pos_y
+            "pos_y": pos_y,
+            "root_width": width,
+            "root_height": height
         }
 
         if item_type == "layer":
