@@ -8,7 +8,6 @@ def example():
     """
 
     example_fill_data = {
-        "destination_path": "C:/CODE/_PYPE_testing/slates_testing/slate.png",
         "shot": "106_V12_010",
         "version": "V007",
         "length": 187,
@@ -29,9 +28,6 @@ def example():
     }
 
     example_presets = {
-        "width": 2048,
-        "height": 1080,
-        "destination_path": "{destination_path}",
         "style": {
             "*": {
                 "font-family": "verdana",
@@ -202,4 +198,8 @@ def example():
         }]
     }
 
-    api.create_slates(example_fill_data, example_presets)
+    api.slate_generator(
+        example_fill_data, example_presets,
+        output_path="C:/CODE/_PYPE_testing/slates_testing/slate.png",
+        # width=2048, height=1080
+        )

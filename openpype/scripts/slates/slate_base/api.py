@@ -11,7 +11,7 @@ from .items import (
     ItemTable,
     TableField
 )
-from .lib import create_slates
+from .lib import slate_generator
 from .example import example
 
 __all__ = [
@@ -28,5 +28,5 @@ __all__ = [
     "ItemTable",
     "TableField",
     "example",
-    "create_slates"
+    "slate_generator"
 ]

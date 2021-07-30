@@ -15,42 +15,32 @@ from .items import (
 log = logging.getLogger(__name__)
 
 
-required_keys = ["width", "height", "destination_path"]
-
-
-def create_slates(
-    fill_data, slate_data=None, data_output_json=None
+def slate_generator(
+    fill_data, slate_settings, output_path=None, width=None, height=None
 ):
-    """Implmentation for command line executing.
+    """Command line script for dynamic creatign of slates with PIL.
 
-    Data for slates are by defaule taken from presets. That requires to enter,
-    `slate_name`. If `slate_data` are entered then they are used.
-
-    `data_output` should be path to json file where data will be collected.
+    Args:
+        fill_data (dict): data used for formating inputs in slate_settings
+        slate_settings (dict): slate settings template for slate layout
+        output_path (str, optional): path string including file extension
+                                     - this will define the output format.
+                                     Defaults to None.
+        width (int, optional): expected width of slate image. Defaults to None.
+        height (int, optional): expected height of slate image.
+                                Defaults to None.
     """
-    if slate_data is None:
-        raise TypeError(
-            "`create_slates` expects to enter data for slates"
-        )
+    assert output_path, TypeError(
+        "`slate_generator` expects to enter `output_path`")
 
-    missing_keys = [
-        "`{}`".format(key) for key in required_keys if key not in slate_data
-    ]
+    width = width or 1920
+    height = height or 1080
+    style = slate_settings.get("style") or {}
 
-    if missing_keys:
-        log.error("Slate data are missing required keys: {}".format(
-            ", ".join(missing_keys)))
-        return False
-
-    width = slate_data["width"]
-    height = slate_data["height"]
-    dst_path = slate_data["destination_path"]
-    style = slate_data.get("style") or {}
-
-    main = MainFrame(width, height, dst_path, fill_data, style=style)
+    main = MainFrame(width, height, output_path, fill_data, style=style)
 
     load_queue = Queue()
-    for item in slate_data["items"]:
+    for item in slate_settings["items"]:
         load_queue.put((item, main))
 
     while not load_queue.empty():
@@ -117,20 +107,3 @@ def create_slates(
 
     main.draw()
     log.debug("Slate creation finished")
-
-    if not data_output_json:
-        return
-
-    if not data_output_json.endswith(".json"):
-        raise ValueError("Output path must be .json file.")
-
-    data_output_json_dir = os.path.dirname(data_output_json)
-    if not os.path.exists(data_output_json_dir):
-        log.info("Creating folder \"{}\"".format(data_output_json_dir))
-        os.makedirs(data_output_json_dir)
-
-    output_data = main.collect_data()
-    with open(data_output_json, "w") as json_file:
-        json_file.write(json.dumps(output_data, indent=4))
-
-    log.info("Metadata collected in \"{}\".".format(data_output_json))
