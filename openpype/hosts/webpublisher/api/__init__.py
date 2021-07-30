@@ -29,6 +29,7 @@ def install():
     log.info(PUBLISH_PATH)
 
     io.install()
+    avalon.Session["AVALON_APP"] = "webpublisher"  # because of Ftrack collect
     avalon.on("application.launched", application_launch)
 
 
