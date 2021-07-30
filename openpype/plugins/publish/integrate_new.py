@@ -303,6 +303,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         key_values = {"families": family, "tasks": task_name}
         profile = filter_profiles(self.template_name_profiles, key_values,
                                   logger=self.log)
+        
+        template_name = "publish"
         if profile:
             template_name = profile["template_name"]
 
