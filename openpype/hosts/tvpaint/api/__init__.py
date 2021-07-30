@@ -1,6 +1,8 @@
 import os
 import logging
 
+import requests
+
 import avalon.api
 import pyblish.api
 from avalon.tvpaint import pipeline
@@ -51,6 +53,13 @@ def initial_launch():
     set_context_settings()
 
 
+def application_exit():
+    # Stop application timer.
+    webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
+    rest_api_url = "{}/timers_manager/stop_timer".format(webserver_url)
+    requests.post(rest_api_url)
+
+
 def install():
     log.info("OpenPype - Installing TVPaint integration")
     localization_file = os.path.join(HOST_DIR, "resources", "avalon.loc")
@@ -67,6 +76,7 @@ def install():
         pyblish.api.register_callback("instanceToggled", on_instance_toggle)
 
     avalon.api.on("application.launched", initial_launch)
+    avalon.api.on("application.exit", application_exit)
 
 
 def uninstall():
