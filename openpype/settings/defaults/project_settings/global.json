@@ -1,5 +1,13 @@
 {
     "publish": {
+        "ValidateEditorialAssetName": {
+            "enabled": true,
+            "optional": false
+        },
+        "ValidateVersion": {
+            "enabled": true,
+            "optional": false
+        },
         "IntegrateHeroVersion": {
             "enabled": true,
             "optional": true,
