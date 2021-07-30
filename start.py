@@ -208,14 +208,21 @@ def set_openpype_global_environments() -> None:
     """Set global OpenPype's environments."""
     import acre
 
-    from openpype.settings import get_environments
+    try:
+        from openpype.settings import get_general_environments
 
-    all_env = get_environments()
+        general_env = get_general_environments()
 
-    # TODO Global environments will be stored in "general" settings so loading
-    #   will be modified and can be done in igniter.
+    except Exception:
+        # Backwards compatibility for OpenPype versions where
+        #   `get_general_environments` does not exists yet
+        from openpype.settings import get_environments
+
+        all_env = get_environments()
+        general_env = all_env["global"]
+
     env = acre.merge(
-        acre.parse(all_env["global"]),
+        acre.parse(general_env),
         dict(os.environ)
     )
     os.environ.clear()

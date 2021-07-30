@@ -65,7 +65,8 @@ module.exports = {
                     label: "Project Settings",
                     items: [
                         "project_settings/settings_project_global",
-                        "project_settings/settings_project_nuke"
+                        "project_settings/settings_project_nuke",
+                        "project_settings/settings_project_standalone"
                     ],
                 },
             ],

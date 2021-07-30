@@ -92,15 +92,16 @@ class RepairSelectInvalidInstances(pyblish.api.Action):
 
         context_asset = context.data["assetEntity"]["name"]
         for instance in instances:
-            self.set_attribute(instance, context_asset)
+            if "nuke" in pyblish.api.registered_hosts():
+                import openpype.hosts.nuke.api as nuke_api
+                origin_node = instance[0]
+                nuke_api.lib.recreate_instance(
+                    origin_node, avalon_data={"asset": context_asset}
+                )
+            else:
+                self.set_attribute(instance, context_asset)
 
     def set_attribute(self, instance, context_asset):
-        if "nuke" in pyblish.api.registered_hosts():
-            import nuke
-            nuke.toNode(
-                instance.data.get("name")
-            )["avalon:asset"].setValue(context_asset)
-
         if "maya" in pyblish.api.registered_hosts():
             from maya import cmds
             cmds.setAttr(

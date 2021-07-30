@@ -1,4 +1,10 @@
+import os
+import tempfile
+import json
 import functools
+import uuid
+import datetime
+import traceback
 import time
 from openpype.api import Logger
 from openpype.settings import get_project_settings
@@ -31,6 +37,7 @@ class BaseHandler(object):
     <description>   - a verbose descriptive text for you action
     <icon>  - icon in ftrack
     '''
+    _process_id = None
     # Default priority is 100
     priority = 100
     # Type is just for logging purpose (e.g.: Action, Event, Application,...)
@@ -64,6 +71,13 @@ class BaseHandler(object):
         # Using decorator
         self.register = self.register_decorator(self.register)
         self.launch = self.launch_log(self.launch)
+
+    @staticmethod
+    def process_identifier():
+        """Helper property to have """
+        if not BaseHandler._process_id:
+            BaseHandler._process_id = str(uuid.uuid4())
+        return BaseHandler._process_id
 
     # Decorator
     def register_decorator(self, func):
@@ -583,3 +597,105 @@ class BaseHandler(object):
         return "/".join(
             [ent["name"] for ent in entity["link"]]
         )
+
+    @classmethod
+    def add_traceback_to_job(
+        cls, job, session, exc_info,
+        description=None,
+        component_name=None,
+        job_status=None
+    ):
+        """Add traceback file to a job.
+
+        Args:
+            job (JobEntity): Entity of job where file should be able to
+                download (Created or queried with passed session).
+            session (Session): Ftrack session which was used to query/create
+                entered job.
+            exc_info (tuple): Exception info (e.g. from `sys.exc_info()`).
+            description (str): Change job description to describe what
+                happened. Job description won't change if not passed.
+            component_name (str): Name of component and default name of
+                downloaded file. Class name and current date time are used if
+                not specified.
+            job_status (str): Status of job which will be set. By default is
+                set to 'failed'.
+        """
+        if description:
+            job_data = {
+                "description": description
+            }
+            job["data"] = json.dumps(job_data)
+
+        if not job_status:
+            job_status = "failed"
+
+        job["status"] = job_status
+
+        # Create temp file where traceback will be stored
+        temp_obj = tempfile.NamedTemporaryFile(
+            mode="w", prefix="openpype_ftrack_", suffix=".txt", delete=False
+        )
+        temp_obj.close()
+        temp_filepath = temp_obj.name
+
+        # Store traceback to file
+        result = traceback.format_exception(*exc_info)
+        with open(temp_filepath, "w") as temp_file:
+            temp_file.write("".join(result))
+
+        # Upload file with traceback to ftrack server and add it to job
+        if not component_name:
+            component_name = "{}_{}".format(
+                cls.__name__,
+                datetime.datetime.now().strftime("%y-%m-%d-%H%M")
+            )
+        cls.add_file_component_to_job(
+            job, session, temp_filepath, component_name
+        )
+        # Delete temp file
+        os.remove(temp_filepath)
+
+    @staticmethod
+    def add_file_component_to_job(job, session, filepath, basename=None):
+        """Add filepath as downloadable component to job.
+
+        Args:
+            job (JobEntity): Entity of job where file should be able to
+                download (Created or queried with passed session).
+            session (Session): Ftrack session which was used to query/create
+                entered job.
+            filepath (str): Path to file which should be added to job.
+            basename (str): Defines name of file which will be downloaded on
+                user's side. Must be without extension otherwise extension will
+                be duplicated in downloaded name. Basename from entered path
+                used when not entered.
+        """
+        # Make sure session's locations are configured
+        # - they can be deconfigured e.g. using `rollback` method
+        session._configure_locations()
+
+        # Query `ftrack.server` location where component will be stored
+        location = session.query(
+            "Location where name is \"ftrack.server\""
+        ).one()
+
+        # Use filename as basename if not entered (must be without extension)
+        if basename is None:
+            basename = os.path.splitext(
+                os.path.basename(filepath)
+            )[0]
+
+        component = session.create_component(
+            filepath,
+            data={"name": basename},
+            location=location
+        )
+        session.create(
+            "JobComponent",
+            {
+                "component_id": component["id"],
+                "job_id": job["id"]
+            }
+        )
+        session.commit()

@@ -78,7 +78,57 @@
                                 "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Hosts",
-                                "multiselection": true
+                                "multiselection": true,
+                                "hosts_filter": [
+                                      "aftereffects",
+                                      "blender",
+                                      "celaction",
+                                      "fusion",
+                                      "harmony",
+                                      "hiero",
+                                      "houdini",
+                                      "maya",
+                                      "nuke",
+                                      "photoshop",
+                                      "resolve",
+                                      "tvpaint",
+                                      "unreal"
+                                  ]
+                            },
+                            {
+                                "key": "tasks",
+                                "label": "Tasks",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "type": "boolean",
+                                "key": "enabled",
+                                "label": "Enabled"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "list",
+                    "key": "open_workfile_tool_on_startup",
+                    "label": "Open workfile tool on launch",
+                    "is_group": true,
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true,
+                                "hosts_filter": [
+                                    "nuke"
+                                ]
                             },
                             {
                                 "key": "tasks",
