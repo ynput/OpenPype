@@ -185,13 +185,13 @@ class DictConditionalEntity(ItemEntity):
         children_def_keys = []
         for children_def in self.enum_children:
             if not isinstance(children_def, dict):
-                raise EntitySchemaError((
+                raise EntitySchemaError(self, (
                     "Children definition under key 'enum_children' must"
                     " be a dictionary."
                 ))
 
             if "key" not in children_def:
-                raise EntitySchemaError((
+                raise EntitySchemaError(self, (
                     "Children definition under key 'enum_children' miss"
                     " 'key' definition."
                 ))
