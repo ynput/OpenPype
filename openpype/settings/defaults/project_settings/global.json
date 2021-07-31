@@ -260,6 +260,13 @@
                     "enabled": true
                 }
             ],
+            "open_workfile_tool_on_startup": [
+                {
+                    "hosts": [],
+                    "tasks": [],
+                    "enabled": false
+                }
+            ],
             "sw_folders": {
                 "compositing": [
                     "nuke",

@@ -7,12 +7,13 @@ class LogsWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(LogsWindow, self).__init__(parent)
 
-        self.setStyleSheet(style.load_stylesheet())
+        self.setWindowTitle("Logs viewer")
+
         self.resize(1400, 800)
         log_detail = OutputWidget(parent=self)
         logs_widget = LogsWidget(log_detail, parent=self)
 
-        main_layout = QtWidgets.QHBoxLayout()
+        main_layout = QtWidgets.QHBoxLayout(self)
 
         log_splitter = QtWidgets.QSplitter(self)
         log_splitter.setOrientation(QtCore.Qt.Horizontal)
@@ -24,5 +25,4 @@ class LogsWindow(QtWidgets.QWidget):
         self.logs_widget = logs_widget
         self.log_detail = log_detail
 
-        self.setLayout(main_layout)
-        self.setWindowTitle("Logs")
+        self.setStyleSheet(style.load_stylesheet())
