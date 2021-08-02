@@ -12,6 +12,10 @@ from avalon.api import AvalonMongoDB
 from openpype.lib import OpenPypeMongoConnection
 from openpype.modules.avalon_apps.rest_api import _RestApiEndpoint
 
+from openpype.lib import PypeLogger
+
+log = PypeLogger.get_logger("WebServer")
+
 
 class RestApiResource:
     """Resource carrying needed info and Avalon DB connection for publish."""
@@ -172,8 +176,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
     """Triggers headless publishing of batch."""
     async def post(self, request) -> Response:
         output = {}
-
-        print(request)
+        log.info("WebpublisherBatchPublishEndpoint called")
         content = await request.json()
 
         batch_path = os.path.join(self.resource.upload_dir,
@@ -200,9 +203,9 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
             args.append("--{}".format(key))
             args.append(value)
 
-        print("args:: {}".format(args))
+        log.info("args:: {}".format(args))
 
-        _exit_code = subprocess.call(args, shell=True)
+        _exit_code = subprocess.call(args)
         return Response(
             status=200,
             body=self.resource.encode(output),
