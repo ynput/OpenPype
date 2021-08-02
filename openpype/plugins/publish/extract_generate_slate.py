@@ -1,24 +1,8 @@
 import os
 import re
 import json
-# import copy
-# import tempfile
-# import platform
-# import shutil
-
-# import clique
-# import six
 import pyblish
 
-# import openpype
-# import openpype.api
-# from openpype.lib import (
-#     get_pype_execute_args,
-#     should_decompress,
-#     get_decompress_dir,
-#     decompress,
-#     CREATE_NO_WINDOW
-# )
 from openpype.scripts import slates
 
 # class ExtractGenerateSlate(openpype.api.Extractor):
@@ -30,7 +14,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
 
     label = "Extract generated slates"
     order = pyblish.api.CollectorOrder
-    families = ["review"]
+    # families = ["review"]
     hosts = [
         "nuke",
         "standalonepublisher"
@@ -42,9 +26,6 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
     options = None
 
     def process(self, instance):
-        self.log.info(self.profiles)
-        self.log.info(self.options)
-
         # TODO get these data from context
         host_name = os.environ["AVALON_APP"]
         task_name = os.environ["AVALON_TASK"]
@@ -52,7 +33,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
 
         # Find profile most matching current host, task and instance family
         profile = self.find_matching_profile(host_name, task_name, family)
-        self.log.info(self.profiles)
+
         if not profile:
             self.log.info((
                 "Skipped instance. None of profiles in presets are for"
@@ -60,380 +41,43 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
             ).format(host_name, family, task_name))
             return
 
-        # slates.api.slate_generator(
-        #     example_fill_data, example_presets,
-        #     output_path="C:/CODE/_PYPE_testing/slates_testing/slate.png",
-        #     # width=2048, height=1080
-        # )
-    #     # ffmpeg doesn't support multipart exrs
-    #     if instance.data.get("multipartExr") is True:
-    #         instance_label = (
-    #             getattr(instance, "label", None)
-    #             or instance.data.get("label")
-    #             or instance.data.get("name")
-    #         )
-    #         self.log.info((
-    #             "Instance \"{}\" contain \"multipartExr\". Skipped."
-    #         ).format(instance_label))
-    #         return
-
-    #     # QUESTION what is this for and should we raise an exception?
-    #     if "representations" not in instance.data:
-    #         raise RuntimeError("Burnin needs already created mov to work on.")
-
-    #     self.main_process(instance)
-
-    #     # Remove any representations tagged for deletion.
-    #     # QUESTION Is possible to have representation with "delete" tag?
-    #     for repre in tuple(instance.data["representations"]):
-    #         if all(x in repre.get("tags", []) for x in ['delete', 'burnin']):
-    #             self.log.debug("Removing representation: {}".format(repre))
-    #             instance.data["representations"].remove(repre)
-
-    # def main_process(self, instance):
-    #     # TODO get these data from context
-    #     host_name = os.environ["AVALON_APP"]
-    #     task_name = os.environ["AVALON_TASK"]
-    #     family = self.main_family_from_instance(instance)
-
-    #     # Find profile most matching current host, task and instance family
-    #     profile = self.find_matching_profile(host_name, task_name, family)
-    #     if not profile:
-    #         self.log.info((
-    #             "Skipped instance. None of profiles in presets are for"
-    #             " Host: \"{}\" | Family: \"{}\" | Task \"{}\""
-    #         ).format(host_name, family, task_name))
-    #         return
-
-    #     # Pre-filter burnin definitions by instance families
-    #     burnin_defs = self.filter_burnins_defs(profile, instance)
-    #     if not burnin_defs:
-    #         self.log.info((
-    #             "Skipped instance. Burnin definitions are not set for profile"
-    #             " Host: \"{}\" | Family: \"{}\" | Task \"{}\" | Profile \"{}\""
-    #         ).format(host_name, family, task_name, profile))
-    #         return
-
-    #     burnin_options = self._get_burnin_options()
-
-    #     # Prepare basic data for processing
-    #     _burnin_data, _temp_data = self.prepare_basic_data(instance)
-
-    #     anatomy = instance.context.data["anatomy"]
-    #     scriptpath = self.burnin_script_path()
-    #     # Executable args that will execute the script
-    #     # [pype executable, *pype script, "run"]
-    #     executable_args = get_pype_execute_args("run", scriptpath)
-
-    #     for idx, repre in enumerate(tuple(instance.data["representations"])):
-    #         self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
-    #         if not self.repres_is_valid(repre):
-    #             continue
-
-    #         # Filter output definition by representation tags (optional)
-    #         repre_burnin_defs = self.filter_burnins_by_tags(
-    #             burnin_defs, repre["tags"]
-    #         )
-    #         if not repre_burnin_defs:
-    #             self.log.info((
-    #                 "Skipped representation. All burnin definitions from"
-    #                 " selected profile does not match to representation's"
-    #                 " tags. \"{}\""
-    #             ).format(str(repre["tags"])))
-    #             continue
-
-    #         # Create copy of `_burnin_data` and `_temp_data` for repre.
-    #         burnin_data = copy.deepcopy(_burnin_data)
-    #         temp_data = copy.deepcopy(_temp_data)
-
-    #         # Prepare representation based data.
-    #         self.prepare_repre_data(instance, repre, burnin_data, temp_data)
-
-    #         # Add anatomy keys to burnin_data.
-    #         filled_anatomy = anatomy.format_all(burnin_data)
-    #         burnin_data["anatomy"] = filled_anatomy.get_solved()
-
-    #         # Add source camera name to burnin data
-    #         camera_name = repre.get("camera_name")
-    #         if camera_name:
-    #             burnin_data["camera_name"] = camera_name
-
-    #         first_output = True
-
-    #         files_to_delete = []
-    #         for filename_suffix, burnin_def in repre_burnin_defs.items():
-    #             new_repre = copy.deepcopy(repre)
-
-    #             # Keep "ftrackreview" tag only on first output
-    #             if first_output:
-    #                 first_output = False
-    #             elif "ftrackreview" in new_repre["tags"]:
-    #                 new_repre["tags"].remove("ftrackreview")
-
-    #             burnin_values = {}
-    #             for key in self.positions:
-    #                 value = burnin_def.get(key)
-    #                 if value:
-    #                     burnin_values[key] = value
-
-    #             # Remove "delete" tag from new representation
-    #             if "delete" in new_repre["tags"]:
-    #                 new_repre["tags"].remove("delete")
-
-    #             if len(repre_burnin_defs.keys()) > 1:
-    #                 # Update name and outputName to be
-    #                 # able have multiple outputs in case of more burnin presets
-    #                 # Join previous "outputName" with filename suffix
-    #                 new_name = "_".join(
-    #                     [new_repre["outputName"], filename_suffix]
-    #                 )
-    #                 new_repre["name"] = new_name
-    #                 new_repre["outputName"] = new_name
-
-    #             # Prepare paths and files for process.
-    #             self.input_output_paths(new_repre, temp_data, filename_suffix)
-
-    #             decompressed_dir = ''
-    #             full_input_path = temp_data["full_input_path"]
-    #             do_decompress = should_decompress(full_input_path)
-    #             if do_decompress:
-    #                 decompressed_dir = get_decompress_dir()
-
-    #                 decompress(
-    #                     decompressed_dir,
-    #                     full_input_path,
-    #                     temp_data["frame_start"],
-    #                     temp_data["frame_end"],
-    #                     self.log
-    #                 )
-
-    #                 # input path changed, 'decompressed' added
-    #                 input_file = os.path.basename(full_input_path)
-    #                 temp_data["full_input_path"] = os.path.join(
-    #                     decompressed_dir,
-    #                     input_file)
-
-    #             # Data for burnin script
-    #             script_data = {
-    #                 "input": temp_data["full_input_path"],
-    #                 "output": temp_data["full_output_path"],
-    #                 "burnin_data": burnin_data,
-    #                 "options": copy.deepcopy(burnin_options),
-    #                 "values": burnin_values,
-    #                 "full_input_path": temp_data["full_input_paths"][0],
-    #                 "first_frame": temp_data["first_frame"]
-    #             }
-
-    #             self.log.debug(
-    #                 "script_data: {}".format(json.dumps(script_data, indent=4))
-    #             )
-
-    #             # Dump data to string
-    #             dumped_script_data = json.dumps(script_data)
-
-    #             # Store dumped json to temporary file
-    #             temporary_json_file = tempfile.NamedTemporaryFile(
-    #                 mode="w", suffix=".json", delete=False
-    #             )
-    #             temporary_json_file.write(dumped_script_data)
-    #             temporary_json_file.close()
-    #             temporary_json_filepath = temporary_json_file.name.replace(
-    #                 "\\", "/"
-    #             )
-
-    #             # Prepare subprocess arguments
-    #             args = list(executable_args)
-    #             args.append(temporary_json_filepath)
-    #             self.log.debug("Executing: {}".format(" ".join(args)))
-
-    #             # Run burnin script
-    #             process_kwargs = {
-    #                 "logger": self.log,
-    #                 "env": {}
-    #             }
-    #             if platform.system().lower() == "windows":
-    #                 process_kwargs["creationflags"] = CREATE_NO_WINDOW
-
-    #             openpype.api.run_subprocess(args, **process_kwargs)
-    #             # Remove the temporary json
-    #             os.remove(temporary_json_filepath)
-
-    #             for filepath in temp_data["full_input_paths"]:
-    #                 filepath = filepath.replace("\\", "/")
-    #                 if filepath not in files_to_delete:
-    #                     files_to_delete.append(filepath)
-
-    #             # Add new representation to instance
-    #             instance.data["representations"].append(new_repre)
-
-    #         # Remove source representation
-    #         # NOTE we maybe can keep source representation if necessary
-    #         instance.data["representations"].remove(repre)
-
-    #         # Delete input files
-    #         for filepath in files_to_delete:
-    #             if os.path.exists(filepath):
-    #                 os.remove(filepath)
-    #                 self.log.debug("Removed: \"{}\"".format(filepath))
-
-    #         if do_decompress and os.path.exists(decompressed_dir):
-    #             shutil.rmtree(decompressed_dir)
-
-    # def _get_burnin_options(self):
-    #     # Prepare burnin options
-    #     burnin_options = copy.deepcopy(self.default_options)
-    #     if self.options:
-    #         for key, value in self.options.items():
-    #             if value is not None:
-    #                 burnin_options[key] = copy.deepcopy(value)
-
-    #     # Convert colors defined as list of numbers RGBA (0-255)
-    #     # BG Color
-    #     bg_color = burnin_options.get("bg_color")
-    #     if bg_color and isinstance(bg_color, list):
-    #         bg_red, bg_green, bg_blue, bg_alpha = bg_color
-    #         bg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
-    #             bg_red, bg_green, bg_blue
-    #         )
-    #         bg_color_alpha = float(bg_alpha) / 255
-    #         burnin_options["bg_opacity"] = bg_color_alpha
-    #         burnin_options["bg_color"] = bg_color_hex
-
-    #     # FG Color
-    #     font_color = burnin_options.get("font_color")
-    #     if font_color and isinstance(font_color, list):
-    #         fg_red, fg_green, fg_blue, fg_alpha = font_color
-    #         fg_color_hex = "#{0:0>2X}{1:0>2X}{2:0>2X}".format(
-    #             fg_red, fg_green, fg_blue
-    #         )
-    #         fg_color_alpha = float(fg_alpha) / 255
-    #         burnin_options["opacity"] = fg_color_alpha
-    #         burnin_options["font_color"] = fg_color_hex
-
-    #     # Define font filepath
-    #     # - font filepath may be defined in settings
-    #     font_filepath = burnin_options.get("font_filepath")
-    #     if font_filepath and isinstance(font_filepath, dict):
-    #         sys_name = platform.system().lower()
-    #         font_filepath = font_filepath.get(sys_name)
-
-    #     if font_filepath and isinstance(font_filepath, six.string_types):
-    #         font_filepath = font_filepath.format(**os.environ)
-    #         if not os.path.exists(font_filepath):
-    #             font_filepath = None
-
-    #     # Use OpenPype default font
-    #     if not font_filepath:
-    #         font_filepath = openpype.api.resources.get_liberation_font_path()
-
-    #     burnin_options["font"] = font_filepath
-
-    #     return burnin_options
-
-    # def prepare_basic_data(self, instance):
-    #     """Pick data from instance for processing and for burnin strings.
-
-    #     Args:
-    #         instance (Instance): Currently processed instance.
-
-    #     Returns:
-    #         tuple: `(burnin_data, temp_data)` - `burnin_data` contain data for
-    #             filling burnin strings. `temp_data` are for repre pre-process
-    #             preparation.
-    #     """
-    #     self.log.debug("Prepring basic data for burnins")
-    #     context = instance.context
-
-    #     version = instance.data.get("version")
-    #     if version is None:
-    #         version = context.data.get("version")
-
-    #     frame_start = instance.data.get("frameStart")
-    #     if frame_start is None:
-    #         self.log.warning(
-    #             "Key \"frameStart\" is not set. Setting to \"0\"."
-    #         )
-    #         frame_start = 0
-    #     frame_start = int(frame_start)
-
-    #     frame_end = instance.data.get("frameEnd")
-    #     if frame_end is None:
-    #         self.log.warning(
-    #             "Key \"frameEnd\" is not set. Setting to \"1\"."
-    #         )
-    #         frame_end = 1
-    #     frame_end = int(frame_end)
-
-    #     handles = instance.data.get("handles")
-    #     if handles is None:
-    #         handles = context.data.get("handles")
-    #         if handles is None:
-    #             handles = 0
-
-    #     handle_start = instance.data.get("handleStart")
-    #     if handle_start is None:
-    #         handle_start = context.data.get("handleStart")
-    #         if handle_start is None:
-    #             handle_start = handles
-
-    #     handle_end = instance.data.get("handleEnd")
-    #     if handle_end is None:
-    #         handle_end = context.data.get("handleEnd")
-    #         if handle_end is None:
-    #             handle_end = handles
-
-    #     frame_start_handle = frame_start - handle_start
-    #     frame_end_handle = frame_end + handle_end
-
-    #     burnin_data = copy.deepcopy(instance.data["anatomyData"])
-
-    #     if "slate.farm" in instance.data["families"]:
-    #         frame_start_handle += 1
-
-    #     burnin_data.update({
-    #         "version": int(version),
-    #         "comment": context.data.get("comment") or ""
-    #     })
-
-    #     intent_label = context.data.get("intent") or ""
-    #     if intent_label and isinstance(intent_label, dict):
-    #         value = intent_label.get("value")
-    #         if value:
-    #             intent_label = intent_label["label"]
-    #         else:
-    #             intent_label = ""
-
-    #     burnin_data["intent"] = intent_label
-
-    #     temp_data = {
-    #         "frame_start": frame_start,
-    #         "frame_end": frame_end,
-    #         "frame_start_handle": frame_start_handle,
-    #         "frame_end_handle": frame_end_handle
-    #     }
-
-    #     self.log.debug(
-    #         "Basic burnin_data: {}".format(json.dumps(burnin_data, indent=4))
-    #     )
-
-    #     return burnin_data, temp_data
-
-    # def repres_is_valid(self, repre):
-    #     """Validation if representaion should be processed.
-
-    #     Args:
-    #         repre (dict): Representation which should be checked.
-
-    #     Returns:
-    #         bool: False if can't be processed else True.
-    #     """
-
-    #     if "burnin" not in (repre.get("tags") or []):
-    #         self.log.info((
-    #             "Representation \"{}\" don't have \"burnin\" tag. Skipped."
-    #         ).format(repre["name"]))
-    #         return False
-    #     return True
+        # TODO: how to get following data from context
+        # TODO: how to define keys matching slates template keys
+        # TODO: where to get notes data > last ftrack comments which is addressed by this submission
+        # TODO: how to address vendor parent (our client's project client) logo path issue
+        # TODO: vendor can be taken from `settings.system.general.studio_name`
+        example_fill_data = {
+            "shot": "106_V12_010",
+            "version": "V007",
+            "length": 187,
+            "date": "11/02/2021",
+            "artist": "John Murdoch",
+            "notes": (
+                "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
+                " Aenean commodo ligula eget dolor. Aenean massa."
+                " Cum sociis natoque penatibus et magnis dis parturient montes,"
+                " nascetur ridiculus mus. Donec quam felis, ultricies nec,"
+                " pellentesque eu, pretium quis, sem. Nulla consequat massa quis"
+                " enim. Donec pede justo, fringilla vel,"
+                " aliquet nec, vulputate eget, arcu."
+            ),
+            "thumbnail_path": "C:/CODE/_PYPE_testing/slates_testing/thumbnail.png",
+            "logo": "C:/CODE/_PYPE_testing/slates_testing/logo.jpg",
+            "vendor": "VENDOR"
+        }
+
+        # TODO: send font patch into slates generator's font factory
+        # TODO: form output slate path into temp dir
+        # TODO: convert input video file to thumbnail image > ffmpeg
+        # TODO: get resolution of an input image
+        slates.api.slate_generator(
+            example_fill_data, json.loads(profile["template"]),
+            output_path="C:/CODE/_PYPE_testing/slates_testing/slate.png",
+            width=1920, height=1080
+        )
+
+        # TODO: connect generated slate image to input video
+        # TODO: remove previous video and replace representation with new data
 
     def find_matching_profile(self, host_name, task_name, family):
         """ Filter profiles by Host name, Task name and main Family.
@@ -461,6 +105,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
             # Host filtering
             host_names = profile.get("hosts")
             match = self.validate_value_by_regexes(host_name, host_names)
+            self.log.info("> host match: {}".format(match))
             if match == -1:
                 continue
             profile_points += match
@@ -489,6 +134,8 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
             if profile_points == highest_points:
                 profile["__value__"] = profile_value
                 matching_profiles.append(profile)
+
+        self.log.info("> matching_profiles: {}".format(matching_profiles))
 
         if not matching_profiles:
             return
