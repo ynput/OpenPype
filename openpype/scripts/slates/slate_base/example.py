@@ -33,7 +33,8 @@ def example():
                 "font-family": "verdana",
                 "font-color": "#ffffff",
                 "font-bold": False,
-                "font-italic": False
+                "font-italic": False,
+                "segments": 20
             },
             "layer": {
                 "padding": 0,
@@ -44,23 +45,18 @@ def example():
                 "margin": 0
             },
             "rectangle": {
-                "padding": 0,
-                "margin": 0,
                 "fill": True
             },
             "main_frame": {
                 "bg-color": "#393939",
-                "padding": 0,
-                "margin": 30
+                "margin": 0.1
             },
             "table": {
-                "padding": 0,
-                "margin-top": 30
+                "margin-top": 0.3
             },
             "table-item": {
-                "padding": 5,
+                "padding": 0.5,
                 "padding-bottom": 20,
-                "margin": 0,
                 "bg-color": "transparent",
                 "bg-alter-color": "transparent",
                 "font-color": "#dcdcdc",
@@ -70,25 +66,29 @@ def example():
                 "alignment-vertical": "top",
                 "word-wrap": True,
                 "ellide": True,
-                "max-lines": 2
+                "max-lines": 1
             },
             "#MainLayer": {
-                "margin": 0,
-                "padding": 0,
-                "min-width": 2048,
-                "min-height": 1080,
+                "min-width": 20,
+                "min-height": "orig-ratio",
                 "alignment-horizontal": "center",
                 "alignment-vertical": "center"
             },
+            "#Metadata": {
+                "x-offset": 2,
+                "y-offset": 2
+            },
             "#VendorLayer": {
-                "min-width": 2048,
+                "min-width": 20,
+                "min-height": "orig-ratio",
                 "alignment-horizontal": "right"
             },
             "#Thumbnail": {
-                "margin-top": 50
+                "margin-top": 1
             },
             "#LogoLayer": {
-                "min-width": 2048,
+                "min-width": 20,
+                "min-height": "orig-ratio",
                 "alignment-horizontal": "left"
             }
         },
@@ -103,8 +103,8 @@ def example():
                     "name": "thumbnail",
                     "path": "{thumbnail_path}",
                     "style": {
-                        "width": 730,
-                        "height": 412
+                        "width": 8,
+                        "height": "orig-ratio"
                     }
                 }]
             }, {
@@ -123,28 +123,28 @@ def example():
                     ],
                     "style": {
                         "table-item": {
-                            "padding": 0
+                            "padding": 0.01
                         },
-                        "table-item-field[3:0]": {
+                        "table-item-field[5:1]": {
                             "word-wrap": True,
                             "ellide": True,
                             "max-lines": 4
                         },
                         "table-item-col[0]": {
-                            "font-size": 30,
+                            "font-size": 0.3,
                             "font-color": "#527ce8",
                             "font-bold": False,
                             "ellide": False,
                             "word-wrap": True,
                             "max-lines": None,
                             "alignment-horizontal": "right",
-                            "width": 200
+                            "width": 2
                         },
                         "table-item-col[1]": {
-                            "font-size": 30,
-                            "padding-left": 10,
+                            "font-size": 0.3,
+                            "padding-left": 0.1,
                             "alignment-horizontal": "left",
-                            "width": 800
+                            "width": 9
                         }
                     }
                 }]
@@ -156,8 +156,8 @@ def example():
                     {
                         "type": "rectangle",
                         "style": {
-                           "width": 2048,
-                           "height": 980,
+                           "width": 20,
+                           "height": 10,
                            "bg-color": "transparent"
                         }
                     }, {
@@ -165,8 +165,8 @@ def example():
                         "value": "{vendor}",
                         "name": "vendorText",
                         "style": {
-                            "padding-right": 50,
-                            "font-size": 50,
+                            "padding-right": 0,
+                            "font-size": .5,
                             "font-color": "#ffffff",
                             "bg-color": "transparent",
                             "font-bold": True
@@ -180,8 +180,8 @@ def example():
                     {
                         "type": "rectangle",
                         "style": {
-                            "width": 2048,
-                            "height": 830,
+                            "width": 20,
+                            "height": 8,
                             "bg-color": "transparent"
                         }
                     }, {
@@ -189,9 +189,9 @@ def example():
                         "name": "logo",
                         "path": "{logo}",
                         "style": {
-                            "padding-left": 50,
-                            "width": 200,
-                            "height": 200
+                            "padding-left": .8,
+                            "width": 3.5,
+                            "height": "orig-ratio"
                         }
                     }
             ]
@@ -201,5 +201,5 @@ def example():
     api.slate_generator(
         example_fill_data, example_presets,
         output_path="C:/CODE/_PYPE_testing/slates_testing/slate.png",
-        # width=2048, height=1080
+        # width=720, height=540
         )

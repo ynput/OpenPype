@@ -55,10 +55,14 @@ class ItemImage(BaseItem):
         )
 
     def value_width(self):
-        return int(self.style["width"])
+        return self.get_size(self.style["width"])
 
     def value_height(self):
-        return int(self.style["height"])
+        height = self.style["height"]
+        if height == "orig-ratio":
+            height = self.get_height_with_orig_ratio(self.style["width"])
+
+        return self.get_size(height)
 
 
 class ItemRectangle(BaseItem):
@@ -88,10 +92,14 @@ class ItemRectangle(BaseItem):
         )
 
     def value_width(self):
-        return int(self.style["width"])
+        return self.get_size(self.style["width"])
 
     def value_height(self):
-        return int(self.style["height"])
+        height = self.style["height"]
+        if height == "orig-ratio":
+            height = self.get_height_with_orig_ratio(self.style["width"])
+
+        return self.get_size(height)
 
 
 class ItemPlaceHolder(BaseItem):
@@ -126,10 +134,14 @@ class ItemPlaceHolder(BaseItem):
         )
 
     def value_width(self):
-        return int(self.style["width"])
+        return self.get_size(self.style["width"])
 
     def value_height(self):
-        return int(self.style["height"])
+        height = self.style["height"]
+        if height == "orig-ratio":
+            height = self.get_height_with_orig_ratio(self.style["width"])
+
+        return self.get_size(height)
 
     def collect_data(self):
         return {
@@ -164,7 +176,7 @@ class ItemText(BaseItem):
 
         font_color = self.style["font-color"]
         font_family = self.style["font-family"]
-        font_size = self.style["font-size"]
+        font_size = self.get_size(self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -180,7 +192,7 @@ class ItemText(BaseItem):
 
     def value_width(self):
         font_family = self.style["font-family"]
-        font_size = self.style["font-size"]
+        font_size = self.get_size(self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -192,7 +204,7 @@ class ItemText(BaseItem):
 
     def value_height(self):
         font_family = self.style["font-family"]
-        font_size = self.style["font-size"]
+        font_size = self.get_size(self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -355,7 +367,7 @@ class TableField(BaseItem):
         if padding_right is None:
             padding_right = padding
 
-        max_width -= (padding_left + padding_right)
+        max_width -= self.get_size((padding_left + padding_right))
 
         if not value:
             return ""
@@ -365,7 +377,7 @@ class TableField(BaseItem):
         max_lines = self.style.get("max-lines")
 
         font_family = self.style["font-family"]
-        font_size = self.style["font-size"]
+        font_size = self.get_size(self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -519,7 +531,7 @@ class TableField(BaseItem):
         self.orig_value = value
 
         max_width = self.style.get("max-width")
-        max_width = self.style.get("width") or max_width
+        max_width = self.get_size(self.style.get("width") or max_width)
         if max_width:
             value = self.recalculate_by_width(value, max_width)
 
@@ -539,7 +551,7 @@ class TableField(BaseItem):
             return 0
 
         font_family = self.style["font-family"]
-        font_size = self.style["font-size"]
+        font_size = self.get_size(self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -548,7 +560,7 @@ class TableField(BaseItem):
         )
         width = font.getsize_multiline(self.value)[0] + 1
 
-        min_width = self.style.get("min-height")
+        min_width = self.get_size(self.style.get("min-width"))
         if min_width and min_width > width:
             width = min_width
 
@@ -558,12 +570,8 @@ class TableField(BaseItem):
         if not self.value:
             return 0
 
-        height = self.style.get("height")
-        if height:
-            return int(height)
-
         font_family = self.style["font-family"]
-        font_size = self.style["font-size"]
+        font_size = self.get_size(self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -572,7 +580,7 @@ class TableField(BaseItem):
         )
         height = font.getsize_multiline(self.value)[1] + 1
 
-        min_height = self.style.get("min-height")
+        min_height = self.get_size(self.style.get("min-height"))
         if min_height and min_height > height:
             height = min_height
 
@@ -610,7 +618,7 @@ class TableField(BaseItem):
             if padding_left is None:
                 padding_left = padding
 
-            pos_x += padding_left
+            pos_x += self.get_size(padding_left)
 
         return int(pos_x)
 
@@ -633,7 +641,7 @@ class TableField(BaseItem):
             if padding_top is None:
                 padding_top = padding
 
-            pos_y += padding_top
+            pos_y += self.get_size(padding_top)
 
         return int(pos_y)
 
@@ -657,7 +665,7 @@ class TableField(BaseItem):
 
         font_color = self.style["font-color"]
         font_family = self.style["font-family"]
-        font_size = self.style["font-size"]
+        font_size = self.get_size(self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 

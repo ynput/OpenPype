@@ -27,7 +27,7 @@ class BaseObj:
         "padding-top", "padding-bottom",
         "margin", "margin-left", "margin-right",
         "margin-top", "margin-bottom", "width", "height",
-        "fill", "word-wrap", "ellide", "max-lines"
+        "fill", "word-wrap", "ellide", "max-lines", "seqments"
     ]
     fill_data_regex = r"{[^}]+}"
 
@@ -234,6 +234,20 @@ class BaseObj:
     def style(self):
         return self.get_style_for_obj_type(self.obj_type)
 
+    def get_height_with_orig_ratio(self, width_size):
+        width = self.root_width
+        height = self.root_height
+
+        return width_size * (height / width)
+
+    def get_size(self, size):
+        if not size:
+            return 0
+
+        segments = self.style["segments"]
+        width = self.root_width
+        return int(size * (width / segments))
+
     @property
     def item_pos_x(self):
         if self.parent.obj_type == "main_frame":
@@ -252,7 +266,7 @@ class BaseObj:
         margin = self.style["margin"]
         margin_left = self.style.get("margin-left") or margin
 
-        pos_x += margin_left
+        pos_x += self.get_size(margin_left)
         return pos_x
 
     @property
@@ -261,7 +275,7 @@ class BaseObj:
         margin = self.style["margin"]
         margin_top = self.style.get("margin-top") or margin
 
-        pos_y += margin_top
+        pos_y += self.get_size(margin_top)
         return pos_y
 
     @property
@@ -272,7 +286,7 @@ class BaseObj:
         if padding_left is None:
             padding_left = padding
 
-        pos_x += padding_left
+        pos_x += self.get_size(padding_left)
 
         return pos_x
 
@@ -284,7 +298,7 @@ class BaseObj:
         if padding_top is None:
             padding_top = padding
 
-        pos_y += padding_top
+        pos_y += self.get_size(padding_top)
 
         return pos_y
 
@@ -357,7 +371,7 @@ class BaseObj:
         margin_left = self.style.get("margin-left") or margin
         margin_right = self.style.get("margin-right") or margin
 
-        return width + margin_left + margin_right
+        return width + self.get_size((margin_left + margin_right))
 
     def height(self):
         height = self.content_height()
@@ -366,7 +380,7 @@ class BaseObj:
         margin_top = self.style.get("margin-top") or margin
         margin_bottom = self.style.get("margin-bottom") or margin
 
-        return height + margin_bottom + margin_top
+        return height + self.get_size((margin_bottom + margin_top))
 
     def add_item(self, item):
         self.items[item.id] = item
