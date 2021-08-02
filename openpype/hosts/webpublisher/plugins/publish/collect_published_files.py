@@ -61,7 +61,6 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             task_type = "default_task_type"
             task_name = None
 
-            subset = "Main"  # temp
             if ctx["type"] == "task":
                 items = ctx["path"].split('/')
                 asset = items[-2]
@@ -74,7 +73,6 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             is_sequence = len(task_data["files"]) > 1
 
             _, extension = os.path.splitext(task_data["files"][0])
-            self.log.info("asset:: {}".format(asset))
             family, families, subset_template = self._get_family(
                 self.task_type_to_family,
                 task_type,
@@ -103,8 +101,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                     task_data["files"], task_dir
                 )
             else:
-
-                instance.data["representation"] = self._get_single_repre(
+                instance.data["representations"] = self._get_single_repre(
                     task_dir, task_data["files"]
                 )
 
@@ -120,15 +117,15 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         return subset
 
     def _get_single_repre(self, task_dir, files):
-        _, ext = os.path.splittext(files[0])
+        _, ext = os.path.splitext(files[0])
         repre_data = {
             "name": ext[1:],
             "ext": ext[1:],
-            "files": files,
+            "files": files[0],
             "stagingDir": task_dir
         }
-
-        return repre_data
+        self.log.info("single file repre_data.data:: {}".format(repre_data))
+        return [repre_data]
 
     def _process_sequence(self, files, task_dir):
         """Prepare reprentations for sequence of files."""
@@ -147,7 +144,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             "files": files,
             "stagingDir": task_dir
         }
-        self.log.info("repre_data.data:: {}".format(repre_data))
+        self.log.info("sequences repre_data.data:: {}".format(repre_data))
         return [repre_data]
 
     def _get_family(self, settings, task_type, is_sequence, extension):
@@ -170,7 +167,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         for family, content in task_obj.items():
             if is_sequence != content["is_sequence"]:
                 continue
-            if extension in content["extensions"]:
+            if extension in content["extensions"] or \
+                    '' in content["extensions"]:  # all extensions setting
                 found_family = family
                 break
 
