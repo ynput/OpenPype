@@ -54,13 +54,21 @@ class ItemImage(BaseItem):
             (self.value_pos_x, self.value_pos_y)
         )
 
+    def get_image_original_size(self):
+        image = Image.open(self.image_path)
+        return image.size
+
     def value_width(self):
         return self.get_size(self.style["width"])
 
     def value_height(self):
         height = self.style["height"]
-        if height == "orig-ratio":
+        if height == "root-ratio":
             height = self.get_height_with_orig_ratio(self.style["width"])
+        elif height == "img-ratio":
+            img_width, img_height = self.get_image_original_size()
+            height = self.get_height_with_orig_ratio(
+                self.style["width"], img_width, img_height)
 
         return self.get_size(height)
 
@@ -96,7 +104,7 @@ class ItemRectangle(BaseItem):
 
     def value_height(self):
         height = self.style["height"]
-        if height == "orig-ratio":
+        if height == "root-ratio":
             height = self.get_height_with_orig_ratio(self.style["width"])
 
         return self.get_size(height)
@@ -138,7 +146,7 @@ class ItemPlaceHolder(BaseItem):
 
     def value_height(self):
         height = self.style["height"]
-        if height == "orig-ratio":
+        if height == "root-ratio":
             height = self.get_height_with_orig_ratio(self.style["width"])
 
         return self.get_size(height)

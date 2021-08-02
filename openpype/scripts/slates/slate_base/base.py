@@ -61,7 +61,6 @@ class BaseObj:
         self.name = name
         self.items = {}
 
-        print(f"{self.name} [{self.obj_type}] - {self.root_width}/{self.root_height}")
         self._pos_x = pos_x or 0
         self._pos_y = pos_y or 0
 
@@ -234,9 +233,12 @@ class BaseObj:
     def style(self):
         return self.get_style_for_obj_type(self.obj_type)
 
-    def get_height_with_orig_ratio(self, width_size):
-        width = self.root_width
-        height = self.root_height
+    def get_height_with_orig_ratio(
+            self, width_size,
+            img_width=None, img_height=None):
+
+        width = img_width or self.root_width
+        height = img_height or self.root_height
 
         return width_size * (height / width)
 
@@ -246,6 +248,7 @@ class BaseObj:
 
         segments = self.style["segments"]
         width = self.root_width
+
         return int(size * (width / segments))
 
     @property
@@ -362,7 +365,7 @@ class BaseObj:
         if padding_bottom is None:
             padding_bottom = padding
 
-        return height + padding_top + padding_bottom
+        return height + self.get_size((padding_top + padding_bottom))
 
     def width(self):
         width = self.content_width()
