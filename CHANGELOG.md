@@ -1,11 +1,17 @@
 # Changelog
 
-## [3.3.0-nightly.5](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.3.0-nightly.6](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.2.0...HEAD)
 
 **🚀 Enhancements**
 
+- Expose stop timer through rest api. [\#1886](https://github.com/pypeclub/OpenPype/pull/1886)
+- Allow Multiple Notes to run on tasks. [\#1882](https://github.com/pypeclub/OpenPype/pull/1882)
+- Prepare for pyside2 [\#1869](https://github.com/pypeclub/OpenPype/pull/1869)
+- Filter hosts in settings host-enum [\#1868](https://github.com/pypeclub/OpenPype/pull/1868)
+- Local actions with process identifier [\#1867](https://github.com/pypeclub/OpenPype/pull/1867)
+- Workfile tool start at host launch support [\#1865](https://github.com/pypeclub/OpenPype/pull/1865)
 - Anatomy schema validation [\#1864](https://github.com/pypeclub/OpenPype/pull/1864)
 - Ftrack prepare project structure [\#1861](https://github.com/pypeclub/OpenPype/pull/1861)
 - Independent general environments [\#1853](https://github.com/pypeclub/OpenPype/pull/1853)
@@ -20,23 +26,23 @@
 
 **🐛 Bug fixes**
 
+- Normalize path returned from Workfiles. [\#1880](https://github.com/pypeclub/OpenPype/pull/1880)
+- Workfiles tool event arguments fix [\#1862](https://github.com/pypeclub/OpenPype/pull/1862)
 - imageio: fix grouping  [\#1856](https://github.com/pypeclub/OpenPype/pull/1856)
 - publisher: missing version in subset prop [\#1849](https://github.com/pypeclub/OpenPype/pull/1849)
 - Ftrack type error fix in sync to avalon event handler [\#1845](https://github.com/pypeclub/OpenPype/pull/1845)
 - Nuke: updating effects subset fail [\#1841](https://github.com/pypeclub/OpenPype/pull/1841)
+- Fix - Standalone Publish better handling of loading multiple versions… [\#1837](https://github.com/pypeclub/OpenPype/pull/1837)
 - nuke: write render node skipped with crop [\#1836](https://github.com/pypeclub/OpenPype/pull/1836)
 - Project folder structure overrides [\#1813](https://github.com/pypeclub/OpenPype/pull/1813)
 - Maya: fix yeti settings path in extractor [\#1809](https://github.com/pypeclub/OpenPype/pull/1809)
 - Failsafe for cross project containers. [\#1806](https://github.com/pypeclub/OpenPype/pull/1806)
-- nuke: fixing wrong name of family folder when `used existing frames` [\#1803](https://github.com/pypeclub/OpenPype/pull/1803)
-- Houdini colector formatting keys fix [\#1802](https://github.com/pypeclub/OpenPype/pull/1802)
+- Settings error dialog on show [\#1798](https://github.com/pypeclub/OpenPype/pull/1798)
 
 **Merged pull requests:**
 
-- Ftrack push attributes action adds traceback to job [\#1842](https://github.com/pypeclub/OpenPype/pull/1842)
 - Add support for pyenv-win on windows [\#1822](https://github.com/pypeclub/OpenPype/pull/1822)
 - PS, AE - send actual context when another webserver is running [\#1811](https://github.com/pypeclub/OpenPype/pull/1811)
-- Build: don't add Poetry to `PATH` [\#1808](https://github.com/pypeclub/OpenPype/pull/1808)
 
 ## [3.2.0](https://github.com/pypeclub/OpenPype/tree/3.2.0) (2021-07-13)
 
@@ -61,6 +67,7 @@
 
 **🐛 Bug fixes**
 
+- nuke: fixing wrong name of family folder when `used existing frames` [\#1803](https://github.com/pypeclub/OpenPype/pull/1803)
 - Collect ftrack family bugs [\#1801](https://github.com/pypeclub/OpenPype/pull/1801)
 - Invitee email can be None which break the Ftrack commit. [\#1788](https://github.com/pypeclub/OpenPype/pull/1788)
 - Fix: staging and `--use-version` option [\#1786](https://github.com/pypeclub/OpenPype/pull/1786)
@@ -82,9 +89,9 @@
 
 **Merged pull requests:**
 
+- Build: don't add Poetry to `PATH` [\#1808](https://github.com/pypeclub/OpenPype/pull/1808)
 - Bump prismjs from 1.23.0 to 1.24.0 in /website [\#1773](https://github.com/pypeclub/OpenPype/pull/1773)
 - Bc/fix/docs [\#1771](https://github.com/pypeclub/OpenPype/pull/1771)
-- Expose write attributes to config [\#1770](https://github.com/pypeclub/OpenPype/pull/1770)
 - TVPaint ftrack family [\#1755](https://github.com/pypeclub/OpenPype/pull/1755)
 
 ## [2.18.4](https://github.com/pypeclub/OpenPype/tree/2.18.4) (2021-06-24)
@@ -100,17 +107,9 @@
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.2.0-nightly.2...2.18.3)
 
-**🐛 Bug fixes**
-
-- Tools names forwards compatibility [\#1727](https://github.com/pypeclub/OpenPype/pull/1727)
-
 ## [2.18.2](https://github.com/pypeclub/OpenPype/tree/2.18.2) (2021-06-16)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.1.0...2.18.2)
-
-**🐛 Bug fixes**
-
-- Maya: Extract review hotfix - 2.x backport [\#1713](https://github.com/pypeclub/OpenPype/pull/1713)
 
 ## [3.1.0](https://github.com/pypeclub/OpenPype/tree/3.1.0) (2021-06-15)
 
