@@ -451,19 +451,6 @@
                     "label": "Slate formating options",
                     "children": [
                         {
-                            "type": "number",
-                            "key": "segments",
-                            "label": "Segments per width",
-                            "minimum": 10
-                        },
-                        {
-                            "type": "number",
-                            "key": "font_size",
-                            "label": "Font size (segment float)",
-                            "decimal": 3,
-                            "minimum": 0
-                        },
-                        {
                             "type": "path",
                             "key": "font_filepath",
                             "label": "Font file path",
@@ -489,6 +476,12 @@
                                 "object_type": "text"
                             },
                             {
+                                "key": "tasks",
+                                "label": "Task names",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
                                 "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Hosts",
@@ -499,7 +492,7 @@
                                 "type": "splitter"
                             },
                             {
-                                "key": "slates",
+                                "key": "template",
                                 "label": "Slate template",
                                 "type": "raw-json",
                                 "store_as_string": true
