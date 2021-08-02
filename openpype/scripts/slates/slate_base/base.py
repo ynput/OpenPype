@@ -242,6 +242,14 @@ class BaseObj:
 
         return width_size * (height / width)
 
+    def get_height_by_percent(self, width_size, percents):
+
+        perc_num = int(percents.replace("%", ""))
+        width = self.root_width
+        height = self.root_height
+
+        return (width_size * (height / width)) * (perc_num / 100)
+
     def get_size(self, size):
         if not size:
             return 0

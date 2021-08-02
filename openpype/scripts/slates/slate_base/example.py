@@ -81,7 +81,7 @@ def example():
                 "alignment-horizontal": "right"
             },
             "#Thumbnail": {
-                "margin-top": 1
+                "margin-top": .6
             },
             "#LogoLayer": {
                 "min-width": 20,
@@ -154,7 +154,7 @@ def example():
                         "type": "rectangle",
                         "style": {
                            "width": 20,
-                           "height": 10,
+                           "height": "90%",
                            "bg-color": "transparent"
                         }
                     }, {
@@ -162,7 +162,7 @@ def example():
                         "value": "{vendor}",
                         "name": "vendorText",
                         "style": {
-                            "padding-right": 0,
+                            "padding-left": -1,
                             "font-size": .5,
                             "font-color": "#ffffff",
                             "bg-color": "transparent",
@@ -178,7 +178,7 @@ def example():
                         "type": "rectangle",
                         "style": {
                             "width": 20,
-                            "height": 8,
+                            "height": "70%",
                             "bg-color": "transparent"
                         }
                     }, {
@@ -187,7 +187,7 @@ def example():
                         "path": "{logo}",
                         "style": {
                             "padding-left": .8,
-                            "width": 3.5,
+                            "width": 3,
                             "height": "img-ratio"
                         }
                     }
@@ -198,5 +198,5 @@ def example():
     api.slate_generator(
         example_fill_data, example_presets,
         output_path="C:/CODE/_PYPE_testing/slates_testing/slate.png",
-        # width=720, height=540
+        width=2048, height=1080
         )

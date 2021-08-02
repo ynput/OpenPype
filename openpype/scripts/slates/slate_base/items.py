@@ -106,6 +106,11 @@ class ItemRectangle(BaseItem):
         height = self.style["height"]
         if height == "root-ratio":
             height = self.get_height_with_orig_ratio(self.style["width"])
+        elif height == "img-ratio":
+            raise AttributeError(
+                "Object {} is not supporting 'img-ratio'".format(self.obj_type))
+        elif isinstance(height, str) and "%" in height:
+            height = self.get_height_by_percent(self.style["width"], height)
 
         return self.get_size(height)
 
@@ -148,6 +153,9 @@ class ItemPlaceHolder(BaseItem):
         height = self.style["height"]
         if height == "root-ratio":
             height = self.get_height_with_orig_ratio(self.style["width"])
+        elif height == "img-ratio":
+            raise AttributeError(
+                "Object {} is not supporting 'img-ratio'".format(self.obj_type))
 
         return self.get_size(height)
 
