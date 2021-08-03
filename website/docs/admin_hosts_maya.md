@@ -95,3 +95,8 @@ You can add your custom tools menu into Maya by extending definitions in **Maya 
 This is still work in progress. Menu definition will be handled more friendly with widgets and not
 raw json.
 :::
+
+## Multiplatform path mapping
+You can configure path mapping using Maya `dirmap` command. This will add bi-directional mapping between
+list of paths specified in **Settings**. You can find it in **Settings -> Project Settings -> Maya -> Maya Directory Mapping**
+![Dirmap settings](assets/maya-admin_dirmap_settings.png)
