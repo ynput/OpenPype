@@ -51,7 +51,8 @@ class ItemImage(BaseItem):
         )
         image.paste(
             paste_image,
-            (self.value_pos_x, self.value_pos_y)
+            (self.value_pos_x, self.value_pos_y),
+            paste_image.convert('RGBA')
         )
 
     def get_image_original_size(self):
@@ -178,6 +179,7 @@ class ItemText(BaseItem):
 
     def fill_data_format(self):
         if re.match(self.fill_data_regex, self.value):
+            self.log.debug("ItemText.value: " + self.value)
             self.value = self.value.format(**self.fill_data)
 
     def draw(self, image, drawer):
@@ -546,6 +548,7 @@ class TableField(BaseItem):
     def fill_data_format(self):
         value = self.value
         if re.match(self.fill_data_regex, value):
+            self.log.debug("TableField.value: " + self.value)
             value = value.format(**self.fill_data)
 
         self.orig_value = value
