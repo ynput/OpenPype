@@ -3,8 +3,10 @@ import re
 import json
 import pyblish
 import platform
+from pprint import pformat
 
 from openpype.scripts import slates
+
 
 # class ExtractGenerateSlate(openpype.api.Extractor):
 class ExtractGenerateSlate(pyblish.api.InstancePlugin):
@@ -14,7 +16,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
     """
 
     label = "Extract generated slates"
-    order = pyblish.api.CollectorOrder + 0.495
+    order = pyblish.api.ValidatorOrder - 0.1
     # families = ["review"]
     hosts = [
         "nuke",
@@ -27,61 +29,62 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
     options = None
 
     def process(self, instance):
-        # TODO get these data from context
-        # Store anatomy data
-        project_doc = instance.data["projectEntity"]
+        formating_data = {}
+        # get context data
+        context = instance.context
         anatomy_data = instance.data["anatomyData"]
-        version_number = instance.data["version"]
 
-        host_name = os.environ["AVALON_APP"]
-        task_name = os.environ["AVALON_TASK"]
+        # get filtering data
+        host_name = anatomy_data["app"]
+        task_name = anatomy_data["task"]
         family = self.main_family_from_instance(instance)
+        families = instance.data["families"]
 
         # Find profile most matching current host, task and instance family
-        profile = self.find_matching_profile(host_name, task_name, family)
+        profile = self.find_matching_profile(host_name, task_name,
+                                             family, families)
 
         if not profile:
             self.log.info((
-                "Skipped instance. None of profiles in presets are for"
-                " Host: \"{}\" | Family: \"{}\" | Task \"{}\""
-            ).format(host_name, family, task_name))
+                "Skipped instance. None of profiles in presets are for "
+                "Host: \"{}\" | Family: \"{}\" | "
+                "Families: \"{}\" | Task \"{}\""
+            ).format(host_name, family, families, task_name))
             return
 
-        self.log.info(self.options)
-        # TODO: how to get following data from context
-        # TODO: how to define keys matching slates template keys
-        # TODO: where to get notes data > last ftrack comments which is addressed by this submission
-        # TODO: how to address vendor parent (our client's project client) logo path issue
-        # TODO: vendor can be taken from `settings.system.general.studio_name`
         example_fill_data = {
-            "shot": "106_V12_010",
-            "version": "V007",
-            "length": 187,
-            "date": "11/02/2021",
-            "artist": "John Murdoch",
-            "notes": (
-                "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
-                " Aenean commodo ligula eget dolor. Aenean massa."
-                " Cum sociis natoque penatibus et magnis dis parturient montes,"
-                " nascetur ridiculus mus. Donec quam felis, ultricies nec,"
-                " pellentesque eu, pretium quis, sem. Nulla consequat massa quis"
-                " enim. Donec pede justo, fringilla vel,"
-                " aliquet nec, vulputate eget, arcu."
-            ),
-            "thumbnail_path": "C:/CODE/_PYPE_testing/slates_testing/thumbnail.png",
-            "logo": "C:/CODE/_PYPE_testing/slates_testing/logo.jpg",
-            "vendor": "VENDOR"
+            "thumbnail_path": "C:/CODE/_PYPE_testing/slates_testing/thumbnail.png"
         }
 
-        # TODO: send font patch into slates generator's font factory
+        # options
+        fonts_dir = self.options.get("font_filepath", {}).get(
+            platform.system().lower())
+        fonts_dir = fonts_dir.format(**os.environ)
+
+        images_dir_path = self.options.get("images_path", {}).get(
+            platform.system().lower())
+        images_dir_path = images_dir_path.format(**os.environ)
+
+        formating_data.update(anatomy_data)
+        formating_data.update(example_fill_data)
+        formating_data.update({
+            "comment": context.data.get("comment", ""),
+            "studio_name": context.data[
+                "system_settings"]["general"]["studio_name"],
+            "studio_code": context.data[
+                "system_settings"]["general"]["studio_code"],
+            "images_dir_path": images_dir_path
+        })
+
+        formating_data.update(os.environ)
+
+        self.log.debug(pformat(formating_data))
+
         # TODO: form output slate path into temp dir
         # TODO: convert input video file to thumbnail image > ffmpeg
         # TODO: get resolution of an input image
-        fonts_dir = self.options.get("font_filepath", {}).get(
-            platform.system().lower())
-        self.log.info(fonts_dir)
         slates.api.slate_generator(
-            example_fill_data, json.loads(profile["template"]),
+            formating_data, json.loads(profile["template"]),
             output_path="C:/CODE/_PYPE_testing/slates_testing/slate.png",
             width=1920, height=1080, fonts_dir=fonts_dir
         )
@@ -89,7 +92,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
         # TODO: connect generated slate image to input video
         # TODO: remove previous video and replace representation with new data
 
-    def find_matching_profile(self, host_name, task_name, family):
+    def find_matching_profile(self, host_name, task_name, family, families):
         """ Filter profiles by Host name, Task name and main Family.
 
         Filtering keys are "hosts" (list), "tasks" (list), "families" (list).
@@ -100,6 +103,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
             host_name (str): Current running host name.
             task_name (str): Current context task name.
             family (str): Main family of current Instance.
+            families (list): list of additional families
 
         Returns:
             dict/None: Return most matching profile or None if none of profiles
@@ -115,7 +119,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
             # Host filtering
             host_names = profile.get("hosts")
             match = self.validate_value_by_regexes(host_name, host_names)
-            self.log.info("> host match: {}".format(match))
+            self.log.debug("> host match: {}".format(match))
             if match == -1:
                 continue
             profile_points += match
@@ -124,14 +128,25 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
             # Task filtering
             task_names = profile.get("tasks")
             match = self.validate_value_by_regexes(task_name, task_names)
+            self.log.debug("> task match: {}".format(match))
+            if match == -1:
+                continue
+            profile_points += match
+            profile_value.append(bool(match))
+
+            # Families filtering
+            p_families = profile.get("families")
+            match = self.validate_value_by_regexes(families, p_families)
+            self.log.debug("> families match: {}".format(match))
             if match == -1:
                 continue
             profile_points += match
             profile_value.append(bool(match))
 
             # Family filtering
-            families = profile.get("families")
-            match = self.validate_value_by_regexes(family, families)
+            p_family = profile.get("family")
+            match = self.validate_value_by_regexes(family, p_family)
+            self.log.debug("> family match: {}".format(match))
             if match == -1:
                 continue
             profile_points += match
@@ -242,7 +257,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
 
         Args:
             in_list (list): List with regexes.
-            value (str): String where regexes is checked.
+            value (str or list): String or list where regexes is checked.
 
         Returns:
             int: Returns `0` when list is not set or is empty. Returns `1` when
@@ -252,12 +267,17 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
         if not in_list:
             return 0
 
+        if isinstance(value, str):
+            value = [value]
+
         output = -1
         regexes = self.compile_list_of_regexes(in_list)
         for regex in regexes:
-            if re.match(regex, value):
-                output = 1
-                break
+            for val in value:
+                self.log.debug(f"val: {val} | regex: {regex}")
+                if re.match(regex, val):
+                    output = 1
+                    break
         return output
 
     def main_family_from_instance(self, instance):
