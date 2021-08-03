@@ -4,6 +4,7 @@ import collections
 
 from PIL import ImageFont
 
+
 class FontFactory:
     fonts = None
     default = None
