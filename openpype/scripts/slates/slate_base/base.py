@@ -29,7 +29,7 @@ class BaseObj:
         "margin-top", "margin-bottom", "width", "height",
         "fill", "word-wrap", "ellide", "max-lines", "seqments"
     ]
-    fill_data_regex = r"{[^}]+}"
+    fill_data_regex = r".*{[^}]+}"
 
     def __init__(self, parent, style={},
                  name=None, pos_x=None, pos_y=None, *args, **kwargs):
