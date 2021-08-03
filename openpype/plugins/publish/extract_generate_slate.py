@@ -2,6 +2,7 @@ import os
 import re
 import json
 import pyblish
+import platform
 
 from openpype.scripts import slates
 
@@ -13,7 +14,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
     """
 
     label = "Extract generated slates"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.495
     # families = ["review"]
     hosts = [
         "nuke",
@@ -27,6 +28,11 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         # TODO get these data from context
+        # Store anatomy data
+        project_doc = instance.data["projectEntity"]
+        anatomy_data = instance.data["anatomyData"]
+        version_number = instance.data["version"]
+
         host_name = os.environ["AVALON_APP"]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
@@ -41,6 +47,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
             ).format(host_name, family, task_name))
             return
 
+        self.log.info(self.options)
         # TODO: how to get following data from context
         # TODO: how to define keys matching slates template keys
         # TODO: where to get notes data > last ftrack comments which is addressed by this submission
@@ -70,10 +77,13 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
         # TODO: form output slate path into temp dir
         # TODO: convert input video file to thumbnail image > ffmpeg
         # TODO: get resolution of an input image
+        fonts_dir = self.options.get("font_filepath", {}).get(
+            platform.system().lower())
+        self.log.info(fonts_dir)
         slates.api.slate_generator(
             example_fill_data, json.loads(profile["template"]),
             output_path="C:/CODE/_PYPE_testing/slates_testing/slate.png",
-            width=1920, height=1080
+            width=1920, height=1080, fonts_dir=fonts_dir
         )
 
         # TODO: connect generated slate image to input video
