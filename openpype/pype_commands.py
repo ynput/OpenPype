@@ -143,6 +143,8 @@ class PypeCommands:
 
         log = Logger.get_logger()
 
+        log.info("remotepublish command")
+
         install()
 
         if host:
@@ -207,7 +209,7 @@ class PypeCommands:
             {"$set":
                 {
                     "finish_date": datetime.now(),
-                    "state": "finished_ok",
+                    "status": "finished_ok",
                     "progress": 1
                 }}
         )
