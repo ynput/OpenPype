@@ -4,15 +4,16 @@ import collections
 
 from PIL import ImageFont
 
-
 class FontFactory:
     fonts = None
     default = None
+    default_font_name = "courier new"
 
     @classmethod
-    def get_font(cls, family, font_size=None, italic=False, bold=False):
+    def get_font(cls, klass, family, font_size=None, italic=False,
+                 bold=False, fonts_dir=None):
         if cls.fonts is None:
-            cls.load_fonts()
+            cls.load_fonts(fonts_dir)
 
         styles = []
         if bold:
@@ -28,7 +29,13 @@ class FontFactory:
         family = family.lower()
         family_styles = cls.fonts.get(family)
         if not family_styles:
-            return cls.default
+            for _font in cls.default:
+                klass.log.warning((
+                    "Missing font '{}', "
+                    "is replaced with default '{}'").format(
+                        family, cls.default_font_name))
+                font = cls.default[_font].font_variant(size=font_size)
+            return font
 
         font = family_styles.get(style)
         if font:
@@ -36,18 +43,20 @@ class FontFactory:
                 font = font.font_variant(size=font_size)
             return font
 
-        # Return first found
-        for font in family_styles:
+        # If missing variant return first found
+        for _font in family_styles:
             if font_size:
-                font = font.font_variant(size=font_size)
+                klass.log.warning((
+                    "Missing font '{}' with variant '{}', "
+                    "is replaced with '{}' variant").format(
+                        family, style, _font))
+                font = family_styles[_font].font_variant(size=font_size)
             return font
 
         return cls.default
 
     @classmethod
-    def load_fonts(cls):
-
-        cls.default = ImageFont.load_default()
+    def load_fonts(cls, fonts_dir=None):
 
         available_font_ext = [".ttf", ".ttc"]
         dirs = []
@@ -58,6 +67,8 @@ class FontFactory:
             windir = os.environ.get("WINDIR")
             if windir:
                 dirs.append(os.path.join(windir, "fonts"))
+            if fonts_dir:
+                dirs.append(os.path.normpath(fonts_dir))
 
         elif sys.platform in ("linux", "linux2"):
             lindirs = os.environ.get("XDG_DATA_DIRS", "")
@@ -68,6 +79,8 @@ class FontFactory:
             dirs += [
                 os.path.join(lindir, "fonts") for lindir in lindirs.split(":")
             ]
+            if fonts_dir:
+                dirs.append(os.path.normpath(fonts_dir))
 
         elif sys.platform == "darwin":
             dirs += [
@@ -75,6 +88,8 @@ class FontFactory:
                 "/System/Library/Fonts",
                 os.path.expanduser("~/Library/Fonts")
             ]
+            if fonts_dir:
+                dirs.append(os.path.normpath(fonts_dir))
 
         available_fonts = collections.defaultdict(dict)
         for directory in dirs:
@@ -90,4 +105,5 @@ class FontFactory:
                     style = font_obj.font.style
                     available_fonts[family][style] = font_obj
 
+        cls.default = available_fonts.get(cls.default_font_name)
         cls.fonts = available_fonts

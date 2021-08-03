@@ -16,7 +16,8 @@ log = logging.getLogger(__name__)
 
 
 def slate_generator(
-    fill_data, slate_settings, output_path=None, width=None, height=None
+    fill_data, slate_settings, output_path=None, width=None, height=None,
+    fonts_dir=None
 ):
     """Command line script for dynamic creatign of slates with PIL.
 
@@ -69,7 +70,8 @@ def slate_generator(
             "pos_x": pos_x,
             "pos_y": pos_y,
             "root_width": width,
-            "root_height": height
+            "root_height": height,
+            "fonts_dir": fonts_dir
         }
 
         if item_type == "layer":

@@ -61,6 +61,8 @@ class BaseObj:
         self.name = name
         self.items = {}
 
+        self.fonts_dir = kwargs.get("fonts_dir")
+
         self._pos_x = pos_x or 0
         self._pos_y = pos_y or 0
 
