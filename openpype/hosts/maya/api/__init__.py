@@ -29,26 +29,8 @@ def install():
     from openpype.settings import get_project_settings
 
     project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-    mapping = project_settings["maya"]["maya-dirmap"]["paths"] or {}
-    mapping_enabled = project_settings["maya"]["maya-dirmap"]["enabled"]
-    if mapping.get("source-path") and mapping_enabled is True:
-        log.info("Processing directory mapping ...")
-        cmds.dirmap(en=True)
-    for k, sp in enumerate(mapping["source-path"]):
-        try:
-            print("{} -> {}".format(sp, mapping["destination-path"][k]))
-            cmds.dirmap(m=(sp, mapping["destination-path"][k]))
-            cmds.dirmap(m=(mapping["destination-path"][k], sp))
-        except IndexError:
-            # missing corresponding destination path
-            log.error(("invalid dirmap mapping, missing corresponding"
-                       " destination directory."))
-            break
-        except RuntimeError:
-            log.error("invalid path {} -> {}, mapping not registered".format(
-                sp, mapping["destination-path"][k]
-            ))
-            continue
+    # process path mapping
+    process_dirmap(project_settings)
 
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
@@ -75,6 +57,40 @@ def install():
 
     log.info("Setting default family states for loader..")
     avalon.data["familiesStateToggled"] = ["imagesequence"]
+
+
+def process_dirmap(project_settings):
+    # type: (dict) -> None
+    """Go through all paths in Settings and set them using `dirmap`.
+
+    Args:
+        project_settings (dict): Settings for current project.
+
+    """
+    if not project_settings["maya"].get("maya-dirmap"):
+        return
+    mapping = project_settings["maya"]["maya-dirmap"]["paths"] or {}
+    mapping_enabled = project_settings["maya"]["maya-dirmap"]["enabled"]
+    if not mapping or not mapping_enabled:
+        return
+    if mapping.get("source-path") and mapping_enabled is True:
+        log.info("Processing directory mapping ...")
+        cmds.dirmap(en=True)
+    for k, sp in enumerate(mapping["source-path"]):
+        try:
+            print("{} -> {}".format(sp, mapping["destination-path"][k]))
+            cmds.dirmap(m=(sp, mapping["destination-path"][k]))
+            cmds.dirmap(m=(mapping["destination-path"][k], sp))
+        except IndexError:
+            # missing corresponding destination path
+            log.error(("invalid dirmap mapping, missing corresponding"
+                       " destination directory."))
+            break
+        except RuntimeError:
+            log.error("invalid path {} -> {}, mapping not registered".format(
+                sp, mapping["destination-path"][k]
+            ))
+            continue
 
 
 def uninstall():
