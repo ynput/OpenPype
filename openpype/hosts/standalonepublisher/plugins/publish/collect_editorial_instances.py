@@ -182,7 +182,7 @@ class CollectInstances(pyblish.api.InstancePlugin):
                 })
                 for subset, properities in self.subsets.items():
                     version = properities.get("version")
-                    if version and version == 0:
+                    if version == 0:
                         properities.pop("version")
 
                     # adding Review-able instance

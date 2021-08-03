@@ -25,6 +25,8 @@ class PrepareProjectLocal(BaseAction):
     settings_key = "prepare_project"
 
     # Key to store info about trigerring create folder structure
+    create_project_structure_key = "create_folder_structure"
+    create_project_structure_identifier = "create.project.structure"
     item_splitter = {"type": "label", "value": "---"}
     _keys_order = (
         "fps",
@@ -90,20 +92,39 @@ class PrepareProjectLocal(BaseAction):
 
         items.extend(ca_items)
 
-        # This item will be last (before enumerators)
-        # - sets value of auto synchronization
-        auto_sync_name = "avalon_auto_sync"
+        # Set value of auto synchronization
         auto_sync_value = project_entity["custom_attributes"].get(
             CUST_ATTR_AUTO_SYNC, False
         )
         auto_sync_item = {
-            "name": auto_sync_name,
+            "name": CUST_ATTR_AUTO_SYNC,
             "type": "boolean",
             "value": auto_sync_value,
             "label": "AutoSync to Avalon"
         }
         # Add autosync attribute
         items.append(auto_sync_item)
+
+        # This item will be last before enumerators
+        # Ask if want to trigger Action Create Folder Structure
+        create_project_structure_checked = (
+            project_settings
+            ["project_settings"]
+            ["ftrack"]
+            ["user_handlers"]
+            ["prepare_project"]
+            ["create_project_structure_checked"]
+        ).value
+        items.append({
+            "type": "label",
+            "value": "<h3>Want to create basic Folder Structure?</h3>"
+        })
+        items.append({
+            "name": self.create_project_structure_key,
+            "type": "boolean",
+            "value": create_project_structure_checked,
+            "label": "Check if Yes"
+        })
 
         # Add enumerator items at the end
         for item in multiselect_enumerators:
@@ -248,7 +269,7 @@ class PrepareProjectLocal(BaseAction):
                     multiselect_enumerators.append(self.item_splitter)
                     multiselect_enumerators.append({
                         "type": "label",
-                        "value": in_data["label"]
+                        "value": "<h3>{}</h3>".format(in_data["label"])
                     })
 
                     default = in_data["default"]
@@ -309,10 +330,13 @@ class PrepareProjectLocal(BaseAction):
         return items, multiselect_enumerators
 
     def launch(self, session, entities, event):
-        if not event['data'].get('values', {}):
+        in_data = event["data"].get("values")
+        if not in_data:
             return
 
-        in_data = event['data']['values']
+        create_project_structure_checked = in_data.pop(
+            self.create_project_structure_key
+        )
 
         root_values = {}
         root_key = "__root__"
@@ -395,11 +419,20 @@ class PrepareProjectLocal(BaseAction):
 
         project_settings.save()
 
-        entity = entities[0]
-        for key, value in custom_attribute_values.items():
-            entity["custom_attributes"][key] = value
-            self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
+        # Change custom attributes on project
+        if custom_attribute_values:
+            for key, value in custom_attribute_values.items():
+                project_entity["custom_attributes"][key] = value
+                self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
+            session.commit()
 
+        # Trigger create project structure action
+        if create_project_structure_checked:
+            trigger_identifier = "{}.{}".format(
+                self.create_project_structure_identifier,
+                self.process_identifier()
+            )
+            self.trigger_action(trigger_identifier, event)
         return True
 
 

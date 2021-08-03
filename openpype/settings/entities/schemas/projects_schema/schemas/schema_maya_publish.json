@@ -148,8 +148,13 @@
                             "label": "Enabled"
                         },
                         {
+                            "type": "boolean",
+                            "key": "database",
+                            "label": "Use database shader name definitions"
+                        },
+                        {
                             "type": "label",
-                            "label": "Path to material file defining list of material names to check. This is material name per line simple text file.<br/>It will be checked against named group <b>shader</b> in your <em>Validation regex</em>.<p>For example: <br/> <code>^.*(?P=&lt;shader&gt;.+)_GEO</code></p>"
+                            "label": "Path to material file defining list of material names to check. This is material name per line simple text file.<br/>It will be checked against named group <b>shader</b> in your <em>Validation regex</em>.<p>For example: <br/> <code>^.*(?P=&lt;shader&gt;.+)_GEO</code></p>This is used instead of database definitions if they are disabled."
                         },
                         {
                             "type": "path",
@@ -162,6 +167,15 @@
                             "type": "text",
                             "key": "regex",
                             "label": "Validation regex"
+                        },
+                        {
+                            "type": "label",
+                            "label": "Regex for validating name of top level group name.<br/>You can use named capturing groups:<br/><code>(?P&lt;asset&gt;.*)</code> for Asset name<br/><code>(?P&lt;subset&gt;.*)</code> for Subset<br/><code>(?P&lt;project&gt;.*)</code> for project<br/><p>For example to check for asset in name so <code>*_some_asset_name_GRP</code> is valid, use:<br/><code>.*?_(?P&lt;asset&gt;.*)_GEO</code>"
+                        },
+                        {
+                            "type": "text",
+                            "key": "top_level_regex",
+                            "label": "Top level group name regex"
                         }
                     ]
                 },

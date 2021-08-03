@@ -2,6 +2,7 @@ import os
 import tempfile
 import json
 import functools
+import uuid
 import datetime
 import traceback
 import time
@@ -36,6 +37,7 @@ class BaseHandler(object):
     <description>   - a verbose descriptive text for you action
     <icon>  - icon in ftrack
     '''
+    _process_id = None
     # Default priority is 100
     priority = 100
     # Type is just for logging purpose (e.g.: Action, Event, Application,...)
@@ -69,6 +71,13 @@ class BaseHandler(object):
         # Using decorator
         self.register = self.register_decorator(self.register)
         self.launch = self.launch_log(self.launch)
+
+    @staticmethod
+    def process_identifier():
+        """Helper property to have """
+        if not BaseHandler._process_id:
+            BaseHandler._process_id = str(uuid.uuid4())
+        return BaseHandler._process_id
 
     # Decorator
     def register_decorator(self, func):

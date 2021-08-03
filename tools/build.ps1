@@ -80,17 +80,6 @@ function Show-PSWarning() {
     }
 }
 
-function Install-Poetry() {
-    Write-Host ">>> " -NoNewline -ForegroundColor Green
-    Write-Host "Installing Poetry ... "
-    $python = "python"
-    if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
-        $python = & pyenv which python
-    }
-    $env:POETRY_HOME="$openpype_root\.poetry"
-    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | & $($python) -
-}
-
 $art = @"
 
              . .   ..     .    ..

@@ -49,6 +49,10 @@
         },
         {
             "type": "schema",
+            "name": "schema_maya_scriptsmenu"
+        },
+        {
+            "type": "schema",
             "name": "schema_maya_create"
         },
         {

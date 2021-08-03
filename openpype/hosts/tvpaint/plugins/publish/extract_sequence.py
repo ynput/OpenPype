@@ -49,6 +49,14 @@ class ExtractSequence(pyblish.api.Extractor):
         family_lowered = instance.data["family"].lower()
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
+
+        # Scene start frame offsets the output files, so we need to offset the
+        # marks.
+        scene_start_frame = instance.context.data["sceneStartFrame"]
+        difference = scene_start_frame - mark_in
+        mark_in += difference
+        mark_out += difference
+
         # Frame start/end may be stored as float
         frame_start = int(instance.data["frameStart"])
         frame_end = int(instance.data["frameEnd"])
@@ -98,7 +106,7 @@ class ExtractSequence(pyblish.api.Extractor):
             self.log.warning((
                 "Lowering representation range to {} frames."
                 " Changed frame end {} -> {}"
-            ).format(output_range + 1, mark_out, new_mark_out))
+            ).format(output_range + 1, mark_out, new_output_frame_end))
             output_frame_end = new_output_frame_end
 
         # -------------------------------------------------------------------
