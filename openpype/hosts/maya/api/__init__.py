@@ -30,19 +30,25 @@ def install():
 
     project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
     mapping = project_settings["maya"]["maya-dirmap"]["paths"] or {}
-    if mapping.get("source-path") and project_settings["maya"]["maya-dirmap"]["enabled"] is True:
+    mapping_enabled = project_settings["maya"]["maya-dirmap"]["enabled"]
+    if mapping.get("source-path") and mapping_enabled is True:
         log.info("Processing directory mapping ...")
         cmds.dirmap(en=True)
     for k, sp in enumerate(mapping["source-path"]):
         try:
             print("{} -> {}".format(sp, mapping["destination-path"][k]))
-            cmds.dirmap(m=[sp, mapping["destination-path"][k]])
-            cmds.dirmap(m=[mapping["destination-path"][k], sp])
+            cmds.dirmap(m=(sp, mapping["destination-path"][k]))
+            cmds.dirmap(m=(mapping["destination-path"][k], sp))
         except IndexError:
             # missing corresponding destination path
             log.error(("invalid dirmap mapping, missing corresponding"
                        " destination directory."))
             break
+        except RuntimeError:
+            log.error("invalid path {} -> {}, mapping not registered".format(
+                sp, mapping["destination-path"][k]
+            ))
+            continue
 
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
