@@ -1138,7 +1138,7 @@ def prepare_host_environments(data, implementation_envs=True):
         # Merge dictionaries
         env_values = _merge_env(tool_env, env_values)
 
-    merged_env = _merge_env(computed_env, data["env"])
+    merged_env = _merge_env(env_values, data["env"])
     loaded_env = acre.compute(merged_env, cleanup=False)
 
     final_env = None
