@@ -296,7 +296,7 @@ class ExtractLook(openpype.api.Extractor):
                 remap[color_space_attr] = color_space
             attr = resource["attribute"]
             remap[attr] = destinations[source]
-            
+
         self.log.info("Finished remapping destinations ...")
 
         # Extract in correct render layer
