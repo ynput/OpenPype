@@ -446,7 +446,7 @@
                 },
                 {
                     "type": "dict",
-                    "collapsible": true,
+                    "collapsible": false,
                     "key": "options",
                     "label": "Slate formating options",
                     "children": [
@@ -454,6 +454,13 @@
                             "type": "path",
                             "key": "font_filepath",
                             "label": "Font file path",
+                            "multipath": false,
+                            "multiplatform": true
+                        },
+                        {
+                            "type": "path",
+                            "key": "images_path",
+                            "label": "Additional slate images path",
                             "multipath": false,
                             "multiplatform": true
                         }
@@ -470,8 +477,14 @@
                         "type": "dict",
                         "children": [
                             {
+                                "key": "family",
+                                "label": "Families (main)",
+                                "type": "list",
+                                "object_type": "text"
+                            },
+                            {
                                 "key": "families",
-                                "label": "Families",
+                                "label": "Families (additional)",
                                 "type": "list",
                                 "object_type": "text"
                             },
@@ -489,13 +502,16 @@
                                 "multiselection": true
                             },
                             {
-                                "type": "splitter"
-                            },
-                            {
-                                "key": "template",
+                                "type": "collapsible-wrap",
                                 "label": "Slate template",
-                                "type": "raw-json",
-                                "store_as_string": true
+                                "children": [
+                                    {
+                                        "key": "template",
+                                        "label": "",
+                                        "type": "raw-json",
+                                        "store_as_string": true
+                                    }
+                                ]
                             }
                         ]
                     }
