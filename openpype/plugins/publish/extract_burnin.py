@@ -156,6 +156,16 @@ class ExtractBurnin(openpype.api.Extractor):
             filled_anatomy = anatomy.format_all(burnin_data)
             burnin_data["anatomy"] = filled_anatomy.get_solved()
 
+            # Add context data burnin_data.
+            burnin_data["context"] = {}
+            for item in repre_burnin_defs:
+                for field, setting in repre_burnin_defs[item].items():
+                    if "context" in setting:
+                        key = setting.split("[")[1].split("]")[0]
+                        burnin_data["context"][key] = (
+                            setting.format(context=instance.context.data)
+                        )
+
             # Add source camera name to burnin data
             camera_name = repre.get("camera_name")
             if camera_name:
