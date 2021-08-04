@@ -10,7 +10,9 @@ from openpype_interfaces import (
 from avalon.api import AvalonMongoDB
 
 
-class TimersManager(OpenPypeModule, ITrayService, IIdleManager, IWebServerRoutes):
+class TimersManager(
+    OpenPypeModule, ITrayService, IIdleManager, IWebServerRoutes
+):
     """ Handles about Timers.
 
     Should be able to start/stop all timers at once.
