@@ -1,15 +1,17 @@
 import os
 import re
+import copy
 import json
 import pyblish
 import platform
 from pprint import pformat
 
+import openpype
 from openpype.scripts import slates
+from openpype.lib import filter_profiles
 
 
-# class ExtractGenerateSlate(openpype.api.Extractor):
-class ExtractGenerateSlate(pyblish.api.InstancePlugin):
+class ExtractGenerateSlate(openpype.api.Extractor):
     """ Extractor for dynamically generating slates.
 
     Slates are generated from previous representation file
@@ -17,7 +19,7 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
 
     label = "Extract generated slates"
     order = pyblish.api.ValidatorOrder - 0.1
-    # families = ["review"]
+    families = ["review"]
     hosts = [
         "nuke",
         "standalonepublisher"
@@ -29,256 +31,220 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
     options = None
 
     def process(self, instance):
-        formating_data = {}
+        # for dev
+        instance.data["representations"] = representations = [{
+            "name": "mp4",
+            "ext": "mp4",
+            "stagingDir": "C:/CODE/_PYPE_testing/testing_data/2d_shots/sh010/mov/cuts",
+            "files": "mainsq02sh010_plate_sh010_h264burnin.mp4",
+            "tags": ["generate-slate"]
+        }]
+
+        self.log.debug("_ representations in: {}".format(
+            representations
+        ))
+
         # get context data
-        context = instance.context
         anatomy_data = instance.data["anatomyData"]
 
         # get filtering data
         host_name = anatomy_data["app"]
-        task_name = anatomy_data["task"]
         family = self.main_family_from_instance(instance)
         families = instance.data["families"]
 
-        # Find profile most matching current host, task and instance family
-        profile = self.find_matching_profile(host_name, task_name,
-                                             family, families)
+        filtering_criteria = {
+            "hosts": host_name,
+            "families": family
+        }
+
+        profile = filter_profiles(self.profiles, filtering_criteria)
 
         if not profile:
             self.log.info((
                 "Skipped instance. None of profiles in presets are for "
                 "Host: \"{}\" | Family: \"{}\" | "
-                "Families: \"{}\" | Task \"{}\""
-            ).format(host_name, family, families, task_name))
+            ).format(host_name, family))
             return
 
-        example_fill_data = {
-            "thumbnail_path": "C:/CODE/_PYPE_testing/slates_testing/thumbnail.png"
-        }
+        for repre in representations:
+            if "generate-slate" not in repre.get("tags"):
+                continue
 
-        # options
+            # additional filtering
+            slate_profiles = self.filter_inputs_by_families(profile, families)
+
+            if not slate_profiles:
+                self.log.info((
+                    "Skipped instance. All slates definitions from selected"
+                    " profile does not match to instance families. \"{}\""
+                ).format(str(families)))
+                return
+
+            # generate slates
+            self.generate_slates(repre, instance, slate_profiles)
+
+        self.log.debug("_ representations out: {}".format(
+            representations
+        ))
+
+    def generate_slates(self, repre, instance, slate_profiles):
+        formating_data = {}
+        # get context data
+        context = instance.context
+        anatomy_data = instance.data["anatomyData"]
+
+        # generate paths
+        thumbnail_path = self.generate_thumbnail(repre)
+
+        # get options
+        # fonts dir path
         fonts_dir = self.options.get("font_filepath", {}).get(
             platform.system().lower())
         fonts_dir = fonts_dir.format(**os.environ)
-
+        # additional images path
         images_dir_path = self.options.get("images_path", {}).get(
             platform.system().lower())
         images_dir_path = images_dir_path.format(**os.environ)
 
+        # prepare formating data for temmplate
         formating_data.update(anatomy_data)
-        formating_data.update(example_fill_data)
         formating_data.update({
             "comment": context.data.get("comment", ""),
             "studio_name": context.data[
                 "system_settings"]["general"]["studio_name"],
             "studio_code": context.data[
                 "system_settings"]["general"]["studio_code"],
-            "images_dir_path": images_dir_path
+            "images_dir_path": images_dir_path,
+            "thumbnail_path": thumbnail_path
         })
-
+        self.log.debug(pformat(formating_data))
+        # add environment variables for formating
         formating_data.update(os.environ)
-
         self.log.debug(pformat(formating_data))
 
-        # TODO: form output slate path into temp dir
-        # TODO: convert input video file to thumbnail image > ffmpeg
-        # TODO: get resolution of an input image
-        slates.api.slate_generator(
-            formating_data, json.loads(profile["template"]),
-            output_path="C:/CODE/_PYPE_testing/slates_testing/slate.png",
-            width=1920, height=1080, fonts_dir=fonts_dir
-        )
+        # get width and height from representation
+        slate_width, slate_height = self.get_output_size(repre)
 
-        # TODO: connect generated slate image to input video
-        # TODO: remove previous video and replace representation with new data
+        remove_repre = []
+        # iterate slate profiles and generate new
+        for suffix, slate_def in slate_profiles.items():
+            suffix = re.sub(
+                '([a-zA-Z])', lambda x: x.groups()[0].upper(), suffix, 1)
+            self.log.debug("suffix: {} | def: {}".format(
+                suffix, pformat(slate_def)
+            ))
+            slate_path = self.get_output_path(repre, suffix, "png")
+            # generate slate image
+            slates.api.slate_generator(
+                formating_data, json.loads(slate_def["template"]),
+                output_path=slate_path,
+                width=slate_width, height=slate_height, fonts_dir=fonts_dir
+            )
 
-    def find_matching_profile(self, host_name, task_name, family, families):
-        """ Filter profiles by Host name, Task name and main Family.
+            # Connecting generated slate image to input video
+            new_repre = self.concut_slate_to_video(repre, slate_path, suffix)
+            instance.data["representations"].append(new_repre)
 
-        Filtering keys are "hosts" (list), "tasks" (list), "families" (list).
-        If key is not find or is empty than it's expected to match.
+            # remove intermediate files
+            # os.remove(slate_path)
 
-        Args:
-            profiles (list): Profiles definition from presets.
-            host_name (str): Current running host name.
-            task_name (str): Current context task name.
-            family (str): Main family of current Instance.
-            families (list): list of additional families
+            remove_repre.append(slate_def["keep_input"])
 
-        Returns:
-            dict/None: Return most matching profile or None if none of profiles
-                match at least one criteria.
-        """
+        # remove temp files
+        os.remove(thumbnail_path)
 
-        matching_profiles = None
-        highest_points = -1
-        for profile in self.profiles or tuple():
-            profile_points = 0
-            profile_value = []
+        # delete original representation only if allowed in settings
+        if not any(remove_repre):
+            instance.data["representations"].remove(repre)
 
-            # Host filtering
-            host_names = profile.get("hosts")
-            match = self.validate_value_by_regexes(host_name, host_names)
-            self.log.debug("> host match: {}".format(match))
-            if match == -1:
-                continue
-            profile_points += match
-            profile_value.append(bool(match))
+    def concut_slate_to_video(self, repre, slate_path, suffix):
+        new_repre = copy.deepcopy(repre)
+        slate_v_path = self.get_output_path(repre, "_sv")
+        output_concut_path = self.get_output_path(repre, suffix)
 
-            # Task filtering
-            task_names = profile.get("tasks")
-            match = self.validate_value_by_regexes(task_name, task_names)
-            self.log.debug("> task match: {}".format(match))
-            if match == -1:
-                continue
-            profile_points += match
-            profile_value.append(bool(match))
+        # convert slate image to one frame video
+        # generate concut text file
+        # crate ffmpeg concut command
+        # ffmpeg concut to new file
 
-            # Families filtering
-            p_families = profile.get("families")
-            match = self.validate_value_by_regexes(families, p_families)
-            self.log.debug("> families match: {}".format(match))
-            if match == -1:
-                continue
-            profile_points += match
-            profile_value.append(bool(match))
+        new_repre.update({
+            "name": repre["name"] + suffix,
+            "files": os.path.basename(output_concut_path),
+            "stagingDir": os.path.dirname(output_concut_path)
+        })
+        return new_repre
 
-            # Family filtering
-            p_family = profile.get("family")
-            match = self.validate_value_by_regexes(family, p_family)
-            self.log.debug("> family match: {}".format(match))
-            if match == -1:
-                continue
-            profile_points += match
-            profile_value.append(bool(match))
+    def get_input_path(self, repre):
+        stagingdir = os.path.normpath(repre['stagingDir'])
+        input_file = repre['files']
+        return os.path.join(stagingdir, input_file)
 
-            if profile_points > highest_points:
-                matching_profiles = []
-                highest_points = profile_points
+    def get_output_path(self, repre, suffix, ext=None):
+        stagingdir = os.path.normpath(repre["stagingDir"])
+        input_file = repre["files"]
 
-            if profile_points == highest_points:
-                profile["__value__"] = profile_value
-                matching_profiles.append(profile)
+        filename, _ext = os.path.splitext(input_file)
+        # use original ext if ext input not defined
+        if not ext:
+            ext = _ext
 
-        self.log.info("> matching_profiles: {}".format(matching_profiles))
+        out_file_name = filename + suffix + "." + ext
 
-        if not matching_profiles:
-            return
+        return os.path.join(stagingdir, out_file_name)
 
-        if len(matching_profiles) == 1:
-            return matching_profiles[0]
+    def get_output_size(self, repre):
+        full_input_path = self.get_input_path(repre)
 
-        return self.profile_exclusion(matching_profiles)
-
-    def profile_exclusion(self, matching_profiles):
-        """Find out most matching profile by host, task and family match.
-
-        Profiles are selectivelly filtered. Each profile should have
-        "__value__" key with list of booleans. Each boolean represents
-        existence of filter for specific key (host, taks, family).
-        Profiles are looped in sequence. In each sequence are split into
-        true_list and false_list. For next sequence loop are used profiles in
-        true_list if there are any profiles else false_list is used.
-
-        Filtering ends when only one profile left in true_list. Or when all
-        existence booleans loops passed, in that case first profile from left
-        profiles is returned.
-
-        Args:
-            matching_profiles (list): Profiles with same values.
-
-        Returns:
-            dict: Most matching profile.
-        """
-        self.log.info(
-            "Search for first most matching profile in match order:"
-            " Host name -> Task name -> Family."
-        )
-        # Filter all profiles with highest points value. First filter profiles
-        # with matching host if there are any then filter profiles by task
-        # name if there are any and lastly filter by family. Else use first in
-        # list.
-        idx = 0
-        final_profile = None
-        while True:
-            profiles_true = []
-            profiles_false = []
-            for profile in matching_profiles:
-                value = profile["__value__"]
-                # Just use first profile when idx is greater than values.
-                if not idx < len(value):
-                    final_profile = profile
-                    break
-
-                if value[idx]:
-                    profiles_true.append(profile)
-                else:
-                    profiles_false.append(profile)
-
-            if final_profile is not None:
+        slate_streams = openpype.lib.ffprobe_streams(full_input_path, self.log)
+        # Try to find first stream with defined 'width' and 'height'
+        # - this is to avoid order of streams where audio can be as first
+        # - there may be a better way (checking `codec_type`?)+
+        width = None
+        height = None
+        for slate_stream in slate_streams:
+            if "width" in slate_stream and "height" in slate_stream:
+                width = int(slate_stream["width"])
+                height = int(slate_stream["height"])
                 break
 
-            if profiles_true:
-                matching_profiles = profiles_true
-            else:
-                matching_profiles = profiles_false
+        assert all([width, height]), AssertionError(
+            "Missing Width and Height attributes in file: {}".format(
+                full_input_path
+            ))
+        return (width, height)
 
-            if len(matching_profiles) == 1:
-                final_profile = matching_profiles[0]
-                break
-            idx += 1
+    def generate_thumbnail(self, repre):
+        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        final_profile.pop("__value__")
-        return final_profile
+        full_input_path = self.get_input_path(repre)
+        full_output_path = self.get_output_path(repre, "_thumb", "jpg")
 
+        self.log.info("output {}".format(full_output_path))
 
-    def compile_list_of_regexes(self, in_list):
-        """Convert strings in entered list to compiled regex objects."""
-        regexes = []
-        if not in_list:
-            return regexes
+        jpeg_items = [
+            "\"{}\"".format(ffmpeg_path),
+            "-y",
+            "-i {}".format(full_input_path),
+            "-vframes 1",
+            full_output_path,
+        ]
 
-        for item in in_list:
-            if not item:
-                continue
+        subprocess_jpeg = " ".join(jpeg_items)
 
-            try:
-                regexes.append(re.compile(item))
-            except TypeError:
-                self.log.warning((
-                    "Invalid type \"{}\" value \"{}\"."
-                    " Expected string based object. Skipping."
-                ).format(str(type(item)), str(item)))
+        # run subprocess
+        self.log.debug("{}".format(subprocess_jpeg))
+        try:  # temporary until oiiotool is supported cross platform
+            openpype.api.run_subprocess(
+                subprocess_jpeg, shell=True, logger=self.log
+            )
+        except RuntimeError as exp:
+            if "Compression" in str(exp):
+                self.log.debug("Unsupported compression on input files. " +
+                               "Skipping!!!")
+                return
+            raise
 
-        return regexes
-
-    def validate_value_by_regexes(self, value, in_list):
-        """Validate in any regexe from list match entered value.
-
-        Args:
-            in_list (list): List with regexes.
-            value (str or list): String or list where regexes is checked.
-
-        Returns:
-            int: Returns `0` when list is not set or is empty. Returns `1` when
-                any regex match value and returns `-1` when none of regexes
-                match value entered.
-        """
-        if not in_list:
-            return 0
-
-        if isinstance(value, str):
-            value = [value]
-
-        output = -1
-        regexes = self.compile_list_of_regexes(in_list)
-        for regex in regexes:
-            for val in value:
-                self.log.debug(f"val: {val} | regex: {regex}")
-                if re.match(regex, val):
-                    output = 1
-                    break
-        return output
+        return full_output_path
 
     def main_family_from_instance(self, instance):
         """Return main family of entered instance."""
@@ -286,3 +252,59 @@ class ExtractGenerateSlate(pyblish.api.InstancePlugin):
         if not family:
             family = instance.data["families"][0]
         return family
+
+    @staticmethod
+    def filter_inputs_by_families(profile, families):
+        def _families_filter_validation(families, output_families_filter):
+            """Determines if entered families intersect with families filters.
+
+            All family values are lowered to avoid unexpected results.
+            """
+            if not output_families_filter:
+                return True
+
+            single_families = []
+            combination_families = []
+            for family_filter in output_families_filter:
+                if not family_filter:
+                    continue
+                if isinstance(family_filter, (list, tuple)):
+                    _family_filter = [
+                        family.lower() for family in family_filter if family]
+                    combination_families.append(_family_filter)
+                else:
+                    single_families.append(family_filter.lower())
+
+            for family in single_families:
+                if family in families:
+                    return True
+
+            for family_combination in combination_families:
+                valid = all(
+                    family in families for family in family_combination)
+                if valid:
+                    return True
+            return False
+
+        slates_profiles = profile.get("slates") or {}
+        if not slates_profiles:
+            return slates_profiles
+
+        families = [family.lower() for family in families]
+
+        filtered_slates = {}
+        for filename_suffix, slate_def in slates_profiles.items():
+            slate_filters = slate_def.get("filter")
+            # If no filter on output preset, skip filtering and add output
+            # profile for farther processing
+            if not slate_filters:
+                filtered_slates[filename_suffix] = slate_def
+                continue
+
+            families_filters = slate_filters.get("families")
+            if not _families_filter_validation(families, families_filters):
+                continue
+
+            filtered_slates[filename_suffix] = slate_def
+
+        return filtered_slates
