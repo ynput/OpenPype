@@ -1,0 +1,69 @@
+import os
+
+import openpype.api
+from avalon import aftereffects
+
+
+class ExtractLocalRender(openpype.api.Extractor):
+    """Render RenderQueue locally."""
+
+    order = openpype.api.Extractor.order - 0.47
+    label = "Extract Local Render"
+    hosts = ["aftereffects"]
+    families = ["render"]
+
+    def process(self, instance):
+        stub = aftereffects.stub()
+        staging_dir = instance.data["stagingDir"]
+
+        stub.render(staging_dir)
+
+        # pull file name from Render Queue Output module
+        render_q = stub.get_render_info()
+        if not render_q:
+            raise ValueError("No file extension set in Render Queue")
+        _, ext = os.path.splitext(os.path.basename(render_q.file_name))
+        ext = ext[1:]
+
+        first_file_path = None
+        files = []
+        for file_name in os.listdir(staging_dir):
+            files.append(file_name)
+            if first_file_path is None:
+                first_file_path = os.path.join(staging_dir,
+                                               file_name)
+
+        repre_data = {
+            "frameStart": instance.data["frameStart"],
+            "frameEnd": instance.data["frameEnd"],
+            "name": ext,
+            "ext": ext,
+            "files": files,
+            "stagingDir": staging_dir
+        }
+        if instance.data["review"]:
+            repre_data["preview"] = True,
+            repre_data["tags"] = ["review", "ftrackreview"]
+
+        instance.data["representations"] = [repre_data]
+
+        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
+        # Generate thumbnail.
+        thumbnail_path = os.path.join(staging_dir,
+                                      "thumbnail.jpg")
+        args = [
+            ffmpeg_path, "-y",
+            "-i", first_file_path,
+            "-vf", "scale=300:-1",
+            "-vframes", "1",
+            thumbnail_path
+        ]
+        output = openpype.lib.run_subprocess(args)
+
+        instance.data["representations"].append({
+            "name": "thumbnail",
+            "ext": "jpg",
+            "files": os.path.basename(thumbnail_path),
+            "stagingDir": staging_dir,
+            "tags": ["thumbnail"]
+        })
