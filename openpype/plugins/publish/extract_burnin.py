@@ -159,7 +159,7 @@ class ExtractBurnin(openpype.api.Extractor):
             # Add context data burnin_data.
             burnin_data["context"] = {}
             for item in repre_burnin_defs:
-                for field, setting in repre_burnin_defs[item].items():
+                for _, setting in repre_burnin_defs[item].items():
                     if "context" in setting:
                         key = setting.split("[")[1].split("]")[0]
                         burnin_data["context"][key] = (
