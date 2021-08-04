@@ -177,7 +177,6 @@ def _load_interfaces():
             if os.path.exists(interfaces_path):
                 interface_paths.append(interfaces_path)
 
-    # print(interface_paths)
     for full_path in interface_paths:
         if not os.path.exists(full_path):
             continue
@@ -271,21 +270,14 @@ def _load_modules():
             fullpath = os.path.join(dirpath, filename)
             basename, ext = os.path.splitext(filename)
 
-            module = None
             # TODO add more logic how to define if folder is module or not
             # - check manifest and content of manifest
             if os.path.isdir(fullpath):
-                module = import_module_from_dirpath(
-                    dirpath, filename, modules_key
-                )
-                module_name = filename
+                import_module_from_dirpath(dirpath, filename, modules_key)
 
             elif ext in (".py", ):
                 module = import_filepath(fullpath)
-                module_name = basename
-
-            if module is not None:
-                setattr(openpype_modules, module_name, module)
+                setattr(openpype_modules, basename, module)
 
 
 class _OpenPypeInterfaceMeta(ABCMeta):
