@@ -124,6 +124,15 @@ class TimersManager(PypeModule, ITrayService, IIdleManager, IWebServerRoutes):
         }
         self.timer_started(None, data)
 
+    def get_task_time(self, project_name, asset_name, task_name):
+        time = {}
+        for module in self.modules:
+            time[module.name] = module.get_task_time(
+                project_name, asset_name, task_name
+            )
+
+        return time
+
     def timer_started(self, source_id, data):
         for module in self.modules:
             if module.id != source_id:
