@@ -17,6 +17,9 @@
             "slate-frame": "Add slate frame"
         },
         {
+            "generate-slate": "Add generated slate frame"
+        },
+        {
             "no-handles": "Skip handle frames"
         },
         {
