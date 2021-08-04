@@ -458,6 +458,9 @@
                             "multiplatform": true
                         },
                         {
+                            "type": "splitter"
+                        },
+                        {
                             "type": "path",
                             "key": "images_path",
                             "label": "Additional slate images path",
@@ -467,9 +470,6 @@
                     ]
                 },
                 {
-                    "type": "separator"
-                },
-                {
                     "type": "list",
                     "key": "profiles",
                     "label": "Profiles",
@@ -477,20 +477,8 @@
                         "type": "dict",
                         "children": [
                             {
-                                "key": "family",
-                                "label": "Families (main)",
-                                "type": "list",
-                                "object_type": "text"
-                            },
-                            {
                                 "key": "families",
-                                "label": "Families (additional)",
-                                "type": "list",
-                                "object_type": "text"
-                            },
-                            {
-                                "key": "tasks",
-                                "label": "Task names",
+                                "label": "Families",
                                 "type": "list",
                                 "object_type": "text"
                             },
@@ -498,20 +486,52 @@
                                 "type": "hosts-enum",
                                 "key": "hosts",
                                 "label": "Hosts",
-                                "hosts_filter": ["standalonepublisher", "nuke"],
                                 "multiselection": true
                             },
                             {
-                                "type": "collapsible-wrap",
-                                "label": "Slate template",
-                                "children": [
-                                    {
-                                        "key": "template",
-                                        "label": "",
-                                        "type": "raw-json",
-                                        "store_as_string": true
-                                    }
-                                ]
+                                "type": "splitter"
+                            },
+                            {
+                                "type": "dict-modifiable",
+                                "key": "slates",
+                                "label": "Slates",
+                                "highlight_content": true,
+                                "object_type": {
+                                    "type": "dict",
+                                    "children": [
+                                        {
+                                            "type": "boolean",
+                                            "key": "keep_input",
+                                            "label": "Keep source representation"
+                                        },
+                                        {
+                                            "type": "collapsible-wrap",
+                                            "label": "Slate template",
+                                            "children": [
+                                                {
+                                                    "key": "template",
+                                                    "label": "",
+                                                    "type": "raw-json",
+                                                    "store_as_string": true
+                                                }
+                                            ]
+                                        },
+                                        {
+                                            "key": "filter",
+                                            "label": "Additional Input filtering",
+                                            "type": "dict",
+                                            "highlight_content": true,
+                                            "children": [
+                                                {
+                                                    "key": "families",
+                                                    "label": "Families",
+                                                    "type": "list",
+                                                    "object_type": "text"
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
                             }
                         ]
                     }
