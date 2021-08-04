@@ -5,6 +5,7 @@ import sys
 import time
 import inspect
 import logging
+import threading
 import collections
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
@@ -84,6 +85,13 @@ class _InterfacesClass(_ModuleClass):
         return self.__attributes__[attr_name]
 
 
+class _LoadCache:
+    interfaces_lock = threading.Lock()
+    modules_lock = threading.Lock()
+    interfaces_loaded = False
+    modules_loaded = False
+
+
 def get_default_modules_dir():
     current_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -98,13 +106,26 @@ def get_module_dirs():
 
 
 def load_interfaces(force=False):
-    if not force and "openpype_interfaces" in sys.modules:
+    if _LoadCache.interfaces_loaded and not force:
         return
 
+    if not _LoadCache.interfaces_lock.locked():
+        with _LoadCache.interfaces_lock:
+            _load_interfaces()
+            _LoadCache.interfaces_loaded = True
+    else:
+        # If lock is locked wait until is finished
+        while _LoadCache.interfaces_lock.locked():
+            time.sleep(0.1)
+
+
+def _load_interfaces():
     from openpype.lib import import_filepath
 
-    sys.modules["openpype_interfaces"] = openpype_interfaces = (
-        _InterfacesClass("openpype_interfaces")
+    modules_key = "openpype_interfaces"
+
+    sys.modules[modules_key] = openpype_interfaces = (
+        _InterfacesClass(modules_key)
     )
 
     log = PypeLogger.get_logger("InterfacesLoader")
@@ -156,24 +177,32 @@ def load_interfaces(force=False):
 
 
 def load_modules(force=False):
-    # TODO add thread lock
+    if _LoadCache.modules_loaded and not force:
+        return
 
     # First load interfaces
     # - modules must not be imported before interfaces
     load_interfaces(force)
 
-    # Key under which will be modules imported in `sys.modules`
-    modules_key = "openpype_modules"
+    if not _LoadCache.modules_lock.locked():
+        with _LoadCache.modules_lock:
+            _load_modules()
+            _LoadCache.modules_loaded = True
+    else:
+        # If lock is locked wait until is finished
+        while _LoadCache.modules_lock.locked():
+            time.sleep(0.1)
 
-    # Check if are modules already loaded or no
-    if not force and modules_key in sys.modules:
-        return
 
+def _load_modules():
     # Import helper functions from lib
     from openpype.lib import (
         import_filepath,
         import_module_from_dirpath
     )
+
+    # Key under which will be modules imported in `sys.modules`
+    modules_key = "openpype_modules"
 
     # Change `sys.modules`
     sys.modules[modules_key] = openpype_modules = _ModuleClass(modules_key)
