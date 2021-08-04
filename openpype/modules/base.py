@@ -293,6 +293,9 @@ class _OpenPypeInterfaceMeta(ABCMeta):
     def __str__(self):
         return "<'OpenPypeInterface.{}'>".format(self.__name__)
 
+    def __repr__(self):
+        return str(self)
+
 
 @six.add_metaclass(_OpenPypeInterfaceMeta)
 class OpenPypeInterface:
