@@ -109,12 +109,14 @@ class _LoadCache:
 
 
 def get_default_modules_dir():
+    """Path to default OpenPype modules."""
     current_dir = os.path.abspath(os.path.dirname(__file__))
 
     return os.path.join(current_dir, "default_modules")
 
 
 def get_module_dirs():
+    """List of paths where OpenPype modules can be found."""
     dirpaths = [
         get_default_modules_dir()
     ]
@@ -122,6 +124,15 @@ def get_module_dirs():
 
 
 def load_interfaces(force=False):
+    """Load interfaces from modules into `openpype_interfaces`.
+
+    Only classes which inherit from `OpenPypeInterface` are loaded and stored.
+
+    Args:
+        force(bool): Force to load interfaces even if are already loaded.
+            This won't update already loaded and used (cached) interfaces.
+    """
+
     if _LoadCache.interfaces_loaded and not force:
         return
 
@@ -136,6 +147,7 @@ def load_interfaces(force=False):
 
 
 def _load_interfaces():
+    # Key under which will be modules imported in `sys.modules`
     from openpype.lib import import_filepath
 
     modules_key = "openpype_interfaces"
@@ -193,6 +205,22 @@ def _load_interfaces():
 
 
 def load_modules(force=False):
+    """Load OpenPype modules as python modules.
+
+    Modules does not load only classes (like in Interfaces) because there must
+    be ability to use inner code of module and be able to import it from one
+    defined place.
+
+    With this it is possible to import module's content from predefined module.
+
+    Function makes sure that `load_interfaces` was triggered. Modules import
+    has specific order which can't be changed.
+
+    Args:
+        force(bool): Force to load modules even if are already loaded.
+            This won't update already loaded and used (cached) modules.
+    """
+
     if _LoadCache.modules_loaded and not force:
         return
 
