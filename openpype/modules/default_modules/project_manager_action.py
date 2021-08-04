@@ -1,8 +1,8 @@
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayAction
 
 
-class ProjectManagerAction(PypeModule, ITrayAction):
+class ProjectManagerAction(OpenPypeModule, ITrayAction):
     label = "Project Manager (beta)"
     name = "project_manager"
     admin_action = True

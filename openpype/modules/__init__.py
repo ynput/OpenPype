@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from .base import (
-    PypeModule,
+    OpenPypeModule,
     OpenPypeInterface,
     ModulesManager,
     TrayModulesManager
@@ -8,7 +8,7 @@ from .base import (
 
 
 __all__ = (
-    "PypeModule",
+    "OpenPypeModule",
     "OpenPypeInterface",
 
     "ModulesManager",

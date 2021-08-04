@@ -244,7 +244,7 @@ class MissingInteface(OpenPypeInterface):
 
 
 @six.add_metaclass(ABCMeta)
-class PypeModule:
+class OpenPypeModule:
     """Base class of pype module.
 
     Attributes:
@@ -299,7 +299,7 @@ class PypeModule:
         return {}
 
 
-class OpenPypeAddOn(PypeModule):
+class OpenPypeAddOn(OpenPypeModule):
     pass
 
 
@@ -351,11 +351,11 @@ class ModulesManager:
             for name in dir(module):
                 modules_item = getattr(module, name, None)
                 # Filter globals that are not classes which inherit from
-                #   PypeModule
+                #   OpenPypeModule
                 if (
                     not inspect.isclass(modules_item)
-                    or modules_item is PypeModule
-                    or not issubclass(modules_item, PypeModule)
+                    or modules_item is OpenPypeModule
+                    or not issubclass(modules_item, OpenPypeModule)
                 ):
                     continue
 

@@ -1,5 +1,5 @@
 import os
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     IPluginPaths,
     ILaunchHookPaths
@@ -8,7 +8,7 @@ from openpype_interfaces import (
 SLACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-class SlackIntegrationModule(PypeModule, IPluginPaths, ILaunchHookPaths):
+class SlackIntegrationModule(OpenPypeModule, IPluginPaths, ILaunchHookPaths):
     """Allows sending notification to Slack channels during publishing."""
 
     name = "slack"

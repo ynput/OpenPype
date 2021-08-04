@@ -2,11 +2,11 @@ import os
 import platform
 import subprocess
 from openpype.lib import get_pype_execute_args
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayAction
 
 
-class StandAlonePublishAction(PypeModule, ITrayAction):
+class StandAlonePublishAction(OpenPypeModule, ITrayAction):
     label = "Publish"
     name = "standalonepublish_tool"
 

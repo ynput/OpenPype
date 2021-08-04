@@ -1,9 +1,9 @@
 from openpype.api import Logger
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayModule
 
 
-class LogViewModule(PypeModule, ITrayModule):
+class LogViewModule(OpenPypeModule, ITrayModule):
     name = "log_viewer"
 
     def initialize(self, modules_settings):

@@ -7,7 +7,7 @@ from .constants import (
     CLOCKIFY_FTRACK_USER_PATH,
     CLOCKIFY_FTRACK_SERVER_PATH
 )
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayModule,
     IPluginPaths,
@@ -17,7 +17,7 @@ from openpype_interfaces import (
 
 
 class ClockifyModule(
-    PypeModule,
+    OpenPypeModule,
     ITrayModule,
     IPluginPaths,
     IFtrackEventHandlerPaths,

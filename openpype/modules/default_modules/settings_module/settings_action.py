@@ -1,8 +1,8 @@
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayAction
 
 
-class SettingsAction(PypeModule, ITrayAction):
+class SettingsAction(OpenPypeModule, ITrayAction):
     """Action to show Setttings tool."""
     name = "settings"
     label = "Studio Settings"
@@ -71,7 +71,7 @@ class SettingsAction(PypeModule, ITrayAction):
             self.settings_window.reset()
 
 
-class LocalSettingsAction(PypeModule, ITrayAction):
+class LocalSettingsAction(OpenPypeModule, ITrayAction):
     """Action to show Setttings tool."""
     name = "local_settings"
     label = "Settings"

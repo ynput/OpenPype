@@ -1,14 +1,14 @@
 import platform
 import collections
 
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayService,
     IIdleManager
 )
 
 
-class IdleManager(PypeModule, ITrayService):
+class IdleManager(OpenPypeModule, ITrayService):
     """ Measure user's idle time in seconds.
     Idle time resets on keyboard/mouse input.
     Is able to emit signals at specific time idle.

@@ -1,14 +1,14 @@
 import os
 import openpype
 from openpype import resources
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayModule,
     IWebServerRoutes
 )
 
 
-class AvalonModule(PypeModule, ITrayModule, IWebServerRoutes):
+class AvalonModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
     name = "avalon"
 
     def initialize(self, modules_settings):

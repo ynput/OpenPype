@@ -2,7 +2,7 @@ import os
 import json
 import collections
 import openpype
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 
 from openpype_interfaces import (
     ITrayModule,
@@ -18,7 +18,7 @@ FTRACK_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 class FtrackModule(
-    PypeModule,
+    OpenPypeModule,
     ITrayModule,
     IPluginPaths,
     ITimersManager,

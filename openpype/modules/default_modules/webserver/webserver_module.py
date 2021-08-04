@@ -2,14 +2,14 @@ import os
 import socket
 
 from openpype import resources
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayService,
     IWebServerRoutes
 )
 
 
-class WebServerModule(PypeModule, ITrayService):
+class WebServerModule(OpenPypeModule, ITrayService):
     name = "webserver"
     label = "WebServer"
 

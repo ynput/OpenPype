@@ -1,8 +1,8 @@
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayAction
 
 
-class LauncherAction(PypeModule, ITrayAction):
+class LauncherAction(OpenPypeModule, ITrayAction):
     label = "Launcher"
     name = "launcher_tool"
 

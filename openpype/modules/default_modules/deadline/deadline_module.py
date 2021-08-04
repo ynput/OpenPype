@@ -1,9 +1,9 @@
 import os
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import IPluginPaths
 
 
-class DeadlineModule(PypeModule, IPluginPaths):
+class DeadlineModule(OpenPypeModule, IPluginPaths):
     name = "deadline"
 
     def initialize(self, modules_settings):

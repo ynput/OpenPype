@@ -2,14 +2,14 @@ import os
 import json
 import appdirs
 import requests
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import (
     ITrayModule,
     IWebServerRoutes
 )
 
 
-class MusterModule(PypeModule, ITrayModule, IWebServerRoutes):
+class MusterModule(OpenPypeModule, ITrayModule, IWebServerRoutes):
     """
     Module handling Muster Render credentials. This will display dialog
     asking for user credentials for Muster if not already specified.

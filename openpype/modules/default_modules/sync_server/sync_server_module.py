@@ -7,7 +7,7 @@ import copy
 
 from avalon.api import AvalonMongoDB
 
-from openpype.modules import PypeModule
+from openpype.modules import OpenPypeModule
 from openpype_interfaces import ITrayModule
 from openpype.api import (
     Anatomy,
@@ -29,7 +29,7 @@ from .utils import time_function, SyncStatus, EditableScopes
 log = PypeLogger().get_logger("SyncServer")
 
 
-class SyncServerModule(PypeModule, ITrayModule):
+class SyncServerModule(OpenPypeModule, ITrayModule):
     """
        Synchronization server that is syncing published files from local to
        any of implemented providers (like GDrive, S3 etc.)
