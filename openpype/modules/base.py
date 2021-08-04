@@ -31,6 +31,8 @@ class _ModuleClass(object):
         super(_ModuleClass, self).__setattr__("__attributes__", dict())
         super(_ModuleClass, self).__setattr__("__defaults__", set())
 
+        super(_ModuleClass, self).__setattr__("_log", None)
+
     def __getattr__(self, attr_name):
         if attr_name not in self.__attributes__:
             if attr_name in ("__path__"):
@@ -45,6 +47,12 @@ class _ModuleClass(object):
             yield module
 
     def __setattr__(self, attr_name, value):
+        if attr_name in self.__attributes__:
+            self.log.warning(
+                "Duplicated name \"{}\" in {}. Overriding.".format(
+                    self.name, attr_name
+                )
+            )
         self.__attributes__[attr_name] = value
 
     def __setitem__(self, key, value):
@@ -52,6 +60,14 @@ class _ModuleClass(object):
 
     def __getitem__(self, key):
         return getattr(self, key)
+
+    @property
+    def log(self):
+        if self._log is None:
+            super(_ModuleClass, self).__setattr__(
+                "_log", PypeLogger.get_logger(self.name)
+            )
+        return self._log
 
     def get(self, key, default=None):
         return self.__attributes__.get(key, default)
