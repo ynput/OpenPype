@@ -24,6 +24,10 @@ class ActionShowWhereIRun(BaseAction):
 
         return False
 
+    @property
+    def launch_identifier(self):
+        return self.identifier
+
     def launch(self, session, entities, event):
         # Don't show info when was launch from this session
         if session.event_hub.id == event.get("data", {}).get("event_hub_id"):

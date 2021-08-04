@@ -1,5 +1,13 @@
 {
     "publish": {
+        "ValidateEditorialAssetName": {
+            "enabled": true,
+            "optional": false
+        },
+        "ValidateVersion": {
+            "enabled": true,
+            "optional": false
+        },
         "IntegrateHeroVersion": {
             "enabled": true,
             "optional": true,
@@ -258,6 +266,13 @@
                     "hosts": [],
                     "tasks": [],
                     "enabled": true
+                }
+            ],
+            "open_workfile_tool_on_startup": [
+                {
+                    "hosts": [],
+                    "tasks": [],
+                    "enabled": false
                 }
             ],
             "sw_folders": {
