@@ -204,6 +204,8 @@
     - it is possible to add darker background with `"highlight_content"` (Default: `False`)
         - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
     - output is dictionary `{the "key": children values}`
+- for UI porposes was added `enum_is_horizontal` which will make combobox appear next to children inputs instead of on top of them (Default: `False`)
+    - this has extended ability of `enum_on_right` which will move combobox to right side next to children widgets (Default: `False`)
 ```
 # Example
 {

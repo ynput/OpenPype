@@ -428,9 +428,11 @@ class PrepareProjectLocal(BaseAction):
 
         # Trigger create project structure action
         if create_project_structure_checked:
-            self.trigger_action(
-                self.create_project_structure_identifier, event
+            trigger_identifier = "{}.{}".format(
+                self.create_project_structure_identifier,
+                self.process_identifier()
             )
+            self.trigger_action(trigger_identifier, event)
         return True
 
 
