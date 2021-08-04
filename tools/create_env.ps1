@@ -62,9 +62,12 @@ function Test-Python() {
     Write-Host "Detecting host Python ... " -NoNewline
     $python = "python"
     if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
-        $python = & pyenv which python
+        $pyenv_python = & pyenv which python
+        if (Test-Path -PathType Leaf -Path "$($pyenv_python)") {
+            $python = $pyenv_python
+        }
     }
-    if (-not (Get-Command "python3" -ErrorAction SilentlyContinue)) {
+    if (-not (Get-Command $python -ErrorAction SilentlyContinue)) {
         Write-Host "!!! Python not detected" -ForegroundColor red
         Set-Location -Path $current_dir
         Exit-WithCode 1

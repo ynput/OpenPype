@@ -254,7 +254,7 @@
             },
             "shot_add_tasks": {}
         },
-        "shot_add_tasks": {
+        "CollectInstances": {
             "custom_start_frame": 0,
             "timeline_frame_start": 900000,
             "timeline_frame_offset": 0,
