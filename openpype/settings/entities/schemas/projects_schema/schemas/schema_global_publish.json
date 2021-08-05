@@ -532,6 +532,11 @@
                                 "type": "splitter"
                             },
                             {
+                                "type": "boolean",
+                                "key": "keep_input",
+                                "label": "Keep source representation"
+                            },
+                            {
                                 "type": "dict-modifiable",
                                 "key": "slates",
                                 "label": "Slates",
@@ -539,11 +544,6 @@
                                 "object_type": {
                                     "type": "dict",
                                     "children": [
-                                        {
-                                            "type": "boolean",
-                                            "key": "keep_input",
-                                            "label": "Keep source representation"
-                                        },
                                         {
                                             "type": "collapsible-wrap",
                                             "label": "Slate template",
