@@ -423,3 +423,54 @@ class ProvidersEnum(BaseEnumEntity):
             self._current_value = value_on_not_set
 
         self.value_on_not_set = value_on_not_set
+
+
+class DeadlineUrlEnumEntity(BaseEnumEntity):
+    schema_types = ["deadline_url-enum"]
+
+    def _item_initalization(self):
+        self.multiselection = self.schema_data.get("multiselection", True)
+
+        self.enum_items = []
+        self.valid_keys = set()
+
+        if self.multiselection:
+            self.valid_value_types = (list,)
+            self.value_on_not_set = []
+        else:
+            for key in self.valid_keys:
+                if self.value_on_not_set is NOT_SET:
+                    self.value_on_not_set = key
+                    break
+
+            self.valid_value_types = (STRING_TYPE,)
+
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
+    def _get_enum_values(self):
+        system_settings_entity = self.get_entity_from_path("system_settings")
+
+        valid_keys = set()
+        enum_items_list = []
+        deadline_urls_entity = (system_settings_entity
+            ["modules"]
+            ["deadline"]
+            ["deadline_urls"]
+        )
+        for server_name, url_entity in deadline_urls_entity.items():
+            enum_items_list.append(
+                {server_name: "{}: {}".format(server_name, url_entity.value)})
+            valid_keys.add(server_name)
+        return enum_items_list, valid_keys
+
+    def set_override_state(self, *args, **kwargs):
+        super(DeadlineUrlEnumEntity, self).set_override_state(*args, **kwargs)
+
+        self.enum_items, self.valid_keys = self._get_enum_values()
+        new_value = []
+        for key in self._current_value:
+            if key in self.valid_keys:
+                new_value.append(key)
+        self._current_value = new_value
+

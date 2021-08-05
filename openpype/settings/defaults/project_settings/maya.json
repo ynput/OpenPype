@@ -31,6 +31,12 @@
                 "Main"
             ]
         },
+        "CreateRender": {
+            "enabled": true,
+            "defaults": [
+                "Main"
+            ]
+        },
         "CreateAnimation": {
             "enabled": true,
             "defaults": [
@@ -76,12 +82,6 @@
             ]
         },
         "CreatePointCache": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateRender": {
             "enabled": true,
             "defaults": [
                 "Main"

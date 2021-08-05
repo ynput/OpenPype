@@ -5,7 +5,7 @@ import os
 import json
 import re
 from copy import copy, deepcopy
-import sys
+from openpype.modules import ModulesManager
 import openpype.api
 
 from avalon import api, io
@@ -615,14 +615,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             instance["families"] = families
 
     def process(self, instance):
+        # type: (pyblish.api.Instance) -> None
         """Process plugin.
 
         Detect type of renderfarm submission and create and post dependend job
         in case of Deadline. It creates json file with metadata needed for
         publishing in directory of render.
 
-        :param instance: Instance data
-        :type instance: dict
+        Args:
+            instance (pyblish.api.Instance): Instance data.
+
         """
         data = instance.data.copy()
         context = instance.context
@@ -908,13 +910,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             }
 
         if submission_type == "deadline":
-            self.deadline_url = (
-                context.data["system_settings"]
-                ["modules"]
-                ["deadline"]
-                ["DEADLINE_REST_URL"]
-            )
-            assert self.deadline_url, "Requires DEADLINE_REST_URL"
+            manager = ModulesManager()
+            deadline_module = manager.modules_by_name["deadline"]
+            # get default deadline webservice url from deadline module
+            self.deadline_url = deadline_module.deadline_url
+            # if custom one is set in instance, use that
+            if instance.data.get("deadlineUrl"):
+                self.deadline_url = instance.data.get("deadlineUrl")
+            assert self.deadline_url, "Requires Deadline Webservice URL"
 
             self._submit_deadline_post_job(instance, render_job, instances)
 

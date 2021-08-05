@@ -36,6 +36,7 @@ from avalon import api
 import pyblish.api
 
 from openpype.hosts.maya.api import lib
+from openpype.modules import ModulesManager
 
 # Documentation for keys available at:
 # https://docs.thinkboxsoftware.com
@@ -264,12 +265,15 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         self._instance = instance
         self.payload_skeleton = copy.deepcopy(payload_skeleton_template)
-        self._deadline_url = (
-            context.data["system_settings"]
-            ["modules"]
-            ["deadline"]
-            ["DEADLINE_REST_URL"]
-        )
+
+        manager = ModulesManager()
+        deadline_module = manager.modules_by_name["deadline"]
+        # get default deadline webservice url from deadline module
+        self.deadline_url = deadline_module.deadline_url
+        # if custom one is set in instance, use that
+        if instance.data.get("deadlineUrl"):
+            self.deadline_url = instance.data.get("deadlineUrl")
+        assert self.deadline_url, "Requires Deadline Webservice URL"
 
         self._job_info = (
             context.data["project_settings"].get(

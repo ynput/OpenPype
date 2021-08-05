@@ -4,6 +4,7 @@ import os
 import json
 import appdirs
 import requests
+import six
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
@@ -12,7 +13,13 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
-from openpype.api import (get_system_settings, get_asset)
+from openpype.api import (
+    get_system_settings,
+    get_project_settings,
+    get_asset)
+from openpype.modules import ModulesManager
+
+from avalon.api import Session
 
 
 class CreateRender(plugin.Creator):
@@ -83,6 +90,19 @@ class CreateRender(plugin.Creator):
     def __init__(self, *args, **kwargs):
         """Constructor."""
         super(CreateRender, self).__init__(*args, **kwargs)
+        project_settings = get_project_settings(Session["AVALON_PROJECT"])
+        try:
+            self.deadline_servers = (
+                project_settings["deadline"]
+                                ["deadline_servers"]
+            )
+        except AttributeError:
+            # Handle situation were we had only one url for deadline.
+            manager = ModulesManager()
+            deadline_module = manager.modules_by_name["deadline"]
+            # get default deadline webservice url from deadline module
+            deadline_url = deadline_module.deadline_url
+            self.deadline_servers = {"default": deadline_url}
 
     def process(self):
         """Entry point."""
@@ -94,10 +114,10 @@ class CreateRender(plugin.Creator):
         use_selection = self.options.get("useSelection")
         with lib.undo_chunk():
             self._create_render_settings()
-            instance = super(CreateRender, self).process()
+            self.instance = super(CreateRender, self).process()
             # create namespace with instance
             index = 1
-            namespace_name = "_{}".format(str(instance))
+            namespace_name = "_{}".format(str(self.instance))
             try:
                 cmds.namespace(rm=namespace_name)
             except RuntimeError:
@@ -105,12 +125,19 @@ class CreateRender(plugin.Creator):
                 pass
 
             while cmds.namespace(exists=namespace_name):
-                namespace_name = "_{}{}".format(str(instance), index)
+                namespace_name = "_{}{}".format(str(self.instance), index)
                 index += 1
 
             namespace = cmds.namespace(add=namespace_name)
 
-            cmds.setAttr("{}.machineList".format(instance), lock=True)
+            # add Deadline server selection list
+            cmds.scriptJob(
+                attributeChange=[
+                    "{}.deadlineServers".format(self.instance),
+                    self._deadline_webservice_changed
+                ])
+
+            cmds.setAttr("{}.machineList".format(self.instance), lock=True)
             self._rs = renderSetup.instance()
             layers = self._rs.getRenderLayers()
             if use_selection:
@@ -122,7 +149,7 @@ class CreateRender(plugin.Creator):
                     render_set = cmds.sets(
                         n="{}:{}".format(namespace, layer.name()))
                     sets.append(render_set)
-                cmds.sets(sets, forceElement=instance)
+                cmds.sets(sets, forceElement=self.instance)
 
             # if no render layers are present, create default one with
             # asterisk selector
@@ -138,62 +165,56 @@ class CreateRender(plugin.Creator):
                 renderer = 'renderman'
 
             self._set_default_renderer_settings(renderer)
+        return self.instance
+
+    def _deadline_webservice_changed(self):
+        """Refresh Deadline server dependent options."""
+        # get selected server
+        webservice = self.deadline_servers[
+            self.server_aliases[
+                cmds.getAttr("{}.deadlineServers".format(self.instance))
+            ]
+        ]
+        pools = self._get_deadline_pools(webservice)
+        cmds.deleteAttr("{}.primaryPool".format(self.instance))
+        cmds.deleteAttr("{}.secondaryPool".format(self.instance))
+        cmds.addAttr(self.instance, longName="primaryPool",
+                     attributeType="enum",
+                     enumName=":".join(pools))
+        cmds.addAttr(self.instance, longName="secondaryPool",
+                     attributeType="enum",
+                     enumName=":".join(["-"] + pools))
+
+    def _get_deadline_pools(self, webservice):
+        # type: (str) -> list
+        """Get pools from Deadline.
+        Args:
+            webservice (str): Server url.
+        Returns:
+            list: Pools.
+        Throws:
+            RuntimeError: If deadline webservice is unreachable.
+            
+        """
+        argument = "{}/api/pools?NamesOnly=true".format(webservice)
+        try:
+            response = self._requests_get(argument)
+        except requests.exceptions.ConnectionError as exc:
+            msg = 'Cannot connect to deadline web service'
+            self.log.error(msg)
+            six.reraise(exc, RuntimeError('{} - {}'.format(msg, exc)))
+        if not response.ok:
+            self.log.warning("No pools retrieved")
+            return []
+
+        return response.json()
 
     def _create_render_settings(self):
         # get pools
-        pools = []
+        pool_names = []
 
-        system_settings = get_system_settings()["modules"]
-
-        deadline_enabled = system_settings["deadline"]["enabled"]
-        muster_enabled = system_settings["muster"]["enabled"]
-        deadline_url = system_settings["deadline"]["DEADLINE_REST_URL"]
-        muster_url = system_settings["muster"]["MUSTER_REST_URL"]
-
-        if deadline_enabled and muster_enabled:
-            self.log.error(
-                "Both Deadline and Muster are enabled. " "Cannot support both."
-            )
-            raise RuntimeError("Both Deadline and Muster are enabled")
-
-        if deadline_enabled:
-            argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
-            try:
-                response = self._requests_get(argument)
-            except requests.exceptions.ConnectionError as e:
-                msg = 'Cannot connect to deadline web service'
-                self.log.error(msg)
-                raise RuntimeError('{} - {}'.format(msg, e))
-            if not response.ok:
-                self.log.warning("No pools retrieved")
-            else:
-                pools = response.json()
-                self.data["primaryPool"] = pools
-                # We add a string "-" to allow the user to not
-                # set any secondary pools
-                self.data["secondaryPool"] = ["-"] + pools
-
-        if muster_enabled:
-            self.log.info(">>> Loading Muster credentials ...")
-            self._load_credentials()
-            self.log.info(">>> Getting pools ...")
-            try:
-                pools = self._get_muster_pools()
-            except requests.exceptions.HTTPError as e:
-                if e.startswith("401"):
-                    self.log.warning("access token expired")
-                    self._show_login()
-                    raise RuntimeError("Access token expired")
-            except requests.exceptions.ConnectionError:
-                self.log.error("Cannot connect to Muster API endpoint.")
-                raise RuntimeError("Cannot connect to {}".format(muster_url))
-            pool_names = []
-            for pool in pools:
-                self.log.info("  - pool: {}".format(pool["name"]))
-                pool_names.append(pool["name"])
-
-            self.data["primaryPool"] = pool_names
-
+        self.server_aliases = self.deadline_servers.keys()
+        self.data["deadlineServers"] = self.server_aliases
         self.data["suspendPublishJob"] = False
         self.data["review"] = True
         self.data["extendFrames"] = False
@@ -212,6 +233,41 @@ class CreateRender(plugin.Creator):
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 
+        system_settings = get_system_settings()["modules"]
+
+        deadline_enabled = system_settings["deadline"]["enabled"]
+        muster_enabled = system_settings["muster"]["enabled"]
+        muster_url = system_settings["muster"]["MUSTER_REST_URL"]
+
+        if deadline_enabled and muster_enabled:
+            self.log.error(
+                "Both Deadline and Muster are enabled. " "Cannot support both."
+            )
+            raise RuntimeError("Both Deadline and Muster are enabled")
+
+        if deadline_enabled:
+            pool_names = self._get_deadline_pools(
+                self.deadline_servers["default"])
+
+        if muster_enabled:
+            self.log.info(">>> Loading Muster credentials ...")
+            self._load_credentials()
+            self.log.info(">>> Getting pools ...")
+            try:
+                pools = self._get_muster_pools()
+            except requests.exceptions.HTTPError as e:
+                if e.startswith("401"):
+                    self.log.warning("access token expired")
+                    self._show_login()
+                    raise RuntimeError("Access token expired")
+            except requests.exceptions.ConnectionError:
+                self.log.error("Cannot connect to Muster API endpoint.")
+                raise RuntimeError("Cannot connect to {}".format(muster_url))
+            for pool in pools:
+                self.log.info("  - pool: {}".format(pool["name"]))
+                pool_names.append(pool["name"])
+
+        self.data["primaryPool"] = pool_names
         self.options = {"useSelection": False}  # Force no content
 
     def _load_credentials(self):

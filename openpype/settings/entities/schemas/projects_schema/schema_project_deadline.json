@@ -6,6 +6,12 @@
     "is_file": true,
     "children": [
         {
+            "type": "deadline_url-enum",
+            "key": "deadline_servers",
+            "label": "Deadline Webservice URLs",
+            "multiselect": true
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "publish",
