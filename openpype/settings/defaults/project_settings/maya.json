@@ -7,6 +7,22 @@
         "workfile": "ma",
         "yetiRig": "ma"
     },
+    "scriptsmenu": {
+        "name": "OpenPype Tools",
+        "definition": [
+            {
+                "type": "action",
+                "command": "import openpype.hosts.maya.api.commands as op_cmds; op_cmds.edit_shader_definitions()",
+                "sourcetype": "python",
+                "title": "Edit shader name definitions",
+                "tooltip": "Edit shader name definitions used in validation and renaming.",
+                "tags": [
+                    "pipeline",
+                    "shader"
+                ]
+            }
+        ]
+    },
     "create": {
         "CreateLook": {
             "enabled": true,
@@ -148,12 +164,14 @@
         },
         "ValidateModelName": {
             "enabled": false,
+            "database": true,
             "material_file": {
                 "windows": "",
                 "darwin": "",
                 "linux": ""
             },
-            "regex": "(.*)_(\\\\d)*_(.*)_(GEO)"
+            "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
+            "top_level_regex": ".*_GRP"
         },
         "ValidateTransformNamingSuffix": {
             "enabled": true,

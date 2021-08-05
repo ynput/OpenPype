@@ -327,7 +327,7 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "shot_add_tasks",
+                    "key": "CollectInstances",
                     "label": "Collect Clip Instances",
                     "is_group": true,
                     "children": [
