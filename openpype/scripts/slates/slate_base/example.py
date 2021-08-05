@@ -15,13 +15,13 @@ def example():
         "date": "11/02/2021",
         "artist": "John Murdoch",
         "notes": (
-                "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
-                " Aenean commodo ligula eget dolor. Aenean massa."
-                " Cum sociis natoque penatibus et magnis dis parturient montes,"
-                " nascetur ridiculus mus. Donec quam felis, ultricies nec,"
-                " pellentesque eu, pretium quis, sem. Nulla consequat massa quis"
-                " enim. Donec pede justo, fringilla vel,"
-                " aliquet nec, vulputate eget, arcu."
+            "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
+            " Aenean commodo ligula eget dolor. Aenean massa."
+            " Cum sociis natoque penatibus et magnis dis parturient montes,"
+            " nascetur ridiculus mus. Donec quam felis, ultricies nec,"
+            " pellentesque eu, pretium quis, sem. Nulla consequat massa quis"
+            " enim. Donec pede justo, fringilla vel,"
+            " aliquet nec, vulputate eget, arcu."
         ),
         "thumbnail_path": "C:/CODE/_PYPE_testing/slates_testing/thumbnail.png",
         "logo": "C:/CODE/_PYPE_testing/slates_testing/logo.jpg",
@@ -109,42 +109,42 @@ def example():
                 "type": "layer",
                 "name": "Metadata",
                 "items": [{
-                        "type": "table",
-                        "use_alternate_color": True,
-                        "values": [
-                            ["SHOT", "{shot}"],
-                            ["VERSION", "{version}"],
-                            ["LENGTH", "{length}"],
-                            ["DATE", "{date}"],
-                            ["ARTIST", "{artist}"],
-                            ["NOTES", "{notes}"]
-                        ],
+                    "type": "table",
+                    "use_alternate_color": True,
+                    "values": [
+                        ["SHOT", "{shot}"],
+                        ["VERSION", "{version}"],
+                        ["LENGTH", "{length}"],
+                        ["DATE", "{date}"],
+                        ["ARTIST", "{artist}"],
+                        ["NOTES", "{notes}"]
+                    ],
                     "style": {
-                            "table-item": {
-                                "padding": 0.01
-                            },
-                            "table-item-field[5:1]": {
-                                "word-wrap": True,
-                                "ellide": True,
-                                "max-lines": 4
-                            },
-                            "table-item-col[0]": {
-                                "font-size": 0.3,
-                                "font-color": "#527ce8",
-                                "font-bold": False,
-                                "ellide": False,
-                                "word-wrap": True,
-                                "max-lines": None,
-                                "alignment-horizontal": "right",
-                                "width": 2
-                            },
-                            "table-item-col[1]": {
-                                "font-size": 0.3,
-                                "padding-left": 0.1,
-                                "alignment-horizontal": "left",
-                                "width": 9
-                            }
-                            }
+                        "table-item": {
+                            "padding": 0.01
+                        },
+                        "table-item-field[5:1]": {
+                            "word-wrap": True,
+                            "ellide": True,
+                            "max-lines": 4
+                        },
+                        "table-item-col[0]": {
+                            "font-size": 0.3,
+                            "font-color": "#527ce8",
+                            "font-bold": False,
+                            "ellide": False,
+                            "word-wrap": True,
+                            "max-lines": None,
+                            "alignment-horizontal": "right",
+                            "width": 2
+                        },
+                        "table-item-col[1]": {
+                            "font-size": 0.3,
+                            "padding-left": 0.1,
+                            "alignment-horizontal": "left",
+                            "width": 9
+                        }
+                    }
                 }]
             }]
         }, {
