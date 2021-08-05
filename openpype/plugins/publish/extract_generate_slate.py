@@ -36,13 +36,15 @@ class ExtractGenerateSlate(openpype.api.Extractor):
             "name": "mp4",
             "ext": "mp4",
             "stagingDir": "C:/CODE/_PYPE_testing/testing_data/2d_shots/sh010/mov/cuts",
-            "files": "mainsq02sh010_plate_sh010_h264burnin.mp4",
+            "files": "mainsq01sh100_plate_sh010_h264burnin.mp4",
             "tags": ["generate-slate"]
         }]
 
         self.log.debug("_ representations in: {}".format(
             representations
         ))
+
+        self.new_representations = []
 
         # get context data
         anatomy_data = instance.data["anatomyData"]
@@ -83,9 +85,25 @@ class ExtractGenerateSlate(openpype.api.Extractor):
             # generate slates
             self.generate_slates(repre, instance, slate_profiles)
 
+        # remove representations
+        if not profile["keep_input"]:
+            self.log.info(profile["keep_input"])
+            self.remove_representation(instance, repre)
+
+        # add new representations
+        instance.data["representations"] += self.new_representations
+
         self.log.debug("_ representations out: {}".format(
-            representations
+            instance.data["representations"]
         ))
+
+    def remove_representation(self, instance, repre):
+        file = repre["files"]
+        dir = repre["stagingDir"]
+        path = os.path.join(dir, file)
+        self.log.warning("removing: {}".format(path))
+        os.remove(path)
+        instance.data["representations"].remove(repre)
 
     def generate_slates(self, repre, instance, slate_profiles):
         formating_data = {}
@@ -125,7 +143,6 @@ class ExtractGenerateSlate(openpype.api.Extractor):
         # get width and height from representation
         slate_width, slate_height = self.get_output_size(repre)
 
-        remove_repre = []
         # iterate slate profiles and generate new
         for suffix, slate_def in slate_profiles.items():
             suffix = re.sub(
@@ -143,19 +160,15 @@ class ExtractGenerateSlate(openpype.api.Extractor):
 
             # Connecting generated slate image to input video
             new_repre = self.concut_slate_to_video(repre, slate_path, suffix)
-            instance.data["representations"].append(new_repre)
+            self.new_representations.append(new_repre)
 
             # remove intermediate files
             # os.remove(slate_path)
 
-            remove_repre.append(slate_def["keep_input"])
-
         # remove temp files
         os.remove(thumbnail_path)
 
-        # delete original representation only if allowed in settings
-        if not any(remove_repre):
-            instance.data["representations"].remove(repre)
+
 
     def concut_slate_to_video(self, repre, slate_path, suffix):
         new_repre = copy.deepcopy(repre)
@@ -186,7 +199,7 @@ class ExtractGenerateSlate(openpype.api.Extractor):
         filename, _ext = os.path.splitext(input_file)
         # use original ext if ext input not defined
         if not ext:
-            ext = _ext
+            ext = _ext[1:]
 
         out_file_name = filename + suffix + "." + ext
 
