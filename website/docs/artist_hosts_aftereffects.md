@@ -55,7 +55,9 @@ will be changed.
 
 #### RenderQueue
 
-AE's Render Queue is required for publishing locally or on a farm. Artist needs to configure expected result format (extension, resolution) in the Render Queue. Currently its expected to have only single render item and single output module in the Render Queue.
+AE's Render Queue is required for publishing locally or on a farm. Artist needs to configure expected result format (extension, resolution) in the Render Queue in an Output module. Currently its expected to have only single render item and single output module in the Render Queue.
+
+AE might throw some warning windows during publishing locally, so please pay attention to them in a case publishing seems to be stuck in a `Extract Local Render`.
 
 When you are ready to share your work, you will need to publish it. This is done by opening the `Publish` by clicking the corresponding button in the OpenPype Panel.
 
