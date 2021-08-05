@@ -8,6 +8,46 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
+            "key": "ValidateEditorialAssetName",
+            "label": "Validate Editorial Asset Name",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "ValidateVersion",
+            "label": "Validate Version",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
             "key": "IntegrateHeroVersion",
             "label": "IntegrateHeroVersion",
             "is_group": true,
