@@ -18,7 +18,7 @@ class ExtractGenerateSlate(openpype.api.Extractor):
     """
 
     label = "Extract generated slates"
-    order = pyblish.api.ValidatorOrder - 0.1
+    order = pyblish.api.ExtractorOrder + 0.031
     families = ["review"]
     hosts = [
         "nuke",
@@ -32,22 +32,21 @@ class ExtractGenerateSlate(openpype.api.Extractor):
 
     def process(self, instance):
         # for dev
-        instance.data["representations"] = representations = [{
-            "name": "mp4",
-            "ext": "mp4",
-            "stagingDir": "C:/CODE/_PYPE_testing/testing_data/2d_shots/sh010/mov/cuts",
-            "files": "mainsq01sh100_plate_sh010_h264burnin.mp4",
-            "tags": ["generate-slate"]
-        }]
+        representations = instance.data["representations"]
 
         self.log.debug("_ representations in: {}".format(
             representations
         ))
 
         self.new_representations = []
+        self.to_clean_list = []
 
         # get context data
         anatomy_data = instance.data["anatomyData"]
+        self.fps = anatomy_data.get("fps")
+
+        # get ffmpeg path
+        self.ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         # get filtering data
         host_name = anatomy_data["app"]
@@ -93,17 +92,16 @@ class ExtractGenerateSlate(openpype.api.Extractor):
         # add new representations
         instance.data["representations"] += self.new_representations
 
+        # removing temp files
+        for f in self.to_clean_list:
+            os.remove(f)
+            self.log.debug("Removed: `{}`".format(f))
+
         self.log.debug("_ representations out: {}".format(
-            instance.data["representations"]
+            pformat(instance.data["representations"])
         ))
 
-    def remove_representation(self, instance, repre):
-        file = repre["files"]
-        dir = repre["stagingDir"]
-        path = os.path.join(dir, file)
-        self.log.warning("removing: {}".format(path))
-        os.remove(path)
-        instance.data["representations"].remove(repre)
+        instance.data["families"].append("slate")
 
     def generate_slates(self, repre, instance, slate_profiles):
         formating_data = {}
@@ -159,32 +157,120 @@ class ExtractGenerateSlate(openpype.api.Extractor):
             )
 
             # Connecting generated slate image to input video
-            new_repre = self.concut_slate_to_video(repre, slate_path, suffix)
+            new_repre = self.concut_slate_to_video(
+                repre, slate_path, suffix, slate_width, slate_height)
             self.new_representations.append(new_repre)
 
-            # remove intermediate files
-            # os.remove(slate_path)
+            # add to later clearing
+            self.to_clean_list.append(slate_path)
 
-        # remove temp files
-        os.remove(thumbnail_path)
+        # add to later clearing
+        self.to_clean_list.append(thumbnail_path)
 
-
-
-    def concut_slate_to_video(self, repre, slate_path, suffix):
+    def concut_slate_to_video(self, repre, slate_path, suffix, width, height):
         new_repre = copy.deepcopy(repre)
-        slate_v_path = self.get_output_path(repre, "_sv")
+        video_input_path = self.get_input_path(repre)
+        slate_v_path = self.get_output_path(repre, (suffix + "_slateVideo"))
         output_concut_path = self.get_output_path(repre, suffix)
 
+        # add slate video frame to removal list
+        self.to_clean_list.append(slate_v_path)
+
         # convert slate image to one frame video
+        input_args = []
+        output_args = []
+
+        # preset's input data
+        if repre.get("outputDef"):
+            input_args.extend(repre["outputDef"].get('input', []))
+
+        input_args.append("-loop 1 -i {}".format(slate_path))
+        input_args.extend([
+            "-r {}".format(repre.get("fps") or self.fps),
+            "-vframes 1"]
+        )
+
+        # Codecs are copied from source for whole input
+        codec_args = self.codec_args(repre)
+        output_args.extend(codec_args)
+
+        # make sure colors are correct
+        output_args.extend([
+            "-vf scale=out_color_matrix=bt709",
+            "-color_primaries bt709",
+            "-color_trc bt709",
+            "-colorspace bt709"
+        ])
+
+        # overrides output file
+        output_args.append("-y")
+        output_args.append(slate_v_path)
+
+        slate_args = [
+            "\"{}\"".format(self.ffmpeg_path),
+            " ".join(input_args),
+            " ".join(output_args)
+        ]
+        slate_subprcs_cmd = " ".join(slate_args)
+
+        # run slate generation subprocess
+        self.log.debug("Slate Executing: {}".format(slate_subprcs_cmd))
+        openpype.api.run_subprocess(
+            slate_subprcs_cmd, shell=True, logger=self.log
+        )
+
         # generate concut text file
-        # crate ffmpeg concut command
-        # ffmpeg concut to new file
+        conc_text_path = self.get_output_path(
+            repre, (suffix + "_concut"), "txt")
+
+        self.to_clean_list.append(conc_text_path)
+        self.log.debug("__ conc_text_path: {}".format(conc_text_path))
+
+        new_line = "\n"
+        with open(conc_text_path, "w") as conc_text_f:
+            conc_text_f.writelines([
+                "file {}".format(
+                    slate_v_path.replace("\\", "/")),
+                new_line,
+                "file {}".format(video_input_path.replace("\\", "/"))
+            ])
+
+        # concat slate and videos together
+        conc_input_args = [
+            "-y",
+            "-f concat",
+            "-safe 0",
+            "-i {}".format(conc_text_path)
+        ]
+
+        conc_output_args = [
+            "-c copy",
+            output_concut_path
+        ]
+        concat_args = [
+            "\"{}\"".format(self.ffmpeg_path),
+            " ".join(conc_input_args),
+            " ".join(conc_output_args)
+        ]
+        concat_subprcs_cmd = " ".join(concat_args)
+
+        # ffmpeg concat subprocess
+        self.log.debug("Executing concat: {}".format(concat_subprcs_cmd))
+        openpype.api.run_subprocess(
+            concat_subprcs_cmd, shell=True, logger=self.log
+        )
+        new_name = repre["name"] + suffix
+        frame_start = int(repre["frameStart"])
 
         new_repre.update({
-            "name": repre["name"] + suffix,
+            "name": new_name,
             "files": os.path.basename(output_concut_path),
-            "stagingDir": os.path.dirname(output_concut_path)
+            "stagingDir": os.path.dirname(output_concut_path),
+            "outputName": new_name,
+            "frameStart": frame_start - 1,
+            "frameStartFtrack": frame_start - 1
         })
+
         return new_repre
 
     def get_input_path(self, repre):
@@ -227,7 +313,6 @@ class ExtractGenerateSlate(openpype.api.Extractor):
         return (width, height)
 
     def generate_thumbnail(self, repre):
-        ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         full_input_path = self.get_input_path(repre)
         full_output_path = self.get_output_path(repre, "_thumb", "jpg")
@@ -235,7 +320,7 @@ class ExtractGenerateSlate(openpype.api.Extractor):
         self.log.info("output {}".format(full_output_path))
 
         jpeg_items = [
-            "\"{}\"".format(ffmpeg_path),
+            "\"{}\"".format(self.ffmpeg_path),
             "-y",
             "-i {}".format(full_input_path),
             "-vframes 1",
@@ -265,6 +350,63 @@ class ExtractGenerateSlate(openpype.api.Extractor):
         if not family:
             family = instance.data["families"][0]
         return family
+
+    def remove_representation(self, instance, repre):
+        file = repre["files"]
+        dir = repre["stagingDir"]
+        path = os.path.join(dir, file)
+        self.log.warning("removing: {}".format(path))
+        os.remove(path)
+        instance.data["representations"].remove(repre)
+
+    def codec_args(self, repre):
+        """Detect possible codec arguments from representation."""
+        codec_args = []
+
+        # Get one filename of representation files
+        filename = repre["files"]
+        # If files is list then pick first filename in list
+        if isinstance(filename, (tuple, list)):
+            filename = filename[0]
+        # Get full path to the file
+        full_input_path = os.path.join(repre["stagingDir"], filename)
+
+        try:
+            # Get information about input file via ffprobe tool
+            streams = openpype.lib.ffprobe_streams(full_input_path, self.log)
+        except Exception:
+            self.log.warning(
+                "Could not get codec data from input.",
+                exc_info=True
+            )
+            return codec_args
+
+        # Try to find first stream that is not an audio
+        no_audio_stream = None
+        for stream in streams:
+            if stream.get("codec_type") != "audio":
+                no_audio_stream = stream
+                break
+
+        if no_audio_stream is None:
+            self.log.warning((
+                "Couldn't find stream that is not an audio from file \"{}\""
+            ).format(full_input_path))
+            return codec_args
+
+        codec_name = no_audio_stream.get("codec_name")
+        if codec_name:
+            codec_args.append("-codec:v {}".format(codec_name))
+
+        profile_name = no_audio_stream.get("profile")
+        if profile_name:
+            profile_name = profile_name.replace(" ", "_").lower()
+            codec_args.append("-profile:v {}".format(profile_name))
+
+        pix_fmt = no_audio_stream.get("pix_fmt")
+        if pix_fmt:
+            codec_args.append("-pix_fmt {}".format(pix_fmt))
+        return codec_args
 
     @staticmethod
     def filter_inputs_by_families(profile, families):
