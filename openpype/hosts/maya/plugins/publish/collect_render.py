@@ -51,6 +51,12 @@ import pyblish.api
 from avalon import maya, api
 from openpype.hosts.maya.api.expected_files import ExpectedFiles
 from openpype.hosts.maya.api import lib
+from openpype.api import (
+    get_system_settings,
+    get_project_settings
+)
+
+from avalon.api import Session
 
 
 class CollectMayaRender(pyblish.api.ContextPlugin):
@@ -86,6 +92,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         asset = api.Session["AVALON_ASSET"]
         workspace = context.data["workspaceDir"]
 
+        deadline_settings = get_system_settings()["modules"]["deadline"]
+
+        if deadline_settings["enabled"]:
+            deadline_url = self._collect_deadline_url(render_instance)
         self._rs = renderSetup.instance()
         current_layer = self._rs.getVisibleRenderLayer()
         maya_render_layers = {
@@ -263,6 +273,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                         "vrayUseReferencedAovs") or False
             }
 
+            if deadline_url:
+                data["deadlineUrl"] = deadline_url
+
             if self.sync_workfile_version:
                 data["version"] = context.data["version"]
 
@@ -392,11 +405,13 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         rset = self.maya_layers[layer].renderSettingsCollectionInstance()
         return rset.getOverrides()
 
-    def get_render_attribute(self, attr, layer):
+    @staticmethod
+    def get_render_attribute(attr, layer):
         """Get attribute from render options.
 
         Args:
-            attr (str): name of attribute to be looked up.
+            attr (str): name of attribute to be looked up
+            layer (str): name of render layer
 
         Returns:
             Attribute value
@@ -405,3 +420,45 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         return lib.get_attr_in_layer(
             "defaultRenderGlobals.{}".format(attr), layer=layer
         )
+
+    @staticmethod
+    def _collect_deadline_url(render_instance):
+        # type: (pyblish.api.Instance) -> str
+        """Get Deadline Webservice URL from render instance.
+
+        This will get all configured Deadline Webservice URLs and create
+        subset of them based upon project configuration. It will then take
+        `deadlineServers` from render instance that is now basically `int`
+        index of that list.
+
+        Args:
+            render_instance (pyblish.api.Instance): Render instance created
+                by Creator in Maya.
+
+        Returns:
+            str: Selected Deadline Webservice URL.
+
+        """
+
+        deadline_settings = get_system_settings()["modules"]["deadline"]
+        project_settings = get_project_settings(Session["AVALON_PROJECT"])
+        try:
+            default_servers = deadline_settings["deadline_urls"]
+            project_servers = (
+                project_settings["deadline"]
+                ["deadline_servers"]
+            )
+            deadline_servers = dict(
+                (k, default_servers[k])
+                for k in project_servers if k in default_servers)
+        except AttributeError:
+            # Handle situation were we had only one url for deadline.
+            deadline_url = render_instance.context.data["defaultDeadline"]
+            deadline_servers = {"default": deadline_url}
+
+        deadline_url = deadline_servers[
+            list(deadline_servers.keys())[
+                int(render_instance.data.get("deadlineServers"))
+            ]
+        ]
+        return deadline_url

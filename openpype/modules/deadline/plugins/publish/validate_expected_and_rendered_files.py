@@ -6,7 +6,6 @@ from avalon.vendor import requests
 
 from openpype.lib.abstract_submit_deadline import requests_get
 from openpype.lib.delivery import collect_frames
-from openpype.modules import ModulesManager
 
 
 class ValidateExpectedFiles(pyblish.api.InstancePlugin):
@@ -22,6 +21,7 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
     allow_user_override = True
 
     def process(self, instance):
+        self.instance = instance
         frame_list = self._get_frame_list(instance.data["render_job_id"])
 
         for repre in instance.data["representations"]:
@@ -129,13 +129,11 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
             Might be different than job info saved in metadata.json if user
             manually changes job pre/during rendering.
         """
-        manager = ModulesManager()
-        deadline_module = manager.modules_by_name["deadline"]
         # get default deadline webservice url from deadline module
-        deadline_url = deadline_module.deadline_url
+        deadline_url = self.instance.context.data["defaultDeadline"]
         # if custom one is set in instance, use that
-        if instance.data.get("deadlineUrl"):
-            deadline_url = instance.data.get("deadlineUrl")
+        if self.instance.data.get("deadlineUrl"):
+            deadline_url = self.instance.data.get("deadlineUrl")
         assert deadline_url, "Requires Deadline Webservice URL"
 
         url = "{}/api/jobs?JobID={}".format(deadline_url, job_id)

@@ -5,6 +5,7 @@ import json
 import appdirs
 import requests
 import six
+import sys
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
@@ -90,12 +91,20 @@ class CreateRender(plugin.Creator):
     def __init__(self, *args, **kwargs):
         """Constructor."""
         super(CreateRender, self).__init__(*args, **kwargs)
+        deadline_settings = get_system_settings()["modules"]["deadline"]
+        if not deadline_settings["enabled"]:
+            self.deadline_servers = {}
+            return
         project_settings = get_project_settings(Session["AVALON_PROJECT"])
         try:
-            self.deadline_servers = (
+            default_servers = deadline_settings["deadline_urls"]
+            project_servers = (
                 project_settings["deadline"]
                                 ["deadline_servers"]
             )
+            self.deadline_servers = dict(
+                (k, default_servers[k])
+                for k in project_servers if k in default_servers)
         except AttributeError:
             # Handle situation were we had only one url for deadline.
             manager = ModulesManager()
@@ -131,11 +140,12 @@ class CreateRender(plugin.Creator):
             namespace = cmds.namespace(add=namespace_name)
 
             # add Deadline server selection list
-            cmds.scriptJob(
-                attributeChange=[
-                    "{}.deadlineServers".format(self.instance),
-                    self._deadline_webservice_changed
-                ])
+            if self.deadline_servers:
+                cmds.scriptJob(
+                    attributeChange=[
+                        "{}.deadlineServers".format(self.instance),
+                        self._deadline_webservice_changed
+                    ])
 
             cmds.setAttr("{}.machineList".format(self.instance), lock=True)
             self._rs = renderSetup.instance()
@@ -170,6 +180,7 @@ class CreateRender(plugin.Creator):
     def _deadline_webservice_changed(self):
         """Refresh Deadline server dependent options."""
         # get selected server
+        from maya import cmds
         webservice = self.deadline_servers[
             self.server_aliases[
                 cmds.getAttr("{}.deadlineServers".format(self.instance))
@@ -194,7 +205,7 @@ class CreateRender(plugin.Creator):
             list: Pools.
         Throws:
             RuntimeError: If deadline webservice is unreachable.
-            
+
         """
         argument = "{}/api/pools?NamesOnly=true".format(webservice)
         try:
@@ -202,7 +213,10 @@ class CreateRender(plugin.Creator):
         except requests.exceptions.ConnectionError as exc:
             msg = 'Cannot connect to deadline web service'
             self.log.error(msg)
-            six.reraise(exc, RuntimeError('{} - {}'.format(msg, exc)))
+            six.reraise(
+                RuntimeError,
+                RuntimeError('{} - {}'.format(msg, exc)),
+                sys.exc_info()[2])
         if not response.ok:
             self.log.warning("No pools retrieved")
             return []
@@ -268,6 +282,9 @@ class CreateRender(plugin.Creator):
                 pool_names.append(pool["name"])
 
         self.data["primaryPool"] = pool_names
+        # We add a string "-" to allow the user to not
+        # set any secondary pools
+        self.data["secondaryPool"] = ["-"] + pool_names
         self.options = {"useSelection": False}  # Force no content
 
     def _load_credentials(self):
@@ -388,6 +405,7 @@ class CreateRender(plugin.Creator):
 
         if renderer == "arnold":
             # set format to exr
+
             cmds.setAttr(
                 "defaultArnoldDriver.ai_translator", "exr", type="string")
             # enable animation

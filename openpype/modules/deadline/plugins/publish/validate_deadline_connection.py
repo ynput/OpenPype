@@ -1,7 +1,6 @@
 import pyblish.api
 
 from avalon.vendor import requests
-from openpype.modules import ModulesManager
 import os
 
 
@@ -14,11 +13,8 @@ class ValidateDeadlineConnection(pyblish.api.InstancePlugin):
     families = ["renderlayer"]
 
     def process(self, instance):
-
-        manager = ModulesManager()
-        deadline_module = manager.modules_by_name["deadline"]
         # get default deadline webservice url from deadline module
-        deadline_url = deadline_module.deadline_url
+        deadline_url = instance.context.data["defaultDeadline"]
         # if custom one is set in instance, use that
         if instance.data.get("deadlineUrl"):
             deadline_url = instance.data.get("deadlineUrl")

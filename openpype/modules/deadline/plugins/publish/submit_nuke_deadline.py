@@ -4,7 +4,6 @@ import getpass
 
 from avalon import api
 from avalon.vendor import requests
-from openpype.modules import ModulesManager
 import re
 import pyblish.api
 import nuke
@@ -43,14 +42,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         node = instance[0]
         context = instance.context
 
-        manager = ModulesManager()
-        deadline_module = manager.modules_by_name["deadline"]
         # get default deadline webservice url from deadline module
-        self.deadline_url = deadline_module.deadline_url
+        deadline_url = instance.context.data["defaultDeadline"]
         # if custom one is set in instance, use that
         if instance.data.get("deadlineUrl"):
-            self.deadline_url = instance.data.get("deadlineUrl")
-        assert self.deadline_url, "Requires Deadline Webservice URL"
+            deadline_url = instance.data.get("deadlineUrl")
+        assert deadline_url, "Requires Deadline Webservice URL"
 
         self.deadline_url = "{}/api/jobs".format(deadline_url)
         self._comment = context.data.get("comment", "")
