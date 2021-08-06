@@ -316,6 +316,7 @@ class Controller(QtCore.QObject):
                 self.was_skipped.emit(plugin)
                 continue
 
+            in_collect_stage = self.collect_state == 0
             if plugin.__instanceEnabled__:
                 instances = pyblish.logic.instances_by_plugin(
                     self.context, plugin
@@ -325,7 +326,10 @@ class Controller(QtCore.QObject):
                     continue
 
                 for instance in instances:
-                    if instance.data.get("publish") is False:
+                    if (
+                        not in_collect_stage
+                        and instance.data.get("publish") is False
+                    ):
                         pyblish.logic.log.debug(
                             "%s was inactive, skipping.." % instance
                         )
@@ -338,7 +342,7 @@ class Controller(QtCore.QObject):
                     yield (plugin, instance)
             else:
                 families = util.collect_families_from_instances(
-                    self.context, only_active=True
+                    self.context, only_active=not in_collect_stage
                 )
                 plugins = pyblish.logic.plugins_by_families(
                     [plugin], families
