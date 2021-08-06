@@ -17,6 +17,7 @@ class ExtractLocalRender(openpype.api.Extractor):
     def process(self, instance):
         stub = aftereffects.stub()
         staging_dir = instance.data["stagingDir"]
+        self.log.info("staging_dir::{}".format(staging_dir))
 
         stub.render(staging_dir)
 
@@ -29,6 +30,7 @@ class ExtractLocalRender(openpype.api.Extractor):
 
         first_file_path = None
         files = []
+        self.log.info("files::{}".format(os.listdir(staging_dir)))
         for file_name in os.listdir(staging_dir):
             files.append(file_name)
             if first_file_path is None:
