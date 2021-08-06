@@ -50,8 +50,7 @@ class ExtractLocalRender(openpype.api.Extractor):
             "stagingDir": staging_dir
         }
         if instance.data["review"]:
-            repre_data["preview"] = True,
-            repre_data["tags"] = ["review", "ftrackreview"]
+            repre_data["tags"] = ["review"]
 
         instance.data["representations"] = [repre_data]
 
