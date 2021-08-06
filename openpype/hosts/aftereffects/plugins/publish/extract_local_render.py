@@ -37,12 +37,16 @@ class ExtractLocalRender(openpype.api.Extractor):
                 first_file_path = os.path.join(staging_dir,
                                                file_name)
 
+        resulting_files = files
+        if len(files) == 1:
+            resulting_files = files[0]
+
         repre_data = {
             "frameStart": instance.data["frameStart"],
             "frameEnd": instance.data["frameEnd"],
             "name": ext,
             "ext": ext,
-            "files": files,
+            "files": resulting_files,
             "stagingDir": staging_dir
         }
         if instance.data["review"]:
