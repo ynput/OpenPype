@@ -55,7 +55,8 @@ class LoadClip(phiero.SequenceLoader):
             **context["representation"]["context"])
 
         # set colorspace
-        track_item.source().setSourceMediaColourTransform(colorspace)
+        if colorspace:
+            track_item.source().setSourceMediaColourTransform(colorspace)
 
         # add additional metadata from the version to imprint Avalon knob
         add_keys = [
@@ -118,7 +119,8 @@ class LoadClip(phiero.SequenceLoader):
         clip.reconnectMedia(file)
 
         # set colorspace
-        clip.setSourceMediaColourTransform(colorspace)
+        if colorspace:
+            clip.setSourceMediaColourTransform(colorspace)
 
         # add additional metadata from the version to imprint Avalon knob
         add_keys = [
