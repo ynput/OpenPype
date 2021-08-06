@@ -1,3 +1,4 @@
+import sys
 import json
 import collections
 import ftrack_api
@@ -90,27 +91,28 @@ class PushHierValuesToNonHier(ServerAction):
 
         try:
             result = self.propagate_values(session, event, entities)
-            job["status"] = "done"
-            session.commit()
 
-            return result
-
-        except Exception:
-            session.rollback()
-            job["status"] = "failed"
-            session.commit()
-
+        except Exception as exc:
             msg = "Pushing Custom attribute values to task Failed"
+
             self.log.warning(msg, exc_info=True)
+
+            session.rollback()
+
+            description = "{} (Download traceback)".format(msg)
+            self.add_traceback_to_job(
+                job, session, sys.exc_info(), description
+            )
+
             return {
                 "success": False,
-                "message": msg
+                "message": "Error: {}".format(str(exc))
             }
 
-        finally:
-            if job["status"] == "running":
-                job["status"] = "failed"
-                session.commit()
+        job["status"] = "done"
+        session.commit()
+
+        return result
 
     def attrs_configurations(self, session, object_ids, interest_attributes):
         attrs = session.query(self.cust_attrs_query.format(

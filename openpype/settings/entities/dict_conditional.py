@@ -144,6 +144,13 @@ class DictConditionalEntity(ItemEntity):
 
         self.enum_entity = None
 
+        # GUI attributes
+        self.enum_is_horizontal = self.schema_data.get(
+            "enum_is_horizontal", False
+        )
+        # `enum_on_right` can be used only if
+        self.enum_on_right = self.schema_data.get("enum_on_right", False)
+
         self.highlight_content = self.schema_data.get(
             "highlight_content", False
         )
@@ -185,13 +192,13 @@ class DictConditionalEntity(ItemEntity):
         children_def_keys = []
         for children_def in self.enum_children:
             if not isinstance(children_def, dict):
-                raise EntitySchemaError((
+                raise EntitySchemaError(self, (
                     "Children definition under key 'enum_children' must"
                     " be a dictionary."
                 ))
 
             if "key" not in children_def:
-                raise EntitySchemaError((
+                raise EntitySchemaError(self, (
                     "Children definition under key 'enum_children' miss"
                     " 'key' definition."
                 ))
@@ -286,7 +293,7 @@ class DictConditionalEntity(ItemEntity):
             "multiselection": False,
             "enum_items": enum_items,
             "key": enum_key,
-            "label": self.enum_label or enum_key
+            "label": self.enum_label
         }
 
         enum_entity = self.create_schema_object(enum_schema, self)

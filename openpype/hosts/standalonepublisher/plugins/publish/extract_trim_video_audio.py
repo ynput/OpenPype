@@ -60,7 +60,7 @@ class ExtractTrimVideoAudio(openpype.api.Extractor):
                 ]
 
             args = [
-                ffmpeg_path,
+                f"\"{ffmpeg_path}\"",
                 "-ss", str(start / fps),
                 "-i", f"\"{video_file_path}\"",
                 "-t", str(dur / fps)

@@ -98,6 +98,11 @@ def install():
             .get(platform_name)
         ) or []
         for path in project_plugins:
+            try:
+                path = str(path.format(**os.environ))
+            except KeyError:
+                pass
+
             if not path or not os.path.exists(path):
                 continue
 

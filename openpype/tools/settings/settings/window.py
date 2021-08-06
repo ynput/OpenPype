@@ -94,7 +94,8 @@ class MainWidget(QtWidgets.QWidget):
         super(MainWidget, self).showEvent(event)
         if self._reset_on_show:
             self._reset_on_show = False
-            self.reset()
+            # Trigger reset with 100ms delay
+            QtCore.QTimer.singleShot(100, self.reset)
 
     def _show_password_dialog(self):
         if self._password_dialog:
@@ -107,6 +108,8 @@ class MainWidget(QtWidgets.QWidget):
         self._password_dialog = None
         if password_passed:
             self.reset()
+            if not self.isVisible():
+                self.show()
         else:
             self.close()
 
@@ -141,7 +144,10 @@ class MainWidget(QtWidgets.QWidget):
         # Don't show dialog if there are not registered slots for
         #   `trigger_restart` signal.
         # - For example when settings are runnin as standalone tool
-        if self.receivers(self.trigger_restart) < 1:
+        # - PySide2 and PyQt5 compatible way how to find out
+        method_index = self.metaObject().indexOfMethod("trigger_restart()")
+        method = self.metaObject().method(method_index)
+        if not self.isSignalConnected(method):
             return
 
         dialog = RestartDialog(self)

@@ -1,3 +1,4 @@
+import copy
 from .input_entities import InputEntity
 from .exceptions import EntitySchemaError
 from .lib import (
@@ -118,30 +119,43 @@ class HostsEnumEntity(BaseEnumEntity):
     implementation instead of application name.
     """
     schema_types = ["hosts-enum"]
+    all_host_names = [
+        "aftereffects",
+        "blender",
+        "celaction",
+        "fusion",
+        "harmony",
+        "hiero",
+        "houdini",
+        "maya",
+        "nuke",
+        "photoshop",
+        "resolve",
+        "tvpaint",
+        "unreal",
+        "standalonepublisher"
+    ]
 
     def _item_initalization(self):
         self.multiselection = self.schema_data.get("multiselection", True)
-        self.use_empty_value = self.schema_data.get(
-            "use_empty_value", not self.multiselection
-        )
+        use_empty_value = False
+        if not self.multiselection:
+            use_empty_value = self.schema_data.get(
+                "use_empty_value", use_empty_value
+            )
+        self.use_empty_value = use_empty_value
+
+        hosts_filter = self.schema_data.get("hosts_filter") or []
+        self.hosts_filter = hosts_filter
+
         custom_labels = self.schema_data.get("custom_labels") or {}
 
-        host_names = [
-            "aftereffects",
-            "blender",
-            "celaction",
-            "fusion",
-            "harmony",
-            "hiero",
-            "houdini",
-            "maya",
-            "nuke",
-            "photoshop",
-            "resolve",
-            "tvpaint",
-            "unreal",
-            "standalonepublisher"
-        ]
+        host_names = copy.deepcopy(self.all_host_names)
+        if hosts_filter:
+            for host_name in tuple(host_names):
+                if host_name not in hosts_filter:
+                    host_names.remove(host_name)
+
         if self.use_empty_value:
             host_names.insert(0, "")
             # Add default label for empty value if not available
@@ -172,6 +186,44 @@ class HostsEnumEntity(BaseEnumEntity):
 
         # GUI attribute
         self.placeholder = self.schema_data.get("placeholder")
+
+    def schema_validations(self):
+        if self.hosts_filter:
+            enum_len = len(self.enum_items)
+            if (
+                enum_len == 0
+                or (enum_len == 1 and self.use_empty_value)
+            ):
+                joined_filters = ", ".join([
+                    '"{}"'.format(item)
+                    for item in self.hosts_filter
+                ])
+                reason = (
+                    "All host names were removed after applying"
+                    " host filters. {}"
+                ).format(joined_filters)
+                raise EntitySchemaError(self, reason)
+
+            invalid_filters = set()
+            for item in self.hosts_filter:
+                if item not in self.all_host_names:
+                    invalid_filters.add(item)
+
+            if invalid_filters:
+                joined_filters = ", ".join([
+                    '"{}"'.format(item)
+                    for item in self.hosts_filter
+                ])
+                expected_hosts = ", ".join([
+                    '"{}"'.format(item)
+                    for item in self.all_host_names
+                ])
+                self.log.warning((
+                    "Host filters containt invalid host names:"
+                    " \"{}\" Expected values are {}"
+                ).format(joined_filters, expected_hosts))
+
+        super(HostsEnumEntity, self).schema_validations()
 
 
 class AppsEnumEntity(BaseEnumEntity):

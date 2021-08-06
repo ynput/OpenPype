@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import copy
 import json
@@ -708,6 +709,10 @@ class ApplicationLaunchContext:
             )
             self.kwargs["creationflags"] = flags
 
+        if not sys.stdout:
+            self.kwargs["stdout"] = subprocess.DEVNULL
+            self.kwargs["stderr"] = subprocess.DEVNULL
+
         self.prelaunch_hooks = None
         self.postlaunch_hooks = None
 
@@ -1297,9 +1302,17 @@ def _prepare_last_workfile(data, workdir):
     )
     data["start_last_workfile"] = start_last_workfile
 
+    workfile_startup = should_workfile_tool_start(
+        project_name, app.host_name, task_name
+    )
+    data["workfile_startup"] = workfile_startup
+
     # Store boolean as "0"(False) or "1"(True)
     data["env"]["AVALON_OPEN_LAST_WORKFILE"] = (
         str(int(bool(start_last_workfile)))
+    )
+    data["env"]["OPENPYPE_WORKFILE_TOOL_ON_START"] = (
+        str(int(bool(workfile_startup)))
     )
 
     _sub_msg = "" if start_last_workfile else " not"
@@ -1339,40 +1352,9 @@ def _prepare_last_workfile(data, workdir):
     data["last_workfile_path"] = last_workfile_path
 
 
-def should_start_last_workfile(
-    project_name, host_name, task_name, default_output=False
+def get_option_from_settings(
+    startup_presets, host_name, task_name, default_output
 ):
-    """Define if host should start last version workfile if possible.
-
-    Default output is `False`. Can be overriden with environment variable
-    `AVALON_OPEN_LAST_WORKFILE`, valid values without case sensitivity are
-    `"0", "1", "true", "false", "yes", "no"`.
-
-    Args:
-        project_name (str): Name of project.
-        host_name (str): Name of host which is launched. In avalon's
-            application context it's value stored in app definition under
-            key `"application_dir"`. Is not case sensitive.
-        task_name (str): Name of task which is used for launching the host.
-            Task name is not case sensitive.
-
-    Returns:
-        bool: True if host should start workfile.
-
-    """
-
-    project_settings = get_project_settings(project_name)
-    startup_presets = (
-        project_settings
-        ["global"]
-        ["tools"]
-        ["Workfiles"]
-        ["last_workfile_on_startup"]
-    )
-
-    if not startup_presets:
-        return default_output
-
     host_name_lowered = host_name.lower()
     task_name_lowered = task_name.lower()
 
@@ -1414,6 +1396,82 @@ def should_start_last_workfile(
             output = default_output
         return output
     return default_output
+
+
+def should_start_last_workfile(
+    project_name, host_name, task_name, default_output=False
+):
+    """Define if host should start last version workfile if possible.
+
+    Default output is `False`. Can be overriden with environment variable
+    `AVALON_OPEN_LAST_WORKFILE`, valid values without case sensitivity are
+    `"0", "1", "true", "false", "yes", "no"`.
+
+    Args:
+        project_name (str): Name of project.
+        host_name (str): Name of host which is launched. In avalon's
+            application context it's value stored in app definition under
+            key `"application_dir"`. Is not case sensitive.
+        task_name (str): Name of task which is used for launching the host.
+            Task name is not case sensitive.
+
+    Returns:
+        bool: True if host should start workfile.
+
+    """
+
+    project_settings = get_project_settings(project_name)
+    startup_presets = (
+        project_settings
+        ["global"]
+        ["tools"]
+        ["Workfiles"]
+        ["last_workfile_on_startup"]
+    )
+
+    if not startup_presets:
+        return default_output
+
+    return get_option_from_settings(
+        startup_presets, host_name, task_name, default_output)
+
+
+def should_workfile_tool_start(
+    project_name, host_name, task_name, default_output=False
+):
+    """Define if host should start workfile tool at host launch.
+
+    Default output is `False`. Can be overriden with environment variable
+    `OPENPYPE_WORKFILE_TOOL_ON_START`, valid values without case sensitivity are
+    `"0", "1", "true", "false", "yes", "no"`.
+
+    Args:
+        project_name (str): Name of project.
+        host_name (str): Name of host which is launched. In avalon's
+            application context it's value stored in app definition under
+            key `"application_dir"`. Is not case sensitive.
+        task_name (str): Name of task which is used for launching the host.
+            Task name is not case sensitive.
+
+    Returns:
+        bool: True if host should start workfile.
+
+    """
+
+    project_settings = get_project_settings(project_name)
+    startup_presets = (
+        project_settings
+        ["global"]
+        ["tools"]
+        ["Workfiles"]
+        ["open_workfile_tool_on_startup"]
+    )
+
+    if not startup_presets:
+        return default_output
+
+    return get_option_from_settings(
+        startup_presets, host_name, task_name, default_output)
 
 
 def compile_list_of_regexes(in_list):
