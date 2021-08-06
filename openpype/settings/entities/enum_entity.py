@@ -453,7 +453,8 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
 
         valid_keys = set()
         enum_items_list = []
-        deadline_urls_entity = (system_settings_entity
+        deadline_urls_entity = (
+            system_settings_entity
             ["modules"]
             ["deadline"]
             ["deadline_urls"]
@@ -473,4 +474,3 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
             if key in self.valid_keys:
                 new_value.append(key)
         self._current_value = new_value
-
