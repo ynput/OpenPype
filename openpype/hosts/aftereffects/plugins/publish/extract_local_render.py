@@ -1,4 +1,6 @@
 import os
+import six
+import sys
 
 import openpype.api
 from avalon import aftereffects
@@ -51,6 +53,7 @@ class ExtractLocalRender(openpype.api.Extractor):
         # Generate thumbnail.
         thumbnail_path = os.path.join(staging_dir,
                                       "thumbnail.jpg")
+
         args = [
             ffmpeg_path, "-y",
             "-i", first_file_path,
@@ -58,7 +61,12 @@ class ExtractLocalRender(openpype.api.Extractor):
             "-vframes", "1",
             thumbnail_path
         ]
-        output = openpype.lib.run_subprocess(args)
+        self.log.debug("Thumbnail args:: {}".format(args))
+        try:
+            output = openpype.lib.run_subprocess(args)
+        except TypeError:
+            self.log.warning("Error in creating thumbnail")
+            six.reraise(*sys.exc_info())
 
         instance.data["representations"].append({
             "name": "thumbnail",
