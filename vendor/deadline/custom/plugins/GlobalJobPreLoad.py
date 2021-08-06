@@ -16,7 +16,7 @@ def inject_openpype_environment(deadlinePlugin):
     job = deadlinePlugin.GetJob()
     job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
-    print("inject_openpype_environment start")
+    print("inject_openpype_environment with open_mongo start")
     try:
         exe_list = job.GetJobExtraInfoKeyValue("openpype_executables")
         openpype_app = FileUtils.SearchFileList(exe_list)
@@ -55,9 +55,9 @@ def inject_openpype_environment(deadlinePlugin):
                   "AVALON_TASK, AVALON_APP_NAME"
             raise RuntimeError(msg)
 
-        print("args::{}".format(args))
+        print("args upd::{}".format(args))
 
-        exit_code = subprocess.call(args, shell=True)
+        exit_code = subprocess.call(args, cwd=os.path.dirname(openpype_app))
         if exit_code != 0:
             raise RuntimeError("Publishing failed, check worker's log")
 
@@ -89,6 +89,9 @@ def inject_render_job_id(deadlinePlugin):
 
     deadlinePlugin.SetProcessEnvironmentVariable("RENDER_JOB_IDS",
                                                  render_job_ids)
+                                                                                                                                             
+    deadlinePlugin.SetProcessEnvironmentVariable("OPENPYPE_MONGO",
+                                                 job.GetJobEnvironmentKeyValue('OPENPYPE_MONGO'))
     print("inject_render_job_id end")
 
 

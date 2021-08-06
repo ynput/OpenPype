@@ -124,7 +124,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "OPENPYPE_LOG_NO_COLORS",
         "OPENPYPE_USERNAME",
         "OPENPYPE_RENDER_JOB",
-        "OPENPYPE_PUBLISH_JOB"
+        "OPENPYPE_PUBLISH_JOB",
+        "OPENPYPE_MONGO"
     ]
 
     # custom deadline atributes
@@ -228,6 +229,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["OPENPYPE_USERNAME"] = instance.context.data["user"]
         environment["OPENPYPE_PUBLISH_JOB"] = "1"
         environment["OPENPYPE_RENDER_JOB"] = "0"
+        environment["OPENPYPE_MONGO"] = os.environ["OPENPYPE_MONGO"]
 
         args = [
             'publish',
