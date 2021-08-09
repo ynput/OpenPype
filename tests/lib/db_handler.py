@@ -2,19 +2,16 @@
     Helper class for automatic testing, provides dump and restore via command
     line utilities.
 
-    Expect mongodump and mongorestore present at MONGODB_UTILS_DIR
+    Expect mongodump, mongoimport and mongorestore present at PATH
 """
 import os
 import pymongo
 import subprocess
 
 
-class DBHandler():
+class DBHandler:
 
-    # vendorize ??
-    MONGODB_UTILS_DIR = "c:\\Program Files\\MongoDB\\Server\\4.4\\bin"
-
-    def __init__(self, uri=None, host=None, port=None, 
+    def __init__(self, uri=None, host=None, port=None,
                  user=None, password=None):
         """'uri' or rest of separate credentials"""
         if uri:
@@ -141,7 +138,7 @@ class DBHandler():
 
     def backup_to_dump(self, db_name, dump_dir, overwrite=False):
         """
-            Helper class for running mongodump for specific 'db_name'
+            Helper method for running mongodump for specific 'db_name'
         """
         if not self._db_exists(db_name) and not overwrite:
             raise RuntimeError("DB {} doesn't exists".format(db_name))
@@ -158,12 +155,8 @@ class DBHandler():
     def _db_exists(self, db_name):
         return db_name in self.client.list_database_names()
 
-    def _dump_query(self, uri,
-                       output_path,
-                       db_name=None, collection=None):
-
-        utility_path = os.path.join(self.MONGODB_UTILS_DIR, "mongodump")
-
+    def _dump_query(self, uri, output_path, db_name=None, collection=None):
+        """Prepares dump query based on 'db_name' or 'collection'."""
         db_part = coll_part = ""
         if db_name:
             db_part = "--db={}".format(db_name)
@@ -172,7 +165,7 @@ class DBHandler():
                 raise ValueError("db_name must be present")
             coll_part = "--nsInclude={}.{}".format(db_name, collection)
         query = "\"{}\" --uri=\"{}\" --out={} {} {}".format(
-            utility_path, uri, output_path, db_part, coll_part
+            "mongodump", uri, output_path, db_part, coll_part
         )
 
         return query
@@ -180,9 +173,7 @@ class DBHandler():
     def _restore_query(self, uri, dump_dir,
                        db_name=None, db_name_out=None,
                        collection=None, drop=True):
-
-        utility_path = os.path.join(self.MONGODB_UTILS_DIR, "mongorestore")
-
+        """Prepares query for mongorestore base on arguments"""
         db_part = coll_part = drop_part = ""
         if db_name:
             db_part = "--nsInclude={}.* --nsFrom={}.*".format(db_name, db_name)
@@ -199,7 +190,7 @@ class DBHandler():
             db_part += " --nsTo={}.*".format(db_name_out)
 
         query = "\"{}\" --uri=\"{}\" --dir=\"{}\" {} {} {}".format(
-            utility_path, uri, dump_dir, db_part, coll_part, drop_part
+            "mongorestore", uri, dump_dir, db_part, coll_part, drop_part
         )
 
         return query
@@ -207,8 +198,6 @@ class DBHandler():
     def _import_query(self, uri, sql_url,
                       db_name=None,
                       collection=None, drop=True, mode=None):
-
-        utility_path = os.path.join(self.MONGODB_UTILS_DIR, "mongoimport")
 
         db_part = coll_part = drop_part = mode_part = ""
         if db_name:
@@ -223,7 +212,7 @@ class DBHandler():
 
         query = \
             "\"{}\" --legacy --uri=\"{}\" --file=\"{}\" {} {} {} {}".format(
-            utility_path, uri, sql_url,
+                "mongoimport", uri, sql_url,
                 db_part, coll_part, drop_part, mode_part)
 
         return query
@@ -232,7 +221,7 @@ class DBHandler():
 #
 # backup_dir = "c:\\projects\\dumps"
 # #
-# # handler.backup_to_dump("openpype", backup_dir, True)
+# handler.backup_to_dump("openpype", backup_dir, True)
 # # handler.setup_from_dump("test_db", backup_dir, True)
 # # handler.setup_from_sql_file("test_db", "c:\\projects\\sql\\item.sql",
 # #                             collection="test_project",
