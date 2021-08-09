@@ -10,6 +10,7 @@ from avalon.tvpaint.communication_server import register_localization_file
 from .lib import set_context_settings
 
 from openpype.hosts import tvpaint
+from openpype.api import get_current_project_settings
 
 log = logging.getLogger(__name__)
 
@@ -54,6 +55,12 @@ def initial_launch():
 
 
 def application_exit():
+    data = get_current_project_settings()
+    stop_timer = data["tvpaint"]["stop_timer_on_application_exit"]
+
+    if not stop_timer:
+        return
+
     # Stop application timer.
     webserver_url = os.environ.get("OPENPYPE_WEBSERVER_URL")
     rest_api_url = "{}/timers_manager/stop_timer".format(webserver_url)
