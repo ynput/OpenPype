@@ -920,3 +920,74 @@ class TrayModulesManager(ModulesManager):
                         ),
                         exc_info=True
                     )
+
+
+def get_module_settings_defs():
+    load_modules()
+
+    import openpype_modules
+
+    settings_defs = []
+
+    log = PypeLogger.get_logger("ModuleSettingsLoad")
+
+    for raw_module in openpype_modules:
+        for attr_name in dir(raw_module):
+            attr = getattr(raw_module, attr_name)
+            if (
+                not inspect.isclass(attr)
+                or attr is ModuleSettingsDef
+                or not issubclass(attr, ModuleSettingsDef)
+            ):
+                continue
+
+            if inspect.isabstract(attr):
+                # Find missing implementations by convetion on `abc` module
+                not_implemented = []
+                for attr_name in dir(attr):
+                    attr = getattr(attr, attr_name, None)
+                    abs_method = getattr(
+                        attr, "__isabstractmethod__", None
+                    )
+                    if attr and abs_method:
+                        not_implemented.append(attr_name)
+
+                # Log missing implementations
+                log.warning((
+                    "Skipping abstract Class: {} in module {}."
+                    " Missing implementations: {}"
+                ).format(
+                    attr_name, raw_module.__name__, ", ".join(not_implemented)
+                ))
+                continue
+
+            settings_defs.append(attr)
+
+    return settings_defs
+
+
+@six.add_metaclass(ABCMeta)
+class ModuleSettingsDef:
+    @abstractmethod
+    def get_system_schemas(self):
+        pass
+
+    @abstractmethod
+    def get_project_schemas(self):
+        pass
+
+    @abstractmethod
+    def save_system_defaults(self, data):
+        pass
+
+    @abstractmethod
+    def save_project_defaults(self, data):
+        pass
+
+    @abstractmethod
+    def get_system_defaults(self):
+        pass
+
+    @abstractmethod
+    def get_project_defaults(self):
+        pass
