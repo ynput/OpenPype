@@ -977,11 +977,11 @@ class ModuleSettingsDef:
         return self._id
 
     @abstractmethod
-    def get_system_schemas(self):
+    def get_settings_schemas(self, schema_type):
         pass
 
     @abstractmethod
-    def get_project_schemas(self):
+    def get_dynamic_schemas(self, schema_type):
         pass
 
     @abstractmethod
