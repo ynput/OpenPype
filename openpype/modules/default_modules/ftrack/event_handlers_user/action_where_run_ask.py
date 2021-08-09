@@ -2,7 +2,7 @@ import platform
 import socket
 import getpass
 
-from openpype.modules.ftrack.lib import BaseAction, statics_icon
+from openpype_modules.ftrack.lib import BaseAction, statics_icon
 
 
 class ActionWhereIRun(BaseAction):
