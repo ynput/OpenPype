@@ -52,7 +52,7 @@ class DBHandler:
             raise RuntimeError(
                 "Backup folder {} doesn't exist".format(sql_dir))
 
-        for (dirpath, dirnames, filenames) in os.walk(sql_dir):
+        for (_dirpath, _dirnames, filenames) in os.walk(sql_dir):
             for file_name in filenames:
                 sql_url = os.path.join(dirpath, file_name)
                 query = self._import_query(self.uri, sql_url,

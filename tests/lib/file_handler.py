@@ -148,8 +148,7 @@ class RemoteFileHandler:
 
             RemoteFileHandler._save_response_content(
                 itertools.chain((first_chunk, ),
-                                response_content_generator),
-                                fpath)
+                                response_content_generator), fpath)
             response.close()
 
     @staticmethod
@@ -260,4 +259,3 @@ class RemoteFileHandler:
             return None
 
         return match.group("id")
-

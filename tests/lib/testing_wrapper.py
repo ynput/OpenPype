@@ -31,7 +31,6 @@ class TestCase:
         yield m
         m.undo()
 
-
     @pytest.fixture(scope="module")
     def download_test_data(self):
         tmpdir = tempfile.mkdtemp()
