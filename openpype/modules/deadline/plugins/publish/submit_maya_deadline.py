@@ -458,7 +458,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AVALON_TASK",
             "AVALON_APP_NAME",
             "OPENPYPE_DEV",
-            "OPENPYPE_LOG_NO_COLORS"
+            "OPENPYPE_LOG_NO_COLORS",
+            "OPENPYPE_MONGO"
         ]
 
         environment = dict({key: os.environ[key] for key in keys
