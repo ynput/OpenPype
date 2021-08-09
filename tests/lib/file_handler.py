@@ -1,5 +1,3 @@
-import requests
-import hashlib
 import enlighten
 import os
 import re
@@ -84,7 +82,7 @@ class RemoteFileHandler:
         try:
             print('Downloading ' + url + ' to ' + fpath)
             RemoteFileHandler._urlretrieve(url, fpath)
-        except (urllib.error.URLError, IOError) as e:  # type: ignore[attr-defined]
+        except (urllib.error.URLError, IOError) as e:  #noqa type: ignore[attr-defined]
             if url[:5] == 'https':
                 url = url.replace('https:', 'http:')
                 print('Failed download. Trying https -> http instead.'
@@ -110,7 +108,7 @@ class RemoteFileHandler:
             md5 (str, optional): MD5 checksum of the download.
                 If None, do not check
         """
-        # Based on https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url
+        # Based on https://stackoverflow.com/questions/38511444/python-download-files-from-google-drive-using-url # noqa
         import requests
         url = "https://docs.google.com/uc?export=download"
 
@@ -263,10 +261,3 @@ class RemoteFileHandler:
 
         return match.group("id")
 
-
-# url = "https://drive.google.com/file/d/1LOVnao6WLW7FpbQELKawzjd19GKx-HH_/view?usp=sharing" # readme
-# url = "https://drive.google.com/file/d/1SYTZGRVjJUwMUGgZjmOjhDljMzyGaWcv/view?usp=sharing"
-#
-#
-# RemoteFileHandler.download_url(url, root="c:/projects/", filename="temp.zip")
-# RemoteFileHandler.unzip("c:/projects/temp.zip")

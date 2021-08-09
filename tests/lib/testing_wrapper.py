@@ -5,13 +5,12 @@ import json
 import pytest
 import tempfile
 import shutil
-from bson.objectid import ObjectId
 
 from tests.lib.db_handler import DBHandler
 from tests.lib.file_handler import RemoteFileHandler
 
 
-class TestCase():
+class TestCase:
 
     TEST_OPENPYPE_MONGO = "mongodb://localhost:27017"
     TEST_DB_NAME = "test_db"
@@ -51,14 +50,14 @@ class TestCase():
             yield tmpdir
             shutil.rmtree(tmpdir)
 
-
     @pytest.fixture(scope="module")
     def env_var(self, monkeypatch_session, download_test_data):
         """Sets temporary env vars from json file."""
         env_url = os.path.join(download_test_data, "input",
                                "env_vars", "env_var.json")
         if not os.path.exists(env_url):
-            raise ValueError("Env variable file {} doesn't exist".format(env_url))
+            raise ValueError("Env variable file {} doesn't exist".
+                             format(env_url))
 
         env_dict = {}
         try:
@@ -92,7 +91,6 @@ class TestCase():
 
         db_handler.teardown(self.TEST_DB_NAME)
         db_handler.teardown(self.TEST_OPENPYPE_NAME)
-
 
     @pytest.fixture(scope="module")
     def db(self, db_setup):
