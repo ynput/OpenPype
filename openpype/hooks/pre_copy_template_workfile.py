@@ -49,7 +49,7 @@ class CopyTemplateWorkfile(PreLaunchHook):
             ))
             return
 
-        self.log.info("Last workfile does not exits.")
+        self.log.info("Last workfile does not exist.")
 
         project_name = self.data["project_name"]
         asset_name = self.data["asset_name"]

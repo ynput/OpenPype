@@ -48,15 +48,26 @@ function Show-PSWarning() {
 function Install-Poetry() {
     Write-Host ">>> " -NoNewline -ForegroundColor Green
     Write-Host "Installing Poetry ... "
+    $python = "python"
+    if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
+        $python = & pyenv which python
+    }
     $env:POETRY_HOME="$openpype_root\.poetry"
-    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
+    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | & $($python) -
 }
 
 
 function Test-Python() {
     Write-Host ">>> " -NoNewline -ForegroundColor green
     Write-Host "Detecting host Python ... " -NoNewline
-    if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
+    $python = "python"
+    if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
+        $pyenv_python = & pyenv which python
+        if (Test-Path -PathType Leaf -Path "$($pyenv_python)") {
+            $python = $pyenv_python
+        }
+    }
+    if (-not (Get-Command $python -ErrorAction SilentlyContinue)) {
         Write-Host "!!! Python not detected" -ForegroundColor red
         Set-Location -Path $current_dir
         Exit-WithCode 1
@@ -66,7 +77,7 @@ import sys
 print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
 '@
 
-    $p = & python -c $version_command
+    $p = & $python -c $version_command
     $env:PYTHON_VERSION = $p
     $m = $p -match '(\d+)\.(\d+)'
     if(-not $m) {

@@ -4,11 +4,11 @@ title: Maya
 sidebar_label: Maya
 ---
 
-## Maya
+## Publish Plugins
 
-### Publish Plugins
+### Render Settings Validator 
 
-#### Render Settings Validator (`ValidateRenderSettings`)
+`ValidateRenderSettings`
 
 Render Settings Validator is here to make sure artists will submit renders
 we correct settings. Some of these settings are needed by OpenPype but some
@@ -50,3 +50,48 @@ Note that `aiOptions` is not the name of node but rather its type. For renderers
 just one instance of this node type but if that is not so, validator will go through all its
 instances and check the value there. Node type for **VRay** settings is `VRaySettingsNode`, for **Renderman**
 it is `rmanGlobals`, for **Redshift** it is `RedshiftOptions`.
+
+### Model Name Validator 
+
+`ValidateRenderSettings`
+
+This validator can enforce specific names for model members. It will check them against **Validation Regex**.
+There is special group in that regex - **shader**. If present, it will take that part of the name as shader name
+and it will compare it with list of shaders defined either in file name specified in **Material File** or from
+database file that is per project and can be directly edited from Maya's *OpenPype Tools > Edit Shader name definitions* when
+**Use database shader name definitions** is on. This list defines simply as one shader name per line.
+
+![Settings example](assets/maya-admin_model_name_validator.png)
+
+For example - you are using default regex `(.*)_(\d)*_(?P<shader>.*)_(GEO)` and you have two shaders defined
+in either file or database `foo` and `bar`.
+
+Object named `SomeCube_0001_foo_GEO` will pass but `SomeCube_GEO` will not and `SomeCube_001_xxx_GEO` will not too.
+
+#### Top level group name
+There is a validation for top level group name too. You can specify whatever regex you'd like to use. Default will
+pass everything with `_GRP` suffix. You can use *named capturing groups* to validate against specific data. If you
+put `(?P<asset>.*)` it will try to match everything captured in that group against current asset name. Likewise you can
+use it for **subset** and **project** - `(?P<subset>.*)` and `(?P<project>.*)`.
+
+**Example**
+
+You are working on asset (shot) `0030_OGC_0190`. You have this regex in **Top level group name**:
+```regexp
+.*?_(?P<asset>.*)_GRP
+```
+
+When you publish your model with top group named like `foo_GRP` it will fail. But with `foo_0030_OGC_0190_GRP` it will pass.
+
+:::info About regex
+All regexes used here are in Python variant.
+:::
+
+## Custom Menu
+You can add your custom tools menu into Maya by extending definitions in **Maya -> Scripts Menu Definition**.
+![Custom menu definition](assets/maya-admin_scriptsmenu.png)
+
+:::note Work in progress
+This is still work in progress. Menu definition will be handled more friendly with widgets and not
+raw json.
+:::

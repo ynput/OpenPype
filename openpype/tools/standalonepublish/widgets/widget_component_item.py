@@ -1,7 +1,6 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
 from .resources import get_resource
-from avalon import style
 
 
 class ComponentItem(QtWidgets.QFrame):
@@ -61,7 +60,7 @@ class ComponentItem(QtWidgets.QFrame):
             name="menu", size=QtCore.QSize(22, 22)
         )
 
-        self.action_menu = QtWidgets.QMenu()
+        self.action_menu = QtWidgets.QMenu(self.btn_action_menu)
 
         expanding_sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
@@ -229,7 +228,6 @@ class ComponentItem(QtWidgets.QFrame):
         if not self.btn_action_menu.isVisible():
             self.btn_action_menu.setVisible(True)
             self.btn_action_menu.clicked.connect(self.show_actions)
-            self.action_menu.setStyleSheet(style.load_stylesheet())
 
     def set_repre_name_valid(self, valid):
         self.has_valid_repre = valid

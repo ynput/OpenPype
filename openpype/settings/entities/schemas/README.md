@@ -204,6 +204,8 @@
     - it is possible to add darker background with `"highlight_content"` (Default: `False`)
         - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
     - output is dictionary `{the "key": children values}`
+- for UI porposes was added `enum_is_horizontal` which will make combobox appear next to children inputs instead of on top of them (Default: `False`)
+    - this has extended ability of `enum_on_right` which will move combobox to right side next to children widgets (Default: `False`)
 ```
 # Example
 {
@@ -337,6 +339,11 @@ How output of the schema could look like on save:
 - schema also defines valid value type
     - by default it is dictionary
     - to be able use list it is required to define `is_list` to `true`
+- output can be stored as string
+    - this is to allow any keys in dictionary
+    - set key `store_as_string` to `true`
+    - code using that setting must expected that value is string and use json module to convert it to python types
+
 ```
 {
     "type": "raw-json",
@@ -374,6 +381,9 @@ How output of the schema could look like on save:
 - multiselection can be allowed with setting key `"multiselection"` to `True` (Default: `False`)
 - it is possible to add empty value (represented with empty string) with setting `"use_empty_value"` to `True` (Default: `False`)
 - it is possible to set `"custom_labels"` for host names where key `""` is empty value (Default: `{}`)
+- to filter host names it is required to define `"hosts_filter"` which is list of host names that will be available
+    - do not pass empty string if `use_empty_value` is enabled
+    - ignoring host names would be more dangerous in some cases
 ```
 {
     "key": "host",
@@ -384,7 +394,10 @@ How output of the schema could look like on save:
     "custom_labels": {
         "": "N/A",
         "nuke": "Nuke"
-    }
+    },
+    "hosts_filter": [
+        "nuke"
+    ]
 }
 ```
 
@@ -571,6 +584,15 @@ How output of the schema could look like on save:
     "type": "splitter"
 }
 ```
+
+## Anatomy
+Anatomy represents data stored on project document.
+
+### anatomy
+- entity works similarly to `dict`
+- anatomy has always all keys overriden with overrides
+    - overrides are not applied as all anatomy data must be available from project document
+    - all children must be groups
 
 ## Proxy wrappers
 - should wraps multiple inputs only visually

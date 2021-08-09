@@ -8,6 +8,46 @@
             "type": "dict",
             "collapsible": true,
             "checkbox_key": "enabled",
+            "key": "ValidateEditorialAssetName",
+            "label": "Validate Editorial Asset Name",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
+            "key": "ValidateVersion",
+            "label": "Validate Version",
+            "is_group": true,
+            "children": [
+                {
+                    "type": "boolean",
+                    "key": "enabled",
+                    "label": "Enabled"
+                },
+                {
+                    "type": "boolean",
+                    "key": "optional",
+                    "label": "Optional"
+                }
+            ]
+        },
+        {
+            "type": "dict",
+            "collapsible": true,
+            "checkbox_key": "enabled",
             "key": "IntegrateHeroVersion",
             "label": "IntegrateHeroVersion",
             "is_group": true,
@@ -519,80 +559,25 @@
         {
             "type": "dict",
             "collapsible": true,
-            "key": "ProcessSubmittedJobOnFarm",
-            "label": "ProcessSubmittedJobOnFarm",
-            "checkbox_key": "enabled",
+            "key": "CleanUp",
+            "label": "Clean Up",
             "is_group": true,
             "children": [
                 {
+                    "type": "list",
+                    "key": "paterns",
+                    "label": "Paterrns (regex)",
+                    "object_type": {
+                        "type": "text"
+                    }
+                },
+                {
                     "type": "boolean",
-                    "key": "enabled",
-                    "label": "Enabled"
-                },
-                {
-                    "type": "text",
-                    "key": "deadline_department",
-                    "label": "Deadline department"
-                },
-                {
-                    "type": "text",
-                    "key": "deadline_pool",
-                    "label": "Deadline Pool"
-                },
-                {
-                    "type": "text",
-                    "key": "deadline_group",
-                    "label": "Deadline Group"
-                },
-                {
-                    "type": "number",
-                    "key": "deadline_chunk_size",
-                    "label": "Deadline Chunk Size"
-                },
-                {
-                    "type": "number",
-                    "key": "deadline_priority",
-                    "label": "Deadline Priotity"
-                },
-                {
-                    "type": "dict",
-                    "key": "aov_filter",
-                    "label": "Reviewable subsets filter",
-                    "children": [
-                        {
-                            "type": "list",
-                            "key": "maya",
-                            "label": "Maya",
-                            "object_type": {
-                                "type": "text"
-                            }
-                        },
-                        {
-                            "type": "list",
-                            "key": "nuke",
-                            "label": "Nuke",
-                            "object_type": {
-                                "type": "text"
-                            }
-                        },
-                        {
-                            "type": "list",
-                            "key": "aftereffects",
-                            "label": "After Effects",
-                            "object_type": {
-                                "type": "text"
-                            }
-                        },
-                        {
-                            "type": "list",
-                            "key": "celaction",
-                            "label": "Celaction",
-                            "object_type": {
-                                "type": "text"
-                            }
-                        }
-                    ]
+                    "key": "remove_temp_renders",
+                    "label": "Remove Temp renders",
+                    "default": false
                 }
+
             ]
         }
     ]
