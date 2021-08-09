@@ -9,6 +9,8 @@ from .base_entity import BaseItemEntity
 from .lib import (
     NOT_SET,
     WRAPPER_TYPES,
+    SCHEMA_KEY_SYSTEM_SETTINGS,
+    SCHEMA_KEY_PROJECT_SETTINGS,
     OverrideState,
     SchemasHub
 )
@@ -468,7 +470,7 @@ class SystemSettings(RootEntity):
     ):
         if schema_hub is None:
             # Load system schemas
-            schema_hub = SchemasHub("system_schema")
+            schema_hub = SchemasHub(SCHEMA_KEY_SYSTEM_SETTINGS)
 
         super(SystemSettings, self).__init__(schema_hub, reset)
 
@@ -599,7 +601,7 @@ class ProjectSettings(RootEntity):
 
         if schema_hub is None:
             # Load system schemas
-            schema_hub = SchemasHub("projects_schema")
+            schema_hub = SchemasHub(SCHEMA_KEY_PROJECT_SETTINGS)
 
         super(ProjectSettings, self).__init__(schema_hub, reset)
 

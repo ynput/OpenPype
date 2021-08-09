@@ -23,6 +23,9 @@ TEMPLATE_METADATA_KEYS = (
     DEFAULT_VALUES_KEY,
 )
 
+SCHEMA_KEY_SYSTEM_SETTINGS = "system_schema"
+SCHEMA_KEY_PROJECT_SETTINGS = "projects_schema"
+
 template_key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
 
