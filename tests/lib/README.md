@@ -40,3 +40,7 @@ Currently it is expected that test file will be zip file with structure:
         
     - sql - sql files to load with `mongoimport` (human readable)
     
+
+Example
+-------
+See `tests\unit\openpype\modules\sync_server\test_site_operations.py` for example usage of implemented classes.
