@@ -373,8 +373,6 @@ def get_default_settings():
     Returns:
         dict: Loaded default settings.
     """
-    # TODO add cacher
-
     global _DEFAULT_SETTINGS
     if _DEFAULT_SETTINGS is None:
         _DEFAULT_SETTINGS = _get_default_settings()
