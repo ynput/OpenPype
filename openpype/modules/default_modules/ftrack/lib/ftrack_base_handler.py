@@ -191,15 +191,22 @@ class BaseHandler(object):
         if session is None:
             session = self.session
 
-        _entities = event['data'].get('entities_object', None)
+        _entities = event["data"].get("entities_object", None)
+        if _entities is not None and not _entities:
+            return _entities
+
         if (
-            _entities is None or
-            _entities[0].get(
-                'link', None
+            _entities is None
+            or _entities[0].get(
+                "link", None
             ) == ftrack_api.symbol.NOT_SET
         ):
-            _entities = self._get_entities(event)
-            event['data']['entities_object'] = _entities
+            _entities = [
+                item
+                for item in self._get_entities(event)
+                if item is not None
+            ]
+            event["data"]["entities_object"] = _entities
 
         return _entities
 
