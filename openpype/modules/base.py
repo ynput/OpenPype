@@ -968,6 +968,14 @@ def get_module_settings_defs():
 
 @six.add_metaclass(ABCMeta)
 class ModuleSettingsDef:
+    _id = None
+
+    @property
+    def id(self):
+        if self._id is None:
+            self._id = uuid4()
+        return self._id
+
     @abstractmethod
     def get_system_schemas(self):
         pass
