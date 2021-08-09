@@ -329,6 +329,41 @@ def reset_default_settings():
     _DEFAULT_SETTINGS = None
 
 
+def _get_default_settings():
+    from openpype.modules import get_module_settings_defs
+
+    defaults = load_openpype_default_settings()
+
+    module_settings_defs = get_module_settings_defs()
+    for module_settings_def_cls in module_settings_defs:
+        module_settings_def = module_settings_def_cls()
+        system_defaults = module_settings_def.get_system_defaults()
+        for path, value in system_defaults.items():
+            if not path:
+                continue
+
+            subdict = defaults["system_settings"]
+            path_items = list(path.split("/"))
+            last_key = path_items.pop(-1)
+            for key in path_items:
+                subdict = subdict[key]
+            subdict[last_key] = value
+
+        project_defaults = module_settings_def.get_project_defaults()
+        for path, value in project_defaults.items():
+            if not path:
+                continue
+
+            subdict = defaults["project_settings"]
+            path_items = list(path.split("/"))
+            last_key = path_items.pop(-1)
+            for key in path_items:
+                subdict = subdict[key]
+            subdict[last_key] = value
+
+    return defaults
+
+
 def get_default_settings():
     """Get default settings.
 
@@ -339,11 +374,11 @@ def get_default_settings():
         dict: Loaded default settings.
     """
     # TODO add cacher
-    return load_openpype_default_settings()
-    # global _DEFAULT_SETTINGS
-    # if _DEFAULT_SETTINGS is None:
-    #     _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
-    # return copy.deepcopy(_DEFAULT_SETTINGS)
+
+    global _DEFAULT_SETTINGS
+    if _DEFAULT_SETTINGS is None:
+        _DEFAULT_SETTINGS = _get_default_settings()
+    return copy.deepcopy(_DEFAULT_SETTINGS)
 
 
 def load_json_file(fpath):
@@ -380,8 +415,8 @@ def load_jsons_from_dir(path, *args, **kwargs):
             "data1": "CONTENT OF FILE"
         },
         "folder2": {
-            "data1": {
-                "subfolder1": "CONTENT OF FILE"
+            "subfolder1": {
+                "data2": "CONTENT OF FILE"
             }
         }
     }
