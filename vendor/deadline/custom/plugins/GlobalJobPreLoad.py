@@ -16,7 +16,7 @@ def inject_openpype_environment(deadlinePlugin):
     job = deadlinePlugin.GetJob()
     job = RepositoryUtils.GetJob(job.JobId, True)  # invalidates cache
 
-    print("inject_openpype_environment with open_mongo start")
+    print("inject_openpype_environment with open_mongo start upd")
     try:
         exe_list = job.GetJobExtraInfoKeyValue("openpype_executables")
         openpype_app = FileUtils.SearchFileList(exe_list)
@@ -32,6 +32,9 @@ def inject_openpype_environment(deadlinePlugin):
                                   time.strftime('%Y%m%d%H%M%S'),
                                   'env.json')  # add HHMMSS + delete later
         print("export_url {}".format(export_url))
+
+        os.environ["OPENPYPE_MONGO"] = \
+            job.GetJobEnvironmentKeyValue("OPENPYPE_MONGO")
 
         args = [
             openpype_app,
