@@ -428,6 +428,9 @@ class RootEntity(BaseItemEntity):
             with open(output_path, "w") as file_stream:
                 json.dump(value, file_stream, indent=4)
 
+        dynamic_values_item = self.collect_dynamic_schema_entities()
+        dynamic_values_item.save_values()
+
     @abstractmethod
     def _save_studio_values(self):
         """Save studio override values."""

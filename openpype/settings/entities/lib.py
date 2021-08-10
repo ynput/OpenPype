@@ -3,6 +3,7 @@ import re
 import json
 import copy
 import inspect
+import collections
 
 from .exceptions import (
     SchemaTemplateMissingKeys,
@@ -679,3 +680,23 @@ class DynamicSchemaValueCollector:
 
     def add_entity(self, entity):
         self._dynamic_entities.append(entity)
+
+    def create_hierarchy(self):
+        output = collections.defaultdict(dict)
+        for entity in self._dynamic_entities:
+            output[entity.dynamic_schema_id][entity.path] = (
+                entity.settings_value()
+            )
+        return output
+
+    def save_values(self):
+        hierarchy = self.create_hierarchy()
+
+        for schema_def_id, schema_def_value in hierarchy.items():
+            schema_def = self._schema_hub.get_dynamic_modules_settings_defs(
+                schema_def_id
+            )
+            if self._schema_hub.schema_type == SCHEMA_KEY_SYSTEM_SETTINGS:
+                schema_def.save_system_defaults(schema_def_value)
+            elif self._schema_hub.schema_type == SCHEMA_KEY_PROJECT_SETTINGS:
+                schema_def.save_project_defaults(schema_def_value)
