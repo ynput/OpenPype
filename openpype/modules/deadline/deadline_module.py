@@ -11,20 +11,16 @@ class DeadlineModule(PypeModule, IPluginPaths):
         deadline_settings = modules_settings[self.name]
         self.enabled = deadline_settings["enabled"]
         deadline_url = deadline_settings.get("DEADLINE_REST_URL")
-        if not deadline_url:
-            deadline_url = deadline_settings.get("deadline_urls", {}).get("default")  # noqa: E501
-        if not deadline_url:
+        if deadline_url:
+            deadline_urls = {"default": deadline_url}
+        else:
+            deadline_urls = deadline_settings.get("deadline_urls")  # noqa: E501
+
+        if not deadline_urls:
             self.enabled = False
             self.log.warning(("default Deadline Webservice URL "
                               "not specified. Disabling module."))
             return
-        self.deadline_url = deadline_url
-
-    def get_global_environments(self):
-        """Deadline global environments for OpenPype implementation."""
-        return {
-            "DEADLINE_REST_URL": self.deadline_url
-        }
 
     def connect_with_modules(self, *_a, **_kw):
         return

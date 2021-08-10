@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Collect default Deadline server."""
-from openpype.modules import ModulesManager
 import pyblish.api
 
 
@@ -11,7 +10,11 @@ class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
     label = "Default Deadline Webservice"
 
     def process(self, context):
-        manager = ModulesManager()
-        deadline_module = manager.modules_by_name["deadline"]
+        try:
+            deadline_module = context.data.get("openPypeModules")["deadline"]
+        except AttributeError:
+            self.log.error("Cannot get OpenPype Deadline module.")
+            raise AssertionError("OpenPype Deadline module not found.")
+
         # get default deadline webservice url from deadline module
-        context.data["defaultDeadline"] = deadline_module.deadline_url
+        context.data["defaultDeadline"] = deadline_module.deadline_urls["default"]
