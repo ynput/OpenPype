@@ -5,8 +5,7 @@ from Qt import QtWidgets, QtCore
 from .base import BaseWidget
 from .widgets import (
     ExpandingWidget,
-    IconButton,
-    SpacerWidget
+    IconButton
 )
 from openpype.tools.settings import (
     BTN_FIXED_SIZE,
@@ -61,7 +60,6 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def create_addible_ui(self):
         add_btn = create_add_btn(self)
         remove_btn = create_remove_btn(self)
-        spacer_widget = SpacerWidget(self)
 
         remove_btn.setEnabled(False)
 
@@ -70,13 +68,12 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         layout.setSpacing(3)
         layout.addWidget(add_btn, 0)
         layout.addWidget(remove_btn, 0)
-        layout.addWidget(spacer_widget, 1)
+        layout.addStretch(1)
 
         add_btn.clicked.connect(self._on_add_clicked)
 
         self.add_btn = add_btn
         self.remove_btn = remove_btn
-        self.spacer_widget = spacer_widget
 
     def _on_focus_lose(self):
         if self.key_input.hasFocus() or self.key_label_input.hasFocus():
