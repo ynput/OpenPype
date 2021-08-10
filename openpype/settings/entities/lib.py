@@ -120,7 +120,7 @@ class SchemasHub:
 
         # Attributes for modules settings
         self._modules_settings_defs_by_id = {}
-        self._dynamic_schemas_by_module_id = {}
+        self._dynamic_schemas_def_by_id = {}
 
         # Trigger reset
         if reset:
@@ -146,7 +146,7 @@ class SchemasHub:
 
     def resolve_dynamic_schema(self, dynamic_key):
         output = []
-        for def_id, def_keys in self._dynamic_schemas_by_module_id.items():
+        for def_id, def_keys in self._dynamic_schemas_def_by_id.items():
             if dynamic_key in def_keys:
                 def_schema = def_keys[dynamic_key]
                 if not def_schema:
@@ -347,7 +347,7 @@ class SchemasHub:
         self._crashed_on_load = {}
         self._loaded_templates = {}
         self._loaded_schemas = {}
-        self._dynamic_schemas_by_module_id = {}
+        self._dynamic_schemas_def_by_id = {}
 
         dirpath = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -356,7 +356,7 @@ class SchemasHub:
         )
         loaded_schemas = {}
         loaded_templates = {}
-        dynamic_schemas_by_module_id = {}
+        dynamic_schemas_def_by_id = {}
         for root, _, filenames in os.walk(dirpath):
             for filename in filenames:
                 basename, ext = os.path.splitext(filename)
@@ -408,7 +408,7 @@ class SchemasHub:
 
         defs_iter = self._modules_settings_defs_by_id.items()
         for def_id, module_settings_def in defs_iter:
-            dynamic_schemas_by_module_id[def_id] = (
+            dynamic_schemas_def_by_id[def_id] = (
                 module_settings_def.get_dynamic_schemas(self._schema_subfolder)
             )
             module_schemas = module_settings_def.get_settings_schemas(
@@ -430,7 +430,7 @@ class SchemasHub:
 
         self._loaded_templates = loaded_templates
         self._loaded_schemas = loaded_schemas
-        self._dynamic_schemas_by_module_id = dynamic_schemas_by_module_id
+        self._dynamic_schemas_def_by_id = dynamic_schemas_def_by_id
 
     def _fill_template(self, child_data, template_def):
         """Fill template based on schema definition and template definition.
