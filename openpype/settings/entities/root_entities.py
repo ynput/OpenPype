@@ -31,6 +31,7 @@ from openpype.settings.lib import (
     DEFAULTS_DIR,
 
     get_default_settings,
+    reset_default_settings,
 
     get_studio_system_settings_overrides,
     save_studio_settings,
@@ -381,6 +382,7 @@ class RootEntity(BaseItemEntity):
 
         if self._override_state is OverrideState.DEFAULTS:
             self._save_default_values()
+            reset_default_settings()
 
         elif self._override_state is OverrideState.STUDIO:
             self._save_studio_values()
