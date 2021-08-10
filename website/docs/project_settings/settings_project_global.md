@@ -135,6 +135,52 @@ Profile may generate multiple outputs from a single input. Each output must defi
         - set alpha to `0` to not use this option at all (in most of cases background stays black)
         - other than `0` alpha will draw color as background
 
+### Extract generate slates
+Dynamic slate generator which can be hooked into the publishing process by `generate-slate` tag - labeled as **Add generated slate freame** - in representation tags. Multiple slate styles/formats per one representation is supported.
+
+:::warning Actual supported scope
+At this moment we only support this feature to be activated on review workflow by adding `Add generated slate freame` in Output Definitions on a Extract review profile.
+:::
+
+#### Slate formating options
+
+##### Custom fonts repository
+Own studio wide folder for custom fonts is supported. It can be added "Custom fonts (dir path)".
+
+![global_publish_generate_slate_settings_font](assets/global_publish_generate_slate_settings_font.png)
+
+Environment variable resolving is supported here so - use `{STUDIO_RESOURCES}/fonts` in case you had add the **STUDIO_RESOURCES** env var into *Settings/System/General/Environment*. In case the environment variable is used the one string should be added to all platforms as it is shown in example.
+
+![global_publish_generate_slate_settings_font_env](assets/global_publish_generate_slate_settings_font_env.png)
+
+##### Custom image repository
+Input path to directory which is used in studio for any logo or image inputs. Environment variable resolving is supported here also as it is explained above. To use the custom dir with image in template you can add image input with `{images_path}/name_of_image.png`.
+
+![global_publish_generate_slate_settings_imagepath_example](assets/global_publish_generate_slate_settings_imagepath_example.png)
+
+Note that transparency for png image format is supported.
+#### Slate profiles
+![global_publish_generate_slate_settings_profile](assets/global_publish_generate_slate_settings_profile.png)
+
+**Families**: allowed main family filter (instance data *family* attrribute)
+
+**Hosts**: allowed host filter
+
+**Keep source representation**: use Active in case you wish to preserve representation which had been used for this plugin.
+
+**Slates**: Slate templates (details are explained bellow)
+
+##### Slates
+**name**: name of a template which will be used as suffix of file name
+
+**Slate template**: JSON formated text wich is containing definitions of all objects to be rendered into image. More about available elements and how to use dynamic formating read bellow.
+
+**Additional Input filtering**: additional families filter (instance data *families* attrribute)
+
+### Slate Template
+**{thumbnail_path}** - Image generated from input representation (video file only at the moment).
+
+**segments** - used in style. This will devide image width into number of segmets and then any input unit is used as segment derivate. So to demonstrate if we set font size to `0.5` and segments in "*" style set to `20` the equesions works as follows: delivery width (1920) devided by 20 multiplied by 0.5 is equal to 48px, so the font size will be evaluated during rendering of image as 48px. This way we are able to generate similarly looking slates to every representation size.
 
 ### IntegrateAssetNew
 
