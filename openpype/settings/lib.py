@@ -354,7 +354,7 @@ def _get_default_settings():
             if not path:
                 continue
 
-            subdict = defaults["project_settings"]
+            subdict = defaults
             path_items = list(path.split("/"))
             last_key = path_items.pop(-1)
             for key in path_items:
