@@ -83,6 +83,17 @@
             ]
         },
         {
+            "type": "list",
+            "use_label_wrap": true,
+            "collapsible": true,
+            "key": "infinite_hierarchy",
+            "label": "Infinite list template hierarchy",
+            "object_type": {
+                "type": "template",
+                "name": "example_infinite_hierarchy"
+            }
+        },
+        {
             "type": "dict",
             "key": "schema_template_exaples",
             "label": "Schema template examples",
