@@ -1,4 +1,4 @@
-from openpype.modules.ftrack.lib import ServerAction
+from openpype_modules.ftrack.lib import ServerAction
 
 
 class PrivateProjectDetectionAction(ServerAction):

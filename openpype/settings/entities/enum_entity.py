@@ -399,7 +399,7 @@ class ProvidersEnum(BaseEnumEntity):
         self.placeholder = None
 
     def _get_enum_values(self):
-        from openpype.modules.sync_server.providers import lib as lib_providers
+        from openpype_modules.sync_server.providers import lib as lib_providers
 
         providers = lib_providers.factory.providers
 

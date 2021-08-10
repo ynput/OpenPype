@@ -1,7 +1,7 @@
 import os
 import json
 from openpype_modules.ftrack.lib import ServerAction
-from openpype.modules.clockify.clockify_api import ClockifyAPI
+from openpype_modules.clockify.clockify_api import ClockifyAPI
 
 
 class SyncClocifyServer(ServerAction):
