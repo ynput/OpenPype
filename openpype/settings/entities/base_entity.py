@@ -253,8 +253,17 @@ class BaseItemEntity(BaseEntity):
             )
 
         # Group item can be only once in on hierarchy branch.
-        if self.is_group and self.group_item:
+        if self.is_group and self.group_item is not None:
             raise SchemeGroupHierarchyBug(self)
+
+        # Group item can be only once in on hierarchy branch.
+        if self.group_item is not None and self.is_dynamic_schema_node:
+            reason = (
+                "Dynamic schema is inside grouped item {}."
+                " Change group hierarchy or remove dynamic"
+                " schema to be able work properly."
+            ).format(self.group_item.path)
+            raise EntitySchemaError(self, reason)
 
         # Validate that env group entities will be stored into file.
         #   - env group entities must store metadata which is not possible if
