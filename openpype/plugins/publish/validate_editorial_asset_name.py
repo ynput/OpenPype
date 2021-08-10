@@ -14,7 +14,6 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
     label = "Validate Editorial Asset Name"
 
     def process(self, context):
-        project_entity = context.data["projectEntity"]
 
         asset_and_parents = self.get_parents(context)
         self.log.debug("__ asset_and_parents: {}".format(asset_and_parents))
@@ -27,7 +26,7 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
         self.log.debug("__ db_assets: {}".format(db_assets))
 
         asset_db_docs = {
-            str(e["name"]): [project_entity["name"]] + e["data"]["parents"]
+            str(e["name"]): e["data"]["parents"]
             for e in db_assets}
 
         self.log.debug("__ project_entities: {}".format(
@@ -110,6 +109,7 @@ class ValidateEditorialAssetName(pyblish.api.ContextPlugin):
             parents = instance.data["parents"]
 
             return_dict.update({
-                asset: [p["entity_name"] for p in parents]
+                asset: [p["entity_name"] for p in parents
+                        if p["entity_type"].lower() != "project"]
             })
         return return_dict
