@@ -199,7 +199,7 @@ def get_renderer_variables(renderlayer, root):
         if extension is None:
             extension = "png"
 
-        if extension == "exr (multichannel)" or extension == "exr (deep)":
+        if extension in ["exr (multichannel)", "exr (deep)"]:
             extension = "exr"
 
         prefix_attr = "vraySettings.fileNamePrefix"
@@ -295,57 +295,70 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         instance.data["toBeRenderedOn"] = "deadline"
 
         filepath = None
+        patches = (
+            context.data["project_settings"].get(
+                "deadline", {}).get(
+                "publish", {}).get(
+                "MayaSubmitDeadline", {}).get(
+                "scene_patches", {})
+        )
 
         # Handle render/export from published scene or not ------------------
         if self.use_published:
+            patched_files = []
             for i in context:
-                if "workfile" in i.data["families"]:
-                    assert i.data["publish"] is True, (
-                        "Workfile (scene) must be published along")
-                    template_data = i.data.get("anatomyData")
-                    rep = i.data.get("representations")[0].get("name")
-                    template_data["representation"] = rep
-                    template_data["ext"] = rep
-                    template_data["comment"] = None
-                    anatomy_filled = anatomy.format(template_data)
-                    template_filled = anatomy_filled["publish"]["path"]
-                    filepath = os.path.normpath(template_filled)
-                    self.log.info("Using published scene for render {}".format(
-                        filepath))
+                if "workfile" not in i.data["families"]:
+                    continue
+                assert i.data["publish"] is True, (
+                    "Workfile (scene) must be published along")
+                template_data = i.data.get("anatomyData")
+                rep = i.data.get("representations")[0].get("name")
+                template_data["representation"] = rep
+                template_data["ext"] = rep
+                template_data["comment"] = None
+                anatomy_filled = anatomy.format(template_data)
+                template_filled = anatomy_filled["publish"]["path"]
+                filepath = os.path.normpath(template_filled)
+                self.log.info("Using published scene for render {}".format(
+                    filepath))
 
-                    if not os.path.exists(filepath):
-                        self.log.error("published scene does not exist!")
-                        raise
-                    # now we need to switch scene in expected files
-                    # because <scene> token will now point to published
-                    # scene file and that might differ from current one
-                    new_scene = os.path.splitext(
-                        os.path.basename(filepath))[0]
-                    orig_scene = os.path.splitext(
-                        os.path.basename(context.data["currentFile"]))[0]
-                    exp = instance.data.get("expectedFiles")
+                if not os.path.exists(filepath):
+                    self.log.error("published scene does not exist!")
+                    raise
+                # now we need to switch scene in expected files
+                # because <scene> token will now point to published
+                # scene file and that might differ from current one
+                new_scene = os.path.splitext(
+                    os.path.basename(filepath))[0]
+                orig_scene = os.path.splitext(
+                    os.path.basename(context.data["currentFile"]))[0]
+                exp = instance.data.get("expectedFiles")
 
-                    if isinstance(exp[0], dict):
-                        # we have aovs and we need to iterate over them
-                        new_exp = {}
-                        for aov, files in exp[0].items():
-                            replaced_files = []
-                            for f in files:
-                                replaced_files.append(
-                                    f.replace(orig_scene, new_scene)
-                                )
-                            new_exp[aov] = replaced_files
-                        instance.data["expectedFiles"] = [new_exp]
-                    else:
-                        new_exp = []
-                        for f in exp:
-                            new_exp.append(
+                if isinstance(exp[0], dict):
+                    # we have aovs and we need to iterate over them
+                    new_exp = {}
+                    for aov, files in exp[0].items():
+                        replaced_files = []
+                        for f in files:
+                            replaced_files.append(
                                 f.replace(orig_scene, new_scene)
                             )
-                        instance.data["expectedFiles"] = [new_exp]
-                    self.log.info("Scene name was switched {} -> {}".format(
-                        orig_scene, new_scene
-                    ))
+                        new_exp[aov] = replaced_files
+                    instance.data["expectedFiles"] = [new_exp]
+                else:
+                    new_exp = []
+                    for f in exp:
+                        new_exp.append(
+                            f.replace(orig_scene, new_scene)
+                        )
+                    instance.data["expectedFiles"] = [new_exp]
+                self.log.info("Scene name was switched {} -> {}".format(
+                    orig_scene, new_scene
+                ))
+                # patch workfile is needed
+                if filepath not in patched_files:
+                    patched_file = self._patch_workfile(filepath, patches)
+                    patched_files.append(patched_file)
 
         all_instances = []
         for result in context.data["results"]:
@@ -868,10 +881,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload["JobInfo"].update(job_info_ext)
         payload["PluginInfo"].update(plugin_info_ext)
 
-        envs = []
-        for k, v in payload["JobInfo"].items():
-            if k.startswith("EnvironmentKeyValue"):
-                envs.append(v)
+        envs = [
+            v
+            for k, v in payload["JobInfo"].items()
+            if k.startswith("EnvironmentKeyValue")
+        ]
 
         # add app name to environment
         envs.append(
@@ -892,11 +906,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         envs.append(
             "OPENPYPE_ASS_EXPORT_STEP={}".format(1))
 
-        i = 0
-        for e in envs:
+        for i, e in enumerate(envs):
             payload["JobInfo"]["EnvironmentKeyValue{}".format(i)] = e
-            i += 1
-
         return payload
 
     def _get_vray_render_payload(self, data):
@@ -1003,7 +1014,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
         if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
+            kwargs['verify'] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
         # add 10sec timeout before bailing out
         kwargs['timeout'] = 10
         return requests.post(*args, **kwargs)
@@ -1022,7 +1033,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
         if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True  # noqa
+            kwargs['verify'] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
         # add 10sec timeout before bailing out
         kwargs['timeout'] = 10
         return requests.get(*args, **kwargs)
@@ -1069,3 +1080,42 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         result = filename_zero.replace("\\", "/")
 
         return result
+
+    def _patch_workfile(self, file, patches):
+        # type: (str, dict) -> Union[str, None]
+        """Patch Maya scene.
+
+        This will take list of patches (lines to add) and apply them to
+        *published* Maya  scene file (that is used later for rendering).
+
+        Patches are dict with following structure::
+            {
+                "name": "Name of patch",
+                "regex": "regex of line before patch",
+                "line": "line to insert"
+            }
+
+        Args:
+            file (str): File to patch.
+            patches (dict): Dictionary defining patches.
+
+        Returns:
+            str: Patched file path or None
+
+        """
+        if os.path.splitext(file)[1].lower() != ".ma" or not patches:
+            return None
+
+        compiled_regex = [re.compile(p["regex"]) for p in patches]
+        with open(file, "r+") as pf:
+            scene_data = pf.readlines()
+            for ln, line in enumerate(scene_data):
+                for i, r in enumerate(compiled_regex):
+                    if re.match(r, line):
+                        scene_data.insert(ln + 1, patches[i]["line"])
+                        pf.seek(0)
+                        pf.writelines(scene_data)
+                        pf.truncate()
+                        self.log.info(
+                            "Applied {} patch to scene.".format(patches[i]["name"]))
+        return file

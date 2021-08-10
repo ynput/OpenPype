@@ -151,7 +151,7 @@
                     "type": "dict",
                     "collapsible": true,
                     "key": "MayaSubmitDeadline",
-                    "label": "Submit maya job to deadline",
+                    "label": "Submit Maya job to Deadline",
                     "checkbox_key": "enabled",
                     "children": [
                         {
@@ -213,6 +213,31 @@
                             "type": "raw-json",
                             "key": "pluginInfo",
                             "label": "Additional PluginInfo data"
+                        },
+                        {
+                            "type": "list",
+                            "key": "scene_patches",
+                            "label": "Scene patches",
+                            "required_keys": ["name", "regex", "line"],
+                            "object_type": {
+                                "type": "dict",
+                                "children": [
+                                    {
+                                        "key": "name",
+                                        "label": "Patch name",
+                                        "type": "text"
+                                    }, {
+                                        "key": "regex",
+                                        "label": "Patch regex",
+                                        "type": "text"
+                                    }, {
+                                        "key": "line",
+                                        "label": "Patch line",
+                                        "type": "text"
+                                    }
+                                ]
+
+                            }
                         }
                     ]
                 },
