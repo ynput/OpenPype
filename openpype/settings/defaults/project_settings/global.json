@@ -173,28 +173,6 @@
                 }
             ]
         },
-        "ProcessSubmittedJobOnFarm": {
-            "enabled": true,
-            "deadline_department": "",
-            "deadline_pool": "",
-            "deadline_group": "",
-            "deadline_chunk_size": 1,
-            "deadline_priority": 50,
-            "publishing_script": "",
-            "skip_integration_repre_list": [],
-            "aov_filter": {
-                "maya": [
-                    ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
-                ],
-                "nuke": [],
-                "aftereffects": [
-                    ".*"
-                ],
-                "celaction": [
-                    ".*"
-                ]
-            }
-        },
         "CleanUp": {
             "paterns": [],
             "remove_temp_renders": false
@@ -257,6 +235,16 @@
                     ],
                     "tasks": [],
                     "template": "{family}{Task}"
+                },
+                {
+                    "families": [
+                        "renderLocal"
+                    ],
+                    "hosts": [
+                        "aftereffects"
+                    ],
+                    "tasks": [],
+                    "template": "render{Task}{Variant}"
                 }
             ]
         },

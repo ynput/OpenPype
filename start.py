@@ -221,9 +221,13 @@ def set_openpype_global_environments() -> None:
         all_env = get_environments()
         general_env = all_env["global"]
 
-    env = acre.merge(
+    merged_env = acre.merge(
         acre.parse(general_env),
         dict(os.environ)
+    )
+    env = acre.compute(
+        merged_env,
+        cleanup=False
     )
     os.environ.clear()
     os.environ.update(env)

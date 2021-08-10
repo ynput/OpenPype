@@ -141,7 +141,20 @@ class ListEntity(EndpointEntity):
         item_schema = self.schema_data["object_type"]
         if not isinstance(item_schema, dict):
             item_schema = {"type": item_schema}
-        self.item_schema = item_schema
+
+        obj_template_name = self.schema_hub.get_template_name(item_schema)
+        _item_schemas = self.schema_hub.resolve_schema_data(item_schema)
+        if len(_item_schemas) == 1:
+            self.item_schema = _item_schemas[0]
+            if self.item_schema != item_schema:
+                if "label" in self.item_schema:
+                    self.item_schema.pop("label")
+                self.item_schema["use_label_wrap"] = False
+        else:
+            self.item_schema = _item_schemas
+
+        # Store if was used template or schema
+        self._obj_template_name = obj_template_name
 
         if self.group_item is None:
             self.is_group = True
@@ -150,6 +163,12 @@ class ListEntity(EndpointEntity):
         self.initial_value = []
 
     def schema_validations(self):
+        if isinstance(self.item_schema, list):
+            reason = (
+                "`ListWidget` has multiple items as object type."
+            )
+            raise EntitySchemaError(self, reason)
+
         super(ListEntity, self).schema_validations()
 
         if self.is_dynamic_item and self.use_label_wrap:
@@ -167,17 +186,35 @@ class ListEntity(EndpointEntity):
             raise EntitySchemaError(self, reason)
 
         # Validate object type schema
-        child_validated = False
+        validate_children = True
         for child_entity in self.children:
             child_entity.schema_validations()
-            child_validated = True
+            validate_children = False
             break
 
-        if not child_validated:
+        if validate_children and self._obj_template_name:
+            _validated = self.schema_hub.is_dynamic_template_validated(
+                self._obj_template_name
+            )
+            _validating = self.schema_hub.is_dynamic_template_validating(
+                self._obj_template_name
+            )
+            validate_children = not _validated and not _validating
+
+        if not validate_children:
+            return
+
+        def _validate():
             idx = 0
             tmp_child = self._add_new_item(idx)
             tmp_child.schema_validations()
             self.children.pop(idx)
+
+        if self._obj_template_name:
+            with self.schema_hub.validating_dynamic(self._obj_template_name):
+                _validate()
+        else:
+            _validate()
 
     def get_child_path(self, child_obj):
         result_idx = None

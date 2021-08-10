@@ -54,6 +54,10 @@ class LoadClip(phiero.SequenceLoader):
         object_name = self.clip_name_template.format(
             **context["representation"]["context"])
 
+        # set colorspace
+        if colorspace:
+            track_item.source().setSourceMediaColourTransform(colorspace)
+
         # add additional metadata from the version to imprint Avalon knob
         add_keys = [
             "frameStart", "frameEnd", "source", "author",
@@ -109,9 +113,14 @@ class LoadClip(phiero.SequenceLoader):
         colorspace = version_data.get("colorspace", None)
         object_name = "{}_{}".format(name, namespace)
         file = api.get_representation_path(representation).replace("\\", "/")
+        clip = track_item.source()
 
         # reconnect media to new path
-        track_item.source().reconnectMedia(file)
+        clip.reconnectMedia(file)
+
+        # set colorspace
+        if colorspace:
+            clip.setSourceMediaColourTransform(colorspace)
 
         # add additional metadata from the version to imprint Avalon knob
         add_keys = [
@@ -160,6 +169,7 @@ class LoadClip(phiero.SequenceLoader):
     @classmethod
     def set_item_color(cls, track_item, version):
 
+        clip = track_item.source()
         # define version name
         version_name = version.get("name", None)
         # get all versions in list
@@ -172,6 +182,6 @@ class LoadClip(phiero.SequenceLoader):
 
         # set clip colour
         if version_name == max_version:
-            track_item.source().binItem().setColor(cls.clip_color_last)
+            clip.binItem().setColor(cls.clip_color_last)
         else:
-            track_item.source().binItem().setColor(cls.clip_color)
+            clip.binItem().setColor(cls.clip_color)
