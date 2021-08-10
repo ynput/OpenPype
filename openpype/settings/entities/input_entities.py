@@ -116,7 +116,11 @@ class InputEntity(EndpointEntity):
 
     def schema_validations(self):
         # Input entity must have file parent.
-        if not self.file_item:
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+            and self.file_item is None
+        ):
             raise EntitySchemaError(self, "Missing parent file entity.")
 
         super(InputEntity, self).schema_validations()

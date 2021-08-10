@@ -841,10 +841,20 @@ class ItemEntity(BaseItemEntity):
         self._require_restart_on_change = require_restart_on_change
 
         # File item reference
-        if self.parent.is_file:
-            self.file_item = self.parent
-        elif self.parent.file_item:
-            self.file_item = self.parent.file_item
+        if not self.is_dynamic_schema_node:
+            self.is_in_dynamic_schema_node = (
+                self.parent.is_dynamic_schema_node
+                or self.parent.is_in_dynamic_schema_node
+            )
+
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+        ):
+            if self.parent.is_file:
+                self.file_item = self.parent
+            elif self.parent.file_item:
+                self.file_item = self.parent.file_item
 
         # Group item reference
         if self.parent.is_group:
@@ -903,7 +913,12 @@ class ItemEntity(BaseItemEntity):
             )
             raise EntitySchemaError(self, reason)
 
-        if self.is_file and self.file_item is not None:
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+            and self.is_file
+            and self.file_item is not None
+        ):
             reason = (
                 "Entity has set `is_file` to true but"
                 " it's parent is already marked as file item."

@@ -215,7 +215,12 @@ class ListStrictEntity(ItemEntity):
 
     def schema_validations(self):
         # List entity must have file parent.
-        if not self.file_item and not self.is_file:
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+            and not self.is_file
+            and self.file_item is None
+        ):
             raise EntitySchemaError(
                 self, "Missing file entity in hierarchy."
             )
