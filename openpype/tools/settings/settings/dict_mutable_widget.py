@@ -431,7 +431,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         key_value = self.key_input.text()
         key_label_value = self.key_label_input.text()
         if key_label_value:
-            label = "{} ({})".format(key_label_value, key_value)
+            label = "{} ({})".format(key_value, key_label_value)
         else:
             label = key_value
         self.wrapper_widget.label_widget.setText(label)
