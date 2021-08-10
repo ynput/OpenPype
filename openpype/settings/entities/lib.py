@@ -26,6 +26,10 @@ TEMPLATE_METADATA_KEYS = (
 SCHEMA_KEY_SYSTEM_SETTINGS = "system_schema"
 SCHEMA_KEY_PROJECT_SETTINGS = "projects_schema"
 
+SCHEMA_EXTEND_TYPES = (
+    "schema", "template", "schema_template", "dynamic_schema"
+)
+
 template_key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
 
@@ -217,7 +221,7 @@ class SchemasHub:
             list: Resolved schema data.
         """
         schema_type = schema_data["type"]
-        if schema_type not in ("schema", "template", "schema_template"):
+        if schema_type not in SCHEMA_EXTEND_TYPES:
             return [schema_data]
 
         if schema_type == "schema":
