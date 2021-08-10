@@ -431,6 +431,9 @@ class SchemasHub:
         self._loaded_schemas = loaded_schemas
         self._dynamic_schemas_def_by_id = dynamic_schemas_def_by_id
 
+    def get_dynamic_schema_def(self, schema_def_id):
+        return self._dynamic_schemas_def_by_id.get(schema_def_id)
+
     def _fill_template(self, child_data, template_def):
         """Fill template based on schema definition and template definition.
 
