@@ -4,6 +4,7 @@ import json
 import copy
 import inspect
 import collections
+import contextlib
 
 from .exceptions import (
     SchemaTemplateMissingKeys,
@@ -123,6 +124,10 @@ class SchemasHub:
         self._dynamic_schemas_defs_by_id = {}
         self._dynamic_schemas_by_id = {}
 
+        # Store validating and validated dynamic template or schemas
+        self._validating_dynamic = set()
+        self._validated_dynamic = set()
+
         # Trigger reset
         if reset:
             self.reset()
@@ -164,6 +169,60 @@ class SchemasHub:
                     item["_dynamic_schema_id"] = def_id
                 output.extend(def_schema)
         return output
+
+    def get_template_name(self, item_def, default=None):
+        """Get template name from passed item definition.
+
+        Args:
+            item_def(dict): Definition of item with "type".
+            default(object): Default return value.
+        """
+        output = default
+        if not item_def or not isinstance(item_def, dict):
+            return output
+
+        item_type = item_def.get("type")
+        if item_type in ("template", "schema_template"):
+            output = item_def["name"]
+        return output
+
+    def is_dynamic_template_validating(self, template_name):
+        """Is template validating using different entity.
+
+        Returns:
+            bool: Is template validating.
+        """
+        if template_name in self._validating_dynamic:
+            return True
+        return False
+
+    def is_dynamic_template_validated(self, template_name):
+        """Is template already validated.
+
+        Returns:
+            bool: Is template validated.
+        """
+
+        if template_name in self._validated_dynamic:
+            return True
+        return False
+
+    @contextlib.contextmanager
+    def validating_dynamic(self, template_name):
+        """Template name is validating and validated.
+
+        Context manager that cares about storing template name validations of
+        template.
+
+        This is to avoid infinite loop of dynamic children validation.
+        """
+        self._validating_dynamic.add(template_name)
+        try:
+            yield
+            self._validated_dynamic.add(template_name)
+
+        finally:
+            self._validating_dynamic.remove(template_name)
 
     def get_schema(self, schema_name):
         """Get schema definition data by it's name.

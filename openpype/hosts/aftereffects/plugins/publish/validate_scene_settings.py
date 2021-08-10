@@ -53,7 +53,7 @@ class ValidateSceneSettings(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Scene Settings"
-    families = ["render.farm"]
+    families = ["render.farm", "render"]
     hosts = ["aftereffects"]
     optional = True
 

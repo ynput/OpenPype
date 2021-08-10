@@ -1,5 +1,17 @@
-# OpenPype modules
-OpenPype modules should contain separated logic of specific kind of implementation, like Ftrack connection and usage code or Deadline farm rendering or special plugins.
+# OpenPype modules/addons
+OpenPype modules should contain separated logic of specific kind of implementation, like Ftrack connection and usage code or Deadline farm rendering or may contain only special plugins. Addons work the same way currently there is no difference in module and addon.
+
+## Modules concept
+- modules and addons are dynamically imported to virtual python module `openpype_modules` from which it is possible to import them no matter where is the modulo located
+- modules or addons should never be imported directly even if you know possible full import path
+    - it is because all of their content must be imported in specific order and should not be imported without defined functions as it may also break few implementation parts
+
+### TODOs
+- add module/addon manifest
+    - definition of module (not 100% defined content e.g. minimum require OpenPype version etc.)
+    - defying that folder is content of a module or an addon
+- module/addon have it's settings schemas and default values outside OpenPype
+- add general setting of paths to modules
 
 ## Base class `OpenPypeModule`
 - abstract class as base for each module
@@ -20,6 +32,7 @@ OpenPype modules should contain separated logic of specific kind of implementati
 - interfaces can be defined in `interfaces.py` inside module directory
     - the file can't use relative imports or import anything from other parts
         of module itself at the header of file
+    - this is one of reasons why modules/addons can't be imported directly without using defined functions in OpenPype modules implementation
 
 ## Base class `OpenPypeInterface`
 - has nothing implemented

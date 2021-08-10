@@ -120,6 +120,13 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
             # create instance
             instance = context.create_instance(**data)
 
+            # add colorspace data
+            instance.data.update({
+                "versionData": {
+                    "colorspace": track_item.sourceMediaColourTransform(),
+                }
+            })
+
             # create shot instance for shot attributes create/update
             self.create_shot_instance(context, **data)
 
@@ -132,13 +139,6 @@ class PrecollectInstances(pyblish.api.ContextPlugin):
 
             # create audio subset instance
             self.create_audio_instance(context, **data)
-
-            # add colorspace data
-            instance.data.update({
-                "versionData": {
-                    "colorspace": track_item.sourceMediaColourTransform(),
-                }
-            })
 
             # add audioReview attribute to plate instance data
             # if reviewTrack is on

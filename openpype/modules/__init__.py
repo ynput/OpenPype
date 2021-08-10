@@ -4,6 +4,8 @@ from .base import (
     OpenPypeAddOn,
     OpenPypeInterface,
 
+    load_modules,
+
     ModulesManager,
     TrayModulesManager,
 
@@ -16,6 +18,8 @@ __all__ = (
     "OpenPypeModule",
     "OpenPypeAddOn",
     "OpenPypeInterface",
+
+    "load_modules",
 
     "ModulesManager",
     "TrayModulesManager",

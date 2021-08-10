@@ -4,7 +4,7 @@ import six
 import pyblish.api
 from avalon import io
 
-# Copy of constant `openpype.modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
+# Copy of constant `openpype_modules.ftrack.lib.avalon_sync.CUST_ATTR_AUTO_SYNC`
 CUST_ATTR_AUTO_SYNC = "avalon_auto_sync"
 CUST_ATTR_GROUP = "openpype"
 
