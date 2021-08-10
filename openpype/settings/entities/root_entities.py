@@ -281,6 +281,8 @@ class RootEntity(BaseItemEntity):
         if self._override_state is not OverrideState.DEFAULTS:
             output = {}
             for key, child_obj in self.non_gui_children.items():
+                if child_obj.is_dynamic_schema_node:
+                    continue
                 value = child_obj.settings_value()
                 if value is not NOT_SET:
                     output[key] = value
