@@ -137,8 +137,6 @@ class BlendModelLoader(plugin.AssetLoader):
                 rotation = transform.get('rotation')
                 scale = transform.get('scale')
 
-                # Y position is inverted in sign because Unreal and Blender have the
-                # Y axis mirrored
                 asset_group.location = (
                     location.get('x'),
                     location.get('y'),

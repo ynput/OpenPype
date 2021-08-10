@@ -11,6 +11,7 @@ from avalon import api
 from avalon.blender.pipeline import AVALON_CONTAINERS
 from avalon.blender.pipeline import AVALON_CONTAINER_ID
 from avalon.blender.pipeline import AVALON_PROPERTY
+from avalon.blender.pipeline import AVALON_INSTANCES
 from openpype.hosts.blender.api import plugin
 
 
@@ -32,6 +33,14 @@ class JsonLayoutLoader(plugin.AssetLoader):
         for obj in objects:
             api.remove(obj.get(AVALON_PROPERTY))
 
+    def _remove_animation_instances(self, asset_group):
+        instances = bpy.data.collections.get(AVALON_INSTANCES)
+        if instances:
+            for obj in list(asset_group.children):
+                anim_collection = instances.children.get(obj.name+"_animation")
+                if anim_collection:
+                    bpy.data.collections.remove(anim_collection)
+
     def _get_loader(self, loaders, family):
         name = ""
         if family == 'rig':
@@ -48,7 +57,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
 
         return None
 
-    def _process(self, libpath, asset_group, actions):
+    def _process(self, libpath, asset, asset_group, actions):
         bpy.ops.object.select_all(action='DESELECT')
 
         with open(libpath, "r") as fp:
@@ -76,7 +85,9 @@ class JsonLayoutLoader(plugin.AssetLoader):
             options = {
                 'parent': asset_group,
                 'transform': element.get('transform'),
-                'action': action
+                'action': action,
+                'create_animation': True if family == 'rig' else False,
+                'animation_asset': asset
             }
 
             # This should return the loaded asset, but the load call will be
@@ -121,7 +132,7 @@ class JsonLayoutLoader(plugin.AssetLoader):
         asset_group.empty_display_type = 'SINGLE_ARROW'
         avalon_container.objects.link(asset_group)
 
-        self._process(libpath, asset_group, None)
+        self._process(libpath, asset, asset_group, None)
 
         bpy.context.scene.collection.objects.link(asset_group)
 
@@ -206,10 +217,12 @@ class JsonLayoutLoader(plugin.AssetLoader):
                 if not rig:
                     raise Exception("No armature in the rig asset group.")
                 if rig.animation_data and rig.animation_data.action:
-                    instance_name = obj_meta.get('instance_name')
-                    actions[instance_name] = rig.animation_data.action
+                    namespace = obj_meta.get('namespace')
+                    actions[namespace] = rig.animation_data.action
 
         mat = asset_group.matrix_basis.copy()
+
+        self._remove_animation_instances(asset_group)
 
         self._remove(asset_group)
 
@@ -235,6 +248,8 @@ class JsonLayoutLoader(plugin.AssetLoader):
 
         if not asset_group:
             return False
+
+        self._remove_animation_instances(asset_group)
 
         self._remove(asset_group)
 

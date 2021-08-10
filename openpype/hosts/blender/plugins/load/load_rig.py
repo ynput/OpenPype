@@ -10,6 +10,7 @@ from avalon import api
 from avalon.blender.pipeline import AVALON_CONTAINERS
 from avalon.blender.pipeline import AVALON_CONTAINER_ID
 from avalon.blender.pipeline import AVALON_PROPERTY
+from openpype import lib
 from openpype.hosts.blender.api import plugin
 
 
@@ -164,18 +165,19 @@ class BlendRigLoader(plugin.AssetLoader):
 
         bpy.ops.object.select_all(action='DESELECT')
 
+        create_animation = False
+
         if options is not None:
             parent = options.get('parent')
             transform = options.get('transform')
             action = options.get('action')
+            create_animation = options.get('create_animation')
 
             if parent and transform:
                 location = transform.get('translation')
                 rotation = transform.get('rotation')
                 scale = transform.get('scale')
 
-                # Y position is inverted in sign because Unreal and Blender have the
-                # Y axis mirrored
                 asset_group.location = (
                     location.get('x'),
                     location.get('y'),
@@ -200,6 +202,27 @@ class BlendRigLoader(plugin.AssetLoader):
                 bpy.ops.object.select_all(action='DESELECT')
 
         objects = self._process(libpath, asset_group, group_name, action)
+
+        if create_animation:
+            creator_plugin = lib.get_creator_by_name("CreateAnimation")
+            if not creator_plugin:
+                raise ValueError("Creator plugin \"CreateAnimation\" was "
+                    "not found.")
+
+            asset_group.select_set(True)
+
+            animation_asset = options.get('animation_asset')
+
+            api.create(
+                creator_plugin,
+                name=namespace+"_animation",
+                # name=f"{unique_number}_{subset}_animation",
+                asset=animation_asset,
+                options={"useSelection": False, "asset_group": asset_group},
+                data={"dependencies": str(context["representation"]["_id"])}
+            )
+
+            bpy.ops.object.select_all(action='DESELECT')
 
         bpy.context.scene.collection.objects.link(asset_group)
 
