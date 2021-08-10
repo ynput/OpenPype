@@ -469,7 +469,7 @@ class DictConditionalEntity(ItemEntity):
             output = {}
             for key, child_obj in children_items:
                 child_value = child_obj.settings_value()
-                if not child_obj.is_file and not child_obj.file_item:
+                if not child_obj.is_file and child_obj.file_item is None:
                     for _key, _value in child_value.items():
                         new_key = "/".join([key, _key])
                         output[new_key] = _value

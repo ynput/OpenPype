@@ -253,7 +253,7 @@ class BaseItemEntity(BaseEntity):
         # Validate that env group entities will be stored into file.
         #   - env group entities must store metadata which is not possible if
         #       metadata would be outside of file
-        if not self.file_item and self.is_env_group:
+        if self.file_item is None and self.is_env_group:
             reason = (
                 "Environment item is not inside file"
                 " item so can't store metadata for defaults."

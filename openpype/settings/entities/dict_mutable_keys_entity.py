@@ -261,7 +261,7 @@ class DictMutableKeysEntity(EndpointEntity):
             raise EntitySchemaError(self, reason)
 
         # TODO Ability to store labels should be defined with different key
-        if self.collapsible_key and not self.file_item:
+        if self.collapsible_key and self.file_item is None:
             reason = (
                 "Modifiable dictionary with collapsible keys is not under"
                 " file item so can't store metadata."
