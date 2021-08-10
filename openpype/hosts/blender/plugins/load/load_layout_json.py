@@ -37,7 +37,8 @@ class JsonLayoutLoader(plugin.AssetLoader):
         instances = bpy.data.collections.get(AVALON_INSTANCES)
         if instances:
             for obj in list(asset_group.children):
-                anim_collection = instances.children.get(obj.name+"_animation")
+                anim_collection = instances.children.get(
+                    obj.name + "_animation")
                 if anim_collection:
                     bpy.data.collections.remove(anim_collection)
 

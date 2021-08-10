@@ -57,7 +57,7 @@ class BlendAnimationLoader(plugin.AssetLoader):
 
         for obj in bpy.data.objects:
             if obj.get(AVALON_PROPERTY) and obj.get(AVALON_PROPERTY).get(
-                'namespace') == target_namespace:
+                    'namespace') == target_namespace:
                 if obj.children[0]:
                     if not obj.children[0].animation_data:
                         obj.children[0].animation_data_create()

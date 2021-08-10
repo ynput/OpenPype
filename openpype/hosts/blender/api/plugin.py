@@ -174,7 +174,8 @@ class AssetLoader(api.Loader):
               context: dict,
               name: Optional[str] = None,
               namespace: Optional[str] = None,
-              options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
+              options: Optional[Dict] = None
+    ) -> Optional[bpy.types.Collection]:
         """Load asset via database
 
         Arguments:

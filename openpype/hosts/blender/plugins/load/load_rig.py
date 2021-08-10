@@ -207,7 +207,7 @@ class BlendRigLoader(plugin.AssetLoader):
             creator_plugin = lib.get_creator_by_name("CreateAnimation")
             if not creator_plugin:
                 raise ValueError("Creator plugin \"CreateAnimation\" was "
-                    "not found.")
+                                 "not found.")
 
             asset_group.select_set(True)
 
@@ -215,7 +215,7 @@ class BlendRigLoader(plugin.AssetLoader):
 
             api.create(
                 creator_plugin,
-                name=namespace+"_animation",
+                name=namespace + "_animation",
                 # name=f"{unique_number}_{subset}_animation",
                 asset=animation_asset,
                 options={"useSelection": False, "asset_group": asset_group},
