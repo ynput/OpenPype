@@ -146,6 +146,23 @@ class SchemasHub:
     def gui_types(self):
         return self._gui_types
 
+    def resolve_dynamic_schema(self, dynamic_key):
+        output = []
+        for def_id, def_keys in self._dynamic_schemas_by_module_id.items():
+            if dynamic_key in def_keys:
+                def_schema = def_keys[dynamic_key]
+                if not def_schema:
+                    continue
+
+                if isinstance(def_schema, dict):
+                    def_schema = [def_schema]
+
+                for item in def_schema:
+                    item["_module_id"] = def_id
+                    item["_module_store_key"] = dynamic_key
+                output.extend(def_schema)
+        return output
+
     def get_schema(self, schema_name):
         """Get schema definition data by it's name.
 
@@ -228,6 +245,9 @@ class SchemasHub:
             return self.resolve_schema_data(
                 self.get_schema(schema_data["name"])
             )
+
+        if schema_type == "dynamic_schema":
+            return self.resolve_dynamic_schema(schema_data["name"])
 
         template_name = schema_data["name"]
         template_def = self.get_template(template_name)
@@ -329,6 +349,7 @@ class SchemasHub:
         self._crashed_on_load = {}
         self._loaded_templates = {}
         self._loaded_schemas = {}
+        self._dynamic_schemas_by_module_id = {}
 
         dirpath = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -337,6 +358,7 @@ class SchemasHub:
         )
         loaded_schemas = {}
         loaded_templates = {}
+        dynamic_schemas_by_module_id = {}
         for root, _, filenames in os.walk(dirpath):
             for filename in filenames:
                 basename, ext = os.path.splitext(filename)
@@ -386,8 +408,31 @@ class SchemasHub:
                         )
                     loaded_schemas[basename] = schema_data
 
+        defs_iter = self._modules_settings_defs_by_id.items()
+        for def_id, module_settings_def in defs_iter:
+            dynamic_schemas_by_module_id[def_id] = (
+                module_settings_def.get_dynamic_schemas(self._schema_subfolder)
+            )
+            module_schemas = module_settings_def.get_settings_schemas(
+                self._schema_subfolder
+            )
+            for key, schema_data in module_schemas.items():
+                if isinstance(schema_data, list):
+                    if key in loaded_templates:
+                        raise KeyError(
+                            "Duplicated template key \"{}\"".format(key)
+                        )
+                    loaded_templates[key] = schema_data
+                else:
+                    if key in loaded_schemas:
+                        raise KeyError(
+                            "Duplicated schema key \"{}\"".format(key)
+                        )
+                    loaded_schemas[key] = schema_data
+
         self._loaded_templates = loaded_templates
         self._loaded_schemas = loaded_schemas
+        self._dynamic_schemas_by_module_id = dynamic_schemas_by_module_id
 
     def _fill_template(self, child_data, template_def):
         """Fill template based on schema definition and template definition.
