@@ -11,7 +11,7 @@ class ValidateTextureBatchWorkfiles(pyblish.api.InstancePlugin):
     label = "Validate Texture Workfile Has Resources"
     hosts = ["standalonepublisher"]
     order = pype.api.ValidateContentsOrder
-    families = ["workfile"]
+    families = ["texture_batch_workfile"]
     optional = True
 
     def process(self, instance):
