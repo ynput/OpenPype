@@ -43,7 +43,7 @@ dictionary level, task's attributes are nested more.
 
 group (string)
     - name of group
-    - based on attribute `openpype.modules.ftrack.lib.CUST_ATTR_GROUP`
+    - based on attribute `openpype_modules.ftrack.lib.CUST_ATTR_GROUP`
         - "pype" by default
 
 *** Required ***************************************************************
