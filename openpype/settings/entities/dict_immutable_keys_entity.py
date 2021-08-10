@@ -330,13 +330,20 @@ class DictImmutableKeysEntity(ItemEntity):
             return NOT_SET
 
         if self._override_state is OverrideState.DEFAULTS:
+            is_dynamic_schema_node = (
+                self.is_dynamic_schema_node or self.is_in_dynamic_schema_node
+            )
             output = {}
             for key, child_obj in self.non_gui_children.items():
                 if child_obj.is_dynamic_schema_node:
                     continue
 
                 child_value = child_obj.settings_value()
-                if not child_obj.is_file and not child_obj.file_item:
+                if (
+                    not is_dynamic_schema_node
+                    and not child_obj.is_file
+                    and not child_obj.file_item
+                ):
                     for _key, _value in child_value.items():
                         new_key = "/".join([key, _key])
                         output[new_key] = _value
