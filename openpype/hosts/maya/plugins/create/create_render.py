@@ -110,8 +110,7 @@ class CreateRender(plugin.Creator):
             manager = ModulesManager()
             deadline_module = manager.modules_by_name["deadline"]
             # get default deadline webservice url from deadline module
-            deadline_url = deadline_module.deadline_url
-            self.deadline_servers = {"default": deadline_url}
+            self.deadline_servers = deadline_module.deadline_urls
 
     def process(self):
         """Entry point."""
