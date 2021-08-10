@@ -104,6 +104,12 @@ class BaseItemEntity(BaseEntity):
         self.is_group = False
         # Entity's value will be stored into file with name of it's key
         self.is_file = False
+        # Default values are not stored to an openpype file
+        # - these must not be set through schemas directly
+        self.dynamic_schema_id = None
+        self.is_dynamic_schema_node = False
+        self.is_in_dynamic_schema_node = False
+
         # Reference to parent entity which has `is_group` == True
         #   - stays as None if none of parents is group
         self.group_item = None
@@ -800,6 +806,12 @@ class ItemEntity(BaseItemEntity):
         self.is_dynamic_item = is_dynamic_item
 
         self.is_file = self.schema_data.get("is_file", False)
+        # These keys have underscore as they must not be set in schemas
+        self.dynamic_schema_id = self.schema_data.get(
+            "_dynamic_schema_id", None
+        )
+        self.is_dynamic_schema_node = self.dynamic_schema_id is not None
+
         self.is_group = self.schema_data.get("is_group", False)
         self.is_in_dynamic_item = bool(
             not self.is_dynamic_item

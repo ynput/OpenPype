@@ -156,8 +156,7 @@ class SchemasHub:
                     def_schema = [def_schema]
 
                 for item in def_schema:
-                    item["_module_id"] = def_id
-                    item["_module_store_key"] = dynamic_key
+                    item["_dynamic_schema_id"] = def_id
                 output.extend(def_schema)
         return output
 
