@@ -14,6 +14,12 @@ from openpype.tools.settings import (
 from openpype.settings.constants import KEY_REGEX
 
 
+KEY_INPUT_TOOLTIP = (
+    "Keys can't be duplicated and may contain alphabetical character (a-Z)"
+    "\nnumerical characters (0-9) dash (\"-\") or underscore (\"_\")."
+)
+
+
 class PaintHelper:
     cached_icons = {}
 
@@ -202,6 +208,7 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def create_collapsible_ui(self):
         key_input = QtWidgets.QLineEdit(self)
         key_input.setObjectName("DictKey")
+        key_input.setToolTip(KEY_INPUT_TOOLTIP)
 
         key_label_input = QtWidgets.QLineEdit(self)
 
@@ -281,6 +288,8 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.create_collapsible_ui()
         else:
             self.create_addible_ui()
+
+        self.key_input.setToolTip(KEY_INPUT_TOOLTIP)
         self.update_style()
 
     @property
