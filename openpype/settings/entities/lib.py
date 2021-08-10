@@ -118,9 +118,6 @@ class SchemasHub:
         self._loaded_templates = {}
         self._loaded_schemas = {}
 
-        # It doesn't make sence to reload types on each reset as they can't be
-        #   changed
-        self._load_types()
         # Attributes for modules settings
         self._modules_settings_defs_by_id = {}
         self._dynamic_schemas_by_module_id = {}
@@ -131,6 +128,7 @@ class SchemasHub:
 
     def reset(self):
         self._load_modules_settings_defs()
+        self._load_types()
         self._load_schemas()
 
     def _load_modules_settings_defs(self):
