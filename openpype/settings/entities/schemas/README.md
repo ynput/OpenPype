@@ -417,6 +417,8 @@ How output of the schema could look like on save:
 - there are 2 possible ways how to set the type:
     1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
     2.) item type name as string without modifiers (e.g. `text`)
+    3.) enhancement of 1.) there is also support of `template` type but be carefull about endless loop of templates
+        - goal of using `template` is to easily change same item definitions in multiple lists
 
 1.) with item modifiers
 ```
@@ -440,6 +442,65 @@ How output of the schema could look like on save:
     "label": "Exclude ports",
     "object_type": "text"
 }
+```
+
+3.) with template definition
+```
+# Schema of list item where template is used
+{
+    "type": "list",
+    "key": "menu_items",
+    "label": "Menu Items",
+    "object_type": {
+        "type": "template",
+        "name": "template_object_example"
+    }
+}
+
+# WARNING:
+#  In this example the template use itself inside which will work in `list`
+#  but may cause an issue in other entity types (e.g. `dict`).
+
+'template_object_example.json' :
+[
+    {
+        "type": "dict-conditional",
+        "use_label_wrap": true,
+        "collapsible": true,
+        "key": "menu_items",
+        "label": "Menu items",
+        "enum_key": "type",
+        "enum_label": "Type",
+        "enum_children": [
+            {
+                "key": "action",
+                "label": "Action",
+                "children": [
+                    {
+                        "type": "text",
+                        "key": "key",
+                        "label": "Key"
+                    }
+                ]
+            },
+            {
+                "key": "menu",
+                "label": "Menu",
+                "children": [
+                    {
+                        "key": "children",
+                        "label": "Children",
+                        "type": "list",
+                        "object_type": {
+                            "type": "template",
+                            "name": "template_object_example"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]
 ```
 
 ### dict-modifiable

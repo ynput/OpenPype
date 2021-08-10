@@ -8,7 +8,7 @@ class ValidateTextureBatchNaming(pyblish.api.InstancePlugin):
     label = "Validate Texture Batch Naming"
     hosts = ["standalonepublisher"]
     order = openpype.api.ValidateContentsOrder
-    families = ["workfile", "textures"]
+    families = ["texture_batch_workfile", "textures"]
     optional = False
 
     def process(self, instance):
