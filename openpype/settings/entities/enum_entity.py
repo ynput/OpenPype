@@ -73,21 +73,41 @@ class EnumEntity(BaseEnumEntity):
     def _item_initalization(self):
         self.multiselection = self.schema_data.get("multiselection", False)
         self.enum_items = self.schema_data.get("enum_items")
+        # Default is optional and non breaking attribute
+        enum_default = self.schema_data.get("default")
 
-        valid_keys = set()
+        all_keys = []
         for item in self.enum_items or []:
-            valid_keys.add(tuple(item.keys())[0])
+            key = tuple(item.keys())[0]
+            all_keys.append(key)
 
-        self.valid_keys = valid_keys
+        self.valid_keys = set(all_keys)
 
         if self.multiselection:
             self.valid_value_types = (list, )
-            self.value_on_not_set = []
+            value_on_not_set = []
+            if enum_default:
+                if not isinstance(enum_default, list):
+                    enum_default = [enum_default]
+
+                for item in enum_default:
+                    if item in all_keys:
+                        value_on_not_set.append(item)
+
+            self.value_on_not_set = value_on_not_set
+
         else:
-            for key in valid_keys:
-                if self.value_on_not_set is NOT_SET:
-                    self.value_on_not_set = key
-                    break
+            if isinstance(enum_default, list) and enum_default:
+                enum_default = enum_default[0]
+
+            if enum_default in self.valid_keys:
+                self.value_on_not_set = enum_default
+
+            else:
+                for key in all_keys:
+                    if self.value_on_not_set is NOT_SET:
+                        self.value_on_not_set = key
+                        break
 
             self.valid_value_types = (STRING_TYPE, )
 
