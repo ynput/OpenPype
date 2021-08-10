@@ -476,7 +476,15 @@ class BaseItemEntity(BaseEntity):
 
     @abstractmethod
     def settings_value(self):
-        """Value of an item without key."""
+        """Value of an item without key without dynamic items."""
+        pass
+
+    @abstractmethod
+    def collect_dynamic_schema_entities(self):
+        """Collect entities that are on top of dynamically added schemas.
+
+        This method make sence only when defaults are saved.
+        """
         pass
 
     @abstractmethod
@@ -904,6 +912,18 @@ class ItemEntity(BaseItemEntity):
     @property
     def root_key(self):
         return self.root_item.root_key
+
+    @abstractmethod
+    def collect_dynamic_schema_entities(self, collector):
+        """Collect entities that are on top of dynamically added schemas.
+
+        This method make sence only when defaults are saved.
+
+        Args:
+            collector(DynamicSchemaValueCollector): Object where dynamic
+                entities are stored.
+        """
+        pass
 
     def schema_validations(self):
         if not self.label and self.use_label_wrap:

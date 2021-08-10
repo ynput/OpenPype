@@ -455,6 +455,10 @@ class DictConditionalEntity(ItemEntity):
                     return True
         return False
 
+    def collect_dynamic_schema_entities(self, collector):
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
+
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET

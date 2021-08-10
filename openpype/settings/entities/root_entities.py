@@ -12,7 +12,8 @@ from .lib import (
     SCHEMA_KEY_SYSTEM_SETTINGS,
     SCHEMA_KEY_PROJECT_SETTINGS,
     OverrideState,
-    SchemasHub
+    SchemasHub,
+    DynamicSchemaValueCollector
 )
 from .exceptions import (
     SchemaError,
@@ -257,6 +258,16 @@ class RootEntity(BaseItemEntity):
         output = {}
         for key, child_obj in self.non_gui_children.items():
             output[key] = child_obj.value
+        return output
+
+    def collect_dynamic_schema_entities(self):
+        output = DynamicSchemaValueCollector(self.schema_hub)
+        if self._override_state is not OverrideState.DEFAULTS:
+            return output
+
+        for child_obj in self.non_gui_children.values():
+            child_obj.collect_dynamic_schema_entities(output)
+
         return output
 
     def settings_value(self):

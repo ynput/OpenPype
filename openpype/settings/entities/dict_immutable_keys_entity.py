@@ -318,6 +318,13 @@ class DictImmutableKeysEntity(ItemEntity):
                     return True
         return False
 
+    def collect_dynamic_schema_entities(self, collector):
+        for child_obj in self.non_gui_children.values():
+            child_obj.collect_dynamic_schema_entities(collector)
+
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
+
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET

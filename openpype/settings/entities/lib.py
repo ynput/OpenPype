@@ -663,3 +663,12 @@ class SchemasHub:
         if found_idx is not None:
             metadata_item = template_def.pop(found_idx)
         return metadata_item
+
+
+class DynamicSchemaValueCollector:
+    def __init__(self, schema_hub):
+        self._schema_hub = schema_hub
+        self._dynamic_entities = []
+
+    def add_entity(self, entity):
+        self._dynamic_entities.append(entity)

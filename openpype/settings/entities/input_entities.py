@@ -49,6 +49,10 @@ class EndpointEntity(ItemEntity):
 
         super(EndpointEntity, self).schema_validations()
 
+    def collect_dynamic_schema_entities(self, collector):
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
+
     @abstractmethod
     def _settings_value(self):
         pass
