@@ -383,5 +383,8 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
 
     def minimumSizeHint(self):
         result = super(BreadcrumbsAddressBar, self).minimumSizeHint()
-        result.setHeight(self.path_input.height())
+        result.setHeight(max(
+            self.path_input.height(),
+            self.crumbs_container.height()
+        ))
         return result
