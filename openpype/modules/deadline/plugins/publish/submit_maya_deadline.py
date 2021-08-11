@@ -1082,7 +1082,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         return result
 
     def _patch_workfile(self, file, patches):
-        # type: (str, dict) -> Union[str, None]
+        # type: (str, dict) -> [str, None]
         """Patch Maya scene.
 
         This will take list of patches (lines to add) and apply them to
@@ -1117,5 +1117,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                         pf.writelines(scene_data)
                         pf.truncate()
                         self.log.info(
-                            "Applied {} patch to scene.".format(patches[i]["name"]))
+                            "Applied {} patch to scene.".format(
+                                patches[i]["name"]))
         return file
