@@ -938,7 +938,7 @@ class RenderProductsRedshift(ARenderProducts):
                                             ext=ext,
                                             multipart=aov_multipart)
                     products.append(product)
-            
+
             if light_groups:
                 light_groups_enabled = True
 
@@ -957,7 +957,7 @@ class RenderProductsRedshift(ARenderProducts):
         # without `Beauty`. Except when using light groups.
         if light_groups_enabled:
             return products
-            
+
         beauty_name = "Beauty_other" if has_beauty_aov else ""
         products.insert(0,
                         RenderProduct(productName=beauty_name,
