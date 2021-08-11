@@ -792,10 +792,6 @@ class DictMutableKeysWidget(BaseWidget):
     def remove_key(self, widget):
         key = self.entity.get_child_key(widget.entity)
         self.entity.pop(key)
-        # Poping of key from entity should remove the entity and input field.
-        #   this is kept for testing purposes.
-        if widget in self.input_fields:
-            self.remove_row(widget)
 
     def change_key(self, new_key, widget):
         if not new_key or widget.is_key_duplicated:
@@ -862,6 +858,11 @@ class DictMutableKeysWidget(BaseWidget):
         return input_field
 
     def remove_row(self, widget):
+        if widget.is_key_duplicated:
+            new_key = widget.uuid_key
+            if new_key is None:
+                new_key = str(uuid4())
+            self.validate_key_duplication(widget.temp_key, new_key, widget)
         self.input_fields.remove(widget)
         self.content_layout.removeWidget(widget)
         widget.deleteLater()
@@ -945,7 +946,10 @@ class DictMutableKeysWidget(BaseWidget):
                 _input_field.set_entity_value()
 
             else:
-                if input_field.key_value() != key:
+                if (
+                    not input_field.is_key_duplicated
+                    and input_field.key_value() != key
+                ):
                     changed = True
                     input_field.set_key(key)
 
