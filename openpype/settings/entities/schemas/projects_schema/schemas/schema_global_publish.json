@@ -503,7 +503,7 @@
                         {
                             "type": "path",
                             "key": "images_path",
-                            "label": "Additional slate images path",
+                            "label": "Images path {images_path}",
                             "multipath": false,
                             "multiplatform": true
                         }
