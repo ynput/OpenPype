@@ -145,15 +145,19 @@ At this moment we only support this feature to be activated on review workflow b
 #### Slate formating options
 
 ##### Custom fonts repository
-Own studio wide folder for custom fonts is supported. It can be added "Custom fonts (dir path)".
+Own studio wide custom fonts folder input can be added into **Custom fonts (dir path)**.
 
 ![global_publish_generate_slate_settings_font](assets/global_publish_generate_slate_settings_font.png)
 
-Environment variable resolving is supported here so - use `{STUDIO_RESOURCES}/fonts` in case you had add the **STUDIO_RESOURCES** env var into *Settings/System/General/Environment*. In case the environment variable is used the one string should be added to all platforms as it is shown in example.
+In case environment variable resolving need to be used add for example `{STUDIO_RESOURCES}/fonts` and add the **STUDIO_RESOURCES** env var into *Settings/System/General/Environment*. In case the environment variable is used the one string should be added to all platforms as it is shown in example.
 
 ![global_publish_generate_slate_settings_font_env](assets/global_publish_generate_slate_settings_font_env.png)
 
 ##### Custom image repository
+Own studio wide custom image folder input can be added into **Images path {images_path}**
+
+![global_publish_generate_slate_images](assets/global_publish_generate_slate_images.png)
+
 Input path to directory which is used in studio for any logo or image inputs. Environment variable resolving is supported here also as it is explained above. To use the custom dir with image in template you can add image input with `{images_path}/name_of_image.png`.
 
 ![global_publish_generate_slate_settings_imagepath_example](assets/global_publish_generate_slate_settings_imagepath_example.png)
@@ -162,25 +166,33 @@ Note that transparency for png image format is supported.
 #### Slate profiles
 ![global_publish_generate_slate_settings_profile](assets/global_publish_generate_slate_settings_profile.png)
 
-**Families**: allowed main family filter (instance data *family* attrribute)
+- **Families**: allowed main family filter (instance data *family* attrribute)
 
-**Hosts**: allowed host filter
+- **Hosts**: allowed host filter
 
-**Keep source representation**: use Active in case you wish to preserve representation which had been used for this plugin.
+- **Keep source representation**: use Active in case you wish to preserve representation which had been used for this plugin.
 
-**Slates**: Slate templates (details are explained bellow)
+- **Slates**: Slate templates (details are explained bellow)
 
 ##### Slates
-**name**: name of a template which will be used as suffix of file name
+- **name**: name of a template which will be used as suffix of file name
 
-**Slate template**: JSON formated text wich is containing definitions of all objects to be rendered into image. More about available elements and how to use dynamic formating read bellow.
+- **Slate template**: JSON formated text wich is containing definitions of all objects to be rendered into image. More about available elements and how to use dynamic formating read bellow.
 
-**Additional Input filtering**: additional families filter (instance data *families* attrribute)
+- **Additional Input filtering**: additional families filter (instance data *families* attrribute)
 
 ### Slate Template
-**{thumbnail_path}** - Image generated from input representation (video file only at the moment).
+- **{thumbnail_path}** - Image generated from input representation (video file only at the moment).
 
-**segments** - used in style. This will devide image width into number of segmets and then any input unit is used as segment derivate. So to demonstrate if we set font size to `0.5` and segments in "*" style set to `20` the equesions works as follows: delivery width (1920) devided by 20 multiplied by 0.5 is equal to 48px, so the font size will be evaluated during rendering of image as 48px. This way we are able to generate similarly looking slates to every representation size.
+- **segments** - used in style. This will devide image width into number of segmets and then any input unit is used as segment derivate. So to demonstrate if we set font size to `0.5` and segments in "*" style set to `20` the equesions works as follows: delivery width (1920) devided by 20 multiplied by 0.5 is equal to 48px, so the font size will be evaluated during rendering of image as 48px. This way we are able to generate similarly looking slates to every representation size.
+
+### Slate size formating
+Height attibute with 3 way of use:
+1. absolute segment size - add float number to refer to segment size
+2. relative to input template width with implemented ratio - use `root-ratio`
+    equastion: representation input width (root) `(root_width / segments) * input_widht * (root_height / root_width)`. ![global_publish_generate_slate_template_root-ratio](assets/global_publish_generate_slate_template_root-ratio.png)
+3. relative to width of used image with implemented ratio - use `img-ratio`.
+    equasion: `(root_width / segments) * input_image_width * (orig_image_height / orig_image_width)` ![global_publish_generate_slate_template_img-ratio](assets/global_publish_generate_slate_template_img-ratio.png)
 
 ### IntegrateAssetNew
 
