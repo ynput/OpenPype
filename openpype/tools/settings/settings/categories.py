@@ -31,6 +31,7 @@ from openpype.settings.entities import (
 
 from openpype.settings import SaveWarningExc
 from .widgets import ProjectListWidget
+from .breadcrumb_widget import BreadcrumbsAddressBar
 
 from .base import GUIWidget
 from .list_item_widget import ListWidget
@@ -175,6 +176,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         scroll_widget = QtWidgets.QScrollArea(self)
         scroll_widget.setObjectName("GroupWidget")
         content_widget = QtWidgets.QWidget(scroll_widget)
+
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 3, 3)
         content_layout.setSpacing(5)
@@ -197,6 +199,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         if self.user_role == "developer":
             self._add_developer_ui(footer_layout)
 
+        breadcrumbs_widget = BreadcrumbsAddressBar(content_widget)
+
         save_btn = QtWidgets.QPushButton("Save", footer_widget)
         require_restart_label = QtWidgets.QLabel(footer_widget)
         require_restart_label.setAlignment(QtCore.Qt.AlignCenter)
@@ -207,6 +211,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         configurations_layout.setContentsMargins(0, 0, 0, 0)
         configurations_layout.setSpacing(0)
 
+        configurations_layout.addWidget(breadcrumbs_widget, 0)
         configurations_layout.addWidget(scroll_widget, 1)
         configurations_layout.addWidget(footer_widget, 0)
 
