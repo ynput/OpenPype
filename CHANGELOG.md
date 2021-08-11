@@ -1,11 +1,16 @@
 # Changelog
 
-## [3.3.0-nightly.7](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.3.0-nightly.9](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.2.0...HEAD)
 
 **🚀 Enhancements**
 
+- submodules: avalon-core update [\#1911](https://github.com/pypeclub/OpenPype/pull/1911)
+- Feature AE local render [\#1901](https://github.com/pypeclub/OpenPype/pull/1901)
+- Ftrack: Where I run action enhancement [\#1900](https://github.com/pypeclub/OpenPype/pull/1900)
+- Ftrack: Private project server actions [\#1899](https://github.com/pypeclub/OpenPype/pull/1899)
+- Support nested studio plugins paths. [\#1898](https://github.com/pypeclub/OpenPype/pull/1898)
 - Settings: global validators with options [\#1892](https://github.com/pypeclub/OpenPype/pull/1892)
 - Settings: Conditional dict enum positioning [\#1891](https://github.com/pypeclub/OpenPype/pull/1891)
 - Expose stop timer through rest api. [\#1886](https://github.com/pypeclub/OpenPype/pull/1886)
@@ -25,11 +30,18 @@
 - nuke: settings create missing default subsets [\#1829](https://github.com/pypeclub/OpenPype/pull/1829)
 - Update poetry lock [\#1823](https://github.com/pypeclub/OpenPype/pull/1823)
 - Settings: settings for plugins [\#1819](https://github.com/pypeclub/OpenPype/pull/1819)
+- Settings list can use template or schema as object type [\#1815](https://github.com/pypeclub/OpenPype/pull/1815)
 - Maya: Deadline custom settings  [\#1797](https://github.com/pypeclub/OpenPype/pull/1797)
 - Maya: Shader name validation [\#1762](https://github.com/pypeclub/OpenPype/pull/1762)
 
 **🐛 Bug fixes**
 
+- Nuke: update video file crassing [\#1916](https://github.com/pypeclub/OpenPype/pull/1916)
+- Fix - texture validators for workfiles triggers only for textures workfiles [\#1914](https://github.com/pypeclub/OpenPype/pull/1914)
+- Settings UI: List order works as expected [\#1906](https://github.com/pypeclub/OpenPype/pull/1906)
+- Hiero: loaded clip was not set colorspace from version data [\#1904](https://github.com/pypeclub/OpenPype/pull/1904)
+- Pyblish UI: Fix collecting stage processing [\#1903](https://github.com/pypeclub/OpenPype/pull/1903)
+- Burnins: Use input's bitrate in h624 [\#1902](https://github.com/pypeclub/OpenPype/pull/1902)
 - Bug: fixed python detection [\#1893](https://github.com/pypeclub/OpenPype/pull/1893)
 - global: integrate name missing default template [\#1890](https://github.com/pypeclub/OpenPype/pull/1890)
 - publisher: editorial plugins fixes [\#1889](https://github.com/pypeclub/OpenPype/pull/1889)
@@ -43,7 +55,7 @@
 - Project folder structure overrides [\#1813](https://github.com/pypeclub/OpenPype/pull/1813)
 - Maya: fix yeti settings path in extractor [\#1809](https://github.com/pypeclub/OpenPype/pull/1809)
 - Failsafe for cross project containers. [\#1806](https://github.com/pypeclub/OpenPype/pull/1806)
-- Houdini colector formatting keys fix [\#1802](https://github.com/pypeclub/OpenPype/pull/1802)
+- Settings error dialog on show [\#1798](https://github.com/pypeclub/OpenPype/pull/1798)
 
 **Merged pull requests:**
 
@@ -67,8 +79,6 @@
 - Push hierarchical attributes care about task parent changes [\#1763](https://github.com/pypeclub/OpenPype/pull/1763)
 - Application executables with environment variables [\#1757](https://github.com/pypeclub/OpenPype/pull/1757)
 - Deadline: Nuke submission additional attributes [\#1756](https://github.com/pypeclub/OpenPype/pull/1756)
-- Settings schema without prefill [\#1753](https://github.com/pypeclub/OpenPype/pull/1753)
-- Settings Hosts enum [\#1739](https://github.com/pypeclub/OpenPype/pull/1739)
 
 **🐛 Bug fixes**
 
@@ -76,6 +86,7 @@
 - Collect ftrack family bugs [\#1801](https://github.com/pypeclub/OpenPype/pull/1801)
 - Invitee email can be None which break the Ftrack commit. [\#1788](https://github.com/pypeclub/OpenPype/pull/1788)
 - Fix: staging and `--use-version` option [\#1786](https://github.com/pypeclub/OpenPype/pull/1786)
+- Otio unrelated error on import [\#1782](https://github.com/pypeclub/OpenPype/pull/1782)
 - FFprobe streams order [\#1775](https://github.com/pypeclub/OpenPype/pull/1775)
 - Fix - single file files are str only, cast it to list to count properly [\#1772](https://github.com/pypeclub/OpenPype/pull/1772)
 - Environments in app executable for MacOS [\#1768](https://github.com/pypeclub/OpenPype/pull/1768)
@@ -83,27 +94,16 @@
 - Settings UI with refresh button [\#1764](https://github.com/pypeclub/OpenPype/pull/1764)
 - Standalone publisher thumbnail extractor fix [\#1761](https://github.com/pypeclub/OpenPype/pull/1761)
 - Anatomy others templates don't cause crash [\#1758](https://github.com/pypeclub/OpenPype/pull/1758)
-- Backend acre module commit update [\#1745](https://github.com/pypeclub/OpenPype/pull/1745)
-- hiero: precollect instances failing when audio selected [\#1743](https://github.com/pypeclub/OpenPype/pull/1743)
-- Hiero: creator instance error [\#1742](https://github.com/pypeclub/OpenPype/pull/1742)
-- Nuke: fixing render creator for no selection format failing [\#1741](https://github.com/pypeclub/OpenPype/pull/1741)
-- StandalonePublisher: failing collector for editorial [\#1738](https://github.com/pypeclub/OpenPype/pull/1738)
 
 **Merged pull requests:**
 
 - Build: don't add Poetry to `PATH` [\#1808](https://github.com/pypeclub/OpenPype/pull/1808)
 - Bump prismjs from 1.23.0 to 1.24.0 in /website [\#1773](https://github.com/pypeclub/OpenPype/pull/1773)
 - Bc/fix/docs [\#1771](https://github.com/pypeclub/OpenPype/pull/1771)
-- TVPaint ftrack family [\#1755](https://github.com/pypeclub/OpenPype/pull/1755)
 
 ## [2.18.4](https://github.com/pypeclub/OpenPype/tree/2.18.4) (2021-06-24)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/2.18.3...2.18.4)
-
-**Merged pull requests:**
-
-- celaction fixes [\#1754](https://github.com/pypeclub/OpenPype/pull/1754)
-- celaciton: audio subset changed data structure [\#1750](https://github.com/pypeclub/OpenPype/pull/1750)
 
 ## [2.18.3](https://github.com/pypeclub/OpenPype/tree/2.18.3) (2021-06-23)
 

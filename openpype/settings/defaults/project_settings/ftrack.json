@@ -298,6 +298,17 @@
                             "add_ftrack_family": true
                         }
                     ]
+                },
+                {
+                    "hosts": [
+                        "aftereffects"
+                    ],
+                    "families": [
+                        "render"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
         },
