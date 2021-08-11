@@ -7,8 +7,8 @@ class DeadlineModule(PypeModule, IPluginPaths):
     name = "deadline"
 
     def __init__(self, manager, settings):
-        super().__init__(manager, settings)
         self.deadline_urls = {}
+        super(DeadlineModule, self).__init__(manager, settings)
 
     def initialize(self, modules_settings):
         # This module is always enabled

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Create ``Render`` instance in Maya."""
 import os
+from collections import OrderedDict
 import json
 import appdirs
 import requests
@@ -102,9 +103,15 @@ class CreateRender(plugin.Creator):
                 project_settings["deadline"]
                                 ["deadline_servers"]
             )
-            self.deadline_servers = dict(
-                (k, default_servers[k])
-                for k in project_servers if k in default_servers)
+            self.deadline_servers = {
+                k: default_servers[k]
+                for k in project_servers
+                if k in default_servers
+            }
+
+            if not self.deadline_servers:
+                self.deadline_servers = default_servers
+
         except AttributeError:
             # Handle situation were we had only one url for deadline.
             manager = ModulesManager()
@@ -223,6 +230,7 @@ class CreateRender(plugin.Creator):
         return response.json()
 
     def _create_render_settings(self):
+        """Create instance settings."""
         # get pools
         pool_names = []
 
@@ -259,13 +267,22 @@ class CreateRender(plugin.Creator):
             raise RuntimeError("Both Deadline and Muster are enabled")
 
         if deadline_enabled:
-            pool_names = self._get_deadline_pools(
-                self.deadline_servers["default"])
+            # if default server is not between selected, use first one for
+            # initial list of pools.
+            try:
+                deadline_url = self.deadline_servers["default"]
+            except KeyError:
+                deadline_url = [
+                    self.deadline_servers[k] for k in self.deadline_servers.keys()
+                ][0]
+
+            pool_names = self._get_deadline_pools(deadline_url)
 
         if muster_enabled:
             self.log.info(">>> Loading Muster credentials ...")
             self._load_credentials()
             self.log.info(">>> Getting pools ...")
+            pools = []
             try:
                 pools = self._get_muster_pools()
             except requests.exceptions.HTTPError as e:
@@ -365,9 +382,7 @@ class CreateRender(plugin.Creator):
 
         """
         if "verify" not in kwargs:
-            kwargs["verify"] = (
-                False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True
-            )  # noqa
+            kwargs["verify"] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
         return requests.post(*args, **kwargs)
 
     def _requests_get(self, *args, **kwargs):
@@ -384,9 +399,7 @@ class CreateRender(plugin.Creator):
 
         """
         if "verify" not in kwargs:
-            kwargs["verify"] = (
-                False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True
-            )  # noqa
+            kwargs["verify"] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
         return requests.get(*args, **kwargs)
 
     def _set_default_renderer_settings(self, renderer):
@@ -407,12 +420,7 @@ class CreateRender(plugin.Creator):
 
             cmds.setAttr(
                 "defaultArnoldDriver.ai_translator", "exr", type="string")
-            # enable animation
-            cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
-            cmds.setAttr("defaultRenderGlobals.animation", 1)
-            cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
-            cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
-
+            self._set_global_output_settings()
             # resolution
             cmds.setAttr(
                 "defaultResolution.width",
@@ -422,43 +430,12 @@ class CreateRender(plugin.Creator):
                 asset["data"].get("resolutionHeight"))
 
         if renderer == "vray":
-            vray_settings = cmds.ls(type="VRaySettingsNode")
-            if not vray_settings:
-                node = cmds.createNode("VRaySettingsNode")
-            else:
-                node = vray_settings[0]
-
-            # set underscore as element separator instead of default `.`
-            cmds.setAttr(
-                "{}.fileNameRenderElementSeparator".format(
-                    node),
-                "_"
-            )
-            # set format to exr
-            cmds.setAttr(
-                "{}.imageFormatStr".format(node), 5)
-
-            # animType
-            cmds.setAttr(
-                "{}.animType".format(node), 1)
-
-            # resolution
-            cmds.setAttr(
-                "{}.width".format(node),
-                asset["data"].get("resolutionWidth"))
-            cmds.setAttr(
-                "{}.height".format(node),
-                asset["data"].get("resolutionHeight"))
-
+            self._set_vray_settings(asset)
         if renderer == "redshift":
-            redshift_settings = cmds.ls(type="RedshiftOptions")
-            if not redshift_settings:
-                node = cmds.createNode("RedshiftOptions")
-            else:
-                node = redshift_settings[0]
+            _ = self._set_renderer_option(
+                "RedshiftOptions", "{}.imageFormat", 1
+            )
 
-            # set exr
-            cmds.setAttr("{}.imageFormat".format(node), 1)
             # resolution
             cmds.setAttr(
                 "defaultResolution.width",
@@ -467,8 +444,56 @@ class CreateRender(plugin.Creator):
                 "defaultResolution.height",
                 asset["data"].get("resolutionHeight"))
 
-            # enable animation
-            cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
-            cmds.setAttr("defaultRenderGlobals.animation", 1)
-            cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
-            cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
+            self._set_global_output_settings()
+
+    @staticmethod
+    def _set_renderer_option(renderer_node, arg=None, value=None):
+        # type: (str, str, str) -> str
+        """Set option on renderer node.
+
+        If renderer settings node doesn't exists, it is created first.
+
+        Args:
+             renderer_node (str): Renderer name.
+             arg (str, optional): Argument name.
+             value (str, optional): Argument value.
+
+        Returns:
+            str: Renderer settings node.
+
+        """
+        settings = cmds.ls(type=renderer_node)
+        result = settings[0] if settings else cmds.createNode(renderer_node)
+        cmds.setAttr(arg.format(result), value)
+        return result
+
+    def _set_vray_settings(self, asset):
+        # type: (dict) -> None
+        """Sets important settings for Vray."""
+        node = self._set_renderer_option(
+            "VRaySettingsNode", "{}.fileNameRenderElementSeparator", "_"
+        )
+
+        # set format to exr
+        cmds.setAttr(
+            "{}.imageFormatStr".format(node), 5)
+
+        # animType
+        cmds.setAttr(
+            "{}.animType".format(node), 1)
+
+        # resolution
+        cmds.setAttr(
+            "{}.width".format(node),
+            asset["data"].get("resolutionWidth"))
+        cmds.setAttr(
+            "{}.height".format(node),
+            asset["data"].get("resolutionHeight"))
+
+    @staticmethod
+    def _set_global_output_settings():
+        # enable animation
+        cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
+        cmds.setAttr("defaultRenderGlobals.animation", 1)
+        cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
+        cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)

@@ -17,4 +17,5 @@ class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
             raise AssertionError("OpenPype Deadline module not found.")
 
         # get default deadline webservice url from deadline module
+        self.log.debug(deadline_module.deadline_urls)
         context.data["defaultDeadline"] = deadline_module.deadline_urls["default"]

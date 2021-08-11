@@ -12,4 +12,4 @@ class CollectModules(pyblish.api.ContextPlugin):
 
     def process(self, context):
         manager = ModulesManager()
-        context.data["openPypeModules"] = manager.modules
+        context.data["openPypeModules"] = manager.modules_by_name
