@@ -894,6 +894,7 @@ class RenderProductsRedshift(ARenderProducts):
             aovs = list(set(aovs) - set(ref_aovs))
 
         products = []
+        light_groups_enabled = False
         has_beauty_aov = False
         for aov in aovs:
             enabled = self._get_attr(aov, "enabled")
@@ -937,6 +938,9 @@ class RenderProductsRedshift(ARenderProducts):
                                             ext=ext,
                                             multipart=aov_multipart)
                     products.append(product)
+            
+            if light_groups:
+                light_groups_enabled = True
 
             # Redshift AOV Light Select always renders the global AOV
             # even when light groups are present so we don't need to
@@ -950,7 +954,10 @@ class RenderProductsRedshift(ARenderProducts):
         # When a Beauty AOV is added manually, it will be rendered as
         # 'Beauty_other' in file name and "standard" beauty will have
         # 'Beauty' in its name. When disabled, standard output will be
-        # without `Beauty`.
+        # without `Beauty`. Except when using light groups.
+        if light_groups_enabled:
+            return products
+            
         beauty_name = "Beauty_other" if has_beauty_aov else ""
         products.insert(0,
                         RenderProduct(productName=beauty_name,
