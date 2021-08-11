@@ -80,7 +80,7 @@ class CreateImage(pype.api.Creator):
                                       replace(stub.LOADED_ICON, '')
                     long_names.append(name)
 
-            self.data.update({"subset": "image" + group.name})
+            self.data.update({"subset": group.name})
             self.data.update({"uuid": str(group.id)})
             self.data.update({"long_name": "_".join(long_names)})
             stub.imprint(group, self.data)
