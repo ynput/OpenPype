@@ -375,7 +375,7 @@ How output of the schema could look like on save:
         {"ftrackreview": "Add to Ftrack"},
         {"delete": "Delete output"},
         {"slate-frame": "Add slate frame"},
-        {"no-hnadles": "Skip handle frames"}
+        {"no-handles": "Skip handle frames"}
     ]
 }
 ```
