@@ -16,7 +16,7 @@ class CreateUSD(plugin.Creator):
 
         self.data.update({"node_type": "usd"})
 
-    def process(self):
+    def _process(self):
         instance = super(CreateUSD, self).process()
 
         parms = {

@@ -10,7 +10,7 @@ class _USDWorkspace(plugin.Creator):
     step = None
     icon = "gears"
 
-    def process(self):
+    def _process(self):
 
         if not all([self.node_type, self.node_name, self.step]):
             self.log.error("Incomplete USD Workspace parameters")

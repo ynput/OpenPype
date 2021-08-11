@@ -27,7 +27,7 @@ class CreateRedshiftROP(plugin.Creator):
 
         self.data.update({"node_type": "Redshift_ROP"})
 
-    def process(self):
+    def _process(self):
         instance = super(CreateRedshiftROP, self).process()
 
         basename = instance.name()

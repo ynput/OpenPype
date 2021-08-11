@@ -10,7 +10,7 @@ class CreateUSDModel(plugin.Creator):
     family = "usdModel"
     icon = "gears"
 
-    def process(self):
+    def _process(self):
 
         node_type = "op::author_model:1.0"
 

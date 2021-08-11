@@ -18,7 +18,7 @@ class CreateVDBCache(plugin.Creator):
         # Set node type to create for output
         self.data["node_type"] = "geometry"
 
-    def process(self):
+    def _process(self):
         instance = super(CreateVDBCache, self).process()
 
         parms = {

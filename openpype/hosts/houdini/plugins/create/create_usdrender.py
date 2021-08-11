@@ -19,7 +19,7 @@ class CreateUSDRender(plugin.Creator):
 
         self.data.update({"node_type": "usdrender_rop"})
 
-    def process(self):
+    def _process(self):
         instance = super(CreateUSDRender, self).process()
 
         parms = {

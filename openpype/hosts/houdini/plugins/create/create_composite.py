@@ -17,7 +17,7 @@ class CreateCompositeSequence(plugin.Creator):
         # Type of ROP node to create
         self.data.update({"node_type": "comp"})
 
-    def process(self):
+    def _process(self):
         instance = super(CreateCompositeSequence, self).process()
 
         parms = {"copoutput": "$HIP/pyblish/%s.$F4.exr" % self.name}

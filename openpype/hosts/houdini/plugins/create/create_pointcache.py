@@ -17,7 +17,7 @@ class CreatePointCache(plugin.Creator):
 
         self.data.update({"node_type": "alembic"})
 
-    def process(self):
+    def _process(self):
         instance = super(CreatePointCache, self).process()
 
         parms = {

@@ -18,7 +18,7 @@ class CreateAlembicCamera(plugin.Creator):
         # Set node type to create for output
         self.data.update({"node_type": "alembic"})
 
-    def process(self):
+    def _process(self):
         instance = super(CreateAlembicCamera, self).process()
 
         parms = {
