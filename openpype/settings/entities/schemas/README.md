@@ -362,6 +362,7 @@ How output of the schema could look like on save:
     - should be possible to enter single dictionary if order of items doesn't matter
 - it is possible to set default selected value/s with `default` attribute
     - it is recommended to use this option only in single selection mode
+    - at the end this option is used only when defying default settings value or in dynamic items
 
 ```
 {
