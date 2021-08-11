@@ -181,6 +181,10 @@ class ValidateExpectedFiles(pyblish.api.InstancePlugin):
         """Returns set of file names from metadata.json"""
         expected_files = set()
 
-        for file_name in repre["files"]:
+        files = repre["files"]
+        if not isinstance(files, list):
+            files = [files]
+
+        for file_name in files:
             expected_files.add(file_name)
         return expected_files
