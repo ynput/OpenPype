@@ -270,6 +270,7 @@ class CollectTextures(pyblish.api.ContextPlugin):
             # store origin
             if family == 'workfile':
                 families = self.workfile_families
+                families.append("texture_batch_workfile")
 
                 new_instance.data["source"] = "standalone publisher"
             else:

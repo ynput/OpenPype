@@ -1138,7 +1138,8 @@ def prepare_host_environments(data, implementation_envs=True):
         # Merge dictionaries
         env_values = _merge_env(tool_env, env_values)
 
-    loaded_env = _merge_env(acre.compute(env_values), data["env"])
+    merged_env = _merge_env(env_values, data["env"])
+    loaded_env = acre.compute(merged_env, cleanup=False)
 
     final_env = None
     # Add host specific environments
@@ -1189,7 +1190,10 @@ def apply_project_environments_value(project_name, env, project_settings=None):
 
     env_value = project_settings["global"]["project_environments"]
     if env_value:
-        env.update(_merge_env(acre.parse(env_value), env))
+        env.update(acre.compute(
+            _merge_env(acre.parse(env_value), env),
+            cleanup=False
+        ))
     return env
 
 
