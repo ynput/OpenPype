@@ -31,7 +31,7 @@ class BaseObj:
     ]
     fill_data_regex = r".*{[^}]+}"
 
-    def __init__(self, parent, style={},
+    def __init__(self, parent, style=None,
                  name=None, pos_x=None, pos_y=None, *args, **kwargs):
         if not self.obj_type:
             raise NotImplementedError(
@@ -53,7 +53,7 @@ class BaseObj:
             ))
 
         self.parent = parent
-        self._style = style
+        self._style = style or {}
 
         self.id = uuid4()
         self.root_width = kwargs.get("root_width")
