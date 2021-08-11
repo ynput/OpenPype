@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Create ``Render`` instance in Maya."""
 import os
-from collections import OrderedDict
 import json
 import appdirs
 import requests
@@ -273,7 +272,8 @@ class CreateRender(plugin.Creator):
                 deadline_url = self.deadline_servers["default"]
             except KeyError:
                 deadline_url = [
-                    self.deadline_servers[k] for k in self.deadline_servers.keys()
+                    self.deadline_servers[k]
+                    for k in self.deadline_servers.keys()
                 ][0]
 
             pool_names = self._get_deadline_pools(deadline_url)
