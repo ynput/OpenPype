@@ -18,4 +18,4 @@ class CollectDefaultDeadlineServer(pyblish.api.ContextPlugin):
 
         # get default deadline webservice url from deadline module
         self.log.debug(deadline_module.deadline_urls)
-        context.data["defaultDeadline"] = deadline_module.deadline_urls["default"]
+        context.data["defaultDeadline"] = deadline_module.deadline_urls["default"]  # noqa: E501
