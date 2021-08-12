@@ -61,9 +61,14 @@ class SettingsBreadcrumbs(BreadcrumbsModel):
     def __init__(self):
         self.entity = None
 
+        self.entities_by_path = {}
+        self.dynamic_paths = set()
+
         super(SettingsBreadcrumbs, self).__init__()
 
     def set_entity(self, entity):
+        self.entities_by_path = {}
+        self.dynamic_paths = set()
         self.entity = entity
         self.reset()
 
@@ -78,9 +83,10 @@ class SystemSettingsBreadcrumbs(SettingsBreadcrumbs):
         if self.entity is None:
             return
 
-        paths = []
+        entities_by_path = self.entity.collect_static_entities_by_path()
+        self.entities_by_path = entities_by_path
         items = []
-        for path in paths:
+        for path in entities_by_path.keys():
             if not path:
                 continue
             path_items = path.split("/")
@@ -100,7 +106,35 @@ class SystemSettingsBreadcrumbs(SettingsBreadcrumbs):
 
 
 class ProjectSettingsBreadcrumbs(SettingsBreadcrumbs):
-    pass
+    def reset(self):
+        root_item = self.invisibleRootItem()
+        rows = root_item.rowCount()
+        if rows > 0:
+            root_item.removeRows(0, rows)
+
+        if self.entity is None:
+            return
+
+        entities_by_path = self.entity.collect_static_entities_by_path()
+        self.entities_by_path = entities_by_path
+        items = []
+        for path in entities_by_path.keys():
+            if not path:
+                continue
+            path_items = path.split("/")
+            value = path
+            label = path_items.pop(-1)
+            prefix = "/".join(path_items)
+            if prefix:
+                prefix += "/"
+
+            item = QtGui.QStandardItem(value)
+            item.setData(label, LAST_SEGMENT_ROLE)
+            item.setData(prefix, PREFIX_ROLE)
+
+            items.append(item)
+
+        root_item.appendRows(items)
 
 
 class BreadcrumbsProxy(QtCore.QSortFilterProxyModel):
@@ -270,12 +304,11 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
     def __init__(self, parent=None):
         super(BreadcrumbsAddressBar, self).__init__(parent)
 
-        proxy_model = BreadcrumbsProxy()
-
         self.setAutoFillBackground(True)
         self.setFrameShape(self.StyledPanel)
 
         # Edit presented path textually
+        proxy_model = BreadcrumbsProxy()
         path_input = BreadcrumbsPathInput(proxy_model, self)
         path_input.setVisible(False)
 
