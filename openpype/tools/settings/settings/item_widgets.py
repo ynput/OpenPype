@@ -289,11 +289,8 @@ class BoolWidget(InputWidget):
             height=checkbox_height, parent=self.content_widget
         )
 
-        spacer = QtWidgets.QWidget(self.content_widget)
-        spacer.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
         self.content_layout.addWidget(self.input_field, 0)
-        self.content_layout.addWidget(spacer, 1)
+        self.content_layout.addStretch(1)
 
         self.setFocusProxy(self.input_field)
 

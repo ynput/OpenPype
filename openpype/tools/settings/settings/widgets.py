@@ -160,15 +160,13 @@ class ExpandingWidget(QtWidgets.QWidget):
         after_label_layout = QtWidgets.QHBoxLayout(after_label_widget)
         after_label_layout.setContentsMargins(0, 0, 0, 0)
 
-        spacer_widget = QtWidgets.QWidget(side_line_widget)
-
         side_line_layout = QtWidgets.QHBoxLayout(side_line_widget)
         side_line_layout.setContentsMargins(5, 10, 0, 10)
         side_line_layout.addWidget(button_toggle)
         side_line_layout.addWidget(before_label_widget)
         side_line_layout.addWidget(label_widget)
         side_line_layout.addWidget(after_label_widget)
-        side_line_layout.addWidget(spacer_widget, 1)
+        side_line_layout.addStretch(1)
 
         top_part_layout = QtWidgets.QHBoxLayout(top_part)
         top_part_layout.setContentsMargins(0, 0, 0, 0)
@@ -176,7 +174,6 @@ class ExpandingWidget(QtWidgets.QWidget):
 
         before_label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         after_label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
@@ -344,31 +341,21 @@ class GridLabelWidget(QtWidgets.QWidget):
 
         self.properties = {}
 
+        label_widget = QtWidgets.QLabel(label, self)
+
+        label_proxy_layout = QtWidgets.QHBoxLayout()
+        label_proxy_layout.setContentsMargins(0, 0, 0, 0)
+        label_proxy_layout.setSpacing(0)
+
+        label_proxy_layout.addWidget(label_widget, 0, QtCore.Qt.AlignRight)
+
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 2, 0, 0)
         layout.setSpacing(0)
 
-        label_proxy = QtWidgets.QWidget(self)
+        layout.addLayout(label_proxy_layout, 0)
+        layout.addStretch(1)
 
-        label_proxy_layout = QtWidgets.QHBoxLayout(label_proxy)
-        label_proxy_layout.setContentsMargins(0, 0, 0, 0)
-        label_proxy_layout.setSpacing(0)
-
-        label_widget = QtWidgets.QLabel(label, label_proxy)
-        spacer_widget_h = SpacerWidget(label_proxy)
-        label_proxy_layout.addWidget(
-            spacer_widget_h, 0, alignment=QtCore.Qt.AlignRight
-        )
-        label_proxy_layout.addWidget(
-            label_widget, 0, alignment=QtCore.Qt.AlignRight
-        )
-
-        spacer_widget_v = SpacerWidget(self)
-
-        layout.addWidget(label_proxy, 0)
-        layout.addWidget(spacer_widget_v, 1)
-
-        label_proxy.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.label_widget = label_widget

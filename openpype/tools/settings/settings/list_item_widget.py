@@ -18,8 +18,6 @@ class EmptyListItem(QtWidgets.QWidget):
 
         add_btn = QtWidgets.QPushButton("+", self)
         remove_btn = QtWidgets.QPushButton("-", self)
-        spacer_widget = QtWidgets.QWidget(self)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
         remove_btn.setEnabled(False)
@@ -35,13 +33,12 @@ class EmptyListItem(QtWidgets.QWidget):
         layout.setSpacing(3)
         layout.addWidget(add_btn, 0)
         layout.addWidget(remove_btn, 0)
-        layout.addWidget(spacer_widget, 1)
+        layout.addStretch(1)
 
         add_btn.clicked.connect(self._on_add_clicked)
 
         self.add_btn = add_btn
         self.remove_btn = remove_btn
-        self.spacer_widget = spacer_widget
 
     def _on_add_clicked(self):
         self.entity_widget.add_new_item()
@@ -101,12 +98,6 @@ class ListItem(QtWidgets.QWidget):
             self.category_widget, self.entity, self
         )
 
-        spacer_widget = QtWidgets.QWidget(self)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        spacer_widget.setVisible(False)
-
-        layout.addWidget(spacer_widget, 1)
-
         layout.addWidget(up_btn, 0)
         layout.addWidget(down_btn, 0)
 
@@ -114,8 +105,6 @@ class ListItem(QtWidgets.QWidget):
         self.remove_btn = remove_btn
         self.up_btn = up_btn
         self.down_btn = down_btn
-
-        self.spacer_widget = spacer_widget
 
         self._row = -1
         self._is_last = False
