@@ -246,7 +246,8 @@ class BreadcrumbsButton(QtWidgets.QToolButton):
 
 class BreadcrumbsAddressBar(QtWidgets.QFrame):
     "Windows Explorer-like address bar"
-    path_selected = QtCore.Signal(str)
+    path_changed = QtCore.Signal(str)
+    path_edited = QtCore.Signal(str)
 
     def __init__(self, parent=None):
         super(BreadcrumbsAddressBar, self).__init__(parent)
@@ -310,10 +311,9 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
 
         self._current_path = None
 
-        self.set_path("project_settings")
 
     def _on_input_confirm(self):
-        self.set_path(self.path_input.text())
+        self.change_path(self.path_input.text())
         self._show_address_field(False)
 
     def _on_input_cancel(self):
@@ -334,7 +334,11 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
 
     def _on_crumb_clicked(self, path):
         "Breadcrumb was clicked"
+        self.change_path(path)
+
+    def change_path(self, path):
         self.set_path(path)
+        self.path_edited.emit(path)
 
     def set_path(self, path):
         if path is None or path == ".":
@@ -356,7 +360,7 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
             self._insert_crumb(item)
             path_items.pop(-1)
 
-        self.path_selected.emit(self._current_path)
+        self.path_changed.emit(self._current_path)
 
     def _cancel_edit(self):
         "Set edit line text back to current path and switch to view mode"
