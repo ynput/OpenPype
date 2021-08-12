@@ -45,7 +45,8 @@
             "group": "none",
             "limit": [],
             "jobInfo": {},
-            "pluginInfo": {}
+            "pluginInfo": {},
+            "scene_patches": []
         },
         "NukeSubmitDeadline": {
             "enabled": true,
