@@ -200,6 +200,11 @@ class ListStrictEntity(ItemEntity):
             idx = int(idx)
         return self.children[idx]
 
+    def __setitem__(self, idx, value):
+        if not isinstance(idx, int):
+            idx = int(idx)
+        self.children[idx].set(value)
+
     def get(self, idx, default=None):
         if not isinstance(idx, int):
             idx = int(idx)
