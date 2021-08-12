@@ -31,7 +31,7 @@ from openpype.settings.entities import (
 
 from openpype.settings import SaveWarningExc
 from .widgets import ProjectListWidget
-from .breadcrumb_widget import (
+from .breadcrumbs_widget import (
     BreadcrumbsAddressBar,
     SystemSettingsBreadcrumbs,
     ProjectSettingsBreadcrumbs
