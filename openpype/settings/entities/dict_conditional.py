@@ -318,6 +318,11 @@ class DictConditionalEntity(ItemEntity):
 
                 self.non_gui_children[item_key][child_obj.key] = child_obj
 
+    def collect_static_entities_by_path(self):
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return {}
+        return {self.path: self}
+
     def get_child_path(self, child_obj):
         """Get hierarchical path of child entity.
 

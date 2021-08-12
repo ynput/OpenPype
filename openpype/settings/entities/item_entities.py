@@ -106,6 +106,9 @@ class PathEntity(ItemEntity):
         self.valid_value_types = valid_value_types
         self.child_obj = self.create_schema_object(item_schema, self)
 
+    def collect_static_entities_by_path(self):
+        return self.child_obj.collect_static_entities_by_path()
+
     def get_child_path(self, _child_obj):
         return self.path
 
@@ -221,6 +224,18 @@ class ListStrictEntity(ItemEntity):
             )
 
         super(ListStrictEntity, self).schema_validations()
+
+    def collect_static_entities_by_path(self):
+        output = {}
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return output
+
+        output[self.path] = self
+        for child_obj in self.children:
+            result = child_obj.collect_static_entities_by_path()
+            if result:
+                output.update(result)
+        return output
 
     def get_child_path(self, child_obj):
         result_idx = None
