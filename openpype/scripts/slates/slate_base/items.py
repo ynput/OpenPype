@@ -60,7 +60,8 @@ class ItemImage(BaseItem):
         return image.size
 
     def value_width(self):
-        return self.convert_segment_size_to_pixels(self.style["width"])
+        return self.convert_segment_size_to_pixels(
+            self.style["width"])
 
     def value_height(self):
         height = self.style["height"]
@@ -101,7 +102,8 @@ class ItemRectangle(BaseItem):
         )
 
     def value_width(self):
-        return self.convert_segment_size_to_pixels(self.style["width"])
+        return self.convert_segment_size_to_pixels(
+            self.style["width"])
 
     def value_height(self):
         height = self.style["height"]
@@ -149,7 +151,8 @@ class ItemPlaceHolder(BaseItem):
         )
 
     def value_width(self):
-        return self.convert_segment_size_to_pixels(self.style["width"])
+        return self.convert_segment_size_to_pixels(
+            self.style["width"])
 
     def value_height(self):
         height = self.style["height"]
@@ -196,7 +199,8 @@ class ItemText(BaseItem):
 
         font_color = self.style["font-color"]
         font_family = self.style["font-family"]
-        font_size = self.convert_segment_size_to_pixels(self.style["font-size"])
+        font_size = self.convert_segment_size_to_pixels(
+            self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -213,7 +217,8 @@ class ItemText(BaseItem):
 
     def value_width(self):
         font_family = self.style["font-family"]
-        font_size = self.convert_segment_size_to_pixels(self.style["font-size"])
+        font_size = self.convert_segment_size_to_pixels(
+            self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -226,7 +231,8 @@ class ItemText(BaseItem):
 
     def value_height(self):
         font_family = self.style["font-family"]
-        font_size = self.convert_segment_size_to_pixels(self.style["font-size"])
+        font_size = self.convert_segment_size_to_pixels(
+            self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -390,7 +396,8 @@ class TableField(BaseItem):
         if padding_right is None:
             padding_right = padding
 
-        max_width -= self.convert_segment_size_to_pixels((padding_left + padding_right))
+        max_width -= self.convert_segment_size_to_pixels(
+            (padding_left + padding_right))
 
         if not value:
             return ""
@@ -400,7 +407,8 @@ class TableField(BaseItem):
         max_lines = self.style.get("max-lines")
 
         font_family = self.style["font-family"]
-        font_size = self.convert_segment_size_to_pixels(self.style["font-size"])
+        font_size = self.convert_segment_size_to_pixels(
+            self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -556,7 +564,8 @@ class TableField(BaseItem):
         self.orig_value = value
 
         max_width = self.style.get("max-width")
-        max_width = self.convert_segment_size_to_pixels(self.style.get("width") or max_width)
+        max_width = self.convert_segment_size_to_pixels(
+            self.style.get("width") or max_width)
         if max_width:
             value = self.recalculate_by_width(value, max_width)
 
@@ -576,7 +585,8 @@ class TableField(BaseItem):
             return 0
 
         font_family = self.style["font-family"]
-        font_size = self.convert_segment_size_to_pixels(self.style["font-size"])
+        font_size = self.convert_segment_size_to_pixels(
+            self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -586,7 +596,8 @@ class TableField(BaseItem):
         )
         width = font.getsize_multiline(self.value)[0] + 1
 
-        min_width = self.convert_segment_size_to_pixels(self.style.get("min-width"))
+        min_width = self.convert_segment_size_to_pixels(
+            self.style.get("min-width"))
         if min_width and min_width > width:
             width = min_width
 
@@ -597,7 +608,8 @@ class TableField(BaseItem):
             return 0
 
         font_family = self.style["font-family"]
-        font_size = self.convert_segment_size_to_pixels(self.style["font-size"])
+        font_size = self.convert_segment_size_to_pixels(
+            self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
@@ -607,7 +619,8 @@ class TableField(BaseItem):
         )
         height = font.getsize_multiline(self.value)[1] + 1
 
-        min_height = self.convert_segment_size_to_pixels(self.style.get("min-height"))
+        min_height = self.convert_segment_size_to_pixels(
+            self.style.get("min-height"))
         if min_height and min_height > height:
             height = min_height
 
@@ -645,7 +658,8 @@ class TableField(BaseItem):
             if padding_left is None:
                 padding_left = padding
 
-            pos_x += self.convert_segment_size_to_pixels(padding_left)
+            pos_x += self.convert_segment_size_to_pixels(
+                padding_left)
 
         return int(pos_x)
 
@@ -668,7 +682,8 @@ class TableField(BaseItem):
             if padding_top is None:
                 padding_top = padding
 
-            pos_y += self.convert_segment_size_to_pixels(padding_top)
+            pos_y += self.convert_segment_size_to_pixels(
+                padding_top)
 
         return int(pos_y)
 
@@ -692,7 +707,8 @@ class TableField(BaseItem):
 
         font_color = self.style["font-color"]
         font_family = self.style["font-family"]
-        font_size = self.convert_segment_size_to_pixels(self.style["font-size"])
+        font_size = self.convert_segment_size_to_pixels(
+            self.style["font-size"])
         font_bold = self.style.get("font-bold", False)
         font_italic = self.style.get("font-italic", False)
 
