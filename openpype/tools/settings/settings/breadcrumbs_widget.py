@@ -78,6 +78,19 @@ class SettingsBreadcrumbs(BreadcrumbsModel):
                 return True
         return False
 
+    def is_valid_path(self, path):
+        if not path:
+            return True
+
+        path_items = path.split("/")
+        try:
+            entity = self.entity
+            for item in path_items:
+                entity = entity[item]
+        except Exception:
+            return False
+        return True
+
 
 class SystemSettingsBreadcrumbs(SettingsBreadcrumbs):
     def reset(self):
@@ -406,7 +419,6 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
 
     def _on_input_confirm(self):
         self.change_path(self.path_input.text())
-        self._show_address_field(False)
 
     def _on_input_cancel(self):
         self._cancel_edit()
@@ -429,8 +441,11 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
         self.change_path(path)
 
     def change_path(self, path):
-        self.set_path(path)
-        self.path_edited.emit(path)
+        if self._model and not self._model.is_valid_path(path):
+            self._show_address_field()
+        else:
+            self.set_path(path)
+            self.path_edited.emit(path)
 
     def set_path(self, path):
         if path is None or path == ".":
