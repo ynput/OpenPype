@@ -252,9 +252,7 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
     def __init__(self, parent=None):
         super(BreadcrumbsAddressBar, self).__init__(parent)
 
-        model = BreadcrumbsModel()
         proxy_model = BreadcrumbsProxy()
-        proxy_model.setSourceModel(model)
 
         self.setAutoFillBackground(True)
         self.setFrameShape(self.StyledPanel)
@@ -306,11 +304,14 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
         self.path_input = path_input
         self.crumbs_container = crumbs_container
 
-        self.model = model
-        self.proxy_model = proxy_model
+        self._model = None
+        self._proxy_model = proxy_model
 
         self._current_path = None
 
+    def set_model(self, model):
+        self._model = model
+        self._proxy_model.setSourceModel(model)
 
     def _on_input_confirm(self):
         self.change_path(self.path_input.text())
@@ -326,7 +327,7 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
                 widget.deleteLater()
 
     def _insert_crumb(self, path):
-        btn = BreadcrumbsButton(path, self.proxy_model, self.crumbs_panel)
+        btn = BreadcrumbsButton(path, self._proxy_model, self.crumbs_panel)
 
         self.crumbs_layout.insertWidget(0, btn)
 
