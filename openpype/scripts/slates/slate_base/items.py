@@ -201,7 +201,7 @@ class ItemText(BaseItem):
         font_italic = self.style.get("font-italic", False)
 
         font = FontFactory.get_font(
-            self, font_family, font_size, font_italic, font_bold,
+            self.log, font_family, font_size, font_italic, font_bold,
             fonts_dir=self.fonts_dir
         )
         drawer.text(
@@ -218,7 +218,7 @@ class ItemText(BaseItem):
         font_italic = self.style.get("font-italic", False)
 
         font = FontFactory.get_font(
-            self, font_family, font_size, font_italic, font_bold,
+            self.log, font_family, font_size, font_italic, font_bold,
             fonts_dir=self.fonts_dir
         )
         width = font.getsize(self.value)[0]
@@ -231,7 +231,7 @@ class ItemText(BaseItem):
         font_italic = self.style.get("font-italic", False)
 
         font = FontFactory.get_font(
-            self, font_family, font_size, font_italic, font_bold,
+            self.log, font_family, font_size, font_italic, font_bold,
             fonts_dir=self.fonts_dir
         )
         height = font.getsize(self.value)[1]
@@ -405,7 +405,7 @@ class TableField(BaseItem):
         font_italic = self.style.get("font-italic", False)
 
         font = FontFactory.get_font(
-            self, font_family, font_size, font_italic, font_bold,
+            self.log, font_family, font_size, font_italic, font_bold,
             fonts_dir=self.fonts_dir
         )
         val_width = font.getsize(value)[0]
@@ -581,7 +581,7 @@ class TableField(BaseItem):
         font_italic = self.style.get("font-italic", False)
 
         font = FontFactory.get_font(
-            self, font_family, font_size, font_italic, font_bold,
+            self.log, font_family, font_size, font_italic, font_bold,
             fonts_dir=self.fonts_dir
         )
         width = font.getsize_multiline(self.value)[0] + 1
@@ -602,7 +602,7 @@ class TableField(BaseItem):
         font_italic = self.style.get("font-italic", False)
 
         font = FontFactory.get_font(
-            self, font_family, font_size, font_italic, font_bold,
+            self.log, font_family, font_size, font_italic, font_bold,
             fonts_dir=self.fonts_dir
         )
         height = font.getsize_multiline(self.value)[1] + 1
@@ -697,7 +697,7 @@ class TableField(BaseItem):
         font_italic = self.style.get("font-italic", False)
 
         font = FontFactory.get_font(
-            self, font_family, font_size, font_italic, font_bold,
+            self.log, font_family, font_size, font_italic, font_bold,
             fonts_dir=self.fonts_dir
         )
 

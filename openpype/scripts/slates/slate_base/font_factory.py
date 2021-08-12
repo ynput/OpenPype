@@ -11,7 +11,7 @@ class FontFactory:
     default_font_name = "courier new"
 
     @classmethod
-    def get_font(cls, klass, family, font_size=None, italic=False,
+    def get_font(cls, log, family, font_size=None, italic=False,
                  bold=False, fonts_dir=None):
         if cls.fonts is None:
             cls.load_fonts(fonts_dir)
@@ -31,7 +31,7 @@ class FontFactory:
         family_styles = cls.fonts.get(family)
         if not family_styles:
             for _font in cls.default:
-                klass.log.warning((
+                log.warning((
                     "Missing font '{}', "
                     "is replaced with default '{}'").format(
                         family, cls.default_font_name))
@@ -47,7 +47,7 @@ class FontFactory:
         # If missing variant return first found
         for _font in family_styles:
             if font_size:
-                klass.log.warning((
+                log.warning((
                     "Missing font '{}' with variant '{}', "
                     "is replaced with '{}' variant").format(
                         family, style, _font))
