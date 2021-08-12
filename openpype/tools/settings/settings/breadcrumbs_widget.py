@@ -72,6 +72,12 @@ class SettingsBreadcrumbs(BreadcrumbsModel):
         self.entity = entity
         self.reset()
 
+    def has_children(self, path):
+        for key in self.entities_by_path.keys():
+            if key.startswith(path):
+                return True
+        return False
+
 
 class SystemSettingsBreadcrumbs(SettingsBreadcrumbs):
     def reset(self):
@@ -206,7 +212,7 @@ class BreadcrumbsPathInput(QtWidgets.QLineEdit):
     cancelled = QtCore.Signal()
     confirmed = QtCore.Signal()
 
-    def __init__(self, model, parent):
+    def __init__(self, model, proxy_model, parent):
         super(BreadcrumbsPathInput, self).__init__(parent)
 
         self.setObjectName("BreadcrumbsPathInput")
@@ -215,7 +221,7 @@ class BreadcrumbsPathInput(QtWidgets.QLineEdit):
 
         completer = QtWidgets.QCompleter(self)
         completer.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        completer.setModel(model)
+        completer.setModel(proxy_model)
 
         popup = completer.popup()
         popup.setUniformItemSizes(True)
@@ -228,16 +234,39 @@ class BreadcrumbsPathInput(QtWidgets.QLineEdit):
 
         self._completer = completer
         self._model = model
+        self._proxy_model = proxy_model
 
         self._context_menu_visible = False
+
+    def set_model(self, model):
+        self._model = model
+
+    def event(self, event):
+        if (
+            event.type() == QtCore.QEvent.KeyPress
+            and event.key() == QtCore.Qt.Key_Tab
+        ):
+            if self._model:
+                find_value = self.text() + "/"
+                if self._model.has_children(find_value):
+                    self.insert("/")
+                else:
+                    self._completer.popup().hide()
+                event.accept()
+                return True
+
+        return super(BreadcrumbsPathInput, self).event(event)
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Escape:
             self.cancelled.emit()
-        elif event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
+            return
+
+        if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
             self.confirmed.emit()
-        else:
-            super(BreadcrumbsPathInput, self).keyPressEvent(event)
+            return
+
+        super(BreadcrumbsPathInput, self).keyPressEvent(event)
 
     def focusOutEvent(self, event):
         if not self._context_menu_visible:
@@ -254,7 +283,7 @@ class BreadcrumbsPathInput(QtWidgets.QLineEdit):
         self.confirmed.emit()
 
     def _on_text_change(self, path):
-        self._model.set_path_prefix(path)
+        self._proxy_model.set_path_prefix(path)
 
 
 class BreadcrumbsButton(QtWidgets.QToolButton):
@@ -318,7 +347,7 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
 
         # Edit presented path textually
         proxy_model = BreadcrumbsProxy()
-        path_input = BreadcrumbsPathInput(proxy_model, self)
+        path_input = BreadcrumbsPathInput(None, proxy_model, self)
         path_input.setVisible(False)
 
         path_input.cancelled.connect(self._on_input_cancel)
@@ -372,6 +401,7 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
 
     def set_model(self, model):
         self._model = model
+        self.path_input.set_model(model)
         self._proxy_model.setSourceModel(model)
 
     def _on_input_confirm(self):
