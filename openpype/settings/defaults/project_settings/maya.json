@@ -177,12 +177,14 @@
         },
         "ValidateModelName": {
             "enabled": false,
+            "database": true,
             "material_file": {
                 "windows": "",
                 "darwin": "",
                 "linux": ""
             },
-            "regex": "(.*)_(\\\\d)*_(.*)_(GEO)"
+            "regex": "(.*)_(\\d)*_(?P<shader>.*)_(GEO)",
+            "top_level_regex": ".*_GRP"
         },
         "ValidateTransformNamingSuffix": {
             "enabled": true,
