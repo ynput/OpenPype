@@ -209,6 +209,8 @@ class BreadcrumbsPathInput(QtWidgets.QLineEdit):
     def __init__(self, model, parent):
         super(BreadcrumbsPathInput, self).__init__(parent)
 
+        self.setObjectName("BreadcrumbsPathInput")
+
         self.setFrame(False)
 
         completer = QtWidgets.QCompleter(self)
@@ -261,6 +263,8 @@ class BreadcrumbsButton(QtWidgets.QToolButton):
     def __init__(self, path, model, parent):
         super(BreadcrumbsButton, self).__init__(parent)
 
+        self.setObjectName("BreadcrumbsButton")
+
         path_prefix = path + "/"
 
         self.setAutoRaise(True)
@@ -303,6 +307,8 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
 
     def __init__(self, parent=None):
         super(BreadcrumbsAddressBar, self).__init__(parent)
+
+        self.setObjectName("BreadcrumbsAddressBar")
 
         self.setAutoFillBackground(True)
         self.setFrameShape(self.StyledPanel)
