@@ -215,7 +215,7 @@ class BreadcrumbsPathInput(QtWidgets.QLineEdit):
         super(BreadcrumbsPathInput, self).contextMenuEvent(event)
 
     def _on_completer_activated(self, path):
-        self.confirmed.emit(path)
+        self.confirmed.emit()
 
     def _on_text_change(self, path):
         self._model.set_path_prefix(path)
