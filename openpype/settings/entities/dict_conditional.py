@@ -141,6 +141,7 @@ class DictConditionalEntity(ItemEntity):
         self.enum_key = self.schema_data.get("enum_key")
         self.enum_label = self.schema_data.get("enum_label")
         self.enum_children = self.schema_data.get("enum_children")
+        self.enum_default = self.schema_data.get("enum_default")
 
         self.enum_entity = None
 
@@ -277,14 +278,21 @@ class DictConditionalEntity(ItemEntity):
             if isinstance(item, dict) and "key" in item:
                 valid_enum_items.append(item)
 
+        enum_keys = []
         enum_items = []
         for item in valid_enum_items:
             item_key = item["key"]
+            enum_keys.append(item_key)
             item_label = item.get("label") or item_key
             enum_items.append({item_key: item_label})
 
         if not enum_items:
             return
+
+        if self.enum_default in enum_keys:
+            default_key = self.enum_default
+        else:
+            default_key = enum_keys[0]
 
         # Create Enum child first
         enum_key = self.enum_key or "invalid"
@@ -293,7 +301,8 @@ class DictConditionalEntity(ItemEntity):
             "multiselection": False,
             "enum_items": enum_items,
             "key": enum_key,
-            "label": self.enum_label
+            "label": self.enum_label,
+            "default": default_key
         }
 
         enum_entity = self.create_schema_object(enum_schema, self)
