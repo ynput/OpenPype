@@ -2,13 +2,18 @@ import os
 import re
 import copy
 import json
+import tempfile
 import pyblish
 import platform
 from pprint import pformat
 
 import openpype
-from openpype.scripts import slates
-from openpype.lib import filter_profiles
+
+from openpype.lib import (
+    filter_profiles,
+    get_pype_execute_args,
+    CREATE_NO_WINDOW
+)
 
 
 class ExtractGenerateSlate(openpype.api.Extractor):
@@ -68,6 +73,9 @@ class ExtractGenerateSlate(openpype.api.Extractor):
             return
 
         for repre in representations:
+            if not repre.get("tags"):
+                continue
+
             if "generate-slate" not in repre.get("tags"):
                 continue
 
@@ -149,12 +157,56 @@ class ExtractGenerateSlate(openpype.api.Extractor):
                 suffix, pformat(slate_def)
             ))
             slate_path = self.get_output_path(repre, suffix, "png")
-            # generate slate image
-            slates.api.slate_generator(
-                formating_data, json.loads(slate_def["template"]),
-                output_path=slate_path,
-                width=slate_width, height=slate_height, fonts_dir=fonts_dir
+
+            # Data for slate generate script
+            script_data = {
+                "fill_data": formating_data,
+                "slate_settings": json.loads(slate_def["template"]),
+                "output_path": slate_path,
+                "width": slate_width,
+                "height": slate_height,
+                "fonts_dir": fonts_dir
+            }
+
+            self.log.debug(
+                "script_data: {}".format(json.dumps(script_data, indent=4))
             )
+
+            # Dump data to string
+            dumped_script_data = json.dumps(script_data)
+
+            # Store dumped json to temporary file
+            temporary_json_file = tempfile.NamedTemporaryFile(
+                mode="w", suffix=".json", delete=False
+            )
+            temporary_json_file.write(dumped_script_data)
+            temporary_json_file.close()
+            temporary_json_filepath = temporary_json_file.name.replace(
+                "\\", "/"
+            )
+
+            scriptpath = self.slate_script_path()
+            # Executable args that will execute the script
+            # [pype executable, *pype script, "run"]
+            executable_args = get_pype_execute_args("run", scriptpath)
+
+            # Prepare subprocess arguments
+            args = list(executable_args)
+            args.append(temporary_json_filepath)
+            self.log.debug("Executing: {}".format(" ".join(args)))
+
+            # Run burnin script
+            process_kwargs = {
+                "logger": self.log,
+                "env": {},
+                "cwd": os.path.dirname(scriptpath)
+            }
+            if platform.system().lower() == "windows":
+                process_kwargs["creationflags"] = CREATE_NO_WINDOW
+
+            openpype.api.run_subprocess(args, **process_kwargs)
+            # Remove the temporary json
+            os.remove(temporary_json_filepath)
 
             # Connecting generated slate image to input video
             new_repre = self.concut_slate_to_video(
@@ -166,6 +218,21 @@ class ExtractGenerateSlate(openpype.api.Extractor):
 
         # add to later clearing
         self.to_clean_list.append(thumbnail_path)
+
+    def slate_script_path(self):
+        """Return path to python script for slate processing."""
+        scriptpath = os.path.normpath(
+            os.path.join(
+                openpype.PACKAGE_DIR,
+                "scripts",
+                "slates",
+                "create_slate.py"
+            )
+        )
+
+        self.log.debug("scriptpath: {}".format(scriptpath))
+
+        return scriptpath
 
     def concut_slate_to_video(self, repre, slate_path, suffix, width, height):
         new_repre = copy.deepcopy(repre)
