@@ -1,6 +1,10 @@
 import sys
 import json
-from .slate_base import api
+
+if __package__:
+    from .slate_base import api
+else:
+    from slate_base import api
 
 
 def main(in_args=None):
