@@ -31,7 +31,11 @@ from openpype.settings.entities import (
 
 from openpype.settings import SaveWarningExc
 from .widgets import ProjectListWidget
-from .breadcrumb_widget import BreadcrumbsAddressBar
+from .breadcrumb_widget import (
+    BreadcrumbsAddressBar,
+    SystemSettingsBreadcrumbs,
+    ProjectSettingsBreadcrumbs
+)
 
 from .base import GUIWidget
 from .list_item_widget import ListWidget
@@ -222,6 +226,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
         save_btn.clicked.connect(self._save)
         refresh_btn.clicked.connect(self._on_refresh)
+        breadcrumbs_widget.path_edited.connect(self._on_path_edit)
 
         self.save_btn = save_btn
         self.refresh_btn = refresh_btn
@@ -230,12 +235,17 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.content_layout = content_layout
         self.content_widget = content_widget
         self.configurations_widget = configurations_widget
+        self.breadcrumbs_widget = breadcrumbs_widget
+        self.breadcrumbs_model = None
         self.main_layout = main_layout
 
         self.ui_tweaks()
 
     def ui_tweaks(self):
         return
+
+    def _on_path_edit(self, path):
+        print("Path edited:", path)
 
     def _add_developer_ui(self, footer_layout):
         modify_defaults_widget = QtWidgets.QWidget()
@@ -432,9 +442,15 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def _on_reset_crash(self):
         self.save_btn.setEnabled(False)
 
+        if self.breadcrumbs_model is not None:
+            self.breadcrumbs_model.set_entity(None)
+
     def _on_reset_success(self):
         if not self.save_btn.isEnabled():
             self.save_btn.setEnabled(True)
+
+        if self.breadcrumbs_model is not None:
+            self.breadcrumbs_model.set_entity(self.entity)
 
     def add_children_gui(self):
         for child_obj in self.entity.children:
@@ -526,6 +542,10 @@ class SystemWidget(SettingsCategoryWidget):
             self.modify_defaults_checkbox.setChecked(True)
             self.modify_defaults_checkbox.setEnabled(False)
 
+    def ui_tweaks(self):
+        self.breadcrumbs_model = SystemSettingsBreadcrumbs()
+        self.breadcrumbs_widget.set_model(self.breadcrumbs_model)
+
     def _on_modify_defaults(self):
         if self.modify_defaults_checkbox.isChecked():
             if not self.entity.is_in_defaults_state():
@@ -540,6 +560,9 @@ class ProjectWidget(SettingsCategoryWidget):
         self.project_name = None
 
     def ui_tweaks(self):
+        self.breadcrumbs_model = ProjectSettingsBreadcrumbs()
+        self.breadcrumbs_widget.set_model(self.breadcrumbs_model)
+
         project_list_widget = ProjectListWidget(self)
 
         self.main_layout.insertWidget(0, project_list_widget, 0)
