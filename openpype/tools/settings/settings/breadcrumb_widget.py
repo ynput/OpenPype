@@ -54,17 +54,31 @@ class BreadcrumbsModel(QtGui.QStandardItemModel):
         self.reset()
 
     def reset(self):
+        return
+
+
+class SettingsBreadcrumbs(BreadcrumbsModel):
+    def __init__(self):
+        self.entity = None
+
+        super(SettingsBreadcrumbs, self).__init__()
+
+    def set_entity(self, entity):
+        self.entity = entity
+        self.reset()
+
+
+class SystemSettingsBreadcrumbs(SettingsBreadcrumbs):
+    def reset(self):
         root_item = self.invisibleRootItem()
         rows = root_item.rowCount()
         if rows > 0:
             root_item.removeRows(0, rows)
 
-        paths = [
-            "project_settings",
-            "project_settings/blabla",
-            "project_settings/blabla2",
-            "project_settings/blabla2/dada"
-        ]
+        if self.entity is None:
+            return
+
+        paths = []
         items = []
         for path in paths:
             if not path:
@@ -83,6 +97,10 @@ class BreadcrumbsModel(QtGui.QStandardItemModel):
             items.append(item)
 
         root_item.appendRows(items)
+
+
+class ProjectSettingsBreadcrumbs(SettingsBreadcrumbs):
+    pass
 
 
 class BreadcrumbsProxy(QtCore.QSortFilterProxyModel):
