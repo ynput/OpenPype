@@ -10,8 +10,13 @@ class CreateUSDModel(plugin.Creator):
     family = "usdModel"
     icon = "gears"
 
-    def _process(self):
+    def _process(self, instance):
+        """Creator main entry point.
 
+        Args:
+            instance (hou.Node): Created Houdini instance.
+
+        """
         node_type = "op::author_model:1.0"
 
         subset = self.data["subset"]
@@ -20,6 +25,7 @@ class CreateUSDModel(plugin.Creator):
 
         # Get stage root and create node
         stage = hou.node("/stage")
+        print("creating node {}/{}".format(node_type, name))
         instance = stage.createNode(node_type, node_name=name)
         instance.moveToGoodPosition(move_unconnected=True)
 

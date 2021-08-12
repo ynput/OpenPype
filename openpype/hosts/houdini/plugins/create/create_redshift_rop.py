@@ -27,9 +27,13 @@ class CreateRedshiftROP(plugin.Creator):
 
         self.data.update({"node_type": "Redshift_ROP"})
 
-    def _process(self):
-        instance = super(CreateRedshiftROP, self).process()
+    def _process(self, instance):
+        """Creator main entry point.
 
+        Args:
+            instance (hou.Node): Created Houdini instance.
+
+        """
         basename = instance.name()
         instance.setName(basename + "_ROP", unique_name=True)
 

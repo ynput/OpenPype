@@ -18,9 +18,13 @@ class CreateVDBCache(plugin.Creator):
         # Set node type to create for output
         self.data["node_type"] = "geometry"
 
-    def _process(self):
-        instance = super(CreateVDBCache, self).process()
+    def _process(self, instance):
+        """Creator main entry point.
 
+        Args:
+            instance (hou.Node): Created Houdini instance.
+
+        """
         parms = {
             "sopoutput": "$HIP/pyblish/%s.$F4.vdb" % self.name,
             "initsim": True,

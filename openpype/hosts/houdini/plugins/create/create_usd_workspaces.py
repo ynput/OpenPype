@@ -10,8 +10,13 @@ class _USDWorkspace(plugin.Creator):
     step = None
     icon = "gears"
 
-    def _process(self):
+    def _process(self, instance):
+        """Creator main entry point.
 
+        Args:
+            instance (hou.Node): Created Houdini instance.
+
+        """
         if not all([self.node_type, self.node_name, self.step]):
             self.log.error("Incomplete USD Workspace parameters")
             return

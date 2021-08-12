@@ -18,9 +18,13 @@ class CreateAlembicCamera(plugin.Creator):
         # Set node type to create for output
         self.data.update({"node_type": "alembic"})
 
-    def _process(self):
-        instance = super(CreateAlembicCamera, self).process()
+    def _process(self, instance):
+        """Creator main entry point.
 
+        Args:
+            instance (hou.Node): Created Houdini instance.
+
+        """
         parms = {
             "filename": "$HIP/pyblish/%s.abc" % self.name,
             "use_sop_path": False,

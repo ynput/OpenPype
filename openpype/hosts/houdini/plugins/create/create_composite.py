@@ -17,9 +17,13 @@ class CreateCompositeSequence(plugin.Creator):
         # Type of ROP node to create
         self.data.update({"node_type": "comp"})
 
-    def _process(self):
-        instance = super(CreateCompositeSequence, self).process()
+    def _process(self, instance):
+        """Creator main entry point.
 
+        Args:
+            instance (hou.Node): Created Houdini instance.
+
+        """
         parms = {"copoutput": "$HIP/pyblish/%s.$F4.exr" % self.name}
 
         if self.nodes:

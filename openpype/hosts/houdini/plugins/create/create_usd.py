@@ -7,6 +7,7 @@ class CreateUSD(plugin.Creator):
     label = "USD"
     family = "usd"
     icon = "gears"
+    enabled = False
 
     def __init__(self, *args, **kwargs):
         super(CreateUSD, self).__init__(*args, **kwargs)
@@ -16,9 +17,13 @@ class CreateUSD(plugin.Creator):
 
         self.data.update({"node_type": "usd"})
 
-    def _process(self):
-        instance = super(CreateUSD, self).process()
+    def _process(self, instance):
+        """Creator main entry point.
 
+        Args:
+            instance (hou.Node): Created Houdini instance.
+
+        """
         parms = {
             "lopoutput": "$HIP/pyblish/%s.usd" % self.name,
             "enableoutputprocessor_simplerelativepaths": False,

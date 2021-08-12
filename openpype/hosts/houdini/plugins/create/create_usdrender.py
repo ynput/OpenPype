@@ -19,9 +19,13 @@ class CreateUSDRender(plugin.Creator):
 
         self.data.update({"node_type": "usdrender_rop"})
 
-    def _process(self):
-        instance = super(CreateUSDRender, self).process()
+    def _process(self, instance):
+        """Creator main entry point.
 
+        Args:
+            instance (hou.Node): Created Houdini instance.
+
+         """
         parms = {
             # Render frame range
             "trange": 1

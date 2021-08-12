@@ -9,7 +9,7 @@ class CreateRemotePublish(plugin.Creator):
     family = "remotePublish"
     icon = "cloud-upload"
 
-    def _process(self):
+    def _process(self, instance):
         """This is a stub creator process.
 
          This does not create a regular instance that the instance collector

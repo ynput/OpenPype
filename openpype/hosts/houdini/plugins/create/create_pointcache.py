@@ -17,9 +17,13 @@ class CreatePointCache(plugin.Creator):
 
         self.data.update({"node_type": "alembic"})
 
-    def _process(self):
-        instance = super(CreatePointCache, self).process()
+    def _process(self, instance):
+        """Creator main entry point.
 
+        Args:
+            instance (hou.Node): Created Houdini instance.
+
+        """
         parms = {
             "use_sop_path": True,  # Export single node from SOP Path
             "build_from_path": True,  # Direct path of primitive in output
