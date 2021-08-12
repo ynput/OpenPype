@@ -112,7 +112,8 @@ class Layer(BaseObj):
             else:
                 height += item.height()
 
-        min_height = self.convert_segment_size_to_pixels(self.style.get("min-height"))
+        min_height = self.convert_segment_size_to_pixels(
+            self.style.get("min-height"))
         if min_height and min_height > height:
             return min_height
 
@@ -129,7 +130,8 @@ class Layer(BaseObj):
             else:
                 width += item.width()
 
-        min_width = self.convert_segment_size_to_pixels(self.style.get("min-width"))
+        min_width = self.convert_segment_size_to_pixels(
+            self.style.get("min-width"))
         if min_width and min_width > width:
             return min_width
 
