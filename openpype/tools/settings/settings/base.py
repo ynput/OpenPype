@@ -28,6 +28,9 @@ class BaseWidget(QtWidgets.QWidget):
     def scroll_to(self, widget):
         self.category_widget.scroll_to(widget)
 
+    def set_path(self, path):
+        self.category_widget.set_path(path)
+
     def set_focus(self, scroll_to=False):
         if scroll_to:
             self.scroll_to(self)
@@ -292,11 +295,23 @@ class BaseWidget(QtWidgets.QWidget):
             if to_run:
                 to_run()
 
+    def focused_in(self):
+        if self.entity is not None:
+            self.set_path(self.entity.path)
+
     def mouseReleaseEvent(self, event):
         if self.allow_actions and event.button() == QtCore.Qt.RightButton:
             return self.show_actions_menu()
 
-        return super(BaseWidget, self).mouseReleaseEvent(event)
+        focused_in = False
+        if event.button() == QtCore.Qt.LeftButton:
+            focused_in = True
+            self.focused_in()
+
+        result = super(BaseWidget, self).mouseReleaseEvent(event)
+        if focused_in and not event.isAccepted():
+            event.accept()
+        return result
 
 
 class InputWidget(BaseWidget):

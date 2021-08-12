@@ -257,10 +257,11 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             input_field.make_sure_is_visible(path, True)
 
     def scroll_to(self, widget):
-        if not widget:
-            return
+        if widget:
+            self.scroll_widget.ensureWidgetVisible(widget)
 
-        self.scroll_widget.ensureWidgetVisible(widget)
+    def set_path(self, path):
+        self.breadcrumbs_widget.set_path(path)
 
     def _add_developer_ui(self, footer_layout):
         modify_defaults_widget = QtWidgets.QWidget()

@@ -383,6 +383,8 @@ class GridLabelWidget(QtWidgets.QWidget):
 
     def mouseReleaseEvent(self, event):
         if self.input_field:
+            if event and event.button() == QtCore.Qt.LeftButton:
+                self.input_field.focused_in()
             return self.input_field.show_actions_menu(event)
         return super(GridLabelWidget, self).mouseReleaseEvent(event)
 
