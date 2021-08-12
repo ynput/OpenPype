@@ -109,18 +109,23 @@ class NumberSpinBox(QtWidgets.QDoubleSpinBox):
         return output
 
 
-class ComboBox(QtWidgets.QComboBox):
+class SettingsComboBox(QtWidgets.QComboBox):
     value_changed = QtCore.Signal()
+    focused_in = QtCore.Signal()
 
     def __init__(self, *args, **kwargs):
-        super(ComboBox, self).__init__(*args, **kwargs)
+        super(SettingsComboBox, self).__init__(*args, **kwargs)
 
         self.currentIndexChanged.connect(self._on_change)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
     def wheelEvent(self, event):
         if self.hasFocus():
-            return super(ComboBox, self).wheelEvent(event)
+            return super(SettingsComboBox, self).wheelEvent(event)
+
+    def focusInEvent(self, event):
+        self.focused_in.emit()
+        return super(SettingsComboBox, self).focusInEvent(event)
 
     def _on_change(self, *args, **kwargs):
         self.value_changed.emit()

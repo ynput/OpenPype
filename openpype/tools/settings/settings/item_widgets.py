@@ -6,7 +6,7 @@ from .widgets import (
     ExpandingWidget,
     NumberSpinBox,
     GridLabelWidget,
-    ComboBox,
+    SettingsComboBox,
     NiceCheckbox,
     SettingsPlainTextEdit,
     SettingsLineEdit
@@ -495,7 +495,7 @@ class EnumeratorWidget(InputWidget):
             )
 
         else:
-            self.input_field = ComboBox(self.content_widget)
+            self.input_field = SettingsComboBox(self.content_widget)
 
         for enum_item in self.entity.enum_items:
             for value, label in enum_item.items():
@@ -505,7 +505,11 @@ class EnumeratorWidget(InputWidget):
 
         self.setFocusProxy(self.input_field)
 
+        self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.value_changed.connect(self._on_value_change)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.value():
