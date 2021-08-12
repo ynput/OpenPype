@@ -264,6 +264,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             self.log.debug("key: {}".format(key))
             if "://" in value:
                 clean_path = value
+            # env var contains now \ separator, dont replace that, its not path
+            elif key == "AVALON_APP_NAME":
+                continue
             else:
                 valid_paths = []
                 for path in value.split(os.pathsep):
