@@ -458,12 +458,15 @@ class GUIWidget(BaseWidget):
         layout.addWidget(splitter_item)
 
     def set_entity_value(self):
-        return
+        pass
 
     def hierarchical_style_update(self):
         pass
 
     def make_sure_is_visible(self, *args, **kwargs):
+        pass
+
+    def set_path(self, *args, **kwargs):
         pass
 
     def get_invalid(self):
