@@ -466,7 +466,10 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
             self.save_btn.setEnabled(True)
 
         if self.breadcrumbs_model is not None:
+            path = self.breadcrumbs_widget.path()
+            self.breadcrumbs_widget.set_path("")
             self.breadcrumbs_model.set_entity(self.entity)
+            self.breadcrumbs_widget.change_path(path)
 
     def add_children_gui(self):
         for child_obj in self.entity.children:
