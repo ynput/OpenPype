@@ -181,6 +181,15 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         scroll_widget.setObjectName("GroupWidget")
         content_widget = QtWidgets.QWidget(scroll_widget)
 
+        breadcrumbs_label = QtWidgets.QLabel("Path:", content_widget)
+        breadcrumbs_widget = BreadcrumbsAddressBar(content_widget)
+
+        breadcrumbs_layout = QtWidgets.QHBoxLayout()
+        breadcrumbs_layout.setContentsMargins(5, 0, 5, 0)
+        breadcrumbs_layout.setSpacing(5)
+        breadcrumbs_layout.addWidget(breadcrumbs_label)
+        breadcrumbs_layout.addWidget(breadcrumbs_widget)
+
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 3, 3)
         content_layout.setSpacing(5)
@@ -189,40 +198,39 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         scroll_widget.setWidgetResizable(True)
         scroll_widget.setWidget(content_widget)
 
-        configurations_widget = QtWidgets.QWidget(self)
-
-        footer_widget = QtWidgets.QWidget(configurations_widget)
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
-
         refresh_icon = qtawesome.icon("fa.refresh", color="white")
-        refresh_btn = QtWidgets.QPushButton(footer_widget)
+        refresh_btn = QtWidgets.QPushButton(self)
         refresh_btn.setIcon(refresh_icon)
 
-        footer_layout.addWidget(refresh_btn, 0)
-
+        footer_layout = QtWidgets.QHBoxLayout()
         if self.user_role == "developer":
             self._add_developer_ui(footer_layout)
 
-        breadcrumbs_widget = BreadcrumbsAddressBar(content_widget)
-
-        save_btn = QtWidgets.QPushButton("Save", footer_widget)
-        require_restart_label = QtWidgets.QLabel(footer_widget)
+        save_btn = QtWidgets.QPushButton("Save", self)
+        require_restart_label = QtWidgets.QLabel(self)
         require_restart_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        footer_layout.addWidget(refresh_btn, 0)
         footer_layout.addWidget(require_restart_label, 1)
         footer_layout.addWidget(save_btn, 0)
 
-        configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
+        configurations_layout = QtWidgets.QVBoxLayout()
         configurations_layout.setContentsMargins(0, 0, 0, 0)
         configurations_layout.setSpacing(0)
 
-        configurations_layout.addWidget(breadcrumbs_widget, 0)
         configurations_layout.addWidget(scroll_widget, 1)
-        configurations_layout.addWidget(footer_widget, 0)
+        configurations_layout.addLayout(footer_layout, 0)
 
-        main_layout = QtWidgets.QHBoxLayout(self)
+        conf_wrapper_layout = QtWidgets.QHBoxLayout()
+        conf_wrapper_layout.setContentsMargins(0, 0, 0, 0)
+        conf_wrapper_layout.setSpacing(0)
+        conf_wrapper_layout.addLayout(configurations_layout, 1)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        main_layout.addWidget(configurations_widget, 1)
+        main_layout.addLayout(breadcrumbs_layout, 0)
+        main_layout.addLayout(conf_wrapper_layout, 1)
 
         save_btn.clicked.connect(self._save)
         refresh_btn.clicked.connect(self._on_refresh)
@@ -234,9 +242,9 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.scroll_widget = scroll_widget
         self.content_layout = content_layout
         self.content_widget = content_widget
-        self.configurations_widget = configurations_widget
         self.breadcrumbs_widget = breadcrumbs_widget
         self.breadcrumbs_model = None
+        self.conf_wrapper_layout = conf_wrapper_layout
         self.main_layout = main_layout
 
         self.ui_tweaks()
@@ -565,7 +573,7 @@ class ProjectWidget(SettingsCategoryWidget):
 
         project_list_widget = ProjectListWidget(self)
 
-        self.main_layout.insertWidget(0, project_list_widget, 0)
+        self.conf_wrapper_layout.insertWidget(0, project_list_widget, 0)
 
         project_list_widget.project_changed.connect(self._on_project_change)
 
