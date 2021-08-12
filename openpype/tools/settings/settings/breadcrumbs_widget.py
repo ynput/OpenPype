@@ -265,14 +265,19 @@ class BreadcrumbsButton(QtWidgets.QToolButton):
 
         self.setObjectName("BreadcrumbsButton")
 
-        path_prefix = path + "/"
+        path_prefix = path
+        if path:
+            path_prefix += "/"
 
         self.setAutoRaise(True)
         self.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
 
         self.setMouseTracking(True)
 
-        self.setText(path.split("/")[-1])
+        if path:
+            self.setText(path.split("/")[-1])
+        else:
+            self.setProperty("empty", "1")
 
         menu = BreadcrumbsHintMenu(model, path_prefix, self)
 
@@ -417,6 +422,7 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
             item = "/".join(path_items)
             self._insert_crumb(item)
             path_items.pop(-1)
+        self._insert_crumb("")
 
         self.path_changed.emit(self._current_path)
 
