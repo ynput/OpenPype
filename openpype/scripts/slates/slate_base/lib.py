@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 
 
 def slate_generator(
-    fill_data, slate_settings, output_path=None, width=None, height=None,
+    fill_data, slate_settings, output_path, width=None, height=None,
     fonts_dir=None
 ):
     """Command line script for dynamic creatign of slates with PIL.
@@ -24,16 +24,12 @@ def slate_generator(
     Args:
         fill_data (dict): data used for formating inputs in slate_settings
         slate_settings (dict): slate settings template for slate layout
-        output_path (str, optional): path string including file extension
-                                     - this will define the output format.
-                                     Defaults to None.
+        output_path (str): path string including file extension
+                           - this will define the output format.
         width (int, optional): expected width of slate image. Defaults to None.
         height (int, optional): expected height of slate image.
                                 Defaults to None.
     """
-    assert output_path, TypeError(
-        "`slate_generator` expects to enter `output_path`")
-
     width = width or 1920
     height = height or 1080
     style = slate_settings.get("style") or {}
