@@ -392,6 +392,7 @@ QTableView::item:selected:active, QTreeView::item:selected:active, QListView::it
 
 #BreadcrumbsPathInput {
     padding: 2px;
+    font-size: 9pt;
 }
 
 #BreadcrumbsButton {
