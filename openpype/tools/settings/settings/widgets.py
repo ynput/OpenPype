@@ -9,6 +9,22 @@ from avalon.mongodb import (
 from openpype.settings.lib import get_system_settings
 
 
+class SettingsLineEdit(QtWidgets.QLineEdit):
+    focused_in = QtCore.Signal()
+
+    def focusInEvent(self, event):
+        super(SettingsLineEdit, self).focusInEvent(event)
+        self.focused_in.emit()
+
+
+class SettingsPlainTextEdit(QtWidgets.QPlainTextEdit):
+    focused_in = QtCore.Signal()
+
+    def focusInEvent(self, event):
+        super(SettingsPlainTextEdit, self).focusInEvent(event)
+        self.focused_in.emit()
+
+
 class ShadowWidget(QtWidgets.QWidget):
     def __init__(self, message, parent):
         super(ShadowWidget, self).__init__(parent)

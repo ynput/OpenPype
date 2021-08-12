@@ -7,7 +7,9 @@ from .widgets import (
     NumberSpinBox,
     GridLabelWidget,
     ComboBox,
-    NiceCheckbox
+    NiceCheckbox,
+    SettingsPlainTextEdit,
+    SettingsLineEdit
 )
 from .multiselection_combobox import MultiSelectionComboBox
 from .wrapper_widgets import (
@@ -313,9 +315,9 @@ class TextWidget(InputWidget):
     def _add_inputs_to_layout(self):
         multiline = self.entity.multiline
         if multiline:
-            self.input_field = QtWidgets.QPlainTextEdit(self.content_widget)
+            self.input_field = SettingsPlainTextEdit(self.content_widget)
         else:
-            self.input_field = QtWidgets.QLineEdit(self.content_widget)
+            self.input_field = SettingsLineEdit(self.content_widget)
 
         placeholder_text = self.entity.placeholder_text
         if placeholder_text:
@@ -329,7 +331,11 @@ class TextWidget(InputWidget):
 
         self.content_layout.addWidget(self.input_field, 1, **layout_kwargs)
 
+        self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.textChanged.connect(self._on_value_change)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_value():
@@ -382,7 +388,7 @@ class NumberWidget(InputWidget):
         self.entity.set(self.input_field.value())
 
 
-class RawJsonInput(QtWidgets.QPlainTextEdit):
+class RawJsonInput(SettingsPlainTextEdit):
     tab_length = 4
 
     def __init__(self, valid_type, *args, **kwargs):
@@ -444,14 +450,17 @@ class RawJsonWidget(InputWidget):
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding
         )
-
         self.setFocusProxy(self.input_field)
 
         self.content_layout.addWidget(
             self.input_field, 1, alignment=QtCore.Qt.AlignTop
         )
 
+        self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.textChanged.connect(self._on_value_change)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def set_entity_value(self):
         self.input_field.set_value(self.entity.value)
@@ -651,14 +660,19 @@ class PathWidget(BaseWidget):
 
 class PathInputWidget(InputWidget):
     def _add_inputs_to_layout(self):
-        self.input_field = QtWidgets.QLineEdit(self.content_widget)
+        self.input_field = SettingsLineEdit(self.content_widget)
         placeholder = self.entity.placeholder_text
         if placeholder:
             self.input_field.setPlaceholderText(placeholder)
 
         self.setFocusProxy(self.input_field)
         self.content_layout.addWidget(self.input_field)
+
         self.input_field.textChanged.connect(self._on_value_change)
+        self.input_field.focused_in.connect(self._on_input_focus)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_value():
