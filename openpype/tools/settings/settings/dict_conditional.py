@@ -213,6 +213,25 @@ class DictConditionalWidget(BaseWidget):
         else:
             body_widget.hide_toolbox(hide_content=False)
 
+    def make_sure_is_visible(self, path, scroll_to):
+        if not path:
+            return
+
+        entity_path = self.entity.path
+        if entity_path == path:
+            self.set_focus(scroll_to)
+            return
+
+        if not path.startswith(entity_path):
+            return
+
+        if self.body_widget and not self.body_widget.is_expanded():
+            self.body_widget.toggle_content(True)
+            QtWidgets.QApplication.processEvents()
+
+        for input_field in self.input_fields:
+            input_field.make_sure_is_visible(path, scroll_to)
+
     def add_widget_to_layout(self, widget, label=None):
         if not widget.entity:
             map_id = widget.id

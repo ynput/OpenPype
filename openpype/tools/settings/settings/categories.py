@@ -253,7 +253,14 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         return
 
     def _on_path_edit(self, path):
-        print("Path edited:", path)
+        for input_field in self.input_fields:
+            input_field.make_sure_is_visible(path, True)
+
+    def scroll_to(self, widget):
+        if not widget:
+            return
+
+        self.scroll_widget.ensureWidgetVisible(widget)
 
     def _add_developer_ui(self, footer_layout):
         modify_defaults_widget = QtWidgets.QWidget()

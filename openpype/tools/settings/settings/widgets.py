@@ -215,6 +215,9 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.main_layout.addWidget(content_widget)
         self.content_widget = content_widget
 
+    def is_expanded(self):
+        return self.button_toggle.isChecked()
+
     def _btn_clicked(self):
         self.toggle_content(self.button_toggle.isChecked())
 

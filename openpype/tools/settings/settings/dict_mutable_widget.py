@@ -319,6 +319,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.category_widget, self.entity, self
         )
 
+    def make_sure_is_visible(self, *args, **kwargs):
+        self.input_field.make_sure_is_visible(*args, **kwargs)
+
     def get_style_state(self):
         if self.is_invalid:
             return "invalid"
@@ -845,6 +848,25 @@ class DictMutableKeysWidget(BaseWidget):
 
         if changed:
             self.on_shuffle()
+
+    def make_sure_is_visible(self, path, scroll_to):
+        if not path:
+            return
+
+        entity_path = self.entity.path
+        if entity_path == path:
+            self.set_focus(scroll_to)
+            return
+
+        if not path.startswith(entity_path):
+            return
+
+        if self.body_widget and not self.body_widget.is_expanded():
+            self.body_widget.toggle_content(True)
+            QtWidgets.QApplication.processEvents()
+
+        for input_field in self.input_fields:
+            input_field.make_sure_is_visible(path, scroll_to)
 
     def set_entity_value(self):
         while self.input_fields:

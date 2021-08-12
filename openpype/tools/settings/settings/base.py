@@ -25,6 +25,21 @@ class BaseWidget(QtWidgets.QWidget):
         self.label_widget = None
         self.create_ui()
 
+    def scroll_to(self, widget):
+        self.category_widget.scroll_to(widget)
+
+    def set_focus(self, scroll_to=False):
+        if scroll_to:
+            self.scroll_to(self)
+        self.setFocus()
+
+    def make_sure_is_visible(self, path, scroll_to):
+        raise NotImplementedError(
+            "{} not implemented `make_sure_is_visible`".format(
+                self.__class__.__name__
+            )
+        )
+
     def trigger_hierarchical_style_update(self):
         self.category_widget.hierarchical_style_update()
 
@@ -337,6 +352,12 @@ class InputWidget(BaseWidget):
             )
         )
 
+    def make_sure_is_visible(self, path, scroll_to):
+        if path:
+            entity_path = self.entity.path
+            if entity_path == path:
+                self.set_focus(scroll_to)
+
     def update_style(self):
         has_unsaved_changes = self.entity.has_unsaved_changes
         if not has_unsaved_changes and self.entity.group_item:
@@ -425,6 +446,9 @@ class GUIWidget(BaseWidget):
         return
 
     def hierarchical_style_update(self):
+        pass
+
+    def make_sure_is_visible(self, *args, **kwargs):
         pass
 
     def get_invalid(self):

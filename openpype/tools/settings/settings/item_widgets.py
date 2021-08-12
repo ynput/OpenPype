@@ -154,6 +154,25 @@ class DictImmutableKeysWidget(BaseWidget):
         else:
             body_widget.hide_toolbox(hide_content=False)
 
+    def make_sure_is_visible(self, path, scroll_to):
+        if not path:
+            return
+
+        entity_path = self.entity.path
+        if entity_path == path:
+            self.set_focus(scroll_to)
+            return
+
+        if not path.startswith(entity_path):
+            return
+
+        if self.body_widget and not self.body_widget.is_expanded():
+            self.body_widget.toggle_content(True)
+            QtWidgets.QApplication.processEvents()
+
+        for input_field in self.input_fields:
+            input_field.make_sure_is_visible(path, scroll_to)
+
     def add_widget_to_layout(self, widget, label=None):
         if self.checkbox_child and widget.entity is self.checkbox_child:
             self.body_widget.add_widget_before_label(widget)
@@ -561,6 +580,9 @@ class PathWidget(BaseWidget):
 
     def set_entity_value(self):
         self.input_field.set_entity_value()
+
+    def make_sure_is_visible(self, *args, **kwargs):
+        self.input_field.make_sure_is_visible(*args, **kwargs)
 
     def hierarchical_style_update(self):
         self.update_style()

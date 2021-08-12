@@ -65,6 +65,19 @@ class ListStrictWidget(BaseWidget):
             invalid.extend(input_field.get_invalid())
         return invalid
 
+    def make_sure_is_visible(self, path, scroll_to):
+        if not path:
+            return
+
+        entity_path = self.entity.path
+        if entity_path == path:
+            self.set_focus(scroll_to)
+            return
+
+        if path.startswith(entity_path):
+            for input_field in self.input_fields:
+                input_field.make_sure_is_visible(path, scroll_to)
+
     def add_widget_to_layout(self, widget, label=None):
         # Horizontally added children
         if self.entity.is_horizontal:

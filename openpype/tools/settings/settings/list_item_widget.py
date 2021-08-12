@@ -129,6 +129,9 @@ class ListItem(QtWidgets.QWidget):
             *args, **kwargs
         )
 
+    def make_sure_is_visible(self, *args, **kwargs):
+        self.input_field.make_sure_is_visible(*args, **kwargs)
+
     @property
     def is_invalid(self):
         return self.input_field.is_invalid
@@ -274,6 +277,25 @@ class ListWidget(InputWidget):
         for input_field in self.input_fields:
             invalid.extend(input_field.get_invalid())
         return invalid
+
+    def make_sure_is_visible(self, path, scroll_to):
+        if not path:
+            return
+
+        entity_path = self.entity.path
+        if entity_path == path:
+            self.set_focus(scroll_to)
+            return
+
+        if not path.startswith(entity_path):
+            return
+
+        if self.body_widget and not self.body_widget.is_expanded():
+            self.body_widget.toggle_content(True)
+            QtWidgets.QApplication.processEvents()
+
+        for input_field in self.input_fields:
+            input_field.make_sure_is_visible(path, scroll_to)
 
     def _on_entity_change(self):
         # TODO do less inefficient
