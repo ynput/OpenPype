@@ -313,8 +313,6 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
     def __init__(self, parent=None):
         super(BreadcrumbsAddressBar, self).__init__(parent)
 
-        self.setObjectName("BreadcrumbsAddressBar")
-
         self.setAutoFillBackground(True)
         self.setFrameShape(self.StyledPanel)
 
@@ -331,6 +329,7 @@ class BreadcrumbsAddressBar(QtWidgets.QFrame):
 
         # Container for breadcrumbs
         crumbs_panel = QtWidgets.QWidget(crumbs_container)
+        crumbs_panel.setObjectName("BreadcrumbsPanel")
 
         crumbs_layout = QtWidgets.QHBoxLayout()
         crumbs_layout.setContentsMargins(0, 0, 0, 0)
