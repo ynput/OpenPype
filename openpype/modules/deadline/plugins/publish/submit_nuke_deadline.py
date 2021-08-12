@@ -252,40 +252,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
-        # self.log.debug("enviro: {}".format(pprint(environment)))
 
         for _path in os.environ:
             if _path.lower().startswith('openpype_'):
                 environment[_path] = os.environ[_path]
 
-        clean_environment = {}
-        for key, value in environment.items():
-            clean_path = ""
-            self.log.debug("key: {}".format(key))
-            # env var contains now \ separator, dont replace that, its not path
-            if "://" in value or key == "AVALON_APP_NAME":
-                clean_path = value
-            else:
-                valid_paths = []
-                for path in value.split(os.pathsep):
-                    if not path:
-                        continue
-                    try:
-                        path.decode('UTF-8', 'strict')
-                        valid_paths.append(os.path.normpath(path))
-                    except UnicodeDecodeError:
-                        print('path contains non UTF characters')
-
-                if valid_paths:
-                    clean_path = os.pathsep.join(valid_paths)
-
-            if key == "PYTHONPATH":
-                clean_path = clean_path.replace('python2', 'python3')
-
-            self.log.debug("clean path: {}".format(clean_path))
-            clean_environment[key] = clean_path
-
-        environment = clean_environment
         # to recognize job from PYPE for turning Event On/Off
         environment["OPENPYPE_RENDER_JOB"] = "1"
 
