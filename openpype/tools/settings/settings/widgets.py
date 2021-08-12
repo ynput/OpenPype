@@ -86,6 +86,8 @@ class IconButton(QtWidgets.QPushButton):
 
 
 class NumberSpinBox(QtWidgets.QDoubleSpinBox):
+    focused_in = QtCore.Signal()
+
     def __init__(self, *args, **kwargs):
         min_value = kwargs.pop("minimum", -99999)
         max_value = kwargs.pop("maximum", 99999)
@@ -95,6 +97,10 @@ class NumberSpinBox(QtWidgets.QDoubleSpinBox):
         self.setDecimals(decimals)
         self.setMinimum(min_value)
         self.setMaximum(max_value)
+
+    def focusInEvent(self, event):
+        super(NumberSpinBox, self).focusInEvent(event)
+        self.focused_in.emit()
 
     def wheelEvent(self, event):
         if self.hasFocus():

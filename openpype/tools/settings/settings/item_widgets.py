@@ -374,6 +374,10 @@ class NumberWidget(InputWidget):
         self.content_layout.addWidget(self.input_field, 1)
 
         self.input_field.valueChanged.connect(self._on_value_change)
+        self.input_field.focused_in.connect(self._on_input_focus)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.value():
