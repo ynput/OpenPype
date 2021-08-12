@@ -16,8 +16,8 @@ log = logging.getLogger(__name__)
 
 
 def slate_generator(
-    fill_data, slate_settings, output_path, width=None, height=None,
-    fonts_dir=None
+    fill_data, slate_settings, output_path,
+    width=None, height=None, fonts_dir=None
 ):
     """Command line script for dynamic creatign of slates with PIL.
 
