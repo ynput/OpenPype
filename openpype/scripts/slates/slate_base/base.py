@@ -252,7 +252,7 @@ class BaseObj:
 
         return (width_size * (height / width)) * (perc_num / 100)
 
-    def get_size(self, size):
+    def convert_segment_size_to_pixels(self, size):
         if not size:
             return 0
 
@@ -279,7 +279,7 @@ class BaseObj:
         margin = self.style["margin"]
         margin_left = self.style.get("margin-left") or margin
 
-        pos_x += self.get_size(margin_left)
+        pos_x += self.convert_segment_size_to_pixels(margin_left)
         return pos_x
 
     @property
@@ -288,7 +288,7 @@ class BaseObj:
         margin = self.style["margin"]
         margin_top = self.style.get("margin-top") or margin
 
-        pos_y += self.get_size(margin_top)
+        pos_y += self.convert_segment_size_to_pixels(margin_top)
         return pos_y
 
     @property
@@ -299,7 +299,7 @@ class BaseObj:
         if padding_left is None:
             padding_left = padding
 
-        pos_x += self.get_size(padding_left)
+        pos_x += self.convert_segment_size_to_pixels(padding_left)
 
         return pos_x
 
@@ -311,7 +311,7 @@ class BaseObj:
         if padding_top is None:
             padding_top = padding
 
-        pos_y += self.get_size(padding_top)
+        pos_y += self.convert_segment_size_to_pixels(padding_top)
 
         return pos_y
 
@@ -375,7 +375,7 @@ class BaseObj:
         if padding_bottom is None:
             padding_bottom = padding
 
-        return height + self.get_size((padding_top + padding_bottom))
+        return height + self.convert_segment_size_to_pixels((padding_top + padding_bottom))
 
     def width(self):
         width = self.content_width()
@@ -384,7 +384,7 @@ class BaseObj:
         margin_left = self.style.get("margin-left") or margin
         margin_right = self.style.get("margin-right") or margin
 
-        return width + self.get_size((margin_left + margin_right))
+        return width + self.convert_segment_size_to_pixels((margin_left + margin_right))
 
     def height(self):
         height = self.content_height()
@@ -393,7 +393,7 @@ class BaseObj:
         margin_top = self.style.get("margin-top") or margin
         margin_bottom = self.style.get("margin-bottom") or margin
 
-        return height + self.get_size((margin_bottom + margin_top))
+        return height + self.convert_segment_size_to_pixels((margin_bottom + margin_top))
 
     def add_item(self, item):
         self.items[item.id] = item

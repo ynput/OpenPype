@@ -71,7 +71,7 @@ class Layer(BaseObj):
             else:
                 margin = self.style["margin"]
                 margin_left = self.style.get("margin-left") or margin
-                pos_x += self.get_size(margin_left)
+                pos_x += self.convert_segment_size_to_pixels(margin_left)
 
         return int(pos_x)
 
@@ -112,7 +112,7 @@ class Layer(BaseObj):
             else:
                 height += item.height()
 
-        min_height = self.get_size(self.style.get("min-height"))
+        min_height = self.convert_segment_size_to_pixels(self.style.get("min-height"))
         if min_height and min_height > height:
             return min_height
 
@@ -129,7 +129,7 @@ class Layer(BaseObj):
             else:
                 width += item.width()
 
-        min_width = self.get_size(self.style.get("min-width"))
+        min_width = self.convert_segment_size_to_pixels(self.style.get("min-width"))
         if min_width and min_width > width:
             return min_width
 
