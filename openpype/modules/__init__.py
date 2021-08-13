@@ -38,6 +38,7 @@ from .muster import MusterModule
 from .deadline import DeadlineModule
 from .project_manager_action import ProjectManagerAction
 from .standalonepublish_action import StandAlonePublishAction
+from .python_interpreter_action import PythonInterpreterAction
 from .sync_server import SyncServerModule
 from .slack import SlackIntegrationModule
 
@@ -77,6 +78,7 @@ __all__ = (
     "DeadlineModule",
     "ProjectManagerAction",
     "StandAlonePublishAction",
+    "PythonInterpreterAction",
 
     "SyncServerModule",
 
