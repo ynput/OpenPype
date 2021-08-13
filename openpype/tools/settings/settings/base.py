@@ -372,6 +372,8 @@ class InputWidget(BaseWidget):
             entity_path = self.entity.path
             if entity_path == path:
                 self.set_focus(scroll_to)
+                return True
+        return False
 
     def update_style(self):
         has_unsaved_changes = self.entity.has_unsaved_changes
@@ -464,6 +466,9 @@ class GUIWidget(BaseWidget):
         pass
 
     def make_sure_is_visible(self, *args, **kwargs):
+        return False
+
+    def focused_in(self):
         pass
 
     def set_path(self, *args, **kwargs):

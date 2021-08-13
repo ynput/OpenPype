@@ -67,16 +67,18 @@ class ListStrictWidget(BaseWidget):
 
     def make_sure_is_visible(self, path, scroll_to):
         if not path:
-            return
+            return False
 
         entity_path = self.entity.path
         if entity_path == path:
             self.set_focus(scroll_to)
-            return
+            return True
 
         if path.startswith(entity_path):
             for input_field in self.input_fields:
-                input_field.make_sure_is_visible(path, scroll_to)
+                if input_field.make_sure_is_visible(path, scroll_to):
+                    return True
+        return False
 
     def add_widget_to_layout(self, widget, label=None):
         # Horizontally added children
