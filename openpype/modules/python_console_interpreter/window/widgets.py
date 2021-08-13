@@ -72,8 +72,18 @@ class PythonInterpreterWidget(QtWidgets.QTextEdit):
             self.eofKey = None
 
         # capture all interactive input/output
-        sys.stdout = MultipleRedirection(sys.stdout, self)
-        sys.stderr = MultipleRedirection(sys.stderr, self)
+        stdout = []
+        stderr = []
+        if sys.stdout is not None:
+            stdout.append(sys.stdout)
+        if sys.stderr is not None:
+            stderr.append(sys.stderr)
+
+        stdout.append(self)
+        stderr.append(self)
+
+        sys.stdout = MultipleRedirection(*stdout)
+        sys.stderr = MultipleRedirection(*stderr)
 
         # last line + last incomplete lines
         self.line = StringObj()
