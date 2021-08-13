@@ -1,6 +1,5 @@
 import weakref
 import logging
-import inspect
 import collections
 import avalon.api
 import pyblish.api
@@ -345,6 +344,23 @@ class PublisherController:
         # TODO execute plugin
         print(plugin, instance)
         self._publish_next_process()
+
+    def get_asset_hierarchy(self):
+        _queue = collections.deque((self.dbcon.find(
+            {"type": "asset"},
+            {
+                "_id": True,
+                "name": True,
+                "data.visualParent": True
+            }
+        )))
+
+        output = collections.defaultdict(list)
+        while _queue:
+            asset_doc = _queue.popleft()
+            parent_id = asset_doc["data"]["visualParent"]
+            output[parent_id].append(asset_doc)
+        return output
 
 
 def collect_families_from_instances(instances, only_active=False):
