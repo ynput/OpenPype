@@ -1359,7 +1359,20 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
         progress_widget = QtWidgets.QProgressBar(content_widget)
 
+        copy_log_btn = QtWidgets.QPushButton("Copy log", content_widget)
+        stop_btn = QtWidgets.QPushButton("Stop", content_widget)
+        refresh_btn = QtWidgets.QPushButton("Refresh", content_widget)
+        publish_btn = QtWidgets.QPushButton("Publish", content_widget)
+
+        footer_layout = QtWidgets.QHBoxLayout()
+        footer_layout.addWidget(copy_log_btn, 0)
+        footer_layout.addStretch(1)
+        footer_layout.addWidget(refresh_btn, 0)
+        footer_layout.addWidget(stop_btn, 0)
+        footer_layout.addWidget(publish_btn, 0)
+
         content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setSpacing(5)
         content_layout.setAlignment(QtCore.Qt.AlignCenter)
         content_layout.addStretch(1)
         content_layout.addWidget(main_label)
@@ -1367,6 +1380,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         content_layout.addLayout(instance_plugin_layout)
         content_layout.addWidget(progress_widget)
         content_layout.addStretch(1)
+        content_layout.addLayout(footer_layout)
 
         main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -1380,6 +1394,11 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.instance_label = instance_label
         self.plugin_label = plugin_label
         self.progress_widget = progress_widget
+
+        self.copy_log_btn = copy_log_btn
+        self.stop_btn = stop_btn
+        self.refresh_btn = refresh_btn
+        self.publish_btn = publish_btn
 
     def set_instance(self, instance_name):
         self.instance_label.setText(instance_name)
