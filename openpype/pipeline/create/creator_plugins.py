@@ -11,6 +11,16 @@ import six
 from openpype.lib import get_subset_name
 
 
+class CreatorError(Exception):
+    """Should be raised when creator failed because of known issue.
+
+    Message of error should be user readable.
+    """
+
+    def __init__(self, message):
+        super(CreatorError, self).__init__(message)
+
+
 @six.add_metaclass(ABCMeta)
 class BaseCreator:
     """Plugin that create and modify instance data before publishing process.

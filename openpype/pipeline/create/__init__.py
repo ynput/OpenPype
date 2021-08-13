@@ -1,4 +1,5 @@
 from .creator_plugins import (
+    CreatorError,
     BaseCreator,
     Creator,
     AutoCreator
@@ -11,6 +12,7 @@ from .context import (
 
 
 __all__ = (
+    "CreatorError",
     "BaseCreator",
     "Creator",
     "AutoCreator",
