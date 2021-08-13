@@ -35,6 +35,9 @@ class StringObj:
     def __len__(self):
         return self.length()
 
+    def __bool__(self):
+        return bool(self._text)
+
     def length(self):
         return len(self._text)
 
