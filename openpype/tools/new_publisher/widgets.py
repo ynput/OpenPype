@@ -1,9 +1,12 @@
 import os
+import sys
 import re
 import copy
 import collections
+import traceback
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.pipeline.create import CreatorError
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from constants import (
     INSTANCE_ID_ROLE,
@@ -419,6 +422,9 @@ class CreateDialog(QtWidgets.QDialog):
         self._selected_creator = None
 
         self._prereq_available = False
+
+        self.message_dialog = None
+
         family_view = QtWidgets.QListView(self)
         family_model = QtGui.QStandardItemModel()
         family_view.setModel(family_model)
@@ -739,9 +745,23 @@ class CreateDialog(QtWidgets.QDialog):
         try:
             self.controller.create(family, subset_name, instance_data, options)
 
+        except CreatorError as exc:
+            error_info = (str(exc), None)
+
         except Exception as exc:
-            # TODO better handling
-            print(str(exc))
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            formatted_traceback = "".join(traceback.format_exception(
+                exc_type, exc_value, exc_traceback
+            ))
+            error_info = (str(exc), formatted_traceback)
+
+        if error_info:
+            box = CreateErrorMessageBox(
+                family, subset_name, asset_name, *error_info
+            )
+            box.show()
+            # Store dialog so is not garbage collected before is shown
+            self.message_dialog = box
 
         if self.auto_close_checkbox.isChecked():
             self.hide()
@@ -1369,3 +1389,79 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
     def set_progress(self, value):
         self.progress_widget.setValue(value)
+
+
+class CreateErrorMessageBox(QtWidgets.QDialog):
+    def __init__(
+        self,
+        family,
+        subset_name,
+        asset_name,
+        exc_msg,
+        formatted_traceback,
+        parent=None
+    ):
+        super(CreateErrorMessageBox, self).__init__(parent)
+        self.setWindowTitle("Creation failed")
+        self.setFocusPolicy(QtCore.Qt.StrongFocus)
+        if not parent:
+            self.setWindowFlags(
+                self.windowFlags() | QtCore.Qt.WindowStaysOnTopHint
+            )
+
+        body_layout = QtWidgets.QVBoxLayout(self)
+
+        main_label = (
+            "<span style='font-size:18pt;'>Failed to create</span>"
+        )
+        main_label_widget = QtWidgets.QLabel(main_label, self)
+        body_layout.addWidget(main_label_widget)
+
+        item_name_template = (
+            "<span style='font-weight:bold;'>Family:</span> {}<br>"
+            "<span style='font-weight:bold;'>Subset:</span> {}<br>"
+            "<span style='font-weight:bold;'>Asset:</span> {}<br>"
+        )
+        exc_msg_template = "<span style='font-weight:bold'>{}</span>"
+
+        line = self._create_line()
+        body_layout.addWidget(line)
+
+        item_name = item_name_template.format(family, subset_name, asset_name)
+        item_name_widget = QtWidgets.QLabel(
+            item_name.replace("\n", "<br>"), self
+        )
+        body_layout.addWidget(item_name_widget)
+
+        exc_msg = exc_msg_template.format(exc_msg.replace("\n", "<br>"))
+        message_label_widget = QtWidgets.QLabel(exc_msg, self)
+        body_layout.addWidget(message_label_widget)
+
+        if formatted_traceback:
+            tb_widget = QtWidgets.QLabel(
+                formatted_traceback.replace("\n", "<br>"), self
+            )
+            tb_widget.setTextInteractionFlags(
+                QtCore.Qt.TextBrowserInteraction
+            )
+            body_layout.addWidget(tb_widget)
+
+        footer_widget = QtWidgets.QWidget(self)
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        button_box = QtWidgets.QDialogButtonBox(QtCore.Qt.Vertical)
+        button_box.setStandardButtons(
+            QtWidgets.QDialogButtonBox.StandardButton.Ok
+        )
+        button_box.accepted.connect(self._on_accept)
+        footer_layout.addWidget(button_box, alignment=QtCore.Qt.AlignRight)
+        body_layout.addWidget(footer_widget)
+
+    def _on_accept(self):
+        self.close()
+
+    def _create_line(self):
+        line = QtWidgets.QFrame(self)
+        line.setFixedHeight(2)
+        line.setFrameShape(QtWidgets.QFrame.HLine)
+        line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        return line
