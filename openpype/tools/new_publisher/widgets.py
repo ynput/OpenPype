@@ -1342,6 +1342,13 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         info_layout.setContentsMargins(0, 0, 0, 0)
         info_layout.addWidget(content_widget)
 
+        hide_btn = QtWidgets.QPushButton("Hide", content_widget)
+
+        top_layout = QtWidgets.QHBoxLayout()
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.addStretch(1)
+        top_layout.addWidget(hide_btn)
+
         main_label = QtWidgets.QLabel("Publishing...", content_widget)
         main_label.setAlignment(QtCore.Qt.AlignCenter)
 
@@ -1374,7 +1381,8 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setSpacing(5)
         content_layout.setAlignment(QtCore.Qt.AlignCenter)
-        content_layout.addStretch(1)
+
+        content_layout.addLayout(top_layout)
         content_layout.addWidget(main_label)
         content_layout.addStretch(1)
         content_layout.addLayout(instance_plugin_layout)
@@ -1387,6 +1395,10 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         main_layout.addStretch(1)
         main_layout.addWidget(info_frame, 2)
         main_layout.addStretch(1)
+
+        hide_btn.clicked.connect(self.hide_requested)
+
+        self.hide_btn = hide_btn
 
         self.main_label = main_label
         self.info_frame = info_frame
