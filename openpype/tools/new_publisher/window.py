@@ -156,6 +156,7 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_view_cards.selection_changed.connect(
             self._on_subset_change
         )
+        overlay_frame.hide_requested.connect(self._on_overlay_hide_request)
 
         controller.add_instance_change_callback(self._on_instance_change)
         controller.add_plugin_change_callback(self._on_plugin_change)
@@ -288,19 +289,19 @@ class PublisherWindow(QtWidgets.QWidget):
     def _on_save_clicked(self):
         self.controller.save_instance_changes()
 
-    def _show_overlay(self):
-        if self.overlay_frame.isVisible():
+    def _set_overlay_visibility(self, visible):
+        if self.overlay_frame.isVisible() == visible:
             return
 
-        self.overlay_frame.setVisible(True)
+        self.overlay_frame.setVisible(visible)
 
     def _on_validate_clicked(self):
-        self._show_overlay()
-        self.controller.validate()
+        self._set_overlay_visibility(True)
+        # self.controller.validate()
 
     def _on_publish_clicked(self):
-        self._show_overlay()
-        self.controller.publish()
+        self._set_overlay_visibility(True)
+        # self.controller.publish()
 
     def _refresh_instances(self):
         if self._refreshing_instances:
@@ -358,6 +359,9 @@ class PublisherWindow(QtWidgets.QWidget):
 
     def _on_publish_stop(self):
         pass
+
+    def _on_overlay_hide_request(self):
+        self._set_overlay_visibility(False)
 
 
 def main():

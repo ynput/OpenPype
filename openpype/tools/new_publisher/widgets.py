@@ -1327,6 +1327,8 @@ class InstanceListView(_AbstractInstanceView):
 
 
 class PublishOverlayFrame(QtWidgets.QFrame):
+    hide_requested = QtCore.Signal()
+
     def __init__(self, parent):
         super(PublishOverlayFrame, self).__init__(parent)
 
