@@ -651,7 +651,10 @@ class CreateDialog(QtWidgets.QDialog):
 
     def _validate_subset_name(self, subset_name, variant_value):
         # Get all subsets of the current asset
-        existing_subset_names = set(self._subset_names)
+        if self._subset_names:
+            existing_subset_names = set(self._subset_names)
+        else:
+            existing_subset_names = set()
         existing_subset_names_low = set(
             _name.lower()
             for _name in existing_subset_names
