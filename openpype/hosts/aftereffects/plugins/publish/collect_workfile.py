@@ -47,7 +47,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "subset": subset,
             "label": scene_file,
             "family": family,
-            "families": [family, "ftrack"],
+            "families": [family],
             "representations": list()
         })
 
