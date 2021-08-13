@@ -169,13 +169,24 @@ class DictImmutableKeysWidget(BaseWidget):
         if not path.startswith(entity_path):
             return False
 
-        if self.body_widget and not self.body_widget.is_expanded():
-            self.body_widget.toggle_content(True)
-
+        is_checkbox_child = False
+        changed = False
         for direct_child in self._direct_children_widgets:
             if direct_child.make_sure_is_visible(path, scroll_to):
-                return True
-        return False
+                changed = True
+                if direct_child.entity is self.checkbox_child:
+                    is_checkbox_child = True
+                break
+
+        # Change scroll to this widget
+        if is_checkbox_child:
+            self.scroll_to(self)
+
+        elif self.body_widget and not self.body_widget.is_expanded():
+            # Expand widget if is callapsible
+            self.body_widget.toggle_content(True)
+
+        return changed
 
     def add_widget_to_layout(self, widget, label=None):
         if self.checkbox_child and widget.entity is self.checkbox_child:
