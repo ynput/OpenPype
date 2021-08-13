@@ -159,13 +159,6 @@ class PublishAttributes:
                 self, attr_defs, value, orig_value
             )
 
-        for key, value in origin_data.items():
-            if key not in self._data:
-                orig_value = copy.deepcopy(value)
-                self._data[key] = PublishAttributeValues(
-                    self, attr_defs, value, orig_value
-                )
-
     def __getitem__(self, key):
         return self._data[key]
 
