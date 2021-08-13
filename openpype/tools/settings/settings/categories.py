@@ -254,7 +254,8 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
     def _on_path_edit(self, path):
         for input_field in self.input_fields:
-            input_field.make_sure_is_visible(path, True)
+            if input_field.make_sure_is_visible(path, True):
+                break
 
     def scroll_to(self, widget):
         if widget:
