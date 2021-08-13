@@ -60,7 +60,7 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
     def focusInEvent(self, event):
         self.focused_in.emit()
-        return super(SettingsComboBox, self).focusInEvent(event)
+        return super(MultiSelectionComboBox, self).focusInEvent(event)
 
     def mousePressEvent(self, event):
         """Reimplemented."""
