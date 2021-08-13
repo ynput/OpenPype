@@ -635,3 +635,27 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #VariantInput[state="exists"], #VariantInput[state="exists"]:focus, #VariantInput[state="exists"]:hover {
     border-color: #4E76BB;
 }
+
+#InstanceListView::item {
+    border-radius: 0.3em;
+    margin: 1px;
+}
+#InstanceListGroupWidget {
+    border: 1px solid white;
+    border-radius: 0.3em;
+    background: transparent;
+}
+
+#PublishOverlayFrame {
+    background: rgba(0, 0, 0, 127)
+}
+
+#PublishOverlay {
+    background: rgb(194, 226, 236);
+    border: 2px solid black;
+    border-radius: 0.3em;
+}
+
+#PublishOverlay QLabel {
+    color: black;
+}
