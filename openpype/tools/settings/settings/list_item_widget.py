@@ -18,8 +18,6 @@ class EmptyListItem(QtWidgets.QWidget):
 
         add_btn = QtWidgets.QPushButton("+", self)
         remove_btn = QtWidgets.QPushButton("-", self)
-        spacer_widget = QtWidgets.QWidget(self)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
         remove_btn.setEnabled(False)
@@ -35,13 +33,12 @@ class EmptyListItem(QtWidgets.QWidget):
         layout.setSpacing(3)
         layout.addWidget(add_btn, 0)
         layout.addWidget(remove_btn, 0)
-        layout.addWidget(spacer_widget, 1)
+        layout.addStretch(1)
 
         add_btn.clicked.connect(self._on_add_clicked)
 
         self.add_btn = add_btn
         self.remove_btn = remove_btn
-        self.spacer_widget = spacer_widget
 
     def _on_add_clicked(self):
         self.entity_widget.add_new_item()
@@ -101,12 +98,6 @@ class ListItem(QtWidgets.QWidget):
             self.category_widget, self.entity, self
         )
 
-        spacer_widget = QtWidgets.QWidget(self)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        spacer_widget.setVisible(False)
-
-        layout.addWidget(spacer_widget, 1)
-
         layout.addWidget(up_btn, 0)
         layout.addWidget(down_btn, 0)
 
@@ -114,8 +105,6 @@ class ListItem(QtWidgets.QWidget):
         self.remove_btn = remove_btn
         self.up_btn = up_btn
         self.down_btn = down_btn
-
-        self.spacer_widget = spacer_widget
 
         self._row = -1
         self._is_last = False
@@ -128,6 +117,9 @@ class ListItem(QtWidgets.QWidget):
         return self.entity_widget.create_ui_for_entity(
             *args, **kwargs
         )
+
+    def make_sure_is_visible(self, *args, **kwargs):
+        return self.input_field.make_sure_is_visible(*args, **kwargs)
 
     @property
     def is_invalid(self):
@@ -274,6 +266,26 @@ class ListWidget(InputWidget):
         for input_field in self.input_fields:
             invalid.extend(input_field.get_invalid())
         return invalid
+
+    def make_sure_is_visible(self, path, scroll_to):
+        if not path:
+            return False
+
+        entity_path = self.entity.path
+        if entity_path == path:
+            self.set_focus(scroll_to)
+            return True
+
+        if not path.startswith(entity_path):
+            return False
+
+        if self.body_widget and not self.body_widget.is_expanded():
+            self.body_widget.toggle_content(True)
+
+        for input_field in self.input_fields:
+            if input_field.make_sure_is_visible(path, scroll_to):
+                return True
+        return False
 
     def _on_entity_change(self):
         # TODO do less inefficient

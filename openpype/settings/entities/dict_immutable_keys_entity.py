@@ -203,6 +203,18 @@ class DictImmutableKeysEntity(ItemEntity):
         )
         self.show_borders = self.schema_data.get("show_borders", True)
 
+    def collect_static_entities_by_path(self):
+        output = {}
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return output
+
+        output[self.path] = self
+        for children in self.non_gui_children.values():
+            result = children.collect_static_entities_by_path()
+            if result:
+                output.update(result)
+        return output
+
     def get_child_path(self, child_obj):
         """Get hierarchical path of child entity.
 

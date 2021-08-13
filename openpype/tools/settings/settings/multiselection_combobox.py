@@ -21,6 +21,8 @@ class ComboItemDelegate(QtWidgets.QStyledItemDelegate):
 
 class MultiSelectionComboBox(QtWidgets.QComboBox):
     value_changed = QtCore.Signal()
+    focused_in = QtCore.Signal()
+
     ignored_keys = {
         QtCore.Qt.Key_Up,
         QtCore.Qt.Key_Down,
@@ -55,6 +57,10 @@ class MultiSelectionComboBox(QtWidgets.QComboBox):
 
         self.lines = {}
         self.item_height = None
+
+    def focusInEvent(self, event):
+        self.focused_in.emit()
+        return super(MultiSelectionComboBox, self).focusInEvent(event)
 
     def mousePressEvent(self, event):
         """Reimplemented."""
