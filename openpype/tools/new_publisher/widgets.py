@@ -1129,7 +1129,8 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         active_checkbox.setChecked(instance.data["active"])
 
         layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        content_margins = layout.contentsMargins()
+        layout.setContentsMargins(content_margins.left() + 2, 0, 2, 0)
         layout.addWidget(subset_name_label)
         layout.addStretch(1)
         layout.addWidget(active_checkbox)
