@@ -4,6 +4,8 @@ from code import InteractiveInterpreter
 
 from Qt import QtCore, QtWidgets, QtGui
 
+from openpype.style import load_stylesheet
+
 
 class MultipleRedirection:
     """ Dummy file which redirects stream to multiple file """
@@ -55,6 +57,7 @@ class PythonInterpreterWidget(QtWidgets.QTextEdit):
     def __init__(self, parent=None):
         super(PythonInterpreterWidget, self).__init__(parent)
 
+        self.setObjectName("PythonInterpreterWidget")
         self._indent = 4
 
         self._interpreter = InteractiveInterpreter()
@@ -87,6 +90,8 @@ class PythonInterpreterWidget(QtWidgets.QTextEdit):
         # user interface setup
         self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
 
+        self.setStyleSheet(load_stylesheet())
+
         # interpreter prompt.
         try:
             sys.ps1
@@ -96,10 +101,6 @@ class PythonInterpreterWidget(QtWidgets.QTextEdit):
             sys.ps2
         except AttributeError:
             sys.ps2 = "... "
-
-        # Font
-        # TODO use OpenPype font
-        self.setStyleSheet("font-family: \"Courier New\";")
 
         # interpreter banner
         self.write("The shell running Python {} on {}.\n".format(
