@@ -75,26 +75,155 @@ class ReadWriteLineEdit(QtWidgets.QFrame):
         return self.read_widget.text()
 
 
-class GlobalAttrsWidget(QtWidgets.QWidget):
+class AssetHierarchyModel(QtGui.QStandardItemModel):
+    def __init__(self, controller):
+        super(AssetHierarchyModel, self).__init__()
+        self._controller = controller
+
+        self._items_by_name = {}
+
+    def reset(self):
+        self.clear()
+
+        self._items_by_name = {}
+        assets_by_parent_id = self._controller.get_asset_hierarchy()
+
+        items_by_name = {}
+        _queue = collections.deque()
+        _queue.append((self.invisibleRootItem(), None))
+        while _queue:
+            parent_item, parent_id = _queue.popleft()
+            children = assets_by_parent_id.get(parent_id)
+            if not children:
+                continue
+
+            children_by_name = {
+                child["name"]: child
+                for child in children
+            }
+            items = []
+            for name in sorted(children_by_name.keys()):
+                child = children_by_name[name]
+                item = QtGui.QStandardItem(name)
+                items_by_name[name] = item
+                items.append(item)
+                _queue.append((item, child["_id"]))
+
+            parent_item.appendRows(items)
+
+        self._items_by_name = items_by_name
+
+    def get_index_by_name(self, item_name):
+        item = self._items_by_name.get(item_name)
+        if item:
+            return item.index()
+        return QtCore.QModelIndex()
+
+
+class TreeComboBoxView(QtWidgets.QTreeView):
+    visible_rows = 12
+
     def __init__(self, parent):
+        super(TreeComboBoxView, self).__init__(parent)
+
+        self.setHeaderHidden(True)
+        self.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        self.setAlternatingRowColors(True)
+        self.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
+        self.setWordWrap(True)
+        self.setAllColumnsShowFocus(True)
+
+    def showEvent(self, event):
+        super(TreeComboBoxView, self).showEvent(event)
+
+        row_sh = self.sizeHintForRow(0)
+        current_height = self.height()
+        height = (self.visible_rows * row_sh) + (current_height % row_sh)
+        self.setMinimumHeight(height)
+
+
+class TreeComboBox(QtWidgets.QComboBox):
+    def __init__(self, model, parent):
+        super(TreeComboBox, self).__init__(parent)
+
+        tree_view = TreeComboBoxView(self)
+        self.setView(tree_view)
+
+        tree_view.viewport().installEventFilter(self)
+
+        self._tree_view = tree_view
+        self._model = None
+        self._skip_next_hide = False
+
+        if model:
+            self.setModel(model)
+
+    def setModel(self, model):
+        self._model = model
+        super(TreeComboBox, self).setModel(model)
+
+    def showPopup(self):
+        self.setRootModelIndex(QtCore.QModelIndex())
+        super(TreeComboBox, self).showPopup()
+
+    def hidePopup(self):
+        # NOTE This would hide everything except parents
+        # self.setRootModelIndex(self._tree_view.currentIndex().parent())
+        # self.setCurrentIndex(self._tree_view.currentIndex().row())
+        if self._skip_next_hide:
+            self._skip_next_hide = False
+        else:
+            super(TreeComboBox, self).hidePopup()
+
+    def selectIndex(self, index):
+        self.setRootModelIndex(index.parent())
+        self.setCurrentIndex(index.row())
+
+    def eventFilter(self, obj, event):
+        if (
+            event.type() == QtCore.QEvent.MouseButtonPress
+            and obj is self._tree_view.viewport()
+        ):
+            index = self._tree_view.indexAt(event.pos())
+            self._skip_next_hide = not (
+                self._tree_view.visualRect(index).contains(event.pos())
+            )
+        return False
+
+    def set_selected_item(self, item_name):
+        index = self._model.get_index_by_name(item_name)
+        if index.isValid():
+            self._tree_view.selectionModel().setCurrentIndex(
+                index, QtCore.QItemSelectionModel.SelectCurrent
+            )
+            self.selectIndex(index)
+
+
+class GlobalAttrsWidget(QtWidgets.QWidget):
+    def __init__(self, controller, parent):
         super(GlobalAttrsWidget, self).__init__(parent)
 
+        self.controller = controller
+
         variant_input = ReadWriteLineEdit(self)
-        family_value_widget = QtWidgets.QLabel(self)
-        asset_value_widget = QtWidgets.QLabel(self)
+        asset_model = AssetHierarchyModel(controller)
+        asset_value_widget = TreeComboBox(asset_model, self)
+        asset_model.reset()
         task_value_widget = QtWidgets.QLabel(self)
+        family_value_widget = QtWidgets.QLabel(self)
         subset_value_widget = QtWidgets.QLabel(self)
 
         subset_value_widget.setText("")
         family_value_widget.setText("")
-        asset_value_widget.setText("")
+        # asset_value_widget.setText("")
         task_value_widget.setText("")
 
         main_layout = QtWidgets.QFormLayout(self)
         main_layout.addRow("Name", variant_input)
-        main_layout.addRow("Family", family_value_widget)
         main_layout.addRow("Asset", asset_value_widget)
         main_layout.addRow("Task", task_value_widget)
+        main_layout.addRow("Family", family_value_widget)
         main_layout.addRow("Subset", subset_value_widget)
 
         self.variant_input = variant_input
@@ -154,7 +283,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         self.variant_input.setText(variant)
         self.family_value_widget.setText(family)
-        self.asset_value_widget.setText(asset_name)
+        self.asset_value_widget.set_selected_item(asset_name)
         self.task_value_widget.setText(task_name)
         self.subset_value_widget.setText(subset_name)
 
@@ -338,7 +467,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         top_widget = QtWidgets.QWidget(self)
 
         # Global attributes
-        global_attrs_widget = GlobalAttrsWidget(top_widget)
+        global_attrs_widget = GlobalAttrsWidget(controller, top_widget)
         thumbnail_widget = ThumbnailWidget(top_widget)
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
