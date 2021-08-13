@@ -185,7 +185,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         breadcrumbs_widget = BreadcrumbsAddressBar(content_widget)
 
         breadcrumbs_layout = QtWidgets.QHBoxLayout()
-        breadcrumbs_layout.setContentsMargins(5, 0, 5, 0)
+        breadcrumbs_layout.setContentsMargins(5, 5, 5, 5)
         breadcrumbs_layout.setSpacing(5)
         breadcrumbs_layout.addWidget(breadcrumbs_label)
         breadcrumbs_layout.addWidget(breadcrumbs_widget)
