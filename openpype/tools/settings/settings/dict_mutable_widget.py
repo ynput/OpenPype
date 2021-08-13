@@ -849,7 +849,7 @@ class DictMutableKeysWidget(BaseWidget):
 
     def make_sure_is_visible(self, path, scroll_to):
         if not path:
-            return
+            return False
 
         entity_path = self.entity.path
         if entity_path == path:
