@@ -57,6 +57,11 @@ QAbstractSpinBox:focus, QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus{
     border-color: {color:border-focus};
 }
 
+/* Checkbox */
+QCheckBox {
+    background: transparent;
+}
+
 /* Buttons */
 QPushButton {
     text-align:center center;
@@ -658,4 +663,8 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #PublishOverlay QLabel {
     color: black;
+}
+
+#ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
+    background: transparent;
 }

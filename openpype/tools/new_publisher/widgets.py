@@ -781,10 +781,10 @@ class InstanceCardWidget(QtWidgets.QWidget):
 
         subset_name_label = QtWidgets.QLabel(instance.data["subset"], self)
         active_checkbox = QtWidgets.QCheckBox(self)
-        active_checkbox.setStyleSheet("background: transparent;")
         active_checkbox.setChecked(instance.data["active"])
 
         expand_btn = QtWidgets.QToolButton(self)
+        expand_btn.setObjectName("ArrowBtn")
         expand_btn.setArrowType(QtCore.Qt.DownArrow)
         expand_btn.setMaximumWidth(14)
         expand_btn.setEnabled(False)
@@ -997,7 +997,6 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         subset_name_label = QtWidgets.QLabel(instance.data["subset"], self)
         active_checkbox = QtWidgets.QCheckBox(self)
-        active_checkbox.setStyleSheet("background: transparent;")
         active_checkbox.setChecked(instance.data["active"])
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -1057,7 +1056,7 @@ class InstanceListGroupWidget(QtWidgets.QFrame):
         subset_name_label = QtWidgets.QLabel(family, self)
 
         expand_btn = QtWidgets.QToolButton(self)
-        expand_btn.setStyleSheet("background: transparent;")
+        expand_btn.setObjectName("ArrowBtn")
         expand_btn.setArrowType(QtCore.Qt.RightArrow)
         expand_btn.setMaximumWidth(14)
 
