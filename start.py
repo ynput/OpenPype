@@ -182,7 +182,7 @@ else:
 if "--headless" in sys.argv:
     os.environ["OPENPYPE_HEADLESS_MODE"] = "1"
 
-import igniter  #   noqa: E402
+import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
     get_openpype_path_from_db,
@@ -797,8 +797,7 @@ def boot():
         openpype_versions = bootstrap.find_openpype(include_zips=True,
                                                     staging=True)
         openpype_versions += bootstrap.find_openpype(include_zips=True,
-                                                    staging=False)
-
+                                                     staging=False)
         v: OpenPypeVersion
         found = [v for v in openpype_versions if str(v) == use_version]
         if not found:
@@ -814,7 +813,8 @@ def boot():
         _print("{}{}".format(
             ">>> " if result[0] else "!!! ",
             bootstrap.validate_openpype_version(
-                bootstrap.get_version_path_from_list(use_version, openpype_versions)
+                bootstrap.get_version_path_from_list(
+                    use_version, openpype_versions)
             )[1])
         )
         sys.exit(1)

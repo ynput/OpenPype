@@ -546,7 +546,7 @@ class BootstrapRepos:
             # test if zip is ok
             zip_file.testzip()
             self._progress_callback(100)
-            
+
     def validate_openpype_version(self, path: Path) -> tuple:
         """Validate version directory or zip file.
 
@@ -558,13 +558,13 @@ class BootstrapRepos:
             path (Path): Path to OpenPype version to validate.
 
         Returns:
-            tuple(bool, str): with version validity as first item and string with
-                reason as second.
+            tuple(bool, str): with version validity as first item
+                and string with reason as second.
 
         """
         if not path.exists():
             return False, "Path doesn't exist"
-        
+
         if path.is_file():
             return self._validate_zip(path)
         return self._validate_dir(path)
@@ -589,7 +589,10 @@ class BootstrapRepos:
             # calculate and compare checksums in the zip file
             for file in checksums:
                 h = hashlib.sha256()
-                h.update(zip_file.read(file[1]))
+                try:
+                    h.update(zip_file.read(file[1]))
+                except FileNotFoundError:
+                    return False, f"Missing file [ {file[1]} ]"
                 if h.hexdigest() != file[0]:
                     return False, f"Invalid checksum on {file[1]}"
 
@@ -627,7 +630,11 @@ class BootstrapRepos:
         files_in_checksum = set([file[1] for file in checksums])
 
         for file in checksums:
-            current = sha256sum((path / file[1]).as_posix())
+            try:
+                current = sha256sum((path / file[1]).as_posix())
+            except FileNotFoundError:
+                return False, f"Missing file [ {file[1]} ]"
+
             if file[0] != current:
                 return False, f"Invalid checksum on {file[1]}"
         diff = files_in_dir.difference(files_in_checksum)
