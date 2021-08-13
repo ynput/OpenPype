@@ -63,6 +63,14 @@
                             "type": "text",
                             "key": "fpath_template",
                             "label": "Path template"
+                        },
+                        {
+                            "type": "list",
+                            "key": "defaults",
+                            "label": "Subset name defaults",
+                            "object_type": {
+                                "type": "text"
+                            }
                         }
                     ]
                 },
@@ -82,6 +90,14 @@
                             "type": "boolean",
                             "key": "use_range_limit",
                             "label": "Use Frame range limit by default"
+                        },
+                        {
+                            "type": "list",
+                            "key": "defaults",
+                            "label": "Subset name defaults",
+                            "object_type": {
+                                "type": "text"
+                            }
                         }
                     ]
                 }

@@ -56,6 +56,119 @@
             "key": "publish",
             "label": "Publish plugins",
             "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectTextures",
+                    "label": "Collect Textures",
+                    "checkbox_key": "enabled",
+                    "children": [
+                        {
+                            "type": "boolean",
+                            "key": "enabled",
+                            "label": "Enabled"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "active",
+                            "label": "Active"
+                        },
+                        {
+                            "type": "list",
+                            "key": "main_workfile_extensions",
+                            "object_type": "text",
+                            "label": "Main workfile extensions"
+                        },
+                        {
+                            "key": "other_workfile_extensions",
+                            "label": "Support workfile extensions",
+                            "type": "list",
+                            "object_type": "text"
+                        },
+                        {
+                            "type": "list",
+                            "key": "texture_extensions",
+                            "object_type": "text",
+                            "label": "Texture extensions"
+                        },
+                        {
+                            "type": "list",
+                            "key": "workfile_families",
+                            "object_type": "text",
+                            "label": "Additional families for workfile"
+                        },
+                        {
+                            "type": "list",
+                            "key": "texture_families",
+                            "object_type": "text",
+                            "label": "Additional families for textures"
+                        },
+                        {
+                            "type": "list",
+                            "key": "color_space",
+                            "object_type": "text",
+                            "label": "Color spaces"
+                        },
+                        {
+                            "type": "dict",
+                            "collapsible": false,
+                            "key": "input_naming_patterns",
+                            "label": "Regex patterns for naming conventions",
+                            "children": [
+                                {
+                                    "type": "label",
+                                    "label": "Add regex groups matching expected name"
+                                },
+                                {
+                                    "type": "list",
+                                    "object_type": "text",
+                                    "key": "workfile",
+                                    "label": "Workfile naming pattern"
+                                },
+                                {
+                                    "type": "list",
+                                    "object_type": "text",
+                                    "key": "textures",
+                                    "label": "Textures naming pattern"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "dict",
+                            "collapsible": false,
+                            "key": "input_naming_groups",
+                            "label": "Group order for regex patterns",
+                            "children": [
+                                {
+                                    "type": "label",
+                                    "label": "Add names of matched groups in correct order. Available values: ('filler', 'asset', 'shader', 'version', 'channel', 'color_space', 'udim')"
+                                },
+                                {
+                                    "type": "list",
+                                    "object_type": "text",
+                                    "key": "workfile",
+                                    "label": "Workfile group positions"
+                                },
+                                {
+                                    "type": "list",
+                                    "object_type": "text",
+                                    "key": "textures",
+                                    "label": "Textures group positions"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "text",
+                            "key": "workfile_subset_template",
+                            "label": "Subset name template for workfile"
+                        },
+                        {
+                            "type": "text",
+                            "key": "texture_subset_template",
+                            "label": "Subset name template for textures"
+                        }
+                    ]
+                },
                {
                     "type": "dict",
                     "collapsible": true,
@@ -214,7 +327,7 @@
                 {
                     "type": "dict",
                     "collapsible": true,
-                    "key": "shot_add_tasks",
+                    "key": "CollectInstances",
                     "label": "Collect Clip Instances",
                     "is_group": true,
                     "children": [

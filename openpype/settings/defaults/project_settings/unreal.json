@@ -1,6 +1,5 @@
 {
     "project_setup": {
-        "dev_mode": true,
-        "install_unreal_python_engine": false
+        "dev_mode": true
     }
 }

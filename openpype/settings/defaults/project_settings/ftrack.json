@@ -136,7 +136,8 @@
                 "Pypeclub",
                 "Administrator",
                 "Project manager"
-            ]
+            ],
+            "create_project_structure_checked": false
         },
         "clean_hierarchical_attr": {
             "enabled": true,
@@ -297,6 +298,17 @@
                             "add_ftrack_family": true
                         }
                     ]
+                },
+                {
+                    "hosts": [
+                        "aftereffects"
+                    ],
+                    "families": [
+                        "render"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
                 }
             ]
         },

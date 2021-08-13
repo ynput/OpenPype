@@ -1,5 +1,6 @@
 import os
 import re
+import json
 
 from openpype.modules.ftrack.lib import BaseAction, statics_icon
 from openpype.api import Anatomy, get_project_settings
@@ -84,6 +85,9 @@ class CreateProjectFolders(BaseAction):
             }
 
         try:
+            if isinstance(project_folder_structure, str):
+                project_folder_structure = json.loads(project_folder_structure)
+
             # Get paths based on presets
             basic_paths = self.get_path_items(project_folder_structure)
             self.create_folders(basic_paths, project_entity)

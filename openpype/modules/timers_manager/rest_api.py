@@ -3,6 +3,7 @@ from openpype.api import Logger
 
 log = Logger().get_logger("Event processor")
 
+
 class TimersManagerModuleRestApi:
     """
         REST API endpoint used for calling from hosts when context change
@@ -22,6 +23,11 @@ class TimersManagerModuleRestApi:
             self.prefix + "/start_timer",
             self.start_timer
         )
+        self.server_manager.add_route(
+            "POST",
+            self.prefix + "/stop_timer",
+            self.stop_timer
+        )
 
     async def start_timer(self, request):
         data = await request.json()
@@ -37,4 +43,8 @@ class TimersManagerModuleRestApi:
 
         self.module.stop_timers()
         self.module.start_timer(project_name, asset_name, task_name, hierarchy)
+        return Response(status=200)
+
+    async def stop_timer(self, request):
+        self.module.stop_timers()
         return Response(status=200)

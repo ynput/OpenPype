@@ -141,8 +141,16 @@ class DictConditionalEntity(ItemEntity):
         self.enum_key = self.schema_data.get("enum_key")
         self.enum_label = self.schema_data.get("enum_label")
         self.enum_children = self.schema_data.get("enum_children")
+        self.enum_default = self.schema_data.get("enum_default")
 
         self.enum_entity = None
+
+        # GUI attributes
+        self.enum_is_horizontal = self.schema_data.get(
+            "enum_is_horizontal", False
+        )
+        # `enum_on_right` can be used only if
+        self.enum_on_right = self.schema_data.get("enum_on_right", False)
 
         self.highlight_content = self.schema_data.get(
             "highlight_content", False
@@ -185,13 +193,13 @@ class DictConditionalEntity(ItemEntity):
         children_def_keys = []
         for children_def in self.enum_children:
             if not isinstance(children_def, dict):
-                raise EntitySchemaError((
+                raise EntitySchemaError(self, (
                     "Children definition under key 'enum_children' must"
                     " be a dictionary."
                 ))
 
             if "key" not in children_def:
-                raise EntitySchemaError((
+                raise EntitySchemaError(self, (
                     "Children definition under key 'enum_children' miss"
                     " 'key' definition."
                 ))
@@ -270,14 +278,21 @@ class DictConditionalEntity(ItemEntity):
             if isinstance(item, dict) and "key" in item:
                 valid_enum_items.append(item)
 
+        enum_keys = []
         enum_items = []
         for item in valid_enum_items:
             item_key = item["key"]
+            enum_keys.append(item_key)
             item_label = item.get("label") or item_key
             enum_items.append({item_key: item_label})
 
         if not enum_items:
             return
+
+        if self.enum_default in enum_keys:
+            default_key = self.enum_default
+        else:
+            default_key = enum_keys[0]
 
         # Create Enum child first
         enum_key = self.enum_key or "invalid"
@@ -286,7 +301,8 @@ class DictConditionalEntity(ItemEntity):
             "multiselection": False,
             "enum_items": enum_items,
             "key": enum_key,
-            "label": self.enum_label or enum_key
+            "label": self.enum_label,
+            "default": default_key
         }
 
         enum_entity = self.create_schema_object(enum_schema, self)

@@ -52,15 +52,35 @@ function Show-PSWarning() {
 
 function Install-Poetry() {
     Write-Color -Text ">>> ", "Installing Poetry ... " -Color Green, Gray
+    $python = "python"
+    if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
+        if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\.python-version")) {
+            $result = & pyenv global
+            if ($result -eq "no global version configured") {
+                Write-Color -Text "!!! ", "Using pyenv but having no local or global version of Python set." -Color Red, Yellow
+                Exit-WithCode 1
+            }
+        }
+        $python = & pyenv which python
+
+    }
+
     $env:POETRY_HOME="$openpype_root\.poetry"
-    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | python -
+    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | & $($python) -
 }
 
 
 function Test-Python() {
     Write-Color -Text ">>> ", "Detecting host Python ... " -Color Green, Gray -NoNewline
-    if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
-        Write-Color -Text "!!! ",  "Python not detected" -Color Red, Yellow
+    $python = "python"
+    if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
+        $pyenv_python = & pyenv which python
+        if (Test-Path -PathType Leaf -Path "$($pyenv_python)") {
+            $python = $pyenv_python
+        }
+    }
+    if (-not (Get-Command $python -ErrorAction SilentlyContinue)) {
+        Write-Host "!!! Python not detected" -ForegroundColor red
         Set-Location -Path $current_dir
         Exit-WithCode 1
     }
@@ -69,14 +89,13 @@ import sys
 print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
 '@
 
-    $p = & python -c $version_command
+    $p = & $python -c $version_command
     $env:PYTHON_VERSION = $p
     $m = $p -match '(\d+)\.(\d+)'
     if(-not $m) {
-        Write-Color -Text "FAILED " -Color Red
-        Write-Color -Text "!!! ", "Cannot determine version" -Color Red, Yellow
-        Set-Location -Path $current_dir
-        Exit-WithCode 1
+      Write-Host "!!! Cannot determine version" -ForegroundColor red
+      Set-Location -Path $current_dir
+      Exit-WithCode 1
     }
     # We are supporting python 3.7 only
     if (($matches[1] -lt 3) -or ($matches[2] -lt 7)) {

@@ -77,11 +77,9 @@ class CustomCombo(QtWidgets.QWidget):
         toolbutton.setMenu(toolmenu)
         toolbutton.setPopupMode(QtWidgets.QToolButton.MenuButtonPopup)
 
-        layout = QtWidgets.QHBoxLayout()
+        layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(toolbutton)
-
-        self.setLayout(layout)
 
         toolmenu.selection_changed.connect(self.selection_changed)
 
@@ -141,7 +139,6 @@ class LogsWidget(QtWidgets.QWidget):
         filter_layout.addWidget(refresh_btn)
 
         view = QtWidgets.QTreeView(self)
-        view.setAllColumnsShowFocus(True)
         view.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -229,9 +226,9 @@ class OutputWidget(QtWidgets.QWidget):
         super(OutputWidget, self).__init__(parent=parent)
         layout = QtWidgets.QVBoxLayout(self)
 
-        show_timecode_checkbox = QtWidgets.QCheckBox("Show timestamp")
+        show_timecode_checkbox = QtWidgets.QCheckBox("Show timestamp", self)
 
-        output_text = QtWidgets.QTextEdit()
+        output_text = QtWidgets.QTextEdit(self)
         output_text.setReadOnly(True)
         # output_text.setLineWrapMode(QtWidgets.QTextEdit.FixedPixelWidth)
 

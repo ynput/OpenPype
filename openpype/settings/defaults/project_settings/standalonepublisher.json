@@ -123,6 +123,16 @@
             ],
             "help": "Process multiple Mov files and publish them for layout and comp."
         },
+        "create_texture_batch": {
+            "name": "texture_batch",
+            "label": "Texture Batch",
+            "family": "texture_batch",
+            "icon": "image",
+            "defaults": [
+                "Main"
+            ],
+            "help": "Texture files with UDIM together with worfile"
+        },
         "__dynamic_keys_labels__": {
             "create_workfile": "Workfile",
             "create_model": "Model",
@@ -134,10 +144,65 @@
             "create_image": "Image",
             "create_matchmove": "Matchmove",
             "create_render": "Render",
-            "create_mov_batch": "Batch Mov"
+            "create_mov_batch": "Batch Mov",
+            "create_texture_batch": "Batch Texture"
         }
     },
     "publish": {
+        "CollectTextures": {
+            "enabled": true,
+            "active": true,
+            "main_workfile_extensions": [
+                "mra"
+            ],
+            "other_workfile_extensions": [
+                "spp",
+                "psd"
+            ],
+            "texture_extensions": [
+                "exr",
+                "dpx",
+                "jpg",
+                "jpeg",
+                "png",
+                "tiff",
+                "tga",
+                "gif",
+                "svg"
+            ],
+            "workfile_families": [],
+            "texture_families": [],
+            "color_space": [
+                "linsRGB",
+                "raw",
+                "acesg"
+            ],
+            "input_naming_patterns": {
+                "workfile": [
+                    "^([^.]+)(_[^_.]*)?_v([0-9]{3,}).+"
+                ],
+                "textures": [
+                    "^([^_.]+)_([^_.]+)_v([0-9]{3,})_([^_.]+)_({color_space})_(1[0-9]{3}).+"
+                ]
+            },
+            "input_naming_groups": {
+                "workfile": [
+                    "asset",
+                    "filler",
+                    "version"
+                ],
+                "textures": [
+                    "asset",
+                    "shader",
+                    "version",
+                    "channel",
+                    "color_space",
+                    "udim"
+                ]
+            },
+            "workfile_subset_template": "textures{Subset}Workfile",
+            "texture_subset_template": "textures{Subset}_{Shader}_{Channel}"
+        },
         "ValidateSceneSettings": {
             "enabled": true,
             "optional": true,
@@ -189,7 +254,7 @@
             },
             "shot_add_tasks": {}
         },
-        "shot_add_tasks": {
+        "CollectInstances": {
             "custom_start_frame": 0,
             "timeline_frame_start": 900000,
             "timeline_frame_offset": 0,

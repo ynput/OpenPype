@@ -1,5 +1,13 @@
 {
     "publish": {
+        "ValidateEditorialAssetName": {
+            "enabled": true,
+            "optional": false
+        },
+        "ValidateVersion": {
+            "enabled": true,
+            "optional": false
+        },
         "IntegrateHeroVersion": {
             "enabled": true,
             "optional": true,
@@ -165,28 +173,6 @@
                 }
             ]
         },
-        "ProcessSubmittedJobOnFarm": {
-            "enabled": true,
-            "deadline_department": "",
-            "deadline_pool": "",
-            "deadline_group": "",
-            "deadline_chunk_size": 1,
-            "deadline_priority": 50,
-            "publishing_script": "",
-            "skip_integration_repre_list": [],
-            "aov_filter": {
-                "maya": [
-                    ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
-                ],
-                "nuke": [],
-                "aftereffects": [
-                    ".*"
-                ],
-                "celaction": [
-                    ".*"
-                ]
-            }
-        },
         "CleanUp": {
             "paterns": [],
             "remove_temp_renders": false
@@ -249,6 +235,16 @@
                     ],
                     "tasks": [],
                     "template": "{family}{Task}"
+                },
+                {
+                    "families": [
+                        "renderLocal"
+                    ],
+                    "hosts": [
+                        "aftereffects"
+                    ],
+                    "tasks": [],
+                    "template": "render{Task}{Variant}"
                 }
             ]
         },
@@ -258,6 +254,13 @@
                     "hosts": [],
                     "tasks": [],
                     "enabled": true
+                }
+            ],
+            "open_workfile_tool_on_startup": [
+                {
+                    "hosts": [],
+                    "tasks": [],
+                    "enabled": false
                 }
             ],
             "sw_folders": {
@@ -277,28 +280,7 @@
             }
         }
     },
-    "project_folder_structure": {
-        "__project_root__": {
-            "prod": {},
-            "resources": {
-                "footage": {
-                    "plates": {},
-                    "offline": {}
-                },
-                "audio": {},
-                "art_dept": {}
-            },
-            "editorial": {},
-            "assets[ftrack.Library]": {
-                "characters[ftrack]": {},
-                "locations[ftrack]": {}
-            },
-            "shots[ftrack.Sequence]": {
-                "scripts": {},
-                "editorial[ftrack.Folder]": {}
-            }
-        }
-    },
+    "project_folder_structure": "{\"__project_root__\": {\"prod\": {}, \"resources\": {\"footage\": {\"plates\": {}, \"offline\": {}}, \"audio\": {}, \"art_dept\": {}}, \"editorial\": {}, \"assets[ftrack.Library]\": {\"characters[ftrack]\": {}, \"locations[ftrack]\": {}}, \"shots[ftrack.Sequence]\": {\"scripts\": {}, \"editorial[ftrack.Folder]\": {}}}}",
     "sync_server": {
         "enabled": true,
         "config": {

@@ -53,6 +53,17 @@
                     ]
                 },
                 {
+                  "type": "schema_template",
+                  "name": "template_publish_plugin",
+                  "template_data": [
+                      {
+                          "key": "ValidateStartFrame",
+                          "label": "Validate Scene Start Frame",
+                          "docstring": "Validate first frame of scene is set to '0'."
+                      }
+                  ]
+                },
+                {
                     "type": "schema_template",
                     "name": "template_publish_plugin",
                     "template_data": [
