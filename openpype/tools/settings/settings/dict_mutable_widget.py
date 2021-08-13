@@ -861,7 +861,6 @@ class DictMutableKeysWidget(BaseWidget):
 
         if self.body_widget and not self.body_widget.is_expanded():
             self.body_widget.toggle_content(True)
-            QtWidgets.QApplication.processEvents()
 
         for input_field in self.input_fields:
             if input_field.make_sure_is_visible(path, scroll_to):

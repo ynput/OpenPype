@@ -258,6 +258,11 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
 
     def scroll_to(self, widget):
         if widget:
+            # Process events which happened before ensurence
+            # - that is because some widgets could be not visible before
+            #   this method was called and have incorrect size
+            QtWidgets.QApplication.processEvents()
+            # Scroll to widget
             self.scroll_widget.ensureWidgetVisible(widget)
 
     def set_path(self, path):

@@ -171,7 +171,6 @@ class DictImmutableKeysWidget(BaseWidget):
 
         if self.body_widget and not self.body_widget.is_expanded():
             self.body_widget.toggle_content(True)
-            QtWidgets.QApplication.processEvents()
 
         for direct_child in self._direct_children_widgets:
             if direct_child.make_sure_is_visible(path, scroll_to):
