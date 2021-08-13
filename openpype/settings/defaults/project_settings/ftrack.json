@@ -304,8 +304,7 @@
                         "aftereffects"
                     ],
                     "families": [
-                        "render",
-                        "workfile"
+                        "render"
                     ],
                     "tasks": [],
                     "add_ftrack_family": true,
