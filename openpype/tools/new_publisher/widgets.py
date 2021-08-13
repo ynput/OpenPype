@@ -1098,6 +1098,7 @@ class InstanceListView(_AbstractInstanceView):
         self.controller = controller
 
         instance_view = QtWidgets.QTreeView(self)
+        instance_view.setObjectName("InstanceListView")
         instance_view.setHeaderHidden(True)
         instance_view.setIndentation(0)
         instance_view.setSelectionMode(
