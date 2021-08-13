@@ -102,7 +102,9 @@ class ListEntity(EndpointEntity):
 
     def add_new_item(self, idx=None, trigger_change=True):
         child_obj = self._add_new_item(idx)
-        child_obj.set_override_state(self._override_state)
+        child_obj.set_override_state(
+            self._override_state, self._ignore_missing_defaults
+        )
 
         if trigger_change:
             self.on_child_change(child_obj)
@@ -139,7 +141,20 @@ class ListEntity(EndpointEntity):
         item_schema = self.schema_data["object_type"]
         if not isinstance(item_schema, dict):
             item_schema = {"type": item_schema}
-        self.item_schema = item_schema
+
+        obj_template_name = self.schema_hub.get_template_name(item_schema)
+        _item_schemas = self.schema_hub.resolve_schema_data(item_schema)
+        if len(_item_schemas) == 1:
+            self.item_schema = _item_schemas[0]
+            if self.item_schema != item_schema:
+                if "label" in self.item_schema:
+                    self.item_schema.pop("label")
+                self.item_schema["use_label_wrap"] = False
+        else:
+            self.item_schema = _item_schemas
+
+        # Store if was used template or schema
+        self._obj_template_name = obj_template_name
 
         if self.group_item is None:
             self.is_group = True
@@ -148,6 +163,12 @@ class ListEntity(EndpointEntity):
         self.initial_value = []
 
     def schema_validations(self):
+        if isinstance(self.item_schema, list):
+            reason = (
+                "`ListWidget` has multiple items as object type."
+            )
+            raise EntitySchemaError(self, reason)
+
         super(ListEntity, self).schema_validations()
 
         if self.is_dynamic_item and self.use_label_wrap:
@@ -165,17 +186,35 @@ class ListEntity(EndpointEntity):
             raise EntitySchemaError(self, reason)
 
         # Validate object type schema
-        child_validated = False
+        validate_children = True
         for child_entity in self.children:
             child_entity.schema_validations()
-            child_validated = True
+            validate_children = False
             break
 
-        if not child_validated:
+        if validate_children and self._obj_template_name:
+            _validated = self.schema_hub.is_dynamic_template_validated(
+                self._obj_template_name
+            )
+            _validating = self.schema_hub.is_dynamic_template_validating(
+                self._obj_template_name
+            )
+            validate_children = not _validated and not _validating
+
+        if not validate_children:
+            return
+
+        def _validate():
             idx = 0
             tmp_child = self._add_new_item(idx)
             tmp_child.schema_validations()
             self.children.pop(idx)
+
+        if self._obj_template_name:
+            with self.schema_hub.validating_dynamic(self._obj_template_name):
+                _validate()
+        else:
+            _validate()
 
     def get_child_path(self, child_obj):
         result_idx = None
@@ -205,13 +244,14 @@ class ListEntity(EndpointEntity):
             self._has_project_override = True
         self.on_change()
 
-    def set_override_state(self, state):
+    def set_override_state(self, state, ignore_missing_defaults):
         # Trigger override state change of root if is not same
         if self.root_item.override_state is not state:
             self.root_item.set_override_state(state)
             return
 
         self._override_state = state
+        self._ignore_missing_defaults = ignore_missing_defaults
 
         while self.children:
             self.children.pop(0)
@@ -219,11 +259,17 @@ class ListEntity(EndpointEntity):
         # Ignore if is dynamic item and use default in that case
         if not self.is_dynamic_item and not self.is_in_dynamic_item:
             if state > OverrideState.DEFAULTS:
-                if not self.has_default_value:
+                if (
+                    not self.has_default_value
+                    and not ignore_missing_defaults
+                ):
                     raise DefaultsNotDefined(self)
 
             elif state > OverrideState.STUDIO:
-                if not self.had_studio_override:
+                if (
+                    not self.had_studio_override
+                    and not ignore_missing_defaults
+                ):
                     raise StudioDefaultsNotDefined(self)
 
         value = NOT_SET
@@ -257,7 +303,9 @@ class ListEntity(EndpointEntity):
                     child_obj.update_studio_value(item)
 
         for child_obj in self.children:
-            child_obj.set_override_state(self._override_state)
+            child_obj.set_override_state(
+                self._override_state, ignore_missing_defaults
+            )
 
         self.initial_value = self.settings_value()
 
@@ -395,7 +443,9 @@ class ListEntity(EndpointEntity):
                 if self.had_studio_override:
                     child_obj.update_studio_value(item)
 
-            child_obj.set_override_state(self._override_state)
+            child_obj.set_override_state(
+                self._override_state, self._ignore_missing_defaults
+            )
 
         if self._override_state >= OverrideState.PROJECT:
             self._has_project_override = self.had_project_override
@@ -427,7 +477,9 @@ class ListEntity(EndpointEntity):
         for item in value:
             child_obj = self._add_new_item()
             child_obj.update_default_value(item)
-            child_obj.set_override_state(self._override_state)
+            child_obj.set_override_state(
+                self._override_state, self._ignore_missing_defaults
+            )
 
         self._ignore_child_changes = False
 
@@ -460,7 +512,10 @@ class ListEntity(EndpointEntity):
             child_obj.update_default_value(item)
             if self._has_studio_override:
                 child_obj.update_studio_value(item)
-            child_obj.set_override_state(self._override_state)
+            child_obj.set_override_state(
+                self._override_state,
+                self._ignore_missing_defaults
+            )
 
         self._ignore_child_changes = False
 

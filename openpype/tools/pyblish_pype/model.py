@@ -498,6 +498,9 @@ class PluginModel(QtGui.QStandardItemModel):
         ):
             new_flag_states[PluginStates.HasError] = True
 
+        if not publish_states & PluginStates.IsCompatible:
+            new_flag_states[PluginStates.IsCompatible] = True
+
         item.setData(new_flag_states, Roles.PublishFlagsRole)
 
         records = item.data(Roles.LogRecordsRole) or []

@@ -51,7 +51,6 @@ class ExtractReviewDataLut(openpype.api.Extractor):
 
         if "render.farm" in families:
             instance.data["families"].remove("review")
-            instance.data["families"].remove("ftrack")
 
         self.log.debug(
             "_ lutPath: {}".format(instance.data["lutPath"]))

@@ -441,6 +441,18 @@
                             "key": "role_list",
                             "label": "Roles",
                             "object_type": "text"
+                        },
+                        {
+                          "type": "separator"
+                        },
+                        {
+                          "type": "label",
+                          "label": "Check \"Create project structure\" by default"
+                        },
+                        {
+                            "type": "boolean",
+                            "key": "create_project_structure_checked",
+                            "label": "Checked"
                         }
                     ]
                 },

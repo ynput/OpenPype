@@ -3,9 +3,37 @@
         "ValidateExpectedFiles": {
             "enabled": true,
             "active": true,
-            "families": ["render"],
-            "targets": ["deadline"],
-            "allow_user_override": true
+            "allow_user_override": true,
+            "families": [
+                "render"
+            ],
+            "targets": [
+                "deadline"
+            ]
+        },
+        "ProcessSubmittedJobOnFarm": {
+            "enabled": true,
+            "deadline_department": "",
+            "deadline_pool": "",
+            "deadline_group": "",
+            "deadline_chunk_size": 1,
+            "deadline_priority": 50,
+            "publishing_script": "",
+            "skip_integration_repre_list": [],
+            "aov_filter": {
+                "maya": [
+                    ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
+                ],
+                "nuke": [
+                    ".*"
+                ],
+                "aftereffects": [
+                    ".*"
+                ],
+                "celaction": [
+                    ".*"
+                ]
+            }
         },
         "MayaSubmitDeadline": {
             "enabled": true,
@@ -15,7 +43,10 @@
             "use_published": true,
             "asset_dependencies": true,
             "group": "none",
-            "limit": []
+            "limit": [],
+            "jobInfo": {},
+            "pluginInfo": {},
+            "scene_patches": []
         },
         "NukeSubmitDeadline": {
             "enabled": true,
@@ -29,6 +60,8 @@
             "group": "",
             "department": "",
             "use_gpu": true,
+            "env_allowed_keys": [],
+            "env_search_replace_values": {},
             "limit_groups": {}
         },
         "HarmonySubmitDeadline": {

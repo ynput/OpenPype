@@ -35,6 +35,10 @@ QWidget:disabled {
     color: {color:font-disabled};
 }
 
+QLabel {
+    background: transparent;
+}
+
 /* Inputs */
 QAbstractSpinBox, QLineEdit, QPlainTextEdit, QTextEdit {
     border: 1px solid {color:border};
@@ -97,7 +101,7 @@ QToolButton:disabled {
     background: {color:bg-buttons-disabled};
 }
 
-QToolButton[popupMode="1"] {
+QToolButton[popupMode="1"], QToolButton[popupMode="MenuButtonPopup"] {
     /* make way for the popup button */
     padding-right: 20px;
     border: 1px solid {color:bg-buttons};
@@ -338,6 +342,11 @@ QAbstractItemView {
     alternate-background-color: {color:bg-view-alternate};
     /* Mac shows selection color on branches. */
     selection-background-color: transparent;
+}
+
+QAbstractItemView::item {
+    /* `border: none` hide outline of selected item. */
+    border: none;
 }
 
 QAbstractItemView:disabled{

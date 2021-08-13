@@ -1,6 +1,8 @@
 import json
 
+from avalon.api import AvalonMongoDB
 from openpype.api import ProjectSettings
+from openpype.lib import create_project
 
 from openpype.modules.ftrack.lib import (
     ServerAction,
@@ -21,8 +23,24 @@ class PrepareProjectServer(ServerAction):
 
     role_list = ["Pypeclub", "Administrator", "Project Manager"]
 
-    # Key to store info about trigerring create folder structure
+    settings_key = "prepare_project"
+
     item_splitter = {"type": "label", "value": "---"}
+    _keys_order = (
+        "fps",
+        "frameStart",
+        "frameEnd",
+        "handleStart",
+        "handleEnd",
+        "clipIn",
+        "clipOut",
+        "resolutionHeight",
+        "resolutionWidth",
+        "pixelAspect",
+        "applications",
+        "tools_env",
+        "library_project",
+    )
 
     def discover(self, session, entities, event):
         """Show only on project."""
@@ -47,13 +65,7 @@ class PrepareProjectServer(ServerAction):
         project_entity = entities[0]
         project_name = project_entity["full_name"]
 
-        try:
-            project_settings = ProjectSettings(project_name)
-        except ValueError:
-            return {
-                "message": "Project is not synchronized yet",
-                "success": False
-            }
+        project_settings = ProjectSettings(project_name)
 
         project_anatom_settings = project_settings["project_anatomy"]
         root_items = self.prepare_root_items(project_anatom_settings)
@@ -78,14 +90,13 @@ class PrepareProjectServer(ServerAction):
 
         items.extend(ca_items)
 
-        # This item will be last (before enumerators)
-        # - sets value of auto synchronization
-        auto_sync_name = "avalon_auto_sync"
+        # This item will be last before enumerators
+        # Set value of auto synchronization
         auto_sync_value = project_entity["custom_attributes"].get(
             CUST_ATTR_AUTO_SYNC, False
         )
         auto_sync_item = {
-            "name": auto_sync_name,
+            "name": CUST_ATTR_AUTO_SYNC,
             "type": "boolean",
             "value": auto_sync_value,
             "label": "AutoSync to Avalon"
@@ -199,7 +210,18 @@ class PrepareProjectServer(ServerAction):
             str([key for key in attributes_to_set])
         ))
 
-        for key, in_data in attributes_to_set.items():
+        attribute_keys = set(attributes_to_set.keys())
+        keys_order = []
+        for key in self._keys_order:
+            if key in attribute_keys:
+                keys_order.append(key)
+
+        attribute_keys = attribute_keys - set(keys_order)
+        for key in sorted(attribute_keys):
+            keys_order.append(key)
+
+        for key in keys_order:
+            in_data = attributes_to_set[key]
             attr = in_data["object"]
 
             # initial item definition
@@ -225,7 +247,7 @@ class PrepareProjectServer(ServerAction):
                     multiselect_enumerators.append(self.item_splitter)
                     multiselect_enumerators.append({
                         "type": "label",
-                        "value": in_data["label"]
+                        "value": "<h3>{}</h3>".format(in_data["label"])
                     })
 
                     default = in_data["default"]
@@ -286,10 +308,10 @@ class PrepareProjectServer(ServerAction):
         return items, multiselect_enumerators
 
     def launch(self, session, entities, event):
-        if not event['data'].get('values', {}):
+        in_data = event["data"].get("values")
+        if not in_data:
             return
 
-        in_data = event['data']['values']
 
         root_values = {}
         root_key = "__root__"
@@ -337,7 +359,27 @@ class PrepareProjectServer(ServerAction):
 
         self.log.debug("Setting Custom Attribute values")
 
-        project_name = entities[0]["full_name"]
+        project_entity = entities[0]
+        project_name = project_entity["full_name"]
+
+        # Try to find project document
+        dbcon = AvalonMongoDB()
+        dbcon.install()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+        project_doc = dbcon.find_one({
+            "type": "project"
+        })
+        # Create project if is not available
+        # - creation is required to be able set project anatomy and attributes
+        if not project_doc:
+            project_code = project_entity["name"]
+            self.log.info("Creating project \"{} [{}]\"".format(
+                project_name, project_code
+            ))
+            create_project(project_name, project_code, dbcon=dbcon)
+
+        dbcon.uninstall()
+
         project_settings = ProjectSettings(project_name)
         project_anatomy_settings = project_settings["project_anatomy"]
         project_anatomy_settings["roots"] = root_data
@@ -352,10 +394,12 @@ class PrepareProjectServer(ServerAction):
 
         project_settings.save()
 
-        entity = entities[0]
-        for key, value in custom_attribute_values.items():
-            entity["custom_attributes"][key] = value
-            self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
+        # Change custom attributes on project
+        if custom_attribute_values:
+            for key, value in custom_attribute_values.items():
+                project_entity["custom_attributes"][key] = value
+                self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
+            session.commit()
 
         return True
 

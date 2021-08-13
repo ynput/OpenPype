@@ -11,28 +11,43 @@ from avalon.api import AvalonMongoDB
 
 
 class AppplicationsAction(BaseAction):
-    """Application Action class.
-
-    Args:
-        session (ftrack_api.Session): Session where action will be registered.
-        label (str): A descriptive string identifing your action.
-        varaint (str, optional): To group actions together, give them the same
-            label and specify a unique variant per action.
-        identifier (str): An unique identifier for app.
-        description (str): A verbose descriptive text for you action.
-        icon (str): Url path to icon which will be shown in Ftrack web.
-    """
+    """Applications Action class."""
 
     type = "Application"
     label = "Application action"
-    identifier = "pype_app.{}.".format(str(uuid4()))
+
+    identifier = "openpype_app"
+    _launch_identifier_with_id = None
+
     icon_url = os.environ.get("OPENPYPE_STATICS_SERVER")
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super(AppplicationsAction, self).__init__(*args, **kwargs)
 
         self.application_manager = ApplicationManager()
         self.dbcon = AvalonMongoDB()
+
+    @property
+    def discover_identifier(self):
+        if self._discover_identifier is None:
+            self._discover_identifier = "{}.{}".format(
+                self.identifier, self.process_identifier()
+            )
+        return self._discover_identifier
+
+    @property
+    def launch_identifier(self):
+        if self._launch_identifier is None:
+            self._launch_identifier = "{}.*".format(self.identifier)
+        return self._launch_identifier
+
+    @property
+    def launch_identifier_with_id(self):
+        if self._launch_identifier_with_id is None:
+            self._launch_identifier_with_id = "{}.{}".format(
+                self.identifier, self.process_identifier()
+            )
+        return self._launch_identifier_with_id
 
     def construct_requirements_validations(self):
         # Override validation as this action does not need them
@@ -56,7 +71,7 @@ class AppplicationsAction(BaseAction):
             " and data.actionIdentifier={0}"
             " and source.user.username={1}"
         ).format(
-            self.identifier + "*",
+            self.launch_identifier,
             self.session.api_user
         )
         self.session.event_hub.subscribe(
@@ -136,11 +151,28 @@ class AppplicationsAction(BaseAction):
                 "label": app.group.label,
                 "variant": app.label,
                 "description": None,
-                "actionIdentifier": self.identifier + app_name,
+                "actionIdentifier": "{}.{}".format(
+                    self.launch_identifier_with_id, app_name
+                ),
                 "icon": app_icon
             })
 
         return items
+
+    def _launch(self, event):
+        event_identifier = event["data"]["actionIdentifier"]
+        # Check if identifier is same
+        # - show message that acion may not be triggered on this machine
+        if event_identifier.startswith(self.launch_identifier_with_id):
+            return BaseAction._launch(self, event)
+
+        return {
+            "success": False,
+            "message": (
+                "There are running more OpenPype processes"
+                " where Application can be launched."
+            )
+        }
 
     def launch(self, session, entities, event):
         """Callback method for the custom action.
@@ -162,7 +194,8 @@ class AppplicationsAction(BaseAction):
         *event* the unmodified original event
         """
         identifier = event["data"]["actionIdentifier"]
-        app_name = identifier[len(self.identifier):]
+        id_identifier_len = len(self.launch_identifier_with_id) + 1
+        app_name = identifier[id_identifier_len:]
 
         entity = entities[0]
 

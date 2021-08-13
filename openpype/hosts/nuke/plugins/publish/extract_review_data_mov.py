@@ -45,7 +45,6 @@ class ExtractReviewDataMov(openpype.api.Extractor):
 
             if "render.farm" in families:
                 instance.data["families"].remove("review")
-                instance.data["families"].remove("ftrack")
                 data = exporter.generate_mov(farm=True)
 
                 self.log.debug(

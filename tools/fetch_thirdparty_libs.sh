@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# Run Pype Tray
-
-
 art () {
   cat <<-EOF
 
@@ -82,11 +79,9 @@ main () {
 
   _inside_openpype_tool="1"
 
-  # make sure Poetry is in PATH
   if [[ -z $POETRY_HOME ]]; then
     export POETRY_HOME="$openpype_root/.poetry"
   fi
-  export PATH="$POETRY_HOME/bin:$PATH"
 
   echo -e "${BIGreen}>>>${RST} Reading Poetry ... \c"
   if [ -f "$POETRY_HOME/bin/poetry" ]; then
@@ -100,7 +95,7 @@ main () {
   pushd "$openpype_root" > /dev/null || return > /dev/null
 
   echo -e "${BIGreen}>>>${RST} Running Pype tool ..."
-  poetry run python "$openpype_root/tools/fetch_thirdparty_libs.py"
+  "$POETRY_HOME/bin/poetry" run python "$openpype_root/tools/fetch_thirdparty_libs.py"
 }
 
 main

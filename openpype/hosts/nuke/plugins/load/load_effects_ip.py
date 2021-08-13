@@ -217,7 +217,7 @@ class LoadEffectsInputProcess(api.Loader):
                         self.log.warning(e)
                         continue
 
-                    if isinstance(v, list) and len(v) > 3:
+                    if isinstance(v, list) and len(v) > 4:
                         node[k].setAnimated()
                         for i, value in enumerate(v):
                             if isinstance(value, list):
@@ -239,10 +239,10 @@ class LoadEffectsInputProcess(api.Loader):
             output = nuke.createNode("Output")
             output.setInput(0, pre_node)
 
-        # try to place it under Viewer1
-        if not self.connect_active_viewer(GN):
-            nuke.delete(GN)
-            return
+        # # try to place it under Viewer1
+        # if not self.connect_active_viewer(GN):
+        #     nuke.delete(GN)
+        #     return
 
         # get all versions in list
         versions = io.find({
@@ -298,7 +298,11 @@ class LoadEffectsInputProcess(api.Loader):
         viewer["input_process_node"].setValue(group_node_name)
 
         # put backdrop under
-        lib.create_backdrop(label="Input Process", layer=2, nodes=[viewer, group_node], color="0x7c7faaff")
+        lib.create_backdrop(
+            label="Input Process",
+            layer=2,
+            nodes=[viewer, group_node],
+            color="0x7c7faaff")
 
         return True
 

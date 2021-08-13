@@ -136,7 +136,8 @@
                 "Pypeclub",
                 "Administrator",
                 "Project manager"
-            ]
+            ],
+            "create_project_structure_checked": false
         },
         "clean_hierarchical_attr": {
             "enabled": true,
@@ -229,7 +230,6 @@
                         "standalonepublisher"
                     ],
                     "families": [
-                        "review",
                         "plate"
                     ],
                     "tasks": [],
@@ -276,6 +276,36 @@
                         "tvpaint"
                     ],
                     "families": [],
+                    "tasks": [],
+                    "add_ftrack_family": true,
+                    "advanced_filtering": []
+                },
+                {
+                    "hosts": [
+                        "nuke"
+                    ],
+                    "families": [
+                        "write",
+                        "render"
+                    ],
+                    "tasks": [],
+                    "add_ftrack_family": false,
+                    "advanced_filtering": [
+                        {
+                            "families": [
+                                "review"
+                            ],
+                            "add_ftrack_family": true
+                        }
+                    ]
+                },
+                {
+                    "hosts": [
+                        "aftereffects"
+                    ],
+                    "families": [
+                        "render"
+                    ],
                     "tasks": [],
                     "add_ftrack_family": true,
                     "advanced_filtering": []
