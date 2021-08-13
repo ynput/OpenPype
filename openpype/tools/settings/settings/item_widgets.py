@@ -180,6 +180,7 @@ class DictImmutableKeysWidget(BaseWidget):
     def add_widget_to_layout(self, widget, label=None):
         if self.checkbox_child and widget.entity is self.checkbox_child:
             self.body_widget.add_widget_before_label(widget)
+            self._direct_children_widgets.append(widget)
             return
 
         if not widget.entity:
