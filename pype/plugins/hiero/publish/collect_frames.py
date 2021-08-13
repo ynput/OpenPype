@@ -31,7 +31,10 @@ class CollectFrames(api.ContextPlugin):
             publish_frames = []
             for track_item in selection:
                 publish_frames.extend(
-                    range(track_item.timelineIn(), track_item.timelineOut())
+                    range(
+                        track_item.timelineIn(),
+                        track_item.timelineOut() + 1
+                    )
                 )
 
         publish_frames = list(set(publish_frames))
@@ -58,16 +61,17 @@ class CollectFrames(api.ContextPlugin):
                 }
 
         for subset_name, subset_data in subset_data.items():
+            frames = sorted(subset_data["frames"])
             name = "frame" + subset_name.title()
             data = {
                 "name": name,
-                "label": "{} {}".format(name, subset_data["frames"]),
+                "label": "{} {}".format(name, frames),
                 "family": "image",
                 "families": ["frame"],
                 "asset": context.data["assetEntity"]["name"],
                 "subset": subset_name,
                 "format": subset_data["format"],
-                "frames": subset_data["frames"]
+                "frames": frames
             }
             context.create_instance(**data)
             self.log.info(
