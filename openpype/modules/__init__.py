@@ -38,7 +38,7 @@ from .muster import MusterModule
 from .deadline import DeadlineModule
 from .project_manager_action import ProjectManagerAction
 from .standalonepublish_action import StandAlonePublishAction
-from .python_interpreter_action import PythonInterpreterAction
+from .python_console_interpreter import PythonInterpreterAction
 from .sync_server import SyncServerModule
 from .slack import SlackIntegrationModule
 
