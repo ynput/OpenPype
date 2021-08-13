@@ -12,6 +12,9 @@ from .version import __version__ as version
 
 def open_dialog():
     """Show Igniter dialog."""
+    if os.getenv("OPENPYPE_HEADLESS_MODE"):
+        print("!!! Can't open dialog in headless mode. Exiting.")
+        sys.exit(1)
     from Qt import QtWidgets, QtCore
     from .install_dialog import InstallDialog
 

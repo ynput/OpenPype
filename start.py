@@ -179,8 +179,10 @@ else:
     ssl_cert_file = certifi.where()
     os.environ["SSL_CERT_FILE"] = ssl_cert_file
 
+if "--headless" in sys.argv:
+    os.environ["OPENPYPE_HEADLESS_MODE"] = "1"
 
-import igniter  # noqa: E402
+import igniter  #   noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
 from igniter.tools import (
     get_openpype_path_from_db,
@@ -343,7 +345,7 @@ def _process_arguments() -> tuple:
     # check for `--use-version=3.0.0` argument and `--use-staging`
     use_version = None
     use_staging = False
-    print_versions = False
+    commands = []
     for arg in sys.argv:
         if arg == "--use-version":
             _print("!!! Please use option --use-version like:")
@@ -366,12 +368,30 @@ def _process_arguments() -> tuple:
                        " proper version string."))
                 sys.exit(1)
 
+        if arg == "--validate-version":
+            _print("!!! Please use option --validate-version like:")
+            _print("    --validate-version=3.0.0")
+            sys.exit(1)
+
+        if arg.startswith("--validate-version="):
+            m = re.search(
+                r"--validate-version=(?P<version>\d+\.\d+\.\d+(?:\S*)?)", arg)
+            if m and m.group('version'):
+                use_version = m.group('version')
+                sys.argv.remove(arg)
+                commands.append("validate")
+            else:
+                _print("!!! Requested version isn't in correct format.")
+                _print(("    Use --list-versions to find out"
+                        " proper version string."))
+                sys.exit(1)
+
     if "--use-staging" in sys.argv:
         use_staging = True
         sys.argv.remove("--use-staging")
 
     if "--list-versions" in sys.argv:
-        print_versions = True
+        commands.append("print_versions")
         sys.argv.remove("--list-versions")
 
     # handle igniter
@@ -389,7 +409,7 @@ def _process_arguments() -> tuple:
         sys.argv.pop(idx)
         sys.argv.insert(idx, "tray")
 
-    return use_version, use_staging, print_versions
+    return use_version, use_staging, commands
 
 
 def _determine_mongodb() -> str:
@@ -738,7 +758,7 @@ def boot():
     # Process arguments
     # ------------------------------------------------------------------------
 
-    use_version, use_staging, print_versions = _process_arguments()
+    use_version, use_staging, commands = _process_arguments()
 
     if os.getenv("OPENPYPE_VERSION"):
         if use_version:
@@ -766,13 +786,47 @@ def boot():
     # Get openpype path from database and set it to environment so openpype can
     # find its versions there and bootstrap them.
     openpype_path = get_openpype_path_from_db(openpype_mongo)
+
+    if getattr(sys, 'frozen', False):
+        local_version = bootstrap.get_version(Path(OPENPYPE_ROOT))
+    else:
+        local_version = bootstrap.get_local_live_version()
+
+    if "validate" in commands:
+        _print(f">>> Validating version [ {use_version} ]")
+        openpype_versions = bootstrap.find_openpype(include_zips=True,
+                                                    staging=True)
+        openpype_versions += bootstrap.find_openpype(include_zips=True,
+                                                    staging=False)
+
+        v: OpenPypeVersion
+        found = [v for v in openpype_versions if str(v) == use_version]
+        if not found:
+            _print(f"!!! Version [ {use_version} ] not found.")
+            list_versions(openpype_versions, local_version)
+            sys.exit(1)
+
+        # print result
+        result = bootstrap.validate_openpype_version(
+            bootstrap.get_version_path_from_list(
+                use_version, openpype_versions))
+
+        _print("{}{}".format(
+            ">>> " if result[0] else "!!! ",
+            bootstrap.validate_openpype_version(
+                bootstrap.get_version_path_from_list(use_version, openpype_versions)
+            )[1])
+        )
+        sys.exit(1)
+
+
     if not openpype_path:
         _print("*** Cannot get OpenPype path from database.")
 
     if not os.getenv("OPENPYPE_PATH") and openpype_path:
         os.environ["OPENPYPE_PATH"] = openpype_path
 
-    if print_versions:
+    if "print_versions" in commands:
         if not use_staging:
             _print("--- This will list only non-staging versions detected.")
             _print("    To see staging versions, use --use-staging argument.")
@@ -803,6 +857,13 @@ def boot():
             # no version to run
             _print(f"!!! {e}")
             sys.exit(1)
+        # validate version
+        _print(f">>> Validating version [ {str(version_path)} ]")
+        result = bootstrap.validate_openpype_version(version_path)
+        if not result[0]:
+            _print(f"!!! Invalid version: {result[1]}")
+            sys.exit(1)
+        _print(f"--- version is valid")
     else:
         version_path = _bootstrap_from_code(use_version, use_staging)
 
