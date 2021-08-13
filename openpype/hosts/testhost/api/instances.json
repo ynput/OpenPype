@@ -1,0 +1,73 @@
+[
+    {
+        "id": "pyblish.avalon.instance",
+        "family": "test_one",
+        "subset": "test_oneMyVariant",
+        "active": true,
+        "version": 1,
+        "asset": "ep01sh0010",
+        "task": "Compositing",
+        "variant": "myVariant",
+        "uuid": "a485f148-9121-46a5-8157-aa64df0fb449",
+        "family_attributes": {
+            "number_key": 10,
+            "ha": 10
+        },
+        "publish_attributes": {
+            "CollectFtrackApi": {
+                "add_ftrack_family": false
+            }
+        }
+    },
+    {
+        "id": "pyblish.avalon.instance",
+        "family": "test_one",
+        "subset": "test_oneMyVariant2",
+        "active": true,
+        "version": 1,
+        "asset": "ep01sh0010",
+        "task": "Compositing",
+        "variant": "myVariant2",
+        "uuid": "a485f148-9121-46a5-8157-aa64df0fb444",
+        "family_attributes": {},
+        "publish_attributes": {
+            "CollectFtrackApi": {
+                "add_ftrack_family": true
+            }
+        }
+    },
+    {
+        "id": "pyblish.avalon.instance",
+        "family": "test_two",
+        "subset": "test_twoMain",
+        "active": true,
+        "version": 1,
+        "asset": "ep01sh0010",
+        "task": "Compositing",
+        "variant": "Main",
+        "uuid": "3607bc95-75f6-4648-a58d-e699f413d09f",
+        "family_attributes": {},
+        "publish_attributes": {
+            "CollectFtrackApi": {
+                "add_ftrack_family": true
+            }
+        }
+    },
+    {
+        "id": "pyblish.avalon.instance",
+        "family": "test_two",
+        "subset": "test_twoMain2",
+        "active": true,
+        "version": 1,
+        "asset": "ep01sh0010",
+        "task": "Compositing",
+        "variant": "Main2",
+        "uuid": "4ccf56f6-9982-4837-967c-a49695dbe8eb",
+        "family_attributes": {},
+        "publish_attributes": {
+            "CollectFtrackApi": {
+                "add_ftrack_family": true
+            }
+        }
+    }
+]
