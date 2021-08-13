@@ -1,11 +1,4 @@
-import os
-import sys
-sys.path.append(r"C:\Users\jakub.trllo\Desktop\pype\pype3_2\.venv\Lib\site-packages")
-
 from Qt import QtWidgets, QtGui, QtCore
-
-# px, size of generated semi-transparent icons
-TRANSP_ICON_SIZE = 40, 40
 
 PREFIX_ROLE = QtCore.Qt.UserRole + 1
 LAST_SEGMENT_ROLE = QtCore.Qt.UserRole + 2
