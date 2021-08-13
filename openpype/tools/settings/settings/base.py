@@ -32,11 +32,25 @@ class BaseWidget(QtWidgets.QWidget):
         self.category_widget.set_path(path)
 
     def set_focus(self, scroll_to=False):
+        """Set focus of a widget.
+
+        Args:
+            scroll_to(bool): Also scroll to widget in category widget.
+        """
         if scroll_to:
             self.scroll_to(self)
         self.setFocus()
 
     def make_sure_is_visible(self, path, scroll_to):
+        """Make a widget of entity visible by it's path.
+
+        Args:
+            path(str): Path to entity.
+            scroll_to(bool): Should be scrolled to entity.
+
+        Returns:
+            bool: Entity with path was found.
+        """
         raise NotImplementedError(
             "{} not implemented `make_sure_is_visible`".format(
                 self.__class__.__name__
