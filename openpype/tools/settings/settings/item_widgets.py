@@ -48,6 +48,7 @@ class DictImmutableKeysWidget(BaseWidget):
             self._ui_item_base()
             label = self.entity.label
 
+        self._direct_children_widgets = []
         self._parent_widget_by_entity_id = {}
         self._added_wrapper_ids = set()
         self._prepare_entity_layouts(
@@ -192,6 +193,8 @@ class DictImmutableKeysWidget(BaseWidget):
                 self.add_widget_to_layout(wrapper)
                 self._added_wrapper_ids.add(wrapper.id)
             return
+
+        self._direct_children_widgets.append(widget)
 
         row = self.content_layout.rowCount()
         if not label or isinstance(widget, WrapperWidget):
