@@ -74,7 +74,6 @@ class PythonInterpreterWidget(QtWidgets.QTextEdit):
         # capture all interactive input/output
         sys.stdout = MultipleRedirection(sys.stdout, self)
         sys.stderr = MultipleRedirection(sys.stderr, self)
-        sys.stdin = MultipleRedirection(sys.stdin, self)
 
         # last line + last incomplete lines
         self.line = StringObj()
