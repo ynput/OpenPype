@@ -623,3 +623,8 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border: 1px solid {color:border};
     border-radius: 0.1em;
 }
+
+/* Python console interpreter */
+#PythonInterpreterWidget {
+    font-family: "Roboto Mono";
+}
