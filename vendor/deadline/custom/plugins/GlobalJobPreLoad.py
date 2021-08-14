@@ -55,9 +55,9 @@ def inject_openpype_environment(deadlinePlugin):
                   "AVALON_TASK, AVALON_APP_NAME"
             raise RuntimeError(msg)
 
-        print("args::{}".format(args))
+        print("args:::{}".format(args))
 
-        exit_code = subprocess.call(args, shell=True)
+        exit_code = subprocess.call(args, cwd=os.path.dirname(openpype_app))
         if exit_code != 0:
             raise RuntimeError("Publishing failed, check worker's log")
 

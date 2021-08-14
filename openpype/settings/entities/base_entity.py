@@ -174,6 +174,14 @@ class BaseItemEntity(BaseEntity):
             roles = [roles]
         self.roles = roles
 
+    @abstractmethod
+    def collect_static_entities_by_path(self):
+        """Collect all paths of all static path entities.
+
+        Static path is entity which is not dynamic or under dynamic entity.
+        """
+        pass
+
     @property
     def require_restart_on_change(self):
         return self._require_restart_on_change

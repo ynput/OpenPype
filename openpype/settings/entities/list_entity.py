@@ -45,6 +45,24 @@ class ListEntity(EndpointEntity):
                 return True
         return False
 
+    def __getitem__(self, idx):
+        if not isinstance(idx, int):
+            idx = int(idx)
+        return self.children[idx]
+
+    def __setitem__(self, idx, value):
+        if not isinstance(idx, int):
+            idx = int(idx)
+        self.children[idx].set(value)
+
+    def get(self, idx, default=None):
+        if not isinstance(idx, int):
+            idx = int(idx)
+
+        if idx < len(self.children):
+            return self.children[idx]
+        return default
+
     def index(self, item):
         if isinstance(item, BaseEntity):
             for idx, child_entity in enumerate(self.children):
