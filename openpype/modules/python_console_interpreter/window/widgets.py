@@ -4,9 +4,28 @@ import sys
 import collections
 from code import InteractiveInterpreter
 
+import appdirs
 from Qt import QtCore, QtWidgets, QtGui
 
 from openpype.style import load_stylesheet
+from openpype.lib import JSONSettingRegistry
+
+
+class PythonInterpreterRegistry(JSONSettingRegistry):
+    """Class handling OpenPype general settings registry.
+
+    Attributes:
+        vendor (str): Name used for path construction.
+        product (str): Additional name used for path construction.
+
+    """
+
+    def __init__(self):
+        self.vendor = "pypeclub"
+        self.product = "openpype"
+        name = "python_interpreter_tool"
+        path = appdirs.user_data_dir(self.product, self.vendor)
+        super(PythonInterpreterRegistry, self).__init__(name, path)
 
 
 class StdOEWrap:
@@ -164,6 +183,12 @@ class PythonTabWidget(QtWidgets.QWidget):
     def _on_execute_clicked(self):
         self.execute()
 
+    def get_code(self):
+        return self._code_input.toPlainText()
+
+    def set_code(self, code_text):
+        self._code_input.setPlainText(code_text)
+
     def execute(self):
         code_text = self._code_input.toPlainText()
         self.before_execute.emit(code_text)
@@ -230,6 +255,9 @@ class TabNameDialog(QtWidgets.QDialog):
 
 
 class PythonInterpreterWidget(QtWidgets.QWidget):
+    default_width = 1000
+    default_height = 600
+
     def __init__(self, parent=None):
         super(PythonInterpreterWidget, self).__init__(parent)
 
@@ -275,7 +303,51 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         self.setStyleSheet(load_stylesheet())
 
-        self.add_tab("Python")
+        self.resize(self.default_width, self.default_height)
+
+        self._init_from_registry()
+
+        if self._tab_widget.count() < 1:
+            self.add_tab("Python")
+
+    def _init_from_registry(self):
+        setting_registry = PythonInterpreterRegistry()
+
+        try:
+            width = setting_registry.get_item("width")
+            height = setting_registry.get_item("height")
+            if width is not None and height is not None:
+                self.resize(width, height)
+
+        except ValueError:
+            pass
+
+        try:
+            tab_defs = setting_registry.get_item("tabs") or []
+            for tab_def in tab_defs:
+                widget = self.add_tab(tab_def["name"])
+                widget.set_code(tab_def["code"])
+
+        except ValueError:
+            pass
+
+    def save_registry(self):
+        setting_registry = PythonInterpreterRegistry()
+
+        setting_registry.set_item("width", self.width())
+        setting_registry.set_item("height", self.height())
+
+        tabs = []
+        for tab_idx in range(self._tab_widget.count()):
+            widget = self._tab_widget.widget(tab_idx)
+            tab_code = widget.get_code()
+            tab_name = self._tab_widget.tabText(tab_idx)
+            tabs.append({
+                "name": tab_name,
+                "code": tab_code
+            })
+
+        setting_registry.set_item("tabs", tabs)
 
     def _on_tab_context_menu(self, point):
         tab_bar = self._tab_widget.tabBar()
@@ -362,3 +434,8 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         if self._tab_widget.count() > 1:
             self._tab_widget.setTabsClosable(True)
+        return widget
+
+    def closeEvent(self, event):
+        self.save_registry()
+        super(PythonInterpreterWidget, self).closeEvent(event)

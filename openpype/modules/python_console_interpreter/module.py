@@ -12,6 +12,10 @@ class PythonInterpreterAction(PypeModule, ITrayAction):
     def tray_init(self):
         self.create_interpreter_window()
 
+    def tray_exit(self):
+        if self._interpreter_window is not None:
+            self._interpreter_window.save_registry()
+
     def connect_with_modules(self, *args, **kwargs):
         pass
 
