@@ -254,6 +254,16 @@ class TabNameDialog(QtWidgets.QDialog):
         self.reject()
 
 
+class OutputTextWidget(QtWidgets.QTextEdit):
+    def vertical_scroll_at_max(self):
+        v_scroll = self.verticalScrollBar()
+        return v_scroll.value() == v_scroll.maximum()
+
+    def scroll_to_bottom(self):
+        v_scroll = self.verticalScrollBar()
+        return v_scroll.setValue(v_scroll.maximum())
+
+
 class PythonInterpreterWidget(QtWidgets.QWidget):
     default_width = 1000
     default_height = 600
@@ -269,7 +279,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         self._stdout_err_wrapper = StdOEWrap()
 
-        output_widget = QtWidgets.QTextEdit(self)
+        output_widget = OutputTextWidget(self)
         output_widget.setObjectName("PythonInterpreterOutput")
         output_widget.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
         output_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
@@ -293,11 +303,10 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(widgets_splitter)
 
-        timer = QtCore.QTimer()
-        timer.setInterval(200)
-        timer.start()
+        line_check_timer = QtCore.QTimer()
+        line_check_timer.setInterval(200)
 
-        timer.timeout.connect(self._on_timer_timeout)
+        line_check_timer.timeout.connect(self._on_timer_timeout)
         add_tab_btn.clicked.connect(self._on_add_clicked)
         tab_widget.customContextMenuRequested.connect(
             self._on_tab_context_menu
@@ -308,7 +317,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         self._add_tab_btn = add_tab_btn
         self._output_widget = output_widget
         self._tab_widget = tab_widget
-        self._timer = timer
+        self._line_check_timer = line_check_timer
 
         self.setStyleSheet(load_stylesheet())
 
@@ -403,12 +412,16 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
     def _on_timer_timeout(self):
         if self._stdout_err_wrapper.lines:
+            at_max = self._output_widget.vertical_scroll_at_max()
             tmp_cursor = QtGui.QTextCursor(self._output_widget.document())
             tmp_cursor.movePosition(QtGui.QTextCursor.End)
             while self._stdout_err_wrapper.lines:
                 line = self._stdout_err_wrapper.lines.popleft()
 
                 tmp_cursor.insertText(self.ansi_escape.sub("", line))
+
+            if at_max:
+                self._output_widget.scroll_to_bottom()
 
     def _on_add_clicked(self):
         dialog = TabNameDialog(self)
@@ -418,6 +431,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
             self.add_tab(tab_name)
 
     def _on_before_execute(self, code_text):
+        at_max = self._output_widget.vertical_scroll_at_max()
         document = self._output_widget.document()
         tmp_cursor = QtGui.QTextCursor(document)
         tmp_cursor.movePosition(QtGui.QTextCursor.End)
@@ -440,6 +454,9 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         tmp_cursor.movePosition(QtGui.QTextCursor.End)
         tmp_cursor.insertText("{}\n".format(20 * "-"))
 
+        if at_max:
+            self._output_widget.scroll_to_bottom()
+
     def add_tab(self, tab_name, index=None):
         widget = PythonTabWidget(self)
         widget.before_execute.connect(self._on_before_execute)
@@ -457,6 +474,12 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
             self._tab_widget.setTabsClosable(True)
         return widget
 
+    def showEvent(self, event):
+        self._line_check_timer.start()
+        super(PythonInterpreterWidget, self).showEvent(event)
+        self._output_widget.scroll_to_bottom()
+
     def closeEvent(self, event):
         self.save_registry()
         super(PythonInterpreterWidget, self).closeEvent(event)
+        self._line_check_timer.stop()
