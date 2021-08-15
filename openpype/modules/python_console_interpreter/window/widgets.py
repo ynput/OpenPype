@@ -198,6 +198,9 @@ class PythonTabWidget(QtWidgets.QWidget):
 
 
 class TabNameDialog(QtWidgets.QDialog):
+    default_width = 330
+    default_height = 85
+
     def __init__(self, parent):
         super(TabNameDialog, self).__init__(parent)
 
@@ -230,6 +233,8 @@ class TabNameDialog(QtWidgets.QDialog):
         self._cancel_btn = cancel_btn
 
         self._result = None
+
+        self.resize(self.default_width, self.default_height)
 
     def set_tab_name(self, name):
         self._name_input.setText(name)
