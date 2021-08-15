@@ -255,9 +255,11 @@ class TabNameDialog(QtWidgets.QDialog):
 
 
 class OutputTextWidget(QtWidgets.QTextEdit):
+    v_max_offset = 4
+
     def vertical_scroll_at_max(self):
         v_scroll = self.verticalScrollBar()
-        return v_scroll.value() == v_scroll.maximum()
+        return v_scroll.value() > v_scroll.maximum() - self.v_max_offset
 
     def scroll_to_bottom(self):
         v_scroll = self.verticalScrollBar()
