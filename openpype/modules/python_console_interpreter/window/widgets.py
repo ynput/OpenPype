@@ -275,6 +275,8 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(PythonInterpreterWidget, self).__init__(parent)
 
+        self.setWindowTitle("OpenPype Console")
+
         self.ansi_escape = re.compile(
             r"(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]"
         )
