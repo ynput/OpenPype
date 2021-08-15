@@ -202,7 +202,7 @@ class TabNameDialog(QtWidgets.QDialog):
         self._ok_btn = ok_btn
         self._cancel_btn = cancel_btn
 
-        self._result = ""
+        self._result = None
 
     def set_tab_name(self, name):
         self._name_input.setText(name)
@@ -225,7 +225,7 @@ class TabNameDialog(QtWidgets.QDialog):
         self.accept()
 
     def _on_cancel_clicked(self):
-        self._result = ""
+        self._result = None
         self.reject()
 
 
@@ -278,11 +278,26 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         self.add_tab("Python")
 
     def _on_tab_context_menu(self, point):
-        tab = self._tab_widget.tabBar().tabAt(point)
-        last_index = self._tab_widget.tabBar().count() - 1
-        if tab < 0 or tab > last_index:
+        tab_bar = self._tab_widget.tabBar()
+        tab_idx = tab_bar.tabAt(point)
+        last_index = tab_bar.count() - 1
+        if tab_idx < 0 or tab_idx > last_index:
             return
-        # TODO add menu
+
+        menu = QtWidgets.QMenu(self._tab_widget)
+        menu.addAction("Rename")
+        global_point = self._tab_widget.mapToGlobal(point)
+        result = menu.exec_(global_point)
+        if result is None:
+            return
+
+        if result.text() == "Rename":
+            dialog = TabNameDialog(self)
+            dialog.set_tab_name(self._tab_widget.tabText(tab_idx))
+            dialog.exec_()
+            tab_name = dialog.result()
+            if tab_name:
+                self._tab_widget.setTabText(tab_idx, tab_name)
 
     def _on_tab_close_req(self, tab_index):
         widget = self._tab_widget.widget(tab_index)
