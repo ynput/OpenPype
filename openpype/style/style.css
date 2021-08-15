@@ -625,6 +625,6 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 /* Python console interpreter */
-#PythonInterpreterOutput {
+#PythonInterpreterOutput, #PythonCodeEditor {
     font-family: "Roboto Mono";
 }

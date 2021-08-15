@@ -74,6 +74,8 @@ class PythonCodeEditor(QtWidgets.QPlainTextEdit):
     def __init__(self, parent):
         super(PythonCodeEditor, self).__init__(parent)
 
+        self.setObjectName("PythonCodeEditor")
+
         self._indent = 4
 
     def _tab_shift_right(self):
