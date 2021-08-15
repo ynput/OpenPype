@@ -281,9 +281,17 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         add_tab_btn = QtWidgets.QPushButton("+", tab_widget)
         tab_widget.setCornerWidget(add_tab_btn, QtCore.Qt.TopLeftCorner)
 
+        widgets_splitter = QtWidgets.QSplitter(self)
+        widgets_splitter.setOrientation(QtCore.Qt.Vertical)
+        widgets_splitter.addWidget(output_widget)
+        widgets_splitter.addWidget(tab_widget)
+        widgets_splitter.setStretchFactor(0, 1)
+        widgets_splitter.setStretchFactor(1, 1)
+        height = int(self.default_height / 2)
+        widgets_splitter.setSizes([height, self.default_height - height])
+
         layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(output_widget)
-        layout.addWidget(tab_widget)
+        layout.addWidget(widgets_splitter)
 
         timer = QtCore.QTimer()
         timer.setInterval(200)
@@ -296,6 +304,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         )
         tab_widget.tabCloseRequested.connect(self._on_tab_close_req)
 
+        self._widgets_splitter = widgets_splitter
         self._add_tab_btn = add_tab_btn
         self._output_widget = output_widget
         self._tab_widget = tab_widget
@@ -323,6 +332,14 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
             pass
 
         try:
+            sizes = setting_registry.get_item("splitter_sizes")
+            if len(sizes) == len(self._widgets_splitter.sizes()):
+                self._widgets_splitter.setSizes(sizes)
+
+        except ValueError:
+            pass
+
+        try:
             tab_defs = setting_registry.get_item("tabs") or []
             for tab_def in tab_defs:
                 widget = self.add_tab(tab_def["name"])
@@ -336,6 +353,10 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         setting_registry.set_item("width", self.width())
         setting_registry.set_item("height", self.height())
+
+        setting_registry.set_item(
+            "splitter_sizes", self._widgets_splitter.sizes()
+        )
 
         tabs = []
         for tab_idx in range(self._tab_widget.count()):
