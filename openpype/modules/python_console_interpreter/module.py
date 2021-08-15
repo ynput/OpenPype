@@ -4,6 +4,7 @@ from .. import PypeModule, ITrayAction
 class PythonInterpreterAction(PypeModule, ITrayAction):
     label = "Console"
     name = "python_interpreter"
+    admin_action = True
 
     def initialize(self, modules_settings):
         self.enabled = True
