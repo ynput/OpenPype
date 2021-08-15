@@ -161,6 +161,8 @@ class PythonTabWidget(QtWidgets.QWidget):
 
         code_input = PythonCodeEditor(self)
 
+        self.setFocusProxy(code_input)
+
         execute_btn = QtWidgets.QPushButton("Execute", self)
         execute_btn.setToolTip("Execute command (Ctrl + Enter)")
 
@@ -474,6 +476,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         if self._tab_widget.count() > 1:
             self._tab_widget.setTabsClosable(True)
+        widget.setFocus()
         return widget
 
     def showEvent(self, event):
