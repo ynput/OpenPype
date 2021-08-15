@@ -476,7 +476,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         widget = PythonTabWidget(self)
         widget.before_execute.connect(self._on_before_execute)
         if index is None:
-            if self._tab_widget.count() > 1:
+            if self._tab_widget.count() > 0:
                 index = self._tab_widget.currentIndex() + 1
             else:
                 index = 0
