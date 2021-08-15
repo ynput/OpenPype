@@ -12,6 +12,25 @@ from openpype.style import load_stylesheet
 from openpype.lib import JSONSettingRegistry
 
 
+openpype_art = """
+             . .   ..     .    ..
+        _oOOP3OPP3Op_. .
+     .PPpo~.   ..   ~2p.  ..  ....  .  .
+    .Ppo . .pPO3Op.. . O:. . . .
+   .3Pp . oP3'. 'P33. . 4 ..   .  .   . .. .  .  .
+  .~OP    3PO.  .Op3    : . ..  _____  _____  _____
+  .P3O  . oP3oP3O3P' . . .   . /    /./    /./    /
+   O3:.   O3p~ .       .:. . ./____/./____/ /____/
+   'P .   3p3.  oP3~. ..P:. .  . ..  .   . .. .  .  .
+  . ':  . Po'  .Opo'. .3O. .  o[ by Pype Club ]]]==- - - .  .
+    . '_ ..  .    . _OP3..  .  .https://openpype.io.. .
+         ~P3.OPPPO3OP~ . ..  .
+           .  ' '. .  .. . . . ..  .
+
+
+"""
+
+
 class PythonInterpreterRegistry(JSONSettingRegistry):
     """Class handling OpenPype general settings registry.
 
@@ -334,6 +353,8 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         self._tab_widget = tab_widget
         self._line_check_timer = line_check_timer
 
+        self._append_lines([openpype_art])
+
         self.setStyleSheet(load_stylesheet())
 
         self.resize(self.default_width, self.default_height)
@@ -425,18 +446,23 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         if self._tab_widget.count() == 1:
             self._tab_widget.setTabsClosable(False)
 
+    def _append_lines(self, lines):
+        at_max = self._output_widget.vertical_scroll_at_max()
+        tmp_cursor = QtGui.QTextCursor(self._output_widget.document())
+        tmp_cursor.movePosition(QtGui.QTextCursor.End)
+        for line in lines:
+            tmp_cursor.insertText(line)
+
+        if at_max:
+            self._output_widget.scroll_to_bottom()
+
     def _on_timer_timeout(self):
         if self._stdout_err_wrapper.lines:
-            at_max = self._output_widget.vertical_scroll_at_max()
-            tmp_cursor = QtGui.QTextCursor(self._output_widget.document())
-            tmp_cursor.movePosition(QtGui.QTextCursor.End)
+            lines = []
             while self._stdout_err_wrapper.lines:
                 line = self._stdout_err_wrapper.lines.popleft()
-
-                tmp_cursor.insertText(self.ansi_escape.sub("", line))
-
-            if at_max:
-                self._output_widget.scroll_to_bottom()
+                lines.append(self.ansi_escape.sub("", line))
+            self._append_lines(lines)
 
     def _on_add_clicked(self):
         dialog = TabNameDialog(self)
