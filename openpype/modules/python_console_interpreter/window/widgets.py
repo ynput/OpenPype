@@ -1,5 +1,7 @@
 import os
+import re
 import sys
+import collections
 from code import InteractiveInterpreter
 
 from Qt import QtCore, QtWidgets, QtGui
@@ -7,328 +9,341 @@ from Qt import QtCore, QtWidgets, QtGui
 from openpype.style import load_stylesheet
 
 
-class MultipleRedirection:
-    """ Dummy file which redirects stream to multiple file """
+class StdOEWrap:
+    def __init__(self):
+        self._origin_stdout_write = None
+        self._origin_stderr_write = None
+        self._listening = False
+        self.lines = collections.deque()
 
-    def __init__(self, *files):
-        """ The stream is redirect to the file list 'files' """
+        if not sys.stdout:
+            sys.stdout = open(os.devnull, "w")
 
-        self.files = files
+        if not sys.stderr:
+            sys.stderr = open(os.devnull, "w")
 
-    def write(self, line):
-        """ Emulate write function """
+        if self._origin_stdout_write is None:
+            self._origin_stdout_write = sys.stdout.write
 
-        for _file in self.files:
-            _file.write(line)
+        if self._origin_stderr_write is None:
+            self._origin_stderr_write = sys.stderr.write
 
+        self._listening = True
+        sys.stdout.write = self._stdout_listener
+        sys.stderr.write = self._stderr_listener
 
-class StringObj:
-    def __init__(self, text=None):
-        if isinstance(text, StringObj):
-            text = str(text)
+    def stop_listen(self):
+        self._listening = False
 
-        self._text = text or ""
+    def _stdout_listener(self, text):
+        if self._listening:
+            self.lines.append(text)
+        if self._origin_stdout_write is not None:
+            self._origin_stdout_write(text)
 
-    def __str__(self):
-        return self._text
-
-    def __len__(self):
-        return self.length()
-
-    def __bool__(self):
-        return bool(self._text)
-
-    def length(self):
-        return len(self._text)
-
-    def clear(self):
-        self._text = ""
-
-    def insert(self, point, text):
-        if isinstance(text, StringObj):
-            text = str(text)
-        self._text = self._text[:point] + text + self._text[point:]
-
-    def remove(self, point, count):
-        self._text = self._text[:point] + self._text[point + count:]
-
-    def copy(self):
-        return StringObj(self._text)
+    def _stderr_listener(self, text):
+        if self._listening:
+            self.lines.append(text)
+        if self._origin_stderr_write is not None:
+            self._origin_stderr_write(text)
 
 
-class PythonInterpreterWidget(QtWidgets.QTextEdit):
-    def __init__(self, parent=None):
-        super(PythonInterpreterWidget, self).__init__(parent)
+class PythonCodeEditor(QtWidgets.QPlainTextEdit):
+    execute_requested = QtCore.Signal()
 
-        self.setObjectName("PythonInterpreterWidget")
+    def __init__(self, parent):
+        super(PythonCodeEditor, self).__init__(parent)
+
         self._indent = 4
 
-        self._interpreter = InteractiveInterpreter()
-
-        # to exit the main interpreter by a Ctrl-D if PyCute has no parent
-        if parent is None:
-            self.eofKey = QtCore.Qt.Key_D
-        else:
-            self.eofKey = None
-
-        # capture all interactive input/output
-        stdout = []
-        stderr = []
-        if sys.stdout is not None:
-            stdout.append(sys.stdout)
-        if sys.stderr is not None:
-            stderr.append(sys.stderr)
-
-        stdout.append(self)
-        stderr.append(self)
-
-        sys.stdout = MultipleRedirection(*stdout)
-        sys.stderr = MultipleRedirection(*stderr)
-
-        # last line + last incomplete lines
-        self.line = StringObj()
-        self.lines = []
-        # the cursor position in the last line
-        self.point = 0
-        # flag: the interpreter needs more input to run the last lines.
-        self.more = False
-        # flag: readline() is being used for e.g. raw_input() and input()
-        self.reading = False
-        # history
-        self.history = []
-        self.pointer = 0
-        self.cursor_pos = 0
-
-        # user interface setup
-        self.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
-
-        self.setStyleSheet(load_stylesheet())
-
-        # interpreter prompt.
-        try:
-            sys.ps1
-        except AttributeError:
-            sys.ps1 = ">>> "
-        try:
-            sys.ps2
-        except AttributeError:
-            sys.ps2 = "... "
-
-        # interpreter banner
-        self.write("The shell running Python {} on {}.\n".format(
-            sys.version, sys.platform
-        ))
-        self.write((
-            "Type \"copyright\", \"credits\" or \"license\""
-            " for more information on Python.\n"
-        ))
-        self.write("\nWelcome to OpenPype!\n\n")
-        self.write(sys.ps1)
-
-    @property
-    def interpreter(self):
-        """Interpreter object."""
-        return self._interpreter
-
-    def moveCursor(self, operation, mode=None):
-        if mode is None:
-            mode = QtGui.QTextCursor.MoveAnchor
+    def _tab_shift_right(self):
         cursor = self.textCursor()
-        cursor.movePosition(operation, mode)
-        self.setTextCursor(cursor)
+        selected_text = cursor.selectedText()
+        if not selected_text:
+            cursor.insertText(" " * self._indent)
+            return
 
-    def flush(self):
-        """Simulate stdin, stdout, and stderr flush."""
-        pass
+        sel_start = cursor.selectionStart()
+        sel_end = cursor.selectionEnd()
+        cursor.setPosition(sel_end)
+        end_line = cursor.blockNumber()
+        cursor.setPosition(sel_start)
+        while True:
+            cursor.movePosition(QtGui.QTextCursor.StartOfLine)
+            text = cursor.block().text()
+            spaces = len(text) - len(text.lstrip(" "))
+            new_spaces = spaces % self._indent
+            if not new_spaces:
+                new_spaces = self._indent
 
-    def isatty(self):
-        """Simulate stdin, stdout, and stderr isatty."""
-        return 1
+            cursor.insertText(" " * new_spaces)
+            if cursor.blockNumber() == end_line:
+                break
 
-    def readline(self):
-        """Simulate stdin, stdout, and stderr readline."""
-        self.reading = True
-        self.__clearLine()
-        self.moveCursor(QtGui.QTextCursor.End)
-        while self.reading:
-            QtWidgets.QApplication.processOneEvent()
-        if self.line.length() == 0:
-            return "\n"
-        return str(self.line)
+            cursor.movePosition(QtGui.QTextCursor.NextBlock)
 
-    def write(self, text):
-        """Simulate stdin, stdout, and stderr write."""
-        cursor = self.textCursor()
+    def _tab_shift_left(self):
+        tmp_cursor = self.textCursor()
+        sel_start = tmp_cursor.selectionStart()
+        sel_end = tmp_cursor.selectionEnd()
 
-        cursor.movePosition(QtGui.QTextCursor.End)
+        cursor = QtGui.QTextCursor(self.document())
+        cursor.setPosition(sel_end)
+        end_line = cursor.blockNumber()
+        cursor.setPosition(sel_start)
+        while True:
+            cursor.movePosition(QtGui.QTextCursor.StartOfLine)
+            text = cursor.block().text()
+            spaces = len(text) - len(text.lstrip(" "))
+            if spaces:
+                spaces_to_remove = (spaces % self._indent) or self._indent
+                if spaces_to_remove > spaces:
+                    spaces_to_remove = spaces
 
-        # pos1 = cursor.position()
-        cursor.insertText(str(text))
-
-        self.cursor_pos = cursor.position()
-        self.setTextCursor(cursor)
-        self.ensureCursorVisible()
-
-        # Set the format
-        # cursor.setPosition(pos1, QtGui.QTextCursor.KeepAnchor)
-        # char_format = cursor.charFormat()
-        # char_format.setForeground(QtGui.QBrush(QtGui.QColor(0, 0, 0)))
-        # cursor.setCharFormat(char_format)
-
-    def writelines(self, text):
-        """
-        Simulate stdin, stdout, and stderr.
-        """
-        for line in text.split("\n"):
-            self.write(line)
-
-    def fake_user_input(self, lines):
-        """Simulate a user input lines is a sequence of strings.
-
-        Args:
-            lines(list, tuple): Lines to process.
-        """
-        for line in lines:
-            self.line = StringObj(line.rstrip())
-            self.write(self.line)
-            self.write("\n")
-            self.__run()
-
-    def __run(self):
-        """
-        Append the last line to the history list, let the interpreter execute
-        the last line(s), and clean up accounting for the interpreter results:
-        (1) the interpreter succeeds
-        (2) the interpreter fails, finds no errors and wants more line(s)
-        (3) the interpreter fails, finds errors and writes them to sys.stderr
-        """
-        self.pointer = 0
-        self.history.append(self.line.copy())
-        try:
-            self.lines.append(str(self.line))
-        except Exception as exc:
-            print(exc)
-
-        source = "\n".join(self.lines)
-        self.more = self._interpreter.runsource(source)
-        if self.more:
-            self.write(sys.ps2)
-        else:
-            self.write(sys.ps1)
-            self.lines = []
-        self.__clearLine()
-
-    def __clearLine(self):
-        """Clear input line buffer."""
-        self.line.clear()
-        self.point = 0
-
-    def __insertText(self, text):
-        """Insert text at the current cursor position."""
-
-        self.line.insert(self.point, text)
-        self.point += len(text)
-
-        cursor = self.textCursor()
-        cursor.insertText(str(text))
-
-    def keyPressEvent(self, event):
-        """Handle user input a key at a time."""
-        text = event.text()
-        key = event.key()
-
-        if key == QtCore.Qt.Key_Backspace:
-            if self.point:
-                cursor = self.textCursor()
-                cursor.movePosition(
-                    QtGui.QTextCursor.PreviousCharacter,
+                cursor.setPosition(
+                    cursor.position() + spaces_to_remove,
                     QtGui.QTextCursor.KeepAnchor
                 )
                 cursor.removeSelectedText()
 
-                self.point -= 1
+            if cursor.blockNumber() == end_line:
+                break
 
-                self.line.remove(self.point, 1)
+            cursor.movePosition(QtGui.QTextCursor.NextBlock)
 
-        elif key == QtCore.Qt.Key_Delete:
-            cursor = self.textCursor()
-            cursor.movePosition(
-                QtGui.QTextCursor.NextCharacter,
-                QtGui.QTextCursor.KeepAnchor
-            )
-            cursor.removeSelectedText()
-
-            self.line.remove(self.point, 1)
-
-        elif key in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
-            self.write("\n")
-            if self.reading:
-                self.reading = False
-            else:
-                self.__run()
-
-        elif key == QtCore.Qt.Key_Tab:
-            self.__insertText(" " * self._indent)
-
-        elif key == QtCore.Qt.Key_Left:
-            if self.point:
-                self.moveCursor(QtGui.QTextCursor.Left)
-                self.point -= 1
-        elif key == QtCore.Qt.Key_Right:
-            if self.point < self.line.length():
-                self.moveCursor(QtGui.QTextCursor.Right)
-                self.point += 1
-
-        elif key == QtCore.Qt.Key_Home:
-            cursor = self.textCursor()
-            cursor.setPosition(self.cursor_pos)
-            self.setTextCursor(cursor)
-            self.point = 0
-
-        elif key == QtCore.Qt.Key_End:
-            self.moveCursor(QtGui.QTextCursor.EndOfLine)
-            self.point = self.line.length()
-
-        elif key == QtCore.Qt.Key_Up:
-            if self.history:
-                if self.pointer == 0:
-                    self.pointer = len(self.history)
-                self.pointer -= 1
-                self.__recall()
-
-        elif key == QtCore.Qt.Key_Down:
-            if self.history:
-                self.pointer += 1
-                if self.pointer == len(self.history):
-                    self.pointer = 0
-                self.__recall()
-
-        elif text:
-            self.__insertText(text)
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Backtab:
+            self._tab_shift_left()
+            event.accept()
             return
 
-        else:
-            event.ignore()
+        if event.key() == QtCore.Qt.Key_Tab:
+            if event.modifiers() == QtCore.Qt.NoModifier:
+                self._tab_shift_right()
+            event.accept()
+            return
 
-    def __recall(self):
-        """Display the current item from the command history."""
-        cursor = self.textCursor()
-        cursor.select(QtGui.QTextCursor.LineUnderCursor)
-        cursor.removeSelectedText()
+        if (
+            event.key() == QtCore.Qt.Key_Return
+            and event.modifiers() == QtCore.Qt.ControlModifier
+        ):
+            self.execute_requested.emit()
+            event.accept()
+            return
 
-        if self.more:
-            self.write(sys.ps2)
-        else:
-            self.write(sys.ps1)
+        super(PythonCodeEditor, self).keyPressEvent(event)
 
-        self.__clearLine()
-        self.__insertText(self.history[self.pointer])
 
-    def mousePressEvent(self, event):
-        """Keep the cursor after the last prompt."""
-        if event.button() == QtCore.Qt.LeftButton:
-            self.moveCursor(QtGui.QTextCursor.End)
+class PythonTabWidget(QtWidgets.QWidget):
+    before_execute = QtCore.Signal(str)
 
-    def contentsContextMenuEvent(self, event):
-        """Suppress the right button context menu."""
-        pass
+    def __init__(self, parent):
+        super(PythonTabWidget, self).__init__(parent)
+
+        code_input = PythonCodeEditor(self)
+
+        execute_btn = QtWidgets.QPushButton("Execute", self)
+        execute_btn.setToolTip("Execute command (Ctrl + Enter)")
+
+        btns_layout = QtWidgets.QHBoxLayout()
+        btns_layout.setContentsMargins(0, 0, 0, 0)
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(execute_btn)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(code_input, 1)
+        layout.addLayout(btns_layout, 0)
+
+        execute_btn.clicked.connect(self._on_execute_clicked)
+        code_input.execute_requested.connect(self.execute)
+
+        self._code_input = code_input
+        self._interpreter = InteractiveInterpreter()
+
+    def _on_execute_clicked(self):
+        self.execute()
+
+    def execute(self):
+        code_text = self._code_input.toPlainText()
+        self.before_execute.emit(code_text)
+        self._interpreter.runcode(code_text)
+
+
+class TabNameDialog(QtWidgets.QDialog):
+    def __init__(self, parent):
+        super(TabNameDialog, self).__init__(parent)
+
+        self.setWindowTitle("Enter tab name")
+
+        name_label = QtWidgets.QLabel("Tab name:", self)
+        name_input = QtWidgets.QLineEdit(self)
+
+        inputs_layout = QtWidgets.QHBoxLayout()
+        inputs_layout.addWidget(name_label)
+        inputs_layout.addWidget(name_input)
+
+        ok_btn = QtWidgets.QPushButton("Ok", self)
+        cancel_btn = QtWidgets.QPushButton("Cancel", self)
+        btns_layout = QtWidgets.QHBoxLayout()
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(ok_btn)
+        btns_layout.addWidget(cancel_btn)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addLayout(inputs_layout)
+        layout.addStretch(1)
+        layout.addLayout(btns_layout)
+
+        ok_btn.clicked.connect(self._on_ok_clicked)
+        cancel_btn.clicked.connect(self._on_cancel_clicked)
+
+        self._name_input = name_input
+        self._ok_btn = ok_btn
+        self._cancel_btn = cancel_btn
+
+        self._result = ""
+
+    def set_tab_name(self, name):
+        self._name_input.setText(name)
+
+    def result(self):
+        return self._result
+
+    def showEvent(self, event):
+        super(TabNameDialog, self).showEvent(event)
+        btns_width = max(
+            self._ok_btn.width(),
+            self._cancel_btn.width()
+        )
+
+        self._ok_btn.setMinimumWidth(btns_width)
+        self._cancel_btn.setMinimumWidth(btns_width)
+
+    def _on_ok_clicked(self):
+        self._result = self._name_input.text()
+        self.accept()
+
+    def _on_cancel_clicked(self):
+        self._result = ""
+        self.reject()
+
+
+class PythonInterpreterWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(PythonInterpreterWidget, self).__init__(parent)
+
+        self.ansi_escape = re.compile(
+            r"(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]"
+        )
+
+        self._tabs = []
+
+        self._stdout_err_wrapper = StdOEWrap()
+
+        output_widget = QtWidgets.QTextEdit(self)
+        output_widget.setObjectName("PythonInterpreterOutput")
+        output_widget.setLineWrapMode(QtWidgets.QTextEdit.NoWrap)
+        output_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
+
+        tab_widget = QtWidgets.QTabWidget(self)
+        tab_widget.setTabsClosable(False)
+        tab_widget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+
+        add_tab_btn = QtWidgets.QPushButton("+", tab_widget)
+        tab_widget.setCornerWidget(add_tab_btn, QtCore.Qt.TopLeftCorner)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(output_widget)
+        layout.addWidget(tab_widget)
+
+        timer = QtCore.QTimer()
+        timer.setInterval(200)
+        timer.start()
+
+        timer.timeout.connect(self._on_timer_timeout)
+        add_tab_btn.clicked.connect(self._on_add_clicked)
+        tab_widget.customContextMenuRequested.connect(
+            self._on_tab_context_menu
+        )
+        tab_widget.tabCloseRequested.connect(self._on_tab_close_req)
+
+        self._add_tab_btn = add_tab_btn
+        self._output_widget = output_widget
+        self._tab_widget = tab_widget
+        self._timer = timer
+
+        self.setStyleSheet(load_stylesheet())
+
+        self.add_tab("Python")
+
+    def _on_tab_context_menu(self, point):
+        tab = self._tab_widget.tabBar().tabAt(point)
+        last_index = self._tab_widget.tabBar().count() - 1
+        if tab < 0 or tab > last_index:
+            return
+        # TODO add menu
+
+    def _on_tab_close_req(self, tab_index):
+        widget = self._tab_widget.widget(tab_index)
+        if widget in self._tabs:
+            self._tabs.remove(widget)
+        self._tab_widget.removeTab(tab_index)
+
+        if self._tab_widget.count() == 1:
+            self._tab_widget.setTabsClosable(False)
+
+    def _on_timer_timeout(self):
+        if self._stdout_err_wrapper.lines:
+            tmp_cursor = QtGui.QTextCursor(self._output_widget.document())
+            tmp_cursor.movePosition(QtGui.QTextCursor.End)
+            while self._stdout_err_wrapper.lines:
+                line = self._stdout_err_wrapper.lines.popleft()
+
+                tmp_cursor.insertText(self.ansi_escape.sub("", line))
+
+    def _on_add_clicked(self):
+        dialog = TabNameDialog(self)
+        dialog.exec_()
+        tab_name = dialog.result()
+        if tab_name:
+            self.add_tab(tab_name)
+
+    def _on_before_execute(self, code_text):
+        document = self._output_widget.document()
+        tmp_cursor = QtGui.QTextCursor(document)
+        tmp_cursor.movePosition(QtGui.QTextCursor.End)
+        tmp_cursor.insertText("{}\nExecuting command:\n".format(20 * "-"))
+
+        code_block_format = QtGui.QTextFrameFormat()
+        code_block_format.setBackground(QtGui.QColor(27, 27, 27))
+        code_block_format.setPadding(4)
+
+        tmp_cursor.insertFrame(code_block_format)
+        char_format = tmp_cursor.charFormat()
+        char_format.setForeground(
+            QtGui.QBrush(QtGui.QColor(114, 224, 198))
+        )
+        tmp_cursor.setCharFormat(char_format)
+        tmp_cursor.insertText(code_text)
+
+        # Create new cursor
+        tmp_cursor = QtGui.QTextCursor(document)
+        tmp_cursor.movePosition(QtGui.QTextCursor.End)
+        tmp_cursor.insertText("{}\n".format(20 * "-"))
+
+    def add_tab(self, tab_name, index=None):
+        widget = PythonTabWidget(self)
+        widget.before_execute.connect(self._on_before_execute)
+        if index is None:
+            if self._tab_widget.count() > 1:
+                index = self._tab_widget.currentIndex() + 1
+            else:
+                index = 0
+
+        self._tabs.append(widget)
+        self._tab_widget.insertTab(index, widget, tab_name)
+        self._tab_widget.setCurrentIndex(index)
+
+        if self._tab_widget.count() > 1:
+            self._tab_widget.setTabsClosable(True)
