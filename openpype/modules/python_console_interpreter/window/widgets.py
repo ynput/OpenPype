@@ -7,6 +7,7 @@ from code import InteractiveInterpreter
 import appdirs
 from Qt import QtCore, QtWidgets, QtGui
 
+from openpype import resources
 from openpype.style import load_stylesheet
 from openpype.lib import JSONSettingRegistry
 
@@ -281,6 +282,7 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         super(PythonInterpreterWidget, self).__init__(parent)
 
         self.setWindowTitle("OpenPype Console")
+        self.setWindowIcon(QtGui.QIcon(resources.pype_icon_filepath()))
 
         self.ansi_escape = re.compile(
             r"(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]"
