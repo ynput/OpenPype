@@ -295,6 +295,34 @@ class OutputTextWidget(QtWidgets.QTextEdit):
         return v_scroll.setValue(v_scroll.maximum())
 
 
+class EnhancedTabBar(QtWidgets.QTabBar):
+    double_clicked = QtCore.Signal(QtCore.QPoint)
+    right_clicked = QtCore.Signal(QtCore.QPoint)
+    mid_clicked = QtCore.Signal(QtCore.QPoint)
+
+    def __init__(self, parent):
+        super(EnhancedTabBar, self).__init__(parent)
+
+        self.setDrawBase(False)
+
+    def mouseDoubleClickEvent(self, event):
+        self.double_clicked.emit(event.globalPos())
+        event.accept()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == QtCore.Qt.RightButton:
+            self.right_clicked.emit(event.globalPos())
+            event.accept()
+            return
+
+        elif event.button() == QtCore.Qt.MidButton:
+            self.mid_clicked.emit(event.globalPos())
+            event.accept()
+
+        else:
+            super(EnhancedTabBar, self).mouseReleaseEvent(event)
+
+
 class PythonInterpreterWidget(QtWidgets.QWidget):
     default_width = 1000
     default_height = 600
@@ -319,6 +347,8 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
         output_widget.setTextInteractionFlags(QtCore.Qt.TextBrowserInteraction)
 
         tab_widget = QtWidgets.QTabWidget(self)
+        tab_bar = EnhancedTabBar(tab_widget)
+        tab_widget.setTabBar(tab_bar)
         tab_widget.setTabsClosable(False)
         tab_widget.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
 
@@ -342,9 +372,9 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         line_check_timer.timeout.connect(self._on_timer_timeout)
         add_tab_btn.clicked.connect(self._on_add_clicked)
-        tab_widget.customContextMenuRequested.connect(
-            self._on_tab_context_menu
-        )
+        tab_bar.right_clicked.connect(self._on_tab_right_click)
+        tab_bar.double_clicked.connect(self._on_tab_double_click)
+        tab_bar.mid_clicked.connect(self._on_tab_mid_click)
         tab_widget.tabCloseRequested.connect(self._on_tab_close_req)
 
         self._widgets_splitter = widgets_splitter
@@ -415,7 +445,8 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         setting_registry.set_item("tabs", tabs)
 
-    def _on_tab_context_menu(self, point):
+    def _on_tab_right_click(self, global_point):
+        point = self._tab_widget.mapFromGlobal(global_point)
         tab_bar = self._tab_widget.tabBar()
         tab_idx = tab_bar.tabAt(point)
         last_index = tab_bar.count() - 1
@@ -424,20 +455,45 @@ class PythonInterpreterWidget(QtWidgets.QWidget):
 
         menu = QtWidgets.QMenu(self._tab_widget)
         menu.addAction("Rename")
-        global_point = self._tab_widget.mapToGlobal(point)
         result = menu.exec_(global_point)
         if result is None:
             return
 
         if result.text() == "Rename":
-            dialog = TabNameDialog(self)
-            dialog.set_tab_name(self._tab_widget.tabText(tab_idx))
-            dialog.exec_()
-            tab_name = dialog.result()
-            if tab_name:
-                self._tab_widget.setTabText(tab_idx, tab_name)
+            self._rename_tab_req(tab_idx)
+
+    def _rename_tab_req(self, tab_idx):
+        dialog = TabNameDialog(self)
+        dialog.set_tab_name(self._tab_widget.tabText(tab_idx))
+        dialog.exec_()
+        tab_name = dialog.result()
+        if tab_name:
+            self._tab_widget.setTabText(tab_idx, tab_name)
+
+    def _on_tab_mid_click(self, global_point):
+        point = self._tab_widget.mapFromGlobal(global_point)
+        tab_bar = self._tab_widget.tabBar()
+        tab_idx = tab_bar.tabAt(point)
+        last_index = tab_bar.count() - 1
+        if tab_idx < 0 or tab_idx > last_index:
+            return
+
+        self._on_tab_close_req(tab_idx)
+
+    def _on_tab_double_click(self, global_point):
+        point = self._tab_widget.mapFromGlobal(global_point)
+        tab_bar = self._tab_widget.tabBar()
+        tab_idx = tab_bar.tabAt(point)
+        last_index = tab_bar.count() - 1
+        if tab_idx < 0 or tab_idx > last_index:
+            return
+
+        self._rename_tab_req(tab_idx)
 
     def _on_tab_close_req(self, tab_index):
+        if self._tab_widget.count() == 1:
+            return
+
         widget = self._tab_widget.widget(tab_index)
         if widget in self._tabs:
             self._tabs.remove(widget)
