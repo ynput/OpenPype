@@ -259,7 +259,8 @@ class LoadMov(api.Loader):
         read_node["last"].setValue(last)
         read_node['frame_mode'].setValue("start at")
 
-        if int(self.first_frame) == int(read_node['frame'].value()):
+        if int(float(self.first_frame)) == int(
+                float(read_node['frame'].value())):
             # start at workfile start
             read_node['frame'].setValue(str(self.first_frame))
         else:

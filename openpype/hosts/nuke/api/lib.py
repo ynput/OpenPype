@@ -1660,9 +1660,13 @@ def find_free_space_to_paste_nodes(
 def launch_workfiles_app():
     '''Function letting start workfiles after start of host
     '''
-    # get state from settings
-    open_at_start = get_current_project_settings()["nuke"].get(
-        "general", {}).get("open_workfile_at_start")
+    from openpype.lib import (
+        env_value_to_bool
+    )
+    # get all imortant settings
+    open_at_start = env_value_to_bool(
+        env_key="OPENPYPE_WORKFILE_TOOL_ON_START",
+        default=None)
 
     # return if none is defined
     if not open_at_start:
@@ -1739,3 +1743,68 @@ def process_workfile_builder():
     log.info("Opening last workfile...")
     # open workfile
     open_file(last_workfile_path)
+
+
+def recreate_instance(origin_node, avalon_data=None):
+    """Recreate input instance to different data
+
+    Args:
+        origin_node (nuke.Node): Nuke node to be recreating from
+        avalon_data (dict, optional): data to be used in new node avalon_data
+
+    Returns:
+        nuke.Node: newly created node
+    """
+    knobs_wl = ["render", "publish", "review", "ypos",
+                "use_limit", "first", "last"]
+    # get data from avalon knobs
+    data = anlib.get_avalon_knob_data(
+        origin_node)
+
+    # add input data to avalon data
+    if avalon_data:
+        data.update(avalon_data)
+
+    # capture all node knobs allowed in op_knobs
+    knobs_data = {k: origin_node[k].value()
+                  for k in origin_node.knobs()
+                  for key in knobs_wl
+                  if key in k}
+
+    # get node dependencies
+    inputs = origin_node.dependencies()
+    outputs = origin_node.dependent()
+
+    # remove the node
+    nuke.delete(origin_node)
+
+    # create new node
+    # get appropriate plugin class
+    creator_plugin = None
+    for Creator in api.discover(api.Creator):
+        if Creator.__name__ == data["creator"]:
+            creator_plugin = Creator
+            break
+
+    # create write node with creator
+    new_node_name = data["subset"]
+    new_node = creator_plugin(new_node_name, data["asset"]).process()
+
+    # white listed knobs to the new node
+    for _k, _v in knobs_data.items():
+        try:
+            print(_k, _v)
+            new_node[_k].setValue(_v)
+        except Exception as e:
+            print(e)
+
+    # connect to original inputs
+    for i, n in enumerate(inputs):
+        new_node.setInput(i, n)
+
+    # connect to outputs
+    if len(outputs) > 0:
+        for dn in outputs:
+            dn.setInput(0, new_node)
+
+    return new_node

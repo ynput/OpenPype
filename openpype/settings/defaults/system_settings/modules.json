@@ -140,7 +140,9 @@
     },
     "deadline": {
         "enabled": true,
-        "DEADLINE_REST_URL": "http://localhost:8082"
+        "deadline_urls": {
+            "default": "http://127.0.0.1:8082"
+        }
     },
     "muster": {
         "enabled": false,
