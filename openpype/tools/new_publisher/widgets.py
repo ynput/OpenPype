@@ -75,9 +75,9 @@ class ReadWriteLineEdit(QtWidgets.QFrame):
         return self.read_widget.text()
 
 
-class AssetHierarchyModel(QtGui.QStandardItemModel):
+class AssetsHierarchyModel(QtGui.QStandardItemModel):
     def __init__(self, controller):
-        super(AssetHierarchyModel, self).__init__()
+        super(AssetsHierarchyModel, self).__init__()
         self._controller = controller
 
         self._items_by_name = {}
@@ -159,6 +159,12 @@ class TreeComboBox(QtWidgets.QComboBox):
         if model:
             self.setModel(model)
 
+        # Create `lineEdit` to be able set asset names that are not available
+        #   or for multiselection.
+        self.setEditable(True)
+        # Set `lineEdit` to read only
+        self.lineEdit().setReadOnly(True)
+
     def setModel(self, model):
         self._model = model
         super(TreeComboBox, self).setModel(model)
@@ -199,6 +205,54 @@ class TreeComboBox(QtWidgets.QComboBox):
             )
             self.selectIndex(index)
 
+        else:
+            self.lineEdit().setText(item_name)
+
+
+class AssetsTreeComboBox(TreeComboBox):
+    selection_changed = QtCore.Signal()
+
+    def __init__(self, controller, parent):
+        model = AssetsHierarchyModel(controller)
+
+        super(AssetsTreeComboBox, self).__init__(model, parent)
+
+        self.currentIndexChanged.connect(self._on_index_change)
+
+        self._ignore_index_change = False
+        self._selected_items = []
+        self._model = model
+
+        model.reset()
+
+    def _on_index_change(self):
+        if self._ignore_index_change:
+            return
+
+        self._selected_items = [self.currentText()]
+        self.selection_changed.emit()
+
+    def get_selected_items(self):
+        return list(self._selected_items)
+
+    def set_selected_items(self, asset_names=None, multiselection_text=None):
+        if asset_names is None:
+            asset_names = []
+
+        self._selected_items = asset_names
+        self._ignore_index_change = True
+        if not asset_names:
+            self.set_selected_item("")
+
+        elif len(asset_names) == 1:
+            self.set_selected_item(tuple(asset_names)[0])
+        else:
+            if multiselection_text is None:
+                multiselection_text = "|".join(asset_names)
+            self.set_selected_item(multiselection_text)
+
+        self._ignore_index_change = False
+
 
 class GlobalAttrsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
@@ -207,17 +261,16 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.controller = controller
 
         variant_input = ReadWriteLineEdit(self)
-        asset_model = AssetHierarchyModel(controller)
-        asset_value_widget = TreeComboBox(asset_model, self)
-        asset_model.reset()
         task_value_widget = QtWidgets.QLabel(self)
+
+        asset_value_widget = AssetsTreeComboBox(controller, self)
         family_value_widget = QtWidgets.QLabel(self)
         subset_value_widget = QtWidgets.QLabel(self)
 
         subset_value_widget.setText("")
         family_value_widget.setText("")
-        # asset_value_widget.setText("")
         task_value_widget.setText("")
+        asset_value_widget.set_selected_items()
 
         main_layout = QtWidgets.QFormLayout(self)
         main_layout.addRow("Name", variant_input)
@@ -234,10 +287,12 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
     def set_current_instances(self, instances):
         editable = False
+        multiselection_text = "< Multiselection >"
+        unknown = "N/A"
+        asset_names = set()
         if len(instances) == 0:
             variant = ""
             family = ""
-            asset_name = ""
             task_name = ""
             subset_name = ""
 
@@ -246,35 +301,26 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             if instance.creator is not None:
                 editable = True
 
-            unknown = "N/A"
-
             variant = instance.data.get("variant") or unknown
             family = instance.data.get("family") or unknown
-            asset_name = instance.data.get("asset") or unknown
             task_name = instance.data.get("task") or unknown
+            asset_names.add(instance.data.get("asset") or unknown)
             subset_name = instance.data.get("subset") or unknown
 
         else:
             families = set()
-            asset_names = set()
             task_names = set()
             for instance in instances:
                 families.add(instance.data.get("family") or unknown)
                 asset_names.add(instance.data.get("asset") or unknown)
                 task_names.add(instance.data.get("task") or unknown)
 
-            multiselection_text = "< Multiselection >"
-
             variant = multiselection_text
             family = multiselection_text
-            asset_name = multiselection_text
             task_name = multiselection_text
             subset_name = multiselection_text
             if len(families) < 4:
                 family = " / ".join(families)
-
-            if len(asset_names) < 4:
-                asset_name = " / ".join(asset_names)
 
             if len(task_names) < 4:
                 task_name = " / ".join(task_names)
@@ -283,8 +329,11 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         self.variant_input.setText(variant)
         self.family_value_widget.setText(family)
-        self.asset_value_widget.set_selected_item(asset_name)
         self.task_value_widget.setText(task_name)
+        # Set context of asset widget
+        self.asset_value_widget.set_selected_items(
+            asset_names, multiselection_text
+        )
         self.subset_value_widget.setText(subset_name)
 
 
