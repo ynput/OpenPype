@@ -296,6 +296,8 @@ class AssetsTreeComboBox(TreeComboBox):
 
 
 class TasksCombobox(QtWidgets.QComboBox):
+    selection_changed = QtCore.Signal()
+
     def __init__(self, controller, parent):
         super(TasksCombobox, self).__init__(parent)
 
@@ -305,13 +307,49 @@ class TasksCombobox(QtWidgets.QComboBox):
         model = TasksModel(controller)
         self.setModel(model)
 
+        self.currentIndexChanged.connect(self._on_index_change)
+
         self._model = model
+        self._selected_items = []
+        self._ignore_index_change = False
+
+    def _on_index_change(self):
+        if self._ignore_index_change:
+            return
+
+        self._selected_items = [self.currentText()]
+        self.selection_changed.emit()
+
+    def get_selected_items(self):
+        return list(self._selected_items)
 
     def set_asset_names(self, asset_names):
         self._model.set_asset_names(asset_names)
 
     def set_selected_items(self, task_names=None, multiselection_text=None):
-        pass
+        if task_names is None:
+            task_names = []
+
+        self._ignore_index_change = True
+        self._selected_items = task_names
+        if not task_names:
+            self.set_selected_item("")
+
+        elif len(task_names) == 1:
+            self.set_selected_item(tuple(task_names)[0])
+
+        else:
+            if multiselection_text is None:
+                multiselection_text = "|".join(task_names)
+            self.set_selected_item(multiselection_text)
+        self._ignore_index_change = False
+
+    def set_selected_item(self, item_name):
+        idx = self.findText(item_name)
+        if idx < 0:
+            self.lineEdit().setText(item_name)
+        else:
+            self.setCurrentIndex(idx)
 
 
 class GlobalAttrsWidget(QtWidgets.QWidget):
