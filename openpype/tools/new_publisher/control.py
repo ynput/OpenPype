@@ -408,11 +408,16 @@ class PublisherController:
         task_names_by_asset_name = (
             self._asset_docs_cache.get_task_names_by_asset_name()
         )
-        tasks = set()
+        tasks = None
         for asset_name in asset_names:
-            task_names = task_names_by_asset_name.get(asset_name)
-            if task_names:
-                tasks |= set(task_names)
+            task_names = set(task_names_by_asset_name.get(asset_name, []))
+            if tasks is None:
+                tasks = task_names
+            else:
+                tasks &= task_names
+
+            if not tasks:
+                break
         return tasks
 
 
