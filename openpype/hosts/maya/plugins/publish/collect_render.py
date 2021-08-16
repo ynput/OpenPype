@@ -64,6 +64,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     def process(self, context):
         """Entry point to collector."""
         render_instance = None
+        deadline_url = None
+
         for instance in context:
             if "rendering" in instance.data["families"]:
                 render_instance = instance
@@ -86,6 +88,15 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         asset = api.Session["AVALON_ASSET"]
         workspace = context.data["workspaceDir"]
 
+        deadline_settings = (
+            context.data
+            ["system_settings"]
+            ["modules"]
+            ["deadline"]
+        )
+
+        if deadline_settings["enabled"]:
+            deadline_url = render_instance.data.get("deadlineUrl")
         self._rs = renderSetup.instance()
         current_layer = self._rs.getVisibleRenderLayer()
         maya_render_layers = {
@@ -263,6 +274,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                         "vrayUseReferencedAovs") or False
             }
 
+            if deadline_url:
+                data["deadlineUrl"] = deadline_url
+
             if self.sync_workfile_version:
                 data["version"] = context.data["version"]
 
@@ -392,11 +406,13 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         rset = self.maya_layers[layer].renderSettingsCollectionInstance()
         return rset.getOverrides()
 
-    def get_render_attribute(self, attr, layer):
+    @staticmethod
+    def get_render_attribute(attr, layer):
         """Get attribute from render options.
 
         Args:
-            attr (str): name of attribute to be looked up.
+            attr (str): name of attribute to be looked up
+            layer (str): name of render layer
 
         Returns:
             Attribute value
