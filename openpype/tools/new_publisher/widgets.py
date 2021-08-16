@@ -263,6 +263,7 @@ class AssetsTreeComboBox(TreeComboBox):
         self._ignore_index_change = False
         self._selected_items = []
         self._origin_selection = []
+        self._has_value_changed = False
         self._model = model
 
         model.reset()
@@ -272,13 +273,13 @@ class AssetsTreeComboBox(TreeComboBox):
             return
 
         self._selected_items = [self.currentText()]
-        self._has_selection_changed = (
+        self._has_value_changed = (
             self._origin_selection != self._selected_items
         )
         self.selection_changed.emit()
 
-    def has_selection_changed(self):
-        return self._has_selection_changed
+    def has_value_changed(self):
+        return self._has_value_changed
 
     def get_selected_items(self):
         return list(self._selected_items)
@@ -289,7 +290,7 @@ class AssetsTreeComboBox(TreeComboBox):
 
         self._ignore_index_change = True
 
-        self._has_selection_changed = False
+        self._has_value_changed = False
         self._origin_selection = list(asset_names)
         self._selected_items = list(asset_names)
         if not asset_names:
@@ -322,22 +323,24 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._model = model
         self._origin_selection = []
         self._selected_items = []
-        self._has_selection_changed = False
+        self._has_value_changed = False
         self._ignore_index_change = False
+        self._value_is_valid = True
 
     def _on_index_change(self):
         if self._ignore_index_change:
             return
 
         self._selected_items = [self.currentText()]
-        self._has_selection_changed = (
+        self._has_value_changed = (
             self._origin_selection != self._selected_items
         )
+        self._value_is_valid = True
 
         self.selection_changed.emit()
 
-    def has_selection_changed(self):
-        return self._has_selection_changed
+    def has_value_changed(self):
+        return self._has_value_changed
 
     def get_selected_items(self):
         return list(self._selected_items)
@@ -351,18 +354,30 @@ class TasksCombobox(QtWidgets.QComboBox):
 
         self._ignore_index_change = True
 
-        self._has_selection_changed = False
+        self._has_value_changed = False
         self._origin_selection = list(task_names)
         self._selected_items = list(task_names)
         # Reset current index
         self.setCurrentIndex(-1)
         if not task_names:
+            self._value_is_valid = False
             self.set_selected_item("")
 
         elif len(task_names) == 1:
-            self.set_selected_item(tuple(task_names)[0])
+            task_name = tuple(task_names)[0]
+            idx = self.findText(task_name)
+            self._value_is_valid = not idx < 0
+            self.set_selected_item(task_name)
 
         else:
+            valid_value = True
+            for task_name in task_names:
+                idx = self.findText(task_name)
+                valid_value = not idx < 0
+                if not valid_value:
+                    break
+
+            self._value_is_valid = valid_value
             if multiselection_text is None:
                 multiselection_text = "|".join(task_names)
             self.set_selected_item(multiselection_text)
