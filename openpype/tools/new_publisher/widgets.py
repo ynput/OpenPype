@@ -262,6 +262,7 @@ class AssetsTreeComboBox(TreeComboBox):
 
         self._ignore_index_change = False
         self._selected_items = []
+        self._origin_selection = []
         self._model = model
 
         model.reset()
@@ -271,7 +272,13 @@ class AssetsTreeComboBox(TreeComboBox):
             return
 
         self._selected_items = [self.currentText()]
+        self._has_selection_changed = (
+            self._origin_selection != self._selected_items
+        )
         self.selection_changed.emit()
+
+    def has_selection_changed(self):
+        return self._has_selection_changed
 
     def get_selected_items(self):
         return list(self._selected_items)
@@ -280,8 +287,11 @@ class AssetsTreeComboBox(TreeComboBox):
         if asset_names is None:
             asset_names = []
 
-        self._selected_items = asset_names
         self._ignore_index_change = True
+
+        self._has_selection_changed = False
+        self._origin_selection = list(asset_names)
+        self._selected_items = list(asset_names)
         if not asset_names:
             self.set_selected_item("")
 
@@ -326,6 +336,9 @@ class TasksCombobox(QtWidgets.QComboBox):
 
         self.selection_changed.emit()
 
+    def has_selection_changed(self):
+        return self._has_selection_changed
+
     def get_selected_items(self):
         return list(self._selected_items)
 
@@ -337,6 +350,7 @@ class TasksCombobox(QtWidgets.QComboBox):
             task_names = []
 
         self._ignore_index_change = True
+
         self._has_selection_changed = False
         self._origin_selection = list(task_names)
         self._selected_items = list(task_names)
