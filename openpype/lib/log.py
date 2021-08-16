@@ -72,6 +72,8 @@ class PypeStreamHandler(logging.StreamHandler):
             msg = self.format(record)
             msg = Terminal.log(msg)
             stream = self.stream
+            if stream is None:
+                return
             fs = "%s\n"
             # if no unicode support...
             if not USE_UNICODE:
