@@ -21,60 +21,6 @@ def get_default_thumbnail_image_path():
     return os.path.join(dirpath, "image_file.png")
 
 
-class ReadWriteLineEdit(QtWidgets.QFrame):
-    textChanged = QtCore.Signal(str)
-
-    def __init__(self, parent):
-        super(ReadWriteLineEdit, self).__init__(parent)
-
-        read_widget = QtWidgets.QLabel(self)
-        edit_widget = QtWidgets.QLineEdit(self)
-
-        self._editable = False
-        edit_widget.setVisible(self._editable)
-        read_widget.setVisible(not self._editable)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
-        layout.addWidget(read_widget)
-        layout.addWidget(edit_widget)
-
-        edit_widget.textChanged.connect(self.textChanged)
-
-        self.read_widget = read_widget
-        self.edit_widget = edit_widget
-
-    def set_editable(self, editable):
-        if self._editable == editable:
-            return
-        self._editable = editable
-        self.set_edit(False)
-
-    def set_edit(self, edit=None):
-        if edit is None:
-            edit = not self.edit_widget.isVisible()
-
-        if not self._editable and edit:
-            return
-
-        if self.edit_widget.isVisible() == edit:
-            return
-
-        self.read_widget.setVisible(not edit)
-        self.edit_widget.setVisible(edit)
-
-    def setText(self, text):
-        self.read_widget.setText(text)
-        if self.edit_widget.text() != text:
-            self.edit_widget.setText(text)
-
-    def text(self):
-        if self.edit_widget.isVisible():
-            return self.edit_widget.text()
-        return self.read_widget.text()
-
-
 class AssetsHierarchyModel(QtGui.QStandardItemModel):
     def __init__(self, controller):
         super(AssetsHierarchyModel, self).__init__()
@@ -392,19 +338,67 @@ class TasksCombobox(QtWidgets.QComboBox):
             self.setCurrentIndex(idx)
 
 
+class VariantInputWidget(QtWidgets.QLineEdit):
+    value_changed = QtCore.Signal()
+
+    def __init__(self, parent):
+        super(VariantInputWidget, self).__init__(parent)
+
+        self._origin_value = []
+        self._current_value = []
+
+        self._ignore_value_change = False
+        self._has_value_changed = False
+
+        self.textChanged.connect(self._on_text_change)
+
+    def has_value_changed(self):
+        return self._has_value_changed
+
+    def _on_text_change(self):
+        if self._ignore_value_change:
+            return
+
+        self._current_value = [self.text()]
+        self._has_value_changed = self._current_value != self._origin_value
+
+    def set_value(self, variants=None, multiselection_text=None):
+        if variants is None:
+            variants = []
+
+        self._ignore_value_change = True
+
+        self._origin_value = list(variants)
+        self._current_value = list(variants)
+
+        if not variants:
+            self.setText("")
+
+        elif len(variants) == 1:
+            self.setText(self._current_value[0])
+
+        else:
+            if multiselection_text is None:
+                multiselection_text = "|".join(variants)
+            self.setText("")
+            self.setPlaceholderText(multiselection_text)
+
+        self._ignore_value_change = False
+
+
 class GlobalAttrsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super(GlobalAttrsWidget, self).__init__(parent)
 
         self.controller = controller
 
-        variant_input = ReadWriteLineEdit(self)
-
+        variant_input = VariantInputWidget(self)
         asset_value_widget = AssetsTreeComboBox(controller, self)
         task_value_widget = TasksCombobox(controller, self)
         family_value_widget = QtWidgets.QLabel(self)
         subset_value_widget = QtWidgets.QLabel(self)
 
+        variant_input.set_value()
         subset_value_widget.setText("")
         family_value_widget.setText("")
         asset_value_widget.set_selected_items()
@@ -435,8 +429,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         unknown = "N/A"
         asset_names = set()
         task_names = set()
+        variants = set()
         if len(instances) == 0:
-            variant = ""
             family = ""
             subset_name = ""
 
@@ -445,7 +439,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             if instance.creator is not None:
                 editable = True
 
-            variant = instance.data.get("variant") or unknown
+            variants.add(instance.data.get("variant") or unknown)
             family = instance.data.get("family") or unknown
             asset_names.add(instance.data.get("asset") or unknown)
             task_names.add(instance.data.get("task") or unknown)
@@ -454,19 +448,17 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         else:
             families = set()
             for instance in instances:
+                variants.add(instance.data.get("variant") or unknown)
                 families.add(instance.data.get("family") or unknown)
                 asset_names.add(instance.data.get("asset") or unknown)
                 task_names.add(instance.data.get("task") or unknown)
 
-            variant = multiselection_text
             family = multiselection_text
             subset_name = multiselection_text
             if len(families) < 4:
                 family = " / ".join(families)
 
-        self.variant_input.set_editable(editable)
-
-        self.variant_input.setText(variant)
+        self.variant_input.set_value(variants, multiselection_text)
         self.family_value_widget.setText(family)
         # Set context of asset widget
         self.asset_value_widget.set_selected_items(
