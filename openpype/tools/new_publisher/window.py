@@ -39,6 +39,9 @@ from widgets import (
 
 
 class PublisherWindow(QtWidgets.QWidget):
+    default_width = 1000
+    default_height = 600
+
     def __init__(self, parent=None):
         super(PublisherWindow, self).__init__(parent)
 
@@ -189,6 +192,8 @@ class PublisherWindow(QtWidgets.QWidget):
         self._change_view_type(self._view_type)
 
         self.setStyleSheet(style.load_stylesheet())
+
+        self.resize(self.default_width, self.default_height)
 
         # DEBUGING
         self.set_context_label(
