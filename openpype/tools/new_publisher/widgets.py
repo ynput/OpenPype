@@ -310,7 +310,9 @@ class TasksCombobox(QtWidgets.QComboBox):
         self.currentIndexChanged.connect(self._on_index_change)
 
         self._model = model
+        self._origin_selection = []
         self._selected_items = []
+        self._has_selection_changed = False
         self._ignore_index_change = False
 
     def _on_index_change(self):
@@ -318,6 +320,10 @@ class TasksCombobox(QtWidgets.QComboBox):
             return
 
         self._selected_items = [self.currentText()]
+        self._has_selection_changed = (
+            self._origin_selection != self._selected_items
+        )
+
         self.selection_changed.emit()
 
     def get_selected_items(self):
@@ -331,7 +337,11 @@ class TasksCombobox(QtWidgets.QComboBox):
             task_names = []
 
         self._ignore_index_change = True
-        self._selected_items = task_names
+        self._has_selection_changed = False
+        self._origin_selection = list(task_names)
+        self._selected_items = list(task_names)
+        # Reset current index
+        self.setCurrentIndex(-1)
         if not task_names:
             self.set_selected_item("")
 
@@ -342,6 +352,7 @@ class TasksCombobox(QtWidgets.QComboBox):
             if multiselection_text is None:
                 multiselection_text = "|".join(task_names)
             self.set_selected_item(multiselection_text)
+
         self._ignore_index_change = False
 
     def set_selected_item(self, item_name):
