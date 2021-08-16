@@ -1,3 +1,4 @@
+import copy
 import weakref
 import logging
 import collections
@@ -69,6 +70,50 @@ class MainThreadProcess(QtCore.QObject):
         self._items_to_process = collections.deque()
 
 
+class AssetDocsCache:
+    projection = {
+        "_id": True,
+        "name": True,
+        "data.visualParent": True,
+        "data.tasks": True
+    }
+
+    def __init__(self, controller):
+        self._controller = controller
+        self._asset_docs = None
+        self._task_names_by_asset_name = {}
+
+    @property
+    def dbcon(self):
+        return self._controller.dbcon
+
+    def reset(self):
+        self._asset_docs = None
+        self._task_names_by_asset_name = {}
+
+    def _query(self):
+        if self._asset_docs is None:
+            asset_docs = list(self.dbcon.find(
+                {"type": "asset"},
+                self.projection
+            ))
+            task_names_by_asset_name = {}
+            for asset_doc in asset_docs:
+                asset_name = asset_doc["name"]
+                asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+                task_names_by_asset_name[asset_name] = list(asset_tasks.keys())
+            self._asset_docs = asset_docs
+            self._task_names_by_asset_name = task_names_by_asset_name
+
+    def get_asset_docs(self):
+        self._query()
+        return copy.deepcopy(self._asset_docs)
+
+    def get_task_names_by_asset_name(self):
+        self._query()
+        return copy.deepcopy(self._task_names_by_asset_name)
+
+
 class PublisherController:
     def __init__(self, dbcon=None, headless=False):
         self.log = logging.getLogger("PublisherController")
@@ -96,6 +141,8 @@ class PublisherController:
 
         self._resetting_plugins = False
         self._resetting_instances = False
+
+        self._asset_docs_cache = AssetDocsCache(self)
 
     @property
     def dbcon(self):
@@ -346,14 +393,9 @@ class PublisherController:
         self._publish_next_process()
 
     def get_asset_hierarchy(self):
-        _queue = collections.deque((self.dbcon.find(
-            {"type": "asset"},
-            {
-                "_id": True,
-                "name": True,
-                "data.visualParent": True
-            }
-        )))
+        _queue = collections.deque(
+            self._asset_docs_cache.get_asset_docs()
+        )
 
         output = collections.defaultdict(list)
         while _queue:
@@ -361,6 +403,17 @@ class PublisherController:
             parent_id = asset_doc["data"]["visualParent"]
             output[parent_id].append(asset_doc)
         return output
+
+    def get_task_names_for_asset_names(self, asset_names):
+        task_names_by_asset_name = (
+            self._asset_docs_cache.get_task_names_by_asset_name()
+        )
+        tasks = set()
+        for asset_name in asset_names:
+            task_names = task_names_by_asset_name.get(asset_name)
+            if task_names:
+                tasks |= set(task_names)
+        return tasks
 
 
 def collect_families_from_instances(instances, only_active=False):
