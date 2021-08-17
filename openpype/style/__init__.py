@@ -65,6 +65,7 @@ def _load_font():
         font_dirs = []
         font_dirs.append(os.path.join(fonts_dirpath, "Montserrat"))
         font_dirs.append(os.path.join(fonts_dirpath, "Spartan"))
+        font_dirs.append(os.path.join(fonts_dirpath, "RobotoMono", "static"))
 
         loaded_fonts = []
         for font_dir in font_dirs:

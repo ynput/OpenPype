@@ -1,11 +1,10 @@
 import pyblish.api
 
 from avalon.vendor import requests
-from openpype.plugin import contextplugin_should_run
 import os
 
 
-class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
+class ValidateDeadlineConnection(pyblish.api.InstancePlugin):
     """Validate Deadline Web Service is running"""
 
     label = "Validate Deadline Web Service"
@@ -13,18 +12,16 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
     hosts = ["maya", "nuke"]
     families = ["renderlayer"]
 
-    def process(self, context):
-
-        # Workaround bug pyblish-base#250
-        if not contextplugin_should_run(self, context):
-            return
-
-        deadline_url = (
-            context.data["system_settings"]
-            ["modules"]
-            ["deadline"]
-            ["DEADLINE_REST_URL"]
-        )
+    def process(self, instance):
+        # get default deadline webservice url from deadline module
+        deadline_url = instance.context.data["defaultDeadline"]
+        # if custom one is set in instance, use that
+        if instance.data.get("deadlineUrl"):
+            deadline_url = instance.data.get("deadlineUrl")
+            self.log.info(
+                "We have deadline URL on instance {}".format(
+                    deadline_url))
+        assert deadline_url, "Requires Deadline Webservice URL"
 
         # Check response
         response = self._requests_get(deadline_url)

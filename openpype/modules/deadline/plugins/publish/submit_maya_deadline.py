@@ -264,12 +264,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         self._instance = instance
         self.payload_skeleton = copy.deepcopy(payload_skeleton_template)
-        self._deadline_url = (
-            context.data["system_settings"]
-            ["modules"]
-            ["deadline"]
-            ["DEADLINE_REST_URL"]
-        )
+
+        # get default deadline webservice url from deadline module
+        self.deadline_url = instance.context.data.get("defaultDeadline")
+        # if custom one is set in instance, use that
+        if instance.data.get("deadlineUrl"):
+            self.deadline_url = instance.data.get("deadlineUrl")
+        assert self.deadline_url, "Requires Deadline Webservice URL"
 
         self._job_info = (
             context.data["project_settings"].get(
@@ -286,8 +287,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "MayaSubmitDeadline", {}).get(
                 "pluginInfo", {})
         )
-
-        assert self._deadline_url, "Requires DEADLINE_REST_URL"
 
         context = instance.context
         workspace = context.data["workspaceDir"]
@@ -683,7 +682,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             self.log.info(
                 "Submitting tile job(s) [{}] ...".format(len(frame_payloads)))
 
-            url = "{}/api/jobs".format(self._deadline_url)
+            url = "{}/api/jobs".format(self.deadline_url)
             tiles_count = instance.data.get("tilesX") * instance.data.get("tilesY")  # noqa: E501
 
             for tile_job in frame_payloads:
@@ -767,7 +766,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             self.log.debug(json.dumps(payload, indent=4, sort_keys=True))
 
             # E.g. http://192.168.0.1:8082/api/jobs
-            url = "{}/api/jobs".format(self._deadline_url)
+            url = "{}/api/jobs".format(self.deadline_url)
             response = self._requests_post(url, json=payload)
             if not response.ok:
                 raise Exception(response.text)
@@ -975,7 +974,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             payload = self._get_arnold_export_payload(data)
             self.log.info("Submitting ass export job.")
 
-        url = "{}/api/jobs".format(self._deadline_url)
+        url = "{}/api/jobs".format(self.deadline_url)
         response = self._requests_post(url, json=payload)
         if not response.ok:
             self.log.error("Submition failed!")
