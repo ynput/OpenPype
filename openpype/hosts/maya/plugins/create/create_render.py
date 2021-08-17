@@ -4,6 +4,8 @@ import os
 import json
 import appdirs
 import requests
+import six
+import sys
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
@@ -12,7 +14,13 @@ from openpype.hosts.maya.api import (
     lib,
     plugin
 )
-from openpype.api import (get_system_settings, get_asset)
+from openpype.api import (
+    get_system_settings,
+    get_project_settings,
+    get_asset)
+from openpype.modules import ModulesManager
+
+from avalon.api import Session
 
 
 class CreateRender(plugin.Creator):
@@ -83,6 +91,32 @@ class CreateRender(plugin.Creator):
     def __init__(self, *args, **kwargs):
         """Constructor."""
         super(CreateRender, self).__init__(*args, **kwargs)
+        deadline_settings = get_system_settings()["modules"]["deadline"]
+        if not deadline_settings["enabled"]:
+            self.deadline_servers = {}
+            return
+        project_settings = get_project_settings(Session["AVALON_PROJECT"])
+        try:
+            default_servers = deadline_settings["deadline_urls"]
+            project_servers = (
+                project_settings["deadline"]
+                                ["deadline_servers"]
+            )
+            self.deadline_servers = {
+                k: default_servers[k]
+                for k in project_servers
+                if k in default_servers
+            }
+
+            if not self.deadline_servers:
+                self.deadline_servers = default_servers
+
+        except AttributeError:
+            # Handle situation were we had only one url for deadline.
+            manager = ModulesManager()
+            deadline_module = manager.modules_by_name["deadline"]
+            # get default deadline webservice url from deadline module
+            self.deadline_servers = deadline_module.deadline_urls
 
     def process(self):
         """Entry point."""
@@ -94,10 +128,10 @@ class CreateRender(plugin.Creator):
         use_selection = self.options.get("useSelection")
         with lib.undo_chunk():
             self._create_render_settings()
-            instance = super(CreateRender, self).process()
+            self.instance = super(CreateRender, self).process()
             # create namespace with instance
             index = 1
-            namespace_name = "_{}".format(str(instance))
+            namespace_name = "_{}".format(str(self.instance))
             try:
                 cmds.namespace(rm=namespace_name)
             except RuntimeError:
@@ -105,12 +139,20 @@ class CreateRender(plugin.Creator):
                 pass
 
             while cmds.namespace(exists=namespace_name):
-                namespace_name = "_{}{}".format(str(instance), index)
+                namespace_name = "_{}{}".format(str(self.instance), index)
                 index += 1
 
             namespace = cmds.namespace(add=namespace_name)
 
-            cmds.setAttr("{}.machineList".format(instance), lock=True)
+            # add Deadline server selection list
+            if self.deadline_servers:
+                cmds.scriptJob(
+                    attributeChange=[
+                        "{}.deadlineServers".format(self.instance),
+                        self._deadline_webservice_changed
+                    ])
+
+            cmds.setAttr("{}.machineList".format(self.instance), lock=True)
             self._rs = renderSetup.instance()
             layers = self._rs.getRenderLayers()
             if use_selection:
@@ -122,7 +164,7 @@ class CreateRender(plugin.Creator):
                     render_set = cmds.sets(
                         n="{}:{}".format(namespace, layer.name()))
                     sets.append(render_set)
-                cmds.sets(sets, forceElement=instance)
+                cmds.sets(sets, forceElement=self.instance)
 
             # if no render layers are present, create default one with
             # asterisk selector
@@ -138,62 +180,61 @@ class CreateRender(plugin.Creator):
                 renderer = 'renderman'
 
             self._set_default_renderer_settings(renderer)
+        return self.instance
+
+    def _deadline_webservice_changed(self):
+        """Refresh Deadline server dependent options."""
+        # get selected server
+        from maya import cmds
+        webservice = self.deadline_servers[
+            self.server_aliases[
+                cmds.getAttr("{}.deadlineServers".format(self.instance))
+            ]
+        ]
+        pools = self._get_deadline_pools(webservice)
+        cmds.deleteAttr("{}.primaryPool".format(self.instance))
+        cmds.deleteAttr("{}.secondaryPool".format(self.instance))
+        cmds.addAttr(self.instance, longName="primaryPool",
+                     attributeType="enum",
+                     enumName=":".join(pools))
+        cmds.addAttr(self.instance, longName="secondaryPool",
+                     attributeType="enum",
+                     enumName=":".join(["-"] + pools))
+
+    def _get_deadline_pools(self, webservice):
+        # type: (str) -> list
+        """Get pools from Deadline.
+        Args:
+            webservice (str): Server url.
+        Returns:
+            list: Pools.
+        Throws:
+            RuntimeError: If deadline webservice is unreachable.
+
+        """
+        argument = "{}/api/pools?NamesOnly=true".format(webservice)
+        try:
+            response = self._requests_get(argument)
+        except requests.exceptions.ConnectionError as exc:
+            msg = 'Cannot connect to deadline web service'
+            self.log.error(msg)
+            six.reraise(
+                RuntimeError,
+                RuntimeError('{} - {}'.format(msg, exc)),
+                sys.exc_info()[2])
+        if not response.ok:
+            self.log.warning("No pools retrieved")
+            return []
+
+        return response.json()
 
     def _create_render_settings(self):
+        """Create instance settings."""
         # get pools
-        pools = []
+        pool_names = []
 
-        system_settings = get_system_settings()["modules"]
-
-        deadline_enabled = system_settings["deadline"]["enabled"]
-        muster_enabled = system_settings["muster"]["enabled"]
-        deadline_url = system_settings["deadline"]["DEADLINE_REST_URL"]
-        muster_url = system_settings["muster"]["MUSTER_REST_URL"]
-
-        if deadline_enabled and muster_enabled:
-            self.log.error(
-                "Both Deadline and Muster are enabled. " "Cannot support both."
-            )
-            raise RuntimeError("Both Deadline and Muster are enabled")
-
-        if deadline_enabled:
-            argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
-            try:
-                response = self._requests_get(argument)
-            except requests.exceptions.ConnectionError as e:
-                msg = 'Cannot connect to deadline web service'
-                self.log.error(msg)
-                raise RuntimeError('{} - {}'.format(msg, e))
-            if not response.ok:
-                self.log.warning("No pools retrieved")
-            else:
-                pools = response.json()
-                self.data["primaryPool"] = pools
-                # We add a string "-" to allow the user to not
-                # set any secondary pools
-                self.data["secondaryPool"] = ["-"] + pools
-
-        if muster_enabled:
-            self.log.info(">>> Loading Muster credentials ...")
-            self._load_credentials()
-            self.log.info(">>> Getting pools ...")
-            try:
-                pools = self._get_muster_pools()
-            except requests.exceptions.HTTPError as e:
-                if e.startswith("401"):
-                    self.log.warning("access token expired")
-                    self._show_login()
-                    raise RuntimeError("Access token expired")
-            except requests.exceptions.ConnectionError:
-                self.log.error("Cannot connect to Muster API endpoint.")
-                raise RuntimeError("Cannot connect to {}".format(muster_url))
-            pool_names = []
-            for pool in pools:
-                self.log.info("  - pool: {}".format(pool["name"]))
-                pool_names.append(pool["name"])
-
-            self.data["primaryPool"] = pool_names
-
+        self.server_aliases = self.deadline_servers.keys()
+        self.data["deadlineServers"] = self.server_aliases
         self.data["suspendPublishJob"] = False
         self.data["review"] = True
         self.data["extendFrames"] = False
@@ -212,6 +253,54 @@ class CreateRender(plugin.Creator):
         # Disable for now as this feature is not working yet
         # self.data["assScene"] = False
 
+        system_settings = get_system_settings()["modules"]
+
+        deadline_enabled = system_settings["deadline"]["enabled"]
+        muster_enabled = system_settings["muster"]["enabled"]
+        muster_url = system_settings["muster"]["MUSTER_REST_URL"]
+
+        if deadline_enabled and muster_enabled:
+            self.log.error(
+                "Both Deadline and Muster are enabled. " "Cannot support both."
+            )
+            raise RuntimeError("Both Deadline and Muster are enabled")
+
+        if deadline_enabled:
+            # if default server is not between selected, use first one for
+            # initial list of pools.
+            try:
+                deadline_url = self.deadline_servers["default"]
+            except KeyError:
+                deadline_url = [
+                    self.deadline_servers[k]
+                    for k in self.deadline_servers.keys()
+                ][0]
+
+            pool_names = self._get_deadline_pools(deadline_url)
+
+        if muster_enabled:
+            self.log.info(">>> Loading Muster credentials ...")
+            self._load_credentials()
+            self.log.info(">>> Getting pools ...")
+            pools = []
+            try:
+                pools = self._get_muster_pools()
+            except requests.exceptions.HTTPError as e:
+                if e.startswith("401"):
+                    self.log.warning("access token expired")
+                    self._show_login()
+                    raise RuntimeError("Access token expired")
+            except requests.exceptions.ConnectionError:
+                self.log.error("Cannot connect to Muster API endpoint.")
+                raise RuntimeError("Cannot connect to {}".format(muster_url))
+            for pool in pools:
+                self.log.info("  - pool: {}".format(pool["name"]))
+                pool_names.append(pool["name"])
+
+        self.data["primaryPool"] = pool_names
+        # We add a string "-" to allow the user to not
+        # set any secondary pools
+        self.data["secondaryPool"] = ["-"] + pool_names
         self.options = {"useSelection": False}  # Force no content
 
     def _load_credentials(self):
@@ -293,9 +382,7 @@ class CreateRender(plugin.Creator):
 
         """
         if "verify" not in kwargs:
-            kwargs["verify"] = (
-                False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True
-            )  # noqa
+            kwargs["verify"] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
         return requests.post(*args, **kwargs)
 
     def _requests_get(self, *args, **kwargs):
@@ -312,9 +399,7 @@ class CreateRender(plugin.Creator):
 
         """
         if "verify" not in kwargs:
-            kwargs["verify"] = (
-                False if os.getenv("OPENPYPE_DONT_VERIFY_SSL", True) else True
-            )  # noqa
+            kwargs["verify"] = not os.getenv("OPENPYPE_DONT_VERIFY_SSL", True)
         return requests.get(*args, **kwargs)
 
     def _set_default_renderer_settings(self, renderer):
@@ -332,14 +417,10 @@ class CreateRender(plugin.Creator):
 
         if renderer == "arnold":
             # set format to exr
+
             cmds.setAttr(
                 "defaultArnoldDriver.ai_translator", "exr", type="string")
-            # enable animation
-            cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
-            cmds.setAttr("defaultRenderGlobals.animation", 1)
-            cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
-            cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
-
+            self._set_global_output_settings()
             # resolution
             cmds.setAttr(
                 "defaultResolution.width",
@@ -349,43 +430,12 @@ class CreateRender(plugin.Creator):
                 asset["data"].get("resolutionHeight"))
 
         if renderer == "vray":
-            vray_settings = cmds.ls(type="VRaySettingsNode")
-            if not vray_settings:
-                node = cmds.createNode("VRaySettingsNode")
-            else:
-                node = vray_settings[0]
-
-            # set underscore as element separator instead of default `.`
-            cmds.setAttr(
-                "{}.fileNameRenderElementSeparator".format(
-                    node),
-                "_"
-            )
-            # set format to exr
-            cmds.setAttr(
-                "{}.imageFormatStr".format(node), 5)
-
-            # animType
-            cmds.setAttr(
-                "{}.animType".format(node), 1)
-
-            # resolution
-            cmds.setAttr(
-                "{}.width".format(node),
-                asset["data"].get("resolutionWidth"))
-            cmds.setAttr(
-                "{}.height".format(node),
-                asset["data"].get("resolutionHeight"))
-
+            self._set_vray_settings(asset)
         if renderer == "redshift":
-            redshift_settings = cmds.ls(type="RedshiftOptions")
-            if not redshift_settings:
-                node = cmds.createNode("RedshiftOptions")
-            else:
-                node = redshift_settings[0]
+            _ = self._set_renderer_option(
+                "RedshiftOptions", "{}.imageFormat", 1
+            )
 
-            # set exr
-            cmds.setAttr("{}.imageFormat".format(node), 1)
             # resolution
             cmds.setAttr(
                 "defaultResolution.width",
@@ -394,8 +444,56 @@ class CreateRender(plugin.Creator):
                 "defaultResolution.height",
                 asset["data"].get("resolutionHeight"))
 
-            # enable animation
-            cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
-            cmds.setAttr("defaultRenderGlobals.animation", 1)
-            cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
-            cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
+            self._set_global_output_settings()
+
+    @staticmethod
+    def _set_renderer_option(renderer_node, arg=None, value=None):
+        # type: (str, str, str) -> str
+        """Set option on renderer node.
+
+        If renderer settings node doesn't exists, it is created first.
+
+        Args:
+             renderer_node (str): Renderer name.
+             arg (str, optional): Argument name.
+             value (str, optional): Argument value.
+
+        Returns:
+            str: Renderer settings node.
+
+        """
+        settings = cmds.ls(type=renderer_node)
+        result = settings[0] if settings else cmds.createNode(renderer_node)
+        cmds.setAttr(arg.format(result), value)
+        return result
+
+    def _set_vray_settings(self, asset):
+        # type: (dict) -> None
+        """Sets important settings for Vray."""
+        node = self._set_renderer_option(
+            "VRaySettingsNode", "{}.fileNameRenderElementSeparator", "_"
+        )
+
+        # set format to exr
+        cmds.setAttr(
+            "{}.imageFormatStr".format(node), 5)
+
+        # animType
+        cmds.setAttr(
+            "{}.animType".format(node), 1)
+
+        # resolution
+        cmds.setAttr(
+            "{}.width".format(node),
+            asset["data"].get("resolutionWidth"))
+        cmds.setAttr(
+            "{}.height".format(node),
+            asset["data"].get("resolutionHeight"))
+
+    @staticmethod
+    def _set_global_output_settings():
+        # enable animation
+        cmds.setAttr("defaultRenderGlobals.outFormatControl", 0)
+        cmds.setAttr("defaultRenderGlobals.animation", 1)
+        cmds.setAttr("defaultRenderGlobals.putFrameBeforeExt", 1)
+        cmds.setAttr("defaultRenderGlobals.extensionPadding", 4)
