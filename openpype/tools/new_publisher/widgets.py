@@ -13,6 +13,8 @@ from constants import (
     SORT_VALUE_ROLE
 )
 
+from openpype.tools.flickcharm import FlickCharm
+
 SEPARATORS = ("---separator---", "---")
 
 
@@ -402,6 +404,9 @@ class MultipleItemWidget(QtWidgets.QWidget):
         view.setModel(model)
         view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+
+        flick = FlickCharm(parent=view)
+        flick.activateOn(view)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
