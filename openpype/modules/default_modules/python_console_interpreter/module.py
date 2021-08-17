@@ -1,5 +1,5 @@
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayModule
+from openpype_interfaces import ITrayAction
 
 
 class PythonInterpreterAction(OpenPypeModule, ITrayAction):
@@ -26,7 +26,7 @@ class PythonInterpreterAction(OpenPypeModule, ITrayAction):
         if self._interpreter_window:
             return
 
-        from openpype.modules.python_console_interpreter.window import (
+        from openpype_modules.python_console_interpreter.window import (
             PythonInterpreterWidget
         )
 
