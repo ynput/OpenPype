@@ -386,6 +386,58 @@ class VariantInputWidget(QtWidgets.QLineEdit):
         self._ignore_value_change = False
 
 
+class MultipleItemWidget(QtWidgets.QWidget):
+    def __init__(self, parent):
+        super(MultipleItemWidget, self).__init__(parent)
+
+        model = QtGui.QStandardItemModel()
+
+        view = QtWidgets.QListView(self)
+        view.setObjectName("MultipleItemView")
+        view.setLayoutMode(QtWidgets.QListView.Batched)
+        view.setViewMode(QtWidgets.QListView.IconMode)
+        view.setResizeMode(QtWidgets.QListView.Adjust)
+        view.setWrapping(False)
+        view.setSpacing(2)
+        view.setModel(model)
+        view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(view)
+
+        self._view = view
+        self._model = model
+
+        self._value = []
+
+    def showEvent(self, event):
+        super(MultipleItemWidget, self).showEvent(event)
+        tmp_item = None
+        if not self._value:
+            tmp_item = QtGui.QStandardItem("tmp")
+            self._model.appendRow(tmp_item)
+
+        height = self._view.sizeHintForRow(0)
+        self.setMaximumHeight(height + (2 * self._view.spacing()))
+
+        if tmp_item is not None:
+            self._model.clear()
+
+    def set_value(self, value=None):
+        if value is None:
+            value = []
+        self._value = value
+
+        self._model.clear()
+        for item_text in value:
+            item = QtGui.QStandardItem(item_text)
+            item.setEditable(False)
+            item.setSelectable(False)
+            self._model.appendRow(item)
+
+
 class GlobalAttrsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super(GlobalAttrsWidget, self).__init__(parent)
@@ -395,14 +447,14 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         variant_input = VariantInputWidget(self)
         asset_value_widget = AssetsTreeComboBox(controller, self)
         task_value_widget = TasksCombobox(controller, self)
-        family_value_widget = QtWidgets.QLabel(self)
-        subset_value_widget = QtWidgets.QLabel(self)
+        family_value_widget = MultipleItemWidget(self)
+        subset_value_widget = MultipleItemWidget(self)
 
         variant_input.set_value()
-        subset_value_widget.setText("")
-        family_value_widget.setText("")
         asset_value_widget.set_selected_items()
         task_value_widget.set_selected_items()
+        family_value_widget.set_value()
+        subset_value_widget.set_value()
 
         main_layout = QtWidgets.QFormLayout(self)
         main_layout.addRow("Name", variant_input)
@@ -414,9 +466,9 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         asset_value_widget.selection_changed.connect(self._on_asset_change)
 
         self.variant_input = variant_input
-        self.family_value_widget = family_value_widget
         self.asset_value_widget = asset_value_widget
         self.task_value_widget = task_value_widget
+        self.family_value_widget = family_value_widget
         self.subset_value_widget = subset_value_widget
 
     def _on_asset_change(self):
@@ -430,9 +482,10 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         asset_names = set()
         task_names = set()
         variants = set()
+        families = set()
+        subset_names = set()
         if len(instances) == 0:
-            family = ""
-            subset_name = ""
+            pass
 
         elif len(instances) == 1:
             instance = instances[0]
@@ -440,26 +493,23 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
                 editable = True
 
             variants.add(instance.data.get("variant") or unknown)
-            family = instance.data.get("family") or unknown
+            families.add(instance.data.get("family") or unknown)
             asset_names.add(instance.data.get("asset") or unknown)
             task_names.add(instance.data.get("task") or unknown)
-            subset_name = instance.data.get("subset") or unknown
+            subset_names.add(instance.data.get("subset") or unknown)
 
         else:
-            families = set()
+
             for instance in instances:
                 variants.add(instance.data.get("variant") or unknown)
                 families.add(instance.data.get("family") or unknown)
                 asset_names.add(instance.data.get("asset") or unknown)
                 task_names.add(instance.data.get("task") or unknown)
+                subset_names.add(instance.data.get("subset") or unknown)
 
-            family = multiselection_text
-            subset_name = multiselection_text
-            if len(families) < 4:
-                family = " / ".join(families)
-
-        self.variant_input.set_value(variants, multiselection_text)
-        self.family_value_widget.setText(family)
+        self.variant_input.set_value(
+            variants, multiselection_text
+        )
         # Set context of asset widget
         self.asset_value_widget.set_selected_items(
             asset_names, multiselection_text
@@ -469,7 +519,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.task_value_widget.set_selected_items(
             task_names, multiselection_text
         )
-        self.subset_value_widget.setText(subset_name)
+        self.family_value_widget.set_value(families)
+        self.subset_value_widget.set_value(subset_names)
 
 
 class FamilyAttrsWidget(QtWidgets.QWidget):
