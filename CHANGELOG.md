@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.3.0-nightly.11](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.3.0](https://github.com/pypeclub/OpenPype/tree/3.3.0) (2021-08-17)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.2.0...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.2.0...3.3.0)
 
 **🚀 Enhancements**
 
@@ -72,7 +72,6 @@
 
 **🐛 Bug fixes**
 
-- Failsafe for cross project containers. [\#1806](https://github.com/pypeclub/OpenPype/pull/1806)
 - nuke: fixing wrong name of family folder when `used existing frames` [\#1803](https://github.com/pypeclub/OpenPype/pull/1803)
 - Collect ftrack family bugs [\#1801](https://github.com/pypeclub/OpenPype/pull/1801)
 - Invitee email can be None which break the Ftrack commit. [\#1788](https://github.com/pypeclub/OpenPype/pull/1788)
