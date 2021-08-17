@@ -199,7 +199,7 @@ class TreeComboBox(QtWidgets.QComboBox):
 
 
 class AssetsTreeComboBox(TreeComboBox):
-    selection_changed = QtCore.Signal()
+    value_changed = QtCore.Signal()
 
     def __init__(self, controller, parent):
         model = AssetsHierarchyModel(controller)
@@ -210,11 +210,16 @@ class AssetsTreeComboBox(TreeComboBox):
 
         self._ignore_index_change = False
         self._selected_items = []
-        self._origin_selection = []
+        self._origin_value = []
         self._has_value_changed = False
         self._model = model
 
+        self._multiselection_text = None
+
         model.reset()
+
+    def set_multiselection_text(self, text):
+        self._multiselection_text = text
 
     def _on_index_change(self):
         if self._ignore_index_change:
@@ -222,9 +227,9 @@ class AssetsTreeComboBox(TreeComboBox):
 
         self._selected_items = [self.currentText()]
         self._has_value_changed = (
-            self._origin_selection != self._selected_items
+            self._origin_value != self._selected_items
         )
-        self.selection_changed.emit()
+        self.value_changed.emit()
 
     def has_value_changed(self):
         return self._has_value_changed
@@ -232,14 +237,14 @@ class AssetsTreeComboBox(TreeComboBox):
     def get_selected_items(self):
         return list(self._selected_items)
 
-    def set_selected_items(self, asset_names=None, multiselection_text=None):
+    def set_selected_items(self, asset_names=None):
         if asset_names is None:
             asset_names = []
 
         self._ignore_index_change = True
 
         self._has_value_changed = False
-        self._origin_selection = list(asset_names)
+        self._origin_value = list(asset_names)
         self._selected_items = list(asset_names)
         if not asset_names:
             self.set_selected_item("")
@@ -247,15 +252,19 @@ class AssetsTreeComboBox(TreeComboBox):
         elif len(asset_names) == 1:
             self.set_selected_item(tuple(asset_names)[0])
         else:
+            multiselection_text = self._multiselection_text
             if multiselection_text is None:
                 multiselection_text = "|".join(asset_names)
             self.set_selected_item(multiselection_text)
 
         self._ignore_index_change = False
 
+    def reset_to_origin(self):
+        self.set_selected_items(self._origin_value)
+
 
 class TasksCombobox(QtWidgets.QComboBox):
-    selection_changed = QtCore.Signal()
+    value_changed = QtCore.Signal()
 
     def __init__(self, controller, parent):
         super(TasksCombobox, self).__init__(parent)
@@ -269,11 +278,14 @@ class TasksCombobox(QtWidgets.QComboBox):
         self.currentIndexChanged.connect(self._on_index_change)
 
         self._model = model
-        self._origin_selection = []
+        self._origin_value = []
         self._selected_items = []
         self._has_value_changed = False
         self._ignore_index_change = False
-        self._value_is_valid = True
+        self._multiselection_text = None
+
+    def set_multiselection_text(self, text):
+        self._multiselection_text = text
 
     def _on_index_change(self):
         if self._ignore_index_change:
@@ -281,11 +293,10 @@ class TasksCombobox(QtWidgets.QComboBox):
 
         self._selected_items = [self.currentText()]
         self._has_value_changed = (
-            self._origin_selection != self._selected_items
+            self._origin_value != self._selected_items
         )
-        self._value_is_valid = True
 
-        self.selection_changed.emit()
+        self.value_changed.emit()
 
     def has_value_changed(self):
         return self._has_value_changed
@@ -296,25 +307,23 @@ class TasksCombobox(QtWidgets.QComboBox):
     def set_asset_names(self, asset_names):
         self._model.set_asset_names(asset_names)
 
-    def set_selected_items(self, task_names=None, multiselection_text=None):
+    def set_selected_items(self, task_names=None):
         if task_names is None:
             task_names = []
 
         self._ignore_index_change = True
 
         self._has_value_changed = False
-        self._origin_selection = list(task_names)
+        self._origin_value = list(task_names)
         self._selected_items = list(task_names)
         # Reset current index
         self.setCurrentIndex(-1)
         if not task_names:
-            self._value_is_valid = False
             self.set_selected_item("")
 
         elif len(task_names) == 1:
             task_name = tuple(task_names)[0]
             idx = self.findText(task_name)
-            self._value_is_valid = not idx < 0
             self.set_selected_item(task_name)
 
         else:
@@ -325,12 +334,14 @@ class TasksCombobox(QtWidgets.QComboBox):
                 if not valid_value:
                     break
 
-            self._value_is_valid = valid_value
+            multiselection_text = self._multiselection_text
             if multiselection_text is None:
                 multiselection_text = "|".join(task_names)
             self.set_selected_item(multiselection_text)
 
         self._ignore_index_change = False
+
+        self.value_changed.emit()
 
     def set_selected_item(self, item_name):
         idx = self.findText(item_name)
@@ -338,6 +349,9 @@ class TasksCombobox(QtWidgets.QComboBox):
             self.lineEdit().setText(item_name)
         else:
             self.setCurrentIndex(idx)
+
+    def reset_to_origin(self):
+        self.set_selected_items(self._origin_value)
 
 
 class VariantInputWidget(QtWidgets.QLineEdit):
@@ -351,8 +365,12 @@ class VariantInputWidget(QtWidgets.QLineEdit):
 
         self._ignore_value_change = False
         self._has_value_changed = False
+        self._multiselection_text = None
 
         self.textChanged.connect(self._on_text_change)
+
+    def set_multiselection_text(self, text):
+        self._multiselection_text = text
 
     def has_value_changed(self):
         return self._has_value_changed
@@ -364,7 +382,10 @@ class VariantInputWidget(QtWidgets.QLineEdit):
         self._current_value = [self.text()]
         self._has_value_changed = self._current_value != self._origin_value
 
-    def set_value(self, variants=None, multiselection_text=None):
+    def reset_to_origin(self):
+        self.set_value(self._origin_value)
+
+    def set_value(self, variants=None):
         if variants is None:
             variants = []
 
@@ -373,6 +394,7 @@ class VariantInputWidget(QtWidgets.QLineEdit):
         self._origin_value = list(variants)
         self._current_value = list(variants)
 
+        self.setPlaceholderText("")
         if not variants:
             self.setText("")
 
@@ -380,6 +402,7 @@ class VariantInputWidget(QtWidgets.QLineEdit):
             self.setText(self._current_value[0])
 
         else:
+            multiselection_text = self._multiselection_text
             if multiselection_text is None:
                 multiselection_text = "|".join(variants)
             self.setText("")
@@ -444,6 +467,9 @@ class MultipleItemWidget(QtWidgets.QWidget):
 
 
 class GlobalAttrsWidget(QtWidgets.QWidget):
+    multiselection_text = "< Multiselection >"
+    unknown_value = "N/A"
+
     def __init__(self, controller, parent):
         super(GlobalAttrsWidget, self).__init__(parent)
 
@@ -455,11 +481,26 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         family_value_widget = MultipleItemWidget(self)
         subset_value_widget = MultipleItemWidget(self)
 
+        variant_input.set_multiselection_text(self.multiselection_text)
+        asset_value_widget.set_multiselection_text(self.multiselection_text)
+        task_value_widget.set_multiselection_text(self.multiselection_text)
+
         variant_input.set_value()
         asset_value_widget.set_selected_items()
         task_value_widget.set_selected_items()
         family_value_widget.set_value()
         subset_value_widget.set_value()
+
+        submit_btn = QtWidgets.QPushButton("Submit", self)
+        cancel_btn = QtWidgets.QPushButton("Cancel", self)
+        submit_btn.setEnabled(False)
+        cancel_btn.setEnabled(False)
+
+        btns_layout = QtWidgets.QHBoxLayout()
+        btns_layout.setContentsMargins(0, 0, 0, 0)
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(submit_btn)
+        btns_layout.addWidget(cancel_btn)
 
         main_layout = QtWidgets.QFormLayout(self)
         main_layout.addRow("Name", variant_input)
@@ -467,65 +508,92 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         main_layout.addRow("Task", task_value_widget)
         main_layout.addRow("Family", family_value_widget)
         main_layout.addRow("Subset", subset_value_widget)
+        main_layout.addRow(btns_layout)
 
-        asset_value_widget.selection_changed.connect(self._on_asset_change)
+        variant_input.value_changed.connect(self._on_variant_change)
+        asset_value_widget.value_changed.connect(self._on_asset_change)
+        task_value_widget.value_changed.connect(self._on_task_change)
+        submit_btn.clicked.connect(self._on_submit)
+        cancel_btn.clicked.connect(self._on_cancel)
 
         self.variant_input = variant_input
         self.asset_value_widget = asset_value_widget
         self.task_value_widget = task_value_widget
         self.family_value_widget = family_value_widget
         self.subset_value_widget = subset_value_widget
+        self.submit_btn = submit_btn
+        self.cancel_btn = cancel_btn
+
+    def _on_submit(self):
+        print("submit")
+        self.cancel_btn.setEnabled(False)
+        self.submit_btn.setEnabled(False)
+
+    def _on_cancel(self):
+        self.variant_input.reset_to_origin()
+        self.asset_value_widget.reset_to_origin()
+        self.task_value_widget.reset_to_origin()
+        self.cancel_btn.setEnabled(False)
+        self.submit_btn.setEnabled(False)
+
+    def _on_value_change(self):
+        any_changed = (
+            self.variant_input.has_value_changed()
+            or self.asset_value_widget.has_value_changed()
+            or self.task_value_widget.has_value_changed()
+        )
+
+        self.cancel_btn.setEnabled(any_changed)
+        self.submit_btn.setEnabled(any_changed)
+
+    def _on_variant_change(self):
+        self._on_value_change()
 
     def _on_asset_change(self):
         asset_names = self.asset_value_widget.get_selected_items()
         self.task_value_widget.set_asset_names(asset_names)
+        self._on_value_change()
+
+    def _on_task_change(self):
+        self._on_value_change()
 
     def set_current_instances(self, instances):
-        editable = False
-        multiselection_text = "< Multiselection >"
-        unknown = "N/A"
+        self.cancel_btn.setEnabled(False)
+        self.submit_btn.setEnabled(False)
+
         asset_names = set()
         task_names = set()
         variants = set()
         families = set()
         subset_names = set()
+
+        editable = True
         if len(instances) == 0:
-            pass
+            editable = False
 
-        elif len(instances) == 1:
-            instance = instances[0]
-            if instance.creator is not None:
-                editable = True
+        for instance in instances:
+            if instance.creator is None:
+                editable = False
 
-            variants.add(instance.data.get("variant") or unknown)
-            families.add(instance.data.get("family") or unknown)
-            asset_names.add(instance.data.get("asset") or unknown)
-            task_names.add(instance.data.get("task") or unknown)
-            subset_names.add(instance.data.get("subset") or unknown)
+            variants.add(instance.data.get("variant") or self.unknown_value)
+            families.add(instance.data.get("family") or self.unknown_value)
+            asset_names.add(instance.data.get("asset") or self.unknown_value)
+            task_names.add(instance.data.get("task") or self.unknown_value)
+            subset_names.add(instance.data.get("subset") or self.unknown_value)
 
-        else:
+        self.variant_input.set_value(variants)
 
-            for instance in instances:
-                variants.add(instance.data.get("variant") or unknown)
-                families.add(instance.data.get("family") or unknown)
-                asset_names.add(instance.data.get("asset") or unknown)
-                task_names.add(instance.data.get("task") or unknown)
-                subset_names.add(instance.data.get("subset") or unknown)
-
-        self.variant_input.set_value(
-            variants, multiselection_text
-        )
         # Set context of asset widget
-        self.asset_value_widget.set_selected_items(
-            asset_names, multiselection_text
-        )
+        self.asset_value_widget.set_selected_items(asset_names)
         # Set context of task widget
         self.task_value_widget.set_asset_names(asset_names)
-        self.task_value_widget.set_selected_items(
-            task_names, multiselection_text
-        )
+        self.task_value_widget.set_selected_items(task_names)
         self.family_value_widget.set_value(families)
         self.subset_value_widget.set_value(subset_names)
+
+        self.variant_input.setEnabled(editable)
+        self.asset_value_widget.setEnabled(editable)
+        self.task_value_widget.setEnabled(editable)
 
 
 class FamilyAttrsWidget(QtWidgets.QWidget):
