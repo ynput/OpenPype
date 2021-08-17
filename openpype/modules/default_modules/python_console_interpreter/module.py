@@ -1,7 +1,8 @@
-from .. import PypeModule, ITrayAction
+from openpype.modules import OpenPypeModule
+from openpype_interfaces import ITrayModule
 
 
-class PythonInterpreterAction(PypeModule, ITrayAction):
+class PythonInterpreterAction(OpenPypeModule, ITrayAction):
     label = "Console"
     name = "python_interpreter"
     admin_action = True
