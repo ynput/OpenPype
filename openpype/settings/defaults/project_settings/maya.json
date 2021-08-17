@@ -7,6 +7,19 @@
         "workfile": "ma",
         "yetiRig": "ma"
     },
+    "maya-dirmap": {
+        "enabled": true,
+        "paths": {
+            "source-path": [
+                "foo1",
+                "foo2"
+            ],
+            "destination-path": [
+                "bar1",
+                "bar2"
+            ]
+        }
+    },
     "scriptsmenu": {
         "name": "OpenPype Tools",
         "definition": [
@@ -27,6 +40,12 @@
         "CreateLook": {
             "enabled": true,
             "make_tx": true,
+            "defaults": [
+                "Main"
+            ]
+        },
+        "CreateRender": {
+            "enabled": true,
             "defaults": [
                 "Main"
             ]
@@ -76,12 +95,6 @@
             ]
         },
         "CreatePointCache": {
-            "enabled": true,
-            "defaults": [
-                "Main"
-            ]
-        },
-        "CreateRender": {
             "enabled": true,
             "defaults": [
                 "Main"

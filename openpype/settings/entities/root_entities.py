@@ -242,6 +242,14 @@ class RootEntity(BaseItemEntity):
         """Whan any children has changed."""
         self.on_change()
 
+    def collect_static_entities_by_path(self):
+        output = {}
+        for child_obj in self.non_gui_children.values():
+            result = child_obj.collect_static_entities_by_path()
+            if result:
+                output.update(result)
+        return output
+
     def get_child_path(self, child_entity):
         """Return path of children entity"""
         for key, _child_entity in self.non_gui_children.items():
