@@ -69,6 +69,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 task_type = ctx["attributes"]["type"]
             else:
                 asset = ctx["name"]
+                os.environ["AVALON_TASK"] = ""
 
             is_sequence = len(task_data["files"]) > 1
 
@@ -94,12 +95,16 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             instance.data["stagingDir"] = task_dir
             instance.data["source"] = "webpublisher"
 
-            os.environ["FTRACK_API_USER"] = task_data["user"]
+            instance.data["user_email"] = task_data["user"]
 
             if is_sequence:
                 instance.data["representations"] = self._process_sequence(
                     task_data["files"], task_dir
                 )
+                instance.data["frameStart"] = \
+                    instance.data["representations"][0]["frameStart"]
+                instance.data["frameEnd"] = \
+                    instance.data["representations"][0]["frameEnd"]
             else:
                 instance.data["representations"] = self._get_single_repre(
                     task_dir, task_data["files"]
@@ -122,7 +127,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             "name": ext[1:],
             "ext": ext[1:],
             "files": files[0],
-            "stagingDir": task_dir
+            "stagingDir": task_dir,
+            "tags": ["review"]
         }
         self.log.info("single file repre_data.data:: {}".format(repre_data))
         return [repre_data]
@@ -142,7 +148,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             "name": ext[1:],
             "ext": ext[1:],
             "files": files,
-            "stagingDir": task_dir
+            "stagingDir": task_dir,
+            "tags": ["review"]
         }
         self.log.info("sequences repre_data.data:: {}".format(repre_data))
         return [repre_data]
