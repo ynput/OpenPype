@@ -1030,3 +1030,6 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         QtWidgets.QApplication.processEvents()
 
 
+    def _set_success_property(self, success):
+        self.info_frame.setProperty("success", str(success))
+        self.info_frame.style().polish(self.info_frame)
