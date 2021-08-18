@@ -1,6 +1,7 @@
 import copy
 import weakref
 import logging
+import traceback
 import collections
 import avalon.api
 import pyblish.api
@@ -509,20 +510,23 @@ class PublisherController:
 
     def _extract_log_items(self, result):
         output = []
-        records = result.get("records")
-        if not records:
-            return output
-
+        records = result.get("records") or []
         instance_name = None
         instance = result["instance"]
         if instance is not None:
             instance_name = instance.data["name"]
 
-        for record in result.get("records") or []:
+        for record in records:
+            record_exc_info = record.exc_info
+            if record_exc_info is not None:
+                record_exc_info = "".join(
+                    traceback.format_exception(*record_exc_info)
+                )
+
             record_item = {
                 "instance": instance_name,
                 "type": "record",
-                "msg": str(record.msg),
+                "msg": record.getMessage(),
                 "name": record.name,
                 "lineno": record.lineno,
                 "levelno": record.levelno,
@@ -530,9 +534,24 @@ class PublisherController:
                 "threadName": record.threadName,
                 "filename": record.filename,
                 "pathname": record.pathname,
-                "msecs": record.msecs
+                "msecs": record.msecs,
+                "exc_info": record_exc_info
             }
             output.append(record_item)
+
+        exception = result.get("error")
+        if exception:
+            fname, line_no, func, exc = exception.traceback
+            error_item = {
+                "type": "error",
+                "msg": str(exception),
+                "filename": str(fname),
+                "lineno": str(line_no),
+                "func": str(func),
+                "traceback": exception.formatted_traceback,
+                "instance": instance_name
+            }
+            output.append(error_item)
 
         return output
 
