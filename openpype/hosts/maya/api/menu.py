@@ -16,12 +16,10 @@ log = logging.getLogger(__name__)
 
 def _get_menu(menu_name=None):
     """Return the menu instance if it currently exists in Maya"""
-
-    project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-    _menu = project_settings["maya"]["scriptsmenu"]["name"]
-
     if menu_name is None:
-        menu_name = _menu
+        project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
+        menu_name = project_settings["maya"]["scriptsmenu"]["name"]
+
     widgets = dict((
         w.objectName(), w) for w in QtWidgets.QApplication.allWidgets())
     menu = widgets.get(menu_name)
