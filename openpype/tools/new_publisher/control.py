@@ -368,7 +368,27 @@ class PublisherController:
         self._trigger_callbacks(self._publishing_stopped_callback_refs)
 
     def _publish_next_process(self):
-        item = next(self._main_thread_iter)
+        # Validations of progress before using iterator
+        # - same conditions may be inside iterator but they may be used
+        #   only in specific cases (e.g. when it happens for a first time)
+
+        # There are validation errors and validation is passed
+        # - can't do any progree
+        if (
+            self._publish_validated
+            and self._publish_validation_errors
+        ):
+            item = MainThreadItem(self._stop_publish)
+
+        # Any unexpected error happened
+        # - everything should stop
+        elif self._publish_error:
+            item = MainThreadItem(self._stop_publish)
+
+        # Everything is ok so try to get new processing item
+        else:
+            item = next(self._main_thread_iter)
+
         self._main_thread_processor.add_item(item)
 
     def _publish_iterator(self):
