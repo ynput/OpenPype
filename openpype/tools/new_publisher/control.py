@@ -383,14 +383,16 @@ class PublisherController:
         self._publish_validation_errors = []
         self._publish_error = None
 
+    def publish(self):
+        """Run publishing."""
+        self._publish_up_validation = False
+        self._start_publish()
+
     def validate(self):
+        """Run publishing and stop after Validation."""
         if self._publish_validated:
             return
         self._publish_up_validation = True
-        self._start_publish()
-
-    def publish(self):
-        self._publish_up_validation = False
         self._start_publish()
 
     def _start_publish(self):
@@ -400,6 +402,7 @@ class PublisherController:
         self._publish_next_process()
 
     def _stop_publish(self):
+        """Stop or pause publishing."""
         self._main_thread_processor.stop()
         self._trigger_callbacks(self._publishing_stopped_callback_refs)
 
@@ -490,11 +493,50 @@ class PublisherController:
         self._publish_finished = True
         yield MainThreadItem(self._stop_publish)
 
+    def _extract_log_items(self, result):
+        output = []
+        records = result.get("records")
+        if not records:
+            return output
+
+        instance_name = None
+        instance = result["instance"]
+        if instance is not None:
+            instance_name = instance.data["name"]
+
+        for record in result.get("records") or []:
+            if isinstance(record, dict):
+                print("is dict")
+                record_item = record
+            else:
+                record_item = {
+                    "instance": instance_name,
+                    "type": "record",
+                    "label": str(record.msg),
+                    "msg": str(record.msg),
+                    "name": record.name,
+                    "lineno": record.lineno,
+                    "levelno": record.levelno,
+                    "levelname": record.levelname,
+                    "threadName": record.threadName,
+                    "filename": record.filename,
+                    "pathname": record.pathname,
+                    "msecs": record.msecs
+                }
+
+            record_item["instance"] = instance_name
+            output.append(record_item)
+
+        return output
+
     def _process_and_continue(self, plugin, instance):
         # TODO execute plugin
         result = pyblish.plugin.process(
             plugin, self._publish_context, instance
         )
+
+        self._publish_logs.extend(self._extract_log_items(result))
+
         exception = result.get("error")
         if exception:
             if (
