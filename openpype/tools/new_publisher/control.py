@@ -124,24 +124,45 @@ class PublisherController:
             self.host, dbcon, headless=False, reset=False
         )
 
+        # pyblish.api.Context
         self._publish_context = None
+        # Pyblish logs
+        self._publish_logs = []
+        # Store exceptions of validation error
+        self._publish_validation_errors = []
+        # Any other exception that happened during publishing
+        self._publish_error = None
+        # Publishing is over validation order
         self._publish_validated = False
+        # Publishing should stop at validation stage
         self._publish_up_validation = False
+        # All publish plugins are processed
+        self._publish_finished = False
+
+        # Validation order
+        # - plugin with order same or higher than this value is extractor or
+        #   higher
         self._validation_order = (
             pyblish.api.ValidatorOrder + PLUGIN_ORDER_OFFSET
         )
+
+        # Qt based main thread processor
         self._main_thread_processor = MainThreadProcess()
+        # Plugin iterator
         self._main_thread_iter = None
 
+        # Varianbles where callbacks are stored
         self._instances_refresh_callback_refs = set()
         self._plugins_refresh_callback_refs = set()
         self._publish_instance_changed_callback_refs = set()
         self._publish_plugin_changed_callback_refs = set()
         self._publishing_stopped_callback_refs = set()
 
+        # State flags to prevent executing method which is already in progress
         self._resetting_plugins = False
         self._resetting_instances = False
 
+        # Cacher of avalon documents
         self._asset_docs_cache = AssetDocsCache(self)
 
     @property
@@ -317,9 +338,14 @@ class PublisherController:
     def _reset_publish(self):
         self._publish_validated = False
         self._publish_up_validation = False
+        self._publish_finished = False
         self._main_thread_processor.clear()
         self._main_thread_iter = self._publish_iterator()
         self._publish_context = pyblish.api.Context()
+
+        self._publish_logs = []
+        self._publish_validation_errors = []
+        self._publish_error = None
 
     def validate(self):
         if self._publish_validated:
