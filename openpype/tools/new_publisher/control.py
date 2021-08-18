@@ -417,6 +417,7 @@ class PublisherController:
                     yield MainThreadItem(
                         self._process_and_continue, plugin, None
                     )
+        self._publish_finished = True
         yield MainThreadItem(self._stop_publish)
 
     def _process_and_continue(self, plugin, instance):
