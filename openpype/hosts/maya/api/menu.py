@@ -56,6 +56,34 @@ def deferred():
                 parent=pipeline._parent
             )
 
+        # Find the pipeline menu
+        top_menu = _get_menu(pipeline._menu)
+
+        # Try to find workfile tool action in the menu
+        workfile_action = None
+        for action in top_menu.actions():
+            if action.text() == "Work Files":
+                workfile_action = action
+                break
+
+        # Add at the top of menu if "Work Files" action was not found
+        after_action = ""
+        if workfile_action:
+            # Use action's object name for `insertAfter` argument
+            after_action = workfile_action.objectName()
+
+        # Insert action to menu
+        cmds.menuItem(
+            "Work Files",
+            parent=pipeline._menu,
+            command=launch_workfiles_app,
+            insertAfter=after_action
+        )
+
+        # Remove replaced action
+        if workfile_action:
+            top_menu.removeAction(workfile_action)
+
     log.info("Attempting to install scripts menu ...")
 
     add_build_workfiles_item()
