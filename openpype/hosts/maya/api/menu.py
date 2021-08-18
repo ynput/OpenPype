@@ -98,11 +98,9 @@ def deferred():
 
         project_manager_action = None
         for action in system_menu.menu().children():
-            if hasattr(action, "text"):
-                print(action.text())
-                if action.text() == "Project Manager":
-                    project_manager_action = action
-                    break
+            if hasattr(action, "text") and action.text() == "Project Manager":
+                project_manager_action = action
+                break
 
         if project_manager_action is not None:
             system_menu.menu().removeAction(project_manager_action)
