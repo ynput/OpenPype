@@ -641,6 +641,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-color: #4E76BB;
 }
 
+#MultipleItemView {
+    background: transparent;
+    border: none;
+}
+
 #MultipleItemView:item {
     background: {color:bg-view-selection};
     border-radius: 0.4em;
