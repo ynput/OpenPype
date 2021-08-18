@@ -19,7 +19,8 @@ class ExtractAlembic(openpype.api.Extractor):
     hosts = ["maya"]
     families = ["pointcache",
                 "model",
-                "vrayproxy"]
+                "vrayproxy",
+                "xgen"]
 
     def process(self, instance):
 
