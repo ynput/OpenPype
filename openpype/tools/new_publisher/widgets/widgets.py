@@ -1,5 +1,6 @@
 import os
 import copy
+import json
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 
@@ -982,6 +983,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         main_layout.addWidget(info_frame, 0)
 
         hide_btn.clicked.connect(self.hide_requested)
+        copy_log_btn.clicked.connect(self._on_copy_log)
 
         controller.add_instance_change_callback(self._on_instance_change)
         controller.add_plugin_change_callback(self._on_plugin_change)
@@ -1090,3 +1092,13 @@ class PublishOverlayFrame(QtWidgets.QFrame):
     def _set_success_property(self, success):
         self.info_frame.setProperty("success", str(success))
         self.info_frame.style().polish(self.info_frame)
+
+    def _on_copy_log(self):
+        logs = self.controller.get_publish_logs()
+        logs_string = json.dumps(logs, indent=4)
+
+        mime_data = QtCore.QMimeData()
+        mime_data.setText(logs_string)
+        QtWidgets.QApplication.instance().clipboard().setMimeData(
+            mime_data
+        )
