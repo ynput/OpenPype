@@ -11,7 +11,6 @@ from openpype.api import (
 
 from openpype.pipeline import (
     PublishValidationError,
-    KnownPublishError,
     OpenPypePyblishPluginMixin
 )
 
@@ -246,6 +245,7 @@ class PublisherController:
         return tasks
 
     def _trigger_callbacks(self, callbacks, *args, **kwargs):
+        """Helper method to trigger callbacks stored by their rerence."""
         # Trigger reset callbacks
         to_remove = set()
         for ref in callbacks:
@@ -370,6 +370,20 @@ class PublisherController:
         self.host.remove_instances(instances)
 
         self._reset_instances()
+
+    # --- Publish specific implementations ---
+    @property
+    def publish_has_finished(self):
+        return self._publish_finished
+
+    def get_publish_crash_error(self):
+        return self._publish_error
+
+    def get_publish_logs(self):
+        return self._publish_logs
+
+    def get_validation_errors(self):
+        return self._publish_validation_errors
 
     def _reset_publish(self):
         self._publish_validated = False
