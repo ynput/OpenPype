@@ -1,3 +1,11 @@
+class PublishValidationError(Exception):
+    pass
+
+
+class KnownPublishError(Exception):
+    pass
+
+
 class OpenPypePyblishPluginMixin:
     executable_in_thread = False
 

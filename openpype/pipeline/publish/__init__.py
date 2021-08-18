@@ -1,7 +1,11 @@
 from .publish_plugins import (
+    PublishValidationError,
+    KnownPublishError,
     OpenPypePyblishPluginMixin
 )
 
 __all__ = (
-    "OpenPypePyblishPluginMixin",
+    "PublishValidationError",
+    "KnownPublishError",
+    "OpenPypePyblishPluginMixin"
 )
