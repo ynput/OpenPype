@@ -529,7 +529,57 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.cancel_btn = cancel_btn
 
     def _on_submit(self):
-        print("submit")
+        variant_value = None
+        asset_name = None
+        task_name = None
+        if self.variant_input.has_value_changed():
+            variant_value = self.variant_input.get_value()[0]
+
+        if self.asset_value_widget.has_value_changed():
+            asset_name = self.asset_value_widget.get_selected_items()[0]
+
+        if self.task_value_widget.has_value_changed():
+            task_name = self.task_value_widget.get_selected_items()[0]
+
+        asset_docs_by_name = {}
+        asset_names = set()
+        if asset_name is None:
+            for instance in self._current_instances:
+                asset_names.add(instance.data.get("asset"))
+        else:
+            asset_names.add(asset_name)
+
+        for asset_doc in self.controller.get_asset_docs():
+            _asset_name = asset_doc["name"]
+            if _asset_name in asset_names:
+                asset_names.remove(_asset_name)
+                asset_docs_by_name[_asset_name] = asset_doc
+
+            if not asset_names:
+                break
+
+        project_name = self.controller.project_name
+        for instance in self._current_instances:
+            if variant_value is not None:
+                instance.data["variant"] = variant_value
+
+            if asset_name is not None:
+                instance.data["asset"] = asset_name
+
+            if task_name is not None:
+                instance.data["task"] = task_name
+
+            new_variant_value = instance.data.get("variant")
+            new_asset_name = instance.data.get("asset")
+            new_task_name = instance.data.get("task")
+
+            asset_doc = asset_docs_by_name[new_asset_name]
+
+            new_subset_name = instance.creator.get_subset_name(
+                new_variant_value, new_task_name, asset_doc, project_name
+            )
+            instance.data["subset"] = new_subset_name
+
         self.cancel_btn.setEnabled(False)
         self.submit_btn.setEnabled(False)
 
