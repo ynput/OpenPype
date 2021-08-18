@@ -266,11 +266,15 @@ class TasksCombobox(QtWidgets.QComboBox):
         self.setEditable(True)
         self.lineEdit().setReadOnly(True)
 
+        delegate = QtWidgets.QStyledItemDelegate()
+        self.setItemDelegate(delegate)
+
         model = TasksModel(controller)
         self.setModel(model)
 
         self.currentIndexChanged.connect(self._on_index_change)
 
+        self._delegate = delegate
         self._model = model
         self._origin_value = []
         self._selected_items = []
