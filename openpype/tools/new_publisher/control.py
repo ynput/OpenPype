@@ -156,6 +156,7 @@ class PublisherController:
         # Varianbles where callbacks are stored
         self._instances_refresh_callback_refs = set()
         self._plugins_refresh_callback_refs = set()
+        self._publishing_started_callback_refs = set()
         self._publish_instance_changed_callback_refs = set()
         self._publish_plugin_changed_callback_refs = set()
         self._publishing_stopped_callback_refs = set()
@@ -198,6 +199,10 @@ class PublisherController:
     def add_plugins_refresh_callback(self, callback):
         ref = weakref.WeakMethod(callback)
         self._plugins_refresh_callback_refs.add(ref)
+
+    def add_publish_started_callback(self, callback):
+        ref = weakref.WeakMethod(callback)
+        self._publishing_started_callback_refs.add(ref)
 
     def add_instance_change_callback(self, callback):
         ref = weakref.WeakMethod(callback)
@@ -360,6 +365,8 @@ class PublisherController:
         self._start_publish()
 
     def _start_publish(self):
+        """Start or continue in publishing."""
+        self._trigger_callbacks(self._publishing_started_callback_refs)
         self._main_thread_processor.start()
         self._publish_next_process()
 
