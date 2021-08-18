@@ -296,6 +296,39 @@ class CreatedInstance:
         if not self._data.get("uuid"):
             self._data["uuid"] = str(uuid4())
 
+        self._asset_is_valid = self.has_set_asset
+        self._task_is_valid = self.has_set_task
+
+    @property
+    def has_set_asset(self):
+        return "asset" in self._data
+
+    @property
+    def has_set_task(self):
+        return "task" in self._data
+
+    @property
+    def has_valid_context(self):
+        return self.has_valid_asset and self.has_valid_task
+
+    @property
+    def has_valid_asset(self):
+        if not self.has_set_asset:
+            return False
+        return self._asset_is_valid
+
+    @property
+    def has_valid_task(self):
+        if not self.has_set_task:
+            return False
+        return self._task_is_valid
+
+    def set_asset_invalid(self, invalid):
+        self._asset_is_valid = not invalid
+
+    def set_task_invalid(self, invalid):
+        self._task_is_valid = not invalid
+
     @property
     def id(self):
         return self._data["uuid"]
