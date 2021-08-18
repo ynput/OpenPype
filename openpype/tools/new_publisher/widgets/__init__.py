@@ -2,7 +2,9 @@ from .widgets import (
     PublishOverlayFrame,
     SubsetAttributesWidget,
     InstanceCardView,
-    InstanceListView,
+    InstanceListView
+)
+from .create_dialog import (
     CreateDialog
 )
 
@@ -12,5 +14,6 @@ __all__ = (
     "SubsetAttributesWidget",
     "InstanceCardView",
     "InstanceListView",
+
     "CreateDialog"
 )
