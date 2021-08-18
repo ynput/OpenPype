@@ -17,8 +17,7 @@ log = logging.getLogger(__name__)
 def _get_menu(menu_name=None):
     """Return the menu instance if it currently exists in Maya"""
     if menu_name is None:
-        project_settings = get_project_settings(os.getenv("AVALON_PROJECT"))
-        menu_name = project_settings["maya"]["scriptsmenu"]["name"]
+        menu_name = pipeline._menu
 
     widgets = dict((
         w.objectName(), w) for w in QtWidgets.QApplication.allWidgets())
@@ -57,7 +56,7 @@ def deferred():
             )
 
         # Find the pipeline menu
-        top_menu = _get_menu(pipeline._menu)
+        top_menu = _get_menu()
 
         # Try to find workfile tool action in the menu
         workfile_action = None
@@ -85,7 +84,7 @@ def deferred():
             top_menu.removeAction(workfile_action)
 
     def remove_project_manager():
-        top_menu = _get_menu(pipeline._menu)
+        top_menu = _get_menu()
 
         # Try to find workfile tool action in the menu
         system_menu = None
