@@ -491,6 +491,7 @@ class CreateContext:
         # Collect instances
         host_instances = self.host.list_instances()
         instances = []
+        task_names_by_asset_name = collections.defaultdict(set)
         for instance_data in host_instances:
             family = instance_data["family"]
             # Prepare publish plugins with attribute definitions
@@ -502,6 +503,49 @@ class CreateContext:
                 instance_data, creator, self.host, attr_plugins
             )
             instances.append(instance)
+
+            task_name = instance_data.get("task")
+            asset_name = instance_data.get("asset")
+            if asset_name and task_name:
+                task_names_by_asset_name[asset_name].add(task_name)
+
+        asset_names = [
+            asset_name
+            for asset_name in task_names_by_asset_name.keys()
+            if asset_name is not None
+        ]
+        asset_docs = list(self.dbcon.find(
+            {
+                "type": "asset",
+                "name": {"$in": asset_names}
+            },
+            {
+                "name": True,
+                "data.tasks": True
+            }
+        ))
+
+        task_names_by_asset_name = {}
+        for asset_doc in asset_docs:
+            asset_name = asset_doc["name"]
+            tasks = asset_doc.get("data", {}).get("tasks") or {}
+            task_names_by_asset_name[asset_name] = set(tasks.keys())
+
+        for instance in instances:
+            if not instance.has_valid_asset or not instance.has_valid_task:
+                continue
+
+            asset_name = instance.data["asset"]
+            if asset_name not in task_names_by_asset_name:
+                instance.set_asset_invalid(True)
+                continue
+
+            task_name = instance.data["task"]
+            if not task_name:
+                continue
+
+            if task_name not in task_names_by_asset_name[asset_name]:
+                instance.set_task_invalid(True)
 
         self.instances = instances
 
