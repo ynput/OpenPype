@@ -995,6 +995,14 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.refresh_btn = refresh_btn
         self.publish_btn = publish_btn
 
+    def set_progress_range(self, max_value):
+        # TODO implement triggers for this method
+        self.progress_widget.setMaximum(max_value)
+
+    def set_progress(self, value):
+        # TODO implement triggers for this method
+        self.progress_widget.setValue(value)
+
     def _on_instance_change(self, context, instance):
         if instance is None:
             new_name = (
@@ -1021,8 +1029,4 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.plugin_label.setText(plugin_name)
         QtWidgets.QApplication.processEvents()
 
-    def set_progress_range(self, max_value):
-        self.progress_widget.setMaximum(max_value)
 
-    def set_progress(self, value):
-        self.progress_widget.setValue(value)
