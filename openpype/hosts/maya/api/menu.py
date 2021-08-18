@@ -161,7 +161,6 @@ def install():
         log.info("Skipping openpype.menu initialization in batch mode..")
         return
 
-    uninstall()
     # Allow time for uninstallation to finish.
     cmds.evalDeferred(deferred)
 
