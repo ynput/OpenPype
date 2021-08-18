@@ -50,7 +50,15 @@ class ExtractXgenCache(openpype.api.Extractor):
 
         with avalon.maya.suspended_refresh():
             with avalon.maya.maintained_selection():
-                command = ('-file ' + path + ' -df "ogawa" -fr ' + str(start) + ' ' + str(end) + ' -step 1 -mxf -wfw')
+                command = (
+                    '-file ' 
+                    + path 
+                    + ' -df "ogawa" -fr ' 
+                    + str(start) 
+                    + ' ' 
+                    + str(end)
+                    + ' -step 1 -mxf -wfw'
+                )
                 for desc in out_descriptions:
                     command += (" -obj " + desc)
                 cmds.xgmSplineCache(export=True, j=command)
