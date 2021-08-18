@@ -393,15 +393,29 @@ class PublisherController:
 
     def _publish_iterator(self):
         for plugin in self.publish_plugins:
+            # Check if plugin is over validation order
+            if not self._publish_validated:
+                self._publish_validated = (
+                    plugin.order >= self._validation_order
+                )
+
+            # Stop if plugin is over validation order and process
+            #   should process up to validation.
+            if self._publish_up_validation and self._publish_validated:
+                yield MainThreadItem(self._stop_publish)
+
+            # Stop if validation is over and validation errors happened
             if (
-                self._publish_up_validation
-                and plugin.order >= self._validation_order
+                self._publish_validated
+                and self._publish_validation_errors
             ):
                 yield MainThreadItem(self._stop_publish)
 
+            # Trigger callback that new plugin is going to be processed
             self._trigger_callbacks(
                 self._publish_plugin_changed_callback_refs, plugin
             )
+            # Plugin is instance plugin
             if plugin.__instanceEnabled__:
                 instances = pyblish.logic.instances_by_plugin(
                     self._publish_context, plugin
