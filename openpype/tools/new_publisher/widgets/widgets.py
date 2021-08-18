@@ -477,6 +477,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         super(GlobalAttrsWidget, self).__init__(parent)
 
         self.controller = controller
+        self._current_instances = []
 
         variant_input = VariantInputWidget(self)
         asset_value_widget = AssetsTreeComboBox(controller, self)
@@ -563,6 +564,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
     def set_current_instances(self, instances):
         self.cancel_btn.setEnabled(False)
         self.submit_btn.setEnabled(False)
+
+        self._current_instances = instances
 
         asset_names = set()
         task_names = set()
