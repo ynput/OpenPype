@@ -216,6 +216,35 @@ class PublisherController:
         ref = weakref.WeakMethod(callback)
         self._publishing_stopped_callback_refs.add(ref)
 
+    def get_asset_docs(self):
+        return self._asset_docs_cache.get_asset_docs()
+
+    def get_asset_hierarchy(self):
+        _queue = collections.deque(self.get_asset_docs())
+
+        output = collections.defaultdict(list)
+        while _queue:
+            asset_doc = _queue.popleft()
+            parent_id = asset_doc["data"]["visualParent"]
+            output[parent_id].append(asset_doc)
+        return output
+
+    def get_task_names_for_asset_names(self, asset_names):
+        task_names_by_asset_name = (
+            self._asset_docs_cache.get_task_names_by_asset_name()
+        )
+        tasks = None
+        for asset_name in asset_names:
+            task_names = set(task_names_by_asset_name.get(asset_name, []))
+            if tasks is None:
+                tasks = task_names
+            else:
+                tasks &= task_names
+
+            if not tasks:
+                break
+        return tasks
+
     def _trigger_callbacks(self, callbacks, *args, **kwargs):
         # Trigger reset callbacks
         to_remove = set()
@@ -478,35 +507,6 @@ class PublisherController:
                 self._publish_error = exception
 
         self._publish_next_process()
-
-    def get_asset_docs(self):
-        return self._asset_docs_cache.get_asset_docs()
-
-    def get_asset_hierarchy(self):
-        _queue = collections.deque(self.get_asset_docs())
-
-        output = collections.defaultdict(list)
-        while _queue:
-            asset_doc = _queue.popleft()
-            parent_id = asset_doc["data"]["visualParent"]
-            output[parent_id].append(asset_doc)
-        return output
-
-    def get_task_names_for_asset_names(self, asset_names):
-        task_names_by_asset_name = (
-            self._asset_docs_cache.get_task_names_by_asset_name()
-        )
-        tasks = None
-        for asset_name in asset_names:
-            task_names = set(task_names_by_asset_name.get(asset_name, []))
-            if tasks is None:
-                tasks = task_names
-            else:
-                tasks &= task_names
-
-            if not tasks:
-                break
-        return tasks
 
 
 def collect_families_from_instances(instances, only_active=False):
