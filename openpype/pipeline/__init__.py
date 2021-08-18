@@ -7,7 +7,7 @@ from .create import (
     CreatedInstance
 )
 
-from .publish_plugins import OpenPypePyblishPluginMixin
+from .publish import OpenPypePyblishPluginMixin
 
 
 __all__ = (
