@@ -10,6 +10,8 @@ from openpype.api import (
 )
 
 from openpype.pipeline import (
+    PublishValidationError,
+    KnownPublishError,
     OpenPypePyblishPluginMixin
 )
 
@@ -419,7 +421,20 @@ class PublisherController:
 
     def _process_and_continue(self, plugin, instance):
         # TODO execute plugin
-        print(plugin, instance)
+        result = pyblish.plugin.process(
+            plugin, self._publish_context, instance
+        )
+        exception = result.get("error")
+        if exception:
+            if (
+                isinstance(exception, PublishValidationError)
+                and not self._publish_validated
+            ):
+                self._publish_validation_errors.append(exception)
+
+            else:
+                self._publish_error = exception
+
         self._publish_next_process()
 
     def get_asset_docs(self):
