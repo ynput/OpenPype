@@ -380,8 +380,13 @@ class VariantInputWidget(QtWidgets.QLineEdit):
         self._current_value = [self.text()]
         self._has_value_changed = self._current_value != self._origin_value
 
+        self.value_changed.emit()
+
     def reset_to_origin(self):
         self.set_value(self._origin_value)
+
+    def get_value(self):
+        return copy.deepcopy(self._current_value)
 
     def set_value(self, variants=None):
         if variants is None:
