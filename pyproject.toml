@@ -63,6 +63,9 @@ jinxed = [
 python3-xlib = { version="*", markers = "sys_platform == 'linux'"}
 enlighten = "^1.9.0"
 slack-sdk = "^3.6.0"
+requests = "2.25.*" # 2.26.0 introduced "charset_normalizer" which does not play well with python 2 hosts; https://github.com/psf/requests/pull/5868
+cloudpathlib = "0.4.1" # For fetching respository versions from the cloud.
+dropbox = "11.16.0" # Custom cloudpathlib class requires dropbox module.
 
 [tool.poetry.dev-dependencies]
 flake8 = "^3.7"
