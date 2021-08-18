@@ -10,12 +10,9 @@ class ExtractAlembic(openpype.api.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Extract Alembic"
     hosts = ["houdini"]
-    targets = ["local"]
     families = ["pointcache", "camera"]
 
     def process(self, instance):
-
-        import hou
 
         ropnode = instance[0]
 

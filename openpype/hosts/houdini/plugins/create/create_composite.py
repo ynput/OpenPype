@@ -35,5 +35,10 @@ class CreateCompositeSequence(plugin.Creator):
         # Lock any parameters in this list
         to_lock = ["prim_to_detail_pattern"]
         for name in to_lock:
-            parm = instance.parm(name)
-            parm.lock(True)
+            try:
+                parm = instance.parm(name)
+                parm.lock(True)
+            except AttributeError:
+                # missing lock pattern
+                self.log.debug(
+                    "missing lock pattern {}".format(name))

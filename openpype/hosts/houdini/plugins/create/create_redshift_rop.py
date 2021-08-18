@@ -38,9 +38,13 @@ class CreateRedshiftROP(plugin.Creator):
         instance.setName(basename + "_ROP", unique_name=True)
 
         # Also create the linked Redshift IPR Rop
-        ipr_rop = self.parent.createNode(
-            "Redshift_IPR", node_name=basename + "_IPR"
-        )
+        try:
+            ipr_rop = self.parent.createNode(
+                "Redshift_IPR", node_name=basename + "_IPR"
+            )
+        except hou.OperationFailed:
+            raise Exception(("Cannot create Redshift node. Is Redshift "
+                             "installed and enabled?"))
 
         # Move it to directly under the Redshift ROP
         ipr_rop.setPosition(instance.position() + hou.Vector2(0, -1))

@@ -10,7 +10,6 @@ class ExtractUSD(openpype.api.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Extract USD"
     hosts = ["houdini"]
-    targets = ["local"]
     families = ["usd",
                 "usdModel",
                 "usdSetDress"]
@@ -31,7 +30,13 @@ class ExtractUSD(openpype.api.Extractor):
 
         assert os.path.exists(output), "Output does not exist: %s" % output
 
-        if "files" not in instance.data:
-            instance.data["files"] = []
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(file_name)
+        representation = {
+            'name': 'usd',
+            'ext': 'usd',
+            'files': file_name,
+            "stagingDir": staging_dir,
+        }
+        instance.data["representations"].append(representation)

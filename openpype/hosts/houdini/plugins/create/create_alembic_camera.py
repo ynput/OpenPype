@@ -33,7 +33,6 @@ class CreateAlembicCamera(plugin.Creator):
         if self.nodes:
             node = self.nodes[0]
             path = node.path()
-
             # Split the node path into the first root and the remainder
             # So we can set the root and objects parameters correctly
             _, root, remainder = path.split("/", 2)

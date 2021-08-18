@@ -2,7 +2,7 @@ import os
 
 import pyblish.api
 import openpype.api
-from openpype.hosts.api.houdini.lib import render_rop
+from openpype.hosts.houdini.api.lib import render_rop
 
 
 class ExtractVDBCache(openpype.api.Extractor):
@@ -10,12 +10,9 @@ class ExtractVDBCache(openpype.api.Extractor):
     order = pyblish.api.ExtractorOrder + 0.1
     label = "Extract VDB Cache"
     families = ["vdbcache"]
-    targets = ["local"]
     hosts = ["houdini"]
 
     def process(self, instance):
-
-        import hou
 
         ropnode = instance[0]
 
@@ -36,8 +33,8 @@ class ExtractVDBCache(openpype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            "name": "mov",
-            "ext": "mov",
+            "name": "vdb",
+            "ext": "vdb",
             "files": output,
             "stagingDir": staging_dir,
         }

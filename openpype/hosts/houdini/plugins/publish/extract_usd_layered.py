@@ -155,8 +155,7 @@ class ExtractUSDLayered(openpype.api.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Extract Layered USD"
     hosts = ["houdini"]
-    targets = ["local"]
-    families = ["colorbleed.usd.layered", "usdShade"]
+    families = ["usdLayered", "usdShade"]
 
     # Force Output Processors so it will always save any file
     # into our unique staging directory with processed Avalon paths

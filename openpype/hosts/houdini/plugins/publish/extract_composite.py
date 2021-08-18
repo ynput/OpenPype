@@ -11,7 +11,6 @@ class ExtractComposite(openpype.api.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Extract Composite (Image Sequence)"
     hosts = ["houdini"]
-    targets = ["local"]
     families = ["imagesequence"]
 
     def process(self, instance):
