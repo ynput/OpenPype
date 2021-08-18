@@ -57,7 +57,7 @@ class PublisherWindow(QtWidgets.QWidget):
         # TODO Title, Icon, Stylesheet
         main_frame = QtWidgets.QWidget(self)
         # Overlay MUST be created after Main to be painted on top of it
-        overlay_frame = PublishOverlayFrame(self)
+        overlay_frame = PublishOverlayFrame(controller, self)
         overlay_frame.setVisible(False)
 
         # Header
@@ -161,8 +161,6 @@ class PublisherWindow(QtWidgets.QWidget):
         )
         overlay_frame.hide_requested.connect(self._on_overlay_hide_request)
 
-        controller.add_instance_change_callback(self._on_instance_change)
-        controller.add_plugin_change_callback(self._on_plugin_change)
         controller.add_publish_stopped_callback(self._on_publish_stop)
 
         self.main_frame = main_frame
@@ -302,11 +300,11 @@ class PublisherWindow(QtWidgets.QWidget):
 
     def _on_validate_clicked(self):
         self._set_overlay_visibility(True)
-        # self.controller.validate()
+        self.controller.validate()
 
     def _on_publish_clicked(self):
         self._set_overlay_visibility(True)
-        # self.controller.publish()
+        self.controller.publish()
 
     def _refresh_instances(self):
         if self._refreshing_instances:
@@ -338,29 +336,6 @@ class PublisherWindow(QtWidgets.QWidget):
         self.delete_btn.setEnabled(len(instances) >= 0)
 
         self.subset_attributes_widget.set_current_instances(instances)
-
-    def _on_plugin_change(self, plugin):
-        plugin_name = plugin.__name__
-        if hasattr(plugin, "label") and plugin.label:
-            plugin_name = plugin.label
-        self.overlay_frame.set_plugin(plugin_name)
-
-    def _on_instance_change(self, context, instance):
-        if instance is None:
-            new_name = (
-                context.data.get("label")
-                or getattr(context, "label", None)
-                or context.data.get("name")
-                or "Context"
-            )
-        else:
-            new_name = (
-                instance.data.get("label")
-                or getattr(instance, "label", None)
-                or instance.data["name"]
-            )
-
-        self.overlay_frame.set_instance(new_name)
 
     def _on_publish_stop(self):
         pass

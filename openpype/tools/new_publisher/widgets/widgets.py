@@ -907,7 +907,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
 class PublishOverlayFrame(QtWidgets.QFrame):
     hide_requested = QtCore.Signal()
 
-    def __init__(self, parent):
+    def __init__(self, controller, parent):
         super(PublishOverlayFrame, self).__init__(parent)
 
         self.setObjectName("PublishOverlayFrame")
@@ -976,6 +976,11 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
         hide_btn.clicked.connect(self.hide_requested)
 
+        controller.add_instance_change_callback(self._on_instance_change)
+        controller.add_plugin_change_callback(self._on_plugin_change)
+
+        self.controller = controller
+
         self.hide_btn = hide_btn
 
         self.main_label = main_label
@@ -990,11 +995,31 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.refresh_btn = refresh_btn
         self.publish_btn = publish_btn
 
-    def set_instance(self, instance_name):
-        self.instance_label.setText(instance_name)
+    def _on_instance_change(self, context, instance):
+        if instance is None:
+            new_name = (
+                context.data.get("label")
+                or getattr(context, "label", None)
+                or context.data.get("name")
+                or "Context"
+            )
+        else:
+            new_name = (
+                instance.data.get("label")
+                or getattr(instance, "label", None)
+                or instance.data["name"]
+            )
 
-    def set_plugin(self, plugin_name):
+        self.instance_label.setText(new_name)
+        QtWidgets.QApplication.processEvents()
+
+    def _on_plugin_change(self, plugin):
+        plugin_name = plugin.__name__
+        if hasattr(plugin, "label") and plugin.label:
+            plugin_name = plugin.label
+
         self.plugin_label.setText(plugin_name)
+        QtWidgets.QApplication.processEvents()
 
     def set_progress_range(self, max_value):
         self.progress_widget.setMaximum(max_value)
