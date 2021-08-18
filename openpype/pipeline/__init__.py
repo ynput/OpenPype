@@ -7,7 +7,11 @@ from .create import (
     CreatedInstance
 )
 
-from .publish import OpenPypePyblishPluginMixin
+from .publish import (
+    PublishValidationError,
+    KnownPublishError,
+    OpenPypePyblishPluginMixin
+)
 
 
 __all__ = (
@@ -18,5 +22,7 @@ __all__ = (
     "AutoCreator",
     "CreatedInstance",
 
+    "PublishValidationError",
+    "KnownPublishError",
     "OpenPypePyblishPluginMixin"
 )

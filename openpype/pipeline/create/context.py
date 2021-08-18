@@ -456,7 +456,11 @@ class CreateContext:
         self._attr_plugins_by_family = {}
 
         publish_plugins = pyblish.api.discover()
-        self.publish_plugins = publish_plugins
+        targets = pyblish.logic.registered_targets() or ["default"]
+        plugins_by_targets = pyblish.logic.plugins_by_targets(
+            publish_plugins, targets
+        )
+        self.publish_plugins = plugins_by_targets
 
         # Collect plugins that can have attribute definitions
         plugins_with_defs = []
