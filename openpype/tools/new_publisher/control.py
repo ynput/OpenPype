@@ -145,6 +145,10 @@ class PublisherController:
         self._asset_docs_cache = AssetDocsCache(self)
 
     @property
+    def project_name(self):
+        return self.dbcon.Session["AVALON_PROJECT"]
+
+    @property
     def dbcon(self):
         return self.create_context.dbcon
 
@@ -392,10 +396,11 @@ class PublisherController:
         print(plugin, instance)
         self._publish_next_process()
 
+    def get_asset_docs(self):
+        return self._asset_docs_cache.get_asset_docs()
+
     def get_asset_hierarchy(self):
-        _queue = collections.deque(
-            self._asset_docs_cache.get_asset_docs()
-        )
+        _queue = collections.deque(self.get_asset_docs())
 
         output = collections.defaultdict(list)
         while _queue:
