@@ -84,11 +84,36 @@ def deferred():
         if workfile_action:
             top_menu.removeAction(workfile_action)
 
+    def remove_project_manager():
+        top_menu = _get_menu(pipeline._menu)
+
+        # Try to find workfile tool action in the menu
+        system_menu = None
+        for action in top_menu.actions():
+            if action.text() == "System":
+                system_menu = action
+                break
+
+        if system_menu is None:
+            return
+
+        project_manager_action = None
+        for action in system_menu.menu().children():
+            if hasattr(action, "text"):
+                print(action.text())
+                if action.text() == "Project Manager":
+                    project_manager_action = action
+                    break
+
+        if project_manager_action is not None:
+            system_menu.menu().removeAction(project_manager_action)
+
     log.info("Attempting to install scripts menu ...")
 
     add_build_workfiles_item()
     add_look_assigner_item()
     modify_workfiles()
+    remove_project_manager()
 
     try:
         import scriptsmenu.launchformaya as launchformaya
