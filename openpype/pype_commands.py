@@ -181,17 +181,26 @@ class PypeCommands:
             "status": "in_progress"
         }).inserted_id
 
+        log_lines = []
         for result in pyblish.util.publish_iter():
+            for record in result["records"]:
+                log_lines.append("{}: {}".format(
+                    result["plugin"].label, record.msg))
+
             if result["error"]:
                 log.error(error_format.format(**result))
                 uninstall()
+                log_lines.append(error_format.format(**result))
                 dbcon.update_one(
                     {"_id": _id},
                     {"$set":
                         {
                             "finish_date": datetime.now(),
                             "status": "error",
-                            "msg": error_format.format(**result)
+                            "msg": "Publishing failed > click here and paste " 
+                                   "report to slack OpenPype support",
+                            "log": os.linesep.join(log_lines)
+
                         }}
                 )
                 sys.exit(1)
@@ -200,7 +209,8 @@ class PypeCommands:
                     {"_id": _id},
                     {"$set":
                         {
-                            "progress": max(result["progress"], 0.95)
+                            "progress": max(result["progress"], 0.95),
+                            "log": os.linesep.join(log_lines)
                         }}
                 )
 
@@ -210,7 +220,8 @@ class PypeCommands:
                 {
                     "finish_date": datetime.now(),
                     "status": "finished_ok",
-                    "progress": 1
+                    "progress": 1,
+                    "log": os.linesep.join(log_lines)
                 }}
         )
 
