@@ -519,26 +519,19 @@ class PublisherController:
             instance_name = instance.data["name"]
 
         for record in result.get("records") or []:
-            if isinstance(record, dict):
-                print("is dict")
-                record_item = record
-            else:
-                record_item = {
-                    "instance": instance_name,
-                    "type": "record",
-                    "label": str(record.msg),
-                    "msg": str(record.msg),
-                    "name": record.name,
-                    "lineno": record.lineno,
-                    "levelno": record.levelno,
-                    "levelname": record.levelname,
-                    "threadName": record.threadName,
-                    "filename": record.filename,
-                    "pathname": record.pathname,
-                    "msecs": record.msecs
-                }
-
-            record_item["instance"] = instance_name
+            record_item = {
+                "instance": instance_name,
+                "type": "record",
+                "msg": str(record.msg),
+                "name": record.name,
+                "lineno": record.lineno,
+                "levelno": record.levelno,
+                "levelname": record.levelname,
+                "threadName": record.threadName,
+                "filename": record.filename,
+                "pathname": record.pathname,
+                "msecs": record.msecs
+            }
             output.append(record_item)
 
         return output
