@@ -3,6 +3,8 @@ import copy
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.pipeline import KnownPublishError
+
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 
 from openpype.tools.flickcharm import FlickCharm
@@ -983,6 +985,9 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
         controller.add_instance_change_callback(self._on_instance_change)
         controller.add_plugin_change_callback(self._on_plugin_change)
+        controller.add_plugins_refresh_callback(self._on_publish_reset)
+        controller.add_publish_started_callback(self._on_publish_start)
+        controller.add_publish_stopped_callback(self._on_publish_stop)
 
         self.controller = controller
 
@@ -1009,7 +1014,18 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         # TODO implement triggers for this method
         self.progress_widget.setValue(value)
 
+    def _on_publish_reset(self):
+        self._set_success_property("")
+        self.main_label.setText("Hit publish! (if you want)")
+        self.message_label.setText("")
+        self.copy_log_btn.setVisible(False)
+
+    def _on_publish_start(self):
+        self._set_success_property(-1)
+        self.main_label.setText("Publishing...")
+
     def _on_instance_change(self, context, instance):
+        """Change instance label when instance is going to be processed."""
         if instance is None:
             new_name = (
                 context.data.get("label")
@@ -1028,6 +1044,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         QtWidgets.QApplication.processEvents()
 
     def _on_plugin_change(self, plugin):
+        """Change plugin label when instance is going to be processed."""
         plugin_name = plugin.__name__
         if hasattr(plugin, "label") and plugin.label:
             plugin_name = plugin.label
@@ -1035,6 +1052,40 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.plugin_label.setText(plugin_name)
         QtWidgets.QApplication.processEvents()
 
+    def _on_publish_stop(self):
+        error = self.controller.get_publish_crash_error()
+        if error:
+            self._set_error(error)
+            return
+
+        validation_errors = self.controller.get_validation_errors()
+        if validation_errors:
+            self._set_validation_errors(validation_errors)
+            return
+
+        if self.controller.has_finished:
+            self._set_finished()
+
+    def _set_error(self, error):
+        self.main_label.setText("Error happened")
+        if isinstance(error, KnownPublishError):
+            msg = str(error)
+        else:
+            msg = (
+                "Something went wrong. Send report"
+                " to your supervisor or OpenPype."
+            )
+        self.message_label.setText(msg)
+        self._set_success_property(0)
+        self.copy_log_btn.setVisible(True)
+
+    def _set_validation_errors(self, validation_errors):
+        # TODO implement
+        pass
+
+    def _set_finished(self):
+        self.main_label.setText("Finished")
+        self._set_success_property(1)
 
     def _set_success_property(self, success):
         self.info_frame.setProperty("success", str(success))
