@@ -929,8 +929,11 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         top_layout.addStretch(1)
         top_layout.addWidget(hide_btn)
 
-        main_label = QtWidgets.QLabel("Publishing...", content_widget)
+        main_label = QtWidgets.QLabel(content_widget)
         main_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        message_label = QtWidgets.QLabel(content_widget)
+        message_label.setAlignment(QtCore.Qt.AlignCenter)
 
         instance_label = QtWidgets.QLabel("<Instance name>", content_widget)
         instance_label.setAlignment(
@@ -947,6 +950,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         progress_widget = QtWidgets.QProgressBar(content_widget)
 
         copy_log_btn = QtWidgets.QPushButton("Copy log", content_widget)
+        copy_log_btn.setVisible(False)
         stop_btn = QtWidgets.QPushButton("Stop", content_widget)
         refresh_btn = QtWidgets.QPushButton("Refresh", content_widget)
         publish_btn = QtWidgets.QPushButton("Publish", content_widget)
@@ -964,6 +968,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
         content_layout.addLayout(top_layout)
         content_layout.addWidget(main_label)
+        content_layout.addWidget(message_label)
         content_layout.addStretch(1)
         content_layout.addLayout(instance_plugin_layout)
         content_layout.addWidget(progress_widget)
@@ -984,6 +989,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.hide_btn = hide_btn
 
         self.main_label = main_label
+        self.message_label = message_label
         self.info_frame = info_frame
 
         self.instance_label = instance_label
