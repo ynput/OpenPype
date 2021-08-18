@@ -8,13 +8,17 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import Union, Callable, List, Tuple
+from typing import Union, Callable, List, Tuple, Optional, Iterable
 
 from zipfile import ZipFile, BadZipFile
 
 from appdirs import user_data_dir
 from speedcopy import copyfile
 import semver
+from cloudpathlib import AnyPath
+from cloudpathlib.cloudpath import CloudPath, register_path_class
+from cloudpathlib.client import Client, register_client_class
+import dropbox
 
 from .user_settings import (
     OpenPypeSecureRegistry,
@@ -22,10 +26,292 @@ from .user_settings import (
 )
 from .tools import get_openpype_path_from_db
 
-
 LOG_INFO = 0
 LOG_WARNING = 1
 LOG_ERROR = 3
+
+if sys.version_info[0] == 2:
+    from urlparse import urlparse
+else:
+    from urllib.parse import urlparse
+
+
+@register_path_class("file")
+class FilePath(CloudPath):
+
+    cloud_prefix: str = "file://"
+    client: str = "File"
+
+    def __init__(
+        self,
+        cloud_path: Union[str, "CloudPath"],
+        client: Optional["Client"] = None
+    ):
+        super().__init__(cloud_path, client=client)
+
+        results = urlparse(str(cloud_path))
+        self.path = os.path.normpath(
+            os.path.join(results.netloc, results.path)
+        )
+        self.path_object = AnyPath(self.path)
+
+    def drive(self) -> str:
+        """
+        For example "bucket" on S3 or "container" on Azure; needs to be defined
+        for each class
+        """
+        raise ValueError("We should not need the drive part.")
+
+    def is_dir(self) -> bool:
+        """Should be implemented without requiring a dir is downloaded"""
+        return self.path_object.is_dir()
+
+    def is_file(self) -> bool:
+        """
+        Should be implemented without requiring that the file is downloaded
+        """
+        return self.path_object.is_file()
+
+    def mkdir(self, parents: bool = False, exist_ok: bool = False):
+        """
+        Should be implemented using the client API without requiring a dir is
+        downloaded
+        """
+        raise ValueError("We should not be making any directories.")
+
+    def touch(self):
+        """
+        Should be implemented using the client API to create and update
+        modified time
+        """
+        raise ValueError("We should not be touching anything.")
+
+    def stat(self):
+        return self.path_object.stat()
+
+
+@register_client_class("file")
+class FileClient(Client):
+
+    def _download_file(
+        self, cloud_path: FilePath, local_path: Union[str, os.PathLike]
+    ) -> Path:
+        raise ValueError("We should not be downloading anything.")
+
+    def _exists(self, cloud_path: FilePath) -> bool:
+        return os.path.exists(cloud_path.path)
+
+    def _list_dir(
+        self, cloud_path: FilePath, recursive: bool
+    ) -> Iterable[FilePath]:
+        """List all the files and folders in a directory.
+        Parameters
+        ----------
+        cloud_path : CloudPath
+            The folder to start from.
+        recursive : bool
+            Whether or not to list recursively.
+        """
+        items = []
+        for item in os.listdir(cloud_path.path):
+            items.append(
+                FilePath(
+                    FilePath.cloud_prefix + os.path.join(cloud_path, item)
+                )
+            )
+        return items
+
+    def _move_file(
+        self, src: FilePath, dst: FilePath, remove_src: bool = True
+    ) -> FilePath:
+        raise ValueError("We should not be moving anything.")
+
+    def _remove(self, path: FilePath) -> None:
+        """Remove a file or folder from the server.
+        Parameters
+        ----------
+        path : CloudPath
+            The file or folder to remove.
+        """
+        raise ValueError("We should not be removing anything.")
+
+    def _upload_file(
+        self, local_path: Union[str, os.PathLike], cloud_path: FilePath
+    ) -> FilePath:
+        raise ValueError("We should not be uploading anything.")
+
+
+@register_path_class("dropbox")
+class DropboxPath(CloudPath):
+
+    cloud_prefix: str = "dropbox://"
+    client: str = "Dropbox"
+
+    def __init__(
+        self,
+        cloud_path: Union[str, "CloudPath"],
+        client: Optional["Client"] = None
+    ):
+        super().__init__(cloud_path, client=client)
+
+        path = cloud_path.replace(self.cloud_prefix, "")
+        # Root folder needs to be empty string rather than "/".
+        if path == "":
+            self.path = path
+        else:
+            self.path = "/" + path
+
+    def drive(self) -> str:
+        """
+        For example "bucket" on S3 or "container" on Azure; needs to be defined
+        for each class
+        """
+        raise ValueError("We should not need the drive part.")
+
+    def is_dir(self) -> bool:
+        """Should be implemented without requiring a dir is downloaded"""
+        return self.client._is_file_or_dir(self) == "dir"
+
+    def is_file(self) -> bool:
+        """
+        Should be implemented without requiring that the file is downloaded
+        """
+        return self.client._is_file_or_dir(self) == "file"
+
+    def mkdir(self, parents: bool = False, exist_ok: bool = False):
+        """
+        Should be implemented using the client API without requiring a dir is
+        downloaded
+        """
+        raise ValueError("We should not be making any directories.")
+
+    def touch(self):
+        """
+        Should be implemented using the client API to create and update
+        modified time
+        """
+        raise ValueError("We should not be touching anything.")
+
+    def stat(self):
+        metadata = self.client._get_metadata(self)
+
+        if metadata is None:
+            raise NotImplementedError(
+                f"No stats available for {self}; it may be a directory or not "
+                "exist."
+            )
+
+        return os.stat_result(
+            (
+                None,  # mode
+                None,  # ino
+                self.cloud_prefix,  # dev,
+                None,  # nlink,
+                None,  # uid,
+                None,  # gid,
+                metadata.size,  # size,
+                None,  # atime,
+                int(metadata.client_modified.strftime('%Y%m%d')),  # mtime,
+                None,  # ctime,
+            )
+        )
+
+
+@register_client_class("dropbox")
+class DropboxClient(Client):
+
+    def __init__(
+        self,
+        local_cache_dir: Optional[Union[str, os.PathLike]] = None
+    ):
+
+        self.client = dropbox.Dropbox("sl.A2wFo4hCBMxyLjJYlwZJQrnG1MFMc8nhHIO2SttqjAaaDExd8ByoXrMkIR2F_4QGAWLiVRvFQmrvOlAxn1XoHkGWDdOFZN99SQ755LQ15SUmg4bPtf7cmLy6f1PMORJTwYdJVAk")
+        super().__init__(local_cache_dir=local_cache_dir)
+
+    def _get_metadata(self, cloud_path: DropboxPath) -> Optional[int]:
+        # If the path is empty, this means the root directory.
+        if cloud_path.path == "":
+            return None
+
+        entry = self.client.files_get_metadata(cloud_path.path)
+
+        if isinstance(entry, dropbox.files.FileMetadata):
+            return entry
+
+        return None
+
+    def _is_file_or_dir(self, cloud_path: DropboxPath) -> Optional[str]:
+        if not self._exists(cloud_path):
+            return None
+
+        entry = self.client.files_get_metadata(cloud_path.path)
+
+        if isinstance(entry, dropbox.files.FolderMetadata):
+            return "dir"
+        elif isinstance(entry, dropbox.files.FileMetadata):
+            return "file"
+        else:
+            return None
+
+    def _download_file(
+        self, cloud_path: DropboxPath, local_path: Union[str, os.PathLike]
+    ) -> Path:
+        self.client.files_download_to_file(local_path, cloud_path.path)
+        return local_path
+
+    def _exists(self, cloud_path: DropboxPath) -> bool:
+        # If the path is empty, this means the root directory.
+        if cloud_path.path == "":
+            try:
+                self.client.files_list_folder(path=cloud_path.path)
+                return True
+            except dropbox.exceptions.AuthError:
+                return False
+
+        try:
+            self.client.files_get_metadata(cloud_path.path)
+            return True
+        except dropbox.exceptions.ApiError:
+            return False
+
+    def _list_dir(
+        self, cloud_path: DropboxPath, recursive: bool
+    ) -> Iterable[FilePath]:
+        """List all the files and folders in a directory.
+        Parameters
+        ----------
+        cloud_path : CloudPath
+            The folder to start from.
+        recursive : bool
+            Whether or not to list recursively.
+        """
+        items = []
+        cursor = self.client.files_list_folder(path=cloud_path.path)
+        prefix = DropboxPath.cloud_prefix
+        for entry in cursor.entries:
+            items.append(
+                DropboxPath(prefix + os.path.join(cloud_path.path, entry.name))
+            )
+        return items
+
+    def _move_file(
+        self, src: DropboxPath, dst: DropboxPath, remove_src: bool = True
+    ) -> FilePath:
+        raise ValueError("We should not be moving anything.")
+
+    def _remove(self, path: DropboxPath) -> None:
+        """Remove a file or folder from the server.
+        Parameters
+        ----------
+        path : CloudPath
+            The file or folder to remove.
+        """
+        raise ValueError("We should not be removing anything.")
+
+    def _upload_file(
+        self, local_path: Union[str, os.PathLike], cloud_path: DropboxPath
+    ) -> FilePath:
+        raise ValueError("We should not be uploading anything.")
 
 
 class OpenPypeVersion(semver.VersionInfo):
@@ -76,7 +362,7 @@ class OpenPypeVersion(semver.VersionInfo):
 
         if kwargs.get("path"):
             if isinstance(kwargs.get("path"), str):
-                self.path = Path(kwargs.get("path"))
+                self.path = AnyPath(kwargs.get("path"))
             elif isinstance(kwargs.get("path"), Path):
                 self.path = kwargs.get("path")
             else:
@@ -237,7 +523,7 @@ class BootstrapRepos:
         self._vendor = "pypeclub"
         self._app = "openpype"
         self._log = log.getLogger(str(__class__))
-        self.data_dir = Path(user_data_dir(self._app, self._vendor))
+        self.data_dir = AnyPath(user_data_dir(self._app, self._vendor))
         self.secure_registry = OpenPypeSecureRegistry("mongodb")
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
@@ -256,9 +542,9 @@ class BootstrapRepos:
         self._progress_callback = progress_callback
 
         if getattr(sys, "frozen", False):
-            self.live_repo_dir = Path(sys.executable).parent / "repos"
+            self.live_repo_dir = AnyPath(sys.executable).parent / "repos"
         else:
-            self.live_repo_dir = Path(Path(__file__).parent / ".." / "repos")
+            self.live_repo_dir = AnyPath(AnyPath(__file__).parent / ".." / "repos")
 
     @staticmethod
     def get_version_path_from_list(version: str, version_list: list) -> Path:
@@ -281,7 +567,7 @@ class BootstrapRepos:
         """Get version of local OpenPype."""
 
         version = {}
-        path = Path(os.environ["OPENPYPE_ROOT"]) / "openpype" / "version.py"
+        path = AnyPath(os.environ["OPENPYPE_ROOT"]) / "openpype" / "version.py"
         with open(path, "r") as fp:
             exec(fp.read(), version)
         return version["__version__"]
@@ -303,7 +589,7 @@ class BootstrapRepos:
 
         """
         # try to find version
-        version_file = Path(repo_dir) / "openpype" / "version.py"
+        version_file = AnyPath(repo_dir) / "openpype" / "version.py"
         if not version_file.exists():
             return None
 
@@ -349,7 +635,7 @@ class BootstrapRepos:
         # create zip inside temporary directory.
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_zip = \
-                Path(temp_dir) / f"openpype-v{version}.zip"
+                AnyPath(temp_dir) / f"openpype-v{version}.zip"
             self._print(f"creating zip: {temp_zip}")
 
             self._create_openpype_zip(temp_zip, repo_dir.parent)
@@ -417,7 +703,7 @@ class BootstrapRepos:
             :class:`OpenPypeVersion` zip file to be installed.
 
         """
-        frozen_root = Path(sys.executable).parent
+        frozen_root = AnyPath(sys.executable).parent
 
         openpype_list = []
         for f in self.openpype_filter:
@@ -432,7 +718,7 @@ class BootstrapRepos:
         # create zip inside temporary directory.
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_zip = \
-                Path(temp_dir) / f"openpype-v{version}.zip"
+                AnyPath(temp_dir) / f"openpype-v{version}.zip"
             self._print(f"creating zip: {temp_zip}")
 
             with ZipFile(temp_zip, "w") as zip_file:
@@ -447,7 +733,7 @@ class BootstrapRepos:
                     # we need to replace first part of path which starts with
                     # something like `exe.win/linux....` with `openpype` as
                     # this is expected by OpenPype in zip archive.
-                    arc_name = Path().joinpath(*arc_name.parts[1:])
+                    arc_name = AnyPath().joinpath(*arc_name.parts[1:])
                     zip_file.write(file, arc_name)
 
             destination = self._move_zip_to_data_dir(temp_zip)
@@ -634,11 +920,11 @@ class BootstrapRepos:
             dir_to_search = openpype_path
         else:
             if os.getenv("OPENPYPE_PATH"):
-                if Path(os.getenv("OPENPYPE_PATH")).exists():
-                    dir_to_search = Path(os.getenv("OPENPYPE_PATH"))
+                if AnyPath(os.getenv("OPENPYPE_PATH")).exists():
+                    dir_to_search = AnyPath(os.getenv("OPENPYPE_PATH"))
             else:
                 try:
-                    registry_dir = Path(
+                    registry_dir = AnyPath(
                         str(self.registry.get_item("openPypePath")))
                     if registry_dir.exists():
                         dir_to_search = registry_dir
@@ -688,7 +974,7 @@ class BootstrapRepos:
 
         # if not successful, consider location to be fs path.
         if not openpype_path:
-            openpype_path = Path(location)
+            openpype_path = AnyPath(location)
 
         # test if this path does exist.
         if not openpype_path.exists():
@@ -857,7 +1143,7 @@ class BootstrapRepos:
             self._print("Creating zip from directory ...")
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_zip = \
-                    Path(temp_dir) / f"openpype-v{openpype_version}.zip"
+                    AnyPath(temp_dir) / f"openpype-v{openpype_version}.zip"
                 self._print(f"creating zip: {temp_zip}")
 
                 self._create_openpype_zip(temp_zip, openpype_version.path)
