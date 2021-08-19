@@ -1,3 +1,8 @@
+from .icons import (
+    get_icon_path,
+    get_pixmap,
+    get_icon
+)
 from .widgets import (
     SubsetAttributesWidget,
     PublishOverlayFrame
@@ -13,6 +18,10 @@ from .instance_views_widgets import (
 
 
 __all__ = (
+    "get_icon_path",
+    "get_pixmap",
+    "get_icon",
+
     "SubsetAttributesWidget",
     "PublishOverlayFrame",
 
