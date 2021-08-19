@@ -446,6 +446,10 @@ class PublisherController:
         if self._publish_is_running:
             self._stop_publish()
 
+    def reset_publish(self):
+        self.stop_publish()
+        self._reset_publish()
+
     def _publish_next_process(self):
         # Validations of progress before using iterator
         # - same conditions may be inside iterator but they may be used
