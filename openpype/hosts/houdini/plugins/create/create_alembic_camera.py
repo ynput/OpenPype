@@ -43,3 +43,4 @@ class CreateAlembicCamera(plugin.Creator):
         # Lock the Use Sop Path setting so the
         # user doesn't accidentally enable it.
         instance.parm("use_sop_path").lock(True)
+        instance.parm("trange").set(1)
