@@ -249,7 +249,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         )
 
     def _on_reset_clicked(self):
-        self.controller.reset_publish()
+        self.controller.reset()
 
     def _on_stop_clicked(self):
         self.controller.stop_publish()

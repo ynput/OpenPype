@@ -64,12 +64,10 @@ class PublisherWindow(QtWidgets.QWidget):
         # Header
         header_widget = QtWidgets.QWidget(main_frame)
         context_label = QtWidgets.QLabel(header_widget)
-        debug_reset_btn = QtWidgets.QPushButton("Reset", header_widget)
 
         header_layout = QtWidgets.QHBoxLayout(header_widget)
         header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.addWidget(context_label, 1)
-        header_layout.addWidget(debug_reset_btn, 0)
 
         # Content
         # Subset widget
@@ -158,8 +156,6 @@ class PublisherWindow(QtWidgets.QWidget):
 
         creator_window = CreateDialog(controller, self)
 
-        debug_reset_btn.clicked.connect(self._on_debug_reset_clicked)
-
         create_btn.clicked.connect(self._on_create_clicked)
         delete_btn.clicked.connect(self._on_delete_clicked)
         save_btn.clicked.connect(self._on_save_clicked)
@@ -236,7 +232,7 @@ class PublisherWindow(QtWidgets.QWidget):
         super(PublisherWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
-            self.reset()
+            self.controller.reset()
 
     def reset(self):
         self.controller.reset()
@@ -278,9 +274,6 @@ class PublisherWindow(QtWidgets.QWidget):
         if new_view is not old_view:
             selected_instances = old_view.get_selected_instances()
             new_view.set_selected_instances(selected_instances)
-
-    def _on_debug_reset_clicked(self):
-        self.reset()
 
     def _on_create_clicked(self):
         self.creator_window.show()
@@ -324,7 +317,7 @@ class PublisherWindow(QtWidgets.QWidget):
         self.overlay_frame.setVisible(visible)
 
     def _on_reset_clicked(self):
-        self.controller.reset_publish()
+        self.controller.reset()
 
     def _on_stop_clicked(self):
         self.controller.stop_publish()
