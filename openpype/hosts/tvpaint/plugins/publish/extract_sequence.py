@@ -50,12 +50,12 @@ class ExtractSequence(pyblish.api.Extractor):
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
 
-        # Scene start frame offsets the output files, so we need to offset the
-        # marks.
+        # Change scene Start Frame to 0 to prevent frame index issues
+        #   - issue is that TVPaint versions deal with frame indexes in a
+        #     different way when Start Frame is not `0`
+        # NOTE It will be set back after rendering
         scene_start_frame = instance.context.data["sceneStartFrame"]
-        difference = scene_start_frame - mark_in
-        mark_in += difference
-        mark_out += difference
+        lib.execute_george("tv_startframe 0")
 
         # Frame start/end may be stored as float
         frame_start = int(instance.data["frameStart"])
@@ -144,6 +144,9 @@ class ExtractSequence(pyblish.api.Extractor):
                 mark_in, mark_out,
                 filtered_layers
             )
+
+        # Change scene frame Start back to previous value
+        lib.execute_george("tv_startframe {}".format(scene_start_frame))
 
         # Sequence of one frame
         if not output_filenames:

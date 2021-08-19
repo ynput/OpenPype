@@ -25,6 +25,38 @@ class BaseWidget(QtWidgets.QWidget):
         self.label_widget = None
         self.create_ui()
 
+    def scroll_to(self, widget):
+        self.category_widget.scroll_to(widget)
+
+    def set_path(self, path):
+        self.category_widget.set_path(path)
+
+    def set_focus(self, scroll_to=False):
+        """Set focus of a widget.
+
+        Args:
+            scroll_to(bool): Also scroll to widget in category widget.
+        """
+        if scroll_to:
+            self.scroll_to(self)
+        self.setFocus()
+
+    def make_sure_is_visible(self, path, scroll_to):
+        """Make a widget of entity visible by it's path.
+
+        Args:
+            path(str): Path to entity.
+            scroll_to(bool): Should be scrolled to entity.
+
+        Returns:
+            bool: Entity with path was found.
+        """
+        raise NotImplementedError(
+            "{} not implemented `make_sure_is_visible`".format(
+                self.__class__.__name__
+            )
+        )
+
     def trigger_hierarchical_style_update(self):
         self.category_widget.hierarchical_style_update()
 
@@ -277,11 +309,23 @@ class BaseWidget(QtWidgets.QWidget):
             if to_run:
                 to_run()
 
+    def focused_in(self):
+        if self.entity is not None:
+            self.set_path(self.entity.path)
+
     def mouseReleaseEvent(self, event):
         if self.allow_actions and event.button() == QtCore.Qt.RightButton:
             return self.show_actions_menu()
 
-        return super(BaseWidget, self).mouseReleaseEvent(event)
+        focused_in = False
+        if event.button() == QtCore.Qt.LeftButton:
+            focused_in = True
+            self.focused_in()
+
+        result = super(BaseWidget, self).mouseReleaseEvent(event)
+        if focused_in and not event.isAccepted():
+            event.accept()
+        return result
 
 
 class InputWidget(BaseWidget):
@@ -336,6 +380,14 @@ class InputWidget(BaseWidget):
                 self.__class__.__name__
             )
         )
+
+    def make_sure_is_visible(self, path, scroll_to):
+        if path:
+            entity_path = self.entity.path
+            if entity_path == path:
+                self.set_focus(scroll_to)
+                return True
+        return False
 
     def update_style(self):
         has_unsaved_changes = self.entity.has_unsaved_changes
@@ -422,9 +474,18 @@ class GUIWidget(BaseWidget):
         layout.addWidget(splitter_item)
 
     def set_entity_value(self):
-        return
+        pass
 
     def hierarchical_style_update(self):
+        pass
+
+    def make_sure_is_visible(self, *args, **kwargs):
+        return False
+
+    def focused_in(self):
+        pass
+
+    def set_path(self, *args, **kwargs):
         pass
 
     def get_invalid(self):
