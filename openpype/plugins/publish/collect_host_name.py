@@ -7,6 +7,8 @@ Provides:
 import os
 import pyblish.api
 
+from openpype.lib import ApplicationManager
+
 
 class CollectHostName(pyblish.api.ContextPlugin):
     """Collect avalon host name to context."""
@@ -15,7 +17,21 @@ class CollectHostName(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
 
     def process(self, context):
-        # Don't override value if is already set
         host_name = context.data.get("host")
+        # Don't override value if is already set
+        if host_name:
+            return
+
+        # Use AVALON_APP as first if available it is the same as host name
+        # - only if is not defined use AVALON_APP_NAME (e.g. on Farm) and
+        #   set it back to AVALON_APP env variable
+        host_name = os.environ.get("AVALON_APP")
         if not host_name:
-            context.data["host"] = os.environ.get("AVALON_APP")
+            app_name = os.environ.get("AVALON_APP_NAME")
+            if app_name:
+                app_manager = ApplicationManager()
+                app = app_manager.applications.get(app_name)
+                if app:
+                    host_name = app.host_name
+
+        context.data["host"] = host_name
