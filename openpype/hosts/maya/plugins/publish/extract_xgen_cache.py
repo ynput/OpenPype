@@ -14,7 +14,7 @@ class ExtractXgenCache(openpype.api.Extractor):
     label = "Extract Xgen ABC Cache"
     hosts = ["maya"]
     families = ["xgen"]
-    optional = true
+    optional = True
 
     def process(self, instance):
 
