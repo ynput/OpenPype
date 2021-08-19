@@ -10,10 +10,10 @@ from openpype.widgets.attribute_defs import create_widget_for_attr_def
 
 from openpype.tools.flickcharm import FlickCharm
 
-
-def get_default_thumbnail_image_path():
-    dirpath = os.path.dirname(os.path.abspath(__file__))
-    return os.path.join(dirpath, "image_file.png")
+from .icons import (
+    get_icon,
+    get_pixmap
+)
 
 
 class AssetsHierarchyModel(QtGui.QStandardItemModel):
@@ -887,7 +887,7 @@ class ThumbnailWidget(QtWidgets.QWidget):
     def __init__(self, parent):
         super(ThumbnailWidget, self).__init__(parent)
 
-        default_pix = QtGui.QPixmap(get_default_thumbnail_image_path())
+        default_pix = get_pixmap("thumbnail")
 
         thumbnail_label = QtWidgets.QLabel(self)
         thumbnail_label.setPixmap(
@@ -955,15 +955,25 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
         copy_log_btn = QtWidgets.QPushButton("Copy log", content_widget)
         copy_log_btn.setVisible(False)
-        stop_btn = QtWidgets.QPushButton("Stop", content_widget)
-        refresh_btn = QtWidgets.QPushButton("Refresh", content_widget)
-        publish_btn = QtWidgets.QPushButton("Publish", content_widget)
+
+        stop_btn = QtWidgets.QPushButton(content_widget)
+        stop_btn.setIcon(get_icon("stop"))
+
+        refresh_btn = QtWidgets.QPushButton(content_widget)
+        refresh_btn.setIcon(get_icon("refresh"))
+
+        validate_btn = QtWidgets.QPushButton(content_widget)
+        validate_btn.setIcon(get_icon("validate"))
+
+        publish_btn = QtWidgets.QPushButton(content_widget)
+        publish_btn.setIcon(get_icon("play"))
 
         footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.addWidget(copy_log_btn, 0)
         footer_layout.addStretch(1)
         footer_layout.addWidget(refresh_btn, 0)
         footer_layout.addWidget(stop_btn, 0)
+        footer_layout.addWidget(validate_btn, 0)
         footer_layout.addWidget(publish_btn, 0)
 
         content_layout = QtWidgets.QVBoxLayout(content_widget)
@@ -972,6 +982,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
         content_layout.addLayout(top_layout)
         content_layout.addWidget(main_label)
+        content_layout.addStretch(1)
         content_layout.addWidget(message_label)
         content_layout.addStretch(1)
         content_layout.addLayout(instance_plugin_layout)
@@ -1007,6 +1018,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.copy_log_btn = copy_log_btn
         self.stop_btn = stop_btn
         self.refresh_btn = refresh_btn
+        self.validate_btn = validate_btn
         self.publish_btn = publish_btn
 
     def set_progress_range(self, max_value):
