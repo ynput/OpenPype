@@ -311,10 +311,8 @@ class PublisherWindow(QtWidgets.QWidget):
         self.controller.save_instance_changes()
 
     def _set_overlay_visibility(self, visible):
-        if self.overlay_frame.isVisible() == visible:
-            return
-
-        self.overlay_frame.setVisible(visible)
+        if self.overlay_frame.isVisible() != visible:
+            self.overlay_frame.setVisible(visible)
 
     def _on_reset_clicked(self):
         self.controller.reset()
