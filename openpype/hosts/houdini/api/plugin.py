@@ -20,4 +20,7 @@ class Creator(PypeCreatorMixin, houdini.Creator):
             instance = super(Creator, self).process()
             self._process(instance)
         except hou.Error as er:
-            six.reraise(OpenPypeCreatorError, OpenPypeCreatorError("Creator error"), sys.exc_info()[2])
+            six.reraise(
+                OpenPypeCreatorError,
+                OpenPypeCreatorError("Creator error: {}".format(er)),
+                sys.exc_info()[2])
