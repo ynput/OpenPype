@@ -4,7 +4,9 @@ from .icons import (
     get_icon
 )
 from .widgets import (
-    SubsetAttributesWidget,
+    SubsetAttributesWidget
+)
+from .overlay_widget import (
     PublishOverlayFrame
 )
 from .create_dialog import (
@@ -23,6 +25,7 @@ __all__ = (
     "get_icon",
 
     "SubsetAttributesWidget",
+
     "PublishOverlayFrame",
 
     "CreateDialog",
