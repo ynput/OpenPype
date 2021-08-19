@@ -205,7 +205,7 @@ class WebpublisherBatchPublishEndpoint(_RestApiEndpoint):
 
         log.info("args:: {}".format(args))
 
-        _exit_code = subprocess.call(args)
+        subprocess.call(args)
         return Response(
             status=200,
             body=self.resource.encode(output),

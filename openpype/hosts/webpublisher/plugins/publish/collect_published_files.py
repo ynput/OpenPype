@@ -49,9 +49,10 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         return data
 
     def _process_batch(self, dir_url):
-        task_subfolders = [os.path.join(dir_url, o)
-                               for o in os.listdir(dir_url)
-                                   if os.path.isdir(os.path.join(dir_url, o))]
+        task_subfolders = [
+            os.path.join(dir_url, o)
+            for o in os.listdir(dir_url)
+            if os.path.isdir(os.path.join(dir_url, o))]
         self.log.info("task_sub:: {}".format(task_subfolders))
         for task_dir in task_subfolders:
             task_data = self._load_json(os.path.join(task_dir,
@@ -185,8 +186,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         assert found_family, msg
 
         return found_family, \
-               content["families"], \
-               content["subset_template_name"]
+            content["families"], \
+            content["subset_template_name"]
 
     def _get_version(self, asset_name, subset_name):
         """Returns version number or 0 for 'asset' and 'subset'"""

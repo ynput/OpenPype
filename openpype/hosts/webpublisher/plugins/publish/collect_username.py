@@ -20,6 +20,9 @@ class CollectUsername(pyblish.api.ContextPlugin):
         Emails in Ftrack are same as company's Slack, username is needed to
         load data to Ftrack.
 
+        Expects "pype.club" user created on Ftrack and FTRACK_BOT_API_KEY env
+        var set up.
+
     """
     order = pyblish.api.CollectorOrder - 0.488
     label = "Collect ftrack username"
@@ -39,7 +42,8 @@ class CollectUsername(pyblish.api.ContextPlugin):
                 email))
 
             if not user:
-                raise ValueError("Couldnt find user with {} email".format(email))
+                raise ValueError(
+                    "Couldnt find user with {} email".format(email))
 
             os.environ["FTRACK_API_USER"] = user[0].get("username")
             break

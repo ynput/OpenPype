@@ -197,8 +197,6 @@ class PypeCommands:
                         {
                             "finish_date": datetime.now(),
                             "status": "error",
-                            "msg": "Publishing failed > click here and paste " 
-                                   "report to slack OpenPype support",
                             "log": os.linesep.join(log_lines)
 
                         }}
