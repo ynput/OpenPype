@@ -17,7 +17,7 @@ class CreateUSDRender(plugin.Creator):
         # Remove the active, we are checking the bypass flag of the nodes
         self.data.pop("active", None)
 
-        self.data.update({"node_type": "usdrender_rop"})
+        self.data.update({"node_type": "usdrender"})
 
     def _process(self, instance):
         """Creator main entry point.
@@ -30,6 +30,9 @@ class CreateUSDRender(plugin.Creator):
             # Render frame range
             "trange": 1
         }
+        if self.nodes:
+            node = self.nodes[0]
+            parms.update({"loppath": node.path()})
         instance.setParms(parms)
 
         # Lock some Avalon attributes

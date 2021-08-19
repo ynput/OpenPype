@@ -28,6 +28,7 @@ class CreateVDBCache(plugin.Creator):
         parms = {
             "sopoutput": "$HIP/pyblish/%s.$F4.vdb" % self.name,
             "initsim": True,
+            "trange": 1
         }
 
         if self.nodes:

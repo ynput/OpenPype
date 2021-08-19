@@ -39,6 +39,7 @@ class CreatePointCache(plugin.Creator):
             parms.update({"sop_path": node.path()})
 
         instance.setParms(parms)
+        instance.parm("trange").set(1)
 
         # Lock any parameters in this list
         to_lock = ["prim_to_detail_pattern"]
