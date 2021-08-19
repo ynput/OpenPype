@@ -189,8 +189,8 @@ class PublishReport:
         records = result.get("records") or []
         instance = result["instance"]
         instance_id = None
-        if instance_id:
-            instance_name = instance.id
+        if instance:
+            instance_id = instance.id
 
         for record in records:
             record_exc_info = record.exc_info
@@ -199,7 +199,7 @@ class PublishReport:
                     traceback.format_exception(*record_exc_info)
                 )
 
-            record_item = {
+            output.append({
                 "instance_id": instance_id,
                 "type": "record",
                 "msg": record.getMessage(),
@@ -212,22 +212,20 @@ class PublishReport:
                 "pathname": record.pathname,
                 "msecs": record.msecs,
                 "exc_info": record_exc_info
-            }
-            output.append(record_item)
+            })
 
         exception = result.get("error")
         if exception:
             fname, line_no, func, exc = exception.traceback
-            error_item = {
+            output.append({
+                "instance_id": instance_id,
                 "type": "error",
                 "msg": str(exception),
                 "filename": str(fname),
                 "lineno": str(line_no),
                 "func": str(func),
-                "traceback": exception.formatted_traceback,
-                "instance": instance_name
-            }
-            output.append(error_item)
+                "traceback": exception.formatted_traceback
+            })
 
         return output
 
