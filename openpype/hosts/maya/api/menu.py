@@ -86,7 +86,7 @@ def deferred():
     def remove_project_manager():
         top_menu = _get_menu()
 
-        # Try to find workfile tool action in the menu
+        # Try to find "System" menu action in the menu
         system_menu = None
         for action in top_menu.actions():
             if action.text() == "System":
@@ -96,12 +96,14 @@ def deferred():
         if system_menu is None:
             return
 
+        # Try to find "Project manager" action in "System" menu
         project_manager_action = None
         for action in system_menu.menu().children():
             if hasattr(action, "text") and action.text() == "Project Manager":
                 project_manager_action = action
                 break
 
+        # Remove "Project manager" action if was found
         if project_manager_action is not None:
             system_menu.menu().removeAction(project_manager_action)
 
