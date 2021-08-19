@@ -6,6 +6,53 @@ from constants import (
     INSTANCE_ID_ROLE,
     SORT_VALUE_ROLE
 )
+from .icons import get_pixmap
+
+
+class ContextWarningLabel(QtWidgets.QLabel):
+    cached_images_by_size = {}
+    source_image = None
+
+    def __init__(self, parent):
+        super(ContextWarningLabel, self).__init__(parent)
+        self.setToolTip(
+            "Contain invalid context. Please check details."
+        )
+
+        self._image = None
+        if self.__class__.source_image is None:
+            self.__class__.source_image = get_pixmap("warning")
+
+    @classmethod
+    def _get_pixmap_by_size(cls, size):
+        image = cls.cached_images_by_size.get(size)
+        if image is not None:
+            return image
+
+        margins = int(size / 8)
+        margins_double = margins * 2
+        pix = QtGui.QPixmap(size, size)
+        pix.fill(QtCore.Qt.transparent)
+
+        scaled_image = cls.source_image.scaled(
+            size - margins_double, size - margins_double,
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+        painter = QtGui.QPainter(pix)
+        painter.setRenderHints(
+            painter.Antialiasing | painter.SmoothPixmapTransform
+        )
+        painter.drawPixmap(margins, margins, scaled_image)
+        painter.end()
+
+        return pix
+
+    def showEvent(self, event):
+        super(ContextWarningLabel, self).showEvent(event)
+        if self._image is None:
+            self._image = self._get_pixmap_by_size(self.height())
+            self.setPixmap(self._image)
 
 
 class InstanceCardWidget(QtWidgets.QWidget):
@@ -21,6 +68,10 @@ class InstanceCardWidget(QtWidgets.QWidget):
         active_checkbox = QtWidgets.QCheckBox(self)
         active_checkbox.setChecked(instance.data["active"])
 
+        context_warning = ContextWarningLabel(self)
+        if instance.has_valid_context:
+            context_warning.setVisible(False)
+
         expand_btn = QtWidgets.QToolButton(self)
         expand_btn.setObjectName("ArrowBtn")
         expand_btn.setArrowType(QtCore.Qt.DownArrow)
@@ -34,6 +85,7 @@ class InstanceCardWidget(QtWidgets.QWidget):
         top_layout = QtWidgets.QHBoxLayout()
         top_layout.addWidget(subset_name_label)
         top_layout.addStretch(1)
+        top_layout.addWidget(context_warning)
         top_layout.addWidget(active_checkbox)
         top_layout.addWidget(expand_btn)
 
@@ -51,6 +103,7 @@ class InstanceCardWidget(QtWidgets.QWidget):
         expand_btn.clicked.connect(self._on_expend_clicked)
 
         self.subset_name_label = subset_name_label
+        self.context_warning = context_warning
         self.active_checkbox = active_checkbox
         self.expand_btn = expand_btn
 
