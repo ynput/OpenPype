@@ -156,11 +156,14 @@ class PublisherController:
         # Varianbles where callbacks are stored
         self._instances_refresh_callback_refs = set()
         self._plugins_refresh_callback_refs = set()
+
+        self._publish_reset_callback_refs = set()
         self._publish_started_callback_refs = set()
         self._publish_validated_callback_refs = set()
+        self._publish_stopped_callback_refs = set()
+
         self._publish_instance_changed_callback_refs = set()
         self._publish_plugin_changed_callback_refs = set()
-        self._publish_stopped_callback_refs = set()
 
         # State flags to prevent executing method which is already in progress
         self._resetting_plugins = False
@@ -202,6 +205,10 @@ class PublisherController:
         self._plugins_refresh_callback_refs.add(ref)
 
     # --- Publish specific callbacks ---
+    def add_publish_reset_callback(self, callback):
+        ref = weakref.WeakMethod(callback)
+        self._publish_reset_callback_refs.add(ref)
+
     def add_publish_started_callback(self, callback):
         ref = weakref.WeakMethod(callback)
         self._publish_started_callback_refs.add(ref)
@@ -416,6 +423,8 @@ class PublisherController:
         self._publish_logs = []
         self._publish_validation_errors = []
         self._publish_error = None
+
+        self._trigger_callbacks(self._publish_reset_callback_refs)
 
     def publish(self):
         """Run publishing."""

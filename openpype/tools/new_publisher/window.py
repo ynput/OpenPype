@@ -122,9 +122,9 @@ class PublisherWindow(QtWidgets.QWidget):
         # Footer
         message_input = QtWidgets.QLineEdit(main_frame)
 
-        refresh_btn = QtWidgets.QPushButton(main_frame)
-        refresh_btn.setIcon(get_icon("refresh"))
-        refresh_btn.setToolTip("Refresh publishing")
+        reset_btn = QtWidgets.QPushButton(main_frame)
+        reset_btn.setIcon(get_icon("refresh"))
+        reset_btn.setToolTip("Refresh publishing")
 
         stop_btn = QtWidgets.QPushButton(main_frame)
         stop_btn.setIcon(get_icon("stop"))
@@ -141,7 +141,7 @@ class PublisherWindow(QtWidgets.QWidget):
         footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(message_input, 1)
-        footer_layout.addWidget(refresh_btn, 0)
+        footer_layout.addWidget(reset_btn, 0)
         footer_layout.addWidget(stop_btn, 0)
         footer_layout.addWidget(validate_btn, 0)
         footer_layout.addWidget(publish_btn, 0)
@@ -165,7 +165,7 @@ class PublisherWindow(QtWidgets.QWidget):
         save_btn.clicked.connect(self._on_save_clicked)
         change_view_btn.clicked.connect(self._on_change_view_clicked)
 
-        refresh_btn.clicked.connect(self._on_refresh_clicked)
+        reset_btn.clicked.connect(self._on_reset_clicked)
         stop_btn.clicked.connect(self._on_stop_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
@@ -180,7 +180,7 @@ class PublisherWindow(QtWidgets.QWidget):
 
         controller.add_instances_refresh_callback(self._on_instances_refresh)
 
-        controller.add_publish_refresh_callback(self._on_publish_reset)
+        controller.add_publish_reset_callback(self._on_publish_reset)
         controller.add_publish_started_callback(self._on_publish_start)
         controller.add_publish_validated_callback(self._on_publish_validated)
         controller.add_publish_stopped_callback(self._on_publish_stop)
@@ -199,7 +199,7 @@ class PublisherWindow(QtWidgets.QWidget):
         self.message_input = message_input
 
         self.stop_btn = stop_btn
-        self.refresh_btn = refresh_btn
+        self.reset_btn = reset_btn
         self.validate_btn = validate_btn
         self.publish_btn = publish_btn
 
@@ -323,8 +323,8 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self.overlay_frame.setVisible(visible)
 
-    def _on_refresh_clicked(self):
-        self.controller.stop_publish()
+    def _on_reset_clicked(self):
+        self.controller.reset_publish()
 
     def _on_stop_clicked(self):
         self.controller.stop_publish()
@@ -369,13 +369,13 @@ class PublisherWindow(QtWidgets.QWidget):
         self.subset_attributes_widget.set_current_instances(instances)
 
     def _on_publish_reset(self):
-        self.refresh_btn.setEnabled(True)
+        self.reset_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self.validate_btn.setEnabled(True)
         self.publish_btn.setEnabled(True)
 
     def _on_publish_start(self):
-        self.refresh_btn.setEnabled(False)
+        self.reset_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.validate_btn.setEnabled(False)
         self.publish_btn.setEnabled(False)
@@ -384,7 +384,7 @@ class PublisherWindow(QtWidgets.QWidget):
         self.validate_btn.setEnabled(False)
 
     def _on_publish_stop(self):
-        self.refresh_btn.setEnabled(True)
+        self.reset_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         validate_enabled = not self.controller.publish_has_crashed
         publish_enabled = not self.controller.publish_has_crashed

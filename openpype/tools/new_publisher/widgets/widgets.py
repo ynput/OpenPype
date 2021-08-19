@@ -956,8 +956,8 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         copy_log_btn = QtWidgets.QPushButton("Copy log", content_widget)
         copy_log_btn.setVisible(False)
 
-        refresh_btn = QtWidgets.QPushButton(content_widget)
-        refresh_btn.setIcon(get_icon("refresh"))
+        reset_btn = QtWidgets.QPushButton(content_widget)
+        reset_btn.setIcon(get_icon("refresh"))
 
         stop_btn = QtWidgets.QPushButton(content_widget)
         stop_btn.setIcon(get_icon("stop"))
@@ -971,7 +971,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.addWidget(copy_log_btn, 0)
         footer_layout.addStretch(1)
-        footer_layout.addWidget(refresh_btn, 0)
+        footer_layout.addWidget(reset_btn, 0)
         footer_layout.addWidget(stop_btn, 0)
         footer_layout.addWidget(validate_btn, 0)
         footer_layout.addWidget(publish_btn, 0)
@@ -997,12 +997,12 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         hide_btn.clicked.connect(self.hide_requested)
         copy_log_btn.clicked.connect(self._on_copy_log)
 
-        refresh_btn.clicked.connect(self._on_refresh_clicked)
+        reset_btn.clicked.connect(self._on_reset_clicked)
         stop_btn.clicked.connect(self._on_stop_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
-        controller.add_publish_refresh_callback(self._on_publish_reset)
+        controller.add_publish_reset_callback(self._on_publish_reset)
         controller.add_publish_started_callback(self._on_publish_start)
         controller.add_publish_validated_callback(self._on_publish_validated)
         controller.add_publish_stopped_callback(self._on_publish_stop)
@@ -1023,7 +1023,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.progress_widget = progress_widget
 
         self.copy_log_btn = copy_log_btn
-        self.refresh_btn = refresh_btn
+        self.reset_btn = reset_btn
         self.stop_btn = stop_btn
         self.validate_btn = validate_btn
         self.publish_btn = publish_btn
@@ -1042,7 +1042,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.message_label.setText("")
         self.copy_log_btn.setVisible(False)
 
-        self.refresh_btn.setEnabled(True)
+        self.reset_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         self.validate_btn.setEnabled(True)
         self.publish_btn.setEnabled(True)
@@ -1051,7 +1051,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self._set_success_property(-1)
         self.main_label.setText("Publishing...")
 
-        self.refresh_btn.setEnabled(False)
+        self.reset_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
         self.validate_btn.setEnabled(False)
         self.publish_btn.setEnabled(False)
@@ -1088,7 +1088,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         QtWidgets.QApplication.processEvents()
 
     def _on_publish_stop(self):
-        self.refresh_btn.setEnabled(True)
+        self.reset_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         validate_enabled = not self.controller.publish_has_crashed
         publish_enabled = not self.controller.publish_has_crashed
@@ -1148,8 +1148,8 @@ class PublishOverlayFrame(QtWidgets.QFrame):
             mime_data
         )
 
-    def _on_refresh_clicked(self):
-        self.controller.stop_publish()
+    def _on_reset_clicked(self):
+        self.controller.reset_publish()
 
     def _on_stop_clicked(self):
         self.controller.stop_publish()
