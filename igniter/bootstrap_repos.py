@@ -12,7 +12,6 @@ from typing import Union, Callable, List, Tuple
 
 from zipfile import ZipFile, BadZipFile
 
-from appdirs import user_data_dir
 from speedcopy import copyfile
 import semver
 from cloudpathlib import AnyPath
@@ -21,7 +20,7 @@ from .user_settings import (
     OpenPypeSecureRegistry,
     OpenPypeSettingsRegistry
 )
-from .tools import get_openpype_path_from_db
+from .tools import get_openpype_path_from_db, get_user_data_dir
 
 LOG_INFO = 0
 LOG_WARNING = 1
@@ -233,11 +232,9 @@ class BootstrapRepos:
             message (QtCore.Signal, optional): Signal to report messages back.
 
         """
-        # vendor and app used to construct user data dir
-        self._vendor = "pypeclub"
-        self._app = "openpype"
+
         self._log = log.getLogger(str(__class__))
-        self.data_dir = AnyPath(user_data_dir(self._app, self._vendor))
+        self.data_dir = get_user_data_dir()
         self.secure_registry = OpenPypeSecureRegistry("mongodb")
         self.registry = OpenPypeSettingsRegistry()
         self.zip_filter = [".pyc", "__pycache__"]
