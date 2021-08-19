@@ -51,11 +51,11 @@ class ExtractXgenCache(openpype.api.Extractor):
         with avalon.maya.suspended_refresh():
             with avalon.maya.maintained_selection():
                 command = (
-                    '-file ' 
-                    + path 
-                    + ' -df "ogawa" -fr ' 
-                    + str(start) 
-                    + ' ' 
+                    '-file '
+                    + path
+                    + ' -df "ogawa" -fr '
+                    + str(start)
+                    + ' '
                     + str(end)
                     + ' -step 1 -mxf -wfw'
                 )
