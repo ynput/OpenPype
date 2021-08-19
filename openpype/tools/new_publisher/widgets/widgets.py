@@ -933,6 +933,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         top_layout.addWidget(hide_btn)
 
         main_label = QtWidgets.QLabel(content_widget)
+        main_label.setObjectName("PublishOverlayMainLabel")
         main_label.setAlignment(QtCore.Qt.AlignCenter)
 
         message_label = QtWidgets.QLabel(content_widget)

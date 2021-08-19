@@ -687,6 +687,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     color: black;
 }
 
+#PublishOverlayMainLabel {
+    font-size: 12pt;
+}
+
 #ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
     background: transparent;
 }
