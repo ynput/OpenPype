@@ -239,7 +239,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.info_frame.style().polish(self.info_frame)
 
     def _on_copy_log(self):
-        logs = self.controller.get_publish_logs()
+        logs = self.controller.get_publish_report()
         logs_string = json.dumps(logs, indent=4)
 
         mime_data = QtCore.QMimeData()

@@ -128,8 +128,8 @@ class PublisherController:
 
         # pyblish.api.Context
         self._publish_context = None
-        # Pyblish logs
-        self._publish_logs = []
+        # Pyblish report
+        self._publish_report = []
         # Store exceptions of validation error
         self._publish_validation_errors = []
         # Any other exception that happened during publishing
@@ -408,8 +408,8 @@ class PublisherController:
     def get_publish_crash_error(self):
         return self._publish_error
 
-    def get_publish_logs(self):
-        return self._publish_logs
+    def get_publish_report(self):
+        return self._publish_report
 
     def get_validation_errors(self):
         return self._publish_validation_errors
@@ -423,7 +423,7 @@ class PublisherController:
         self._main_thread_iter = self._publish_iterator()
         self._publish_context = pyblish.api.Context()
 
-        self._publish_logs = []
+        self._publish_report = []
         self._publish_validation_errors = []
         self._publish_error = None
 
@@ -603,7 +603,7 @@ class PublisherController:
             plugin, self._publish_context, instance
         )
 
-        self._publish_logs.extend(self._extract_log_items(result))
+        self._publish_report.extend(self._extract_log_items(result))
 
         exception = result.get("error")
         if exception:
