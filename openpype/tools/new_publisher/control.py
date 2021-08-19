@@ -156,10 +156,11 @@ class PublisherController:
         # Varianbles where callbacks are stored
         self._instances_refresh_callback_refs = set()
         self._plugins_refresh_callback_refs = set()
-        self._publishing_started_callback_refs = set()
+        self._publish_started_callback_refs = set()
+        self._publish_validated_callback_refs = set()
         self._publish_instance_changed_callback_refs = set()
         self._publish_plugin_changed_callback_refs = set()
-        self._publishing_stopped_callback_refs = set()
+        self._publish_stopped_callback_refs = set()
 
         # State flags to prevent executing method which is already in progress
         self._resetting_plugins = False
@@ -202,7 +203,11 @@ class PublisherController:
 
     def add_publish_started_callback(self, callback):
         ref = weakref.WeakMethod(callback)
-        self._publishing_started_callback_refs.add(ref)
+        self._publish_started_callback_refs.add(ref)
+
+    def add_publish_validated_callback(self, callback):
+        ref = weakref.WeakMethod(callback)
+        self._publish_validated_callback_refs.add(ref)
 
     def add_instance_change_callback(self, callback):
         ref = weakref.WeakMethod(callback)
@@ -214,7 +219,7 @@ class PublisherController:
 
     def add_publish_stopped_callback(self, callback):
         ref = weakref.WeakMethod(callback)
-        self._publishing_stopped_callback_refs.add(ref)
+        self._publish_stopped_callback_refs.add(ref)
 
     def get_asset_docs(self):
         return self._asset_docs_cache.get_asset_docs()
@@ -412,14 +417,14 @@ class PublisherController:
 
     def _start_publish(self):
         """Start or continue in publishing."""
-        self._trigger_callbacks(self._publishing_started_callback_refs)
+        self._trigger_callbacks(self._publish_started_callback_refs)
         self._main_thread_processor.start()
         self._publish_next_process()
 
     def _stop_publish(self):
         """Stop or pause publishing."""
         self._main_thread_processor.stop()
-        self._trigger_callbacks(self._publishing_stopped_callback_refs)
+        self._trigger_callbacks(self._publish_stopped_callback_refs)
 
     def _publish_next_process(self):
         # Validations of progress before using iterator
@@ -452,6 +457,11 @@ class PublisherController:
                 self._publish_validated = (
                     plugin.order >= self._validation_order
                 )
+                # Trigger callbacks when validation stage is passed
+                if self._publish_validated:
+                    self._trigger_callbacks(
+                        self._publish_validated_callback_refs
+                    )
 
             # Stop if plugin is over validation order and process
             #   should process up to validation.
