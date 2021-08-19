@@ -165,8 +165,8 @@ class PublisherWindow(QtWidgets.QWidget):
         save_btn.clicked.connect(self._on_save_clicked)
         change_view_btn.clicked.connect(self._on_change_view_clicked)
 
-        stop_btn.clicked.connect(self._on_stop_clicked)
         refresh_btn.clicked.connect(self._on_refresh_clicked)
+        stop_btn.clicked.connect(self._on_stop_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 

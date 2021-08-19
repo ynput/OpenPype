@@ -956,11 +956,11 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         copy_log_btn = QtWidgets.QPushButton("Copy log", content_widget)
         copy_log_btn.setVisible(False)
 
-        stop_btn = QtWidgets.QPushButton(content_widget)
-        stop_btn.setIcon(get_icon("stop"))
-
         refresh_btn = QtWidgets.QPushButton(content_widget)
         refresh_btn.setIcon(get_icon("refresh"))
+
+        stop_btn = QtWidgets.QPushButton(content_widget)
+        stop_btn.setIcon(get_icon("stop"))
 
         validate_btn = QtWidgets.QPushButton(content_widget)
         validate_btn.setIcon(get_icon("validate"))
@@ -997,6 +997,11 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         hide_btn.clicked.connect(self.hide_requested)
         copy_log_btn.clicked.connect(self._on_copy_log)
 
+        refresh_btn.clicked.connect(self._on_refresh_clicked)
+        stop_btn.clicked.connect(self._on_stop_clicked)
+        validate_btn.clicked.connect(self._on_validate_clicked)
+        publish_btn.clicked.connect(self._on_publish_clicked)
+
         controller.add_publish_refresh_callback(self._on_publish_reset)
         controller.add_publish_started_callback(self._on_publish_start)
         controller.add_publish_validated_callback(self._on_publish_validated)
@@ -1018,8 +1023,8 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.progress_widget = progress_widget
 
         self.copy_log_btn = copy_log_btn
-        self.stop_btn = stop_btn
         self.refresh_btn = refresh_btn
+        self.stop_btn = stop_btn
         self.validate_btn = validate_btn
         self.publish_btn = publish_btn
 
@@ -1142,3 +1147,15 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         QtWidgets.QApplication.instance().clipboard().setMimeData(
             mime_data
         )
+
+    def _on_refresh_clicked(self):
+        self.controller.stop_publish()
+
+    def _on_stop_clicked(self):
+        self.controller.stop_publish()
+
+    def _on_validate_clicked(self):
+        self.controller.validate()
+
+    def _on_publish_clicked(self):
+        self.controller.publish()
