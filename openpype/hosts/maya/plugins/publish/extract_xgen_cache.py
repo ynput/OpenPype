@@ -19,8 +19,8 @@ class ExtractXgenCache(openpype.api.Extractor):
     def process(self, instance):
 
         # Collect the out set nodes
-        out_descriptions = [(node for node in instance
-                            if cmds.nodeType(node) == "xgmSplineDescription")]
+        out_descriptions = [node for node in instance
+                            if cmds.nodeType(node) == "xgmSplineDescription"]
 
         start = 1
         end = 1
