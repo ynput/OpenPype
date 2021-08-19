@@ -34,7 +34,8 @@ from widgets import (
     SubsetAttributesWidget,
     InstanceCardView,
     InstanceListView,
-    CreateDialog
+    CreateDialog,
+    get_icon
 )
 
 
@@ -120,12 +121,28 @@ class PublisherWindow(QtWidgets.QWidget):
 
         # Footer
         message_input = QtWidgets.QLineEdit(main_frame)
-        validate_btn = QtWidgets.QPushButton("Validate", main_frame)
-        publish_btn = QtWidgets.QPushButton("Publish", main_frame)
+
+        refresh_btn = QtWidgets.QPushButton(main_frame)
+        refresh_btn.setIcon(get_icon("refresh"))
+        refresh_btn.setToolTip("Refresh publishing")
+
+        stop_btn = QtWidgets.QPushButton(main_frame)
+        stop_btn.setIcon(get_icon("stop"))
+        stop_btn.setToolTip("Stop/Pause publishing")
+
+        validate_btn = QtWidgets.QPushButton(main_frame)
+        validate_btn.setIcon(get_icon("validate"))
+        validate_btn.setToolTip("Validate")
+
+        publish_btn = QtWidgets.QPushButton(main_frame)
+        publish_btn.setIcon(get_icon("play"))
+        publish_btn.setToolTip("Publish")
 
         footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(message_input, 1)
+        footer_layout.addWidget(refresh_btn, 0)
+        footer_layout.addWidget(stop_btn, 0)
         footer_layout.addWidget(validate_btn, 0)
         footer_layout.addWidget(publish_btn, 0)
 
@@ -150,6 +167,8 @@ class PublisherWindow(QtWidgets.QWidget):
         save_btn.clicked.connect(self._on_save_clicked)
         change_view_btn.clicked.connect(self._on_change_view_clicked)
 
+        stop_btn.clicked.connect(self._on_stop_clicked)
+        refresh_btn.clicked.connect(self._on_refresh_clicked)
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
@@ -175,6 +194,9 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self.subset_attributes_widget = subset_attributes_widget
         self.message_input = message_input
+
+        self.stop_btn = stop_btn
+        self.refresh_btn = refresh_btn
         self.validate_btn = validate_btn
         self.publish_btn = publish_btn
 
@@ -297,6 +319,12 @@ class PublisherWindow(QtWidgets.QWidget):
             return
 
         self.overlay_frame.setVisible(visible)
+
+    def _on_refresh_clicked(self):
+        self.controller.stop_publish()
+
+    def _on_stop_clicked(self):
+        self.controller.stop_publish()
 
     def _on_validate_clicked(self):
         self._set_overlay_visibility(True)
