@@ -201,6 +201,7 @@ class PublisherController:
         ref = weakref.WeakMethod(callback)
         self._plugins_refresh_callback_refs.add(ref)
 
+    # --- Publish specific callbacks ---
     def add_publish_started_callback(self, callback):
         ref = weakref.WeakMethod(callback)
         self._publish_started_callback_refs.add(ref)
@@ -382,6 +383,18 @@ class PublisherController:
     def publish_has_finished(self):
         return self._publish_finished
 
+    @property
+    def publish_is_running(self):
+        return self._publish_is_running
+
+    @property
+    def publish_has_validated(self):
+        return self._publish_validated
+
+    @property
+    def publish_has_crashed(self):
+        return bool(self._publish_error)
+
     def get_publish_crash_error(self):
         return self._publish_error
 
@@ -392,6 +405,7 @@ class PublisherController:
         return self._publish_validation_errors
 
     def _reset_publish(self):
+        self._publish_is_running = False
         self._publish_validated = False
         self._publish_up_validation = False
         self._publish_finished = False
@@ -417,12 +431,14 @@ class PublisherController:
 
     def _start_publish(self):
         """Start or continue in publishing."""
+        self._publish_is_running = True
         self._trigger_callbacks(self._publish_started_callback_refs)
         self._main_thread_processor.start()
         self._publish_next_process()
 
     def _stop_publish(self):
         """Stop or pause publishing."""
+        self._publish_is_running = False
         self._main_thread_processor.stop()
         self._trigger_callbacks(self._publish_stopped_callback_refs)
 
