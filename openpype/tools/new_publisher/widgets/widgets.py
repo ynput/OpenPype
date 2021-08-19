@@ -997,11 +997,13 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         hide_btn.clicked.connect(self.hide_requested)
         copy_log_btn.clicked.connect(self._on_copy_log)
 
+        controller.add_publish_refresh_callback(self._on_publish_reset)
+        controller.add_publish_started_callback(self._on_publish_start)
+        controller.add_publish_validated_callback(self._on_publish_validated)
+        controller.add_publish_stopped_callback(self._on_publish_stop)
+
         controller.add_instance_change_callback(self._on_instance_change)
         controller.add_plugin_change_callback(self._on_plugin_change)
-        controller.add_plugins_refresh_callback(self._on_publish_reset)
-        controller.add_publish_started_callback(self._on_publish_start)
-        controller.add_publish_stopped_callback(self._on_publish_stop)
 
         self.controller = controller
 
@@ -1035,9 +1037,22 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.message_label.setText("")
         self.copy_log_btn.setVisible(False)
 
+        self.refresh_btn.setEnabled(True)
+        self.stop_btn.setEnabled(False)
+        self.validate_btn.setEnabled(True)
+        self.publish_btn.setEnabled(True)
+
     def _on_publish_start(self):
         self._set_success_property(-1)
         self.main_label.setText("Publishing...")
+
+        self.refresh_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.validate_btn.setEnabled(False)
+        self.publish_btn.setEnabled(False)
+
+    def _on_publish_validated(self):
+        self.validate_btn.setEnabled(False)
 
     def _on_instance_change(self, context, instance):
         """Change instance label when instance is going to be processed."""
@@ -1068,6 +1083,18 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         QtWidgets.QApplication.processEvents()
 
     def _on_publish_stop(self):
+        self.refresh_btn.setEnabled(True)
+        self.stop_btn.setEnabled(False)
+        validate_enabled = not self.controller.publish_has_crashed
+        publish_enabled = not self.controller.publish_has_crashed
+        if validate_enabled:
+            validate_enabled = not self.controller.publish_has_validated
+        if publish_enabled:
+            publish_enabled = not self.controller.publish_has_finished
+
+        self.validate_btn.setEnabled(validate_enabled)
+        self.publish_btn.setEnabled(publish_enabled)
+
         error = self.controller.get_publish_crash_error()
         if error:
             self._set_error(error)
