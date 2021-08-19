@@ -180,6 +180,8 @@ class PublisherWindow(QtWidgets.QWidget):
         )
         overlay_frame.hide_requested.connect(self._on_overlay_hide_request)
 
+        controller.add_publish_started_callback(self._on_publish_start)
+        controller.add_publish_validated_callback(self._on_publish_validated)
         controller.add_publish_stopped_callback(self._on_publish_stop)
 
         self.main_frame = main_frame
@@ -365,8 +367,28 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self.subset_attributes_widget.set_current_instances(instances)
 
+    def _on_publish_start(self):
+        self.refresh_btn.setEnabled(False)
+        self.stop_btn.setEnabled(True)
+        self.validate_btn.setEnabled(False)
+        self.publish_btn.setEnabled(False)
+
+    def _on_publish_validated(self):
+        self.validate_btn.setEnabled(False)
+
     def _on_publish_stop(self):
-        pass
+        self.refresh_btn.setEnabled(True)
+        self.stop_btn.setEnabled(False)
+        validate_enabled = self.controller.publish_has_crashed
+        publish_enabled = self.controller.publish_has_crashed
+        if validate_enabled:
+            
+        self.validate_btn.setEnabled(
+            not self.controller.publish_has_validated
+        )
+        self.publish_btn.setEnabled(
+            not self.controller.publish_has_finished
+        )
 
     def _on_overlay_hide_request(self):
         self._set_overlay_visibility(False)
