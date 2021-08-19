@@ -1,4 +1,5 @@
 {
+    "deadline_servers": [],
     "publish": {
         "ValidateExpectedFiles": {
             "enabled": true,
@@ -11,6 +12,30 @@
                 "deadline"
             ]
         },
+        "ProcessSubmittedJobOnFarm": {
+            "enabled": true,
+            "deadline_department": "",
+            "deadline_pool": "",
+            "deadline_group": "",
+            "deadline_chunk_size": 1,
+            "deadline_priority": 50,
+            "publishing_script": "",
+            "skip_integration_repre_list": [],
+            "aov_filter": {
+                "maya": [
+                    ".+(?:\\.|_)([Bb]eauty)(?:\\.|_).*"
+                ],
+                "nuke": [
+                    ".*"
+                ],
+                "aftereffects": [
+                    ".*"
+                ],
+                "celaction": [
+                    ".*"
+                ]
+            }
+        },
         "MayaSubmitDeadline": {
             "enabled": true,
             "optional": false,
@@ -21,7 +46,8 @@
             "group": "none",
             "limit": [],
             "jobInfo": {},
-            "pluginInfo": {}
+            "pluginInfo": {},
+            "scene_patches": []
         },
         "NukeSubmitDeadline": {
             "enabled": true,

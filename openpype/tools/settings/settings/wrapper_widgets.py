@@ -19,6 +19,14 @@ class WrapperWidget(QtWidgets.QWidget):
 
         self.create_ui()
 
+    def make_sure_is_visible(self, *args, **kwargs):
+        changed = False
+        for input_field in self.input_fields:
+            if input_field.make_sure_is_visible(*args, **kwargs):
+                changed = True
+                break
+        return changed
+
     def create_ui(self):
         raise NotImplementedError(
             "{} does not have implemented `create_ui`.".format(
@@ -88,6 +96,14 @@ class CollapsibleWrapper(WrapperWidget):
                 body_widget.toggle_content()
         else:
             body_widget.hide_toolbox(hide_content=False)
+
+    def make_sure_is_visible(self, *args, **kwargs):
+        result = super(CollapsibleWrapper, self).make_sure_is_visible(
+            *args, **kwargs
+        )
+        if result:
+            self.body_widget.toggle_content(True)
+        return result
 
     def add_widget_to_layout(self, widget, label=None):
         self.input_fields.append(widget)

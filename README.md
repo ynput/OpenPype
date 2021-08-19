@@ -29,7 +29,7 @@ The main things you will need to run and build OpenPype are:
     - PowerShell 5.0+ (Windows)
     - Bash (Linux)
 - [**Python 3.7.8**](#python) or higher
-- [**MongoDB**](#database)
+- [**MongoDB**](#database) (needed only for local development)
 
 
 It can be built and ran on all common platforms. We develop and test on the following:
@@ -126,13 +126,22 @@ pyenv local 3.7.9
 
 ### Linux
 
+#### Docker
+Easiest way to build OpenPype on Linux is using [Docker](https://www.docker.com/). Just run:
+
+```sh
+sudo ./tools/docker_build.sh
+```
+
+If all is successful, you'll find built OpenPype in `./build/` folder.
+
+#### Manual build
 You will need [Python 3.7](https://www.python.org/downloads/) and [git](https://git-scm.com/downloads). You'll also need [curl](https://curl.se) on systems that doesn't have one preinstalled.
 
 To build Python related stuff, you need Python header files installed (`python3-dev` on Ubuntu for example).
 
 You'll need also other tools to build
 some OpenPype dependencies like [CMake](https://cmake.org/). Python 3 should be part of all modern distributions. You can use your package manager to install **git** and **cmake**.
-
 
 <details>
 <summary>Details for Ubuntu</summary>

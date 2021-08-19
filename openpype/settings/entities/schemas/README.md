@@ -195,6 +195,7 @@
     - all items in `enum_children` must have at least `key` key which represents value stored under `enum_key`
     - items can define `label` for UI purposes
     - most important part is that item can define `children` key where are definitions of it's children (`children` value works the same way as in `dict`)
+- to set default value for `enum_key` set it with `enum_default`
 - entity must have defined `"label"` if is not used as widget
 - is set as group if any parent is not group
 - if `"label"` is entetered there which will be shown in GUI
@@ -359,6 +360,9 @@ How output of the schema could look like on save:
 - values are defined under value of key `"enum_items"` as list
     - each item in list is simple dictionary where value is label and key is value which will be stored
     - should be possible to enter single dictionary if order of items doesn't matter
+- it is possible to set default selected value/s with `default` attribute
+    - it is recommended to use this option only in single selection mode
+    - at the end this option is used only when defying default settings value or in dynamic items
 
 ```
 {
@@ -371,7 +375,7 @@ How output of the schema could look like on save:
         {"ftrackreview": "Add to Ftrack"},
         {"delete": "Delete output"},
         {"slate-frame": "Add slate frame"},
-        {"no-hnadles": "Skip handle frames"}
+        {"no-handles": "Skip handle frames"}
     ]
 }
 ```
@@ -417,6 +421,8 @@ How output of the schema could look like on save:
 - there are 2 possible ways how to set the type:
     1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
     2.) item type name as string without modifiers (e.g. `text`)
+    3.) enhancement of 1.) there is also support of `template` type but be carefull about endless loop of templates
+        - goal of using `template` is to easily change same item definitions in multiple lists
 
 1.) with item modifiers
 ```
@@ -440,6 +446,65 @@ How output of the schema could look like on save:
     "label": "Exclude ports",
     "object_type": "text"
 }
+```
+
+3.) with template definition
+```
+# Schema of list item where template is used
+{
+    "type": "list",
+    "key": "menu_items",
+    "label": "Menu Items",
+    "object_type": {
+        "type": "template",
+        "name": "template_object_example"
+    }
+}
+
+# WARNING:
+#  In this example the template use itself inside which will work in `list`
+#  but may cause an issue in other entity types (e.g. `dict`).
+
+'template_object_example.json' :
+[
+    {
+        "type": "dict-conditional",
+        "use_label_wrap": true,
+        "collapsible": true,
+        "key": "menu_items",
+        "label": "Menu items",
+        "enum_key": "type",
+        "enum_label": "Type",
+        "enum_children": [
+            {
+                "key": "action",
+                "label": "Action",
+                "children": [
+                    {
+                        "type": "text",
+                        "key": "key",
+                        "label": "Key"
+                    }
+                ]
+            },
+            {
+                "key": "menu",
+                "label": "Menu",
+                "children": [
+                    {
+                        "key": "children",
+                        "label": "Children",
+                        "type": "list",
+                        "object_type": {
+                            "type": "template",
+                            "name": "template_object_example"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]
 ```
 
 ### dict-modifiable

@@ -389,3 +389,31 @@ QTableView::item:pressed, QListView::item:pressed, QTreeView::item:pressed  {
 QTableView::item:selected:active, QTreeView::item:selected:active, QListView::item:selected:active  {
     background: #3d8ec9;
 }
+
+#BreadcrumbsPathInput {
+    padding: 2px;
+    font-size: 9pt;
+}
+
+#BreadcrumbsButton {
+    padding-right: 12px;
+    font-size: 9pt;
+}
+
+#BreadcrumbsButton[empty="1"] {
+    padding-right: 0px;
+}
+
+#BreadcrumbsButton::menu-button {
+    width: 12px;
+    background: rgba(127, 127, 127, 60);
+}
+#BreadcrumbsButton::menu-button:hover {
+    background: rgba(127, 127, 127, 90);
+}
+
+#BreadcrumbsPanel {
+    border: 1px solid #4e5254;
+    border-radius: 5px;
+    background: #21252B;;
+}

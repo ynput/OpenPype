@@ -45,7 +45,8 @@ class ExtractBurnin(openpype.api.Extractor):
         "fusion",
         "aftereffects",
         "tvpaint",
-        "webpublisher"
+        "webpublisher",
+        "aftereffects"
         # "resolve"
     ]
     optional = True

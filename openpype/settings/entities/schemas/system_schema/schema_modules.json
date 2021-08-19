@@ -130,9 +130,11 @@
                     "label": "Enabled"
                 },
                 {
-                    "type": "text",
-                    "key": "DEADLINE_REST_URL",
-                    "label": "Deadline Resl URL"
+                    "type": "dict-modifiable",
+                    "object_type": "text",
+                    "key": "deadline_urls",
+                    "required_keys": ["default"],
+                    "label": "Deadline Webservice URLs"
                 }
             ]
         },
