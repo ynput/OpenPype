@@ -18,8 +18,6 @@ class EmptyListItem(QtWidgets.QWidget):
 
         add_btn = QtWidgets.QPushButton("+", self)
         remove_btn = QtWidgets.QPushButton("-", self)
-        spacer_widget = QtWidgets.QWidget(self)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         add_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
         remove_btn.setEnabled(False)
@@ -35,13 +33,12 @@ class EmptyListItem(QtWidgets.QWidget):
         layout.setSpacing(3)
         layout.addWidget(add_btn, 0)
         layout.addWidget(remove_btn, 0)
-        layout.addWidget(spacer_widget, 1)
+        layout.addStretch(1)
 
         add_btn.clicked.connect(self._on_add_clicked)
 
         self.add_btn = add_btn
         self.remove_btn = remove_btn
-        self.spacer_widget = spacer_widget
 
     def _on_add_clicked(self):
         self.entity_widget.add_new_item()
@@ -101,12 +98,6 @@ class ListItem(QtWidgets.QWidget):
             self.category_widget, self.entity, self
         )
 
-        spacer_widget = QtWidgets.QWidget(self)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        spacer_widget.setVisible(False)
-
-        layout.addWidget(spacer_widget, 1)
-
         layout.addWidget(up_btn, 0)
         layout.addWidget(down_btn, 0)
 
@@ -115,7 +106,8 @@ class ListItem(QtWidgets.QWidget):
         self.up_btn = up_btn
         self.down_btn = down_btn
 
-        self.spacer_widget = spacer_widget
+        self._row = -1
+        self._is_last = False
 
     @property
     def category_widget(self):
@@ -125,6 +117,9 @@ class ListItem(QtWidgets.QWidget):
         return self.entity_widget.create_ui_for_entity(
             *args, **kwargs
         )
+
+    def make_sure_is_visible(self, *args, **kwargs):
+        return self.input_field.make_sure_is_visible(*args, **kwargs)
 
     @property
     def is_invalid(self):
@@ -136,28 +131,40 @@ class ListItem(QtWidgets.QWidget):
     def add_widget_to_layout(self, widget, label=None):
         self.content_layout.addWidget(widget, 1)
 
+    def set_row(self, row, is_last):
+        if row == self._row and is_last == self._is_last:
+            return
+
+        trigger_order_changed = (
+            row != self._row
+            or is_last != self._is_last
+        )
+        self._row = row
+        self._is_last = is_last
+
+        if trigger_order_changed:
+            self.order_changed()
+
+    @property
     def row(self):
-        return self.entity_widget.input_fields.index(self)
+        return self._row
 
     def parent_rows_count(self):
         return len(self.entity_widget.input_fields)
 
     def _on_add_clicked(self):
-        self.entity_widget.add_new_item(row=self.row() + 1)
+        self.entity_widget.add_new_item(row=self.row + 1)
 
     def _on_remove_clicked(self):
         self.entity_widget.remove_row(self)
 
     def _on_up_clicked(self):
-        row = self.row()
-        self.entity_widget.swap_rows(row - 1, row)
+        self.entity_widget.swap_rows(self.row - 1, self.row)
 
     def _on_down_clicked(self):
-        row = self.row()
-        self.entity_widget.swap_rows(row, row + 1)
+        self.entity_widget.swap_rows(self.row, self.row + 1)
 
     def order_changed(self):
-        row = self.row()
         parent_row_count = self.parent_rows_count()
         if parent_row_count == 1:
             self.up_btn.setVisible(False)
@@ -168,11 +175,11 @@ class ListItem(QtWidgets.QWidget):
             self.up_btn.setVisible(True)
             self.down_btn.setVisible(True)
 
-        if row == 0:
+        if self.row == 0:
             self.up_btn.setEnabled(False)
             self.down_btn.setEnabled(True)
 
-        elif row == parent_row_count - 1:
+        elif self.row == parent_row_count - 1:
             self.up_btn.setEnabled(True)
             self.down_btn.setEnabled(False)
 
@@ -191,6 +198,7 @@ class ListWidget(InputWidget):
     def create_ui(self):
         self._child_style_state = ""
         self.input_fields = []
+        self._input_fields_by_entity_id = {}
 
         main_layout = QtWidgets.QHBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -243,8 +251,7 @@ class ListWidget(InputWidget):
         self.entity_widget.add_widget_to_layout(self, entity_label)
 
     def set_entity_value(self):
-        for input_field in tuple(self.input_fields):
-            self.remove_row(input_field)
+        self.remove_all_rows()
 
         for entity in self.entity.children:
             self.add_row(entity)
@@ -260,41 +267,82 @@ class ListWidget(InputWidget):
             invalid.extend(input_field.get_invalid())
         return invalid
 
+    def make_sure_is_visible(self, path, scroll_to):
+        if not path:
+            return False
+
+        entity_path = self.entity.path
+        if entity_path == path:
+            self.set_focus(scroll_to)
+            return True
+
+        if not path.startswith(entity_path):
+            return False
+
+        if self.body_widget and not self.body_widget.is_expanded():
+            self.body_widget.toggle_content(True)
+
+        for input_field in self.input_fields:
+            if input_field.make_sure_is_visible(path, scroll_to):
+                return True
+        return False
+
     def _on_entity_change(self):
         # TODO do less inefficient
-        input_field_last_idx = len(self.input_fields) - 1
-        child_len = len(self.entity)
+        childen_order = []
+        new_children = []
         for idx, child_entity in enumerate(self.entity):
-            if idx > input_field_last_idx:
-                self.add_row(child_entity, idx)
-                input_field_last_idx += 1
+            input_field = self._input_fields_by_entity_id.get(child_entity.id)
+            if input_field is not None:
+                childen_order.append(input_field)
+            else:
+                new_children.append((idx, child_entity))
+
+        order_changed = False
+        for idx, input_field in enumerate(childen_order):
+            current_field = self.input_fields[idx]
+            if current_field is input_field:
                 continue
+            order_changed = True
+            old_idx = self.input_fields.index(input_field)
+            self.input_fields[old_idx], self.input_fields[idx] = (
+                current_field, input_field
+            )
+            self.content_layout.insertWidget(idx + 1, input_field)
 
-            if self.input_fields[idx].entity is child_entity:
-                continue
+        kept_len = len(childen_order)
+        fields_len = len(self.input_fields)
+        if fields_len > kept_len:
+            order_changed = True
+            for row in reversed(range(kept_len, fields_len)):
+                self.remove_row(row=row)
 
-            input_field_idx = None
-            for _input_field_idx, input_field in enumerate(self.input_fields):
-                if input_field.entity is child_entity:
-                    input_field_idx = _input_field_idx
-                    break
+        for idx, child_entity in new_children:
+            order_changed = False
+            self.add_row(child_entity, idx)
 
-            if input_field_idx is None:
-                self.add_row(child_entity, idx)
-                input_field_last_idx += 1
-                continue
+        if not order_changed:
+            return
 
-            input_field = self.input_fields.pop(input_field_idx)
-            self.input_fields.insert(idx, input_field)
-            self.content_layout.insertWidget(idx, input_field)
+        self._on_order_change()
 
-        new_input_field_len = len(self.input_fields)
-        if child_len != new_input_field_len:
-            for _idx in range(child_len, new_input_field_len):
-                # Remove row at the same index
-                self.remove_row(self.input_fields[child_len])
+        input_field_len = self.count()
+        self.empty_row.setVisible(input_field_len == 0)
 
-        self.empty_row.setVisible(self.count() == 0)
+    def _on_order_change(self):
+        last_idx = self.count() - 1
+        previous_input = None
+        for idx, input_field in enumerate(self.input_fields):
+            input_field.set_row(idx, idx == last_idx)
+            next_input = input_field.input_field.focusProxy()
+            if previous_input is not None:
+                self.setTabOrder(previous_input, next_input)
+            else:
+                self.setTabOrder(self, next_input)
+            previous_input = next_input
+
+        if previous_input is not None:
+            self.setTabOrder(previous_input, self)
 
     def count(self):
         return len(self.input_fields)
@@ -307,32 +355,20 @@ class ListWidget(InputWidget):
 
     def add_new_item(self, row=None):
         new_entity = self.entity.add_new_item(row)
-        for input_field in self.input_fields:
-            if input_field.entity is new_entity:
-                input_field.input_field.setFocus(True)
-                break
+        input_field = self._input_fields_by_entity_id.get(new_entity.id)
+        if input_field is not None:
+            input_field.input_field.setFocus(True)
         return new_entity
 
     def add_row(self, child_entity, row=None):
         # Create new item
         item_widget = ListItem(child_entity, self)
-
-        previous_field = None
-        next_field = None
+        self._input_fields_by_entity_id[child_entity.id] = item_widget
 
         if row is None:
-            if self.input_fields:
-                previous_field = self.input_fields[-1]
             self.content_layout.addWidget(item_widget)
             self.input_fields.append(item_widget)
         else:
-            if row > 0:
-                previous_field = self.input_fields[row - 1]
-
-            max_index = self.count()
-            if row < max_index:
-                next_field = self.input_fields[row]
-
             self.content_layout.insertWidget(row + 1, item_widget)
             self.input_fields.insert(row, item_widget)
 
@@ -342,49 +378,53 @@ class ListWidget(InputWidget):
         #   added as widget here which won't because is not in input_fields
         item_widget.input_field.set_entity_value()
 
-        if previous_field:
-            previous_field.order_changed()
+        self._on_order_change()
 
-        if next_field:
-            next_field.order_changed()
-
-        item_widget.order_changed()
-
-        previous_input = None
-        for input_field in self.input_fields:
-            if previous_input is not None:
-                self.setTabOrder(
-                    previous_input, input_field.input_field.focusProxy()
-                )
-            previous_input = input_field.input_field.focusProxy()
+        input_field_len = self.count()
+        self.empty_row.setVisible(input_field_len == 0)
 
         self.updateGeometry()
 
-    def remove_row(self, item_widget):
-        row = self.input_fields.index(item_widget)
-        previous_field = None
-        next_field = None
-        if row > 0:
-            previous_field = self.input_fields[row - 1]
+    def remove_all_rows(self):
+        self._input_fields_by_entity_id = {}
+        while self.input_fields:
+            item_widget = self.input_fields.pop(0)
+            self.content_layout.removeWidget(item_widget)
+            item_widget.setParent(None)
+            item_widget.deleteLater()
 
-        if row != len(self.input_fields) - 1:
-            next_field = self.input_fields[row + 1]
+        self.empty_row.setVisible(True)
+
+        self.updateGeometry()
+
+    def remove_row(self, item_widget=None, row=None):
+        if item_widget is None:
+            item_widget = self.input_fields[row]
+        elif row is None:
+            row = self.input_fields.index(item_widget)
 
         self.content_layout.removeWidget(item_widget)
         self.input_fields.pop(row)
+        self._input_fields_by_entity_id.pop(item_widget.entity.id)
         item_widget.setParent(None)
         item_widget.deleteLater()
 
         if item_widget.entity in self.entity:
             self.entity.remove(item_widget.entity)
 
-        if previous_field:
-            previous_field.order_changed()
+        rows = self.count()
+        any_item = rows == 0
+        if any_item:
+            start_row = 0
+            if row > 0:
+                start_row = row - 1
 
-        if next_field:
-            next_field.order_changed()
+            last_row = rows - 1
+            _enum = enumerate(self.input_fields[start_row:rows])
+            for idx, _item_widget in _enum:
+                _item_widget.set_row(idx, idx == last_row)
 
-        self.empty_row.setVisible(self.count() == 0)
+        self.empty_row.setVisible(any_item)
 
         self.updateGeometry()
 

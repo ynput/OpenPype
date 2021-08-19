@@ -63,8 +63,9 @@ class CollectFtrackFamily(pyblish.api.InstancePlugin):
                 self.log.debug("Adding ftrack family for '{}'".
                                format(instance.data.get("family")))
 
-                if families and "ftrack" not in families:
-                    instance.data["families"].append("ftrack")
+                if families:
+                    if "ftrack" not in families:
+                        instance.data["families"].append("ftrack")
                 else:
                     instance.data["families"] = ["ftrack"]
         else:

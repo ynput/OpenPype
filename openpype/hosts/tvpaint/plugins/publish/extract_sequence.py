@@ -49,6 +49,14 @@ class ExtractSequence(pyblish.api.Extractor):
         family_lowered = instance.data["family"].lower()
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
+
+        # Change scene Start Frame to 0 to prevent frame index issues
+        #   - issue is that TVPaint versions deal with frame indexes in a
+        #     different way when Start Frame is not `0`
+        # NOTE It will be set back after rendering
+        scene_start_frame = instance.context.data["sceneStartFrame"]
+        lib.execute_george("tv_startframe 0")
+
         # Frame start/end may be stored as float
         frame_start = int(instance.data["frameStart"])
         frame_end = int(instance.data["frameEnd"])
@@ -98,7 +106,7 @@ class ExtractSequence(pyblish.api.Extractor):
             self.log.warning((
                 "Lowering representation range to {} frames."
                 " Changed frame end {} -> {}"
-            ).format(output_range + 1, mark_out, new_mark_out))
+            ).format(output_range + 1, mark_out, new_output_frame_end))
             output_frame_end = new_output_frame_end
 
         # -------------------------------------------------------------------
@@ -136,6 +144,9 @@ class ExtractSequence(pyblish.api.Extractor):
                 mark_in, mark_out,
                 filtered_layers
             )
+
+        # Change scene frame Start back to previous value
+        lib.execute_george("tv_startframe {}".format(scene_start_frame))
 
         # Sequence of one frame
         if not output_filenames:

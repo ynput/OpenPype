@@ -2,7 +2,7 @@ import os
 import opentimelineio as otio
 import pyblish.api
 from openpype import lib as plib
-
+from copy import deepcopy
 
 class CollectInstances(pyblish.api.InstancePlugin):
     """Collect instances from editorial's OTIO sequence"""
@@ -17,16 +17,12 @@ class CollectInstances(pyblish.api.InstancePlugin):
         "referenceMain": {
             "family": "review",
             "families": ["clip"],
-            "extensions": [".mp4"]
+            "extensions": ["mp4"]
         },
         "audioMain": {
             "family": "audio",
             "families": ["clip"],
-            "extensions": [".wav"],
-        },
-        "shotMain": {
-            "family": "shot",
-            "families": []
+            "extensions": ["wav"],
         }
     }
     timeline_frame_start = 900000  # starndard edl default (10:00:00:00)
@@ -178,10 +174,20 @@ class CollectInstances(pyblish.api.InstancePlugin):
                         data_key: instance.data.get(data_key)})
 
                 # adding subsets to context as instances
+                self.subsets.update({
+                    "shotMain": {
+                        "family": "shot",
+                        "families": []
+                    }
+                })
                 for subset, properities in self.subsets.items():
+                    version = properities.get("version")
+                    if version == 0:
+                        properities.pop("version")
+
                     # adding Review-able instance
-                    subset_instance_data = instance_data.copy()
-                    subset_instance_data.update(properities)
+                    subset_instance_data = deepcopy(instance_data)
+                    subset_instance_data.update(deepcopy(properities))
                     subset_instance_data.update({
                         # unique attributes
                         "name": f"{name}_{subset}",

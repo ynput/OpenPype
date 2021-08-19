@@ -113,6 +113,10 @@ def _h264_codec_args(ffprobe_data):
 
     output.extend(["-codec:v", "h264"])
 
+    bit_rate = ffprobe_data.get("bit_rate")
+    if bit_rate:
+        output.extend(["-b:v", bit_rate])
+
     pix_fmt = ffprobe_data.get("pix_fmt")
     if pix_fmt:
         output.extend(["-pix_fmt", pix_fmt])

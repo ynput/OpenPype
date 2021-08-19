@@ -37,7 +37,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
 
         # return if any
         if entity_type:
-            return {"entityType": entity_type, "entityName": value}
+            return {"entity_type": entity_type, "entity_name": value}
 
     def rename_with_hierarchy(self, instance):
         search_text = ""
@@ -76,8 +76,8 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
         # add current selection context hierarchy from standalonepublisher
         for entity in reversed(visual_hierarchy):
             parents.append({
-                "entityType": entity["data"]["entityType"],
-                "entityName": entity["name"]
+                "entity_type": entity["data"]["entityType"],
+                "entity_name": entity["name"]
             })
 
         if self.shot_add_hierarchy:
@@ -98,7 +98,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
 
                 # in case SP context is set to the same folder
                 if (_index == 0) and ("folder" in parent_key) \
-                        and (parents[-1]["entityName"] == parent_filled):
+                        and (parents[-1]["entity_name"] == parent_filled):
                     self.log.debug(f" skiping : {parent_filled}")
                     continue
 
@@ -131,20 +131,21 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             tasks_to_add = dict()
             project_tasks = io.find_one({"type": "project"})["config"]["tasks"]
             for task_name, task_data in self.shot_add_tasks.items():
-                try:
-                    if task_data["type"] in project_tasks.keys():
-                        tasks_to_add.update({task_name: task_data})
-                    else:
-                        raise KeyError(
-                            "Wrong FtrackTaskType `{}` for `{}` is not"
-                            " existing in `{}``".format(
-                                task_data["type"],
-                                task_name,
-                                list(project_tasks.keys())))
-                except KeyError as error:
+                _task_data = deepcopy(task_data)
+
+                # fixing enumerator from settings
+                _task_data["type"] = task_data["type"][0]
+
+                # check if task type in project task types
+                if _task_data["type"] in project_tasks.keys():
+                    tasks_to_add.update({task_name: _task_data})
+                else:
                     raise KeyError(
-                        "Wrong presets: `{0}`".format(error)
-                    )
+                        "Wrong FtrackTaskType `{}` for `{}` is not"
+                        " existing in `{}``".format(
+                            _task_data["type"],
+                            task_name,
+                            list(project_tasks.keys())))
 
             instance.data["tasks"] = tasks_to_add
         else:
@@ -279,9 +280,9 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
             for parent in reversed(parents):
                 next_dict = {}
-                parent_name = parent["entityName"]
+                parent_name = parent["entity_name"]
                 next_dict[parent_name] = {}
-                next_dict[parent_name]["entity_type"] = parent["entityType"]
+                next_dict[parent_name]["entity_type"] = parent["entity_type"]
                 next_dict[parent_name]["childs"] = actual
                 actual = next_dict
 

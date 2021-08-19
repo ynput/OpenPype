@@ -1,6 +1,8 @@
 import json
 
+from avalon.api import AvalonMongoDB
 from openpype.api import ProjectSettings
+from openpype.lib import create_project
 
 from openpype.modules.ftrack.lib import (
     BaseAction,
@@ -23,7 +25,24 @@ class PrepareProjectLocal(BaseAction):
     settings_key = "prepare_project"
 
     # Key to store info about trigerring create folder structure
+    create_project_structure_key = "create_folder_structure"
+    create_project_structure_identifier = "create.project.structure"
     item_splitter = {"type": "label", "value": "---"}
+    _keys_order = (
+        "fps",
+        "frameStart",
+        "frameEnd",
+        "handleStart",
+        "handleEnd",
+        "clipIn",
+        "clipOut",
+        "resolutionHeight",
+        "resolutionWidth",
+        "pixelAspect",
+        "applications",
+        "tools_env",
+        "library_project",
+    )
 
     def discover(self, session, entities, event):
         """Show only on project."""
@@ -48,13 +67,7 @@ class PrepareProjectLocal(BaseAction):
         project_entity = entities[0]
         project_name = project_entity["full_name"]
 
-        try:
-            project_settings = ProjectSettings(project_name)
-        except ValueError:
-            return {
-                "message": "Project is not synchronized yet",
-                "success": False
-            }
+        project_settings = ProjectSettings(project_name)
 
         project_anatom_settings = project_settings["project_anatomy"]
         root_items = self.prepare_root_items(project_anatom_settings)
@@ -79,20 +92,39 @@ class PrepareProjectLocal(BaseAction):
 
         items.extend(ca_items)
 
-        # This item will be last (before enumerators)
-        # - sets value of auto synchronization
-        auto_sync_name = "avalon_auto_sync"
+        # Set value of auto synchronization
         auto_sync_value = project_entity["custom_attributes"].get(
             CUST_ATTR_AUTO_SYNC, False
         )
         auto_sync_item = {
-            "name": auto_sync_name,
+            "name": CUST_ATTR_AUTO_SYNC,
             "type": "boolean",
             "value": auto_sync_value,
             "label": "AutoSync to Avalon"
         }
         # Add autosync attribute
         items.append(auto_sync_item)
+
+        # This item will be last before enumerators
+        # Ask if want to trigger Action Create Folder Structure
+        create_project_structure_checked = (
+            project_settings
+            ["project_settings"]
+            ["ftrack"]
+            ["user_handlers"]
+            ["prepare_project"]
+            ["create_project_structure_checked"]
+        ).value
+        items.append({
+            "type": "label",
+            "value": "<h3>Want to create basic Folder Structure?</h3>"
+        })
+        items.append({
+            "name": self.create_project_structure_key,
+            "type": "boolean",
+            "value": create_project_structure_checked,
+            "label": "Check if Yes"
+        })
 
         # Add enumerator items at the end
         for item in multiselect_enumerators:
@@ -200,7 +232,18 @@ class PrepareProjectLocal(BaseAction):
             str([key for key in attributes_to_set])
         ))
 
-        for key, in_data in attributes_to_set.items():
+        attribute_keys = set(attributes_to_set.keys())
+        keys_order = []
+        for key in self._keys_order:
+            if key in attribute_keys:
+                keys_order.append(key)
+
+        attribute_keys = attribute_keys - set(keys_order)
+        for key in sorted(attribute_keys):
+            keys_order.append(key)
+
+        for key in keys_order:
+            in_data = attributes_to_set[key]
             attr = in_data["object"]
 
             # initial item definition
@@ -226,7 +269,7 @@ class PrepareProjectLocal(BaseAction):
                     multiselect_enumerators.append(self.item_splitter)
                     multiselect_enumerators.append({
                         "type": "label",
-                        "value": in_data["label"]
+                        "value": "<h3>{}</h3>".format(in_data["label"])
                     })
 
                     default = in_data["default"]
@@ -287,10 +330,13 @@ class PrepareProjectLocal(BaseAction):
         return items, multiselect_enumerators
 
     def launch(self, session, entities, event):
-        if not event['data'].get('values', {}):
+        in_data = event["data"].get("values")
+        if not in_data:
             return
 
-        in_data = event['data']['values']
+        create_project_structure_checked = in_data.pop(
+            self.create_project_structure_key
+        )
 
         root_values = {}
         root_key = "__root__"
@@ -338,7 +384,27 @@ class PrepareProjectLocal(BaseAction):
 
         self.log.debug("Setting Custom Attribute values")
 
-        project_name = entities[0]["full_name"]
+        project_entity = entities[0]
+        project_name = project_entity["full_name"]
+
+        # Try to find project document
+        dbcon = AvalonMongoDB()
+        dbcon.install()
+        dbcon.Session["AVALON_PROJECT"] = project_name
+        project_doc = dbcon.find_one({
+            "type": "project"
+        })
+        # Create project if is not available
+        # - creation is required to be able set project anatomy and attributes
+        if not project_doc:
+            project_code = project_entity["name"]
+            self.log.info("Creating project \"{} [{}]\"".format(
+                project_name, project_code
+            ))
+            create_project(project_name, project_code, dbcon=dbcon)
+
+        dbcon.uninstall()
+
         project_settings = ProjectSettings(project_name)
         project_anatomy_settings = project_settings["project_anatomy"]
         project_anatomy_settings["roots"] = root_data
@@ -353,11 +419,20 @@ class PrepareProjectLocal(BaseAction):
 
         project_settings.save()
 
-        entity = entities[0]
-        for key, value in custom_attribute_values.items():
-            entity["custom_attributes"][key] = value
-            self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
+        # Change custom attributes on project
+        if custom_attribute_values:
+            for key, value in custom_attribute_values.items():
+                project_entity["custom_attributes"][key] = value
+                self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
+            session.commit()
 
+        # Trigger create project structure action
+        if create_project_structure_checked:
+            trigger_identifier = "{}.{}".format(
+                self.create_project_structure_identifier,
+                self.process_identifier()
+            )
+            self.trigger_action(trigger_identifier, event)
         return True
 
 
