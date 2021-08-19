@@ -1078,7 +1078,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
             self._set_validation_errors(validation_errors)
             return
 
-        if self.controller.has_finished:
+        if self.controller.publish_has_finished:
             self._set_finished()
 
     def _set_error(self, error):
