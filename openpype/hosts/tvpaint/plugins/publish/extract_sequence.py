@@ -145,6 +145,9 @@ class ExtractSequence(pyblish.api.Extractor):
                 filtered_layers
             )
 
+        # Change scene frame Start back
+        lib.execute_george("tv_startframe {}".format(scene_start_frame))
+
         # Sequence of one frame
         if not output_filenames:
             self.log.warning("Extractor did not create any output.")
