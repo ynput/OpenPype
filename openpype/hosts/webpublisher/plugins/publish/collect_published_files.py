@@ -75,7 +75,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             is_sequence = len(task_data["files"]) > 1
 
             _, extension = os.path.splitext(task_data["files"][0])
-            family, families, subset_template = self._get_family(
+            family, families, subset_template, tags = self._get_family(
                 self.task_type_to_family,
                 task_type,
                 is_sequence,
@@ -100,7 +100,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
             if is_sequence:
                 instance.data["representations"] = self._process_sequence(
-                    task_data["files"], task_dir
+                    task_data["files"], task_dir, tags
                 )
                 instance.data["frameStart"] = \
                     instance.data["representations"][0]["frameStart"]
@@ -108,7 +108,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                     instance.data["representations"][0]["frameEnd"]
             else:
                 instance.data["representations"] = self._get_single_repre(
-                    task_dir, task_data["files"]
+                    task_dir, task_data["files"], tags
                 )
 
             self.log.info("instance.data:: {}".format(instance.data))
@@ -122,19 +122,19 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
         subset = subset_template.format(**prepare_template_data(fill_pairs))
         return subset
 
-    def _get_single_repre(self, task_dir, files):
+    def _get_single_repre(self, task_dir, files, tags):
         _, ext = os.path.splitext(files[0])
         repre_data = {
             "name": ext[1:],
             "ext": ext[1:],
             "files": files[0],
             "stagingDir": task_dir,
-            "tags": ["review"]
+            "tags": tags
         }
         self.log.info("single file repre_data.data:: {}".format(repre_data))
         return [repre_data]
 
-    def _process_sequence(self, files, task_dir):
+    def _process_sequence(self, files, task_dir, tags):
         """Prepare reprentations for sequence of files."""
         collections, remainder = clique.assemble(files)
         assert len(collections) == 1, \
@@ -150,7 +150,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             "ext": ext[1:],
             "files": files,
             "stagingDir": task_dir,
-            "tags": ["review"]
+            "tags": tags
         }
         self.log.info("sequences repre_data.data:: {}".format(repre_data))
         return [repre_data]
@@ -165,7 +165,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 extension (str): without '.'
 
             Returns:
-                (family, [families], subset_template_name) tuple
+                (family, [families], subset_template_name, tags) tuple
                 AssertionError if not matching family found
         """
         task_obj = settings.get(task_type)
@@ -187,7 +187,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
 
         return found_family, \
             content["families"], \
-            content["subset_template_name"]
+            content["subset_template_name"], \
+            content["tags"]
 
     def _get_version(self, asset_name, subset_name):
         """Returns version number or 0 for 'asset' and 'subset'"""

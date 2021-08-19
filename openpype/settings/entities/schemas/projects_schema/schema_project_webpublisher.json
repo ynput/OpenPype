@@ -49,6 +49,10 @@
                                             "object_type": "text"
                                         },
                                         {
+                                            "type": "schema",
+                                            "name": "schema_representation_tags"
+                                        },
+                                        {
                                             "type": "text",
                                             "key": "subset_template_name",
                                             "label": "Subset template name"

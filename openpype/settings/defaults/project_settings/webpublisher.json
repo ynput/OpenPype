@@ -9,6 +9,7 @@
                             "tvp"
                         ],
                         "families": [],
+                        "tags": [],
                         "subset_template_name": ""
                     },
                     "render": {
@@ -21,6 +22,9 @@
                         ],
                         "families": [
                             "review"
+                        ],
+                        "tags": [
+                            "ftrackreview"
                         ],
                         "subset_template_name": ""
                     }
@@ -32,6 +36,7 @@
                             "aep"
                         ],
                         "families": [],
+                        "tags": [],
                         "subset_template_name": ""
                     },
                     "render": {
@@ -45,6 +50,9 @@
                         "families": [
                             "review"
                         ],
+                        "tags": [
+                            "ftrackreview"
+                        ],
                         "subset_template_name": ""
                     }
                 },
@@ -55,6 +63,7 @@
                             "psd"
                         ],
                         "families": [],
+                        "tags": [],
                         "subset_template_name": ""
                     },
                     "image": {
@@ -69,6 +78,9 @@
                         "families": [
                             "review"
                         ],
+                        "tags": [
+                            "ftrackreview"
+                        ],
                         "subset_template_name": ""
                     }
                 },
@@ -79,6 +91,7 @@
                             "tvp"
                         ],
                         "families": [],
+                        "tags": [],
                         "subset_template_name": "{family}{Variant}"
                     },
                     "render": {
@@ -91,6 +104,9 @@
                         ],
                         "families": [
                             "review"
+                        ],
+                        "tags": [
+                            "ftrackreview"
                         ],
                         "subset_template_name": "{family}{Variant}"
                     }
