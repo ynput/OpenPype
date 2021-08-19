@@ -701,6 +701,27 @@ under `input_SET`). This mechanism uses *cbId* attribute on those shapes.
 If match is found shapes are connected using their `outMesh` and `outMesh`. Thus you can easily connect existing animation to loaded rig.
 :::
 
+## Working with Xgen in OpenPype
+
+OpenPype support publishing and loading of Xgen interactive grooms. You can publish 
+them as mayaAscii files with scalps that can be loaded into another maya scene, or as
+alembic caches. 
+
+### Publishing Xgen Grooms
+
+To prepare xgen for publishing just select all the descriptions that should be published together and the create Xgen Subset in the scene using - **OpenPype menu** → **Create**... and select **Xgen Interactive**. Leave Use selection checked.
+
+For actual publishing of your groom to go **OpenPype → Publish** and then press ▶ to publish. This will export `.ma` file containing your grooms with any geometries they are attached to and also a baked cache in `.abc` format 
+
+
+### Loading Xgen
+
+You can use published xgens by loading them using OpenPype Publisher. You can choose to reference or import xgen. We don't have any automatic mesh linking at the moment and it is expected, that groom is published with a scalp, that can then be manually attached to your animated mesh for example. 
+
+The alembic representation can be loaded too and it contains the groom converted to curves. Keep in mind that the density of the alembic directly depends on your viewport xgen density at the point of export.
+
+
+
 ## Using Redshift Proxies
 
 OpenPype supports working with Redshift Proxy files. You can create  Redshift Proxy from almost
