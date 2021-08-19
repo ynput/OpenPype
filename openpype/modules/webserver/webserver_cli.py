@@ -139,3 +139,13 @@ def reprocess_failed(upload_dir):
             log.info("response{}".format(r))
         except:
             log.info("exception", exc_info=True)
+
+        dbcon.update_one(
+            {"_id": batch["_id"]},
+            {"$set":
+                {
+                    "finish_date": datetime.now(),
+                    "status": "sent_for_reprocessing",
+                    "progress": 1
+                }}
+        )
