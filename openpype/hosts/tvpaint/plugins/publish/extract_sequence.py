@@ -50,10 +50,10 @@ class ExtractSequence(pyblish.api.Extractor):
         mark_in = instance.context.data["sceneMarkIn"]
         mark_out = instance.context.data["sceneMarkOut"]
 
-        # Change scene Start Frame to 0 to prevend frame index issues
+        # Change scene Start Frame to 0 to prevent frame index issues
         #   - issue is that TVPaint versions deal with frame indexes in a
-        #     different way
-        # It should be set back after rendering
+        #     different way when Start Frame is not `0`
+        # NOTE It will be set back after rendering
         scene_start_frame = instance.context.data["sceneStartFrame"]
         lib.execute_george("tv_startframe 0")
 
@@ -145,7 +145,7 @@ class ExtractSequence(pyblish.api.Extractor):
                 filtered_layers
             )
 
-        # Change scene frame Start back
+        # Change scene frame Start back to previous value
         lib.execute_george("tv_startframe {}".format(scene_start_frame))
 
         # Sequence of one frame
