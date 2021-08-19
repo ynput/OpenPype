@@ -6,12 +6,12 @@ Functions ``compose_url()`` and ``decompose_url()`` are the same as in
 version is decided.
 
 """
-import sys
 import os
 from typing import Dict, Union
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
 import platform
+from typing import Optional, Iterable
 
 from pymongo import MongoClient
 from pymongo.errors import (
@@ -20,6 +20,290 @@ from pymongo.errors import (
     ConfigurationError,
     OperationFailure
 )
+from cloudpathlib import AnyPath
+from cloudpathlib.cloudpath import CloudPath, register_path_class
+from cloudpathlib.client import Client, register_client_class
+import dropbox
+
+
+@register_path_class("file")
+class FilePath(CloudPath):
+
+    cloud_prefix: str = "file://"
+    client: str = "File"
+
+    def __init__(
+        self,
+        cloud_path: Union[str, "CloudPath"],
+        client: Optional["Client"] = None
+    ):
+        super().__init__(cloud_path, client=client)
+
+        results = urlparse(str(cloud_path))
+        self.path = os.path.normpath(
+            os.path.join(results.netloc, results.path)
+        )
+        self.path_object = AnyPath(self.path)
+
+    def drive(self) -> str:
+        """
+        For example "bucket" on S3 or "container" on Azure; needs to be defined
+        for each class
+        """
+        raise ValueError("We should not need the drive part.")
+
+    def is_dir(self) -> bool:
+        """Should be implemented without requiring a dir is downloaded"""
+        return self.path_object.is_dir()
+
+    def is_file(self) -> bool:
+        """
+        Should be implemented without requiring that the file is downloaded
+        """
+        return self.path_object.is_file()
+
+    def mkdir(self, parents: bool = False, exist_ok: bool = False):
+        """
+        Should be implemented using the client API without requiring a dir is
+        downloaded
+        """
+        raise ValueError("We should not be making any directories.")
+
+    def touch(self):
+        """
+        Should be implemented using the client API to create and update
+        modified time
+        """
+        raise ValueError("We should not be touching anything.")
+
+    def stat(self):
+        return self.path_object.stat()
+
+
+@register_client_class("file")
+class FileClient(Client):
+
+    def _download_file(
+        self, cloud_path: FilePath, local_path: Union[str, os.PathLike]
+    ) -> Path:
+        raise ValueError("We should not be downloading anything.")
+
+    def _exists(self, cloud_path: FilePath) -> bool:
+        return os.path.exists(cloud_path.path)
+
+    def _list_dir(
+        self, cloud_path: FilePath, recursive: bool
+    ) -> Iterable[FilePath]:
+        """List all the files and folders in a directory.
+        Parameters
+        ----------
+        cloud_path : CloudPath
+            The folder to start from.
+        recursive : bool
+            Whether or not to list recursively.
+        """
+        items = []
+        for item in os.listdir(cloud_path.path):
+            items.append(
+                FilePath(
+                    FilePath.cloud_prefix + os.path.join(cloud_path, item)
+                )
+            )
+        return items
+
+    def _move_file(
+        self, src: FilePath, dst: FilePath, remove_src: bool = True
+    ) -> FilePath:
+        raise ValueError("We should not be moving anything.")
+
+    def _remove(self, path: FilePath) -> None:
+        """Remove a file or folder from the server.
+        Parameters
+        ----------
+        path : CloudPath
+            The file or folder to remove.
+        """
+        raise ValueError("We should not be removing anything.")
+
+    def _upload_file(
+        self, local_path: Union[str, os.PathLike], cloud_path: FilePath
+    ) -> FilePath:
+        raise ValueError("We should not be uploading anything.")
+
+
+@register_path_class("dropbox")
+class DropboxPath(CloudPath):
+
+    cloud_prefix: str = "dropbox://"
+    client: str = "Dropbox"
+
+    def __init__(
+        self,
+        cloud_path: Union[str, "CloudPath"],
+        client: Optional["Client"] = None
+    ):
+        super().__init__(cloud_path, client=client)
+
+        path = cloud_path.replace(self.cloud_prefix, "")
+        # Root folder needs to be empty string rather than "/".
+        if path == "":
+            self.path = path
+        else:
+            self.path = "/" + path
+
+    def drive(self) -> str:
+        """
+        For example "bucket" on S3 or "container" on Azure; needs to be defined
+        for each class
+        """
+        raise ValueError("We should not need the drive part.")
+
+    def is_dir(self) -> bool:
+        """Should be implemented without requiring a dir is downloaded"""
+        return self.client._is_file_or_dir(self) == "dir"
+
+    def is_file(self) -> bool:
+        """
+        Should be implemented without requiring that the file is downloaded
+        """
+        return self.client._is_file_or_dir(self) == "file"
+
+    def mkdir(self, parents: bool = False, exist_ok: bool = False):
+        """
+        Should be implemented using the client API without requiring a dir is
+        downloaded
+        """
+        raise ValueError("We should not be making any directories.")
+
+    def touch(self):
+        """
+        Should be implemented using the client API to create and update
+        modified time
+        """
+        raise ValueError("We should not be touching anything.")
+
+    def stat(self):
+        metadata = self.client._get_metadata(self)
+
+        if metadata is None:
+            raise NotImplementedError(
+                f"No stats available for {self}; it may be a directory or not "
+                "exist."
+            )
+
+        return os.stat_result(
+            (
+                None,  # mode
+                None,  # ino
+                self.cloud_prefix,  # dev,
+                None,  # nlink,
+                None,  # uid,
+                None,  # gid,
+                metadata.size,  # size,
+                None,  # atime,
+                int(metadata.client_modified.strftime('%Y%m%d')),  # mtime,
+                None,  # ctime,
+            )
+        )
+
+
+@register_client_class("dropbox")
+class DropboxClient(Client):
+
+    def __init__(
+        self,
+        local_cache_dir: Optional[Union[str, os.PathLike]] = None
+    ):
+
+        self.client = dropbox.Dropbox("sl.A2wFo4hCBMxyLjJYlwZJQrnG1MFMc8nhHIO2SttqjAaaDExd8ByoXrMkIR2F_4QGAWLiVRvFQmrvOlAxn1XoHkGWDdOFZN99SQ755LQ15SUmg4bPtf7cmLy6f1PMORJTwYdJVAk")
+        super().__init__(local_cache_dir=local_cache_dir)
+
+    def _get_metadata(self, cloud_path: DropboxPath) -> Optional[int]:
+        # If the path is empty, this means the root directory.
+        if cloud_path.path == "":
+            return None
+
+        entry = self.client.files_get_metadata(cloud_path.path)
+
+        if isinstance(entry, dropbox.files.FileMetadata):
+            return entry
+
+        return None
+
+    def _is_file_or_dir(self, cloud_path: DropboxPath) -> Optional[str]:
+        # Empty path means the root directory.
+        if cloud_path.path == "":
+            self.client.files_list_folder(path=cloud_path.path)
+            return "dir"
+
+        entry = self.client.files_get_metadata(cloud_path.path)
+
+        if isinstance(entry, dropbox.files.FolderMetadata):
+            return "dir"
+        elif isinstance(entry, dropbox.files.FileMetadata):
+            return "file"
+        else:
+            return None
+
+    def _download_file(
+        self, cloud_path: DropboxPath, local_path: Union[str, os.PathLike]
+    ) -> Path:
+        self.client.files_download_to_file(local_path, cloud_path.path)
+        return local_path
+
+    def _exists(self, cloud_path: DropboxPath) -> bool:
+        # If the path is empty, this means the root directory.
+        if cloud_path.path == "":
+            try:
+                self.client.files_list_folder(path=cloud_path.path)
+                return True
+            except dropbox.exceptions.AuthError:
+                return False
+
+        try:
+            self.client.files_get_metadata(cloud_path.path)
+            return True
+        except dropbox.exceptions.ApiError:
+            return False
+
+    def _list_dir(
+        self, cloud_path: DropboxPath, recursive: bool
+    ) -> Iterable[FilePath]:
+        """List all the files and folders in a directory.
+        Parameters
+        ----------
+        cloud_path : CloudPath
+            The folder to start from.
+        recursive : bool
+            Whether or not to list recursively.
+        """
+        items = []
+        cursor = self.client.files_list_folder(path=cloud_path.path)
+        prefix = DropboxPath.cloud_prefix
+        for entry in cursor.entries:
+            items.append(
+                DropboxPath(prefix + os.path.join(cloud_path.path, entry.name))
+            )
+        return items
+
+    def _move_file(
+        self, src: DropboxPath, dst: DropboxPath, remove_src: bool = True
+    ) -> FilePath:
+        raise ValueError("We should not be moving anything.")
+
+    def _remove(self, path: DropboxPath) -> None:
+        """Remove a file or folder from the server.
+        Parameters
+        ----------
+        path : CloudPath
+            The file or folder to remove.
+        """
+        raise ValueError("We should not be removing anything.")
+
+    def _upload_file(
+        self, local_path: Union[str, os.PathLike], cloud_path: DropboxPath
+    ) -> FilePath:
+        raise ValueError("We should not be uploading anything.")
 
 
 def decompose_url(url: str) -> Dict:
@@ -245,6 +529,6 @@ def get_openpype_path_from_db(url: str) -> Union[str, None]:
 
     # Loop over paths and return only existing
     for path in paths:
-        if os.path.exists(path):
+        if AnyPath(path).exists():
             return path
     return None
