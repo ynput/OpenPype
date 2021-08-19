@@ -442,6 +442,10 @@ class PublisherController:
         self._main_thread_processor.stop()
         self._trigger_callbacks(self._publish_stopped_callback_refs)
 
+    def stop_publish(self):
+        if self._publish_is_running:
+            self._stop_publish()
+
     def _publish_next_process(self):
         # Validations of progress before using iterator
         # - same conditions may be inside iterator but they may be used
@@ -453,12 +457,12 @@ class PublisherController:
             self._publish_validated
             and self._publish_validation_errors
         ):
-            item = MainThreadItem(self._stop_publish)
+            item = MainThreadItem(self.stop_publish)
 
         # Any unexpected error happened
         # - everything should stop
         elif self._publish_error:
-            item = MainThreadItem(self._stop_publish)
+            item = MainThreadItem(self.stop_publish)
 
         # Everything is ok so try to get new processing item
         else:
@@ -482,14 +486,14 @@ class PublisherController:
             # Stop if plugin is over validation order and process
             #   should process up to validation.
             if self._publish_up_validation and self._publish_validated:
-                yield MainThreadItem(self._stop_publish)
+                yield MainThreadItem(self.stop_publish)
 
             # Stop if validation is over and validation errors happened
             if (
                 self._publish_validated
                 and self._publish_validation_errors
             ):
-                yield MainThreadItem(self._stop_publish)
+                yield MainThreadItem(self.stop_publish)
 
             # Trigger callback that new plugin is going to be processed
             self._trigger_callbacks(
@@ -532,7 +536,7 @@ class PublisherController:
                         self._process_and_continue, plugin, None
                     )
         self._publish_finished = True
-        yield MainThreadItem(self._stop_publish)
+        yield MainThreadItem(self.stop_publish)
 
     def _extract_log_items(self, result):
         output = []
