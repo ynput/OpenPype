@@ -116,6 +116,122 @@ class AssetDocsCache:
         return copy.deepcopy(self._task_names_by_asset_name)
 
 
+class PublishReport:
+    def __init__(self, controller):
+        self.controller = controller
+        self._plugin_data = []
+        self._current_plugin_data = []
+        self._all_instances_by_id = {}
+        self._current_context = None
+
+    def reset(self, context):
+        self._plugin_data = []
+        self._current_plugin_data = {}
+        self._all_instances_by_id = {}
+        self._current_context = context
+
+    def add_plugin_iter(self, plugin, context):
+        for instance in context:
+            self._all_instances_by_id[instance.id] = instance
+
+        self._current_plugin_data = {
+            "name": plugin.__name__,
+            "label": getattr(plugin, "label"),
+            "order": plugin.order,
+            "instances_data": [],
+            "skipped": False
+        }
+
+        self._plugin_data.append(self._current_plugin_data)
+
+    def set_plugin_skipped(self):
+        self._current_plugin_data["skipped"] = True
+
+    def add_result(self, result):
+        instance = result["instance"]
+        instance_id = None
+        if instance:
+            instance_id = instance.id
+        self._current_plugin_data["instances_data"].append({
+            "id": instance_id,
+            "logs": self._extract_log_items(result)
+        })
+
+    def get_report(self):
+        instances_details = {}
+        for instance in self._all_instances_by_id.values():
+            instances_details[instance.id] = self._extract_instance_data(
+                instance, instance in self._current_context
+            )
+
+        return {
+            "plugins_data": copy.deepcopy(self._plugin_data),
+            "instances": instances_details,
+            "context": self._extract_context_data(self._current_context)
+        }
+
+    def _extract_context_data(self, context):
+        return {
+            "label": context.data.get("label")
+        }
+
+    def _extract_instance_data(self, instance, exists):
+        return {
+            "name": instance.data.get("name"),
+            "label": instance.data.get("label"),
+            "family": instance.data["family"],
+            "families": instance.data.get("families") or [],
+            "exists": exists
+        }
+
+    def _extract_log_items(self, result):
+        output = []
+        records = result.get("records") or []
+        instance = result["instance"]
+        instance_id = None
+        if instance_id:
+            instance_name = instance.id
+
+        for record in records:
+            record_exc_info = record.exc_info
+            if record_exc_info is not None:
+                record_exc_info = "".join(
+                    traceback.format_exception(*record_exc_info)
+                )
+
+            record_item = {
+                "instance_id": instance_id,
+                "type": "record",
+                "msg": record.getMessage(),
+                "name": record.name,
+                "lineno": record.lineno,
+                "levelno": record.levelno,
+                "levelname": record.levelname,
+                "threadName": record.threadName,
+                "filename": record.filename,
+                "pathname": record.pathname,
+                "msecs": record.msecs,
+                "exc_info": record_exc_info
+            }
+            output.append(record_item)
+
+        exception = result.get("error")
+        if exception:
+            fname, line_no, func, exc = exception.traceback
+            error_item = {
+                "type": "error",
+                "msg": str(exception),
+                "filename": str(fname),
+                "lineno": str(line_no),
+                "func": str(func),
+                "traceback": exception.formatted_traceback,
+                "instance": instance_name
+            }
+            output.append(error_item)
+
+        return output
+
+
 class PublisherController:
     def __init__(self, dbcon=None, headless=False):
         self.log = logging.getLogger("PublisherController")
@@ -129,7 +245,7 @@ class PublisherController:
         # pyblish.api.Context
         self._publish_context = None
         # Pyblish report
-        self._publish_report = []
+        self._publish_report = PublishReport(self)
         # Store exceptions of validation error
         self._publish_validation_errors = []
         # Any other exception that happened during publishing
@@ -409,7 +525,7 @@ class PublisherController:
         return self._publish_error
 
     def get_publish_report(self):
-        return self._publish_report
+        return self._publish_report.get_report()
 
     def get_validation_errors(self):
         return self._publish_validation_errors
@@ -423,7 +539,7 @@ class PublisherController:
         self._main_thread_iter = self._publish_iterator()
         self._publish_context = pyblish.api.Context()
 
-        self._publish_report = []
+        self._publish_report.reset(self._publish_context)
         self._publish_validation_errors = []
         self._publish_error = None
 
@@ -484,6 +600,8 @@ class PublisherController:
 
     def _publish_iterator(self):
         for plugin in self.publish_plugins:
+            self._publish_report.add_plugin_iter(plugin, self._publish_context)
+
             # Check if plugin is over validation order
             if not self._publish_validated:
                 self._publish_validated = (
@@ -517,6 +635,7 @@ class PublisherController:
                     self._publish_context, plugin
                 )
                 if not instances:
+                    self._publish_report.set_plugin_skipped()
                     continue
 
                 for instance in instances:
@@ -547,55 +666,11 @@ class PublisherController:
                     yield MainThreadItem(
                         self._process_and_continue, plugin, None
                     )
+                else:
+                    self._publish_report.set_plugin_skipped()
+
         self._publish_finished = True
         yield MainThreadItem(self.stop_publish)
-
-    def _extract_log_items(self, result):
-        output = []
-        records = result.get("records") or []
-        instance_name = None
-        instance = result["instance"]
-        if instance is not None:
-            instance_name = instance.data["name"]
-
-        for record in records:
-            record_exc_info = record.exc_info
-            if record_exc_info is not None:
-                record_exc_info = "".join(
-                    traceback.format_exception(*record_exc_info)
-                )
-
-            record_item = {
-                "instance": instance_name,
-                "type": "record",
-                "msg": record.getMessage(),
-                "name": record.name,
-                "lineno": record.lineno,
-                "levelno": record.levelno,
-                "levelname": record.levelname,
-                "threadName": record.threadName,
-                "filename": record.filename,
-                "pathname": record.pathname,
-                "msecs": record.msecs,
-                "exc_info": record_exc_info
-            }
-            output.append(record_item)
-
-        exception = result.get("error")
-        if exception:
-            fname, line_no, func, exc = exception.traceback
-            error_item = {
-                "type": "error",
-                "msg": str(exception),
-                "filename": str(fname),
-                "lineno": str(line_no),
-                "func": str(func),
-                "traceback": exception.formatted_traceback,
-                "instance": instance_name
-            }
-            output.append(error_item)
-
-        return output
 
     def _process_and_continue(self, plugin, instance):
         # TODO execute plugin
@@ -603,7 +678,7 @@ class PublisherController:
             plugin, self._publish_context, instance
         )
 
-        self._publish_report.extend(self._extract_log_items(result))
+        self._publish_report.add_result(result)
 
         exception = result.get("error")
         if exception:
