@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 import json
 
+from openpype.lib import PypeLogger
 
 from .webpublish_routes import (
     RestApiResource,
@@ -18,6 +19,10 @@ from .webpublish_routes import (
 
 from openpype.api import get_system_settings
 
+SERVER_URL = "http://172.17.0.1:8079"  # machine is not listening on localhost
+
+log = PypeLogger().get_logger("webserver_gui")
+
 
 def run_webserver(*args, **kwargs):
     """Runs webserver in command line, adds routes."""
@@ -27,9 +32,14 @@ def run_webserver(*args, **kwargs):
     webserver_module = manager.modules_by_name["webserver"]
     webserver_module.create_server_manager()
 
-    is_webpublish_enabled = get_system_settings()["modules"]\
-        ["webpublish_tool"]["enabled"]
+    is_webpublish_enabled = False
+    webpublish_tool = get_system_settings()["modules"].\
+        get("webpublish_tool")
 
+    if webpublish_tool and webpublish_tool["enabled"]:
+        is_webpublish_enabled = True
+
+    log.debug("is_webpublish_enabled {}".format(is_webpublish_enabled))
     if is_webpublish_enabled:
         resource = RestApiResource(webserver_module.server_manager,
                                    upload_dir=kwargs["upload_dir"],
@@ -81,18 +91,18 @@ def run_webserver(*args, **kwargs):
             user_status_endpoint.dispatch
         )
 
-        webserver_module.start_server()
-        last_reprocessed = time.time()
-        while True:
-            if is_webpublish_enabled:
-                if time.time() - last_reprocessed > 60:
-                    reprocess_failed(kwargs["upload_dir"])
-                    last_reprocessed = time.time()
-            time.sleep(1.0)
+    webserver_module.start_server()
+    last_reprocessed = time.time()
+    while True:
+        if is_webpublish_enabled:
+            if time.time() - last_reprocessed > 20:
+                reprocess_failed(kwargs["upload_dir"])
+                last_reprocessed = time.time()
+        time.sleep(1.0)
 
 
 def reprocess_failed(upload_dir):
-    print("reprocess_failed")
+    # log.info("check_reprocesable_records")
     from openpype.lib import OpenPypeMongoConnection
 
     mongo_client = OpenPypeMongoConnection.get_mongo_client()
@@ -100,12 +110,11 @@ def reprocess_failed(upload_dir):
     dbcon = mongo_client[database_name]["webpublishes"]
 
     results = dbcon.find({"status": "reprocess"})
-
     for batch in results:
-        print("batch:: {}".format(batch))
         batch_url = os.path.join(upload_dir,
                                  batch["batch_id"],
                                  "manifest.json")
+        log.info("batch:: {} {}".format(os.path.exists(batch_url), batch_url))
         if not os.path.exists(batch_url):
             msg = "Manifest {} not found".format(batch_url)
             print(msg)
@@ -120,12 +129,13 @@ def reprocess_failed(upload_dir):
                     }}
             )
             continue
-
-        server_url = "{}/api/webpublish/batch".format(
-            os.environ["OPENPYPE_WEBSERVER_URL"])
+        server_url = "{}/api/webpublish/batch".format(SERVER_URL)
 
         with open(batch_url) as f:
             data = json.loads(f.read())
 
-        r = requests.post(server_url, json=data)
-        print(r.status_code)
+        try:
+            r = requests.post(server_url, json=data)
+            log.info("response{}".format(r))
+        except:
+            log.info("exception", exc_info=True)
