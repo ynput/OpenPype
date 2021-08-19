@@ -134,6 +134,8 @@ class PublisherController:
         self._publish_validation_errors = []
         # Any other exception that happened during publishing
         self._publish_error = None
+        # Publishing is in progress
+        self._publish_is_running = False
         # Publishing is over validation order
         self._publish_validated = False
         # Publishing should stop at validation stage
@@ -273,6 +275,7 @@ class PublisherController:
             callbacks.remove(ref)
 
     def reset(self):
+        self.stop_publish()
         self._reset_plugins()
         # Publish part must be resetted after plugins
         self._reset_publish()
@@ -454,10 +457,6 @@ class PublisherController:
     def stop_publish(self):
         if self._publish_is_running:
             self._stop_publish()
-
-    def reset_publish(self):
-        self.stop_publish()
-        self._reset_publish()
 
     def _publish_next_process(self):
         # Validations of progress before using iterator
