@@ -7,6 +7,7 @@ version is decided.
 
 """
 import os
+import sys
 from typing import Dict, Union
 from urllib.parse import urlparse, parse_qs
 from pathlib import Path
@@ -24,6 +25,12 @@ from cloudpathlib import AnyPath
 from cloudpathlib.cloudpath import CloudPath, register_path_class
 from cloudpathlib.client import Client, register_client_class
 import dropbox
+from appdirs import user_data_dir
+
+
+# Hack to share url to AnyPath paths.
+MODULE = sys.modules[__name__]
+URL = ""
 
 
 @register_path_class("file")
@@ -215,8 +222,11 @@ class DropboxClient(Client):
         local_cache_dir: Optional[Union[str, os.PathLike]] = None
     ):
 
-        self.client = dropbox.Dropbox("sl.A2wFo4hCBMxyLjJYlwZJQrnG1MFMc8nhHIO2SttqjAaaDExd8ByoXrMkIR2F_4QGAWLiVRvFQmrvOlAxn1XoHkGWDdOFZN99SQ755LQ15SUmg4bPtf7cmLy6f1PMORJTwYdJVAk")
-        super().__init__(local_cache_dir=local_cache_dir)
+        system_settings = get_openpype_system_settings(MODULE.URL)
+        self.client = dropbox.Dropbox(
+            system_settings["modules"]["dropbox"]["token"]
+        )
+        super().__init__(local_cache_dir=get_user_data_dir())
 
     def _get_metadata(self, cloud_path: DropboxPath) -> Optional[int]:
         # If the path is empty, this means the root directory.
@@ -467,6 +477,47 @@ def validate_path_string(path: str) -> (bool, str):
     return True, "valid path"
 
 
+def get_openpype_system_settings(url: str) -> dict:
+    """Load system settings from Mongo database.
+
+    We are loading data from database `openpype` and collection `settings`.
+    There we expect document type `system_settings`.
+
+    Args:
+        url (str): MongoDB url.
+
+    Returns:
+        dict: With settings data. Empty dictionary is returned if not found.
+    """
+    try:
+        components = decompose_url(url)
+    except RuntimeError:
+        return {}
+    mongo_kwargs = {
+        "host": compose_url(**components),
+        "serverSelectionTimeoutMS": 2000
+    }
+    port = components.get("port")
+    if port is not None:
+        mongo_kwargs["port"] = int(port)
+
+    try:
+        # Create mongo connection
+        client = MongoClient(**mongo_kwargs)
+        # Access settings collection
+        col = client["openpype"]["settings"]
+        # Query global settings
+        settings = col.find_one({"type": "system_settings"}) or {}
+        # Close Mongo connection
+        client.close()
+
+    except Exception:
+        # TODO log traceback or message
+        return {}
+
+    return settings.get("data") or {}
+
+
 def get_openpype_global_settings(url: str) -> dict:
     """Load global settings from Mongo database.
 
@@ -527,8 +578,19 @@ def get_openpype_path_from_db(url: str) -> Union[str, None]:
     if paths and isinstance(paths, str):
         paths = [paths]
 
+    # Hack to share url to AnyPath paths.
+    MODULE.URL = url
+
     # Loop over paths and return only existing
     for path in paths:
         if AnyPath(path).exists():
             return path
     return None
+
+
+def get_user_data_dir():
+    """Convenience method for centralize the user data directory path"""
+
+    vendor = "pypeclub"
+    app = "openpype"
+    return AnyPath(user_data_dir(app, vendor))
