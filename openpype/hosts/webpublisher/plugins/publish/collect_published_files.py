@@ -96,6 +96,10 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             instance.data["stagingDir"] = task_dir
             instance.data["source"] = "webpublisher"
 
+            instance.data["ctx_path"] = ctx["path"]  # to store for logging
+            instance.data["batch_id"] = task_data["batch"]
+
+
             instance.data["user_email"] = task_data["user"]
 
             if is_sequence:
