@@ -180,7 +180,6 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_view_cards.selection_changed.connect(
             self._on_subset_change
         )
-        publish_frame.hide_requested.connect(self._on_overlay_hide_request)
 
         controller.add_instances_refresh_callback(self._on_instances_refresh)
 
@@ -382,9 +381,6 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self.validate_btn.setEnabled(validate_enabled)
         self.publish_btn.setEnabled(publish_enabled)
-
-    def _on_overlay_hide_request(self):
-        self._set_publish_visibility(False)
 
 
 def main():

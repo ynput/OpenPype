@@ -9,8 +9,6 @@ from .validations_widget import ValidationsWidget
 
 
 class PublishFrame(QtWidgets.QFrame):
-    hide_requested = QtCore.Signal()
-
     def __init__(self, controller, parent):
         super(PublishFrame, self).__init__(parent)
 
@@ -28,19 +26,15 @@ class PublishFrame(QtWidgets.QFrame):
         info_layout.setContentsMargins(0, 0, 0, 0)
         info_layout.addWidget(content_widget)
 
-        hide_btn = QtWidgets.QPushButton("Hide", content_widget)
-
-        top_layout = QtWidgets.QHBoxLayout()
-        top_layout.setContentsMargins(0, 0, 0, 0)
-        top_layout.addStretch(1)
-        top_layout.addWidget(hide_btn)
-
         main_label = QtWidgets.QLabel(content_widget)
         main_label.setObjectName("PublishInfoMainLabel")
         main_label.setAlignment(QtCore.Qt.AlignCenter)
 
         message_label = QtWidgets.QLabel(content_widget)
         message_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        message_label_bottom = QtWidgets.QLabel(content_widget)
+        message_label_bottom.setAlignment(QtCore.Qt.AlignCenter)
 
         instance_label = QtWidgets.QLabel("<Instance name>", content_widget)
         instance_label.setAlignment(
@@ -57,7 +51,7 @@ class PublishFrame(QtWidgets.QFrame):
         progress_widget = QtWidgets.QProgressBar(content_widget)
 
         copy_log_btn = QtWidgets.QPushButton("Copy log", content_widget)
-        copy_log_btn.setVisible(False)
+        # copy_log_btn.setVisible(False)
 
         reset_btn = QtWidgets.QPushButton(content_widget)
         reset_btn.setIcon(get_icon("refresh"))
@@ -73,7 +67,7 @@ class PublishFrame(QtWidgets.QFrame):
 
         footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.addWidget(copy_log_btn, 0)
-        footer_layout.addStretch(1)
+        footer_layout.addWidget(message_label_bottom, 1)
         footer_layout.addWidget(reset_btn, 0)
         footer_layout.addWidget(stop_btn, 0)
         footer_layout.addWidget(validate_btn, 0)
@@ -83,7 +77,6 @@ class PublishFrame(QtWidgets.QFrame):
         content_layout.setSpacing(5)
         content_layout.setAlignment(QtCore.Qt.AlignCenter)
 
-        content_layout.addLayout(top_layout)
         content_layout.addWidget(main_label)
         content_layout.addStretch(1)
         content_layout.addWidget(message_label)
@@ -97,7 +90,6 @@ class PublishFrame(QtWidgets.QFrame):
         main_layout.addWidget(validation_errors_widget, 1)
         main_layout.addWidget(info_frame, 0)
 
-        hide_btn.clicked.connect(self.hide_requested)
         copy_log_btn.clicked.connect(self._on_copy_log)
 
         reset_btn.clicked.connect(self._on_reset_clicked)
@@ -115,8 +107,6 @@ class PublishFrame(QtWidgets.QFrame):
 
         self.controller = controller
 
-        self.hide_btn = hide_btn
-
         self.validation_errors_widget = validation_errors_widget
 
         self.info_frame = info_frame
@@ -128,6 +118,7 @@ class PublishFrame(QtWidgets.QFrame):
         self.progress_widget = progress_widget
 
         self.copy_log_btn = copy_log_btn
+        self.message_label_bottom = message_label_bottom
         self.reset_btn = reset_btn
         self.stop_btn = stop_btn
         self.validate_btn = validate_btn
@@ -136,10 +127,12 @@ class PublishFrame(QtWidgets.QFrame):
     def _on_publish_reset(self):
         self._set_success_property()
         self._change_bg_property()
+        self._set_progress_visibility(True)
 
         self.main_label.setText("Hit publish! (if you want)")
         self.message_label.setText("")
-        self.copy_log_btn.setVisible(False)
+        self.message_label_bottom.setText("")
+        # self.copy_log_btn.setVisible(False)
 
         self.reset_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
@@ -154,6 +147,7 @@ class PublishFrame(QtWidgets.QFrame):
 
         self._set_success_property(-1)
         self._change_bg_property()
+        self._set_progress_visibility(True)
         self.main_label.setText("Publishing...")
 
         self.reset_btn.setEnabled(False)
@@ -222,6 +216,7 @@ class PublishFrame(QtWidgets.QFrame):
 
         validation_errors = self.controller.get_validation_errors()
         if validation_errors:
+            self._set_progress_visibility(False)
             self._change_bg_property(1)
             self._set_validation_errors(validation_errors)
             return
@@ -239,12 +234,14 @@ class PublishFrame(QtWidgets.QFrame):
                 " to your supervisor or OpenPype."
             )
         self.message_label.setText(msg)
+        self.message_label_bottom.setText("")
         self._set_success_property(0)
-        self.copy_log_btn.setVisible(True)
+        # self.copy_log_btn.setVisible(True)
 
     def _set_validation_errors(self, validation_errors):
         self.main_label.setText("Your publish didn't pass studio validations")
-        self.message_label.setText("Check results above please")
+        self.message_label.setText("")
+        self.message_label_bottom.setText("Check results above please")
         self._set_success_property(2)
 
         self.validation_errors_widget.set_errors(validation_errors)
@@ -256,6 +253,12 @@ class PublishFrame(QtWidgets.QFrame):
     def _change_bg_property(self, state=None):
         self.setProperty("state", str(state or ""))
         self.style().polish(self)
+
+    def _set_progress_visibility(self, visible):
+        self.instance_label.setVisible(visible)
+        self.plugin_label.setVisible(visible)
+        self.progress_widget.setVisible(visible)
+        self.message_label.setVisible(visible)
 
     def _set_success_property(self, state=None):
         self.info_frame.setProperty("state", str(state or ""))
