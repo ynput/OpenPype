@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Progress window to show when OpenPype is updating/installing locally."""
 import os
-import sys
 from pathlib import Path
 from .update_thread import UpdateThread
 from Qt import QtCore, QtGui, QtWidgets  # noqa
@@ -12,8 +11,8 @@ def load_stylesheet(path: str = None) -> str:
     """Load css style sheet.
 
     Args:
-        path (str, optional): Path to stylesheet. If none, `stylesheet.css` from
-            current package's path is used.
+        path (str, optional): Path to stylesheet. If none, `stylesheet.css`
+            from current package's path is used.
     Returns:
         str: content of the stylesheet
 

@@ -397,6 +397,9 @@ def _process_arguments() -> tuple:
     # handle igniter
     # this is helper to run igniter before anything else
     if "igniter" in sys.argv:
+        if os.getenv("OPENPYPE_HEADLESS"):
+            _print("!!! Cannot open Igniter dialog in headless mode.")
+            sys.exit(1)
         import igniter
         return_code = igniter.open_dialog()
 
@@ -444,6 +447,11 @@ def _determine_mongodb() -> str:
 
     if not openpype_mongo:
         _print("*** No DB connection string specified.")
+        if os.getenv("OPENPYPE_HEADLESS"):
+            _print("!!! Cannot open Igniter dialog in headless mode.")
+            _print(
+                "!!! Please use `OPENPYPE_MONGO` to specify server address.")
+            sys.exit(1)
         _print("--- launching setup UI ...")
 
         result = igniter.open_dialog()
@@ -547,6 +555,9 @@ def _find_frozen_openpype(use_version: str = None,
         except IndexError:
             # no OpenPype version found, run Igniter and ask for them.
             _print('*** No OpenPype versions found.')
+            if os.getenv("OPENPYPE_HEADLESS"):
+                _print("!!! Cannot open Igniter dialog in headless mode.")
+                sys.exit(1)
             _print("--- launching setup UI ...")
             import igniter
             return_code = igniter.open_dialog()
