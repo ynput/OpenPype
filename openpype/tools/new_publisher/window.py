@@ -51,39 +51,41 @@ class PublisherWindow(QtWidgets.QWidget):
 
         controller = PublisherController()
 
-        main_frame = QtWidgets.QWidget(self)
-        # Overlay MUST be created after Main to be painted on top of it
-        overlay_frame = PublishOverlayFrame(controller, self)
-        overlay_frame.setVisible(False)
-
         # Header
-        header_widget = QtWidgets.QWidget(main_frame)
+        header_widget = QtWidgets.QWidget(self)
         context_label = QtWidgets.QLabel(header_widget)
+        context_label.setObjectName("PublishContextLabel")
 
         header_layout = QtWidgets.QHBoxLayout(header_widget)
-        header_layout.setContentsMargins(0, 0, 0, 0)
         header_layout.addWidget(context_label, 1)
+
+        line_widget = QtWidgets.QWidget(self)
+        line_widget.setObjectName("Separator")
+        line_widget.setMinimumHeight(2)
+
+        # Overlay MUST be created after Main to be painted on top of it
+        publish_frame = PublishOverlayFrame(controller, self)
 
         # Content
         # Subset widget
-        subset_widget = QtWidgets.QWidget(main_frame)
+        subset_frame = QtWidgets.QWidget(self)
 
-        subset_view_cards = InstanceCardView(controller, subset_widget)
-        subset_list_view = InstanceListView(controller, subset_widget)
+        subset_view_cards = InstanceCardView(controller, subset_frame)
+        subset_list_view = InstanceListView(controller, subset_frame)
 
         subset_views_layout = QtWidgets.QStackedLayout()
         subset_views_layout.addWidget(subset_view_cards)
         subset_views_layout.addWidget(subset_list_view)
 
         # Buttons at the bottom of subset view
-        create_btn = QtWidgets.QPushButton("+", subset_widget)
-        delete_btn = QtWidgets.QPushButton("-", subset_widget)
-        save_btn = QtWidgets.QPushButton("Save", subset_widget)
-        change_view_btn = QtWidgets.QPushButton("=", subset_widget)
+        create_btn = QtWidgets.QPushButton("+", subset_frame)
+        delete_btn = QtWidgets.QPushButton("-", subset_frame)
+        save_btn = QtWidgets.QPushButton("Save", subset_frame)
+        change_view_btn = QtWidgets.QPushButton("=", subset_frame)
 
         # Subset details widget
         subset_attributes_widget = SubsetAttributesWidget(
-            controller, subset_widget
+            controller, subset_frame
         )
 
         # Layout of buttons at the bottom of subset view
@@ -103,31 +105,27 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_view_layout.addLayout(subset_view_btns_layout, 0)
 
         # Whole subset layout with attributes and details
-        subset_layout = QtWidgets.QHBoxLayout(subset_widget)
-        subset_layout.setContentsMargins(0, 0, 0, 0)
-        subset_layout.addLayout(subset_view_layout, 0)
-        subset_layout.addWidget(subset_attributes_widget, 1)
-
-        content_layout = QtWidgets.QVBoxLayout()
-        content_layout.setContentsMargins(0, 0, 0, 0)
-        content_layout.addWidget(subset_widget)
+        subset_content_layout = QtWidgets.QHBoxLayout()
+        subset_content_layout.setContentsMargins(0, 0, 0, 0)
+        subset_content_layout.addLayout(subset_view_layout, 0)
+        subset_content_layout.addWidget(subset_attributes_widget, 1)
 
         # Footer
-        message_input = QtWidgets.QLineEdit(main_frame)
+        message_input = QtWidgets.QLineEdit(subset_frame)
 
-        reset_btn = QtWidgets.QPushButton(main_frame)
+        reset_btn = QtWidgets.QPushButton(subset_frame)
         reset_btn.setIcon(get_icon("refresh"))
         reset_btn.setToolTip("Refresh publishing")
 
-        stop_btn = QtWidgets.QPushButton(main_frame)
+        stop_btn = QtWidgets.QPushButton(subset_frame)
         stop_btn.setIcon(get_icon("stop"))
         stop_btn.setToolTip("Stop/Pause publishing")
 
-        validate_btn = QtWidgets.QPushButton(main_frame)
+        validate_btn = QtWidgets.QPushButton(subset_frame)
         validate_btn.setIcon(get_icon("validate"))
         validate_btn.setToolTip("Validate")
 
-        publish_btn = QtWidgets.QPushButton(main_frame)
+        publish_btn = QtWidgets.QPushButton(subset_frame)
         publish_btn.setIcon(get_icon("play"))
         publish_btn.setToolTip("Publish")
 
@@ -139,15 +137,25 @@ class PublisherWindow(QtWidgets.QWidget):
         footer_layout.addWidget(validate_btn, 0)
         footer_layout.addWidget(publish_btn, 0)
 
-        # Main frame
-        main_frame_layout = QtWidgets.QVBoxLayout(main_frame)
-        main_frame_layout.addWidget(header_widget, 0)
-        main_frame_layout.addLayout(content_layout, 1)
-        main_frame_layout.addLayout(footer_layout, 0)
+        # Subset frame layout
+        subset_layout = QtWidgets.QVBoxLayout(subset_frame)
+        subset_layout.addLayout(subset_content_layout, 1)
+        subset_layout.addLayout(footer_layout, 0)
+
+        content_stacked_layout = QtWidgets.QStackedLayout()
+        content_stacked_layout.setStackingMode(
+            QtWidgets.QStackedLayout.StackAll
+        )
+        content_stacked_layout.addWidget(subset_frame)
+        content_stacked_layout.addWidget(publish_frame)
 
         # Add main frame to this window
-        main_layout = QtWidgets.QHBoxLayout(self)
-        main_layout.addWidget(main_frame)
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        main_layout.addWidget(header_widget, 0)
+        main_layout.addWidget(line_widget, 0)
+        main_layout.addLayout(content_stacked_layout, 1)
 
         creator_window = CreateDialog(controller, self)
 
@@ -167,7 +175,7 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_view_cards.selection_changed.connect(
             self._on_subset_change
         )
-        overlay_frame.hide_requested.connect(self._on_overlay_hide_request)
+        publish_frame.hide_requested.connect(self._on_overlay_hide_request)
 
         controller.add_instances_refresh_callback(self._on_instances_refresh)
 
@@ -176,8 +184,9 @@ class PublisherWindow(QtWidgets.QWidget):
         controller.add_publish_validated_callback(self._on_publish_validated)
         controller.add_publish_stopped_callback(self._on_publish_stop)
 
-        self.main_frame = main_frame
-        self.overlay_frame = overlay_frame
+        self.content_stacked_layout = content_stacked_layout
+        self.publish_frame = publish_frame
+        self.subset_frame = subset_frame
 
         self.context_label = context_label
 
@@ -207,15 +216,6 @@ class PublisherWindow(QtWidgets.QWidget):
         self.set_context_label(
             "<project>/<hierarchy>/<asset>/<task>/<workfile>"
         )
-
-    def resizeEvent(self, event):
-        super(PublisherWindow, self).resizeEvent(event)
-
-        self.overlay_frame.resize(self.size())
-
-    def moveEvent(self, event):
-        super(PublisherWindow, self).moveEvent(event)
-        self.overlay_frame.move(0, 0)
 
     def showEvent(self, event):
         super(PublisherWindow, self).showEvent(event)
@@ -287,8 +287,11 @@ class PublisherWindow(QtWidgets.QWidget):
         self.controller.save_instance_changes()
 
     def _set_overlay_visibility(self, visible):
-        if self.overlay_frame.isVisible() != visible:
-            self.overlay_frame.setVisible(visible)
+        if visible:
+            widget = self.publish_frame
+        else:
+            widget = self.subset_frame
+        self.content_stacked_layout.setCurrentWidget(widget)
 
     def _on_reset_clicked(self):
         self.controller.reset()
