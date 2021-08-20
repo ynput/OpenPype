@@ -178,20 +178,30 @@ class ValidationsWidget(QtWidgets.QWidget):
             QtCore.Qt.TextBrowserInteraction
         )
 
-        error_details_layout = QtWidgets.QVBoxLayout(error_details_widget)
-        error_details_layout.addWidget(error_details_input)
-
         actions_widget = ValidateActionsWidget(controller, self)
         actions_widget.setFixedWidth(140)
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setSpacing(0)
+        error_details_layout = QtWidgets.QHBoxLayout(error_details_widget)
+        error_details_layout.addWidget(error_details_input, 1)
+        error_details_layout.addWidget(actions_widget, 0)
+
+        content_layout = QtWidgets.QHBoxLayout()
+        content_layout.setSpacing(0)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+
+        content_layout.addWidget(errors_widget, 0)
+        content_layout.addWidget(error_details_widget, 1)
+
+        top_label = QtWidgets.QLabel("Publish validation report", self)
+        top_label.setObjectName("PublishInfoMainLabel")
+        top_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(top_label)
+        layout.addLayout(content_layout)
 
-        layout.addWidget(errors_widget, 0)
-        layout.addWidget(error_details_widget, 1)
-        layout.addWidget(actions_widget, 0)
-
+        self._top_label = top_label
         self._errors_widget = errors_widget
         self._errors_layout = errors_layout
         self._error_details_widget = error_details_widget
@@ -213,6 +223,7 @@ class ValidationsWidget(QtWidgets.QWidget):
             if widget:
                 widget.deleteLater()
 
+        self._top_label.setVisible(False)
         self._error_details_widget.setVisible(False)
         self._errors_widget.setVisible(False)
         self._actions_widget.setVisible(False)
@@ -222,6 +233,7 @@ class ValidationsWidget(QtWidgets.QWidget):
         if not errors:
             return
 
+        self._top_label.setVisible(True)
         self._error_details_widget.setVisible(True)
         self._errors_widget.setVisible(True)
 
