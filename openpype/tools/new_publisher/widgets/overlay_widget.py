@@ -153,7 +153,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.publish_btn.setEnabled(True)
 
     def _on_publish_start(self):
-        self.validation_errors_widget.set_errors([])
+        self.validation_errors_widget.clear()
 
         self._set_success_property(-1)
         self.main_label.setText("Publishing...")
