@@ -712,6 +712,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     font-size: 12pt;
 }
 
+#PublishContextLabel {
+    font-size: 13pt;
+}
+
 #ValidationErrorTitleWidget {
     background: {color:bg-inputs};
 }
