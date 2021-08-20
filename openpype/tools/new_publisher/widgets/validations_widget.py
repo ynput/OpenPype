@@ -1,3 +1,8 @@
+try:
+    import commonmark
+except Exception:
+    commonmark = None
+
 from Qt import QtWidgets, QtCore
 
 
@@ -268,7 +273,10 @@ class ValidationsWidget(QtWidgets.QWidget):
 
         error_item = self._error_info[index]
 
-        self._error_details_input.setMarkdown(
-            error_item["exception"].description
-        )
+        dsc = error_item["exception"].description
+        if commonmark:
+            html = commonmark.commonmark(dsc)
+            self._error_details_input.setHtml(html)
+        else:
+            self._error_details_input.setMarkdown(dsc)
         self._actions_widget.set_plugin(error_item["plugin"])
