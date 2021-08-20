@@ -6,8 +6,8 @@ from .icons import (
 from .widgets import (
     SubsetAttributesWidget
 )
-from .overlay_widget import (
-    PublishOverlayFrame
+from .publish_widget import (
+    PublishFrame
 )
 from .create_dialog import (
     CreateDialog

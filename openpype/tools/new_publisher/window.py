@@ -30,7 +30,7 @@ from Qt import QtWidgets
 from openpype import style
 from control import PublisherController
 from widgets import (
-    PublishOverlayFrame,
+    PublishFrame,
     SubsetAttributesWidget,
     InstanceCardView,
     InstanceListView,
@@ -64,7 +64,7 @@ class PublisherWindow(QtWidgets.QWidget):
         line_widget.setMinimumHeight(2)
 
         # Overlay MUST be created after Main to be painted on top of it
-        publish_frame = PublishOverlayFrame(controller, self)
+        publish_frame = PublishFrame(controller, self)
 
         # Content
         # Subset widget

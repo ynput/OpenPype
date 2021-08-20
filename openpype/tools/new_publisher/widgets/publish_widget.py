@@ -8,16 +8,16 @@ from .icons import get_icon
 from .validations_widget import ValidationsWidget
 
 
-class PublishOverlayFrame(QtWidgets.QFrame):
+class PublishFrame(QtWidgets.QFrame):
     hide_requested = QtCore.Signal()
 
     def __init__(self, controller, parent):
-        super(PublishOverlayFrame, self).__init__(parent)
+        super(PublishFrame, self).__init__(parent)
 
-        self.setObjectName("PublishOverlayFrame")
+        self.setObjectName("PublishFrame")
 
         info_frame = QtWidgets.QFrame(self)
-        info_frame.setObjectName("PublishOverlay")
+        info_frame.setObjectName("PublishInfoFrame")
 
         validation_errors_widget = ValidationsWidget(controller, self)
 
@@ -36,7 +36,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         top_layout.addWidget(hide_btn)
 
         main_label = QtWidgets.QLabel(content_widget)
-        main_label.setObjectName("PublishOverlayMainLabel")
+        main_label.setObjectName("PublishInfoMainLabel")
         main_label.setAlignment(QtCore.Qt.AlignCenter)
 
         message_label = QtWidgets.QLabel(content_widget)

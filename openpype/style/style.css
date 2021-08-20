@@ -675,40 +675,40 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: transparent;
 }
 
-#PublishOverlayFrame {
+#PublishFrame {
     background: rgba(0, 0, 0, 127);
 }
-#PublishOverlayFrame[state="1"] {
+#PublishFrame[state="1"] {
     background: rgb(22, 25, 29);
 }
 
-#PublishOverlay {
+#PublishInfoFrame {
     background: {color:bg};
     border: 2px solid black;
     border-radius: 0.3em;
 }
 
-#PublishOverlay[state="-1"] {
+#PublishInfoFrame[state="-1"] {
     background: rgb(194, 226, 236);
 }
 
-#PublishOverlay[state="0"] {
+#PublishInfoFrame[state="0"] {
 	background: #AA5050;
 }
 
-#PublishOverlay[state="1"] {
+#PublishInfoFrame[state="1"] {
 	background: #458056;
 }
 
-#PublishOverlay[state="2"] {
+#PublishInfoFrame[state="2"] {
 	background: #ff9900;
 }
 
-#PublishOverlay QLabel {
+#PublishInfoFrame QLabel {
     color: black;
 }
 
-#PublishOverlayMainLabel {
+#PublishInfoMainLabel {
     font-size: 12pt;
 }
 
