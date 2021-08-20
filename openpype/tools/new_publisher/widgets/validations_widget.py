@@ -1,12 +1,6 @@
 from Qt import QtWidgets, QtCore
 
 
-class ValidationErrorInfo:
-    def __init__(self, title, detail, actions):
-        self.title = title
-        self.detail = detail
-        self.actions = actions
-
 global_msg = """
 ## Publish plugins
 
@@ -39,7 +33,8 @@ class ValidationErrorTitleWidget(QtWidgets.QFrame):
 
         self.setObjectName("ValidationErrorTitleWidget")
 
-        label_widget = QtWidgets.QLabel(error_info.title, self)
+        exception = error_info["exception"]
+        label_widget = QtWidgets.QLabel(exception.title, self)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.addWidget(label_widget)
@@ -133,49 +128,53 @@ class ValidationsWidget(QtWidgets.QWidget):
         self._error_info = {}
         self._previous_checked = None
 
-        self.set_errors([
-            {
-                "title": "Test 1",
-                "detail": global_msg,
-                "actions": []
-            },
-            {
-                "title": "Test 2",
-                "detail": "Detaile message about error 2",
-                "actions": []
-            },
-            {
-                "title": "Test 3",
-                "detail": "Detaile message about error 3",
-                "actions": []
-            }
-        ])
-
     def set_errors(self, errors):
         _old_title_widget = self._title_widgets
         self._title_widgets = {}
         self._error_info = {}
         self._previous_checked = None
         while self._errors_layout.count():
-            self._errors_layout.takeAt(0)
+            item = self._errors_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
 
         while self._actions_layout.count():
             self._actions_layout.takeAt(0)
 
-        for idx, error in enumerate(errors):
-            item = ValidationErrorInfo(
-                error["title"], error["detail"], error["actions"]
-            )
+        errors_by_title = []
+        for plugin_info in errors:
+            titles = []
+            exception_by_title = {}
+            instances_by_title = {}
+
+            for error_info in plugin_info["errors"]:
+                exception = error_info["exception"]
+                title = exception.title
+                if title not in titles:
+                    titles.append(title)
+                    instances_by_title[title] = []
+                    exception_by_title[title] = exception
+                instances_by_title[title].append(error_info["instance"])
+
+            for title in titles:
+                errors_by_title.append({
+                    "plugin": plugin_info["plugin"],
+                    "exception": exception_by_title[title],
+                    "instances": instances_by_title[title]
+                })
+
+        for idx, item in enumerate(errors_by_title):
             widget = ValidationErrorTitleWidget(idx, item, self)
             widget.checked.connect(self._on_checked)
             self._errors_layout.addWidget(widget)
             self._title_widgets[idx] = widget
             self._error_info[idx] = item
 
+        self._errors_layout.addStretch(1)
+
         if self._title_widgets:
             self._title_widgets[0].set_checked(True)
-
-        self._errors_layout.addStretch(1)
 
     def _on_checked(self, index):
         if self._previous_checked:
@@ -185,4 +184,6 @@ class ValidationsWidget(QtWidgets.QWidget):
 
         self._previous_checked = self._title_widgets[index]
         error_item = self._error_info[index]
-        self._error_details_input.setMarkdown(error_item.detail)
+        self._error_details_input.setMarkdown(
+            error_item["exception"].description
+        )
