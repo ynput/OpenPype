@@ -56,9 +56,6 @@ class PublisherWindow(QtWidgets.QWidget):
         controller = PublisherController()
 
         main_frame = QtWidgets.QWidget(self)
-        blur_effect = QtWidgets.QGraphicsBlurEffect()
-        blur_effect.setBlurRadius(5)
-
         # Overlay MUST be created after Main to be painted on top of it
         overlay_frame = PublishOverlayFrame(controller, self)
         overlay_frame.setVisible(False)
@@ -183,7 +180,6 @@ class PublisherWindow(QtWidgets.QWidget):
         controller.add_publish_validated_callback(self._on_publish_validated)
         controller.add_publish_stopped_callback(self._on_publish_stop)
 
-        self.blur_effect = blur_effect
         self.main_frame = main_frame
         self.overlay_frame = overlay_frame
 
@@ -316,10 +312,6 @@ class PublisherWindow(QtWidgets.QWidget):
     def _set_overlay_visibility(self, visible):
         if self.overlay_frame.isVisible() != visible:
             self.overlay_frame.setVisible(visible)
-            effect = None
-            if visible:
-                effect = self.blur_effect
-            self.main_frame.setGraphicsEffect(effect)
 
     def _on_reset_clicked(self):
         self.controller.reset()
