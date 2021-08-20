@@ -81,27 +81,23 @@ class ValidationErrorTitleFrame(_ClickableFrame):
         self.set_selected(True)
 
 
-class ActionWidget(_ClickableFrame):
+class ActionButton(QtWidgets.QPushButton):
     action_clicked = QtCore.Signal(str)
 
     def __init__(self, action, parent):
-        super(ActionWidget, self).__init__(parent)
-
-        self.setObjectName("PublishPluginActionWidget")
-
-        self._action_id = action.id
+        super(ActionButton, self).__init__(parent)
 
         action_label = action.label or action.__name__
+        self.setText(action_label)
+
         # TODO handle icons
         # action.icon
 
-        lable_widget = QtWidgets.QLabel(action_label, self)
+        self.action = action
+        self.clicked.connect(self._on_click)
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(lable_widget)
-
-    def _mouse_release_callback(self):
-        self.action_clicked.emit(self._action_id)
+    def _on_click(self):
+        self.action_clicked.emit(self.action.id)
 
 
 class ValidateActionsWidget(QtWidgets.QFrame):
@@ -148,9 +144,9 @@ class ValidateActionsWidget(QtWidgets.QFrame):
 
             self._actions_mapping[action.id] = action
 
-            action_widget = ActionWidget(action, self._content_widget)
-            action_widget.action_clicked.connect(self._on_action_click)
-            self._content_layout.addWidget(action_widget)
+            action_btn = ActionButton(action, self._content_widget)
+            action_btn.action_clicked.connect(self._on_action_click)
+            self._content_layout.addWidget(action_btn)
 
         if self._content_layout.count() > 0:
             self.setVisible(True)
