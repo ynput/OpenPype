@@ -258,6 +258,8 @@ class PublisherController:
         self._publish_up_validation = False
         # All publish plugins are processed
         self._publish_finished = False
+        self._publish_max_progress = 0
+        self._publish_progress = 0
 
         # Validation order
         # - plugin with order same or higher than this value is extractor or
@@ -521,6 +523,14 @@ class PublisherController:
     def publish_has_crashed(self):
         return bool(self._publish_error)
 
+    @property
+    def publish_max_progress(self):
+        return self._publish_max_progress
+
+    @property
+    def publish_progress(self):
+        return self._publish_progress
+
     def get_publish_crash_error(self):
         return self._publish_error
 
@@ -543,6 +553,9 @@ class PublisherController:
         self._publish_validation_errors = []
         self._publish_current_plugin_validation_errors = None
         self._publish_error = None
+
+        self._publish_max_progress = len(self.publish_plugins)
+        self._publish_progress = 0
 
         self._trigger_callbacks(self._publish_reset_callback_refs)
 
@@ -606,7 +619,8 @@ class PublisherController:
         self._main_thread_processor.add_item(item)
 
     def _publish_iterator(self):
-        for plugin in self.publish_plugins:
+        for idx, plugin in enumerate(self.publish_plugins):
+            self._publish_progress = idx
             # Add plugin to publish report
             self._publish_report.add_plugin_iter(plugin, self._publish_context)
 
@@ -681,6 +695,7 @@ class PublisherController:
                     self._publish_report.set_plugin_skipped()
 
         self._publish_finished = True
+        self._publish_progress = self._publish_max_progress
         yield MainThreadItem(self.stop_publish)
 
     def _add_validation_error(self, result):

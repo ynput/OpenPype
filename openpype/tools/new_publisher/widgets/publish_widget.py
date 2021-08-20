@@ -133,14 +133,6 @@ class PublishFrame(QtWidgets.QFrame):
         self.validate_btn = validate_btn
         self.publish_btn = publish_btn
 
-    def set_progress_range(self, max_value):
-        # TODO implement triggers for this method
-        self.progress_widget.setMaximum(max_value)
-
-    def set_progress(self, value):
-        # TODO implement triggers for this method
-        self.progress_widget.setValue(value)
-
     def _on_publish_reset(self):
         self._set_success_property()
         self._change_bg_property()
@@ -153,6 +145,9 @@ class PublishFrame(QtWidgets.QFrame):
         self.stop_btn.setEnabled(False)
         self.validate_btn.setEnabled(True)
         self.publish_btn.setEnabled(True)
+
+        self.progress_widget.setValue(self.controller.publish_progress)
+        self.progress_widget.setMaximum(self.controller.publish_max_progress)
 
     def _on_publish_start(self):
         self.validation_errors_widget.clear()
@@ -194,10 +189,13 @@ class PublishFrame(QtWidgets.QFrame):
         if hasattr(plugin, "label") and plugin.label:
             plugin_name = plugin.label
 
+        self.progress_widget.setValue(self.controller.publish_progress)
         self.plugin_label.setText(plugin_name)
         QtWidgets.QApplication.processEvents()
 
     def _on_publish_stop(self):
+        self.progress_widget.setValue(self.controller.publish_progress)
+
         self.reset_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
         validate_enabled = not self.controller.publish_has_crashed
