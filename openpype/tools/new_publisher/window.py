@@ -291,7 +291,7 @@ class PublisherWindow(QtWidgets.QWidget):
     def _on_save_clicked(self):
         self.controller.save_instance_changes()
 
-    def _set_overlay_visibility(self, visible):
+    def _set_publish_visibility(self, visible):
         if visible:
             widget = self.publish_frame
         else:
@@ -305,11 +305,11 @@ class PublisherWindow(QtWidgets.QWidget):
         self.controller.stop_publish()
 
     def _on_validate_clicked(self):
-        self._set_overlay_visibility(True)
+        self._set_publish_visibility(True)
         self.controller.validate()
 
     def _on_publish_clicked(self):
-        self._set_overlay_visibility(True)
+        self._set_publish_visibility(True)
         self.controller.publish()
 
     def _refresh_instances(self):
@@ -352,6 +352,8 @@ class PublisherWindow(QtWidgets.QWidget):
         self.validate_btn.setEnabled(True)
         self.publish_btn.setEnabled(True)
 
+        self._set_publish_visibility(False)
+
     def _on_publish_start(self):
         self.reset_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
@@ -382,7 +384,7 @@ class PublisherWindow(QtWidgets.QWidget):
         self.publish_btn.setEnabled(publish_enabled)
 
     def _on_overlay_hide_request(self):
-        self._set_overlay_visibility(False)
+        self._set_publish_visibility(False)
 
 
 def main():
