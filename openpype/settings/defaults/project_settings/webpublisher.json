@@ -24,7 +24,7 @@
                             "review"
                         ],
                         "tags": [
-                            "ftrackreview"
+                            "review"
                         ],
                         "subset_template_name": ""
                     }
@@ -51,7 +51,7 @@
                             "review"
                         ],
                         "tags": [
-                            "ftrackreview"
+                            "review"
                         ],
                         "subset_template_name": ""
                     }
@@ -79,7 +79,7 @@
                             "review"
                         ],
                         "tags": [
-                            "ftrackreview"
+                            "review"
                         ],
                         "subset_template_name": ""
                     }
@@ -106,7 +106,7 @@
                             "review"
                         ],
                         "tags": [
-                            "ftrackreview"
+                            "review"
                         ],
                         "subset_template_name": "{family}{Variant}"
                     }

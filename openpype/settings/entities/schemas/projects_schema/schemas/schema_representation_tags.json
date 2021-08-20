@@ -8,7 +8,10 @@
             "burnin": "Add burnins"
         },
         {
-            "ftrackreview": "Add to Ftrack"
+            "review": "Create review"
+        },
+        {
+            "ftrackreview": "Add review to Ftrack"
         },
         {
             "delete": "Delete output"
