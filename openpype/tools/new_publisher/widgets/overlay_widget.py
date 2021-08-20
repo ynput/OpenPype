@@ -234,8 +234,8 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.main_label.setText("Finished")
         self._set_success_property(1)
 
-    def _set_success_property(self, success):
-        self.info_frame.setProperty("success", str(success))
+    def _set_success_property(self, state):
+        self.info_frame.setProperty("state", str(state))
         self.info_frame.style().polish(self.info_frame)
 
     def _on_copy_log(self):

@@ -671,16 +671,20 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-radius: 0.3em;
 }
 
-#PublishOverlay[success="-1"] {
+#PublishOverlay[state="-1"] {
     background: rgb(194, 226, 236);
 }
 
-#PublishOverlay[success="1"] {
-	background: #458056
+#PublishOverlay[state="0"] {
+	background: #AA5050;
 }
 
-#PublishOverlay[success="0"] {
-	background: #AA5050
+#PublishOverlay[state="1"] {
+	background: #458056;
+}
+
+#PublishOverlay[state="2"] {
+	background: #ff9900;
 }
 
 #PublishOverlay QLabel {
