@@ -246,6 +246,8 @@ class PublisherController:
         self._publish_report = PublishReport(self)
         # Store exceptions of validation error
         self._publish_validation_errors = []
+        # Currently processing plugin errors
+        self._publish_current_plugin_validation_errors = None
         # Any other exception that happened during publishing
         self._publish_error = None
         # Publishing is in progress
@@ -539,6 +541,7 @@ class PublisherController:
 
         self._publish_report.reset(self._publish_context)
         self._publish_validation_errors = []
+        self._publish_current_plugin_validation_errors = None
         self._publish_error = None
 
         self._trigger_callbacks(self._publish_reset_callback_refs)
@@ -598,7 +601,11 @@ class PublisherController:
 
     def _publish_iterator(self):
         for plugin in self.publish_plugins:
+            # Add plugin to publish report
             self._publish_report.add_plugin_iter(plugin, self._publish_context)
+
+            # Reset current plugin validations error
+            self._publish_current_plugin_validation_errors = None
 
             # Check if plugin is over validation order
             if not self._publish_validated:
@@ -670,6 +677,21 @@ class PublisherController:
         self._publish_finished = True
         yield MainThreadItem(self.stop_publish)
 
+    def _add_validation_error(self, result):
+        if self._publish_current_plugin_validation_errors is None:
+            self._publish_current_plugin_validation_errors = {
+                "plugin": result["plugin"],
+                "errors": []
+            }
+            self._publish_validation_errors.append(
+                self._publish_current_plugin_validation_errors
+            )
+
+        self._publish_current_plugin_validation_errors["errors"].append({
+            "exception": result["error"],
+            "instance": result["instance"]
+        })
+
     def _process_and_continue(self, plugin, instance):
         # TODO execute plugin
         result = pyblish.plugin.process(
@@ -684,7 +706,7 @@ class PublisherController:
                 isinstance(exception, PublishValidationError)
                 and not self._publish_validated
             ):
-                self._publish_validation_errors.append(exception)
+                self._add_validation_error(result)
 
             else:
                 self._publish_error = exception
