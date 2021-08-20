@@ -5,6 +5,7 @@ from Qt import QtWidgets, QtCore
 from openpype.pipeline import KnownPublishError
 
 from .icons import get_icon
+from .validations_widget import ValidationsWidget
 
 
 class PublishOverlayFrame(QtWidgets.QFrame):
@@ -17,6 +18,8 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
         info_frame = QtWidgets.QFrame(self)
         info_frame.setObjectName("PublishOverlay")
+
+        validation_errors_widget = ValidationsWidget(self)
 
         content_widget = QtWidgets.QWidget(info_frame)
         content_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
@@ -91,7 +94,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         content_layout.addLayout(footer_layout)
 
         main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addStretch(1)
+        main_layout.addWidget(validation_errors_widget, 1)
         main_layout.addWidget(info_frame, 0)
 
         hide_btn.clicked.connect(self.hide_requested)
