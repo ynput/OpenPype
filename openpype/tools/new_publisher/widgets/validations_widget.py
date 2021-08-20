@@ -97,14 +97,16 @@ class ValidationsWidget(QtWidgets.QWidget):
 
         self._errors_widget = errors_widget
         self._errors_layout = errors_layout
+        self._error_details_widget = error_details_widget
         self._error_details_input = error_details_input
+        self._actions_widget = actions_widget
         self._actions_layout = actions_layout
 
         self._title_widgets = {}
         self._error_info = {}
         self._previous_checked = None
 
-    def set_errors(self, errors):
+    def clear(self):
         _old_title_widget = self._title_widgets
         self._title_widgets = {}
         self._error_info = {}
@@ -117,6 +119,18 @@ class ValidationsWidget(QtWidgets.QWidget):
 
         while self._actions_layout.count():
             self._actions_layout.takeAt(0)
+
+        self._error_details_widget.setVisible(False)
+        self._errors_widget.setVisible(False)
+        self._actions_widget.setVisible(False)
+
+    def set_errors(self, errors):
+        self.clear()
+        if not errors:
+            return
+
+        self._error_details_widget.setVisible(True)
+        self._errors_widget.setVisible(True)
 
         errors_by_title = []
         for plugin_info in errors:
