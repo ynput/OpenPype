@@ -63,9 +63,6 @@ class PublisherWindow(QtWidgets.QWidget):
         line_widget.setObjectName("Separator")
         line_widget.setMinimumHeight(2)
 
-        # Overlay MUST be created after Main to be painted on top of it
-        publish_frame = PublishFrame(controller, self)
-
         # Content
         # Subset widget
         subset_frame = QtWidgets.QWidget(self)
@@ -130,7 +127,6 @@ class PublisherWindow(QtWidgets.QWidget):
         publish_btn.setToolTip("Publish")
 
         footer_layout = QtWidgets.QHBoxLayout()
-        footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(message_input, 1)
         footer_layout.addWidget(reset_btn, 0)
         footer_layout.addWidget(stop_btn, 0)
@@ -139,8 +135,17 @@ class PublisherWindow(QtWidgets.QWidget):
 
         # Subset frame layout
         subset_layout = QtWidgets.QVBoxLayout(subset_frame)
+        marings = subset_layout.contentsMargins()
+        marings.setLeft(marings.left() * 2)
+        marings.setRight(marings.right() * 2)
+        marings.setTop(marings.top() * 2)
+        marings.setBottom(marings.bottom() * 2)
+        subset_layout.setContentsMargins(marings)
         subset_layout.addLayout(subset_content_layout, 1)
         subset_layout.addLayout(footer_layout, 0)
+
+        # Create publish frame
+        publish_frame = PublishFrame(controller, self)
 
         content_stacked_layout = QtWidgets.QStackedLayout()
         content_stacked_layout.setStackingMode(
