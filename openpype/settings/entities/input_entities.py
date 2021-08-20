@@ -53,6 +53,11 @@ class EndpointEntity(ItemEntity):
     def _settings_value(self):
         pass
 
+    def collect_static_entities_by_path(self):
+        if self.is_dynamic_item or self.is_in_dynamic_item:
+            return {}
+        return {self.path: self}
+
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET

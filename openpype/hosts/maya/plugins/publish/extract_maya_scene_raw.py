@@ -19,7 +19,8 @@ class ExtractMayaSceneRaw(openpype.api.Extractor):
     families = ["mayaAscii",
                 "setdress",
                 "layout",
-                "camerarig"]
+                "camerarig",
+                "xgen"]
     scene_type = "ma"
 
     def process(self, instance):

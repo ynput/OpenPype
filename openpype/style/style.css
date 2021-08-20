@@ -271,37 +271,38 @@ QTabWidget::tab-bar {
 }
 
 QTabBar::tab {
-    border-top-left-radius: 4px;
-    border-top-right-radius: 4px;
     padding: 5px;
-
+    border-left: 3px solid transparent;
+    border-top: 1px solid {color:border};
+    border-right: 1px solid {color:border};
+    background: qlineargradient(
+        x1: 0, y1: 1, x2: 0, y2: 0,
+        stop: 0.5 {color:bg}, stop: 1.0 {color:bg-inputs}
+    );
 }
 
 QTabBar::tab:selected {
     background: {color:grey-lighter};
-    /* background: qradialgradient(
-        cx:0.5, cy:0.5, radius: 2,
-        fx:0.5, fy:1,
-        stop:0.3 {color:bg}, stop:1 white
-    ) */
-    /* background: qlineargradient(
-        x1: 0, y1: 0, x2: 0, y2: 1,
-        stop: 0 {color:bg-inputs}, stop: 1.0 {color:bg}
-    ); */
+    border-left: 3px solid {color:border-focus};
+    background: qlineargradient(
+        x1: 0, y1: 1, x2: 0, y2: 0,
+        stop: 0.5 {color:bg}, stop: 1.0 {color:border}
+    );
 }
 
 QTabBar::tab:!selected {
-    /* Make it smaller*/
-    margin-top: 3px;
     background: {color:grey-light};
 }
 
 QTabBar::tab:!selected:hover {
     background: {color:grey-lighter};
 }
-
+QTabBar::tab:first {
+    border-left: 1px solid {color:border};
+}
 QTabBar::tab:first:selected {
     margin-left: 0;
+    border-left: 3px solid {color:border-focus};
 }
 
 QTabBar::tab:last:selected {
@@ -622,4 +623,9 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ComponentFrame {
     border: 1px solid {color:border};
     border-radius: 0.1em;
+}
+
+/* Python console interpreter */
+#PythonInterpreterOutput, #PythonCodeEditor {
+    font-family: "Roboto Mono";
 }
