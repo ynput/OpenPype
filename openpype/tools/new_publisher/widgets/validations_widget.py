@@ -25,7 +25,7 @@ class _ClickableFrame(QtWidgets.QFrame):
 
 
 class ValidationErrorTitleWidget(_ClickableFrame):
-    checked = QtCore.Signal(int)
+    selected = QtCore.Signal(int)
 
     def __init__(self, index, error_info, parent):
         super(ValidationErrorTitleWidget, self).__init__(parent)
@@ -40,13 +40,13 @@ class ValidationErrorTitleWidget(_ClickableFrame):
 
         self._index = index
         self._error_info = error_info
-        self._checked = False
+        self._selected = False
 
         self._mouse_pressed = False
 
     @property
-    def is_checked(self):
-        return self._checked
+    def is_selected(self):
+        return self._selected
 
     @property
     def index(self):
@@ -55,25 +55,25 @@ class ValidationErrorTitleWidget(_ClickableFrame):
     def set_index(self, index):
         self._index = index
 
-    def _change_style_property(self, checked):
-        value = "1" if checked else ""
-        self.setProperty("checked", value)
+    def _change_style_property(self, selected):
+        value = "1" if selected else ""
+        self.setProperty("selected", value)
         self.style().polish(self)
 
-    def set_checked(self, checked=None):
-        if checked is None:
-            checked = not self._checked
+    def set_selected(self, selected=None):
+        if selected is None:
+            selected = not self._selected
 
-        elif checked == self._checked:
+        elif selected == self._selected:
             return
 
-        self._checked = checked
-        self._change_style_property(checked)
-        if checked:
-            self.checked.emit(self._index)
+        self._selected = selected
+        self._change_style_property(selected)
+        if selected:
+            self.selected.emit(self._index)
 
     def _mouse_release_callback(self):
-        self.set_checked(True)
+        self.set_selected(True)
 
 
 class ActionWidget(_ClickableFrame):
@@ -91,6 +91,7 @@ class ActionWidget(_ClickableFrame):
         # action.icon
 
         lable_widget = QtWidgets.QLabel(action_label, self)
+
         layout = QtWidgets.QHBoxLayout(self)
         layout.addWidget(lable_widget)
 
@@ -198,13 +199,13 @@ class ValidationsWidget(QtWidgets.QWidget):
 
         self._title_widgets = {}
         self._error_info = {}
-        self._previous_checked = None
+        self._previous_select = None
 
     def clear(self):
         _old_title_widget = self._title_widgets
         self._title_widgets = {}
         self._error_info = {}
-        self._previous_checked = None
+        self._previous_select = None
         while self._errors_layout.count():
             item = self._errors_layout.takeAt(0)
             widget = item.widget()
@@ -247,7 +248,7 @@ class ValidationsWidget(QtWidgets.QWidget):
 
         for idx, item in enumerate(errors_by_title):
             widget = ValidationErrorTitleWidget(idx, item, self)
-            widget.checked.connect(self._on_checked)
+            widget.selected.connect(self._on_select)
             self._errors_layout.addWidget(widget)
             self._title_widgets[idx] = widget
             self._error_info[idx] = item
@@ -255,15 +256,15 @@ class ValidationsWidget(QtWidgets.QWidget):
         self._errors_layout.addStretch(1)
 
         if self._title_widgets:
-            self._title_widgets[0].set_checked(True)
+            self._title_widgets[0].set_selected(True)
 
-    def _on_checked(self, index):
-        if self._previous_checked:
-            if self._previous_checked.index == index:
+    def _on_select(self, index):
+        if self._previous_select:
+            if self._previous_select.index == index:
                 return
-            self._previous_checked.set_checked(False)
+            self._previous_select.set_selected(False)
 
-        self._previous_checked = self._title_widgets[index]
+        self._previous_select = self._title_widgets[index]
 
         error_item = self._error_info[index]
 
