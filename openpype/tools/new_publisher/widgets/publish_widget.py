@@ -203,7 +203,14 @@ class PublishFrame(QtWidgets.QFrame):
         if validate_enabled:
             validate_enabled = not self.controller.publish_has_validated
         if publish_enabled:
-            publish_enabled = not self.controller.publish_has_finished
+            if (
+                self.controller.publish_has_validated
+                and self.controller.publish_has_validation_errors
+            ):
+                publish_enabled = False
+
+            else:
+                publish_enabled = not self.controller.publish_has_finished
 
         self.validate_btn.setEnabled(validate_enabled)
         self.publish_btn.setEnabled(publish_enabled)

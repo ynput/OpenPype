@@ -524,6 +524,10 @@ class PublisherController:
         return bool(self._publish_error)
 
     @property
+    def publish_has_validation_errors(self):
+        return bool(self._publish_validation_errors)
+
+    @property
     def publish_max_progress(self):
         return self._publish_max_progress
 
