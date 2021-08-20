@@ -966,6 +966,7 @@ class BootstrapRepos:
 
         # test if destination directory already exist, if so lets delete it.
         if destination.exists() and force:
+            self._print("removing existing directory")
             try:
                 shutil.rmtree(destination)
             except OSError as e:
@@ -975,6 +976,7 @@ class BootstrapRepos:
                 raise OpenPypeVersionIOError(
                     f"cannot remove existing {destination}") from e
         elif destination.exists() and not force:
+            self._print("destination directory already exists")
             raise OpenPypeVersionExists(f"{destination} already exist.")
         else:
             # create destination parent directories even if they don't exist.
@@ -984,6 +986,7 @@ class BootstrapRepos:
         if openpype_version.path.is_dir():
             # create zip inside temporary directory.
             self._print("Creating zip from directory ...")
+            self._progress_callback(0)
             with tempfile.TemporaryDirectory() as temp_dir:
                 temp_zip = \
                     Path(temp_dir) / f"openpype-v{openpype_version}.zip"
@@ -1009,13 +1012,16 @@ class BootstrapRepos:
                 raise OpenPypeVersionInvalid("Invalid file format")
 
             if not self.is_inside_user_data(openpype_version.path):
+                self._progress_callback(35)
                 openpype_version.path = self._copy_zip(
                     openpype_version.path, destination)
 
         # extract zip there
         self._print("extracting zip to destination ...")
         with ZipFile(openpype_version.path, "r") as zip_ref:
+            self._progress_callback(75)
             zip_ref.extractall(destination)
+            self._progress_callback(100)
 
         return destination
 

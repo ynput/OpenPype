@@ -610,8 +610,16 @@ def _find_frozen_openpype(use_version: str = None,
 
     if not is_inside:
         # install latest version to user data dir
-        version_path = bootstrap.install_version(
-            openpype_version, force=True)
+        if not os.getenv("OPENPYPE_HEADLESS"):
+            import igniter
+            version_path = igniter.open_update_window(openpype_version)
+        else:
+            version_path = bootstrap.install_version(
+                openpype_version, force=True)
+
+        openpype_version.path = version_path
+        _initialize_environment(openpype_version)
+        return openpype_version.path
 
     if openpype_version.path.is_file():
         _print(">>> Extracting zip file ...")
