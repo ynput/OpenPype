@@ -117,9 +117,11 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
         self.hide_btn = hide_btn
 
+        self.validation_errors_widget = validation_errors_widget
+
+        self.info_frame = info_frame
         self.main_label = main_label
         self.message_label = message_label
-        self.info_frame = info_frame
 
         self.instance_label = instance_label
         self.plugin_label = plugin_label
@@ -230,8 +232,11 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.copy_log_btn.setVisible(True)
 
     def _set_validation_errors(self, validation_errors):
-        # TODO implement
-        pass
+        self.main_label.setText("Your publish didn't pass studio validations")
+        self.message_label.setText("Check publish results please")
+        self._set_success_property(2)
+
+        self.validation_errors_widget.set_errors(validation_errors)
 
     def _set_finished(self):
         self.main_label.setText("Finished")
