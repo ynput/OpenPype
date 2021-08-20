@@ -151,6 +151,10 @@ class InstanceCardWidget(QtWidgets.QWidget):
 
 class _AbstractInstanceView(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
+    refreshed = False
+
+    def set_refreshed(self, refreshed):
+        self.refreshed = refreshed
 
     def refresh(self):
         raise NotImplementedError((

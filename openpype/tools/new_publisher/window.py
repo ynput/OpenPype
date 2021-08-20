@@ -49,10 +49,6 @@ class PublisherWindow(QtWidgets.QWidget):
         self._first_show = True
         self._refreshing_instances = False
 
-        self._view_type_order = ["card", "list"]
-        self._view_type = self._view_type_order[0]
-        self._views_refreshed = {}
-
         controller = PublisherController()
 
         main_frame = QtWidgets.QWidget(self)
@@ -75,8 +71,9 @@ class PublisherWindow(QtWidgets.QWidget):
         subset_view_cards = InstanceCardView(controller, subset_widget)
         subset_list_view = InstanceListView(controller, subset_widget)
 
-        subset_view_cards.setVisible(False)
-        subset_list_view.setVisible(False)
+        subset_views_layout = QtWidgets.QStackedLayout()
+        subset_views_layout.addWidget(subset_view_cards)
+        subset_views_layout.addWidget(subset_list_view)
 
         # Buttons at the bottom of subset view
         create_btn = QtWidgets.QPushButton("+", subset_widget)
@@ -102,8 +99,7 @@ class PublisherWindow(QtWidgets.QWidget):
         # Layout of view and buttons
         subset_view_layout = QtWidgets.QVBoxLayout()
         subset_view_layout.setContentsMargins(0, 0, 0, 0)
-        subset_view_layout.addWidget(subset_view_cards, 1)
-        subset_view_layout.addWidget(subset_list_view, 1)
+        subset_view_layout.addLayout(subset_views_layout, 1)
         subset_view_layout.addLayout(subset_view_btns_layout, 0)
 
         # Whole subset layout with attributes and details
@@ -187,6 +183,7 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self.subset_view_cards = subset_view_cards
         self.subset_list_view = subset_list_view
+        self.subset_views_layout = subset_views_layout
 
         self.delete_btn = delete_btn
 
@@ -201,13 +198,6 @@ class PublisherWindow(QtWidgets.QWidget):
         self.controller = controller
 
         self.creator_window = creator_window
-
-        self.views_by_type = {
-            "card": subset_view_cards,
-            "list": subset_list_view
-        }
-
-        self._change_view_type(self._view_type)
 
         self.setStyleSheet(style.load_stylesheet())
 
@@ -240,33 +230,20 @@ class PublisherWindow(QtWidgets.QWidget):
         self.context_label.setText(label)
 
     def get_selected_instances(self):
-        view = self.views_by_type[self._view_type]
+        view = self.subset_views_layout.currentWidget()
         return view.get_selected_instances()
 
-    def _change_view_type(self, view_type=None):
-        if view_type is None:
-            next_type = False
-            for _view_type in self._view_type_order:
-                if next_type:
-                    view_type = _view_type
-                    break
+    def _change_view_type(self):
+        old_view = self.subset_views_layout.currentWidget()
 
-                if _view_type == self._view_type:
-                    next_type = True
+        idx = self.subset_views_layout.currentIndex()
+        new_idx = (idx + 1) % self.subset_views_layout.count()
+        self.subset_views_layout.setCurrentIndex(new_idx)
 
-            if view_type is None:
-                view_type = self._view_type_order[0]
-
-        old_view = self.views_by_type[self._view_type]
-        old_view.setVisible(False)
-
-        self._view_type = view_type
-        refreshed = self._views_refreshed.get(view_type, False)
-        new_view = self.views_by_type[view_type]
-        new_view.setVisible(True)
-        if not refreshed:
+        new_view = self.subset_views_layout.currentWidget()
+        if not new_view.refreshed:
             new_view.refresh()
-            self._views_refreshed[view_type] = True
+            new_view.set_refreshed(True)
         else:
             new_view.refresh_active_state()
 
@@ -333,10 +310,13 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self._refreshing_instances = True
 
-        view = self.views_by_type[self._view_type]
-        view.refresh()
+        for idx in range(self.subset_views_layout.count()):
+            widget = self.subset_views_layout.widget(idx)
+            widget.set_refreshed(False)
 
-        self._views_refreshed = {self._view_type: True}
+        view = self.subset_views_layout.currentWidget()
+        view.refresh()
+        view.set_refreshed(True)
 
         self._refreshing_instances = False
 
