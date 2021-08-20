@@ -213,6 +213,10 @@ class DropboxPath(CloudPath):
             )
         )
 
+    def resolve(self):
+        # Casting the local cached path to Path object to return.
+        return AnyPath(self.fspath)
+
 
 @register_client_class("dropbox")
 class DropboxClient(Client):
