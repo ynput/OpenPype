@@ -1,5 +1,22 @@
 class PublishValidationError(Exception):
-    pass
+    """Validation error happened during publishing.
+
+    This exception should be used when validation publishing failed.
+
+    Has additional UI specific attributes that may be handy for artist.
+
+    Args:
+        message(str): Message of error. Short explanation an issue.
+        title(str): Title showed in UI. All instances are grouped under
+            single title.
+        description(str): Detailed description of an error. It is possible
+            to use Markdown syntax.
+    """
+    def __init__(self, message, title=None, description=None):
+        self.message = message
+        self.title = title or "< Missing title >"
+        self.description = description or message
+        super(PublishValidationError, self).__init__(message)
 
 
 class KnownPublishError(Exception):
