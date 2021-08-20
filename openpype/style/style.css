@@ -571,17 +571,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #InfoText {
-    padding: 5px;
+    padding-left: 30px;
+    padding-top: 20px;
     background: transparent;
     border: 1px solid {color:border};
-}
-
-#InfoText:hover {
-    border-color: {color:border};
-}
-
-#InfoText:focus {
-    border-color: {color:border};
 }
 
 #TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
@@ -716,11 +709,18 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     font-size: 13pt;
 }
 
-#ValidationErrorTitleWidget {
+#ValidationErrorTitleFrame {
     background: {color:bg-inputs};
+    border-left: 4px solid transparent;
 }
-#ValidationErrorTitleWidget[checked="1"] {
+
+#ValidationErrorTitleFrame:hover {
+    border-left-color: {color:border};
+}
+
+#ValidationErrorTitleFrame[selected="1"] {
     background: {color:bg};
+    border-left-color: {palette:blue-light};
 }
 
 #ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {

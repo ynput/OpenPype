@@ -29,13 +29,13 @@ class _ClickableFrame(QtWidgets.QFrame):
         super(_ClickableFrame, self).mouseReleaseEvent(event)
 
 
-class ValidationErrorTitleWidget(_ClickableFrame):
+class ValidationErrorTitleFrame(_ClickableFrame):
     selected = QtCore.Signal(int)
 
     def __init__(self, index, error_info, parent):
-        super(ValidationErrorTitleWidget, self).__init__(parent)
+        super(ValidationErrorTitleFrame, self).__init__(parent)
 
-        self.setObjectName("ValidationErrorTitleWidget")
+        self.setObjectName("ValidationErrorTitleFrame")
 
         exception = error_info["exception"]
         label_widget = QtWidgets.QLabel(exception.title, self)
@@ -252,7 +252,7 @@ class ValidationsWidget(QtWidgets.QWidget):
                 })
 
         for idx, item in enumerate(errors_by_title):
-            widget = ValidationErrorTitleWidget(idx, item, self)
+            widget = ValidationErrorTitleFrame(idx, item, self)
             widget.selected.connect(self._on_select)
             self._errors_layout.addWidget(widget)
             self._title_widgets[idx] = widget
