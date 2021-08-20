@@ -695,6 +695,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     font-size: 12pt;
 }
 
+#ValidationErrorTitleWidget {
+    background: {color:bg-inputs};
+}
+#ValidationErrorTitleWidget[checked="1"] {
+    background: {color:bg};
+}
+
 #ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
     background: transparent;
 }
