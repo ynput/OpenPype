@@ -676,7 +676,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #PublishOverlayFrame {
-    background: rgba(0, 0, 0, 127)
+    background: rgba(0, 0, 0, 127);
+}
+#PublishOverlayFrame[state="1"] {
+    background: rgb(22, 25, 29);
 }
 
 #PublishOverlay {

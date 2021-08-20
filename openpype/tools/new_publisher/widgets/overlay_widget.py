@@ -142,7 +142,9 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.progress_widget.setValue(value)
 
     def _on_publish_reset(self):
-        self._set_success_property("")
+        self._set_success_property()
+        self._change_bg_property()
+
         self.main_label.setText("Hit publish! (if you want)")
         self.message_label.setText("")
         self.copy_log_btn.setVisible(False)
@@ -156,6 +158,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.validation_errors_widget.clear()
 
         self._set_success_property(-1)
+        self._change_bg_property()
         self.main_label.setText("Publishing...")
 
         self.reset_btn.setEnabled(False)
@@ -214,6 +217,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
         validation_errors = self.controller.get_validation_errors()
         if validation_errors:
+            self._change_bg_property(1)
             self._set_validation_errors(validation_errors)
             return
 
@@ -244,8 +248,12 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         self.main_label.setText("Finished")
         self._set_success_property(1)
 
-    def _set_success_property(self, state):
-        self.info_frame.setProperty("state", str(state))
+    def _change_bg_property(self, state=None):
+        self.setProperty("state", str(state or ""))
+        self.style().polish(self)
+
+    def _set_success_property(self, state=None):
+        self.info_frame.setProperty("state", str(state or ""))
         self.info_frame.style().polish(self.info_frame)
 
     def _on_copy_log(self):
