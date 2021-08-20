@@ -19,7 +19,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
         info_frame = QtWidgets.QFrame(self)
         info_frame.setObjectName("PublishOverlay")
 
-        validation_errors_widget = ValidationsWidget(self)
+        validation_errors_widget = ValidationsWidget(controller, self)
 
         content_widget = QtWidgets.QWidget(info_frame)
         content_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)

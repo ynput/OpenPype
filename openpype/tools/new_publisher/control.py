@@ -575,6 +575,12 @@ class PublisherController:
         if self._publish_is_running:
             self._stop_publish()
 
+    def run_action(self, plugin, action):
+        # TODO handle result
+        result = pyblish.plugin.process(
+            plugin, self._publish_context, None, action.id
+        )
+
     def _publish_next_process(self):
         # Validations of progress before using iterator
         # - same conditions may be inside iterator but they may be used
