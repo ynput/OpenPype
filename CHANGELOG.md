@@ -1,8 +1,8 @@
 # Changelog
 
-## [3.3.1-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.3.0...HEAD)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.3.0...3.3.1)
 
 **🐛 Bug fixes**
 
@@ -37,6 +37,7 @@
 - Filter hosts in settings host-enum [\#1868](https://github.com/pypeclub/OpenPype/pull/1868)
 - Local actions with process identifier [\#1867](https://github.com/pypeclub/OpenPype/pull/1867)
 - Workfile tool start at host launch support [\#1865](https://github.com/pypeclub/OpenPype/pull/1865)
+- Anatomy schema validation [\#1864](https://github.com/pypeclub/OpenPype/pull/1864)
 - Maya: support for configurable `dirmap` 🗺️ [\#1859](https://github.com/pypeclub/OpenPype/pull/1859)
 - Settings list can use template or schema as object type [\#1815](https://github.com/pypeclub/OpenPype/pull/1815)
 
@@ -50,7 +51,6 @@
 - standalone: validator asset parents [\#1917](https://github.com/pypeclub/OpenPype/pull/1917)
 - Nuke: update video file crassing [\#1916](https://github.com/pypeclub/OpenPype/pull/1916)
 - Fix - texture validators for workfiles triggers only for textures workfiles [\#1914](https://github.com/pypeclub/OpenPype/pull/1914)
-- Fix - validators for textures workfiles trigger only for textures workfiles [\#1913](https://github.com/pypeclub/OpenPype/pull/1913)
 - Settings UI: List order works as expected [\#1906](https://github.com/pypeclub/OpenPype/pull/1906)
 - Hiero: loaded clip was not set colorspace from version data [\#1904](https://github.com/pypeclub/OpenPype/pull/1904)
 - Pyblish UI: Fix collecting stage processing [\#1903](https://github.com/pypeclub/OpenPype/pull/1903)
