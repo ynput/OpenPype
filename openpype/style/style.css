@@ -570,6 +570,20 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     padding-right: 3px;
 }
 
+#InfoText {
+    padding: 5px;
+    background: transparent;
+    border: 1px solid {color:border};
+}
+
+#InfoText:hover {
+    border-color: {color:border};
+}
+
+#InfoText:focus {
+    border-color: {color:border};
+}
+
 #TypeEditor, #ToolEditor, #NameEditor, #NumberEditor {
     background: transparent;
     border-radius: 0.3em;

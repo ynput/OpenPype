@@ -76,6 +76,7 @@ class ValidationsWidget(QtWidgets.QWidget):
 
         error_details_widget = QtWidgets.QWidget(self)
         error_details_input = QtWidgets.QTextEdit(error_details_widget)
+        error_details_input.setObjectName("InfoText")
         error_details_input.setTextInteractionFlags(
             QtCore.Qt.TextBrowserInteraction
         )
