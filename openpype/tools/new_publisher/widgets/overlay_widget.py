@@ -235,7 +235,7 @@ class PublishOverlayFrame(QtWidgets.QFrame):
 
     def _set_validation_errors(self, validation_errors):
         self.main_label.setText("Your publish didn't pass studio validations")
-        self.message_label.setText("Check publish results please")
+        self.message_label.setText("Check results above please")
         self._set_success_property(2)
 
         self.validation_errors_widget.set_errors(validation_errors)
