@@ -600,6 +600,9 @@ def _find_frozen_openpype(use_version: str = None,
         except OSError as e:
             _print("!!! failed: {}".format(str(e)))
             sys.exit(1)
+        else:
+            # cleanup zip after extraction
+            os.unlink(openpype_version.path)
 
         openpype_version.path = version_path
 
