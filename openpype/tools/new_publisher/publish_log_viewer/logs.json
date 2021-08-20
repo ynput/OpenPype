@@ -1,0 +1,845 @@
+{
+    "plugins_data": [
+        {
+            "name": "CollectSettings",
+            "label": "Collect Settings",
+            "order": -0.491,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectContextDataTestHost",
+            "label": "Collect Context - Test Host",
+            "order": -0.49,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "collected instance: {'family': 'test_one', 'name': 'test_oneMyVariant', 'subset': 'test_oneMyVariant', 'asset': 'sq01_sh0010', 'label': 'test_oneMyVariant', 'families': []}",
+                            "name": "pyblish.CollectContextDataTestHost",
+                            "lineno": 60,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 421.083927154541,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "parsing data: {'id': 'pyblish.avalon.instance', 'family': 'test_one', 'subset': 'test_oneMyVariant', 'active': True, 'version': 1, 'asset': 'sq01_sh0010', 'task': 'Compositing', 'variant': 'myVariant', 'uuid': 'a485f148-9121-46a5-8157-aa64df0fb449', 'family_attributes': {'number_key': 10, 'ha': 10}, 'publish_attributes': {'CollectFtrackApi': {'add_ftrack_family': False}}}",
+                            "name": "pyblish.CollectContextDataTestHost",
+                            "lineno": 61,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 421.083927154541,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "collected instance: {'family': 'test_one', 'name': 'test_oneMyVariant2', 'subset': 'test_oneMyVariant2', 'asset': 'sq01_sh0010', 'label': 'test_oneMyVariant2', 'families': []}",
+                            "name": "pyblish.CollectContextDataTestHost",
+                            "lineno": 60,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 423.0847358703613,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "parsing data: {'id': 'pyblish.avalon.instance', 'family': 'test_one', 'subset': 'test_oneMyVariant2', 'active': True, 'version': 1, 'asset': 'sq01_sh0010', 'task': 'Compositing', 'variant': 'myVariant2', 'uuid': 'a485f148-9121-46a5-8157-aa64df0fb444', 'family_attributes': {}, 'publish_attributes': {'CollectFtrackApi': {'add_ftrack_family': True}}}",
+                            "name": "pyblish.CollectContextDataTestHost",
+                            "lineno": 61,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 423.0847358703613,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "collected instance: {'family': 'test_two', 'name': 'test_twoMain', 'subset': 'test_twoMain', 'asset': 'sq01_sh0010', 'label': 'test_twoMain', 'families': []}",
+                            "name": "pyblish.CollectContextDataTestHost",
+                            "lineno": 60,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 423.0847358703613,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "parsing data: {'id': 'pyblish.avalon.instance', 'family': 'test_two', 'subset': 'test_twoMain', 'active': True, 'version': 1, 'asset': 'sq01_sh0010', 'task': 'Compositing', 'variant': 'Main', 'uuid': '3607bc95-75f6-4648-a58d-e699f413d09f', 'family_attributes': {}, 'publish_attributes': {'CollectFtrackApi': {'add_ftrack_family': True}}}",
+                            "name": "pyblish.CollectContextDataTestHost",
+                            "lineno": 61,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 424.0849018096924,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "collected instance: {'family': 'test_two', 'name': 'test_twoMain2', 'subset': 'test_twoMain2', 'asset': 'sq01_sh0020', 'label': 'test_twoMain2', 'families': []}",
+                            "name": "pyblish.CollectContextDataTestHost",
+                            "lineno": 60,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 424.0849018096924,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "parsing data: {'id': 'pyblish.avalon.instance', 'family': 'test_two', 'subset': 'test_twoMain2', 'active': True, 'version': 1, 'asset': 'sq01_sh0020', 'task': 'Compositing', 'variant': 'Main2', 'uuid': '4ccf56f6-9982-4837-967c-a49695dbe8eb', 'family_attributes': {}, 'publish_attributes': {'CollectFtrackApi': {'add_ftrack_family': True}}}",
+                            "name": "pyblish.CollectContextDataTestHost",
+                            "lineno": 61,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 424.0849018096924,
+                            "exc_info": null
+                        }
+                    ]
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectAnatomyObject",
+            "label": "Collect Anatomy Object",
+            "order": -0.4,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Crashed",
+                            "name": "pyblish.CollectAnatomyObject",
+                            "lineno": 24,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 483.0970764160156,
+                            "exc_info": "Traceback (most recent call last):\n  File \"<string>\", line 22, in process\nValueError: test\n"
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Anatomy object collected for project \"kuba_each_case\".",
+                            "name": "pyblish.CollectAnatomyObject",
+                            "lineno": 35,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 491.09888076782227,
+                            "exc_info": null
+                        }
+                    ]
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectAvalonEntities",
+            "label": "Collect Avalon Entities",
+            "order": -0.1,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Collected Project \"{'_id': ObjectId('5eb950f9e3c2c3183455f266'), 'name': 'kuba_each_case', 'data': {'ftrackId': '38c5fec4-0aed-11ea-a454-3e41ec9bc0d6', 'entityType': 'Project', 'library_project': False, 'clipIn': 1001, 'resolutionWidth': 1920, 'handleEnd': 10, 'frameEnd': 1100, 'resolutionHeight': 1080, 'frameStart': 1001, 'pixelAspect': 1.0, 'fps': 25.0, 'handleStart': 10, 'clipOut': 1100, 'tools_env': [], 'code': 'kuba_each_case'}, 'type': 'project', 'config': {'tasks': {'Layout': {'short_name': 'lay'}, 'Setdress': {'short_name': 'dress'}, 'Previz': {'short_name': ''}, 'Generic': {'short_name': 'gener'}, 'Animation': {'short_name': 'anim'}, 'Modeling': {'short_name': 'mdl'}, 'Lookdev': {'short_name': 'look'}, 'FX': {'short_name': 'fx'}, 'Lighting': {'short_name': 'lgt'}, 'Compositing': {'short_name': 'comp'}, 'Tracking': {'short_name': ''}, 'Rigging': {'short_name': 'rig'}, 'Paint': {'short_name': 'paint'}, 'Art': {'short_name': 'art'}, 'Texture': {'short_name': 'tex'}, 'Edit': {'short_name': 'edit'}}, 'apps': [{'name': 'blender/2-91'}, {'name': 'hiero/11-3'}, {'name': 'houdini/18-5'}, {'name': 'maya/2020'}, {'name': 'nuke/11-3'}, {'name': 'nukestudio/11-3'}], 'imageio': {'hiero': {'workfile': {'ocioConfigName': 'nuke-default', 'ocioconfigpath': {'windows': [], 'darwin': [], 'linux': []}, 'workingSpace': 'linear', 'sixteenBitLut': 'sRGB', 'eightBitLut': 'sRGB', 'floatLut': 'linear', 'logLut': 'Cineon', 'viewerLut': 'sRGB', 'thumbnailLut': 'sRGB'}, 'regexInputs': {'inputs': [{'regex': '[^-a-zA-Z0-9](plateRef).*(?=mp4)', 'colorspace': 'sRGB'}]}}, 'nuke': {'viewer': {'viewerProcess': 'sRGB'}, 'workfile': {'colorManagement': 'Nuke', 'OCIO_config': 'nuke-default', 'customOCIOConfigPath': {'windows': [], 'darwin': [], 'linux': []}, 'workingSpaceLUT': 'linear', 'monitorLut': 'sRGB', 'int8Lut': 'sRGB', 'int16Lut': 'sRGB', 'logLut': 'Cineon', 'floatLut': 'linear'}, 'nodes': {'requiredNodes': [{'plugins': ['CreateWriteRender'], 'nukeNodeClass': 'Write', 'knobs': [{'name': 'file_type', 'value': 'exr'}, {'name': 'datatype', 'value': '16 bit half'}, {'name': 'compression', 'value': 'Zip (1 scanline)'}, {'name': 'autocrop', 'value': 'True'}, {'name': 'tile_color', 'value': '0xff0000ff'}, {'name': 'channels', 'value': 'rgb'}, {'name': 'colorspace', 'value': 'linear'}, {'name': 'create_directories', 'value': 'True'}]}, {'plugins': ['CreateWritePrerender'], 'nukeNodeClass': 'Write', 'knobs': [{'name': 'file_type', 'value': 'exr'}, {'name': 'datatype', 'value': '16 bit half'}, {'name': 'compression', 'value': 'Zip (1 scanline)'}, {'name': 'autocrop', 'value': 'False'}, {'name': 'tile_color', 'value': '0xadab1dff'}, {'name': 'channels', 'value': 'rgb'}, {'name': 'colorspace', 'value': 'linear'}, {'name': 'create_directories', 'value': 'True'}]}], 'customNodes': []}, 'regexInputs': {'inputs': [{'regex': '[^-a-zA-Z0-9]beauty[^-a-zA-Z0-9]', 'colorspace': 'linear'}]}}}, 'roots': {'work': {'windows': 'C:/projects', 'darwin': '/Volumes/path', 'linux': '/mnt/share/projects'}}, 'templates': {'defaults': {'version_padding': 3, 'version': 'v{version:0>{@version_padding}}', 'frame_padding': 4, 'frame': '{frame:0>{@frame_padding}}'}, 'work': {'folder': '{root[work]}/{project[name]}/{hierarchy}/{asset}/work/{task}', 'file': '{project[code]}_{asset}_{task}_{@version}<_{comment}>.{ext}', 'path': '{@folder}/{@file}'}, 'render': {'folder': '{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}', 'file': '{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}>.{ext}', 'path': '{@folder}/{@file}'}, 'publish': {'folder': '{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/{@version}', 'file': '{project[code]}_{asset}_{subset}_{@version}<_{output}><.{@frame}><_{udim}>.{ext}', 'path': '{@folder}/{@file}', 'thumbnail': '{thumbnail_root}/{project[name]}/{_id}_{thumbnail_type}.{ext}'}, 'hero': {'folder': '{root[work]}/{project[name]}/{hierarchy}/{asset}/publish/{family}/{subset}/hero', 'file': '{project[code]}_{asset}_{subset}_hero<_{output}><.{frame}>.{ext}', 'path': '{@folder}/{@file}'}, 'delivery': {}, 'others': {}}, 'schema': 'openpype:config-2.0'}, 'parent': None, 'schema': 'openpype:project-3.0'}\"",
+                            "name": "pyblish.CollectAvalonEntities",
+                            "lineno": 33,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 546.1108684539795,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Collected Asset \"{'_id': ObjectId('5dd50967e3c2c32b004b4817'), 'name': 'Alpaca_01', 'data': {'ftrackId': 'fc02ea60-9786-11eb-8ae9-fa8d1b9899e1', 'entityType': 'AssetBuild', 'clipIn': 1001, 'resolutionWidth': 1920, 'handleEnd': 10, 'frameEnd': 1010, 'resolutionHeight': 1080, 'frameStart': 1001, 'pixelAspect': 1.0, 'fps': 25.0, 'handleStart': 10, 'clipOut': 1100, 'tools_env': ['mtoa/3-1'], 'avalon_mongo_id': '5dd50967e3c2c32b004b4817', 'parents': ['Assets'], 'tasks': {'modeling': {'type': 'Modeling'}, 'animation': {'type': 'Animation'}, 'edit': {'type': 'Edit'}}, 'visualParent': ObjectId('5dd50967e3c2c32b004b4812')}, 'type': 'asset', 'parent': ObjectId('5eb950f9e3c2c3183455f266'), 'schema': 'openpype:asset-3.0'}\"",
+                            "name": "pyblish.CollectAvalonEntities",
+                            "lineno": 44,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 548.1112003326416,
+                            "exc_info": null
+                        }
+                    ]
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectCurrentDate",
+            "label": "Current date",
+            "order": 0,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectCurrentUser",
+            "label": "Current user",
+            "order": 0,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectCurrentWorkingDirectory",
+            "label": "Current working directory",
+            "order": 0,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectComment",
+            "label": "Collect Comment",
+            "order": 0,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectDateTimeData",
+            "label": "Collect DateTime data",
+            "order": 0,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectHostName",
+            "label": "Collect Host Name",
+            "order": 0,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectMachineName",
+            "label": "Local Machine Name",
+            "order": 0,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Machine name: 014-BAILEYS",
+                            "name": "pyblish.CollectMachineName",
+                            "lineno": 21,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 985.015869140625,
+                            "exc_info": null
+                        }
+                    ]
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectTime",
+            "label": "Collect Current Time",
+            "order": 0,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "RepairUnicodeStrings",
+            "label": "Unicode Strings",
+            "order": 0,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectCurrentUserPype",
+            "label": "Collect Pype User",
+            "order": 0.001,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Collected user \"jakub.trllo\"",
+                            "name": "pyblish.CollectCurrentUserPype",
+                            "lineno": 17,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 170.26805877685547,
+                            "exc_info": null
+                        }
+                    ]
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectAnatomyContextData",
+            "label": "Collect Anatomy Context Data",
+            "order": 0.002,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Global anatomy Data collected",
+                            "name": "pyblish.CollectAnatomyContextData",
+                            "lineno": 87,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 234.85493659973145,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "{\n    \"project\": {\n        \"name\": \"kuba_each_case\",\n        \"code\": \"kuba_each_case\"\n    },\n    \"asset\": \"Alpaca_01\",\n    \"hierarchy\": \"Assets\",\n    \"task\": \"modeling\",\n    \"username\": \"jakub.trllo\",\n    \"app\": \"testhost\",\n    \"d\": \"19\",\n    \"dd\": \"19\",\n    \"ddd\": \"Thu\",\n    \"dddd\": \"Thursday\",\n    \"m\": \"8\",\n    \"mm\": \"08\",\n    \"mmm\": \"Aug\",\n    \"mmmm\": \"August\",\n    \"yy\": \"21\",\n    \"yyyy\": \"2021\",\n    \"H\": \"18\",\n    \"HH\": \"18\",\n    \"h\": \"6\",\n    \"hh\": \"06\",\n    \"ht\": \"PM\",\n    \"M\": \"7\",\n    \"MM\": \"07\",\n    \"S\": \"1\",\n    \"SS\": \"01\"\n}",
+                            "name": "pyblish.CollectAnatomyContextData",
+                            "lineno": 88,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 234.85493659973145,
+                            "exc_info": null
+                        }
+                    ]
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectContextLabel",
+            "label": "Context Label",
+            "order": 0.25,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectAnatomyInstanceData",
+            "label": "Collect Anatomy Instance data",
+            "order": 0.49,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Collecting anatomy data for all instances.",
+                            "name": "pyblish.CollectAnatomyInstanceData",
+                            "lineno": 42,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 358.84571075439453,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Qeurying asset documents for instances.",
+                            "name": "pyblish.CollectAnatomyInstanceData",
+                            "lineno": 51,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 358.84571075439453,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Querying asset documents with names: \"sq01_sh0010\", \"sq01_sh0020\"",
+                            "name": "pyblish.CollectAnatomyInstanceData",
+                            "lineno": 82,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 359.8446846008301,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Qeurying latest versions for instances.",
+                            "name": "pyblish.CollectAnatomyInstanceData",
+                            "lineno": 123,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 360.8419895172119,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Storing anatomy data to instance data.",
+                            "name": "pyblish.CollectAnatomyInstanceData",
+                            "lineno": 210,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 361.8345260620117,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Anatomy data for instance test_oneMyVariant(test_oneMyVariant): {\n    \"project\": {\n        \"name\": \"kuba_each_case\",\n        \"code\": \"kuba_each_case\"\n    },\n    \"asset\": \"sq01_sh0010\",\n    \"hierarchy\": \"Shots/sq01\",\n    \"task\": \"modeling\",\n    \"username\": \"jakub.trllo\",\n    \"app\": \"testhost\",\n    \"d\": \"19\",\n    \"dd\": \"19\",\n    \"ddd\": \"Thu\",\n    \"dddd\": \"Thursday\",\n    \"m\": \"8\",\n    \"mm\": \"08\",\n    \"mmm\": \"Aug\",\n    \"mmmm\": \"August\",\n    \"yy\": \"21\",\n    \"yyyy\": \"2021\",\n    \"H\": \"18\",\n    \"HH\": \"18\",\n    \"h\": \"6\",\n    \"hh\": \"06\",\n    \"ht\": \"PM\",\n    \"M\": \"7\",\n    \"MM\": \"07\",\n    \"S\": \"1\",\n    \"SS\": \"01\",\n    \"family\": \"test_one\",\n    \"subset\": \"test_oneMyVariant\",\n    \"version\": 1\n}",
+                            "name": "pyblish.CollectAnatomyInstanceData",
+                            "lineno": 279,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 362.8430366516113,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Anatomy data for instance test_oneMyVariant2(test_oneMyVariant2): {\n    \"project\": {\n        \"name\": \"kuba_each_case\",\n        \"code\": \"kuba_each_case\"\n    },\n    \"asset\": \"sq01_sh0010\",\n    \"hierarchy\": \"Shots/sq01\",\n    \"task\": \"modeling\",\n    \"username\": \"jakub.trllo\",\n    \"app\": \"testhost\",\n    \"d\": \"19\",\n    \"dd\": \"19\",\n    \"ddd\": \"Thu\",\n    \"dddd\": \"Thursday\",\n    \"m\": \"8\",\n    \"mm\": \"08\",\n    \"mmm\": \"Aug\",\n    \"mmmm\": \"August\",\n    \"yy\": \"21\",\n    \"yyyy\": \"2021\",\n    \"H\": \"18\",\n    \"HH\": \"18\",\n    \"h\": \"6\",\n    \"hh\": \"06\",\n    \"ht\": \"PM\",\n    \"M\": \"7\",\n    \"MM\": \"07\",\n    \"S\": \"1\",\n    \"SS\": \"01\",\n    \"family\": \"test_one\",\n    \"subset\": \"test_oneMyVariant2\",\n    \"version\": 1\n}",
+                            "name": "pyblish.CollectAnatomyInstanceData",
+                            "lineno": 279,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 362.8430366516113,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Anatomy data for instance test_twoMain(test_twoMain): {\n    \"project\": {\n        \"name\": \"kuba_each_case\",\n        \"code\": \"kuba_each_case\"\n    },\n    \"asset\": \"sq01_sh0010\",\n    \"hierarchy\": \"Shots/sq01\",\n    \"task\": \"modeling\",\n    \"username\": \"jakub.trllo\",\n    \"app\": \"testhost\",\n    \"d\": \"19\",\n    \"dd\": \"19\",\n    \"ddd\": \"Thu\",\n    \"dddd\": \"Thursday\",\n    \"m\": \"8\",\n    \"mm\": \"08\",\n    \"mmm\": \"Aug\",\n    \"mmmm\": \"August\",\n    \"yy\": \"21\",\n    \"yyyy\": \"2021\",\n    \"H\": \"18\",\n    \"HH\": \"18\",\n    \"h\": \"6\",\n    \"hh\": \"06\",\n    \"ht\": \"PM\",\n    \"M\": \"7\",\n    \"MM\": \"07\",\n    \"S\": \"1\",\n    \"SS\": \"01\",\n    \"family\": \"test_two\",\n    \"subset\": \"test_twoMain\",\n    \"version\": 1\n}",
+                            "name": "pyblish.CollectAnatomyInstanceData",
+                            "lineno": 279,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 363.8427257537842,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Anatomy data for instance test_twoMain2(test_twoMain2): {\n    \"project\": {\n        \"name\": \"kuba_each_case\",\n        \"code\": \"kuba_each_case\"\n    },\n    \"asset\": \"sq01_sh0020\",\n    \"hierarchy\": \"Shots/sq01\",\n    \"task\": \"modeling\",\n    \"username\": \"jakub.trllo\",\n    \"app\": \"testhost\",\n    \"d\": \"19\",\n    \"dd\": \"19\",\n    \"ddd\": \"Thu\",\n    \"dddd\": \"Thursday\",\n    \"m\": \"8\",\n    \"mm\": \"08\",\n    \"mmm\": \"Aug\",\n    \"mmmm\": \"August\",\n    \"yy\": \"21\",\n    \"yyyy\": \"2021\",\n    \"H\": \"18\",\n    \"HH\": \"18\",\n    \"h\": \"6\",\n    \"hh\": \"06\",\n    \"ht\": \"PM\",\n    \"M\": \"7\",\n    \"MM\": \"07\",\n    \"S\": \"1\",\n    \"SS\": \"01\",\n    \"family\": \"test_two\",\n    \"subset\": \"test_twoMain2\",\n    \"version\": 1\n}",
+                            "name": "pyblish.CollectAnatomyInstanceData",
+                            "lineno": 279,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 364.84289169311523,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Anatomy Data collection finished.",
+                            "name": "pyblish.CollectAnatomyInstanceData",
+                            "lineno": 48,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 365.83518981933594,
+                            "exc_info": null
+                        }
+                    ]
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "CollectResourcesPath",
+            "label": "Collect Resources Path",
+            "order": 0.495,
+            "instances_data": [],
+            "skipped": true
+        },
+        {
+            "name": "ValidateEditorialAssetName",
+            "label": "Validate Editorial Asset Name",
+            "order": 1,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "__ asset_and_parents: {}",
+                            "name": "pyblish.ValidateEditorialAssetName",
+                            "lineno": 19,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 420.8390712738037,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "__ db_assets: [{'_id': ObjectId('5e11ec3e0002fc29f0728009'), 'name': 'MyFolder', 'data': {'parents': []}}, {'_id': ObjectId('5dd50967e3c2c32b004b4811'), 'name': 'Shots', 'data': {'parents': []}}, {'_id': ObjectId('5dd50967e3c2c32b004b4812'), 'name': 'Assets', 'data': {'parents': []}}, {'_id': ObjectId('606d813fda091ca18ad3c1cb'), 'name': 'sq01', 'data': {'parents': ['Shots']}}, {'_id': ObjectId('60ffcef3ed7b98218feec87d'), 'name': 'editorial', 'data': {'parents': ['Shots']}}, {'_id': ObjectId('5eb40b96e3c2c3361ce67c05'), 'name': 'Buddie_01', 'data': {'parents': ['Assets']}}, {'_id': ObjectId('60ffcef3ed7b98218feec87e'), 'name': 'characters', 'data': {'parents': ['Assets']}}, {'_id': ObjectId('60ffcef3ed7b98218feec87f'), 'name': 'locations', 'data': {'parents': ['Assets']}}, {'_id': ObjectId('5dd50967e3c2c32b004b4817'), 'name': 'Alpaca_01', 'data': {'parents': ['Assets']}}, {'_id': ObjectId('60d9a8e8a5016c2a23f88534'), 'name': 'sq01_sh0020', 'data': {'parents': ['Shots', 'sq01']}}, {'_id': ObjectId('60d9a8e8a5016c2a23f88535'), 'name': 'sq01_sh0030', 'data': {'parents': ['Shots', 'sq01']}}, {'_id': ObjectId('606d813fda091ca18ad3c1cd'), 'name': 'sq01_sh0010', 'data': {'parents': ['Shots', 'sq01']}}]",
+                            "name": "pyblish.ValidateEditorialAssetName",
+                            "lineno": 26,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 421.8316078186035,
+                            "exc_info": null
+                        },
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "__ project_entities: {'Alpaca_01': ['Assets'],\n 'Assets': [],\n 'Buddie_01': ['Assets'],\n 'MyFolder': [],\n 'Shots': [],\n 'characters': ['Assets'],\n 'editorial': ['Shots'],\n 'locations': ['Assets'],\n 'sq01': ['Shots'],\n 'sq01_sh0010': ['Shots', 'sq01'],\n 'sq01_sh0020': ['Shots', 'sq01'],\n 'sq01_sh0030': ['Shots', 'sq01']}",
+                            "name": "pyblish.ValidateEditorialAssetName",
+                            "lineno": 33,
+                            "levelno": 10,
+                            "levelname": "DEBUG",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 421.8316078186035,
+                            "exc_info": null
+                        }
+                    ]
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "ValidateFFmpegInstalled",
+            "label": "Validate ffmpeg installation",
+            "order": 1,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "ffmpeg path: `C:\\Users\\jakub.trllo\\Desktop\\pype\\pype3\\vendor\\bin\\ffmpeg\\windows\\bin\\ffmpeg`",
+                            "name": "pyblish.ValidateFFmpegInstalled",
+                            "lineno": 31,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 482.6626777648926,
+                            "exc_info": null
+                        }
+                    ]
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "ValidateResources",
+            "label": "Resources",
+            "order": 1.1,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": []
+                },
+                {
+                    "id": null,
+                    "logs": []
+                },
+                {
+                    "id": null,
+                    "logs": []
+                },
+                {
+                    "id": null,
+                    "logs": []
+                }
+            ],
+            "skipped": false
+        },
+        {
+            "name": "ExtractHierarchyToAvalon",
+            "label": "Extract Hierarchy To Avalon",
+            "order": 1.99,
+            "instances_data": [],
+            "skipped": true
+        },
+        {
+            "name": "IntegrateResourcesPath",
+            "label": "Integrate Resources Path",
+            "order": 2.95,
+            "instances_data": [],
+            "skipped": true
+        },
+        {
+            "name": "IntegrateAssetNew",
+            "label": "Integrate Asset New",
+            "order": 3,
+            "instances_data": [],
+            "skipped": true
+        },
+        {
+            "name": "IntegrateThumbnails",
+            "label": "Integrate Thumbnails",
+            "order": 3.01,
+            "instances_data": [],
+            "skipped": true
+        },
+        {
+            "name": "IntegrateHeroVersion",
+            "label": "Integrate Hero Version",
+            "order": 3.1,
+            "instances_data": [],
+            "skipped": true
+        },
+        {
+            "name": "CleanUp",
+            "label": "Clean Up",
+            "order": 13,
+            "instances_data": [
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Staging dir not set.",
+                            "name": "pyblish.CleanUp",
+                            "lineno": 60,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 794.025182723999,
+                            "exc_info": null
+                        }
+                    ]
+                },
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Staging dir not set.",
+                            "name": "pyblish.CleanUp",
+                            "lineno": 60,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 856.0423851013184,
+                            "exc_info": null
+                        }
+                    ]
+                },
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Staging dir not set.",
+                            "name": "pyblish.CleanUp",
+                            "lineno": 60,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 917.0691967010498,
+                            "exc_info": null
+                        }
+                    ]
+                },
+                {
+                    "id": null,
+                    "logs": [
+                        {
+                            "instance_id": null,
+                            "type": "record",
+                            "msg": "Staging dir not set.",
+                            "name": "pyblish.CleanUp",
+                            "lineno": 60,
+                            "levelno": 20,
+                            "levelname": "INFO",
+                            "threadName": "MainThread",
+                            "filename": "<string>",
+                            "pathname": "<string>",
+                            "msecs": 978.832483291626,
+                            "exc_info": null
+                        }
+                    ]
+                }
+            ],
+            "skipped": false
+        }
+    ],
+    "instances": {
+        "fad07a7e-0d74-4468-8c82-d5ef3b21c625": {
+            "name": "test_oneMyVariant",
+            "label": "test_oneMyVariant",
+            "family": "test_one",
+            "families": [],
+            "exists": true
+        },
+        "3690bd36-4ea5-450d-9deb-e5ba4caa456b": {
+            "name": "test_oneMyVariant2",
+            "label": "test_oneMyVariant2",
+            "family": "test_one",
+            "families": [],
+            "exists": true
+        },
+        "c6ad1345-a447-4b0a-82a7-827a957a0424": {
+            "name": "test_twoMain",
+            "label": "test_twoMain",
+            "family": "test_two",
+            "families": [],
+            "exists": true
+        },
+        "d01c9aab-a7fc-4f61-bd38-05c2d999e740": {
+            "name": "test_twoMain2",
+            "label": "test_twoMain2",
+            "family": "test_two",
+            "families": [],
+            "exists": true
+        }
+    },
+    "context": {
+        "name": null,
+        "label": "Testhost - <Unsaved>"
+    }
+}
