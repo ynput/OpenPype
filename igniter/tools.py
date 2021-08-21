@@ -218,7 +218,7 @@ class DropboxPath(CloudPath):
         return AnyPath(self.fspath)
 
     def clean_cache(self):
-        self.client._clean_cache(self)
+        self.client._clean_cache(AnyPath(self.cloud_prefix))
 
 
 @register_client_class("dropbox")
