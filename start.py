@@ -604,6 +604,16 @@ def _find_frozen_openpype(use_version: str = None,
             # cleanup zip after extraction
             os.unlink(openpype_version.path)
 
+            # cleanup cloud caches
+            try:
+                openpype_version.path.clean_cache()
+            except AttributeError:
+                _print(
+                    "Could not clean the cache on {}".format(
+                        openpype_version.path
+                    )
+                )
+
         openpype_version.path = version_path
 
     _initialize_environment(openpype_version)
