@@ -230,9 +230,7 @@ class DropboxClient(Client):
         self.client = dropbox.Dropbox(
             system_settings["modules"]["dropbox"]["token"]
         )
-
-        self.cache_dir = os.path.join(get_user_data_dir(), "dropbox_cache")
-        super().__init__(local_cache_dir=self.cache_dir)
+        super().__init__(local_cache_dir=get_user_data_dir())
 
     def _get_metadata(self, cloud_path: DropboxPath) -> Optional[int]:
         # If the path is empty, this means the root directory.
