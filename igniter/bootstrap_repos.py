@@ -660,6 +660,24 @@ class BootstrapRepos:
 
         return openpype_versions
 
+    def _validate_version(self, version):
+        # if file, strip extension, in case of dir not.
+        name = version.name if version.is_dir() else version.stem
+        result = OpenPypeVersion.version_in_str(name)
+        detected_version = result[1]
+
+        if version.is_dir() and not self._is_openpype_in_dir(
+            version, detected_version
+        ):
+            return False
+
+        if version.is_file() and not self._is_openpype_in_zip(
+            version, detected_version
+        ):
+            return False
+
+        return True
+
     def process_entered_location(self, location: str) -> Union[Path, None]:
         """Process user entered location string.
 
@@ -708,7 +726,11 @@ class BootstrapRepos:
             self._print(f"found OpenPype in [ {openpype_path} ]")
             self._print(f"latest version found is [ {versions[-1]} ]")
 
-            return self.install_version(versions[-1])
+            # Validate versions and return latest. This is to prevent any
+            # unnecessary downloading from cloud repositories.
+            for version in reversed(versions):
+                if self._validate_version(version):
+                    return self.install_version(version)
 
         # if we got here, it means that location is "live"
         # OpenPype repository. We'll create zip from it and move it to user
@@ -1027,16 +1049,6 @@ class BootstrapRepos:
             if result[0]:
                 detected_version: OpenPypeVersion
                 detected_version = result[1]
-
-                if item.is_dir() and not self._is_openpype_in_dir(
-                    item, detected_version
-                ):
-                    continue
-
-                if item.is_file() and not self._is_openpype_in_zip(
-                    item, detected_version
-                ):
-                    continue
 
                 detected_version.path = item
                 if staging and detected_version.is_staging():
