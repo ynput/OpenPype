@@ -201,103 +201,11 @@ class ExtractLook(openpype.api.Extractor):
         relationships = lookdata["relationships"]
         sets = relationships.keys()
 
-        # Extract the textures to transfer, possibly convert with maketx and
-        # remap the node paths to the destination path. Note that a source
-        # might be included more than once amongst the resources as they could
-        # be the input file to multiple nodes.
-        resources = instance.data["resources"]
-        do_maketx = instance.data.get("maketx", False)
-
-        # Collect all unique files used in the resources
-        files = set()
-        files_metadata = {}
-        for resource in resources:
-            # Preserve color space values (force value after filepath change)
-            # This will also trigger in the same order at end of context to
-            # ensure after context it's still the original value.
-            color_space = resource.get("color_space")
-
-            for f in resource["files"]:
-
-                files_metadata[os.path.normpath(f)] = {
-                    "color_space": color_space}
-                # files.update(os.path.normpath(f))
-
-        # Process the resource files
-        transfers = []
-        hardlinks = []
-        hashes = {}
-        force_copy = instance.data.get("forceCopy", False)
-
-        self.log.info(files)
-        for filepath in files_metadata:
-
-            linearize = False
-            if do_maketx and files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
-                linearize = True
-                # set its file node to 'raw' as tx will be linearized
-                files_metadata[filepath]["color_space"] = "raw"
-
-            if do_maketx:
-                color_space = "raw"
-
-            source, mode, texture_hash = self._process_texture(
-                filepath,
-                do_maketx,
-                staging=dir_path,
-                linearize=linearize,
-                force=force_copy
-            )
-            destination = self.resource_destination(instance,
-                                                    source,
-                                                    do_maketx)
-
-            # Force copy is specified.
-            if force_copy:
-                mode = COPY
-
-            if mode == COPY:
-                transfers.append((source, destination))
-                self.log.info('copying')
-            elif mode == HARDLINK:
-                hardlinks.append((source, destination))
-                self.log.info('hardlinking')
-
-            # Store the hashes from hash to destination to include in the
-            # database
-            hashes[texture_hash] = destination
-
-        # Remap the resources to the destination path (change node attributes)
-        destinations = {}
-        remap = OrderedDict()  # needs to be ordered, see color space values
-        for resource in resources:
-            source = os.path.normpath(resource["source"])
-            if source not in destinations:
-                # Cache destination as source resource might be included
-                # multiple times
-                destinations[source] = self.resource_destination(
-                    instance, source, do_maketx
-                )
-
-            # Preserve color space values (force value after filepath change)
-            # This will also trigger in the same order at end of context to
-            # ensure after context it's still the original value.
-            color_space_attr = resource["node"] + ".colorSpace"
-            try:
-                color_space = cmds.getAttr(color_space_attr)
-            except ValueError:
-                # node doesn't have color space attribute
-                color_space = "raw"
-            else:
-                if files_metadata[source]["color_space"] == "raw":
-                    # set color space to raw if we linearized it
-                    color_space = "raw"
-                # Remap file node filename to destination
-                remap[color_space_attr] = color_space
-            attr = resource["attribute"]
-            remap[attr] = destinations[source]
-
-        self.log.info("Finished remapping destinations ...")
+        results = self.process_resources(instance, staging_dir=dir_path)
+        transfers = results["fileTransfers"]
+        hardlinks = results["fileHardlinks"]
+        hashes = results["fileHashes"]
+        remap = results["attrRemap"]
 
         # Extract in correct render layer
         layer = instance.data.get("renderlayer", "defaultRenderLayer")
@@ -377,6 +285,112 @@ class ExtractLook(openpype.api.Extractor):
         """
         self.log.info("Extracted instance '%s' to: %s" % (instance.name,
                                                           maya_path))
+
+    def process_resources(self, instance, staging_dir):
+
+        # Extract the textures to transfer, possibly convert with maketx and
+        # remap the node paths to the destination path. Note that a source
+        # might be included more than once amongst the resources as they could
+        # be the input file to multiple nodes.
+        resources = instance.data["resources"]
+        do_maketx = instance.data.get("maketx", False)
+
+        # Collect all unique files used in the resources
+        files = set()
+        files_metadata = {}
+        for resource in resources:
+            # Preserve color space values (force value after filepath change)
+            # This will also trigger in the same order at end of context to
+            # ensure after context it's still the original value.
+            color_space = resource.get("color_space")
+
+            for f in resource["files"]:
+                files_metadata[os.path.normpath(f)] = {
+                    "color_space": color_space}
+                # files.update(os.path.normpath(f))
+
+        # Process the resource files
+        transfers = []
+        hardlinks = []
+        hashes = {}
+        force_copy = instance.data.get("forceCopy", False)
+
+        self.log.info(files)
+        for filepath in files_metadata:
+
+            linearize = False
+            if do_maketx and files_metadata[filepath]["color_space"].lower() == "srgb":  # noqa: E501
+                linearize = True
+                # set its file node to 'raw' as tx will be linearized
+                files_metadata[filepath]["color_space"] = "raw"
+
+            if do_maketx:
+                color_space = "raw"
+
+            source, mode, texture_hash = self._process_texture(
+                filepath,
+                do_maketx,
+                staging=staging_dir,
+                linearize=linearize,
+                force=force_copy
+            )
+            destination = self.resource_destination(instance,
+                                                    source,
+                                                    do_maketx)
+
+            # Force copy is specified.
+            if force_copy:
+                mode = COPY
+
+            if mode == COPY:
+                transfers.append((source, destination))
+                self.log.info('copying')
+            elif mode == HARDLINK:
+                hardlinks.append((source, destination))
+                self.log.info('hardlinking')
+
+            # Store the hashes from hash to destination to include in the
+            # database
+            hashes[texture_hash] = destination
+
+        # Remap the resources to the destination path (change node attributes)
+        destinations = {}
+        remap = OrderedDict()  # needs to be ordered, see color space values
+        for resource in resources:
+            source = os.path.normpath(resource["source"])
+            if source not in destinations:
+                # Cache destination as source resource might be included
+                # multiple times
+                destinations[source] = self.resource_destination(
+                    instance, source, do_maketx
+                )
+
+            # Preserve color space values (force value after filepath change)
+            # This will also trigger in the same order at end of context to
+            # ensure after context it's still the original value.
+            color_space_attr = resource["node"] + ".colorSpace"
+            try:
+                color_space = cmds.getAttr(color_space_attr)
+            except ValueError:
+                # node doesn't have color space attribute
+                color_space = "raw"
+            else:
+                if files_metadata[source]["color_space"] == "raw":
+                    # set color space to raw if we linearized it
+                    color_space = "raw"
+                # Remap file node filename to destination
+                remap[color_space_attr] = color_space
+            attr = resource["attribute"]
+            remap[attr] = destinations[source]
+
+        self.log.info("Finished remapping destinations ...")
+
+        return {
+            "fileTransfers": transfers,
+            "fileHardlinks": hardlinks,
+            "fileHashes": hashes,
+            "attrRemap": remap,
+        }
 
     def resource_destination(self, instance, filepath, do_maketx):
         """Get resource destination path.
@@ -467,3 +481,135 @@ class ExtractLook(openpype.api.Extractor):
             return converted, COPY, texture_hash
 
         return filepath, COPY, texture_hash
+
+
+class ExtractAugmentedModel(ExtractLook):
+    """Extract as Augmented Model (Maya Scene).
+
+    Rendering attrs augmented model.
+
+    Only extracts contents based on the original "setMembers" data to ensure
+    publishing the least amount of required shapes. From that it only takes
+    the shapes that are not intermediateObjects
+
+    During export it sets a temporary context to perform a clean extraction.
+    The context ensures:
+        - Smooth preview is turned off for the geometry
+        - Default shader is assigned (no materials are exported)
+        - Remove display layers
+
+    """
+
+    label = "Augmented Model (Maya Scene)"
+    hosts = ["maya"]
+    families = ["model"]
+    scene_type = "ma"
+    augmented = "fried"
+
+    def process(self, instance):
+        """Plugin entry point.
+
+        Args:
+            instance: Instance to process.
+
+        """
+        render_sets = instance.data.get("modelRenderSetsHistory")
+        if not render_sets:
+            self.log.info("Model is not render augmented, skip extraction.")
+            return
+
+        ext_mapping = (
+            instance.context.data["project_settings"]["maya"]["ext_mapping"]
+        )
+        if ext_mapping:
+            self.log.info("Looking in settings for scene type ...")
+            # use extension mapping for first family found
+            for family in self.families:
+                try:
+                    self.scene_type = ext_mapping[family]
+                    self.log.info(
+                        "Using {} as scene type".format(self.scene_type))
+                    break
+                except KeyError:
+                    # no preset found
+                    pass
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        # Define extract output file path
+        stagingdir = self.staging_dir(instance)
+        ext = "{0}.{1}".format(self.augmented, self.scene_type)
+        filename = "{0}.{1}".format(instance.name, ext)
+        path = os.path.join(stagingdir, filename)
+
+        # Perform extraction
+        self.log.info("Performing extraction ...")
+
+        results = self.process_resources(instance, staging_dir=stagingdir)
+        transfers = results["fileTransfers"]
+        hardlinks = results["fileHardlinks"]
+        hashes = results["fileHashes"]
+        remap = results["attrRemap"]
+
+        self.log.info(remap)
+
+        # Get only the shape contents we need in such a way that we avoid
+        # taking along intermediateObjects
+        members = instance.data("setMembers")
+        members = cmds.ls(members,
+                          dag=True,
+                          shapes=True,
+                          type=("mesh", "nurbsCurve"),
+                          noIntermediate=True,
+                          long=True)
+        members += instance.data.get("modelRenderSetsHistory")
+
+        with lib.no_display_layers(instance):
+            with lib.displaySmoothness(members,
+                                       divisionsU=0,
+                                       divisionsV=0,
+                                       pointsWire=4,
+                                       pointsShaded=1,
+                                       polygonObject=1):
+                with lib.shader(members,
+                                shadingEngine="initialShadingGroup"):
+                    # To avoid Maya trying to automatically remap the file
+                    # textures relative to the `workspace -directory` we force
+                    # it to a fake temporary workspace. This fixes textures
+                    # getting incorrectly remapped. (LKD-17, PLN-101)
+                    with no_workspace_dir():
+                        with lib.attribute_values(remap):
+                            with avalon.maya.maintained_selection():
+
+                                cmds.select(members, noExpand=True)
+                                cmds.file(path,
+                                          force=True,
+                                          typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
+                                          exportSelected=True,
+                                          preserveReferences=False,
+                                          channels=False,
+                                          constraints=False,
+                                          expressions=False,
+                                          constructionHistory=False)
+
+        if "hardlinks" not in instance.data:
+            instance.data["hardlinks"] = []
+        if "transfers" not in instance.data:
+            instance.data["transfers"] = []
+
+        # Set up the resources transfers/links for the integrator
+        instance.data["transfers"].extend(transfers)
+        instance.data["hardlinks"].extend(hardlinks)
+
+        # Source hash for the textures
+        instance.data["sourceHashes"] = hashes
+
+        instance.data["representations"].append({
+            'name': ext,
+            'ext': ext,
+            'files': filename,
+            "stagingDir": stagingdir,
+        })
+
+        self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))

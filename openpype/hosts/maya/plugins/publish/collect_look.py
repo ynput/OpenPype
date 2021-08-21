@@ -357,6 +357,17 @@ class CollectLook(pyblish.api.InstancePlugin):
             for vray_node in vray_plugin_nodes:
                 history.extend(cmds.listHistory(vray_node))
 
+            # handling render attribute sets
+            render_set_types = [
+                "VRayDisplacement",
+            ]
+            render_sets = cmds.ls(look_sets, type=render_set_types)
+            if render_sets:
+                history.extend(
+                    cmds.listHistory(render_sets, future=False, pruneDagObjects=True)
+                    or []
+                )
+
             files = cmds.ls(history, type="file", long=True)
             files.extend(cmds.ls(history, type="aiImage", long=True))
             files.extend(cmds.ls(history, type="RedshiftNormalMap", long=True))
@@ -550,3 +561,63 @@ class CollectLook(pyblish.api.InstancePlugin):
                 "source": source,  # required for resources
                 "files": files,
                 "color_space": color_space}  # required for resources
+
+
+class CollectModelRenderSets(CollectLook):
+    """Collect render attribute sets for model instance.
+
+    This enables additional render attributes be published with model.
+
+    """
+
+    order = pyblish.api.CollectorOrder + 0.21
+    families = ["model"]
+    label = "Collect Model Render Sets"
+    hosts = ["maya"]
+    maketx = True
+
+    def process(self, instance):
+        """Collect the Look in the instance with the correct layer settings"""
+        model_nodes = instance[:]
+
+        with lib.renderlayer(instance.data.get("renderlayer", "defaultRenderLayer")):
+            self.collect(instance)
+
+        set_nodes = [m for m in instance if m not in model_nodes]
+        instance[:] = model_nodes
+
+        if set_nodes:
+            instance.data["modelRenderSets"] = set_nodes
+            instance.data["modelRenderSetsHistory"] = \
+                cmds.listHistory(set_nodes, future=False, pruneDagObjects=True)
+
+            self.log.info("Model render sets collected.")
+        else:
+            self.log.info("No model render sets.")
+
+    def collect_sets(self, instance):
+        """Collect all related objectSets except shadingEngines
+
+        Args:
+            instance (list): all nodes to be published
+
+        Returns:
+            dict
+        """
+
+        sets = {}
+        for node in instance:
+            related_sets = lib.get_related_sets(node)
+            if not related_sets:
+                continue
+
+            for objset in related_sets:
+                if objset in sets:
+                    continue
+
+                if "shadingEngine" in cmds.nodeType(objset, inherited=True):
+                    continue
+
+                sets[objset] = {"uuid": lib.get_id(objset), "members": list()}
+
+        return sets
