@@ -217,6 +217,9 @@ class DropboxPath(CloudPath):
         # Casting the local cached path to Path object to return.
         return AnyPath(self.fspath)
 
+    def clean_cache(self):
+        self.client._clean_cache(self)
+
 
 @register_client_class("dropbox")
 class DropboxClient(Client):
@@ -233,6 +236,13 @@ class DropboxClient(Client):
 
         self.cache_dir = os.path.join(get_user_data_dir(), "dropbox_cache")
         super().__init__(local_cache_dir=self.cache_dir)
+
+    def _clean_cache(self, cloud_path):
+        cloud_files = [str(x.resolve()) for x in cloud_path.iterdir()]
+        for item in os.listdir(self.cache_path):
+            path = os.path.join(self.cache_path, item)
+            if path not in cloud_files:
+                os.remove(path)
 
     def _get_metadata(self, cloud_path: DropboxPath) -> Optional[int]:
         # If the path is empty, this means the root directory.
@@ -265,14 +275,6 @@ class DropboxClient(Client):
         self, cloud_path: DropboxPath, local_path: Union[str, os.PathLike]
     ) -> Path:
         self.client.files_download_to_file(local_path, cloud_path.path)
-
-        # Clean local cache.
-        for item in os.listdir(self.cache_dir):
-            if item == os.path.basename(local_path):
-                continue
-
-            os.remove(os.path.join(self.cache_dir, item))
-
         return local_path
 
     def _exists(self, cloud_path: DropboxPath) -> bool:
