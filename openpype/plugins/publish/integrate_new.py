@@ -97,7 +97,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "background",
                 "camerarig",
                 "redshiftproxy",
-                "effect"
+                "effect",
+                "xgen"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
