@@ -100,6 +100,7 @@ import traceback
 import subprocess
 import site
 from pathlib import Path
+import shutil
 
 
 # OPENPYPE_ROOT is variable pointing to build (or code) directory
@@ -187,6 +188,7 @@ from igniter.tools import (
     validate_mongo_connection
 )  # noqa
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
+from igniter.tools import get_user_data_dir
 
 bootstrap = BootstrapRepos()
 silent_commands = ["run", "igniter", "standalonepublisher",
@@ -478,6 +480,23 @@ def _initialize_environment(openpype_version: OpenPypeVersion) -> None:
     os.environ["PYTHONPATH"] = os.pathsep.join(split_paths)
 
 
+def _clean_repository(current_version):
+    current_directory = get_user_data_dir() / current_version.stem
+    for item in get_user_data_dir().iterdir():
+        # Remove all directories that is not extracted from the current
+        # version.
+        if item.is_dir() and item != current_directory:
+            shutil.rmtree(item)
+
+        # Only clean up zip files.
+        if item.is_file() and item.suffix == ".zip":
+            # Skip current zip version.
+            if item.resolve() == current_version.resolve():
+                continue
+
+            os.unlink(item)
+
+
 def _find_frozen_openpype(use_version: str = None,
                           use_staging: bool = False) -> Path:
     """Find OpenPype to run from frozen code.
@@ -601,18 +620,8 @@ def _find_frozen_openpype(use_version: str = None,
             _print("!!! failed: {}".format(str(e)))
             sys.exit(1)
         else:
-            # cleanup zip after extraction
-            os.unlink(openpype_version.path)
-
-            # cleanup cloud caches
-            try:
-                openpype_version.path.clean_cache()
-            except AttributeError:
-                _print(
-                    "Could not clean the cache on {}".format(
-                        openpype_version.path
-                    )
-                )
+            # clean up previous extract zips and their folders.
+            _clean_repository(openpype_version.path)
 
         openpype_version.path = version_path
 
