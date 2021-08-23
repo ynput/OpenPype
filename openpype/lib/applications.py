@@ -1120,7 +1120,7 @@ def prepare_host_environments(data, implementation_envs=True):
             environments.append(group.environment)
             added_env_keys.add(group_name)
             for tool_name in sorted(tool_by_group_name[group_name].keys()):
-                tool = tool_by_group_name[tool_name]
+                tool = tool_by_group_name[group_name][tool_name]
                 environments.append(tool.environment)
                 added_env_keys.add(tool.name)
 
