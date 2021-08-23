@@ -188,7 +188,7 @@ from igniter.tools import (
     validate_mongo_connection
 )  # noqa
 from igniter.bootstrap_repos import OpenPypeVersion  # noqa: E402
-from igniter.tools import get_user_data_dir
+from igniter.tools import get_user_data_dir  # noqa: E402
 
 bootstrap = BootstrapRepos()
 silent_commands = ["run", "igniter", "standalonepublisher",
