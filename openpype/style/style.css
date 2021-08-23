@@ -694,7 +694,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 }
 
 #PublishInfoFrame[state="2"] {
-	background: #ff9900;
+	background: #ffc671;
 }
 
 #PublishInfoFrame QLabel {
