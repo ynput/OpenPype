@@ -96,7 +96,7 @@ class ExtractBurnin(openpype.api.Extractor):
 
     def main_process(self, instance):
         # TODO get these data from context
-        host_name = instance.context["host"]
+        host_name = instance.context["hostName"]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
 

@@ -17,7 +17,7 @@ class CollectHostName(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
 
     def process(self, context):
-        host_name = context.data.get("host")
+        host_name = context.data.get("hostName")
         # Don't override value if is already set
         if host_name:
             return
@@ -34,4 +34,4 @@ class CollectHostName(pyblish.api.ContextPlugin):
                 if app:
                     host_name = app.host_name
 
-        context.data["host"] = host_name
+        context.data["hostName"] = host_name

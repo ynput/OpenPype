@@ -63,7 +63,7 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
             "hierarchy": hierarchy.replace("\\", "/"),
             "task": task_name,
             "username": context.data["user"],
-            "app": context.data["host"]
+            "app": context.data["hostName"]
         }
 
         datetime_data = context.data.get("datetimeData") or {}
