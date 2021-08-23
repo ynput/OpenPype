@@ -568,7 +568,8 @@ class CollectLook(pyblish.api.InstancePlugin):
 class CollectModelRenderSets(CollectLook):
     """Collect render attribute sets for model instance.
 
-    This enables additional render attributes be published with model.
+    Collects additional render attribute sets so they can be
+    published with model.
 
     """
 
