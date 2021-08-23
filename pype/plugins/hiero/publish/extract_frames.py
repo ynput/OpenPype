@@ -59,12 +59,13 @@ class ExtractFrames(pype.api.Extractor):
             output_path = output_template.format(
                 int(frame), instance.data["format"]
             )
-            args = [
-                "ffmpeg",
-                "-gamma", "2.2",
-                "-i", exr_output_path,
-                output_path
-            ]
+            args = ["ffmpeg"]
+
+            if input_path.endswith(".exr"):
+                args.extend(["-gamma", "2.2"])
+
+            args.extend(["-i", exr_output_path, output_path])
+
             self.log.info(args)
             pype.api.subprocess(args)
 
