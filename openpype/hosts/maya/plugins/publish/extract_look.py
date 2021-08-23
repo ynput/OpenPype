@@ -518,21 +518,7 @@ class ExtractAugmentedModel(ExtractLook):
             self.log.info("Model is not render augmented, skip extraction.")
             return
 
-        ext_mapping = (
-            instance.context.data["project_settings"]["maya"]["ext_mapping"]
-        )
-        if ext_mapping:
-            self.log.info("Looking in settings for scene type ...")
-            # use extension mapping for first family found
-            for family in self.families:
-                try:
-                    self.scene_type = ext_mapping[family]
-                    self.log.info(
-                        "Using {} as scene type".format(self.scene_type))
-                    break
-                except KeyError:
-                    # no preset found
-                    pass
+        self.get_maya_scene_type(instance)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
