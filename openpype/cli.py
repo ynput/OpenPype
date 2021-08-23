@@ -99,6 +99,13 @@ def eventserver(debug,
 @click.option("-e", "--executable", help="Executable")
 @click.option("-u", "--upload_dir", help="Upload dir")
 def webpublisherwebserver(debug, executable, upload_dir):
+    """Starts webserver for communication with Webpublish FR via command line
+
+        OP must be congigured on a machine, eg. OPENPYPE_MONGO filled AND
+        FTRACK_BOT_API_KEY provided with api key from Ftrack.
+
+        Expect "pype.club" user created on Ftrack.
+    """
     if debug:
         os.environ['OPENPYPE_DEBUG'] = "3"
 
