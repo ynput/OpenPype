@@ -96,10 +96,11 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             instance.data["stagingDir"] = task_dir
             instance.data["source"] = "webpublisher"
 
-            instance.data["ctx_path"] = ctx["path"]  # to store for logging
+            # to store logging info into DB openpype.webpublishes
+            instance.data["ctx_path"] = ctx["path"]
             instance.data["batch_id"] = task_data["batch"]
 
-
+            # to convert from email provided into Ftrack username
             instance.data["user_email"] = task_data["user"]
 
             if is_sequence:

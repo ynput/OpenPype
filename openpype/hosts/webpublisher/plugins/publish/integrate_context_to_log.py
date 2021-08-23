@@ -1,6 +1,5 @@
 import os
 
-from avalon import io
 import pyblish.api
 from openpype.lib import OpenPypeMongoConnection
 
