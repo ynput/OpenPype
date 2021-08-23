@@ -642,6 +642,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     font-family: "Roboto Mono";
 }
 
+/* New Create/Publish UI */
+#PublishLogConsole {
+    font-family: "Roboto Mono";
+}
+
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
     border-color: #7AAB8F;
 }
