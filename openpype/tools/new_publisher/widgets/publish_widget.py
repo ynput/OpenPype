@@ -51,7 +51,12 @@ class PublishFrame(QtWidgets.QFrame):
         progress_widget = QtWidgets.QProgressBar(content_widget)
 
         copy_log_btn = QtWidgets.QPushButton("Copy log", content_widget)
-        # copy_log_btn.setVisible(False)
+        copy_log_btn.setVisible(False)
+
+        show_details_btn = QtWidgets.QPushButton(
+            "Show details", content_widget
+        )
+        show_details_btn.setVisible(False)
 
         reset_btn = QtWidgets.QPushButton(content_widget)
         reset_btn.setIcon(get_icon("refresh"))
@@ -67,6 +72,7 @@ class PublishFrame(QtWidgets.QFrame):
 
         footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.addWidget(copy_log_btn, 0)
+        footer_layout.addWidget(show_details_btn, 0)
         footer_layout.addWidget(message_label_bottom, 1)
         footer_layout.addWidget(reset_btn, 0)
         footer_layout.addWidget(stop_btn, 0)
@@ -91,6 +97,7 @@ class PublishFrame(QtWidgets.QFrame):
         main_layout.addWidget(info_frame, 0)
 
         copy_log_btn.clicked.connect(self._on_copy_log)
+        show_details_btn.clicked.connect(self._on_show_details)
 
         reset_btn.clicked.connect(self._on_reset_clicked)
         stop_btn.clicked.connect(self._on_stop_clicked)
@@ -118,6 +125,7 @@ class PublishFrame(QtWidgets.QFrame):
         self.progress_widget = progress_widget
 
         self.copy_log_btn = copy_log_btn
+        self.show_details_btn = show_details_btn
         self.message_label_bottom = message_label_bottom
         self.reset_btn = reset_btn
         self.stop_btn = stop_btn
@@ -132,7 +140,8 @@ class PublishFrame(QtWidgets.QFrame):
         self.main_label.setText("Hit publish! (if you want)")
         self.message_label.setText("")
         self.message_label_bottom.setText("")
-        # self.copy_log_btn.setVisible(False)
+        self.copy_log_btn.setVisible(False)
+        self.show_details_btn.setVisible(False)
 
         self.reset_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
@@ -149,6 +158,8 @@ class PublishFrame(QtWidgets.QFrame):
         self._change_bg_property()
         self._set_progress_visibility(True)
         self.main_label.setText("Publishing...")
+        self.copy_log_btn.setVisible(False)
+        self.show_details_btn.setVisible(False)
 
         self.reset_btn.setEnabled(False)
         self.stop_btn.setEnabled(True)
@@ -189,6 +200,8 @@ class PublishFrame(QtWidgets.QFrame):
 
     def _on_publish_stop(self):
         self.progress_widget.setValue(self.controller.publish_progress)
+        self.copy_log_btn.setVisible(True)
+        self.show_details_btn.setVisible(True)
 
         self.reset_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
@@ -236,7 +249,6 @@ class PublishFrame(QtWidgets.QFrame):
         self.message_label.setText(msg)
         self.message_label_bottom.setText("")
         self._set_success_property(0)
-        # self.copy_log_btn.setVisible(True)
 
     def _set_validation_errors(self, validation_errors):
         self.main_label.setText("Your publish didn't pass studio validations")
@@ -273,6 +285,9 @@ class PublishFrame(QtWidgets.QFrame):
         QtWidgets.QApplication.instance().clipboard().setMimeData(
             mime_data
         )
+
+    def _on_show_details(self):
+        pass
 
     def _on_reset_clicked(self):
         self.controller.reset()
