@@ -35,7 +35,7 @@ class PypeCommands:
 
     @staticmethod
     def launch_eventservercli(*args):
-        from openpype.modules.ftrack.ftrack_server.event_server_cli import (
+        from openpype_modules.ftrack.ftrack_server.event_server_cli import (
             run_event_server
         )
         return run_event_server(*args)
