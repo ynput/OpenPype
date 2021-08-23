@@ -364,7 +364,9 @@ class CollectLook(pyblish.api.InstancePlugin):
             render_sets = cmds.ls(look_sets, type=render_set_types)
             if render_sets:
                 history.extend(
-                    cmds.listHistory(render_sets, future=False, pruneDagObjects=True)
+                    cmds.listHistory(render_sets,
+                                     future=False,
+                                     pruneDagObjects=True)
                     or []
                 )
 
@@ -579,8 +581,9 @@ class CollectModelRenderSets(CollectLook):
     def process(self, instance):
         """Collect the Look in the instance with the correct layer settings"""
         model_nodes = instance[:]
+        renderlayer = instance.data.get("renderlayer", "defaultRenderLayer")
 
-        with lib.renderlayer(instance.data.get("renderlayer", "defaultRenderLayer")):
+        with lib.renderlayer(renderlayer):
             self.collect(instance)
 
         set_nodes = [m for m in instance if m not in model_nodes]
