@@ -637,6 +637,11 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-radius: 0.1em;
 }
 
+/* Python console interpreter */
+#PythonInterpreterOutput, #PythonCodeEditor {
+    font-family: "Roboto Mono";
+}
+
 #VariantInput[state="new"], #VariantInput[state="new"]:focus, #VariantInput[state="new"]:hover {
     border-color: #7AAB8F;
 }
