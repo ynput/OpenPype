@@ -3,7 +3,7 @@ try:
 except Exception:
     commonmark = None
 
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 
 
 class _ClickableFrame(QtWidgets.QFrame):
@@ -29,25 +29,94 @@ class _ClickableFrame(QtWidgets.QFrame):
         super(_ClickableFrame, self).mouseReleaseEvent(event)
 
 
-class ValidationErrorTitleFrame(_ClickableFrame):
+class ValidationErrorInstanceList(QtWidgets.QListView):
+    def __init__(self, *args, **kwargs):
+        super(ValidationErrorInstanceList, self).__init__(*args, **kwargs)
+
+        self.setObjectName("ValidationErrorInstanceList")
+
+        self.setSelectionMode(QtWidgets.QListView.ExtendedSelection)
+
+    def minimumSizeHint(self):
+        result = super(ValidationErrorInstanceList, self).minimumSizeHint()
+        result.setHeight(0)
+        return result
+
+    def sizeHint(self):
+        row_count = self.model().rowCount()
+        height = 0
+        if row_count > 0:
+            height = self.sizeHintForRow(0) * row_count
+        return QtCore.QSize(self.width(), height)
+
+
+class ValidationErrorTitleWidget(QtWidgets.QWidget):
     selected = QtCore.Signal(int)
 
     def __init__(self, index, error_info, parent):
-        super(ValidationErrorTitleFrame, self).__init__(parent)
-
-        self.setObjectName("ValidationErrorTitleFrame")
-
-        exception = error_info["exception"]
-        label_widget = QtWidgets.QLabel(exception.title, self)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(label_widget)
+        super(ValidationErrorTitleWidget, self).__init__(parent)
 
         self._index = index
         self._error_info = error_info
         self._selected = False
 
-        self._mouse_pressed = False
+        title_frame = _ClickableFrame(self)
+        title_frame.setObjectName("ValidationErrorTitleFrame")
+        title_frame._mouse_release_callback = self._mouse_release_callback
+
+        toggle_instance_btn = QtWidgets.QToolButton(title_frame)
+        toggle_instance_btn.setObjectName("ArrowBtn")
+        toggle_instance_btn.setArrowType(QtCore.Qt.RightArrow)
+        toggle_instance_btn.setMaximumWidth(14)
+
+        exception = error_info["exception"]
+        label_widget = QtWidgets.QLabel(exception.title, title_frame)
+
+        title_frame_layout = QtWidgets.QHBoxLayout(title_frame)
+        title_frame_layout.addWidget(toggle_instance_btn)
+        title_frame_layout.addWidget(label_widget)
+
+        instances_model = QtGui.QStandardItemModel()
+        instances = error_info["instances"]
+        context_validation = False
+        if (
+            not instances
+            or (len(instances) == 1 and instances[0] is None)
+        ):
+            context_validation = True
+            toggle_instance_btn.setArrowType(QtCore.Qt.NoArrow)
+        else:
+            items = []
+            for instance in instances:
+                label = instance.data.get("label") or instance.data.get("name")
+                item = QtGui.QStandardItem(label)
+                item.setData(instance.id)
+                items.append(item)
+                break
+            instances_model.invisibleRootItem().appendRows(items)
+
+        instances_view = ValidationErrorInstanceList(self)
+        instances_view.setModel(instances_model)
+        instances_view.setVisible(False)
+
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(title_frame)
+        layout.addWidget(instances_view)
+
+        if not context_validation:
+            toggle_instance_btn.clicked.connect(self._on_toggle_btn_click)
+
+        self._title_frame = title_frame
+
+        self._toggle_instance_btn = toggle_instance_btn
+
+        self._instances_model = instances_model
+        self._instances_view = instances_view
+
+    def _mouse_release_callback(self):
+        self.set_selected(True)
 
     @property
     def is_selected(self):
@@ -62,8 +131,8 @@ class ValidationErrorTitleFrame(_ClickableFrame):
 
     def _change_style_property(self, selected):
         value = "1" if selected else ""
-        self.setProperty("selected", value)
-        self.style().polish(self)
+        self._title_frame.setProperty("selected", value)
+        self._title_frame.style().polish(self._title_frame)
 
     def set_selected(self, selected=None):
         if selected is None:
@@ -77,8 +146,13 @@ class ValidationErrorTitleFrame(_ClickableFrame):
         if selected:
             self.selected.emit(self._index)
 
-    def _mouse_release_callback(self):
-        self.set_selected(True)
+    def _on_toggle_btn_click(self):
+        new_visible = not self._instances_view.isVisible()
+        self._instances_view.setVisible(new_visible)
+        if new_visible:
+            self._toggle_instance_btn.setArrowType(QtCore.Qt.DownArrow)
+        else:
+            self._toggle_instance_btn.setArrowType(QtCore.Qt.RightArrow)
 
 
 class ActionButton(QtWidgets.QPushButton):
@@ -260,7 +334,7 @@ class ValidationsWidget(QtWidgets.QWidget):
                 })
 
         for idx, item in enumerate(errors_by_title):
-            widget = ValidationErrorTitleFrame(idx, item, self)
+            widget = ValidationErrorTitleWidget(idx, item, self)
             widget.selected.connect(self._on_select)
             self._errors_layout.addWidget(widget)
             self._title_widgets[idx] = widget
