@@ -37,7 +37,7 @@ making one job on farm.
 """
 
 
-class ValidateWithError(pyblish.api.InstancePlugin):
+class ValidateContextWithError(pyblish.api.ContextPlugin):
     """Validate the instance asset is the current selected context asset.
 
         As it might happen that multiple worfiles are opened, switching
@@ -48,10 +48,10 @@ class ValidateWithError(pyblish.api.InstancePlugin):
         Closing and reopening with Workfiles will refresh  Context value.
     """
 
-    label = "Validate With Error"
+    label = "Validate Context With Error"
     hosts = ["testhost"]
     actions = [ValidateInstanceAssetRepair]
     order = pyblish.api.ValidatorOrder
 
-    def process(self, instance):
-        raise PublishValidationError("Crashing", "Instance error", description)
+    def process(self, context):
+        raise PublishValidationError("Crashing", "Context error", description)
