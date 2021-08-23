@@ -24,10 +24,14 @@ for path in [
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype import style
-from widgets import PublishLogViewerWidget
+if __package__:
+    from .widgets import PublishLogViewerWidget
+else:
+    from widgets import PublishLogViewerWidget
 
 
 class PublishLogViewerWindow(QtWidgets.QWidget):
+    # TODO add buttons to be able load report file or paste content of report
     default_width = 1200
     default_height = 600
 
