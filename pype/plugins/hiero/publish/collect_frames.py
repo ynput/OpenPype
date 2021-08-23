@@ -53,12 +53,15 @@ class CollectFrames(api.ContextPlugin):
                 continue
 
             subset = metadata["tag.subset"]
-            try:
-                subset_data[subset]["frames"].append(frame)
-            except KeyError:
+            if subset not in subset_data.keys():
+                subset_data[subset] = {}
+
+            if "frames" not in subset_data[subset]:
                 subset_data[subset] = {
                     "frames": [frame], "format": metadata["tag.format"]
                 }
+            elif frame not in subset_data[subset]["frames"]:
+                subset_data[subset]["frames"].append(frame)
 
         for subset_name, subset_data in subset_data.items():
             frames = sorted(subset_data["frames"])
