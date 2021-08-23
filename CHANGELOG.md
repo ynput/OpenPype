@@ -1,8 +1,32 @@
 # Changelog
 
+## [3.4.0-nightly.1](https://github.com/pypeclub/OpenPype/tree/HEAD)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.3.1...HEAD)
+
+**🚀 Enhancements**
+
+- Add face sets to exported alembics [\#1942](https://github.com/pypeclub/OpenPype/pull/1942)
+
+**Merged pull requests:**
+
+- Maya: Add Xgen family support [\#1947](https://github.com/pypeclub/OpenPype/pull/1947)
+- Settings UI: Breadcrumbs in settings [\#1932](https://github.com/pypeclub/OpenPype/pull/1932)
+
+## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
+
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.3.1-nightly.1...3.3.1)
+
+**🐛 Bug fixes**
+
+- TVPaint: Fixed rendered frame indexes [\#1946](https://github.com/pypeclub/OpenPype/pull/1946)
+- Maya: Menu actions fix [\#1945](https://github.com/pypeclub/OpenPype/pull/1945)
+- standalone: editorial shared object problem [\#1941](https://github.com/pypeclub/OpenPype/pull/1941)
+- Bugfix nuke deadline app name [\#1928](https://github.com/pypeclub/OpenPype/pull/1928)
+
 ## [3.3.0](https://github.com/pypeclub/OpenPype/tree/3.3.0) (2021-08-17)
 
-[Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.2.0...3.3.0)
+[Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.3.0-nightly.11...3.3.0)
 
 **🚀 Enhancements**
 
@@ -26,7 +50,6 @@
 - Filter hosts in settings host-enum [\#1868](https://github.com/pypeclub/OpenPype/pull/1868)
 - Local actions with process identifier [\#1867](https://github.com/pypeclub/OpenPype/pull/1867)
 - Workfile tool start at host launch support [\#1865](https://github.com/pypeclub/OpenPype/pull/1865)
-- Anatomy schema validation [\#1864](https://github.com/pypeclub/OpenPype/pull/1864)
 - Maya: support for configurable `dirmap` 🗺️ [\#1859](https://github.com/pypeclub/OpenPype/pull/1859)
 - Settings list can use template or schema as object type [\#1815](https://github.com/pypeclub/OpenPype/pull/1815)
 
@@ -55,7 +78,6 @@
 **Merged pull requests:**
 
 - Fix - make AE workfile publish to Ftrack configurable [\#1937](https://github.com/pypeclub/OpenPype/pull/1937)
-- Settings UI: Breadcrumbs in settings [\#1932](https://github.com/pypeclub/OpenPype/pull/1932)
 - Add support for multiple Deadline ☠️➖ servers [\#1905](https://github.com/pypeclub/OpenPype/pull/1905)
 - Maya: add support for `RedshiftNormalMap` node, fix `tx` linear space 🚀 [\#1863](https://github.com/pypeclub/OpenPype/pull/1863)
 - Maya: expected files -\> render products ⚙️ overhaul [\#1812](https://github.com/pypeclub/OpenPype/pull/1812)
@@ -74,8 +96,6 @@
 
 - nuke: fixing wrong name of family folder when `used existing frames` [\#1803](https://github.com/pypeclub/OpenPype/pull/1803)
 - Collect ftrack family bugs [\#1801](https://github.com/pypeclub/OpenPype/pull/1801)
-- Invitee email can be None which break the Ftrack commit. [\#1788](https://github.com/pypeclub/OpenPype/pull/1788)
-- Fix: staging and `--use-version` option [\#1786](https://github.com/pypeclub/OpenPype/pull/1786)
 
 **Merged pull requests:**
 

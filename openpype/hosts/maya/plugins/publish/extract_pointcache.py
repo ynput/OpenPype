@@ -38,6 +38,7 @@ class ExtractAlembic(openpype.api.Extractor):
 
         # Get extra export arguments
         writeColorSets = instance.data.get("writeColorSets", False)
+        writeFaceSets = instance.data.get("writeFaceSets", False)
 
         self.log.info("Extracting pointcache..")
         dirname = self.staging_dir(instance)
@@ -53,6 +54,7 @@ class ExtractAlembic(openpype.api.Extractor):
             "writeVisibility": True,
             "writeCreases": True,
             "writeColorSets": writeColorSets,
+            "writeFaceSets": writeFaceSets,
             "uvWrite": True,
             "selection": True,
             "worldSpace": instance.data.get("worldSpace", True)
