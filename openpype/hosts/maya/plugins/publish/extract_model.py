@@ -28,6 +28,7 @@ class ExtractModel(openpype.api.Extractor):
     hosts = ["maya"]
     families = ["model"]
     scene_type = "ma"
+    optional = True
 
     def process(self, instance):
         """Plugin entry point."""
