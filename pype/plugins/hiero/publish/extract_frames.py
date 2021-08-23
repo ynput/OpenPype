@@ -35,7 +35,7 @@ class ExtractFrames(pype.api.Extractor):
             )
             exr_output_path = output_template.format(int(frame), "exr")
 
-            args = ["oiiotool"]
+            args = [os.getenv("PYPE_OIIO_PATH")]
 
             ext = os.path.splitext(input_path)[1][1:]
             if ext in self.movie_extensions:
