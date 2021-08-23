@@ -1105,7 +1105,7 @@ def prepare_host_environments(data, implementation_envs=True):
     asset_doc = data.get("asset_doc")
     # Add tools environments
     groups_by_name = {}
-    tool_by_group_name = collections.defaultdict(list)
+    tool_by_group_name = collections.defaultdict(dict)
     if asset_doc:
         # Make sure each tool group can be added only once
         for key in asset_doc["data"].get("tools_env") or []:
