@@ -99,11 +99,17 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         instances_view.setModel(instances_model)
         instances_view.setVisible(False)
 
+        view_layout = QtWidgets.QHBoxLayout()
+        view_layout.setContentsMargins(0, 0, 0, 0)
+        view_layout.setSpacing(0)
+        view_layout.addSpacing(14)
+        view_layout.addWidget(instances_view)
+
         layout = QtWidgets.QVBoxLayout(self)
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(title_frame)
-        layout.addWidget(instances_view)
+        layout.addLayout(view_layout)
 
         if not context_validation:
             toggle_instance_btn.clicked.connect(self._on_toggle_btn_click)

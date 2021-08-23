@@ -723,6 +723,15 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-left-color: {palette:blue-light};
 }
 
+#ValidationErrorInstanceList {
+    border-radius: 0;
+}
+
+#ValidationErrorInstanceList::item {
+    border-bottom: 1px solid {color:border};
+    border-left: 1px solid {color:border};
+}
+
 #ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
     background: transparent;
 }
