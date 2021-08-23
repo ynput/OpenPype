@@ -1,4 +1,5 @@
 {
+    "deadline_servers": [],
     "publish": {
         "ValidateExpectedFiles": {
             "enabled": true,
