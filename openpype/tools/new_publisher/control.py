@@ -5,20 +5,9 @@ import traceback
 import collections
 import avalon.api
 import pyblish.api
-from openpype.api import (
-    get_system_settings,
-    get_project_settings
-)
 
-from openpype.pipeline import (
-    PublishValidationError,
-    OpenPypePyblishPluginMixin
-)
-
-from openpype.pipeline.create import (
-    BaseCreator,
-    CreateContext
-)
+from openpype.pipeline import PublishValidationError
+from openpype.pipeline.create import CreateContext
 
 from Qt import QtCore
 
