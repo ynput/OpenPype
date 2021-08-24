@@ -165,6 +165,9 @@ def _load_interfaces():
         os.path.join(get_default_modules_dir(), "interfaces.py")
     )
     for dirpath in dirpaths:
+        if not os.path.exists(dirpath):
+            continue
+
         for filename in os.listdir(dirpath):
             if filename in ("__pycache__", ):
                 continue
