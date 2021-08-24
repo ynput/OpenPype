@@ -305,12 +305,19 @@ def _load_modules():
 
             # TODO add more logic how to define if folder is module or not
             # - check manifest and content of manifest
-            if os.path.isdir(fullpath):
-                import_module_from_dirpath(dirpath, filename, modules_key)
+            try:
+                if os.path.isdir(fullpath):
+                    import_module_from_dirpath(dirpath, filename, modules_key)
 
-            elif ext in (".py", ):
-                module = import_filepath(fullpath)
-                setattr(openpype_modules, basename, module)
+                elif ext in (".py", ):
+                    module = import_filepath(fullpath)
+                    setattr(openpype_modules, basename, module)
+
+            except Exception:
+                log.error(
+                    "Failed to import '{}'.".format(fullpath),
+                    exc_info=True
+                )
 
 
 class _OpenPypeInterfaceMeta(ABCMeta):
