@@ -1,18 +1,80 @@
 from uuid import uuid4
 
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 
 from .base import BaseWidget
 from .widgets import (
     ExpandingWidget,
-    IconButton,
-    SpacerWidget
+    IconButton
 )
 from openpype.tools.settings import (
     BTN_FIXED_SIZE,
     CHILD_OFFSET
 )
 from openpype.settings.constants import KEY_REGEX
+
+
+KEY_INPUT_TOOLTIP = (
+    "Keys can't be duplicated and may contain alphabetical character (a-Z)"
+    "\nnumerical characters (0-9) dash (\"-\") or underscore (\"_\")."
+)
+
+
+class PaintHelper:
+    cached_icons = {}
+
+    @classmethod
+    def _draw_image(cls, width, height, brush):
+        image = QtGui.QPixmap(width, height)
+        image.fill(QtCore.Qt.transparent)
+
+        icon_path_stroker = QtGui.QPainterPathStroker()
+        icon_path_stroker.setCapStyle(QtCore.Qt.RoundCap)
+        icon_path_stroker.setJoinStyle(QtCore.Qt.RoundJoin)
+        icon_path_stroker.setWidth(height / 5)
+
+        painter = QtGui.QPainter(image)
+        painter.setPen(QtCore.Qt.transparent)
+        painter.setBrush(brush)
+        rect = QtCore.QRect(0, 0, image.width(), image.height())
+        fifteenth = rect.height() / 15
+        # Left point
+        p1 = QtCore.QPoint(
+            rect.x() + (5 * fifteenth),
+            rect.y() + (9 * fifteenth)
+        )
+        # Middle bottom point
+        p2 = QtCore.QPoint(
+            rect.center().x(),
+            rect.y() + (11 * fifteenth)
+        )
+        # Top right point
+        p3 = QtCore.QPoint(
+            rect.x() + (10 * fifteenth),
+            rect.y() + (5 * fifteenth)
+        )
+
+        path = QtGui.QPainterPath(p1)
+        path.lineTo(p2)
+        path.lineTo(p3)
+
+        stroked_path = icon_path_stroker.createStroke(path)
+        painter.drawPath(stroked_path)
+
+        painter.end()
+
+        return image
+
+    @classmethod
+    def get_confirm_icon(cls, width, height):
+        key = "{}x{}-confirm_image".format(width, height)
+        icon = cls.cached_icons.get(key)
+
+        if icon is None:
+            image = cls._draw_image(width, height, QtCore.Qt.white)
+            icon = QtGui.QIcon(image)
+            cls.cached_icons[key] = icon
+        return icon
 
 
 def create_add_btn(parent):
@@ -31,6 +93,19 @@ def create_remove_btn(parent):
     return remove_btn
 
 
+def create_confirm_btn(parent):
+    confirm_btn = QtWidgets.QPushButton(parent)
+
+    icon = PaintHelper.get_confirm_icon(
+        BTN_FIXED_SIZE, BTN_FIXED_SIZE
+    )
+    confirm_btn.setIcon(icon)
+    confirm_btn.setFocusPolicy(QtCore.Qt.ClickFocus)
+    confirm_btn.setProperty("btn-type", "tool-item")
+    confirm_btn.setFixedSize(BTN_FIXED_SIZE, BTN_FIXED_SIZE)
+    return confirm_btn
+
+
 class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def __init__(self, entity_widget, store_as_list, parent):
         super(ModifiableDictEmptyItem, self).__init__(parent)
@@ -41,6 +116,8 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         self.store_as_list = store_as_list
         self.is_duplicated = False
         self.key_is_valid = store_as_list
+
+        self.confirm_btn = None
 
         if self.collapsible_key:
             self.create_collapsible_ui()
@@ -61,7 +138,6 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def create_addible_ui(self):
         add_btn = create_add_btn(self)
         remove_btn = create_remove_btn(self)
-        spacer_widget = SpacerWidget(self)
 
         remove_btn.setEnabled(False)
 
@@ -70,13 +146,12 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         layout.setSpacing(3)
         layout.addWidget(add_btn, 0)
         layout.addWidget(remove_btn, 0)
-        layout.addWidget(spacer_widget, 1)
+        layout.addStretch(1)
 
         add_btn.clicked.connect(self._on_add_clicked)
 
         self.add_btn = add_btn
         self.remove_btn = remove_btn
-        self.spacer_widget = spacer_widget
 
     def _on_focus_lose(self):
         if self.key_input.hasFocus() or self.key_label_input.hasFocus():
@@ -111,7 +186,16 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         self.is_duplicated = self.entity_widget.is_key_duplicated(key)
         key_input_state = ""
         # Collapsible key and empty key are not invalid
-        if self.collapsible_key and self.key_input.text() == "":
+        key_value = self.key_input.text()
+        if self.confirm_btn is not None:
+            conf_disabled = (
+                key_value == ""
+                or not self.key_is_valid
+                or self.is_duplicated
+            )
+            self.confirm_btn.setEnabled(not conf_disabled)
+
+        if self.collapsible_key and key_value == "":
             pass
         elif self.is_duplicated or not self.key_is_valid:
             key_input_state = "invalid"
@@ -124,6 +208,7 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
     def create_collapsible_ui(self):
         key_input = QtWidgets.QLineEdit(self)
         key_input.setObjectName("DictKey")
+        key_input.setToolTip(KEY_INPUT_TOOLTIP)
 
         key_label_input = QtWidgets.QLineEdit(self)
 
@@ -141,11 +226,15 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         key_input_label_widget = QtWidgets.QLabel("Key:", self)
         key_label_input_label_widget = QtWidgets.QLabel("Label:", self)
 
+        confirm_btn = create_confirm_btn(self)
+        confirm_btn.setEnabled(False)
+
         wrapper_widget = ExpandingWidget("", self)
         wrapper_widget.add_widget_after_label(key_input_label_widget)
         wrapper_widget.add_widget_after_label(key_input)
         wrapper_widget.add_widget_after_label(key_label_input_label_widget)
         wrapper_widget.add_widget_after_label(key_label_input)
+        wrapper_widget.add_widget_after_label(confirm_btn)
         wrapper_widget.hide_toolbox()
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -157,9 +246,12 @@ class ModifiableDictEmptyItem(QtWidgets.QWidget):
         key_input.returnPressed.connect(self._on_enter_press)
         key_label_input.returnPressed.connect(self._on_enter_press)
 
+        confirm_btn.clicked.connect(self._on_enter_press)
+
         self.key_input = key_input
         self.key_label_input = key_label_input
         self.wrapper_widget = wrapper_widget
+        self.confirm_btn = confirm_btn
 
 
 class ModifiableDictItem(QtWidgets.QWidget):
@@ -190,10 +282,14 @@ class ModifiableDictItem(QtWidgets.QWidget):
 
         self.key_label_input = None
 
+        self.confirm_btn = None
+
         if collapsible_key:
             self.create_collapsible_ui()
         else:
             self.create_addible_ui()
+
+        self.key_input.setToolTip(KEY_INPUT_TOOLTIP)
         self.update_style()
 
     @property
@@ -277,6 +373,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
         edit_btn.setProperty("btn-type", "tool-item-icon")
         edit_btn.setFixedHeight(BTN_FIXED_SIZE)
 
+        confirm_btn = create_confirm_btn(self)
+        confirm_btn.setVisible(False)
+
         remove_btn = create_remove_btn(self)
 
         key_input_label_widget = QtWidgets.QLabel("Key:")
@@ -286,6 +385,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         wrapper_widget.add_widget_after_label(key_input)
         wrapper_widget.add_widget_after_label(key_label_input_label_widget)
         wrapper_widget.add_widget_after_label(key_label_input)
+        wrapper_widget.add_widget_after_label(confirm_btn)
         wrapper_widget.add_widget_after_label(remove_btn)
 
         key_input.textChanged.connect(self._on_key_change)
@@ -295,6 +395,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         key_label_input.returnPressed.connect(self._on_enter_press)
 
         edit_btn.clicked.connect(self.on_edit_pressed)
+        confirm_btn.clicked.connect(self._on_enter_press)
         remove_btn.clicked.connect(self.on_remove_clicked)
 
         # Hide edit inputs
@@ -310,6 +411,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.key_label_input_label_widget = key_label_input_label_widget
         self.wrapper_widget = wrapper_widget
         self.edit_btn = edit_btn
+        self.confirm_btn = confirm_btn
         self.remove_btn = remove_btn
 
         self.content_widget = content_widget
@@ -318,6 +420,9 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.input_field = self.create_ui_for_entity(
             self.category_widget, self.entity, self
         )
+
+    def make_sure_is_visible(self, *args, **kwargs):
+        return self.input_field.make_sure_is_visible(*args, **kwargs)
 
     def get_style_state(self):
         if self.is_invalid:
@@ -415,6 +520,14 @@ class ModifiableDictItem(QtWidgets.QWidget):
             self.temp_key, key, self
         )
         self.temp_key = key
+        if self.confirm_btn is not None:
+            conf_disabled = (
+                key == ""
+                or not self.key_is_valid
+                or is_key_duplicated
+            )
+            self.confirm_btn.setEnabled(not conf_disabled)
+
         if is_key_duplicated or not self.key_is_valid:
             return
 
@@ -434,7 +547,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         key_value = self.key_input.text()
         key_label_value = self.key_label_input.text()
         if key_label_value:
-            label = "{} ({})".format(key_label_value, key_value)
+            label = "{} ({})".format(key_value, key_label_value)
         else:
             label = key_value
         self.wrapper_widget.label_widget.setText(label)
@@ -457,6 +570,7 @@ class ModifiableDictItem(QtWidgets.QWidget):
         self.key_input.setVisible(enabled)
         self.key_input_label_widget.setVisible(enabled)
         self.key_label_input.setVisible(enabled)
+        self.confirm_btn.setVisible(enabled)
         if not self.is_required:
             self.remove_btn.setVisible(enabled)
         if enabled:
@@ -681,10 +795,6 @@ class DictMutableKeysWidget(BaseWidget):
     def remove_key(self, widget):
         key = self.entity.get_child_key(widget.entity)
         self.entity.pop(key)
-        # Poping of key from entity should remove the entity and input field.
-        #   this is kept for testing purposes.
-        if widget in self.input_fields:
-            self.remove_row(widget)
 
     def change_key(self, new_key, widget):
         if not new_key or widget.is_key_duplicated:
@@ -751,6 +861,11 @@ class DictMutableKeysWidget(BaseWidget):
         return input_field
 
     def remove_row(self, widget):
+        if widget.is_key_duplicated:
+            new_key = widget.uuid_key
+            if new_key is None:
+                new_key = str(uuid4())
+            self.validate_key_duplication(widget.temp_key, new_key, widget)
         self.input_fields.remove(widget)
         self.content_layout.removeWidget(widget)
         widget.deleteLater()
@@ -834,7 +949,10 @@ class DictMutableKeysWidget(BaseWidget):
                 _input_field.set_entity_value()
 
             else:
-                if input_field.key_value() != key:
+                if (
+                    not input_field.is_key_duplicated
+                    and input_field.key_value() != key
+                ):
                     changed = True
                     input_field.set_key(key)
 
@@ -845,6 +963,26 @@ class DictMutableKeysWidget(BaseWidget):
 
         if changed:
             self.on_shuffle()
+
+    def make_sure_is_visible(self, path, scroll_to):
+        if not path:
+            return False
+
+        entity_path = self.entity.path
+        if entity_path == path:
+            self.set_focus(scroll_to)
+            return True
+
+        if not path.startswith(entity_path):
+            return False
+
+        if self.body_widget and not self.body_widget.is_expanded():
+            self.body_widget.toggle_content(True)
+
+        for input_field in self.input_fields:
+            if input_field.make_sure_is_visible(path, scroll_to):
+                return True
+        return False
 
     def set_entity_value(self):
         while self.input_fields:

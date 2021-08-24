@@ -99,14 +99,24 @@ class ReferenceLoader(api.Loader):
             nodes = self[:]
             if not nodes:
                 return
-
-            loaded_containers.append(containerise(
-                name=name,
-                namespace=namespace,
-                nodes=nodes,
-                context=context,
-                loader=self.__class__.__name__
-            ))
+            # FIXME: there is probably better way to do this for looks.
+            if "look" in self.families:
+                loaded_containers.append(containerise(
+                    name=name,
+                    namespace=namespace,
+                    nodes=nodes,
+                    context=context,
+                    loader=self.__class__.__name__
+                ))
+            else:
+                ref_node = self._get_reference_node(nodes)
+                loaded_containers.append(containerise(
+                    name=name,
+                    namespace=namespace,
+                    nodes=[ref_node],
+                    context=context,
+                    loader=self.__class__.__name__
+                ))
 
             c += 1
             namespace = None
@@ -234,9 +244,6 @@ class ReferenceLoader(api.Loader):
         if cmds.getAttr("{}.verticesOnlySet".format(node)):
             self.log.info("Setting %s.verticesOnlySet to False", node)
             cmds.setAttr("{}.verticesOnlySet".format(node), False)
-
-        # Add new nodes of the reference to the container
-        cmds.sets(content, forceElement=node)
 
         # Remove any placeHolderList attribute entries from the set that
         # are remaining from nodes being removed from the referenced file.

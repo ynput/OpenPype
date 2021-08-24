@@ -195,6 +195,7 @@
     - all items in `enum_children` must have at least `key` key which represents value stored under `enum_key`
     - items can define `label` for UI purposes
     - most important part is that item can define `children` key where are definitions of it's children (`children` value works the same way as in `dict`)
+- to set default value for `enum_key` set it with `enum_default`
 - entity must have defined `"label"` if is not used as widget
 - is set as group if any parent is not group
 - if `"label"` is entetered there which will be shown in GUI
@@ -359,6 +360,9 @@ How output of the schema could look like on save:
 - values are defined under value of key `"enum_items"` as list
     - each item in list is simple dictionary where value is label and key is value which will be stored
     - should be possible to enter single dictionary if order of items doesn't matter
+- it is possible to set default selected value/s with `default` attribute
+    - it is recommended to use this option only in single selection mode
+    - at the end this option is used only when defying default settings value or in dynamic items
 
 ```
 {
@@ -371,7 +375,7 @@ How output of the schema could look like on save:
         {"ftrackreview": "Add to Ftrack"},
         {"delete": "Delete output"},
         {"slate-frame": "Add slate frame"},
-        {"no-hnadles": "Skip handle frames"}
+        {"no-handles": "Skip handle frames"}
     ]
 }
 ```
