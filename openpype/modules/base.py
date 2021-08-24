@@ -118,6 +118,18 @@ def get_default_modules_dir():
 
 
 def get_dynamic_modules_dirs():
+    """Possible paths to OpenPype Addons of Modules.
+
+    Paths are loaded from studio settings under:
+        `modules -> addon_paths -> {platform name}`
+
+    Path may contain environment variable as a formatting string.
+
+    They are not validated or checked their existence.
+
+    Returns:
+        list: Paths loaded from studio overrides.
+    """
     output = []
     value = get_studio_system_settings_overrides()
     for key in ("modules", "addon_paths", platform.system().lower()):
@@ -963,6 +975,17 @@ class TrayModulesManager(ModulesManager):
 
 
 def get_module_settings_defs():
+    """Check loaded addons/modules for existence of thei settings definition.
+
+    Check if OpenPype addon/module as python module has class that inherit
+    from `ModuleSettingsDef` in python module variables (imported
+    in `__init__py`).
+
+    Returns:
+        list: All valid and not abstract settings definitions from imported
+            openpype addons and modules.
+    """
+    # Make sure modules are loaded
     load_modules()
 
     import openpype_modules
