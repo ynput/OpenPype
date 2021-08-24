@@ -337,7 +337,9 @@ def _get_default_settings():
     module_settings_defs = get_module_settings_defs()
     for module_settings_def_cls in module_settings_defs:
         module_settings_def = module_settings_def_cls()
-        system_defaults = module_settings_def.get_system_defaults()
+        system_defaults = module_settings_def.get_defaults(
+            SYSTEM_SETTINGS_KEY
+        ) or {}
         for path, value in system_defaults.items():
             if not path:
                 continue
@@ -349,7 +351,9 @@ def _get_default_settings():
                 subdict = subdict[key]
             subdict[last_key] = value
 
-        project_defaults = module_settings_def.get_project_defaults()
+        project_defaults = module_settings_def.get_defaults(
+            PROJECT_SETTINGS_KEY
+        ) or {}
         for path, value in project_defaults.items():
             if not path:
                 continue
