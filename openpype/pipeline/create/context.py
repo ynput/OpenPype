@@ -427,6 +427,7 @@ class CreateContext:
         self.instances = []
 
         self.creators = {}
+        self.publish_discover_result = None
         self.publish_plugins = []
         self.plugins_with_defs = []
         self._attr_plugins_by_family = {}
@@ -448,18 +449,22 @@ class CreateContext:
 
     def reset_plugins(self):
         import avalon.api
-        import pyblish.api
+        import pyblish.logic
 
         from openpype.pipeline import OpenPypePyblishPluginMixin
+        from openpype.pipeline.publish import publish_plugins_discover
 
         # Reset publish plugins
         self._attr_plugins_by_family = {}
 
-        publish_plugins = pyblish.api.discover()
+        discover_result = publish_plugins_discover()
+        publish_plugins = discover_result.plugins
+
         targets = pyblish.logic.registered_targets() or ["default"]
         plugins_by_targets = pyblish.logic.plugins_by_targets(
             publish_plugins, targets
         )
+        self.publish_discover_result = discover_result
         self.publish_plugins = plugins_by_targets
 
         # Collect plugins that can have attribute definitions

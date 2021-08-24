@@ -4,8 +4,15 @@ from .publish_plugins import (
     OpenPypePyblishPluginMixin
 )
 
+from .lib import (
+    publish_plugins_discover
+)
+
+
 __all__ = (
     "PublishValidationError",
     "KnownPublishError",
-    "OpenPypePyblishPluginMixin"
+    "OpenPypePyblishPluginMixin",
+
+    "publish_plugins_discover"
 )
