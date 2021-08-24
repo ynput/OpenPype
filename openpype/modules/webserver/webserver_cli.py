@@ -19,7 +19,7 @@ from .webpublish_routes import (
 
 from openpype.api import get_system_settings
 
-SERVER_URL = "http://172.17.0.1:8079"  # machine is not listening on localhost
+# SERVER_URL = "http://172.17.0.1:8079"  # machine is not listening on localhost
 
 log = PypeLogger().get_logger("webserver_gui")
 
@@ -129,7 +129,8 @@ def reprocess_failed(upload_dir):
                     }}
             )
             continue
-        server_url = "{}/api/webpublish/batch".format(SERVER_URL)
+        server_url = "{}/api/webpublish/batch".format(
+            os.environ["OPENPYPE_WEBSERVER_URL"])
 
         with open(batch_url) as f:
             data = json.loads(f.read())

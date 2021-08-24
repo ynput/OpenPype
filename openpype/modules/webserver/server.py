@@ -1,5 +1,6 @@
 import threading
 import asyncio
+import os
 
 from aiohttp import web
 
@@ -110,7 +111,9 @@ class WebServerThread(threading.Thread):
         """ Starts runner and TCPsite """
         self.runner = web.AppRunner(self.manager.app)
         await self.runner.setup()
-        self.site = web.TCPSite(self.runner, 'localhost', self.port)
+        host_ip = os.environ.get("WEBSERVER_HOST_IP") or 'localhost'
+        log.info("host_ip:: {}".format(os.environ.get("WEBSERVER_HOST_IP")))
+        self.site = web.TCPSite(self.runner, host_ip, self.port)
         await self.site.start()
 
     def stop(self):

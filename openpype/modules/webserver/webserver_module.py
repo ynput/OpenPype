@@ -79,7 +79,10 @@ class WebServerModule(PypeModule, ITrayService):
         self.server_manager.on_stop_callbacks.append(
             self.set_service_failed_icon
         )
-        webserver_url = "http://localhost:{}".format(self.port)
+        # in a case that webserver should listen on specific ip (webpublisher)
+        self.log.info("module host_ip:: {}".format(os.environ.get("WEBSERVER_HOST_IP")))
+        host_ip = os.environ.get("WEBSERVER_HOST_IP") or 'localhost'
+        webserver_url = "http://{}:{}".format(host_ip, self.port)
         os.environ["OPENPYPE_WEBSERVER_URL"] = webserver_url
 
     @staticmethod

@@ -40,6 +40,7 @@ Deploy OP build distribution (Openpype Igniter) on an OS of your choice.
 ```sh
 #!/usr/bin/env bash
 export OPENPYPE_DEBUG=3
+export WEBSERVER_HOST_IP=localhost
 export FTRACK_BOT_API_KEY=YOUR_API_KEY
 export PYTHONDONTWRITEBYTECODE=1
 export OPENPYPE_MONGO=YOUR_MONGODB_CONNECTION
