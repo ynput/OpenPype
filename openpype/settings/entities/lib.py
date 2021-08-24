@@ -12,6 +12,8 @@ from .exceptions import (
 )
 
 from openpype.settings.constants import (
+    SYSTEM_SETTINGS_KEY,
+    PROJECT_SETTINGS_KEY,
     SCHEMA_KEY_SYSTEM_SETTINGS,
     SCHEMA_KEY_PROJECT_SETTINGS
 )
@@ -734,6 +736,12 @@ class SchemasHub:
 
 
 class DynamicSchemaValueCollector:
+    # Map schema hub type to store keys
+    schema_hub_type_map = {
+        SCHEMA_KEY_SYSTEM_SETTINGS: SYSTEM_SETTINGS_KEY,
+        SCHEMA_KEY_PROJECT_SETTINGS: PROJECT_SETTINGS_KEY
+    }
+
     def __init__(self, schema_hub):
         self._schema_hub = schema_hub
         self._dynamic_entities = []
@@ -756,7 +764,7 @@ class DynamicSchemaValueCollector:
             schema_def = self._schema_hub.get_dynamic_modules_settings_defs(
                 schema_def_id
             )
-            if self._schema_hub.schema_type == SCHEMA_KEY_SYSTEM_SETTINGS:
-                schema_def.save_system_defaults(schema_def_value)
-            elif self._schema_hub.schema_type == SCHEMA_KEY_PROJECT_SETTINGS:
-                schema_def.save_project_defaults(schema_def_value)
+            top_key = self.schema_hub_type_map.get(
+                self._schema_hub.schema_type
+            )
+            schema_def.save_defaults(top_key, schema_def_value)
