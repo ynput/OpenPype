@@ -1008,26 +1008,63 @@ def get_module_settings_defs():
 
 @six.add_metaclass(ABCMeta)
 class ModuleSettingsDef:
+    """Definition of settings for OpenPype module or AddOn."""
     _id = None
 
     @property
     def id(self):
+        """ID created on initialization.
+
+        ID should be per created object. Helps to store objects.
+        """
         if self._id is None:
             self._id = uuid4()
         return self._id
 
     @abstractmethod
     def get_settings_schemas(self, schema_type):
+        """Setting schemas for passed schema type.
+
+        These are main schemas by dynamic schema keys. If they're using
+        sub schemas or templates they should be loaded with
+        `get_dynamic_schemas`.
+
+        Returns:
+            dict: Schema by `dynamic_schema` keys.
+        """
         pass
 
     @abstractmethod
     def get_dynamic_schemas(self, schema_type):
+        """Settings schemas and templates that can be used anywhere.
+
+        It is recommended to add prefix specific for addon/module to keys
+        (e.g. "my_addon/real_schema_name").
+
+        Returns:
+            dict: Schemas and templates by their keys.
+        """
         pass
 
     @abstractmethod
     def get_defaults(self, top_key):
+        """Default values for passed top key.
+
+        Top keys are (currently) "system_settings" or "project_settings".
+
+        Should return exactly what was passed with `save_defaults`.
+
+        Returns:
+            dict: Default values by path to first key in OpenPype defaults.
+        """
         pass
 
     @abstractmethod
     def save_defaults(self, top_key, data):
+        """Save default values for passed top key.
+
+        Top keys are (currently) "system_settings" or "project_settings".
+
+        Passed data are by path to first key defined in main schemas.
+        """
         pass
