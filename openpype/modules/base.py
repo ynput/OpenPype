@@ -115,11 +115,24 @@ def get_default_modules_dir():
     return os.path.join(current_dir, "default_modules")
 
 
+def get_dynamic_modules_dirs():
+    output = []
+    return output
+
+
 def get_module_dirs():
     """List of paths where OpenPype modules can be found."""
-    dirpaths = [
-        get_default_modules_dir()
-    ]
+    _dirpaths = []
+    _dirpaths.append(get_default_modules_dir())
+    _dirpaths.extend(get_dynamic_modules_dirs())
+
+    dirpaths = []
+    for path in _dirpaths:
+        if not path:
+            continue
+        normalized = os.path.normpath(path)
+        if normalized not in dirpaths:
+            dirpaths.append(normalized)
     return dirpaths
 
 
