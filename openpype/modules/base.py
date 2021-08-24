@@ -5,6 +5,7 @@ import sys
 import time
 import inspect
 import logging
+import platform
 import threading
 import collections
 from uuid import uuid4
@@ -13,6 +14,7 @@ import six
 
 import openpype
 from openpype.settings import get_system_settings
+from openpype.settings.lib import get_studio_system_settings_overrides
 from openpype.lib import PypeLogger
 
 
@@ -117,6 +119,21 @@ def get_default_modules_dir():
 
 def get_dynamic_modules_dirs():
     output = []
+    value = get_studio_system_settings_overrides()
+    for key in ("modules", "addon_paths", platform.system().lower()):
+        if key not in value:
+            return output
+        value = value[key]
+
+    for path in value:
+        if not path:
+            continue
+
+        try:
+            path = path.format(**os.environ)
+        except Exception:
+            pass
+        output.append(path)
     return output
 
 
