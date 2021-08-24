@@ -11,6 +11,10 @@ from .exceptions import (
     SchemaDuplicatedEnvGroupKeys
 )
 
+from openpype.settings.constants import (
+    SCHEMA_KEY_SYSTEM_SETTINGS,
+    SCHEMA_KEY_PROJECT_SETTINGS
+)
 try:
     STRING_TYPE = basestring
 except Exception:
@@ -24,9 +28,6 @@ DEFAULT_VALUES_KEY = "__default_values__"
 TEMPLATE_METADATA_KEYS = (
     DEFAULT_VALUES_KEY,
 )
-
-SCHEMA_KEY_SYSTEM_SETTINGS = "system_schema"
-SCHEMA_KEY_PROJECT_SETTINGS = "projects_schema"
 
 SCHEMA_EXTEND_TYPES = (
     "schema", "template", "schema_template", "dynamic_schema"
