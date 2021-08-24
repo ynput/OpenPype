@@ -1025,17 +1025,9 @@ class ModuleSettingsDef:
         pass
 
     @abstractmethod
-    def save_system_defaults(self, data):
+    def get_defaults(self, top_key):
         pass
 
     @abstractmethod
-    def save_project_defaults(self, data):
-        pass
-
-    @abstractmethod
-    def get_system_defaults(self):
-        pass
-
-    @abstractmethod
-    def get_project_defaults(self):
+    def save_defaults(self, top_key, data):
         pass
