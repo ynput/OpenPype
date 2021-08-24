@@ -112,6 +112,22 @@
 ```
 - It is possible to define default values for unfilled fields to do so one of items in list must be dictionary with key `"__default_values__"` and value as dictionary with default key: values (as in example above).
 
+### dynamic_schema
+- dynamic templates that can be defined by class of `ModuleSettingsDef`
+- example:
+```
+{
+    "type": "dynamic_schema",
+    "name": "project_settings/global"
+}
+```
+- all valid `ModuleSettingsDef` classes where calling of `get_settings_schemas`
+    will return dictionary where is key "project_settings/global" with schemas
+    will extend and replace this item
+- works almost the same way as templates
+    - one item can be replaced by multiple items (or by 0 items)
+- goal is to dynamically loaded settings of OpenPype addons without having
+    their schemas or default values in main repository
 
 ## Basic Dictionary inputs
 - these inputs wraps another inputs into {key: value} relation
