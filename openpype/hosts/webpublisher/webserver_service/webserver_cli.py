@@ -29,20 +29,23 @@ def run_webserver(*args, **kwargs):
 
     manager = ModulesManager()
     webserver_module = manager.modules_by_name["webserver"]
-    webserver_module.create_server_manager()
+    host = os.environ.get("WEBSERVER_HOST_IP")
+    port = 8079
+    server_manager = webserver_module.create_new_server_manager(port, host)
+    webserver_url = server_manager.url
 
-    resource = RestApiResource(webserver_module.server_manager,
+    resource = RestApiResource(server_manager,
                                upload_dir=kwargs["upload_dir"],
                                executable=kwargs["executable"])
     projects_endpoint = WebpublisherProjectsEndpoint(resource)
-    webserver_module.server_manager.add_route(
+    server_manager.add_route(
         "GET",
         "/api/projects",
         projects_endpoint.dispatch
     )
 
     hiearchy_endpoint = WebpublisherHiearchyEndpoint(resource)
-    webserver_module.server_manager.add_route(
+    server_manager.add_route(
         "GET",
         "/api/hierarchy/{project_name}",
         hiearchy_endpoint.dispatch
@@ -51,7 +54,7 @@ def run_webserver(*args, **kwargs):
     # triggers publish
     webpublisher_task_publish_endpoint = \
         WebpublisherBatchPublishEndpoint(resource)
-    webserver_module.server_manager.add_route(
+    server_manager.add_route(
         "POST",
         "/api/webpublish/batch",
         webpublisher_task_publish_endpoint.dispatch
@@ -59,7 +62,7 @@ def run_webserver(*args, **kwargs):
 
     webpublisher_batch_publish_endpoint = \
         WebpublisherTaskPublishEndpoint(resource)
-    webserver_module.server_manager.add_route(
+    server_manager.add_route(
         "POST",
         "/api/webpublish/task",
         webpublisher_batch_publish_endpoint.dispatch
@@ -68,29 +71,29 @@ def run_webserver(*args, **kwargs):
     # reporting
     openpype_resource = OpenPypeRestApiResource()
     batch_status_endpoint = BatchStatusEndpoint(openpype_resource)
-    webserver_module.server_manager.add_route(
+    server_manager.add_route(
         "GET",
         "/api/batch_status/{batch_id}",
         batch_status_endpoint.dispatch
     )
 
     user_status_endpoint = PublishesStatusEndpoint(openpype_resource)
-    webserver_module.server_manager.add_route(
+    server_manager.add_route(
         "GET",
         "/api/publishes/{user}",
         user_status_endpoint.dispatch
     )
 
-    webserver_module.start_server()
+    server_manager.start_server()
     last_reprocessed = time.time()
     while True:
         if time.time() - last_reprocessed > 20:
-            reprocess_failed(kwargs["upload_dir"])
+            reprocess_failed(kwargs["upload_dir"], webserver_url)
             last_reprocessed = time.time()
         time.sleep(1.0)
 
 
-def reprocess_failed(upload_dir):
+def reprocess_failed(upload_dir, webserver_url):
     # log.info("check_reprocesable_records")
     from openpype.lib import OpenPypeMongoConnection
 
@@ -118,8 +121,7 @@ def reprocess_failed(upload_dir):
                     }}
             )
             continue
-        server_url = "{}/api/webpublish/batch".format(
-            os.environ["OPENPYPE_WEBSERVER_URL"])
+        server_url = "{}/api/webpublish/batch".format(webserver_url)
 
         with open(batch_url) as f:
             data = json.loads(f.read())
