@@ -137,7 +137,6 @@ class ActionModel(QtGui.QStandardItemModel):
         actions.extend(app_actions)
 
         self._registered_actions = actions
-        self.items_by_id.clear()
 
     def get_application_actions(self):
         actions = []
