@@ -92,7 +92,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             instance.data["subset"] = subset
             instance.data["family"] = family
             instance.data["families"] = families
-            instance.data["version"] = self._get_version(asset, subset) + 1
+            instance.data["version"] = \
+                self._get_last_version(asset, subset) + 1
             instance.data["stagingDir"] = task_dir
             instance.data["source"] = "webpublisher"
 
@@ -195,7 +196,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             content["subset_template_name"], \
             content["tags"]
 
-    def _get_version(self, asset_name, subset_name):
+    def _get_last_version(self, asset_name, subset_name):
         """Returns version number or 0 for 'asset' and 'subset'"""
         query = [
             {
