@@ -78,7 +78,7 @@ class TestCase:
         """Restore prepared MongoDB dumps into selected DB."""
         backup_dir = os.path.join(download_test_data, "input", "dumps")
 
-        uri = os.environ.get("OPENPYPE_MONGO") or "mongodb://localhost:27017"
+        uri = os.environ.get("OPENPYPE_MONGO")
         db_handler = DBHandler(uri)
         db_handler.setup_from_dump(self.TEST_DB_NAME, backup_dir, True,
                                    db_name_out=self.TEST_DB_NAME)
