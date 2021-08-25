@@ -12,14 +12,6 @@ from openpype_interfaces import (
 )
 
 
-@six.add_metaclass(ABCMeta)
-class IWebServerRoutes:
-    """Other modules interface to register their routes."""
-    @abstractmethod
-    def webserver_initialization(self, server_manager):
-        pass
-
-
 class WebServerModule(OpenPypeModule, ITrayService):
     name = "webserver"
     label = "WebServer"
@@ -57,8 +49,6 @@ class WebServerModule(OpenPypeModule, ITrayService):
         static_prefix = "/res"
         self.server_manager.add_static(static_prefix, resources.RESOURCES_DIR)
 
-        webserver_url = "http://localhost:{}".format(self.port)
-        os.environ["OPENPYPE_WEBSERVER_URL"] = webserver_url
         os.environ["OPENPYPE_STATICS_SERVER"] = "{}{}".format(
             self.webserver_url, static_prefix
         )
