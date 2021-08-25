@@ -40,7 +40,7 @@ class ValidateFileExtension(pyblish.api.InstancePlugin):
         node = instance[0]
 
         # Create lookup for current family in instance
-        families = instance.data.get("families", list())
+        families = []
         family = instance.data.get("family", None)
         if family:
             families.append(family)
