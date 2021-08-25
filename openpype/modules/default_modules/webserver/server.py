@@ -1,6 +1,5 @@
 import threading
 import asyncio
-import os
 
 from aiohttp import web
 
@@ -11,8 +10,9 @@ log = PypeLogger.get_logger("WebServer")
 
 class WebServerManager:
     """Manger that care about web server thread."""
-    def __init__(self, module):
-        self.module = module
+    def __init__(self, port=None, host=None):
+        self.port = port or 8079
+        self.host = host or "localhost"
 
         self.client = None
         self.handlers = {}
@@ -25,8 +25,8 @@ class WebServerManager:
         self.webserver_thread = WebServerThread(self)
 
     @property
-    def port(self):
-        return self.module.port
+    def url(self):
+        return "http://{}:{}".format(self.host, self.port)
 
     def add_route(self, *args, **kwargs):
         self.app.router.add_route(*args, **kwargs)
@@ -79,6 +79,10 @@ class WebServerThread(threading.Thread):
     def port(self):
         return self.manager.port
 
+    @property
+    def host(self):
+        return self.manager.host
+
     def run(self):
         self.is_running = True
 
@@ -111,9 +115,7 @@ class WebServerThread(threading.Thread):
         """ Starts runner and TCPsite """
         self.runner = web.AppRunner(self.manager.app)
         await self.runner.setup()
-        host_ip = os.environ.get("WEBSERVER_HOST_IP") or 'localhost'
-        log.info("host_ip:: {}".format(os.environ.get("WEBSERVER_HOST_IP")))
-        self.site = web.TCPSite(self.runner, host_ip, self.port)
+        self.site = web.TCPSite(self.runner, self.host, self.port)
         await self.site.start()
 
     def stop(self):
