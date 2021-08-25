@@ -1,8 +1,13 @@
 import copy
-import weakref
 import logging
 import traceback
 import collections
+
+try:
+    from weakref import WeakMethod
+except Exception:
+    from ._python2_comp import WeakMethod
+
 import avalon.api
 import pyblish.api
 
@@ -306,36 +311,36 @@ class PublisherController:
         return self.create_context.plugins_with_defs
 
     def add_instances_refresh_callback(self, callback):
-        ref = weakref.WeakMethod(callback)
+        ref = WeakMethod(callback)
         self._instances_refresh_callback_refs.add(ref)
 
     def add_plugins_refresh_callback(self, callback):
-        ref = weakref.WeakMethod(callback)
+        ref = WeakMethod(callback)
         self._plugins_refresh_callback_refs.add(ref)
 
     # --- Publish specific callbacks ---
     def add_publish_reset_callback(self, callback):
-        ref = weakref.WeakMethod(callback)
+        ref = WeakMethod(callback)
         self._publish_reset_callback_refs.add(ref)
 
     def add_publish_started_callback(self, callback):
-        ref = weakref.WeakMethod(callback)
+        ref = WeakMethod(callback)
         self._publish_started_callback_refs.add(ref)
 
     def add_publish_validated_callback(self, callback):
-        ref = weakref.WeakMethod(callback)
+        ref = WeakMethod(callback)
         self._publish_validated_callback_refs.add(ref)
 
     def add_instance_change_callback(self, callback):
-        ref = weakref.WeakMethod(callback)
+        ref = WeakMethod(callback)
         self._publish_instance_changed_callback_refs.add(ref)
 
     def add_plugin_change_callback(self, callback):
-        ref = weakref.WeakMethod(callback)
+        ref = WeakMethod(callback)
         self._publish_plugin_changed_callback_refs.add(ref)
 
     def add_publish_stopped_callback(self, callback):
-        ref = weakref.WeakMethod(callback)
+        ref = WeakMethod(callback)
         self._publish_stopped_callback_refs.add(ref)
 
     def get_asset_docs(self):
