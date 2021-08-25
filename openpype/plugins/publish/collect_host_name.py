@@ -14,7 +14,7 @@ class CollectHostName(pyblish.api.ContextPlugin):
     """Collect avalon host name to context."""
 
     label = "Collect Host Name"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 1
 
     def process(self, context):
         host_name = context.data.get("hostName")
