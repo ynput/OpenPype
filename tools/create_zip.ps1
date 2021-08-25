@@ -45,11 +45,9 @@ $openpype_root = (Get-Item $script_dir).parent.FullName
 
 $env:_INSIDE_OPENPYPE_TOOL = "1"
 
-# make sure Poetry is in PATH
 if (-not (Test-Path 'env:POETRY_HOME')) {
     $env:POETRY_HOME = "$openpype_root\.poetry"
 }
-$env:PATH = "$($env:PATH);$($env:POETRY_HOME)\bin"
 
 Set-Location -Path $openpype_root
 
@@ -87,7 +85,7 @@ if (-not $openpype_version) {
 
 Write-Host ">>> " -NoNewline -ForegroundColor Green
 Write-Host "Reading Poetry ... " -NoNewline
-if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
+if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Host "NOT FOUND" -ForegroundColor Yellow
     Write-Host "*** " -NoNewline -ForegroundColor Yellow
     Write-Host "We need to install Poetry create virtual env first ..."
@@ -107,5 +105,5 @@ Write-Host ">>> " -NoNewline -ForegroundColor green
 Write-Host "Generating zip from current sources ..."
 $env:PYTHONPATH="$($openpype_root);$($env:PYTHONPATH)"
 $env:OPENPYPE_ROOT="$($openpype_root)"
-& poetry run python "$($openpype_root)\tools\create_zip.py" $ARGS
+& "$($env:POETRY_HOME)\bin\poetry" run python "$($openpype_root)\tools\create_zip.py" $ARGS
 Set-Location -Path $current_dir

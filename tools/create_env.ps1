@@ -48,17 +48,36 @@ function Show-PSWarning() {
 function Install-Poetry() {
     Write-Host ">>> " -NoNewline -ForegroundColor Green
     Write-Host "Installing Poetry ... "
+    $python = "python"
+    if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
+        if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\.python-version")) {
+            $result = & pyenv global
+            if ($result -eq "no global version configured") {
+                Write-Host "!!! " -NoNewline -ForegroundColor Red
+                Write-Host "Using pyenv but having no local or global version of Python set."
+                Exit-WithCode 1
+            }
+        }
+        $python = & pyenv which python
+        
+    }
+
     $env:POETRY_HOME="$openpype_root\.poetry"
-    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python -
-    # add it to PATH
-    $env:PATH = "$($env:PATH);$openpype_root\.poetry\bin"
+    (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/install-poetry.py -UseBasicParsing).Content | & $($python) -
 }
 
 
 function Test-Python() {
     Write-Host ">>> " -NoNewline -ForegroundColor green
     Write-Host "Detecting host Python ... " -NoNewline
-    if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
+    $python = "python"
+    if (Get-Command "pyenv" -ErrorAction SilentlyContinue) {
+        $pyenv_python = & pyenv which python
+        if (Test-Path -PathType Leaf -Path "$($pyenv_python)") {
+            $python = $pyenv_python
+        }
+    }
+    if (-not (Get-Command $python -ErrorAction SilentlyContinue)) {
         Write-Host "!!! Python not detected" -ForegroundColor red
         Set-Location -Path $current_dir
         Exit-WithCode 1
@@ -68,7 +87,7 @@ import sys
 print('{0}.{1}'.format(sys.version_info[0], sys.version_info[1]))
 '@
 
-    $p = & python -c $version_command
+    $p = & $python -c $version_command
     $env:PYTHON_VERSION = $p
     $m = $p -match '(\d+)\.(\d+)'
     if(-not $m) {
@@ -94,11 +113,10 @@ $current_dir = Get-Location
 $script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $openpype_root = (Get-Item $script_dir).parent.FullName
 
-# make sure Poetry is in PATH
 if (-not (Test-Path 'env:POETRY_HOME')) {
     $env:POETRY_HOME = "$openpype_root\.poetry"
 }
-$env:PATH = "$($env:PATH);$($env:POETRY_HOME)\bin"
+
 
 Set-Location -Path $openpype_root
 
@@ -145,7 +163,7 @@ Test-Python
 
 Write-Host ">>> " -NoNewline -ForegroundColor Green
 Write-Host "Reading Poetry ... " -NoNewline
-if (-not (Test-Path -PathType Container -Path "$openpype_root\.poetry\bin")) {
+if (-not (Test-Path -PathType Container -Path "$($env:POETRY_HOME)\bin")) {
     Write-Host "NOT FOUND" -ForegroundColor Yellow
     Install-Poetry
     Write-Host "INSTALLED" -ForegroundColor Cyan
@@ -160,7 +178,7 @@ if (-not (Test-Path -PathType Leaf -Path "$($openpype_root)\poetry.lock")) {
     Write-Host ">>> " -NoNewline -ForegroundColor green
     Write-Host "Installing virtual environment from lock."
 }
-& poetry install --no-root $poetry_verbosity
+& "$env:POETRY_HOME\bin\poetry" install --no-root $poetry_verbosity --ansi
 if ($LASTEXITCODE -ne 0) {
     Write-Host "!!! " -ForegroundColor yellow -NoNewline
     Write-Host "Poetry command failed."

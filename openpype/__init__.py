@@ -68,6 +68,10 @@ def patched_discover(superclass):
 def install():
     """Install Pype to Avalon."""
     from pyblish.lib import MessageHandler
+    from openpype.modules import load_modules
+
+    # Make sure modules are loaded
+    load_modules()
 
     def modified_emit(obj, record):
         """Method replacing `emit` in Pyblish's MessageHandler."""
@@ -98,6 +102,11 @@ def install():
             .get(platform_name)
         ) or []
         for path in project_plugins:
+            try:
+                path = str(path.format(**os.environ))
+            except KeyError:
+                pass
+
             if not path or not os.path.exists(path):
                 continue
 

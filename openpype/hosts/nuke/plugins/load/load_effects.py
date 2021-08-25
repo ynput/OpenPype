@@ -214,7 +214,7 @@ class LoadEffects(api.Loader):
                         self.log.warning(e)
                         continue
 
-                    if isinstance(v, list) and len(v) > 3:
+                    if isinstance(v, list) and len(v) > 4:
                         node[k].setAnimated()
                         for i, value in enumerate(v):
                             if isinstance(value, list):

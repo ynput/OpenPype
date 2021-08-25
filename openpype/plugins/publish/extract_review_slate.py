@@ -26,9 +26,23 @@ class ExtractReviewSlate(openpype.api.Extractor):
         slate_path = inst_data.get("slateFrame")
         ffmpeg_path = openpype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        slate_stream = openpype.lib.ffprobe_streams(slate_path, self.log)[0]
-        slate_width = slate_stream["width"]
-        slate_height = slate_stream["height"]
+        slate_streams = openpype.lib.ffprobe_streams(slate_path, self.log)
+        # Try to find first stream with defined 'width' and 'height'
+        # - this is to avoid order of streams where audio can be as first
+        # - there may be a better way (checking `codec_type`?)+
+        slate_width = None
+        slate_height = None
+        for slate_stream in slate_streams:
+            if "width" in slate_stream and "height" in slate_stream:
+                slate_width = int(slate_stream["width"])
+                slate_height = int(slate_stream["height"])
+                break
+
+        # Raise exception of any stream didn't define input resolution
+        if slate_width is None:
+            raise AssertionError((
+                "FFprobe couldn't read resolution from input file: \"{}\""
+            ).format(slate_path))
 
         if "reviewToWidth" in inst_data:
             use_legacy_code = True
@@ -309,16 +323,29 @@ class ExtractReviewSlate(openpype.api.Extractor):
             )
             return codec_args
 
-        codec_name = streams[0].get("codec_name")
+        # Try to find first stream that is not an audio
+        no_audio_stream = None
+        for stream in streams:
+            if stream.get("codec_type") != "audio":
+                no_audio_stream = stream
+                break
+
+        if no_audio_stream is None:
+            self.log.warning((
+                "Couldn't find stream that is not an audio from file \"{}\""
+            ).format(full_input_path))
+            return codec_args
+
+        codec_name = no_audio_stream.get("codec_name")
         if codec_name:
             codec_args.append("-codec:v {}".format(codec_name))
 
-        profile_name = streams[0].get("profile")
+        profile_name = no_audio_stream.get("profile")
         if profile_name:
             profile_name = profile_name.replace(" ", "_").lower()
             codec_args.append("-profile:v {}".format(profile_name))
 
-        pix_fmt = streams[0].get("pix_fmt")
+        pix_fmt = no_audio_stream.get("pix_fmt")
         if pix_fmt:
             codec_args.append("-pix_fmt {}".format(pix_fmt))
         return codec_args

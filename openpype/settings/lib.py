@@ -114,7 +114,8 @@ def save_studio_settings(data):
         SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager, ISettingsChangeListener
+    from openpype.modules import ModulesManager
+    from openpype_interfaces import ISettingsChangeListener
 
     old_data = get_system_settings()
     default_values = get_default_settings()[SYSTEM_SETTINGS_KEY]
@@ -161,7 +162,8 @@ def save_project_settings(project_name, overrides):
         SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager, ISettingsChangeListener
+    from openpype.modules import ModulesManager
+    from openpype_interfaces import ISettingsChangeListener
 
     default_values = get_default_settings()[PROJECT_SETTINGS_KEY]
     if project_name:
@@ -222,7 +224,8 @@ def save_project_anatomy(project_name, anatomy_data):
         SaveWarningExc: If any module raises the exception.
     """
     # Notify Pype modules
-    from openpype.modules import ModulesManager, ISettingsChangeListener
+    from openpype.modules import ModulesManager
+    from openpype_interfaces import ISettingsChangeListener
 
     default_values = get_default_settings()[PROJECT_ANATOMY_KEY]
     if project_name:
@@ -315,14 +318,28 @@ class DuplicatedEnvGroups(Exception):
         super(DuplicatedEnvGroups, self).__init__(msg)
 
 
+def load_openpype_default_settings():
+    """Load openpype default settings."""
+    return load_jsons_from_dir(DEFAULTS_DIR)
+
+
 def reset_default_settings():
+    """Reset cache of default settings. Can't be used now."""
     global _DEFAULT_SETTINGS
     _DEFAULT_SETTINGS = None
 
 
 def get_default_settings():
+    """Get default settings.
+
+    Todo:
+        Cache loaded defaults.
+
+    Returns:
+        dict: Loaded default settings.
+    """
     # TODO add cacher
-    return load_jsons_from_dir(DEFAULTS_DIR)
+    return load_openpype_default_settings()
     # global _DEFAULT_SETTINGS
     # if _DEFAULT_SETTINGS is None:
     #     _DEFAULT_SETTINGS = load_jsons_from_dir(DEFAULTS_DIR)
@@ -866,6 +883,25 @@ def get_environments():
     """
 
     return find_environments(get_system_settings(False))
+
+
+def get_general_environments():
+    """Get general environments.
+
+    Function is implemented to be able load general environments without using
+    `get_default_settings`.
+    """
+    # Use only openpype defaults.
+    # - prevent to use `get_system_settings` where `get_default_settings`
+    #   is used
+    default_values = load_openpype_default_settings()
+    studio_overrides = get_studio_system_settings_overrides()
+    result = apply_overrides(default_values, studio_overrides)
+    environments = result["general"]["environment"]
+
+    clear_metadata_from_settings(environments)
+
+    return environments
 
 
 def clear_metadata_from_settings(values):

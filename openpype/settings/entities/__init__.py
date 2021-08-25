@@ -105,12 +105,14 @@ from .enum_entity import (
     AppsEnumEntity,
     ToolsEnumEntity,
     TaskTypeEnumEntity,
-    ProvidersEnum
+    ProvidersEnum,
+    DeadlineUrlEnumEntity
 )
 
 from .list_entity import ListEntity
 from .dict_immutable_keys_entity import DictImmutableKeysEntity
 from .dict_mutable_keys_entity import DictMutableKeysEntity
+from .dict_conditional import DictConditionalEntity
 
 from .anatomy_entities import AnatomyEntity
 
@@ -159,12 +161,15 @@ __all__ = (
     "ToolsEnumEntity",
     "TaskTypeEnumEntity",
     "ProvidersEnum",
+    "DeadlineUrlEnumEntity",
 
     "ListEntity",
 
     "DictImmutableKeysEntity",
 
     "DictMutableKeysEntity",
+
+    "DictConditionalEntity",
 
     "AnatomyEntity"
 )

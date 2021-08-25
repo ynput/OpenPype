@@ -181,6 +181,106 @@
 }
 ```
 
+## dict-conditional
+- is similar to `dict` but has only one child entity that will be always available
+- the one entity is enumerator of possible values and based on value of the entity are defined and used other children entities
+- each value of enumerator have defined children that will be used
+    - there is no way how to have shared entities across multiple enum items
+- value from enumerator is also stored next to other values
+    - to define the key under which will be enum value stored use `enum_key`
+    - `enum_key` must match key regex and any enum item can't have children with same key
+    - `enum_label` is label of the entity for UI purposes
+- enum items are define with `enum_children`
+    - it's a list where each item represents enum item
+    - all items in `enum_children` must have at least `key` key which represents value stored under `enum_key`
+    - items can define `label` for UI purposes
+    - most important part is that item can define `children` key where are definitions of it's children (`children` value works the same way as in `dict`)
+- to set default value for `enum_key` set it with `enum_default`
+- entity must have defined `"label"` if is not used as widget
+- is set as group if any parent is not group
+- if `"label"` is entetered there which will be shown in GUI
+    - item with label can be collapsible
+        - that can be set with key `"collapsible"` as `True`/`False` (Default: `True`)
+            - with key `"collapsed"` as `True`/`False` can be set that is collapsed when GUI is opened (Default: `False`)
+    - it is possible to add darker background with `"highlight_content"` (Default: `False`)
+        - darker background has limits of maximum applies after 3-4 nested highlighted items there is not difference in the color
+    - output is dictionary `{the "key": children values}`
+- for UI porposes was added `enum_is_horizontal` which will make combobox appear next to children inputs instead of on top of them (Default: `False`)
+    - this has extended ability of `enum_on_right` which will move combobox to right side next to children widgets (Default: `False`)
+```
+# Example
+{
+    "type": "dict-conditional",
+    "key": "my_key",
+    "label": "My Key",
+    "enum_key": "type",
+    "enum_label": "label",
+    "enum_children": [
+        # Each item must be a dictionary with 'key'
+        {
+            "key": "action",
+            "label": "Action",
+            "children": [
+                {
+                    "type": "text",
+                    "key": "key",
+                    "label": "Key"
+                },
+                {
+                    "type": "text",
+                    "key": "label",
+                    "label": "Label"
+                },
+                {
+                    "type": "text",
+                    "key": "command",
+                    "label": "Comand"
+                }
+            ]
+        },
+        {
+            "key": "menu",
+            "label": "Menu",
+            "children": [
+                {
+                    "key": "children",
+                    "label": "Children",
+                    "type": "list",
+                    "object_type": "text"
+                }
+            ]
+        },
+        {
+            # Separator does not have children as "separator" value is enough
+            "key": "separator",
+            "label": "Separator"
+        }
+    ]
+}
+```
+
+How output of the schema could look like on save:
+```
+{
+    "type": "separator"
+}
+
+{
+    "type": "action",
+    "key": "action_1",
+    "label": "Action 1",
+    "command": "run command -arg"
+}
+
+{
+    "type": "menu",
+    "children": [
+        "child_1",
+        "child_2"
+    ]
+}
+```
+
 ## Inputs for setting any kind of value (`Pure` inputs)
 - all these input must have defined `"key"` under which will be stored and `"label"` which will be shown next to input
     - unless they are used in different types of inputs (later) "as widgets" in that case `"key"` and `"label"` are not required as there is not place where to set them
@@ -240,6 +340,11 @@
 - schema also defines valid value type
     - by default it is dictionary
     - to be able use list it is required to define `is_list` to `true`
+- output can be stored as string
+    - this is to allow any keys in dictionary
+    - set key `store_as_string` to `true`
+    - code using that setting must expected that value is string and use json module to convert it to python types
+
 ```
 {
     "type": "raw-json",
@@ -255,6 +360,9 @@
 - values are defined under value of key `"enum_items"` as list
     - each item in list is simple dictionary where value is label and key is value which will be stored
     - should be possible to enter single dictionary if order of items doesn't matter
+- it is possible to set default selected value/s with `default` attribute
+    - it is recommended to use this option only in single selection mode
+    - at the end this option is used only when defying default settings value or in dynamic items
 
 ```
 {
@@ -267,7 +375,7 @@
         {"ftrackreview": "Add to Ftrack"},
         {"delete": "Delete output"},
         {"slate-frame": "Add slate frame"},
-        {"no-hnadles": "Skip handle frames"}
+        {"no-handles": "Skip handle frames"}
     ]
 }
 ```
@@ -277,6 +385,9 @@
 - multiselection can be allowed with setting key `"multiselection"` to `True` (Default: `False`)
 - it is possible to add empty value (represented with empty string) with setting `"use_empty_value"` to `True` (Default: `False`)
 - it is possible to set `"custom_labels"` for host names where key `""` is empty value (Default: `{}`)
+- to filter host names it is required to define `"hosts_filter"` which is list of host names that will be available
+    - do not pass empty string if `use_empty_value` is enabled
+    - ignoring host names would be more dangerous in some cases
 ```
 {
     "key": "host",
@@ -287,7 +398,10 @@
     "custom_labels": {
         "": "N/A",
         "nuke": "Nuke"
-    }
+    },
+    "hosts_filter": [
+        "nuke"
+    ]
 }
 ```
 
@@ -307,6 +421,8 @@
 - there are 2 possible ways how to set the type:
     1.) dictionary with item modifiers (`number` input has `minimum`, `maximum` and `decimals`) in that case item type must be set as value of `"type"` (example below)
     2.) item type name as string without modifiers (e.g. `text`)
+    3.) enhancement of 1.) there is also support of `template` type but be carefull about endless loop of templates
+        - goal of using `template` is to easily change same item definitions in multiple lists
 
 1.) with item modifiers
 ```
@@ -330,6 +446,65 @@
     "label": "Exclude ports",
     "object_type": "text"
 }
+```
+
+3.) with template definition
+```
+# Schema of list item where template is used
+{
+    "type": "list",
+    "key": "menu_items",
+    "label": "Menu Items",
+    "object_type": {
+        "type": "template",
+        "name": "template_object_example"
+    }
+}
+
+# WARNING:
+#  In this example the template use itself inside which will work in `list`
+#  but may cause an issue in other entity types (e.g. `dict`).
+
+'template_object_example.json' :
+[
+    {
+        "type": "dict-conditional",
+        "use_label_wrap": true,
+        "collapsible": true,
+        "key": "menu_items",
+        "label": "Menu items",
+        "enum_key": "type",
+        "enum_label": "Type",
+        "enum_children": [
+            {
+                "key": "action",
+                "label": "Action",
+                "children": [
+                    {
+                        "type": "text",
+                        "key": "key",
+                        "label": "Key"
+                    }
+                ]
+            },
+            {
+                "key": "menu",
+                "label": "Menu",
+                "children": [
+                    {
+                        "key": "children",
+                        "label": "Children",
+                        "type": "list",
+                        "object_type": {
+                            "type": "template",
+                            "name": "template_object_example"
+                        }
+                    }
+                ]
+            }
+        ]
+    }
+]
 ```
 
 ### dict-modifiable
@@ -474,6 +649,15 @@
     "type": "splitter"
 }
 ```
+
+## Anatomy
+Anatomy represents data stored on project document.
+
+### anatomy
+- entity works similarly to `dict`
+- anatomy has always all keys overriden with overrides
+    - overrides are not applied as all anatomy data must be available from project document
+    - all children must be groups
 
 ## Proxy wrappers
 - should wraps multiple inputs only visually
