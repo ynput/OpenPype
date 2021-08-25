@@ -312,7 +312,11 @@ class BoolWidget(InputWidget):
 
         self.setFocusProxy(self.input_field)
 
+        self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.stateChanged.connect(self._on_value_change)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.isChecked():
