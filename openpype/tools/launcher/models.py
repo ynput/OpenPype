@@ -143,7 +143,10 @@ class ActionModel(QtGui.QStandardItemModel):
         if not self.dbcon.Session.get("AVALON_PROJECT"):
             return actions
 
-        project_doc = self.dbcon.find_one({"type": "project"})
+        project_doc = self.dbcon.find_one(
+            {"type": "project"},
+            {"config.apps": True}
+        )
         if not project_doc:
             return actions
 
