@@ -5,7 +5,11 @@ from abc import ABCMeta, abstractmethod
 import six
 
 from openpype import resources
-from .. import PypeModule, ITrayService
+from openpype.modules import OpenPypeModule
+from openpype_interfaces import (
+    ITrayService,
+    IWebServerRoutes
+)
 
 
 @six.add_metaclass(ABCMeta)
@@ -16,7 +20,7 @@ class IWebServerRoutes:
         pass
 
 
-class WebServerModule(PypeModule, ITrayService):
+class WebServerModule(OpenPypeModule, ITrayService):
     name = "webserver"
     label = "WebServer"
 
@@ -53,6 +57,8 @@ class WebServerModule(PypeModule, ITrayService):
         static_prefix = "/res"
         self.server_manager.add_static(static_prefix, resources.RESOURCES_DIR)
 
+        webserver_url = "http://localhost:{}".format(self.port)
+        os.environ["OPENPYPE_WEBSERVER_URL"] = webserver_url
         os.environ["OPENPYPE_STATICS_SERVER"] = "{}{}".format(
             self.webserver_url, static_prefix
         )

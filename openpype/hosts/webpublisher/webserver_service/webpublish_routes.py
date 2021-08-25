@@ -10,7 +10,7 @@ import subprocess
 from avalon.api import AvalonMongoDB
 
 from openpype.lib import OpenPypeMongoConnection
-from openpype.modules.avalon_apps.rest_api import _RestApiEndpoint
+from openpype_modules.avalon_apps.rest_api import _RestApiEndpoint
 
 from openpype.lib import PypeLogger
 
