@@ -31,7 +31,7 @@ class CollectUsername(pyblish.api.ContextPlugin):
     _context = None
 
     def process(self, context):
-        os.environ["FTRACK_API_USER"] = "pype.club"
+        os.environ["FTRACK_API_USER"] = os.environ["FTRACK_BOT_API_USER"]
         os.environ["FTRACK_API_KEY"] = os.environ["FTRACK_BOT_API_KEY"]
         self.log.info("CollectUsername")
         for instance in context:
