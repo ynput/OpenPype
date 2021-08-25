@@ -158,6 +158,8 @@ class ActionBar(QtWidgets.QWidget):
         self.model.discover()
 
     def filter_actions(self):
+        if self._animation_timer.isActive():
+            self._animation_timer.stop()
         self.model.filter_actions()
 
     def set_row_height(self, rows):
