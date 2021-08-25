@@ -82,7 +82,7 @@ class RemoteFileHandler:
         try:
             print('Downloading ' + url + ' to ' + fpath)
             RemoteFileHandler._urlretrieve(url, fpath)
-        except (urllib.error.URLError, IOError) as e:  #noqa type: ignore[attr-defined]
+        except (urllib.error.URLError, IOError) as e:
             if url[:5] == 'https':
                 url = url.replace('https:', 'http:')
                 print('Failed download. Trying https -> http instead.'

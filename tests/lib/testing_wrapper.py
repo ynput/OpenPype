@@ -92,11 +92,11 @@ class TestCase:
         db_handler.teardown(self.TEST_OPENPYPE_NAME)
 
     @pytest.fixture(scope="module")
-    def db(self, db_setup):
+    def dbcon(self, db_setup):
         """Provide test database connection.
 
             Database prepared from dumps with 'db_setup' fixture.
         """
         from avalon.api import AvalonMongoDB
-        db = AvalonMongoDB()
-        yield db
+        dbcon = AvalonMongoDB()
+        yield dbcon
