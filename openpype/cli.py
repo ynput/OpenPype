@@ -162,7 +162,7 @@ def publish(debug, paths, targets):
 @click.option("-h", "--host", help="Host")
 @click.option("-u", "--user", help="User email address")
 @click.option("-p", "--project", help="Project")
-@click.option("-t", "--targets", help="Targets module", default=None,
+@click.option("-t", "--targets", help="Targets", default=None,
               multiple=True)
 def remotepublish(debug, project, path, host, targets=None, user=None):
     """Start CLI publishing.
