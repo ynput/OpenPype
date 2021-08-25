@@ -36,3 +36,8 @@ def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
+
+
+# to have required methods for interface
+def ls():
+    pass

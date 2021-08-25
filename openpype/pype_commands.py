@@ -160,7 +160,7 @@ class PypeCommands:
         os.environ["AVALON_APP"] = host
 
         import avalon.api
-        from openpype.hosts import webpublisher
+        from openpype.hosts.webpublisher import api as webpublisher
 
         avalon.api.install(webpublisher)
 
