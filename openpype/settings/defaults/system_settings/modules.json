@@ -167,9 +167,6 @@
     "standalonepublish_tool": {
         "enabled": true
     },
-    "webpublish_tool": {
-        "enabled": false
-    },
     "project_manager": {
         "enabled": true
     },

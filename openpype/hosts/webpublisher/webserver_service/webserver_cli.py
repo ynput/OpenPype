@@ -19,7 +19,6 @@ from .webpublish_routes import (
 
 from openpype.api import get_system_settings
 
-# SERVER_URL = "http://172.17.0.1:8079"  # machine is not listening on localhost
 
 log = PypeLogger().get_logger("webserver_gui")
 
@@ -32,72 +31,62 @@ def run_webserver(*args, **kwargs):
     webserver_module = manager.modules_by_name["webserver"]
     webserver_module.create_server_manager()
 
-    is_webpublish_enabled = False
-    webpublish_tool = get_system_settings()["modules"].\
-        get("webpublish_tool")
+    resource = RestApiResource(webserver_module.server_manager,
+                               upload_dir=kwargs["upload_dir"],
+                               executable=kwargs["executable"])
+    projects_endpoint = WebpublisherProjectsEndpoint(resource)
+    webserver_module.server_manager.add_route(
+        "GET",
+        "/api/projects",
+        projects_endpoint.dispatch
+    )
 
-    if webpublish_tool and webpublish_tool["enabled"]:
-        is_webpublish_enabled = True
+    hiearchy_endpoint = WebpublisherHiearchyEndpoint(resource)
+    webserver_module.server_manager.add_route(
+        "GET",
+        "/api/hierarchy/{project_name}",
+        hiearchy_endpoint.dispatch
+    )
 
-    log.debug("is_webpublish_enabled {}".format(is_webpublish_enabled))
-    if is_webpublish_enabled:
-        resource = RestApiResource(webserver_module.server_manager,
-                                   upload_dir=kwargs["upload_dir"],
-                                   executable=kwargs["executable"])
-        projects_endpoint = WebpublisherProjectsEndpoint(resource)
-        webserver_module.server_manager.add_route(
-            "GET",
-            "/api/projects",
-            projects_endpoint.dispatch
-        )
+    # triggers publish
+    webpublisher_task_publish_endpoint = \
+        WebpublisherBatchPublishEndpoint(resource)
+    webserver_module.server_manager.add_route(
+        "POST",
+        "/api/webpublish/batch",
+        webpublisher_task_publish_endpoint.dispatch
+    )
 
-        hiearchy_endpoint = WebpublisherHiearchyEndpoint(resource)
-        webserver_module.server_manager.add_route(
-            "GET",
-            "/api/hierarchy/{project_name}",
-            hiearchy_endpoint.dispatch
-        )
+    webpublisher_batch_publish_endpoint = \
+        WebpublisherTaskPublishEndpoint(resource)
+    webserver_module.server_manager.add_route(
+        "POST",
+        "/api/webpublish/task",
+        webpublisher_batch_publish_endpoint.dispatch
+    )
 
-        # triggers publish
-        webpublisher_task_publish_endpoint = \
-            WebpublisherBatchPublishEndpoint(resource)
-        webserver_module.server_manager.add_route(
-            "POST",
-            "/api/webpublish/batch",
-            webpublisher_task_publish_endpoint.dispatch
-        )
+    # reporting
+    openpype_resource = OpenPypeRestApiResource()
+    batch_status_endpoint = BatchStatusEndpoint(openpype_resource)
+    webserver_module.server_manager.add_route(
+        "GET",
+        "/api/batch_status/{batch_id}",
+        batch_status_endpoint.dispatch
+    )
 
-        webpublisher_batch_publish_endpoint = \
-            WebpublisherTaskPublishEndpoint(resource)
-        webserver_module.server_manager.add_route(
-            "POST",
-            "/api/webpublish/task",
-            webpublisher_batch_publish_endpoint.dispatch
-        )
-
-        # reporting
-        openpype_resource = OpenPypeRestApiResource()
-        batch_status_endpoint = BatchStatusEndpoint(openpype_resource)
-        webserver_module.server_manager.add_route(
-            "GET",
-            "/api/batch_status/{batch_id}",
-            batch_status_endpoint.dispatch
-        )
-
-        user_status_endpoint = PublishesStatusEndpoint(openpype_resource)
-        webserver_module.server_manager.add_route(
-            "GET",
-            "/api/publishes/{user}",
-            user_status_endpoint.dispatch
-        )
+    user_status_endpoint = PublishesStatusEndpoint(openpype_resource)
+    webserver_module.server_manager.add_route(
+        "GET",
+        "/api/publishes/{user}",
+        user_status_endpoint.dispatch
+    )
 
     webserver_module.start_server()
     last_reprocessed = time.time()
     while True:
-        if is_webpublish_enabled:
-            if time.time() - last_reprocessed > 20:
-                reprocess_failed(kwargs["upload_dir"])
-                last_reprocessed = time.time()
+        if time.time() - last_reprocessed > 20:
+            reprocess_failed(kwargs["upload_dir"])
+            last_reprocessed = time.time()
         time.sleep(1.0)
 
 

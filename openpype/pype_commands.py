@@ -42,9 +42,8 @@ class PypeCommands:
 
     @staticmethod
     def launch_webpublisher_webservercli(*args, **kwargs):
-        from openpype.modules.webserver.webserver_cli import (
-            run_webserver
-        )
+        from openpype.hosts.webpublisher.webserver_service.webserver_cli \
+            import (run_webserver)
         return run_webserver(*args, **kwargs)
 
     @staticmethod
@@ -53,7 +52,7 @@ class PypeCommands:
         standalonepublish.main()
 
     @staticmethod
-    def publish(paths, targets=None, host=None):
+    def publish(paths, targets=None):
         """Start headless publishing.
 
         Publish use json from passed paths argument.
