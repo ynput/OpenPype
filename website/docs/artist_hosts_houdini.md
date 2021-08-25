@@ -52,7 +52,7 @@ Alembic ROP `/out/pointcacheStrange`
 This part of documentation is still work in progress.
 :::
 
-## USD
+## USD (experimental support)
 ### Publishing USD
 You can publish your Solaris Stage as USD file.
 ![Solaris USD](assets/houdini_usd_stage.png)

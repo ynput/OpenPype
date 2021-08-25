@@ -4,7 +4,7 @@ from openpype.hosts.houdini.api import plugin
 class CreateUSD(plugin.Creator):
     """Universal Scene Description"""
 
-    label = "USD"
+    label = "USD (experimental)"
     family = "usd"
     icon = "gears"
     enabled = False

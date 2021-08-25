@@ -5,7 +5,7 @@ from openpype.hosts.houdini.api import plugin
 class CreateUSDRender(plugin.Creator):
     """USD Render ROP in /stage"""
 
-    label = "USD Render"
+    label = "USD Render (experimental)"
     family = "usdrender"
     icon = "magic"
 
