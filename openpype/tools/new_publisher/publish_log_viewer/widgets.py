@@ -9,6 +9,7 @@ ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
 ITEM_IS_GROUP_ROLE = QtCore.Qt.UserRole + 2
 PLUGIN_SKIPPED_ROLE = QtCore.Qt.UserRole + 3
 PLUGIN_ERRORED_ROLE = QtCore.Qt.UserRole + 4
+INSTANCE_REMOVED_ROLE = QtCore.Qt.UserRole + 5
 
 
 class PluginItem:
@@ -41,6 +42,7 @@ class InstanceItem:
         self._id = instance_id
         self.label = instance_data.get("label") or instance_data.get("name")
         self.family = instance_data.get("family")
+        self.removed = not instance_data.get("exists", True)
 
         logs = []
         for plugin_data in report_data["plugins_data"]:
@@ -112,6 +114,7 @@ class InstancesModel(QtGui.QStandardItemModel):
             for instance_item in instance_items:
                 item = QtGui.QStandardItem(instance_item.label)
                 item.setData(instance_item.id, ITEM_ID_ROLE)
+                item.setData(instance_item.removed, INSTANCE_REMOVED_ROLE)
                 item.setData(False, ITEM_IS_GROUP_ROLE)
                 items.append(item)
 
@@ -126,6 +129,35 @@ class InstancesModel(QtGui.QStandardItemModel):
             family_items.append(family_item)
 
         root_item.appendRows(family_items)
+
+
+class InstanceProxyModel(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(InstanceProxyModel, self).__init__(*args, **kwargs)
+
+        self._ignore_removed = True
+
+    @property
+    def ignore_removed(self):
+        return self._ignore_removed
+
+    def set_ignore_removed(self, value):
+        if value == self._ignore_removed:
+            return
+        self._ignore_removed = value
+
+        if self.sourceModel():
+            self.invalidateFilter()
+
+    def filterAcceptsRow(self, row, parent):
+        model = self.sourceModel()
+        source_index = model.index(row, 0, parent)
+        if source_index.data(ITEM_IS_GROUP_ROLE):
+            return model.rowCount(source_index) > 0
+
+        if self._ignore_removed and source_index.data(PLUGIN_SKIPPED_ROLE):
+            return False
+        return True
 
 
 class PluginsModel(QtGui.QStandardItemModel):
@@ -172,6 +204,7 @@ class PluginsModel(QtGui.QStandardItemModel):
             items = []
             for plugin_item in plugin_items:
                 item = QtGui.QStandardItem(plugin_item.label)
+                item.setData(False, ITEM_IS_GROUP_ROLE)
                 item.setData(False, ITEM_IS_GROUP_ROLE)
                 item.setData(plugin_item.id, ITEM_ID_ROLE)
                 item.setData(plugin_item.skipped, PLUGIN_SKIPPED_ROLE)
@@ -251,23 +284,28 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         super(PublishLogViewerWidget, self).__init__(parent)
 
         instances_model = InstancesModel()
+        instances_proxy = InstanceProxyModel()
+        instances_proxy.setSourceModel(instances_model)
 
         plugins_model = PluginsModel()
         plugins_proxy = PluginProxyModel()
         plugins_proxy.setSourceModel(plugins_model)
 
+        removed_instances_check = QtWidgets.QCheckBox(
+            "Hide removed instances", self
+        )
+        removed_instances_check.setChecked(instances_proxy.ignore_removed)
+
         instances_view = QtWidgets.QTreeView(self)
-        instances_view.setModel(instances_model)
+        instances_view.setModel(instances_proxy)
         # instances_view.setIndentation(0)
         instances_view.setHeaderHidden(True)
         instances_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
 
         skipped_plugins_check = QtWidgets.QCheckBox(
-            "Ignore skipped plugins", self
+            "Hide skipped plugins", self
         )
-        skipped_plugins_check.setChecked(
-            plugins_proxy.ignore_skipped
-        )
+        skipped_plugins_check.setChecked(plugins_proxy.ignore_skipped)
 
         plugins_view = QtWidgets.QTreeView(self)
         plugins_view.setModel(plugins_proxy)
@@ -278,6 +316,7 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         details_widget = DetailsWidget(self)
 
         layout = QtWidgets.QGridLayout(self)
+        layout.addWidget(removed_instances_check, 0, 0)
         layout.addWidget(instances_view, 1, 0)
         layout.addWidget(skipped_plugins_check, 0, 1)
         layout.addWidget(plugins_view, 1, 1)
@@ -293,13 +332,18 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         skipped_plugins_check.stateChanged.connect(
             self._on_skipped_plugin_check
         )
+        removed_instances_check.stateChanged.connect(
+            self._on_removed_instances_check
+        )
 
         self._ignore_selection_changes = False
         self._report_item = None
         self._details_widget = details_widget
 
+        self._removed_instances_check = removed_instances_check
         self._instances_view = instances_view
         self._instances_model = instances_model
+        self._instances_proxy = instances_proxy
 
         self._skipped_plugins_check = skipped_plugins_check
         self._plugins_view = plugins_view
@@ -367,4 +411,9 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
     def _on_skipped_plugin_check(self):
         self._plugins_proxy.set_ignore_skipped(
             self._skipped_plugins_check.isChecked()
+        )
+
+    def _on_removed_instances_check(self):
+        self._instances_proxy.set_ignore_removed(
+            self._removed_instances_check.isChecked()
         )
