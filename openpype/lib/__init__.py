@@ -52,9 +52,11 @@ from .vendor_bin_utils import (
 )
 
 from .python_module_tools import (
+    import_filepath,
     modules_from_path,
     recursive_bases_from_class,
-    classes_from_module
+    classes_from_module,
+    import_module_from_dirpath
 )
 
 from .avalon_context import (
@@ -170,9 +172,11 @@ __all__ = [
     "get_ffmpeg_tool_path",
     "ffprobe_streams",
 
+    "import_filepath",
     "modules_from_path",
     "recursive_bases_from_class",
     "classes_from_module",
+    "import_module_from_dirpath",
 
     "CURRENT_DOC_SCHEMAS",
     "PROJECT_NAME_ALLOWED_SYMBOLS",
