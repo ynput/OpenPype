@@ -1,8 +1,11 @@
 # -*- coding: utf-8 -*-
 """Base class for Pype Modules."""
+import os
+import sys
 import time
 import inspect
 import logging
+import threading
 import collections
 from uuid import uuid4
 from abc import ABCMeta, abstractmethod
@@ -11,11 +14,305 @@ import six
 import openpype
 from openpype.settings import get_system_settings
 from openpype.lib import PypeLogger
-from openpype import resources
+
+
+# Inherit from `object` for Python 2 hosts
+class _ModuleClass(object):
+    """Fake module class for storing OpenPype modules.
+
+    Object of this class can be stored to `sys.modules` and used for storing
+    dynamically imported modules.
+    """
+    def __init__(self, name):
+        # Call setattr on super class
+        super(_ModuleClass, self).__setattr__("name", name)
+
+        # Where modules and interfaces are stored
+        super(_ModuleClass, self).__setattr__("__attributes__", dict())
+        super(_ModuleClass, self).__setattr__("__defaults__", set())
+
+        super(_ModuleClass, self).__setattr__("_log", None)
+
+    def __getattr__(self, attr_name):
+        if attr_name not in self.__attributes__:
+            if attr_name in ("__path__"):
+                return None
+            raise ImportError("No module named {}.{}".format(
+                self.name, attr_name
+            ))
+        return self.__attributes__[attr_name]
+
+    def __iter__(self):
+        for module in self.values():
+            yield module
+
+    def __setattr__(self, attr_name, value):
+        if attr_name in self.__attributes__:
+            self.log.warning(
+                "Duplicated name \"{}\" in {}. Overriding.".format(
+                    self.name, attr_name
+                )
+            )
+        self.__attributes__[attr_name] = value
+
+    def __setitem__(self, key, value):
+        self.__setattr__(key, value)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    @property
+    def log(self):
+        if self._log is None:
+            super(_ModuleClass, self).__setattr__(
+                "_log", PypeLogger.get_logger(self.name)
+            )
+        return self._log
+
+    def get(self, key, default=None):
+        return self.__attributes__.get(key, default)
+
+    def keys(self):
+        return self.__attributes__.keys()
+
+    def values(self):
+        return self.__attributes__.values()
+
+    def items(self):
+        return self.__attributes__.items()
+
+
+class _InterfacesClass(_ModuleClass):
+    """Fake module class for storing OpenPype interfaces.
+
+    MissingInterface object is returned if interfaces does not exists.
+    - this is because interfaces must be available even if are missing
+        implementation
+    """
+    def __getattr__(self, attr_name):
+        if attr_name not in self.__attributes__:
+            # Fake Interface if is not missing
+            self.__attributes__[attr_name] = type(
+                attr_name,
+                (MissingInteface, ),
+                {}
+            )
+
+        return self.__attributes__[attr_name]
+
+
+class _LoadCache:
+    interfaces_lock = threading.Lock()
+    modules_lock = threading.Lock()
+    interfaces_loaded = False
+    modules_loaded = False
+
+
+def get_default_modules_dir():
+    """Path to default OpenPype modules."""
+    current_dir = os.path.abspath(os.path.dirname(__file__))
+
+    return os.path.join(current_dir, "default_modules")
+
+
+def get_module_dirs():
+    """List of paths where OpenPype modules can be found."""
+    dirpaths = [
+        get_default_modules_dir()
+    ]
+    return dirpaths
+
+
+def load_interfaces(force=False):
+    """Load interfaces from modules into `openpype_interfaces`.
+
+    Only classes which inherit from `OpenPypeInterface` are loaded and stored.
+
+    Args:
+        force(bool): Force to load interfaces even if are already loaded.
+            This won't update already loaded and used (cached) interfaces.
+    """
+
+    if _LoadCache.interfaces_loaded and not force:
+        return
+
+    if not _LoadCache.interfaces_lock.locked():
+        with _LoadCache.interfaces_lock:
+            _load_interfaces()
+            _LoadCache.interfaces_loaded = True
+    else:
+        # If lock is locked wait until is finished
+        while _LoadCache.interfaces_lock.locked():
+            time.sleep(0.1)
+
+
+def _load_interfaces():
+    # Key under which will be modules imported in `sys.modules`
+    from openpype.lib import import_filepath
+
+    modules_key = "openpype_interfaces"
+
+    sys.modules[modules_key] = openpype_interfaces = (
+        _InterfacesClass(modules_key)
+    )
+
+    log = PypeLogger.get_logger("InterfacesLoader")
+
+    dirpaths = get_module_dirs()
+
+    interface_paths = []
+    interface_paths.append(
+        os.path.join(get_default_modules_dir(), "interfaces.py")
+    )
+    for dirpath in dirpaths:
+        for filename in os.listdir(dirpath):
+            if filename in ("__pycache__", ):
+                continue
+
+            full_path = os.path.join(dirpath, filename)
+            if not os.path.isdir(full_path):
+                continue
+
+            interfaces_path = os.path.join(full_path, "interfaces.py")
+            if os.path.exists(interfaces_path):
+                interface_paths.append(interfaces_path)
+
+    for full_path in interface_paths:
+        if not os.path.exists(full_path):
+            continue
+
+        try:
+            # Prepare module object where content of file will be parsed
+            module = import_filepath(full_path)
+
+        except Exception:
+            log.warning(
+                "Failed to load path: \"{0}\"".format(full_path),
+                exc_info=True
+            )
+            continue
+
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+            if (
+                not inspect.isclass(attr)
+                or attr is OpenPypeInterface
+                or not issubclass(attr, OpenPypeInterface)
+            ):
+                continue
+            setattr(openpype_interfaces, attr_name, attr)
+
+
+def load_modules(force=False):
+    """Load OpenPype modules as python modules.
+
+    Modules does not load only classes (like in Interfaces) because there must
+    be ability to use inner code of module and be able to import it from one
+    defined place.
+
+    With this it is possible to import module's content from predefined module.
+
+    Function makes sure that `load_interfaces` was triggered. Modules import
+    has specific order which can't be changed.
+
+    Args:
+        force(bool): Force to load modules even if are already loaded.
+            This won't update already loaded and used (cached) modules.
+    """
+
+    if _LoadCache.modules_loaded and not force:
+        return
+
+    # First load interfaces
+    # - modules must not be imported before interfaces
+    load_interfaces(force)
+
+    if not _LoadCache.modules_lock.locked():
+        with _LoadCache.modules_lock:
+            _load_modules()
+            _LoadCache.modules_loaded = True
+    else:
+        # If lock is locked wait until is finished
+        while _LoadCache.modules_lock.locked():
+            time.sleep(0.1)
+
+
+def _load_modules():
+    # Import helper functions from lib
+    from openpype.lib import (
+        import_filepath,
+        import_module_from_dirpath
+    )
+
+    # Key under which will be modules imported in `sys.modules`
+    modules_key = "openpype_modules"
+
+    # Change `sys.modules`
+    sys.modules[modules_key] = openpype_modules = _ModuleClass(modules_key)
+
+    log = PypeLogger.get_logger("ModulesLoader")
+
+    # Look for OpenPype modules in paths defined with `get_module_dirs`
+    dirpaths = get_module_dirs()
+
+    for dirpath in dirpaths:
+        if not os.path.exists(dirpath):
+            log.warning((
+                "Could not find path when loading OpenPype modules \"{}\""
+            ).format(dirpath))
+            continue
+
+        for filename in os.listdir(dirpath):
+            # Ignore filenames
+            if filename in ("__pycache__", ):
+                continue
+
+            fullpath = os.path.join(dirpath, filename)
+            basename, ext = os.path.splitext(filename)
+
+            # TODO add more logic how to define if folder is module or not
+            # - check manifest and content of manifest
+            if os.path.isdir(fullpath):
+                import_module_from_dirpath(dirpath, filename, modules_key)
+
+            elif ext in (".py", ):
+                module = import_filepath(fullpath)
+                setattr(openpype_modules, basename, module)
+
+
+class _OpenPypeInterfaceMeta(ABCMeta):
+    """OpenPypeInterface meta class to print proper string."""
+    def __str__(self):
+        return "<'OpenPypeInterface.{}'>".format(self.__name__)
+
+    def __repr__(self):
+        return str(self)
+
+
+@six.add_metaclass(_OpenPypeInterfaceMeta)
+class OpenPypeInterface:
+    """Base class of Interface that can be used as Mixin with abstract parts.
+
+    This is way how OpenPype module or addon can tell that has implementation
+    for specific part or for other module/addon.
+
+    Child classes of OpenPypeInterface may be used as mixin in different
+    OpenPype modules which means they have to have implemented methods defined
+    in the interface. By default interface does not have any abstract parts.
+    """
+    pass
+
+
+class MissingInteface(OpenPypeInterface):
+    """Class representing missing interface class.
+
+    Used when interface is not available from currently registered paths.
+    """
+    pass
 
 
 @six.add_metaclass(ABCMeta)
-class PypeModule:
+class OpenPypeModule:
     """Base class of pype module.
 
     Attributes:
@@ -38,7 +335,7 @@ class PypeModule:
     def __init__(self, manager, settings):
         self.manager = manager
 
-        self.log = PypeLogger().get_logger(self.name)
+        self.log = PypeLogger.get_logger(self.name)
 
         self.initialize(settings)
 
@@ -70,265 +367,8 @@ class PypeModule:
         return {}
 
 
-@six.add_metaclass(ABCMeta)
-class IPluginPaths:
-    """Module has plugin paths to return.
-
-    Expected result is dictionary with keys "publish", "create", "load" or
-    "actions" and values as list or string.
-    {
-        "publish": ["path/to/publish_plugins"]
-    }
-    """
-    # TODO validation of an output
-    @abstractmethod
-    def get_plugin_paths(self):
-        pass
-
-
-@six.add_metaclass(ABCMeta)
-class ILaunchHookPaths:
-    """Module has launch hook paths to return.
-
-    Expected result is list of paths.
-    ["path/to/launch_hooks_dir"]
-    """
-
-    @abstractmethod
-    def get_launch_hook_paths(self):
-        pass
-
-
-@six.add_metaclass(ABCMeta)
-class ITrayModule:
-    """Module has special procedures when used in Pype Tray.
-
-    IMPORTANT:
-    The module still must be usable if is not used in tray even if
-    would do nothing.
-    """
-    tray_initialized = False
-    _tray_manager = None
-
-    @abstractmethod
-    def tray_init(self):
-        """Initialization part of tray implementation.
-
-        Triggered between `initialization` and `connect_with_modules`.
-
-        This is where GUIs should be loaded or tray specific parts should be
-        prepared.
-        """
-        pass
-
-    @abstractmethod
-    def tray_menu(self, tray_menu):
-        """Add module's action to tray menu."""
-        pass
-
-    @abstractmethod
-    def tray_start(self):
-        """Start procedure in Pype tray."""
-        pass
-
-    @abstractmethod
-    def tray_exit(self):
-        """Cleanup method which is executed on tray shutdown.
-
-        This is place where all threads should be shut.
-        """
-        pass
-
-    def execute_in_main_thread(self, callback):
-        """ Pushes callback to the queue or process 'callback' on a main thread
-
-            Some callbacks need to be processed on main thread (menu actions
-            must be added on main thread or they won't get triggered etc.)
-        """
-        # called without initialized tray, still main thread needed
-        if not self.tray_initialized:
-            try:
-                callback = self._main_thread_callbacks.popleft()
-                callback()
-            except:
-                self.log.warning(
-                    "Failed to execute {} in main thread".format(callback),
-                    exc_info=True)
-
-            return
-        self.manager.tray_manager.execute_in_main_thread(callback)
-
-    def show_tray_message(self, title, message, icon=None, msecs=None):
-        """Show tray message.
-
-        Args:
-            title (str): Title of message.
-            message (str): Content of message.
-            icon (QSystemTrayIcon.MessageIcon): Message's icon. Default is
-                Information icon, may differ by Qt version.
-            msecs (int): Duration of message visibility in miliseconds.
-                Default is 10000 msecs, may differ by Qt version.
-        """
-        if self._tray_manager:
-            self._tray_manager.show_tray_message(title, message, icon, msecs)
-
-    def add_doubleclick_callback(self, callback):
-        if hasattr(self.manager, "add_doubleclick_callback"):
-            self.manager.add_doubleclick_callback(self, callback)
-
-
-class ITrayAction(ITrayModule):
-    """Implementation of Tray action.
-
-    Add action to tray menu which will trigger `on_action_trigger`.
-    It is expected to be used for showing tools.
-
-    Methods `tray_start`, `tray_exit` and `connect_with_modules` are overriden
-    as it's not expected that action will use them. But it is possible if
-    necessary.
-    """
-
-    admin_action = False
-    _admin_submenu = None
-
-    @property
-    @abstractmethod
-    def label(self):
-        """Service label showed in menu."""
-        pass
-
-    @abstractmethod
-    def on_action_trigger(self):
-        """What happens on actions click."""
-        pass
-
-    def tray_menu(self, tray_menu):
-        from Qt import QtWidgets
-
-        if self.admin_action:
-            menu = self.admin_submenu(tray_menu)
-            action = QtWidgets.QAction(self.label, menu)
-            menu.addAction(action)
-            if not menu.menuAction().isVisible():
-                menu.menuAction().setVisible(True)
-
-        else:
-            action = QtWidgets.QAction(self.label, tray_menu)
-            tray_menu.addAction(action)
-
-        action.triggered.connect(self.on_action_trigger)
-
-    def tray_start(self):
-        return
-
-    def tray_exit(self):
-        return
-
-    @staticmethod
-    def admin_submenu(tray_menu):
-        if ITrayAction._admin_submenu is None:
-            from Qt import QtWidgets
-
-            admin_submenu = QtWidgets.QMenu("Admin", tray_menu)
-            admin_submenu.menuAction().setVisible(False)
-            ITrayAction._admin_submenu = admin_submenu
-        return ITrayAction._admin_submenu
-
-
-class ITrayService(ITrayModule):
-    # Module's property
-    menu_action = None
-
-    # Class properties
-    _services_submenu = None
-    _icon_failed = None
-    _icon_running = None
-    _icon_idle = None
-
-    @property
-    @abstractmethod
-    def label(self):
-        """Service label showed in menu."""
-        pass
-
-    # TODO be able to get any sort of information to show/print
-    # @abstractmethod
-    # def get_service_info(self):
-    #     pass
-
-    @staticmethod
-    def services_submenu(tray_menu):
-        if ITrayService._services_submenu is None:
-            from Qt import QtWidgets
-
-            services_submenu = QtWidgets.QMenu("Services", tray_menu)
-            services_submenu.menuAction().setVisible(False)
-            ITrayService._services_submenu = services_submenu
-        return ITrayService._services_submenu
-
-    @staticmethod
-    def add_service_action(action):
-        ITrayService._services_submenu.addAction(action)
-        if not ITrayService._services_submenu.menuAction().isVisible():
-            ITrayService._services_submenu.menuAction().setVisible(True)
-
-    @staticmethod
-    def _load_service_icons():
-        from Qt import QtGui
-        ITrayService._failed_icon = QtGui.QIcon(
-            resources.get_resource("icons", "circle_red.png")
-        )
-        ITrayService._icon_running = QtGui.QIcon(
-            resources.get_resource("icons", "circle_green.png")
-        )
-        ITrayService._icon_idle = QtGui.QIcon(
-            resources.get_resource("icons", "circle_orange.png")
-        )
-
-    @staticmethod
-    def get_icon_running():
-        if ITrayService._icon_running is None:
-            ITrayService._load_service_icons()
-        return ITrayService._icon_running
-
-    @staticmethod
-    def get_icon_idle():
-        if ITrayService._icon_idle is None:
-            ITrayService._load_service_icons()
-        return ITrayService._icon_idle
-
-    @staticmethod
-    def get_icon_failed():
-        if ITrayService._failed_icon is None:
-            ITrayService._load_service_icons()
-        return ITrayService._failed_icon
-
-    def tray_menu(self, tray_menu):
-        from Qt import QtWidgets
-        action = QtWidgets.QAction(
-            self.label,
-            self.services_submenu(tray_menu)
-        )
-        self.menu_action = action
-
-        self.add_service_action(action)
-
-        self.set_service_running_icon()
-
-    def set_service_running_icon(self):
-        """Change icon of an QAction to green circle."""
-        if self.menu_action:
-            self.menu_action.setIcon(self.get_icon_running())
-
-    def set_service_failed_icon(self):
-        """Change icon of an QAction to red circle."""
-        if self.menu_action:
-            self.menu_action.setIcon(self.get_icon_failed())
-
-    def set_service_idle_icon(self):
-        """Change icon of an QAction to orange circle."""
-        if self.menu_action:
-            self.menu_action.setIcon(self.get_icon_idle())
+class OpenPypeAddOn(OpenPypeModule):
+    pass
 
 
 class ModulesManager:
@@ -357,6 +397,11 @@ class ModulesManager:
 
     def initialize_modules(self):
         """Import and initialize modules."""
+        # Make sure modules are loaded
+        load_modules()
+
+        import openpype_modules
+
         self.log.debug("*** Pype modules initialization.")
         # Prepare settings for modules
         system_settings = getattr(self, "_system_settings", None)
@@ -368,33 +413,43 @@ class ModulesManager:
         time_start = time.time()
         prev_start_time = time_start
 
-        # Go through globals in `pype.modules`
-        for name in dir(openpype.modules):
-            modules_item = getattr(openpype.modules, name, None)
-            # Filter globals that are not classes which inherit from PypeModule
-            if (
-                not inspect.isclass(modules_item)
-                or modules_item is openpype.modules.PypeModule
-                or not issubclass(modules_item, openpype.modules.PypeModule)
-            ):
-                continue
+        module_classes = []
+        for module in openpype_modules:
+            # Go through globals in `pype.modules`
+            for name in dir(module):
+                modules_item = getattr(module, name, None)
+                # Filter globals that are not classes which inherit from
+                #   OpenPypeModule
+                if (
+                    not inspect.isclass(modules_item)
+                    or modules_item is OpenPypeModule
+                    or not issubclass(modules_item, OpenPypeModule)
+                ):
+                    continue
 
-            # Check if class is abstract (Developing purpose)
-            if inspect.isabstract(modules_item):
-                # Find missing implementations by convetion on `abc` module
-                not_implemented = []
-                for attr_name in dir(modules_item):
-                    attr = getattr(modules_item, attr_name, None)
-                    if attr and getattr(attr, "__isabstractmethod__", None):
-                        not_implemented.append(attr_name)
+                # Check if class is abstract (Developing purpose)
+                if inspect.isabstract(modules_item):
+                    # Find missing implementations by convetion on `abc` module
+                    not_implemented = []
+                    for attr_name in dir(modules_item):
+                        attr = getattr(modules_item, attr_name, None)
+                        abs_method = getattr(
+                            attr, "__isabstractmethod__", None
+                        )
+                        if attr and abs_method:
+                            not_implemented.append(attr_name)
 
-                # Log missing implementations
-                self.log.warning((
-                    "Skipping abstract Class: {}. Missing implementations: {}"
-                ).format(name, ", ".join(not_implemented)))
-                continue
+                    # Log missing implementations
+                    self.log.warning((
+                        "Skipping abstract Class: {}."
+                        " Missing implementations: {}"
+                    ).format(name, ", ".join(not_implemented)))
+                    continue
+                module_classes.append(modules_item)
 
+        for modules_item in module_classes:
             try:
+                name = modules_item.__name__
                 # Try initialize module
                 module = modules_item(self, modules_settings)
                 # Store initialized object
@@ -492,6 +547,8 @@ class ModulesManager:
                 and "actions" each containing list of paths.
         """
         # Output structure
+        from openpype_interfaces import IPluginPaths
+
         output = {
             "publish": [],
             "create": [],
@@ -544,6 +601,8 @@ class ModulesManager:
         Returns:
             list: Paths to launch hook directories.
         """
+        from openpype_interfaces import ILaunchHookPaths
+
         str_type = type("")
         expected_types = (list, tuple, set)
 
@@ -711,6 +770,7 @@ class TrayModulesManager(ModulesManager):
         self.modules_by_id = {}
         self.modules_by_name = {}
         self._report = {}
+
         self.tray_manager = None
 
         self.doubleclick_callbacks = {}
@@ -743,6 +803,8 @@ class TrayModulesManager(ModulesManager):
         self.tray_menu(tray_menu)
 
     def get_enabled_tray_modules(self):
+        from openpype_interfaces import ITrayModule
+
         output = []
         for module in self.modules:
             if module.enabled and isinstance(module, ITrayModule):
@@ -818,6 +880,8 @@ class TrayModulesManager(ModulesManager):
             self._report["Tray menu"] = report
 
     def start_modules(self):
+        from openpype_interfaces import ITrayService
+
         report = {}
         time_start = time.time()
         prev_start_time = time_start
