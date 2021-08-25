@@ -96,9 +96,11 @@ def eventserver(debug,
 
 @main.command()
 @click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click.option("-h", "--host", help="Host", default=None)
+@click.option("-p", "--port", help="Port", default=None)
 @click.option("-e", "--executable", help="Executable")
 @click.option("-u", "--upload_dir", help="Upload dir")
-def webpublisherwebserver(debug, executable, upload_dir):
+def webpublisherwebserver(debug, executable, upload_dir, host=None, port=None):
     """Starts webserver for communication with Webpublish FR via command line
 
         OP must be congigured on a machine, eg. OPENPYPE_MONGO filled AND
@@ -111,7 +113,9 @@ def webpublisherwebserver(debug, executable, upload_dir):
 
     PypeCommands().launch_webpublisher_webservercli(
         upload_dir=upload_dir,
-        executable=executable
+        executable=executable,
+        host=host,
+        port=port
     )
 
 
