@@ -17,8 +17,6 @@ from .webpublish_routes import (
     PublishesStatusEndpoint
 )
 
-from openpype.api import get_system_settings
-
 
 log = PypeLogger().get_logger("webserver_gui")
 
@@ -129,7 +127,7 @@ def reprocess_failed(upload_dir, webserver_url):
         try:
             r = requests.post(server_url, json=data)
             log.info("response{}".format(r))
-        except:
+        except Exception:
             log.info("exception", exc_info=True)
 
         dbcon.update_one(

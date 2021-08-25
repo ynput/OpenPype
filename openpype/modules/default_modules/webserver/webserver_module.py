@@ -1,8 +1,5 @@
 import os
 import socket
-from abc import ABCMeta, abstractmethod
-
-import six
 
 from openpype import resources
 from openpype.modules import OpenPypeModule
