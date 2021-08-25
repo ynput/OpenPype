@@ -571,6 +571,8 @@ class PublisherController:
 
     def _start_publish(self):
         """Start or continue in publishing."""
+        if self._publish_is_running:
+            return
         self._publish_is_running = True
         self._trigger_callbacks(self._publish_started_callback_refs)
         self._main_thread_processor.start()
