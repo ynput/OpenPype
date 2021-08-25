@@ -3,8 +3,12 @@ import uuid
 
 from Qt import QtWidgets, QtCore, QtGui
 
+import pyblish.api
 
 ITEM_ID_ROLE = QtCore.Qt.UserRole + 1
+ITEM_IS_GROUP_ROLE = QtCore.Qt.UserRole + 2
+PLUGIN_SKIPPED_ROLE = QtCore.Qt.UserRole + 3
+PLUGIN_ERRORED_ROLE = QtCore.Qt.UserRole + 4
 
 
 class PluginItem:
@@ -17,9 +21,14 @@ class PluginItem:
         self.skipped = plugin_data["skipped"]
 
         logs = []
+        errored = False
         for instance_data in plugin_data["instances_data"]:
-            logs.extend(copy.deepcopy(instance_data["logs"]))
+            for log_item in instance_data["logs"]:
+                if not errored:
+                    errored = log_item["type"] == "error"
+                logs.append(copy.deepcopy(log_item))
 
+        self.errored = errored
         self.logs = logs
 
     @property
@@ -103,6 +112,7 @@ class InstancesModel(QtGui.QStandardItemModel):
             for instance_item in instance_items:
                 item = QtGui.QStandardItem(instance_item.label)
                 item.setData(instance_item.id, ITEM_ID_ROLE)
+                item.setData(False, ITEM_IS_GROUP_ROLE)
                 items.append(item)
 
             if family is None:
@@ -110,6 +120,8 @@ class InstancesModel(QtGui.QStandardItemModel):
                 continue
 
             family_item = QtGui.QStandardItem(family)
+            family_item.setFlags(QtCore.Qt.ItemIsEnabled)
+            family_item.setData(True, ITEM_IS_GROUP_ROLE)
             family_item.appendRows(items)
             family_items.append(family_item)
 
@@ -117,19 +129,86 @@ class InstancesModel(QtGui.QStandardItemModel):
 
 
 class PluginsModel(QtGui.QStandardItemModel):
+    order_label_mapping = (
+        (pyblish.api.CollectorOrder + 0.5, "Collect"),
+        (pyblish.api.ValidatorOrder + 0.5, "Validate"),
+        (pyblish.api.ExtractorOrder + 0.5, "Extract"),
+        (pyblish.api.IntegratorOrder + 0.5, "Integrate"),
+        (None, "Other")
+    )
+
     def set_report(self, report_item):
         self.clear()
 
         root_item = self.invisibleRootItem()
 
-        items = []
+        labels_iter = iter(self.order_label_mapping)
+        cur_order, cur_label = next(labels_iter)
+        cur_plugin_items = []
+
+        plugin_items_by_group_labels = []
+        plugin_items_by_group_labels.append((cur_label, cur_plugin_items))
         for plugin_id in report_item.plugins_id_order:
             plugin_item = report_item.plugins_items_by_id[plugin_id]
-            item = QtGui.QStandardItem(plugin_item.label)
-            item.setData(plugin_item.id, ITEM_ID_ROLE)
-            items.append(item)
+            if cur_order is not None and plugin_item.order >= cur_order:
+                cur_order, cur_label = next(labels_iter)
+                cur_plugin_items = []
+                plugin_items_by_group_labels.append(
+                    (cur_label, cur_plugin_items)
+                )
 
-        root_item.appendRows(items)
+            cur_plugin_items.append(plugin_item)
+
+        group_items = []
+        for group_label, plugin_items in plugin_items_by_group_labels:
+            group_item = QtGui.QStandardItem(group_label)
+            group_item.setData(True, ITEM_IS_GROUP_ROLE)
+            group_item.setFlags(QtCore.Qt.ItemIsEnabled)
+            group_items.append(group_item)
+
+            if not plugin_items:
+                continue
+
+            items = []
+            for plugin_item in plugin_items:
+                item = QtGui.QStandardItem(plugin_item.label)
+                item.setData(False, ITEM_IS_GROUP_ROLE)
+                item.setData(plugin_item.id, ITEM_ID_ROLE)
+                item.setData(plugin_item.skipped, PLUGIN_SKIPPED_ROLE)
+                item.setData(plugin_item.errored, PLUGIN_ERRORED_ROLE)
+                items.append(item)
+            group_item.appendRows(items)
+
+        root_item.appendRows(group_items)
+
+
+class PluginProxyModel(QtCore.QSortFilterProxyModel):
+    def __init__(self, *args, **kwargs):
+        super(PluginProxyModel, self).__init__(*args, **kwargs)
+
+        self._ignore_skipped = True
+
+    @property
+    def ignore_skipped(self):
+        return self._ignore_skipped
+
+    def set_ignore_skipped(self, value):
+        if value == self._ignore_skipped:
+            return
+        self._ignore_skipped = value
+
+        if self.sourceModel():
+            self.invalidateFilter()
+
+    def filterAcceptsRow(self, row, parent):
+        model = self.sourceModel()
+        source_index = model.index(row, 0, parent)
+        if source_index.data(ITEM_IS_GROUP_ROLE):
+            return model.rowCount(source_index) > 0
+
+        if self._ignore_skipped and source_index.data(PLUGIN_SKIPPED_ROLE):
+            return False
+        return True
 
 
 class DetailsWidget(QtWidgets.QWidget):
@@ -172,7 +251,10 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         super(PublishLogViewerWidget, self).__init__(parent)
 
         instances_model = InstancesModel()
+
         plugins_model = PluginsModel()
+        plugins_proxy = PluginProxyModel()
+        plugins_proxy.setSourceModel(plugins_model)
 
         instances_view = QtWidgets.QTreeView(self)
         instances_view.setModel(instances_model)
@@ -180,18 +262,26 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         instances_view.setHeaderHidden(True)
         instances_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
 
+        skipped_plugins_check = QtWidgets.QCheckBox(
+            "Ignore skipped plugins", self
+        )
+        skipped_plugins_check.setChecked(
+            plugins_proxy.ignore_skipped
+        )
+
         plugins_view = QtWidgets.QTreeView(self)
-        plugins_view.setModel(plugins_model)
+        plugins_view.setModel(plugins_proxy)
         # plugins_view.setIndentation(0)
         plugins_view.setHeaderHidden(True)
         plugins_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
 
         details_widget = DetailsWidget(self)
 
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.addWidget(instances_view)
-        layout.addWidget(plugins_view)
-        layout.addWidget(details_widget, 1)
+        layout = QtWidgets.QGridLayout(self)
+        layout.addWidget(instances_view, 1, 0)
+        layout.addWidget(skipped_plugins_check, 0, 1)
+        layout.addWidget(plugins_view, 1, 1)
+        layout.addWidget(details_widget, 1, 2)
 
         instances_view.selectionModel().selectionChanged.connect(
             self._on_instance_change
@@ -200,15 +290,34 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
             self._on_plugin_change
         )
 
+        skipped_plugins_check.stateChanged.connect(
+            self._on_skipped_plugin_check
+        )
+
         self._ignore_selection_changes = False
         self._report_item = None
         self._details_widget = details_widget
 
         self._instances_view = instances_view
-        self._plugins_view = plugins_view
-
         self._instances_model = instances_model
+
+        self._skipped_plugins_check = skipped_plugins_check
+        self._plugins_view = plugins_view
         self._plugins_model = plugins_model
+        self._plugins_proxy = plugins_proxy
+
+    def set_report(self, report_data):
+        self._ignore_selection_changes = True
+
+        report_item = PublishReport(report_data)
+        self._report_item = report_item
+
+        self._instances_model.set_report(report_item)
+        self._plugins_model.set_report(report_item)
+
+        self._details_widget.set_logs(report_item.logs)
+
+        self._ignore_selection_changes = False
 
     def _on_instance_change(self, *_args):
         if self._ignore_selection_changes:
@@ -255,15 +364,7 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         plugin_item = self._report_item.plugins_items_by_id[plugin_id]
         self._details_widget.set_logs(plugin_item.logs)
 
-    def set_report(self, report_data):
-        self._ignore_selection_changes = True
-
-        report_item = PublishReport(report_data)
-        self._report_item = report_item
-
-        self._instances_model.set_report(report_item)
-        self._plugins_model.set_report(report_item)
-
-        self._details_widget.set_logs(report_item.logs)
-
-        self._ignore_selection_changes = False
+    def _on_skipped_plugin_check(self):
+        self._plugins_proxy.set_ignore_skipped(
+            self._skipped_plugins_check.isChecked()
+        )
