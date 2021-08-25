@@ -122,7 +122,6 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self.application_manager = ApplicationManager()
 
-        self._groups = {}
         self.default_icon = qtawesome.icon("fa.cube", color="white")
         # Cache of available actions
         self._registered_actions = list()
@@ -186,8 +185,6 @@ class ActionModel(QtGui.QStandardItemModel):
         self.clear()
 
         self.items_by_id.clear()
-        self._groups.clear()
-
         actions = self.filter_compatible_actions(self._registered_actions)
 
         self.beginResetModel()
