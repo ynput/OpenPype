@@ -1,4 +1,46 @@
 {
+    "create": {
+        "CreateAlembicCamera": {
+            "enabled": true,
+            "defaults": []
+        },
+        "CreateCompositeSequence": {
+            "enabled": true,
+            "defaults": []
+        },
+        "CreatePointCache": {
+            "enabled": true,
+            "defaults": []
+        },
+        "CreateRedshiftROP": {
+            "enabled": true,
+            "defaults": []
+        },
+        "CreateRemotePublish": {
+            "enabled": true,
+            "defaults": []
+        },
+        "CreateVDBCache": {
+            "enabled": true,
+            "defaults": []
+        },
+        "CreateUSD": {
+            "enabled": false,
+            "defaults": []
+        },
+        "CreateUSDModel": {
+            "enabled": false,
+            "defaults": []
+        },
+        "USDCreateShadingWorkspace": {
+            "enabled": false,
+            "defaults": []
+        },
+        "CreateUSDRender": {
+            "enabled": false,
+            "defaults": []
+        }
+    },
     "publish": {
         "ValidateContainers": {
             "enabled": true,

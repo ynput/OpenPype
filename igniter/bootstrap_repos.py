@@ -508,7 +508,7 @@ class BootstrapRepos:
                 processed_path = file
                 self._print(f"- processing {processed_path}")
 
-                zip_file.write(file, file.relative_to(openpype_root))
+                zip_file.write(file, file.resolve().relative_to(openpype_root))
 
             # test if zip is ok
             zip_file.testzip()
