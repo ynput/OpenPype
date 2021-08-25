@@ -3,7 +3,7 @@ import sys
 import types
 
 import six
-import pyblish.logic
+import pyblish.plugin
 
 
 class DiscoverResult:
@@ -46,12 +46,12 @@ def publish_plugins_discover(paths=None):
     plugins = dict()
     plugin_names = []
 
-    allow_duplicates = pyblish.logic.ALLOW_DUPLICATES
-    log = pyblish.logic.log
+    allow_duplicates = pyblish.plugin.ALLOW_DUPLICATES
+    log = pyblish.plugin.log
 
     # Include plug-ins from registered paths
     if not paths:
-        paths = pyblish.logic.plugin_paths()
+        paths = pyblish.plugin.plugin_paths()
 
     for path in paths:
         path = os.path.normpath(path)
@@ -90,7 +90,7 @@ def publish_plugins_discover(paths=None):
                 log.debug("Skipped: \"%s\" (%s)", mod_name, err)
                 continue
 
-            for plugin in pyblish.logic.plugins_from_module(module):
+            for plugin in pyblish.plugin.plugins_from_module(module):
                 if not allow_duplicates and plugin.__name__ in plugin_names:
                     result.duplicated_plugins.append(plugin)
                     log.debug("Duplicate plug-in found: %s", plugin)
@@ -104,7 +104,7 @@ def publish_plugins_discover(paths=None):
 
     # Include plug-ins from registration.
     # Directly registered plug-ins take precedence.
-    for plugin in pyblish.logic.registered_plugins():
+    for plugin in pyblish.plugin.registered_plugins():
         if not allow_duplicates and plugin.__name__ in plugin_names:
             result.duplicated_plugins.append(plugin)
             log.debug("Duplicate plug-in found: %s", plugin)
@@ -115,10 +115,10 @@ def publish_plugins_discover(paths=None):
         plugins[plugin.__name__] = plugin
 
     plugins = list(plugins.values())
-    pyblish.logic.sort(plugins)  # In-place
+    pyblish.plugin.sort(plugins)  # In-place
 
     # In-place user-defined filter
-    for filter_ in pyblish.logic._registered_plugin_filters:
+    for filter_ in pyblish.plugin._registered_plugin_filters:
         filter_(plugins)
 
     result.plugins = plugins
