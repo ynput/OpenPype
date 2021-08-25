@@ -2,7 +2,7 @@ import collections
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from constants import (
+from ..constants import (
     INSTANCE_ID_ROLE,
     SORT_VALUE_ROLE
 )

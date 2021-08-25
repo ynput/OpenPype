@@ -1,35 +1,9 @@
-import os
-import sys
-
-openpype_dir = ""
-mongo_url = ""
-project_name = ""
-asset_name = ""
-task_name = ""
-host_name = ""
-
-os.environ["OPENPYPE_MONGO"] = mongo_url
-os.environ["AVALON_MONGO"] = mongo_url
-os.environ["AVALON_PROJECT"] = project_name
-os.environ["AVALON_ASSET"] = asset_name
-os.environ["AVALON_TASK"] = task_name
-os.environ["AVALON_APP"] = host_name
-os.environ["OPENPYPE_DATABASE_NAME"] = "openpype"
-os.environ["AVALON_CONFIG"] = "openpype"
-os.environ["AVALON_TIMEOUT"] = "1000"
-os.environ["AVALON_DB"] = "avalon"
-for path in [
-    openpype_dir,
-    r"{}\repos\avalon-core".format(openpype_dir),
-    r"{}\.venv\Lib\site-packages".format(openpype_dir)
-]:
-    sys.path.append(path)
-
 from Qt import QtWidgets
 
 from openpype import style
-from control import PublisherController
-from widgets import (
+
+from .control import PublisherController
+from .widgets import (
     PublishFrame,
     SubsetAttributesWidget,
     InstanceCardView,
@@ -381,16 +355,3 @@ class PublisherWindow(QtWidgets.QWidget):
 
         self.validate_btn.setEnabled(validate_enabled)
         self.publish_btn.setEnabled(publish_enabled)
-
-
-def main():
-    """Main function for testing purposes."""
-
-    app = QtWidgets.QApplication([])
-    window = PublisherWindow()
-    window.show()
-    app.exec_()
-
-
-if __name__ == "__main__":
-    main()

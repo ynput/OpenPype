@@ -26,7 +26,7 @@ __all__ = (
 
     "SubsetAttributesWidget",
 
-    "PublishOverlayFrame",
+    "PublishFrame",
 
     "CreateDialog",
 
