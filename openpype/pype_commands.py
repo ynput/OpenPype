@@ -157,11 +157,12 @@ class PypeCommands:
 
         os.environ["OPENPYPE_PUBLISH_DATA"] = batch_path
         os.environ["AVALON_PROJECT"] = project
-        os.environ["AVALON_APP"] = host  # to trigger proper plugings
+        os.environ["AVALON_APP"] = host
 
-        # this should be more generic
-        from openpype.hosts.webpublisher.api import install as w_install
-        w_install()
+        import avalon.api
+        from openpype.hosts import webpublisher
+
+        avalon.api.install(webpublisher)
 
         log.info("Running publish ...")
 
