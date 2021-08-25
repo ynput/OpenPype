@@ -9,7 +9,7 @@ import itertools
 from datetime import datetime
 
 from avalon import style
-from openpype.modules.webserver import host_console_listener
+from openpype_modules.webserver import host_console_listener
 
 from Qt import QtWidgets, QtCore
 
