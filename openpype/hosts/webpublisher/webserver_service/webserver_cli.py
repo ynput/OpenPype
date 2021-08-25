@@ -29,8 +29,8 @@ def run_webserver(*args, **kwargs):
 
     manager = ModulesManager()
     webserver_module = manager.modules_by_name["webserver"]
-    host = os.environ.get("WEBSERVER_HOST_IP")
-    port = 8079
+    host = kwargs.get("host") or "localhost"
+    port = kwargs.get("port") or 8079
     server_manager = webserver_module.create_new_server_manager(port, host)
     webserver_url = server_manager.url
 
