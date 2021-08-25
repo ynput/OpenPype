@@ -710,6 +710,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 
 #PublishInfoFrame QLabel {
     color: black;
+    font-style: bold;
 }
 
 #PublishInfoMainLabel {

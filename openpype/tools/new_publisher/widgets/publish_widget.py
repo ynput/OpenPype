@@ -137,7 +137,7 @@ class PublishFrame(QtWidgets.QFrame):
         self._change_bg_property()
         self._set_progress_visibility(True)
 
-        self.main_label.setText("Hit publish! (if you want)")
+        self.main_label.setText("Hit publish (play button)! If you want")
         self.message_label.setText("")
         self.message_label_bottom.setText("")
         self.copy_log_btn.setVisible(False)
@@ -223,19 +223,32 @@ class PublishFrame(QtWidgets.QFrame):
         self.publish_btn.setEnabled(publish_enabled)
 
         error = self.controller.get_publish_crash_error()
+        validation_errors = self.controller.get_validation_errors()
         if error:
             self._set_error(error)
-            return
 
-        validation_errors = self.controller.get_validation_errors()
-        if validation_errors:
+        elif validation_errors:
             self._set_progress_visibility(False)
             self._change_bg_property(1)
             self._set_validation_errors(validation_errors)
-            return
 
-        if self.controller.publish_has_finished:
+        elif self.controller.publish_has_finished:
             self._set_finished()
+
+        else:
+            self._set_stopped()
+
+    def _set_stopped(self):
+        main_label = "Publish paused"
+        if self.controller.publish_has_validated:
+            main_label += " - Validation passed"
+
+        self.main_label.setText(main_label)
+        self.message_label.setText(
+            "Hit publish (play button) to continue."
+        )
+
+        self._set_success_property(-1)
 
     def _set_error(self, error):
         self.main_label.setText("Error happened")
