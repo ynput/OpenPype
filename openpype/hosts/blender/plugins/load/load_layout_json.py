@@ -1,122 +1,113 @@
-"""Load an asset in Blender from an Alembic file."""
+"""Load a layout in Blender."""
 
 from pathlib import Path
 from pprint import pformat
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import bpy
+import json
 
 from avalon import api
-from avalon.blender import lib
 from avalon.blender.pipeline import AVALON_CONTAINERS
 from avalon.blender.pipeline import AVALON_CONTAINER_ID
 from avalon.blender.pipeline import AVALON_PROPERTY
+from avalon.blender.pipeline import AVALON_INSTANCES
 from openpype.hosts.blender.api import plugin
 
 
-class CacheModelLoader(plugin.AssetLoader):
-    """Load cache models.
+class JsonLayoutLoader(plugin.AssetLoader):
+    """Load layout published from Unreal."""
 
-    Stores the imported asset in a collection named after the asset.
+    families = ["layout"]
+    representations = ["json"]
 
-    Note:
-        At least for now it only supports Alembic files.
-    """
-
-    families = ["model", "pointcache"]
-    representations = ["abc"]
-
-    label = "Load Alembic"
+    label = "Load Layout"
     icon = "code-fork"
     color = "orange"
 
+    animation_creator_name = "CreateAnimation"
+
     def _remove(self, asset_group):
         objects = list(asset_group.children)
-        empties = []
 
         for obj in objects:
-            if obj.type == 'MESH':
-                for material_slot in list(obj.material_slots):
-                    bpy.data.materials.remove(material_slot.material)
-                bpy.data.meshes.remove(obj.data)
-            elif obj.type == 'EMPTY':
-                objects.extend(obj.children)
-                empties.append(obj)
+            api.remove(obj.get(AVALON_PROPERTY))
 
-        for empty in empties:
-            bpy.data.objects.remove(empty)
+    def _remove_animation_instances(self, asset_group):
+        instances = bpy.data.collections.get(AVALON_INSTANCES)
+        if instances:
+            for obj in list(asset_group.children):
+                anim_collection = instances.children.get(
+                    obj.name + "_animation")
+                if anim_collection:
+                    bpy.data.collections.remove(anim_collection)
 
-    def _process(self, libpath, asset_group, group_name):
+    def _get_loader(self, loaders, family):
+        name = ""
+        if family == 'rig':
+            name = "BlendRigLoader"
+        elif family == 'model':
+            name = "BlendModelLoader"
+
+        if name == "":
+            return None
+
+        for loader in loaders:
+            if loader.__name__ == name:
+                return loader
+
+        return None
+
+    def _process(self, libpath, asset, asset_group, actions):
         bpy.ops.object.select_all(action='DESELECT')
 
-        collection = bpy.context.view_layer.active_layer_collection.collection
+        with open(libpath, "r") as fp:
+            data = json.load(fp)
 
-        relative = bpy.context.preferences.filepaths.use_relative_paths
-        bpy.ops.wm.alembic_import(
-            filepath=libpath,
-            relative_path=relative
-        )
+        all_loaders = api.discover(api.Loader)
 
-        parent = bpy.context.scene.collection
+        for element in data:
+            reference = element.get('reference')
+            family = element.get('family')
 
-        imported = lib.get_selection()
+            loaders = api.loaders_from_representation(all_loaders, reference)
+            loader = self._get_loader(loaders, family)
 
-        empties = [obj for obj in imported if obj.type == 'EMPTY']
+            if not loader:
+                continue
 
-        container = None
+            instance_name = element.get('instance_name')
 
-        for empty in empties:
-            if not empty.parent:
-                container = empty
-                break
+            action = None
 
-        assert container, "No asset group found"
+            if actions:
+                action = actions.get(instance_name, None)
 
-        # Children must be linked before parents,
-        # otherwise the hierarchy will break
-        objects = []
-        nodes = list(container.children)
+            options = {
+                'parent': asset_group,
+                'transform': element.get('transform'),
+                'action': action,
+                'create_animation': True if family == 'rig' else False,
+                'animation_asset': asset
+            }
 
-        for obj in nodes:
-            obj.parent = asset_group
+            # This should return the loaded asset, but the load call will be
+            # added to the queue to run in the Blender main thread, so
+            # at this time it will not return anything. The assets will be
+            # loaded in the next Blender cycle, so we use the options to
+            # set the transform, parent and assign the action, if there is one.
+            api.load(
+                loader,
+                reference,
+                namespace=instance_name,
+                options=options
+            )
 
-        bpy.data.objects.remove(container)
-
-        for obj in nodes:
-            objects.append(obj)
-            nodes.extend(list(obj.children))
-
-        objects.reverse()
-
-        for obj in objects:
-            parent.objects.link(obj)
-            collection.objects.unlink(obj)
-
-        for obj in objects:
-            name = obj.name
-            obj.name = f"{group_name}:{name}"
-            if obj.type != 'EMPTY':
-                name_data = obj.data.name
-                obj.data.name = f"{group_name}:{name_data}"
-
-                for material_slot in obj.material_slots:
-                    name_mat = material_slot.material.name
-                    material_slot.material.name = f"{group_name}:{name_mat}"
-
-            if not obj.get(AVALON_PROPERTY):
-                obj[AVALON_PROPERTY] = dict()
-
-            avalon_info = obj[AVALON_PROPERTY]
-            avalon_info.update({"container_name": group_name})
-
-        bpy.ops.object.select_all(action='DESELECT')
-
-        return objects
-
-    def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> Optional[List]:
+    def process_asset(self,
+                      context: dict,
+                      name: str,
+                      namespace: Optional[str] = None,
+                      options: Optional[Dict] = None):
         """
         Arguments:
             name: Use pre-defined name
@@ -124,7 +115,6 @@ class CacheModelLoader(plugin.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
@@ -140,9 +130,10 @@ class CacheModelLoader(plugin.AssetLoader):
             bpy.context.scene.collection.children.link(avalon_container)
 
         asset_group = bpy.data.objects.new(group_name, object_data=None)
+        asset_group.empty_display_type = 'SINGLE_ARROW'
         avalon_container.objects.link(asset_group)
 
-        objects = self._process(libpath, asset_group, group_name)
+        self._process(libpath, asset, asset_group, None)
 
         bpy.context.scene.collection.objects.link(asset_group)
 
@@ -160,8 +151,8 @@ class CacheModelLoader(plugin.AssetLoader):
             "objectName": group_name
         }
 
-        self[:] = objects
-        return objects
+        self[:] = asset_group.children
+        return asset_group.children
 
     def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset.
@@ -171,9 +162,6 @@ class CacheModelLoader(plugin.AssetLoader):
         If the objects of the collection are used in another collection they
         will not be removed, only unlinked. Normally this should not be the
         case though.
-
-        Warning:
-            No nested collections are supported at the moment!
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
@@ -217,10 +205,30 @@ class CacheModelLoader(plugin.AssetLoader):
             self.log.info("Library already loaded, not updating...")
             return
 
+        actions = {}
+
+        for obj in asset_group.children:
+            obj_meta = obj.get(AVALON_PROPERTY)
+            if obj_meta.get('family') == 'rig':
+                rig = None
+                for child in obj.children:
+                    if child.type == 'ARMATURE':
+                        rig = child
+                        break
+                if not rig:
+                    raise Exception("No armature in the rig asset group.")
+                if rig.animation_data and rig.animation_data.action:
+                    namespace = obj_meta.get('namespace')
+                    actions[namespace] = rig.animation_data.action
+
         mat = asset_group.matrix_basis.copy()
+
+        self._remove_animation_instances(asset_group)
+
         self._remove(asset_group)
 
-        self._process(str(libpath), asset_group, object_name)
+        self._process(str(libpath), asset_group, actions)
+
         asset_group.matrix_basis = mat
 
         metadata["libpath"] = str(libpath)
@@ -235,15 +243,14 @@ class CacheModelLoader(plugin.AssetLoader):
 
         Returns:
             bool: Whether the container was deleted.
-
-        Warning:
-            No nested collections are supported at the moment!
         """
         object_name = container["objectName"]
         asset_group = bpy.data.objects.get(object_name)
 
         if not asset_group:
             return False
+
+        self._remove_animation_instances(asset_group)
 
         self._remove(asset_group)
 
