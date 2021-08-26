@@ -138,6 +138,8 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self._registered_actions = actions
 
+        self.filter_actions()
+
     def get_application_actions(self):
         actions = []
         if not self.dbcon.Session.get("AVALON_PROJECT"):
