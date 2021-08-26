@@ -628,7 +628,7 @@ class FilesWidget(QtWidgets.QWidget):
         result = messagebox.exec_()
         if result == messagebox.Yes:
             return True
-        elif result == messagebox.No:
+        if result == messagebox.No:
             return False
         return None
 
@@ -950,7 +950,7 @@ class Window(QtWidgets.QMainWindow):
         assets_widget = AssetWidget(io, parent=home_body_widget)
         assets_widget.set_current_asset_btn_visibility(True)
 
-        tasks_widget = TasksWidget(home_body_widget)
+        tasks_widget = TasksWidget(io, home_body_widget)
         files_widget = FilesWidget(home_body_widget)
         side_panel = SidePanelWidget(home_body_widget)
 
