@@ -12,10 +12,15 @@ from avalon import style, io, api, pipeline
 
 from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget
-from avalon.tools.models import TasksModel
 from avalon.tools.delegates import PrettyTimeDelegate
 
-from .model import FilesModel
+from .model import (
+    TASK_NAME_ROLE,
+    TASK_TYPE_ROLE,
+    FilesModel,
+    TasksModel,
+    TasksProxyModel
+)
 from .view import FilesView
 
 from openpype.lib import (
@@ -313,32 +318,30 @@ class TasksWidget(QtWidgets.QWidget):
 
     task_changed = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, dbcon=None, parent=None):
         super(TasksWidget, self).__init__(parent)
-        self.setContentsMargins(0, 0, 0, 0)
 
-        view = QtWidgets.QTreeView()
-        view.setIndentation(0)
-        model = TasksModel(io)
-        view.setModel(model)
+        tasks_view = QtWidgets.QTreeView(self)
+        tasks_view.setIndentation(0)
+        tasks_view.setSortingEnabled(True)
+        if dbcon is None:
+            dbcon = io
+
+        tasks_model = TasksModel(dbcon)
+        tasks_proxy = TasksProxyModel()
+        tasks_proxy.setSourceModel(tasks_model)
+        tasks_view.setModel(tasks_proxy)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(view)
+        layout.addWidget(tasks_view)
 
-        # Hide the default tasks "count" as we don't need that data here.
-        view.setColumnHidden(1, True)
+        selection_model = tasks_view.selectionModel()
+        selection_model.currentChanged.connect(self.task_changed)
 
-        selection = view.selectionModel()
-        selection.currentChanged.connect(self.task_changed)
-
-        self.models = {
-            "tasks": model
-        }
-
-        self.widgets = {
-            "view": view,
-        }
+        self._tasks_model = tasks_model
+        self._tasks_proxy = tasks_proxy
+        self._tasks_view = tasks_view
 
         self._last_selected_task = None
 
@@ -354,7 +357,7 @@ class TasksWidget(QtWidgets.QWidget):
         if current:
             self._last_selected_task = current
 
-        self.models["tasks"].set_assets(asset_docs=[asset])
+        self._tasks_model.set_asset(asset_doc)
 
         if self._last_selected_task:
             self.select_task(self._last_selected_task)
@@ -374,21 +377,20 @@ class TasksWidget(QtWidgets.QWidget):
         """
 
         # Clear selection
-        view = self.widgets["view"]
-        model = view.model()
-        selection_model = view.selectionModel()
+        selection_model = self._tasks_view.selectionModel()
         selection_model.clearSelection()
 
         # Select the task
         mode = selection_model.Select | selection_model.Rows
-        for row in range(model.rowCount(QtCore.QModelIndex())):
-            index = model.index(row, 0, QtCore.QModelIndex())
+        for row in range(self._tasks_model.rowCount()):
+            index = self._tasks_model.index(row, 0)
             name = index.data(QtCore.Qt.DisplayRole)
-            if name == task:
+            if name == task_name:
                 selection_model.select(index, mode)
 
                 # Set the currently active index
-                view.setCurrentIndex(index)
+                self._tasks_view.setCurrentIndex(index)
+                break
 
     def get_current_task(self):
         """Return name of task at current index (selected)
@@ -397,16 +399,12 @@ class TasksWidget(QtWidgets.QWidget):
             str: Name of the current task.
 
         """
-        view = self.widgets["view"]
-        index = view.currentIndex()
-        index = index.sibling(index.row(), 0)  # ensure column zero for name
+        index = self._tasks_view.currentIndex()
+        selection_model = self._tasks_view.selectionModel()
+        if index.isValid() and selection_model.isSelected(index):
+            return index.data(TASK_NAME_ROLE)
+        return None
 
-        selection = view.selectionModel()
-        if selection.isSelected(index):
-            # Ignore when the current task is not selected as the "No task"
-            # placeholder might be the current index even though it's
-            # disallowed to be selected. So we only return if it is selected.
-            return index.data(QtCore.Qt.DisplayRole)
 
 
 class FilesWidget(QtWidgets.QWidget):
