@@ -89,6 +89,25 @@ class DictImmutableKeysWidget(BaseWidget):
 
             self._prepare_entity_layouts(child["children"], wrapper)
 
+    def set_focus(self, scroll_to=False):
+        """Set focus of a widget.
+
+        Args:
+            scroll_to(bool): Also scroll to widget in category widget.
+        """
+        if self.body_widget:
+            if scroll_to:
+                self.scroll_to(self.body_widget.top_part)
+            self.body_widget.top_part.setFocus()
+
+        else:
+            if scroll_to:
+                if not self.input_fields:
+                    self.scroll_to(self)
+                else:
+                    self.scroll_to(self.input_fields[0])
+            self.setFocus()
+
     def _ui_item_base(self):
         self.setObjectName("DictInvisible")
 

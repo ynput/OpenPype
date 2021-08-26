@@ -221,6 +221,8 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.main_layout.setSpacing(0)
         self.main_layout.addWidget(top_part)
 
+        self.top_part = top_part
+
     def hide_toolbox(self, hide_content=False):
         self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
         self.toolbox_hidden = True
