@@ -126,10 +126,14 @@ class NameWindow(QtWidgets.QDialog):
         #   for "{version".
         if "{version" in self.template:
             inputs_layout.addRow("Version:", version_widget)
+        else:
+            version_widget.setVisible(False)
 
         # Add subversion only if template containt `{comment}`
         if "{comment}" in self.template:
             inputs_layout.addRow("Subversion:", subversion_input)
+        else:
+            subversion_input.setVisible(False)
         inputs_layout.addRow("Extension:", ext_combo)
         inputs_layout.addRow("Preview:", preview_label)
 
