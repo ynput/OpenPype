@@ -521,10 +521,36 @@ class AnatomyTemplatesEnumEntity(BaseEnumEntity):
         valid_keys = set()
         enum_items_list = []
 
-        for key, value in templates_entity.items():
-            enum_items_list.append(
-                {key: key})
+        others_entity = None
+        for key, entity in templates_entity.items():
+            # Skip defaults key
+            if key == "defaults":
+                continue
+
+            if key == "others":
+                others_entity = entity
+                continue
+
+            label = key
+            if hasattr(entity, "label"):
+                label = entity.label or label
+
+            enum_items_list.append({key: label})
             valid_keys.add(key)
+
+        if others_entity is not None:
+            print(others_entity)
+            get_child_label_func = getattr(
+                others_entity, "get_child_label", None
+            )
+            for key, child_entity in others_entity.items():
+                label = key
+                if callable(get_child_label_func):
+                    label = get_child_label_func(child_entity) or label
+
+                enum_items_list.append({key: label})
+                valid_keys.add(key)
+
         return enum_items_list, valid_keys
 
     def set_override_state(self, *args, **kwargs):
