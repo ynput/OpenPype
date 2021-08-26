@@ -344,6 +344,70 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
     return version_doc
 
 
+def get_workfile_template_key_from_context(
+    project_name, asset_name, task_name, host_name,
+    dbcon=None, project_settings=None
+):
+    if not dbcon:
+        from avalon.api import AvalonMongoDB
+
+        dbcon = AvalonMongoDB()
+
+    dbcon.Session["AVALON_PROJECT"] = project_name
+    asset_doc = dbcon.find_one(
+        {
+            "type": "asset",
+            "name": asset_name
+        },
+        {
+            "data.tasks": 1
+        }
+    )
+    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+    task_info = asset_tasks.get(task_name) or {}
+    task_type = task_info.get("type")
+
+    return get_workfile_template_key(
+        project_name, task_type, host_name, project_settings
+    )
+
+
+def get_workfile_template_key(
+    project_name, task_type, host_name, project_settings=None
+):
+    default = "work"
+    if not task_type or not host_name:
+        return default
+
+    if not project_settings:
+        project_settings = get_project_settings(project_name)
+
+    try:
+        profiles = (
+            project_settings
+            ["global"]
+            ["tools"]
+            ["Workfiles"]
+            ["workfile_template_profiles"]
+        )
+    except Exception:
+        profiles = []
+
+    if not profiles:
+        return default
+
+    from .profiles_filtering import filter_profiles
+
+    profile_filter = {
+        "task_types": task_type,
+        "hosts": host_name
+    }
+    profile = filter_profiles(profiles, profile_filter)
+    if profile:
+        return profile["workfile_template"] or default
+    return default
+
+
 def get_workdir_data(project_doc, asset_doc, task_name, host_name):
     """Prepare data for workdir template filling from entered information.
 
