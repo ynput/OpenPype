@@ -48,6 +48,10 @@ class DictImmutableKeysWidget(BaseWidget):
             self._ui_item_base()
             label = self.entity.label
 
+        # Set stretch of second column to 1
+        if isinstance(self.content_layout, QtWidgets.QGridLayout):
+            self.content_layout.setColumnStretch(1, 1)
+
         self._direct_children_widgets = []
         self._parent_widget_by_entity_id = {}
         self._added_wrapper_ids = set()
