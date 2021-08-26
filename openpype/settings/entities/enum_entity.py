@@ -539,7 +539,6 @@ class AnatomyTemplatesEnumEntity(BaseEnumEntity):
             valid_keys.add(key)
 
         if others_entity is not None:
-            print(others_entity)
             get_child_label_func = getattr(
                 others_entity, "get_child_label", None
             )
