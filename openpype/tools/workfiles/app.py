@@ -28,7 +28,8 @@ from openpype.lib import (
     get_workdir,
     get_workfile_doc,
     create_workfile_doc,
-    save_workfile_data_to_doc
+    save_workfile_data_to_doc,
+    get_workfile_template_key
 )
 
 log = logging.getLogger(__name__)
@@ -547,10 +548,16 @@ class FilesWidget(QtWidgets.QWidget):
         """Return a modified session for the current asset and task"""
 
         session = api.Session.copy()
+        self.template_key = get_workfile_template_key(
+            self._task_type,
+            session["AVALON_APP"],
+            project_name=session["AVALON_PROJECT"]
+        )
         changes = pipeline.compute_session_changes(
             session,
             asset=self._asset,
             task=self._task_name,
+            template_key=self.template_key
         )
         session.update(changes)
 
@@ -564,6 +571,7 @@ class FilesWidget(QtWidgets.QWidget):
             session,
             asset=self._asset,
             task=self._task_name,
+            template_key=self.template_key
         )
         if not changes:
             # Return early if we're already in the right Session context
@@ -742,6 +750,7 @@ class FilesWidget(QtWidgets.QWidget):
             session,
             asset=self._asset,
             task=self._task_name,
+            template_key=self.template_key
         )
         session.update(changes)
 
