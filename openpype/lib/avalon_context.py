@@ -494,7 +494,8 @@ def get_workdir_data(project_doc, asset_doc, task_name, host_name):
 
 
 def get_workdir_with_workdir_data(
-    workdir_data, anatomy=None, project_name=None, template_key=None
+    workdir_data, anatomy=None, project_name=None,
+    template_key=None, dbcon=None
 ):
     """Fill workdir path from entered data and project's anatomy.
 
@@ -508,8 +509,10 @@ def get_workdir_with_workdir_data(
             `project_name` is entered.
         project_name (str): Project's name. Optional if `anatomy` is entered
             otherwise Anatomy object is created with using the project name.
-        template_key (str): Key of work templates in anatomy templates. By
-            default is seto to `"work"`.
+        template_key (str): Key of work templates in anatomy templates. If not
+            passed `get_workfile_template_key_from_context` is used to get it.
+        dbcon(AvalonMongoDB): Mongo connection. Required only if 'template_key'
+            and 'project_name' are not passed.
 
     Returns:
         TemplateResult: Workdir path.
@@ -527,7 +530,13 @@ def get_workdir_with_workdir_data(
         anatomy = Anatomy(project_name)
 
     if not template_key:
-        template_key = "work"
+        template_key = get_workfile_template_key_from_context(
+            workdir_data["asset"],
+            workdir_data["task"],
+            workdir_data["app"],
+            project_name=workdir_data["project"]["name"],
+            dbcon=dbcon
+        )
 
     anatomy_filled = anatomy.format(workdir_data)
     # Output is TemplateResult object which contain usefull data
@@ -568,7 +577,9 @@ def get_workdir(
         project_doc, asset_doc, task_name, host_name
     )
     # Output is TemplateResult object which contain usefull data
-    return get_workdir_with_workdir_data(workdir_data, anatomy, template_key)
+    return get_workdir_with_workdir_data(
+        workdir_data, anatomy, template_key=template_key
+    )
 
 
 @with_avalon
@@ -637,7 +648,9 @@ def create_workfile_doc(asset_doc, task_name, filename, workdir, dbcon=None):
     # Prepare anatomy
     anatomy = Anatomy(project_doc["name"])
     # Get workdir path (result is anatomy.TemplateResult)
-    template_workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
+    template_workdir = get_workdir_with_workdir_data(
+        workdir_data, anatomy, dbcon=dbcon
+    )
     template_workdir_path = str(template_workdir).replace("\\", "/")
 
     # Replace slashses in workdir path where workfile is located
