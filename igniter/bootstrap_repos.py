@@ -446,7 +446,7 @@ class BootstrapRepos:
                     # we need to replace first part of path which starts with
                     # something like `exe.win/linux....` with `openpype` as
                     # this is expected by OpenPype in zip archive.
-                    arc_name = AnyPath().joinpath(*arc_name.parts[1:])
+                    arc_name = AnyPath("").joinpath(*arc_name.parts[1:])
                     zip_file.write(file, arc_name)
 
             destination = self._move_zip_to_data_dir(temp_zip)
