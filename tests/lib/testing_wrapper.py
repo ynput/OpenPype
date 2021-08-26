@@ -72,6 +72,12 @@ class TestCase:
             value = value.format(**all_vars)
             print("Setting {}:{}".format(key, value))
             monkeypatch_session.setenv(key, value)
+        import openpype
+
+        openpype_root = os.path.dirname(os.path.dirname(openpype.__file__))
+        # ?? why 2 of those
+        monkeypatch_session.setenv("OPENPYPE_ROOT", openpype_root)
+        monkeypatch_session.setenv("OPENPYPE_REPOS_ROOT", openpype_root)
 
     @pytest.fixture(scope="module")
     def db_setup(self, download_test_data, env_var, monkeypatch_session):
