@@ -494,3 +494,45 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
             if key in self.valid_keys:
                 new_value.append(key)
         self._current_value = new_value
+
+
+class AnatomyTemplatesEnumEntity(BaseEnumEntity):
+    schema_types = ["anatomy-templates-enum"]
+
+    def _item_initalization(self):
+        self.multiselection = False
+
+        self.enum_items = []
+        self.valid_keys = set()
+
+        enum_default = self.schema_data.get("default") or "work"
+
+        self.value_on_not_set = enum_default
+        self.valid_value_types = (STRING_TYPE,)
+
+        # GUI attribute
+        self.placeholder = self.schema_data.get("placeholder")
+
+    def _get_enum_values(self):
+        templates_entity = self.get_entity_from_path(
+            "project_anatomy/templates"
+        )
+
+        valid_keys = set()
+        enum_items_list = []
+
+        for key, value in templates_entity.items():
+            print(key, value)
+            enum_items_list.append(
+                {key: key})
+            valid_keys.add(key)
+        return enum_items_list, valid_keys
+
+    def set_override_state(self, *args, **kwargs):
+        super(AnatomyTemplatesEnumEntity, self).set_override_state(
+            *args, **kwargs
+        )
+
+        self.enum_items, self.valid_keys = self._get_enum_values()
+        if self._current_value not in self.valid_keys:
+            self._current_value = self.value_on_not_set
