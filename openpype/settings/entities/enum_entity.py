@@ -522,7 +522,6 @@ class AnatomyTemplatesEnumEntity(BaseEnumEntity):
         enum_items_list = []
 
         for key, value in templates_entity.items():
-            print(key, value)
             enum_items_list.append(
                 {key: key})
             valid_keys.add(key)
