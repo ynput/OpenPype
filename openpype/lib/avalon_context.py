@@ -345,15 +345,47 @@ def get_latest_version(asset_name, subset_name, dbcon=None, project_name=None):
 
 
 def get_workfile_template_key_from_context(
-    project_name, asset_name, task_name, host_name,
+    asset_name, task_name, host_name, project_name=None,
     dbcon=None, project_settings=None
 ):
+    """Helper function to get template key for workfile template.
+
+    Do the same as `get_workfile_template_key` but returns value for "session
+    context".
+
+    It is required to pass one of 'dbcon' with already set project name or
+    'project_name' arguments.
+
+    Args:
+        asset_name(str): Name of asset document.
+        task_name(str): Task name for which is template key retrieved.
+            Must be available on asset document under `data.tasks`.
+        host_name(str): Name of host implementation for which is workfile
+            used.
+        project_name(str): Project name where asset and task is. Not required
+            when 'dbcon' is passed.
+        dbcon(AvalonMongoDB): Connection to mongo with already set project
+            under `AVALON_PROJECT`. Not required when 'project_name' is passed.
+        project_settings(dict): Project settings for passed 'project_name'.
+            Not required at all but makes function faster.
+    Raises:
+        ValueError: When both 'dbcon' and 'project_name' were not
+            passed.
+    """
     if not dbcon:
+        if not project_name:
+            raise ValueError((
+                "`get_workfile_template_key_from_context` requires to pass"
+                " one of 'dbcon' or 'project_name' arguments."
+            ))
         from avalon.api import AvalonMongoDB
 
         dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = project_name
 
-    dbcon.Session["AVALON_PROJECT"] = project_name
+    elif not project_name:
+        project_name = dbcon.Session["AVALON_PROJECT"]
+
     asset_doc = dbcon.find_one(
         {
             "type": "asset",
@@ -368,18 +400,43 @@ def get_workfile_template_key_from_context(
     task_type = task_info.get("type")
 
     return get_workfile_template_key(
-        project_name, task_type, host_name, project_settings
+        task_type, host_name, project_name, project_settings
     )
 
 
 def get_workfile_template_key(
-    project_name, task_type, host_name, project_settings=None
+    task_type, host_name, project_name=None, project_settings=None
 ):
+    """Workfile template key which should be used to get workfile template.
+
+    Function is using profiles from project settings to return right template
+    for passet task type and host name.
+
+    One of 'project_name' or 'project_settings' must be passed it is preffered
+    to pass settings if are already available.
+
+    Args:
+        task_type(str): Name of task type.
+        host_name(str): Name of host implementation (e.g. "maya", "nuke", ...)
+        project_name(str): Name of project in which context should look for
+            settings. Not required if `project_settings` are passed.
+        project_settings(dict): Prepare project settings for project name.
+            Not needed if `project_name` is passed.
+
+    Raises:
+        ValueError: When both 'project_name' and 'project_settings' were not
+            passed.
+    """
     default = "work"
     if not task_type or not host_name:
         return default
 
     if not project_settings:
+        if not project_name:
+            raise ValueError((
+                "`get_workfile_template_key` requires to pass"
+                " one of 'project_name' or 'project_settings' arguments."
+            ))
         project_settings = get_project_settings(project_name)
 
     try:
