@@ -434,6 +434,14 @@ class OpenPypeAddOn(OpenPypeModule):
     # Enable Addon by default
     enabled = True
 
+    def initialize(self, module_settings):
+        """Initialization is not be required for most of addons."""
+        pass
+
+    def connect_with_modules(self, enabled_modules):
+        """Do not require to implement connection with modules for addon."""
+        pass
+
 
 class ModulesManager:
     """Manager of Pype modules helps to load and prepare them to work.
