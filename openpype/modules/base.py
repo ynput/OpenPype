@@ -1256,19 +1256,19 @@ class JsonFilesSettingsDef(ModuleSettingsDef):
     across all OpenPype addons/modules. Prefix can be defined with class
     attribute `schema_prefix`.
 
-    Only think which must be implemented in `get_settings_root_dir` which
+    Only think which must be implemented in `get_settings_root_path` which
     should return directory path to `root` (in structure graph above).
     """
     # Possible way how to define `schemas` prefix
     schema_prefix = ""
 
     @abstractmethod
-    def get_settings_root_dir(self):
+    def get_settings_root_path(self):
         """Directory path where settings and it's schemas are located."""
         pass
 
     def __init__(self):
-        settings_root_dir = self.get_settings_root_dir()
+        settings_root_dir = self.get_settings_root_path()
         defaults_dir = os.path.join(
             settings_root_dir, "defaults"
         )
