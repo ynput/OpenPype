@@ -203,6 +203,7 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         refresh_btn.setIcon(refresh_icon)
 
         footer_layout = QtWidgets.QHBoxLayout()
+        footer_layout.setContentsMargins(5, 5, 5, 5)
         if self.user_role == "developer":
             self._add_developer_ui(footer_layout)
 
