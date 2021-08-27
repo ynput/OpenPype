@@ -45,6 +45,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "fusion",
         "tvpaint",
         "resolve",
+        "webpublisher",
         "aftereffects"
     ]
 
@@ -89,7 +90,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 instance.data["representations"].remove(repre)
 
     def main_process(self, instance):
-        host_name = os.environ["AVALON_APP"]
+        host_name = instance.context.data["hostName"]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
 

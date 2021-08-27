@@ -1,21 +1,21 @@
 """Load a rig asset in Blender."""
 
-import logging
 from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
 
-from avalon import api, blender
 import bpy
-import openpype.hosts.blender.api.plugin as plugin
+
+from avalon import api
+from avalon.blender.pipeline import AVALON_CONTAINERS
+from avalon.blender.pipeline import AVALON_CONTAINER_ID
+from avalon.blender.pipeline import AVALON_PROPERTY
+from openpype import lib
+from openpype.hosts.blender.api import plugin
 
 
 class BlendRigLoader(plugin.AssetLoader):
-    """Load rigs from a .blend file.
-
-    Because they come from a .blend file we can simply link the collection that
-    contains the model. There is no further need to 'containerise' it.
-    """
+    """Load rigs from a .blend file."""
 
     families = ["rig"]
     representations = ["blend"]
@@ -24,66 +24,60 @@ class BlendRigLoader(plugin.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    def _remove(self, objects, obj_container):
-        for obj in list(objects):
-            if obj.type == 'ARMATURE':
-                bpy.data.armatures.remove(obj.data)
-            elif obj.type == 'MESH':
+    def _remove(self, asset_group):
+        objects = list(asset_group.children)
+
+        for obj in objects:
+            if obj.type == 'MESH':
+                for material_slot in list(obj.material_slots):
+                    if material_slot.material:
+                        bpy.data.materials.remove(material_slot.material)
                 bpy.data.meshes.remove(obj.data)
+            elif obj.type == 'ARMATURE':
+                objects.extend(obj.children)
+                bpy.data.armatures.remove(obj.data)
             elif obj.type == 'CURVE':
                 bpy.data.curves.remove(obj.data)
+            elif obj.type == 'EMPTY':
+                objects.extend(obj.children)
+                bpy.data.objects.remove(obj)
 
-        for child in obj_container.children:
-            bpy.data.collections.remove(child)
-
-        bpy.data.collections.remove(obj_container)
-
-    def make_local_and_metadata(self, obj, collection_name):
-        local_obj = plugin.prepare_data(obj, collection_name)
-        plugin.prepare_data(local_obj.data, collection_name)
-
-        if not local_obj.get(blender.pipeline.AVALON_PROPERTY):
-            local_obj[blender.pipeline.AVALON_PROPERTY] = dict()
-
-        avalon_info = local_obj[blender.pipeline.AVALON_PROPERTY]
-        avalon_info.update({"container_name": collection_name + '_CON'})
-
-        return local_obj
-
-    def _process(
-        self, libpath, lib_container, collection_name,
-        action, parent_collection
-    ):
-        relative = bpy.context.preferences.filepaths.use_relative_paths
+    def _process(self, libpath, asset_group, group_name, action):
         with bpy.data.libraries.load(
-            libpath, link=True, relative=relative
-        ) as (_, data_to):
-            data_to.collections = [lib_container]
+            libpath, link=True, relative=False
+        ) as (data_from, data_to):
+            data_to.objects = data_from.objects
 
-        parent = parent_collection
+        parent = bpy.context.scene.collection
 
-        if parent is None:
-            parent = bpy.context.scene.collection
+        empties = [obj for obj in data_to.objects if obj.type == 'EMPTY']
 
-        parent.children.link(bpy.data.collections[lib_container])
+        container = None
 
-        rig_container = parent.children[lib_container].make_local()
-        rig_container.name = collection_name
+        for empty in empties:
+            if empty.get(AVALON_PROPERTY):
+                container = empty
+                break
 
+        assert container, "No asset group found"
+
+        # Children must be linked before parents,
+        # otherwise the hierarchy will break
         objects = []
-        armatures = [
-            obj for obj in rig_container.objects
-            if obj.type == 'ARMATURE'
-        ]
+        nodes = list(container.children)
 
-        for child in rig_container.children:
-            local_child = plugin.prepare_data(child, collection_name)
-            objects.extend(local_child.objects)
+        for obj in nodes:
+            obj.parent = asset_group
 
-        # for obj in bpy.data.objects:
-        #     obj.select_set(False)
+        for obj in nodes:
+            objects.append(obj)
+            nodes.extend(list(obj.children))
+
+        objects.reverse()
 
         constraints = []
+
+        armatures = [obj for obj in objects if obj.type == 'ARMATURE']
 
         for armature in armatures:
             for bone in armature.pose.bones:
@@ -91,38 +85,52 @@ class BlendRigLoader(plugin.AssetLoader):
                     if hasattr(constraint, 'target'):
                         constraints.append(constraint)
 
-        # Link armatures after other objects.
-        # The armature is unparented for all the non-local meshes,
-        # when it is made local.
         for obj in objects:
-            local_obj = self.make_local_and_metadata(obj, collection_name)
+            parent.objects.link(obj)
 
-            if obj != local_obj:
-                for constraint in constraints:
-                    if constraint.target == obj:
-                        constraint.target = local_obj
+        for obj in objects:
+            local_obj = plugin.prepare_data(obj, group_name)
 
-        for armature in armatures:
-            local_obj = self.make_local_and_metadata(armature, collection_name)
+            if local_obj.type == 'MESH':
+                plugin.prepare_data(local_obj.data, group_name)
 
-            if action is not None:
-                local_obj.animation_data.action = action
-            elif local_obj.animation_data.action is not None:
-                plugin.prepare_data(
-                    local_obj.animation_data.action, collection_name)
+                if obj != local_obj:
+                    for constraint in constraints:
+                        if constraint.target == obj:
+                            constraint.target = local_obj
 
-            # Set link the drivers to the local object
-            if local_obj.data.animation_data:
-                for d in local_obj.data.animation_data.drivers:
-                    for v in d.driver.variables:
-                        for t in v.targets:
-                            t.id = local_obj
+                for material_slot in local_obj.material_slots:
+                    if material_slot.material:
+                        plugin.prepare_data(material_slot.material, group_name)
+            elif local_obj.type == 'ARMATURE':
+                plugin.prepare_data(local_obj.data, group_name)
 
-        rig_container.pop(blender.pipeline.AVALON_PROPERTY)
+                if action is not None:
+                    local_obj.animation_data.action = action
+                elif local_obj.animation_data.action is not None:
+                    plugin.prepare_data(
+                        local_obj.animation_data.action, group_name)
+
+                # Set link the drivers to the local object
+                if local_obj.data.animation_data:
+                    for d in local_obj.data.animation_data.drivers:
+                        for v in d.driver.variables:
+                            for t in v.targets:
+                                t.id = local_obj
+
+            if not local_obj.get(AVALON_PROPERTY):
+                local_obj[AVALON_PROPERTY] = dict()
+
+            avalon_info = local_obj[AVALON_PROPERTY]
+            avalon_info.update({"container_name": group_name})
+
+        objects.reverse()
+
+        bpy.data.orphans_purge(do_local_ids=False)
 
         bpy.ops.object.select_all(action='DESELECT')
 
-        return rig_container
+        return objects
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -138,61 +146,111 @@ class BlendRigLoader(plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        lib_container = plugin.asset_name(
-            asset, subset
-        )
-        unique_number = plugin.get_unique_number(
-            asset, subset
-        )
+
+        asset_name = plugin.asset_name(asset, subset)
+        unique_number = plugin.get_unique_number(asset, subset)
+        group_name = plugin.asset_name(asset, subset, unique_number)
         namespace = namespace or f"{asset}_{unique_number}"
-        collection_name = plugin.asset_name(
-            asset, subset, unique_number
-        )
 
-        container = bpy.data.collections.new(collection_name)
-        blender.pipeline.containerise_existing(
-            container,
-            name,
-            namespace,
-            context,
-            self.__class__.__name__,
-        )
+        avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
+        if not avalon_container:
+            avalon_container = bpy.data.collections.new(name=AVALON_CONTAINERS)
+            bpy.context.scene.collection.children.link(avalon_container)
 
-        metadata = container.get(blender.pipeline.AVALON_PROPERTY)
+        asset_group = bpy.data.objects.new(group_name, object_data=None)
+        asset_group.empty_display_type = 'SINGLE_ARROW'
+        avalon_container.objects.link(asset_group)
 
-        metadata["libpath"] = libpath
-        metadata["lib_container"] = lib_container
+        action = None
 
-        obj_container = self._process(
-            libpath, lib_container, collection_name, None, None)
+        bpy.ops.object.select_all(action='DESELECT')
 
-        metadata["obj_container"] = obj_container
-        # Save the list of objects in the metadata container
-        metadata["objects"] = obj_container.all_objects
+        create_animation = False
 
-        metadata["parent"] = str(context["representation"]["parent"])
-        metadata["family"] = context["representation"]["context"]["family"]
+        if options is not None:
+            parent = options.get('parent')
+            transform = options.get('transform')
+            action = options.get('action')
+            create_animation = options.get('create_animation')
 
-        nodes = list(container.objects)
-        nodes.append(container)
-        self[:] = nodes
-        return nodes
+            if parent and transform:
+                location = transform.get('translation')
+                rotation = transform.get('rotation')
+                scale = transform.get('scale')
 
-    def update(self, container: Dict, representation: Dict):
+                asset_group.location = (
+                    location.get('x'),
+                    location.get('y'),
+                    location.get('z')
+                )
+                asset_group.rotation_euler = (
+                    rotation.get('x'),
+                    rotation.get('y'),
+                    rotation.get('z')
+                )
+                asset_group.scale = (
+                    scale.get('x'),
+                    scale.get('y'),
+                    scale.get('z')
+                )
+
+                bpy.context.view_layer.objects.active = parent
+                asset_group.select_set(True)
+
+                bpy.ops.object.parent_set(keep_transform=True)
+
+                bpy.ops.object.select_all(action='DESELECT')
+
+        objects = self._process(libpath, asset_group, group_name, action)
+
+        if create_animation:
+            creator_plugin = lib.get_creator_by_name("CreateAnimation")
+            if not creator_plugin:
+                raise ValueError("Creator plugin \"CreateAnimation\" was "
+                                 "not found.")
+
+            asset_group.select_set(True)
+
+            animation_asset = options.get('animation_asset')
+
+            api.create(
+                creator_plugin,
+                name=namespace + "_animation",
+                # name=f"{unique_number}_{subset}_animation",
+                asset=animation_asset,
+                options={"useSelection": False, "asset_group": asset_group},
+                data={"dependencies": str(context["representation"]["_id"])}
+            )
+
+            bpy.ops.object.select_all(action='DESELECT')
+
+        bpy.context.scene.collection.objects.link(asset_group)
+
+        asset_group[AVALON_PROPERTY] = {
+            "schema": "openpype:container-2.0",
+            "id": AVALON_CONTAINER_ID,
+            "name": name,
+            "namespace": namespace or '',
+            "loader": str(self.__class__.__name__),
+            "representation": str(context["representation"]["_id"]),
+            "libpath": libpath,
+            "asset_name": asset_name,
+            "parent": str(context["representation"]["parent"]),
+            "family": context["representation"]["context"]["family"],
+            "objectName": group_name
+        }
+
+        self[:] = objects
+        return objects
+
+    def exec_update(self, container: Dict, representation: Dict):
         """Update the loaded asset.
 
-        This will remove all objects of the current collection, load the new
-        ones and add them to the collection.
-        If the objects of the collection are used in another collection they
-        will not be removed, only unlinked. Normally this should not be the
-        case though.
-
-        Warning:
-            No nested collections are supported at the moment!
+        This will remove all children of the asset group, load the new ones
+        and add them as children of the group.
         """
-        collection = bpy.data.collections.get(
-            container["objectName"]
-        )
+        object_name = container["objectName"]
+        asset_group = bpy.data.objects.get(object_name)
         libpath = Path(api.get_representation_path(representation))
         extension = libpath.suffix.lower()
 
@@ -202,11 +260,8 @@ class BlendRigLoader(plugin.AssetLoader):
             pformat(representation, indent=2),
         )
 
-        assert collection, (
+        assert asset_group, (
             f"The asset is not loaded: {container['objectName']}"
-        )
-        assert not (collection.children), (
-            "Nested collections are not supported."
         )
         assert libpath, (
             "No existing library file found for {container['objectName']}"
@@ -218,89 +273,84 @@ class BlendRigLoader(plugin.AssetLoader):
             f"Unsupported file: {libpath}"
         )
 
-        collection_metadata = collection.get(
-            blender.pipeline.AVALON_PROPERTY)
-        collection_libpath = collection_metadata["libpath"]
-        lib_container = collection_metadata["lib_container"]
+        metadata = asset_group.get(AVALON_PROPERTY)
+        group_libpath = metadata["libpath"]
 
-        obj_container = plugin.get_local_collection_with_name(
-            collection_metadata["obj_container"].name
-        )
-        objects = obj_container.all_objects
-
-        container_name = obj_container.name
-
-        normalized_collection_libpath = (
-            str(Path(bpy.path.abspath(collection_libpath)).resolve())
+        normalized_group_libpath = (
+            str(Path(bpy.path.abspath(group_libpath)).resolve())
         )
         normalized_libpath = (
             str(Path(bpy.path.abspath(str(libpath))).resolve())
         )
         self.log.debug(
-            "normalized_collection_libpath:\n  %s\nnormalized_libpath:\n  %s",
-            normalized_collection_libpath,
+            "normalized_group_libpath:\n  %s\nnormalized_libpath:\n  %s",
+            normalized_group_libpath,
             normalized_libpath,
         )
-        if normalized_collection_libpath == normalized_libpath:
+        if normalized_group_libpath == normalized_libpath:
             self.log.info("Library already loaded, not updating...")
             return
 
+        # Check how many assets use the same library
+        count = 0
+        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
+            if obj.get(AVALON_PROPERTY).get('libpath') == group_libpath:
+                count += 1
+
         # Get the armature of the rig
-        armatures = [obj for obj in objects if obj.type == 'ARMATURE']
-        assert(len(armatures) == 1)
+        objects = asset_group.children
+        armature = [obj for obj in objects if obj.type == 'ARMATURE'][0]
 
         action = None
-        if armatures[0].animation_data and armatures[0].animation_data.action:
-            action = armatures[0].animation_data.action
+        if armature.animation_data and armature.animation_data.action:
+            action = armature.animation_data.action
 
-        parent = plugin.get_parent_collection(obj_container)
+        mat = asset_group.matrix_basis.copy()
 
-        self._remove(objects, obj_container)
+        self._remove(asset_group)
 
-        obj_container = self._process(
-            str(libpath), lib_container, container_name, action, parent)
+        # If it is the last object to use that library, remove it
+        if count == 1:
+            library = bpy.data.libraries.get(bpy.path.basename(group_libpath))
+            bpy.data.libraries.remove(library)
 
-        # Save the list of objects in the metadata container
-        collection_metadata["obj_container"] = obj_container
-        collection_metadata["objects"] = obj_container.all_objects
-        collection_metadata["libpath"] = str(libpath)
-        collection_metadata["representation"] = str(representation["_id"])
+        self._process(str(libpath), asset_group, object_name, action)
 
-        bpy.ops.object.select_all(action='DESELECT')
+        asset_group.matrix_basis = mat
 
-    def remove(self, container: Dict) -> bool:
-        """Remove an existing container from a Blender scene.
+        metadata["libpath"] = str(libpath)
+        metadata["representation"] = str(representation["_id"])
+
+    def exec_remove(self, container: Dict) -> bool:
+        """Remove an existing asset group from a Blender scene.
 
         Arguments:
             container (openpype:container-1.0): Container to remove,
                 from `host.ls()`.
 
         Returns:
-            bool: Whether the container was deleted.
-
-        Warning:
-            No nested collections are supported at the moment!
+            bool: Whether the asset group was deleted.
         """
+        object_name = container["objectName"]
+        asset_group = bpy.data.objects.get(object_name)
+        libpath = asset_group.get(AVALON_PROPERTY).get('libpath')
 
-        collection = bpy.data.collections.get(
-            container["objectName"]
-        )
-        if not collection:
+        # Check how many assets use the same library
+        count = 0
+        for obj in bpy.data.collections.get(AVALON_CONTAINERS).objects:
+            if obj.get(AVALON_PROPERTY).get('libpath') == libpath:
+                count += 1
+
+        if not asset_group:
             return False
-        assert not (collection.children), (
-            "Nested collections are not supported."
-        )
 
-        collection_metadata = collection.get(
-            blender.pipeline.AVALON_PROPERTY)
+        self._remove(asset_group)
 
-        obj_container = plugin.get_local_collection_with_name(
-            collection_metadata["obj_container"].name
-        )
-        objects = obj_container.all_objects
+        bpy.data.objects.remove(asset_group)
 
-        self._remove(objects, obj_container)
-
-        bpy.data.collections.remove(collection)
+        # If it is the last object to use that library, remove it
+        if count == 1:
+            library = bpy.data.libraries.get(bpy.path.basename(libpath))
+            bpy.data.libraries.remove(library)
 
         return True

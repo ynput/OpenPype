@@ -221,6 +221,8 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.main_layout.setSpacing(0)
         self.main_layout.addWidget(top_part)
 
+        self.top_part = top_part
+
     def hide_toolbox(self, hide_content=False):
         self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
         self.toolbox_hidden = True
@@ -459,6 +461,7 @@ class NiceCheckbox(QtWidgets.QFrame):
     stateChanged = QtCore.Signal(int)
     checked_bg_color = QtGui.QColor(69, 128, 86)
     unchecked_bg_color = QtGui.QColor(170, 80, 80)
+    focused_in = QtCore.Signal()
 
     def set_bg_color(self, color):
         self._bg_color = color
@@ -582,6 +585,10 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._checkstate = checkstate
 
         self._on_checkstate_change()
+
+    def mousePressEvent(self, event):
+        self.focused_in.emit()
+        super(NiceCheckbox, self).mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:

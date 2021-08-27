@@ -1,11 +1,13 @@
 import os
 
-import openpype.api
+from openpype import api
+from openpype.hosts.blender.api import plugin
+from avalon.blender.pipeline import AVALON_PROPERTY
 
 import bpy
 
 
-class ExtractFBX(openpype.api.Extractor):
+class ExtractFBX(api.Extractor):
     """Extract as FBX."""
 
     label = "Extract FBX"
@@ -15,71 +17,56 @@ class ExtractFBX(openpype.api.Extractor):
 
     def process(self, instance):
         # Define extract output file path
-
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.fbx"
         filepath = os.path.join(stagingdir, filename)
 
-        context = bpy.context
-        scene = context.scene
-        view_layer = context.view_layer
-
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        collections = [
-            obj for obj in instance if type(obj) is bpy.types.Collection]
+        bpy.ops.object.select_all(action='DESELECT')
 
-        assert len(collections) == 1, "There should be one and only one " \
-            "collection collected for this asset"
+        selected = []
+        asset_group = None
 
-        old_active_layer_collection = view_layer.active_layer_collection
+        for obj in instance:
+            obj.select_set(True)
+            selected.append(obj)
+            if obj.get(AVALON_PROPERTY):
+                asset_group = obj
 
-        layers = view_layer.layer_collection.children
-
-        # Get the layer collection from the collection we need to export.
-        # This is needed because in Blender you can only set the active
-        # collection with the layer collection, and there is no way to get
-        # the layer collection from the collection
-        # (but there is the vice versa).
-        layer_collections = [
-            layer for layer in layers if layer.collection == collections[0]]
-
-        assert len(layer_collections) == 1
-
-        view_layer.active_layer_collection = layer_collections[0]
-
-        old_scale = scene.unit_settings.scale_length
-
-        # We set the scale of the scene for the export
-        scene.unit_settings.scale_length = 0.01
+        context = plugin.create_blender_context(
+            active=asset_group, selected=selected)
 
         new_materials = []
+        new_materials_objs = []
+        objects = list(asset_group.children)
 
-        for obj in collections[0].all_objects:
-            if obj.type == 'MESH':
+        for obj in objects:
+            objects.extend(obj.children)
+            if obj.type == 'MESH' and len(obj.data.materials) == 0:
                 mat = bpy.data.materials.new(obj.name)
                 obj.data.materials.append(mat)
                 new_materials.append(mat)
+                new_materials_objs.append(obj)
 
         # We export the fbx
         bpy.ops.export_scene.fbx(
+            context,
             filepath=filepath,
-            use_active_collection=True,
+            use_active_collection=False,
+            use_selection=True,
             mesh_smooth_type='FACE',
             add_leaf_bones=False
         )
 
-        view_layer.active_layer_collection = old_active_layer_collection
-
-        scene.unit_settings.scale_length = old_scale
+        bpy.ops.object.select_all(action='DESELECT')
 
         for mat in new_materials:
             bpy.data.materials.remove(mat)
 
-        for obj in collections[0].all_objects:
-            if obj.type == 'MESH':
-                obj.data.materials.pop()
+        for obj in new_materials_objs:
+            obj.data.materials.pop()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

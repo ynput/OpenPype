@@ -2,6 +2,7 @@ import os
 
 import pyblish.api
 import openpype.api
+from openpype.hosts.houdini.api.lib import render_rop
 
 
 class ExtractVDBCache(openpype.api.Extractor):
@@ -13,8 +14,6 @@ class ExtractVDBCache(openpype.api.Extractor):
 
     def process(self, instance):
 
-        import hou
-
         ropnode = instance[0]
 
         # Get the filename from the filename parameter
@@ -25,15 +24,8 @@ class ExtractVDBCache(openpype.api.Extractor):
         file_name = os.path.basename(sop_output)
 
         self.log.info("Writing VDB '%s' to '%s'" % (file_name, staging_dir))
-        try:
-            ropnode.render()
-        except hou.Error as exc:
-            # The hou.Error is not inherited from a Python Exception class,
-            # so we explicitly capture the houdini error, otherwise pyblish
-            # will remain hanging.
-            import traceback
-            traceback.print_exc()
-            raise RuntimeError("Render failed: {0}".format(exc))
+
+        render_rop(ropnode)
 
         output = instance.data["frames"]
 
@@ -41,9 +33,9 @@ class ExtractVDBCache(openpype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'mov',
-            'ext': 'mov',
-            'files': output,
+            "name": "vdb",
+            "ext": "vdb",
+            "files": output,
             "stagingDir": staging_dir,
         }
         instance.data["representations"].append(representation)

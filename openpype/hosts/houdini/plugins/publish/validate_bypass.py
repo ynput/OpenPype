@@ -18,12 +18,17 @@ class ValidateBypassed(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
+        if len(instance) == 0:
+            # Ignore instances without any nodes
+            # e.g. in memory bootstrap instances
+            return
+
         invalid = self.get_invalid(instance)
         if invalid:
             rop = invalid[0]
             raise RuntimeError(
-                "ROP node %s is set to bypass, publishing cannot continue.." %
-                rop.path()
+                "ROP node %s is set to bypass, publishing cannot continue.."
+                % rop.path()
             )
 
     @classmethod
