@@ -13,8 +13,17 @@ from abc import ABCMeta, abstractmethod
 import six
 
 import openpype
-from openpype.settings import get_system_settings
-from openpype.settings.lib import get_studio_system_settings_overrides
+from openpype.settings import (
+    get_system_settings,
+    SYSTEM_SETTINGS_KEY,
+    PROJECT_SETTINGS_KEY,
+    SCHEMA_KEY_SYSTEM_SETTINGS,
+    SCHEMA_KEY_PROJECT_SETTINGS
+)
+
+from openpype.settings.lib import (
+    get_studio_system_settings_overrides,
+)
 from openpype.lib import PypeLogger
 
 
@@ -1030,7 +1039,7 @@ def get_module_settings_defs():
 
 
 @six.add_metaclass(ABCMeta)
-class ModuleSettingsDef:
+class BaseModuleSettingsDef:
     """Definition of settings for OpenPype module or AddOn."""
     _id = None
 
@@ -1087,6 +1096,115 @@ class ModuleSettingsDef:
         """Save default values for passed top key.
 
         Top keys are (currently) "system_settings" or "project_settings".
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        pass
+
+
+class ModuleSettingsDef(BaseModuleSettingsDef):
+    def get_defaults(self, top_key):
+        """Split method into 2 methods by top key."""
+        if top_key == SYSTEM_SETTINGS_KEY:
+            return self.get_default_system_settings() or {}
+        elif top_key == PROJECT_SETTINGS_KEY:
+            return self.get_default_project_settings() or {}
+        return {}
+
+    def save_defaults(self, top_key, data):
+        """Split method into 2 methods by top key."""
+        if top_key == SYSTEM_SETTINGS_KEY:
+            self.save_system_defaults(data)
+        elif top_key == PROJECT_SETTINGS_KEY:
+            self.save_project_defaults(data)
+
+    def get_settings_schemas(self, schema_type):
+        """Split method into 2 methods by schema type."""
+        if schema_type == SCHEMA_KEY_SYSTEM_SETTINGS:
+            return self.get_system_settings_schemas() or {}
+        elif schema_type == SCHEMA_KEY_PROJECT_SETTINGS:
+            return self.get_project_settings_schemas() or {}
+        return {}
+
+    def get_dynamic_schemas(self, schema_type):
+        """Split method into 2 methods by schema type."""
+        if schema_type == SCHEMA_KEY_SYSTEM_SETTINGS:
+            return self.get_system_dynamic_schemas() or {}
+        elif schema_type == SCHEMA_KEY_PROJECT_SETTINGS:
+            return self.get_project_dynamic_schemas() or {}
+        return {}
+
+    @abstractmethod
+    def get_system_settings_schemas(self):
+        """Schemas and templates usable in system settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        pass
+
+    @abstractmethod
+    def get_project_settings_schemas(self):
+        """Schemas and templates usable in project settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        pass
+
+    @abstractmethod
+    def get_system_dynamic_schemas(self):
+        """System schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        pass
+
+    @abstractmethod
+    def get_project_dynamic_schemas(self):
+        """Project schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        pass
+
+    @abstractmethod
+    def get_default_system_settings(self):
+        """Default system settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        pass
+
+    @abstractmethod
+    def get_default_project_settings(self):
+        """Default project settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        pass
+
+    @abstractmethod
+    def save_system_defaults(self, data):
+        """Save default system settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        pass
+
+    @abstractmethod
+    def save_project_defaults(self, data):
+        """Save default project settings values.
 
         Passed data are by path to first key defined in main schemas.
         """

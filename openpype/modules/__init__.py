@@ -9,6 +9,7 @@ from .base import (
     ModulesManager,
     TrayModulesManager,
 
+    BaseModuleSettingsDef,
     ModuleSettingsDef,
     get_module_settings_defs
 )
@@ -24,6 +25,7 @@ __all__ = (
     "ModulesManager",
     "TrayModulesManager",
 
+    "BaseModuleSettingsDef",
     "ModuleSettingsDef",
     "get_module_settings_defs"
 )
