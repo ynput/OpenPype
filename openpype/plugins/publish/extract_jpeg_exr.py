@@ -17,7 +17,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         "imagesequence", "render", "render2d",
         "source", "plate", "take"
     ]
-    hosts = ["shell", "fusion", "resolve"]
+    hosts = ["shell", "fusion", "resolve", "webpublisher"]
     enabled = False
 
     # presetable attribute

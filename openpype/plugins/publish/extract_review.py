@@ -45,6 +45,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         "fusion",
         "tvpaint",
         "resolve",
+        "webpublisher",
         "aftereffects"
     ]
 

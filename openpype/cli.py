@@ -95,6 +95,31 @@ def eventserver(debug,
 
 
 @main.command()
+@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click.option("-h", "--host", help="Host", default=None)
+@click.option("-p", "--port", help="Port", default=None)
+@click.option("-e", "--executable", help="Executable")
+@click.option("-u", "--upload_dir", help="Upload dir")
+def webpublisherwebserver(debug, executable, upload_dir, host=None, port=None):
+    """Starts webserver for communication with Webpublish FR via command line
+
+        OP must be congigured on a machine, eg. OPENPYPE_MONGO filled AND
+        FTRACK_BOT_API_KEY provided with api key from Ftrack.
+
+        Expect "pype.club" user created on Ftrack.
+    """
+    if debug:
+        os.environ['OPENPYPE_DEBUG'] = "3"
+
+    PypeCommands().launch_webpublisher_webservercli(
+        upload_dir=upload_dir,
+        executable=executable,
+        host=host,
+        port=port
+    )
+
+
+@main.command()
 @click.argument("output_json_path")
 @click.option("--project", help="Project name", default=None)
 @click.option("--asset", help="Asset name", default=None)
@@ -129,6 +154,25 @@ def publish(debug, paths, targets):
     if debug:
         os.environ['OPENPYPE_DEBUG'] = '3'
     PypeCommands.publish(list(paths), targets)
+
+
+@main.command()
+@click.argument("path")
+@click.option("-d", "--debug", is_flag=True, help="Print debug messages")
+@click.option("-h", "--host", help="Host")
+@click.option("-u", "--user", help="User email address")
+@click.option("-p", "--project", help="Project")
+@click.option("-t", "--targets", help="Targets", default=None,
+              multiple=True)
+def remotepublish(debug, project, path, host, targets=None, user=None):
+    """Start CLI publishing.
+
+    Publish collects json from paths provided as an argument.
+    More than one path is allowed.
+    """
+    if debug:
+        os.environ['OPENPYPE_DEBUG'] = '3'
+    PypeCommands.remotepublish(project, path, host, user, targets=targets)
 
 
 @main.command()
