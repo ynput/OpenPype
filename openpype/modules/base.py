@@ -2,6 +2,7 @@
 """Base class for Pype Modules."""
 import os
 import sys
+import json
 import time
 import inspect
 import logging
@@ -23,6 +24,7 @@ from openpype.settings import (
 
 from openpype.settings.lib import (
     get_studio_system_settings_overrides,
+    load_json_file
 )
 from openpype.lib import PypeLogger
 
@@ -1103,6 +1105,11 @@ class BaseModuleSettingsDef:
 
 
 class ModuleSettingsDef(BaseModuleSettingsDef):
+    """Settings definiton with separated system and procect settings parts.
+
+    Reduce conditions that must be checked and adds predefined methods for
+    each case.
+    """
     def get_defaults(self, top_key):
         """Split method into 2 methods by top key."""
         if top_key == SYSTEM_SETTINGS_KEY:
@@ -1209,3 +1216,191 @@ class ModuleSettingsDef(BaseModuleSettingsDef):
         Passed data are by path to first key defined in main schemas.
         """
         pass
+
+
+class JsonFilesSettingsDef(ModuleSettingsDef):
+    """Preimplemented settings definition using json files and file structure.
+
+    Expected file structure:
+    ┕ root
+      │
+      │ # Default values
+      ┝ defaults
+      │ ┝ system_settings.json
+      │ ┕ project_settings.json
+      │
+      │ # Schemas for `dynamic_template` type
+      ┝ dynamic_schemas
+      │ ┝ system_dynamic_schemas.json
+      │ ┕ project_dynamic_schemas.json
+      │
+      │ # Schemas that can be used anywhere (enhancement for `dynamic_schemas`)
+      ┕ schemas
+        ┝ system_schemas
+        │ ┝ <system schema.json> # Any schema or template files
+        │ ┕ ...
+        ┕ project_schemas
+          ┝ <system schema.json> # Any schema or template files
+          ┕ ...
+
+    Schemas can be loaded with prefix to avoid duplicated schema/template names
+    across all OpenPype addons/modules. Prefix can be defined with class
+    attribute `schema_prefix`.
+
+    Only think which must be implemented in `get_settings_root_dir` which
+    should return directory path to `root` (in structure graph above).
+    """
+    # Possible way how to define `schemas` prefix
+    schema_prefix = ""
+
+    @abstractmethod
+    def get_settings_root_dir(self):
+        """Directory path where settings and it's schemas are located."""
+        pass
+
+    def __init__(self):
+        settings_root_dir = self.get_settings_root_dir()
+        defaults_dir = os.path.join(
+            settings_root_dir, "defaults"
+        )
+        dynamic_schemas_dir = os.path.join(
+            settings_root_dir, "dynamic_schemas"
+        )
+        schemas_dir = os.path.join(
+            settings_root_dir, "schemas"
+        )
+
+        self.system_defaults_filepath = os.path.join(
+            defaults_dir, "system_settings.json"
+        )
+        self.project_defaults_filepath = os.path.join(
+            defaults_dir, "project_settings.json"
+        )
+
+        self.system_dynamic_schemas_filepath = os.path.join(
+            dynamic_schemas_dir, "system_dynamic_schemas.json"
+        )
+        self.project_dynamic_schemas_filepath = os.path.join(
+            dynamic_schemas_dir, "project_dynamic_schemas.json"
+        )
+
+        self.system_schemas_dir = os.path.join(
+            schemas_dir, "system_schemas"
+        )
+        self.project_schemas_dir = os.path.join(
+            schemas_dir, "project_schemas"
+        )
+
+    def _load_json_file_data(self, path):
+        if os.path.exists(path):
+            return load_json_file(path)
+        return {}
+
+    def get_default_system_settings(self):
+        """Default system settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        return self._load_json_file_data(self.system_defaults_filepath)
+
+    def get_default_project_settings(self):
+        """Default project settings values.
+
+        Returns:
+            dict: Default values by path to first key.
+        """
+        return self._load_json_file_data(self.project_defaults_filepath)
+
+    def _save_data_to_filepath(self, path, data):
+        dirpath = os.path.dirname(path)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath)
+
+        with open(path, "w") as file_stream:
+            json.dump(data, file_stream, indent=4)
+
+    def save_system_defaults(self, data):
+        """Save default system settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        self._save_data_to_filepath(self.system_defaults_filepath, data)
+
+    def save_project_defaults(self, data):
+        """Save default project settings values.
+
+        Passed data are by path to first key defined in main schemas.
+        """
+        self._save_data_to_filepath(self.project_defaults_filepath, data)
+
+    def get_system_dynamic_schemas(self):
+        """System schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        return self._load_json_file_data(self.system_dynamic_schemas_filepath)
+
+    def get_project_dynamic_schemas(self):
+        """Project schemas by dynamic schema name.
+
+        If dynamic schema name is not available in then schema will not used.
+
+        Returns:
+            dict: Schemas or list of schemas by dynamic schema name.
+        """
+        return self._load_json_file_data(self.project_dynamic_schemas_filepath)
+
+    def _load_files_from_path(self, path):
+        output = {}
+        if not path or not os.path.exists(path):
+            return output
+
+        if os.path.isfile(path):
+            filename = os.path.basename(path)
+            basename, ext = os.path.splitext(filename)
+            if ext == ".json":
+                if self.schema_prefix:
+                    key = "{}/{}".format(self.schema_prefix, basename)
+                else:
+                    key = basename
+                output[key] = self._load_json_file_data(path)
+            return output
+
+        path = os.path.normpath(path)
+        for root, _, files in os.walk(path, topdown=False):
+            for filename in files:
+                basename, ext = os.path.splitext(filename)
+                if ext != ".json":
+                    continue
+
+                json_path = os.path.join(root, filename)
+                store_key = os.path.join(
+                    root.replace(path, ""), basename
+                ).replace("\\", "/")
+                if self.schema_prefix:
+                    store_key = "{}/{}".format(self.schema_prefix, store_key)
+                output[store_key] = self._load_json_file_data(json_path)
+
+        return output
+
+    def get_system_settings_schemas(self):
+        """Schemas and templates usable in system settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        return self._load_files_from_path(self.system_schemas_dir)
+
+    def get_project_settings_schemas(self):
+        """Schemas and templates usable in project settings schemas.
+
+        Returns:
+            dict: Schemas and templates by it's names. Names must be unique
+                across whole OpenPype.
+        """
+        return self._load_files_from_path(self.project_schemas_dir)

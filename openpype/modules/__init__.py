@@ -11,6 +11,8 @@ from .base import (
 
     BaseModuleSettingsDef,
     ModuleSettingsDef,
+    JsonFilesSettingsDef,
+
     get_module_settings_defs
 )
 
@@ -27,5 +29,7 @@ __all__ = (
 
     "BaseModuleSettingsDef",
     "ModuleSettingsDef",
+    "JsonFilesSettingsDef",
+
     "get_module_settings_defs"
 )
