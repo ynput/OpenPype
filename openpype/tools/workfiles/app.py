@@ -578,7 +578,11 @@ class FilesWidget(QtWidgets.QWidget):
             # to avoid any unwanted Task Changed callbacks to be triggered.
             return
 
-        api.update_current_task(asset=self._asset, task=self._task_name)
+        api.update_current_task(
+            asset=self._asset,
+            task=self._task_name,
+            template_key=self.template_key
+        )
 
     def open_file(self, filepath):
         host = self.host
