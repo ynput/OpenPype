@@ -431,7 +431,8 @@ class OpenPypeModule:
 
 
 class OpenPypeAddOn(OpenPypeModule):
-    pass
+    # Enable Addon by default
+    enabled = True
 
 
 class ModulesManager:
