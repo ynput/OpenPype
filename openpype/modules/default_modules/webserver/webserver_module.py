@@ -13,12 +13,15 @@ class WebServerModule(OpenPypeModule, ITrayService):
     name = "webserver"
     label = "WebServer"
 
+    webserver_url_env = "OPENPYPE_WEBSERVER_URL"
+
     def initialize(self, _module_settings):
         self.enabled = True
         self.server_manager = None
         self._host_listener = None
 
         self.port = self.find_free_port()
+        self.webserver_url = None
 
     def connect_with_modules(self, enabled_modules):
         if not self.server_manager:
@@ -43,10 +46,8 @@ class WebServerModule(OpenPypeModule, ITrayService):
         static_prefix = "/res"
         self.server_manager.add_static(static_prefix, resources.RESOURCES_DIR)
 
-        webserver_url = "http://localhost:{}".format(self.port)
-        os.environ["OPENPYPE_WEBSERVER_URL"] = webserver_url
         os.environ["OPENPYPE_STATICS_SERVER"] = "{}{}".format(
-            webserver_url, static_prefix
+            self.webserver_url, static_prefix
         )
 
     def _add_listeners(self):
@@ -64,16 +65,33 @@ class WebServerModule(OpenPypeModule, ITrayService):
         if self.server_manager:
             self.server_manager.stop_server()
 
+    @staticmethod
+    def create_new_server_manager(port=None, host=None):
+        """Create webserver manager for passed port and host.
+
+        Args:
+            port(int): Port on which wil webserver listen.
+            host(str): Host name or IP address. Default is 'localhost'.
+
+        Returns:
+            WebServerManager: Prepared manager.
+        """
+        from .server import WebServerManager
+
+        return WebServerManager(port, host)
+
     def create_server_manager(self):
         if self.server_manager:
             return
 
-        from .server import WebServerManager
-
-        self.server_manager = WebServerManager(self)
+        self.server_manager = self.create_new_server_manager(self.port)
         self.server_manager.on_stop_callbacks.append(
             self.set_service_failed_icon
         )
+
+        webserver_url = self.server_manager.url
+        os.environ[self.webserver_url_env] = str(webserver_url)
+        self.webserver_url = webserver_url
 
     @staticmethod
     def find_free_port(

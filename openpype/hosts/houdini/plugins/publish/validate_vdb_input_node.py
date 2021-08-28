@@ -3,7 +3,7 @@ import openpype.api
 
 
 class ValidateVDBInputNode(pyblish.api.InstancePlugin):
-    """Validate that the node connected to the output node is of type VDB
+    """Validate that the node connected to the output node is of type VDB.
 
     Regardless of the amount of VDBs create the output will need to have an
     equal amount of VDBs, points, primitives and vertices
@@ -24,8 +24,9 @@ class ValidateVDBInputNode(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Node connected to the output node is not"
-                               "of type VDB!")
+            raise RuntimeError(
+                "Node connected to the output node is not" "of type VDB!"
+            )
 
     @classmethod
     def get_invalid(cls, instance):

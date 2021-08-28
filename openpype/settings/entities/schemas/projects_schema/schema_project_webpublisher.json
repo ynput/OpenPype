@@ -1,0 +1,69 @@
+{
+    "type": "dict",
+    "collapsible": true,
+    "key": "webpublisher",
+    "label": "Web Publisher",
+    "is_file": true,
+    "children": [
+        {
+            "type": "dict",
+            "collapsible": true,
+            "key": "publish",
+            "label": "Publish plugins",
+            "children": [
+                {
+                    "type": "dict",
+                    "collapsible": true,
+                    "key": "CollectPublishedFiles",
+                    "label": "Collect Published Files",
+                    "children": [
+                        {
+                            "type": "dict-modifiable",
+                            "collapsible": true,
+                            "key": "task_type_to_family",
+                            "label": "Task type to family mapping",
+                            "collapsible_key": true,
+                            "object_type": {
+                                "type": "dict-modifiable",
+                                "collapsible": false,
+                                "key": "task_type",
+                                "collapsible_key": false,
+                                "object_type": {
+                                    "type": "dict",
+                                    "children": [
+                                        {
+                                            "type": "boolean",
+                                            "key": "is_sequence",
+                                            "label": "Is Sequence"
+                                        },
+                                        {
+                                            "type": "list",
+                                            "key": "extensions",
+                                            "label": "Extensions",
+                                            "object_type": "text"
+                                        },
+                                        {
+                                            "type": "list",
+                                            "key": "families",
+                                            "label": "Families",
+                                            "object_type": "text"
+                                        },
+                                        {
+                                            "type": "schema",
+                                            "name": "schema_representation_tags"
+                                        },
+                                        {
+                                            "type": "text",
+                                            "key": "subset_template_name",
+                                            "label": "Subset template name"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

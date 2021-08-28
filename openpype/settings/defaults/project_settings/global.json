@@ -151,6 +151,7 @@
             "template_name_profiles": [
                 {
                     "families": [],
+                    "hosts": [],
                     "tasks": [],
                     "template_name": "publish"
                 },
@@ -160,6 +161,7 @@
                         "render",
                         "prerender"
                     ],
+                    "hosts": [],
                     "tasks": [],
                     "template_name": "render"
                 }

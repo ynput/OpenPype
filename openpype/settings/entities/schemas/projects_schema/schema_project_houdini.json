@@ -6,6 +6,10 @@
     "is_file": true,
     "children": [
         {
+            "type": "schema",
+            "name": "schema_houdini_create"
+        },
+        {
             "type": "dict",
             "collapsible": true,
             "key": "publish",

@@ -325,7 +325,9 @@ class BreadcrumbsButton(QtWidgets.QToolButton):
         self.setSizePolicy(size_policy)
 
         menu.triggered.connect(self._on_menu_click)
-        self.clicked.connect(self._on_click)
+        # Don't allow to go to root with mouse click
+        if path:
+            self.clicked.connect(self._on_click)
 
         self._path = path
         self._path_prefix = path_prefix
