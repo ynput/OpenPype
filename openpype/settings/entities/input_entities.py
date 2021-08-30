@@ -369,6 +369,9 @@ class NumberEntity(InputEntity):
         self.valid_value_types = valid_value_types
         self.value_on_not_set = value_on_not_set
 
+        # UI specific attributes
+        self.show_slider = self.schema_data.get("show_slider", False)
+
     def _convert_to_valid_type(self, value):
         if isinstance(value, str):
             new_value = None
