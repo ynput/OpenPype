@@ -6,8 +6,10 @@ from .widgets import (
     ExpandingWidget,
     NumberSpinBox,
     GridLabelWidget,
-    ComboBox,
-    NiceCheckbox
+    SettingsComboBox,
+    NiceCheckbox,
+    SettingsPlainTextEdit,
+    SettingsLineEdit
 )
 from .multiselection_combobox import MultiSelectionComboBox
 from .wrapper_widgets import (
@@ -46,6 +48,11 @@ class DictImmutableKeysWidget(BaseWidget):
             self._ui_item_base()
             label = self.entity.label
 
+        # Set stretch of second column to 1
+        if isinstance(self.content_layout, QtWidgets.QGridLayout):
+            self.content_layout.setColumnStretch(1, 1)
+
+        self._direct_children_widgets = []
         self._parent_widget_by_entity_id = {}
         self._added_wrapper_ids = set()
         self._prepare_entity_layouts(
@@ -85,6 +92,25 @@ class DictImmutableKeysWidget(BaseWidget):
             self._parent_widget_by_entity_id[wrapper.id] = widget
 
             self._prepare_entity_layouts(child["children"], wrapper)
+
+    def set_focus(self, scroll_to=False):
+        """Set focus of a widget.
+
+        Args:
+            scroll_to(bool): Also scroll to widget in category widget.
+        """
+        if self.body_widget:
+            if scroll_to:
+                self.scroll_to(self.body_widget.top_part)
+            self.body_widget.top_part.setFocus()
+
+        else:
+            if scroll_to:
+                if not self.input_fields:
+                    self.scroll_to(self)
+                else:
+                    self.scroll_to(self.input_fields[0])
+            self.setFocus()
 
     def _ui_item_base(self):
         self.setObjectName("DictInvisible")
@@ -154,9 +180,41 @@ class DictImmutableKeysWidget(BaseWidget):
         else:
             body_widget.hide_toolbox(hide_content=False)
 
+    def make_sure_is_visible(self, path, scroll_to):
+        if not path:
+            return False
+
+        entity_path = self.entity.path
+        if entity_path == path:
+            self.set_focus(scroll_to)
+            return True
+
+        if not path.startswith(entity_path):
+            return False
+
+        is_checkbox_child = False
+        changed = False
+        for direct_child in self._direct_children_widgets:
+            if direct_child.make_sure_is_visible(path, scroll_to):
+                changed = True
+                if direct_child.entity is self.checkbox_child:
+                    is_checkbox_child = True
+                break
+
+        # Change scroll to this widget
+        if is_checkbox_child:
+            self.scroll_to(self)
+
+        elif self.body_widget and not self.body_widget.is_expanded():
+            # Expand widget if is callapsible
+            self.body_widget.toggle_content(True)
+
+        return changed
+
     def add_widget_to_layout(self, widget, label=None):
         if self.checkbox_child and widget.entity is self.checkbox_child:
             self.body_widget.add_widget_before_label(widget)
+            self._direct_children_widgets.append(widget)
             return
 
         if not widget.entity:
@@ -171,6 +229,8 @@ class DictImmutableKeysWidget(BaseWidget):
                 self.add_widget_to_layout(wrapper)
                 self._added_wrapper_ids.add(wrapper.id)
             return
+
+        self._direct_children_widgets.append(widget)
 
         row = self.content_layout.rowCount()
         if not label or isinstance(widget, WrapperWidget):
@@ -270,15 +330,16 @@ class BoolWidget(InputWidget):
             height=checkbox_height, parent=self.content_widget
         )
 
-        spacer = QtWidgets.QWidget(self.content_widget)
-        spacer.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-
         self.content_layout.addWidget(self.input_field, 0)
-        self.content_layout.addWidget(spacer, 1)
+        self.content_layout.addStretch(1)
 
         self.setFocusProxy(self.input_field)
 
+        self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.stateChanged.connect(self._on_value_change)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.isChecked():
@@ -297,9 +358,9 @@ class TextWidget(InputWidget):
     def _add_inputs_to_layout(self):
         multiline = self.entity.multiline
         if multiline:
-            self.input_field = QtWidgets.QPlainTextEdit(self.content_widget)
+            self.input_field = SettingsPlainTextEdit(self.content_widget)
         else:
-            self.input_field = QtWidgets.QLineEdit(self.content_widget)
+            self.input_field = SettingsLineEdit(self.content_widget)
 
         placeholder_text = self.entity.placeholder_text
         if placeholder_text:
@@ -313,7 +374,11 @@ class TextWidget(InputWidget):
 
         self.content_layout.addWidget(self.input_field, 1, **layout_kwargs)
 
+        self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.textChanged.connect(self._on_value_change)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_value():
@@ -352,6 +417,10 @@ class NumberWidget(InputWidget):
         self.content_layout.addWidget(self.input_field, 1)
 
         self.input_field.valueChanged.connect(self._on_value_change)
+        self.input_field.focused_in.connect(self._on_input_focus)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.value():
@@ -366,7 +435,7 @@ class NumberWidget(InputWidget):
         self.entity.set(self.input_field.value())
 
 
-class RawJsonInput(QtWidgets.QPlainTextEdit):
+class RawJsonInput(SettingsPlainTextEdit):
     tab_length = 4
 
     def __init__(self, valid_type, *args, **kwargs):
@@ -428,14 +497,17 @@ class RawJsonWidget(InputWidget):
             QtWidgets.QSizePolicy.Minimum,
             QtWidgets.QSizePolicy.MinimumExpanding
         )
-
         self.setFocusProxy(self.input_field)
 
         self.content_layout.addWidget(
             self.input_field, 1, alignment=QtCore.Qt.AlignTop
         )
 
+        self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.textChanged.connect(self._on_value_change)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def set_entity_value(self):
         self.input_field.set_value(self.entity.value)
@@ -470,7 +542,7 @@ class EnumeratorWidget(InputWidget):
             )
 
         else:
-            self.input_field = ComboBox(self.content_widget)
+            self.input_field = SettingsComboBox(self.content_widget)
 
         for enum_item in self.entity.enum_items:
             for value, label in enum_item.items():
@@ -480,7 +552,11 @@ class EnumeratorWidget(InputWidget):
 
         self.setFocusProxy(self.input_field)
 
+        self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.value_changed.connect(self._on_value_change)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.value():
@@ -562,6 +638,9 @@ class PathWidget(BaseWidget):
     def set_entity_value(self):
         self.input_field.set_entity_value()
 
+    def make_sure_is_visible(self, *args, **kwargs):
+        return self.input_field.make_sure_is_visible(*args, **kwargs)
+
     def hierarchical_style_update(self):
         self.update_style()
         self.input_field.hierarchical_style_update()
@@ -632,14 +711,19 @@ class PathWidget(BaseWidget):
 
 class PathInputWidget(InputWidget):
     def _add_inputs_to_layout(self):
-        self.input_field = QtWidgets.QLineEdit(self.content_widget)
+        self.input_field = SettingsLineEdit(self.content_widget)
         placeholder = self.entity.placeholder_text
         if placeholder:
             self.input_field.setPlaceholderText(placeholder)
 
         self.setFocusProxy(self.input_field)
         self.content_layout.addWidget(self.input_field)
+
         self.input_field.textChanged.connect(self._on_value_change)
+        self.input_field.focused_in.connect(self._on_input_focus)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_value():

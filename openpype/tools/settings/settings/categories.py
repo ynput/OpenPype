@@ -31,6 +31,11 @@ from openpype.settings.entities import (
 
 from openpype.settings import SaveWarningExc
 from .widgets import ProjectListWidget
+from .breadcrumbs_widget import (
+    BreadcrumbsAddressBar,
+    SystemSettingsBreadcrumbs,
+    ProjectSettingsBreadcrumbs
+)
 
 from .base import GUIWidget
 from .list_item_widget import ListWidget
@@ -175,6 +180,16 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         scroll_widget = QtWidgets.QScrollArea(self)
         scroll_widget.setObjectName("GroupWidget")
         content_widget = QtWidgets.QWidget(scroll_widget)
+
+        breadcrumbs_label = QtWidgets.QLabel("Path:", content_widget)
+        breadcrumbs_widget = BreadcrumbsAddressBar(content_widget)
+
+        breadcrumbs_layout = QtWidgets.QHBoxLayout()
+        breadcrumbs_layout.setContentsMargins(5, 5, 5, 5)
+        breadcrumbs_layout.setSpacing(5)
+        breadcrumbs_layout.addWidget(breadcrumbs_label)
+        breadcrumbs_layout.addWidget(breadcrumbs_widget)
+
         content_layout = QtWidgets.QVBoxLayout(content_widget)
         content_layout.setContentsMargins(3, 3, 3, 3)
         content_layout.setSpacing(5)
@@ -183,40 +198,44 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         scroll_widget.setWidgetResizable(True)
         scroll_widget.setWidget(content_widget)
 
-        configurations_widget = QtWidgets.QWidget(self)
-
-        footer_widget = QtWidgets.QWidget(configurations_widget)
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
-
         refresh_icon = qtawesome.icon("fa.refresh", color="white")
-        refresh_btn = QtWidgets.QPushButton(footer_widget)
+        refresh_btn = QtWidgets.QPushButton(self)
         refresh_btn.setIcon(refresh_icon)
 
-        footer_layout.addWidget(refresh_btn, 0)
-
+        footer_layout = QtWidgets.QHBoxLayout()
+        footer_layout.setContentsMargins(5, 5, 5, 5)
         if self.user_role == "developer":
             self._add_developer_ui(footer_layout)
 
-        save_btn = QtWidgets.QPushButton("Save", footer_widget)
-        require_restart_label = QtWidgets.QLabel(footer_widget)
+        save_btn = QtWidgets.QPushButton("Save", self)
+        require_restart_label = QtWidgets.QLabel(self)
         require_restart_label.setAlignment(QtCore.Qt.AlignCenter)
+
+        footer_layout.addWidget(refresh_btn, 0)
         footer_layout.addWidget(require_restart_label, 1)
         footer_layout.addWidget(save_btn, 0)
 
-        configurations_layout = QtWidgets.QVBoxLayout(configurations_widget)
+        configurations_layout = QtWidgets.QVBoxLayout()
         configurations_layout.setContentsMargins(0, 0, 0, 0)
         configurations_layout.setSpacing(0)
 
         configurations_layout.addWidget(scroll_widget, 1)
-        configurations_layout.addWidget(footer_widget, 0)
+        configurations_layout.addLayout(footer_layout, 0)
 
-        main_layout = QtWidgets.QHBoxLayout(self)
+        conf_wrapper_layout = QtWidgets.QHBoxLayout()
+        conf_wrapper_layout.setContentsMargins(0, 0, 0, 0)
+        conf_wrapper_layout.setSpacing(0)
+        conf_wrapper_layout.addLayout(configurations_layout, 1)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        main_layout.addWidget(configurations_widget, 1)
+        main_layout.addLayout(breadcrumbs_layout, 0)
+        main_layout.addLayout(conf_wrapper_layout, 1)
 
         save_btn.clicked.connect(self._save)
         refresh_btn.clicked.connect(self._on_refresh)
+        breadcrumbs_widget.path_edited.connect(self._on_path_edit)
 
         self.save_btn = save_btn
         self.refresh_btn = refresh_btn
@@ -224,13 +243,32 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
         self.scroll_widget = scroll_widget
         self.content_layout = content_layout
         self.content_widget = content_widget
-        self.configurations_widget = configurations_widget
+        self.breadcrumbs_widget = breadcrumbs_widget
+        self.breadcrumbs_model = None
+        self.conf_wrapper_layout = conf_wrapper_layout
         self.main_layout = main_layout
 
         self.ui_tweaks()
 
     def ui_tweaks(self):
         return
+
+    def _on_path_edit(self, path):
+        for input_field in self.input_fields:
+            if input_field.make_sure_is_visible(path, True):
+                break
+
+    def scroll_to(self, widget):
+        if widget:
+            # Process events which happened before ensurence
+            # - that is because some widgets could be not visible before
+            #   this method was called and have incorrect size
+            QtWidgets.QApplication.processEvents()
+            # Scroll to widget
+            self.scroll_widget.ensureWidgetVisible(widget)
+
+    def set_path(self, path):
+        self.breadcrumbs_widget.set_path(path)
 
     def _add_developer_ui(self, footer_layout):
         modify_defaults_widget = QtWidgets.QWidget()
@@ -427,9 +465,18 @@ class SettingsCategoryWidget(QtWidgets.QWidget):
     def _on_reset_crash(self):
         self.save_btn.setEnabled(False)
 
+        if self.breadcrumbs_model is not None:
+            self.breadcrumbs_model.set_entity(None)
+
     def _on_reset_success(self):
         if not self.save_btn.isEnabled():
             self.save_btn.setEnabled(True)
+
+        if self.breadcrumbs_model is not None:
+            path = self.breadcrumbs_widget.path()
+            self.breadcrumbs_widget.set_path("")
+            self.breadcrumbs_model.set_entity(self.entity)
+            self.breadcrumbs_widget.change_path(path)
 
     def add_children_gui(self):
         for child_obj in self.entity.children:
@@ -521,6 +568,10 @@ class SystemWidget(SettingsCategoryWidget):
             self.modify_defaults_checkbox.setChecked(True)
             self.modify_defaults_checkbox.setEnabled(False)
 
+    def ui_tweaks(self):
+        self.breadcrumbs_model = SystemSettingsBreadcrumbs()
+        self.breadcrumbs_widget.set_model(self.breadcrumbs_model)
+
     def _on_modify_defaults(self):
         if self.modify_defaults_checkbox.isChecked():
             if not self.entity.is_in_defaults_state():
@@ -535,9 +586,12 @@ class ProjectWidget(SettingsCategoryWidget):
         self.project_name = None
 
     def ui_tweaks(self):
+        self.breadcrumbs_model = ProjectSettingsBreadcrumbs()
+        self.breadcrumbs_widget.set_model(self.breadcrumbs_model)
+
         project_list_widget = ProjectListWidget(self)
 
-        self.main_layout.insertWidget(0, project_list_widget, 0)
+        self.conf_wrapper_layout.insertWidget(0, project_list_widget, 0)
 
         project_list_widget.project_changed.connect(self._on_project_change)
 
