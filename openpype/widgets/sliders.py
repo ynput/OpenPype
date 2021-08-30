@@ -70,18 +70,19 @@ class NiceSlider(QtWidgets.QSlider):
         )
 
         _range = self.maximum() - self.minimum()
+        _offset = self.value() - self.minimum()
         if horizontal:
             _handle_half = rect.height() / 2
             _handle_size = _handle_half * 2
             width = rect.width() - _handle_size
-            pos_x = ((width / _range) * self.value())
+            pos_x = ((width / _range) * _offset)
             pos_y = rect.center().y() - _handle_half + 1
         else:
             _handle_half = rect.width() / 2
             _handle_size = _handle_half * 2
             height = rect.height() - _handle_size
             pos_x = rect.center().x() - _handle_half + 1
-            pos_y = height - ((height / _range) * self.value())
+            pos_y = height - ((height / _range) * _offset)
 
         handle_rect = QtCore.QRect(
             pos_x, pos_y, _handle_size, _handle_size
