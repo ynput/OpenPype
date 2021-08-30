@@ -568,6 +568,10 @@ def burnins_from_data(
             profile_name = profile_name.replace(" ", "_").lower()
             ffmpeg_args.append("-profile:v {}".format(profile_name))
 
+        bit_rate = ffprobe_data.get("bit_rate")
+        if bit_rate and "crf" not in data:
+            ffmpeg_args.append("-b:v {}".format(bit_rate))
+
         pix_fmt = ffprobe_data.get("pix_fmt")
         if pix_fmt:
             ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))

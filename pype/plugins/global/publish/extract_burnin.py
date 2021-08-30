@@ -237,9 +237,12 @@ class ExtractBurnin(pype.api.Extractor):
                         input_file)
 
                 # Passing crf data to burnin script.
-                for arg in new_repre["outputDef"]["ffmpeg_args"]["output"]:
-                    if "-crf" in arg:
-                        burnin_data["crf"] = int(arg.replace("-crf", ""))
+                cmd = new_repre.get("ffmpeg_cmd", "")
+                args = cmd.split(" ")
+                for count, arg in enumerate(args):
+                    if arg == "-crf":
+                        burnin_data["crf"] = int(args[count + 1])
+                        break
 
                 # Data for burnin script
                 script_data = {
