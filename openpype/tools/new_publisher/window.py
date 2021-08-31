@@ -1,4 +1,4 @@
-from Qt import QtWidgets
+from Qt import QtWidgets, QtCore
 
 from openpype import style
 
@@ -13,12 +13,28 @@ from .widgets import (
 )
 
 
-class PublisherWindow(QtWidgets.QWidget):
+class PublisherWindow(QtWidgets.QDialog):
     default_width = 1000
     default_height = 600
 
     def __init__(self, parent=None):
         super(PublisherWindow, self).__init__(parent)
+
+        self.setWindowTitle("OpenPype publisher")
+
+        if parent is None:
+            on_top_flag = QtCore.Qt.WindowStaysOnTopHint
+        else:
+            on_top_flag = QtCore.Qt.Dialog
+
+        self.setWindowFlags(
+            self.windowFlags()
+            | QtCore.Qt.WindowTitleHint
+            | QtCore.Qt.WindowMaximizeButtonHint
+            | QtCore.Qt.WindowMinimizeButtonHint
+            | QtCore.Qt.WindowCloseButtonHint
+            | on_top_flag
+        )
 
         self._first_show = True
         self._refreshing_instances = False
