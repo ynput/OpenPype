@@ -389,13 +389,15 @@ class NumberWidget(InputWidget):
         self.input_field = NumberSpinBox(self.content_widget, **kwargs)
         input_field_stretch = 1
 
-        self._slider_multiplier = 10 ** self.entity.decimal
+        slider_multiplier = 1
         if self.entity.show_slider:
-
+            # Slider can't handle float numbers so all decimals are converted
+            #   to integer range.
+            slider_multiplier = 10 ** self.entity.decimal
             slider_widget = NiceSlider(QtCore.Qt.Horizontal, self)
             slider_widget.setRange(
-                int(self.entity.minimum * self._slider_multiplier),
-                int(self.entity.maximum * self._slider_multiplier)
+                int(self.entity.minimum * slider_multiplier),
+                int(self.entity.maximum * slider_multiplier)
             )
 
             self.content_layout.addWidget(slider_widget, 1)
@@ -405,6 +407,8 @@ class NumberWidget(InputWidget):
             self._slider_widget = slider_widget
 
             input_field_stretch = 0
+
+        self._slider_multiplier = slider_multiplier
 
         self.setFocusProxy(self.input_field)
 
