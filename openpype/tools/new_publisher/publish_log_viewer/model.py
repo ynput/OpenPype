@@ -39,12 +39,15 @@ class InstancesModel(QtGui.QStandardItemModel):
         for family in all_families:
             items = []
             instance_items = report_item.instance_items_by_family[family]
+            all_removed = True
             for instance_item in instance_items:
                 item = QtGui.QStandardItem(instance_item.label)
                 item.setData(instance_item.label, ITEM_LABEL_ROLE)
                 item.setData(instance_item.errored, ITEM_ERRORED_ROLE)
                 item.setData(instance_item.id, ITEM_ID_ROLE)
                 item.setData(instance_item.removed, INSTANCE_REMOVED_ROLE)
+                if all_removed and not instance_item.removed:
+                    all_removed = False
                 item.setData(False, ITEM_IS_GROUP_ROLE)
                 items.append(item)
                 self._items_by_id[instance_item.id] = item
@@ -59,6 +62,7 @@ class InstancesModel(QtGui.QStandardItemModel):
             family_item.setFlags(QtCore.Qt.ItemIsEnabled)
             family_id = uuid.uuid4()
             family_item.setData(family_id, ITEM_ID_ROLE)
+            family_item.setData(all_removed, INSTANCE_REMOVED_ROLE)
             family_item.setData(True, ITEM_IS_GROUP_ROLE)
             family_item.appendRows(items)
             family_items.append(family_item)
@@ -86,12 +90,8 @@ class InstanceProxyModel(QtCore.QSortFilterProxyModel):
             self.invalidateFilter()
 
     def filterAcceptsRow(self, row, parent):
-        model = self.sourceModel()
-        source_index = model.index(row, 0, parent)
-        if source_index.data(ITEM_IS_GROUP_ROLE):
-            return model.rowCount(source_index) > 0
-
-        if self._ignore_removed and source_index.data(PLUGIN_SKIPPED_ROLE):
+        source_index = self.sourceModel().index(row, 0, parent)
+        if self._ignore_removed and source_index.data(INSTANCE_REMOVED_ROLE):
             return False
         return True
 
