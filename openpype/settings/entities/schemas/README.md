@@ -300,6 +300,7 @@ How output of the schema could look like on save:
     - key `"decimal"` defines how many decimal places will be used, 0 is for integer input (Default: `0`)
     - key `"minimum"` as minimum allowed number to enter (Default: `-99999`)
     - key `"maxium"` as maximum allowed number to enter (Default: `99999`)
+- for UI it is possible to show slider to enable this option set `show_slider` to `true`
 ```
 {
     "type": "number",
@@ -308,6 +309,18 @@ How output of the schema could look like on save:
     "decimal": 2,
     "minimum": 1,
     "maximum": 300000
+}
+```
+
+```
+{
+    "type": "number",
+    "key": "ratio",
+    "label": "Ratio"
+    "decimal": 3,
+    "minimum": 0,
+    "maximum": 1,
+    "show_slider": true
 }
 ```
 
