@@ -6,7 +6,8 @@ ITEM_IS_GROUP_ROLE = QtCore.Qt.UserRole + 2
 ITEM_LABEL_ROLE = QtCore.Qt.UserRole + 3
 ITEM_ERRORED_ROLE = QtCore.Qt.UserRole + 4
 PLUGIN_SKIPPED_ROLE = QtCore.Qt.UserRole + 5
-INSTANCE_REMOVED_ROLE = QtCore.Qt.UserRole + 6
+PLUGIN_PASSED_ROLE = QtCore.Qt.UserRole + 6
+INSTANCE_REMOVED_ROLE = QtCore.Qt.UserRole + 7
 
 
 __all__ = (

@@ -1,12 +1,11 @@
-import platform
+import os
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 from .constants import (
-    ITEM_ID_ROLE,
     ITEM_IS_GROUP_ROLE,
     ITEM_ERRORED_ROLE,
-    ITEM_LABEL_ROLE,
     PLUGIN_SKIPPED_ROLE,
+    PLUGIN_PASSED_ROLE,
     INSTANCE_REMOVED_ROLE
 )
 
@@ -24,6 +23,13 @@ colors = {
     "group-hover": QtGui.QColor("#3c3c3c"),
     "group-selected-hover": QtGui.QColor("#555555")
 }
+
+def get_image_path(filename):
+    return os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "images",
+        filename
+    )
 
 
 class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
@@ -130,32 +136,64 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
         if icons_by_size and size in icons_by_size:
             return icons_by_size[size]
 
+        offset = int(size * cls._item_pix_offset_ratio)
+        offset_size = size - (2 * offset)
         pix = QtGui.QPixmap(size, size)
         pix.fill(QtCore.Qt.transparent)
 
         painter = QtGui.QPainter(pix)
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
 
+        draw_ellipse = True
         if name == "error":
             color = QtGui.QColor(colors["error"])
             painter.setPen(QtCore.Qt.NoPen)
             painter.setBrush(color)
+
         elif name == "skipped":
             color = QtGui.QColor(QtCore.Qt.white)
             pen = QtGui.QPen(color)
             pen.setWidth(int(size * cls._item_border_size))
             painter.setPen(pen)
             painter.setBrush(QtCore.Qt.transparent)
+
+        elif name == "passed":
+            color = QtGui.QColor(colors["ok"])
+            painter.setPen(QtCore.Qt.NoPen)
+            painter.setBrush(color)
+
+        elif name == "removed":
+            draw_ellipse = False
+            image_path = get_image_path("deleted_instance.png")
+
+            source_pix = QtGui.QPixmap(image_path)
+            width = offset_size
+            height = offset_size
+            if source_pix.width() > source_pix.height():
+                height = source_pix.width() / width * source_pix.height()
+            else:
+                width = source_pix.height() / height * source_pix.width()
+
+            scaled_pix = source_pix.scaled(
+                width,
+                height,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+            start_point = QtCore.QPointF(
+                offset + ((offset_size / 2) - (scaled_pix.width() / 2)),
+                offset + ((offset_size / 2) - (scaled_pix.height() / 2))
+            )
+            painter.drawPixmap(start_point, scaled_pix)
+
         else:
             color = QtGui.QColor(QtCore.Qt.white)
             painter.setPen(QtCore.Qt.NoPen)
             painter.setBrush(color)
 
-        offset = int(size * cls._item_pix_offset_ratio)
-        painter.drawEllipse(
-            offset, offset,
-            size - (2 * offset), size - (2 * offset)
-        )
+        if draw_ellipse:
+            painter.drawEllipse(offset, offset, offset_size, offset_size)
+
         painter.end()
 
         cls._item_icons_by_name_and_size[name][size] = pix
@@ -202,6 +240,10 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
             expander_icon = self._get_icon("error", icon_size)
         elif index.data(PLUGIN_SKIPPED_ROLE):
             expander_icon = self._get_icon("skipped", icon_size)
+        elif index.data(PLUGIN_PASSED_ROLE):
+            expander_icon = self._get_icon("passed", icon_size)
+        elif index.data(INSTANCE_REMOVED_ROLE):
+            expander_icon = self._get_icon("removed", icon_size)
         else:
             expander_icon = self._get_icon("", icon_size)
 
