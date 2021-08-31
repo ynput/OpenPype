@@ -5,43 +5,8 @@ from pathlib import Path
 from .update_thread import UpdateThread
 from Qt import QtCore, QtGui, QtWidgets  # noqa
 from .bootstrap_repos import OpenPypeVersion
-
-
-def load_stylesheet(path: str = None) -> str:
-    """Load css style sheet.
-
-    Args:
-        path (str, optional): Path to stylesheet. If none, `stylesheet.css`
-            from current package's path is used.
-    Returns:
-        str: content of the stylesheet
-
-    """
-    if path:
-        stylesheet_path = Path(path)
-    else:
-        stylesheet_path = Path(os.path.dirname(__file__)) / "stylesheet.css"
-
-    return stylesheet_path.read_text()
-
-
-class NiceProgressBar(QtWidgets.QProgressBar):
-    def __init__(self, parent=None):
-        super(NiceProgressBar, self).__init__(parent)
-        self._real_value = 0
-
-    def setValue(self, value):
-        self._real_value = value
-        if value != 0 and value < 11:
-            value = 11
-
-        super(NiceProgressBar, self).setValue(value)
-
-    def value(self):
-        return self._real_value
-
-    def text(self):
-        return "{} %".format(self._real_value)
+from .nice_progress_bar import NiceProgressBar
+from .tools import load_stylesheet
 
 
 class UpdateWindow(QtWidgets.QDialog):

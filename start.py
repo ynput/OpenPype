@@ -181,6 +181,10 @@ else:
 
 if "--headless" in sys.argv:
     os.environ["OPENPYPE_HEADLESS_MODE"] = "1"
+    sys.argv.remove("--headless")
+else:
+    if os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
+        os.environ.pop("OPENPYPE_HEADLESS_MODE")
 
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
@@ -397,7 +401,7 @@ def _process_arguments() -> tuple:
     # handle igniter
     # this is helper to run igniter before anything else
     if "igniter" in sys.argv:
-        if os.getenv("OPENPYPE_HEADLESS_MODE"):
+        if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
             _print("!!! Cannot open Igniter dialog in headless mode.")
             sys.exit(1)
         import igniter
@@ -447,7 +451,7 @@ def _determine_mongodb() -> str:
 
     if not openpype_mongo:
         _print("*** No DB connection string specified.")
-        if os.getenv("OPENPYPE_HEADLESS_MODE"):
+        if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
             _print("!!! Cannot open Igniter dialog in headless mode.")
             _print(
                 "!!! Please use `OPENPYPE_MONGO` to specify server address.")
@@ -555,7 +559,7 @@ def _find_frozen_openpype(use_version: str = None,
         except IndexError:
             # no OpenPype version found, run Igniter and ask for them.
             _print('*** No OpenPype versions found.')
-            if os.getenv("OPENPYPE_HEADLESS_MODE"):
+            if os.getenv("OPENPYPE_HEADLESS_MODE") == "1":
                 _print("!!! Cannot open Igniter dialog in headless mode.")
                 sys.exit(1)
             _print("--- launching setup UI ...")
@@ -621,7 +625,7 @@ def _find_frozen_openpype(use_version: str = None,
 
     if not is_inside:
         # install latest version to user data dir
-        if not os.getenv("OPENPYPE_HEADLESS_MODE"):
+        if os.getenv("OPENPYPE_HEADLESS_MODE", "0") != "1":
             import igniter
             version_path = igniter.open_update_window(openpype_version)
         else:
