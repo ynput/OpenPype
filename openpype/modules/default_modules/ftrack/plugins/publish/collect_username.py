@@ -26,7 +26,7 @@ class CollectUsername(pyblish.api.ContextPlugin):
     """
     order = pyblish.api.CollectorOrder - 0.488
     label = "Collect ftrack username"
-    host = ["webpublisher"]
+    hosts = ["webpublisher"]
 
     _context = None
 
