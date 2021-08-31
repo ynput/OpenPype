@@ -8,7 +8,7 @@ class _WindowCache:
 def show(parent=None):
     window = _WindowCache.window
     if window is None:
-        window = PublisherWindow()
+        window = PublisherWindow(parent)
         _WindowCache.window = window
 
     window.show()
