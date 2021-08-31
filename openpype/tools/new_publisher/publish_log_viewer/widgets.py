@@ -200,6 +200,8 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         layout.addWidget(plugins_view, 1, 1)
         layout.addWidget(details_widget, 1, 2)
 
+        layout.setColumnStretch(2, 1)
+
         instances_view.selectionModel().selectionChanged.connect(
             self._on_instance_change
         )
