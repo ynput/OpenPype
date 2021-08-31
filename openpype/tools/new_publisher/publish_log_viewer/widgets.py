@@ -6,7 +6,8 @@ from Qt import QtWidgets, QtCore, QtGui
 import pyblish.api
 
 from .constants import (
-    ITEM_ID_ROLE
+    ITEM_ID_ROLE,
+    ITEM_IS_GROUP_ROLE
 )
 from .delegates import GroupItemDelegate
 from .model import (
@@ -25,6 +26,7 @@ class PluginItem:
         self.label = plugin_data["label"]
         self.order = plugin_data["order"]
         self.skipped = plugin_data["skipped"]
+        self.passed = plugin_data["passed"]
 
         logs = []
         errored = False
@@ -166,6 +168,7 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         instances_view.setIndentation(0)
         instances_view.setHeaderHidden(True)
         instances_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        instances_view.setExpandsOnDoubleClick(False)
 
         instances_delegate = GroupItemDelegate(instances_view)
         instances_view.setItemDelegate(instances_delegate)
@@ -181,6 +184,7 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         plugins_view.setIndentation(0)
         plugins_view.setHeaderHidden(True)
         plugins_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        plugins_view.setExpandsOnDoubleClick(False)
 
         plugins_delegate = GroupItemDelegate(plugins_view)
         plugins_view.setItemDelegate(plugins_delegate)
@@ -199,6 +203,8 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         instances_view.selectionModel().selectionChanged.connect(
             self._on_instance_change
         )
+        instances_view.clicked.connect(self._on_instance_view_clicked)
+        plugins_view.clicked.connect(self._on_plugin_view_clicked)
         plugins_view.selectionModel().selectionChanged.connect(
             self._on_plugin_change
         )
@@ -226,6 +232,24 @@ class PublishLogViewerWidget(QtWidgets.QWidget):
         self._plugins_view = plugins_view
         self._plugins_model = plugins_model
         self._plugins_proxy = plugins_proxy
+
+    def _on_instance_view_clicked(self, index):
+        if not index.isValid() or not index.data(ITEM_IS_GROUP_ROLE):
+            return
+
+        if self._instances_view.isExpanded(index):
+            self._instances_view.collapse(index)
+        else:
+            self._instances_view.expand(index)
+
+    def _on_plugin_view_clicked(self, index):
+        if not index.isValid() or not index.data(ITEM_IS_GROUP_ROLE):
+            return
+
+        if self._plugins_view.isExpanded(index):
+            self._plugins_view.collapse(index)
+        else:
+            self._plugins_view.expand(index)
 
     def set_report(self, report_data):
         self._ignore_selection_changes = True
