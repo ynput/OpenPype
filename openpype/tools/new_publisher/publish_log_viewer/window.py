@@ -2,12 +2,12 @@ from Qt import QtWidgets
 
 from openpype import style
 if __package__:
-    from .widgets import PublishLogViewerWidget
+    from .widgets import PublishReportViewerWidget
 else:
-    from widgets import PublishLogViewerWidget
+    from widgets import PublishReportViewerWidget
 
 
-class PublishLogViewerWindow(QtWidgets.QWidget):
+class PublishReportViewerWindow(QtWidgets.QWidget):
     # TODO add buttons to be able load report file or paste content of report
     default_width = 1200
     default_height = 600
@@ -15,7 +15,7 @@ class PublishLogViewerWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super(PublishLogViewerWindow, self).__init__(parent)
 
-        main_widget = PublishLogViewerWidget(self)
+        main_widget = PublishReportViewerWidget(self)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.addWidget(main_widget)

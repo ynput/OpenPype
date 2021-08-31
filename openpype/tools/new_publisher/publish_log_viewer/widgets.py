@@ -148,9 +148,9 @@ class DetailsWidget(QtWidgets.QWidget):
         self._output_widget.setPlainText(text)
 
 
-class PublishLogViewerWidget(QtWidgets.QWidget):
+class PublishReportViewerWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        super(PublishLogViewerWidget, self).__init__(parent)
+        super(PublishReportViewerWidget, self).__init__(parent)
 
         instances_model = InstancesModel()
         instances_proxy = InstanceProxyModel()

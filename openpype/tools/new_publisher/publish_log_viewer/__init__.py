@@ -1,7 +1,14 @@
-from .window import (
-    PublishLogViewerWindow
+from .widgets import (
+    PublishReportViewerWidget
 )
 
+from .window import (
+    PublishReportViewerWindow
+)
+
+
 __all__ = (
-    "PublishLogViewerWindow",
+    "PublishReportViewerWidget",
+
+    "PublishReportViewerWindow",
 )
