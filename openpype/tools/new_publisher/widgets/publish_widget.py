@@ -288,7 +288,11 @@ class PublishFrame(QtWidgets.QFrame):
         self.message_label.setVisible(visible)
 
     def _set_success_property(self, state=None):
-        self.info_frame.setProperty("state", str(state or ""))
+        if state is None:
+            state = ""
+        else:
+            state = str(state)
+        self.info_frame.setProperty("state", state)
         self.info_frame.style().polish(self.info_frame)
 
     def _on_copy_log(self):
