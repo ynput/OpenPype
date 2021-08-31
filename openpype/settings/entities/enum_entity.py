@@ -458,27 +458,19 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
             self.valid_value_types = (list,)
             self.value_on_not_set = []
         else:
-            for key in self.valid_keys:
-                if self.value_on_not_set is NOT_SET:
-                    self.value_on_not_set = key
-                    break
-
             self.valid_value_types = (STRING_TYPE,)
+            self.value_on_not_set = ""
 
         # GUI attribute
         self.placeholder = self.schema_data.get("placeholder")
 
     def _get_enum_values(self):
-        system_settings_entity = self.get_entity_from_path("system_settings")
+        deadline_urls_entity = self.get_entity_from_path(
+            "system_settings/modules/deadline/deadline_urls"
+        )
 
         valid_keys = set()
         enum_items_list = []
-        deadline_urls_entity = (
-            system_settings_entity
-            ["modules"]
-            ["deadline"]
-            ["deadline_urls"]
-        )
         for server_name, url_entity in deadline_urls_entity.items():
             enum_items_list.append(
                 {server_name: "{}: {}".format(server_name, url_entity.value)})
@@ -489,11 +481,19 @@ class DeadlineUrlEnumEntity(BaseEnumEntity):
         super(DeadlineUrlEnumEntity, self).set_override_state(*args, **kwargs)
 
         self.enum_items, self.valid_keys = self._get_enum_values()
-        new_value = []
-        for key in self._current_value:
-            if key in self.valid_keys:
-                new_value.append(key)
-        self._current_value = new_value
+        if self.multiselection:
+            new_value = []
+            for key in self._current_value:
+                if key in self.valid_keys:
+                    new_value.append(key)
+            self._current_value = new_value
+
+        else:
+            if not self.valid_keys:
+                self._current_value = ""
+
+            elif self._current_value not in self.valid_keys:
+                self._current_value = tuple(self.valid_keys)[0]
 
 
 class AnatomyTemplatesEnumEntity(BaseEnumEntity):

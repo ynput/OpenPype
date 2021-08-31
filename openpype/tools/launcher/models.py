@@ -122,7 +122,6 @@ class ActionModel(QtGui.QStandardItemModel):
 
         self.application_manager = ApplicationManager()
 
-        self._groups = {}
         self.default_icon = qtawesome.icon("fa.cube", color="white")
         # Cache of available actions
         self._registered_actions = list()
@@ -138,14 +137,18 @@ class ActionModel(QtGui.QStandardItemModel):
         actions.extend(app_actions)
 
         self._registered_actions = actions
-        self.items_by_id.clear()
+
+        self.filter_actions()
 
     def get_application_actions(self):
         actions = []
         if not self.dbcon.Session.get("AVALON_PROJECT"):
             return actions
 
-        project_doc = self.dbcon.find_one({"type": "project"})
+        project_doc = self.dbcon.find_one(
+            {"type": "project"},
+            {"config.apps": True}
+        )
         if not project_doc:
             return actions
 
@@ -182,15 +185,11 @@ class ActionModel(QtGui.QStandardItemModel):
         return icon
 
     def filter_actions(self):
+        self.items_by_id.clear()
         # Validate actions based on compatibility
         self.clear()
 
-        self.items_by_id.clear()
-        self._groups.clear()
-
         actions = self.filter_compatible_actions(self._registered_actions)
-
-        self.beginResetModel()
 
         single_actions = []
         varianted_actions = collections.defaultdict(list)
@@ -274,12 +273,17 @@ class ActionModel(QtGui.QStandardItemModel):
 
             items_by_order[order].append(item)
 
+        self.beginResetModel()
+
+        items = []
         for order in sorted(items_by_order.keys()):
             for item in items_by_order[order]:
                 item_id = str(uuid.uuid4())
                 item.setData(item_id, ACTION_ID_ROLE)
                 self.items_by_id[item_id] = item
-                self.appendRow(item)
+                items.append(item)
+
+        self.invisibleRootItem().appendRows(items)
 
         self.endResetModel()
 
