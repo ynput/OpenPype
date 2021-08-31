@@ -16,7 +16,7 @@ from openpype.pipeline.create import CreateContext
 
 from Qt import QtCore
 
-
+# Define constant for plugin orders offset
 PLUGIN_ORDER_OFFSET = 0.5
 
 
@@ -114,6 +114,7 @@ class PublishReport:
     def __init__(self, controller):
         self.controller = controller
         self._plugin_data = []
+        self._stored_plugins = []
         self._current_plugin_data = []
         self._all_instances_by_id = {}
         self._current_context = None
@@ -128,12 +129,18 @@ class PublishReport:
         for instance in context:
             self._all_instances_by_id[instance.id] = instance
 
+        if self._current_plugin_data:
+            self._current_plugin_data["passed"] = True
+
+        self._stored_plugins.append(plugin)
+
         self._current_plugin_data = {
             "name": plugin.__name__,
             "label": getattr(plugin, "label"),
             "order": plugin.order,
             "instances_data": [],
-            "skipped": False
+            "skipped": False,
+            "passed": False
         }
 
         self._plugin_data.append(self._current_plugin_data)
@@ -151,15 +158,31 @@ class PublishReport:
             "logs": self._extract_log_items(result)
         })
 
-    def get_report(self):
+    def get_report(self, publish_plugins=None):
         instances_details = {}
         for instance in self._all_instances_by_id.values():
             instances_details[instance.id] = self._extract_instance_data(
                 instance, instance in self._current_context
             )
 
+        plugins_data = copy.deepcopy(self._plugin_data)
+        if plugins_data and not plugins_data[-1]["passed"]:
+            plugins_data[-1]["passed"] = True
+
+        if publish_plugins:
+            for plugin in publish_plugins:
+                if plugin not in self._stored_plugins:
+                    plugins_data.append({
+                        "name": plugin.__name__,
+                        "label": getattr(plugin, "label"),
+                        "order": plugin.order,
+                        "instances_data": [],
+                        "skipped": False,
+                        "passed": False
+                    })
+
         return {
-            "plugins_data": copy.deepcopy(self._plugin_data),
+            "plugins_data": plugins_data,
             "instances": instances_details,
             "context": self._extract_context_data(self._current_context)
         }
@@ -193,10 +216,15 @@ class PublishReport:
                     traceback.format_exception(*record_exc_info)
                 )
 
+            try:
+                msg = record.getMessage()
+            except Exception:
+                msg = str(record.msg)
+
             output.append({
                 "instance_id": instance_id,
                 "type": "record",
-                "msg": record.getMessage(),
+                "msg": msg,
                 "name": record.name,
                 "lineno": record.lineno,
                 "levelno": record.levelno,
@@ -533,7 +561,7 @@ class PublisherController:
         return self._publish_error
 
     def get_publish_report(self):
-        return self._publish_report.get_report()
+        return self._publish_report.get_report(self.publish_plugins)
 
     def get_validation_errors(self):
         return self._publish_validation_errors
@@ -714,7 +742,6 @@ class PublisherController:
         })
 
     def _process_and_continue(self, plugin, instance):
-        # TODO execute plugin
         result = pyblish.plugin.process(
             plugin, self._publish_context, instance
         )
