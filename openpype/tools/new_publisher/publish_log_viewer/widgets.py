@@ -55,6 +55,13 @@ class InstanceItem:
                 if instance_data_item["id"] == self._id:
                     logs.extend(copy.deepcopy(instance_data_item["logs"]))
 
+        errored = False
+        for log in logs:
+            if log["type"] == "error":
+                errored = True
+                break
+
+        self.errored = errored
         self.logs = logs
 
     @property

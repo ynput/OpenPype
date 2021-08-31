@@ -1,11 +1,12 @@
 import platform
+import collections
 from Qt import QtWidgets, QtCore, QtGui
-from constants import (
+from .constants import (
     ITEM_ID_ROLE,
     ITEM_IS_GROUP_ROLE,
+    ITEM_ERRORED_ROLE,
     ITEM_LABEL_ROLE,
     PLUGIN_SKIPPED_ROLE,
-    PLUGIN_ERRORED_ROLE,
     INSTANCE_REMOVED_ROLE
 )
 
@@ -25,22 +26,19 @@ colors = {
 }
 
 
-class ItemDelegate(QtWidgets.QStyledItemDelegate):
-    pass
-
-
 class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
     """Generic delegate for instance header"""
+
+    _item_icons_by_name_and_size = collections.defaultdict(dict)
+
     _minus_pixmaps = {}
     _plus_pixmaps = {}
     _path_stroker = None
 
-    _pix_offset_ratio = 1 / 3
-    _pix_stroke_size_ratio = 1 / 7
-
-    def __init__(self, parent):
-        super(GroupItemDelegate, self).__init__(parent)
-        self.item_delegate = ItemDelegate(parent)
+    _item_pix_offset_ratio = 1 / 5
+    _item_border_size = 1 / 7
+    _group_pix_offset_ratio = 1 / 3
+    _group_pix_stroke_size_ratio = 1 / 7
 
     @classmethod
     def _get_path_stroker(cls):
@@ -61,7 +59,7 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
         pix = QtGui.QPixmap(size, size)
         pix.fill(QtCore.Qt.transparent)
 
-        offset = int(size * cls._pix_offset_ratio)
+        offset = int(size * cls._group_pix_offset_ratio)
         pnt_1 = QtCore.QPoint(offset, int(size / 2))
         pnt_2 = QtCore.QPoint(size - offset, int(size / 2))
         pnt_3 = QtCore.QPoint(int(size / 2), offset)
@@ -72,7 +70,7 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
         path_2.lineTo(pnt_4)
 
         path_stroker = cls._get_path_stroker()
-        path_stroker.setWidth(size * cls._pix_stroke_size_ratio)
+        path_stroker.setWidth(size * cls._group_pix_stroke_size_ratio)
         stroked_path_1 = path_stroker.createStroke(path_1)
         stroked_path_2 = path_stroker.createStroke(path_2)
 
@@ -97,13 +95,13 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
         if pix is not None:
             return pix
 
-        offset = int(size * cls._pix_offset_ratio)
+        offset = int(size * cls._group_pix_offset_ratio)
         pnt_1 = QtCore.QPoint(offset, int(size / 2))
         pnt_2 = QtCore.QPoint(size - offset, int(size / 2))
         path = QtGui.QPainterPath(pnt_1)
         path.lineTo(pnt_2)
         path_stroker = cls._get_path_stroker()
-        path_stroker.setWidth(size * cls._pix_stroke_size_ratio)
+        path_stroker.setWidth(size * cls._group_pix_stroke_size_ratio)
         stroked_path = path_stroker.createStroke(path)
 
         pix = QtGui.QPixmap(size, size)
@@ -120,11 +118,112 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
 
         return pix
 
+    @classmethod
+    def _get_icon_color(cls, name):
+        if name == "error":
+            return QtGui.QColor(colors["error"])
+        return QtGui.QColor(QtCore.Qt.white)
+
+    @classmethod
+    def _get_icon(cls, name, size):
+        icons_by_size = cls._item_icons_by_name_and_size[name]
+        if icons_by_size and size in icons_by_size:
+            return icons_by_size[size]
+
+        pix = QtGui.QPixmap(size, size)
+        pix.fill(QtCore.Qt.transparent)
+
+        painter = QtGui.QPainter(pix)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        if name == "error":
+            color = QtGui.QColor(colors["error"])
+            painter.setPen(QtCore.Qt.NoPen)
+            painter.setBrush(color)
+        elif name == "skipped":
+            color = QtGui.QColor(QtCore.Qt.white)
+            pen = QtGui.QPen(color)
+            pen.setWidth(int(size * cls._item_border_size))
+            painter.setPen(pen)
+            painter.setBrush(QtCore.Qt.transparent)
+        else:
+            color = QtGui.QColor(QtCore.Qt.white)
+            painter.setPen(QtCore.Qt.NoPen)
+            painter.setBrush(color)
+
+        offset = int(size * cls._item_pix_offset_ratio)
+        painter.drawEllipse(
+            offset, offset,
+            size - (2 * offset), size - (2 * offset)
+        )
+        painter.end()
+
+        cls._item_icons_by_name_and_size[name][size] = pix
+
+        return pix
+
     def paint(self, painter, option, index):
         if index.data(ITEM_IS_GROUP_ROLE):
             self.group_item_paint(painter, option, index)
         else:
-            self.item_delegate.paint(painter, option, index)
+            self.item_paint(painter, option, index)
+
+    def item_paint(self, painter, option, index):
+        self.initStyleOption(option, index)
+
+        widget = option.widget
+        if widget:
+            style = widget.style()
+        else:
+            style = QtWidgets.QApplicaion.style()
+
+        style.proxy().drawPrimitive(
+            style.PE_PanelItemViewItem, option, painter, widget
+        )
+        _rect = style.proxy().subElementRect(
+            style.SE_ItemViewItemText, option, widget
+        )
+        bg_rect = QtCore.QRectF(option.rect)
+        bg_rect.setY(_rect.y())
+        bg_rect.setHeight(_rect.height())
+
+        expander_rect = QtCore.QRectF(bg_rect)
+        expander_rect.setWidth(expander_rect.height() + 5)
+
+        label_rect = QtCore.QRectF(
+            expander_rect.x() + expander_rect.width(),
+            expander_rect.y(),
+            bg_rect.width() - expander_rect.width(),
+            expander_rect.height()
+        )
+
+        icon_size = expander_rect.height()
+        if index.data(ITEM_ERRORED_ROLE):
+            expander_icon = self._get_icon("error", icon_size)
+        elif index.data(PLUGIN_SKIPPED_ROLE):
+            expander_icon = self._get_icon("skipped", icon_size)
+        else:
+            expander_icon = self._get_icon("", icon_size)
+
+        label = index.data(QtCore.Qt.DisplayRole)
+        label = option.fontMetrics.elidedText(
+            label, QtCore.Qt.ElideRight, label_rect.width()
+        )
+
+        painter.save()
+        # Draw icon
+        pix_point = QtCore.QPoint(
+            expander_rect.center().x() - int(expander_icon.width() / 2),
+            expander_rect.top()
+        )
+        painter.drawPixmap(pix_point, expander_icon)
+
+        # Draw label
+        painter.setFont(option.font)
+        painter.drawText(label_rect, QtCore.Qt.AlignVCenter, label)
+
+        # Ok, we're done, tidy up.
+        painter.restore()
 
     def group_item_paint(self, painter, option, index):
         """Paint text
