@@ -744,6 +744,10 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-left: 1px solid {color:border};
 }
 
+#PublishProgressBar[state="0"]::chunk {
+    background: {color:bg-buttons};
+}
+
 #ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
     background: transparent;
 }

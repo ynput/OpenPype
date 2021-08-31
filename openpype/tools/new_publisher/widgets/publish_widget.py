@@ -49,6 +49,7 @@ class PublishFrame(QtWidgets.QFrame):
         instance_plugin_layout.addWidget(plugin_label, 1)
 
         progress_widget = QtWidgets.QProgressBar(content_widget)
+        progress_widget.setObjectName("PublishProgressBar")
 
         copy_log_btn = QtWidgets.QPushButton("Copy log", content_widget)
         copy_log_btn.setVisible(False)
@@ -292,8 +293,11 @@ class PublishFrame(QtWidgets.QFrame):
             state = ""
         else:
             state = str(state)
-        self.info_frame.setProperty("state", state)
-        self.info_frame.style().polish(self.info_frame)
+
+        for widget in (self.progress_widget, self.info_frame):
+            if widget.property("state") != state:
+                widget.setProperty("state", state)
+                widget.style().polish(widget)
 
     def _on_copy_log(self):
         logs = self.controller.get_publish_report()
