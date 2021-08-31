@@ -138,6 +138,9 @@ class DetailsWidget(QtWidgets.QWidget):
                 if exc_info:
                     lines.append(exc_info)
 
+            elif log["type"] == "error":
+                lines.append(log["traceback"])
+
             else:
                 print(log["type"])
 
