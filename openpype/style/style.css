@@ -748,6 +748,13 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:bg-buttons};
 }
 
+#PublishDetailViews {
+    background: transparent;
+}
+#PublishDetailViews::item {
+    margin: 1px 0px 1px 0px;
+}
+
 #ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
     background: transparent;
 }
