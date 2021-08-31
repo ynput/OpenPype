@@ -1,0 +1,120 @@
+{
+    "publish": {
+        "CollectPublishedFiles": {
+            "task_type_to_family": {
+                "Animation": {
+                    "workfile": {
+                        "is_sequence": false,
+                        "extensions": [
+                            "tvp"
+                        ],
+                        "families": [],
+                        "tags": [],
+                        "subset_template_name": ""
+                    },
+                    "render": {
+                        "is_sequence": true,
+                        "extensions": [
+                            "png",
+                            "exr",
+                            "tiff",
+                            "tif"
+                        ],
+                        "families": [
+                            "review"
+                        ],
+                        "tags": [
+                            "review"
+                        ],
+                        "subset_template_name": ""
+                    }
+                },
+                "Compositing": {
+                    "workfile": {
+                        "is_sequence": false,
+                        "extensions": [
+                            "aep"
+                        ],
+                        "families": [],
+                        "tags": [],
+                        "subset_template_name": ""
+                    },
+                    "render": {
+                        "is_sequence": true,
+                        "extensions": [
+                            "png",
+                            "exr",
+                            "tiff",
+                            "tif"
+                        ],
+                        "families": [
+                            "review"
+                        ],
+                        "tags": [
+                            "review"
+                        ],
+                        "subset_template_name": ""
+                    }
+                },
+                "Layout": {
+                    "workfile": {
+                        "is_sequence": false,
+                        "extensions": [
+                            "psd"
+                        ],
+                        "families": [],
+                        "tags": [],
+                        "subset_template_name": ""
+                    },
+                    "image": {
+                        "is_sequence": false,
+                        "extensions": [
+                            "png",
+                            "jpg",
+                            "jpeg",
+                            "tiff",
+                            "tif"
+                        ],
+                        "families": [
+                            "review"
+                        ],
+                        "tags": [
+                            "review"
+                        ],
+                        "subset_template_name": ""
+                    }
+                },
+                "default_task_type": {
+                    "workfile": {
+                        "is_sequence": false,
+                        "extensions": [
+                            "tvp"
+                        ],
+                        "families": [],
+                        "tags": [],
+                        "subset_template_name": "{family}{Variant}"
+                    },
+                    "render": {
+                        "is_sequence": true,
+                        "extensions": [
+                            "png",
+                            "exr",
+                            "tiff",
+                            "tif"
+                        ],
+                        "families": [
+                            "review"
+                        ],
+                        "tags": [
+                            "review"
+                        ],
+                        "subset_template_name": "{family}{Variant}"
+                    }
+                },
+                "__dynamic_keys_labels__": {
+                    "default_task_type": "Default task type"
+                }
+            }
+        }
+    }
+}

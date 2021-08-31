@@ -48,6 +48,10 @@ class DictImmutableKeysWidget(BaseWidget):
             self._ui_item_base()
             label = self.entity.label
 
+        # Set stretch of second column to 1
+        if isinstance(self.content_layout, QtWidgets.QGridLayout):
+            self.content_layout.setColumnStretch(1, 1)
+
         self._direct_children_widgets = []
         self._parent_widget_by_entity_id = {}
         self._added_wrapper_ids = set()
@@ -88,6 +92,25 @@ class DictImmutableKeysWidget(BaseWidget):
             self._parent_widget_by_entity_id[wrapper.id] = widget
 
             self._prepare_entity_layouts(child["children"], wrapper)
+
+    def set_focus(self, scroll_to=False):
+        """Set focus of a widget.
+
+        Args:
+            scroll_to(bool): Also scroll to widget in category widget.
+        """
+        if self.body_widget:
+            if scroll_to:
+                self.scroll_to(self.body_widget.top_part)
+            self.body_widget.top_part.setFocus()
+
+        else:
+            if scroll_to:
+                if not self.input_fields:
+                    self.scroll_to(self)
+                else:
+                    self.scroll_to(self.input_fields[0])
+            self.setFocus()
 
     def _ui_item_base(self):
         self.setObjectName("DictInvisible")
@@ -312,7 +335,11 @@ class BoolWidget(InputWidget):
 
         self.setFocusProxy(self.input_field)
 
+        self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.stateChanged.connect(self._on_value_change)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.isChecked():
