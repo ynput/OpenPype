@@ -1,4 +1,4 @@
-from .widgets import (
+from .window import (
     PublishLogViewerWindow
 )
 
