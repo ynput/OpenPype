@@ -389,11 +389,13 @@ class NumberWidget(InputWidget):
         self.input_field = NumberSpinBox(self.content_widget, **kwargs)
         input_field_stretch = 1
 
+        self._slider_multiplier = 10 ** self.entity.decimal
         if self.entity.show_slider:
+
             slider_widget = NiceSlider(QtCore.Qt.Horizontal, self)
             slider_widget.setRange(
-                self.entity.minimum,
-                self.entity.maximum
+                int(self.entity.minimum * self._slider_multiplier),
+                int(self.entity.maximum * self._slider_multiplier)
             )
 
             self.content_layout.addWidget(slider_widget, 1)
@@ -429,7 +431,7 @@ class NumberWidget(InputWidget):
             return
 
         self._ignore_input_change = True
-        self.input_field.setValue(new_value)
+        self.input_field.setValue(new_value / self._slider_multiplier)
         self._ignore_input_change = False
 
     def _on_value_change(self):
