@@ -273,6 +273,8 @@ class PublishFrame(QtWidgets.QFrame):
 
     def _set_finished(self):
         self.main_label.setText("Finished")
+        self.message_label.setText("")
+        self.message_label_bottom.setText("")
         self._set_success_property(1)
 
     def _change_bg_property(self, state=None):
