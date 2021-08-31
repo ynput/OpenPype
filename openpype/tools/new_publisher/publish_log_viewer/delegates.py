@@ -31,31 +31,37 @@ class ItemDelegate(QtWidgets.QStyledItemDelegate):
 
 class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
     """Generic delegate for instance header"""
+    _minus_pixmaps = {}
+    _plus_pixmaps = {}
+    _path_stroker = None
+
+    _pix_offset_ratio = 1 / 3
+    _pix_stroke_size_ratio = 1 / 7
 
     def __init__(self, parent):
         super(GroupItemDelegate, self).__init__(parent)
         self.item_delegate = ItemDelegate(parent)
 
-        self._minus_pixmaps = {}
-        self._plus_pixmaps = {}
-        self._pix_offset_ratio = 1 / 3
-        self._pix_stroke_size_ratio = 1 / 7
+    @classmethod
+    def _get_path_stroker(cls):
+        if cls._path_stroker is None:
+            path_stroker = QtGui.QPainterPathStroker()
+            path_stroker.setCapStyle(QtCore.Qt.RoundCap)
+            path_stroker.setJoinStyle(QtCore.Qt.RoundJoin)
 
-        path_stroker = QtGui.QPainterPathStroker()
-        path_stroker.setCapStyle(QtCore.Qt.RoundCap)
-        path_stroker.setJoinStyle(QtCore.Qt.RoundJoin)
+            cls._path_stroker = path_stroker
+        return cls._path_stroker
 
-        self._path_stroker = path_stroker
-
-    def _get_plus_pixmap(self, size):
-        pix = self._minus_pixmaps.get(size)
+    @classmethod
+    def _get_plus_pixmap(cls, size):
+        pix = cls._minus_pixmaps.get(size)
         if pix is not None:
             return pix
 
         pix = QtGui.QPixmap(size, size)
         pix.fill(QtCore.Qt.transparent)
 
-        offset = int(size * self._pix_offset_ratio)
+        offset = int(size * cls._pix_offset_ratio)
         pnt_1 = QtCore.QPoint(offset, int(size / 2))
         pnt_2 = QtCore.QPoint(size - offset, int(size / 2))
         pnt_3 = QtCore.QPoint(int(size / 2), offset)
@@ -65,9 +71,10 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
         path_2 = QtGui.QPainterPath(pnt_3)
         path_2.lineTo(pnt_4)
 
-        self._path_stroker.setWidth(size * self._pix_stroke_size_ratio)
-        stroked_path_1 = self._path_stroker.createStroke(path_1)
-        stroked_path_2 = self._path_stroker.createStroke(path_2)
+        path_stroker = cls._get_path_stroker()
+        path_stroker.setWidth(size * cls._pix_stroke_size_ratio)
+        stroked_path_1 = path_stroker.createStroke(path_1)
+        stroked_path_2 = path_stroker.createStroke(path_2)
 
         pix = QtGui.QPixmap(size, size)
         pix.fill(QtCore.Qt.transparent)
@@ -80,22 +87,24 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawPath(stroked_path_2)
         painter.end()
 
-        self._minus_pixmaps[size] = pix
+        cls._minus_pixmaps[size] = pix
 
         return pix
 
-    def _get_minus_pixmap(self, size):
-        pix = self._plus_pixmaps.get(size)
+    @classmethod
+    def _get_minus_pixmap(cls, size):
+        pix = cls._plus_pixmaps.get(size)
         if pix is not None:
             return pix
 
-        offset = int(size / self._pix_offset_ratio)
+        offset = int(size * cls._pix_offset_ratio)
         pnt_1 = QtCore.QPoint(offset, int(size / 2))
         pnt_2 = QtCore.QPoint(size - offset, int(size / 2))
         path = QtGui.QPainterPath(pnt_1)
         path.lineTo(pnt_2)
-        self._path_stroker.setWidth(size / self._pix_stroke_size_ratio)
-        stroked_path = self._path_stroker.createStroke(path)
+        path_stroker = cls._get_path_stroker()
+        path_stroker.setWidth(size * cls._pix_stroke_size_ratio)
+        stroked_path = path_stroker.createStroke(path)
 
         pix = QtGui.QPixmap(size, size)
         pix.fill(QtCore.Qt.transparent)
@@ -107,7 +116,7 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
         painter.drawPath(stroked_path)
         painter.end()
 
-        self._plus_pixmaps[size] = pix
+        cls._plus_pixmaps[size] = pix
 
         return pix
 
