@@ -13,6 +13,19 @@ from openpype.api import (
 )
 
 
+class HostMissRequiredMethod(Exception):
+    def __init__(self, host, missing_methods):
+        self.missing_methods = missing_methods
+        self.host = host
+        joined_methods = ", ".join(
+            ['"{}"'.format(name) for name in missing_methods]
+        )
+        msg = "Host {} does not have implemented method/s {}".format(
+            str(host), joined_methods
+        )
+        super(HostMissRequiredMethod, self).__init__(msg)
+
+
 class InstanceMember:
     def __init__(self, instance, name):
         self.instance = instance
@@ -411,6 +424,12 @@ class CreatedInstance:
 
 
 class CreateContext:
+    required_methods = (
+        "list_instances",
+        "remove_instances",
+        "update_instances"
+    )
+
     def __init__(self, host, dbcon=None, headless=False, reset=True):
         if dbcon is None:
             import avalon.api
@@ -421,7 +440,22 @@ class CreateContext:
 
         self.dbcon = dbcon
 
+        self._log = None
+
         self.host = host
+        host_is_valid = True
+        missing_methods = self.get_host_misssing_methods(host)
+        if missing_methods:
+            host_is_valid = False
+            joined_methods = ", ".join(
+                ['"{}"'.format(name) for name in missing_methods]
+            )
+            self.log.warning((
+                "Host miss required methods to be able use creation."
+                " Missing methods: {}"
+            ).format(joined_methods))
+
+        self._host_is_valid = host_is_valid
         self.headless = headless
 
         self.instances = []
@@ -432,10 +466,20 @@ class CreateContext:
         self.plugins_with_defs = []
         self._attr_plugins_by_family = {}
 
-        self._log = None
-
         if reset:
             self.reset()
+
+    @classmethod
+    def get_host_misssing_methods(cls, host):
+        missing = set()
+        for attr_name in cls.required_methods:
+            if not hasattr(host, attr_name):
+                missing.add(attr_name)
+        return missing
+
+    @property
+    def host_is_valid(self):
+        return self._host_is_valid
 
     @property
     def log(self):
@@ -498,8 +542,12 @@ class CreateContext:
 
     def reset_instances(self):
         # Collect instances
-        host_instances = self.host.list_instances()
         instances = []
+        if not self.host_is_valid:
+            self.instances = instances
+            return
+
+        host_instances = self.host.list_instances()
         task_names_by_asset_name = collections.defaultdict(set)
         for instance_data in host_instances:
             family = instance_data["family"]
@@ -559,6 +607,10 @@ class CreateContext:
         self.instances = instances
 
     def save_instance_changes(self):
+        if not self.host_is_valid:
+            missing_methods = self.get_host_misssing_methods(self.host)
+            raise HostMissRequiredMethod(self.host, missing_methods)
+
         update_list = []
         for instance in self.instances:
             instance_changes = instance.changes()
@@ -569,6 +621,10 @@ class CreateContext:
             self.host.update_instances(update_list)
 
     def remove_instances(self, instances):
+        if not self.host_is_valid:
+            missing_methods = self.get_host_misssing_methods(self.host)
+            raise HostMissRequiredMethod(self.host, missing_methods)
+
         self.host.remove_instances(instances)
 
     def _get_publish_plugins_with_attr_for_family(self, family):
