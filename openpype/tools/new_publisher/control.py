@@ -113,13 +113,15 @@ class AssetDocsCache:
 class PublishReport:
     def __init__(self, controller):
         self.controller = controller
+        self._publish_discover_result = None
         self._plugin_data = []
         self._stored_plugins = []
         self._current_plugin_data = []
         self._all_instances_by_id = {}
         self._current_context = None
 
-    def reset(self, context):
+    def reset(self, context, publish_discover_result=None):
+        self._publish_discover_result = publish_discover_result
         self._plugin_data = []
         self._current_plugin_data = {}
         self._all_instances_by_id = {}
@@ -181,10 +183,19 @@ class PublishReport:
                         "passed": False
                     })
 
+        crashed_file_paths = {}
+        if self._publish_discover_result is not None:
+            items = self._publish_discover_result.crashed_file_paths.items()
+            for filepath, exc_info in items:
+                crashed_file_paths[filepath] = "".join(
+                    traceback.format_exception(*exc_info)
+                )
+
         return {
             "plugins_data": plugins_data,
             "instances": instances_details,
-            "context": self._extract_context_data(self._current_context)
+            "context": self._extract_context_data(self._current_context),
+            "crashed_file_paths": crashed_file_paths
         }
 
     def _extract_context_data(self, context):
@@ -575,7 +586,10 @@ class PublisherController:
         self._main_thread_iter = self._publish_iterator()
         self._publish_context = pyblish.api.Context()
 
-        self._publish_report.reset(self._publish_context)
+        self._publish_report.reset(
+            self._publish_context,
+            self.create_context.publish_discover_result
+        )
         self._publish_validation_errors = []
         self._publish_current_plugin_validation_errors = None
         self._publish_error = None
