@@ -1,15 +1,29 @@
 # Changelog
 
-## [3.4.0-nightly.2](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.4.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.3.1...HEAD)
 
 **Merged pull requests:**
 
+- Ftrack: Fix hosts attribute in collect ftrack username [\#1972](https://github.com/pypeclub/OpenPype/pull/1972)
+- Removed deprecated submodules [\#1967](https://github.com/pypeclub/OpenPype/pull/1967)
+- Launcher: Fix crashes on action click [\#1964](https://github.com/pypeclub/OpenPype/pull/1964)
+- Settings: Minor fixes in UI and missing default values [\#1963](https://github.com/pypeclub/OpenPype/pull/1963)
+- Blender: Toggle system console works on windows [\#1962](https://github.com/pypeclub/OpenPype/pull/1962)
+- Resolve path when adding to zip [\#1960](https://github.com/pypeclub/OpenPype/pull/1960)
+- Bump url-parse from 1.5.1 to 1.5.3 in /website [\#1958](https://github.com/pypeclub/OpenPype/pull/1958)
+- Global: Avalon Host name collector [\#1949](https://github.com/pypeclub/OpenPype/pull/1949)
+- Global: Define hosts in CollectSceneVersion [\#1948](https://github.com/pypeclub/OpenPype/pull/1948)
 - Maya: Add Xgen family support [\#1947](https://github.com/pypeclub/OpenPype/pull/1947)
 - Add face sets to exported alembics [\#1942](https://github.com/pypeclub/OpenPype/pull/1942)
+- Bump path-parse from 1.0.6 to 1.0.7 in /website [\#1933](https://github.com/pypeclub/OpenPype/pull/1933)
+- \#1894 - adds host to template\_name\_profiles for filtering [\#1915](https://github.com/pypeclub/OpenPype/pull/1915)
 - Environments: Tool environments in alphabetical order [\#1910](https://github.com/pypeclub/OpenPype/pull/1910)
+- Disregard publishing time. [\#1888](https://github.com/pypeclub/OpenPype/pull/1888)
+- Feature/webpublisher backend [\#1876](https://github.com/pypeclub/OpenPype/pull/1876)
 - Dynamic modules [\#1872](https://github.com/pypeclub/OpenPype/pull/1872)
+- Houdini: add Camera, Point Cache, Composite, Redshift ROP and VDB Cache support [\#1821](https://github.com/pypeclub/OpenPype/pull/1821)
 
 ## [3.3.1](https://github.com/pypeclub/OpenPype/tree/3.3.1) (2021-08-20)
 
@@ -72,20 +86,10 @@
 - Maya: support for configurable `dirmap` 🗺️ [\#1859](https://github.com/pypeclub/OpenPype/pull/1859)
 - Maya: don't add reference members as connections to the container set 📦 [\#1855](https://github.com/pypeclub/OpenPype/pull/1855)
 - Settings list can use template or schema as object type [\#1815](https://github.com/pypeclub/OpenPype/pull/1815)
-- Maya: expected files -\> render products ⚙️ overhaul [\#1812](https://github.com/pypeclub/OpenPype/pull/1812)
-- Settings error dialog on show [\#1798](https://github.com/pypeclub/OpenPype/pull/1798)
 
 ## [3.2.0](https://github.com/pypeclub/OpenPype/tree/3.2.0) (2021-07-13)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/CI/3.2.0-nightly.7...3.2.0)
-
-**Merged pull requests:**
-
-- Build: don't add Poetry to `PATH` [\#1808](https://github.com/pypeclub/OpenPype/pull/1808)
-- Nuke: ftrack family plugin settings preset [\#1805](https://github.com/pypeclub/OpenPype/pull/1805)
-- nuke: fixing wrong name of family folder when `used existing frames` [\#1803](https://github.com/pypeclub/OpenPype/pull/1803)
-- Collect ftrack family bugs [\#1801](https://github.com/pypeclub/OpenPype/pull/1801)
-- Standalone publisher last project [\#1799](https://github.com/pypeclub/OpenPype/pull/1799)
 
 ## [2.18.4](https://github.com/pypeclub/OpenPype/tree/2.18.4) (2021-06-24)
 
