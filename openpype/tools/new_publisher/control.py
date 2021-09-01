@@ -342,6 +342,10 @@ class PublisherController:
         return self.create_context.creators
 
     @property
+    def host_is_valid(self):
+        return self.create_context.host_is_valid
+
+    @property
     def publish_plugins(self):
         return self.create_context.publish_plugins
 

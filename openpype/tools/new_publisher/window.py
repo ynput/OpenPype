@@ -92,7 +92,8 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_view_layout.addLayout(subset_view_btns_layout, 0)
 
         # Whole subset layout with attributes and details
-        subset_content_layout = QtWidgets.QHBoxLayout()
+        subset_content_widget = QtWidgets.QWidget(subset_frame)
+        subset_content_layout = QtWidgets.QHBoxLayout(subset_content_widget)
         subset_content_layout.setContentsMargins(0, 0, 0, 0)
         subset_content_layout.addLayout(subset_view_layout, 0)
         subset_content_layout.addWidget(subset_attributes_widget, 1)
@@ -131,7 +132,7 @@ class PublisherWindow(QtWidgets.QDialog):
         marings.setTop(marings.top() * 2)
         marings.setBottom(marings.bottom() * 2)
         subset_layout.setContentsMargins(marings)
-        subset_layout.addLayout(subset_content_layout, 1)
+        subset_layout.addWidget(subset_content_widget, 1)
         subset_layout.addLayout(footer_layout, 0)
 
         # Create publish frame
@@ -181,6 +182,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self.content_stacked_layout = content_stacked_layout
         self.publish_frame = publish_frame
         self.subset_frame = subset_frame
+        self.subset_content_widget = subset_content_widget
 
         self.context_label = context_label
 
@@ -215,7 +217,7 @@ class PublisherWindow(QtWidgets.QDialog):
         super(PublisherWindow, self).showEvent(event)
         if self._first_show:
             self._first_show = False
-            self.controller.reset()
+            self.reset()
 
     def reset(self):
         self.controller.reset()
@@ -342,6 +344,8 @@ class PublisherWindow(QtWidgets.QDialog):
         self.publish_btn.setEnabled(True)
 
         self._set_publish_visibility(False)
+
+        self.subset_content_widget.setEnabled(self.controller.host_is_valid)
 
     def _on_publish_start(self):
         self.reset_btn.setEnabled(False)
