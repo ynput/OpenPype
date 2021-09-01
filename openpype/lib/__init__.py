@@ -71,6 +71,8 @@ from .avalon_context import (
     get_linked_assets,
     get_latest_version,
 
+    get_workfile_template_key,
+    get_workfile_template_key_from_context,
     get_workdir_data,
     get_workdir,
     get_workdir_with_workdir_data,
@@ -189,6 +191,8 @@ __all__ = [
     "get_linked_assets",
     "get_latest_version",
 
+    "get_workfile_template_key",
+    "get_workfile_template_key_from_context",
     "get_workdir_data",
     "get_workdir",
     "get_workdir_with_workdir_data",

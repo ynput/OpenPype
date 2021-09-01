@@ -12,10 +12,15 @@ from avalon import style, io, api, pipeline
 
 from avalon.tools import lib as tools_lib
 from avalon.tools.widgets import AssetWidget
-from avalon.tools.models import TasksModel
 from avalon.tools.delegates import PrettyTimeDelegate
 
-from .model import FilesModel
+from .model import (
+    TASK_NAME_ROLE,
+    TASK_TYPE_ROLE,
+    FilesModel,
+    TasksModel,
+    TasksProxyModel
+)
 from .view import FilesView
 
 from openpype.lib import (
@@ -23,7 +28,8 @@ from openpype.lib import (
     get_workdir,
     get_workfile_doc,
     create_workfile_doc,
-    save_workfile_data_to_doc
+    save_workfile_data_to_doc,
+    get_workfile_template_key
 )
 
 log = logging.getLogger(__name__)
@@ -55,9 +61,13 @@ class NameWindow(QtWidgets.QDialog):
 
         # Set work file data for template formatting
         asset_name = session["AVALON_ASSET"]
-        project_doc = io.find_one({
-            "type": "project"
-        })
+        project_doc = io.find_one(
+            {"type": "project"},
+            {
+                "name": True,
+                "data.code": True
+            }
+        )
         self.data = {
             "project": {
                 "name": project_doc["name"],
@@ -126,10 +136,14 @@ class NameWindow(QtWidgets.QDialog):
         #   for "{version".
         if "{version" in self.template:
             inputs_layout.addRow("Version:", version_widget)
+        else:
+            version_widget.setVisible(False)
 
         # Add subversion only if template containt `{comment}`
         if "{comment}" in self.template:
             inputs_layout.addRow("Subversion:", subversion_input)
+        else:
+            subversion_input.setVisible(False)
         inputs_layout.addRow("Extension:", ext_combo)
         inputs_layout.addRow("Preview:", preview_label)
 
@@ -305,48 +319,46 @@ class TasksWidget(QtWidgets.QWidget):
 
     task_changed = QtCore.Signal()
 
-    def __init__(self, parent=None):
+    def __init__(self, dbcon=None, parent=None):
         super(TasksWidget, self).__init__(parent)
-        self.setContentsMargins(0, 0, 0, 0)
 
-        view = QtWidgets.QTreeView()
-        view.setIndentation(0)
-        model = TasksModel(io)
-        view.setModel(model)
+        tasks_view = QtWidgets.QTreeView(self)
+        tasks_view.setIndentation(0)
+        tasks_view.setSortingEnabled(True)
+        if dbcon is None:
+            dbcon = io
+
+        tasks_model = TasksModel(dbcon)
+        tasks_proxy = TasksProxyModel()
+        tasks_proxy.setSourceModel(tasks_model)
+        tasks_view.setModel(tasks_proxy)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(view)
+        layout.addWidget(tasks_view)
 
-        # Hide the default tasks "count" as we don't need that data here.
-        view.setColumnHidden(1, True)
+        selection_model = tasks_view.selectionModel()
+        selection_model.currentChanged.connect(self.task_changed)
 
-        selection = view.selectionModel()
-        selection.currentChanged.connect(self.task_changed)
-
-        self.models = {
-            "tasks": model
-        }
-
-        self.widgets = {
-            "view": view,
-        }
+        self._tasks_model = tasks_model
+        self._tasks_proxy = tasks_proxy
+        self._tasks_view = tasks_view
 
         self._last_selected_task = None
 
-    def set_asset(self, asset):
-        if asset is None:
-            # Asset deselected
+    def set_asset(self, asset_doc):
+        # Asset deselected
+        if asset_doc is None:
             return
 
         # Try and preserve the last selected task and reselect it
         # after switching assets. If there's no currently selected
         # asset keep whatever the "last selected" was prior to it.
-        current = self.get_current_task()
+        current = self.get_current_task_name()
         if current:
             self._last_selected_task = current
 
-        self.models["tasks"].set_assets(asset_docs=[asset])
+        self._tasks_model.set_asset(asset_doc)
 
         if self._last_selected_task:
             self.select_task(self._last_selected_task)
@@ -354,7 +366,7 @@ class TasksWidget(QtWidgets.QWidget):
         # Force a task changed emit.
         self.task_changed.emit()
 
-    def select_task(self, task):
+    def select_task(self, task_name):
         """Select a task by name.
 
         If the task does not exist in the current model then selection is only
@@ -366,39 +378,40 @@ class TasksWidget(QtWidgets.QWidget):
         """
 
         # Clear selection
-        view = self.widgets["view"]
-        model = view.model()
-        selection_model = view.selectionModel()
+        selection_model = self._tasks_view.selectionModel()
         selection_model.clearSelection()
 
         # Select the task
         mode = selection_model.Select | selection_model.Rows
-        for row in range(model.rowCount(QtCore.QModelIndex())):
-            index = model.index(row, 0, QtCore.QModelIndex())
-            name = index.data(QtCore.Qt.DisplayRole)
-            if name == task:
+        for row in range(self._tasks_model.rowCount()):
+            index = self._tasks_model.index(row, 0)
+            name = index.data(TASK_NAME_ROLE)
+            if name == task_name:
                 selection_model.select(index, mode)
 
                 # Set the currently active index
-                view.setCurrentIndex(index)
+                self._tasks_view.setCurrentIndex(index)
+                break
 
-    def get_current_task(self):
+    def get_current_task_name(self):
         """Return name of task at current index (selected)
 
         Returns:
             str: Name of the current task.
 
         """
-        view = self.widgets["view"]
-        index = view.currentIndex()
-        index = index.sibling(index.row(), 0)  # ensure column zero for name
+        index = self._tasks_view.currentIndex()
+        selection_model = self._tasks_view.selectionModel()
+        if index.isValid() and selection_model.isSelected(index):
+            return index.data(TASK_NAME_ROLE)
+        return None
 
-        selection = view.selectionModel()
-        if selection.isSelected(index):
-            # Ignore when the current task is not selected as the "No task"
-            # placeholder might be the current index even though it's
-            # disallowed to be selected. So we only return if it is selected.
-            return index.data(QtCore.Qt.DisplayRole)
+    def get_current_task_type(self):
+        index = self._tasks_view.currentIndex()
+        selection_model = self._tasks_view.selectionModel()
+        if index.isValid() and selection_model.isSelected(index):
+            return index.data(TASK_TYPE_ROLE)
+        return None
 
 
 class FilesWidget(QtWidgets.QWidget):
@@ -411,7 +424,8 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Setup
         self._asset = None
-        self._task = None
+        self._task_name = None
+        self._task_type = None
 
         # Pype's anatomy object for current project
         self.anatomy = Anatomy(io.Session["AVALON_PROJECT"])
@@ -506,14 +520,15 @@ class FilesWidget(QtWidgets.QWidget):
         self.btn_browse = btn_browse
         self.btn_save = btn_save
 
-    def set_asset_task(self, asset, task):
+    def set_asset_task(self, asset, task_name, task_type):
         self._asset = asset
-        self._task = task
+        self._task_name = task_name
+        self._task_type = task_type
 
         # Define a custom session so we can query the work root
         # for a "Work area" that is not our current Session.
         # This way we can browse it even before we enter it.
-        if self._asset and self._task:
+        if self._asset and self._task_name and self._task_type:
             session = self._get_session()
             self.root = self.host.work_root(session)
             self.files_model.set_root(self.root)
@@ -533,10 +548,16 @@ class FilesWidget(QtWidgets.QWidget):
         """Return a modified session for the current asset and task"""
 
         session = api.Session.copy()
+        self.template_key = get_workfile_template_key(
+            self._task_type,
+            session["AVALON_APP"],
+            project_name=session["AVALON_PROJECT"]
+        )
         changes = pipeline.compute_session_changes(
             session,
             asset=self._asset,
-            task=self._task
+            task=self._task_name,
+            template_key=self.template_key
         )
         session.update(changes)
 
@@ -549,14 +570,19 @@ class FilesWidget(QtWidgets.QWidget):
         changes = pipeline.compute_session_changes(
             session,
             asset=self._asset,
-            task=self._task
+            task=self._task_name,
+            template_key=self.template_key
         )
         if not changes:
             # Return early if we're already in the right Session context
             # to avoid any unwanted Task Changed callbacks to be triggered.
             return
 
-        api.update_current_task(asset=self._asset, task=self._task)
+        api.update_current_task(
+            asset=self._asset,
+            task=self._task_name,
+            template_key=self.template_key
+        )
 
     def open_file(self, filepath):
         host = self.host
@@ -606,7 +632,7 @@ class FilesWidget(QtWidgets.QWidget):
         result = messagebox.exec_()
         if result == messagebox.Yes:
             return True
-        elif result == messagebox.No:
+        if result == messagebox.No:
             return False
         return None
 
@@ -700,7 +726,7 @@ class FilesWidget(QtWidgets.QWidget):
         self._enter_session()   # Make sure we are in the right session
         self.host.save_file(file_path)
 
-        self.set_asset_task(self._asset, self._task)
+        self.set_asset_task(self._asset, self._task_name, self._task_type)
 
         pipeline.emit("after.workfile.save", [file_path])
 
@@ -727,7 +753,8 @@ class FilesWidget(QtWidgets.QWidget):
         changes = pipeline.compute_session_changes(
             session,
             asset=self._asset,
-            task=self._task
+            task=self._task_name,
+            template_key=self.template_key
         )
         session.update(changes)
 
@@ -750,7 +777,7 @@ class FilesWidget(QtWidgets.QWidget):
 
         # Force a full to the asset as opposed to just self.refresh() so
         # that it will actually check again whether the Work directory exists
-        self.set_asset_task(self._asset, self._task)
+        self.set_asset_task(self._asset, self._task_name, self._task_type)
 
     def refresh(self):
         """Refresh listed files for current selection in the interface"""
@@ -927,7 +954,7 @@ class Window(QtWidgets.QMainWindow):
         assets_widget = AssetWidget(io, parent=home_body_widget)
         assets_widget.set_current_asset_btn_visibility(True)
 
-        tasks_widget = TasksWidget(home_body_widget)
+        tasks_widget = TasksWidget(io, home_body_widget)
         files_widget = FilesWidget(home_body_widget)
         side_panel = SidePanelWidget(home_body_widget)
 
@@ -999,7 +1026,7 @@ class Window(QtWidgets.QMainWindow):
         if asset_docs:
             asset_doc = asset_docs[0]
 
-        task_name = self.tasks_widget.get_current_task()
+        task_name = self.tasks_widget.get_current_task_name()
 
         workfile_doc = None
         if asset_doc and task_name and filepath:
@@ -1026,7 +1053,7 @@ class Window(QtWidgets.QMainWindow):
     def _get_current_workfile_doc(self, filepath=None):
         if filepath is None:
             filepath = self.files_widget._get_selected_filepath()
-        task_name = self.tasks_widget.get_current_task()
+        task_name = self.tasks_widget.get_current_task_name()
         asset_docs = self.assets_widget.get_selected_assets()
         if not task_name or not asset_docs or not filepath:
             return
@@ -1046,7 +1073,7 @@ class Window(QtWidgets.QMainWindow):
             workdir, filename = os.path.split(filepath)
             asset_docs = self.assets_widget.get_selected_assets()
             asset_doc = asset_docs[0]
-            task_name = self.tasks_widget.get_current_task()
+            task_name = self.tasks_widget.get_current_task_name()
             create_workfile_doc(asset_doc, task_name, filename, workdir, io)
 
     def set_context(self, context):
@@ -1065,7 +1092,6 @@ class Window(QtWidgets.QMainWindow):
             # Select the asset
             self.assets_widget.select_assets([asset], expand=True)
 
-            # Force a refresh on Tasks?
             self.tasks_widget.set_asset(asset_document)
 
         if "task" in context:
@@ -1095,12 +1121,13 @@ class Window(QtWidgets.QMainWindow):
         asset = self.assets_widget.get_selected_assets() or None
         if asset is not None:
             asset = asset[0]
-        task = self.tasks_widget.get_current_task()
+        task_name = self.tasks_widget.get_current_task_name()
+        task_type = self.tasks_widget.get_current_task_type()
 
         self.tasks_widget.setEnabled(bool(asset))
 
-        self.files_widget.setEnabled(all([bool(task), bool(asset)]))
-        self.files_widget.set_asset_task(asset, task)
+        self.files_widget.setEnabled(all([bool(task_name), bool(asset)]))
+        self.files_widget.set_asset_task(asset, task_name, task_type)
         self.files_widget.refresh()
 
 
