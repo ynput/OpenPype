@@ -19,7 +19,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "",
             task,
             context.data["assetEntity"]["_id"],
-            host_name="maya"
+            host_name="photoshop"
         )
 
         file_path = context.data["currentFile"]
