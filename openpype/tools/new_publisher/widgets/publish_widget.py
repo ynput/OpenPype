@@ -6,7 +6,7 @@ from openpype.pipeline import KnownPublishError
 
 from .icons import get_icon
 from .validations_widget import ValidationsWidget
-from ..publish_log_viewer import PublishReportViewerWidget
+from ..publish_report_viewer import PublishReportViewerWidget
 
 
 class PublishFrame(QtWidgets.QFrame):
