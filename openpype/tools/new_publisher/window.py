@@ -1,6 +1,9 @@
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 
-from openpype import style
+from openpype import (
+    resources,
+    style
+)
 
 from .control import PublisherController
 from .widgets import (
@@ -21,6 +24,9 @@ class PublisherWindow(QtWidgets.QDialog):
         super(PublisherWindow, self).__init__(parent)
 
         self.setWindowTitle("OpenPype publisher")
+
+        icon = QtGui.QIcon(resources.pype_icon_filepath())
+        self.setWindowIcon(icon)
 
         if parent is None:
             on_top_flag = QtCore.Qt.WindowStaysOnTopHint
