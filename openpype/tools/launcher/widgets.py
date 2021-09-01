@@ -40,16 +40,11 @@ class ProjectBar(QtWidgets.QWidget):
             QtWidgets.QSizePolicy.Maximum
         )
 
-        refresh_timer = QtCore.QTimer()
-        refresh_timer.setInterval(project_handler.refresh_interval)
-
         self.project_handler = project_handler
         self.project_delegate = project_delegate
         self.project_combobox = project_combobox
-        self.refresh_timer = refresh_timer
 
         # Signals
-        refresh_timer.timeout.connect(self._on_refresh_timeout)
         self.project_combobox.currentIndexChanged.connect(self.on_index_change)
         project_handler.project_changed.connect(self._on_project_change)
 
@@ -57,20 +52,6 @@ class ProjectBar(QtWidgets.QWidget):
         project_name = project_handler.current_project
         if project_name:
             self.set_project(project_name)
-
-    def showEvent(self, event):
-        if not self.refresh_timer.isActive():
-            self.refresh_timer.start()
-        super(ProjectBar, self).showEvent(event)
-
-    def _on_refresh_timeout(self):
-        if not self.isVisible():
-            # Stop timer if widget is not visible
-            self.refresh_timer.stop()
-
-        elif self.isActiveWindow():
-            # Refresh projects if window is active
-            self.project_handler.refresh_model()
 
     def _on_project_change(self, project_name):
         if self.get_current_project() == project_name:
@@ -103,9 +84,10 @@ class ActionBar(QtWidgets.QWidget):
 
     action_clicked = QtCore.Signal(object)
 
-    def __init__(self, dbcon, parent=None):
+    def __init__(self, project_handler, dbcon, parent=None):
         super(ActionBar, self).__init__(parent)
 
+        self.project_handler = project_handler
         self.dbcon = dbcon
 
         layout = QtWidgets.QHBoxLayout(self)
@@ -152,16 +134,24 @@ class ActionBar(QtWidgets.QWidget):
 
         self.set_row_height(1)
 
+        project_handler.projects_refreshed.connect(self._on_projects_refresh)
         view.clicked.connect(self.on_clicked)
 
     def discover_actions(self):
+        if self._animation_timer.isActive():
+            self._animation_timer.stop()
         self.model.discover()
 
     def filter_actions(self):
+        if self._animation_timer.isActive():
+            self._animation_timer.stop()
         self.model.filter_actions()
 
     def set_row_height(self, rows):
         self.setMinimumHeight(rows * 75)
+
+    def _on_projects_refresh(self):
+        self.discover_actions()
 
     def _on_animation(self):
         time_now = time.time()
@@ -182,6 +172,8 @@ class ActionBar(QtWidgets.QWidget):
         self.update()
 
     def _start_animation(self, index):
+        # Offset refresh timout
+        self.project_handler.start_timer()
         action_id = index.data(ACTION_ID_ROLE)
         item = self.model.items_by_id.get(action_id)
         if item:
@@ -201,6 +193,9 @@ class ActionBar(QtWidgets.QWidget):
             self._start_animation(index)
             self.action_clicked.emit(action)
             return
+
+        # Offset refresh timout
+        self.project_handler.start_timer()
 
         actions = index.data(ACTION_ROLE)
 

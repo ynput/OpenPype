@@ -14,8 +14,7 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["pointcache",
-                "vdbcache"]
+    families = ["pointcache", "vdbcache"]
     hosts = ["houdini"]
     label = "Validate Output Node"
 
@@ -23,8 +22,10 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Output node(s) `%s` are incorrect. "
-                               "See plug-in log for details." % invalid)
+            raise RuntimeError(
+                "Output node(s) `%s` are incorrect. "
+                "See plug-in log for details." % invalid
+            )
 
     @classmethod
     def get_invalid(cls, instance):
@@ -35,39 +36,42 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
 
         if output_node is None:
             node = instance[0]
-            cls.log.error("SOP Output node in '%s' does not exist. "
-                          "Ensure a valid SOP output path is set."
-                          % node.path())
+            cls.log.error(
+                "SOP Output node in '%s' does not exist. "
+                "Ensure a valid SOP output path is set." % node.path()
+            )
 
             return [node.path()]
 
         # Output node must be a Sop node.
         if not isinstance(output_node, hou.SopNode):
-            cls.log.error("Output node %s is not a SOP node. "
-                          "SOP Path must point to a SOP node, "
-                          "instead found category type: %s" % (
-                            output_node.path(),
-                            output_node.type().category().name()
-                            )
-                          )
+            cls.log.error(
+                "Output node %s is not a SOP node. "
+                "SOP Path must point to a SOP node, "
+                "instead found category type: %s"
+                % (output_node.path(), output_node.type().category().name())
+            )
             return [output_node.path()]
 
         # For the sake of completeness also assert the category type
         # is Sop to avoid potential edge case scenarios even though
         # the isinstance check above should be stricter than this category
         assert output_node.type().category().name() == "Sop", (
-            "Output node %s is not of category Sop. This is a bug.." %
-            output_node.path()
+            "Output node %s is not of category Sop. This is a bug.."
+            % output_node.path()
         )
 
         # Check if output node has incoming connections
         if not output_node.inputConnections():
-            cls.log.error("Output node `%s` has no incoming connections"
-                          % output_node.path())
+            cls.log.error(
+                "Output node `%s` has no incoming connections"
+                % output_node.path()
+            )
             return [output_node.path()]
 
         # Ensure the output node has at least Geometry data
         if not output_node.geometry():
-            cls.log.error("Output node `%s` has no geometry data."
-                          % output_node.path())
+            cls.log.error(
+                "Output node `%s` has no geometry data." % output_node.path()
+            )
             return [output_node.path()]

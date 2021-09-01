@@ -67,6 +67,37 @@
             "children": [
                 {
                     "type": "list",
+                    "key": "workfile_template_profiles",
+                    "label": "Workfile template profiles",
+                    "use_label_wrap": true,
+                    "object_type": {
+                        "type": "dict",
+                        "children": [
+                            {
+                                "key": "task_types",
+                                "label": "Task types",
+                                "type": "task-types-enum"
+                            },
+                            {
+                                "type": "hosts-enum",
+                                "key": "hosts",
+                                "label": "Hosts",
+                                "multiselection": true
+                            },
+                            {
+                                "type": "splitter"
+                            },
+                            {
+                                "key": "workfile_template",
+                                "label": "Workfile template",
+                                "type": "anatomy-templates-enum",
+                                "multiselection": false
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "list",
                     "key": "last_workfile_on_startup",
                     "label": "Open last workfiles on launch",
                     "is_group": true,

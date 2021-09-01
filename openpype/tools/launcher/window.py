@@ -103,35 +103,15 @@ class ProjectsPanel(QtWidgets.QWidget):
 
         layout.addWidget(view)
 
-        refresh_timer = QtCore.QTimer()
-        refresh_timer.setInterval(project_handler.refresh_interval)
-
-        refresh_timer.timeout.connect(self._on_refresh_timeout)
         view.clicked.connect(self.on_clicked)
 
         self.view = view
-        self.refresh_timer = refresh_timer
         self.project_handler = project_handler
 
     def on_clicked(self, index):
         if index.isValid():
             project_name = index.data(QtCore.Qt.DisplayRole)
             self.project_handler.set_project(project_name)
-
-    def showEvent(self, event):
-        self.project_handler.refresh_model()
-        if not self.refresh_timer.isActive():
-            self.refresh_timer.start()
-        super(ProjectsPanel, self).showEvent(event)
-
-    def _on_refresh_timeout(self):
-        if not self.isVisible():
-            # Stop timer if widget is not visible
-            self.refresh_timer.stop()
-
-        elif self.isActiveWindow():
-            # Refresh projects if window is active
-            self.project_handler.refresh_model()
 
 
 class AssetsPanel(QtWidgets.QWidget):
@@ -268,8 +248,6 @@ class AssetsPanel(QtWidgets.QWidget):
 
 class LauncherWindow(QtWidgets.QDialog):
     """Launcher interface"""
-    # Refresh actions each 10000msecs
-    actions_refresh_timeout = 10000
 
     def __init__(self, parent=None):
         super(LauncherWindow, self).__init__(parent)
@@ -304,7 +282,7 @@ class LauncherWindow(QtWidgets.QDialog):
         page_slider.addWidget(asset_panel)
 
         # actions
-        actions_bar = ActionBar(self.dbcon, self)
+        actions_bar = ActionBar(project_handler, self.dbcon, self)
 
         # statusbar
         statusbar = QtWidgets.QWidget()
@@ -342,10 +320,6 @@ class LauncherWindow(QtWidgets.QDialog):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        actions_refresh_timer = QtCore.QTimer()
-        actions_refresh_timer.setInterval(self.actions_refresh_timeout)
-
-        self.actions_refresh_timer = actions_refresh_timer
         self.project_handler = project_handler
 
         self.message_label = message_label
@@ -357,21 +331,30 @@ class LauncherWindow(QtWidgets.QDialog):
         self._page = 0
 
         # signals
-        actions_refresh_timer.timeout.connect(self._on_action_timer)
         actions_bar.action_clicked.connect(self.on_action_clicked)
         action_history.trigger_history.connect(self.on_history_action)
         project_handler.project_changed.connect(self.on_project_change)
+        project_handler.timer_timeout.connect(self._on_refresh_timeout)
         asset_panel.back_clicked.connect(self.on_back_clicked)
         asset_panel.session_changed.connect(self.on_session_changed)
 
         self.resize(520, 740)
 
     def showEvent(self, event):
-        if not self.actions_refresh_timer.isActive():
-            self.actions_refresh_timer.start()
-            self.discover_actions()
+        self.project_handler.set_active(True)
+        self.project_handler.start_timer(True)
 
         super(LauncherWindow, self).showEvent(event)
+
+    def _on_refresh_timeout(self):
+        # Stop timer if widget is not visible
+        if not self.isVisible():
+            self.project_handler.stop_timer()
+
+    def changeEvent(self, event):
+        if event.type() == QtCore.QEvent.ActivationChange:
+            self.project_handler.set_active(self.isActiveWindow())
+        super(LauncherWindow, self).changeEvent(event)
 
     def set_page(self, page):
         current = self.page_slider.currentIndex()
@@ -392,19 +375,9 @@ class LauncherWindow(QtWidgets.QDialog):
 
     def discover_actions(self):
         self.actions_bar.discover_actions()
-        self.filter_actions()
 
     def filter_actions(self):
         self.actions_bar.filter_actions()
-
-    def _on_action_timer(self):
-        if not self.isVisible():
-            # Stop timer if widget is not visible
-            self.actions_refresh_timer.stop()
-
-        elif self.isActiveWindow():
-            # Refresh projects if window is active
-            self.discover_actions()
 
     def on_project_change(self, project_name):
         # Update the Action plug-ins available for the current project
