@@ -13,7 +13,7 @@ class PublishReportViewerWindow(QtWidgets.QWidget):
     default_height = 600
 
     def __init__(self, parent=None):
-        super(PublishLogViewerWindow, self).__init__(parent)
+        super(PublishReportViewerWindow, self).__init__(parent)
 
         main_widget = PublishReportViewerWidget(self)
 

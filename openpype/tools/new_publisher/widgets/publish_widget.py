@@ -6,6 +6,7 @@ from openpype.pipeline import KnownPublishError
 
 from .icons import get_icon
 from .validations_widget import ValidationsWidget
+from ..publish_log_viewer import PublishReportViewerWidget
 
 
 class PublishFrame(QtWidgets.QFrame):
@@ -93,9 +94,21 @@ class PublishFrame(QtWidgets.QFrame):
         content_layout.addStretch(1)
         content_layout.addLayout(footer_layout)
 
-        main_layout = QtWidgets.QVBoxLayout(self)
-        main_layout.addWidget(validation_errors_widget, 1)
-        main_layout.addWidget(info_frame, 0)
+        publish_widget = QtWidgets.QWidget(self)
+        publish_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        publish_layout = QtWidgets.QVBoxLayout(publish_widget)
+        publish_layout.addWidget(validation_errors_widget, 1)
+        publish_layout.addWidget(info_frame, 0)
+
+        details_widget = PublishReportViewerWidget(self)
+
+        main_layout = QtWidgets.QStackedLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setStackingMode(main_layout.StackOne)
+        main_layout.addWidget(publish_widget)
+        main_layout.addWidget(details_widget)
+
+        main_layout.setCurrentWidget(publish_widget)
 
         copy_log_btn.clicked.connect(self._on_copy_log)
         show_details_btn.clicked.connect(self._on_show_details)
@@ -117,6 +130,8 @@ class PublishFrame(QtWidgets.QFrame):
 
         self.validation_errors_widget = validation_errors_widget
 
+        self._main_layout = main_layout
+
         self.info_frame = info_frame
         self.main_label = main_label
         self.message_label = message_label
@@ -132,6 +147,8 @@ class PublishFrame(QtWidgets.QFrame):
         self.stop_btn = stop_btn
         self.validate_btn = validate_btn
         self.publish_btn = publish_btn
+
+        self.details_widget = details_widget
 
     def _on_publish_reset(self):
         self._set_success_property()
@@ -310,7 +327,10 @@ class PublishFrame(QtWidgets.QFrame):
         )
 
     def _on_show_details(self):
-        pass
+        self._change_bg_property(2)
+        self._main_layout.setCurrentWidget(self.details_widget)
+        logs = self.controller.get_publish_report()
+        self.details_widget.set_report(logs)
 
     def _on_reset_clicked(self):
         self.controller.reset()
