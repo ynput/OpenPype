@@ -1,6 +1,6 @@
 import json
 
-from Qt import QtWidgets, QtCore
+from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.pipeline import KnownPublishError
 
@@ -100,7 +100,16 @@ class PublishFrame(QtWidgets.QFrame):
         publish_layout.addWidget(validation_errors_widget, 1)
         publish_layout.addWidget(info_frame, 0)
 
-        details_widget = PublishReportViewerWidget(self)
+        details_widget = QtWidgets.QWidget(self)
+        report_view = PublishReportViewerWidget(details_widget)
+        close_report_btn = QtWidgets.QPushButton(details_widget)
+        close_report_icon = self._get_report_close_icon()
+        close_report_btn.setIcon(close_report_icon)
+
+        details_layout = QtWidgets.QVBoxLayout(details_widget)
+        details_layout.setContentsMargins(0, 0, 0, 0)
+        details_layout.addWidget(report_view)
+        details_layout.addWidget(close_report_btn)
 
         main_layout = QtWidgets.QStackedLayout(self)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -118,6 +127,8 @@ class PublishFrame(QtWidgets.QFrame):
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
+        close_report_btn.clicked.connect(self._on_close_report_clicked)
+
         controller.add_publish_reset_callback(self._on_publish_reset)
         controller.add_publish_started_callback(self._on_publish_start)
         controller.add_publish_validated_callback(self._on_publish_validated)
@@ -131,6 +142,8 @@ class PublishFrame(QtWidgets.QFrame):
         self.validation_errors_widget = validation_errors_widget
 
         self._main_layout = main_layout
+
+        self.publish_widget = publish_widget
 
         self.info_frame = info_frame
         self.main_label = main_label
@@ -148,7 +161,34 @@ class PublishFrame(QtWidgets.QFrame):
         self.validate_btn = validate_btn
         self.publish_btn = publish_btn
 
+        self.close_report_btn = close_report_btn
+
         self.details_widget = details_widget
+        self.report_view = report_view
+
+    def _get_report_close_icon(self):
+        size = 100
+        pix = QtGui.QPixmap(size, size)
+        pix.fill(QtCore.Qt.transparent)
+
+        half_stroke_size = size / 12
+        stroke_size = 2 * half_stroke_size
+        size_part = size / 5
+
+        p1 = QtCore.QPoint(half_stroke_size, size_part)
+        p2 = QtCore.QPoint(size / 2, size_part * 4)
+        p3 = QtCore.QPoint(size - half_stroke_size, size_part)
+        painter = QtGui.QPainter(pix)
+        pen = QtGui.QPen(QtCore.Qt.white)
+        pen.setWidth(stroke_size)
+        pen.setCapStyle(QtCore.Qt.RoundCap)
+        painter.setPen(pen)
+        painter.setBrush(QtCore.Qt.transparent)
+        painter.drawLine(p1, p2)
+        painter.drawLine(p2, p3)
+        painter.end()
+
+        return QtGui.QIcon(pix)
 
     def _on_publish_reset(self):
         self._set_success_property()
@@ -330,7 +370,14 @@ class PublishFrame(QtWidgets.QFrame):
         self._change_bg_property(2)
         self._main_layout.setCurrentWidget(self.details_widget)
         logs = self.controller.get_publish_report()
-        self.details_widget.set_report(logs)
+        self.report_view.set_report(logs)
+
+    def _on_close_report_clicked(self):
+        if self.controller.get_publish_crash_error():
+            self._change_bg_property()
+        else:
+            self._change_bg_property(2)
+        self._main_layout.setCurrentWidget(self.publish_widget)
 
     def _on_reset_clicked(self):
         self.controller.reset()
