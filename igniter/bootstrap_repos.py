@@ -537,7 +537,8 @@ class BootstrapRepos:
                         file.resolve().relative_to(openpype_root)
                     )
                 )
-                zip_file.write(file, file.relative_to(openpype_root))
+                zip_file.write(
+                    file, file.resolve().relative_to(openpype_root))
 
             checksums_str = ""
             for c in checksums:

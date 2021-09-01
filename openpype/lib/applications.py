@@ -28,7 +28,8 @@ from . import (
 from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
-    get_workdir_with_workdir_data
+    get_workdir_with_workdir_data,
+    get_workfile_template_key_from_context
 )
 
 from .python_module_tools import (
@@ -1105,7 +1106,7 @@ def prepare_host_environments(data, implementation_envs=True):
     asset_doc = data.get("asset_doc")
     # Add tools environments
     groups_by_name = {}
-    tool_by_group_name = collections.defaultdict(list)
+    tool_by_group_name = collections.defaultdict(dict)
     if asset_doc:
         # Make sure each tool group can be added only once
         for key in asset_doc["data"].get("tools_env") or []:
@@ -1113,12 +1114,14 @@ def prepare_host_environments(data, implementation_envs=True):
             if not tool:
                 continue
             groups_by_name[tool.group.name] = tool.group
-            tool_by_group_name[tool.group.name].append(tool)
+            tool_by_group_name[tool.group.name][tool.name] = tool
 
-        for group_name, group in groups_by_name.items():
+        for group_name in sorted(groups_by_name.keys()):
+            group = groups_by_name[group_name]
             environments.append(group.environment)
             added_env_keys.add(group_name)
-            for tool in tool_by_group_name[group_name]:
+            for tool_name in sorted(tool_by_group_name[group_name].keys()):
+                tool = tool_by_group_name[group_name][tool_name]
                 environments.append(tool.environment)
                 added_env_keys.add(tool.name)
 
@@ -1234,8 +1237,18 @@ def prepare_context_environments(data):
 
     anatomy = data["anatomy"]
 
+    template_key = get_workfile_template_key_from_context(
+        asset_doc["name"],
+        task_name,
+        app.host_name,
+        project_name=project_name,
+        dbcon=data["dbcon"]
+    )
+
     try:
-        workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
+        workdir = get_workdir_with_workdir_data(
+            workdir_data, anatomy, template_key=template_key
+        )
 
     except Exception as exc:
         raise ApplicationLaunchFailed(

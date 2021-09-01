@@ -45,6 +45,7 @@ class ExtractBurnin(openpype.api.Extractor):
         "fusion",
         "aftereffects",
         "tvpaint",
+        "webpublisher",
         "aftereffects"
         # "resolve"
     ]
@@ -96,7 +97,7 @@ class ExtractBurnin(openpype.api.Extractor):
 
     def main_process(self, instance):
         # TODO get these data from context
-        host_name = os.environ["AVALON_APP"]
+        host_name = instance.context.data["hostName"]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
 

@@ -8,5 +8,5 @@ ACTION_ID_ROLE = QtCore.Qt.UserRole + 3
 ANIMATION_START_ROLE = QtCore.Qt.UserRole + 4
 ANIMATION_STATE_ROLE = QtCore.Qt.UserRole + 5
 
-
-ANIMATION_LEN = 10
+# Animation length in seconds
+ANIMATION_LEN = 7
