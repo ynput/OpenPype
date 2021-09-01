@@ -39,7 +39,7 @@ class ResetTVPaintWorkfileMetadata(pyblish.api.Action):
 
 class CollectWorkfileData(pyblish.api.ContextPlugin):
     label = "Collect Workfile Data"
-    order = pyblish.api.CollectorOrder - 1.01
+    order = pyblish.api.CollectorOrder - 0.5
     hosts = ["tvpaint"]
     actions = [ResetTVPaintWorkfileMetadata]
 
