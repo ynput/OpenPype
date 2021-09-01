@@ -36,7 +36,7 @@ def get_log_since_tag(version):
 
 def release_type(log):
     regex_minor = ["feature/", "(feat)"]
-    regex_patch = ["bugfix/", "fix/", "(fix)"]
+    regex_patch = ["bugfix/", "fix/", "(fix)", "enhancement/"]
     for reg in regex_minor:
         if re.search(reg, log):
             return "minor"

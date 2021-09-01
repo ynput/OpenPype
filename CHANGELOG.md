@@ -1,11 +1,12 @@
 # Changelog
 
-## [3.4.0-nightly.3](https://github.com/pypeclub/OpenPype/tree/HEAD)
+## [3.4.0-nightly.4](https://github.com/pypeclub/OpenPype/tree/HEAD)
 
 [Full Changelog](https://github.com/pypeclub/OpenPype/compare/3.3.1...HEAD)
 
 **Merged pull requests:**
 
+- Ftrack: Fix hosts attribute in collect ftrack username [\#1972](https://github.com/pypeclub/OpenPype/pull/1972)
 - Removed deprecated submodules [\#1967](https://github.com/pypeclub/OpenPype/pull/1967)
 - Launcher: Fix crashes on action click [\#1964](https://github.com/pypeclub/OpenPype/pull/1964)
 - Settings: Minor fixes in UI and missing default values [\#1963](https://github.com/pypeclub/OpenPype/pull/1963)
@@ -18,7 +19,9 @@
 - Add face sets to exported alembics [\#1942](https://github.com/pypeclub/OpenPype/pull/1942)
 - Bump path-parse from 1.0.6 to 1.0.7 in /website [\#1933](https://github.com/pypeclub/OpenPype/pull/1933)
 - \#1894 - adds host to template\_name\_profiles for filtering [\#1915](https://github.com/pypeclub/OpenPype/pull/1915)
+- Environments: Tool environments in alphabetical order [\#1910](https://github.com/pypeclub/OpenPype/pull/1910)
 - Disregard publishing time. [\#1888](https://github.com/pypeclub/OpenPype/pull/1888)
+- Feature/webpublisher backend [\#1876](https://github.com/pypeclub/OpenPype/pull/1876)
 - Dynamic modules [\#1872](https://github.com/pypeclub/OpenPype/pull/1872)
 - Houdini: add Camera, Point Cache, Composite, Redshift ROP and VDB Cache support [\#1821](https://github.com/pypeclub/OpenPype/pull/1821)
 
@@ -56,7 +59,6 @@
 - Nuke: update video file crassing [\#1916](https://github.com/pypeclub/OpenPype/pull/1916)
 - Fix - texture validators for workfiles triggers only for textures workfiles [\#1914](https://github.com/pypeclub/OpenPype/pull/1914)
 - submodules: avalon-core update [\#1911](https://github.com/pypeclub/OpenPype/pull/1911)
-- Environments: Tool environments in alphabetical order [\#1910](https://github.com/pypeclub/OpenPype/pull/1910)
 - Settings UI: List order works as expected [\#1906](https://github.com/pypeclub/OpenPype/pull/1906)
 - Add support for multiple Deadline ☠️➖ servers [\#1905](https://github.com/pypeclub/OpenPype/pull/1905)
 - Hiero: loaded clip was not set colorspace from version data [\#1904](https://github.com/pypeclub/OpenPype/pull/1904)
@@ -75,7 +77,6 @@
 - TVPaint: Increment workfile [\#1885](https://github.com/pypeclub/OpenPype/pull/1885)
 - Allow Multiple Notes to run on tasks. [\#1882](https://github.com/pypeclub/OpenPype/pull/1882)
 - Normalize path returned from Workfiles. [\#1880](https://github.com/pypeclub/OpenPype/pull/1880)
-- Feature/webpublisher backend [\#1876](https://github.com/pypeclub/OpenPype/pull/1876)
 - Prepare for pyside2 [\#1869](https://github.com/pypeclub/OpenPype/pull/1869)
 - Filter hosts in settings host-enum [\#1868](https://github.com/pypeclub/OpenPype/pull/1868)
 - Local actions with process identifier [\#1867](https://github.com/pypeclub/OpenPype/pull/1867)
@@ -83,8 +84,8 @@
 - Maya: add support for `RedshiftNormalMap` node, fix `tx` linear space 🚀 [\#1863](https://github.com/pypeclub/OpenPype/pull/1863)
 - Workfiles tool event arguments fix [\#1862](https://github.com/pypeclub/OpenPype/pull/1862)
 - Maya: support for configurable `dirmap` 🗺️ [\#1859](https://github.com/pypeclub/OpenPype/pull/1859)
+- Maya: don't add reference members as connections to the container set 📦 [\#1855](https://github.com/pypeclub/OpenPype/pull/1855)
 - Settings list can use template or schema as object type [\#1815](https://github.com/pypeclub/OpenPype/pull/1815)
-- Maya: expected files -\> render products ⚙️ overhaul [\#1812](https://github.com/pypeclub/OpenPype/pull/1812)
 
 ## [3.2.0](https://github.com/pypeclub/OpenPype/tree/3.2.0) (2021-07-13)
 

@@ -135,6 +135,16 @@ progress_bar.close()
 # iterate over frozen libs and create list to delete
 libs_dir = build_dir / "lib"
 
+# On Windows "python3.dll" is needed for PyQt5 from the build.
+if platform.system().lower() == "windows":
+    src = Path(libs_dir / "PyQt5" / "python3.dll")
+    dst = Path(deps_dir / "PyQt5" / "python3.dll")
+    if src.exists():
+        shutil.copyfile(src, dst)
+    else:
+        _print("Could not find {}".format(src), 1)
+        sys.exit(1)
+
 to_delete = []
 # _print("Finding duplicates ...")
 deps_items = list(deps_dir.iterdir())

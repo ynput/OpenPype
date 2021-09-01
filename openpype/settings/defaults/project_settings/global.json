@@ -251,6 +251,13 @@
             ]
         },
         "Workfiles": {
+            "workfile_template_profiles": [
+                {
+                    "task_types": [],
+                    "hosts": [],
+                    "workfile_template": "work"
+                }
+            ],
             "last_workfile_on_startup": [
                 {
                     "hosts": [],
