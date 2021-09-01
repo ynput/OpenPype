@@ -48,10 +48,41 @@
             "type": "dict",
             "children": [
             {
-                "type": "path",
-                "key": "credentials_url",
-                "label": "Credentials url",
-                "multiplatform": true
+              "type": "dict",
+              "key": "gdrive",
+              "label": "Google Drive",
+              "collapsible": true,
+              "children": [
+                {
+                  "type": "path",
+                  "key": "credentials_url",
+                  "label": "Credentials url",
+                  "multiplatform": true
+                }
+              ]
+            },
+            {
+              "type": "dict",
+              "key": "dropbox",
+              "label": "Dropbox",
+              "collapsible": true,
+              "children": [
+                {
+                  "type": "text",
+                  "key": "token",
+                  "label": "Access Token"
+                },
+                {
+                  "type": "text",
+                  "key": "team_folder_name",
+                  "label": "Team Folder Name"
+                },
+                {
+                  "type": "text",
+                  "key": "acting_as_member",
+                  "label": "Acting As Member"
+                }
+              ]
             },
             {
                 "type": "dict-modifiable",
@@ -61,7 +92,7 @@
                 "collapsable_key": false,
                 "object_type": "text"
             }
-            ]
+          ]
         }
     }
     ]
