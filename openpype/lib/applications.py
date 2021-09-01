@@ -1328,22 +1328,26 @@ def _prepare_last_workfile(data, workdir):
 
     # Last workfile path
     last_workfile_path = ""
-    extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(
-        app.host_name
-    )
-    if extensions:
-        anatomy = data["anatomy"]
-        # Find last workfile
-        file_template = anatomy.templates["work"]["file"]
-        workdir_data.update({
-            "version": 1,
-            "user": get_openpype_username(),
-            "ext": extensions[0]
-        })
-
-        last_workfile_path = avalon.api.last_workfile(
-            workdir, file_template, workdir_data, extensions, True
+    if data.get("last_workfile_path"):  # to inject explicitly
+        last_workfile_path = data.get("last_workfile_path")
+    else:
+        extensions = avalon.api.HOST_WORKFILE_EXTENSIONS.get(
+            app.host_name
         )
+
+        if extensions:
+            anatomy = data["anatomy"]
+            # Find last workfile
+            file_template = anatomy.templates["work"]["file"]
+            workdir_data.update({
+                "version": 1,
+                "user": get_openpype_username(),
+                "ext": extensions[0]
+            })
+
+            last_workfile_path = avalon.api.last_workfile(
+                workdir, file_template, workdir_data, extensions, True
+            )
 
     if os.path.exists(last_workfile_path):
         log.debug((
