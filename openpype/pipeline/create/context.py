@@ -558,6 +558,19 @@ class CreateContext:
 
         self.instances = instances
 
+    def save_instance_changes(self):
+        update_list = []
+        for instance in self.instances:
+            instance_changes = instance.changes()
+            if instance_changes:
+                update_list.append((instance, instance_changes))
+
+        if update_list:
+            self.host.update_instances(update_list)
+
+    def remove_instances(self, instances):
+        self.host.remove_instances(instances)
+
     def _get_publish_plugins_with_attr_for_family(self, family):
         if family not in self._attr_plugins_by_family:
             import pyblish.logic
