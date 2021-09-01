@@ -184,7 +184,7 @@ if "--headless" in sys.argv:
     sys.argv.remove("--headless")
 else:
     if os.getenv("OPENPYPE_HEADLESS_MODE") != "1":
-        os.environ.pop("OPENPYPE_HEADLESS_MODE")
+        os.environ.pop("OPENPYPE_HEADLESS_MODE", None)
 
 import igniter  # noqa: E402
 from igniter import BootstrapRepos  # noqa: E402
