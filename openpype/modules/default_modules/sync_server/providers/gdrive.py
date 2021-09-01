@@ -61,7 +61,6 @@ class GDriveHandler(AbstractProvider):
     CHUNK_SIZE = 2097152  # must be divisible by 256! used for upload chunks
 
     def __init__(self, project_name, site_name, tree=None, presets=None):
-        self.presets = None
         self.active = False
         self.project_name = project_name
         self.site_name = site_name
@@ -74,7 +73,13 @@ class GDriveHandler(AbstractProvider):
                      format(site_name))
             return
 
-        cred_path = self.presets.get("credentials_url", {}).\
+        provider_presets = self.presets.get(self.CODE)
+        if not provider_presets:
+            msg = "Sync Server: No provider presets for {}".format(self.CODE)
+            log.info(msg)
+            return
+
+        cred_path = self.presets[self.CODE].get("credentials_url", {}).\
             get(platform.system().lower()) or ''
         if not os.path.exists(cred_path):
             msg = "Sync Server: No credentials for gdrive provider " + \
