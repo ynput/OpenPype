@@ -364,6 +364,8 @@ class FtrackModule(
             ' and parent.name is "{}"'
             ' and project.full_name is "{}"'
         ).format(task_name, asset_name, project_name)
-        task_entity = session.query(query).one()
+        task_entity = session.query(query).first()
+        if not task_entity:
+            return 0
         hours_logged = (task_entity["time_logged"] / 60) / 60
         return hours_logged
