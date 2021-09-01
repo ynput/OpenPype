@@ -1,3 +1,4 @@
+import os
 import copy
 import logging
 import collections
@@ -20,8 +21,16 @@ class HostMissRequiredMethod(Exception):
         joined_methods = ", ".join(
             ['"{}"'.format(name) for name in missing_methods]
         )
-        msg = "Host {} does not have implemented method/s {}".format(
-            str(host), joined_methods
+        dirpath = os.path.dirname(
+            os.path.normpath(inspect.getsourcefile(host))
+        )
+        dirpath_parts = dirpath.split(os.path.sep)
+        host_name = dirpath_parts.pop(-1)
+        if host_name == "api":
+            host_name = dirpath_parts.pop(-1)
+
+        msg = "Host \"{}\" does not have implemented method/s {}".format(
+            host_name, joined_methods
         )
         super(HostMissRequiredMethod, self).__init__(msg)
 
