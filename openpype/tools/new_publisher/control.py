@@ -138,7 +138,7 @@ class PublishReport:
 
         self._current_plugin_data = {
             "name": plugin.__name__,
-            "label": getattr(plugin, "label"),
+            "label": getattr(plugin, "label", None),
             "order": plugin.order,
             "instances_data": [],
             "skipped": False,

@@ -1,9 +1,7 @@
 import copy
 import uuid
 
-from Qt import QtWidgets, QtCore, QtGui
-
-import pyblish.api
+from Qt import QtWidgets, QtCore
 
 from .constants import (
     ITEM_ID_ROLE,

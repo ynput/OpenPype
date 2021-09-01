@@ -1,4 +1,3 @@
-import os
 import collections
 from Qt import QtWidgets, QtCore, QtGui
 from .constants import (
