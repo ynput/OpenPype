@@ -28,7 +28,8 @@ from . import (
 from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
-    get_workdir_with_workdir_data
+    get_workdir_with_workdir_data,
+    get_workfile_template_key_from_context
 )
 
 from .python_module_tools import (
@@ -1236,8 +1237,18 @@ def prepare_context_environments(data):
 
     anatomy = data["anatomy"]
 
+    template_key = get_workfile_template_key_from_context(
+        asset_doc["name"],
+        task_name,
+        app.host_name,
+        project_name=project_name,
+        dbcon=data["dbcon"]
+    )
+
     try:
-        workdir = get_workdir_with_workdir_data(workdir_data, anatomy)
+        workdir = get_workdir_with_workdir_data(
+            workdir_data, anatomy, template_key=template_key
+        )
 
     except Exception as exc:
         raise ApplicationLaunchFailed(

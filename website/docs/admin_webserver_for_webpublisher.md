@@ -40,14 +40,13 @@ Deploy OP build distribution (Openpype Igniter) on an OS of your choice.
 ```sh
 #!/usr/bin/env bash
 export OPENPYPE_DEBUG=3
-export WEBSERVER_HOST_IP=localhost
 export FTRACK_BOT_API_USER=YOUR_API_USER
 export FTRACK_BOT_API_KEY=YOUR_API_KEY
 export PYTHONDONTWRITEBYTECODE=1
 export OPENPYPE_MONGO=YOUR_MONGODB_CONNECTION
 
 pushd /opt/openpype
-./openpype_console webpublisherwebserver --upload_dir YOUR_SHARED_FOLDER_ON_HOST  --executable /opt/openpype/openpype_console  > /tmp/openpype.log 2>&1
+./openpype_console webpublisherwebserver --upload_dir YOUR_SHARED_FOLDER_ON_HOST  --executable /opt/openpype/openpype_console  --host YOUR_HOST_IP --port YOUR_HOST_PORT > /tmp/openpype.log 2>&1
 ```
 
 1. create service file `sudo vi /etc/systemd/system/openpye-webserver.service`
