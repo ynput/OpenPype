@@ -24,13 +24,6 @@ colors = {
     "group-selected-hover": QtGui.QColor("#555555")
 }
 
-def get_image_path(filename):
-    return os.path.join(
-        os.path.dirname(os.path.abspath(__file__)),
-        "images",
-        filename
-    )
-
 
 class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
     """Generic delegate for instance header"""
@@ -164,27 +157,20 @@ class GroupItemDelegate(QtWidgets.QStyledItemDelegate):
 
         elif name == "removed":
             draw_ellipse = False
-            image_path = get_image_path("deleted_instance.png")
 
-            source_pix = QtGui.QPixmap(image_path)
-            width = offset_size
-            height = offset_size
-            if source_pix.width() > source_pix.height():
-                height = source_pix.width() / width * source_pix.height()
-            else:
-                width = source_pix.height() / height * source_pix.width()
+            offset = offset * 1.5
+            p1 = QtCore.QPoint(offset, offset)
+            p2 = QtCore.QPoint(size - offset, size - offset)
+            p3 = QtCore.QPoint(offset, size - offset)
+            p4 = QtCore.QPoint(size - offset, offset)
 
-            scaled_pix = source_pix.scaled(
-                width,
-                height,
-                QtCore.Qt.KeepAspectRatio,
-                QtCore.Qt.SmoothTransformation
-            )
-            start_point = QtCore.QPointF(
-                offset + ((offset_size / 2) - (scaled_pix.width() / 2)),
-                offset + ((offset_size / 2) - (scaled_pix.height() / 2))
-            )
-            painter.drawPixmap(start_point, scaled_pix)
+            pen = QtGui.QPen(QtCore.Qt.white)
+            pen.setWidth(offset_size / 4)
+            pen.setCapStyle(QtCore.Qt.RoundCap)
+            painter.setPen(pen)
+            painter.setBrush(QtCore.Qt.transparent)
+            painter.drawLine(p1, p2)
+            painter.drawLine(p3, p4)
 
         else:
             color = QtGui.QColor(QtCore.Qt.white)
