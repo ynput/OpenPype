@@ -63,11 +63,12 @@ class TimersManagerModuleRestApi:
             asset_name = data['asset_name']
             task_name = data['task_name']
         except KeyError:
-            message = "Payload must contain fields 'project_name, 'asset_name', 'task_name'"
+            message = (
+                "Payload must contain fields 'project_name, 'asset_name',"
+                " 'task_name'"
+            )
             log.warning(message)
             return Response(text=message, status=404)
-                      "'asset_name', 'task_name'")
-            return Response(status=400)
 
         time = self.module.get_task_time(project_name, asset_name, task_name)
         return Response(text=json.dumps(time))
