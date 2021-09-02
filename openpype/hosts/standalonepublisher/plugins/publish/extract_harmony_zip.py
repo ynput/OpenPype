@@ -11,6 +11,7 @@ import zipfile
 import pyblish.api
 from avalon import api, io
 import openpype.api
+from openpype.lib import get_workfile_template_key_from_context
 
 
 class ExtractHarmonyZip(openpype.api.Extractor):
@@ -234,11 +235,18 @@ class ExtractHarmonyZip(openpype.api.Extractor):
             "ext": "zip",
         }
         host_name = "harmony"
+        template_name = get_workfile_template_key_from_context(
+            instance.data["asset"],
+            instance.data.get("task"),
+            host_name,
+            project_name=project_entity["name"],
+            dbcon=io
+        )
 
         # Get a valid work filename first with version 1
-        file_template = anatomy.templates["work"]["file"]
+        file_template = anatomy.templates[template_name]["file"]
         anatomy_filled = anatomy.format(data)
-        work_path = anatomy_filled["work"]["path"]
+        work_path = anatomy_filled[template_name]["path"]
 
         # Get the final work filename with the proper version
         data["version"] = api.last_workfile_with_version(
