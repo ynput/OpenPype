@@ -10,7 +10,7 @@ Folder for libs and tooling for automatic testing.
   
 - file_handler.py - class to download test data from GDrive
     - downloads data from (list) of files from GDrive
-    - checks md5 if file ok
+    - check file integrity with MD5 hash
     - unzips if zip
     
 - testing_wrapper.py - base class to use for testing
@@ -34,11 +34,11 @@ Currently it is expected that test file will be zip file with structure:
 - expected - expected files (not implemented yet)
 - input
     - data - test data (workfiles, images etc)
-    - dumps - folder for BSOn dumps from (`mongodump`)
+    - dumps - folder for BSON dumps from (`mongodump`)
     - env_vars 
         env_vars.json - dictionary with environment variables {key:value}
         
-    - sql - sql files to load with `mongoimport` (human readable)
+    - json - json files to load with `mongoimport` (human readable)
     
 
 Example

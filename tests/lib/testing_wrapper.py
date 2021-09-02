@@ -88,7 +88,7 @@ class TestCase:
             all_vars.update(vars(TestCase))  # TODO check
             value = value.format(**all_vars)
             print("Setting {}:{}".format(key, value))
-            monkeypatch_session.setenv(key, value)
+            monkeypatch_session.setenv(key, str(value))
         import openpype
 
         openpype_root = os.path.dirname(os.path.dirname(openpype.__file__))

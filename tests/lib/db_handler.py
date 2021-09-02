@@ -19,9 +19,9 @@ class DBHandler:
         if host:
             if all([user, password]):
                 host = "{}:{}@{}".format(user, password, host)
-            uri = 'mongodb://{}:{}'.format(host, port or 27017)
+            self.uri = 'mongodb://{}:{}'.format(host, port or 27017)
 
-        assert uri, "Must have uri to MongoDB"
+        assert self.uri, "Must have uri to MongoDB"
         self.client = pymongo.MongoClient(uri)
         self.db = None
 
