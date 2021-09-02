@@ -455,6 +455,7 @@ class PublisherController:
 
         self._resetting_instances = True
 
+        self.create_context.reset_context_data()
         self.create_context.reset_instances()
 
         self._resetting_instances = False

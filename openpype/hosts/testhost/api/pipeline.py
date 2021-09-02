@@ -119,7 +119,7 @@ def remove_instances(instances):
 
 
 def get_context_data():
-    HostContext.get_context_data()
+    return HostContext.get_context_data()
 
 
 def update_context_data(data):

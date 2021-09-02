@@ -513,7 +513,7 @@ class CreateContext:
 
     def reset(self):
         self.reset_plugins()
-        self.rese_context_data()
+        self.reset_context_data()
         self.reset_instances()
 
     def reset_plugins(self):
