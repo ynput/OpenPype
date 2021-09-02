@@ -881,10 +881,15 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         layout.addWidget(bottom_widget, 1)
 
         self.controller = controller
+
         self.global_attrs_widget = global_attrs_widget
+
         self.family_attrs_widget = family_attrs_widget
         self.publish_attrs_widget = publish_attrs_widget
         self.thumbnail_widget = thumbnail_widget
+
+        self.top_bottom = top_bottom
+        self.bottom_separator = bottom_separator
 
     def set_current_instances(self, instances, context_selected):
         self.global_attrs_widget.set_current_instances(instances)
