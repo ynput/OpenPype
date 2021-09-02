@@ -505,6 +505,7 @@ class CreateContext:
 
     def reset(self):
         self.reset_plugins()
+        self.rese_context_data()
         self.reset_instances()
 
     def reset_plugins(self):
@@ -555,6 +556,17 @@ class CreateContext:
             )
 
         self.creators = creators
+
+    def reset_context_data(self):
+        if not self.host_is_valid:
+            self._publish_attributes = PublishAttributes(self, {})
+            return
+
+        original_data = self.host.get_context_data()
+        attr_plugins = self._get_publish_plugins_with_attr_for_context()
+        self._publish_attributes = PublishAttributes(
+            self, original_data, attr_plugins
+        )
 
     def reset_instances(self):
         instances = []
@@ -657,3 +669,10 @@ class CreateContext:
             self._attr_plugins_by_family[family] = plugins
 
         return self._attr_plugins_by_family[family]
+
+    def _get_publish_plugins_with_attr_for_context(self):
+        plugins = []
+        for plugin in self.plugins_with_defs:
+            if not plugin.__instanceEnabled__:
+                plugins.append(plugin)
+        return plugins
