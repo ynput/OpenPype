@@ -436,7 +436,9 @@ class CreateContext:
     required_methods = (
         "list_instances",
         "remove_instances",
-        "update_instances"
+        "update_instances",
+        "get_context_data",
+        "update_context_data"
     )
 
     def __init__(self, host, dbcon=None, headless=False, reset=True):
