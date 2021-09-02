@@ -1,18 +1,3 @@
-"""
-Requires:
-    environment     -> SAPUBLISH_INPATH
-    environment     -> SAPUBLISH_OUTPATH
-
-Provides:
-    context         -> returnJsonPath (str)
-    context         -> project
-    context         -> asset
-    instance        -> destination_list (list)
-    instance        -> representations (list)
-    instance        -> source (list)
-    instance        -> representations
-"""
-
 import pyblish.api
 from avalon import io
 
@@ -32,7 +17,7 @@ class CollectContextDataTestHost(
     """
 
     label = "Collect Context - Test Host"
-    order = pyblish.api.CollectorOrder - 0.49
+    order = pyblish.api.CollectorOrder - 0.5
     hosts = ["testhost"]
 
     @classmethod
@@ -59,16 +44,17 @@ class CollectContextDataTestHost(
         instance_families = in_data.get("families") or []
 
         instance = context.create_instance(subset)
-        instance.data.update(
-            {
-                "subset": subset,
-                "asset": in_data["asset"],
-                "label": subset,
-                "name": subset,
-                "family": in_data["family"],
-                "families": instance_families
-            }
-        )
+        instance.data.update({
+            "subset": subset,
+            "asset": in_data["asset"],
+            "label": subset,
+            "name": subset,
+            "family": in_data["family"],
+            "families": instance_families
+        })
+        for key, value in in_data.items():
+            if key not in instance.data:
+                instance.data[key] = value
         self.log.info("collected instance: {}".format(instance.data))
         self.log.info("parsing data: {}".format(in_data))
 
