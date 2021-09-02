@@ -4,7 +4,8 @@ from .icons import (
     get_icon
 )
 from .widgets import (
-    SubsetAttributesWidget
+    SubsetAttributesWidget,
+    IconBtn
 )
 from .publish_widget import (
     PublishFrame
@@ -25,6 +26,7 @@ __all__ = (
     "get_icon",
 
     "SubsetAttributesWidget",
+    "IconBtn",
 
     "PublishFrame",
 

@@ -7,6 +7,7 @@ from openpype.pipeline import KnownPublishError
 from .icons import get_icon
 from .validations_widget import ValidationsWidget
 from ..publish_report_viewer import PublishReportViewerWidget
+from .widgets import IconBtn
 
 
 class PublishFrame(QtWidgets.QFrame):
@@ -60,16 +61,16 @@ class PublishFrame(QtWidgets.QFrame):
         )
         show_details_btn.setVisible(False)
 
-        reset_btn = QtWidgets.QPushButton(content_widget)
+        reset_btn = IconBtn(content_widget)
         reset_btn.setIcon(get_icon("refresh"))
 
-        stop_btn = QtWidgets.QPushButton(content_widget)
+        stop_btn = IconBtn(content_widget)
         stop_btn.setIcon(get_icon("stop"))
 
-        validate_btn = QtWidgets.QPushButton(content_widget)
+        validate_btn = IconBtn(content_widget)
         validate_btn.setIcon(get_icon("validate"))
 
-        publish_btn = QtWidgets.QPushButton(content_widget)
+        publish_btn = IconBtn(content_widget)
         publish_btn.setIcon(get_icon("play"))
 
         footer_layout = QtWidgets.QHBoxLayout()

@@ -9,6 +9,26 @@ from openpype.tools.flickcharm import FlickCharm
 from .icons import get_pixmap
 
 
+class IconBtn(QtWidgets.QPushButton):
+    """PushButton with icon and size of font.
+
+    Using font metrics height as icon size reference.
+    """
+    def __init__(self, *args, **kwargs):
+        self._first_show = True
+        super(IconBtn, self).__init__(*args, **kwargs)
+
+    def resizeEvent(self, event):
+        super(IconBtn, self).resizeEvent(event)
+        icon_size = self.fontMetrics().height()
+        self.setIconSize(QtCore.QSize(icon_size, icon_size))
+
+    def showEvent(self, event):
+        super(IconBtn, self).showEvent(event)
+        icon_size = self.fontMetrics().height()
+        self.setIconSize(QtCore.QSize(icon_size, icon_size))
+
+
 class AssetsHierarchyModel(QtGui.QStandardItemModel):
     def __init__(self, controller):
         super(AssetsHierarchyModel, self).__init__()

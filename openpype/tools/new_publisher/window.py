@@ -12,6 +12,7 @@ from .widgets import (
     InstanceCardView,
     InstanceListView,
     CreateDialog,
+    IconBtn,
     get_icon
 )
 
@@ -107,19 +108,19 @@ class PublisherWindow(QtWidgets.QDialog):
         # Footer
         message_input = QtWidgets.QLineEdit(subset_frame)
 
-        reset_btn = QtWidgets.QPushButton(subset_frame)
+        reset_btn = IconBtn(subset_frame)
         reset_btn.setIcon(get_icon("refresh"))
         reset_btn.setToolTip("Refresh publishing")
 
-        stop_btn = QtWidgets.QPushButton(subset_frame)
+        stop_btn = IconBtn(subset_frame)
         stop_btn.setIcon(get_icon("stop"))
         stop_btn.setToolTip("Stop/Pause publishing")
 
-        validate_btn = QtWidgets.QPushButton(subset_frame)
+        validate_btn = IconBtn(subset_frame)
         validate_btn.setIcon(get_icon("validate"))
         validate_btn.setToolTip("Validate")
 
-        publish_btn = QtWidgets.QPushButton(subset_frame)
+        publish_btn = IconBtn(subset_frame)
         publish_btn.setIcon(get_icon("play"))
         publish_btn.setToolTip("Publish")
 
