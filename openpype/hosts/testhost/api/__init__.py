@@ -8,7 +8,9 @@ from .pipeline import (
     ls,
     list_instances,
     update_instances,
-    remove_instances
+    remove_instances,
+    get_context_data,
+    update_context_data
 )
 
 

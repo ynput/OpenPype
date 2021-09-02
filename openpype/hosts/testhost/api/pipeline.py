@@ -4,7 +4,31 @@ import collections
 
 
 class HostContext:
-    json_path = None
+    instances_json_path = None
+    context_json_path = None
+
+    @classmethod
+    def get_current_dir_filepath(cls, filename):
+        return os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            filename
+        )
+
+    @classmethod
+    def get_instances_json_path(cls):
+        if cls.instances_json_path is None:
+            cls.instances_json_path = cls.get_current_dir_filepath(
+                "instances.json"
+            )
+        return cls.instances_json_path
+
+    @classmethod
+    def get_context_json_path(cls):
+        if cls.context_json_path is None:
+            cls.context_json_path = cls.get_current_dir_filepath(
+                "context.json"
+            )
+        return cls.context_json_path
 
     @classmethod
     def add_instance(cls, instance):
@@ -14,22 +38,13 @@ class HostContext:
 
     @classmethod
     def save_instances(cls, instances):
-        json_path = cls.get_json_path()
+        json_path = cls.get_instances_json_path()
         with open(json_path, "w") as json_stream:
             json.dump(instances, json_stream, indent=4)
 
     @classmethod
-    def get_json_path(cls):
-        if cls.json_path is None:
-            cls.json_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                "instances.json"
-            )
-        return cls.json_path
-
-    @classmethod
     def get_instances(cls):
-        json_path = cls.get_json_path()
+        json_path = cls.get_instances_json_path()
         if not os.path.exists(json_path):
             instances = []
             with open(json_path, "w") as json_stream:
@@ -38,6 +53,24 @@ class HostContext:
             with open(json_path, "r") as json_stream:
                 instances = json.load(json_stream)
         return instances
+
+    @classmethod
+    def get_context_data(cls):
+        json_path = cls.get_context_json_path()
+        if not os.path.exists(json_path):
+            data = {}
+            with open(json_path, "w") as json_stream:
+                json.dump(json_stream, data)
+        else:
+            with open(json_path, "r") as json_stream:
+                data = json.load(json_stream)
+        return data
+
+    @classmethod
+    def save_context_data(cls, data):
+        json_path = cls.get_context_json_path()
+        with open(json_path, "w") as json_stream:
+            json.dump(json_stream, data)
 
 
 def ls():
@@ -83,3 +116,11 @@ def remove_instances(instances):
         if found_idx is not None:
             current_instances.pop(found_idx)
     HostContext.save_instances(current_instances)
+
+
+def get_context_data():
+    HostContext.get_context_data()
+
+
+def update_context_data(data):
+    HostContext.save_context_data(data)
