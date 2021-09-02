@@ -233,6 +233,7 @@ class ExtractHarmonyZip(openpype.api.Extractor):
             "version": 1,
             "ext": "zip",
         }
+        host_name = "harmony"
 
         # Get a valid work filename first with version 1
         file_template = anatomy.templates["work"]["file"]
@@ -241,7 +242,10 @@ class ExtractHarmonyZip(openpype.api.Extractor):
 
         # Get the final work filename with the proper version
         data["version"] = api.last_workfile_with_version(
-            os.path.dirname(work_path), file_template, data, [".zip"]
+            os.path.dirname(work_path),
+            file_template,
+            data,
+            api.HOST_WORKFILE_EXTENSIONS[host_name]
         )[1]
 
         base_name = os.path.splitext(os.path.basename(work_path))[0]
