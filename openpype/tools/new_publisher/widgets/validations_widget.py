@@ -293,7 +293,6 @@ class ValidationsWidget(QtWidgets.QWidget):
         self._previous_select = None
 
     def clear(self):
-        _old_title_widget = self._title_widgets
         self._title_widgets = {}
         self._error_info = {}
         self._previous_select = None

@@ -27,3 +27,15 @@ def install():
     pyblish.api.register_host("testhost")
     pyblish.api.register_plugin_path(PUBLISH_PATH)
     avalon.api.register_plugin_path(BaseCreator, CREATE_PATH)
+
+
+__all__ = (
+    "ls",
+    "list_instances",
+    "update_instances",
+    "remove_instances",
+    "get_context_data",
+    "update_context_data",
+
+    "install"
+)

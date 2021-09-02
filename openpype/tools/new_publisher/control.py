@@ -136,9 +136,13 @@ class PublishReport:
 
         self._stored_plugins.append(plugin)
 
+        label = None
+        if hasattr(plugin, "label"):
+            label = plugin.label
+
         self._current_plugin_data = {
             "name": plugin.__name__,
-            "label": getattr(plugin, "label", None),
+            "label": label,
             "order": plugin.order,
             "instances_data": [],
             "skipped": False,
