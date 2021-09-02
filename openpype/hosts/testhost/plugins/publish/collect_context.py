@@ -13,14 +13,14 @@ Provides:
     instance        -> representations
 """
 
-import os
-import json
-import copy
-
 import pyblish.api
 from avalon import io
 
 from openpype.hosts.testhost import api
+from openpype.pipeline import (
+    OpenPypePyblishPluginMixin,
+    attribute_definitions
+)
 
 
 class CollectContextDataTestHost(pyblish.api.ContextPlugin):
@@ -32,6 +32,16 @@ class CollectContextDataTestHost(pyblish.api.ContextPlugin):
     label = "Collect Context - Test Host"
     order = pyblish.api.CollectorOrder - 0.49
     hosts = ["testhost"]
+
+    @classmethod
+    def get_attribute_defs(cls):
+        return [
+            attribute_definitions.BoolDef(
+                "test_bool",
+                True,
+                label="Bool input"
+            )
+        ]
 
     def process(self, context):
         # get json paths from os and load them
