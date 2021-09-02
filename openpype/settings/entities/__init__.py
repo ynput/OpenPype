@@ -105,7 +105,9 @@ from .enum_entity import (
     AppsEnumEntity,
     ToolsEnumEntity,
     TaskTypeEnumEntity,
-    ProvidersEnum
+    ProvidersEnum,
+    DeadlineUrlEnumEntity,
+    AnatomyTemplatesEnumEntity
 )
 
 from .list_entity import ListEntity
@@ -160,6 +162,8 @@ __all__ = (
     "ToolsEnumEntity",
     "TaskTypeEnumEntity",
     "ProvidersEnum",
+    "DeadlineUrlEnumEntity",
+    "AnatomyTemplatesEnumEntity",
 
     "ListEntity",
 

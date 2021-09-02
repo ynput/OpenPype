@@ -9,6 +9,22 @@ from avalon.mongodb import (
 from openpype.settings.lib import get_system_settings
 
 
+class SettingsLineEdit(QtWidgets.QLineEdit):
+    focused_in = QtCore.Signal()
+
+    def focusInEvent(self, event):
+        super(SettingsLineEdit, self).focusInEvent(event)
+        self.focused_in.emit()
+
+
+class SettingsPlainTextEdit(QtWidgets.QPlainTextEdit):
+    focused_in = QtCore.Signal()
+
+    def focusInEvent(self, event):
+        super(SettingsPlainTextEdit, self).focusInEvent(event)
+        self.focused_in.emit()
+
+
 class ShadowWidget(QtWidgets.QWidget):
     def __init__(self, message, parent):
         super(ShadowWidget, self).__init__(parent)
@@ -70,6 +86,8 @@ class IconButton(QtWidgets.QPushButton):
 
 
 class NumberSpinBox(QtWidgets.QDoubleSpinBox):
+    focused_in = QtCore.Signal()
+
     def __init__(self, *args, **kwargs):
         min_value = kwargs.pop("minimum", -99999)
         max_value = kwargs.pop("maximum", 99999)
@@ -79,6 +97,10 @@ class NumberSpinBox(QtWidgets.QDoubleSpinBox):
         self.setDecimals(decimals)
         self.setMinimum(min_value)
         self.setMaximum(max_value)
+
+    def focusInEvent(self, event):
+        super(NumberSpinBox, self).focusInEvent(event)
+        self.focused_in.emit()
 
     def wheelEvent(self, event):
         if self.hasFocus():
@@ -93,18 +115,23 @@ class NumberSpinBox(QtWidgets.QDoubleSpinBox):
         return output
 
 
-class ComboBox(QtWidgets.QComboBox):
+class SettingsComboBox(QtWidgets.QComboBox):
     value_changed = QtCore.Signal()
+    focused_in = QtCore.Signal()
 
     def __init__(self, *args, **kwargs):
-        super(ComboBox, self).__init__(*args, **kwargs)
+        super(SettingsComboBox, self).__init__(*args, **kwargs)
 
         self.currentIndexChanged.connect(self._on_change)
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
 
     def wheelEvent(self, event):
         if self.hasFocus():
-            return super(ComboBox, self).wheelEvent(event)
+            return super(SettingsComboBox, self).wheelEvent(event)
+
+    def focusInEvent(self, event):
+        self.focused_in.emit()
+        return super(SettingsComboBox, self).focusInEvent(event)
 
     def _on_change(self, *args, **kwargs):
         self.value_changed.emit()
@@ -160,15 +187,13 @@ class ExpandingWidget(QtWidgets.QWidget):
         after_label_layout = QtWidgets.QHBoxLayout(after_label_widget)
         after_label_layout.setContentsMargins(0, 0, 0, 0)
 
-        spacer_widget = QtWidgets.QWidget(side_line_widget)
-
         side_line_layout = QtWidgets.QHBoxLayout(side_line_widget)
         side_line_layout.setContentsMargins(5, 10, 0, 10)
         side_line_layout.addWidget(button_toggle)
         side_line_layout.addWidget(before_label_widget)
         side_line_layout.addWidget(label_widget)
         side_line_layout.addWidget(after_label_widget)
-        side_line_layout.addWidget(spacer_widget, 1)
+        side_line_layout.addStretch(1)
 
         top_part_layout = QtWidgets.QHBoxLayout(top_part)
         top_part_layout.setContentsMargins(0, 0, 0, 0)
@@ -176,7 +201,6 @@ class ExpandingWidget(QtWidgets.QWidget):
 
         before_label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         after_label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
-        spacer_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
@@ -197,6 +221,8 @@ class ExpandingWidget(QtWidgets.QWidget):
         self.main_layout.setSpacing(0)
         self.main_layout.addWidget(top_part)
 
+        self.top_part = top_part
+
     def hide_toolbox(self, hide_content=False):
         self.button_toggle.setArrowType(QtCore.Qt.NoArrow)
         self.toolbox_hidden = True
@@ -214,6 +240,9 @@ class ExpandingWidget(QtWidgets.QWidget):
         content_widget.setVisible(False)
         self.main_layout.addWidget(content_widget)
         self.content_widget = content_widget
+
+    def is_expanded(self):
+        return self.button_toggle.isChecked()
 
     def _btn_clicked(self):
         self.toggle_content(self.button_toggle.isChecked())
@@ -341,31 +370,21 @@ class GridLabelWidget(QtWidgets.QWidget):
 
         self.properties = {}
 
+        label_widget = QtWidgets.QLabel(label, self)
+
+        label_proxy_layout = QtWidgets.QHBoxLayout()
+        label_proxy_layout.setContentsMargins(0, 0, 0, 0)
+        label_proxy_layout.setSpacing(0)
+
+        label_proxy_layout.addWidget(label_widget, 0, QtCore.Qt.AlignRight)
+
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 2, 0, 0)
         layout.setSpacing(0)
 
-        label_proxy = QtWidgets.QWidget(self)
+        layout.addLayout(label_proxy_layout, 0)
+        layout.addStretch(1)
 
-        label_proxy_layout = QtWidgets.QHBoxLayout(label_proxy)
-        label_proxy_layout.setContentsMargins(0, 0, 0, 0)
-        label_proxy_layout.setSpacing(0)
-
-        label_widget = QtWidgets.QLabel(label, label_proxy)
-        spacer_widget_h = SpacerWidget(label_proxy)
-        label_proxy_layout.addWidget(
-            spacer_widget_h, 0, alignment=QtCore.Qt.AlignRight
-        )
-        label_proxy_layout.addWidget(
-            label_widget, 0, alignment=QtCore.Qt.AlignRight
-        )
-
-        spacer_widget_v = SpacerWidget(self)
-
-        layout.addWidget(label_proxy, 0)
-        layout.addWidget(spacer_widget_v, 1)
-
-        label_proxy.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.label_widget = label_widget
@@ -380,6 +399,8 @@ class GridLabelWidget(QtWidgets.QWidget):
 
     def mouseReleaseEvent(self, event):
         if self.input_field:
+            if event and event.button() == QtCore.Qt.LeftButton:
+                self.input_field.focused_in()
             return self.input_field.show_actions_menu(event)
         return super(GridLabelWidget, self).mouseReleaseEvent(event)
 
@@ -440,6 +461,7 @@ class NiceCheckbox(QtWidgets.QFrame):
     stateChanged = QtCore.Signal(int)
     checked_bg_color = QtGui.QColor(69, 128, 86)
     unchecked_bg_color = QtGui.QColor(170, 80, 80)
+    focused_in = QtCore.Signal()
 
     def set_bg_color(self, color):
         self._bg_color = color
@@ -563,6 +585,10 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._checkstate = checkstate
 
         self._on_checkstate_change()
+
+    def mousePressEvent(self, event):
+        self.focused_in.emit()
+        super(NiceCheckbox, self).mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:

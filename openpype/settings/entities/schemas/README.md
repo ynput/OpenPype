@@ -380,6 +380,20 @@ How output of the schema could look like on save:
 }
 ```
 
+### anatomy-templates-enum
+- enumeration of all available anatomy template keys
+- have only single selection mode
+- it is possible to define default value `default`
+    - `"work"` is used if default value is not specified
+```
+{
+    "key": "host",
+    "label": "Host name",
+    "type": "anatomy-templates-enum",
+    "default": "publish"
+}
+```
+
 ### hosts-enum
 - enumeration of available hosts
 - multiselection can be allowed with setting key `"multiselection"` to `True` (Default: `False`)

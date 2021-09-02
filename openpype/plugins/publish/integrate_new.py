@@ -97,7 +97,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "background",
                 "camerarig",
                 "redshiftproxy",
-                "effect"
+                "effect",
+                "xgen"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -300,7 +301,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         task_name = io.Session.get("AVALON_TASK")
         family = self.main_family_from_instance(instance)
 
-        key_values = {"families": family, "tasks": task_name}
+        key_values = {"families": family,
+                      "tasks": task_name,
+                      "hosts": instance.data["anatomyData"]["app"]}
         profile = filter_profiles(self.template_name_profiles, key_values,
                                   logger=self.log)
 

@@ -24,6 +24,7 @@ class CreateAnimation(plugin.Creator):
 
         # Write vertex colors with the geometry.
         self.data["writeColorSets"] = False
+        self.data["writeFaceSets"] = False
 
         # Include only renderable visible shapes.
         # Skips locators and empty transforms

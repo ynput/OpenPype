@@ -120,7 +120,12 @@ const studios = [
       title: "Bad Clay",
       image: "/img/badClay_logo.png",
       infoLink: "https://www.bad-clay.com/",
-  }
+  },
+  {
+      title: "Moonrock Animation Studio",
+      image: "/img/moonrock_logo.png",
+      infoLink: "https://www.moonrock.eu/",
+  }  
 ];
 
 function Service({imageUrl, title, description}) {

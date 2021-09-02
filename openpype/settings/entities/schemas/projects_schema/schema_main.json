@@ -120,6 +120,10 @@
                 },
                 {
                     "type": "schema",
+                    "name": "schema_project_webpublisher"
+                },
+                {
+                    "type": "schema",
                     "name": "schema_project_unreal"
                 }
             ]
