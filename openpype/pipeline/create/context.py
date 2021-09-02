@@ -151,13 +151,13 @@ class PublishAttributeValues(AttributeValues):
         super(PublishAttributeValues, self).__init__(*args, **kwargs)
 
     @property
-    def instance(self):
-        self.publish_attributes.instance
+    def parent(self):
+        self.publish_attributes.parent
 
 
 class PublishAttributes:
-    def __init__(self, instance, origin_data, attr_plugins=None):
-        self.instance = instance
+    def __init__(self, parent, origin_data, attr_plugins=None):
+        self.parent = parent
         self._origin_data = copy.deepcopy(origin_data)
 
         attr_plugins = attr_plugins or []
