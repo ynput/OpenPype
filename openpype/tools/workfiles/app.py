@@ -430,7 +430,6 @@ class FilesWidget(QtWidgets.QWidget):
         # Pype's anatomy object for current project
         self.anatomy = Anatomy(io.Session["AVALON_PROJECT"])
         # Template key used to get work template from anatomy templates
-        # TODO change template key based on task
         self.template_key = "work"
 
         # This is not root but workfile directory
