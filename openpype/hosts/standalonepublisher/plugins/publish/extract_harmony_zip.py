@@ -244,7 +244,6 @@ class ExtractHarmonyZip(openpype.api.Extractor):
             os.path.dirname(work_path), file_template, data, [".zip"]
         )[1]
 
-        work_path = anatomy_filled["work"]["path"]
         base_name = os.path.splitext(os.path.basename(work_path))[0]
 
         staging_work_path = os.path.join(os.path.dirname(staging_scene),
