@@ -11,7 +11,21 @@ from tests.lib.file_handler import RemoteFileHandler
 
 
 class TestCase:
+    """Generic test class for testing
 
+        Implemented fixtures:
+            monkeypatch_session - fixture for env vars with session scope
+            download_test_data - tmp folder with extracted data from GDrive
+            env_var - sets env vars from input file
+            db_setup - prepares avalon AND openpype DBs for testing from
+                        binary dumps from input data
+            dbcon - returns DBConnection to AvalonDB
+            dbcon_openpype - returns DBConnection for OpenpypeMongoDB
+
+        Not implemented:
+            last_workfile_path - returns path to testing workfile
+
+    """
     TEST_OPENPYPE_MONGO = "mongodb://localhost:27017"
     TEST_DB_NAME = "test_db"
     TEST_PROJECT_NAME = "test_project"
@@ -19,9 +33,11 @@ class TestCase:
 
     REPRESENTATION_ID = "60e578d0c987036c6a7b741d"
 
-    TEST_FILES = [
-        ("1eCwPljuJeOI8A3aisfOIBKKjcmIycTEt", "test_site_operations.zip", "")
-    ]
+    TEST_FILES = []
+
+    PROJECT = "test_project"
+    ASSET = "test_asset"
+    TASK = "test_task"
 
     @pytest.fixture(scope='session')
     def monkeypatch_session(self):
@@ -47,6 +63,7 @@ class TestCase:
                 RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
 
             yield tmpdir
+            print("Removing {}".format(tmpdir))
             shutil.rmtree(tmpdir)
 
     @pytest.fixture(scope="module")
@@ -105,4 +122,23 @@ class TestCase:
         """
         from avalon.api import AvalonMongoDB
         dbcon = AvalonMongoDB()
+        dbcon.Session["AVALON_PROJECT"] = self.TEST_PROJECT_NAME
         yield dbcon
+
+    @pytest.fixture(scope="module")
+    def dbcon_openpype(self, db_setup):
+        """Provide test database connection for OP settings.
+
+            Database prepared from dumps with 'db_setup' fixture.
+        """
+        from openpype.lib import OpenPypeMongoConnection
+        mongo_client = OpenPypeMongoConnection.get_mongo_client()
+        yield mongo_client[self.TEST_OPENPYPE_NAME]["settings"]
+
+    @pytest.fixture(scope="module")
+    def last_workfile_path(self, download_test_data):
+        raise NotImplemented
+
+    @pytest.fixture(scope="module")
+    def startup_scripts(self, monkeypatch_session, download_test_data):
+        raise NotImplemented
