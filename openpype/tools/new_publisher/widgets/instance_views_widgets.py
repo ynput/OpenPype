@@ -4,11 +4,10 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from ..constants import (
     INSTANCE_ID_ROLE,
-    SORT_VALUE_ROLE
+    SORT_VALUE_ROLE,
+    CONTEXT_ID
 )
 from .icons import get_pixmap
-
-CONTEXT_ID = "context"
 
 
 class ContextWarningLabel(QtWidgets.QLabel):
