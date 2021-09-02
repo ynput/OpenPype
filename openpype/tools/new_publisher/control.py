@@ -157,7 +157,7 @@ class PublishReport:
     def add_result(self, result):
         instance = result["instance"]
         instance_id = None
-        if instance:
+        if instance is not None:
             instance_id = instance.id
         self._current_plugin_data["instances_data"].append({
             "id": instance_id,
