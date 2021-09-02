@@ -162,6 +162,7 @@ If you wish to check your render before publishing, you can use your local machi
 
 If you want to render and publish on the farm in one go, run publish with On farm option selected in the write node to render and make the review on farm.
 
+![Versionless](assets/nuke_tut/nuke_RenderLocalFarm.png)
 
 ## Version-less Render
 
