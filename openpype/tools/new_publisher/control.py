@@ -483,11 +483,18 @@ class PublisherController:
                     item[2].append(value)
         return output
 
-    def get_publish_attribute_definitions(self, instances):
+    def get_publish_attribute_definitions(self, instances, include_context):
+        _tmp_items = []
+        if include_context:
+            _tmp_items.append(self.create_context)
+
+        for instance in instances:
+            _tmp_items.append(instance)
+
         all_defs_by_plugin_name = {}
         all_plugin_values = {}
-        for instance in instances:
-            for plugin_name, attr_val in instance.publish_attributes.items():
+        for item in _tmp_items:
+            for plugin_name, attr_val in item.publish_attributes.items():
                 attr_defs = attr_val.attr_defs
                 if not attr_defs:
                     continue
@@ -506,7 +513,7 @@ class PublisherController:
                     attr_values = plugin_values[attr_def.key]
 
                     value = attr_val[attr_def.key]
-                    attr_values.append((instance, value))
+                    attr_values.append((item, value))
 
         output = []
         for plugin in self.plugins_with_defs:

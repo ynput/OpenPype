@@ -625,7 +625,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.cancel_btn.setEnabled(enabled)
         self.submit_btn.setEnabled(enabled)
 
-    def set_current_instances(self, instances, context_selected):
+    def set_current_instances(self, instances):
         self.set_btns_visible(False)
 
         self._current_instances = instances
@@ -688,7 +688,7 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
         # To store content of scroll area to prevend garbage collection
         self._content_widget = None
 
-    def set_current_instances(self, instances, context_selected):
+    def set_current_instances(self, instances):
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -774,7 +774,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         self._attr_def_id_to_plugin_name = {}
 
         result = self.controller.get_publish_attribute_definitions(
-            instances
+            instances, context_selected
         )
 
         content_widget = QtWidgets.QWidget(self._scroll_area)
@@ -887,12 +887,8 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         self.thumbnail_widget = thumbnail_widget
 
     def set_current_instances(self, instances, context_selected):
-        self.global_attrs_widget.set_current_instances(
-            instances, context_selected
-        )
-        self.family_attrs_widget.set_current_instances(
-            instances, context_selected
-        )
+        self.global_attrs_widget.set_current_instances(instances)
+        self.family_attrs_widget.set_current_instances(instances)
         self.publish_attrs_widget.set_current_instances(
             instances, context_selected
         )
