@@ -588,9 +588,10 @@ class CreateContext:
         }
 
     def context_data_changes(self):
-        changes = {
-            "publish_attributes": self._publish_attributes.changes()
-        }
+        changes = {}
+        publish_attribute_changes = self._publish_attributes.changes()
+        if publish_attribute_changes:
+            changes["publish_attributes"] = publish_attribute_changes
         return changes
 
     def reset_instances(self):
@@ -668,9 +669,10 @@ class CreateContext:
         self._save_instance_changes()
 
     def _save_context_changes(self):
-        data = self.context_data_to_store()
         changes = self.context_data_changes()
-        self.host.update_context_data(data, changes)
+        if changes:
+            data = self.context_data_to_store()
+            self.host.update_context_data(data, changes)
 
     def _save_instance_changes(self):
         update_list = []
