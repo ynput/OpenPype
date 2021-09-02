@@ -29,7 +29,7 @@ from .local_settings import get_openpype_username
 from .avalon_context import (
     get_workdir_data,
     get_workdir_with_workdir_data,
-    get_workfile_template_key_from_context
+    get_workfile_template_key
 )
 
 from .python_module_tools import (
@@ -1226,8 +1226,12 @@ def prepare_context_environments(data):
 
     # Load project specific environments
     project_name = project_doc["name"]
+    project_settings = get_project_settings(project_name)
+    data["project_settings"] = project_settings
     # Apply project specific environments on current env value
-    apply_project_environments_value(project_name, data["env"])
+    apply_project_environments_value(
+        project_name, data["env"], project_settings
+    )
 
     app = data["app"]
     workdir_data = get_workdir_data(
@@ -1237,17 +1241,19 @@ def prepare_context_environments(data):
 
     anatomy = data["anatomy"]
 
-    template_key = get_workfile_template_key_from_context(
-        asset_doc["name"],
-        task_name,
+    asset_tasks = asset_doc.get("data", {}).get("tasks") or {}
+    task_info = asset_tasks.get(task_name) or {}
+    task_type = task_info.get("type")
+    workfile_template_key = get_workfile_template_key(
+        task_type,
         app.host_name,
         project_name=project_name,
-        dbcon=data["dbcon"]
+        project_settings=project_settings
     )
 
     try:
         workdir = get_workdir_with_workdir_data(
-            workdir_data, anatomy, template_key=template_key
+            workdir_data, anatomy, template_key=workfile_template_key
         )
 
     except Exception as exc:
@@ -1281,10 +1287,10 @@ def prepare_context_environments(data):
     )
     data["env"].update(context_env)
 
-    _prepare_last_workfile(data, workdir)
+    _prepare_last_workfile(data, workdir, workfile_template_key)
 
 
-def _prepare_last_workfile(data, workdir):
+def _prepare_last_workfile(data, workdir, workfile_template_key):
     """last workfile workflow preparation.
 
     Function check if should care about last workfile workflow and tries
@@ -1345,7 +1351,7 @@ def _prepare_last_workfile(data, workdir):
     if extensions:
         anatomy = data["anatomy"]
         # Find last workfile
-        file_template = anatomy.templates["work"]["file"]
+        file_template = anatomy.templates[workfile_template_key]["file"]
         workdir_data.update({
             "version": 1,
             "user": get_openpype_username(),
