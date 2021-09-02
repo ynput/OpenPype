@@ -166,6 +166,7 @@ class PublishAttributes:
         self._data = {}
         self._plugin_names_order = []
         data = copy.deepcopy(origin_data)
+        added_keys = set()
         for plugin in attr_plugins:
             data = plugin.convert_attribute_values(data)
             attr_defs = plugin.get_attribute_defs()
@@ -173,6 +174,7 @@ class PublishAttributes:
                 continue
 
             key = plugin.__name__
+            added_keys.add(key)
             self._plugin_names_order.append(key)
 
             value = data.get(key) or {}
@@ -180,6 +182,12 @@ class PublishAttributes:
             self._data[key] = PublishAttributeValues(
                 self, attr_defs, value, orig_value
             )
+
+        for key, value in data.items():
+            if key not in added_keys:
+                self._data[key] = PublishAttributeValues(
+                    self, [], value, value
+                )
 
     def __getitem__(self, key):
         return self._data[key]
