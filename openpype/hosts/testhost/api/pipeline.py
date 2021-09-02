@@ -60,7 +60,7 @@ class HostContext:
         if not os.path.exists(json_path):
             data = {}
             with open(json_path, "w") as json_stream:
-                json.dump(json_stream, data)
+                json.dump(data, json_stream)
         else:
             with open(json_path, "r") as json_stream:
                 data = json.load(json_stream)
@@ -70,7 +70,7 @@ class HostContext:
     def save_context_data(cls, data):
         json_path = cls.get_context_json_path()
         with open(json_path, "w") as json_stream:
-            json.dump(json_stream, data)
+            json.dump(data, json_stream, indent=4)
 
 
 def ls():
