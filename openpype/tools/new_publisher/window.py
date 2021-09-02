@@ -74,7 +74,6 @@ class PublisherWindow(QtWidgets.QDialog):
         # Buttons at the bottom of subset view
         create_btn = QtWidgets.QPushButton("+", subset_frame)
         delete_btn = QtWidgets.QPushButton("-", subset_frame)
-        save_btn = QtWidgets.QPushButton("Save", subset_frame)
         change_view_btn = QtWidgets.QPushButton("=", subset_frame)
 
         # Subset details widget
@@ -88,7 +87,6 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_view_btns_layout.setSpacing(5)
         subset_view_btns_layout.addWidget(create_btn)
         subset_view_btns_layout.addWidget(delete_btn)
-        subset_view_btns_layout.addWidget(save_btn)
         subset_view_btns_layout.addStretch(1)
         subset_view_btns_layout.addWidget(change_view_btn)
 
@@ -164,7 +162,6 @@ class PublisherWindow(QtWidgets.QDialog):
 
         create_btn.clicked.connect(self._on_create_clicked)
         delete_btn.clicked.connect(self._on_delete_clicked)
-        save_btn.clicked.connect(self._on_save_clicked)
         change_view_btn.clicked.connect(self._on_change_view_clicked)
 
         reset_btn.clicked.connect(self._on_reset_clicked)
@@ -225,6 +222,10 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._first_show:
             self._first_show = False
             self.reset()
+
+    def closeEvent(self, event):
+        self.controller.save_changes()
+        super(PublisherWindow, self).closeEvent(event)
 
     def reset(self):
         self.controller.reset()
@@ -289,9 +290,6 @@ class PublisherWindow(QtWidgets.QDialog):
 
     def _on_change_view_clicked(self):
         self._change_view_type()
-
-    def _on_save_clicked(self):
-        self.controller.save_changes()
 
     def _set_publish_visibility(self, visible):
         if visible:

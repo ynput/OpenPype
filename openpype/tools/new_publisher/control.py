@@ -625,6 +625,10 @@ class PublisherController:
         """Start or continue in publishing."""
         if self._publish_is_running:
             return
+
+        # Make sure changes are saved
+        self.save_changes()
+
         self._publish_is_running = True
         self._trigger_callbacks(self._publish_started_callback_refs)
         self._main_thread_processor.start()
