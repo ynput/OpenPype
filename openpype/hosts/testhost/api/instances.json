@@ -69,5 +69,22 @@
                 "add_ftrack_family": true
             }
         }
+    },
+    {
+        "id": "pyblish.avalon.instance",
+        "family": "test_three",
+        "subset": "test_threeMain2",
+        "active": true,
+        "version": 1,
+        "asset": "sq01_sh0020",
+        "task": "Compositing",
+        "variant": "Main2",
+        "uuid": "4ccf56f6-9982-4837-967c-a49695dbe8ec",
+        "family_attributes": {},
+        "publish_attributes": {
+            "CollectFtrackApi": {
+                "add_ftrack_family": true
+            }
+        }
     }
 ]
