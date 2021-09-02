@@ -552,12 +552,12 @@ class CreateContext:
         self.creators = creators
 
     def reset_instances(self):
-        # Collect instances
         instances = []
         if not self.host_is_valid:
             self.instances = instances
             return
 
+        # Collect instances
         host_instances = self.host.list_instances()
         task_names_by_asset_name = collections.defaultdict(set)
         for instance_data in host_instances:
@@ -645,6 +645,10 @@ class CreateContext:
             filtered_plugins = pyblish.logic.plugins_by_families(
                 self.plugins_with_defs, [family]
             )
-            self._attr_plugins_by_family[family] = filtered_plugins
+            plugins = []
+            for plugin in filtered_plugins:
+                if plugin.__instanceEnabled__:
+                    plugins.append(plugin)
+            self._attr_plugins_by_family[family] = plugins
 
         return self._attr_plugins_by_family[family]
