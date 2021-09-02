@@ -23,7 +23,9 @@ from openpype.pipeline import (
 )
 
 
-class CollectContextDataTestHost(pyblish.api.ContextPlugin):
+class CollectContextDataTestHost(
+    pyblish.api.ContextPlugin, OpenPypePyblishPluginMixin
+):
     """
     Collecting temp json data sent from a host context
     and path for returning json data back to hostself.
