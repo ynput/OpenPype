@@ -11,6 +11,13 @@ PS> .\run_mongo.ps1
 
 #>
 
+$current_dir = Get-Location
+$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
+$openpype_root = (Get-Item $script_dir).parent.FullName
+
+# Install PSWriteColor to support colorized output to terminal
+$env:PSModulePath = $env:PSModulePath + ";$($openpype_root)\vendor\powershell"
+
 $art = @"
 
              . .   ..     .    ..
@@ -43,8 +50,7 @@ function Exit-WithCode($exitcode) {
 
 function Find-Mongo ($preferred_version) {
     $defaultPath = "C:\Program Files\MongoDB\Server"
-    Write-Host ">>> " -NoNewLine -ForegroundColor Green
-    Write-Host "Detecting MongoDB ... " -NoNewline
+    Write-Color -Text ">>> ", "Detecting MongoDB ... " -Color Geen, Gray -NoNewline
     if (-not (Get-Command "mongod" -ErrorAction SilentlyContinue)) {
         if(Test-Path "$($defaultPath)\*\bin\mongod.exe" -PathType Leaf) {
         # we have mongo server installed on standard Windows location
@@ -52,17 +58,14 @@ function Find-Mongo ($preferred_version) {
         # $preferred_version.
         $mongoVersions = Get-ChildItem -Directory 'C:\Program Files\MongoDB\Server' | Sort-Object -Property {$_.Name -as [int]}
         if(Test-Path "$($mongoVersions[-1])\bin\mongod.exe" -PathType Leaf) {
-            Write-Host "OK" -ForegroundColor Green
+            Write-Color -Text "OK" -Color Green
             $use_version = $mongoVersions[-1]
             foreach ($v in $mongoVersions) {
-                Write-Host "  - found [ " -NoNewline
-                Write-Host $v -NoNewLine -ForegroundColor Cyan
-                Write-Host " ]" -NoNewLine
-
+                Write-Color -Text "  - found [ ", $v, " ]" - Color Cyan, White, Cyan -NoNewLine
                 $version = Split-Path $v -Leaf
 
                 if ($preferred_version -eq $version) {
-                    Write-Host " *" -ForegroundColor Green
+                    Write-Color -Text " *" -Color Green
                     $use_version = $v
                 } else {
                     Write-Host ""
@@ -103,9 +106,6 @@ function Find-Mongo ($preferred_version) {
   (using latest if found). When mongod is found, path to it is added to PATH
   #>
 }
-
-$script_dir = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
-$openpype_root = (Get-Item $script_dir).parent.FullName
 
 # mongodb port
 $port = 2707
