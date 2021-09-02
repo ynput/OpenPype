@@ -625,7 +625,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.cancel_btn.setEnabled(enabled)
         self.submit_btn.setEnabled(enabled)
 
-    def set_current_instances(self, instances):
+    def set_current_instances(self, instances, context_selected):
         self.set_btns_visible(False)
 
         self._current_instances = instances
@@ -688,7 +688,7 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
         # To store content of scroll area to prevend garbage collection
         self._content_widget = None
 
-    def set_current_instances(self, instances):
+    def set_current_instances(self, instances, context_selected):
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -760,7 +760,7 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
         # Store content of scroll area to prevend garbage collection
         self._content_widget = None
 
-    def set_current_instances(self, instances):
+    def set_current_instances(self, instances, context_selected):
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
             self._scroll_area.takeWidget()
@@ -886,10 +886,16 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         self.publish_attrs_widget = publish_attrs_widget
         self.thumbnail_widget = thumbnail_widget
 
-    def set_current_instances(self, instances):
-        self.global_attrs_widget.set_current_instances(instances)
-        self.family_attrs_widget.set_current_instances(instances)
-        self.publish_attrs_widget.set_current_instances(instances)
+    def set_current_instances(self, instances, context_selected):
+        self.global_attrs_widget.set_current_instances(
+            instances, context_selected
+        )
+        self.family_attrs_widget.set_current_instances(
+            instances, context_selected
+        )
+        self.publish_attrs_widget.set_current_instances(
+            instances, context_selected
+        )
 
 
 class ThumbnailWidget(QtWidgets.QWidget):

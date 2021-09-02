@@ -8,6 +8,8 @@ from ..constants import (
 )
 from .icons import get_pixmap
 
+CONTEXT_ID = "context"
+
 
 class ContextWarningLabel(QtWidgets.QLabel):
     cached_images_by_size = {}
@@ -149,6 +151,29 @@ class InstanceCardWidget(QtWidgets.QWidget):
         self._set_expanded()
 
 
+class ContextCardWidget(QtWidgets.QWidget):
+    def __init__(self, item, parent):
+        super(ContextCardWidget, self).__init__(parent)
+
+        self.item = item
+
+        subset_name_label = QtWidgets.QLabel("Context", self)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(2, 2, 2, 2)
+        layout.addWidget(subset_name_label)
+        layout.addStretch(1)
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        subset_name_label.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        self.subset_name_label = subset_name_label
+
+    def showEvent(self, event):
+        super(ContextCardWidget, self).showEvent(event)
+        self.item.setSizeHint(self.sizeHint())
+
+
 class _AbstractInstanceView(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
     refreshed = False
@@ -161,14 +186,14 @@ class _AbstractInstanceView(QtWidgets.QWidget):
             "{} Method 'refresh' is not implemented."
         ).format(self.__class__.__name__))
 
-    def get_selected_instances(self):
+    def get_selected_items(self):
         raise NotImplementedError((
-            "{} Method 'get_selected_instances' is not implemented."
+            "{} Method 'get_selected_items' is not implemented."
         ).format(self.__class__.__name__))
 
-    def set_selected_instances(self, instances):
+    def set_selected_items(self, instances, context_selected):
         raise NotImplementedError((
-            "{} Method 'set_selected_instances' is not implemented."
+            "{} Method 'set_selected_items' is not implemented."
         ).format(self.__class__.__name__))
 
 
@@ -195,6 +220,9 @@ class InstanceCardView(_AbstractInstanceView):
         self._items_by_id = {}
         self._widgets_by_id = {}
 
+        self._context_widget = None
+        self._context_item = None
+
         self.list_widget = list_widget
 
     def refresh(self):
@@ -202,6 +230,17 @@ class InstanceCardView(_AbstractInstanceView):
         for instance in self.controller.instances:
             instance_id = instance.data["uuid"]
             instances_by_id[instance_id] = instance
+
+        if not self._context_item:
+            item = QtWidgets.QListWidgetItem(self.list_widget)
+            item.setData(INSTANCE_ID_ROLE, CONTEXT_ID)
+
+            widget = ContextCardWidget(item, self)
+            self.list_widget.addItem(item)
+            self.list_widget.setItemWidget(item, widget)
+
+            self._context_item = item
+            self._context_widget = widget
 
         for instance_id in tuple(self._items_by_id.keys()):
             if instance_id not in instances_by_id:
@@ -251,18 +290,28 @@ class InstanceCardView(_AbstractInstanceView):
     def _on_selection_change(self, *_args):
         self.selection_changed.emit()
 
-    def get_selected_instances(self):
+    def get_selected_items(self):
         instances = []
+        context_selected = False
         for item in self.list_widget.selectedItems():
             instance_id = item.data(INSTANCE_ID_ROLE)
-            widget = self._widgets_by_id.get(instance_id)
-            if widget:
-                instances.append(widget.instance)
-        return instances
+            if instance_id == CONTEXT_ID:
+                context_selected = True
+            else:
+                widget = self._widgets_by_id.get(instance_id)
+                if widget:
+                    instances.append(widget.instance)
 
-    def set_selected_instances(self, instances):
+        return instances, context_selected
+
+    def set_selected_items(self, instances, context_selected):
         indexes = []
         model = self.list_widget.model()
+        if context_selected and self._context_item is not None:
+            row = self.list_widget.row(self._context_item)
+            index = model.index(row, 0)
+            indexes.append(index)
+
         for instance in instances:
             instance_id = instance.data["uuid"]
             item = self._items_by_id.get(instance_id)
@@ -337,6 +386,24 @@ class InstanceListItemWidget(QtWidgets.QWidget):
 
         self.instance.data["active"] = new_value
         self.active_changed.emit(self.instance.data["uuid"], new_value)
+
+
+class ListContextWidget(QtWidgets.QFrame):
+    def __init__(self, parent):
+        super(ListContextWidget, self).__init__(parent)
+
+        label_widget = QtWidgets.QLabel("Context", self)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(5, 0, 2, 0)
+        layout.addWidget(
+            label_widget, 1, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        )
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        label_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        self.label_widget = label_widget
 
 
 class InstanceListGroupWidget(QtWidgets.QFrame):
@@ -424,6 +491,9 @@ class InstanceListView(_AbstractInstanceView):
         self._group_items = {}
         self._group_widgets = {}
         self._widgets_by_id = {}
+        self._context_item = None
+        self._context_widget = None
+
         self.instance_view = instance_view
         self.instance_model = instance_model
         self.proxy_model = proxy_model
@@ -448,6 +518,28 @@ class InstanceListView(_AbstractInstanceView):
             families.add(family)
             instances_by_family[family].append(instance)
 
+        sort_at_the_end = False
+        root_item = self.instance_model.invisibleRootItem()
+
+        context_item = None
+        if self._context_item is None:
+            sort_at_the_end = True
+            context_item = QtGui.QStandardItem()
+            context_item.setData(0, SORT_VALUE_ROLE)
+            context_item.setData(CONTEXT_ID, INSTANCE_ID_ROLE)
+
+            root_item.appendRow(context_item)
+
+            index = self.instance_model.index(
+                context_item.row(), context_item.column()
+            )
+            proxy_index = self.proxy_model.mapFromSource(index)
+            widget = ListContextWidget(self.instance_view)
+            self.instance_view.setIndexWidget(proxy_index, widget)
+
+            self._context_widget = widget
+            self._context_item = context_item
+
         new_group_items = []
         for family in families:
             if family in self._group_items:
@@ -459,8 +551,6 @@ class InstanceListView(_AbstractInstanceView):
             self._group_items[family] = group_item
             new_group_items.append(group_item)
 
-        sort_at_the_end = False
-        root_item = self.instance_model.invisibleRootItem()
         if new_group_items:
             sort_at_the_end = True
             root_item.appendRows(new_group_items)
@@ -552,24 +642,27 @@ class InstanceListView(_AbstractInstanceView):
         for widget in self._widgets_by_id.values():
             widget.update_instance_values()
 
-    def get_selected_instances(self):
+    def get_selected_items(self):
         instances = []
         instances_by_id = {}
+        context_selected = False
         for instance in self.controller.instances:
             instance_id = instance.data["uuid"]
             instances_by_id[instance_id] = instance
 
         for index in self.instance_view.selectionModel().selectedIndexes():
             instance_id = index.data(INSTANCE_ID_ROLE)
-            if instance_id is not None:
+            if not context_selected and instance_id == CONTEXT_ID:
+                context_selected = True
+
+            elif instance_id is not None:
                 instance = instances_by_id.get(instance_id)
                 if instance:
                     instances.append(instance)
 
-        return instances
+        return instances, context_selected
 
-    def set_selected_instances(self, instances):
-        model = self.instance_view.model()
+    def set_selected_items(self, instances, context_selected):
         instance_ids_by_family = collections.defaultdict(set)
         for instance in instances:
             family = instance.data["family"]
@@ -577,6 +670,11 @@ class InstanceListView(_AbstractInstanceView):
             instance_ids_by_family[family].add(instance_id)
 
         indexes = []
+        if context_selected and self._context_item is not None:
+            index = self.instance_model.index(self._context_item.row(), 0)
+            proxy_index = self.proxy_model.mapFromSource(index)
+            indexes.append(proxy_index)
+
         for family, group_item in self._group_items.items():
             selected_ids = instance_ids_by_family[family]
             if not selected_ids:
@@ -588,7 +686,7 @@ class InstanceListView(_AbstractInstanceView):
             proxy_group_index = self.proxy_model.mapFromSource(group_index)
             has_indexes = False
             for row in range(group_item.rowCount()):
-                index = model.index(row, 0, proxy_group_index)
+                index = self.proxy_model.index(row, 0, proxy_group_index)
                 instance_id = index.data(INSTANCE_ID_ROLE)
                 if instance_id in selected_ids:
                     indexes.append(index)

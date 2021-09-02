@@ -232,9 +232,9 @@ class PublisherWindow(QtWidgets.QDialog):
     def set_context_label(self, label):
         self.context_label.setText(label)
 
-    def get_selected_instances(self):
+    def get_selected_items(self):
         view = self.subset_views_layout.currentWidget()
-        return view.get_selected_instances()
+        return view.get_selected_items()
 
     def _change_view_type(self):
         old_view = self.subset_views_layout.currentWidget()
@@ -251,14 +251,18 @@ class PublisherWindow(QtWidgets.QDialog):
             new_view.refresh_active_state()
 
         if new_view is not old_view:
-            selected_instances = old_view.get_selected_instances()
-            new_view.set_selected_instances(selected_instances)
+            selected_instances, context_selected = (
+                old_view.get_selected_items()
+            )
+            new_view.set_selected_items(
+                selected_instances, context_selected
+            )
 
     def _on_create_clicked(self):
         self.creator_window.show()
 
     def _on_delete_clicked(self):
-        instances = self.get_selected_instances()
+        instances, _ = self.get_selected_items()
 
         # Ask user if he really wants to remove instances
         dialog = QtWidgets.QMessageBox(self)
@@ -337,12 +341,14 @@ class PublisherWindow(QtWidgets.QDialog):
         if self._refreshing_instances:
             return
 
-        instances = self.get_selected_instances()
+        instances, context_selected = self.get_selected_items()
 
         # Disable delete button if nothing is selected
         self.delete_btn.setEnabled(len(instances) >= 0)
 
-        self.subset_attributes_widget.set_current_instances(instances)
+        self.subset_attributes_widget.set_current_instances(
+            instances, context_selected
+        )
 
     def _on_publish_reset(self):
         self.reset_btn.setEnabled(True)
