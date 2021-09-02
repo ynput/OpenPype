@@ -452,6 +452,7 @@ class CreateContext:
         self.dbcon = dbcon
 
         self._log = None
+        self._publish_attributes = PublishAttributes(self, {})
 
         self.host = host
         host_is_valid = True
@@ -479,6 +480,10 @@ class CreateContext:
 
         if reset:
             self.reset()
+
+    @property
+    def publish_attributes(self):
+        return self._publish_attributes
 
     @classmethod
     def get_host_misssing_methods(cls, host):
