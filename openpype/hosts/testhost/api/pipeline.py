@@ -122,5 +122,5 @@ def get_context_data():
     return HostContext.get_context_data()
 
 
-def update_context_data(data):
+def update_context_data(data, changes):
     HostContext.save_context_data(data)
