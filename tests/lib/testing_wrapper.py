@@ -137,8 +137,8 @@ class TestCase:
 
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data):
-        raise NotImplemented
+        raise NotImplementedError
 
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
-        raise NotImplemented
+        raise NotImplementedError

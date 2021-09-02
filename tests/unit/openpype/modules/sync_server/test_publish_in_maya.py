@@ -122,18 +122,17 @@ class TestPublishInMaya(TestCase):
         assert 5 == dbcon.find({"type": "version"}).count(), \
             "Not expected no of versions"
 
-        assert 0 == \
-               dbcon.find({"type": "version", "name": {"$ne": 1}}).count(), \
-                   "Only versions with 1 expected"
+        assert 0 == dbcon.find({"type": "version",
+                                "name": {"$ne": 1}}).count(), \
+            "Only versions with 1 expected"
 
-        assert 1 == \
-               dbcon.find({"type": "subset", "name": "modelMain"}).count(), \
-                   "modelMain subset must be present"
+        assert 1 == dbcon.find({"type": "subset",
+                                "name": "modelMain"}).count(), \
+            "modelMain subset must be present"
 
-        assert 1 == \
-               dbcon.find(
-                   {"type": "subset", "name": "workfileTest_task"}).count(), \
-                   "workfileTest_task subset must be present"
+        assert 1 == dbcon.find({"type": "subset",
+                                "name": "workfileTest_task"}).count(), \
+            "workfileTest_task subset must be present"
 
         assert 11 == dbcon.find({"type": "representation"}).count(), \
             "Not expected no of representations"
@@ -201,6 +200,7 @@ class TestPublishInMaya(TestCase):
             os.path.join(workfile_folder,
                          "test_project_test_asset_workfileTest_task_v001.mb")
         ), "test_project_test_asset_workfileTest_task_v001.mb doesn't exist"
+
 
 if __name__ == "__main__":
     test_case = TestPublishInMaya()

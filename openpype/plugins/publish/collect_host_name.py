@@ -35,4 +35,3 @@ class CollectHostName(pyblish.api.ContextPlugin):
                     host_name = app.host_name
 
         context.data["hostName"] = host_name
-
