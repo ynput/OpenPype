@@ -461,6 +461,7 @@ class CreateContext:
 
         self._log = None
         self._publish_attributes = PublishAttributes(self, {})
+        self._original_context_data = {}
 
         self.host = host
         host_is_valid = True
@@ -567,14 +568,30 @@ class CreateContext:
 
     def reset_context_data(self):
         if not self.host_is_valid:
+            self._original_context_data = {}
             self._publish_attributes = PublishAttributes(self, {})
             return
 
-        original_data = self.host.get_context_data()
+        original_data = self.host.get_context_data() or {}
+        self._original_context_data = copy.deepcopy(original_data)
+
+        publish_attributes = original_data.get("publish_attributes") or {}
+
         attr_plugins = self._get_publish_plugins_with_attr_for_context()
         self._publish_attributes = PublishAttributes(
-            self, original_data, attr_plugins
+            self, publish_attributes, attr_plugins
         )
+
+    def context_data_to_store(self):
+        return {
+            "publish_attributes": self._publish_attributes.data_to_store()
+        }
+
+    def context_data_changes(self):
+        changes = {
+            "publish_attributes": self._publish_attributes.changes()
+        }
+        return changes
 
     def reset_instances(self):
         instances = []
@@ -642,11 +659,20 @@ class CreateContext:
 
         self.instances = instances
 
-    def save_instance_changes(self):
+    def save_changes(self):
         if not self.host_is_valid:
             missing_methods = self.get_host_misssing_methods(self.host)
             raise HostMissRequiredMethod(self.host, missing_methods)
 
+        self._save_context_changes()
+        self._save_instance_changes()
+
+    def _save_context_changes(self):
+        data = self.context_data_to_store()
+        changes = self.context_data_changes()
+        self.host.update_context_data(data, changes)
+
+    def _save_instance_changes(self):
         update_list = []
         for instance in self.instances:
             instance_changes = instance.changes()

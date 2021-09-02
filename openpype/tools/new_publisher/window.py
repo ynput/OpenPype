@@ -291,7 +291,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._change_view_type()
 
     def _on_save_clicked(self):
-        self.controller.save_instance_changes()
+        self.controller.save_changes()
 
     def _set_publish_visibility(self, visible):
         if visible:

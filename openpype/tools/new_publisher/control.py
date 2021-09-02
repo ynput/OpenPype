@@ -541,8 +541,8 @@ class PublisherController:
 
         self._reset_instances()
 
-    def save_instance_changes(self):
-        self.create_context.save_instance_changes()
+    def save_changes(self):
+        self.create_context.save_changes()
 
     def remove_instances(self, instances):
         self.create_context.remove_instances(instances)
