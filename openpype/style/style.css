@@ -826,6 +826,9 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     padding: 5px 1px;
     border: 0px;
 }
+#VariantInput[state="invalid"], #VariantInput[state="invalid"]:focus, #VariantInput[state="invalid"]:hover {
+    border-color: #AA5050;
+}
 
 #OptionalActionBody, #OptionalActionOption {
     background: transparent;
