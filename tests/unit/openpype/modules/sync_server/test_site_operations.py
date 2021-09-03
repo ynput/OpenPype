@@ -13,11 +13,13 @@
 """
 import pytest
 
-from tests.lib.testing_wrapper import TestCase
+from tests.lib.testing_classes import ModuleUnitTest
 from bson.objectid import ObjectId
 
 
-class TestSiteOperation(TestCase):
+class TestSiteOperation(ModuleUnitTest):
+
+    REPRESENTATION_ID = "60e578d0c987036c6a7b741d"
 
     @pytest.fixture(scope="module")
     def setup_sync_server_module(self, dbcon):

@@ -4,10 +4,10 @@ import os
 import shutil
 import glob
 
-from tests.lib.testing_wrapper import TestCase
+from tests.lib.testing_classes import PublishTest
 
 
-class TestPublishInMaya(TestCase):
+class TestPublishInMaya(PublishTest):
     """Basic test case for publishing in Maya
 
         Uses generic TestCase to prepare fixtures for test data, testing DBs,
@@ -64,59 +64,8 @@ class TestPublishInMaya(TestCase):
                                    "{};{}".format(original_pythonpath,
                                                   startup_path))
 
-    @pytest.fixture(scope="module")
-    def launched_app(self, dbcon, download_test_data, last_workfile_path,
-                     startup_scripts):
-        """Get sync_server_module from ModulesManager"""
-        root_key = "config.roots.work.{}".format("windows")  # TEMP
-        dbcon.update_one(
-            {"type": "project"},
-            {"$set":
-                {
-                    root_key: download_test_data
-                }}
-        )
-
-        from openpype import PACKAGE_DIR
-
-        # Path to OpenPype's schema
-        schema_path = os.path.join(
-            os.path.dirname(PACKAGE_DIR),
-            "schema"
-        )
-        os.environ["AVALON_SCHEMA"] = schema_path  # TEMP
-
-        import openpype
-        openpype.install()
-        os.environ["OPENPYPE_EXECUTABLE"] = sys.executable
-        from openpype.lib import ApplicationManager
-
-        application_manager = ApplicationManager()
-        data = {
-            "last_workfile_path": last_workfile_path,
-            "start_last_workfile": True,
-            "project_name": self.PROJECT,
-            "asset_name": self.ASSET,
-            "task_name": self.TASK
-        }
-
-        yield application_manager.launch(self.APP_NAME, **data)
-
-    @pytest.fixture(scope="module")
-    def publish_finished(self, dbcon, launched_app):
-        """Dummy fixture waiting for publish to finish"""
-        import time
-        time_start = time.time()
-        while launched_app.poll() is None:
-            time.sleep(0.5)
-            if time.time() - time_start > self.TIMEOUT:
-                raise ValueError("Timeout reached")
-
-        # some clean exit test possible?
-        print("Publish finished")
-        yield True
-
     def test_db_asserts(self, dbcon, publish_finished):
+        """Host and input data dependent expected results in DB."""
         print("test_db_asserts")
         assert 5 == dbcon.find({"type": "version"}).count(), \
             "Not expected no of versions"
@@ -145,34 +94,6 @@ class TestPublishInMaya(TestCase):
                                 "context.subset": "modelMain",
                                 "context.ext": "ma"}).count(), \
             "Not expected no of representations with ext 'abc'"
-
-    def test_folder_structure_same(self, dbcon, publish_finished,
-                                   download_test_data):
-        """Check if expected and published subfolders contain same files.
-
-            Compares only presence, not size nor content!
-        """
-        published_dir_base = download_test_data
-        published_dir = os.path.join(published_dir_base,
-                                     self.PROJECT,
-                                     self.TASK,
-                                     "**")
-        expected_dir_base = os.path.join(published_dir_base,
-                                         "expected")
-        expected_dir = os.path.join(expected_dir_base,
-                                    self.PROJECT,
-                                    self.TASK,
-                                    "**")
-
-        published = set(f.replace(published_dir_base, '') for f in
-                        glob.glob(published_dir, recursive=True) if
-                        f != published_dir_base and os.path.exists(f))
-        expected = set(f.replace(expected_dir_base, '') for f in
-                       glob.glob(expected_dir, recursive=True) if
-                       f != expected_dir_base and os.path.exists(f))
-
-        not_matched = expected.difference(published)
-        assert not not_matched, "Missing {} files".format(not_matched)
 
 
 if __name__ == "__main__":
