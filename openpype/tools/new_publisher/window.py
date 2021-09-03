@@ -158,7 +158,7 @@ class PublisherWindow(QtWidgets.QDialog):
         main_layout.addWidget(line_widget, 0)
         main_layout.addLayout(content_stacked_layout, 1)
 
-        creator_window = CreateDialog(controller, self)
+        creator_window = CreateDialog(controller, parent=self)
 
         create_btn.clicked.connect(self._on_create_clicked)
         delete_btn.clicked.connect(self._on_delete_clicked)

@@ -87,10 +87,21 @@ class CreateErrorMessageBox(QtWidgets.QDialog):
 
 
 class CreateDialog(QtWidgets.QDialog):
-    def __init__(self, controller, parent=None):
+    def __init__(
+        self, controller, asset_name=None, task_name=None, parent=None
+    ):
         super(CreateDialog, self).__init__(parent)
 
         self.controller = controller
+
+        if asset_name is None:
+            asset_name = self.dbcon.Session.get("AVALON_ASSET")
+
+        if task_name is None:
+            task_name = self.dbcon.Session.get("AVALON_TASK")
+
+        self._asset_name = asset_name
+        self._task_name = task_name
 
         self._last_pos = None
         self._asset_doc = None
@@ -189,7 +200,7 @@ class CreateDialog(QtWidgets.QDialog):
         self.variant_hints_btn.setEnabled(self._prereq_available)
 
     def _refresh_asset(self):
-        asset_name = self.dbcon.Session.get("AVALON_ASSET")
+        asset_name = self._asset_name
 
         # Skip if asset did not change
         if self._asset_doc and self._asset_doc["name"] == asset_name:
@@ -298,7 +309,7 @@ class CreateDialog(QtWidgets.QDialog):
             return
 
         project_name = self.dbcon.Session["AVALON_PROJECT"]
-        task_name = self.dbcon.Session.get("AVALON_TASK")
+        task_name = self._task_name
 
         asset_doc = copy.deepcopy(self._asset_doc)
         # Calculate subset name with Creator plugin
@@ -390,8 +401,8 @@ class CreateDialog(QtWidgets.QDialog):
         family = index.data(QtCore.Qt.DisplayRole)
         subset_name = self.subset_name_input.text()
         variant = self.variant_input.text()
-        asset_name = self._asset_doc["name"]
-        task_name = self.dbcon.Session.get("AVALON_TASK")
+        asset_name = self.asset_name
+        task_name = self._task_name
         options = {}
         # Where to define these data?
         # - what data show be stored?
