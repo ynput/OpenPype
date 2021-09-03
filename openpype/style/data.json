@@ -47,6 +47,10 @@
 
         "border": "#373D48",
         "border-hover": "hsla(220, 14%, 70%, .3)",
-        "border-focus": "hsl(200, 60%, 60%)"
+        "border-focus": "hsl(200, 60%, 60%)",
+
+        "publish-error": "#AA5050",
+        "publish-success": "#458056",
+        "publish-warning": "#ffc671"
     }
 }
