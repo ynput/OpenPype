@@ -176,6 +176,7 @@ class ContextCardWidget(QtWidgets.QWidget):
 
 class _AbstractInstanceView(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
+    active_changed = QtCore.Signal(set)
     refreshed = False
 
     def set_refreshed(self, refreshed):
