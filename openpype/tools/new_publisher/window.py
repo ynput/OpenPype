@@ -249,7 +249,7 @@ class PublisherWindow(QtWidgets.QDialog):
             new_view.refresh()
             new_view.set_refreshed(True)
         else:
-            new_view.refresh_active_state()
+            new_view.refresh_instance_states()
 
         if new_view is not old_view:
             selected_instances, context_selected = (

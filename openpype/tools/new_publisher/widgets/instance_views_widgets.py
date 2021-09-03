@@ -265,7 +265,7 @@ class InstanceCardView(_AbstractInstanceView):
                 self._items_by_id[instance_id] = item
                 self._widgets_by_id[instance_id] = widget
 
-    def refresh_active_state(self):
+    def refresh_instance_states(self):
         for widget in self._widgets_by_id.values():
             widget.update_instance_values()
 
@@ -637,7 +637,7 @@ class InstanceListView(_AbstractInstanceView):
             if sort_at_the_end:
                 self.proxy_model.sort(0)
 
-    def refresh_active_state(self):
+    def refresh_instance_states(self):
         for widget in self._widgets_by_id.values():
             widget.update_instance_values()
 
