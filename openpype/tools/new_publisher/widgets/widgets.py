@@ -572,6 +572,8 @@ class MultipleItemWidget(QtWidgets.QWidget):
 
 
 class GlobalAttrsWidget(QtWidgets.QWidget):
+    instance_context_changed = QtCore.Signal()
+
     multiselection_text = "< Multiselection >"
     unknown_value = "N/A"
 
@@ -686,6 +688,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
         self.cancel_btn.setEnabled(False)
         self.submit_btn.setEnabled(False)
+
+        self.instance_context_changed.emit()
 
     def _on_cancel(self):
         self.variant_input.reset_to_origin()
@@ -938,6 +942,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
     |  attributes  |  attributes  | BOTTOM
     |______________|______________|
     """
+    instance_context_changed = QtCore.Signal()
 
     def __init__(self, controller, parent):
         super(SubsetAttributesWidget, self).__init__(parent)
@@ -948,6 +953,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         # Global attributes
         global_attrs_widget = GlobalAttrsWidget(controller, top_widget)
         thumbnail_widget = ThumbnailWidget(top_widget)
+        thumbnail_widget.setVisible(False)
 
         top_layout = QtWidgets.QHBoxLayout(top_widget)
         top_layout.setContentsMargins(0, 0, 0, 0)
@@ -981,6 +987,10 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         layout.addWidget(top_widget, 0)
         layout.addWidget(top_bottom, 0)
         layout.addWidget(bottom_widget, 1)
+
+        global_attrs_widget.instance_context_changed.connect(
+            self.instance_context_changed
+        )
 
         self.controller = controller
 

@@ -175,6 +175,9 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_view_cards.selection_changed.connect(
             self._on_subset_change
         )
+        subset_attributes_widget.instance_context_changed.connect(
+            self._on_instance_context_change
+        )
 
         controller.add_instances_refresh_callback(self._on_instances_refresh)
 
@@ -236,6 +239,18 @@ class PublisherWindow(QtWidgets.QDialog):
     def get_selected_items(self):
         view = self.subset_views_layout.currentWidget()
         return view.get_selected_items()
+
+    def _on_instance_context_change(self):
+        current_idx = self.subset_views_layout.currentIndex()
+        for idx in range(self.subset_views_layout.count()):
+            if idx == current_idx:
+                continue
+            widget = self.subset_views_layout.widget(idx)
+            if widget.refreshed:
+                widget.set_refreshed(False)
+
+        current_widget = self.subset_views_layout.widget(current_idx)
+        current_widget.refresh_instance_states()
 
     def _change_view_type(self):
         old_view = self.subset_views_layout.currentWidget()
