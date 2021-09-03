@@ -2,6 +2,7 @@ import pytest
 import sys
 import os
 import shutil
+import glob
 
 from tests.lib.testing_wrapper import TestCase
 
@@ -28,6 +29,8 @@ class TestPublishInMaya(TestCase):
 
     APP_NAME = "{}/{}".format(APP, APP_VARIANT)
 
+    TIMEOUT = 120  # publish timeout
+
     @pytest.fixture(scope="module")
     def last_workfile_path(self, download_test_data):
         """Get last_workfile_path from source data.
@@ -52,22 +55,14 @@ class TestPublishInMaya(TestCase):
 
     @pytest.fixture(scope="module")
     def startup_scripts(self, monkeypatch_session, download_test_data):
-        """Copy"""
+        """Points Maya to userSetup file from input data"""
         startup_path = os.path.join(download_test_data,
                                     "input",
-                                    "startup",
-                                    "userSetup.py")
-        from openpype.hosts import maya
-        maya_dir = os.path.dirname(os.path.abspath(maya.__file__))
-        shutil.move(os.path.join(maya_dir, "startup", "userSetup.py"),
-                    os.path.join(maya_dir, "startup", "userSetup.tmp")
-                    )
-        shutil.copy(startup_path,
-                    os.path.join(maya_dir, "startup", "userSetup.py"))
-        yield os.path.join(maya_dir, "startup", "userSetup.py")
-
-        shutil.move(os.path.join(maya_dir, "startup", "userSetup.tmp"),
-                    os.path.join(maya_dir, "startup", "userSetup.py"))
+                                    "startup")
+        original_pythonpath = os.environ.get("PYTHONPATH")
+        monkeypatch_session.setenv("PYTHONPATH",
+                                   "{};{}".format(original_pythonpath,
+                                                  startup_path))
 
     @pytest.fixture(scope="module")
     def launched_app(self, dbcon, download_test_data, last_workfile_path,
@@ -111,11 +106,15 @@ class TestPublishInMaya(TestCase):
     def publish_finished(self, dbcon, launched_app):
         """Dummy fixture waiting for publish to finish"""
         import time
+        time_start = time.time()
         while launched_app.poll() is None:
             time.sleep(0.5)
+            if time.time() - time_start > self.TIMEOUT:
+                raise ValueError("Timeout reached")
 
         # some clean exit test possible?
         print("Publish finished")
+        yield True
 
     def test_db_asserts(self, dbcon, publish_finished):
         print("test_db_asserts")
@@ -147,59 +146,33 @@ class TestPublishInMaya(TestCase):
                                 "context.ext": "ma"}).count(), \
             "Not expected no of representations with ext 'abc'"
 
-    def test_files(self, dbcon, publish_finished, download_test_data):
-        print("test_files")
-        # hero files
-        hero_folder = os.path.join(download_test_data,
-                                   self.PROJECT,
-                                   self.ASSET,
-                                   "publish",
-                                   "model",
-                                   "modelMain",
-                                   "hero")
+    def test_folder_structure_same(self, dbcon, publish_finished,
+                                   download_test_data):
+        """Check if expected and published subfolders contain same files.
 
-        assert os.path.exists(
-            os.path.join(hero_folder,
-                         "test_project_test_asset_modelMain_hero.ma")
-        ), "test_project_test_asset_modelMain_hero.ma doesn't exist"
+            Compares only presence, not size nor content!
+        """
+        published_dir_base = download_test_data
+        published_dir = os.path.join(published_dir_base,
+                                     self.PROJECT,
+                                     self.TASK,
+                                     "**")
+        expected_dir_base = os.path.join(published_dir_base,
+                                         "expected")
+        expected_dir = os.path.join(expected_dir_base,
+                                    self.PROJECT,
+                                    self.TASK,
+                                    "**")
 
-        assert os.path.exists(
-            os.path.join(hero_folder,
-                         "test_project_test_asset_modelMain_hero.abc")
-        ), "test_project_test_asset_modelMain_hero.abc doesn't exist"
+        published = set(f.replace(published_dir_base, '') for f in
+                        glob.glob(published_dir, recursive=True) if
+                        f != published_dir_base and os.path.exists(f))
+        expected = set(f.replace(expected_dir_base, '') for f in
+                       glob.glob(expected_dir, recursive=True) if
+                       f != expected_dir_base and os.path.exists(f))
 
-        # version files
-        version_folder = os.path.join(download_test_data,
-                                      self.PROJECT,
-                                      self.ASSET,
-                                      "publish",
-                                      "model",
-                                      "modelMain",
-                                      "v001")
-
-        assert os.path.exists(
-            os.path.join(version_folder,
-                         "test_project_test_asset_modelMain_v001.ma")
-        ), "test_project_test_asset_modelMain_v001.ma doesn't exist"
-
-        assert os.path.exists(
-            os.path.join(version_folder,
-                         "test_project_test_asset_modelMain_v001.abc")
-        ), "test_project_test_asset_modelMain_v001.abc doesn't exist"
-
-        # workfile files
-        workfile_folder = os.path.join(download_test_data,
-                                       self.PROJECT,
-                                       self.ASSET,
-                                       "publish",
-                                       "workfile",
-                                       "workfileTest_task",
-                                       "v001")
-
-        assert os.path.exists(
-            os.path.join(workfile_folder,
-                         "test_project_test_asset_workfileTest_task_v001.mb")
-        ), "test_project_test_asset_workfileTest_task_v001.mb doesn't exist"
+        not_matched = expected.difference(published)
+        assert not not_matched, "Missing {} files".format(not_matched)
 
 
 if __name__ == "__main__":
