@@ -9,7 +9,7 @@ reload(anlib)
 class CollectWorkfile(pyblish.api.ContextPlugin):
     """Collect current script for publish."""
 
-    order = pyblish.api.CollectorOrder - 0.60
+    order = pyblish.api.CollectorOrder - 0.50
     label = "Pre-collect Workfile"
     hosts = ['nuke']
 
