@@ -309,6 +309,7 @@ class TasksCombobox(QtWidgets.QComboBox):
 
     def __init__(self, controller, parent):
         super(TasksCombobox, self).__init__(parent)
+        self.setObjectName("TasksCombobox")
 
         self.setEditable(True)
         self.lineEdit().setReadOnly(True)
@@ -328,6 +329,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._has_value_changed = False
         self._ignore_index_change = False
         self._multiselection_text = None
+        self._is_valid = True
 
     def set_multiselection_text(self, text):
         self._multiselection_text = text
@@ -336,6 +338,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         if self._ignore_index_change:
             return
 
+        self._set_is_valid(True)
         self._selected_items = [self.currentText()]
         self._has_value_changed = (
             self._origin_value != self._selected_items
@@ -343,14 +346,33 @@ class TasksCombobox(QtWidgets.QComboBox):
 
         self.value_changed.emit()
 
+    def is_valid(self):
+        return self._is_valid
+
     def has_value_changed(self):
         return self._has_value_changed
+
+    def _set_is_valid(self, valid):
+        if valid == self._is_valid:
+            return
+        self._is_valid = valid
+        state = ""
+        if not valid:
+            state = "invalid"
+        self._set_state_property(state)
+
+    def _set_state_property(self, state):
+        current_value = self.property("state")
+        if current_value != state:
+            self.setProperty("state", state)
+            self.style().polish(self)
 
     def get_selected_items(self):
         return list(self._selected_items)
 
     def set_asset_names(self, asset_names):
         self._model.set_asset_names(asset_names)
+        self.set_selected_items(self._origin_value)
 
     def set_selected_items(self, task_names=None):
         if task_names is None:
@@ -363,26 +385,29 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._selected_items = list(task_names)
         # Reset current index
         self.setCurrentIndex(-1)
+        is_valid = True
         if not task_names:
             self.set_selected_item("")
 
         elif len(task_names) == 1:
             task_name = tuple(task_names)[0]
             idx = self.findText(task_name)
+            is_valid = not idx < 0
             self.set_selected_item(task_name)
 
         else:
-            valid_value = True
             for task_name in task_names:
                 idx = self.findText(task_name)
-                valid_value = not idx < 0
-                if not valid_value:
+                is_valid = not idx < 0
+                if not is_valid:
                     break
 
             multiselection_text = self._multiselection_text
             if multiselection_text is None:
                 multiselection_text = "|".join(task_names)
             self.set_selected_item(multiselection_text)
+
+        self._set_is_valid(is_valid)
 
         self._ignore_index_change = False
 
@@ -668,12 +693,18 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.submit_btn.setEnabled(False)
 
     def _on_value_change(self):
+        any_invalid = (
+            not self.variant_input.is_valid()
+            or not self.asset_value_widget.is_valid()
+            or not self.task_value_widget.is_valid()
+        )
         any_changed = (
             self.variant_input.has_value_changed()
             or self.asset_value_widget.has_value_changed()
             or self.task_value_widget.has_value_changed()
         )
-        self.set_btns_visible(any_changed)
+        self.set_btns_visible(any_changed or any_invalid)
+        self.set_btns_enabled(not any_invalid)
 
     def _on_variant_change(self):
         self._on_value_change()

@@ -750,7 +750,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     border-left: 1px solid {color:border};
 }
 
-#AssetsTreeComboBox[state="invalid"] {
+#TasksCombobox[state="invalid"], #AssetsTreeComboBox[state="invalid"] {
     border-color: {color:publish-error};
 }
 
