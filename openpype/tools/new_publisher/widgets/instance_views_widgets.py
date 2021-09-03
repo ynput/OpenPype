@@ -281,12 +281,18 @@ class InstanceCardView(_AbstractInstanceView):
                 found = True
 
         if not found:
-            return
+            selected_ids = set()
+            selected_ids.add(changed_instance_id)
 
+        changed_ids = set()
         for instance_id in selected_ids:
             widget = self._widgets_by_id.get(instance_id)
             if widget:
+                changed_ids.add(instance_id)
                 widget.set_active(new_value)
+
+        if changed_ids:
+            self.active_changed.emit(changed_ids)
 
     def _on_selection_change(self, *_args):
         self.selection_changed.emit()
@@ -632,6 +638,7 @@ class InstanceListView(_AbstractInstanceView):
                     widget = InstanceListItemWidget(
                         instance, self.instance_view
                     )
+                    widget.active_changed.connect(self._on_active_changed)
                     self.instance_view.setIndexWidget(proxy_index, widget)
                     self._widgets_by_id[instance.data["uuid"]] = widget
 
@@ -642,6 +649,30 @@ class InstanceListView(_AbstractInstanceView):
     def refresh_instance_states(self):
         for widget in self._widgets_by_id.values():
             widget.update_instance_values()
+
+    def _on_active_changed(self, changed_instance_id, new_value):
+        selected_instances, _ = self.get_selected_items()
+
+        selected_ids = set()
+        found = False
+        for instance in selected_instances:
+            selected_ids.add(instance.id)
+            if not found and instance.id == changed_instance_id:
+                found = True
+
+        if not found:
+            selected_ids = set()
+            selected_ids.add(changed_instance_id)
+
+        changed_ids = set()
+        for instance_id in selected_ids:
+            widget = self._widgets_by_id.get(instance_id)
+            if widget:
+                changed_ids.add(instance_id)
+                widget.set_active(new_value)
+
+        if changed_ids:
+            self.active_changed.emit(changed_ids)
 
     def get_selected_items(self):
         instances = []

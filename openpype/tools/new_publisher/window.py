@@ -169,12 +169,21 @@ class PublisherWindow(QtWidgets.QDialog):
         validate_btn.clicked.connect(self._on_validate_clicked)
         publish_btn.clicked.connect(self._on_publish_clicked)
 
+        # Selection changed
         subset_list_view.selection_changed.connect(
             self._on_subset_change
         )
         subset_view_cards.selection_changed.connect(
             self._on_subset_change
         )
+        # Active instances changed
+        subset_list_view.active_changed.connect(
+            self._on_active_changed
+        )
+        subset_view_cards.active_changed.connect(
+            self._on_active_changed
+        )
+        # Instance context has changed
         subset_attributes_widget.instance_context_changed.connect(
             self._on_instance_context_change
         )
@@ -251,6 +260,8 @@ class PublisherWindow(QtWidgets.QDialog):
 
         current_widget = self.subset_views_layout.widget(current_idx)
         current_widget.refresh_instance_states()
+
+        self._validate_create_instances()
 
     def _change_view_type(self):
         old_view = self.subset_views_layout.currentWidget()
@@ -349,6 +360,8 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_instances_refresh(self):
         self._refresh_instances()
 
+        self._validate_create_instances()
+
     def _on_subset_change(self, *_args):
         # Ignore changes if in middle of refreshing
         if self._refreshing_instances:
@@ -363,6 +376,27 @@ class PublisherWindow(QtWidgets.QDialog):
             instances, context_selected
         )
 
+    def _on_active_changed(self, _instance_ids):
+        if self._refreshing_instances:
+            return
+        self._validate_create_instances()
+
+    def _validate_create_instances(self):
+        if not self.controller.host_is_valid:
+            self.footer_widget.setEnabled(True)
+            return
+
+        all_valid = None
+        for instance in self.controller.instances:
+            if not instance.data["active"]:
+                continue
+
+            if not instance.has_valid_context:
+                all_valid = False
+                break
+
+            if all_valid is None:
+                all_valid = True
     def _on_publish_reset(self):
         self.reset_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
