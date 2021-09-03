@@ -74,27 +74,20 @@ function Find-Mongo ($preferred_version) {
 
             $env:PATH = "$($env:PATH);$($use_version)\bin\"
 
-            Write-Host "  - auto-added from [ " -NoNewline
-            Write-Host "$($use_version)\bin\mongod.exe" -NoNewLine -ForegroundColor Cyan
-            Write-Host " ]"
+            Write-Color -Text "  - auto-added from [ ", "$($use_version)\bin\mongod.exe", " ]" -Color Cyan, White, Cyan
             return "$($use_version)\bin\mongod.exe"
         } else {
-            Write-Host "FAILED " -NoNewLine -ForegroundColor Red
-            Write-Host "MongoDB not detected" -ForegroundColor Yellow
-            Write-Host "Tried to find it on standard location " -NoNewline -ForegroundColor Gray
-            Write-Host " [ " -NoNewline -ForegroundColor Cyan
-            Write-Host "$($mongoVersions[-1])\bin\mongod.exe" -NoNewline -ForegroundColor White
-            Write-Host " ] " -NoNewLine -ForegroundColor Cyan
-            Write-Host "but failed." -ForegroundColor Gray
+            Write-Color -Text "FAILED " -Color Red  -NoNewLine
+            Write-Color -Text "MongoDB not detected" -Color Yellow
+            Write-Color -Text "Tried to find it on standard location ", "[ ", "$($mongoVersions[-1])\bin\mongod.exe", " ]", " but failed." -Color Gray, Cyan, White, Cyan, Gray -NoNewline
             Exit-WithCode 1
         }
     } else {
-        Write-Host "FAILED " -NoNewLine -ForegroundColor Red
-        Write-Host "MongoDB not detected in PATH" -ForegroundColor Yellow
+        Write-Color -Text "FAILED ", "MongoDB not detected in PATH" -Color Red, Yellow
         Exit-WithCode 1
     }
   } else {
-        Write-Host "OK" -ForegroundColor Green
+        Write-Color -Text "OK" -Color Green
         return Get-Command "mongod" -ErrorAction SilentlyContinue
   }
   <#
@@ -116,15 +109,7 @@ $dbpath = (Get-Item $openpype_root).parent.FullName + "\mongo_db_data"
 $preferred_version = "4.0"
 
 $mongoPath = Find-Mongo $preferred_version
-Write-Host ">>> " -NoNewLine -ForegroundColor Green
-Write-Host "Using DB path: " -NoNewLine
-Write-Host " [ " -NoNewline -ForegroundColor Cyan
-Write-Host "$($dbpath)" -NoNewline -ForegroundColor White
-Write-Host " ] "-ForegroundColor Cyan
-Write-Host ">>> " -NoNewLine -ForegroundColor Green
-Write-Host "Port: " -NoNewLine
-Write-Host " [ " -NoNewline -ForegroundColor Cyan
-Write-Host "$($port)" -NoNewline -ForegroundColor White
-Write-Host " ] " -ForegroundColor Cyan
-Start-Process -FilePath $mongopath "--dbpath $($dbpath) --port $($port)" -PassThru | Out-Null
+Write-Color -Text ">>> ", "Using DB path: ", "[ ", "$($dbpath)", " ]" -Color Green, Gray, Cyan, White, Cyan
+Write-Color -Text ">>> ", "Port: ", "[ ", "$($port)", " ]", -Color Green, Gray, Cyan, White, Cyan
 
+Start-Process -FilePath $mongopath "--dbpath $($dbpath) --port $($port)" -PassThru | Out-Null
