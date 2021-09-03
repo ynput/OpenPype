@@ -188,6 +188,9 @@ class Creator(BaseCreator):
     # Label shown in UI
     label = None
 
+    # Icon shown in UI
+    icon = None
+
     # Short description of family
     description = None
 
