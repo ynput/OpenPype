@@ -251,11 +251,14 @@ class CreateDialog(QtWidgets.QDialog):
 
         # Add new families
         new_families = set()
-        for family, creator in self.controller.creators.items():
+        for family in self.controller.creators.keys():
             # TODO add details about creator
             new_families.add(family)
             if family not in existing_items:
                 item = QtGui.QStandardItem(family)
+                item.setFlags(
+                    QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+                )
                 self.family_model.appendRow(item)
 
         # Remove families that are no more available
