@@ -68,6 +68,9 @@ class AssetsHierarchyModel(QtGui.QStandardItemModel):
 
         self._items_by_name = items_by_name
 
+    def name_is_valid(self, item_name):
+        return item_name in self._items_by_name
+
     def get_index_by_name(self, item_name):
         item = self._items_by_name.get(item_name)
         if item:
@@ -212,6 +215,7 @@ class AssetsTreeComboBox(TreeComboBox):
         model = AssetsHierarchyModel(controller)
 
         super(AssetsTreeComboBox, self).__init__(model, parent)
+        self.setObjectName("AssetsTreeComboBox")
 
         self.currentIndexChanged.connect(self._on_index_change)
 
@@ -220,6 +224,7 @@ class AssetsTreeComboBox(TreeComboBox):
         self._origin_value = []
         self._has_value_changed = False
         self._model = model
+        self._is_valid = True
 
         self._multiselection_text = None
 
@@ -232,11 +237,30 @@ class AssetsTreeComboBox(TreeComboBox):
         if self._ignore_index_change:
             return
 
+        self._set_is_valid(True)
         self._selected_items = [self.currentText()]
         self._has_value_changed = (
             self._origin_value != self._selected_items
         )
         self.value_changed.emit()
+
+    def _set_is_valid(self, valid):
+        if valid == self._is_valid:
+            return
+        self._is_valid = valid
+        state = ""
+        if not valid:
+            state = "invalid"
+        self._set_state_property(state)
+
+    def _set_state_property(self, state):
+        current_value = self.property("state")
+        if current_value != state:
+            self.setProperty("state", state)
+            self.style().polish(self)
+
+    def is_valid(self):
+        return self._is_valid
 
     def has_value_changed(self):
         return self._has_value_changed
@@ -253,16 +277,26 @@ class AssetsTreeComboBox(TreeComboBox):
         self._has_value_changed = False
         self._origin_value = list(asset_names)
         self._selected_items = list(asset_names)
+        is_valid = True
         if not asset_names:
             self.set_selected_item("")
 
         elif len(asset_names) == 1:
-            self.set_selected_item(tuple(asset_names)[0])
+            asset_name = tuple(asset_names)[0]
+            is_valid = self._model.name_is_valid(asset_name)
+            self.set_selected_item(asset_name)
         else:
+            for asset_name in asset_names:
+                is_valid = self._model.name_is_valid(asset_name)
+                if not is_valid:
+                    break
+
             multiselection_text = self._multiselection_text
             if multiselection_text is None:
                 multiselection_text = "|".join(asset_names)
             self.set_selected_item(multiselection_text)
+
+        self._set_is_valid(is_valid)
 
         self._ignore_index_change = False
 
