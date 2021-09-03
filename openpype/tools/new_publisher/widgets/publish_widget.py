@@ -376,6 +376,9 @@ class PublishFrame(QtWidgets.QFrame):
     def _on_close_report_clicked(self):
         if self.controller.get_publish_crash_error():
             self._change_bg_property()
+
+        elif self.controller.get_validation_errors():
+            self._change_bg_property(1)
         else:
             self._change_bg_property(2)
         self._main_layout.setCurrentWidget(self.publish_widget)
