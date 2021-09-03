@@ -535,7 +535,9 @@ class PublisherController:
     def create(self, family, subset_name, instance_data, options):
         # QUESTION Force to return instances or call `list_instances` on each
         #   creation? (`list_instances` may slow down...)
-        # WARNING changes done before creation will be lost
+        #   - also save may not be required in that case
+        self.save_changes()
+
         creator = self.creators[family]
         creator.create(subset_name, instance_data, options)
 
@@ -545,6 +547,10 @@ class PublisherController:
         self.create_context.save_changes()
 
     def remove_instances(self, instances):
+        # QUESTION Expect that instaces are really removed? In that case save
+        #   reset is not required and save changes too.
+        self.save_changes()
+
         self.create_context.remove_instances(instances)
 
         self._reset_instances()
