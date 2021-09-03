@@ -97,6 +97,8 @@ class CreateDialog(QtWidgets.QDialog):
     ):
         super(CreateDialog, self).__init__(parent)
 
+        self.setWindowTitle("Create new instance")
+
         self.controller = controller
 
         if asset_name is None:
