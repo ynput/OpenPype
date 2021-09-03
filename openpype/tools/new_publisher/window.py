@@ -138,7 +138,7 @@ class PublisherWindow(QtWidgets.QDialog):
         marings.setBottom(marings.bottom() * 2)
         subset_layout.setContentsMargins(marings)
         subset_layout.addWidget(subset_content_widget, 1)
-        subset_layout.addLayout(footer_layout, 0)
+        subset_layout.addWidget(footer_widget, 0)
 
         # Create publish frame
         publish_frame = PublishFrame(controller, self)
@@ -209,6 +209,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self.delete_btn = delete_btn
 
         self.subset_attributes_widget = subset_attributes_widget
+
+        self.footer_widget = footer_widget
+
         self.message_input = message_input
 
         self.stop_btn = stop_btn
@@ -397,6 +400,9 @@ class PublisherWindow(QtWidgets.QDialog):
 
             if all_valid is None:
                 all_valid = True
+
+        self.footer_widget.setEnabled(bool(all_valid))
+
     def _on_publish_reset(self):
         self.reset_btn.setEnabled(True)
         self.stop_btn.setEnabled(False)
@@ -406,6 +412,8 @@ class PublisherWindow(QtWidgets.QDialog):
         self._set_publish_visibility(False)
 
         self.subset_content_widget.setEnabled(self.controller.host_is_valid)
+
+        self.footer_widget.setEnabled(False)
 
     def _on_publish_start(self):
         self.reset_btn.setEnabled(False)
