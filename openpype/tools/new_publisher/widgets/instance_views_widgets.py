@@ -126,6 +126,7 @@ class InstanceCardWidget(QtWidgets.QWidget):
 
     def update_instance_values(self):
         self.set_active(self.instance.data["active"])
+        self.context_warning.setVisible(not self.instance.has_valid_context)
 
     def _set_expanded(self, expanded=None):
         if expanded is None:
