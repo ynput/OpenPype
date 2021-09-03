@@ -239,17 +239,64 @@ class ValidateActionsWidget(QtWidgets.QFrame):
         self.controller.run_action(self._plugin, action)
 
 
+class VerticallScrollArea(QtWidgets.QScrollArea):
+    def __init__(self, *args, **kwargs):
+        super(VerticallScrollArea, self).__init__(*args, **kwargs)
+
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.setViewportMargins(0, 0, 0, 0)
+
+        self.verticalScrollBar().installEventFilter(self)
+
+    def setVerticalScrollBar(self, widget):
+        old_widget = self.verticalScrollBar()
+        if old_widget:
+            old_widget.removeEventFilter(self)
+
+        super(VerticallScrollArea, self).setVerticalScrollBar(widget)
+        if widget:
+            widget.installEventFilter(self)
+
+    def setWidget(self, widget):
+        old_widget = self.widget()
+        if old_widget:
+            old_widget.removeEventFilter(self)
+
+        super(VerticallScrollArea, self).setWidget(widget)
+        if widget:
+            widget.installEventFilter(self)
+
+    def eventFilter(self, obj, event):
+        if (
+            event.type() == QtCore.QEvent.Resize
+            and (obj is self.widget() or obj is self.verticalScrollBar())
+        ):
+            width = self.widget().width()
+            if self.verticalScrollBar().isVisible():
+                width += self.verticalScrollBar().width()
+            self.setMinimumWidth(width)
+        return super(VerticallScrollArea, self).eventFilter(obj, event)
+
+
 class ValidationsWidget(QtWidgets.QWidget):
     def __init__(self, controller, parent):
         super(ValidationsWidget, self).__init__(parent)
 
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
-        errors_widget = QtWidgets.QWidget(self)
-        errors_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        errors_scroll = VerticallScrollArea(self)
+        errors_scroll.setWidgetResizable(True)
+        errors_scroll.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+
+        errors_widget = QtWidgets.QWidget(errors_scroll)
         errors_widget.setFixedWidth(200)
+        errors_widget.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         errors_layout = QtWidgets.QVBoxLayout(errors_widget)
         errors_layout.setContentsMargins(0, 0, 0, 0)
+
+        errors_scroll.setWidget(errors_widget)
 
         error_details_widget = QtWidgets.QWidget(self)
         error_details_input = QtWidgets.QTextEdit(error_details_widget)
@@ -269,7 +316,7 @@ class ValidationsWidget(QtWidgets.QWidget):
         content_layout.setSpacing(0)
         content_layout.setContentsMargins(0, 0, 0, 0)
 
-        content_layout.addWidget(errors_widget, 0)
+        content_layout.addWidget(errors_scroll, 0)
         content_layout.addWidget(error_details_widget, 1)
 
         top_label = QtWidgets.QLabel("Publish validation report", self)
