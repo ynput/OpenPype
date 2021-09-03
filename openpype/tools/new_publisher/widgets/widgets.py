@@ -667,9 +667,11 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
 
             if asset_name is not None:
                 instance.data["asset"] = asset_name
+                instance.set_asset_invalid(False)
 
             if task_name is not None:
                 instance.data["task"] = task_name
+                instance.set_task_invalid(False)
 
             new_variant_value = instance.data.get("variant")
             new_asset_name = instance.data.get("asset")
