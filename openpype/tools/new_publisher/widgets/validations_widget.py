@@ -246,9 +246,23 @@ class VerticallScrollArea(QtWidgets.QScrollArea):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
         self.setLayoutDirection(QtCore.Qt.RightToLeft)
+
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        # Background of scrollbar will be transparent
+        scrollbar_bg = self.verticalScrollBar().parent()
+        if scrollbar_bg:
+            scrollbar_bg.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         self.setViewportMargins(0, 0, 0, 0)
 
         self.verticalScrollBar().installEventFilter(self)
+
+        # Timer with 100ms offset after changing size
+        size_changed_timer = QtCore.QTimer()
+        size_changed_timer.setInterval(100)
+        size_changed_timer.setSingleShot(True)
+
+        size_changed_timer.timeout.connect(self._on_timer_timeout)
+        self._size_changed_timer = size_changed_timer
 
     def setVerticalScrollBar(self, widget):
         old_widget = self.verticalScrollBar()
@@ -268,15 +282,18 @@ class VerticallScrollArea(QtWidgets.QScrollArea):
         if widget:
             widget.installEventFilter(self)
 
+    def _on_timer_timeout(self):
+        width = self.widget().width()
+        if self.verticalScrollBar().isVisible():
+            width += self.verticalScrollBar().width()
+        self.setMinimumWidth(width)
+
     def eventFilter(self, obj, event):
         if (
             event.type() == QtCore.QEvent.Resize
             and (obj is self.widget() or obj is self.verticalScrollBar())
         ):
-            width = self.widget().width()
-            if self.verticalScrollBar().isVisible():
-                width += self.verticalScrollBar().width()
-            self.setMinimumWidth(width)
+            self._size_changed_timer.start()
         return super(VerticallScrollArea, self).eventFilter(obj, event)
 
 
@@ -288,7 +305,6 @@ class ValidationsWidget(QtWidgets.QWidget):
 
         errors_scroll = VerticallScrollArea(self)
         errors_scroll.setWidgetResizable(True)
-        errors_scroll.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         errors_widget = QtWidgets.QWidget(errors_scroll)
         errors_widget.setFixedWidth(200)
