@@ -127,19 +127,6 @@ class CreateDialog(QtWidgets.QDialog):
         subset_name_input = QtWidgets.QLineEdit(self)
         subset_name_input.setEnabled(False)
 
-        checkbox_inputs = QtWidgets.QWidget(self)
-        auto_close_checkbox = QtWidgets.QCheckBox(
-            "Auto-close", checkbox_inputs
-        )
-        use_selection_checkbox = QtWidgets.QCheckBox(
-            "Use selection", checkbox_inputs
-        )
-
-        checkbox_layout = QtWidgets.QHBoxLayout(checkbox_inputs)
-        checkbox_layout.setContentsMargins(0, 0, 0, 0)
-        checkbox_layout.addWidget(auto_close_checkbox)
-        checkbox_layout.addWidget(use_selection_checkbox)
-
         create_btn = QtWidgets.QPushButton("Create", self)
         create_btn.setEnabled(False)
 
@@ -152,7 +139,6 @@ class CreateDialog(QtWidgets.QDialog):
         layout.addLayout(variant_layout, 0)
         layout.addWidget(QtWidgets.QLabel("Subset:", self))
         layout.addWidget(subset_name_input, 0)
-        layout.addWidget(checkbox_inputs, 0)
         layout.addWidget(create_btn, 0)
 
         create_btn.clicked.connect(self._on_create)
@@ -175,8 +161,6 @@ class CreateDialog(QtWidgets.QDialog):
 
         self.family_model = family_model
         self.family_view = family_view
-        self.auto_close_checkbox = auto_close_checkbox
-        self.use_selection_checkbox = auto_close_checkbox
         self.create_btn = create_btn
 
     @property
@@ -408,9 +392,7 @@ class CreateDialog(QtWidgets.QDialog):
         variant = self.variant_input.text()
         asset_name = self._asset_doc["name"]
         task_name = self.dbcon.Session.get("AVALON_TASK")
-        options = {
-            "useSelection": self.use_selection_checkbox.isChecked()
-        }
+        options = {}
         # Where to define these data?
         # - what data show be stored?
         instance_data = {
@@ -441,6 +423,3 @@ class CreateDialog(QtWidgets.QDialog):
             box.show()
             # Store dialog so is not garbage collected before is shown
             self.message_dialog = box
-
-        if self.auto_close_checkbox.isChecked():
-            self.hide()
