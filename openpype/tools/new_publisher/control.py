@@ -115,6 +115,8 @@ class PublishReport:
         self.controller = controller
         self._publish_discover_result = None
         self._plugin_data = []
+        self._plugin_data_with_plugin = []
+
         self._stored_plugins = []
         self._current_plugin_data = []
         self._all_instances_by_id = {}
@@ -123,6 +125,7 @@ class PublishReport:
     def reset(self, context, publish_discover_result=None):
         self._publish_discover_result = publish_discover_result
         self._plugin_data = []
+        self._plugin_data_with_plugin = []
         self._current_plugin_data = {}
         self._all_instances_by_id = {}
         self._current_context = context
@@ -134,22 +137,41 @@ class PublishReport:
         if self._current_plugin_data:
             self._current_plugin_data["passed"] = True
 
+        self._current_plugin_data = self._add_plugin_data_item(plugin)
+
+    def _get_plugin_data_item(self, plugin):
+        store_item = None
+        for item in self._plugin_data_with_plugin:
+            if item["plugin"] is plugin:
+                store_item = item["data"]
+                break
+        return store_item
+
+    def _add_plugin_data_item(self, plugin):
+        if plugin in self._stored_plugins:
+            raise ValueError("Plugin is already stored")
+
         self._stored_plugins.append(plugin)
 
         label = None
         if hasattr(plugin, "label"):
             label = plugin.label
 
-        self._current_plugin_data = {
+        plugin_data_item = {
             "name": plugin.__name__,
             "label": label,
             "order": plugin.order,
             "instances_data": [],
+            "actions_data": [],
             "skipped": False,
             "passed": False
         }
-
-        self._plugin_data.append(self._current_plugin_data)
+        self._plugin_data_with_plugin.append({
+            "plugin": plugin,
+            "data": plugin_data_item
+        })
+        self._plugin_data.append(plugin_data_item)
+        return plugin_data_item
 
     def set_plugin_skipped(self):
         self._current_plugin_data["skipped"] = True
@@ -161,7 +183,24 @@ class PublishReport:
             instance_id = instance.id
         self._current_plugin_data["instances_data"].append({
             "id": instance_id,
-            "logs": self._extract_log_items(result)
+            "logs": self._extract_instance_log_items(result)
+        })
+
+    def add_action_result(self, action, result):
+        plugin = result["plugin"]
+
+        store_item = self._get_plugin_data_item(plugin)
+        if store_item is None:
+            store_item = self._add_plugin_data_item(plugin)
+
+        action_name = action.__name__
+        action_label = action.label or action_name
+        log_items = self._extract_log_items(result)
+        store_item["actions_data"].append({
+            "success": result["success"],
+            "name": action_name,
+            "label": action_label,
+            "logs": log_items
         })
 
     def get_report(self, publish_plugins=None):
@@ -178,14 +217,7 @@ class PublishReport:
         if publish_plugins:
             for plugin in publish_plugins:
                 if plugin not in self._stored_plugins:
-                    plugins_data.append({
-                        "name": plugin.__name__,
-                        "label": getattr(plugin, "label"),
-                        "order": plugin.order,
-                        "instances_data": [],
-                        "skipped": False,
-                        "passed": False
-                    })
+                    plugins_data.append(self._add_plugin_data_item(plugin))
 
         crashed_file_paths = {}
         if self._publish_discover_result is not None:
@@ -216,14 +248,20 @@ class PublishReport:
             "exists": exists
         }
 
-    def _extract_log_items(self, result):
-        output = []
-        records = result.get("records") or []
+    def _extract_instance_log_items(self, result):
         instance = result["instance"]
         instance_id = None
         if instance:
             instance_id = instance.id
 
+        log_items = self._extract_log_items(result)
+        for item in log_items:
+            item["instance_id"] = instance_id
+        return log_items
+
+    def _extract_log_items(self, result):
+        output = []
+        records = result.get("records") or []
         for record in records:
             record_exc_info = record.exc_info
             if record_exc_info is not None:
@@ -237,7 +275,6 @@ class PublishReport:
                 msg = str(record.msg)
 
             output.append({
-                "instance_id": instance_id,
                 "type": "record",
                 "msg": msg,
                 "name": record.name,
@@ -255,7 +292,6 @@ class PublishReport:
         if exception:
             fname, line_no, func, exc = exception.traceback
             output.append({
-                "instance_id": instance_id,
                 "type": "error",
                 "msg": str(exception),
                 "filename": str(fname),
@@ -651,10 +687,11 @@ class PublisherController:
             self._stop_publish()
 
     def run_action(self, plugin, action):
-        # TODO handle result
+        # TODO handle result in UI
         result = pyblish.plugin.process(
             plugin, self._publish_context, None, action.id
         )
+        self._publish_report.add_action_result(action, result)
 
     def _publish_next_process(self):
         # Validations of progress before using iterator
