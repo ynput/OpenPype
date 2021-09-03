@@ -422,7 +422,7 @@ class CreateDialog(QtWidgets.QDialog):
         family = index.data(QtCore.Qt.DisplayRole)
         subset_name = self.subset_name_input.text()
         variant = self.variant_input.text()
-        asset_name = self.asset_name
+        asset_name = self._asset_name
         task_name = self._task_name
         options = {}
         # Where to define these data?
