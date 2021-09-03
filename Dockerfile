@@ -33,6 +33,7 @@ RUN yum -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.n
         readline-devel \
         sqlite sqlite-devel \
         openssl-devel \
+        openssl-libs \
         tk-devel libffi-devel \
         qt5-qtbase-devel \
         patchelf \
@@ -73,10 +74,12 @@ RUN source $HOME/.bashrc \
     && ./tools/fetch_thirdparty_libs.sh
 
 RUN source $HOME/.bashrc \
-    && bash ./tools/build.sh \
-    && cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.7/lib \
+    && bash ./tools/build.sh
+
+RUN cp /usr/lib64/libffi* ./build/exe.linux-x86_64-3.7/lib \
     && cp /usr/lib64/libssl* ./build/exe.linux-x86_64-3.7/lib \
-    && cp /usr/lib64/libcrypto* ./build/exe.linux-x86_64-3.7/lib
+    && cp /usr/lib64/libcrypto* ./build/exe.linux-x86_64-3.7/lib \
+    && cp /root/.pyenv/versions/${OPENPYPE_PYTHON_VERSION}/lib/libpython* ./build/exe.linux-x86_64-3.7/lib
 
 RUN cd /opt/openpype \
     rm -rf ./vendor/bin

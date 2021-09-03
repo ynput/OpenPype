@@ -32,7 +32,8 @@ main () {
   openpype_version="$(python3 <<< ${version_command})"
 
   echo -e "${BIGreen}>>>${RST} Running docker build ..."
-  docker build --pull --no-cache -t pypeclub/openpype:$openpype_version .
+  # docker build --pull --no-cache -t pypeclub/openpype:$openpype_version .
+  docker build --pull -t pypeclub/openpype:$openpype_version .
   if [ $? -ne 0 ] ; then
     echo -e "${BIRed}!!!${RST} Docker build failed."
     return 1
@@ -47,6 +48,7 @@ main () {
   fi
   echo -e "${BIYellow}---${RST} Copying ..."
   docker cp "$id:/opt/openpype/build/exe.linux-x86_64-3.7" "$openpype_root/build"
+  docker cp "$id:/opt/openpype/build/build.log" "$openpype_root/build"
   if [ $? -ne 0 ] ; then
     echo -e "${BIRed}!!!${RST} Copying failed."
     return 1
