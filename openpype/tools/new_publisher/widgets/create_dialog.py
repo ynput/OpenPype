@@ -7,6 +7,11 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.pipeline.create import CreatorError
 
+from ..constants import (
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    VARIANT_TOOLTIP
+)
+
 SEPARATORS = ("---separator---", "---")
 
 
@@ -112,12 +117,17 @@ class CreateDialog(QtWidgets.QDialog):
 
         self.message_dialog = None
 
+        name_pattern = "^[{}]*$".format(SUBSET_NAME_ALLOWED_SYMBOLS)
+        self._name_pattern = name_pattern
+        self._compiled_name_pattern = re.compile(name_pattern)
+
         family_view = QtWidgets.QListView(self)
         family_model = QtGui.QStandardItemModel()
         family_view.setModel(family_model)
 
         variant_input = QtWidgets.QLineEdit(self)
         variant_input.setObjectName("VariantInput")
+        variant_input.setToolTip(VARIANT_TOOLTIP)
 
         variant_hints_btn = QtWidgets.QPushButton(self)
         variant_hints_btn.setFixedWidth(18)
@@ -308,6 +318,14 @@ class CreateDialog(QtWidgets.QDialog):
                 self.subset_name_input.setText("")
             return
 
+        match = self._compiled_name_pattern.match(variant_value)
+        valid = bool(match)
+        self.create_btn.setEnabled(valid)
+        if not valid:
+            self._set_variant_state_property("invalid")
+            self.subset_name_input.setText("< Invalid variant >")
+            return
+
         project_name = self.dbcon.Session["AVALON_PROJECT"]
         task_name = self._task_name
 
@@ -369,14 +387,17 @@ class CreateDialog(QtWidgets.QDialog):
         else:
             property_value = "new"
 
-        current_value = self.variant_input.property("state")
-        if current_value != property_value:
-            self.variant_input.setProperty("state", property_value)
-            self.variant_input.style().polish(self.variant_input)
+        self._set_variant_state_property(property_value)
 
         variant_is_valid = variant_value.strip() != ""
         if variant_is_valid != self.create_btn.isEnabled():
             self.create_btn.setEnabled(variant_is_valid)
+
+    def _set_variant_state_property(self, state):
+        current_value = self.variant_input.property("state")
+        if current_value != state:
+            self.variant_input.setProperty("state", state)
+            self.variant_input.style().polish(self.variant_input)
 
     def moveEvent(self, event):
         super(CreateDialog, self).moveEvent(event)
