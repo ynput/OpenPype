@@ -1,3 +1,4 @@
+import re
 import copy
 import collections
 from Qt import QtWidgets, QtCore, QtGui
@@ -6,6 +7,11 @@ from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools.flickcharm import FlickCharm
 
 from .icons import get_pixmap
+
+from ..constants import (
+    SUBSET_NAME_ALLOWED_SYMBOLS,
+    VARIANT_TOOLTIP
+)
 
 
 class IconBtn(QtWidgets.QPushButton):
@@ -365,6 +371,13 @@ class VariantInputWidget(QtWidgets.QLineEdit):
     def __init__(self, parent):
         super(VariantInputWidget, self).__init__(parent)
 
+        self.setObjectName("VariantInput")
+        self.setToolTip(VARIANT_TOOLTIP)
+
+        name_pattern = "^[{}]*$".format(SUBSET_NAME_ALLOWED_SYMBOLS)
+        self._name_pattern = name_pattern
+        self._compiled_name_pattern = re.compile(name_pattern)
+
         self._origin_value = []
         self._current_value = []
 
@@ -372,17 +385,40 @@ class VariantInputWidget(QtWidgets.QLineEdit):
         self._has_value_changed = False
         self._multiselection_text = None
 
+        self._is_valid = True
+
         self.textChanged.connect(self._on_text_change)
 
-    def set_multiselection_text(self, text):
-        self._multiselection_text = text
+    def is_valid(self):
+        return self._is_valid
 
     def has_value_changed(self):
         return self._has_value_changed
 
+    def _set_state_property(self, state):
+        current_value = self.property("state")
+        if current_value != state:
+            self.setProperty("state", state)
+            self.style().polish(self)
+
+    def set_multiselection_text(self, text):
+        self._multiselection_text = text
+
+    def _set_is_valid(self, valid):
+        if valid == self._is_valid:
+            return
+        self._is_valid = valid
+        state = ""
+        if not valid:
+            state = "invalid"
+        self._set_state_property(state)
+
     def _on_text_change(self):
         if self._ignore_value_change:
             return
+
+        is_valid = bool(self._compiled_name_pattern.match(self.text()))
+        self._set_is_valid(is_valid)
 
         self._current_value = [self.text()]
         self._has_value_changed = self._current_value != self._origin_value
