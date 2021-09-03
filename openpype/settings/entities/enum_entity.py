@@ -456,7 +456,7 @@ class ProvidersEnum(BaseEnumEntity):
         self.value_on_not_set = ""
         self.enum_items = []
         self.valid_keys = set()
-        self.valid_value_types = (str, )
+        self.valid_value_types = (STRING_TYPE, )
         self.placeholder = None
 
     def _get_enum_values(self):
