@@ -21,11 +21,13 @@ class IconBtn(QtWidgets.QPushButton):
     """
     def resizeEvent(self, event):
         super(IconBtn, self).resizeEvent(event)
-        icon_size = self.fontMetrics().height()
-        self.setIconSize(QtCore.QSize(icon_size, icon_size))
+        self._icon_size_change()
 
     def showEvent(self, event):
         super(IconBtn, self).showEvent(event)
+        self._icon_size_change()
+
+    def _icon_size_change(self):
         icon_size = self.fontMetrics().height()
         self.setIconSize(QtCore.QSize(icon_size, icon_size))
 
