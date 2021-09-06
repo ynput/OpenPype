@@ -99,6 +99,8 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         instances_view.setModel(instances_model)
         instances_view.setVisible(False)
 
+        self.setLayoutDirection(QtCore.Qt.LeftToRight)
+
         view_layout = QtWidgets.QHBoxLayout()
         view_layout.setContentsMargins(0, 0, 0, 0)
         view_layout.setSpacing(0)
