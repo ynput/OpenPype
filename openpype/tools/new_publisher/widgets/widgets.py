@@ -688,8 +688,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             )
             instance.data["subset"] = new_subset_name
 
-        self.set_btns_enabled(False)
-        self.set_btns_visible(False)
+        self._set_btns_enabled(False)
+        self._set_btns_visible(False)
 
         self.instance_context_changed.emit()
 
@@ -697,7 +697,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.variant_input.reset_to_origin()
         self.asset_value_widget.reset_to_origin()
         self.task_value_widget.reset_to_origin()
-        self.set_btns_enabled(False)
+        self._set_btns_enabled(False)
 
     def _on_value_change(self):
         any_invalid = (
@@ -710,8 +710,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             or self.asset_value_widget.has_value_changed()
             or self.task_value_widget.has_value_changed()
         )
-        self.set_btns_visible(any_changed or any_invalid)
-        self.set_btns_enabled(not any_invalid)
+        self._set_btns_visible(any_changed or any_invalid)
+        self._set_btns_enabled(not any_invalid)
 
     def _on_variant_change(self):
         self._on_value_change()
@@ -724,16 +724,16 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
     def _on_task_change(self):
         self._on_value_change()
 
-    def set_btns_visible(self, visible):
+    def _set_btns_visible(self, visible):
         self.cancel_btn.setVisible(visible)
         self.submit_btn.setVisible(visible)
 
-    def set_btns_enabled(self, enabled):
+    def _set_btns_enabled(self, enabled):
         self.cancel_btn.setEnabled(enabled)
         self.submit_btn.setEnabled(enabled)
 
     def set_current_instances(self, instances):
-        self.set_btns_visible(False)
+        self._set_btns_visible(False)
 
         self._current_instances = instances
 
