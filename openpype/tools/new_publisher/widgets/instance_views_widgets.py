@@ -2,6 +2,7 @@ import collections
 
 from Qt import QtWidgets, QtCore, QtGui
 
+from openpype.widgets.nice_checkbox import NiceCheckbox
 from ..constants import (
     INSTANCE_ID_ROLE,
     SORT_VALUE_ROLE,
@@ -66,7 +67,7 @@ class InstanceCardWidget(QtWidgets.QWidget):
         self.item = item
 
         subset_name_label = QtWidgets.QLabel(instance.data["subset"], self)
-        active_checkbox = QtWidgets.QCheckBox(self)
+        active_checkbox = NiceCheckbox(parent=self)
         active_checkbox.setChecked(instance.data["active"])
 
         context_warning = ContextWarningLabel(self)
@@ -347,7 +348,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
         self.instance = instance
 
         subset_name_label = QtWidgets.QLabel(instance.data["subset"], self)
-        active_checkbox = QtWidgets.QCheckBox(self)
+        active_checkbox = NiceCheckbox(parent=self)
         active_checkbox.setChecked(instance.data["active"])
 
         layout = QtWidgets.QHBoxLayout(self)
