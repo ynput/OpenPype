@@ -35,8 +35,9 @@ class CollectContextDataTestHost(
         io.install()
 
         for instance_data in api.list_instances():
-            # create instance
-            self.create_instance(context, instance_data)
+            if instance_data.get("active", True):
+                # create instance
+                self.create_instance(context, instance_data)
 
     def create_instance(self, context, in_data):
         subset = in_data["subset"]
