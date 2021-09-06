@@ -19,6 +19,9 @@ class BaseTest:
 class ModuleUnitTest(BaseTest):
     """Generic test class for testing modules
 
+        Use PERSIST==True to keep temporary folder and DB prepared for
+        debugging or preparation of test files.
+
         Implemented fixtures:
             monkeypatch_session - fixture for env vars with session scope
             download_test_data - tmp folder with extracted data from GDrive
@@ -29,6 +32,8 @@ class ModuleUnitTest(BaseTest):
             dbcon_openpype - returns DBConnection for OpenpypeMongoDB
 
     """
+    PERSIST = False  # True to not purge temporary folder nor test DB
+
     TEST_OPENPYPE_MONGO = "mongodb://localhost:27017"
     TEST_DB_NAME = "test_db"
     TEST_PROJECT_NAME = "test_project"
@@ -62,10 +67,12 @@ class ModuleUnitTest(BaseTest):
 
             if ext.lstrip('.') in RemoteFileHandler.IMPLEMENTED_ZIP_FORMATS:
                 RemoteFileHandler.unzip(os.path.join(tmpdir, file_name))
-
+            print("Temporary folder created:: {}".format(tmpdir))
             yield tmpdir
-            print("Removing {}".format(tmpdir))
-            shutil.rmtree(tmpdir)
+
+            if not self.PERSIST:
+                print("Removing {}".format(tmpdir))
+                shutil.rmtree(tmpdir)
 
     @pytest.fixture(scope="module")
     def env_var(self, monkeypatch_session, download_test_data):
@@ -112,8 +119,9 @@ class ModuleUnitTest(BaseTest):
 
         yield db_handler
 
-        db_handler.teardown(self.TEST_DB_NAME)
-        db_handler.teardown(self.TEST_OPENPYPE_NAME)
+        if not self.PERSIST:
+            db_handler.teardown(self.TEST_DB_NAME)
+            db_handler.teardown(self.TEST_OPENPYPE_NAME)
 
     @pytest.fixture(scope="module")
     def dbcon(self, db_setup):
@@ -213,7 +221,7 @@ class PublishTest(ModuleUnitTest):
         yield application_manager.launch(self.APP_NAME, **data)
 
     @pytest.fixture(scope="module")
-    def publish_finished(self, dbcon, launched_app):
+    def publish_finished(self, dbcon, launched_app, download_test_data):
         """Dummy fixture waiting for publish to finish"""
         import time
         time_start = time.time()

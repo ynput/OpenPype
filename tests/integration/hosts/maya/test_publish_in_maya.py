@@ -20,6 +20,8 @@ class TestPublishInMaya(PublishTest):
         Checks tmp folder if all expected files were published.
 
     """
+    PERSIST = True
+
     TEST_FILES = [
         ("1pOwjA_VVBc6ooTZyFxtAwLS2KZHaBlkY", "test_maya_publish.zip", "")
     ]
@@ -39,7 +41,7 @@ class TestPublishInMaya(PublishTest):
         """
         src_path = os.path.join(download_test_data,
                                 "input",
-                                "data",
+                                "workfile",
                                 "test_project_test_asset_TestTask_v001.mb")
         dest_folder = os.path.join(download_test_data,
                                    self.PROJECT,
