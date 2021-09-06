@@ -396,9 +396,9 @@ class NiceCheckbox(QtWidgets.QFrame):
         )
         gradient.setColorAt(0, checker_color)
         if under_mouse:
-            dark_value = 120
+            dark_value = 155
         else:
-            dark_value = 115
+            dark_value = 130
         gradient.setColorAt(1, checker_color.darker(dark_value))
         painter.setBrush(gradient)
         painter.drawEllipse(smaller_checker_rect)
