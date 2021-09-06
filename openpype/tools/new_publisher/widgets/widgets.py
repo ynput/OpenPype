@@ -795,6 +795,13 @@ class FamilyAttrsWidget(QtWidgets.QWidget):
         # To store content of scroll area to prevend garbage collection
         self._content_widget = None
 
+    def set_instances_valid(self, valid):
+        if (
+            self._content_widget is not None
+            and self._content_widget.isEnabled() != valid
+        ):
+            self._content_widget.setEnabled(valid)
+
     def set_current_instances(self, instances):
         prev_content_widget = self._scroll_area.widget()
         if prev_content_widget:
@@ -866,6 +873,13 @@ class PublishPluginAttrsWidget(QtWidgets.QWidget):
 
         # Store content of scroll area to prevend garbage collection
         self._content_widget = None
+
+    def set_instances_valid(self, valid):
+        if (
+            self._content_widget is not None
+            and self._content_widget.isEnabled() != valid
+        ):
+            self._content_widget.setEnabled(valid)
 
     def set_current_instances(self, instances, context_selected):
         prev_content_widget = self._scroll_area.widget()
@@ -989,8 +1003,12 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         layout.addWidget(top_bottom, 0)
         layout.addWidget(bottom_widget, 1)
 
+        self._current_instances = None
+        self._context_selected = False
+        self._all_instances_valid = True
+
         global_attrs_widget.instance_context_changed.connect(
-            self.instance_context_changed
+            self._on_instance_context_changed
         )
 
         self.controller = controller
@@ -1004,12 +1022,36 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
         self.top_bottom = top_bottom
         self.bottom_separator = bottom_separator
 
+    def _on_instance_context_changed(self):
+        all_valid = True
+        for instance in self._current_instances:
+            if not instance.has_valid_context:
+                all_valid = False
+                break
+        self._all_instances_valid = all_valid
+        self.family_attrs_widget.set_instances_valid(all_valid)
+        self.publish_attrs_widget.set_instances_valid(all_valid)
+
+        self.instance_context_changed.emit()
+
     def set_current_instances(self, instances, context_selected):
+        all_valid = True
+        for instance in instances:
+            if not instance.has_valid_context:
+                all_valid = False
+                break
+
+        self._current_instances = instances
+        self._context_selected = context_selected
+        self._all_instances_valid = all_valid
+
         self.global_attrs_widget.set_current_instances(instances)
         self.family_attrs_widget.set_current_instances(instances)
         self.publish_attrs_widget.set_current_instances(
             instances, context_selected
         )
+        self.family_attrs_widget.set_instances_valid(all_valid)
+        self.publish_attrs_widget.set_instances_valid(all_valid)
 
 
 class ThumbnailWidget(QtWidgets.QWidget):
