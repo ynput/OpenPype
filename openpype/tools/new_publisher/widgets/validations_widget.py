@@ -39,7 +39,7 @@ class ValidationErrorInstanceList(QtWidgets.QListView):
 
     def minimumSizeHint(self):
         result = super(ValidationErrorInstanceList, self).minimumSizeHint()
-        result.setHeight(0)
+        result.setHeight(self.sizeHint().height())
         return result
 
     def sizeHint(self):
@@ -92,7 +92,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
                 item = QtGui.QStandardItem(label)
                 item.setData(instance.id)
                 items.append(item)
-                break
+
             instances_model.invisibleRootItem().appendRows(items)
 
         instances_view = ValidationErrorInstanceList(self)
