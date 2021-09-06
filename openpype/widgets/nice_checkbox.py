@@ -218,6 +218,8 @@ class NiceCheckbox(QtWidgets.QFrame):
             if self.rect().contains(event.pos()):
                 self.setCheckState(self.nextCheckState())
                 self.clicked.emit()
+                event.accept()
+                return
         super(NiceCheckbox, self).mouseReleaseEvent(event)
 
     def mouseMoveEvent(self, event):
