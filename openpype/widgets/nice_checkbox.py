@@ -38,7 +38,6 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._under_mouse = False
 
         self.checked_bg_color = QtGui.QColor(67, 181, 129)
-        self.unchecked_bg_color = QtGui.QColor(230, 230, 230)
         self.unchecked_bg_color = QtGui.QColor(79, 79, 79)
 
         self.checker_checked_color = QtGui.QColor(255, 255, 255)
@@ -74,6 +73,15 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._draw_icons = draw_icons
         self.repaint()
 
+    def _checkbox_size_hint(self):
+        checkbox_height = self.style().pixelMetric(
+            QtWidgets.QStyle.PM_IndicatorHeight
+        )
+        checkbox_height += checkbox_height % 2
+        width = (2 * checkbox_height) - (checkbox_height / 5)
+        new_size = QtCore.QSize(width, checkbox_height)
+        return new_size
+
     def showEvent(self, event):
         super(NiceCheckbox, self).showEvent(event)
         if self._first_show:
@@ -85,12 +93,7 @@ class NiceCheckbox(QtWidgets.QFrame):
                     and not (self._fixed_width_set or self._fixed_height_set)
                 )
             ):
-                checkbox_height = self.style().pixelMetric(
-                    QtWidgets.QStyle.PM_IndicatorHeight
-                )
-                checkbox_height += checkbox_height % 2
-                width = (2 * checkbox_height) - (checkbox_height / 5)
-                new_size = QtCore.QSize(width, checkbox_height)
+                new_size = self._checkbox_size_hint()
                 self.setFixedSize(new_size)
 
     def resizeEvent(self, event):
@@ -202,7 +205,9 @@ class NiceCheckbox(QtWidgets.QFrame):
         return QtCore.Qt.Checked
 
     def sizeHint(self):
-        return self._base_size
+        if self._use_checkbox_height_hint is False:
+            return self._base_size
+        return self._checkbox_size_hint()
 
     def mousePressEvent(self, event):
         if event.buttons() & QtCore.Qt.LeftButton:
