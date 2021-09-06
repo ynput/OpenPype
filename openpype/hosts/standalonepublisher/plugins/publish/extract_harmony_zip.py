@@ -66,10 +66,10 @@ class ExtractHarmonyZip(openpype.api.Extractor):
 
         # Get Task types and Statuses for creation if needed
         self.task_types = self._get_all_task_types(project_entity)
-        self.task_statuses = self.get_all_task_statuses(project_entity)
+        self.task_statuses = self._get_all_task_statuses(project_entity)
 
         # Get Statuses of AssetVersions
-        self.assetversion_statuses = self.get_all_assetversion_statuses(
+        self.assetversion_statuses = self._get_all_assetversion_statuses(
             project_entity
         )
 
