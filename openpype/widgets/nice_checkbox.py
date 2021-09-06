@@ -43,9 +43,6 @@ class NiceCheckbox(QtWidgets.QFrame):
         self.checker_checked_color = QtGui.QColor(255, 255, 255)
         self.checker_unchecked_color = self.checker_checked_color
 
-        self.border_color = QtGui.QColor(44, 44, 44)
-        self.border_color_hover = QtGui.QColor(119, 131, 126)
-
         self.icon_scale_factor = sqrt(2) / 2
 
         icon_path_stroker = QtGui.QPainterPathStroker()
@@ -298,11 +295,6 @@ class NiceCheckbox(QtWidgets.QFrame):
 
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
         frame_rect = QtCore.QRect(event.rect())
-
-        if self.isEnabled() and self._under_mouse:
-            pen_color = self.border_color_hover
-        else:
-            pen_color = self.border_color
 
         # Draw inner background
         if self._current_step == self._steps:
