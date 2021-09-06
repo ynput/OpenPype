@@ -688,8 +688,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             )
             instance.data["subset"] = new_subset_name
 
-        self.cancel_btn.setEnabled(False)
-        self.submit_btn.setEnabled(False)
+        self.set_btns_enabled(False)
+        self.set_btns_visible(False)
 
         self.instance_context_changed.emit()
 
@@ -697,8 +697,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self.variant_input.reset_to_origin()
         self.asset_value_widget.reset_to_origin()
         self.task_value_widget.reset_to_origin()
-        self.cancel_btn.setEnabled(False)
-        self.submit_btn.setEnabled(False)
+        self.set_btns_enabled(False)
 
     def _on_value_change(self):
         any_invalid = (
