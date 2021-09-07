@@ -122,7 +122,9 @@ class PublisherWindow(QtWidgets.QDialog):
         publish_btn.setIcon(get_icon("play"))
         publish_btn.setToolTip("Publish")
 
-        footer_layout = QtWidgets.QHBoxLayout()
+        footer_widget = QtWidgets.QWidget(subset_frame)
+        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(message_input, 1)
         footer_layout.addWidget(reset_btn, 0)
         footer_layout.addWidget(stop_btn, 0)
