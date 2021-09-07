@@ -377,8 +377,13 @@ class TasksCombobox(QtWidgets.QComboBox):
         if self._ignore_index_change:
             return
 
+        text = self.currentText()
+        idx = self.findText(text)
+        if idx < 0:
+            return
+
         self._set_is_valid(True)
-        self._selected_items = [self.currentText()]
+        self._selected_items = [text]
         self._has_value_changed = (
             self._origin_selection != self._selected_items
         )
@@ -514,10 +519,10 @@ class TasksCombobox(QtWidgets.QComboBox):
 
     def set_selected_item(self, item_name):
         idx = self.findText(item_name)
+        # Set current index (must be set to -1 if is invalid)
+        self.setCurrentIndex(idx)
         if idx < 0:
             self.lineEdit().setText(item_name)
-        else:
-            self.setCurrentIndex(idx)
 
     def reset_to_origin(self):
         self.set_selected_items(self._origin_value)
