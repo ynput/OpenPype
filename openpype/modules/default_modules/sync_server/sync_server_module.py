@@ -403,6 +403,59 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         """Wrapper for Local settings - all projects incl. Default"""
         return self.get_configurable_items(EditableScopes.LOCAL)
 
+    def get_system_configurable_items_for_provider(self, provider_name):
+        """ Gets system level configurable items without use of Setting
+
+            Used for Setting UI to provide forms.
+        """
+        scope = EditableScopes.SYSTEM
+        return self._get_configurable_items_for_provider(provider_name, scope)
+
+    def get_project_configurable_items_for_provider(self, provider_name):
+        """ Gets project level configurable items without use of Setting
+
+            It is not using Setting! Used for Setting UI to provide forms.
+        """
+        scope = EditableScopes.PROJECT
+        return self._get_configurable_items_for_provider(provider_name, scope)
+
+    def get_system_configurable_items_for_providers(self):
+        """ Gets system level configurable items for all providers.
+
+            It is not using Setting! Used for Setting UI to provide forms.
+        """
+        scope = EditableScopes.SYSTEM
+        ret_dict = {}
+        for provider_name in lib.factory.providers:
+            ret_dict[provider_name] = \
+                self._get_configurable_items_for_provider(provider_name, scope)
+
+        return ret_dict
+
+    def get_project_configurable_items_for_providers(self):
+        """ Gets project level configurable items for all providers.
+
+            It is not using Setting! Used for Setting UI to provide forms.
+        """
+        scope = EditableScopes.PROJECT
+        ret_dict = {}
+        for provider_name in lib.factory.providers:
+            ret_dict[provider_name] = \
+                self._get_configurable_items_for_provider(provider_name, scope)
+
+        return ret_dict
+
+    def _get_configurable_items_for_provider(self, provider_name, scope):
+        items = lib.factory.get_provider_configurable_items(provider_name)
+        ret_dict = {}
+
+        for item_key, item in items.items():
+            if scope in item["scope"]:
+                item.pop("scope")
+                ret_dict[item_key] = item
+
+        return ret_dict
+
     def get_configurable_items(self, scope=None):
         """
             Returns list of sites that could be configurable for all projects.
