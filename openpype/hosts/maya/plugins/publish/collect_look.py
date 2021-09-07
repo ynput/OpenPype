@@ -223,8 +223,8 @@ class CollectLook(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Collect the Look in the instance with the correct layer settings"""
-
-        with lib.renderlayer(instance.data["renderlayer"]):
+        renderlayer = instance.data.get("renderlayer", "defaultRenderLayer")
+        with lib.renderlayer(renderlayer):
             self.collect(instance)
 
     def collect(self, instance):
@@ -578,26 +578,6 @@ class CollectModelRenderSets(CollectLook):
     label = "Collect Model Render Sets"
     hosts = ["maya"]
     maketx = True
-
-    def process(self, instance):
-        """Collect the Look in the instance with the correct layer settings"""
-        model_nodes = instance[:]
-        renderlayer = instance.data.get("renderlayer", "defaultRenderLayer")
-
-        with lib.renderlayer(renderlayer):
-            self.collect(instance)
-
-        set_nodes = [m for m in instance if m not in model_nodes]
-        instance[:] = model_nodes
-
-        if set_nodes:
-            instance.data["modelRenderSets"] = set_nodes
-            instance.data["modelRenderSetsHistory"] = \
-                cmds.listHistory(set_nodes, future=False, pruneDagObjects=True)
-
-            self.log.info("Model render sets collected.")
-        else:
-            self.log.info("No model render sets.")
 
     def collect_sets(self, instance):
         """Collect all related objectSets except shadingEngines

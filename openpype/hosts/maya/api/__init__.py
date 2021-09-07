@@ -35,6 +35,7 @@ def install():
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
     log.info(PUBLISH_PATH)
     menu.install()
 
@@ -97,6 +98,7 @@ def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.deregister_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     menu.uninstall()
 

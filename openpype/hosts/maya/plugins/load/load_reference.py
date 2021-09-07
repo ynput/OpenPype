@@ -152,15 +152,3 @@ class ReferenceLoader(openpype.hosts.maya.api.plugin.ReferenceLoader):
                 options={"useSelection": True},
                 data={"dependencies": dependency}
             )
-
-
-class AugmentedModelLoader(ReferenceLoader):
-    """Load augmented model via Maya referencing"""
-
-    families = ["model"]
-    representations = ["fried.ma", "fried.mb"]
-
-    label = "Fried Model"
-    order = -9
-    icon = "code-fork"
-    color = "yellow"

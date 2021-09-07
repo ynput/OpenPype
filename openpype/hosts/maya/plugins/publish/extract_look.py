@@ -135,6 +135,7 @@ class ExtractLook(openpype.api.Extractor):
     families = ["look"]
     order = pyblish.api.ExtractorOrder + 0.2
     scene_type = "ma"
+    look_data_type = "json"
 
     @staticmethod
     def get_renderer_name():
@@ -186,7 +187,7 @@ class ExtractLook(openpype.api.Extractor):
         # Define extract output file path
         dir_path = self.staging_dir(instance)
         maya_fname = "{0}.{1}".format(instance.name, self.scene_type)
-        json_fname = "{0}.json".format(instance.name)
+        json_fname = "{0}.{1}".format(instance.name, self.look_data_type)
 
         # Make texture dump folder
         maya_path = os.path.join(dir_path, maya_fname)
@@ -252,19 +253,21 @@ class ExtractLook(openpype.api.Extractor):
         instance.data["files"].append(maya_fname)
         instance.data["files"].append(json_fname)
 
-        instance.data["representations"] = []
+        if instance.data.get("representations") is None:
+            instance.data["representations"] = []
+
         instance.data["representations"].append(
             {
-                "name": "ma",
-                "ext": "ma",
+                "name": self.scene_type,
+                "ext": self.scene_type,
                 "files": os.path.basename(maya_fname),
                 "stagingDir": os.path.dirname(maya_fname),
             }
         )
         instance.data["representations"].append(
             {
-                "name": "json",
-                "ext": "json",
+                "name": self.look_data_type,
+                "ext": self.look_data_type,
                 "files": os.path.basename(json_fname),
                 "stagingDir": os.path.dirname(json_fname),
             }
@@ -483,119 +486,17 @@ class ExtractLook(openpype.api.Extractor):
         return filepath, COPY, texture_hash
 
 
-class ExtractAugmentedModel(ExtractLook):
-    """Extract as Augmented Model (Maya Scene).
+class ExtractModelRenderSets(ExtractLook):
+    """Extract model render attribute sets as model metadata
 
-    Rendering attrs augmented model.
-
-    Only extracts contents based on the original "setMembers" data to ensure
-    publishing the least amount of required shapes. From that it only takes
-    the shapes that are not intermediateObjects
-
-    During export it sets a temporary context to perform a clean extraction.
-    The context ensures:
-        - Smooth preview is turned off for the geometry
-        - Default shader is assigned (no materials are exported)
-        - Remove display layers
+    Only extracts the render attrib sets (NO shadingEngines) alongside a .json file
+    that stores it relationships for the sets and "attribute" data for the
+    instance members.
 
     """
 
-    label = "Augmented Model (Maya Scene)"
+    label = "Model Render Sets"
     hosts = ["maya"]
     families = ["model"]
-    scene_type = "ma"
-    augmented = "fried"
-
-    def process(self, instance):
-        """Plugin entry point.
-
-        Args:
-            instance: Instance to process.
-
-        """
-        render_sets = instance.data.get("modelRenderSetsHistory")
-        if not render_sets:
-            self.log.info("Model is not render augmented, skip extraction.")
-            return
-
-        self.get_maya_scene_type(instance)
-
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
-
-        # Define extract output file path
-        stagingdir = self.staging_dir(instance)
-        ext = "{0}.{1}".format(self.augmented, self.scene_type)
-        filename = "{0}.{1}".format(instance.name, ext)
-        path = os.path.join(stagingdir, filename)
-
-        # Perform extraction
-        self.log.info("Performing extraction ...")
-
-        results = self.process_resources(instance, staging_dir=stagingdir)
-        transfers = results["fileTransfers"]
-        hardlinks = results["fileHardlinks"]
-        hashes = results["fileHashes"]
-        remap = results["attrRemap"]
-
-        self.log.info(remap)
-
-        # Get only the shape contents we need in such a way that we avoid
-        # taking along intermediateObjects
-        members = instance.data("setMembers")
-        members = cmds.ls(members,
-                          dag=True,
-                          shapes=True,
-                          type=("mesh", "nurbsCurve"),
-                          noIntermediate=True,
-                          long=True)
-        members += instance.data.get("modelRenderSetsHistory")
-
-        with lib.no_display_layers(instance):
-            with lib.displaySmoothness(members,
-                                       divisionsU=0,
-                                       divisionsV=0,
-                                       pointsWire=4,
-                                       pointsShaded=1,
-                                       polygonObject=1):
-                with lib.shader(members,
-                                shadingEngine="initialShadingGroup"):
-                    # To avoid Maya trying to automatically remap the file
-                    # textures relative to the `workspace -directory` we force
-                    # it to a fake temporary workspace. This fixes textures
-                    # getting incorrectly remapped. (LKD-17, PLN-101)
-                    with no_workspace_dir():
-                        with lib.attribute_values(remap):
-                            with avalon.maya.maintained_selection():
-
-                                cmds.select(members, noExpand=True)
-                                cmds.file(path,
-                                          force=True,
-                                          typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
-                                          exportSelected=True,
-                                          preserveReferences=False,
-                                          channels=False,
-                                          constraints=False,
-                                          expressions=False,
-                                          constructionHistory=False)
-
-        if "hardlinks" not in instance.data:
-            instance.data["hardlinks"] = []
-        if "transfers" not in instance.data:
-            instance.data["transfers"] = []
-
-        # Set up the resources transfers/links for the integrator
-        instance.data["transfers"].extend(transfers)
-        instance.data["hardlinks"].extend(hardlinks)
-
-        # Source hash for the textures
-        instance.data["sourceHashes"] = hashes
-
-        instance.data["representations"].append({
-            'name': ext,
-            'ext': ext,
-            'files': filename,
-            "stagingDir": stagingdir,
-        })
-
-        self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
+    scene_type = "meta.render.ma"
+    look_data_type = "meta.render.json"
