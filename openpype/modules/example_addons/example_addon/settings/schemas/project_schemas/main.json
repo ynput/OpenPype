@@ -1,0 +1,29 @@
+{
+    "type": "dict",
+    "key": "exmaple_addon",
+    "collapsible": true,
+    "children": [
+        {
+            "type": "number",
+            "key": "number",
+            "label": "This is your lucky number:",
+            "minimum": 7,
+            "maximum": 7,
+            "decimals": 0
+        },
+        {
+            "type": "template",
+            "name": "example_addon/the_template",
+            "template_data": [
+                {
+                    "name": "color_1",
+                    "lable": "Color 1"
+                },
+                {
+                    "name": "color_2",
+                    "lable": "Color 2"
+                }
+            ]
+        }
+    ]
+}
