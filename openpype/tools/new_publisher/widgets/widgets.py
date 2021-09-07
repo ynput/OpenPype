@@ -191,6 +191,9 @@ class TreeComboBox(QtWidgets.QComboBox):
         self.setEditable(True)
         # Set `lineEdit` to read only
         self.lineEdit().setReadOnly(True)
+        self.lineEdit().setAttribute(
+            QtCore.Qt.WA_TransparentForMouseEvents, True
+        )
 
     def setModel(self, model):
         self._model = model
