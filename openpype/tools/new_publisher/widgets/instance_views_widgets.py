@@ -6,7 +6,8 @@ from openpype.widgets.nice_checkbox import NiceCheckbox
 from ..constants import (
     INSTANCE_ID_ROLE,
     SORT_VALUE_ROLE,
-    CONTEXT_ID
+    CONTEXT_ID,
+    CONTEXT_LABEL
 )
 from .icons import get_pixmap
 
@@ -158,7 +159,7 @@ class ContextCardWidget(QtWidgets.QWidget):
 
         self.item = item
 
-        subset_name_label = QtWidgets.QLabel("Context", self)
+        subset_name_label = QtWidgets.QLabel(CONTEXT_LABEL, self)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(2, 2, 2, 2)
@@ -400,7 +401,7 @@ class ListContextWidget(QtWidgets.QFrame):
     def __init__(self, parent):
         super(ListContextWidget, self).__init__(parent)
 
-        label_widget = QtWidgets.QLabel("Context", self)
+        label_widget = QtWidgets.QLabel(CONTEXT_LABEL, self)
 
         layout = QtWidgets.QHBoxLayout(self)
         layout.setContentsMargins(5, 0, 2, 0)
