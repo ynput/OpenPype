@@ -455,15 +455,24 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
     @classmethod
     def _get_configurable_items_for_provider(cls, provider_name, scope):
+        """
+            Args:
+                provider_name (str)
+                scope (EditableScopes)
+            Returns
+                (list) of (dict)
+        """
         items = lib.factory.get_provider_configurable_items(provider_name)
-        ret_dict = {}
 
-        for item_key, item in items.items():
+        ret = []
+        for key in sorted(items.keys()):
+            item = items[key]
             if scope in item["scope"]:
-                item.pop("scope")
-                ret_dict[item_key] = item
+                item.pop("scope")  # unneeded by UI
+                item.pop("namespace", None)  # unneeded by UI
+                ret.append(item)
 
-        return ret_dict
+        return ret
 
     def get_configurable_items(self, scope=None):
         """
