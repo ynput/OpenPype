@@ -445,7 +445,7 @@ class NumberWidget(InputWidget):
         value = self.input_field.value()
         if self._slider_widget is not None and not self._ignore_input_change:
             self._ignore_slider_change = True
-            self._slider_widget.setValue(value)
+            self._slider_widget.setValue(value * self._slider_multiplier)
             self._ignore_slider_change = False
 
         self.entity.set(value)
