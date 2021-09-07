@@ -6,8 +6,10 @@ be found by OpenPype discovery.
 
 from .addon import (
     AddonSettingsDef,
+    ExampleAddon
 )
 
 __all__ = (
     "AddonSettingsDef",
+    "ExampleAddon"
 )

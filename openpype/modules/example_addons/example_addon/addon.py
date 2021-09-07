@@ -31,7 +31,7 @@ class AddonSettingsDef(JsonFilesSettingsDef):
     #   recommended as schemas and templates may have name clashes across
     #   multiple addons
     # - it is also recommended that prefix has addon name in it
-    schema_prefix = "addon_with_settings"
+    schema_prefix = "example_addon"
 
     def get_settings_root_path(self):
         """Implemented abstract class of JsonFilesSettingsDef.
@@ -66,6 +66,14 @@ class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
         self._connected_modules = None
         # UI which must not be created at this time
         self._dialog = None
+
+    def tray_init(self):
+        """Implementation of abstract method for `ITrayAction`.
+
+        We're definetely in trat tool so we can precreate dialog.
+        """
+
+        self._create_dialog()
 
     def connect_with_modules(self, enabled_modules):
         """Method where you should find connected modules.

@@ -1,6 +1,6 @@
 {
     "system_settings/modules": {
         "type": "schema",
-        "name": "addon_with_settings/main"
+        "name": "example_addon/main"
     }
 }

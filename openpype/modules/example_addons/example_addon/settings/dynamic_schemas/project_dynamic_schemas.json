@@ -1,6 +1,6 @@
 {
     "project_settings/global": {
         "type": "schema",
-        "name": "addon_with_settings/main"
+        "name": "example_addon/main"
     }
 }

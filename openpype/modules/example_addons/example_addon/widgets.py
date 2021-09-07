@@ -1,5 +1,7 @@
 from Qt import QtWidgets
 
+from openpype.style import load_stylesheet
+
 
 class MyExampleDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -18,7 +20,14 @@ class MyExampleDialog(QtWidgets.QDialog):
         layout.addWidget(label_widget)
         layout.addLayout(btns_layout)
 
+        ok_btn.clicked.connect(self._on_ok_clicked)
+
         self._label_widget = label_widget
+
+        self.setStyleSheet(load_stylesheet())
+
+    def _on_ok_clicked(self):
+        self.done(1)
 
     def set_connected_modules(self, connected_modules):
         if connected_modules:

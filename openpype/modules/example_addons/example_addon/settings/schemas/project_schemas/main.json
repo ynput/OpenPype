@@ -1,6 +1,7 @@
 {
     "type": "dict",
-    "key": "exmaple_addon",
+    "key": "example_addon",
+    "label": "Example addon",
     "collapsible": true,
     "children": [
         {
@@ -17,11 +18,11 @@
             "template_data": [
                 {
                     "name": "color_1",
-                    "lable": "Color 1"
+                    "label": "Color 1"
                 },
                 {
                     "name": "color_2",
-                    "lable": "Color 2"
+                    "label": "Color 2"
                 }
             ]
         }
