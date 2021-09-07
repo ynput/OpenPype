@@ -353,6 +353,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._delegate = delegate
         self._model = model
         self._origin_value = []
+        self._origin_selection = []
         self._selected_items = []
         self._has_value_changed = False
         self._ignore_index_change = False
@@ -369,7 +370,7 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._set_is_valid(True)
         self._selected_items = [self.currentText()]
         self._has_value_changed = (
-            self._origin_value != self._selected_items
+            self._origin_selection != self._selected_items
         )
 
         self.value_changed.emit()
@@ -399,17 +400,62 @@ class TasksCombobox(QtWidgets.QComboBox):
         return list(self._selected_items)
 
     def set_asset_names(self, asset_names):
-        self._model.set_asset_names(asset_names)
-        self.set_selected_items(self._origin_value)
+        self._ignore_index_change = True
 
-    def set_selected_items(self, task_names=None):
-        if task_names is None:
-            task_names = []
+        self._model.set_asset_names(asset_names)
+
+        self._ignore_index_change = False
+
+        # It is a bug if not exactly one asset got here
+        if len(asset_names) != 1:
+            self.set_selected_item("")
+            self._set_is_valid(False)
+            return
+
+        asset_name = tuple(asset_names)[0]
+
+        is_valid = False
+        if self._selected_items:
+            is_valid = True
+
+        for task_name in self._selected_items:
+            is_valid = self._model.is_task_name_valid(asset_name, task_name)
+            if not is_valid:
+                break
+
+        if len(self._selected_items) == 0:
+            self.set_selected_item("")
+
+        elif len(self._selected_items) == 1:
+            self.set_selected_item(self._selected_items[0])
+
+        else:
+            multiselection_text = self._multiselection_text
+            if multiselection_text is None:
+                multiselection_text = "|".join(self._selected_items)
+            self.set_selected_item(multiselection_text)
+        self._set_is_valid(is_valid)
+
+    def set_selected_items(self, asset_task_combinations=None):
+        if asset_task_combinations is None:
+            asset_task_combinations = []
+
+        task_names = set()
+        task_names_by_asset_name = collections.defaultdict(set)
+        for asset_name, task_name in asset_task_combinations:
+            task_names.add(task_name)
+            task_names_by_asset_name[asset_name].add(task_name)
+        asset_names = set(task_names_by_asset_name.keys())
 
         self._ignore_index_change = True
 
+        self._model.set_asset_names(asset_names)
+
         self._has_value_changed = False
-        self._origin_value = list(task_names)
+
+        self._origin_value = copy.deepcopy(asset_task_combinations)
+
+        self._origin_selection = list(task_names)
         self._selected_items = list(task_names)
         # Reset current index
         self.setCurrentIndex(-1)
@@ -421,6 +467,10 @@ class TasksCombobox(QtWidgets.QComboBox):
             task_name = tuple(task_names)[0]
             idx = self.findText(task_name)
             is_valid = not idx < 0
+            if not is_valid and len(asset_names) > 1:
+                is_valid = self._validate_task_names_by_asset_names(
+                    task_names_by_asset_name
+                )
             self.set_selected_item(task_name)
 
         else:
@@ -430,6 +480,10 @@ class TasksCombobox(QtWidgets.QComboBox):
                 if not is_valid:
                     break
 
+            if not is_valid and len(asset_names) > 1:
+                is_valid = self._validate_task_names_by_asset_names(
+                    task_names_by_asset_name
+                )
             multiselection_text = self._multiselection_text
             if multiselection_text is None:
                 multiselection_text = "|".join(task_names)
@@ -440,6 +494,13 @@ class TasksCombobox(QtWidgets.QComboBox):
         self._ignore_index_change = False
 
         self.value_changed.emit()
+
+    def _validate_task_names_by_asset_names(self, task_names_by_asset_name):
+        for asset_name, task_names in task_names_by_asset_name.items():
+            for task_name in task_names:
+                if not self._model.is_task_name_valid(asset_name, task_name):
+                    return False
+        return True
 
     def set_selected_item(self, item_name):
         idx = self.findText(item_name)
@@ -737,7 +798,8 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             or self.task_value_widget.has_value_changed()
         )
         self._set_btns_visible(any_changed or any_invalid)
-        self._set_btns_enabled(not any_invalid)
+        self.cancel_btn.setEnabled(any_changed)
+        self.submit_btn.setEnabled(not any_invalid)
 
     def _on_variant_change(self):
         self._on_value_change()
@@ -764,7 +826,6 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self._current_instances = instances
 
         asset_names = set()
-        task_names = set()
         variants = set()
         families = set()
         subset_names = set()
@@ -773,14 +834,17 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         if len(instances) == 0:
             editable = False
 
+        asset_task_combinations = []
         for instance in instances:
             if instance.creator is None:
                 editable = False
 
             variants.add(instance.data.get("variant") or self.unknown_value)
             families.add(instance.data.get("family") or self.unknown_value)
-            asset_names.add(instance.data.get("asset") or self.unknown_value)
-            task_names.add(instance.data.get("task") or self.unknown_value)
+            asset_name = instance.data.get("asset") or self.unknown_value
+            task_name = instance.data.get("task") or self.unknown_value
+            asset_names.add(asset_name)
+            asset_task_combinations.append((asset_name, task_name))
             subset_names.add(instance.data.get("subset") or self.unknown_value)
 
         self.variant_input.set_value(variants)
@@ -788,8 +852,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         # Set context of asset widget
         self.asset_value_widget.set_selected_items(asset_names)
         # Set context of task widget
-        self.task_value_widget.set_asset_names(asset_names)
-        self.task_value_widget.set_selected_items(task_names)
+        self.task_value_widget.set_selected_items(asset_task_combinations)
         self.family_value_widget.set_value(families)
         self.subset_value_widget.set_value(subset_names)
 
