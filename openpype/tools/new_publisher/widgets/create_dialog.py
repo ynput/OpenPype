@@ -144,9 +144,6 @@ class CreateDialog(QtWidgets.QDialog):
         variant_layout.addWidget(variant_input, 1)
         variant_layout.addWidget(variant_hints_btn, 0)
 
-        asset_name_input = QtWidgets.QLineEdit(self)
-        asset_name_input.setEnabled(False)
-
         subset_name_input = QtWidgets.QLineEdit(self)
         subset_name_input.setEnabled(False)
 
@@ -156,8 +153,6 @@ class CreateDialog(QtWidgets.QDialog):
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(QtWidgets.QLabel("Family:", self))
         layout.addWidget(family_view, 1)
-        layout.addWidget(QtWidgets.QLabel("Asset:", self))
-        layout.addWidget(asset_name_input, 0)
         layout.addWidget(QtWidgets.QLabel("Name:", self))
         layout.addLayout(variant_layout, 0)
         layout.addWidget(QtWidgets.QLabel("Subset:", self))
@@ -174,7 +169,6 @@ class CreateDialog(QtWidgets.QDialog):
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
 
-        self.asset_name_input = asset_name_input
         self.subset_name_input = subset_name_input
 
         self.variant_input = variant_input
@@ -200,7 +194,8 @@ class CreateDialog(QtWidgets.QDialog):
         self._refresh_creators()
 
         if self._asset_doc is None:
-            self.asset_name_input.setText("< Asset is not set >")
+            # QUESTION how to handle invalid asset?
+            self.subset_name_input.setText("< Asset is not set >")
             self._prereq_available = False
 
         if self.family_model.rowCount() < 1:
@@ -231,7 +226,6 @@ class CreateDialog(QtWidgets.QDialog):
         self._asset_doc = asset_doc
 
         if asset_doc:
-            self.asset_name_input.setText(asset_doc["name"])
             subset_docs = self.dbcon.find(
                 {
                     "type": "subset",
