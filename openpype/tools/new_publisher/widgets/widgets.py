@@ -767,6 +767,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
                 break
 
         project_name = self.controller.project_name
+        subset_names = set()
         for instance in self._current_instances:
             if variant_value is not None:
                 instance.data["variant"] = variant_value
@@ -788,7 +789,10 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
             new_subset_name = instance.creator.get_subset_name(
                 new_variant_value, new_task_name, asset_doc, project_name
             )
+            subset_names.add(new_subset_name)
             instance.data["subset"] = new_subset_name
+
+        self.subset_value_widget.set_value(subset_names)
 
         self._set_btns_enabled(False)
         self._set_btns_visible(False)
@@ -1132,6 +1136,7 @@ class SubsetAttributesWidget(QtWidgets.QWidget):
             if not instance.has_valid_context:
                 all_valid = False
                 break
+
         self._all_instances_valid = all_valid
         self.family_attrs_widget.set_instances_valid(all_valid)
         self.publish_attrs_widget.set_instances_valid(all_valid)
