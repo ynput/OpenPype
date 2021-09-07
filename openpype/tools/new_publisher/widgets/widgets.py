@@ -197,21 +197,28 @@ class TreeComboBox(QtWidgets.QComboBox):
         super(TreeComboBox, self).setModel(model)
 
     def showPopup(self):
-        self.setRootModelIndex(QtCore.QModelIndex())
         super(TreeComboBox, self).showPopup()
 
     def hidePopup(self):
-        # NOTE This would hide everything except parents
-        # self.setRootModelIndex(self._tree_view.currentIndex().parent())
-        # self.setCurrentIndex(self._tree_view.currentIndex().row())
         if self._skip_next_hide:
             self._skip_next_hide = False
         else:
             super(TreeComboBox, self).hidePopup()
 
-    def selectIndex(self, index):
-        self.setRootModelIndex(index.parent())
-        self.setCurrentIndex(index.row())
+    def select_index(self, index):
+        parent_indexes = []
+        parent_index = index.parent()
+        while parent_index.isValid():
+            parent_indexes.append(parent_index)
+            parent_index = parent_index.parent()
+
+        for parent_index in parent_indexes:
+            self._tree_view.expand(parent_index)
+        selection_model = self._tree_view.selectionModel()
+        selection_model.setCurrentIndex(
+            index, selection_model.ClearAndSelect
+        )
+        self.lineEdit().setText(index.data(QtCore.Qt.DisplayRole) or "")
 
     def eventFilter(self, obj, event):
         if (
@@ -230,7 +237,7 @@ class TreeComboBox(QtWidgets.QComboBox):
             self._tree_view.selectionModel().setCurrentIndex(
                 index, QtCore.QItemSelectionModel.SelectCurrent
             )
-            self.selectIndex(index)
+            self.select_index(index)
 
         else:
             self.lineEdit().setText(item_name)
