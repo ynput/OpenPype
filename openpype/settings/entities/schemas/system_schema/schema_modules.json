@@ -242,6 +242,10 @@
                     "label": "Enabled"
                 }
             ]
+        },
+        {
+            "type": "dynamic_schema",
+            "name": "system_settings/modules"
         }
     ]
 }
