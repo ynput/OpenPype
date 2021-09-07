@@ -10,8 +10,6 @@ OpenPype modules should contain separated logic of specific kind of implementati
 - add module/addon manifest
     - definition of module (not 100% defined content e.g. minimum require OpenPype version etc.)
     - defying that folder is content of a module or an addon
-- module/addon have it's settings schemas and default values outside OpenPype
-- add general setting of paths to modules
 
 ## Base class `OpenPypeModule`
 - abstract class as base for each module
@@ -24,6 +22,26 @@ OpenPype modules should contain separated logic of specific kind of implementati
 - `__init__` should not be overriden and `initialize` should not do time consuming part but only prepare base data about module
     - also keep in mind that they may be initialized in headless mode
 - connection with other modules is made with help of interfaces
+
+## Addon class `OpenPypeAddOn`
+- inherit from `OpenPypeModule` but is enabled by default and don't have to implement `initialize` and `connect_with_modules` methods
+    - that is because it is expected that addons don't need to have system settings and `enabled` value on it (but it is possible...)
+
+## How to add addons/modules
+- in System settings go to `modules/addon_paths` (`Modules/OpenPype AddOn Paths`) where you have to add path to addon root folder
+- for openpype example addons use `{OPENPYPE_REPOS_ROOT}/openpype/modules/example_addons`
+
+## Addon/module settings
+- addons/modules may have defined custom settings definitions with default values
+- it is based on settings type `dynamic_schema` which has `name`
+    - that item defines that it can be replaced dynamically with any schemas from module or module which won't be saved to openpype core defaults
+    - they can't be added to any schema hierarchy
+        - item must not be in settings group (under overrides) or in dynamic item (e.g. `list` of `dict-modifiable`)
+    - addons may define it's dynamic schema items
+- they can be defined with class which inherit from `BaseModuleSettingsDef`
+    - it is recommended to use preimplemented `JsonFilesSettingsDef` which defined structure and use json files to define dynamic schemas, schemas and default values
+    - check it's docstring and check for `example_addon` in example addons
+- settings definition returns schemas by dynamic schemas names
 
 # Interfaces
 - interface is class that has defined abstract methods to implement and may contain preimplemented helper methods
