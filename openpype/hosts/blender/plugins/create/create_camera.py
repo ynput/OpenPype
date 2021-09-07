@@ -21,13 +21,12 @@ class CreateCamera(plugin.Creator):
         mti = ops.MainThreadItem(self._process)
         ops.execute_in_main_thread(mti)
 
-    def process(self):
+    def _process(self):
         # Get Instance Containter or create it if it does not exist
         instances = bpy.data.collections.get(AVALON_INSTANCES)
         if not instances:
             instances = bpy.data.collections.new(name=AVALON_INSTANCES)
             bpy.context.scene.collection.children.link(instances)
-
 
         # Create instance object
         asset = self.data["asset"]

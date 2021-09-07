@@ -57,8 +57,8 @@ class CameraLoader(api.Loader):
             )
 
             # Get highest number to make a unique name
-            folders = [a for a in asset_content 
-                if a[-1] == "/" and f"{name}_" in a]
+            folders = [a for a in asset_content
+                       if a[-1] == "/" and f"{name}_" in a]
             f_numbers = []
             for f in folders:
                 # Get number from folder name. Splits the string by "_" and
