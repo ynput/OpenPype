@@ -1,4 +1,3 @@
-import os
 import pyblish.api
 
 
