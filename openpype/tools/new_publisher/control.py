@@ -439,21 +439,16 @@ class PublisherController:
             output[parent_id].append(asset_doc)
         return output
 
-    def get_task_names_for_asset_names(self, asset_names):
+    def get_task_names_by_asset_names(self, asset_names):
         task_names_by_asset_name = (
             self._asset_docs_cache.get_task_names_by_asset_name()
         )
-        tasks = None
+        result = {}
         for asset_name in asset_names:
-            task_names = set(task_names_by_asset_name.get(asset_name, []))
-            if tasks is None:
-                tasks = task_names
-            else:
-                tasks &= task_names
-
-            if not tasks:
-                break
-        return tasks
+            result[asset_name] = set(
+                task_names_by_asset_name.get(asset_name) or []
+            )
+        return result
 
     def _trigger_callbacks(self, callbacks, *args, **kwargs):
         """Helper method to trigger callbacks stored by their rerence."""
