@@ -410,8 +410,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             Used for Setting UI to provide forms.
         """
         scope = EditableScopes.SYSTEM
-        return SyncServerModule._get_configurable_items_for_provider(
-            provider_name, scope)
+        return cls._get_configurable_items_for_provider(provider_name, scope)
 
     @classmethod
     def get_project_configurable_items_for_provider(cls, provider_name):
@@ -420,8 +419,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             It is not using Setting! Used for Setting UI to provide forms.
         """
         scope = EditableScopes.PROJECT
-        return SyncServerModule._get_configurable_items_for_provider(
-            provider_name, scope)
+        return cls._get_configurable_items_for_provider(provider_name, scope)
 
     @classmethod
     def get_system_configurable_items_for_providers(cls):
@@ -433,8 +431,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         ret_dict = {}
         for provider_name in lib.factory.providers:
             ret_dict[provider_name] = \
-                SyncServerModule._get_configurable_items_for_provider(
-                    provider_name, scope)
+                cls._get_configurable_items_for_provider(provider_name, scope)
 
         return ret_dict
 
@@ -448,8 +445,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         ret_dict = {}
         for provider_name in lib.factory.providers:
             ret_dict[provider_name] = \
-                SyncServerModule._get_configurable_items_for_provider(
-                    provider_name, scope)
+                cls._get_configurable_items_for_provider(provider_name, scope)
 
         return ret_dict
 
@@ -469,7 +465,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
             item = items[key]
             if scope in item["scope"]:
                 item.pop("scope")  # unneeded by UI
-                item.pop("namespace", None)  # unneeded by UI
+                if scope in [EditableScopes.SYSTEM, EditableScopes.PROJECT]:
+                    item.pop("namespace", None)  # unneeded by UI
                 ret.append(item)
 
         return ret
