@@ -149,6 +149,8 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         layout.setColumnStretch(1, 1)
         layout.setRowStretch(1, 1)
 
+        self._widget = None
+
         self._top_left_w = top_left_w
         self._top_right_w = top_right_w
         self._left_w = left_w
@@ -175,6 +177,12 @@ class BorderedLabelWidget(QtWidgets.QFrame):
             self._widget.update()
 
     def set_center_widget(self, widget):
+        while self._center_layout.count():
+            item = self._center_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
         self._widget = widget
         if isinstance(widget, QtWidgets.QLayout):
             self._center_layout.addLayout(widget)
