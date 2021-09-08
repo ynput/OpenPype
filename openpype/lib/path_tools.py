@@ -2,8 +2,12 @@ import os
 import re
 import logging
 
+from openpype.api import Anatomy
+
 log = logging.getLogger(__name__)
 
+pattern_array = re.compile(r"\[.*\]")
+project_root_key = "__project_root__"
 
 def _rreplace(s, a, b, n=1):
     """Replace a with b in string s from right side n times."""
@@ -119,3 +123,42 @@ def get_last_version_from_path(path_dir, filter):
         return filtred_files[-1]
 
     return None
+
+
+def compute_paths(basic_paths_items, project_root):
+    output = []
+    for path_items in basic_paths_items:
+        clean_items = []
+        for path_item in path_items:
+            matches = re.findall(pattern_array, path_item)
+            if len(matches) > 0:
+                path_item = path_item.replace(matches[0], "")
+            if path_item == project_root_key:
+                path_item = project_root
+            clean_items.append(path_item)
+        output.append(os.path.normpath(os.path.sep.join(clean_items)))
+    return output
+
+
+def create_project_folders(basic_paths, project_name):
+    anatomy = Anatomy(project_name)
+    roots_paths = []
+    if isinstance(anatomy.roots, dict):
+        for root in anatomy.roots.values():
+            roots_paths.append(root.value)
+    else:
+        roots_paths.append(anatomy.roots.value)
+
+    for root_path in roots_paths:
+        project_root = os.path.join(root_path, project_name)
+        full_paths = compute_paths(basic_paths, project_root)
+        # Create folders
+        for path in full_paths:
+            full_path = path.format(project_root=project_root)
+            if os.path.exists(full_path):
+                log.debug(
+                    "Folder already exists: {}".format(full_path)
+                )
+            else:
+                log.debug("Creating folder: {}".format(full_path))
+                os.makedirs(full_path)
