@@ -159,7 +159,7 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         ipn_orig = None
         for v in [n for n in nuke.allNodes()
-                if "Viewer" == n.Class()]:
+                  if "Viewer" == n.Class()]:
             ip = v['input_process'].getValue()
             ipn = v['input_process_node'].getValue()
             if "VIEWER_INPUT" not in ipn and ip:
