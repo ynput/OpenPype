@@ -12,8 +12,10 @@ class ImportModelRender(api.InventoryAction):
 
     @staticmethod
     def is_compatible(container):
-        return container.get("loader") == "ReferenceLoader" \
-               and container.get("name", "").startswith("model")
+        return (
+            container.get("loader") == "ReferenceLoader"
+            and container.get("name", "").startswith("model")
+        )
 
     def process(self, containers):
         from maya import cmds
