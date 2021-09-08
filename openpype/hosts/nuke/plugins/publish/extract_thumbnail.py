@@ -112,12 +112,12 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         # create write node
         write_node = nuke.createNode("Write")
-        file = fhead + "jpeg"
+        file = fhead + "jpg"
         name = "thumbnail"
         path = os.path.join(staging_dir, file).replace("\\", "/")
         instance.data["thumbnail"] = path
         write_node["file"].setValue(path)
-        write_node["file_type"].setValue("jpeg")
+        write_node["file_type"].setValue("jpg")
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
@@ -126,10 +126,11 @@ class ExtractThumbnail(openpype.api.Extractor):
         # retime for
         first_frame = int(last_frame) / 2
         last_frame = int(last_frame) / 2
+        mid_frame = int((int(last_frame) - int(first_frame) ) / 2) + int(first_frame)
 
         repre = {
             'name': name,
-            'ext': "jpeg",
+            'ext': "jpg",
             "outputName": "thumb",
             'files': file,
             "stagingDir": staging_dir,
@@ -140,7 +141,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         instance.data["representations"].append(repre)
 
         # Render frames
-        nuke.execute(write_node.name(), int(first_frame), int(last_frame))
+        nuke.execute(write_node.name(), int(mid_frame), int(mid_frame))
 
         self.log.debug(
             "representations: {}".format(instance.data["representations"]))
@@ -157,12 +158,12 @@ class ExtractThumbnail(openpype.api.Extractor):
 
         ipn_orig = None
         for v in [n for n in nuke.allNodes()
-                  if "Viewer" == n.Class()]:
-            ip = v['input_process'].getValue()
-            ipn = v['input_process_node'].getValue()
-            if "VIEWER_INPUT" not in ipn and ip:
-                ipn_orig = nuke.toNode(ipn)
-                ipn_orig.setSelected(True)
+            if "Viewer" == n.Class()]:
+                ip = v['input_process'].getValue()
+                ipn = v['input_process_node'].getValue()
+                if "VIEWER_INPUT" not in ipn and ip:
+                    ipn_orig = nuke.toNode(ipn)
+                    ipn_orig.setSelected(True)
 
         if ipn_orig:
             nuke.nodeCopy('%clipboard%')
