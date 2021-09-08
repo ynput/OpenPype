@@ -30,18 +30,59 @@ class LocalDriveHandler(AbstractProvider):
         return True
 
     @classmethod
-    def get_configurable_items(cls):
+    def get_system_settings_schema(cls):
         """
-            Returns filtered dict of editable properties
+            Returns dict for editable properties on system settings level
+
+
+            Returns:
+                (list) of dict
+        """
+        return []
+
+    @classmethod
+    def get_project_settings_schema(cls):
+        """
+            Returns dict for editable properties on project settings level
+
+
+            Returns:
+                (list) of dict
+        """
+        # {platform} tells that value is multiplatform and only specific OS
+        # should be returned
+        editable = [
+            # credentials could be override on Project or User level
+            {
+                'label': "Credentials url",
+                'type': 'text',
+                'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'
+                # noqa: E501
+            },
+            # roots could be override only on Project leve, User cannot
+            #
+            {
+                'label': "Roots",
+                'type': 'dict'
+            }
+        ]
+        return editable
+
+    @classmethod
+    def get_local_settings_schema(cls):
+        """
+            Returns dict for editable properties on local settings level
+
 
             Returns:
                 (dict)
         """
-        editable = {
-            'root': {'scope': [EditableScopes.LOCAL],
-                     'label': "Roots",
-                     'type': 'dict'}
-        }
+        editable = [
+            {
+                'label': "Roots",
+                'type': 'dict'
+            }
+        ]
         return editable
 
     def upload_file(self, source_path, target_path,

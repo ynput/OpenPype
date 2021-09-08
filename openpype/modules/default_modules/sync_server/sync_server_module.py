@@ -8,7 +8,7 @@ import copy
 from avalon.api import AvalonMongoDB
 
 from openpype.modules import OpenPypeModule
-from openpype_interfaces import ITrayModule
+from openpype.modules.default_modules.interfaces import ITrayModule
 from openpype.api import (
     Anatomy,
     get_project_settings,
@@ -399,272 +399,239 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
 
         return remote_site
 
-    def get_local_settings_schema(self):
-        """Wrapper for Local settings - all projects incl. Default"""
-        return self.get_configurable_items(EditableScopes.LOCAL)
-
+    # Methods for Settings UI to draw appropriate forms
     @classmethod
-    def get_system_configurable_items_for_provider(cls, provider_name):
-        """ Gets system level configurable items without use of Setting
+    def get_system_settings_schema(cls):
+        """ Gets system level schema of  configurable items
 
             Used for Setting UI to provide forms.
         """
-        scope = EditableScopes.SYSTEM
-        return cls._get_configurable_items_for_provider(provider_name, scope)
-
-    @classmethod
-    def get_project_configurable_items_for_provider(cls, provider_name):
-        """ Gets project level configurable items without use of Setting
-
-            It is not using Setting! Used for Setting UI to provide forms.
-        """
-        scope = EditableScopes.PROJECT
-        return cls._get_configurable_items_for_provider(provider_name, scope)
-
-    @classmethod
-    def get_system_configurable_items_for_providers(cls):
-        """ Gets system level configurable items for all providers.
-
-            It is not using Setting! Used for Setting UI to provide forms.
-        """
-        scope = EditableScopes.SYSTEM
         ret_dict = {}
-        for provider_name in lib.factory.providers:
-            ret_dict[provider_name] = \
-                cls._get_configurable_items_for_provider(provider_name, scope)
+        for provider_code in lib.factory.providers:
+            ret_dict[provider_code] = \
+                lib.factory.get_provider_cls(provider_code). \
+                get_system_settings_schema()
 
         return ret_dict
 
     @classmethod
-    def get_project_configurable_items_for_providers(cls):
-        """ Gets project level configurable items for all providers.
+    def get_project_settings_schema(cls):
+        """ Gets project level schema of configurable items.
 
             It is not using Setting! Used for Setting UI to provide forms.
         """
-        scope = EditableScopes.PROJECT
         ret_dict = {}
-        for provider_name in lib.factory.providers:
-            ret_dict[provider_name] = \
-                cls._get_configurable_items_for_provider(provider_name, scope)
+        for provider_code in lib.factory.providers:
+            ret_dict[provider_code] = \
+                lib.factory.get_provider_cls(provider_code). \
+                get_project_settings_schema()
 
         return ret_dict
 
     @classmethod
-    def _get_configurable_items_for_provider(cls, provider_name, scope):
+    def get_local_settings_schema(cls):
+        """ Gets local level schema of configurable items.
+
+            It is not using Setting! Used for Setting UI to provide forms.
         """
-            Args:
-                provider_name (str)
-                scope (EditableScopes)
-            Returns
-                (list) of (dict)
-        """
-        items = lib.factory.get_provider_configurable_items(provider_name)
+        ret_dict = {}
+        for provider_code in lib.factory.providers:
+            ret_dict[provider_code] = \
+                lib.factory.get_provider_cls(provider_code). \
+                get_local_settings_schema()
 
-        ret = []
-        for key in sorted(items.keys()):
-            item = items[key]
-            if scope in item["scope"]:
-                item.pop("scope")  # unneeded by UI
-                if scope in [EditableScopes.SYSTEM, EditableScopes.PROJECT]:
-                    item.pop("namespace", None)  # unneeded by UI
-                ret.append(item)
+        return ret_dict
 
-        return ret
-
-    def get_configurable_items(self, scope=None):
-        """
-            Returns list of sites that could be configurable for all projects.
-
-            Could be filtered by 'scope' argument (list)
-
-            Args:
-                scope (list of utils.EditableScope)
-
-            Returns:
-                (dict of list of dict)
-                {
-                    siteA : [
-                        {
-                            key:"root", label:"root",
-                            "value":"{'work': 'c:/projects'}",
-                            "type": "dict",
-                            "children":[
-                                { "key": "work",
-                                  "type": "text",
-                                  "value": "c:/projects"}
-                            ]
-                        },
-                        {
-                            key:"credentials_url", label:"Credentials url",
-                            "value":"'c:/projects/cred.json'", "type": "text",
-                            "namespace": "{project_setting}/global/sync_server/
-                                     sites"
-                        }
-                    ]
-                }
-        """
-        editable = {}
-        applicable_projects = list(self.connection.projects())
-        applicable_projects.append(None)
-        for project in applicable_projects:
-            project_name = None
-            if project:
-                project_name = project["name"]
-
-            items = self.get_configurable_items_for_project(project_name,
-                                                            scope)
-            editable.update(items)
-
-        return editable
-
-    def get_local_settings_schema_for_project(self, project_name):
-        """Wrapper for Local settings - for specific 'project_name'"""
-        return self.get_configurable_items_for_project(project_name,
-                                                       EditableScopes.LOCAL)
-
-    def get_configurable_items_for_project(self, project_name=None,
-                                           scope=None):
-        """
-            Returns list of items that could be configurable for specific
-            'project_name'
-
-            Args:
-                project_name (str) - None > default project,
-                scope (list of utils.EditableScope)
-                    (optional, None is all scopes, default is LOCAL)
-
-            Returns:
-                (dict of list of dict)
-            {
-                siteA : [
-                    {
-                        key:"root", label:"root",
-                        "type": "dict",
-                        "children":[
-                            { "key": "work",
-                              "type": "text",
-                              "value": "c:/projects"}
-                        ]
-                    },
-                    {
-                        key:"credentials_url", label:"Credentials url",
-                        "value":"'c:/projects/cred.json'", "type": "text",
-                        "namespace": "{project_setting}/global/sync_server/
-                                     sites"
-                    }
-                ]
-            }
-        """
-        allowed_sites = set()
-        sites = self.get_all_site_configs(project_name)
-        if project_name:
-            # Local Settings can select only from allowed sites for project
-            allowed_sites.update(set(self.get_active_sites(project_name)))
-            allowed_sites.update(set(self.get_remote_sites(project_name)))
-
-        editable = {}
-        for site_name in sites.keys():
-            if allowed_sites and site_name not in allowed_sites:
-                continue
-
-            items = self.get_configurable_items_for_site(project_name,
-                                                         site_name,
-                                                         scope)
-            # Local Settings need 'local' instead of real value
-            site_name = site_name.replace(get_local_site_id(), 'local')
-            editable[site_name] = items
-
-        return editable
-
-    def get_local_settings_schema_for_site(self, project_name, site_name):
-        """Wrapper for Local settings - for particular 'site_name and proj."""
-        return self.get_configurable_items_for_site(project_name,
-                                                    site_name,
-                                                    EditableScopes.LOCAL)
-
-    def get_configurable_items_for_site(self, project_name=None,
-                                        site_name=None,
-                                        scope=None):
-        """
-            Returns list of items that could be configurable.
-
-            Args:
-                project_name (str) - None > default project
-                site_name (str)
-                scope (list of utils.EditableScope)
-                    (optional, None is all scopes)
-
-            Returns:
-                (list)
-                [
-                    {
-                        key:"root", label:"root", type:"dict",
-                        "children":[
-                            { "key": "work",
-                              "type": "text",
-                              "value": "c:/projects"}
-                        ]
-                    }, ...
-                ]
-        """
-        provider_name = self.get_provider_for_site(site=site_name)
-        items = lib.factory.get_provider_configurable_items(provider_name)
-
-        if project_name:
-            sync_s = self.get_sync_project_setting(project_name,
-                                                   exclude_locals=True,
-                                                   cached=False)
-        else:
-            sync_s = get_default_project_settings(exclude_locals=True)
-            sync_s = sync_s["global"]["sync_server"]
-            sync_s["sites"].update(
-                self._get_default_site_configs(self.enabled))
-
-        editable = []
-        if type(scope) is not list:
-            scope = [scope]
-        scope = set(scope)
-        for key, properties in items.items():
-            if scope is None or scope.intersection(set(properties["scope"])):
-                val = sync_s.get("sites", {}).get(site_name, {}).get(key)
-
-                item = {
-                    "key": key,
-                    "label": properties["label"],
-                    "type": properties["type"]
-                }
-
-                if properties.get("namespace"):
-                    item["namespace"] = properties.get("namespace")
-                    if "platform" in item["namespace"]:
-                        try:
-                            if val:
-                                val = val[platform.system().lower()]
-                        except KeyError:
-                            st = "{}'s field value {} should be".format(key, val)  # noqa: E501
-                            log.error(st + " multiplatform dict")
-
-                    item["namespace"] = item["namespace"].replace('{site}',
-                                                                  site_name)
-                children = []
-                if properties["type"] == "dict":
-                    if val:
-                        for val_key, val_val in val.items():
-                            child = {
-                                "type": "text",
-                                "key": val_key,
-                                "value": val_val
-                            }
-                            children.append(child)
-
-                if properties["type"] == "dict":
-                    item["children"] = children
-                else:
-                    item["value"] = val
-
-                editable.append(item)
-
-        return editable
+    # Needs to be refactored after Settings are updated
+    # # Methods for Settings to get appriate values to fill forms
+    # def get_configurable_items(self, scope=None):
+    #     """
+    #         Returns list of sites that could be configurable for all projects.
+    #
+    #         Could be filtered by 'scope' argument (list)
+    #
+    #         Args:
+    #             scope (list of utils.EditableScope)
+    #
+    #         Returns:
+    #             (dict of list of dict)
+    #             {
+    #                 siteA : [
+    #                     {
+    #                         key:"root", label:"root",
+    #                         "value":"{'work': 'c:/projects'}",
+    #                         "type": "dict",
+    #                         "children":[
+    #                             { "key": "work",
+    #                               "type": "text",
+    #                               "value": "c:/projects"}
+    #                         ]
+    #                     },
+    #                     {
+    #                         key:"credentials_url", label:"Credentials url",
+    #                         "value":"'c:/projects/cred.json'", "type": "text",
+    #                         "namespace": "{project_setting}/global/sync_server/
+    #                                  sites"
+    #                     }
+    #                 ]
+    #             }
+    #     """
+    #     editable = {}
+    #     applicable_projects = list(self.connection.projects())
+    #     applicable_projects.append(None)
+    #     for project in applicable_projects:
+    #         project_name = None
+    #         if project:
+    #             project_name = project["name"]
+    #
+    #         items = self.get_configurable_items_for_project(project_name,
+    #                                                         scope)
+    #         editable.update(items)
+    #
+    #     return editable
+    #
+    # def get_local_settings_schema_for_project(self, project_name):
+    #     """Wrapper for Local settings - for specific 'project_name'"""
+    #     return self.get_configurable_items_for_project(project_name,
+    #                                                    EditableScopes.LOCAL)
+    #
+    # def get_configurable_items_for_project(self, project_name=None,
+    #                                        scope=None):
+    #     """
+    #         Returns list of items that could be configurable for specific
+    #         'project_name'
+    #
+    #         Args:
+    #             project_name (str) - None > default project,
+    #             scope (list of utils.EditableScope)
+    #                 (optional, None is all scopes, default is LOCAL)
+    #
+    #         Returns:
+    #             (dict of list of dict)
+    #         {
+    #             siteA : [
+    #                 {
+    #                     key:"root", label:"root",
+    #                     "type": "dict",
+    #                     "children":[
+    #                         { "key": "work",
+    #                           "type": "text",
+    #                           "value": "c:/projects"}
+    #                     ]
+    #                 },
+    #                 {
+    #                     key:"credentials_url", label:"Credentials url",
+    #                     "value":"'c:/projects/cred.json'", "type": "text",
+    #                     "namespace": "{project_setting}/global/sync_server/
+    #                                  sites"
+    #                 }
+    #             ]
+    #         }
+    #     """
+    #     allowed_sites = set()
+    #     sites = self.get_all_site_configs(project_name)
+    #     if project_name:
+    #         # Local Settings can select only from allowed sites for project
+    #         allowed_sites.update(set(self.get_active_sites(project_name)))
+    #         allowed_sites.update(set(self.get_remote_sites(project_name)))
+    #
+    #     editable = {}
+    #     for site_name in sites.keys():
+    #         if allowed_sites and site_name not in allowed_sites:
+    #             continue
+    #
+    #         items = self.get_configurable_items_for_site(project_name,
+    #                                                      site_name,
+    #                                                      scope)
+    #         # Local Settings need 'local' instead of real value
+    #         site_name = site_name.replace(get_local_site_id(), 'local')
+    #         editable[site_name] = items
+    #
+    #     return editable
+    #
+    # def get_configurable_items_for_site(self, project_name=None,
+    #                                     site_name=None,
+    #                                     scope=None):
+    #     """
+    #         Returns list of items that could be configurable.
+    #
+    #         Args:
+    #             project_name (str) - None > default project
+    #             site_name (str)
+    #             scope (list of utils.EditableScope)
+    #                 (optional, None is all scopes)
+    #
+    #         Returns:
+    #             (list)
+    #             [
+    #                 {
+    #                     key:"root", label:"root", type:"dict",
+    #                     "children":[
+    #                         { "key": "work",
+    #                           "type": "text",
+    #                           "value": "c:/projects"}
+    #                     ]
+    #                 }, ...
+    #             ]
+    #     """
+    #     provider_name = self.get_provider_for_site(site=site_name)
+    #     items = lib.factory.get_provider_configurable_items(provider_name)
+    #
+    #     if project_name:
+    #         sync_s = self.get_sync_project_setting(project_name,
+    #                                                exclude_locals=True,
+    #                                                cached=False)
+    #     else:
+    #         sync_s = get_default_project_settings(exclude_locals=True)
+    #         sync_s = sync_s["global"]["sync_server"]
+    #         sync_s["sites"].update(
+    #             self._get_default_site_configs(self.enabled))
+    #
+    #     editable = []
+    #     if type(scope) is not list:
+    #         scope = [scope]
+    #     scope = set(scope)
+    #     for key, properties in items.items():
+    #         if scope is None or scope.intersection(set(properties["scope"])):
+    #             val = sync_s.get("sites", {}).get(site_name, {}).get(key)
+    #
+    #             item = {
+    #                 "key": key,
+    #                 "label": properties["label"],
+    #                 "type": properties["type"]
+    #             }
+    #
+    #             if properties.get("namespace"):
+    #                 item["namespace"] = properties.get("namespace")
+    #                 if "platform" in item["namespace"]:
+    #                     try:
+    #                         if val:
+    #                             val = val[platform.system().lower()]
+    #                     except KeyError:
+    #                         st = "{}'s field value {} should be".format(key, val)  # noqa: E501
+    #                         log.error(st + " multiplatform dict")
+    #
+    #                 item["namespace"] = item["namespace"].replace('{site}',
+    #                                                               site_name)
+    #             children = []
+    #             if properties["type"] == "dict":
+    #                 if val:
+    #                     for val_key, val_val in val.items():
+    #                         child = {
+    #                             "type": "text",
+    #                             "key": val_key,
+    #                             "value": val_val
+    #                         }
+    #                         children.append(child)
+    #
+    #             if properties["type"] == "dict":
+    #                 item["children"] = children
+    #             else:
+    #                 item["value"] = val
+    #
+    #             editable.append(item)
+    #
+    #     return editable
 
     def reset_timer(self):
         """
