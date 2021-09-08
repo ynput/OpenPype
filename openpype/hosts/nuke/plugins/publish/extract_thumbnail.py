@@ -124,10 +124,10 @@ class ExtractThumbnail(openpype.api.Extractor):
         tags = ["thumbnail", "publish_on_farm"]
 
         # retime for
-        first_frame = int(last_frame) / 2
-        last_frame = int(last_frame) / 2
         mid_frame = int((int(last_frame) - int(first_frame)) / 2) \
             + int(first_frame)
+        first_frame = int(last_frame) / 2
+        last_frame = int(last_frame) / 2
 
         repre = {
             'name': name,
