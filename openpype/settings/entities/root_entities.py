@@ -9,8 +9,11 @@ from .base_entity import BaseItemEntity
 from .lib import (
     NOT_SET,
     WRAPPER_TYPES,
+    SCHEMA_KEY_SYSTEM_SETTINGS,
+    SCHEMA_KEY_PROJECT_SETTINGS,
     OverrideState,
-    SchemasHub
+    SchemasHub,
+    DynamicSchemaValueCollector
 )
 from .exceptions import (
     SchemaError,
@@ -28,6 +31,7 @@ from openpype.settings.lib import (
     DEFAULTS_DIR,
 
     get_default_settings,
+    reset_default_settings,
 
     get_studio_system_settings_overrides,
     save_studio_settings,
@@ -265,6 +269,16 @@ class RootEntity(BaseItemEntity):
             output[key] = child_obj.value
         return output
 
+    def collect_dynamic_schema_entities(self):
+        output = DynamicSchemaValueCollector(self.schema_hub)
+        if self._override_state is not OverrideState.DEFAULTS:
+            return output
+
+        for child_obj in self.non_gui_children.values():
+            child_obj.collect_dynamic_schema_entities(output)
+
+        return output
+
     def settings_value(self):
         """Value for current override state with metadata.
 
@@ -276,6 +290,8 @@ class RootEntity(BaseItemEntity):
         if self._override_state is not OverrideState.DEFAULTS:
             output = {}
             for key, child_obj in self.non_gui_children.items():
+                if child_obj.is_dynamic_schema_node:
+                    continue
                 value = child_obj.settings_value()
                 if value is not NOT_SET:
                     output[key] = value
@@ -374,6 +390,7 @@ class RootEntity(BaseItemEntity):
 
         if self._override_state is OverrideState.DEFAULTS:
             self._save_default_values()
+            reset_default_settings()
 
         elif self._override_state is OverrideState.STUDIO:
             self._save_studio_values()
@@ -420,6 +437,9 @@ class RootEntity(BaseItemEntity):
             self.log.debug("Saving data to: {}\n{}".format(subpath, value))
             with open(output_path, "w") as file_stream:
                 json.dump(value, file_stream, indent=4)
+
+        dynamic_values_item = self.collect_dynamic_schema_entities()
+        dynamic_values_item.save_values()
 
     @abstractmethod
     def _save_studio_values(self):
@@ -476,7 +496,7 @@ class SystemSettings(RootEntity):
     ):
         if schema_hub is None:
             # Load system schemas
-            schema_hub = SchemasHub("system_schema")
+            schema_hub = SchemasHub(SCHEMA_KEY_SYSTEM_SETTINGS)
 
         super(SystemSettings, self).__init__(schema_hub, reset)
 
@@ -607,7 +627,7 @@ class ProjectSettings(RootEntity):
 
         if schema_hub is None:
             # Load system schemas
-            schema_hub = SchemasHub("projects_schema")
+            schema_hub = SchemasHub(SCHEMA_KEY_PROJECT_SETTINGS)
 
         super(ProjectSettings, self).__init__(schema_hub, reset)
 

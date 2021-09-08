@@ -165,7 +165,8 @@ def filter_profiles(profiles_data, key_values, keys_order=None, logger=None):
             if match == -1:
                 profile_value = profile.get(key) or []
                 logger.debug(
-                    "\"{}\" not found in {}".format(key, profile_value)
+                    "\"{}\" not found in \"{}\": {}".format(value, key,
+                                                            profile_value)
                 )
                 profile_points = -1
                 break
@@ -192,13 +193,13 @@ def filter_profiles(profiles_data, key_values, keys_order=None, logger=None):
     ])
 
     if not matching_profiles:
-        logger.warning(
+        logger.info(
             "None of profiles match your setup. {}".format(log_parts)
         )
         return None
 
     if len(matching_profiles) > 1:
-        logger.warning(
+        logger.info(
             "More than one profile match your setup. {}".format(log_parts)
         )
 
