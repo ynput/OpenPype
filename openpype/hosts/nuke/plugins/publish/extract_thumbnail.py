@@ -126,7 +126,7 @@ class ExtractThumbnail(openpype.api.Extractor):
         # retime for
         first_frame = int(last_frame) / 2
         last_frame = int(last_frame) / 2
-        mid_frame = int((int(last_frame) - int(first_frame) ) / 2) + int(first_frame)
+        mid_frame = int((int(last_frame)-int(first_frame))/2)+int(first_frame)
 
         repre = {
             'name': name,
