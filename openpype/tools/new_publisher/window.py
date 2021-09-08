@@ -82,9 +82,13 @@ class PublisherWindow(QtWidgets.QDialog):
         change_view_btn = QtWidgets.QPushButton("=", subset_frame)
 
         # Subset details widget
-        subset_attributes_widget = SubsetAttributesWidget(
-            controller, subset_frame
+        subset_attributes_wrap = BorderedLabelWidget(
+            "Publish options", subset_frame
         )
+        subset_attributes_widget = SubsetAttributesWidget(
+            controller, subset_attributes_wrap
+        )
+        subset_attributes_wrap.set_center_widget(subset_attributes_widget)
 
         # Layout of buttons at the bottom of subset view
         subset_view_btns_layout = QtWidgets.QHBoxLayout()
@@ -108,7 +112,7 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_content_layout = QtWidgets.QHBoxLayout(subset_content_widget)
         subset_content_layout.setContentsMargins(0, 0, 0, 0)
         subset_content_layout.addWidget(subset_views_widget, 0)
-        subset_content_layout.addWidget(subset_attributes_widget, 1)
+        subset_content_layout.addWidget(subset_attributes_wrap, 1)
 
         # Footer
         message_input = QtWidgets.QLineEdit(subset_frame)
