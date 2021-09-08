@@ -417,7 +417,6 @@ class OpenPypeModule:
         """
         pass
 
-    @abstractmethod
     def connect_with_modules(self, enabled_modules):
         """Connect with other enabled modules."""
         pass
