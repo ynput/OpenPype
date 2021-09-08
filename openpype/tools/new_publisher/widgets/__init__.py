@@ -2,6 +2,8 @@ from .icons import (
     get_icon_path,
     get_pixmap,
     get_icon
+from .border_label_widget import (
+    BorderedLabelWidget
 )
 from .widgets import (
     SubsetAttributesWidget,
@@ -26,6 +28,7 @@ __all__ = (
     "get_icon",
 
     "SubsetAttributesWidget",
+    "BorderedLabelWidget",
     "IconBtn",
 
     "PublishFrame",

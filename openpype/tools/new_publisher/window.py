@@ -7,6 +7,7 @@ from openpype import (
 
 from .control import PublisherController
 from .widgets import (
+    BorderedLabelWidget,
     PublishFrame,
     SubsetAttributesWidget,
     InstanceCardView,
@@ -64,8 +65,12 @@ class PublisherWindow(QtWidgets.QDialog):
         # Subset widget
         subset_frame = QtWidgets.QWidget(self)
 
-        subset_view_cards = InstanceCardView(controller, subset_frame)
-        subset_list_view = InstanceListView(controller, subset_frame)
+        subset_views_widget = BorderedLabelWidget(
+            "Subsets to publish", subset_frame
+        )
+
+        subset_view_cards = InstanceCardView(controller, subset_views_widget)
+        subset_list_view = InstanceListView(controller, subset_views_widget)
 
         subset_views_layout = QtWidgets.QStackedLayout()
         subset_views_layout.addWidget(subset_view_cards)
@@ -96,11 +101,13 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_view_layout.addLayout(subset_views_layout, 1)
         subset_view_layout.addLayout(subset_view_btns_layout, 0)
 
+        subset_views_widget.set_center_widget(subset_view_layout)
+
         # Whole subset layout with attributes and details
         subset_content_widget = QtWidgets.QWidget(subset_frame)
         subset_content_layout = QtWidgets.QHBoxLayout(subset_content_widget)
         subset_content_layout.setContentsMargins(0, 0, 0, 0)
-        subset_content_layout.addLayout(subset_view_layout, 0)
+        subset_content_layout.addWidget(subset_views_widget, 0)
         subset_content_layout.addWidget(subset_attributes_widget, 1)
 
         # Footer
