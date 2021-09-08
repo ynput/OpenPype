@@ -10,6 +10,18 @@ _FONT_IDS = None
 current_dir = os.path.dirname(os.path.abspath(__file__))
 
 
+def get_colors_data():
+    data = _get_colors_raw_data()
+    return data.get("color") or {}
+
+
+def _get_colors_raw_data():
+    data_path = os.path.join(current_dir, "data.json")
+    with open(data_path, "r") as data_stream:
+        data = json.load(data_stream)
+    return data
+
+
 def _load_stylesheet():
     from . import qrc_resources
 
@@ -19,9 +31,7 @@ def _load_stylesheet():
     with open(style_path, "r") as style_file:
         stylesheet = style_file.read()
 
-    data_path = os.path.join(current_dir, "data.json")
-    with open(data_path, "r") as data_stream:
-        data = json.load(data_stream)
+    data = _get_colors_raw_data()
 
     data_deque = collections.deque()
     for item in data.items():
