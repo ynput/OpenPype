@@ -14,7 +14,10 @@ from .widgets import (
     InstanceListView,
     CreateDialog,
     IconBtn,
-    get_icon
+    StopBtn,
+    ResetBtn,
+    ValidateBtn,
+    PublishBtn,
 )
 
 
@@ -117,21 +120,10 @@ class PublisherWindow(QtWidgets.QDialog):
         # Footer
         message_input = QtWidgets.QLineEdit(subset_frame)
 
-        reset_btn = IconBtn(subset_frame)
-        reset_btn.setIcon(get_icon("refresh"))
-        reset_btn.setToolTip("Refresh publishing")
-
-        stop_btn = IconBtn(subset_frame)
-        stop_btn.setIcon(get_icon("stop"))
-        stop_btn.setToolTip("Stop/Pause publishing")
-
-        validate_btn = IconBtn(subset_frame)
-        validate_btn.setIcon(get_icon("validate"))
-        validate_btn.setToolTip("Validate")
-
-        publish_btn = IconBtn(subset_frame)
-        publish_btn.setIcon(get_icon("play"))
-        publish_btn.setToolTip("Publish")
+        reset_btn = ResetBtn(subset_frame)
+        stop_btn = StopBtn(subset_frame)
+        validate_btn = ValidateBtn(subset_frame)
+        publish_btn = PublishBtn(subset_frame)
 
         footer_widget = QtWidgets.QWidget(subset_frame)
         footer_layout = QtWidgets.QHBoxLayout(footer_widget)

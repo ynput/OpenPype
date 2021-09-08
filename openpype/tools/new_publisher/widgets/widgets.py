@@ -6,7 +6,10 @@ from Qt import QtWidgets, QtCore, QtGui
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools.flickcharm import FlickCharm
 
-from .icons import get_pixmap
+from .icons import (
+    get_pixmap,
+    get_icon_path
+)
 
 from ..constants import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
@@ -30,6 +33,95 @@ class IconBtn(QtWidgets.QPushButton):
     def _icon_size_change(self):
         icon_size = self.fontMetrics().height()
         self.setIconSize(QtCore.QSize(icon_size, icon_size))
+
+
+class PublishIconBtn(IconBtn):
+    def __init__(self, pixmap_path, *args, **kwargs):
+        super(PublishIconBtn, self).__init__(*args, **kwargs)
+
+        loaded_image = QtGui.QImage(pixmap_path)
+
+        pixmap = self.paint_image_with_color(loaded_image, QtCore.Qt.white)
+
+        self._base_image = loaded_image
+        self._enabled_icon = QtGui.QIcon(pixmap)
+        self._disabled_icon = None
+
+        self.setIcon(self._enabled_icon)
+
+    def get_enabled_icon(self):
+        return self._enabled_icon
+
+    def get_disabled_icon(self):
+        if self._disabled_icon is None:
+            pixmap = self.paint_image_with_color(
+                self._base_image, QtCore.Qt.gray
+            )
+            self._disabled_icon = QtGui.QIcon(pixmap)
+        return self._disabled_icon
+
+    @staticmethod
+    def paint_image_with_color(image, color):
+        width = image.width()
+        height = image.height()
+        tenth_w = int(width / 10)
+        tenth_h = int(height / 10)
+        tenth_w -= tenth_w % 2
+        tenth_h -= tenth_h % 2
+        scaled_image = image.scaled(
+            width - (2 * tenth_w),
+            height - (2 * tenth_h)
+        )
+        alpha_mask = scaled_image.createAlphaMask()
+        alpha_region = QtGui.QRegion(QtGui.QBitmap(alpha_mask))
+        alpha_region.translate(tenth_w, tenth_h)
+
+        pixmap = QtGui.QPixmap(width, height)
+        pixmap.fill(QtCore.Qt.transparent)
+
+        painter = QtGui.QPainter(pixmap)
+        painter.setClipRegion(alpha_region)
+        painter.setPen(QtCore.Qt.NoPen)
+        painter.setBrush(color)
+        painter.drawRect(QtCore.QRect(0, 0, width, height))
+        painter.end()
+
+        return pixmap
+
+    def setEnabled(self, enabled):
+        super(PublishIconBtn, self).setEnabled(enabled)
+        if self.isEnabled():
+            self.setIcon(self.get_enabled_icon())
+        else:
+            self.setIcon(self.get_disabled_icon())
+
+
+class ResetBtn(PublishIconBtn):
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("refresh")
+        super(ResetBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Refresh publishing")
+
+
+class StopBtn(PublishIconBtn):
+    def __init__(self, parent):
+        icon_path = get_icon_path("stop")
+        super(StopBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Stop/Pause publishing")
+
+
+class ValidateBtn(PublishIconBtn):
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("validate")
+        super(ValidateBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Validate")
+
+
+class PublishBtn(PublishIconBtn):
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("play")
+        super(PublishBtn, self).__init__(icon_path, "Publish", parent)
+        self.setToolTip("Publish")
 
 
 class AssetsHierarchyModel(QtGui.QStandardItemModel):

@@ -7,7 +7,11 @@ from .border_label_widget import (
 )
 from .widgets import (
     SubsetAttributesWidget,
-    IconBtn
+    IconBtn,
+    StopBtn,
+    ResetBtn,
+    ValidateBtn,
+    PublishBtn
 )
 from .publish_widget import (
     PublishFrame
@@ -30,6 +34,10 @@ __all__ = (
     "SubsetAttributesWidget",
     "BorderedLabelWidget",
     "IconBtn",
+    "StopBtn",
+    "ResetBtn",
+    "ValidateBtn",
+    "PublishBtn",
 
     "PublishFrame",
 
