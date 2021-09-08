@@ -19,18 +19,20 @@ class ImportModelRender(api.InventoryAction):
         from maya import cmds
 
         for container in containers:
-            container_name = container["objectName"]
+            con_name = container["objectName"]
             nodes = []
-            for n in cmds.sets(container_name, query=True, nodesOnly=True) or []:
+            for n in cmds.sets(con_name, query=True, nodesOnly=True) or []:
                 if cmds.nodeType(n) == "reference":
                     nodes += cmds.referenceQuery(n, nodes=True)
                 else:
                     nodes.append(n)
 
-            repr_doc = io.find_one({"_id": io.ObjectId(container["representation"])})
+            repr_doc = io.find_one({
+                "_id": io.ObjectId(container["representation"]),
+            })
             version_id = repr_doc["parent"]
 
-            print("Importing render sets for model %r" % container_name)
+            print("Importing render sets for model %r" % con_name)
             self.assign_model_render_by_version(nodes, version_id)
 
     def assign_model_render_by_version(self, nodes, version_id):
@@ -51,22 +53,25 @@ class ImportModelRender(api.InventoryAction):
         from openpype.hosts.maya.api import lib
 
         # Get representations of shader file and relationships
-        look_representation = io.find_one({"type": "representation",
-                                           "parent": version_id,
-                                           "name": self.scene_type})
-
-        if not look_representation:
+        look_repr = io.find_one({
+            "type": "representation",
+            "parent": version_id,
+            "name": self.scene_type,
+        })
+        if not look_repr:
             print("No model render sets for this model version..")
             return
 
-        json_representation = io.find_one({"type": "representation",
-                                           "parent": version_id,
-                                           "name": self.look_data_type})
+        json_repr = io.find_one({
+            "type": "representation",
+            "parent": version_id,
+            "name": self.look_data_type,
+        })
 
-        context = pipeline.get_representation_context(look_representation['_id'])
+        context = pipeline.get_representation_context(look_repr["_id"])
         maya_file = pipeline.get_representation_path_from_context(context)
 
-        context = pipeline.get_representation_context(json_representation['_id'])
+        context = pipeline.get_representation_context(json_repr["_id"])
         json_file = pipeline.get_representation_path_from_context(context)
 
         # Import the look file

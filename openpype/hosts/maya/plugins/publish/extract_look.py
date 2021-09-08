@@ -489,9 +489,9 @@ class ExtractLook(openpype.api.Extractor):
 class ExtractModelRenderSets(ExtractLook):
     """Extract model render attribute sets as model metadata
 
-    Only extracts the render attrib sets (NO shadingEngines) alongside a .json file
-    that stores it relationships for the sets and "attribute" data for the
-    instance members.
+    Only extracts the render attrib sets (NO shadingEngines) alongside
+    a .json file that stores it relationships for the sets and "attribute"
+    data for the instance members.
 
     """
 
