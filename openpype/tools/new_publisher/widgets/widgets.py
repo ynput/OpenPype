@@ -63,17 +63,18 @@ class PublishIconBtn(IconBtn):
     def paint_image_with_color(image, color):
         width = image.width()
         height = image.height()
-        tenth_w = int(width / 10)
-        tenth_h = int(height / 10)
-        tenth_w -= tenth_w % 2
-        tenth_h -= tenth_h % 2
+        partition = 8
+        part_w = int(width / partition)
+        part_h = int(height / partition)
+        part_w -= part_w % 2
+        part_h -= part_h % 2
         scaled_image = image.scaled(
-            width - (2 * tenth_w),
-            height - (2 * tenth_h)
+            width - (2 * part_w),
+            height - (2 * part_h)
         )
         alpha_mask = scaled_image.createAlphaMask()
         alpha_region = QtGui.QRegion(QtGui.QBitmap(alpha_mask))
-        alpha_region.translate(tenth_w, tenth_h)
+        alpha_region.translate(part_w, part_h)
 
         pixmap = QtGui.QPixmap(width, height)
         pixmap.fill(QtCore.Qt.transparent)
