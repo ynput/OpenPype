@@ -8,7 +8,7 @@ import copy
 from avalon.api import AvalonMongoDB
 
 from openpype.modules import OpenPypeModule
-from openpype.modules.default_modules.interfaces import ITrayModule
+from openpype_interfaces import ITrayModule
 from openpype.api import (
     Anatomy,
     get_project_settings,
@@ -16,14 +16,13 @@ from openpype.api import (
     get_local_site_id)
 from openpype.lib import PypeLogger
 from openpype.settings.lib import (
-    get_default_project_settings,
     get_default_anatomy_settings,
     get_anatomy_settings)
 
 from .providers.local_drive import LocalDriveHandler
 from .providers import lib
 
-from .utils import time_function, SyncStatus, EditableScopes
+from .utils import time_function, SyncStatus
 
 
 log = PypeLogger().get_logger("SyncServer")
@@ -646,7 +645,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
         enabled_projects = []
 
         if self.enabled:
-            for project in self.connection.projects():
+            for project in self.connection.projects(projection={"name": 1}):
                 project_name = project["name"]
                 project_settings = self.get_sync_project_setting(project_name)
                 if project_settings and project_settings.get("enabled"):
