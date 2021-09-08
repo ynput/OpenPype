@@ -469,6 +469,10 @@ class DictConditionalEntity(ItemEntity):
                     return True
         return False
 
+    def collect_dynamic_schema_entities(self, collector):
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
+
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
@@ -482,13 +486,7 @@ class DictConditionalEntity(ItemEntity):
 
             output = {}
             for key, child_obj in children_items:
-                child_value = child_obj.settings_value()
-                if not child_obj.is_file and not child_obj.file_item:
-                    for _key, _value in child_value.items():
-                        new_key = "/".join([key, _key])
-                        output[new_key] = _value
-                else:
-                    output[key] = child_value
+                output[key] = child_obj.settings_value()
             return output
 
         if self.is_group:

@@ -56,6 +56,19 @@ openpype_console --list-versions
 You can add `--use-staging` to list staging versions.
 :::
 
+If you want to validate integrity of some available version, you can use:
+
+```shell
+openpype_console --validate-version=3.3.0
+```
+
+This will go through the version and validate file content against sha 256 hashes
+stored in `checksums` file.
+
+:::tip Headless mode
+Add `--headless` to run OpenPype without graphical UI (useful on server or on automated tasks, etc.)
+:::
+
 ### Details
 When you run OpenPype from executable, few check are made: 
 
