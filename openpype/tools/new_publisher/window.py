@@ -114,8 +114,8 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_content_widget = QtWidgets.QWidget(subset_frame)
         subset_content_layout = QtWidgets.QHBoxLayout(subset_content_widget)
         subset_content_layout.setContentsMargins(0, 0, 0, 0)
-        subset_content_layout.addWidget(subset_views_widget, 0)
-        subset_content_layout.addWidget(subset_attributes_wrap, 1)
+        subset_content_layout.addWidget(subset_views_widget, 3)
+        subset_content_layout.addWidget(subset_attributes_wrap, 7)
 
         # Footer
         message_input = QtWidgets.QLineEdit(subset_frame)
