@@ -22,17 +22,16 @@ class IconBtn(QtWidgets.QPushButton):
 
     Using font metrics height as icon size reference.
     """
-    def resizeEvent(self, event):
-        super(IconBtn, self).resizeEvent(event)
-        self._icon_size_change()
-
-    def showEvent(self, event):
-        super(IconBtn, self).showEvent(event)
-        self._icon_size_change()
-
-    def _icon_size_change(self):
-        icon_size = self.fontMetrics().height()
-        self.setIconSize(QtCore.QSize(icon_size, icon_size))
+    def sizeHint(self):
+        result = super().sizeHint()
+        if not self.text():
+            new_height = (
+                result.height()
+                - self.iconSize().height()
+                + self.fontMetrics().height()
+            )
+            result.setHeight(new_height)
+        return result
 
 
 class PublishIconBtn(IconBtn):
