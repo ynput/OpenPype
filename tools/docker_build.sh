@@ -27,17 +27,15 @@ create_container () {
   fi
   local id=$(<"$openpype_root/build/docker-image.id")
   echo -e "${BIYellow}---${RST} Creating container from $id ..."
-  local cid="$(docker create $id bash)"
+  cid="$(docker create $id bash)"
   if [ $? -ne 0 ] ; then
     echo -e "${BIRed}!!!${RST} Cannot create container."
     exit 1
   fi
-  return $cid
 }
 
 retrieve_build_log () {
   create_container
-  local cid=$?
   echo -e "${BIYellow}***${RST} Copying build log to ${BIWhite}$openpype_root/build/build.log${RST}"
   docker cp "$cid:/opt/openpype/build/build.log" "$openpype_root/build"
 }
@@ -65,7 +63,6 @@ main () {
 
   echo -e "${BIGreen}>>>${RST} Copying build from container ..."
   create_container
-  local cid=$?
   echo -e "${BIYellow}---${RST} Copying ..."
   docker cp "$cid:/opt/openpype/build/exe.linux-x86_64-3.7" "$openpype_root/build"
   docker cp "$cid:/opt/openpype/build/build.log" "$openpype_root/build"
@@ -79,7 +76,7 @@ main () {
   chown -R $username ./build
 
   echo -e "${BIGreen}>>>${RST} All done, you can delete container:"
-  echo -e "${BIYellow}$id${RST}"
+  echo -e "${BIYellow}$cid${RST}"
 }
 
 return_code=0
