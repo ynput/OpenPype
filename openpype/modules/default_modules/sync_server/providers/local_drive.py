@@ -49,18 +49,10 @@ class LocalDriveHandler(AbstractProvider):
             Returns:
                 (list) of dict
         """
-        # {platform} tells that value is multiplatform and only specific OS
-        # should be returned
+        # for non 'studio' sites, 'studio' is configured in Anatomy
         editable = [
-            # credentials could be override on Project or User level
             {
-                'label': "Credentials url",
-                'type': 'text',
-                'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'  # noqa: E501
-            },
-            # roots could be override only on Project leve, User cannot
-            #
-            {
+                'key': "roots",
                 'label': "Roots",
                 'type': 'dict'
             }
@@ -78,6 +70,7 @@ class LocalDriveHandler(AbstractProvider):
         """
         editable = [
             {
+                'key': "roots",
                 'label': "Roots",
                 'type': 'dict'
             }

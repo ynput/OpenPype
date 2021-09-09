@@ -120,6 +120,7 @@ class GDriveHandler(AbstractProvider):
         editable = [
             # credentials could be override on Project or User level
              {
+                'key': "credentials_url",
                 'label': "Credentials url",
                 'type': 'text',
                 'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'  # noqa: E501
@@ -127,6 +128,7 @@ class GDriveHandler(AbstractProvider):
             # roots could be override only on Project leve, User cannot
             #
             {
+                 'key': "roots",
                  'label': "Roots",
                  'type': 'dict'
             }
@@ -145,6 +147,7 @@ class GDriveHandler(AbstractProvider):
         editable = [
             # credentials could be override on Project or User level
             {
+                'key': "credentials_url",
                 'label': "Credentials url",
                 'type': 'text',
                 'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'
