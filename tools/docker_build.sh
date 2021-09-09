@@ -40,6 +40,21 @@ retrieve_build_log () {
   docker cp "$cid:/opt/openpype/build/build.log" "$openpype_root/build"
 }
 
+openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
+
+
+if [ -z $1 ]; then
+    dockerfile="Dockerfile"
+else
+  dockerfile="Dockerfile.$1"
+  if [ ! -f "$openpype_root/$dockerfile" ]; then
+    echo -e "${BIRed}!!!${RST} Dockerfile for specifed platform ${BIWhite}$1${RST} doesn't exist."
+    exit 1
+  else
+    echo -e "${BIGreen}>>>${RST} Using Dockerfile for ${BIWhite}$1${RST} ..."
+  fi
+fi
+
 # Main
 main () {
   openpype_root=$(realpath $(dirname $(dirname "${BASH_SOURCE[0]}")))
@@ -53,7 +68,7 @@ main () {
 
   echo -e "${BIGreen}>>>${RST} Running docker build ..."
   # docker build --pull --no-cache -t pypeclub/openpype:$openpype_version .
-  docker build --pull --iidfile $openpype_root/build/docker-image.id -t pypeclub/openpype:$openpype_version .
+  docker build --pull --iidfile $openpype_root/build/docker-image.id -t pypeclub/openpype:$openpype_version -f $dockerfile .
   if [ $? -ne 0 ] ; then
     echo $?
     echo -e "${BIRed}!!!${RST} Docker build failed."
