@@ -124,6 +124,76 @@ class PublishBtn(PublishIconBtn):
         self.setToolTip("Publish")
 
 
+class AbstractInstanceView(QtWidgets.QWidget):
+    selection_changed = QtCore.Signal()
+    active_changed = QtCore.Signal(set)
+    refreshed = False
+
+    def set_refreshed(self, refreshed):
+        self.refreshed = refreshed
+
+    def refresh(self):
+        raise NotImplementedError((
+            "{} Method 'refresh' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def get_selected_items(self):
+        raise NotImplementedError((
+            "{} Method 'get_selected_items' is not implemented."
+        ).format(self.__class__.__name__))
+
+    def set_selected_items(self, instances, context_selected):
+        raise NotImplementedError((
+            "{} Method 'set_selected_items' is not implemented."
+        ).format(self.__class__.__name__))
+
+
+class ContextWarningLabel(QtWidgets.QLabel):
+    cached_images_by_size = {}
+    source_image = None
+
+    def __init__(self, parent):
+        super(ContextWarningLabel, self).__init__(parent)
+        self.setToolTip(
+            "Contain invalid context. Please check details."
+        )
+
+        self._image = None
+        if self.__class__.source_image is None:
+            self.__class__.source_image = get_pixmap("warning")
+
+    @classmethod
+    def _get_pixmap_by_size(cls, size):
+        image = cls.cached_images_by_size.get(size)
+        if image is not None:
+            return image
+
+        margins = int(size / 8)
+        margins_double = margins * 2
+        pix = QtGui.QPixmap(size, size)
+        pix.fill(QtCore.Qt.transparent)
+
+        scaled_image = cls.source_image.scaled(
+            size - margins_double, size - margins_double,
+            QtCore.Qt.KeepAspectRatio,
+            QtCore.Qt.SmoothTransformation
+        )
+        painter = QtGui.QPainter(pix)
+        painter.setRenderHints(
+            painter.Antialiasing | painter.SmoothPixmapTransform
+        )
+        painter.drawPixmap(margins, margins, scaled_image)
+        painter.end()
+
+        return pix
+
+    def showEvent(self, event):
+        super(ContextWarningLabel, self).showEvent(event)
+        if self._image is None:
+            self._image = self._get_pixmap_by_size(self.height())
+            self.setPixmap(self._image)
+
+
 class AssetsHierarchyModel(QtGui.QStandardItemModel):
     def __init__(self, controller):
         super(AssetsHierarchyModel, self).__init__()

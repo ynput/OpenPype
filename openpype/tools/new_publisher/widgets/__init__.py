@@ -20,8 +20,11 @@ from .create_dialog import (
     CreateDialog
 )
 
+from .card_view_widgets import (
+    InstanceCardView
+)
+
 from .instance_views_widgets import (
-    InstanceCardView,
     InstanceListView
 )
 
