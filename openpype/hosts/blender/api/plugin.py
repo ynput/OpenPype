@@ -5,11 +5,12 @@ from typing import Dict, List, Optional
 
 import bpy
 
-from avalon import api
-import avalon.blender
+from avalon import api, blender
+from avalon.blender import ops
+from avalon.blender.pipeline import AVALON_CONTAINERS
 from openpype.api import PypeCreatorMixin
 
-VALID_EXTENSIONS = [".blend", ".json", ".abc"]
+VALID_EXTENSIONS = [".blend", ".json", ".abc", ".fbx"]
 
 
 def asset_name(
@@ -27,32 +28,24 @@ def get_unique_number(
     asset: str, subset: str
 ) -> str:
     """Return a unique number based on the asset name."""
-    avalon_containers = [
-        c for c in bpy.data.collections
-        if c.name == 'AVALON_CONTAINERS'
-    ]
-    containers = []
-    # First, add the children of avalon containers
-    for c in avalon_containers:
-        containers.extend(c.children)
-    # then keep looping to include all the children
-    for c in containers:
-        containers.extend(c.children)
-    container_names = [
-        c.name for c in containers
-    ]
+    avalon_container = bpy.data.collections.get(AVALON_CONTAINERS)
+    if not avalon_container:
+        return "01"
+    asset_groups = avalon_container.all_objects
+
+    container_names = [c.name for c in asset_groups if c.type == 'EMPTY']
     count = 1
-    name = f"{asset}_{count:0>2}_{subset}_CON"
+    name = f"{asset}_{count:0>2}_{subset}"
     while name in container_names:
         count += 1
-        name = f"{asset}_{count:0>2}_{subset}_CON"
+        name = f"{asset}_{count:0>2}_{subset}"
     return f"{count:0>2}"
 
 
 def prepare_data(data, container_name):
     name = data.name
     local_data = data.make_local()
-    local_data.name = f"{name}:{container_name}"
+    local_data.name = f"{container_name}:{name}"
     return local_data
 
 
@@ -102,7 +95,7 @@ def get_local_collection_with_name(name):
     return None
 
 
-class Creator(PypeCreatorMixin, avalon.blender.Creator):
+class Creator(PypeCreatorMixin, blender.Creator):
     pass
 
 
@@ -173,6 +166,16 @@ class AssetLoader(api.Loader):
              name: Optional[str] = None,
              namespace: Optional[str] = None,
              options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
+        """ Run the loader on Blender main thread"""
+        mti = ops.MainThreadItem(self._load, context, name, namespace, options)
+        ops.execute_in_main_thread(mti)
+
+    def _load(self,
+              context: dict,
+              name: Optional[str] = None,
+              namespace: Optional[str] = None,
+              options: Optional[Dict] = None
+    ) -> Optional[bpy.types.Collection]:
         """Load asset via database
 
         Arguments:
@@ -218,16 +221,26 @@ class AssetLoader(api.Loader):
         #         loader=self.__class__.__name__,
         #     )
 
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-        instance_name = asset_name(asset, subset, unique_number) + '_CON'
+        # asset = context["asset"]["name"]
+        # subset = context["subset"]["name"]
+        # instance_name = asset_name(asset, subset, unique_number) + '_CON'
 
-        return self._get_instance_collection(instance_name, nodes)
+        # return self._get_instance_collection(instance_name, nodes)
+
+    def exec_update(self, container: Dict, representation: Dict):
+        """Must be implemented by a sub-class"""
+        raise NotImplementedError("Must be implemented by a sub-class")
 
     def update(self, container: Dict, representation: Dict):
+        """ Run the update on Blender main thread"""
+        mti = ops.MainThreadItem(self.exec_update, container, representation)
+        ops.execute_in_main_thread(mti)
+
+    def exec_remove(self, container: Dict) -> bool:
         """Must be implemented by a sub-class"""
         raise NotImplementedError("Must be implemented by a sub-class")
 
     def remove(self, container: Dict) -> bool:
-        """Must be implemented by a sub-class"""
-        raise NotImplementedError("Must be implemented by a sub-class")
+        """ Run the remove on Blender main thread"""
+        mti = ops.MainThreadItem(self.exec_remove, container)
+        ops.execute_in_main_thread(mti)

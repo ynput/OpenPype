@@ -3,7 +3,8 @@ import json
 
 import bpy
 
-from avalon import blender, io
+from avalon import io
+from avalon.blender.pipeline import AVALON_PROPERTY
 import openpype.api
 
 
@@ -24,52 +25,49 @@ class ExtractLayout(openpype.api.Extractor):
 
         json_data = []
 
-        for collection in instance:
-            for asset in collection.children:
-                collection = bpy.data.collections[asset.name]
-                container = bpy.data.collections[asset.name + '_CON']
-                metadata = container.get(blender.pipeline.AVALON_PROPERTY)
+        asset_group = bpy.data.objects[str(instance)]
 
-                parent = metadata["parent"]
-                family = metadata["family"]
+        for asset in asset_group.children:
+            metadata = asset.get(AVALON_PROPERTY)
 
-                self.log.debug("Parent: {}".format(parent))
-                blend = io.find_one(
-                    {
-                        "type": "representation",
-                        "parent": io.ObjectId(parent),
-                        "name": "blend"
-                    },
-                    projection={"_id": True})
-                blend_id = blend["_id"]
+            parent = metadata["parent"]
+            family = metadata["family"]
 
-                json_element = {}
-                json_element["reference"] = str(blend_id)
-                json_element["family"] = family
-                json_element["instance_name"] = asset.name
-                json_element["asset_name"] = metadata["lib_container"]
-                json_element["file_path"] = metadata["libpath"]
+            self.log.debug("Parent: {}".format(parent))
+            blend = io.find_one(
+                {
+                    "type": "representation",
+                    "parent": io.ObjectId(parent),
+                    "name": "blend"
+                },
+                projection={"_id": True})
+            blend_id = blend["_id"]
 
-                obj = collection.objects[0]
+            json_element = {}
+            json_element["reference"] = str(blend_id)
+            json_element["family"] = family
+            json_element["instance_name"] = asset.name
+            json_element["asset_name"] = metadata["asset_name"]
+            json_element["file_path"] = metadata["libpath"]
 
-                json_element["transform"] = {
-                    "translation": {
-                        "x": obj.location.x,
-                        "y": obj.location.y,
-                        "z": obj.location.z
-                    },
-                    "rotation": {
-                        "x": obj.rotation_euler.x,
-                        "y": obj.rotation_euler.y,
-                        "z": obj.rotation_euler.z,
-                    },
-                    "scale": {
-                        "x": obj.scale.x,
-                        "y": obj.scale.y,
-                        "z": obj.scale.z
-                    }
+            json_element["transform"] = {
+                "translation": {
+                    "x": asset.location.x,
+                    "y": asset.location.y,
+                    "z": asset.location.z
+                },
+                "rotation": {
+                    "x": asset.rotation_euler.x,
+                    "y": asset.rotation_euler.y,
+                    "z": asset.rotation_euler.z,
+                },
+                "scale": {
+                    "x": asset.scale.x,
+                    "y": asset.scale.y,
+                    "z": asset.scale.z
                 }
-                json_data.append(json_element)
+            }
+            json_data.append(json_element)
 
         json_filename = "{}.json".format(instance.name)
         json_path = os.path.join(stagingdir, json_filename)

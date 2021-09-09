@@ -44,15 +44,40 @@ class ProjectHandler(QtCore.QObject):
 
     # Signal emmited when project has changed
     project_changed = QtCore.Signal(str)
+    projects_refreshed = QtCore.Signal()
+    timer_timeout = QtCore.Signal()
 
     def __init__(self, dbcon, model):
         super(ProjectHandler, self).__init__()
+        self._active = False
         # Store project model for usage
         self.model = model
         # Store dbcon
         self.dbcon = dbcon
 
         self.current_project = dbcon.Session.get("AVALON_PROJECT")
+
+        refresh_timer = QtCore.QTimer()
+        refresh_timer.setInterval(self.refresh_interval)
+        refresh_timer.timeout.connect(self._on_timeout)
+
+        self.refresh_timer = refresh_timer
+
+    def _on_timeout(self):
+        if self._active:
+            self.timer_timeout.emit()
+            self.refresh_model()
+
+    def set_active(self, active):
+        self._active = active
+
+    def start_timer(self, trigger=False):
+        self.refresh_timer.start()
+        if trigger:
+            self._on_timeout()
+
+    def stop_timer(self):
+        self.refresh_timer.stop()
 
     def set_project(self, project_name):
         # Change current project of this handler
@@ -66,6 +91,7 @@ class ProjectHandler(QtCore.QObject):
 
     def refresh_model(self):
         self.model.refresh()
+        self.projects_refreshed.emit()
 
 
 def get_action_icon(action):

@@ -6,6 +6,18 @@
     "is_file": true,
     "children": [
         {
+            "type": "path",
+            "key": "addon_paths",
+            "label": "OpenPype AddOn Paths",
+            "use_label_wrap": true,
+            "multiplatform": true,
+            "multipath": true,
+            "require_restart": true
+        },
+        {
+            "type": "separator"
+        },
+        {
             "type": "dict",
             "key": "avalon",
             "label": "Avalon",
@@ -60,6 +72,11 @@
                     "decimal": 2,
                     "key": "message_time",
                     "label": "When dialog will show"
+                },
+                {
+                    "type": "boolean",
+                    "key": "disregard_publishing",
+                    "label": "Disregard Publishing"
                 }
             ]
         },

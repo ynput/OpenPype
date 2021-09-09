@@ -14,19 +14,11 @@ from .tools import (
     validate_mongo_connection,
     get_openpype_path_from_db
 )
+
+from .nice_progress_bar import NiceProgressBar
 from .user_settings import OpenPypeSecureRegistry
+from .tools import load_stylesheet
 from .version import __version__
-
-
-def load_stylesheet():
-    stylesheet_path = os.path.join(
-        os.path.dirname(__file__),
-        "stylesheet.css"
-    )
-    with open(stylesheet_path, "r") as file_stream:
-        stylesheet = file_stream.read()
-
-    return stylesheet
 
 
 class ButtonWithOptions(QtWidgets.QFrame):
@@ -89,25 +81,6 @@ class ButtonWithOptions(QtWidgets.QFrame):
 
     def _on_main_button(self):
         self.option_clicked.emit(self._default_value)
-
-
-class NiceProgressBar(QtWidgets.QProgressBar):
-    def __init__(self, parent=None):
-        super(NiceProgressBar, self).__init__(parent)
-        self._real_value = 0
-
-    def setValue(self, value):
-        self._real_value = value
-        if value != 0 and value < 11:
-            value = 11
-
-        super(NiceProgressBar, self).setValue(value)
-
-    def value(self):
-        return self._real_value
-
-    def text(self):
-        return "{} %".format(self._real_value)
 
 
 class ConsoleWidget(QtWidgets.QWidget):

@@ -115,6 +115,9 @@ class PathEntity(ItemEntity):
     def set(self, value):
         self.child_obj.set(value)
 
+    def collect_dynamic_schema_entities(self, *args, **kwargs):
+        self.child_obj.collect_dynamic_schema_entities(*args, **kwargs)
+
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:
             return NOT_SET
@@ -236,7 +239,12 @@ class ListStrictEntity(ItemEntity):
 
     def schema_validations(self):
         # List entity must have file parent.
-        if not self.file_item and not self.is_file:
+        if (
+            not self.is_dynamic_schema_node
+            and not self.is_in_dynamic_schema_node
+            and not self.is_file
+            and self.file_item is None
+        ):
             raise EntitySchemaError(
                 self, "Missing file entity in hierarchy."
             )
@@ -278,6 +286,10 @@ class ListStrictEntity(ItemEntity):
         new_value = self.convert_to_valid_type(value)
         for idx, item in enumerate(new_value):
             self.children[idx].set(item)
+
+    def collect_dynamic_schema_entities(self, collector):
+        if self.is_dynamic_schema_node:
+            collector.add_entity(self)
 
     def settings_value(self):
         if self._override_state is OverrideState.NOT_DEFINED:

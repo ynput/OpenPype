@@ -184,6 +184,15 @@
                     "maximum": -5
                 },
                 {
+                    "type": "number",
+                    "key": "number_with_slider",
+                    "label": "Number with slider",
+                    "decimal": 2,
+                    "minimum": 0.0,
+                    "maximum": 1.0,
+                    "show_slider": true
+                },
+                {
                     "type": "text",
                     "key": "singleline_text",
                     "label": "Singleline text"

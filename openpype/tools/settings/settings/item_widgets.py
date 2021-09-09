@@ -21,6 +21,7 @@ from .base import (
     BaseWidget,
     InputWidget
 )
+from openpype.widgets.sliders import NiceSlider
 from openpype.tools.settings import CHILD_OFFSET
 
 
@@ -47,6 +48,10 @@ class DictImmutableKeysWidget(BaseWidget):
         else:
             self._ui_item_base()
             label = self.entity.label
+
+        # Set stretch of second column to 1
+        if isinstance(self.content_layout, QtWidgets.QGridLayout):
+            self.content_layout.setColumnStretch(1, 1)
 
         self._direct_children_widgets = []
         self._parent_widget_by_entity_id = {}
@@ -88,6 +93,25 @@ class DictImmutableKeysWidget(BaseWidget):
             self._parent_widget_by_entity_id[wrapper.id] = widget
 
             self._prepare_entity_layouts(child["children"], wrapper)
+
+    def set_focus(self, scroll_to=False):
+        """Set focus of a widget.
+
+        Args:
+            scroll_to(bool): Also scroll to widget in category widget.
+        """
+        if self.body_widget:
+            if scroll_to:
+                self.scroll_to(self.body_widget.top_part)
+            self.body_widget.top_part.setFocus()
+
+        else:
+            if scroll_to:
+                if not self.input_fields:
+                    self.scroll_to(self)
+                else:
+                    self.scroll_to(self.input_fields[0])
+            self.setFocus()
 
     def _ui_item_base(self):
         self.setObjectName("DictInvisible")
@@ -312,7 +336,11 @@ class BoolWidget(InputWidget):
 
         self.setFocusProxy(self.input_field)
 
+        self.input_field.focused_in.connect(self._on_input_focus)
         self.input_field.stateChanged.connect(self._on_value_change)
+
+    def _on_input_focus(self):
+        self.focused_in()
 
     def _on_entity_change(self):
         if self.entity.value != self.input_field.isChecked():
@@ -377,6 +405,8 @@ class TextWidget(InputWidget):
 
 
 class NumberWidget(InputWidget):
+    _slider_widget = None
+
     def _add_inputs_to_layout(self):
         kwargs = {
             "minimum": self.entity.minimum,
@@ -384,13 +414,38 @@ class NumberWidget(InputWidget):
             "decimal": self.entity.decimal
         }
         self.input_field = NumberSpinBox(self.content_widget, **kwargs)
+        input_field_stretch = 1
+
+        slider_multiplier = 1
+        if self.entity.show_slider:
+            # Slider can't handle float numbers so all decimals are converted
+            #   to integer range.
+            slider_multiplier = 10 ** self.entity.decimal
+            slider_widget = NiceSlider(QtCore.Qt.Horizontal, self)
+            slider_widget.setRange(
+                int(self.entity.minimum * slider_multiplier),
+                int(self.entity.maximum * slider_multiplier)
+            )
+
+            self.content_layout.addWidget(slider_widget, 1)
+
+            slider_widget.valueChanged.connect(self._on_slider_change)
+
+            self._slider_widget = slider_widget
+
+            input_field_stretch = 0
+
+        self._slider_multiplier = slider_multiplier
 
         self.setFocusProxy(self.input_field)
 
-        self.content_layout.addWidget(self.input_field, 1)
+        self.content_layout.addWidget(self.input_field, input_field_stretch)
 
         self.input_field.valueChanged.connect(self._on_value_change)
         self.input_field.focused_in.connect(self._on_input_focus)
+
+        self._ignore_slider_change = False
+        self._ignore_input_change = False
 
     def _on_input_focus(self):
         self.focused_in()
@@ -402,10 +457,25 @@ class NumberWidget(InputWidget):
     def set_entity_value(self):
         self.input_field.setValue(self.entity.value)
 
+    def _on_slider_change(self, new_value):
+        if self._ignore_slider_change:
+            return
+
+        self._ignore_input_change = True
+        self.input_field.setValue(new_value / self._slider_multiplier)
+        self._ignore_input_change = False
+
     def _on_value_change(self):
         if self.ignore_input_changes:
             return
-        self.entity.set(self.input_field.value())
+
+        value = self.input_field.value()
+        if self._slider_widget is not None and not self._ignore_input_change:
+            self._ignore_slider_change = True
+            self._slider_widget.setValue(value * self._slider_multiplier)
+            self._ignore_slider_change = False
+
+        self.entity.set(value)
 
 
 class RawJsonInput(SettingsPlainTextEdit):

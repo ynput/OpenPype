@@ -1,14 +1,16 @@
 import os
 import json
 
-import openpype.api
-
 import bpy
 import bpy_extras
 import bpy_extras.anim_utils
 
+from openpype import api
+from openpype.hosts.blender.api import plugin
+from avalon.blender.pipeline import AVALON_PROPERTY
 
-class ExtractAnimationFBX(openpype.api.Extractor):
+
+class ExtractAnimationFBX(api.Extractor):
     """Extract as animation."""
 
     label = "Extract FBX"
@@ -20,33 +22,26 @@ class ExtractAnimationFBX(openpype.api.Extractor):
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
 
-        context = bpy.context
-        scene = context.scene
-
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        collections = [
-            obj for obj in instance if type(obj) is bpy.types.Collection]
+        # The first collection object in the instance is taken, as there
+        # should be only one that contains the asset group.
+        collection = [
+            obj for obj in instance if type(obj) is bpy.types.Collection][0]
 
-        assert len(collections) == 1, "There should be one and only one " \
-            "collection collected for this asset"
+        # Again, the first object in the collection is taken , as there
+        # should be only the asset group in the collection.
+        asset_group = collection.objects[0]
 
-        old_scale = scene.unit_settings.scale_length
+        armature = [
+            obj for obj in asset_group.children if obj.type == 'ARMATURE'][0]
 
-        # We set the scale of the scene for the export
-        scene.unit_settings.scale_length = 0.01
-
-        armatures = [
-            obj for obj in collections[0].objects if obj.type == 'ARMATURE']
-
-        assert len(collections) == 1, "There should be one and only one " \
-            "armature collected for this asset"
-
-        armature = armatures[0]
+        asset_group_name = asset_group.name
+        asset_group.name = asset_group.get(AVALON_PROPERTY).get("asset_name")
 
         armature_name = armature.name
-        original_name = armature_name.split(':')[0]
+        original_name = armature_name.split(':')[1]
         armature.name = original_name
 
         object_action_pairs = []
@@ -89,26 +84,28 @@ class ExtractAnimationFBX(openpype.api.Extractor):
         for obj in bpy.data.objects:
             obj.select_set(False)
 
+        asset_group.select_set(True)
         armature.select_set(True)
         fbx_filename = f"{instance.name}_{armature.name}.fbx"
         filepath = os.path.join(stagingdir, fbx_filename)
 
-        override = bpy.context.copy()
-        override['selected_objects'] = [armature]
+        override = plugin.create_blender_context(
+            active=asset_group, selected=[asset_group, armature])
         bpy.ops.export_scene.fbx(
             override,
             filepath=filepath,
+            use_active_collection=False,
             use_selection=True,
             bake_anim_use_nla_strips=False,
             bake_anim_use_all_actions=False,
             add_leaf_bones=False,
             armature_nodetype='ROOT',
-            object_types={'ARMATURE'}
+            object_types={'EMPTY', 'ARMATURE'}
         )
         armature.name = armature_name
+        asset_group.name = asset_group_name
+        asset_group.select_set(False)
         armature.select_set(False)
-
-        scene.unit_settings.scale_length = old_scale
 
         # We delete the baked action and set the original one back
         for i in range(0, len(object_action_pairs)):
@@ -125,18 +122,20 @@ class ExtractAnimationFBX(openpype.api.Extractor):
         json_filename = f"{instance.name}.json"
         json_path = os.path.join(stagingdir, json_filename)
 
-        json_dict = {}
+        json_dict = {
+            "instance_name": asset_group.get(AVALON_PROPERTY).get("namespace")
+        }
 
-        collection = instance.data.get("name")
-        container = None
-        for obj in bpy.data.collections[collection].objects:
-            if obj.type == "ARMATURE":
-                container_name = obj.get("avalon").get("container_name")
-                container = bpy.data.collections[container_name]
-        if container:
-            json_dict = {
-                "instance_name": container.get("avalon").get("instance_name")
-            }
+        # collection = instance.data.get("name")
+        # container = None
+        # for obj in bpy.data.collections[collection].objects:
+        #     if obj.type == "ARMATURE":
+        #         container_name = obj.get("avalon").get("container_name")
+        #         container = bpy.data.collections[container_name]
+        # if container:
+        #     json_dict = {
+        #         "instance_name": container.get("avalon").get("instance_name")
+        #     }
 
         with open(json_path, "w+") as file:
             json.dump(json_dict, fp=file, indent=2)
@@ -158,7 +157,6 @@ class ExtractAnimationFBX(openpype.api.Extractor):
         }
         instance.data["representations"].append(fbx_representation)
         instance.data["representations"].append(json_representation)
-
 
         self.log.info("Extracted instance '{}' to: {}".format(
                       instance.name, fbx_representation))

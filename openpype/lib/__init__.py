@@ -52,9 +52,11 @@ from .vendor_bin_utils import (
 )
 
 from .python_module_tools import (
+    import_filepath,
     modules_from_path,
     recursive_bases_from_class,
-    classes_from_module
+    classes_from_module,
+    import_module_from_dirpath
 )
 
 from .avalon_context import (
@@ -69,6 +71,8 @@ from .avalon_context import (
     get_linked_assets,
     get_latest_version,
 
+    get_workfile_template_key,
+    get_workfile_template_key_from_context,
     get_workdir_data,
     get_workdir,
     get_workdir_with_workdir_data,
@@ -171,9 +175,11 @@ __all__ = [
     "get_ffmpeg_tool_path",
     "ffprobe_streams",
 
+    "import_filepath",
     "modules_from_path",
     "recursive_bases_from_class",
     "classes_from_module",
+    "import_module_from_dirpath",
 
     "CURRENT_DOC_SCHEMAS",
     "PROJECT_NAME_ALLOWED_SYMBOLS",
@@ -186,6 +192,8 @@ __all__ = [
     "get_linked_assets",
     "get_latest_version",
 
+    "get_workfile_template_key",
+    "get_workfile_template_key_from_context",
     "get_workdir_data",
     "get_workdir",
     "get_workdir_with_workdir_data",
