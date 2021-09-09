@@ -21,11 +21,11 @@ from openpype_interfaces import (
 )
 
 
-# Settings definiton of this addon using `JsonFilesSettingsDef`
-# - JsonFilesSettingsDef is prepared settings definiton using json files
-#   to define settings and store defaul values
+# Settings definition of this addon using `JsonFilesSettingsDef`
+# - JsonFilesSettingsDef is prepared settings definition using json files
+#   to define settings and store default values
 class AddonSettingsDef(JsonFilesSettingsDef):
-    # This will add prefix to every schema and template from `schemas`
+    # This will add prefixes to every schema and template from `schemas`
     #   subfolder.
     # - it is not required to fill the prefix but it is highly
     #   recommended as schemas and templates may have name clashes across
@@ -48,7 +48,7 @@ class AddonSettingsDef(JsonFilesSettingsDef):
 class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
     """This Addon has defined it's settings and interface.
 
-    This example has system settings with enabled option. And use
+    This example has system settings with an enabled option. And use
     few other interfaces:
     - `IPluginPaths` to define custom plugin paths
     - `ITrayAction` to be shown in tray tool
@@ -70,7 +70,7 @@ class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
     def tray_init(self):
         """Implementation of abstract method for `ITrayAction`.
 
-        We're definetely in trat tool so we can precreate dialog.
+        We're definitely  in tray tool so we can pre create dialog.
         """
 
         self._create_dialog()
@@ -101,7 +101,7 @@ class ExampleAddon(OpenPypeAddOn, IPluginPaths, ITrayAction):
         """Show dialog with connected modules.
 
         This can be called from anywhere but can also crash in headless mode.
-        There is not way how to prevent addon to do invalid operations if he's
+        There is no way to prevent addon to do invalid operations if he's
         not handling them.
         """
         # Make sure dialog is created
