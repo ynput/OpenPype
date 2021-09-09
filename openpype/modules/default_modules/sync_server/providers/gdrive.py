@@ -118,14 +118,13 @@ class GDriveHandler(AbstractProvider):
         # {platform} tells that value is multiplatform and only specific OS
         # should be returned
         editable = [
-            # credentials could be override on Project or User level
-             {
+            # credentials could be overriden on Project or User level
+            {
                 'key': "credentials_url",
                 'label': "Credentials url",
                 'type': 'text'
             },
-            # roots could be override only on Project leve, User cannot
-            #
+            # roots could be overriden only on Project leve, User cannot
             {
                  'key': "roots",
                  'label': "Roots",
@@ -149,8 +148,7 @@ class GDriveHandler(AbstractProvider):
                 'key': "credentials_url",
                 'label': "Credentials url",
                 'type': 'text',
-                'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'
-                # noqa: E501
+                'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'  # noqa: E501
             }
         ]
         return editable
