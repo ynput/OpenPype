@@ -40,7 +40,7 @@ for path in [
 ]:
     sys.path.append(path)
 
-from Qt import QtWidgets
+from Qt import QtWidgets, QtCore
 
 from openpype.tools.new_publisher.window import PublisherWindow
 
@@ -59,6 +59,7 @@ def main():
     avalon.api.install(testhost)
 
     app = QtWidgets.QApplication([])
+    app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     window = PublisherWindow()
     window.show()
     app.exec_()
