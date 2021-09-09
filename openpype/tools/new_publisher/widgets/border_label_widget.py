@@ -4,27 +4,32 @@ from openpype.style import get_colors_data
 
 
 class _VLineWidget(QtWidgets.QWidget):
-    def __init__(self, color, parent):
+    def __init__(self, color, left, parent):
         super(_VLineWidget, self).__init__(parent)
         self._color = color
+        self._left = left
 
     def paintEvent(self, event):
         if not self.isVisible():
             return
 
-        rect = QtCore.QRect(
-            0, 0, self.width(), self.height()
-        )
-
+        if self._left:
+            pos_x = 0
+        else:
+            pos_x = self.width()
         painter = QtGui.QPainter(self)
         painter.setRenderHints(
             painter.Antialiasing
             | painter.SmoothPixmapTransform
         )
-        painter.setPen(QtCore.Qt.NoPen)
         if self._color:
-            painter.setBrush(self._color)
-        painter.drawRect(rect)
+            pen = QtGui.QPen(self._color)
+        else:
+            pen = painter.pen()
+        pen.setWidth(1)
+        painter.setPen(pen)
+        painter.setBrush(QtCore.Qt.transparent)
+        painter.drawLine(pos_x, 0, pos_x, self.height())
         painter.end()
 
 
@@ -126,8 +131,8 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         top_layout.addWidget(label_widget, 0)
         top_layout.addWidget(top_right_w, 1)
 
-        left_w = _VLineWidget(color, self)
-        right_w = _VLineWidget(color, self)
+        left_w = _VLineWidget(color, True, self)
+        right_w = _VLineWidget(color, False, self)
 
         bottom_w = _HLineWidget(color, self)
 
@@ -151,6 +156,8 @@ class BorderedLabelWidget(QtWidgets.QFrame):
 
         self._widget = None
 
+        self._radius = 0
+
         self._top_left_w = top_left_w
         self._top_right_w = top_right_w
         self._left_w = left_w
@@ -159,15 +166,23 @@ class BorderedLabelWidget(QtWidgets.QFrame):
         self._label_widget = label_widget
         self._center_layout = center_layout
 
+    def set_content_margins(self, value):
+        self._center_layout.setContentsMargins(
+            value, value, value, value
+        )
+
     def showEvent(self, event):
         super(BorderedLabelWidget, self).showEvent(event)
 
         height = self._label_widget.height()
         radius = (height + (height % 2)) / 2
-        self._left_w.setMinimumWidth(1)
-        self._left_w.setMaximumWidth(1)
-        self._right_w.setMinimumWidth(1)
-        self._right_w.setMaximumWidth(1)
+        self._radius = radius
+
+        side_width = 1 + radius
+        self._left_w.setMinimumWidth(side_width)
+        self._left_w.setMaximumWidth(side_width)
+        self._right_w.setMinimumWidth(side_width)
+        self._right_w.setMaximumWidth(side_width)
         self._bottom_w.setMinimumHeight(radius)
         self._bottom_w.setMaximumHeight(radius)
         self._bottom_w.set_radius(radius)
