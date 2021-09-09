@@ -1,12 +1,13 @@
 import os
 
-import openpype.api
-import openpype.hosts.blender.api.plugin
+from openpype import api
+from openpype.hosts.blender.api import plugin
+from avalon.blender.pipeline import AVALON_PROPERTY
 
 import bpy
 
 
-class ExtractABC(openpype.api.Extractor):
+class ExtractABC(api.Extractor):
     """Extract as ABC."""
 
     label = "Extract ABC"
@@ -16,7 +17,6 @@ class ExtractABC(openpype.api.Extractor):
 
     def process(self, instance):
         # Define extract output file path
-
         stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.abc"
         filepath = os.path.join(stagingdir, filename)
@@ -28,57 +28,29 @@ class ExtractABC(openpype.api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        collections = [
-            obj for obj in instance if type(obj) is bpy.types.Collection]
-
-        assert len(collections) == 1, "There should be one and only one " \
-            "collection collected for this asset"
-
-        old_active_layer_collection = view_layer.active_layer_collection
-
-        layers = view_layer.layer_collection.children
-
-        # Get the layer collection from the collection we need to export.
-        # This is needed because in Blender you can only set the active
-        # collection with the layer collection, and there is no way to get
-        # the layer collection from the collection
-        # (but there is the vice versa).
-        layer_collections = [
-            layer for layer in layers if layer.collection == collections[0]]
-
-        assert len(layer_collections) == 1
-
-        view_layer.active_layer_collection = layer_collections[0]
-
-        old_scale = scene.unit_settings.scale_length
-
         bpy.ops.object.select_all(action='DESELECT')
 
-        selected = list()
+        selected = []
+        asset_group = None
 
         for obj in instance:
-            try:
-                obj.select_set(True)
-                selected.append(obj)
-            except:
-                continue
+            obj.select_set(True)
+            selected.append(obj)
+            if obj.get(AVALON_PROPERTY):
+                asset_group = obj
 
-        new_context = openpype.hosts.blender.api.plugin.create_blender_context(
-            active=selected[0], selected=selected)
-
-        # We set the scale of the scene for the export
-        scene.unit_settings.scale_length = 0.01
+        context = plugin.create_blender_context(
+            active=asset_group, selected=selected)
 
         # We export the abc
         bpy.ops.wm.alembic_export(
-            new_context,
+            context,
             filepath=filepath,
-            selected=True
+            selected=True,
+            flatten=False
         )
 
-        view_layer.active_layer_collection = old_active_layer_collection
-
-        scene.unit_settings.scale_length = old_scale
+        bpy.ops.object.select_all(action='DESELECT')
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

@@ -114,6 +114,30 @@ QPushButton[btn-type="expand-toggle"] {
     background: #21252B;
 }
 
+/* SLider */
+QSlider::groove {
+    border: 1px solid #464b54;
+    border-radius: 0.3em;
+}
+QSlider::groove:horizontal {
+    height: 8px;
+}
+QSlider::groove:vertical {
+    width: 8px;
+}
+QSlider::handle {
+    width: 10px;
+    height: 10px;
+
+    border-radius: 5px;
+}
+QSlider::handle:horizontal {
+    margin: -2px 0;
+}
+QSlider::handle:vertical {
+    margin: 0 -2px;
+}
+
 #GroupWidget {
     border-bottom: 1px solid #21252B;
 }

@@ -1,6 +1,8 @@
 import os
-import avalon.blender.workio
 
+import bpy
+
+# import avalon.blender.workio
 import openpype.api
 
 
@@ -9,7 +11,7 @@ class ExtractBlend(openpype.api.Extractor):
 
     label = "Extract Blend"
     hosts = ["blender"]
-    families = ["model", "camera", "rig", "action", "layout", "animation"]
+    families = ["model", "camera", "rig", "action", "layout"]
     optional = True
 
     def process(self, instance):
@@ -22,15 +24,12 @@ class ExtractBlend(openpype.api.Extractor):
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        # Just save the file to a temporary location. At least for now it's no
-        # problem to have (possibly) extra stuff in the file.
-        avalon.blender.workio.save_file(filepath, copy=True)
-        #
-        # # Store reference for integration
-        # if "files" not in instance.data:
-        #     instance.data["files"] = list()
-        #
-        # # instance.data["files"].append(filename)
+        data_blocks = set()
+
+        for obj in instance:
+            data_blocks.add(obj)
+
+        bpy.data.libraries.write(filepath, data_blocks)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
