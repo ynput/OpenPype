@@ -7,8 +7,6 @@ import time
 from openpype.api import Logger, Anatomy
 from .abstract_provider import AbstractProvider
 
-from ..utils import EditableScopes
-
 log = Logger().get_logger("SyncServer")
 
 

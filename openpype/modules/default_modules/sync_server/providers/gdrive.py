@@ -8,7 +8,7 @@ import platform
 from openpype.api import Logger
 from openpype.api import get_system_settings
 from .abstract_provider import AbstractProvider
-from ..utils import time_function, ResumableError, EditableScopes
+from ..utils import time_function, ResumableError
 
 log = Logger().get_logger("SyncServer")
 
@@ -122,8 +122,7 @@ class GDriveHandler(AbstractProvider):
              {
                 'key': "credentials_url",
                 'label': "Credentials url",
-                'type': 'text',
-                'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'  # noqa: E501
+                'type': 'text'
             },
             # roots could be override only on Project leve, User cannot
             #
