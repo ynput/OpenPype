@@ -411,7 +411,8 @@ class NumberWidget(InputWidget):
         kwargs = {
             "minimum": self.entity.minimum,
             "maximum": self.entity.maximum,
-            "decimal": self.entity.decimal
+            "decimal": self.entity.decimal,
+            "steps": self.entity.steps
         }
         self.input_field = NumberSpinBox(self.content_widget, **kwargs)
         input_field_stretch = 1
@@ -426,6 +427,10 @@ class NumberWidget(InputWidget):
                 int(self.entity.minimum * slider_multiplier),
                 int(self.entity.maximum * slider_multiplier)
             )
+            if self.entity.steps is not None:
+                slider_widget.setSingleStep(
+                    self.entity.steps * slider_multiplier
+                )
 
             self.content_layout.addWidget(slider_widget, 1)
 

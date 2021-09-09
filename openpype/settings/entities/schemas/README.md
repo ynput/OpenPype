@@ -316,6 +316,7 @@ How output of the schema could look like on save:
     - key `"decimal"` defines how many decimal places will be used, 0 is for integer input (Default: `0`)
     - key `"minimum"` as minimum allowed number to enter (Default: `-99999`)
     - key `"maxium"` as maximum allowed number to enter (Default: `99999`)
+- key `"steps"` will change single step value of UI inputs (using arrows and wheel scroll)
 - for UI it is possible to show slider to enable this option set `show_slider` to `true`
 ```
 {
