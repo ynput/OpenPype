@@ -379,6 +379,10 @@ class NumberEntity(InputEntity):
 
         # UI specific attributes
         self.show_slider = self.schema_data.get("show_slider", False)
+        steps = self.schema_data.get("steps", None)
+        if steps is None:
+            steps = 1 / (10 ** self.decimal)
+        self.steps = steps
 
     def _convert_to_valid_type(self, value):
         if isinstance(value, str):
