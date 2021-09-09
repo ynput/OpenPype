@@ -21,6 +21,9 @@ class TestSiteOperation(ModuleUnitTest):
 
     REPRESENTATION_ID = "60e578d0c987036c6a7b741d"
 
+    TEST_FILES = [("1eCwPljuJeOI8A3aisfOIBKKjcmIycTEt",
+                   "test_site_operations.zip", '')]
+
     @pytest.fixture(scope="module")
     def setup_sync_server_module(self, dbcon):
         """Get sync_server_module from ModulesManager"""
@@ -109,7 +112,7 @@ class TestSiteOperation(ModuleUnitTest):
         site_names = [site["name"] for site in ret["files"][0]["sites"]]
 
         assert 'test_site' not in site_names, "Site name wasn't removed"
-    
+
     @pytest.mark.usefixtures("setup_sync_server_module")
     def test_remove_site_again(self, dbcon, setup_sync_server_module):
         """Depends on test_add_site, must trow exception"""

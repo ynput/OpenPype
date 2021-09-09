@@ -1,8 +1,6 @@
 import pytest
-import sys
 import os
 import shutil
-import glob
 
 from tests.lib.testing_classes import PublishTest
 

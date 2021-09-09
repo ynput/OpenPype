@@ -268,13 +268,19 @@ class PypeCommands:
         """
         print("run_tests")
         import subprocess
-        folder = folder or "../tests"
+
+        if folder:
+            folder = " ".join(list(folder))
+        else:
+            folder = "../tests"
+
         mark_str = pyargs_str = ''
         if mark:
-            mark_str = "- m {}".format(mark)
+            mark_str = "-m {}".format(mark)
 
         if pyargs:
             pyargs_str = "--pyargs {}".format(pyargs)
 
-        subprocess.run("pytest {} {} {}".format(folder, mark_str, pyargs_str))
-
+        cmd = "pytest {} {} {}".format(folder, mark_str, pyargs_str)
+        print("Running {}".format(cmd))
+        subprocess.run(cmd)

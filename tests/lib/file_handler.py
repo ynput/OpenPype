@@ -193,11 +193,10 @@ class RemoteFileHandler:
                 urllib.request.Request(url,
                                        headers={"User-Agent": USER_AGENT})) \
                     as response:
-                        for chunk in iter(lambda: response.read(chunk_size),
-                                          ""):
-                            if not chunk:
-                                break
-                            fh.write(chunk)
+                for chunk in iter(lambda: response.read(chunk_size), ""):
+                    if not chunk:
+                        break
+                    fh.write(chunk)
 
     @staticmethod
     def _get_redirect_url(url, max_hops):
@@ -218,7 +217,7 @@ class RemoteFileHandler:
             )
 
     @staticmethod
-    def _get_confirm_token(response):  # type: ignore[name-defined]
+    def _get_confirm_token(response):
         for key, value in response.cookies.items():
             if key.startswith('download_warning'):
                 return value
@@ -227,7 +226,7 @@ class RemoteFileHandler:
 
     @staticmethod
     def _save_response_content(
-        response_gen, destination,  # type: ignore[name-defined]
+        response_gen, destination,
     ):
         with open(destination, "wb") as f:
             pbar = enlighten.Counter(
@@ -241,7 +240,7 @@ class RemoteFileHandler:
                 pbar.close()
 
     @staticmethod
-    def _quota_exceeded(first_chunk):  # type: ignore[name-defined]
+    def _quota_exceeded(first_chunk):
         try:
             return "Google Drive - Quota exceeded" in first_chunk.decode()
         except UnicodeDecodeError:
