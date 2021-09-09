@@ -407,44 +407,6 @@ class TaskTypeEnumEntity(BaseEnumEntity):
         self._current_value = new_value
 
 
-class ProvidersEnum(BaseEnumEntity):
-    schema_types = ["providers-enum"]
-
-    def _item_initalization(self):
-        self.multiselection = False
-        self.value_on_not_set = ""
-        self.enum_items = []
-        self.valid_keys = set()
-        self.valid_value_types = (str, )
-        self.placeholder = None
-
-    def _get_enum_values(self):
-        from openpype_modules.sync_server.providers import lib as lib_providers
-
-        providers = lib_providers.factory.providers
-
-        valid_keys = set()
-        valid_keys.add('')
-        enum_items = [{'': 'Choose Provider'}]
-        for provider_code, provider_info in providers.items():
-            provider, _ = provider_info
-            enum_items.append({provider_code: provider.LABEL})
-            valid_keys.add(provider_code)
-
-        return enum_items, valid_keys
-
-    def set_override_state(self, *args, **kwargs):
-        super(ProvidersEnum, self).set_override_state(*args, **kwargs)
-
-        self.enum_items, self.valid_keys = self._get_enum_values()
-
-        value_on_not_set = list(self.valid_keys)[0]
-        if self._current_value is NOT_SET:
-            self._current_value = value_on_not_set
-
-        self.value_on_not_set = value_on_not_set
-
-
 class DeadlineUrlEnumEntity(BaseEnumEntity):
     schema_types = ["deadline_url-enum"]
 

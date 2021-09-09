@@ -121,14 +121,7 @@
                     "collapsible_key": false,
                     "object_type":
                     {
-                        "type": "dict",
-                        "children": [
-                            {
-                                "type": "providers-enum",
-                                "key": "provider",
-                                "label": "Provider"
-                            }
-                        ]
+                        "type": "sync-server-providers"
                     }
                 }
             ]
