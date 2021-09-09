@@ -54,8 +54,6 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
         if hierarchy_items:
             hierarchy = os.path.join(*hierarchy_items)
 
-        frame_start = asset_entity["data"]["frameStart"]
-        frame_end = asset_entity["data"]["frameEnd"]
         context_data = {
             "project": {
                 "name": project_entity["name"],
@@ -64,10 +62,7 @@ class CollectAnatomyContextData(pyblish.api.ContextPlugin):
             "asset": asset_entity["name"],
             "hierarchy": hierarchy.replace("\\", "/"),
             "task": task_name,
-            "username": context.data["user"],
-            "frame_start": frame_start,
-            "frame_duration": int(frame_end - frame_start + 1),
-            "frame_end": frame_end
+            "username": context.data["user"]
         }
 
         # Use AVALON_APP as first if available it is the same as host name
