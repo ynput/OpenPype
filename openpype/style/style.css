@@ -682,6 +682,14 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: transparent;
 }
 
+#CardViewWidget {
+    background: {color:bg-buttons};
+    border-radius: 0.1em;
+}
+#CardViewWidget[state="selected"] {
+    background: {color:bg-inputs};
+}
+
 #PublishFrame {
     background: rgba(0, 0, 0, 127);
 }
