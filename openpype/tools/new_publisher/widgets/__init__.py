@@ -24,7 +24,7 @@ from .card_view_widgets import (
     InstanceCardView
 )
 
-from .instance_views_widgets import (
+from .list_view_widgets import (
     InstanceListView
 )
 
