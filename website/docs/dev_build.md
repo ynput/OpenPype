@@ -84,6 +84,13 @@ You can use Docker to build OpenPype. Just run:
 ```shell
 $ sudo ./tools/docker_build.sh
 ```
+
+This will by default use Debian as base image. If you need to make Centos 7 compatible build, please run:
+
+```sh
+sudo ./tools/docker_build.sh centos7
+```
+
 and you should have built OpenPype in `build` directory. It is using **Centos 7**
 as a base image.
 
@@ -323,14 +330,18 @@ Same as:
 poetry run python ./tools/create_zip.py
 ```
 
-### docker_build.sh
+### docker_build.sh *[variant]*
 Script to build OpenPype on [Docker](https://www.docker.com/) enabled systems - usually Linux and Windows
 with [Docker Desktop](https://docs.docker.com/docker-for-windows/install/)
 and [Windows Subsystem for Linux](https://docs.microsoft.com/en-us/windows/wsl/about) (WSL) installed.
 
 It must be run with administrative privileges - `sudo ./docker_build.sh`.
 
-It will use **Centos 7** base image to build OpenPype. You'll see your build in `./build` folder.
+It will use latest **Debian** base image to build OpenPype. If you need to build OpenPype for
+older systems like Centos 7, use `centos7` as argument. This will use another Dockerfile to build
+OpenPype with **Centos 7** as base image.
+
+You'll see your build in `./build` folder.
 
 ### fetch_thirdparty_libs
 This script will download necessary tools for OpenPype defined in `pyproject.toml` like FFMpeg,
