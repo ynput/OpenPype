@@ -445,7 +445,7 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
     # # Methods for Settings to get appriate values to fill forms
     # def get_configurable_items(self, scope=None):
     #     """
-    #         Returns list of sites that could be configurable for all projects.
+    #         Returns list of sites that could be configurable for all projects
     #
     #         Could be filtered by 'scope' argument (list)
     #
@@ -468,8 +468,8 @@ class SyncServerModule(OpenPypeModule, ITrayModule):
     #                     },
     #                     {
     #                         key:"credentials_url", label:"Credentials url",
-    #                         "value":"'c:/projects/cred.json'", "type": "text",
-    #                         "namespace": "{project_setting}/global/sync_server/
+    #                         "value":"'c:/projects/cred.json'", "type": "text",  # noqa: E501
+    #                         "namespace": "{project_setting}/global/sync_server/  # noqa: E501
     #                                  sites"
     #                     }
     #                 ]

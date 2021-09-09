@@ -56,8 +56,7 @@ class LocalDriveHandler(AbstractProvider):
             {
                 'label': "Credentials url",
                 'type': 'text',
-                'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'
-                # noqa: E501
+                'namespace': '{project_settings}/global/sync_server/sites/{site}/credentials_url/{platform}'  # noqa: E501
             },
             # roots could be override only on Project leve, User cannot
             #
