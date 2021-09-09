@@ -28,7 +28,8 @@
                     "type": "number",
                     "key": "AVALON_TIMEOUT",
                     "minimum": 0,
-                    "label": "Avalon Mongo Timeout (ms)"
+                    "label": "Avalon Mongo Timeout (ms)",
+                    "steps": 100
                 },
                 {
                     "type": "path",
