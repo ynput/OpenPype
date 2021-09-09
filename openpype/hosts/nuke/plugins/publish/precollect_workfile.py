@@ -3,7 +3,6 @@ import pyblish.api
 import os
 import openpype.api as pype
 from avalon.nuke import lib as anlib
-reload(anlib)
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
