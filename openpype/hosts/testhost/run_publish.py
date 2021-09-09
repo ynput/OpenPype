@@ -5,11 +5,11 @@ mongo_url = ""
 project_name = ""
 asset_name = ""
 task_name = ""
-host_name = ""
 ftrack_url = ""
 ftrack_username = ""
 ftrack_api_key = ""
 
+host_name = "testhost"
 current_file = os.path.abspath(__file__)
 
 
