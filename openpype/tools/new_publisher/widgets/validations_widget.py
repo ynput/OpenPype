@@ -5,28 +5,7 @@ except Exception:
 
 from Qt import QtWidgets, QtCore, QtGui
 
-
-class _ClickableFrame(QtWidgets.QFrame):
-    def __init__(self, parent):
-        super(_ClickableFrame, self).__init__(parent)
-
-        self._mouse_pressed = False
-
-    def _mouse_release_callback(self):
-        pass
-
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self._mouse_pressed = True
-        super(_ClickableFrame, self).mousePressEvent(event)
-
-    def mouseReleaseEvent(self, event):
-        if self._mouse_pressed:
-            self._mouse_pressed = False
-            if self.rect().contains(event.pos()):
-                self._mouse_release_callback()
-
-        super(_ClickableFrame, self).mouseReleaseEvent(event)
+from .widgets import ClickableFrame
 
 
 class ValidationErrorInstanceList(QtWidgets.QListView):
@@ -60,7 +39,7 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
         self._error_info = error_info
         self._selected = False
 
-        title_frame = _ClickableFrame(self)
+        title_frame = ClickableFrame(self)
         title_frame.setObjectName("ValidationErrorTitleFrame")
         title_frame._mouse_release_callback = self._mouse_release_callback
 

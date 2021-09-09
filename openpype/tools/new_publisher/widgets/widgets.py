@@ -148,6 +148,29 @@ class AbstractInstanceView(QtWidgets.QWidget):
         ).format(self.__class__.__name__))
 
 
+class ClickableFrame(QtWidgets.QFrame):
+    def __init__(self, parent):
+        super(ClickableFrame, self).__init__(parent)
+
+        self._mouse_pressed = False
+
+    def _mouse_release_callback(self):
+        pass
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        super(ClickableFrame, self).mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self._mouse_release_callback()
+
+        super(ClickableFrame, self).mouseReleaseEvent(event)
+
+
 class ContextWarningLabel(QtWidgets.QLabel):
     cached_images_by_size = {}
     source_image = None
