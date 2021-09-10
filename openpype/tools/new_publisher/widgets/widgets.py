@@ -17,24 +17,30 @@ from ..constants import (
 )
 
 
-class IconBtn(QtWidgets.QPushButton):
+class IconButton(QtWidgets.QPushButton):
     """PushButton with icon and size of font.
 
     Using font metrics height as icon size reference.
     """
+
+    def __init__(self, *args, **kwargs):
+        super(IconButton, self).__init__(*args, **kwargs)
+        self.setObjectName("IconButton")
+
     def sizeHint(self):
-        result = super().sizeHint()
-        if not self.text():
-            new_height = (
-                result.height()
-                - self.iconSize().height()
-                + self.fontMetrics().height()
-            )
-            result.setHeight(new_height)
+        result = super(IconButton, self).sizeHint()
+        icon_h = self.iconSize().height()
+        font_height = self.fontMetrics().height()
+        text_set = bool(self.text())
+        if not text_set and icon_h < font_height:
+            new_size = result.height() - icon_h + font_height
+            result.setHeight(new_size)
+            result.setWidth(new_size)
+
         return result
 
 
-class PublishIconBtn(IconBtn):
+class PublishIconBtn(IconButton):
     def __init__(self, pixmap_path, *args, **kwargs):
         super(PublishIconBtn, self).__init__(*args, **kwargs)
 
@@ -122,6 +128,27 @@ class PublishBtn(PublishIconBtn):
         icon_path = get_icon_path("play")
         super(PublishBtn, self).__init__(icon_path, "Publish", parent)
         self.setToolTip("Publish")
+
+
+class CreateInstanceBtn(PublishIconBtn):
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("add")
+        super(CreateInstanceBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Create new instance")
+
+
+class RemoveInstanceBtn(PublishIconBtn):
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("delete")
+        super(RemoveInstanceBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Remove selected instances")
+
+
+class ChangeViewBtn(PublishIconBtn):
+    def __init__(self, parent=None):
+        icon_path = get_icon_path("change_view")
+        super(ChangeViewBtn, self).__init__(icon_path, parent)
+        self.setToolTip("Swap between views")
 
 
 class AbstractInstanceView(QtWidgets.QWidget):

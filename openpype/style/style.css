@@ -547,7 +547,9 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     background: {color:bg-menu-separator};
 }
 
-#IconBtn {}
+#IconButton {
+    padding: 4px 4px 4px 4px;
+}
 
 /* Password dialog*/
 #PasswordBtn {

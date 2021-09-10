@@ -2,16 +2,21 @@ from .icons import (
     get_icon_path,
     get_pixmap,
     get_icon
+)
 from .border_label_widget import (
     BorderedLabelWidget
 )
 from .widgets import (
     SubsetAttributesWidget,
-    IconBtn,
+
     StopBtn,
     ResetBtn,
     ValidateBtn,
-    PublishBtn
+    PublishBtn,
+
+    CreateInstanceBtn,
+    RemoveInstanceBtn,
+    ChangeViewBtn
 )
 from .publish_widget import (
     PublishFrame
@@ -36,11 +41,15 @@ __all__ = (
 
     "SubsetAttributesWidget",
     "BorderedLabelWidget",
-    "IconBtn",
+
     "StopBtn",
     "ResetBtn",
     "ValidateBtn",
     "PublishBtn",
+
+    "CreateInstanceBtn",
+    "RemoveInstanceBtn",
+    "ChangeViewBtn",
 
     "PublishFrame",
 

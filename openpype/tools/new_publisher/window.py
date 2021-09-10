@@ -13,11 +13,15 @@ from .widgets import (
     InstanceCardView,
     InstanceListView,
     CreateDialog,
-    IconBtn,
+
     StopBtn,
     ResetBtn,
     ValidateBtn,
     PublishBtn,
+
+    CreateInstanceBtn,
+    RemoveInstanceBtn,
+    ChangeViewBtn
 )
 
 
@@ -80,9 +84,9 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_views_layout.addWidget(subset_list_view)
 
         # Buttons at the bottom of subset view
-        create_btn = QtWidgets.QPushButton("+", subset_frame)
-        delete_btn = QtWidgets.QPushButton("-", subset_frame)
-        change_view_btn = QtWidgets.QPushButton("=", subset_frame)
+        create_btn = CreateInstanceBtn(subset_frame)
+        delete_btn = RemoveInstanceBtn(subset_frame)
+        change_view_btn = ChangeViewBtn(subset_frame)
 
         # Subset details widget
         subset_attributes_wrap = BorderedLabelWidget(
