@@ -126,7 +126,7 @@ class PublishBtn(PublishIconBtn):
 
 class AbstractInstanceView(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()
-    active_changed = QtCore.Signal(set)
+    active_changed = QtCore.Signal()
     refreshed = False
 
     def set_refreshed(self, refreshed):

@@ -66,7 +66,7 @@ class InstanceListItemWidget(QtWidgets.QWidget):
             return
 
         self.instance.data["active"] = new_value
-        self.active_changed.emit(self.instance.data["uuid"], new_value)
+        self.active_changed.emit(self.instance.id, new_value)
 
 
 class ListContextWidget(QtWidgets.QFrame):
@@ -346,7 +346,7 @@ class InstanceListView(AbstractInstanceView):
                 widget.set_active(new_value)
 
         if changed_ids:
-            self.active_changed.emit(changed_ids)
+            self.active_changed.emit()
 
     def get_selected_items(self):
         instances = []

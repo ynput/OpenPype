@@ -376,7 +376,7 @@ class PublisherWindow(QtWidgets.QDialog):
             instances, context_selected
         )
 
-    def _on_active_changed(self, _instance_ids):
+    def _on_active_changed(self):
         if self._refreshing_instances:
             return
         self._validate_create_instances()

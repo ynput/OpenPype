@@ -241,10 +241,8 @@ class InstanceCardView(AbstractInstanceView):
         for widget in self._widgets_by_id.values():
             widget.update_instance_values()
 
-    def _on_active_changed(self, changed_instance_id, new_value):
-        changed_ids = set()
-        if changed_ids:
-            self.active_changed.emit(changed_ids)
+    def _on_active_changed(self):
+        self.active_changed.emit()
 
     def _on_widget_selection(self, widget_id):
         if widget_id == CONTEXT_ID:
