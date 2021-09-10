@@ -371,7 +371,7 @@ class PublisherWindow(QtWidgets.QDialog):
         instances, context_selected = self.get_selected_items()
 
         # Disable delete button if nothing is selected
-        self.delete_btn.setEnabled(len(instances) >= 0)
+        self.delete_btn.setEnabled(len(instances) > 0)
 
         self.subset_attributes_widget.set_current_instances(
             instances, context_selected
