@@ -1,3 +1,4 @@
+import re
 import collections
 
 from Qt import QtWidgets, QtCore
@@ -158,7 +159,15 @@ class InstanceCardWidget(CardWidget):
         icon_layout.addWidget(icon_widget)
         icon_layout.addWidget(context_warning)
 
-        label_widget = QtWidgets.QLabel(instance.data["subset"], self)
+        variant = instance.data["variant"]
+        subset_name = instance.data["subset"]
+        found_parts = set(re.findall(variant, subset_name, re.IGNORECASE))
+        if found_parts:
+            for part in found_parts:
+                replacement = "<b>{}</b>".format(part)
+                subset_name = subset_name.replace(part, replacement)
+
+        label_widget = QtWidgets.QLabel(subset_name, self)
 
         active_checkbox = NiceCheckbox(parent=self)
         active_checkbox.setChecked(instance.data["active"])
