@@ -92,6 +92,10 @@ class NiceCheckbox(QtWidgets.QFrame):
             ):
                 new_size = self._checkbox_size_hint()
                 self.setFixedSize(new_size)
+    def sizeHint(self):
+        height = self.fontMetrics().height()
+        width = self.get_width_hint_by_height(height)
+        return QtCore.QSize(width, height)
 
     def get_width_hint_by_height(self, height):
         return (
@@ -206,11 +210,6 @@ class NiceCheckbox(QtWidgets.QFrame):
         if self._checked:
             return QtCore.Qt.Unchecked
         return QtCore.Qt.Checked
-
-    def sizeHint(self):
-        if self._use_checkbox_height_hint is False:
-            return self._base_size
-        return self._checkbox_size_hint()
 
     def mousePressEvent(self, event):
         if event.buttons() & QtCore.Qt.LeftButton:
