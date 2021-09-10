@@ -8,6 +8,13 @@ class NiceCheckbox(QtWidgets.QFrame):
 
     def __init__(self, checked=False, draw_icons=False, parent=None):
         super(NiceCheckbox, self).__init__(parent)
+
+        self.setObjectName("NiceCheckbox")
+
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Fixed,
+            QtWidgets.QSizePolicy.Fixed
+        )
         self._checked = checked
         if checked:
             checkstate = QtCore.Qt.Checked

@@ -776,3 +776,8 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
     background: transparent;
 }
+
+#NiceCheckbox {
+    /* Default size hint of NiceCheckbox is defined by font size. */
+    font-size: 7pt;
+}
