@@ -373,6 +373,7 @@ class AssetsDialog(QtWidgets.QDialog):
         self._model.reset()
 
     def name_is_valid(self, name):
+        self.reset(False)
         return self._model.name_is_valid(name)
 
     def _on_filter_change(self, text):
