@@ -335,6 +335,7 @@ class InstanceCardView(AbstractInstanceView):
         for family in sorted_families:
             if family not in self._widgets_by_family:
                 family_widget = FamilyWidget(family, self._content_widget)
+                family_widget.active_changed.connect(self._on_active_changed)
                 family_widget.selected.connect(self._on_widget_selection)
                 self._content_layout.insertWidget(widget_idx, family_widget)
                 self._widgets_by_family[family] = family_widget
