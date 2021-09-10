@@ -6,10 +6,7 @@ class NiceCheckbox(QtWidgets.QFrame):
     stateChanged = QtCore.Signal(int)
     clicked = QtCore.Signal()
 
-    def __init__(
-        self, checked=False, draw_icons=False, parent=None,
-        use_checkbox_height_hint=None
-    ):
+    def __init__(self, checked=False, draw_icons=False, parent=None):
         super(NiceCheckbox, self).__init__(parent)
         self._checked = checked
         if checked:
@@ -24,8 +21,6 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._animation_timer = QtCore.QTimer(self)
         self._animation_timeout = 6
 
-        self._use_checkbox_height_hint = use_checkbox_height_hint
-        self._first_show = True
         self._fixed_width_set = False
         self._fixed_height_set = False
 
@@ -79,19 +74,6 @@ class NiceCheckbox(QtWidgets.QFrame):
         new_size = QtCore.QSize(width, checkbox_height)
         return new_size
 
-    def showEvent(self, event):
-        super(NiceCheckbox, self).showEvent(event)
-        if self._first_show:
-            self._first_show = False
-            if (
-                self._use_checkbox_height_hint
-                or (
-                    self._use_checkbox_height_hint is None
-                    and not (self._fixed_width_set or self._fixed_height_set)
-                )
-            ):
-                new_size = self._checkbox_size_hint()
-                self.setFixedSize(new_size)
     def sizeHint(self):
         height = self.fontMetrics().height()
         width = self.get_width_hint_by_height(height)
