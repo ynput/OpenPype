@@ -774,6 +774,9 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #PublishDetailViews::item {
     margin: 1px 0px 1px 0px;
 }
+#PublishCommentInput {
+    padding: 0.2em;
+}
 
 #ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
     background: transparent;

@@ -131,6 +131,10 @@ class PublisherWindow(QtWidgets.QDialog):
 
         # Footer
         comment_input = QtWidgets.QLineEdit(subset_frame)
+        comment_input.setObjectName("PublishCommentInput")
+        comment_input.setPlaceholderText(
+            "Attach a comment to your publish"
+        )
 
         reset_btn = ResetBtn(subset_frame)
         stop_btn = StopBtn(subset_frame)
