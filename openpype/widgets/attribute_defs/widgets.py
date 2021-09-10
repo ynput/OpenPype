@@ -189,6 +189,7 @@ class BoolAttrWidget(_BaseAttrDefWidget):
         self._input_widget = input_widget
 
         self.main_layout.addWidget(input_widget, 0)
+        self.main_layout.addStretch(1)
 
     def _on_value_change(self):
         new_value = self._input_widget.isChecked()
