@@ -343,11 +343,20 @@ class PublisherWindow(QtWidgets.QDialog):
     def _on_stop_clicked(self):
         self.controller.stop_publish()
 
+    def _set_publish_comment(self):
+        if self.controller.publish_comment_is_set:
+            return
+
+        comment = self.comment_input.text()
+        self.controller.context.data["comment"] = comment
+
     def _on_validate_clicked(self):
+        self._set_publish_comment()
         self._set_publish_visibility(True)
         self.controller.validate()
 
     def _on_publish_clicked(self):
+        self._set_publish_comment()
         self._set_publish_visibility(True)
         self.controller.publish()
 

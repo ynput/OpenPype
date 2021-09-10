@@ -333,6 +333,7 @@ class PublisherController:
         self._publish_finished = False
         self._publish_max_progress = 0
         self._publish_progress = 0
+        self._publish_comment_is_set = False
 
         # Validation order
         # - plugin with order same or higher than this value is extractor or
@@ -621,6 +622,10 @@ class PublisherController:
     def publish_progress(self):
         return self._publish_progress
 
+    @property
+    def publish_comment_is_set(self):
+        return self._publish_comment_is_set
+
     def get_publish_crash_error(self):
         return self._publish_error
 
@@ -635,9 +640,12 @@ class PublisherController:
         self._publish_validated = False
         self._publish_up_validation = False
         self._publish_finished = False
+        self._publish_comment_is_set = False
         self._main_thread_processor.clear()
         self._main_thread_iter = self._publish_iterator()
         self._publish_context = pyblish.api.Context()
+        # Make sure "comment" is set on publish context
+        self._publish_context.data["comment"] = ""
 
         self._publish_report.reset(
             self._publish_context,
@@ -651,6 +659,10 @@ class PublisherController:
         self._publish_progress = 0
 
         self._trigger_callbacks(self._publish_reset_callback_refs)
+
+    def set_comment(self, comment):
+        self._publish_context.data["comment"] = comment
+        self._publish_comment_is_set = True
 
     def publish(self):
         """Run publishing."""
