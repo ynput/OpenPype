@@ -45,8 +45,6 @@ class TransparentPixmapLabel(QtWidgets.QLabel):
     def __init__(self, *args, **kwargs):
         super(TransparentPixmapLabel, self).__init__(*args, **kwargs)
 
-        self.setObjectName("FamilyIconLabel")
-
     def resizeEvent(self, event):
         size = self.fontMetrics().height()
         size += size % 2
@@ -65,8 +63,6 @@ class IconValuePixmapLabel(PixmapLabel):
         source_pixmap = self._parse_icon_def(icon_def)
 
         super(IconValuePixmapLabel, self).__init__(source_pixmap, parent)
-
-        self.setObjectName("FamilyIconLabel")
 
     def _default_pixmap(self):
         pix = QtGui.QPixmap(1, 1)

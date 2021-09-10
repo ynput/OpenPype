@@ -123,6 +123,7 @@ class ContextCardWidget(CardWidget):
         self._family = ""
 
         icon_widget = TransparentPixmapLabel(self)
+        icon_widget.setObjectName("FamilyIconLabel")
 
         label_widget = QtWidgets.QLabel(CONTEXT_LABEL, self)
 
@@ -152,6 +153,7 @@ class InstanceCardWidget(CardWidget):
         self.instance = instance
 
         icon_widget = IconValuePixmapLabel(family_icon, self)
+        icon_widget.setObjectName("FamilyIconLabel")
         context_warning = ContextWarningLabel(self)
 
         icon_layout = QtWidgets.QHBoxLayout()
