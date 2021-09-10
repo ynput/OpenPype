@@ -174,6 +174,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 (family, [families], subset_template_name, tags) tuple
                 AssertionError if not matching family found
         """
+        if task_type:
+            task_type = task_type.capitalize()
         task_obj = settings.get(task_type)
         assert task_obj, "No family configuration for '{}'".format(task_type)
 
