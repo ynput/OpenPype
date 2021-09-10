@@ -1,13 +1,14 @@
+import json
+import logging
 import os
 import re
-import logging
 
-from openpype.api import Anatomy
+
+from .anatomy import Anatomy
+from openpype.settings import get_project_settings
 
 log = logging.getLogger(__name__)
 
-pattern_array = re.compile(r"\[.*\]")
-project_root_key = "__project_root__"
 
 def _rreplace(s, a, b, n=1):
     """Replace a with b in string s from right side n times."""
@@ -126,6 +127,8 @@ def get_last_version_from_path(path_dir, filter):
 
 
 def compute_paths(basic_paths_items, project_root):
+    pattern_array = re.compile(r"\[.*\]")
+    project_root_key = "__project_root__"
     output = []
     for path_items in basic_paths_items:
         clean_items = []
@@ -162,3 +165,32 @@ def create_project_folders(basic_paths, project_name):
             else:
                 log.debug("Creating folder: {}".format(full_path))
                 os.makedirs(full_path)
+
+
+def _list_path_items(folder_structure):
+    output = []
+    for key, value in folder_structure.items():
+        if not value:
+            output.append(key)
+        else:
+            paths = _list_path_items(value)
+            for path in paths:
+                if not isinstance(path, (list, tuple)):
+                    path = [path]
+
+                output.append([key, *path])
+
+    return output
+
+
+def get_project_basic_paths(project_name):
+    project_settings = get_project_settings(project_name)
+    folder_structure = (
+        project_settings["global"]["project_folder_structure"]
+    )
+    if not folder_structure:
+        return []
+
+    if isinstance(folder_structure, str):
+        folder_structure = json.loads(folder_structure)
+    return _list_path_items(folder_structure)

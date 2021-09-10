@@ -941,35 +941,6 @@ def get_general_environments():
     return environments
 
 
-def _list_path_items(folder_structure):
-    output = []
-    for key, value in folder_structure.items():
-        if not value:
-            output.append(key)
-        else:
-            paths = _list_path_items(value)
-            for path in paths:
-                if not isinstance(path, (list, tuple)):
-                    path = [path]
-
-                output.append([key, *path])
-
-    return output
-
-
-def get_project_basic_paths(project_name):
-    project_settings = get_project_settings(project_name)
-    folder_structure = (
-        project_settings["global"]["project_folder_structure"]
-    )
-    if not folder_structure:
-        return []
-
-    if isinstance(folder_structure, str):
-        folder_structure = json.loads(folder_structure)
-    return _list_path_items(folder_structure)
-
-
 def clear_metadata_from_settings(values):
     """Remove all metadata keys from loaded settings."""
     if isinstance(values, dict):

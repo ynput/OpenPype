@@ -4,7 +4,6 @@ from .settings import (
     get_current_project_settings,
     get_anatomy_settings,
     get_environments,
-    get_project_basic_paths,
 
     SystemSettings,
     ProjectSettings
@@ -26,7 +25,8 @@ from .lib import (
     get_global_environments,
     get_local_site_id,
     change_openpype_mongo_url,
-    create_project_folders
+    create_project_folders,
+    get_project_basic_paths
 )
 
 from .lib.mongo import (
