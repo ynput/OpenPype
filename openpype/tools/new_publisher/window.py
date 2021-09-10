@@ -130,7 +130,7 @@ class PublisherWindow(QtWidgets.QDialog):
         subset_content_layout.addWidget(subset_attributes_wrap, 7)
 
         # Footer
-        message_input = QtWidgets.QLineEdit(subset_frame)
+        comment_input = QtWidgets.QLineEdit(subset_frame)
 
         reset_btn = ResetBtn(subset_frame)
         stop_btn = StopBtn(subset_frame)
@@ -139,7 +139,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.setContentsMargins(0, 0, 0, 0)
-        footer_layout.addWidget(message_input, 1)
+        footer_layout.addWidget(comment_input, 1)
         footer_layout.addWidget(reset_btn, 0)
         footer_layout.addWidget(stop_btn, 0)
         footer_layout.addWidget(validate_btn, 0)
@@ -226,7 +226,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self.subset_attributes_widget = subset_attributes_widget
 
-        self.message_input = message_input
+        self.comment_input = comment_input
 
         self.stop_btn = stop_btn
         self.reset_btn = reset_btn
@@ -391,7 +391,7 @@ class PublisherWindow(QtWidgets.QDialog):
         self._validate_create_instances()
 
     def _set_footer_enabled(self, enabled):
-        self.message_input.setEnabled(enabled)
+        self.comment_input.setEnabled(enabled)
         self.reset_btn.setEnabled(True)
         if enabled:
             self.stop_btn.setEnabled(False)
