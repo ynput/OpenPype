@@ -29,13 +29,35 @@ class AbstractProvider:
 
     @classmethod
     @abc.abstractmethod
-    def get_configurable_items(cls):
+    def get_system_settings_schema(cls):
         """
-            Returns filtered dict of editable properties
+            Returns dict for editable properties on system settings level
 
 
             Returns:
-                (dict)
+                (list) of dict
+        """
+
+    @classmethod
+    @abc.abstractmethod
+    def get_project_settings_schema(cls):
+        """
+            Returns dict for editable properties on project settings level
+
+
+            Returns:
+                (list) of dict
+        """
+
+    @classmethod
+    @abc.abstractmethod
+    def get_local_settings_schema(cls):
+        """
+            Returns dict for editable properties on local settings level
+
+
+            Returns:
+               (list) of dict
         """
 
     @abc.abstractmethod
