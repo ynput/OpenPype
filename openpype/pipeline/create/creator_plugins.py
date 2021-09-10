@@ -203,6 +203,10 @@ class Creator(BaseCreator):
     # - may not be used if `get_description` is overriden
     description = None
 
+    # Detailed description of family for artists
+    # - may not be used if `get_detail_description` is overriden
+    detailed_description = None
+
     @abstractmethod
     def create(self, subset_name, instance_data, options=None):
         """Create new instance and store it.
@@ -227,15 +231,15 @@ class Creator(BaseCreator):
         """
         return self.description
 
-    # def get_detail_description(self):
-    #     """Description of family and plugin.
-    #
-    #     Can be detailed with html tags.
-    #
-    #     Returns:
-    #         str: Detailed description of family for artist.
-    #     """
-    #     return None
+    def get_detail_description(self):
+        """Description of family and plugin.
+
+        Can be detailed with markdown or html tags.
+
+        Returns:
+            str: Detailed description of family for artist.
+        """
+        return self.detailed_description
 
 
 class AutoCreator(BaseCreator):

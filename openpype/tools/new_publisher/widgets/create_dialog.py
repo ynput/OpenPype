@@ -3,6 +3,10 @@ import re
 import traceback
 import copy
 
+try:
+    import commonmark
+except Exception:
+    commonmark = None
 from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.pipeline.create import CreatorError
@@ -109,33 +113,54 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
             QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft
         )
 
+        detail_description_widget = QtWidgets.QTextEdit(self)
+        detail_description_widget.setObjectName("InfoText")
+        detail_description_widget.setTextInteractionFlags(
+            QtCore.Qt.TextBrowserInteraction
+        )
+
         label_layout = QtWidgets.QVBoxLayout()
         label_layout.setSpacing(0)
         label_layout.addWidget(family_label)
         label_layout.addWidget(description_label)
 
-        layout = QtWidgets.QHBoxLayout(self)
+        top_layout = QtWidgets.QHBoxLayout()
+        top_layout.setContentsMargins(0, 0, 0, 0)
+        top_layout.addWidget(icon_widget, 0)
+        top_layout.addLayout(label_layout, 1)
+
+        layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(icon_widget, 0)
-        layout.addLayout(label_layout, 1)
+        layout.addLayout(top_layout, 0)
+        layout.addWidget(detail_description_widget, 1)
 
         self.icon_widget = icon_widget
         self.family_label = family_label
         self.description_label = description_label
+        self.detail_description_widget = detail_description_widget
 
     def set_plugin(self, plugin=None):
         if not plugin:
             self.icon_widget.set_icon_def(None)
             self.family_label.setText("")
             self.description_label.setText("")
+            self.detail_description_widget.setPlainText("")
             return
 
-        description = plugin.get_description() or ""
         plugin_icon = plugin.get_icon()
+        description = plugin.get_description() or ""
+        detailed_description = plugin.get_detail_description() or ""
 
         self.icon_widget.set_icon_def(plugin_icon)
-        self.family_label.setText(plugin.family)
+        self.family_label.setText("<b>{}</b>".format(plugin.family))
+        self.family_label.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.description_label.setText(description)
+
+        if commonmark:
+            html = commonmark.commonmark(detailed_description)
+            self.detail_description_widget.setHtml(html)
+        else:
+            self.detail_description_widget.setMarkdown(detailed_description)
 
 
 class CreateDialog(QtWidgets.QDialog):
@@ -199,15 +224,20 @@ class CreateDialog(QtWidgets.QDialog):
         create_btn = QtWidgets.QPushButton("Create", self)
         create_btn.setEnabled(False)
 
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(creator_description_widget, 0)
-        layout.addWidget(QtWidgets.QLabel("Family:", self))
-        layout.addWidget(family_view, 1)
-        layout.addWidget(QtWidgets.QLabel("Name:", self))
-        layout.addLayout(variant_layout, 0)
-        layout.addWidget(QtWidgets.QLabel("Subset:", self))
-        layout.addWidget(subset_name_input, 0)
-        layout.addWidget(create_btn, 0)
+        form_layout = QtWidgets.QFormLayout()
+        form_layout.addRow("Name:", variant_layout)
+        form_layout.addRow("Subset:", subset_name_input)
+
+        left_layout = QtWidgets.QVBoxLayout()
+        left_layout.addWidget(QtWidgets.QLabel("Choose family:", self))
+        left_layout.addWidget(family_view, 1)
+        left_layout.addLayout(form_layout, 0)
+        left_layout.addWidget(create_btn, 0)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.addLayout(left_layout, 0)
+        layout.addSpacing(5)
+        layout.addWidget(creator_description_widget, 1)
 
         create_btn.clicked.connect(self._on_create)
         variant_input.returnPressed.connect(self._on_create)

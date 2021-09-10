@@ -26,7 +26,11 @@ class PixmapLabel(QtWidgets.QLabel):
         super(PixmapLabel, self).__init__(parent)
         self._source_pixmap = pixmap
 
-    def resizeEvent(self, event):
+    def set_source_pixmap(self, pixmap):
+        self._source_pixmap = pixmap
+        self._set_resized_pix()
+
+    def _set_resized_pix(self):
         size = self.fontMetrics().height()
         size += size % 2
         self.setPixmap(
@@ -37,6 +41,9 @@ class PixmapLabel(QtWidgets.QLabel):
                 QtCore.Qt.SmoothTransformation
             )
         )
+
+    def resizeEvent(self, event):
+        self._set_resized_pix()
         super(PixmapLabel, self).resizeEvent(event)
 
 
@@ -63,6 +70,10 @@ class IconValuePixmapLabel(PixmapLabel):
         source_pixmap = self._parse_icon_def(icon_def)
 
         super(IconValuePixmapLabel, self).__init__(source_pixmap, parent)
+
+    def set_icon_def(self, icon_def):
+        source_pixmap = self._parse_icon_def(icon_def)
+        self.set_source_pixmap(source_pixmap)
 
     def _default_pixmap(self):
         pix = QtGui.QPixmap(1, 1)
