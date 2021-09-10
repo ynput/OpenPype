@@ -17,6 +17,26 @@ from ..constants import (
 )
 
 
+class PixmapLabel(QtWidgets.QLabel):
+    """Label resizing image to height of font."""
+    def __init__(self, pixmap, parent):
+        super(PixmapLabel, self).__init__(parent)
+        self._source_pixmap = pixmap
+
+    def resizeEvent(self, event):
+        size = self.fontMetrics().height()
+        size += size % 2
+        self.setPixmap(
+            self._source_pixmap.scaled(
+                size,
+                size,
+                QtCore.Qt.KeepAspectRatio,
+                QtCore.Qt.SmoothTransformation
+            )
+        )
+        super(PixmapLabel, self).resizeEvent(event)
+
+
 class IconButton(QtWidgets.QPushButton):
     """PushButton with icon and size of font.
 

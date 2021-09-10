@@ -14,6 +14,8 @@ from .widgets import (
     InstanceListView,
     CreateDialog,
 
+    PixmapLabel,
+
     StopBtn,
     ResetBtn,
     ValidateBtn,
@@ -58,10 +60,16 @@ class PublisherWindow(QtWidgets.QDialog):
 
         # Header
         header_widget = QtWidgets.QWidget(self)
+        icon_pixmap = QtGui.QPixmap(resources.get_openpype_icon_filepath())
+        icon_label = PixmapLabel(icon_pixmap, header_widget)
+        icon_label.setObjectName("PublishContextLabel")
         context_label = QtWidgets.QLabel(header_widget)
         context_label.setObjectName("PublishContextLabel")
 
         header_layout = QtWidgets.QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(15, 15, 15, 15)
+        header_layout.setSpacing(15)
+        header_layout.addWidget(icon_label, 0)
         header_layout.addWidget(context_label, 1)
 
         line_widget = QtWidgets.QWidget(self)

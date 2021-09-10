@@ -9,6 +9,8 @@ from .border_label_widget import (
 from .widgets import (
     SubsetAttributesWidget,
 
+    PixmapLabel,
+
     StopBtn,
     ResetBtn,
     ValidateBtn,
@@ -41,6 +43,8 @@ __all__ = (
 
     "SubsetAttributesWidget",
     "BorderedLabelWidget",
+
+    "PixmapLabel",
 
     "StopBtn",
     "ResetBtn",
