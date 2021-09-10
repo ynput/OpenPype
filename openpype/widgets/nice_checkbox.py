@@ -36,6 +36,8 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._middle_step = 11
         self.set_steps(self._steps)
 
+        self._checker_margins_divider = 0
+
         self._pressed = False
         self._under_mouse = False
 
@@ -94,7 +96,6 @@ class NiceCheckbox(QtWidgets.QFrame):
         return (
             width / self._base_size.width()
         ) * self._base_size.height()
-
 
     def setFixedHeight(self, *args, **kwargs):
         self._fixed_height_set = True
@@ -310,11 +311,20 @@ class NiceCheckbox(QtWidgets.QFrame):
                 offset_ratio
             )
 
-        margins_ratio = 20
-        size_without_margins = int(
-            frame_rect.height() / margins_ratio * (margins_ratio - 2)
-        )
-        margin_size_c = ceil(frame_rect.height() - size_without_margins) / 2
+        margins_ratio = self._checker_margins_divider
+        if margins_ratio > 0:
+            size_without_margins = int(
+                (frame_rect.height() / margins_ratio) * (margins_ratio - 2)
+            )
+            size_without_margins -= size_without_margins % 2
+            margin_size_c = ceil(
+                frame_rect.height() - size_without_margins
+            ) / 2
+
+        else:
+            size_without_margins = frame_rect.height()
+            margin_size_c = 0
+
         checkbox_rect = QtCore.QRect(
             frame_rect.x() + margin_size_c,
             frame_rect.y() + margin_size_c,
@@ -378,21 +388,22 @@ class NiceCheckbox(QtWidgets.QFrame):
         painter.setBrush(checker_color)
         painter.drawEllipse(checker_rect)
 
-        smaller_checker_rect = checker_rect.adjusted(
-            margin_size_c, margin_size_c, -margin_size_c, -margin_size_c
-        )
-        gradient = QtGui.QLinearGradient(
-            smaller_checker_rect.bottomRight(),
-            smaller_checker_rect.topLeft()
-        )
-        gradient.setColorAt(0, checker_color)
         if under_mouse:
-            dark_value = 155
-        else:
-            dark_value = 130
-        gradient.setColorAt(1, checker_color.darker(dark_value))
-        painter.setBrush(gradient)
-        painter.drawEllipse(smaller_checker_rect)
+            adjust = margin_size_c
+            if adjust < 1 and checker_rect.height() > 4:
+                adjust = 1
+
+            smaller_checker_rect = checker_rect.adjusted(
+                adjust, adjust, -adjust, -adjust
+            )
+            gradient = QtGui.QLinearGradient(
+                smaller_checker_rect.bottomRight(),
+                smaller_checker_rect.topLeft()
+            )
+            gradient.setColorAt(0, checker_color)
+            gradient.setColorAt(1, checker_color.darker(155))
+            painter.setBrush(gradient)
+            painter.drawEllipse(smaller_checker_rect)
 
         if self._draw_icons:
             painter.setBrush(bg_color)
