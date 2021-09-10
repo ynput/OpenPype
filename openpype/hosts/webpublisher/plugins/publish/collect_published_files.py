@@ -10,6 +10,7 @@ Provides:
 import os
 import json
 import clique
+import tempfile
 
 import pyblish.api
 from avalon import io
@@ -94,7 +95,7 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
             instance.data["families"] = families
             instance.data["version"] = \
                 self._get_last_version(asset, subset) + 1
-            instance.data["stagingDir"] = task_dir
+            instance.data["stagingDir"] = tempfile.mkdtemp()
             instance.data["source"] = "webpublisher"
 
             # to store logging info into DB openpype.webpublishes
@@ -113,6 +114,8 @@ class CollectPublishedFiles(pyblish.api.ContextPlugin):
                 instance.data["frameEnd"] = \
                     instance.data["representations"][0]["frameEnd"]
             else:
+                instance.data["frameStart"] = 0
+                instance.data["frameEnd"] = 1
                 instance.data["representations"] = self._get_single_repre(
                     task_dir, task_data["files"], tags
                 )
