@@ -280,13 +280,13 @@ class NiceCheckbox(QtWidgets.QFrame):
         return QtGui.QColor(red, green, blue)
 
     def paintEvent(self, event):
-        if self.width() < 1 or self.height() < 1:
+        frame_rect = QtCore.QRect(self.rect())
+        if frame_rect.width() < 0 or frame_rect.height() < 0:
             return
 
         painter = QtGui.QPainter(self)
 
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        frame_rect = QtCore.QRect(self.rect())
 
         # Draw inner background
         if self._current_step == self._steps:
