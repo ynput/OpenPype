@@ -7,6 +7,7 @@ from openpype.pipeline.lib import (
     EnumDef,
     BoolDef
 )
+from openpype.widgets.nice_checkbox import NiceCheckbox
 from Qt import QtWidgets, QtCore
 
 
@@ -180,7 +181,7 @@ class TextAttrWidget(_BaseAttrDefWidget):
 
 class BoolAttrWidget(_BaseAttrDefWidget):
     def _ui_init(self):
-        input_widget = QtWidgets.QCheckBox(self)
+        input_widget = NiceCheckbox(parent=self)
         input_widget.setChecked(self.attr_def.default)
 
         input_widget.stateChanged.connect(self._on_value_change)
