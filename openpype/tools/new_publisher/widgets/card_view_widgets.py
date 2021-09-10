@@ -10,7 +10,6 @@ from .widgets import (
     ClickableFrame
 )
 from ..constants import (
-    INSTANCE_ID_ROLE,
     CONTEXT_ID,
     CONTEXT_LABEL
 )
@@ -259,11 +258,30 @@ class InstanceCardView(AbstractInstanceView):
 
         self.controller = controller
 
+        scroll_area = QtWidgets.QScrollArea(self)
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        scrollbar_bg = scroll_area.verticalScrollBar().parent()
+        if scrollbar_bg:
+            scrollbar_bg.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        scroll_area.setViewportMargins(0, 0, 0, 0)
+
+        content_widget = QtWidgets.QWidget(scroll_area)
+
+        scroll_area.setWidget(content_widget)
+
+        content_layout = QtWidgets.QVBoxLayout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        content_layout.addStretch(1)
+
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addStretch(1)
+        layout.addWidget(scroll_area)
 
-        self._content_layout = layout
+        self._scroll_area = scroll_area
+        self._content_layout = content_layout
+        self._content_widget = content_widget
 
         self._widgets_by_family = {}
         self._family_widgets_by_name = {}
@@ -271,9 +289,26 @@ class InstanceCardView(AbstractInstanceView):
 
         self._selected_widget = None
 
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Minimum,
+            self.sizePolicy().verticalPolicy()
+        )
+
+    def sizeHint(self):
+        # Calculate width hint by content widget and verticall scroll bar
+        scroll_bar = self._scroll_area.verticalScrollBar()
+        width = (
+            self._content_widget.sizeHint().width()
+            + scroll_bar.sizeHint().width()
+        )
+
+        result = super(InstanceCardView, self).sizeHint()
+        result.setWidth(width)
+        return result
+
     def refresh(self):
         if not self._context_widget:
-            widget = ContextCardWidget(self)
+            widget = ContextCardWidget(self._content_widget)
             widget.selected.connect(self._on_widget_selection)
             widget.set_selected(True)
             self.selection_changed.emit()
@@ -299,7 +334,7 @@ class InstanceCardView(AbstractInstanceView):
         widget_idx = 1
         for family in sorted_families:
             if family not in self._widgets_by_family:
-                family_widget = FamilyWidget(family, self)
+                family_widget = FamilyWidget(family, self._content_widget)
                 family_widget.selected.connect(self._on_widget_selection)
                 self._content_layout.insertWidget(widget_idx, family_widget)
                 self._widgets_by_family[family] = family_widget
