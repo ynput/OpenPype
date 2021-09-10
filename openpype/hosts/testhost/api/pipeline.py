@@ -8,6 +8,33 @@ class HostContext:
     context_json_path = None
 
     @classmethod
+    def get_context_title(cls):
+        project_name = os.environ.get("AVALON_PROJECT")
+        if not project_name:
+            return "TestHost"
+
+        asset_name = os.environ.get("AVALON_ASSET")
+        if not asset_name:
+            return project_name
+
+        from avalon import io
+
+        asset_doc = io.find_one(
+            {"type": "asset", "name": asset_name},
+            {"data.parents": 1}
+        )
+        parents = asset_doc.get("data", {}).get("parents") or []
+
+        hierarchy = [project_name]
+        hierarchy.extend(parents)
+        hierarchy.append("<b>{}</b>".format(asset_name))
+        task_name = os.environ.get("AVALON_TASK")
+        if task_name:
+            hierarchy.append(task_name)
+
+        return "/".join(hierarchy)
+
+    @classmethod
     def get_current_dir_filepath(cls, filename):
         return os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
@@ -124,3 +151,7 @@ def get_context_data():
 
 def update_context_data(data, changes):
     HostContext.save_context_data(data)
+
+
+def get_context_title():
+    return HostContext.get_context_title()

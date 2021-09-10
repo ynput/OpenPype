@@ -245,11 +245,6 @@ class PublisherWindow(QtWidgets.QDialog):
 
         self.resize(self.default_width, self.default_height)
 
-        # DEBUGING
-        self.set_context_label(
-            "<project>/<hierarchy>/<asset>/<task>/<workfile>"
-        )
-
     def showEvent(self, event):
         super(PublisherWindow, self).showEvent(event)
         if self._first_show:
@@ -383,6 +378,9 @@ class PublisherWindow(QtWidgets.QDialog):
         self._refresh_instances()
 
         self._validate_create_instances()
+
+        context_title = self.controller.get_context_title()
+        self.set_context_label(context_title)
 
     def _on_subset_change(self, *_args):
         # Ignore changes if in middle of refreshing

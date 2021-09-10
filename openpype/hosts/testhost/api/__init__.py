@@ -10,7 +10,8 @@ from .pipeline import (
     update_instances,
     remove_instances,
     get_context_data,
-    update_context_data
+    update_context_data,
+    get_context_title
 )
 
 
@@ -36,6 +37,7 @@ __all__ = (
     "remove_instances",
     "get_context_data",
     "update_context_data",
+    "get_context_title",
 
     "install"
 )

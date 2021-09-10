@@ -1,3 +1,4 @@
+import os
 import copy
 import logging
 import traceback
@@ -429,6 +430,18 @@ class PublisherController:
 
     def get_asset_docs(self):
         return self._asset_docs_cache.get_asset_docs()
+
+    def get_context_title(self):
+        context_title = None
+        if hasattr(self.host, "get_context_title"):
+            context_title = self.host.get_context_title()
+
+        if context_title is None:
+            context_title = os.environ.get("AVALON_APP_NAME")
+            if context_title is None:
+                context_title = os.environ.get("AVALON_APP")
+
+        return context_title
 
     def get_asset_hierarchy(self):
         _queue = collections.deque(self.get_asset_docs())
