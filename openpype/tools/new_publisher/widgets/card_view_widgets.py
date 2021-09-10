@@ -24,10 +24,12 @@ class FamilyLabel(QtWidgets.QWidget):
 
         line_widget = QtWidgets.QWidget(self)
         line_widget.setObjectName("Separator")
-        line_widget.setMinimumHeight(1)
-        line_widget.setMaximumHeight(1)
+        line_widget.setMinimumHeight(2)
+        line_widget.setMaximumHeight(2)
 
         layout = QtWidgets.QHBoxLayout(self)
+        layout.setAlignment(QtCore.Qt.AlignCenter)
+        layout.setSpacing(10)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(label_widget, 0)
         layout.addWidget(line_widget, 1)
