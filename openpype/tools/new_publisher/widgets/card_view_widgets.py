@@ -168,6 +168,9 @@ class InstanceCardWidget(CardWidget):
                 subset_name = subset_name.replace(part, replacement)
 
         label_widget = QtWidgets.QLabel(subset_name, self)
+        # HTML text will cause that label start catch mouse clicks
+        # - disabling with changing interaction flag
+        label_widget.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
 
         active_checkbox = NiceCheckbox(parent=self)
         active_checkbox.setChecked(instance.data["active"])
