@@ -58,9 +58,8 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._base_size = QtCore.QSize(90, 50)
 
     def setTristate(self, tristate=True):
-        if self._is_tristate == tristate:
-            return
-        self._is_tristate = tristate
+        if self._is_tristate != tristate:
+            self._is_tristate = tristate
 
     def set_draw_icons(self, draw_icons=None):
         if draw_icons is None:
@@ -96,10 +95,6 @@ class NiceCheckbox(QtWidgets.QFrame):
             width / self._base_size.width()
         ) * self._base_size.height()
 
-    def resizeEvent(self, event):
-        new_size = QtCore.QSize(self._base_size)
-        new_size.scale(event.size(), QtCore.Qt.KeepAspectRatio)
-        self.resize(new_size)
 
     def setFixedHeight(self, *args, **kwargs):
         self._fixed_height_set = True
@@ -290,7 +285,7 @@ class NiceCheckbox(QtWidgets.QFrame):
         painter = QtGui.QPainter(self)
 
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
-        frame_rect = QtCore.QRect(event.rect())
+        frame_rect = QtCore.QRect(self.rect())
 
         # Draw inner background
         if self._current_step == self._steps:
