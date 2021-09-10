@@ -93,6 +93,16 @@ class NiceCheckbox(QtWidgets.QFrame):
                 new_size = self._checkbox_size_hint()
                 self.setFixedSize(new_size)
 
+    def get_width_hint_by_height(self, height):
+        return (
+            height / self._base_size.height()
+        ) * self._base_size.width()
+
+    def get_height_hint_by_width(self, width):
+        return (
+            width / self._base_size.width()
+        ) * self._base_size.height()
+
     def resizeEvent(self, event):
         new_size = QtCore.QSize(self._base_size)
         new_size.scale(event.size(), QtCore.Qt.KeepAspectRatio)
@@ -102,19 +112,15 @@ class NiceCheckbox(QtWidgets.QFrame):
         self._fixed_height_set = True
         super(NiceCheckbox, self).setFixedHeight(*args, **kwargs)
         if not self._fixed_width_set:
-            width = (
-                self.height() / self._base_size.height()
-            ) * self._base_size.width()
+            width = self.get_width_hint_by_height(self.height())
             self.setFixedWidth(width)
 
     def setFixedWidth(self, *args, **kwargs):
         self._fixed_width_set = True
         super(NiceCheckbox, self).setFixedWidth(*args, **kwargs)
         if not self._fixed_height_set:
-            width = (
-                self.width() / self._base_size.width()
-            ) * self._base_size.height()
-            self.setFixedHeight(width)
+            height = self.get_height_hint_by_width(self.width())
+            self.setFixedHeight(height)
 
     def setFixedSize(self, *args, **kwargs):
         self._fixed_height_set = True
