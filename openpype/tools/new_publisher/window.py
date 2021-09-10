@@ -272,8 +272,6 @@ class PublisherWindow(QtWidgets.QDialog):
         self._validate_create_instances()
 
     def _change_view_type(self):
-        old_view = self.subset_views_layout.currentWidget()
-
         idx = self.subset_views_layout.currentIndex()
         new_idx = (idx + 1) % self.subset_views_layout.count()
         self.subset_views_layout.setCurrentIndex(new_idx)
@@ -285,13 +283,7 @@ class PublisherWindow(QtWidgets.QDialog):
         else:
             new_view.refresh_instance_states()
 
-        if new_view is not old_view:
-            selected_instances, context_selected = (
-                old_view.get_selected_items()
-            )
-            new_view.set_selected_items(
-                selected_instances, context_selected
-            )
+        self._on_subset_change()
 
     def _on_create_clicked(self):
         self.creator_window.show()
