@@ -343,7 +343,7 @@ class PublisherWindow(QtWidgets.QDialog):
             return
 
         comment = self.comment_input.text()
-        self.controller.context.data["comment"] = comment
+        self.controller.set_comment(comment)
 
     def _on_validate_clicked(self):
         self._set_publish_comment()
