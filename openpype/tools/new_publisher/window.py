@@ -99,7 +99,7 @@ class PublisherWindow(QtWidgets.QDialog):
 
         # Layout of buttons at the bottom of subset view
         subset_view_btns_layout = QtWidgets.QHBoxLayout()
-        subset_view_btns_layout.setContentsMargins(0, 0, 0, 0)
+        subset_view_btns_layout.setContentsMargins(0, 5, 0, 0)
         subset_view_btns_layout.addWidget(create_btn)
         subset_view_btns_layout.addSpacing(5)
         subset_view_btns_layout.addWidget(delete_btn)
