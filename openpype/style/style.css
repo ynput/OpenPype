@@ -737,6 +737,22 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
     font-size: 13pt;
 }
 
+#ValidationActionButton {
+    border: 1px solid transparent;
+    border-radius: 0.2em;
+    padding: 4px 6px 4px 6px;
+    background: {color:bg-buttons};
+}
+
+#ValidationActionButton:hover {
+    background: {color:bg-button-hover};
+    color: {color:font-hover};
+}
+
+#ValidationActionButton:disabled {
+    background: {color:bg-buttons-disabled};
+}
+
 #ValidationErrorTitleFrame {
     background: {color:bg-inputs};
     border-left: 4px solid transparent;

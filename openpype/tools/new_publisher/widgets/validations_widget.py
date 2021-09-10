@@ -5,7 +5,10 @@ except Exception:
 
 from Qt import QtWidgets, QtCore, QtGui
 
-from .widgets import ClickableFrame
+from .widgets import (
+    ClickableFrame,
+    IconValuePixmapLabel
+)
 
 
 class ValidationErrorInstanceList(QtWidgets.QListView):
@@ -142,22 +145,33 @@ class ValidationErrorTitleWidget(QtWidgets.QWidget):
             self._toggle_instance_btn.setArrowType(QtCore.Qt.RightArrow)
 
 
-class ActionButton(QtWidgets.QPushButton):
+class ActionButton(ClickableFrame):
     action_clicked = QtCore.Signal(str)
 
     def __init__(self, action, parent):
         super(ActionButton, self).__init__(parent)
 
-        action_label = action.label or action.__name__
-        self.setText(action_label)
-
-        # TODO handle icons
-        # action.icon
+        self.setObjectName("ValidationActionButton")
 
         self.action = action
-        self.clicked.connect(self._on_click)
 
-    def _on_click(self):
+        action_label = action.label or action.__name__
+        action_icon = getattr(action, "icon", None)
+        label_widget = QtWidgets.QLabel(action_label, self)
+        if action_icon:
+            icon_label = IconValuePixmapLabel(action_icon, self)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(5, 0, 5, 0)
+        layout.addWidget(label_widget, 1)
+        layout.addWidget(icon_label, 0)
+
+        self.setSizePolicy(
+            QtWidgets.QSizePolicy.Minimum,
+            self.sizePolicy().verticalPolicy()
+        )
+
+    def _mouse_release_callback(self):
         self.action_clicked.emit(self.action.id)
 
 
