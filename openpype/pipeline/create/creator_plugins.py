@@ -43,6 +43,10 @@ class BaseCreator:
     # - default_variants may not be used if `get_default_variants` is overriden
     default_variants = []
 
+    # Creator (and family) icon
+    # - may not be used if `get_icon` is reimplemented
+    icon = None
+
     def __init__(
         self, create_context, system_settings, project_settings, headless=False
     ):
@@ -73,6 +77,13 @@ class BaseCreator:
             implementation
         """
         pass
+
+    def get_icon(self):
+        """Icon of creator (family).
+
+        Can return path to image file or awesome icon name.
+        """
+        return self.icon
 
     def get_default_variants(self):
         """Default variant values for UI tooltips.
@@ -187,9 +198,6 @@ class Creator(BaseCreator):
     """"""
     # Label shown in UI
     label = None
-
-    # Icon shown in UI
-    icon = None
 
     # Short description of family
     description = None
