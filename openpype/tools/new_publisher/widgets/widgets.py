@@ -1,7 +1,10 @@
+import os
 import re
 import copy
 import collections
 from Qt import QtWidgets, QtCore, QtGui
+
+from avalon.vendor import qtawesome
 
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools.flickcharm import FlickCharm
@@ -35,6 +38,68 @@ class PixmapLabel(QtWidgets.QLabel):
             )
         )
         super(PixmapLabel, self).resizeEvent(event)
+
+
+class TransparentPixmapLabel(QtWidgets.QLabel):
+    """Label resizing to width and height of font."""
+    def __init__(self, *args, **kwargs):
+        super(TransparentPixmapLabel, self).__init__(*args, **kwargs)
+
+        self.setObjectName("FamilyIconLabel")
+
+    def resizeEvent(self, event):
+        size = self.fontMetrics().height()
+        size += size % 2
+        pix = QtGui.QPixmap(size, size)
+        pix.fill(QtCore.Qt.transparent)
+        self.setPixmap(pix)
+        super(TransparentPixmapLabel, self).resizeEvent(event)
+
+
+class IconValuePixmapLabel(PixmapLabel):
+    """Label resizing to width and height of font."""
+    fa_prefixes = ["", "fa."]
+    default_size = 200
+
+    def __init__(self, icon_def, parent):
+        source_pixmap = self._parse_icon_def(icon_def)
+
+        super(IconValuePixmapLabel, self).__init__(source_pixmap, parent)
+
+        self.setObjectName("FamilyIconLabel")
+
+    def _default_pixmap(self):
+        pix = QtGui.QPixmap(1, 1)
+        pix.fill(QtCore.Qt.transparent)
+        return pix
+
+    def _parse_icon_def(self, icon_def):
+        if not icon_def:
+            return self._default_pixmap()
+
+        if isinstance(icon_def, QtGui.QPixmap):
+            return icon_def
+
+        if isinstance(icon_def, QtGui.QIcon):
+            return icon_def.pixmap(self.default_size, self.default_size)
+
+        try:
+            if os.path.exists(icon_def):
+                return QtGui.QPixmap(icon_def)
+        except Exception:
+            # TODO logging
+            pass
+
+        for prefix in self.fa_prefixes:
+            try:
+                icon_name = "{}{}".format(prefix, icon_def)
+                icon = qtawesome.icon(icon_name, color="white")
+                return icon.pixmap(self.default_size, self.default_size)
+            except Exception:
+                # TODO logging
+                continue
+
+        return self._default_pixmap()
 
 
 class IconButton(QtWidgets.QPushButton):

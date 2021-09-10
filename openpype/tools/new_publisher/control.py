@@ -563,6 +563,12 @@ class PublisherController:
             ))
         return output
 
+    def get_icon_for_family(self, family):
+        creator = self.creators.get(family)
+        if creator is not None:
+            return creator.get_icon()
+        return None
+
     def create(self, family, subset_name, instance_data, options):
         # QUESTION Force to return instances or call `list_instances` on each
         #   creation? (`list_instances` may slow down...)

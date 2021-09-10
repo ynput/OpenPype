@@ -7,7 +7,9 @@ from openpype.widgets.nice_checkbox import NiceCheckbox
 from .widgets import (
     AbstractInstanceView,
     ContextWarningLabel,
-    ClickableFrame
+    ClickableFrame,
+    IconValuePixmapLabel,
+    TransparentPixmapLabel
 )
 from ..constants import (
     CONTEXT_ID,
@@ -15,32 +17,11 @@ from ..constants import (
 )
 
 
-class FamilyLabel(QtWidgets.QWidget):
-    def __init__(self, family, parent):
-        super(FamilyLabel, self).__init__(parent)
-
-        label_widget = QtWidgets.QLabel(family, self)
-
-        line_widget = QtWidgets.QWidget(self)
-        line_widget.setObjectName("Separator")
-        line_widget.setMinimumHeight(2)
-        line_widget.setMaximumHeight(2)
-
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setAlignment(QtCore.Qt.AlignCenter)
-        layout.setSpacing(10)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(label_widget, 0)
-        layout.addWidget(line_widget, 1)
-
-        self._label_widget = label_widget
-
-
 class FamilyWidget(QtWidgets.QWidget):
     selected = QtCore.Signal(str, str)
     active_changed = QtCore.Signal()
 
-    def __init__(self, family, parent):
+    def __init__(self, family, family_icon, parent):
         super(FamilyWidget, self).__init__(parent)
 
         label_widget = QtWidgets.QLabel(family, self)
@@ -60,6 +41,9 @@ class FamilyWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addLayout(label_layout, 0)
+
+        self._family = family
+        self._family_icon = family_icon
 
         self._widgets_by_id = {}
 
@@ -98,7 +82,9 @@ class FamilyWidget(QtWidgets.QWidget):
                     widget = self._widgets_by_id[instance.id]
                     widget.update_instance(instance)
                 else:
-                    widget = InstanceCardWidget(instance, self)
+                    widget = InstanceCardWidget(
+                        instance, self._family_icon, self
+                    )
                     widget.selected.connect(self.selected)
                     widget.active_changed.connect(self.active_changed)
                     self._widgets_by_id[instance.id] = widget
@@ -135,7 +121,7 @@ class ContextCardWidget(CardWidget):
         self._id = CONTEXT_ID
         self._family = ""
 
-        icon_widget = QtWidgets.QLabel(self)
+        icon_widget = TransparentPixmapLabel(self)
 
         label_widget = QtWidgets.QLabel(CONTEXT_LABEL, self)
 
@@ -155,18 +141,19 @@ class ContextCardWidget(CardWidget):
 class InstanceCardWidget(CardWidget):
     active_changed = QtCore.Signal()
 
-    def __init__(self, instance, parent):
+    def __init__(self, instance, family_icon, parent):
         super(InstanceCardWidget, self).__init__(parent)
 
         self._id = instance.id
         self._family = instance.data["family"]
+        self._family_icon = family_icon
 
         self.instance = instance
 
-        icon_widget = QtWidgets.QLabel(self)
+        icon_widget = IconValuePixmapLabel(family_icon, self)
 
         icon_layout = QtWidgets.QHBoxLayout()
-        icon_layout.setContentsMargins(5, 5, 5, 5)
+        icon_layout.setContentsMargins(10, 5, 5, 5)
         icon_layout.addWidget(icon_widget)
 
         label_widget = QtWidgets.QLabel(instance.data["subset"], self)
@@ -334,7 +321,10 @@ class InstanceCardView(AbstractInstanceView):
         widget_idx = 1
         for family in sorted_families:
             if family not in self._widgets_by_family:
-                family_widget = FamilyWidget(family, self._content_widget)
+                family_icon = self.controller.get_icon_for_family(family)
+                family_widget = FamilyWidget(
+                    family, family_icon, self._content_widget
+                )
                 family_widget.active_changed.connect(self._on_active_changed)
                 family_widget.selected.connect(self._on_widget_selection)
                 self._content_layout.insertWidget(widget_idx, family_widget)

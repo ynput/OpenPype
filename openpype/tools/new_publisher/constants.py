@@ -2,7 +2,7 @@ from Qt import QtCore
 
 # ID of context item in instance view
 CONTEXT_ID = "context"
-CONTEXT_LABEL = "Publish options"
+CONTEXT_LABEL = "Options"
 
 # Allowed symbols for subset name (and variant)
 # - characters, numbers, unsercore and dash

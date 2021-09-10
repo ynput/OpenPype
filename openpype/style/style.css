@@ -777,7 +777,9 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 #PublishCommentInput {
     padding: 0.2em;
 }
-
+#FamilyIconLabel {
+    font-size: 14pt;
+}
 #ArrowBtn, #ArrowBtn:disabled, #ArrowBtn:hover {
     background: transparent;
 }
