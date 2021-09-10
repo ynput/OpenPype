@@ -151,19 +151,17 @@ class InstanceCardWidget(CardWidget):
         self.instance = instance
 
         icon_widget = IconValuePixmapLabel(family_icon, self)
+        context_warning = ContextWarningLabel(self)
 
         icon_layout = QtWidgets.QHBoxLayout()
         icon_layout.setContentsMargins(10, 5, 5, 5)
         icon_layout.addWidget(icon_widget)
+        icon_layout.addWidget(context_warning)
 
         label_widget = QtWidgets.QLabel(instance.data["subset"], self)
 
         active_checkbox = NiceCheckbox(parent=self)
         active_checkbox.setChecked(instance.data["active"])
-
-        context_warning = ContextWarningLabel(self)
-        if instance.has_valid_context:
-            context_warning.setVisible(False)
 
         expand_btn = QtWidgets.QToolButton(self)
         # Not yet implemented
@@ -201,6 +199,8 @@ class InstanceCardWidget(CardWidget):
         self.active_checkbox = active_checkbox
         self.expand_btn = expand_btn
 
+        self._validate_context()
+
     def set_active(self, new_value):
         checkbox_value = self.active_checkbox.isChecked()
         instance_value = self.instance.data["active"]
@@ -217,9 +217,14 @@ class InstanceCardWidget(CardWidget):
         self.instance = instance
         self.update_instance_values()
 
+    def _validate_context(self):
+        valid = self.instance.has_valid_context
+        self.icon_widget.setVisible(valid)
+        self.context_warning.setVisible(not valid)
+
     def update_instance_values(self):
         self.set_active(self.instance.data["active"])
-        self.context_warning.setVisible(not self.instance.has_valid_context)
+        self._validate_context()
 
     def _set_expanded(self, expanded=None):
         if expanded is None:
