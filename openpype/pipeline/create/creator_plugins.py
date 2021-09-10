@@ -200,6 +200,7 @@ class Creator(BaseCreator):
     label = None
 
     # Short description of family
+    # - may not be used if `get_description` is overriden
     description = None
 
     @abstractmethod
@@ -218,16 +219,23 @@ class Creator(BaseCreator):
         # )
         pass
 
-    def get_detail_description(self):
-        """Description of family and plugin.
-
-        Can be detailed with html tags.
+    def get_description(self):
+        """Short description of family and plugin.
 
         Returns:
-            str: Detailed description of family for artist. By default returns
-                short description.
+            str: Short description of family.
         """
         return self.description
+
+    # def get_detail_description(self):
+    #     """Description of family and plugin.
+    #
+    #     Can be detailed with html tags.
+    #
+    #     Returns:
+    #         str: Detailed description of family for artist.
+    #     """
+    #     return None
 
 
 class AutoCreator(BaseCreator):

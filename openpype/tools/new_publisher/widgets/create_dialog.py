@@ -7,6 +7,7 @@ from Qt import QtWidgets, QtCore, QtGui
 
 from openpype.pipeline.create import CreatorError
 
+from .widgets import IconValuePixmapLabel
 from ..constants import (
     SUBSET_NAME_ALLOWED_SYMBOLS,
     VARIANT_TOOLTIP
@@ -91,6 +92,52 @@ class CreateErrorMessageBox(QtWidgets.QDialog):
         return line
 
 
+class FamilyDescriptionWidget(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        super(FamilyDescriptionWidget, self).__init__(parent=parent)
+
+        icon_widget = IconValuePixmapLabel(None, self)
+        icon_widget.setObjectName("FamilyIconLabel")
+
+        family_label = QtWidgets.QLabel("family")
+        family_label.setAlignment(
+            QtCore.Qt.AlignBottom | QtCore.Qt.AlignLeft
+        )
+
+        description_label = QtWidgets.QLabel("description")
+        description_label.setAlignment(
+            QtCore.Qt.AlignTop | QtCore.Qt.AlignLeft
+        )
+
+        label_layout = QtWidgets.QVBoxLayout()
+        label_layout.setSpacing(0)
+        label_layout.addWidget(family_label)
+        label_layout.addWidget(description_label)
+
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(icon_widget, 0)
+        layout.addLayout(label_layout, 1)
+
+        self.icon_widget = icon_widget
+        self.family_label = family_label
+        self.description_label = description_label
+
+    def set_plugin(self, plugin=None):
+        if not plugin:
+            self.icon_widget.set_icon_def(None)
+            self.family_label.setText("")
+            self.description_label.setText("")
+            return
+
+        description = plugin.get_description() or ""
+        plugin_icon = plugin.get_icon()
+
+        self.icon_widget.set_icon_def(plugin_icon)
+        self.family_label.setText(plugin.family)
+        self.description_label.setText(description)
+
+
 class CreateDialog(QtWidgets.QDialog):
     def __init__(
         self, controller, asset_name=None, task_name=None, parent=None
@@ -123,6 +170,8 @@ class CreateDialog(QtWidgets.QDialog):
         self._name_pattern = name_pattern
         self._compiled_name_pattern = re.compile(name_pattern)
 
+        creator_description_widget = FamilyDescriptionWidget(self)
+
         family_view = QtWidgets.QListView(self)
         family_model = QtGui.QStandardItemModel()
         family_view.setModel(family_model)
@@ -151,6 +200,7 @@ class CreateDialog(QtWidgets.QDialog):
         create_btn.setEnabled(False)
 
         layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(creator_description_widget, 0)
         layout.addWidget(QtWidgets.QLabel("Family:", self))
         layout.addWidget(family_view, 1)
         layout.addWidget(QtWidgets.QLabel("Name:", self))
@@ -168,6 +218,8 @@ class CreateDialog(QtWidgets.QDialog):
         variant_hints_menu.triggered.connect(self._on_variant_action)
 
         controller.add_plugins_refresh_callback(self._on_plugins_refresh)
+
+        self.creator_description_widget = creator_description_widget
 
         self.subset_name_input = subset_name_input
 
@@ -282,6 +334,9 @@ class CreateDialog(QtWidgets.QDialog):
             family = new_index.data(QtCore.Qt.DisplayRole)
 
         creator = self.controller.creators.get(family)
+
+        self.creator_description_widget.set_plugin(creator)
+
         self._selected_creator = creator
         if not creator:
             return
