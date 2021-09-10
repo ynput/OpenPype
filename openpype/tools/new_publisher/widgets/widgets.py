@@ -9,6 +9,11 @@ from avalon.vendor import qtawesome
 from openpype.widgets.attribute_defs import create_widget_for_attr_def
 from openpype.tools.flickcharm import FlickCharm
 
+from .models import (
+    AssetsHierarchyModel,
+    TasksModel,
+    RecursiveSortFilterProxyModel,
+)
 from .icons import (
     get_pixmap,
     get_icon_path
@@ -302,255 +307,201 @@ class ClickableFrame(QtWidgets.QFrame):
         super(ClickableFrame, self).mouseReleaseEvent(event)
 
 
-class AssetsHierarchyModel(QtGui.QStandardItemModel):
-    def __init__(self, controller):
-        super(AssetsHierarchyModel, self).__init__()
-        self._controller = controller
+class AssetsDialog(QtWidgets.QDialog):
+    def __init__(self, controller, parent):
+        super(AssetsDialog, self).__init__(parent)
+        self.setWindowTitle("Select asset")
 
-        self._items_by_name = {}
+        model = AssetsHierarchyModel(controller)
+        proxy_model = RecursiveSortFilterProxyModel()
+        proxy_model.setSourceModel(model)
+        proxy_model.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
 
-    def reset(self):
-        self.clear()
+        filter_input = QtWidgets.QLineEdit()
+        filter_input.setPlaceholderText("Filter assets..")
 
-        self._items_by_name = {}
-        assets_by_parent_id = self._controller.get_asset_hierarchy()
+        asset_view = QtWidgets.QTreeView(self)
+        asset_view.setModel(proxy_model)
+        asset_view.setHeaderHidden(True)
+        asset_view.setFrameShape(QtWidgets.QFrame.NoFrame)
+        asset_view.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
+        asset_view.setAlternatingRowColors(True)
+        asset_view.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
+        asset_view.setAllColumnsShowFocus(True)
 
-        items_by_name = {}
-        _queue = collections.deque()
-        _queue.append((self.invisibleRootItem(), None))
-        while _queue:
-            parent_item, parent_id = _queue.popleft()
-            children = assets_by_parent_id.get(parent_id)
-            if not children:
-                continue
+        ok_btn = QtWidgets.QPushButton("OK", self)
+        cancel_btn = QtWidgets.QPushButton("Cancel", self)
 
-            children_by_name = {
-                child["name"]: child
-                for child in children
-            }
-            items = []
-            for name in sorted(children_by_name.keys()):
-                child = children_by_name[name]
-                item = QtGui.QStandardItem(name)
-                items_by_name[name] = item
-                items.append(item)
-                _queue.append((item, child["_id"]))
+        btns_layout = QtWidgets.QHBoxLayout()
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(ok_btn)
+        btns_layout.addWidget(cancel_btn)
 
-            parent_item.appendRows(items)
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(filter_input, 0)
+        layout.addWidget(asset_view, 1)
+        layout.addLayout(btns_layout, 0)
 
-        self._items_by_name = items_by_name
+        filter_input.textChanged.connect(self._on_filter_change)
+        ok_btn.clicked.connect(self._on_ok_clicked)
+        cancel_btn.clicked.connect(self._on_cancel_clicked)
 
-    def name_is_valid(self, item_name):
-        return item_name in self._items_by_name
+        self._filter_input = filter_input
+        self._ok_btn = ok_btn
+        self._cancel_btn = cancel_btn
 
-    def get_index_by_name(self, item_name):
-        item = self._items_by_name.get(item_name)
-        if item:
-            return item.index()
-        return QtCore.QModelIndex()
+        self._model = model
+        self._proxy_model = proxy_model
 
+        self._asset_view = asset_view
 
-class TasksModel(QtGui.QStandardItemModel):
-    def __init__(self, controller):
-        super(TasksModel, self).__init__()
-        self._controller = controller
-        self._items_by_name = {}
-        self._asset_names = []
-        self._task_names_by_asset_name = {}
-
-    def set_asset_names(self, asset_names):
-        self._asset_names = asset_names
-        self.reset()
-
-    @staticmethod
-    def get_intersection_of_tasks(task_names_by_asset_name):
-        tasks = None
-        for task_names in task_names_by_asset_name.values():
-            if tasks is None:
-                tasks = set(task_names)
-            else:
-                tasks &= set(task_names)
-
-            if not tasks:
-                break
-        return tasks or set()
-
-    def is_task_name_valid(self, asset_name, task_name):
-        task_names = self._task_names_by_asset_name.get(asset_name)
-        if task_names and task_name in task_names:
-            return True
-        return False
-
-    def reset(self):
-        if not self._asset_names:
-            self._items_by_name = {}
-            self._task_names_by_asset_name = {}
-            self.clear()
-            return
-
-        task_names_by_asset_name = (
-            self._controller.get_task_names_by_asset_names(self._asset_names)
-        )
-        self._task_names_by_asset_name = task_names_by_asset_name
-
-        new_task_names = self.get_intersection_of_tasks(
-            task_names_by_asset_name
-        )
-        old_task_names = set(self._items_by_name.keys())
-        if new_task_names == old_task_names:
-            return
-
-        root_item = self.invisibleRootItem()
-        for task_name in old_task_names:
-            if task_name not in new_task_names:
-                item = self._items_by_name.pop(task_name)
-                root_item.removeRow(item.row())
-
-        new_items = []
-        for task_name in new_task_names:
-            if task_name in self._items_by_name:
-                continue
-
-            item = QtGui.QStandardItem(task_name)
-            self._items_by_name[task_name] = item
-            new_items.append(item)
-        root_item.appendRows(new_items)
-
-
-class TreeComboBoxView(QtWidgets.QTreeView):
-    visible_rows = 12
-
-    def __init__(self, parent):
-        super(TreeComboBoxView, self).__init__(parent)
-
-        self.setHeaderHidden(True)
-        self.setFrameShape(QtWidgets.QFrame.NoFrame)
-        self.setEditTriggers(QtWidgets.QTreeView.NoEditTriggers)
-        self.setAlternatingRowColors(True)
-        self.setSelectionBehavior(QtWidgets.QTreeView.SelectRows)
-        self.setWordWrap(True)
-        self.setAllColumnsShowFocus(True)
+        self._selected_asset = None
+        self._soft_reset_enabled = True
 
     def showEvent(self, event):
-        super(TreeComboBoxView, self).showEvent(event)
+        super(AssetsDialog, self).showEvent(event)
 
-        row_sh = self.sizeHintForRow(0)
-        current_height = self.height()
-        height = (self.visible_rows * row_sh) + (current_height % row_sh)
-        self.setMinimumHeight(height)
+        self.reset(False)
 
+    def reset(self, force=True):
+        if not force and not self._soft_reset_enabled:
+            return
 
-class TreeComboBox(QtWidgets.QComboBox):
-    def __init__(self, model, parent):
-        super(TreeComboBox, self).__init__(parent)
+        if self._soft_reset_enabled:
+            self._soft_reset_enabled = False
 
-        tree_view = TreeComboBoxView(self)
-        self.setView(tree_view)
+        self._model.reset()
 
-        tree_view.viewport().installEventFilter(self)
+    def name_is_valid(self, name):
+        return self._model.name_is_valid(name)
 
-        self._tree_view = tree_view
-        self._model = None
-        self._skip_next_hide = False
+    def _on_filter_change(self, text):
+        self._proxy_model.setFilterFixedString(text)
 
-        if model:
-            self.setModel(model)
+    def _on_cancel_clicked(self):
+        self.done(0)
 
-        # Create `lineEdit` to be able set asset names that are not available
-        #   or for multiselection.
-        self.setEditable(True)
-        # Set `lineEdit` to read only
-        self.lineEdit().setReadOnly(True)
-        self.lineEdit().setAttribute(
-            QtCore.Qt.WA_TransparentForMouseEvents, True
-        )
-
-    def setModel(self, model):
-        self._model = model
-        super(TreeComboBox, self).setModel(model)
-
-    def showPopup(self):
-        super(TreeComboBox, self).showPopup()
-
-    def hidePopup(self):
-        if self._skip_next_hide:
-            self._skip_next_hide = False
-        else:
-            super(TreeComboBox, self).hidePopup()
-
-    def select_index(self, index):
-        parent_indexes = []
-        parent_index = index.parent()
-        while parent_index.isValid():
-            parent_indexes.append(parent_index)
-            parent_index = parent_index.parent()
-
-        for parent_index in parent_indexes:
-            self._tree_view.expand(parent_index)
-        selection_model = self._tree_view.selectionModel()
-        selection_model.setCurrentIndex(
-            index, selection_model.ClearAndSelect
-        )
-        self.lineEdit().setText(index.data(QtCore.Qt.DisplayRole) or "")
-
-    def eventFilter(self, obj, event):
-        if (
-            event.type() == QtCore.QEvent.MouseButtonPress
-            and obj is self._tree_view.viewport()
-        ):
-            index = self._tree_view.indexAt(event.pos())
-            self._skip_next_hide = not (
-                self._tree_view.visualRect(index).contains(event.pos())
-            )
-        return False
-
-    def set_selected_item(self, item_name):
-        index = self._model.get_index_by_name(item_name)
+    def _on_ok_clicked(self):
+        index = self._asset_view.currentIndex()
+        asset_name = None
         if index.isValid():
-            self._tree_view.selectionModel().setCurrentIndex(
-                index, QtCore.QItemSelectionModel.SelectCurrent
-            )
-            self.select_index(index)
+            asset_name = index.data(QtCore.Qt.DisplayRole)
+        self._selected_asset = asset_name
+        self.done(1)
 
-        else:
-            self.lineEdit().setText(item_name)
+    def set_selected_assets(self, asset_names):
+        self.reset(False)
+        self._asset_view.collapseAll()
+        self._filter_input.setText("")
+
+        indexes = []
+        for asset_name in asset_names:
+            index = self._model.get_index_by_name(asset_name)
+            if index.isValid():
+                indexes.append(index)
+
+        if not indexes:
+            return
+
+        index_deque = collections.deque()
+        for index in indexes:
+            index_deque.append(index)
+
+        all_indexes = []
+        while index_deque:
+            index = index_deque.popleft()
+            all_indexes.append(index)
+
+            parent_index = index.parent()
+            if parent_index.isValid():
+                index_deque.append(parent_index)
+
+        for index in all_indexes:
+            proxy_index = self._proxy_model.mapFromSource(index)
+            self._asset_view.expand(proxy_index)
+
+    def get_selected_asset(self):
+        return self._selected_asset
 
 
-class AssetsTreeComboBox(TreeComboBox):
+class AssetNameInput(QtWidgets.QLineEdit):
+    clicked = QtCore.Signal()
+
+    def __init__(self, *args, **kwargs):
+        super(AssetNameInput, self).__init__(*args, **kwargs)
+        self.setObjectName("AssetNameInput")
+        self._mouse_pressed = False
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self._mouse_pressed = True
+        event.accept()
+
+    def mouseMoveEvent(self, event):
+        event.accept()
+
+    def mouseReleaseEvent(self, event):
+        if self._mouse_pressed:
+            self._mouse_pressed = False
+            if self.rect().contains(event.pos()):
+                self.clicked.emit()
+        event.accept()
+
+    def mouseDoubleClickEvent(self, event):
+        event.accept()
+
+
+class AssetsField(ClickableFrame):
     value_changed = QtCore.Signal()
 
     def __init__(self, controller, parent):
-        model = AssetsHierarchyModel(controller)
+        super(AssetsField, self).__init__(parent)
 
-        super(AssetsTreeComboBox, self).__init__(model, parent)
-        self.setObjectName("AssetsTreeComboBox")
+        dialog = AssetsDialog(controller, self)
 
-        self.currentIndexChanged.connect(self._on_index_change)
+        name_input = AssetNameInput(self)
+        name_input.setReadOnly(True)
 
-        self._ignore_index_change = False
-        self._selected_items = []
+        layout = QtWidgets.QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(name_input, 1)
+
+        name_input.clicked.connect(self._mouse_release_callback)
+        dialog.finished.connect(self._on_dialog_finish)
+
+        self._dialog = dialog
+        self._name_input = name_input
+
         self._origin_value = []
+        self._origin_selection = []
+        self._selected_items = []
         self._has_value_changed = False
-        self._model = model
         self._is_valid = True
-
         self._multiselection_text = None
 
-        model.reset()
-
-    def set_multiselection_text(self, text):
-        self._multiselection_text = text
-
-    def _on_index_change(self):
-        if self._ignore_index_change:
+    def _on_dialog_finish(self, result):
+        if not result:
             return
 
-        self._set_is_valid(True)
-        self._selected_items = [self.currentText()]
+        asset_name = self._dialog.get_selected_asset()
+        if asset_name is None:
+            return
+
+        self._selected_items = [asset_name]
         self._has_value_changed = (
             self._origin_value != self._selected_items
         )
+        self.set_text(asset_name)
+        self._set_is_valid(True)
+
         self.value_changed.emit()
+
+    def _mouse_release_callback(self):
+        self._dialog.set_selected_assets(self._selected_items)
+        self._dialog.open()
+
+    def set_multiselection_text(self, text):
+        self._multiselection_text = text
 
     def _set_is_valid(self, valid):
         if valid == self._is_valid:
@@ -562,10 +513,10 @@ class AssetsTreeComboBox(TreeComboBox):
         self._set_state_property(state)
 
     def _set_state_property(self, state):
-        current_value = self.property("state")
+        current_value = self._name_input.property("state")
         if current_value != state:
-            self.setProperty("state", state)
-            self.style().polish(self)
+            self._name_input.setProperty("state", state)
+            self._name_input.style().polish(self._name_input)
 
     def is_valid(self):
         return self._is_valid
@@ -576,37 +527,36 @@ class AssetsTreeComboBox(TreeComboBox):
     def get_selected_items(self):
         return list(self._selected_items)
 
+    def set_text(self, text):
+        self._name_input.setText(text)
+
     def set_selected_items(self, asset_names=None):
         if asset_names is None:
             asset_names = []
-
-        self._ignore_index_change = True
 
         self._has_value_changed = False
         self._origin_value = list(asset_names)
         self._selected_items = list(asset_names)
         is_valid = True
         if not asset_names:
-            self.set_selected_item("")
+            self.set_text("")
 
         elif len(asset_names) == 1:
             asset_name = tuple(asset_names)[0]
-            is_valid = self._model.name_is_valid(asset_name)
-            self.set_selected_item(asset_name)
+            is_valid = self._dialog.name_is_valid(asset_name)
+            self.set_text(asset_name)
         else:
             for asset_name in asset_names:
-                is_valid = self._model.name_is_valid(asset_name)
+                is_valid = self._dialog.name_is_valid(asset_name)
                 if not is_valid:
                     break
 
             multiselection_text = self._multiselection_text
             if multiselection_text is None:
                 multiselection_text = "|".join(asset_names)
-            self.set_selected_item(multiselection_text)
+            self.set_text(multiselection_text)
 
         self._set_is_valid(is_valid)
-
-        self._ignore_index_change = False
 
     def reset_to_origin(self):
         self.set_selected_items(self._origin_value)
@@ -958,7 +908,7 @@ class GlobalAttrsWidget(QtWidgets.QWidget):
         self._current_instances = []
 
         variant_input = VariantInputWidget(self)
-        asset_value_widget = AssetsTreeComboBox(controller, self)
+        asset_value_widget = AssetsField(controller, self)
         task_value_widget = TasksCombobox(controller, self)
         family_value_widget = MultipleItemWidget(self)
         subset_value_widget = MultipleItemWidget(self)
