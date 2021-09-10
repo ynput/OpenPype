@@ -125,8 +125,7 @@ class PublisherWindow(QtWidgets.QDialog):
         validate_btn = ValidateBtn(subset_frame)
         publish_btn = PublishBtn(subset_frame)
 
-        footer_widget = QtWidgets.QWidget(subset_frame)
-        footer_layout = QtWidgets.QHBoxLayout(footer_widget)
+        footer_layout = QtWidgets.QHBoxLayout()
         footer_layout.setContentsMargins(0, 0, 0, 0)
         footer_layout.addWidget(message_input, 1)
         footer_layout.addWidget(reset_btn, 0)
@@ -143,7 +142,7 @@ class PublisherWindow(QtWidgets.QDialog):
         marings.setBottom(marings.bottom() * 2)
         subset_layout.setContentsMargins(marings)
         subset_layout.addWidget(subset_content_widget, 1)
-        subset_layout.addWidget(footer_widget, 0)
+        subset_layout.addLayout(footer_layout, 0)
 
         # Create publish frame
         publish_frame = PublishFrame(controller, self)
@@ -214,8 +213,6 @@ class PublisherWindow(QtWidgets.QDialog):
         self.delete_btn = delete_btn
 
         self.subset_attributes_widget = subset_attributes_widget
-
-        self.footer_widget = footer_widget
 
         self.message_input = message_input
 
@@ -381,9 +378,21 @@ class PublisherWindow(QtWidgets.QDialog):
             return
         self._validate_create_instances()
 
+    def _set_footer_enabled(self, enabled):
+        self.message_input.setEnabled(enabled)
+        self.reset_btn.setEnabled(True)
+        if enabled:
+            self.stop_btn.setEnabled(False)
+            self.validate_btn.setEnabled(True)
+            self.publish_btn.setEnabled(True)
+        else:
+            self.stop_btn.setEnabled(enabled)
+            self.validate_btn.setEnabled(enabled)
+            self.publish_btn.setEnabled(enabled)
+
     def _validate_create_instances(self):
         if not self.controller.host_is_valid:
-            self.footer_widget.setEnabled(True)
+            self._set_footer_enabled(True)
             return
 
         all_valid = None
@@ -398,19 +407,14 @@ class PublisherWindow(QtWidgets.QDialog):
             if all_valid is None:
                 all_valid = True
 
-        self.footer_widget.setEnabled(bool(all_valid))
+        self._set_footer_enabled(bool(all_valid))
 
     def _on_publish_reset(self):
-        self.reset_btn.setEnabled(True)
-        self.stop_btn.setEnabled(False)
-        self.validate_btn.setEnabled(True)
-        self.publish_btn.setEnabled(True)
-
         self._set_publish_visibility(False)
 
         self.subset_content_widget.setEnabled(self.controller.host_is_valid)
 
-        self.footer_widget.setEnabled(False)
+        self._set_footer_enabled(False)
 
     def _on_publish_start(self):
         self.reset_btn.setEnabled(False)
