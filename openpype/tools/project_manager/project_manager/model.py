@@ -43,18 +43,14 @@ class ProjectModel(QtGui.QStandardItemModel):
         none_project.setData(None)
         project_items.append(none_project)
 
-        database = self.dbcon.database
         project_names = set()
-        for project_name in database.collection_names():
-            # Each collection will have exactly one project document
-            project_doc = database[project_name].find_one(
-                {"type": "project"},
-                {"name": 1}
-            )
-            if not project_doc:
-                continue
 
-            project_name = project_doc.get("name")
+        for doc in sorted(
+                self.dbcon.projects(projection={"name": 1}, no_archived=True),
+                key=lambda x: x["name"]
+        ):
+
+            project_name = doc.get("name")
             if project_name:
                 project_names.add(project_name)
                 project_items.append(QtGui.QStandardItem(project_name))
